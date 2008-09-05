@@ -738,7 +738,6 @@ extern struct rand_struct sql_rand;
 extern const char *opt_date_time_formats[];
 extern KNOWN_DATE_TIME_FORMAT known_date_time_formats[];
 
-extern String null_string;
 extern HASH open_cache, lock_db_cache;
 extern Table *unused_tables;
 extern const char* any_db;

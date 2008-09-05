@@ -30,6 +30,9 @@
 
 #define DRIZZLE_CLIENT
 #undef DRIZZLE_SERVER
+
+#include <map>
+
 #include <libdrizzle/my_time.h>
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
@@ -41,6 +44,7 @@
 #include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
+using namespace std;
 
 enum options_drizzlebinlog
 {
@@ -141,7 +145,7 @@ class Load_log_processor
   /*
     When we see first event corresponding to some LOAD DATA statement in
     binlog, we create temporary file to store data to be loaded.
-    We add name of this file to file_names array using its file_id as index.
+    We add name of this file to file_names map using its file_id as index.
     If we have Create_file event (i.e. we have binary log in pre-5.0.3
     format) we also store save event object to be able which is needed to
     emit LOAD DATA statement when we will meet Exec_load_data event.
@@ -153,14 +157,8 @@ class Load_log_processor
     char *fname;
     Create_file_log_event *event;
   };
-  /*
-    @todo Should be a map (e.g., a hash map), not an array.  With the
-    present implementation, the number of elements in this array is
-    about the number of files loaded since the server started, which
-    may be big after a few years.  We should be able to use existing
-    library data structures for this. /Sven
-  */
-  DYNAMIC_ARRAY file_names;
+
+  map<unsigned int, File_name_record *> file_names;
 
   /**
     Looks for a non-existing filename by adding a numerical suffix to
@@ -195,12 +193,6 @@ public:
   Load_log_processor() {}
   ~Load_log_processor() {}
 
-  int init()
-  {
-    return init_dynamic_array(&file_names, sizeof(File_name_record),
-            100,100 CALLER_INFO);
-  }
-
   void init_by_dir_name(const char *dir)
     {
       target_dir_name_len= (convert_dirname(target_dir_name, dir, NullS) -
@@ -214,19 +206,18 @@ public:
     }
   void destroy()
   {
-    File_name_record *ptr= (File_name_record *)file_names.buffer;
-    File_name_record *end= ptr + file_names.elements;
-    for (; ptr < end; ptr++)
+    // TODO: Is this necessary? Can't we make the map dtor do this for us?
+    map<unsigned int, File_name_record *>::iterator i;
+    for ( i= file_names.begin() ; i != file_names.end() ; i++)
     {
-      if (ptr->fname)
+      File_name_record *record_to_delete = file_names[i->first];
+      if (record_to_delete->fname)
       {
-        my_free(ptr->fname, MYF(MY_WME));
-        delete ptr->event;
-        memset(ptr, 0, sizeof(File_name_record));
+        free(record_to_delete->fname);
+        delete record_to_delete->event;
       }
+      file_names.erase(i->first);
     }
-
-    delete_dynamic(&file_names);
   }
 
   /**
@@ -247,14 +238,12 @@ public:
   Create_file_log_event *grab_event(uint file_id)
     {
       File_name_record *ptr;
-      Create_file_log_event *res;
 
-      if (file_id >= file_names.elements)
-        return 0;
-      ptr= dynamic_element(&file_names, file_id, File_name_record*);
-      if ((res= ptr->event))
-        memset(ptr, 0, sizeof(File_name_record));
-      return res;
+      if ((ptr= file_names[file_id]))
+      {
+        file_names.erase(file_id);
+      }
+      return ptr->event;
     }
 
   /**
@@ -275,18 +264,19 @@ public:
   char *grab_fname(uint file_id)
     {
       File_name_record *ptr;
-      char *res= 0;
+      char *res= NULL;
 
-      if (file_id >= file_names.elements)
-        return 0;
-      ptr= dynamic_element(&file_names, file_id, File_name_record*);
-      if (!ptr->event)
+      if ((ptr= file_names[file_id]))
       {
-        res= ptr->fname;
-        memset(ptr, 0, sizeof(File_name_record));
+        if (ptr->event != NULL)
+        {
+          res= ptr->fname;
+          file_names.erase(file_id);
+        }
       }
       return res;
     }
+
   Exit_status process(Create_file_log_event *ce);
   Exit_status process(Begin_load_query_log_event *ce);
   Exit_status process(Append_block_log_event *ae);
@@ -429,7 +419,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
   Exit_status retval= OK_CONTINUE;
   char *fname, *ptr;
   File file;
-  File_name_record rec;
+  File_name_record *rec;
 
 
   if (!(fname= (char*) my_malloc(full_len,MYF(MY_WME))))
@@ -453,15 +443,11 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
     return(ERROR_STOP);
   }
 
-  rec.fname= fname;
-  rec.event= ce;
+  rec= (File_name_record *)malloc(sizeof(File_name_record));
+  rec->fname= fname;
+  rec->event= ce;
 
-  if (set_dynamic(&file_names, (uchar*)&rec, file_id))
-  {
-    error("Out of memory.");
-    delete ce;
-    return(ERROR_STOP);
-  }
+  file_names[file_id]= rec;
 
   if (ce)
     ce->set_fname_outside_temp_buf(fname, strlen(fname));
@@ -542,9 +528,13 @@ Exit_status Load_log_processor::process(Begin_load_query_log_event *blqe)
 Exit_status Load_log_processor::process(Append_block_log_event *ae)
 {
 
-  const char* fname= ((ae->file_id < file_names.elements) ?
-                       dynamic_element(&file_names, ae->file_id,
-                                       File_name_record*)->fname : 0);
+
+  const char* fname= 0;
+  File_name_record *ptr= file_names[ae->file_id];
+  if (ptr != NULL)
+  {
+    fname= ptr->fname;
+  }
 
   if (fname)
   {
@@ -1912,8 +1902,6 @@ int main(int argc, char** argv)
     dirname_for_local_load= my_strdup(my_tmpdir(&tmpdir), MY_WME);
   }
 
-  if (load_processor.init())
-    exit(1);
   if (dirname_for_local_load)
     load_processor.init_by_dir_name(dirname_for_local_load);
   else

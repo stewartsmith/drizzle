@@ -135,7 +135,7 @@ our $exe_bug25714;
 our $exe_drizzled;
 our $exe_drizzlecheck;
 our $exe_drizzledump;
-our $exe_mysqlslap;
+our $exe_drizzleslap;
 our $exe_drizzleimport;
 our $exe_drizzle_fix_system_tables;
 our $exe_drizzletest;
@@ -1251,10 +1251,10 @@ sub executable_setup () {
   if (!$opt_extern)
   {
 # Look for SQL scripts directory
-    if ( $mysql_version_id >= 50100 )
-    {
-      $exe_mysqlslap= mtr_exe_exists("$path_client_bindir/mysqlslap");
-    }
+     if ( $mysql_version_id >= 50100 )
+     {
+         $exe_drizzleslap= mtr_exe_exists("$path_client_bindir/drizzleslap");
+     }
   }
 
 # Look for drizzletest executable
@@ -1461,24 +1461,25 @@ sub environment_setup () {
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
 
-
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap
   # ----------------------------------------------------
-  if ( $exe_mysqlslap )
+  if ( $exe_drizzleslap )
   {
-    my $cmdline_mysqlslap=
-      mtr_native_path($exe_mysqlslap) .
+    my $cmdline_drizzleslap=
+      mtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
 
     if ( $opt_debug )
    {
-      $cmdline_mysqlslap .=
-	" --debug=d:t:A,$path_vardir_trace/log/mysqlslap.trace";
+      $cmdline_drizzleslap .=
+        " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
     }
-    $ENV{'DRIZZLE_SLAP'}= $cmdline_mysqlslap;
+    $ENV{'DRIZZLE_SLAP'}= $cmdline_drizzleslap;
   }
+
+
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlimport

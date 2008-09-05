@@ -15,68 +15,6 @@
 
 #include <mysys/my_sys.h>
 
-/*
-  A typesafe wrapper around DYNAMIC_ARRAY
-*/
-
-template <class Elem> class Dynamic_array
-{
-  DYNAMIC_ARRAY  array;
-public:
-  Dynamic_array(uint prealloc=16, uint increment=16)
-  {
-    init(prealloc, increment);
-  }
-
-  void init(uint prealloc=16, uint increment=16)
-  {
-    my_init_dynamic_array(&array, sizeof(Elem), prealloc, increment);
-  }
-
-  Elem& at(int idx)
-  {
-    return *(((Elem*)array.buffer) + idx);
-  }
-
-  Elem *front()
-  {
-    return (Elem*)array.buffer;
-  }
-
-  Elem *back()
-  {
-    return ((Elem*)array.buffer) + array.elements;
-  }
-
-  bool append(Elem &el)
-  {
-    return (insert_dynamic(&array, (uchar*)&el));
-  }
-
-  int elements()
-  {
-    return array.elements;
-  }
-
-  void clear()
-  {
-    array.elements= 0;
-  }
-
-  ~Dynamic_array()
-  {
-    delete_dynamic(&array);
-  }
-
-  typedef int (*CMP_FUNC)(const Elem *el1, const Elem *el2);
-
-  void sort(CMP_FUNC cmp_func)
-  {
-    my_qsort(array.buffer, array.elements, sizeof(Elem), (qsort_cmp)cmp_func);
-  }
-};
-
-
 /* 
   Array of pointers to Elem that uses memory from MEM_ROOT
 

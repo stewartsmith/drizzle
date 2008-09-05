@@ -1,4 +1,4 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Team 
+/* Copyright (C) 2008 Drizzle Open Source Development Team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,6 +32,11 @@
 */
 
 #define MTEST_VERSION "3.3"
+
+#include <queue>
+#include <map>
+#include <string>
+
 #include <pcrecpp.h>
 
 #include "client_priv.h"
@@ -40,6 +45,8 @@
 #include <vio/violite.h>
 
 #include "errname.h"
+
+using namespace std;
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -137,7 +144,7 @@ static uint64_t timer_now(void);
 
 static uint64_t progress_start= 0;
 
-DYNAMIC_ARRAY q_lines;
+vector<struct st_command*> q_lines;
 
 typedef struct {
   int read_lines,current_line;
@@ -297,7 +304,7 @@ const char *command_names[]=
   "copy_file",
   "perl",
   "die",
-              
+
   /* Don't execute any more commands, compare result */
   "exit",
   "skip",
@@ -356,9 +363,9 @@ struct st_command
 };
 
 TYPELIB command_typelib= {array_elements(command_names),"",
-        command_names, 0};
+                          command_names, 0};
 
-DYNAMIC_STRING ds_res, ds_progress, ds_warning_messages;
+string ds_res, ds_progress, ds_warning_messages;
 
 char builtin_echo[FN_REFLEN];
 
@@ -382,14 +389,14 @@ VAR* var_get(const char *var_name, const char** var_name_end,
 void eval_expr(VAR* v, const char *p, const char** p_end);
 bool match_delimiter(int c, const char *delim, uint length);
 void dump_result_to_reject_file(char *buf, int size);
-void dump_result_to_log_file(char *buf, int size);
+void dump_result_to_log_file(const char *buf, int size);
 void dump_warning_messages(void);
 void dump_progress(void);
 
-void do_eval(DYNAMIC_STRING *query_eval, const char *query,
+void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars);
-void str_to_file(const char *fname, char *str, int size);
-void str_to_file2(const char *fname, char *str, int size, bool append);
+void str_to_file(const char *fname, const char *str, int size);
+void str_to_file2(const char *fname, const char *str, int size, bool append);
 
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
@@ -415,15 +422,15 @@ void free_all_replace(void){
   free_replace_column();
 }
 
-void replace_dynstr_append_mem(DYNAMIC_STRING *ds, const char *val,
-                               int len);
-void replace_dynstr_append(DYNAMIC_STRING *ds, const char *val);
-void replace_dynstr_append_uint(DYNAMIC_STRING *ds, uint val);
-void dynstr_append_sorted(DYNAMIC_STRING* ds, DYNAMIC_STRING* ds_input);
+void replace_append_mem(string *ds, const char *val,
+                        int len);
+void replace_append(string *ds, const char *val);
+void replace_append_uint(string *ds, uint val);
+void append_sorted(string* ds, string* ds_input);
 
 void handle_error(struct st_command*,
                   unsigned int err_errno, const char *err_error,
-                  const char *err_sqlstate, DYNAMIC_STRING *ds);
+                  const char *err_sqlstate, string *ds);
 void handle_no_error(struct st_command*);
 
 #ifdef EMBEDDED_LIBRARY
@@ -492,7 +499,7 @@ static void wait_query_thread_end(struct st_connection *con)
 
 #endif /*EMBEDDED_LIBRARY*/
 
-void do_eval(DYNAMIC_STRING *query_eval, const char *query,
+void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
 {
   const char *p;
@@ -507,44 +514,88 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
     case '$':
       if (escaped)
       {
-  escaped= 0;
-  dynstr_append_mem(query_eval, p, 1);
+        escaped= 0;
+        query_eval->append(p, 1);
       }
       else
       {
-  if (!(v= var_get(p, &p, 0, 0)))
-    die("Bad variable in eval");
-  dynstr_append_mem(query_eval, v->str_val, v->str_val_len);
+        if (!(v= var_get(p, &p, 0, 0)))
+          die("Bad variable in eval");
+        query_eval->append(v->str_val, v->str_val_len);
       }
       break;
     case '\\':
       next_c= *(p+1);
       if (escaped)
       {
-  escaped= 0;
-  dynstr_append_mem(query_eval, p, 1);
+        escaped= 0;
+        query_eval->append(p, 1);
       }
       else if (next_c == '\\' || next_c == '$' || next_c == '"')
       {
         /* Set escaped only if next char is \, " or $ */
-  escaped= 1;
+        escaped= 1;
 
         if (pass_through_escape_chars)
         {
           /* The escape char should be added to the output string. */
-          dynstr_append_mem(query_eval, p, 1);
+          query_eval->append(p, 1);
         }
       }
       else
-  dynstr_append_mem(query_eval, p, 1);
+        query_eval->append(p, 1);
       break;
     default:
       escaped= 0;
-      dynstr_append_mem(query_eval, p, 1);
+      query_eval->append(p, 1);
       break;
     }
   }
   return;
+}
+
+
+/*
+  Concatenates any number of strings, escapes any OS quote in the result then
+  surround the whole affair in another set of quotes which is finally appended
+  to specified string.  This function is especially useful when
+  building strings to be executed with the system() function.
+
+  @param str string which will have addtional strings appended.
+  @param append string to be appended.
+  @param ... Optional. Additional string(s) to be appended.
+
+  @note The final argument in the list must be NullS even if no additional
+  options are passed.
+*/
+
+void append_os_quoted(string *str, const char *append, ...)
+{
+  const char *quote_str= "\'";
+  const uint  quote_len= 1;
+
+  va_list dirty_text;
+
+  str->append(quote_str, quote_len); /* Leading quote */
+  va_start(dirty_text, append);
+  while (append != NullS)
+  {
+    const char  *cur_pos= append;
+    const char *next_pos= cur_pos;
+
+    /* Search for quote in each string and replace with escaped quote */
+    while((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
+    {
+      str->append(cur_pos, next_pos - cur_pos);
+      str->append("\\", 1);
+      str->append(quote_str, quote_len);
+      cur_pos= next_pos + 1;
+    }
+    str->append(cur_pos, next_pos - cur_pos);
+    append= va_arg(dirty_text, char *);
+  }
+  va_end(dirty_text);
+  str->append(quote_str, quote_len); /* Trailing quote */
 }
 
 
@@ -694,7 +745,7 @@ struct command_arg {
   const char *argname;       /* Name of argument   */
   enum arg_type type;        /* Type of argument   */
   bool required;          /* Argument required  */
-  DYNAMIC_STRING *ds;        /* Storage for argument */
+  string *ds;        /* Storage for argument */
   const char *description;   /* Description of the argument */
 };
 
@@ -724,13 +775,12 @@ static void check_command_args(struct st_command *command,
         ptr++;
       if (ptr > start)
       {
-        init_dynamic_string(arg->ds, 0, ptr-start, 32);
         do_eval(arg->ds, start, ptr, false);
       }
       else
       {
         /* Empty string */
-        init_dynamic_string(arg->ds, "", 0, 0);
+        arg->ds->erase();
       }
       command->last_argument= (char*)ptr;
 
@@ -742,7 +792,6 @@ static void check_command_args(struct st_command *command,
       /* Rest of line */
     case ARG_REST:
       start= ptr;
-      init_dynamic_string(arg->ds, 0, command->query_len, 256);
       do_eval(arg->ds, start, command->end, false);
       command->last_argument= command->end;
       break;
@@ -753,7 +802,7 @@ static void check_command_args(struct st_command *command,
     }
 
     /* Check required arg */
-    if (arg->ds->length == 0 && arg->required)
+    if (arg->ds->length() == 0 && arg->required)
       die("Missing required argument '%s' to command '%.*s'", arg->argname,
           command->first_word_len, command->query);
 
@@ -843,12 +892,17 @@ static void free_used_memory(void)
   close_files();
   hash_free(&var_hash);
 
-  for (i= 0 ; i < q_lines.elements ; i++)
+  vector<struct st_command *>::iterator iter;
+  for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
   {
-    struct st_command **q= dynamic_element(&q_lines, i, struct st_command**);
-    my_free((*q)->query_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free((*q),MYF(0));
+    struct st_command * q_line= *(iter.base());
+    if (q_line->query_buf != NULL)
+    {
+      free(q_line->query_buf);
+    }
+    free(q_line);
   }
+
   for (i= 0; i < 10; i++)
   {
     if (var_reg[i].alloced_len)
@@ -856,10 +910,7 @@ static void free_used_memory(void)
   }
   while (embedded_server_arg_count > 1)
     my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
-  delete_dynamic(&q_lines);
-  dynstr_free(&ds_res);
-  dynstr_free(&ds_progress);
-  dynstr_free(&ds_warning_messages);
+
   free_all_replace();
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
@@ -887,7 +938,7 @@ static void cleanup_and_exit(int exit_code)
       break;
     case 62:
       printf("skipped\n");
-    break;
+      break;
     default:
       printf("unknown exit code: %d\n", exit_code);
       assert(0);
@@ -930,29 +981,29 @@ void die(const char *fmt, ...)
   fflush(stderr);
 
   /* Show results from queries just before failure */
-  if (ds_res.length && opt_tail_lines)
+  if (ds_res.length() && opt_tail_lines)
   {
     int tail_lines= opt_tail_lines;
-    char* show_from= ds_res.str + ds_res.length - 1;
-    while(show_from > ds_res.str && tail_lines > 0 )
+    const char* show_from= ds_res.c_str() + ds_res.length() - 1;
+    while(show_from > ds_res.c_str() && tail_lines > 0 )
     {
       show_from--;
       if (*show_from == '\n')
         tail_lines--;
     }
     fprintf(stderr, "\nThe result from queries just before the failure was:\n");
-    if (show_from > ds_res.str)
+    if (show_from > ds_res.c_str())
       fprintf(stderr, "< snip >");
     fprintf(stderr, "%s", show_from);
     fflush(stderr);
   }
 
   /* Dump the result that has been accumulated so far to .log file */
-  if (result_file_name && ds_res.length)
-    dump_result_to_log_file(ds_res.str, ds_res.length);
+  if (result_file_name && ds_res.length())
+    dump_result_to_log_file(ds_res.c_str(), ds_res.length());
 
   /* Dump warning messages */
-  if (result_file_name && ds_warning_messages.length)
+  if (result_file_name && ds_warning_messages.length())
     dump_warning_messages();
 
   /*
@@ -1029,27 +1080,25 @@ void warning_msg(const char *fmt, ...)
 
 
   va_start(args, fmt);
-  dynstr_append(&ds_warning_messages, "drizzletest: ");
+  ds_warning_messages.append("drizzletest: ");
   if (start_lineno != 0)
   {
-    dynstr_append(&ds_warning_messages, "Warning detected ");
+    ds_warning_messages.append("Warning detected ");
     if (cur_file && cur_file != file_stack)
     {
       len= snprintf(buff, sizeof(buff), "in included file %s ",
-                       cur_file->file_name);
-      dynstr_append_mem(&ds_warning_messages,
-                        buff, len);
+                    cur_file->file_name);
+      ds_warning_messages.append(buff, len);
     }
     len= snprintf(buff, sizeof(buff), "at line %d: ",
-                     start_lineno);
-    dynstr_append_mem(&ds_warning_messages,
-                      buff, len);
+                  start_lineno);
+    ds_warning_messages.append(buff, len);
   }
 
   len= vsnprintf(buff, sizeof(buff), fmt, args);
-  dynstr_append_mem(&ds_warning_messages, buff, len);
+  ds_warning_messages.append(buff, len);
 
-  dynstr_append(&ds_warning_messages, "\n");
+  ds_warning_messages.append("\n");
   va_end(args);
 
   return;
@@ -1067,8 +1116,8 @@ void log_msg(const char *fmt, ...)
   len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
-  dynstr_append_mem(&ds_res, buff, len);
-  dynstr_append(&ds_res, "\n");
+  ds_res.append(buff, len);
+  ds_res.append("\n");
 
   return;
 }
@@ -1084,7 +1133,7 @@ void log_msg(const char *fmt, ...)
 
 */
 
-static void cat_file(DYNAMIC_STRING* ds, const char* filename)
+static void cat_file(string* ds, const char* filename)
 {
   int fd;
   uint len;
@@ -1104,15 +1153,15 @@ static void cat_file(DYNAMIC_STRING* ds, const char* filename)
         /* Add fake newline instead of cr and output the line */
         *p= '\n';
         p++; /* Step past the "fake" newline */
-        dynstr_append_mem(ds, start, p-start);
+        ds->append(start, p-start);
         p++; /* Step past the "fake" newline */
         start= p;
       }
       else
         p++;
     }
-    /* Output any chars that migh be left */
-    dynstr_append_mem(ds, start, p-start);
+    /* Output any chars that might be left */
+    ds->append(start, p-start);
   }
   my_close(fd, MYF(0));
 }
@@ -1124,13 +1173,13 @@ static void cat_file(DYNAMIC_STRING* ds, const char* filename)
   SYNOPSIS
   run_command
   cmd - command to execute(should be properly quoted
-  ds_res- pointer to dynamic string where to store the result
+  result - pointer to string where to store the result
 
 */
 
-static int run_command(char* cmd,
-                       DYNAMIC_STRING *ds_res)
+static int run_command(const char * cmd, string * result)
 {
+  assert(result!=NULL);
   char buf[512]= {0};
   FILE *res_file;
   int error;
@@ -1140,16 +1189,8 @@ static int run_command(char* cmd,
 
   while (fgets(buf, sizeof(buf), res_file))
   {
-    if(ds_res)
-    {
-      /* Save the output of this command in the supplied string */
-      dynstr_append(ds_res, buf);
-    }
-    else
-    {
-      /* Print it directly on screen */
-      fprintf(stdout, "%s", buf);
-    }
+    /* Save the output of this command in the supplied string */
+    result->append(buf);
   }
 
   error= pclose(res_file);
@@ -1163,41 +1204,38 @@ static int run_command(char* cmd,
   SYNOPSIS
   run_tool
   tool_path - the name of the tool to run
-  ds_res - pointer to dynamic string where to store the result
+  result - pointer to dynamic string where to store the result
   ... - variable number of arguments that will be properly
-        quoted and appended after the tool's name
+  quoted and appended after the tool's name
 
 */
 
-static int run_tool(const char *tool_path, DYNAMIC_STRING *ds_res, ...)
+static int run_tool(const char *tool_path, string * result, ...)
 {
   int ret;
   const char* arg;
   va_list args;
-  DYNAMIC_STRING ds_cmdline;
+  string ds_cmdline;
 
-  if (init_dynamic_string(&ds_cmdline, "", FN_REFLEN, FN_REFLEN))
-    die("Out of memory");
 
-  dynstr_append_os_quoted(&ds_cmdline, tool_path, NullS);
-  dynstr_append(&ds_cmdline, " ");
+  append_os_quoted(&ds_cmdline, tool_path);
+  ds_cmdline.append(" ");
 
-  va_start(args, ds_res);
+  va_start(args, result);
 
   while ((arg= va_arg(args, char *)))
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
-      dynstr_append_os_quoted(&ds_cmdline, arg, NullS);
+      append_os_quoted(&ds_cmdline, arg, NullS);
     else
-      dynstr_append(&ds_cmdline, arg);
-    dynstr_append(&ds_cmdline, " ");
+      ds_cmdline.append(arg);
+    ds_cmdline.append(" ");
   }
 
   va_end(args);
 
-  ret= run_command(ds_cmdline.str, ds_res);
-  dynstr_free(&ds_cmdline);
+  ret= run_command(ds_cmdline.c_str(), result);
   return(ret);
 }
 
@@ -1215,14 +1253,11 @@ static int run_tool(const char *tool_path, DYNAMIC_STRING *ds_res, ...)
 
 */
 
-static void show_diff(DYNAMIC_STRING* ds,
+static void show_diff(string* ds,
                       const char* filename1, const char* filename2)
 {
 
-  DYNAMIC_STRING ds_tmp;
-
-  if (init_dynamic_string(&ds_tmp, "", 256, 256))
-    die("Out of memory");
+  string ds_tmp;
 
   /* First try with unified diff */
   if (run_tool("diff",
@@ -1233,7 +1268,7 @@ static void show_diff(DYNAMIC_STRING* ds,
                "2>&1",
                NULL) > 1) /* Most "diff" tools return >1 if error */
   {
-    dynstr_set(&ds_tmp, "");
+    ds_tmp= "";
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
@@ -1248,49 +1283,47 @@ static void show_diff(DYNAMIC_STRING* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      dynstr_set(&ds_tmp, "");
+      ds_tmp= "";
 
-      dynstr_append(&ds_tmp,
-"\n"
-"The two files differ but it was not possible to execute 'diff' in\n"
-"order to show only the difference, tried both 'diff -u' or 'diff -c'.\n"
-"Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
-"To get a better report you should install 'diff' on your system, which you\n"
-"for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
-"\n");
+      ds_tmp.append(
+                    "\n"
+                    "The two files differ but it was not possible to execute 'diff' in\n"
+                    "order to show only the difference, tried both 'diff -u' or 'diff -c'.\n"
+                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
+                    "To get a better report you should install 'diff' on your system, which you\n"
+                    "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
+                    "\n");
 
-      dynstr_append(&ds_tmp, " --- ");
-      dynstr_append(&ds_tmp, filename1);
-      dynstr_append(&ds_tmp, " >>>\n");
+      ds_tmp.append(" --- ");
+      ds_tmp.append(filename1);
+      ds_tmp.append(" >>>\n");
       cat_file(&ds_tmp, filename1);
-      dynstr_append(&ds_tmp, "<<<\n --- ");
-      dynstr_append(&ds_tmp, filename1);
-      dynstr_append(&ds_tmp, " >>>\n");
+      ds_tmp.append("<<<\n --- ");
+      ds_tmp.append(filename1);
+      ds_tmp.append(" >>>\n");
       cat_file(&ds_tmp, filename2);
-      dynstr_append(&ds_tmp, "<<<<\n");
+      ds_tmp.append("<<<<\n");
     }
   }
 
   if (ds)
   {
     /* Add the diff to output */
-    dynstr_append_mem(ds, ds_tmp.str, ds_tmp.length);
+    ds->append(ds_tmp.c_str(), ds_tmp.length());
   }
   else
   {
     /* Print diff directly to stdout */
-    fprintf(stderr, "%s\n", ds_tmp.str);
+    fprintf(stderr, "%s\n", ds_tmp.c_str());
   }
-
-  dynstr_free(&ds_tmp);
 
 }
 
 
 enum compare_files_result_enum {
-   RESULT_OK= 0,
-   RESULT_CONTENT_MISMATCH= 1,
-   RESULT_LENGTH_MISMATCH= 2
+  RESULT_OK= 0,
+  RESULT_CONTENT_MISMATCH= 1,
+  RESULT_LENGTH_MISMATCH= 2
 };
 
 /*
@@ -1388,7 +1421,7 @@ static int compare_files(const char* filename1, const char* filename2)
   Compare content of the string in ds to content of file fname
 
   SYNOPSIS
-  dyn_string_cmp
+  string_cmp
   ds - Dynamic string containing the string o be compared
   fname - Name of file to compare with
 
@@ -1396,7 +1429,7 @@ static int compare_files(const char* filename1, const char* filename2)
   See 'compare_files2'
 */
 
-static int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
+static int string_cmp(string* ds, const char *fname)
 {
   int error;
   File fd;
@@ -1408,7 +1441,7 @@ static int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (my_write(fd, (uchar *) ds->str, ds->length,
+  if (my_write(fd, (uchar *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
       my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
   {
@@ -1440,7 +1473,7 @@ static int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
 
 */
 
-static void check_result(DYNAMIC_STRING* ds)
+static void check_result(string* ds)
 {
   const char* mess= "Result content mismatch\n";
 
@@ -1450,7 +1483,7 @@ static void check_result(DYNAMIC_STRING* ds)
   if (access(result_file_name, F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name);
 
-  switch (dyn_string_cmp(ds, result_file_name)) {
+  switch (string_cmp(ds, result_file_name)) {
   case RESULT_OK:
     break; /* ok */
   case RESULT_LENGTH_MISMATCH:
@@ -1478,9 +1511,9 @@ static void check_result(DYNAMIC_STRING* ds)
       fn_format(reject_file, result_file_name, opt_logdir,
                 ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
-    str_to_file(reject_file, ds->str, ds->length);
+    str_to_file(reject_file, ds->c_str(), ds->length());
 
-    dynstr_set(ds, NULL); /* Don't create a .log file */
+    ds->erase(); /* Don't create a .log file */
 
     show_diff(NULL, result_file_name, reject_file);
     die(mess);
@@ -1509,11 +1542,11 @@ static void check_result(DYNAMIC_STRING* ds)
 
 */
 
-static void check_require(DYNAMIC_STRING* ds, const char *fname)
+static void check_require(string* ds, const char *fname)
 {
 
 
-  if (dyn_string_cmp(ds, fname))
+  if (string_cmp(ds, fname))
   {
     char reason[FN_REFLEN];
     fn_format(reason, fname, "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
@@ -1524,9 +1557,9 @@ static void check_require(DYNAMIC_STRING* ds, const char *fname)
 
 
 /*
-   Remove surrounding chars from string
+  Remove surrounding chars from string
 
-   Return 1 if first character is found but not last
+  Return 1 if first character is found but not last
 */
 static int strip_surrounding(char* str, char c1, char c2)
 {
@@ -1562,8 +1595,8 @@ static int strip_surrounding(char* str, char c1, char c2)
 static void strip_parentheses(struct st_command *command)
 {
   if (strip_surrounding(command->first_argument, '(', ')'))
-      die("%.*s - argument list started with '%c' must be ended with '%c'",
-          command->first_word_len, command->query, '(', ')');
+    die("%.*s - argument list started with '%c' must be ended with '%c'",
+        command->first_word_len, command->query, '(', ')');
 }
 
 
@@ -1636,7 +1669,7 @@ VAR* var_from_env(const char *name, const char *def_val)
 
 
 VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
-       bool ignore_not_existing)
+             bool ignore_not_existing)
 {
   int digit;
   VAR *v;
@@ -1654,7 +1687,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     if (var_name == save_var_name)
     {
       if (ignore_not_existing)
-  return(0);
+        return(0);
       die("Empty variable");
     }
     length= (uint) (var_name - save_var_name);
@@ -1662,7 +1695,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     if (!(v = (VAR*) hash_search(&var_hash, (const uchar*) save_var_name,
-                                            length)))
+                                 length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
       strmake(buff, save_var_name, length);
@@ -1738,8 +1771,8 @@ static void var_set(const char *var_name, const char *var_name_end,
       v->str_val_len= strlen(v->str_val);
     }
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
-                v->name_len, v->name,
-                v->str_val_len, v->str_val);
+             v->name_len, v->name,
+             v->str_val_len, v->str_val);
     if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
       die("Out of memory");
     putenv(v->env_s);
@@ -1810,12 +1843,12 @@ static void var_set_drizzle_get_server_version(DRIZZLE *drizzle)
 
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
-  char *end = (char*)((query_end && *query_end) ?
-          *query_end : query + strlen(query));
+  const char *end = (char*)((query_end && *query_end) ?
+                            *query_end : query + strlen(query));
   DRIZZLE_RES *res;
   DRIZZLE_ROW row;
   DRIZZLE *drizzle= &cur_con->drizzle;
-  DYNAMIC_STRING ds_query;
+  string ds_query;
 
 
   while (end > query && *end != '`')
@@ -1825,15 +1858,13 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   ++query;
 
   /* Eval the query, thus replacing all environment variables */
-  init_dynamic_string(&ds_query, 0, (end - query) + 32, 256);
   do_eval(&ds_query, query, end, false);
 
-  if (drizzle_real_query(drizzle, ds_query.str, ds_query.length))
-    die("Error running query '%s': %d %s", ds_query.str,
-  drizzle_errno(drizzle), drizzle_error(drizzle));
+  if (drizzle_real_query(drizzle, ds_query.c_str(), ds_query.length()))
+    die("Error running query '%s': %d %s", ds_query.c_str(),
+        drizzle_errno(drizzle), drizzle_error(drizzle));
   if (!(res= drizzle_store_result(drizzle)))
-    die("Query '%s' didn't return a result set", ds_query.str);
-  dynstr_free(&ds_query);
+    die("Query '%s' didn't return a result set", ds_query.c_str());
 
   if ((row= drizzle_fetch_row(res)) && row[0])
   {
@@ -1841,24 +1872,22 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
-    DYNAMIC_STRING result;
+    string result;
     uint32_t i;
     uint32_t *lengths;
 
-    init_dynamic_string(&result, "", 512, 512);
     lengths= drizzle_fetch_lengths(res);
     for (i= 0; i < drizzle_num_fields(res); i++)
     {
       if (row[i])
       {
         /* Add column to tab separated string */
-  dynstr_append_mem(&result, row[i], lengths[i]);
+        result.append(row[i], lengths[i]);
       }
-      dynstr_append_mem(&result, "\t", 1);
+      result.append("\t", 1);
     }
-    end= result.str + result.length-1;
-    eval_expr(var, result.str, (const char**) &end);
-    dynstr_free(&result);
+    end= result.c_str() + result.length()-1;
+    eval_expr(var, result.c_str(), (const char**) &end);
   }
   else
     eval_expr(var, "", 0);
@@ -1884,9 +1913,9 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
   <query to run> -    The query that should be sent to the server
   <column name> -     Name of the column that holds the field be compared
-                      against the expected value
+  against the expected value
   <row no> -          Number of the row that holds the field to be
-                      compared against the expected value
+  compared against the expected value
 
 */
 
@@ -1897,9 +1926,9 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
   DRIZZLE_RES* res;
   DRIZZLE *drizzle= &cur_con->drizzle;
 
-  static DYNAMIC_STRING ds_query;
-  static DYNAMIC_STRING ds_col;
-  static DYNAMIC_STRING ds_row;
+  string ds_query;
+  string ds_col;
+  string ds_row;
   const struct command_arg query_get_value_args[] = {
     {"query", ARG_STRING, true, &ds_query, "Query to run"},
     {"column name", ARG_STRING, true, &ds_col, "Name of column"},
@@ -1914,20 +1943,22 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
                      ',');
 
   /* Convert row number to int */
-  if (!str2int(ds_row.str, 10, (long) 0, (long) INT_MAX, &row_no))
-    die("Invalid row number: '%s'", ds_row.str);
-  dynstr_free(&ds_row);
+  if (!str2int(ds_row.c_str(), 10, (long) 0, (long) INT_MAX, &row_no))
+    die("Invalid row number: '%s'", ds_row.c_str());
 
   /* Remove any surrounding "'s from the query - if there is any */
-  if (strip_surrounding(ds_query.str, '"', '"'))
-    die("Mismatched \"'s around query '%s'", ds_query.str);
+  // (Don't get me started on this)
+  char * unstripped_query= strdup(ds_query.c_str());
+  if (strip_surrounding(unstripped_query, '"', '"'))
+    die("Mismatched \"'s around query '%s'", ds_query.c_str());
+  ds_query= unstripped_query;
 
   /* Run the query */
-  if (drizzle_real_query(drizzle, ds_query.str, ds_query.length))
-    die("Error running query '%s': %d %s", ds_query.str,
-  drizzle_errno(drizzle), drizzle_error(drizzle));
+  if (drizzle_real_query(drizzle, ds_query.c_str(), ds_query.length()))
+    die("Error running query '%s': %d %s", ds_query.c_str(),
+        drizzle_errno(drizzle), drizzle_error(drizzle));
   if (!(res= drizzle_store_result(drizzle)))
-    die("Query '%s' didn't return a result set", ds_query.str);
+    die("Query '%s' didn't return a result set", ds_query.c_str());
 
   {
     /* Find column number from the given column name */
@@ -1937,8 +1968,8 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 
     for (i= 0; i < num_fields; i++)
     {
-      if (strcmp(fields[i].name, ds_col.str) == 0 &&
-          strlen(fields[i].name) == ds_col.length)
+      if (strcmp(fields[i].name, ds_col.c_str()) == 0 &&
+          strlen(fields[i].name) == ds_col.length())
       {
         col_no= i;
         break;
@@ -1948,10 +1979,9 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     {
       drizzle_free_result(res);
       die("Could not find column '%s' in the result of '%s'",
-          ds_col.str, ds_query.str);
+          ds_col.c_str(), ds_query.c_str());
     }
   }
-  dynstr_free(&ds_col);
 
   {
     /* Get the value */
@@ -1975,7 +2005,6 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     }
     eval_expr(var, value, 0);
   }
-  dynstr_free(&ds_query);
   drizzle_free_result(res);
 
   return;
@@ -2046,7 +2075,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
         MIN_VAR_ALLOC : new_val_len + 1;
       if (!(v->str_val =
             v->str_val ? (char *)my_realloc(v->str_val, v->alloced_len+1,
-                                    MYF(MY_WME)) :
+                                            MYF(MY_WME)) :
             (char *)my_malloc(v->alloced_len+1, MYF(MY_WME))))
         die("Out of memory");
     }
@@ -2101,7 +2130,7 @@ static int open_file(const char *name)
 
 static void do_source(struct st_command *command)
 {
-  static DYNAMIC_STRING ds_filename;
+  string ds_filename;
   const struct command_arg source_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to source" }
   };
@@ -2119,17 +2148,10 @@ static void do_source(struct st_command *command)
     ; /* Do nothing */
   else
   {
-    open_file(ds_filename.str);
+    open_file(ds_filename.c_str());
   }
 
-  dynstr_free(&ds_filename);
   return;
-}
-
-
-static FILE* my_popen(DYNAMIC_STRING *ds_cmd, const char *mode)
-{
-  return popen(ds_cmd->str, mode);
 }
 
 
@@ -2144,33 +2166,30 @@ static void init_builtin_echo(void)
   Replace a substring
 
   SYNOPSIS
-    replace
-    ds_str      The string to search and perform the replace in
-    search_str  The string to search for
-    search_len  Length of the string to search for
-    replace_str The string to replace with
-    replace_len Length of the string to replace with
+  replace
+  ds_str      The string to search and perform the replace in
+  search_str  The string to search for
+  search_len  Length of the string to search for
+  replace_str The string to replace with
+  replace_len Length of the string to replace with
 
   RETURN
-    0 String replaced
-    1 Could not find search_str in str
+  0 String replaced
+  1 Could not find search_str in str
 */
 
-static int replace(DYNAMIC_STRING *ds_str,
+static int replace(string *ds_str,
                    const char *search_str, uint32_t search_len,
                    const char *replace_str, uint32_t replace_len)
 {
-  DYNAMIC_STRING ds_tmp;
-  const char *start= strstr(ds_str->str, search_str);
+  string ds_tmp;
+  const char *start= strstr(ds_str->c_str(), search_str);
   if (!start)
     return 1;
-  init_dynamic_string(&ds_tmp, "",
-                      ds_str->length + replace_len, 256);
-  dynstr_append_mem(&ds_tmp, ds_str->str, start - ds_str->str);
-  dynstr_append_mem(&ds_tmp, replace_str, replace_len);
-  dynstr_append(&ds_tmp, start + search_len);
-  dynstr_set(ds_str, ds_tmp.str);
-  dynstr_free(&ds_tmp);
+  ds_tmp.append(ds_str->c_str(), start - ds_str->c_str());
+  ds_tmp.append(replace_str, replace_len);
+  ds_tmp.append(start + search_len);
+  *ds_str= ds_tmp;
   return 0;
 }
 
@@ -2202,7 +2221,7 @@ static void do_exec(struct st_command *command)
   char buf[512];
   FILE *res_file;
   char *cmd= command->first_argument;
-  DYNAMIC_STRING ds_cmd;
+  string ds_cmd;
 
   /* Skip leading space */
   while (*cmd && my_isspace(charset_info, *cmd))
@@ -2211,7 +2230,6 @@ static void do_exec(struct st_command *command)
     die("Missing argument in exec");
   command->last_argument= command->end;
 
-  init_dynamic_string(&ds_cmd, 0, command->query_len+256, 256);
   /* Eval the command, thus replacing all environment variables */
   do_eval(&ds_cmd, cmd, command->end, !is_windows);
 
@@ -2222,9 +2240,8 @@ static void do_exec(struct st_command *command)
     replace(&ds_cmd, "echo", 4, builtin_echo, strlen(builtin_echo));
   }
 
-  if (!(res_file= my_popen(&ds_cmd, "r")) && command->abort_on_error)
+  if (!(res_file= popen(ds_cmd.c_str(), "r")) && command->abort_on_error)
   {
-    dynstr_free(&ds_cmd);
     die("popen(\"%s\", \"r\") failed", command->first_argument);
   }
 
@@ -2236,7 +2253,7 @@ static void do_exec(struct st_command *command)
     }
     else
     {
-      replace_dynstr_append(&ds_res, buf);
+      replace_append(&ds_res, buf);
     }
   }
   error= pclose(res_file);
@@ -2248,8 +2265,7 @@ static void do_exec(struct st_command *command)
     if (command->abort_on_error)
     {
       log_msg("exec of '%s' failed, error: %d, status: %d, errno: %d",
-              ds_cmd.str, error, status, errno);
-      dynstr_free(&ds_cmd);
+              ds_cmd.c_str(), error, status, errno);
       die("command \"%s\" failed", command->first_argument);
     }
 
@@ -2263,7 +2279,6 @@ static void do_exec(struct st_command *command)
     }
     if (!ok)
     {
-      dynstr_free(&ds_cmd);
       die("command \"%s\" failed with wrong error: %d",
           command->first_argument, status);
     }
@@ -2273,13 +2288,11 @@ static void do_exec(struct st_command *command)
   {
     /* Error code we wanted was != 0, i.e. not an expected success */
     log_msg("exec of '%s failed, error: %d, errno: %d",
-            ds_cmd.str, error, errno);
-    dynstr_free(&ds_cmd);
+            ds_cmd.c_str(), error, errno);
     die("command \"%s\" succeeded - should have failed with errno %d...",
         command->first_argument, command->expected_errors.err[0].code.errnum);
   }
 
-  dynstr_free(&ds_cmd);
   return;
 }
 
@@ -2333,23 +2346,6 @@ static int do_modify_var(struct st_command *command,
 
 
 /*
-  Wrapper for 'system' function
-
-  NOTE
-  If drizzletest is executed from cygwin shell, the command will be
-  executed in the "windows command interpreter" cmd.exe and we prepend "sh"
-  to make it be executed by cygwins "bash". Thus commands like "rm",
-  "mkdir" as well as shellscripts can executed by "system" in Windows.
-
-*/
-
-static int my_system(DYNAMIC_STRING* ds_cmd)
-{
-  return system(ds_cmd->str);
-}
-
-
-/*
   SYNOPSIS
   do_system
   command  called command
@@ -2364,30 +2360,27 @@ static int my_system(DYNAMIC_STRING* ds_cmd)
 
 static void do_system(struct st_command *command)
 {
-  DYNAMIC_STRING ds_cmd;
+  string ds_cmd;
 
 
   if (strlen(command->first_argument) == 0)
     die("Missing arguments to system, nothing to do!");
 
-  init_dynamic_string(&ds_cmd, 0, command->query_len + 64, 256);
-
   /* Eval the system command, thus replacing all environment variables */
   do_eval(&ds_cmd, command->first_argument, command->end, !is_windows);
 
-  if (my_system(&ds_cmd))
+  if (system(ds_cmd.c_str()))
   {
     if (command->abort_on_error)
       die("system command '%s' failed", command->first_argument);
 
     /* If ! abort_on_error, log message and continue */
-    dynstr_append(&ds_res, "system command '");
-    replace_dynstr_append(&ds_res, command->first_argument);
-    dynstr_append(&ds_res, "' failed\n");
+    ds_res.append("system command '");
+    replace_append(&ds_res, command->first_argument);
+    ds_res.append("' failed\n");
   }
 
   command->last_argument= command->end;
-  dynstr_free(&ds_cmd);
   return;
 }
 
@@ -2405,7 +2398,7 @@ static void do_system(struct st_command *command)
 static void do_remove_file(struct st_command *command)
 {
   int error;
-  static DYNAMIC_STRING ds_filename;
+  string ds_filename;
   const struct command_arg rm_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to delete" }
   };
@@ -2415,9 +2408,8 @@ static void do_remove_file(struct st_command *command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_delete(ds_filename.str, MYF(0)) != 0;
+  error= my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
-  dynstr_free(&ds_filename);
   return;
 }
 
@@ -2437,8 +2429,8 @@ static void do_remove_file(struct st_command *command)
 static void do_copy_file(struct st_command *command)
 {
   int error;
-  static DYNAMIC_STRING ds_from_file;
-  static DYNAMIC_STRING ds_to_file;
+  string ds_from_file;
+  string ds_to_file;
   const struct command_arg copy_file_args[] = {
     { "from_file", ARG_STRING, true, &ds_from_file, "Filename to copy from" },
     { "to_file", ARG_STRING, true, &ds_to_file, "Filename to copy to" }
@@ -2450,11 +2442,9 @@ static void do_copy_file(struct st_command *command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (my_copy(ds_from_file.str, ds_to_file.str,
+  error= (my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
-  dynstr_free(&ds_from_file);
-  dynstr_free(&ds_to_file);
   return;
 }
 
@@ -2473,8 +2463,8 @@ static void do_copy_file(struct st_command *command)
 static void do_chmod_file(struct st_command *command)
 {
   long mode= 0;
-  static DYNAMIC_STRING ds_mode;
-  static DYNAMIC_STRING ds_file;
+  string ds_mode;
+  string ds_file;
   const struct command_arg chmod_file_args[] = {
     { "mode", ARG_STRING, true, &ds_mode, "Mode of file(octal) ex. 0660"},
     { "filename", ARG_STRING, true, &ds_file, "Filename of file to modify" }
@@ -2487,13 +2477,11 @@ static void do_chmod_file(struct st_command *command)
                      ' ');
 
   /* Parse what mode to set */
-  if (ds_mode.length != 4 ||
-      str2int(ds_mode.str, 8, 0, INT_MAX, &mode) == NullS)
+  if (ds_mode.length() != 4 ||
+      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NullS)
     die("You must write a 4 digit octal number for mode");
 
-  handle_command_error(command, chmod(ds_file.str, mode));
-  dynstr_free(&ds_mode);
-  dynstr_free(&ds_file);
+  handle_command_error(command, chmod(ds_file.c_str(), mode));
   return;
 }
 
@@ -2511,7 +2499,7 @@ static void do_chmod_file(struct st_command *command)
 static void do_file_exist(struct st_command *command)
 {
   int error;
-  static DYNAMIC_STRING ds_filename;
+  string ds_filename;
   const struct command_arg file_exist_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to check if it exist" }
   };
@@ -2522,9 +2510,8 @@ static void do_file_exist(struct st_command *command)
                      sizeof(file_exist_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (access(ds_filename.str, F_OK) != 0);
+  error= (access(ds_filename.c_str(), F_OK) != 0);
   handle_command_error(command, error);
-  dynstr_free(&ds_filename);
   return;
 }
 
@@ -2542,7 +2529,7 @@ static void do_file_exist(struct st_command *command)
 static void do_mkdir(struct st_command *command)
 {
   int error;
-  static DYNAMIC_STRING ds_dirname;
+  string ds_dirname;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2552,9 +2539,8 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_mkdir(ds_dirname.str, 0777, MYF(0)) != 0;
+  error= my_mkdir(ds_dirname.c_str(), 0777, MYF(0)) != 0;
   handle_command_error(command, error);
-  dynstr_free(&ds_dirname);
   return;
 }
 
@@ -2571,7 +2557,7 @@ static void do_mkdir(struct st_command *command)
 static void do_rmdir(struct st_command *command)
 {
   int error;
-  static DYNAMIC_STRING ds_dirname;
+  string ds_dirname;
   const struct command_arg rmdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to remove"}
   };
@@ -2581,9 +2567,8 @@ static void do_rmdir(struct st_command *command)
                      rmdir_args, sizeof(rmdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= rmdir(ds_dirname.str) != 0;
+  error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
-  dynstr_free(&ds_dirname);
   return;
 }
 
@@ -2612,12 +2597,12 @@ static void my_ungetc(int c)
 }
 
 
-static void read_until_delimiter(DYNAMIC_STRING *ds,
-                                 DYNAMIC_STRING *ds_delimiter)
+static void read_until_delimiter(string *ds,
+                                 string *ds_delimiter)
 {
   char c;
 
-  if (ds_delimiter->length > MAX_DELIMITER_LENGTH)
+  if (ds_delimiter->length() > MAX_DELIMITER_LENGTH)
     die("Max delimiter length(%d) exceeded", MAX_DELIMITER_LENGTH);
 
   /* Read from file until delimiter is found */
@@ -2644,12 +2629,12 @@ static void read_until_delimiter(DYNAMIC_STRING *ds,
 
     if (feof(cur_file->file))
       die("End of file encountered before '%s' delimiter was found",
-          ds_delimiter->str);
+          ds_delimiter->c_str());
 
-    if (match_delimiter(c, ds_delimiter->str, ds_delimiter->length))
+    if (match_delimiter(c, ds_delimiter->c_str(), ds_delimiter->length()))
       break;
 
-    dynstr_append_mem(ds, (const char*)&c, 1);
+    ds->push_back(c);
   }
   return;
 }
@@ -2657,9 +2642,9 @@ static void read_until_delimiter(DYNAMIC_STRING *ds,
 
 static void do_write_file_command(struct st_command *command, bool append)
 {
-  static DYNAMIC_STRING ds_content;
-  static DYNAMIC_STRING ds_filename;
-  static DYNAMIC_STRING ds_delimiter;
+  string ds_content;
+  string ds_filename;
+  string ds_delimiter;
   const struct command_arg write_file_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to write to" },
     { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
@@ -2673,21 +2658,18 @@ static void do_write_file_command(struct st_command *command, bool append)
                      ' ');
 
   /* If no delimiter was provided, use EOF */
-  if (ds_delimiter.length == 0)
-    dynstr_set(&ds_delimiter, "EOF");
+  if (ds_delimiter.length() == 0)
+    ds_delimiter= "EOF";
 
-  if (!append && access(ds_filename.str, F_OK) == 0)
+  if (!append && access(ds_filename.c_str(), F_OK) == 0)
   {
     /* The file should not be overwritten */
-    die("File already exist: '%s'", ds_filename.str);
+    die("File already exist: '%s'", ds_filename.c_str());
   }
 
-  init_dynamic_string(&ds_content, "", 1024, 1024);
   read_until_delimiter(&ds_content, &ds_delimiter);
-  str_to_file2(ds_filename.str, ds_content.str, ds_content.length, append);
-  dynstr_free(&ds_content);
-  dynstr_free(&ds_filename);
-  dynstr_free(&ds_delimiter);
+  str_to_file2(ds_filename.c_str(), ds_content.c_str(),
+               ds_content.length(), append);
   return;
 }
 
@@ -2770,7 +2752,7 @@ static void do_append_file(struct st_command *command)
 
 static void do_cat_file(struct st_command *command)
 {
-  static DYNAMIC_STRING ds_filename;
+  static string ds_filename;
   const struct command_arg cat_file_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to read from" }
   };
@@ -2782,9 +2764,8 @@ static void do_cat_file(struct st_command *command)
                      sizeof(cat_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  cat_file(&ds_res, ds_filename.str);
+  cat_file(&ds_res, ds_filename.c_str());
 
-  dynstr_free(&ds_filename);
   return;
 }
 
@@ -2804,8 +2785,8 @@ static void do_cat_file(struct st_command *command)
 static void do_diff_files(struct st_command *command)
 {
   int error= 0;
-  static DYNAMIC_STRING ds_filename;
-  static DYNAMIC_STRING ds_filename2;
+  string ds_filename;
+  string ds_filename2;
   const struct command_arg diff_file_args[] = {
     { "file1", ARG_STRING, true, &ds_filename, "First file to diff" },
     { "file2", ARG_STRING, true, &ds_filename2, "Second file to diff" }
@@ -2818,16 +2799,14 @@ static void do_diff_files(struct st_command *command)
                      sizeof(diff_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  if ((error= compare_files(ds_filename.str, ds_filename2.str)))
+  if ((error= compare_files(ds_filename.c_str(), ds_filename2.c_str())))
   {
     /* Compare of the two files failed, append them to output
        so the failure can be analyzed
     */
-    show_diff(&ds_res, ds_filename.str, ds_filename2.str);
+    show_diff(&ds_res, ds_filename.c_str(), ds_filename2.c_str());
   }
 
-  dynstr_free(&ds_filename);
-  dynstr_free(&ds_filename2);
   handle_command_error(command, error);
   return;
 }
@@ -2901,7 +2880,7 @@ static void do_change_user(struct st_command *command)
 {
   DRIZZLE *drizzle= &cur_con->drizzle;
   /* static keyword to make the NetWare compiler happy. */
-  static DYNAMIC_STRING ds_user, ds_passwd, ds_db;
+  string ds_user, ds_passwd, ds_db;
   const struct command_arg change_user_args[] = {
     { "user", ARG_STRING, false, &ds_user, "User to connect as" },
     { "password", ARG_STRING, false, &ds_passwd, "Password used when connecting" },
@@ -2915,21 +2894,19 @@ static void do_change_user(struct st_command *command)
                      sizeof(change_user_args)/sizeof(struct command_arg),
                      ',');
 
-  if (!ds_user.length)
-    dynstr_set(&ds_user, drizzle->user);
+  if (!ds_user.length())
+    ds_user= drizzle->user;
 
-  if (!ds_passwd.length)
-    dynstr_set(&ds_passwd, drizzle->passwd);
+  if (!ds_passwd.length())
+    ds_passwd= drizzle->passwd;
 
-  if (!ds_db.length)
-    dynstr_set(&ds_db, drizzle->db);
+  if (!ds_db.length())
+    ds_db= drizzle->db;
 
-  if (drizzle_change_user(drizzle, ds_user.str, ds_passwd.str, ds_db.str))
+  if (drizzle_change_user(drizzle, ds_user.c_str(),
+                          ds_passwd.c_str(), ds_db.c_str()))
     die("change user failed: %s", drizzle_error(drizzle));
 
-  dynstr_free(&ds_user);
-  dynstr_free(&ds_passwd);
-  dynstr_free(&ds_db);
 
   return;
 }
@@ -2961,8 +2938,8 @@ static void do_perl(struct st_command *command)
   FILE *res_file;
   char buf[FN_REFLEN];
   char temp_file_path[FN_REFLEN];
-  static DYNAMIC_STRING ds_script;
-  static DYNAMIC_STRING ds_delimiter;
+  string ds_script;
+  string ds_delimiter;
   const struct command_arg perl_args[] = {
     { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
   };
@@ -2975,10 +2952,9 @@ static void do_perl(struct st_command *command)
                      ' ');
 
   /* If no delimiter was provided, use EOF */
-  if (ds_delimiter.length == 0)
-    dynstr_set(&ds_delimiter, "EOF");
+  if (ds_delimiter.length() == 0)
+    ds_delimiter= "EOF";
 
-  init_dynamic_string(&ds_script, "", 1024, 1024);
   read_until_delimiter(&ds_script, &ds_delimiter);
 
   /* Create temporary file name */
@@ -2988,7 +2964,7 @@ static void do_perl(struct st_command *command)
     die("Failed to create temporary file for perl command");
   my_close(fd, MYF(0));
 
-  str_to_file(temp_file_path, ds_script.str, ds_script.length);
+  str_to_file(temp_file_path, ds_script.c_str(), ds_script.length());
 
   /* Format the "perl <filename>" command */
   snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
@@ -3001,7 +2977,7 @@ static void do_perl(struct st_command *command)
     if (disable_result_log)
       buf[strlen(buf)-1]=0;
     else
-      replace_dynstr_append(&ds_res, buf);
+      replace_append(&ds_res, buf);
   }
   error= pclose(res_file);
 
@@ -3009,8 +2985,6 @@ static void do_perl(struct st_command *command)
   my_delete(temp_file_path, MYF(0));
 
   handle_command_error(command, WEXITSTATUS(error));
-  dynstr_free(&ds_script);
-  dynstr_free(&ds_delimiter);
   return;
 }
 
@@ -3018,7 +2992,7 @@ static void do_perl(struct st_command *command)
 /*
   Print the content between echo and <delimiter> to result file.
   Evaluate all variables in the string before printing, allow
-  for variable names to be escaped using \
+  for variable names to be escaped using        \
 
   SYNOPSIS
   do_echo()
@@ -3041,14 +3015,12 @@ static void do_perl(struct st_command *command)
 
 static int do_echo(struct st_command *command)
 {
-  DYNAMIC_STRING ds_echo;
+  string ds_echo;
 
 
-  init_dynamic_string(&ds_echo, "", command->query_len, 256);
   do_eval(&ds_echo, command->first_argument, command->end, false);
-  dynstr_append_mem(&ds_res, ds_echo.str, ds_echo.length);
-  dynstr_append_mem(&ds_res, "\n", 1);
-  dynstr_free(&ds_echo);
+  ds_res.append(ds_echo.c_str(), ds_echo.length());
+  ds_res.append("\n");
   command->last_argument= command->end;
   return(0);
 }
@@ -3066,9 +3038,9 @@ do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
     int done;
 
     if (drizzle_query(drizzle,"show status like 'Slave_running'") ||
-  !(res=drizzle_store_result(drizzle)))
+        !(res=drizzle_store_result(drizzle)))
       die("Query failed while probing slave for stop: %s",
-    drizzle_error(drizzle));
+          drizzle_error(drizzle));
     if (!(row=drizzle_fetch_row(res)) || !row[1])
     {
       drizzle_free_result(res);
@@ -3096,7 +3068,7 @@ static void do_sync_with_master2(long offset)
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
   sprintf(query_buf, "select master_pos_wait('%s', %ld)", master_pos.file,
-    master_pos.pos + offset);
+          master_pos.pos + offset);
 
 wait_for_position:
 
@@ -3165,7 +3137,7 @@ static int do_save_master_pos(void)
 
   if (drizzle_query(drizzle, query= "show master status"))
     die("failed in 'show master status': %d %s",
-  drizzle_errno(drizzle), drizzle_error(drizzle));
+        drizzle_errno(drizzle), drizzle_error(drizzle));
 
   if (!(res = drizzle_store_result(drizzle)))
     die("drizzle_store_result() retuned NULL for '%s'", query);
@@ -3201,10 +3173,8 @@ static void do_let(struct st_command *command)
 {
   char *p= command->first_argument;
   char *var_name, *var_name_end;
-  DYNAMIC_STRING let_rhs_expr;
+  string let_rhs_expr;
 
-
-  init_dynamic_string(&let_rhs_expr, "", 512, 2048);
 
   /* Find <var_name> */
   if (!*p)
@@ -3229,9 +3199,8 @@ static void do_let(struct st_command *command)
 
   command->last_argument= command->end;
   /* Assign var_val to var_name */
-  var_set(var_name, var_name_end, let_rhs_expr.str,
-          (let_rhs_expr.str + let_rhs_expr.length));
-  dynstr_free(&let_rhs_expr);
+  var_set(var_name, var_name_end, let_rhs_expr.c_str(),
+          (let_rhs_expr.c_str() + let_rhs_expr.length()));
   return;
 }
 
@@ -3243,7 +3212,7 @@ static void do_let(struct st_command *command)
   do_sleep()
   q         called command
   real_sleep   use the value from opt_sleep as number of seconds to sleep
-               if real_sleep is false
+  if real_sleep is false
 
   DESCRIPTION
   sleep <seconds>
@@ -3291,7 +3260,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
 
 
 static void do_get_file_name(struct st_command *command,
-                      char* dest, uint dest_max_len)
+                             char* dest, uint dest_max_len)
 {
   char *p= command->first_argument, *name;
   if (!*p)
@@ -3392,7 +3361,7 @@ static void do_get_errcodes(struct st_command *command)
         if (my_isdigit(charset_info, *p) || my_isupper(charset_info, *p))
           *to_ptr++= *p++;
         else
-          die("The sqlstate may only consist of digits[0-9] " \
+          die("The sqlstate may only consist of digits[0-9] "   \
               "and _uppercase_ letters");
       }
 
@@ -3422,7 +3391,7 @@ static void do_get_errcodes(struct st_command *command)
       while (*p && p != end)
       {
         if (!my_isdigit(charset_info, *p))
-          die("Invalid argument to error: '%s' - "\
+          die("Invalid argument to error: '%s' - "              \
               "the errno may only consist of digits[0-9]",
               command->first_argument);
         p++;
@@ -3430,7 +3399,7 @@ static void do_get_errcodes(struct st_command *command)
 
       /* Convert the sting to int */
       if (!str2int(start, 10, (long) INT_MIN, (long) INT_MAX, &val))
-  die("Invalid argument to error: '%s'", command->first_argument);
+        die("Invalid argument to error: '%s'", command->first_argument);
 
       to->code.errnum= (uint) val;
       to->type= ERR_ERRNO;
@@ -3489,29 +3458,29 @@ static char *get_string(char **to_ptr, char **from_ptr,
       /* We can't translate \0 -> ASCII 0 as replace can't handle ASCII 0 */
       switch (*++from) {
       case 'n':
-  *to++= '\n';
-  break;
+        *to++= '\n';
+        break;
       case 't':
-  *to++= '\t';
-  break;
+        *to++= '\t';
+        break;
       case 'r':
-  *to++ = '\r';
-  break;
+        *to++ = '\r';
+        break;
       case 'b':
-  *to++ = '\b';
-  break;
+        *to++ = '\b';
+        break;
       case 'Z':        /* ^Z must be escaped on Win32 */
-  *to++='\032';
-  break;
+        *to++='\032';
+        break;
       default:
-  *to++ = *from;
-  break;
+        *to++ = *from;
+        break;
       }
     }
     else if (c == sep)
     {
       if (c == ' ' || c != *++from)
-  break;        /* Found end of string */
+        break;        /* Found end of string */
       *to++=c;        /* Copy duplicated separator */
     }
     else
@@ -3651,15 +3620,15 @@ static void do_close_connection(struct st_command *command)
 */
 
 static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
-                  const char *user, const char *pass, const char *db,
-                  int port)
+                         const char *user, const char *pass, const char *db,
+                         int port)
 {
   int failed_attempts= 0;
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
 
 
   while(!drizzle_connect(drizzle, host, user, pass, db, port, NULL,
-                            CLIENT_MULTI_STATEMENTS | CLIENT_REMEMBER_OPTIONS))
+                         CLIENT_MULTI_STATEMENTS | CLIENT_REMEMBER_OPTIONS))
   {
     /*
       Connect failed
@@ -3717,13 +3686,10 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
 */
 
 static int connect_n_handle_errors(struct st_command *command,
-                            DRIZZLE *con, const char* host,
-                            const char* user, const char* pass,
-                            const char* db, int port, const char* sock)
+                                   DRIZZLE *con, const char* host,
+                                   const char* user, const char* pass,
+                                   const char* db, int port, const char* sock)
 {
-  DYNAMIC_STRING *ds;
-
-  ds= &ds_res;
 
   /* Only log if an error is expected */
   if (!command->abort_on_error &&
@@ -3732,30 +3698,30 @@ static int connect_n_handle_errors(struct st_command *command,
     /*
       Log the connect to result log
     */
-    dynstr_append_mem(ds, "connect(", 8);
-    replace_dynstr_append(ds, host);
-    dynstr_append_mem(ds, ",", 1);
-    replace_dynstr_append(ds, user);
-    dynstr_append_mem(ds, ",", 1);
-    replace_dynstr_append(ds, pass);
-    dynstr_append_mem(ds, ",", 1);
+    ds_res.append("connect(");
+    replace_append(&ds_res, host);
+    ds_res.append(",");
+    replace_append(&ds_res, user);
+    ds_res.append(",");
+    replace_append(&ds_res, pass);
+    ds_res.append(",");
     if (db)
-      replace_dynstr_append(ds, db);
-    dynstr_append_mem(ds, ",", 1);
-    replace_dynstr_append_uint(ds, port);
-    dynstr_append_mem(ds, ",", 1);
+      replace_append(&ds_res, db);
+    ds_res.append(",");
+    replace_append_uint(&ds_res, port);
+    ds_res.append(",");
     if (sock)
-      replace_dynstr_append(ds, sock);
-    dynstr_append_mem(ds, ")", 1);
-    dynstr_append_mem(ds, delimiter, delimiter_length);
-    dynstr_append_mem(ds, "\n", 1);
+      replace_append(&ds_res, sock);
+    ds_res.append(")");
+    ds_res.append(delimiter);
+    ds_res.append("\n");
   }
   if (!drizzle_connect(con, host, user, pass, db, port, 0,
-                          CLIENT_MULTI_STATEMENTS))
+                       CLIENT_MULTI_STATEMENTS))
   {
     var_set_errno(drizzle_errno(con));
     handle_error(command, drizzle_errno(con), drizzle_error(con),
-     drizzle_sqlstate(con), ds);
+                 drizzle_sqlstate(con), &ds_res);
     return 0; /* Not connected */
   }
 
@@ -3785,26 +3751,26 @@ static int connect_n_handle_errors(struct st_command *command,
   <port> - server port
   <sock> - server socket
   <opts> - options to use for the connection
-   * SSL - use SSL if available
-   * COMPRESS - use compression if available
+  * SSL - use SSL if available
+  * COMPRESS - use compression if available
 
-*/
+  */
 
 static void do_connect(struct st_command *command)
 {
   int con_port= opt_port;
-  char *con_options;
+  const char *con_options;
   bool con_ssl= 0, con_compress= 0;
   struct st_connection* con_slot;
 
-  static DYNAMIC_STRING ds_connection_name;
-  static DYNAMIC_STRING ds_host;
-  static DYNAMIC_STRING ds_user;
-  static DYNAMIC_STRING ds_password;
-  static DYNAMIC_STRING ds_database;
-  static DYNAMIC_STRING ds_port;
-  static DYNAMIC_STRING ds_sock;
-  static DYNAMIC_STRING ds_options;
+  string ds_connection_name;
+  string ds_host;
+  string ds_user;
+  string ds_password;
+  string ds_database;
+  string ds_port;
+  string ds_sock;
+  string ds_options;
   const struct command_arg connect_args[] = {
     { "connection name", ARG_STRING, true, &ds_connection_name, "Name of the connection" },
     { "host", ARG_STRING, true, &ds_host, "Host to connect to" },
@@ -3823,41 +3789,36 @@ static void do_connect(struct st_command *command)
                      ',');
 
   /* Port */
-  if (ds_port.length)
+  if (ds_port.length())
   {
-    con_port= atoi(ds_port.str);
+    con_port= atoi(ds_port.c_str());
     if (con_port == 0)
-      die("Illegal argument for port: '%s'", ds_port.str);
+      die("Illegal argument for port: '%s'", ds_port.c_str());
   }
 
   /* Sock */
-  if (ds_sock.length)
+  if (!ds_sock.empty())
   {
     /*
       If the socket is specified just as a name without path
       append tmpdir in front
     */
-    if (*ds_sock.str != FN_LIBCHAR)
+    if (*ds_sock.c_str() != FN_LIBCHAR)
     {
       char buff[FN_REFLEN];
-      fn_format(buff, ds_sock.str, TMPDIR, "", 0);
-      dynstr_set(&ds_sock, buff);
+      fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
+      ds_sock= buff;
     }
-  }
-  else
-  {
-    /* No socket specified, use default */
-    dynstr_set(&ds_sock, unix_sock);
   }
 
   /* Options */
-  con_options= ds_options.str;
+  con_options= ds_options.c_str();
   while (*con_options)
   {
-    char* end;
+    const char* end;
     /* Step past any spaces in beginning of option*/
     while (*con_options && my_isspace(charset_info, *con_options))
-     con_options++;
+      con_options++;
     /* Find end of this option */
     end= con_options;
     while (*end && !my_isspace(charset_info, *end))
@@ -3873,11 +3834,13 @@ static void do_connect(struct st_command *command)
     con_options= end;
   }
 
-  if (find_connection_by_name(ds_connection_name.str))
-    die("Connection %s already exists", ds_connection_name.str);
-   
+  if (find_connection_by_name(ds_connection_name.c_str()))
+    die("Connection %s already exists", ds_connection_name.c_str());
+
   if (next_con != connections_end)
+  {
     con_slot= next_con;
+  }
   else
   {
     if (!(con_slot= find_connection_by_name("-closed_connection-")))
@@ -3885,39 +3848,36 @@ static void do_connect(struct st_command *command)
           (int) (sizeof(connections)/sizeof(struct st_connection)));
   }
 
-#ifdef EMBEDDED_LIBRARY
-  con_slot->query_done= 1;
-#endif
   if (!drizzle_create(&con_slot->drizzle))
     die("Failed on drizzle_create()");
   if (opt_compress || con_compress)
     drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
   drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                charset_info->csname);
+                  charset_info->csname);
   int opt_protocol= DRIZZLE_PROTOCOL_TCP;
   drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (opt_charsets_dir)
     drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                  opt_charsets_dir);
+                    opt_charsets_dir);
 
   /* Use default db name */
-  if (ds_database.length == 0)
-    dynstr_set(&ds_database, opt_db);
+  if (ds_database.length() == 0)
+    ds_database= opt_db;
 
   /* Special database to allow one to connect without a database name */
-  if (ds_database.length && !strcmp(ds_database.str,"*NO-ONE*"))
-    dynstr_set(&ds_database, "");
+  if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
+    ds_database= "";
 
   if (connect_n_handle_errors(command, &con_slot->drizzle,
-                              ds_host.str,ds_user.str,
-                              ds_password.str, ds_database.str,
-                              con_port, ds_sock.str))
+                              ds_host.c_str(),ds_user.c_str(),
+                              ds_password.c_str(), ds_database.c_str(),
+                              con_port, ds_sock.c_str()))
   {
-    if (!(con_slot->name= my_strdup(ds_connection_name.str, MYF(MY_WME))))
+    if (!(con_slot->name= strdup(ds_connection_name.c_str())))
       die("Out of memory");
     cur_con= con_slot;
-   
+
     if (con_slot == next_con)
       next_con++; /* if we used the next_con slot, advance the pointer */
   }
@@ -3925,14 +3885,6 @@ static void do_connect(struct st_command *command)
   /* Update $drizzle_get_server_version to that of current connection */
   var_set_drizzle_get_server_version(&cur_con->drizzle);
 
-  dynstr_free(&ds_connection_name);
-  dynstr_free(&ds_host);
-  dynstr_free(&ds_user);
-  dynstr_free(&ds_password);
-  dynstr_free(&ds_database);
-  dynstr_free(&ds_port);
-  dynstr_free(&ds_sock);
-  dynstr_free(&ds_options);
   return;
 }
 
@@ -4080,7 +4032,7 @@ bool match_delimiter(int c, const char *delim, uint length)
     return 0;
 
   for (i= 1; i < length &&
-   (c= my_getc(cur_file->file)) == *(delim + i);
+         (c= my_getc(cur_file->file)) == *(delim + i);
        i++)
     tmp[i]= c;
 
@@ -4144,7 +4096,7 @@ static int read_line(char *buf, int size)
   found_eof:
       if (cur_file->file != stdin)
       {
-  my_fclose(cur_file->file, MYF(0));
+        my_fclose(cur_file->file, MYF(0));
         cur_file->file= 0;
       }
       my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
@@ -4179,8 +4131,8 @@ static int read_line(char *buf, int size)
     case R_NORMAL:
       if (end_of_query(c))
       {
-  *p= 0;
-  return(0);
+        *p= 0;
+        return(0);
       }
       else if ((c == '{' &&
                 (!my_strnncoll_simple(charset_info, (const uchar*) "while", 5,
@@ -4190,13 +4142,13 @@ static int read_line(char *buf, int size)
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;
-  *p= 0;
-  return(0);
+        *p= 0;
+        return(0);
       }
       else if (c == '\'' || c == '"' || c == '`')
       {
         last_quote= c;
-  state= R_Q;
+        state= R_Q;
       }
       break;
 
@@ -4204,8 +4156,8 @@ static int read_line(char *buf, int size)
       if (c == '\n')
       {
         /* Comments are terminated by newline */
-  *p= 0;
-  return(0);
+        *p= 0;
+        return(0);
       }
       break;
 
@@ -4213,44 +4165,44 @@ static int read_line(char *buf, int size)
       if (c == '#' || c == '-')
       {
         /* A # or - in the first position of the line - this is a comment */
-  state = R_COMMENT;
+        state = R_COMMENT;
       }
       else if (my_isspace(charset_info, c))
       {
         /* Skip all space at begining of line */
-  if (c == '\n')
+        if (c == '\n')
         {
           /* Query hasn't started yet */
-    start_lineno= cur_file->lineno;
+          start_lineno= cur_file->lineno;
         }
-  skip_char= 1;
+        skip_char= 1;
       }
       else if (end_of_query(c))
       {
-  *p= 0;
-  return(0);
+        *p= 0;
+        return(0);
       }
       else if (c == '}')
       {
         /* A "}" need to be by itself in the begining of a line to terminate */
         *p++= c;
-  *p= 0;
-  return(0);
+        *p= 0;
+        return(0);
       }
       else if (c == '\'' || c == '"' || c == '`')
       {
         last_quote= c;
-  state= R_Q;
+        state= R_Q;
       }
       else
-  state= R_NORMAL;
+        state= R_NORMAL;
       break;
 
     case R_Q:
       if (c == last_quote)
-  state= R_NORMAL;
+        state= R_NORMAL;
       else if (c == '\\')
-  state= R_SLASH_IN_Q;
+        state= R_SLASH_IN_Q;
       break;
 
     case R_SLASH_IN_Q:
@@ -4269,32 +4221,32 @@ static int read_line(char *buf, int size)
       /* completed before we pass buf_end */
       if ((charlen > 1) && (p + charlen) <= buf_end)
       {
-  int i;
-  char* mb_start = p;
+        int i;
+        char* mb_start = p;
 
-  *p++ = c;
+        *p++ = c;
 
-  for (i= 1; i < charlen; i++)
-  {
-    if (feof(cur_file->file))
-      goto found_eof;
-    c= my_getc(cur_file->file);
-    *p++ = c;
-  }
-  if (! my_ismbchar(charset_info, mb_start, p))
-  {
-    /* It was not a multiline char, push back the characters */
-    /* We leave first 'c', i.e. pretend it was a normal char */
-    while (p > mb_start)
-      my_ungetc(*--p);
-  }
+        for (i= 1; i < charlen; i++)
+        {
+          if (feof(cur_file->file))
+            goto found_eof;
+          c= my_getc(cur_file->file);
+          *p++ = c;
+        }
+        if (! my_ismbchar(charset_info, mb_start, p))
+        {
+          /* It was not a multiline char, push back the characters */
+          /* We leave first 'c', i.e. pretend it was a normal char */
+          while (p > mb_start)
+            my_ungetc(*--p);
+        }
       }
       else
 #endif
-  *p++= c;
+        *p++= c;
     }
   }
-  die("The input buffer is too small for this query.x\n" \
+  die("The input buffer is too small for this query.x\n"        \
       "check your query or increase MAX_QUERY and recompile");
   return(0);
 }
@@ -4456,12 +4408,12 @@ static void check_eol_junk(const char *eol)
   Create a command from a set of lines
 
   SYNOPSIS
-    read_command()
-    command_ptr pointer where to return the new query
+  read_command()
+  command_ptr pointer where to return the new query
 
   DESCRIPTION
-    Converts lines returned by read_line into a command, this involves
-    parsing the first word in the read line to find the command type.
+  Converts lines returned by read_line into a command, this involves
+  parsing the first word in the read line to find the command type.
 
   A -- comment may contain a valid query as the first word after the
   comment start. Thus it's always checked to see if that is the case.
@@ -4480,14 +4432,14 @@ static int read_command(struct st_command** command_ptr)
 
   if (parser.current_line < parser.read_lines)
   {
-    get_dynamic(&q_lines, (uchar*) command_ptr, parser.current_line) ;
+    *command_ptr= q_lines[parser.current_line];
     return(0);
   }
   if (!(*command_ptr= command=
         (struct st_command*) my_malloc(sizeof(*command),
-                                       MYF(MY_WME|MY_ZEROFILL))) ||
-      insert_dynamic(&q_lines, (uchar*) &command))
+                                       MYF(MY_WME|MY_ZEROFILL))))
     die(NullS);
+  q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
   read_command_buf[0]= 0;
@@ -4614,13 +4566,13 @@ static struct my_option my_long_options[] =
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-   drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
 {
   print_version();
-  printf("DRIZZLE AB, by Sasha, Matt, Monty & Jani\n");
+  printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
   printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
@@ -4655,11 +4607,11 @@ static void read_embedded_server_arguments(const char *name)
     die("Failed to open file '%s'", buff);
 
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
-   (str=fgets(argument,sizeof(argument), file)))
+         (str=fgets(argument,sizeof(argument), file)))
   {
     *(strchr(str, '\0')-1)=0;        /* Remove end newline */
     if (!(embedded_server_args[embedded_server_arg_count]=
-    (char*) my_strdup(str,MYF(MY_WME))))
+          (char*) my_strdup(str,MYF(MY_WME))))
     {
       my_fclose(file,MYF(0));
       die("Out of memory");
@@ -4677,7 +4629,7 @@ static void read_embedded_server_arguments(const char *name)
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-         char *argument)
+               char *argument)
 {
   switch(optid) {
   case 'r':
@@ -4790,7 +4742,7 @@ static int parse_args(int argc, char **argv)
   append - append to file instead of overwriting old file
 */
 
-void str_to_file2(const char *fname, char *str, int size, bool append)
+void str_to_file2(const char *fname, const char *str, int size, bool append)
 {
   int fd;
   char buff[FN_REFLEN];
@@ -4824,13 +4776,13 @@ void str_to_file2(const char *fname, char *str, int size, bool append)
   size - size of content witten to file
 */
 
-void str_to_file(const char *fname, char *str, int size)
+void str_to_file(const char *fname, const char *str, int size)
 {
   str_to_file2(fname, str, size, false);
 }
 
 
-void dump_result_to_log_file(char *buf, int size)
+void dump_result_to_log_file(const char *buf, int size)
 {
   char log_file[FN_REFLEN];
   str_to_file(fn_format(log_file, result_file_name, opt_logdir, ".log",
@@ -4848,7 +4800,7 @@ void dump_progress(void)
                         opt_logdir, ".progress",
                         *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
-              ds_progress.str, ds_progress.length);
+              ds_progress.c_str(), ds_progress.length());
 }
 
 void dump_warning_messages(void)
@@ -4858,7 +4810,7 @@ void dump_warning_messages(void)
   str_to_file(fn_format(warn_file, result_file_name, opt_logdir, ".warnings",
                         *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
-              ds_warning_messages.str, ds_warning_messages.length);
+              ds_warning_messages.c_str(), ds_warning_messages.length());
 }
 
 
@@ -4866,7 +4818,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* field,
+static void append_field(string *ds, uint col_idx, const DRIZZLE_FIELD* field,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4883,15 +4835,15 @@ static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* 
   if (!display_result_vertically)
   {
     if (col_idx)
-      dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_mem(ds, val, (int)len);
+      ds->append("\t");
+    replace_append_mem(ds, val, (int)len);
   }
   else
   {
-    dynstr_append(ds, field->name);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_mem(ds, val, (int)len);
-    dynstr_append_mem(ds, "\n", 1);
+    ds->append(field->name);
+    ds->append("\t");
+    replace_append_mem(ds, val, (int)len);
+    ds->append("\n");
   }
 }
 
@@ -4901,7 +4853,7 @@ static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* 
   Values may be converted with 'replace_column'
 */
 
-static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
+static void append_result(string *ds, DRIZZLE_RES *res)
 {
   DRIZZLE_ROW row;
   uint32_t num_fields= drizzle_num_fields(res);
@@ -4916,7 +4868,8 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
       append_field(ds, i, &fields[i],
                    (const char*)row[i], lengths[i], !row[i]);
     if (!display_result_vertically)
-      dynstr_append_mem(ds, "\n", 1);
+      ds->append("\n");
+
   }
 }
 
@@ -4925,50 +4878,50 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
   Append metadata for fields to output
 */
 
-static void append_metadata(DYNAMIC_STRING *ds,
+static void append_metadata(string *ds,
                             const DRIZZLE_FIELD *field,
                             uint num_fields)
 {
   const DRIZZLE_FIELD *field_end;
-  dynstr_append(ds,"Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
-                "Column_alias\tType\tLength\tMax length\tIs_null\t"
-                "Flags\tDecimals\tCharsetnr\n");
+  ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
+             "Column_alias\tType\tLength\tMax length\tIs_null\t"
+             "Flags\tDecimals\tCharsetnr\n");
 
   for (field_end= field+num_fields ;
        field < field_end ;
        field++)
   {
-    dynstr_append_mem(ds, field->catalog,
-                      field->catalog_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, field->db, field->db_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, field->org_table,
-                      field->org_table_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, field->table,
-                      field->table_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, field->org_name,
-                      field->org_name_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, field->name, field->name_length);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->type);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->length);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->max_length);
-    dynstr_append_mem(ds, "\t", 1);
-    dynstr_append_mem(ds, (char*) (IS_NOT_NULL(field->flags) ?
-                                   "N" : "Y"), 1);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->flags);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->decimals);
-    dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append_uint(ds, field->charsetnr);
-    dynstr_append_mem(ds, "\n", 1);
+    ds->append(field->catalog,
+               field->catalog_length);
+    ds->append("\t", 1);
+    ds->append(field->db, field->db_length);
+    ds->append("\t", 1);
+    ds->append(field->org_table,
+               field->org_table_length);
+    ds->append("\t", 1);
+    ds->append(field->table,
+               field->table_length);
+    ds->append("\t", 1);
+    ds->append(field->org_name,
+               field->org_name_length);
+    ds->append("\t", 1);
+    ds->append(field->name, field->name_length);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->type);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->length);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->max_length);
+    ds->append("\t", 1);
+    ds->append((char*) (IS_NOT_NULL(field->flags) ?
+                        "N" : "Y"), 1);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->flags);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->decimals);
+    ds->append("\t", 1);
+    replace_append_uint(ds, field->charsetnr);
+    ds->append("\n", 1);
   }
 }
 
@@ -4977,17 +4930,17 @@ static void append_metadata(DYNAMIC_STRING *ds,
   Append affected row count and other info to output
 */
 
-static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
+static void append_info(string *ds, uint64_t affected_rows,
                         const char *info)
 {
   char buf[40], buff2[21];
   sprintf(buf,"affected rows: %s\n", llstr(affected_rows, buff2));
-  dynstr_append(ds, buf);
+  ds->append(buf);
   if (info)
   {
-    dynstr_append(ds, "info: ");
-    dynstr_append(ds, info);
-    dynstr_append_mem(ds, "\n", 1);
+    ds->append("info: ");
+    ds->append(info);
+    ds->append("\n", 1);
   }
 }
 
@@ -4996,7 +4949,7 @@ static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
   Display the table headings with the names tab separated
 */
 
-static void append_table_headings(DYNAMIC_STRING *ds,
+static void append_table_headings(string *ds,
                                   const DRIZZLE_FIELD *field,
                                   uint num_fields)
 {
@@ -5004,10 +4957,10 @@ static void append_table_headings(DYNAMIC_STRING *ds,
   for (col_idx= 0; col_idx < num_fields; col_idx++)
   {
     if (col_idx)
-      dynstr_append_mem(ds, "\t", 1);
-    replace_dynstr_append(ds, field[col_idx].name);
+      ds->append("\t", 1);
+    replace_append(ds, field[col_idx].name);
   }
-  dynstr_append_mem(ds, "\n", 1);
+  ds->append("\n", 1);
 }
 
 /*
@@ -5017,7 +4970,7 @@ static void append_table_headings(DYNAMIC_STRING *ds,
   Number of warnings appended to ds
 */
 
-static int append_warnings(DYNAMIC_STRING *ds, DRIZZLE *drizzle)
+static int append_warnings(string *ds, DRIZZLE *drizzle)
 {
   uint count;
   DRIZZLE_RES *warn_res;
@@ -5038,10 +4991,9 @@ static int append_warnings(DYNAMIC_STRING *ds, DRIZZLE *drizzle)
 
   if (!(warn_res= drizzle_store_result(drizzle)))
     die("Warning count is %u but didn't get any warnings",
-  count);
+        count);
 
   append_result(ds, warn_res);
-  drizzle_free_result(warn_res);
 
   return(count);
 }
@@ -5051,19 +5003,19 @@ static int append_warnings(DYNAMIC_STRING *ds, DRIZZLE *drizzle)
   Run query using DRIZZLE C API
 
   SYNOPSIS
-    run_query_normal()
-    drizzle  DRIZZLE handle
-    command  current command pointer
-    flags  flags indicating if we should SEND and/or REAP
-    query  query string to execute
-    query_len  length query string to execute
-    ds    output buffer where to store result form query
+  run_query_normal()
+  drizzle  DRIZZLE handle
+  command  current command pointer
+  flags  flags indicating if we should SEND and/or REAP
+  query  query string to execute
+  query_len  length query string to execute
+  ds    output buffer where to store result form query
 */
 
 static void run_query_normal(struct st_connection *cn,
                              struct st_command *command,
                              int flags, char *query, int query_len,
-                             DYNAMIC_STRING *ds, DYNAMIC_STRING *ds_warnings)
+                             string *ds, string *ds_warnings)
 {
   DRIZZLE_RES *res= 0;
   DRIZZLE *drizzle= &cn->drizzle;
@@ -5072,23 +5024,15 @@ static void run_query_normal(struct st_connection *cn,
   if (flags & QUERY_SEND_FLAG)
   {
     /*
-      Send the query
-    */
+     * Send the query
+     */
     if (do_send_query(cn, query, query_len, flags))
     {
       handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
-       drizzle_sqlstate(drizzle), ds);
+                   drizzle_sqlstate(drizzle), ds);
       goto end;
     }
   }
-#ifdef EMBEDDED_LIBRARY
-  /*
-    Here we handle 'reap' command, so we need to check if the
-    query's thread was finished and probably wait
-  */
-  else if (flags & QUERY_REAP_FLAG)
-    wait_query_thread_end(cn);
-#endif /*EMBEDDED_LIBRARY*/
   if (!(flags & QUERY_REAP_FLAG))
     return;
 
@@ -5101,7 +5045,7 @@ static void run_query_normal(struct st_connection *cn,
     if ((counter==0) && drizzle_read_query_result(drizzle))
     {
       handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
-       drizzle_sqlstate(drizzle), ds);
+                   drizzle_sqlstate(drizzle), ds);
       goto end;
 
     }
@@ -5112,7 +5056,7 @@ static void run_query_normal(struct st_connection *cn,
     if (drizzle_field_count(drizzle) && ((res= drizzle_store_result(drizzle)) == 0))
     {
       handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
-       drizzle_sqlstate(drizzle), ds);
+                   drizzle_sqlstate(drizzle), ds);
       goto end;
     }
 
@@ -5148,15 +5092,15 @@ static void run_query_normal(struct st_connection *cn,
       */
       if (!disable_warnings && !drizzle_more_results(drizzle))
       {
-  if (append_warnings(ds_warnings, drizzle) || ds_warnings->length)
-  {
-    dynstr_append_mem(ds, "Warnings:\n", 10);
-    dynstr_append_mem(ds, ds_warnings->str, ds_warnings->length);
-  }
+        if (append_warnings(ds_warnings, drizzle) || ds_warnings->length())
+        {
+          ds->append("Warnings:\n", 10);
+          ds->append(ds_warnings->c_str(), ds_warnings->length());
+        }
       }
 
       if (!disable_info)
-  append_info(ds, affected_rows, drizzle_info(drizzle));
+        append_info(ds, affected_rows, drizzle_info(drizzle));
     }
 
     if (res)
@@ -5170,7 +5114,7 @@ static void run_query_normal(struct st_connection *cn,
   {
     /* We got an error from drizzle_next_result, maybe expected */
     handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
-     drizzle_sqlstate(drizzle), ds);
+                 drizzle_sqlstate(drizzle), ds);
     goto end;
   }
   assert(err == -1); /* Successful and there are no more results */
@@ -5202,16 +5146,15 @@ end:
   ds    - dynamic string which is used for output buffer
 
   NOTE
-    If there is an unexpected error this function will abort drizzletest
-    immediately.
+  If there is an unexpected error this function will abort drizzletest
+  immediately.
 */
 
 void handle_error(struct st_command *command,
                   unsigned int err_errno, const char *err_error,
-                  const char *err_sqlstate, DYNAMIC_STRING *ds)
+                  const char *err_sqlstate, string *ds)
 {
   uint i;
-
 
 
   if (command->require_file[0])
@@ -5247,17 +5190,17 @@ void handle_error(struct st_command *command,
         if (command->expected_errors.count == 1)
         {
           /* Only log error if there is one possible error */
-          dynstr_append_mem(ds, "ERROR ", 6);
-          replace_dynstr_append(ds, err_sqlstate);
-          dynstr_append_mem(ds, ": ", 2);
-          replace_dynstr_append(ds, err_error);
-          dynstr_append_mem(ds,"\n",1);
+          ds->append("ERROR ", 6);
+          replace_append(ds, err_sqlstate);
+          ds->append(": ", 2);
+          replace_append(ds, err_error);
+          ds->append("\n",1);
         }
         /* Don't log error if we may not get an error */
         else if (command->expected_errors.err[0].type == ERR_SQLSTATE ||
                  (command->expected_errors.err[0].type == ERR_ERRNO &&
                   command->expected_errors.err[0].code.errnum != 0))
-          dynstr_append(ds,"Got one of the listed errors\n");
+          ds->append("Got one of the listed errors\n");
       }
       /* OK */
       return;
@@ -5266,11 +5209,11 @@ void handle_error(struct st_command *command,
 
   if (!disable_result_log)
   {
-    dynstr_append_mem(ds, "ERROR ",6);
-    replace_dynstr_append(ds, err_sqlstate);
-    dynstr_append_mem(ds, ": ", 2);
-    replace_dynstr_append(ds, err_error);
-    dynstr_append_mem(ds, "\n", 1);
+    ds->append("ERROR ",6);
+    replace_append(ds, err_sqlstate);
+    ds->append(": ", 2);
+    replace_append(ds, err_error);
+    ds->append("\n", 1);
   }
 
   if (i)
@@ -5282,7 +5225,7 @@ void handle_error(struct st_command *command,
     else
       die("query '%s' failed with wrong sqlstate %s: '%s', instead of %s...",
           command->query, err_sqlstate, err_error,
-    command->expected_errors.err[0].code.sqlstate);
+          command->expected_errors.err[0].code.sqlstate);
   }
 
   return;
@@ -5327,9 +5270,9 @@ void handle_no_error(struct st_command *command)
   Run query
 
   SYNPOSIS
-    run_query()
-     drizzle  DRIZZLE handle
-     command  currrent command pointer
+  run_query()
+  drizzle  DRIZZLE handle
+  command  currrent command pointer
 
   flags control the phased/stages of query execution to be performed
   if QUERY_SEND_FLAG bit is on, the query will be sent. If QUERY_REAP_FLAG
@@ -5340,17 +5283,15 @@ static void run_query(struct st_connection *cn,
                       struct st_command *command,
                       int flags)
 {
-  DYNAMIC_STRING *ds;
-  DYNAMIC_STRING *save_ds= NULL;
-  DYNAMIC_STRING ds_result;
-  DYNAMIC_STRING ds_sorted;
-  DYNAMIC_STRING ds_warnings;
-  DYNAMIC_STRING eval_query;
+  string *ds= NULL;
+  string *save_ds= NULL;
+  string ds_result;
+  string ds_sorted;
+  string ds_warnings;
+  string eval_query;
   char *query;
   int query_len;
 
-
-  init_dynamic_string(&ds_warnings, NULL, 0, 256);
 
   /* Scan for warning before sending to server */
   scan_command_for_warnings(command);
@@ -5360,10 +5301,9 @@ static void run_query(struct st_connection *cn,
   */
   if (command->type == Q_EVAL)
   {
-    init_dynamic_string(&eval_query, "", command->query_len+256, 1024);
     do_eval(&eval_query, command->query, command->end, false);
-    query = eval_query.str;
-    query_len = eval_query.length;
+    query = strdup(eval_query.c_str());
+    query_len = eval_query.length();
   }
   else
   {
@@ -5379,30 +5319,29 @@ static void run_query(struct st_connection *cn,
   */
   if (command->require_file[0])
   {
-    init_dynamic_string(&ds_result, "", 1024, 1024);
     ds= &ds_result;
   }
   else
+  {
     ds= &ds_res;
-
+  }
   /*
     Log the query into the output buffer
   */
   if (!disable_query_log && (flags & QUERY_SEND_FLAG))
   {
-    replace_dynstr_append_mem(ds, query, query_len);
-    dynstr_append_mem(ds, delimiter, delimiter_length);
-    dynstr_append_mem(ds, "\n", 1);
+    replace_append_mem(ds, query, query_len);
+    ds->append(delimiter, delimiter_length);
+    ds->append("\n");
   }
 
   if (display_result_sorted)
   {
     /*
-       Collect the query output in a separate string
-       that can be sorted before it's added to the
-       global result string
+      Collect the query output in a separate string
+      that can be sorted before it's added to the
+      global result string
     */
-    init_dynamic_string(&ds_sorted, "", 1024, 1024);
     save_ds= ds; /* Remember original ds */
     ds= &ds_sorted;
   }
@@ -5417,9 +5356,8 @@ static void run_query(struct st_connection *cn,
   if (display_result_sorted)
   {
     /* Sort the result set and append it to result */
-    dynstr_append_sorted(save_ds, &ds_sorted);
+    append_sorted(save_ds, &ds_sorted);
     ds= save_ds;
-    dynstr_free(&ds_sorted);
   }
 
   if (command->require_file[0])
@@ -5431,11 +5369,6 @@ static void run_query(struct st_connection *cn,
     check_require(ds, command->require_file);
   }
 
-  dynstr_free(&ds_warnings);
-  if (ds == &ds_result)
-    dynstr_free(&ds_result);
-  if (command->type == Q_EVAL)
-    dynstr_free(&eval_query);
   return;
 }
 
@@ -5485,7 +5418,7 @@ static void get_command_type(struct st_command* command)
     {
       /* -- comment that didn't contain a drizzletest command */
       command->type= Q_COMMENT;
-      warning_msg("Suspicious command '--%s' detected, was this intentional? "\
+      warning_msg("Suspicious command '--%s' detected, was this intentional? " \
                   "Use # instead of -- to avoid this warning",
                   command->query);
 
@@ -5539,24 +5472,24 @@ static void mark_progress(struct st_command* command __attribute__((unused)),
 
   /* Milliseconds since start */
   end= int64_t2str(timer, buf, 10);
-  dynstr_append_mem(&ds_progress, buf, (int)(end-buf));
-  dynstr_append_mem(&ds_progress, "\t", 1);
+  ds_progress.append(buf, (int)(end-buf));
+  ds_progress.append("\t", 1);
 
   /* Parser line number */
   end= int10_to_str(line, buf, 10);
-  dynstr_append_mem(&ds_progress, buf, (int)(end-buf));
-  dynstr_append_mem(&ds_progress, "\t", 1);
+  ds_progress.append(buf, (int)(end-buf));
+  ds_progress.append("\t", 1);
 
   /* Filename */
-  dynstr_append(&ds_progress, cur_file->file_name);
-  dynstr_append_mem(&ds_progress, ":", 1);
+  ds_progress.append(cur_file->file_name);
+  ds_progress.append(":", 1);
 
   /* Line in file */
   end= int10_to_str(cur_file->lineno, buf, 10);
-  dynstr_append_mem(&ds_progress, buf, (int)(end-buf));
+  ds_progress.append(buf, (int)(end-buf));
 
 
-  dynstr_append_mem(&ds_progress, "\n", 1);
+  ds_progress.append("\n", 1);
 
 }
 
@@ -5582,12 +5515,6 @@ int main(int argc, char **argv)
     (sizeof(connections)/sizeof(struct st_connection)) - 1;
   next_con= connections + 1;
 
-#ifdef EMBEDDED_LIBRARY
-  /* set appropriate stack for the 'query' threads */
-  (void) pthread_attr_init(&cn_thd_attrib);
-  pthread_attr_setstacksize(&cn_thd_attrib, DEFAULT_THREAD_STACK);
-#endif /*EMBEDDED_LIBRARY*/
-
   /* Init file stack */
   memset(file_stack, 0, sizeof(file_stack));
   file_stack_end=
@@ -5602,8 +5529,6 @@ int main(int argc, char **argv)
   cur_block->ok= true; /* Outer block should always be executed */
   cur_block->cmd= cmd_none;
 
-  my_init_dynamic_array(&q_lines, sizeof(struct st_command*), 1024, 1024);
-
   if (hash_init(&var_hash, charset_info,
                 1024, 0, 0, get_var_key, var_free, MYF(0)))
     die("Variable hash initialization failed");
@@ -5617,9 +5542,10 @@ int main(int argc, char **argv)
 
   init_builtin_echo();
 
-  init_dynamic_string(&ds_res, "", 65536, 65536);
-  init_dynamic_string(&ds_progress, "", 0, 2048);
-  init_dynamic_string(&ds_warning_messages, "", 0, 2048);
+  ds_res.reserve(65536);
+  ds_progress.reserve(2048);
+  ds_warning_messages.reserve(2048);
+
   parse_args(argc, argv);
 
   server_initialized= 1;
@@ -5636,12 +5562,12 @@ int main(int argc, char **argv)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
   drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                charset_info->csname);
+                  charset_info->csname);
   int opt_protocol= DRIZZLE_PROTOCOL_TCP;
   drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (opt_charsets_dir)
     drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                  opt_charsets_dir);
+                    opt_charsets_dir);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");
@@ -5689,10 +5615,12 @@ int main(int argc, char **argv)
       case Q_CONNECT:
         do_connect(command);
         break;
-      case Q_CONNECTION: select_connection(command); break;
+      case Q_CONNECTION:
+        select_connection(command);
+        break;
       case Q_DISCONNECT:
       case Q_DIRTY_CLOSE:
-  do_close_connection(command); break;
+        do_close_connection(command); break;
       case Q_ENABLE_QUERY_LOG:   disable_query_log=0; break;
       case Q_DISABLE_QUERY_LOG:  disable_query_log=1; break;
       case Q_ENABLE_ABORT_ON_ERROR:  abort_on_error=1; break;
@@ -5728,19 +5656,19 @@ int main(int argc, char **argv)
       case Q_PERL: do_perl(command); break;
       case Q_DELIMITER:
         do_delimiter(command);
-  break;
+        break;
       case Q_DISPLAY_VERTICAL_RESULTS:
         display_result_vertically= true;
         break;
       case Q_DISPLAY_HORIZONTAL_RESULTS:
-  display_result_vertically= false;
+        display_result_vertically= false;
         break;
       case Q_SORTED_RESULT:
         /*
           Turn on sorting of result set, will be reset after next
           command
         */
-  display_result_sorted= true;
+        display_result_sorted= true;
         break;
       case Q_LET: do_let(command); break;
       case Q_EVAL_RESULT:
@@ -5748,17 +5676,17 @@ int main(int argc, char **argv)
       case Q_EVAL:
       case Q_QUERY_VERTICAL:
       case Q_QUERY_HORIZONTAL:
-  if (command->query == command->query_buf)
+        if (command->query == command->query_buf)
         {
           /* Skip the first part of command, i.e query_xxx */
-    command->query= command->first_argument;
+          command->query= command->first_argument;
           command->first_word_len= 0;
         }
-  /* fall through */
+        /* fall through */
       case Q_QUERY:
       case Q_REAP:
       {
-  bool old_display_result_vertically= display_result_vertically;
+        bool old_display_result_vertically= display_result_vertically;
         /* Default is full query, both reap and send  */
         int flags= QUERY_REAP_FLAG | QUERY_SEND_FLAG;
 
@@ -5776,19 +5704,19 @@ int main(int argc, char **argv)
         /* Check for special property for this query */
         display_result_vertically|= (command->type == Q_QUERY_VERTICAL);
 
-  if (save_file[0])
-  {
-    strmake(command->require_file, save_file, sizeof(save_file) - 1);
-    save_file[0]= 0;
-  }
-  run_query(cur_con, command, flags);
-  command_executed++;
+        if (save_file[0])
+        {
+          strmake(command->require_file, save_file, sizeof(save_file) - 1);
+          save_file[0]= 0;
+        }
+        run_query(cur_con, command, flags);
+        command_executed++;
         command->last_argument= command->end;
 
         /* Restore settings */
-  display_result_vertically= old_display_result_vertically;
+        display_result_vertically= old_display_result_vertically;
 
-  break;
+        break;
       }
       case Q_SEND:
         if (!*command->first_argument)
@@ -5802,67 +5730,67 @@ int main(int argc, char **argv)
         }
 
         /* Remove "send" if this is first iteration */
-  if (command->query == command->query_buf)
-    command->query= command->first_argument;
+        if (command->query == command->query_buf)
+          command->query= command->first_argument;
 
-  /*
-    run_query() can execute a query partially, depending on the flags.
-    QUERY_SEND_FLAG flag without QUERY_REAP_FLAG tells it to just send
+        /*
+          run_query() can execute a query partially, depending on the flags.
+          QUERY_SEND_FLAG flag without QUERY_REAP_FLAG tells it to just send
           the query and read the result some time later when reap instruction
-    is given on this connection.
+          is given on this connection.
         */
-  run_query(cur_con, command, QUERY_SEND_FLAG);
-  command_executed++;
+        run_query(cur_con, command, QUERY_SEND_FLAG);
+        command_executed++;
         command->last_argument= command->end;
-  break;
+        break;
       case Q_REQUIRE:
-  do_get_file_name(command, save_file, sizeof(save_file));
-  break;
+        do_get_file_name(command, save_file, sizeof(save_file));
+        break;
       case Q_ERROR:
         do_get_errcodes(command);
-  break;
+        break;
       case Q_REPLACE:
-  do_get_replace(command);
-  break;
+        do_get_replace(command);
+        break;
       case Q_REPLACE_REGEX:
         do_get_replace_regex(command);
         break;
       case Q_REPLACE_COLUMN:
-  do_get_replace_column(command);
-  break;
+        do_get_replace_column(command);
+        break;
       case Q_SAVE_MASTER_POS: do_save_master_pos(); break;
       case Q_SYNC_WITH_MASTER: do_sync_with_master(command); break;
       case Q_SYNC_SLAVE_WITH_MASTER:
       {
-  do_save_master_pos();
-  if (*command->first_argument)
-    select_connection(command);
-  else
-    select_connection_name("slave");
-  do_sync_with_master2(0);
-  break;
+        do_save_master_pos();
+        if (*command->first_argument)
+          select_connection(command);
+        else
+          select_connection_name("slave");
+        do_sync_with_master2(0);
+        break;
       }
       case Q_COMMENT:        /* Ignore row */
         command->last_argument= command->end;
-  break;
+        break;
       case Q_PING:
-  (void) drizzle_ping(&cur_con->drizzle);
-  break;
+        (void) drizzle_ping(&cur_con->drizzle);
+        break;
       case Q_EXEC:
-  do_exec(command);
-  command_executed++;
-  break;
+        do_exec(command);
+        command_executed++;
+        break;
       case Q_START_TIMER:
-  /* Overwrite possible earlier start of timer */
-  timer_start= timer_now();
-  break;
+        /* Overwrite possible earlier start of timer */
+        timer_start= timer_now();
+        break;
       case Q_END_TIMER:
-  /* End timer before ending drizzletest */
-  timer_output();
-  break;
+        /* End timer before ending drizzletest */
+        timer_output();
+        break;
       case Q_CHARACTER_SET:
-  do_set_charset(command);
-  break;
+        do_set_charset(command);
+        break;
       case Q_DISABLE_RECONNECT:
         set_reconnect(&cur_con->drizzle, 0);
         break;
@@ -5958,7 +5886,7 @@ int main(int argc, char **argv)
     Time to compare result or save it to record file.
     The entire output from test is now kept in ds_res.
   */
-  if (ds_res.length)
+  if (ds_res.length())
   {
     if (result_file_name)
     {
@@ -5966,22 +5894,22 @@ int main(int argc, char **argv)
 
       if (record)
       {
-  /* Recording - dump the output from test to result file */
-  str_to_file(result_file_name, ds_res.str, ds_res.length);
+        /* Recording - dump the output from test to result file */
+        str_to_file(result_file_name, ds_res.c_str(), ds_res.length());
       }
       else
       {
-  /* Check that the output from test is equal to result file
-     - detect missing result file
-     - detect zero size result file
+        /* Check that the output from test is equal to result file
+           - detect missing result file
+           - detect zero size result file
         */
-  check_result(&ds_res);
+        check_result(&ds_res);
       }
     }
     else
     {
       /* No result_file_name specified to compare with, print to stdout */
-      printf("%s", ds_res.str);
+      printf("%s", ds_res.c_str());
     }
   }
   else
@@ -6006,7 +5934,7 @@ int main(int argc, char **argv)
     dump_progress();
 
   /* Dump warning messages */
-  if (result_file_name && ds_warning_messages.length)
+  if (result_file_name && ds_warning_messages.length())
     dump_warning_messages();
 
   timer_output();
@@ -6128,9 +6056,9 @@ typedef struct st_pointer_array {    /* when using array-strings */
 
 struct st_replace;
 struct st_replace *init_replace(char * *from, char * *to, uint count,
-        char * word_end_chars);
+                                char * word_end_chars);
 int insert_pointer_name(POINTER_ARRAY *pa,char * name);
-void replace_strings_append(struct st_replace *rep, DYNAMIC_STRING* ds,
+void replace_strings_append(struct st_replace *rep, string* ds,
                             const char *from, int len);
 void free_pointer_array(POINTER_ARRAY *pa);
 
@@ -6176,9 +6104,9 @@ void do_get_replace(struct st_command *command)
       *pos++= i;
   *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace((char**) from_array.typelib.type_names,
-          (char**) to_array.typelib.type_names,
-          (uint) from_array.typelib.count,
-          word_end_chars)))
+                                   (char**) to_array.typelib.type_names,
+                                   (uint) from_array.typelib.count,
+                                   word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
   free_pointer_array(&to_array);
@@ -6213,9 +6141,8 @@ typedef struct st_replace_found {
 } REPLACE_STRING;
 
 
-void replace_strings_append(REPLACE *rep, DYNAMIC_STRING* ds,
-                            const char *str,
-                            int len __attribute__((unused)))
+void replace_strings_append(REPLACE *rep, string* ds,
+                            const char *str, int len)
 {
   register REPLACE *rep_pos;
   register REPLACE_STRING *rep_str;
@@ -6234,16 +6161,16 @@ void replace_strings_append(REPLACE *rep, DYNAMIC_STRING* ds,
     if (!(rep_str = ((REPLACE_STRING*) rep_pos))->replace_string)
     {
       /* No match found */
-      dynstr_append_mem(ds, start, from - start - 1);
+      ds->append(start, from - start - 1);
       return;
     }
 
     /* Append part of original string before replace string */
-    dynstr_append_mem(ds, start, (from - rep_str->to_offset) - start);
+    ds->append(start, (from - rep_str->to_offset) - start);
 
     /* Append replace string */
-    dynstr_append_mem(ds, rep_str->replace_string,
-                      strlen(rep_str->replace_string));
+    ds->append(rep_str->replace_string,
+               strlen(rep_str->replace_string));
 
     if (!*(from-=rep_str->from_offset) && rep_pos->found != 2)
       return;
@@ -6630,7 +6557,7 @@ static uint replace_len(char * str)
 /* Init a replace structure for further calls */
 
 REPLACE *init_replace(char * *from, char * *to,uint count,
-          char * word_end_chars)
+                      char * word_end_chars)
 {
   static const int SPACE_CHAR= 256;
   static const int START_OF_LINE= 257;
@@ -6670,7 +6597,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     return(0);
   found_sets=0;
   if (!(found_set= (FOUND_SET*) my_malloc(sizeof(FOUND_SET)*max_length*count,
-            MYF(MY_WME))))
+                                          MYF(MY_WME))))
   {
     free_sets(&sets);
     return(0);
@@ -6695,8 +6622,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       internal_set_bit(start_states,states+1);
       if (!from[i][2])
       {
-  start_states->table_offset=i;
-  start_states->found_offset=1;
+        start_states->table_offset=i;
+        start_states->found_offset=1;
       }
     }
     else if (from[i][0] == '\\' && from[i][1] == '$')
@@ -6705,49 +6632,49 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       internal_set_bit(word_states,states);
       if (!from[i][2] && start_states->table_offset == UINT32_MAX)
       {
-  start_states->table_offset=i;
-  start_states->found_offset=0;
+        start_states->table_offset=i;
+        start_states->found_offset=0;
       }
     }
     else
     {
       internal_set_bit(word_states,states);
       if (from[i][0] == '\\' && (from[i][1] == 'b' && from[i][2]))
-  internal_set_bit(start_states,states+1);
+        internal_set_bit(start_states,states+1);
       else
-  internal_set_bit(start_states,states);
+        internal_set_bit(start_states,states);
     }
     for (pos=from[i], len=0; *pos ; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
-  pos++;
-  switch (*pos) {
-  case 'b':
-    follow_ptr->chr = SPACE_CHAR;
-    break;
-  case '^':
-    follow_ptr->chr = START_OF_LINE;
-    break;
-  case '$':
-    follow_ptr->chr = END_OF_LINE;
-    break;
-  case 'r':
-    follow_ptr->chr = '\r';
-    break;
-  case 't':
-    follow_ptr->chr = '\t';
-    break;
-  case 'v':
-    follow_ptr->chr = '\v';
-    break;
-  default:
-    follow_ptr->chr = (uchar) *pos;
-    break;
-  }
+        pos++;
+        switch (*pos) {
+        case 'b':
+          follow_ptr->chr = SPACE_CHAR;
+          break;
+        case '^':
+          follow_ptr->chr = START_OF_LINE;
+          break;
+        case '$':
+          follow_ptr->chr = END_OF_LINE;
+          break;
+        case 'r':
+          follow_ptr->chr = '\r';
+          break;
+        case 't':
+          follow_ptr->chr = '\t';
+          break;
+        case 'v':
+          follow_ptr->chr = '\v';
+          break;
+        default:
+          follow_ptr->chr = (uchar) *pos;
+          break;
+        }
       }
       else
-  follow_ptr->chr= (uchar) *pos;
+        follow_ptr->chr= (uchar) *pos;
       follow_ptr->table_offset=i;
       follow_ptr->len= ++len;
       follow_ptr++;
@@ -6771,9 +6698,9 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     {
       if (!follow[i].chr)
       {
-  if (! default_state)
-    default_state= find_found(found_set,set->table_offset,
-            set->found_offset+1);
+        if (! default_state)
+          default_state= find_found(found_set,set->table_offset,
+                                    set->found_offset+1);
       }
     }
     copy_bits(sets.set+used_sets,set);    /* Save set for changes */
@@ -6786,86 +6713,86 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
-     follow[i].len > 1) || follow[i].chr == END_OF_LINE)
-  used_chars[0]=1;
+           follow[i].len > 1) || follow[i].chr == END_OF_LINE)
+        used_chars[0]=1;
     }
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
       for (pos= word_end_chars ; *pos ; pos++)
-  used_chars[(int) (uchar) *pos] = 1;
+        used_chars[(int) (uchar) *pos] = 1;
 
     /* Handle other used characters */
     for (chr= 0 ; chr < 256 ; chr++)
     {
       if (! used_chars[chr])
-  set->next[chr]= chr ? default_state : -1;
+        set->next[chr]= chr ? default_state : -1;
       else
       {
-  new_set=make_new_set(&sets);
-  set=sets.set+set_nr;      /* if realloc */
-  new_set->table_offset=set->table_offset;
-  new_set->found_len=set->found_len;
-  new_set->found_offset=set->found_offset+1;
-  found_end=0;
+        new_set=make_new_set(&sets);
+        set=sets.set+set_nr;      /* if realloc */
+        new_set->table_offset=set->table_offset;
+        new_set->found_len=set->found_len;
+        new_set->found_offset=set->found_offset+1;
+        found_end=0;
 
-  for (i= UINT32_MAX ; (i=get_next_bit(sets.set+used_sets,i)) ; )
-  {
-    if (!follow[i].chr || follow[i].chr == chr ||
-        (follow[i].chr == SPACE_CHAR &&
-         (is_word_end[chr] ||
-    (!chr && follow[i].len > 1 && ! follow[i+1].chr))) ||
-        (follow[i].chr == END_OF_LINE && ! chr))
-    {
-      if ((! chr || (follow[i].chr && !follow[i+1].chr)) &&
-    follow[i].len > found_end)
-        found_end=follow[i].len;
-      if (chr && follow[i].chr)
-        internal_set_bit(new_set,i+1);    /* To next set */
-      else
-        internal_set_bit(new_set,i);
-    }
-  }
-  if (found_end)
-  {
-    new_set->found_len=0;      /* Set for testing if first */
-    bits_set=0;
-    for (i= UINT32_MAX; (i=get_next_bit(new_set,i)) ;)
-    {
-      if ((follow[i].chr == SPACE_CHAR ||
-     follow[i].chr == END_OF_LINE) && ! chr)
-        bit_nr=i+1;
-      else
-        bit_nr=i;
-      if (follow[bit_nr-1].len < found_end ||
-    (new_set->found_len &&
-     (chr == 0 || !follow[bit_nr].chr)))
-        internal_clear_bit(new_set,i);
-      else
-      {
-        if (chr == 0 || !follow[bit_nr].chr)
-        {          /* best match  */
-    new_set->table_offset=follow[bit_nr].table_offset;
-    if (chr || (follow[i].chr == SPACE_CHAR ||
-          follow[i].chr == END_OF_LINE))
-      new_set->found_offset=found_end;  /* New match */
-    new_set->found_len=found_end;
+        for (i= UINT32_MAX ; (i=get_next_bit(sets.set+used_sets,i)) ; )
+        {
+          if (!follow[i].chr || follow[i].chr == chr ||
+              (follow[i].chr == SPACE_CHAR &&
+               (is_word_end[chr] ||
+                (!chr && follow[i].len > 1 && ! follow[i+1].chr))) ||
+              (follow[i].chr == END_OF_LINE && ! chr))
+          {
+            if ((! chr || (follow[i].chr && !follow[i+1].chr)) &&
+                follow[i].len > found_end)
+              found_end=follow[i].len;
+            if (chr && follow[i].chr)
+              internal_set_bit(new_set,i+1);    /* To next set */
+            else
+              internal_set_bit(new_set,i);
+          }
         }
-        bits_set++;
-      }
-    }
-    if (bits_set == 1)
-    {
-      set->next[chr] = find_found(found_set,
-          new_set->table_offset,
-          new_set->found_offset);
-      free_last_set(&sets);
-    }
-    else
-      set->next[chr] = find_set(&sets,new_set);
-  }
-  else
-    set->next[chr] = find_set(&sets,new_set);
+        if (found_end)
+        {
+          new_set->found_len=0;      /* Set for testing if first */
+          bits_set=0;
+          for (i= UINT32_MAX; (i=get_next_bit(new_set,i)) ;)
+          {
+            if ((follow[i].chr == SPACE_CHAR ||
+                 follow[i].chr == END_OF_LINE) && ! chr)
+              bit_nr=i+1;
+            else
+              bit_nr=i;
+            if (follow[bit_nr-1].len < found_end ||
+                (new_set->found_len &&
+                 (chr == 0 || !follow[bit_nr].chr)))
+              internal_clear_bit(new_set,i);
+            else
+            {
+              if (chr == 0 || !follow[bit_nr].chr)
+              {          /* best match  */
+                new_set->table_offset=follow[bit_nr].table_offset;
+                if (chr || (follow[i].chr == SPACE_CHAR ||
+                            follow[i].chr == END_OF_LINE))
+                  new_set->found_offset=found_end;  /* New match */
+                new_set->found_len=found_end;
+              }
+              bits_set++;
+            }
+          }
+          if (bits_set == 1)
+          {
+            set->next[chr] = find_found(found_set,
+                                        new_set->table_offset,
+                                        new_set->found_offset);
+            free_last_set(&sets);
+          }
+          else
+            set->next[chr] = find_set(&sets,new_set);
+        }
+        else
+          set->next[chr] = find_set(&sets,new_set);
       }
     }
   }
@@ -6873,9 +6800,9 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   /* Alloc replace structure for the replace-state-machine */
 
   if ((replace=(REPLACE*) my_malloc(sizeof(REPLACE)*(sets.count)+
-            sizeof(REPLACE_STRING)*(found_sets+1)+
-            sizeof(char *)*count+result_len,
-            MYF(MY_WME | MY_ZEROFILL))))
+                                    sizeof(REPLACE_STRING)*(found_sets+1)+
+                                    sizeof(char *)*count+result_len,
+                                    MYF(MY_WME | MY_ZEROFILL))))
   {
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
@@ -6894,15 +6821,15 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
       rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
-  end_of_word(pos);
+        end_of_word(pos);
     }
     for (i=0 ; i < sets.count ; i++)
     {
       for (j=0 ; j < 256 ; j++)
-  if (sets.set[i].next[j] >= 0)
-    replace[i].next[j]=replace+sets.set[i].next[j];
-  else
-    replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
+        if (sets.set[i].next[j] >= 0)
+          replace[i].next[j]=replace+sets.set[i].next[j];
+        else
+          replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
   my_free(follow,MYF(0));
@@ -6917,10 +6844,10 @@ int init_sets(REP_SETS *sets,uint states)
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
   if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
-                MYF(MY_WME))))
+                                              MYF(MY_WME))))
     return 1;
   if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
-             SET_MALLOC_HUNC,MYF(MY_WME))))
+                                           SET_MALLOC_HUNC,MYF(MY_WME))))
   {
     my_free(sets->set,MYF(0));
     return 1;
@@ -6956,13 +6883,13 @@ REP_SET *make_new_set(REP_SETS *sets)
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
   if (!(set=(REP_SET*) my_realloc((uchar*) sets->set_buffer,
                                   sizeof(REP_SET)*count,
-          MYF(MY_WME))))
+                                  MYF(MY_WME))))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
   if (!(bit_buffer=(uint*) my_realloc((uchar*) sets->bit_buffer,
-              (sizeof(uint)*sets->size_of_bits)*count,
-              MYF(MY_WME))))
+                                      (sizeof(uint)*sets->size_of_bits)*count,
+                                      MYF(MY_WME))))
     return 0;
   sets->bit_buffer=bit_buffer;
   for (i=0 ; i < count ; i++)
@@ -7012,7 +6939,7 @@ void or_bits(REP_SET *to,REP_SET *from)
 void copy_bits(REP_SET *to,REP_SET *from)
 {
   memcpy(to->bits,from->bits,
-   (size_t) (sizeof(uint) * to->size_of_bits));
+         (size_t) (sizeof(uint) * to->size_of_bits));
 }
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
@@ -7074,7 +7001,7 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
   int i;
   for (i=0 ; (uint) i < found_sets ; i++)
     if (found_set[i].table_offset == table_offset &&
-  found_set[i].found_offset == found_offset)
+        found_set[i].found_offset == found_offset)
       return -i-2;
   found_set[i].table_offset=table_offset;
   found_set[i].found_offset=found_offset;
@@ -7114,18 +7041,18 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (! pa->typelib.count)
   {
     if (!(pa->typelib.type_names=(const char **)
-    my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
-         (sizeof(char *)+sizeof(*pa->flag))*
-         (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
+          my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
+                     (sizeof(char *)+sizeof(*pa->flag))*
+                     (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
       return(-1);
     if (!(pa->str= (uchar*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
-             MYF(MY_WME))))
+                                      MYF(MY_WME))))
     {
       my_free((char*) pa->typelib.type_names,MYF(0));
       return (-1);
     }
     pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(uchar*)+
-                 sizeof(*pa->flag));
+                                               sizeof(*pa->flag));
     pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
     pa->length=0;
     pa->max_length=PS_MALLOC-MALLOC_OVERHEAD;
@@ -7135,15 +7062,15 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (pa->length+length >= pa->max_length)
   {
     if (!(new_pos= (uchar*) my_realloc((uchar*) pa->str,
-              (uint) (pa->max_length+PS_MALLOC),
-              MYF(MY_WME))))
+                                       (uint) (pa->max_length+PS_MALLOC),
+                                       MYF(MY_WME))))
       return(1);
     if (new_pos != pa->str)
     {
       my_ptrdiff_t diff=PTR_BYTE_DIFF(new_pos,pa->str);
       for (i=0 ; i < pa->typelib.count ; i++)
-  pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
-                char*);
+        pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
+                                              char*);
       pa->str=new_pos;
     }
     pa->max_length+=PS_MALLOC;
@@ -7154,7 +7081,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
     if (!(new_array=(const char **) my_realloc((uchar*) pa->typelib.type_names,
-                 (uint) len/
+                                               (uint) len/
                                                (sizeof(uchar*)+sizeof(*pa->flag))*
                                                (sizeof(uchar*)+sizeof(*pa->flag)),
                                                MYF(MY_WME))))
@@ -7192,41 +7119,46 @@ void free_pointer_array(POINTER_ARRAY *pa)
 /* Functions that uses replace and replace_regex */
 
 /* Append the string to ds, with optional replace */
-void replace_dynstr_append_mem(DYNAMIC_STRING *ds,
-                               const char *val, int len)
+void replace_append_mem(string *ds,
+                        const char *val, int len)
 {
+  char *v= strdup(val);
+
   if (glob_replace_regex)
   {
     /* Regex replace */
-    if (!multi_reg_replace(glob_replace_regex, (char*)val))
+    if (!multi_reg_replace(glob_replace_regex, v))
     {
-      val= glob_replace_regex->buf;
-      len= strlen(val);
+      v= glob_replace_regex->buf;
+      len= strlen(v);
     }
   }
 
   if (glob_replace)
   {
     /* Normal replace */
-    replace_strings_append(glob_replace, ds, val, len);
+    replace_strings_append(glob_replace, ds, v, len);
   }
   else
-    dynstr_append_mem(ds, val, len);
+  {
+    ds->append(v, len);
+  }
 }
 
 
 /* Append zero-terminated string to ds, with optional replace */
-void replace_dynstr_append(DYNAMIC_STRING *ds, const char *val)
+void replace_append(string *ds, const char *val)
 {
-  replace_dynstr_append_mem(ds, val, strlen(val));
+  replace_append_mem(ds, val, strlen(val));
 }
 
 /* Append uint to ds, with optional replace */
-void replace_dynstr_append_uint(DYNAMIC_STRING *ds, uint val)
+void replace_append_uint(string *ds, uint val)
 {
   char buff[22]; /* This should be enough for any int */
   char *end= int64_t10_to_str(val, buff, 10);
-  replace_dynstr_append_mem(ds, buff, end - buff);
+  replace_append_mem(ds, buff, end - buff);
+
 }
 
 
@@ -7243,58 +7175,39 @@ void replace_dynstr_append_uint(DYNAMIC_STRING *ds, uint val)
 
 */
 
-static int comp_lines(const char **a, const char **b)
+
+void append_sorted(string* ds, string *ds_input)
 {
-  return (strcmp(*a,*b));
-}
+  priority_queue<string> lines;
 
-void dynstr_append_sorted(DYNAMIC_STRING* ds, DYNAMIC_STRING *ds_input)
-{
-  unsigned i;
-  char *start= ds_input->str;
-  DYNAMIC_ARRAY lines;
-
-
-  if (!*start)
+  if (ds_input->empty())
     return;  /* No input */
 
-  my_init_dynamic_array(&lines, sizeof(const char*), 32, 32);
+  unsigned long eol_pos= 0;
 
-  /* First line is result header, skip past it */
-  while (*start && *start != '\n')
-    start++;
-  start++; /* Skip past \n */
-  dynstr_append_mem(ds, ds_input->str, start - ds_input->str);
+  eol_pos= ds_input->find_first_of('\n', 0);
+  if (eol_pos == string::npos)
+    return; // We should have at least one header here
+
+  ds->append(ds_input->substr(0, eol_pos));
+
+  unsigned long start_pos= eol_pos+1;
 
   /* Insert line(s) in array */
-  while (*start)
-  {
-    char* line_end= (char*)start;
+  do {
 
+    eol_pos= ds_input->find_first_of('\n', start_pos);
     /* Find end of line */
-    while (*line_end && *line_end != '\n')
-      line_end++;
-    *line_end= 0;
+    lines.push(ds_input->substr(start_pos, eol_pos-start_pos));
+    start_pos= eol_pos+1;
 
-    /* Insert pointer to the line in array */
-    if (insert_dynamic(&lines, (uchar*) &start))
-      die("Out of memory inserting lines to sort");
-
-    start= line_end+1;
-  }
-
-  /* Sort array */
-  qsort(lines.buffer, lines.elements,
-        sizeof(char**), (qsort_cmp)comp_lines);
+  } while ( eol_pos != string::npos);
 
   /* Create new result */
-  for (i= 0; i < lines.elements ; i++)
-  {
-    const char **line= dynamic_element(&lines, i, const char**);
-    dynstr_append(ds, *line);
-    dynstr_append(ds, "\n");
+  while (!lines.empty()) {
+    ds->append(lines.top());
+    lines.pop();
   }
 
-  delete_dynamic(&lines);
   return;
 }

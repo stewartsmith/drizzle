@@ -150,6 +150,7 @@ test-drizzle:
         ctype_filename \
         delete \
         distinct \
+	drizzleslap \
         endspace \
         flush2 \
         func_like \
@@ -173,7 +174,6 @@ test-drizzle:
         keywords \
         lock \
         lock_tables_lost_commit \
-        mysqlslap \
         overflow \
         select \
         subselect \
