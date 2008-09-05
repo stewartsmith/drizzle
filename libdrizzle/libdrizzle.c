@@ -563,11 +563,7 @@ uint drizzle_thread_safe(void)
 
 bool drizzle_embedded(void)
 {
-#ifdef EMBEDDED_LIBRARY
-  return true;
-#else
   return false;
-#endif
 }
 
 /****************************************************************************

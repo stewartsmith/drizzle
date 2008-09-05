@@ -433,71 +433,8 @@ void handle_error(struct st_command*,
                   const char *err_sqlstate, string *ds);
 void handle_no_error(struct st_command*);
 
-#ifdef EMBEDDED_LIBRARY
-
-/* attributes of the query thread */
-pthread_attr_t cn_thd_attrib;
-
-/*
-  send_one_query executes query in separate thread, which is
-  necessary in embedded library to run 'send' in proper way.
-  This implementation doesn't handle errors returned
-  by drizzle_send_query. It's technically possible, though
-  I don't see where it is needed.
-*/
-pthread_handler_t send_one_query(void *arg)
-{
-  struct st_connection *cn= (struct st_connection*)arg;
-
-  drizzle_thread_init();
-  VOID(drizzle_send_query(&cn->drizzle, cn->cur_query, cn->cur_query_len));
-
-  drizzle_thread_end();
-  pthread_mutex_lock(&cn->mutex);
-  cn->query_done= 1;
-  VOID(pthread_cond_signal(&cn->cond));
-  pthread_mutex_unlock(&cn->mutex);
-  pthread_exit(0);
-  return 0;
-}
-
-static int do_send_query(struct st_connection *cn, const char *q, int q_len,
-                         int flags)
-{
-  pthread_t tid;
-
-  if (flags & QUERY_REAP_FLAG)
-    return drizzle_send_query(&cn->drizzle, q, q_len);
-
-  if (pthread_mutex_init(&cn->mutex, NULL) ||
-      pthread_cond_init(&cn->cond, NULL))
-    die("Error in the thread library");
-
-  cn->cur_query= q;
-  cn->cur_query_len= q_len;
-  cn->query_done= 0;
-  if (pthread_create(&tid, &cn_thd_attrib, send_one_query, (void*)cn))
-    die("Cannot start new thread for query");
-
-  return 0;
-}
-
-static void wait_query_thread_end(struct st_connection *con)
-{
-  if (!con->query_done)
-  {
-    pthread_mutex_lock(&con->mutex);
-    while (!con->query_done)
-      pthread_cond_wait(&con->cond, &con->mutex);
-    pthread_mutex_unlock(&con->mutex);
-  }
-}
-
-#else /*EMBEDDED_LIBRARY*/
 
 #define do_send_query(cn,q,q_len,flags) drizzle_send_query(&cn->drizzle, q, q_len)
-
-#endif /*EMBEDDED_LIBRARY*/
 
 void do_eval(string *query_eval, const char *query,
              const char *query_end, bool pass_through_escape_chars)
