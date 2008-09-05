@@ -81,6 +81,7 @@ TODO:
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <string>
 
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
@@ -115,7 +116,7 @@ static char *host= NULL, *opt_password= NULL, *user= NULL,
 
 const char *delimiter= "\n";
 
-const char *create_schema_string= "mysqlslap";
+const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
 static bool debug_info_flag= 0, debug_check_flag= 0;
@@ -167,7 +168,7 @@ const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
 
-const char *default_dbug_option="d:t:o,/tmp/mysqlslap.trace";
+const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
@@ -176,7 +177,7 @@ static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
 
-static const char *load_default_groups[]= { "mysqlslap","client",0 };
+static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
 /* Types */
 typedef enum {
@@ -779,26 +780,26 @@ build_table_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING table_string;
+  string table_string;
 
-  init_dynamic_string(&table_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
+  table_string.reserve(HUGE_STRING_LENGTH);
 
-  dynstr_append(&table_string, "CREATE TABLE `t1` (");
+  table_string= "CREATE TABLE `t1` (";
 
   if (auto_generate_sql_autoincrement)
   {
-    dynstr_append(&table_string, "id serial");
+    table_string.append("id serial");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (auto_generate_sql_guid_primary)
   {
-    dynstr_append(&table_string, "id varchar(128) primary key");
+    table_string.append("id varchar(128) primary key");
 
     if (num_int_cols || num_char_cols || auto_generate_sql_guid_primary)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (auto_generate_sql_secondary_indexes)
@@ -808,7 +809,7 @@ build_table_string(void)
     for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
       if (count) /* Except for the first pass we add a comma */
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
 
       if (snprintf(buf, HUGE_STRING_LENGTH, "id%d varchar(32) unique key", count)
           > HUGE_STRING_LENGTH)
@@ -816,11 +817,11 @@ build_table_string(void)
         fprintf(stderr, "Memory Allocation error in create table\n");
         exit(1);
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
     }
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (num_int_cols)
@@ -844,10 +845,10 @@ build_table_string(void)
           exit(1);
         }
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
   if (num_char_cols)
@@ -872,10 +873,10 @@ build_table_string(void)
           exit(1);
         }
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
   if (num_blob_cols)
@@ -887,21 +888,20 @@ build_table_string(void)
         fprintf(stderr, "Memory Allocation error in creating table\n");
         exit(1);
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_blob_cols)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
-  dynstr_append(&table_string, ")");
+  table_string.append(")");
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string = (char *)my_malloc(table_string.length+1,
+  ptr->string = (char *)my_malloc(table_string.length()+1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= table_string.length+1;
+  ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
-  stpcpy(ptr->string, table_string.str);
-  dynstr_free(&table_string);
+  stpcpy(ptr->string, table_string.c_str());
   return(ptr);
 }
 
@@ -917,12 +917,11 @@ build_update_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING update_string;
+  string update_string;
 
+  update_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&update_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append(&update_string, "UPDATE t1 SET ");
+  update_string= "UPDATE t1 SET ";
 
   if (num_int_cols)
     for (col_count= 1; col_count <= num_int_cols; col_count++)
@@ -933,10 +932,10 @@ build_update_string(void)
         fprintf(stderr, "Memory Allocation error in creating update\n");
         exit(1);
       }
-      dynstr_append(&update_string, buf);
+      update_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&update_string, ",", 1);
+        update_string.append(",", 1);
     }
 
   if (num_char_cols)
@@ -952,28 +951,27 @@ build_update_string(void)
         fprintf(stderr, "Memory Allocation error in creating update\n");
         exit(1);
       }
-      dynstr_append(&update_string, buf);
+      update_string.append(buf);
 
       if (col_count < num_char_cols)
-        dynstr_append_mem(&update_string, ",", 1);
+        update_string.append(",", 1);
     }
 
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-    dynstr_append(&update_string, " WHERE id = ");
+    update_string.append(" WHERE id = ");
 
 
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
-  ptr->string= (char *)my_malloc(update_string.length + 1,
+  ptr->string= (char *)my_malloc(update_string.length() + 1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= update_string.length+1;
+  ptr->length= update_string.length()+1;
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  stpcpy(ptr->string, update_string.str);
-  dynstr_free(&update_string);
+  stpcpy(ptr->string, update_string.c_str());
   return(ptr);
 }
 
@@ -990,27 +988,26 @@ build_insert_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING insert_string;
+  string insert_string;
 
+  insert_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&insert_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append(&insert_string, "INSERT INTO t1 VALUES (");
+  insert_string= "INSERT INTO t1 VALUES (";
 
   if (auto_generate_sql_autoincrement)
   {
-    dynstr_append(&insert_string, "NULL");
+    insert_string.append("NULL");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (auto_generate_sql_guid_primary)
   {
-    dynstr_append(&insert_string, "uuid()");
+    insert_string.append("uuid()");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (auto_generate_sql_secondary_indexes)
@@ -1020,13 +1017,13 @@ build_insert_string(void)
     for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
       if (count) /* Except for the first pass we add a comma */
-        dynstr_append(&insert_string, ",");
+        insert_string.append(",");
 
-      dynstr_append(&insert_string, "uuid()");
+      insert_string.append("uuid()");
     }
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (num_int_cols)
@@ -1037,22 +1034,22 @@ build_insert_string(void)
         fprintf(stderr, "Memory Allocation error in creating insert\n");
         exit(1);
       }
-      dynstr_append(&insert_string, buf);
+      insert_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",");
     }
 
   if (num_char_cols)
     for (col_count= 1; col_count <= num_char_cols; col_count++)
     {
       int buf_len= get_random_string(buf, RAND_STRING_SIZE);
-      dynstr_append_mem(&insert_string, "'", 1);
-      dynstr_append_mem(&insert_string, buf, buf_len);
-      dynstr_append_mem(&insert_string, "'", 1);
+      insert_string.append("'", 1);
+      insert_string.append(buf, buf_len);
+      insert_string.append("'", 1);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",", 1);
     }
 
   if (num_blob_cols)
@@ -1085,35 +1082,33 @@ build_insert_string(void)
 
       buf_len= get_random_string(blob_ptr, size);
 
-      dynstr_append_mem(&insert_string, "'", 1);
-      dynstr_append_mem(&insert_string, blob_ptr, buf_len);
-      dynstr_append_mem(&insert_string, "'", 1);
+      insert_string.append("'", 1);
+      insert_string.append(blob_ptr, buf_len);
+      insert_string.append("'", 1);
 
       if (col_count < num_blob_cols)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",", 1);
     }
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
       my_free(blob_ptr, MYF(0));
   }
 
-  dynstr_append_mem(&insert_string, ")", 1);
+  insert_string.append(")", 1);
 
   if (!(ptr= (statement *)my_malloc(sizeof(statement), MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  if (!(ptr->string= (char *)my_malloc(insert_string.length + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
+  if (!(ptr->string= (char *)my_malloc(insert_string.length() + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  ptr->length= insert_string.length+1;
+  ptr->length= insert_string.length()+1;
   ptr->type= INSERT_TYPE;
-  stpcpy(ptr->string, insert_string.str);
-  dynstr_free(&insert_string);
-
+  stpcpy(ptr->string, insert_string.c_str());
   return(ptr);
 }
 
@@ -1130,15 +1125,14 @@ build_select_string(bool key)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  static DYNAMIC_STRING query_string;
+  string query_string;
 
+  query_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&query_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append_mem(&query_string, "SELECT ", 7);
+  query_string.append("SELECT ", 7);
   if (auto_generate_selected_columns_opt)
   {
-    dynstr_append(&query_string, auto_generate_selected_columns_opt);
+    query_string.append(auto_generate_selected_columns_opt);
   }
   else
   {
@@ -1150,10 +1144,10 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
 
     }
     for (col_count= 1; col_count <= num_char_cols; col_count++)
@@ -1164,10 +1158,10 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
 
     }
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
@@ -1178,30 +1172,29 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_blob_cols)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
     }
   }
-  dynstr_append(&query_string, " FROM t1");
+  query_string.append(" FROM t1");
 
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
-    dynstr_append(&query_string, " WHERE id = ");
+    query_string.append(" WHERE id = ");
 
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string= (char *)my_malloc(query_string.length + 1,
+  ptr->string= (char *)my_malloc(query_string.length() + 1,
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= query_string.length+1;
+  ptr->length= query_string.length()+1;
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
     ptr->type= SELECT_TYPE;
-  stpcpy(ptr->string, query_string.str);
-  dynstr_free(&query_string);
+  stpcpy(ptr->string, query_string.c_str());
   return(ptr);
 }
 
@@ -2529,7 +2522,7 @@ standard_deviation (conclusions *con, stats *sptr)
 {
   unsigned int x;
   long int sum_of_squares;
-  double catch;
+  double the_catch;
   stats *ptr;
 
   if (iterations == 1 || iterations == 0)
@@ -2546,6 +2539,6 @@ standard_deviation (conclusions *con, stats *sptr)
     sum_of_squares+= deviation*deviation;
   }
 
-  catch= sqrt((double)(sum_of_squares/(iterations -1)));
-  con->std_dev= (long int)catch;
+  the_catch= sqrt((double)(sum_of_squares/(iterations -1)));
+  con->std_dev= (long int)the_catch;
 }

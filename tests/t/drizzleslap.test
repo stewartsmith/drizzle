@@ -60,13 +60,13 @@
 
 --exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write,read  --number-blob-cols=1:1024 --auto-generate-sql-select-columns="charcol1, blobcol1"
 
-CREATE SCHEMA mysqlslap;
+CREATE SCHEMA drizzleslap;
 
-CREATE TABLE mysqlslap.t1 (id int, name varchar(64));
+CREATE TABLE drizzleslap.t1 (id int, name varchar(64));
 
 --exec $DRIZZLE_SLAP --silent --iterations=20  --query="select * from t1" --query="INSERT INTO t1 VALUES (1, 'This is a test');" --delimiter=";"
 
-SELECT count(*) from mysqlslap.t1;
+SELECT count(*) from drizzleslap.t1;
 
 # Now we will test to make sure we can destory the data if it happens to be
 # in our way.
