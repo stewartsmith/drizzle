@@ -2335,7 +2335,7 @@ CREATE TABLE t1 (
 K2C4 varchar(4) character set latin1 collate latin1_bin NOT NULL default '', 
 K4N4 varchar(4) character set latin1 collate latin1_bin NOT NULL default '0000', 
 F2I4 int NOT NULL default '0' 
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES 
 ('W%RT', '0100',  1), 

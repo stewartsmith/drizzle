@@ -613,8 +613,7 @@ drop table t1;
 # without # prefix is not allowed for TEXT columns, while index
 # is defined with prefix.
 # 
-create table t1 (t varchar(255) default null, key t (t(80)))
-engine=myisam default charset=latin1;
+create table t1 (t varchar(255) default null, key t (t(80))) engine=myisam;
 alter table t1 change t t text;
 drop table t1;
 

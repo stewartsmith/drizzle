@@ -69,7 +69,7 @@ b int default NULL,
 c char(3) default NULL,
 PRIMARY KEY  (id),
 KEY t2i1 (b)
-) ENGINE=innodb DEFAULT CHARSET=latin1;
+) ENGINE=innodb;
 INSERT INTO t1 VALUES (0,0,'GPL'),(1,0,'GPL'),(2,1,'GPL'),(3,2,'GPL');
 CREATE TABLE t2 (
 id int NOT NULL default '0',
@@ -77,7 +77,7 @@ b int default NULL,
 c char(3) default NULL,
 PRIMARY KEY  (id),
 KEY t2i (b)
-) ENGINE=innodb DEFAULT CHARSET=latin1;
+) ENGINE=innodb;
 INSERT INTO t2 VALUES (0,0,'GPL'),(1,0,'GPL'),(2,1,'GPL'),(3,2,'GPL');
 select (select max(id) from t2 where b=1 group by b) as x,b from t1 where b=1;
 x	b
@@ -106,8 +106,8 @@ a	b
 2	12
 4	105
 drop table t1, t2;
-CREATE TABLE `t1` ( `unit` varchar(50) NOT NULL default '', `ingredient` varchar(50) NOT NULL default '') ENGINE=InnoDB DEFAULT CHARSET=latin1;
-CREATE TABLE `t2` ( `ingredient` varchar(50) NOT NULL default '', `unit` varchar(50) NOT NULL default '', PRIMARY KEY (ingredient, unit)) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+CREATE TABLE `t1` ( `unit` varchar(50) NOT NULL default '', `ingredient` varchar(50) NOT NULL default '') ENGINE=InnoDB;
+CREATE TABLE `t2` ( `ingredient` varchar(50) NOT NULL default '', `unit` varchar(50) NOT NULL default '', PRIMARY KEY (ingredient, unit)) ENGINE=InnoDB;
 INSERT INTO `t1` VALUES ('xx','yy');
 INSERT INTO `t2` VALUES ('yy','xx');
 SELECT R.unit, R.ingredient FROM t1 R WHERE R.ingredient IN (SELECT N.ingredient FROM t2 N WHERE N.unit = R.unit);
@@ -145,7 +145,7 @@ school_name varchar(45) NOT NULL,
 country varchar(45) NOT NULL,    
 funds_requested float NOT NULL,
 schooltype varchar(45) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB;
 insert into t1 values ("the school", "USA", 1200, "Human");
 select count(country) as countrycount, sum(funds_requested) as smcnt,
 country, (select sum(funds_requested) from t1) as total_funds
