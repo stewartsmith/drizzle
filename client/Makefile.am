@@ -32,7 +32,8 @@ bin_PROGRAMS =	drizzle \
 				drizzlecheck \
 				drizzledump \
 				drizzleimport \
-				drizzletest
+				drizzletest \
+				drizzleslap
 
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
 drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
@@ -50,6 +51,8 @@ drizzlecheck_SOURCES =		drizzlecheck.cc
 drizzledump_SOURCES=            drizzledump.cc 
 
 drizzleimport_SOURCES=		drizzleimport.cc
+
+drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)

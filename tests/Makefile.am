@@ -145,6 +145,7 @@ test-drizzle:
         ctype_filename \
         delete \
         distinct \
+	drizzleslap \
         endspace \
         flush2 \
         func_like \
