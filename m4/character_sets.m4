@@ -72,133 +72,21 @@ do
       ;;
     binary)
       ;;
-    cp1250)
-      AC_DEFINE(HAVE_CHARSET_cp1250, 1, [Define to enable cp1250])
-      ;;
-    cp1251)
-      AC_DEFINE(HAVE_CHARSET_cp1251, 1, [Define to enable charset cp1251])
-      ;;
-    cp1256)
-      AC_DEFINE(HAVE_CHARSET_cp1256, 1, [Define to enable charset cp1256])
-      ;;
-    cp1257)
-      AC_DEFINE(HAVE_CHARSET_cp1257, 1, [Define to enable charset cp1257])
-      ;;
-    cp850)
-      AC_DEFINE(HAVE_CHARSET_cp850, 1, [Define to enable charset cp850])
-      ;;
-    cp852)
-      AC_DEFINE(HAVE_CHARSET_cp852, 1, [Define to enable charset cp852])
-      ;;
-    cp866)
-      AC_DEFINE(HAVE_CHARSET_cp866, 1, [Define to enable charset cp866])
-      ;;
-    cp932)
-      AC_DEFINE(HAVE_CHARSET_cp932, 1, [Define to enable charset cp932])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    dec8)
-      AC_DEFINE(HAVE_CHARSET_dec8, 1, [Define to enable charset dec8])
-      ;;
-    eucjpms)
-      AC_DEFINE(HAVE_CHARSET_eucjpms, 1, [Define to enable charset eucjpms])
-      AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    euckr)
-      AC_DEFINE(HAVE_CHARSET_euckr, 1, [Define to enable charset euckr])
-      AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    gb2312)
-      AC_DEFINE(HAVE_CHARSET_gb2312, 1, [Define to enable charset gb2312])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    gbk)
-      AC_DEFINE(HAVE_CHARSET_gbk, 1, [Define to enable charset gbk])
-      AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    geostd8)
-      AC_DEFINE(HAVE_CHARSET_geostd8, 1, [Define to enable charset geostd8])
-      ;;
-    greek)
-      AC_DEFINE(HAVE_CHARSET_greek, 1, [Define to enable charset greek])
-      ;;
-    hebrew)
-      AC_DEFINE(HAVE_CHARSET_hebrew, 1, [Define to enable charset hebrew])
-      ;;
-    hp8)
-      AC_DEFINE(HAVE_CHARSET_hp8, 1, [Define to enable charset hp8])
-      ;;
-    keybcs2)
-      AC_DEFINE(HAVE_CHARSET_keybcs2, 1, [Define to enable charset keybcs2])
-      ;;
-    koi8r)
-      AC_DEFINE(HAVE_CHARSET_koi8r, 1, [Define to enable charset koi8r])
-      ;;
-    koi8u)
-      AC_DEFINE(HAVE_CHARSET_koi8u, 1, [Define to enable charset koi8u])
-      ;;
     latin1)
       AC_DEFINE(HAVE_CHARSET_latin1, 1, [Define to enable charset latin1])
-      ;;
-    latin2)
-      AC_DEFINE(HAVE_CHARSET_latin2, 1, [Define to enable charset latin2])
-      ;;
-    latin5)
-      AC_DEFINE(HAVE_CHARSET_latin5, 1, [Define to enable charset latin5])
-      ;;
-    latin7)
-      AC_DEFINE(HAVE_CHARSET_latin7, 1, [Define to enable charset latin7])
-      ;;
-    macce)
-      AC_DEFINE(HAVE_CHARSET_macce, 1, [Define to enable charset macce])
-      ;;
-    macroman)
-      AC_DEFINE(HAVE_CHARSET_macroman, 1,
-                [Define to enable charset macroman])
-      ;;
-    sjis)
-      AC_DEFINE(HAVE_CHARSET_sjis, 1, [Define to enable charset sjis])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    swe7)
-      AC_DEFINE(HAVE_CHARSET_swe7, 1, [Define to enable charset swe7])
-      ;;
-    tis620)
-      AC_DEFINE(HAVE_CHARSET_tis620, 1, [Define to enable charset tis620])
       ;;
     ucs2)
       AC_DEFINE(HAVE_CHARSET_ucs2, 1, [Define to enable charset ucs2])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
       ;;
-    ujis)
-      AC_DEFINE(HAVE_CHARSET_ujis, 1, [Define to enable charset ujis])
-      AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
     utf8)
       AC_DEFINE(HAVE_CHARSET_utf8mb4, 1, [Define to enable ut8])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
+      AC_DEFINE(USE_MB_IDENT, [1], [ ])
       ;;
     utf8mb3)
       AC_DEFINE(HAVE_CHARSET_utf8mb3, 1, [Define to enable ut8])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    utf16)
-      AC_DEFINE(HAVE_CHARSET_utf16, 1, [Define to enable utf16])
-      AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-      AC_DEFINE(USE_MB_IDENT, 1)
-      ;;
-    utf32)
-      AC_DEFINE(HAVE_CHARSET_utf32, 1, [Define to enable utf32])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
       ;;
