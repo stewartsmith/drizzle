@@ -62,10 +62,10 @@ drop database mysqltest;
 select * from information_schema.CHARACTER_SETS
 where CHARACTER_SET_NAME like 'latin1%';
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-latin1	latin1_swedish_ci	cp1252 West European	1
+latin1	latin1_swedish_ci		1
 SHOW CHARACTER SET LIKE 'latin1%';
 Charset	Description	Default collation	Maxlen
-latin1	cp1252 West European	latin1_swedish_ci	1
+latin1		latin1_swedish_ci	1
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
