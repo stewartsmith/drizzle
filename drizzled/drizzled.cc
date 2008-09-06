@@ -277,7 +277,6 @@ handlerton *myisam_hton;
 bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
-bool opt_sync_frm;
 bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
 bool opt_log_slow_admin_statements= 0;
@@ -4050,10 +4049,6 @@ struct my_option my_long_options[] =
       "Use 0 (default) to disable synchronous flushing."),
    (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
-  {"sync-frm", OPT_SYNC_FRM,
-   N_("Sync .frm to disk on create. Enabled by default."),
-   (char**) &opt_sync_frm, (char**) &opt_sync_frm, 0, GET_BOOL, NO_ARG, 1, 0,
-   0, 0, 0, 0},
   {"table_cache", OPT_TABLE_OPEN_CACHE,
    N_("Deprecated; use --table_open_cache instead."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,

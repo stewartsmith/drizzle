@@ -558,8 +558,6 @@ static void write_header(FILE *sql_file, char *db_name)
     }
     if (opt_set_charset)
       fprintf(sql_file,
-"\n/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;"
-"\n/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;"
 "\n/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;"
 "\n/*!40101 SET NAMES %s */;\n",default_charset);
 
@@ -601,8 +599,6 @@ static void write_footer(FILE *sql_file)
     }
     if (opt_set_charset)
       fprintf(sql_file,
-"/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n"
-"/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n"
 "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
     fprintf(sql_file,
             "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n");
@@ -1590,8 +1586,6 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           }
 
           fprintf(sql_file,
-                  "SET @saved_cs_client     = @@character_set_client;\n"
-                  "SET character_set_client = utf8;\n"
                   "/*!50001 CREATE TABLE %s (\n",
                   result_table);
 
@@ -1612,10 +1606,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
             fprintf(sql_file, ",\n  %s %s",
                     quote_name(row[0], name_buff, 0), row[1]);
           }
-          fprintf(sql_file,
-                  "\n) */;\n"
-                  "SET character_set_client = @saved_cs_client;\n");
-
+          fprintf(sql_file, "\n) */;\n"); 
           check_io(sql_file);
         }
 
@@ -1630,12 +1621,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
       row= drizzle_fetch_row(result);
 
-      fprintf(sql_file,
-              "SET @saved_cs_client     = @@character_set_client;\n"
-              "SET character_set_client = utf8;\n"
-              "%s;\n"
-              "SET character_set_client = @saved_cs_client;\n",
-              row[1]);
+      fprintf(sql_file, "%s;\n", row[1]);
 
       check_io(sql_file);
       drizzle_free_result(result);

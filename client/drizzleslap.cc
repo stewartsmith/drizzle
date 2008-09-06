@@ -36,8 +36,8 @@
   Supply your own create and query SQL statements, with 50 clients
   querying (200 selects for each):
 
-  drizzleslap --delimiter=";"                                           \
-  --create="CREATE TABLE A (a int);INSERT INTO A VALUES (23)"           \
+  drizzleslap --delimiter=";" \
+  --create="CREATE TABLE A (a int);INSERT INTO A VALUES (23)" \
   --query="SELECT * FROM A" --concurrency=50 --iterations=200
 
   Let the program build the query SQL statement with a table of two int
@@ -45,8 +45,8 @@
   don't create the table or insert the data (using the previous test's
   schema and data):
 
-  drizzleslap --concurrency=5 --iterations=20          \
-  --number-int-cols=2 --number-char-cols=3             \
+  drizzleslap --concurrency=5 --iterations=20 \
+  --number-int-cols=2 --number-char-cols=3 \
   --auto-generate-sql
 
   Tell the program to load the create, insert and query SQL statements from
@@ -56,8 +56,8 @@
   load statements, and then run all the queries in the query file
   with five clients (five times each):
 
-  drizzleslap --concurrency=5                                      \
-  --iterations=5 --query=query.sql --create=create.sql             \
+  drizzleslap --concurrency=5 \
+  --iterations=5 --query=query.sql --create=create.sql \
   --delimiter=";"
 
   TODO:
@@ -293,7 +293,7 @@ static int run_query(DRIZZLE *drizzle, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
 
 static const char ALPHANUMERICS[]=
-  "0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
+"0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
 
 #define ALPHANUMERICS_SIZE (sizeof(ALPHANUMERICS)-1)
 
@@ -593,10 +593,10 @@ static struct my_option my_long_options[] =
    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
+    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
-   (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-start", OPT_SLAP_DELAYED_START,
    "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,

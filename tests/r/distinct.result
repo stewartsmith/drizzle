@@ -581,7 +581,7 @@ x varchar(20) default NULL,
 y decimal(10,0) default NULL,
 PRIMARY KEY  (ID),
 KEY (y)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM;
 INSERT INTO t1 VALUES
 (1,'ba','-1'),
 (2,'ba','1150'),

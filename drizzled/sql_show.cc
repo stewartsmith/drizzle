@@ -888,26 +888,6 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
       packet->append(buff, (uint) (end - buff));
     }
 
-    
-    if (share->table_charset)
-    {
-      /*
-        IF   check_create_info
-        THEN add DEFAULT CHARSET only if it was used when creating the table
-      */
-      if (!create_info_arg ||
-          (create_info_arg->used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
-      {
-        packet->append(STRING_WITH_LEN(" DEFAULT CHARSET="));
-        packet->append(share->table_charset->csname);
-        if (!(share->table_charset->state & MY_CS_PRIMARY))
-        {
-          packet->append(STRING_WITH_LEN(" COLLATE="));
-          packet->append(table->s->table_charset->name);
-        }
-      }
-    }
-
     if (share->min_rows)
     {
       char *end;

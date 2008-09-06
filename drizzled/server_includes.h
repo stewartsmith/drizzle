@@ -696,7 +696,6 @@ extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
-extern bool opt_sync_frm;
 extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
 extern bool opt_log_slow_admin_statements;

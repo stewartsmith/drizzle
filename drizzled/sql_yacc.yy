@@ -360,10 +360,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 100 shift/reduce conflicts.
+  Currently there are 94 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 95
+%expect 94
 
 /*
    Comments for TOKENS.
@@ -1422,7 +1422,6 @@ create_database_options:
 
 create_database_option:
           default_collation {}
-        | default_charset {}
         ;
 
 opt_table_options:
@@ -1543,7 +1542,6 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
             Lex->alter_info.flags|= ALTER_ROW_FORMAT;
           }
-        | default_charset
         | default_collation
         | DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
           {
@@ -1570,24 +1568,6 @@ create_table_option:
           {
 	    Lex->create_info.used_fields|= HA_CREATE_USED_TRANSACTIONAL;
             Lex->create_info.transactional= $3;
-          }
-        ;
-
-default_charset:
-          opt_default charset opt_equal charset_name_or_default
-          {
-            HA_CREATE_INFO *cinfo= &Lex->create_info;
-            if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
-                 cinfo->default_table_charset && $4 &&
-                 !my_charset_same(cinfo->default_table_charset,$4))
-            {
-              my_error(ER_CONFLICTING_DECLARATIONS, MYF(0),
-                       "CHARACTER SET ", cinfo->default_table_charset->csname,
-                       "CHARACTER SET ", $4->csname);
-              DRIZZLE_YYABORT;
-            }
-            Lex->create_info.default_table_charset= $4;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
           }
         ;
 
@@ -3614,8 +3594,6 @@ function_call_nonkeyword:
 function_call_conflict:
           ASCII_SYM '(' expr ')'
           { $$= new (YYTHD->mem_root) Item_func_ascii($3); }
-        | CHARSET '(' expr ')'
-          { $$= new (YYTHD->mem_root) Item_func_charset($3); }
         | COALESCE '(' expr_list ')'
           { $$= new (YYTHD->mem_root) Item_func_coalesce(* $3); }
         | COLLATION_SYM '(' expr ')'

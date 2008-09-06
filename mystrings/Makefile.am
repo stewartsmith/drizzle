@@ -37,11 +37,11 @@ libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
                                 llstr.c \
                                 ctype.c ctype-simple.c ctype-mb.c \
-                                ctype-big5.c ctype-cp932.c ctype-czech.c \
-                                ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \
+                                ctype-czech.c \
+                                ctype-euc_kr.c ctype-gb2312.c \
                                 ctype-gbk.c ctype-sjis.c ctype-tis620.c \
-                                ctype-ujis.c ctype-utf8.c ctype-ucs2.c \
-                                ctype-uca.c ctype-win1250ch.c ctype-bin.c \
+                                ctype-utf8.c ctype-ucs2.c \
+                                ctype-uca.c ctype-bin.c \
                                 ctype-latin1.c xml.c \
                                 decimal.c ctype-extra.c str_alloc.c \
                                 dtoa.c 
