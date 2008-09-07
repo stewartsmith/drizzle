@@ -18,12 +18,10 @@
 dist-hook:
 	test -d $(distdir)/charsets || mkdir $(distdir)/charsets
 	$(INSTALL_DATA) $(srcdir)/charsets/*.* $(distdir)/charsets
-	$(INSTALL_DATA) $(srcdir)/charsets/README $(distdir)/charsets
 	$(INSTALL_DATA) $(srcdir)/charsets/Index.xml $(distdir)/charsets
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/charsets
-	$(INSTALL_DATA) $(srcdir)/charsets/README $(DESTDIR)$(pkgdatadir)/charsets/README
 	$(INSTALL_DATA) $(srcdir)/charsets/*.xml $(DESTDIR)$(pkgdatadir)/charsets
 
 # FIXME maybe shouldn't remove, could be needed by other installation?
