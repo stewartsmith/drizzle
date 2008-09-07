@@ -595,7 +595,6 @@ static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_out
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                    SHOW_LONG},
-  {"character_sets_dir",      mysql_charsets_dir,                   SHOW_CHAR},
   {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
 #ifdef HAVE_MLOCKALL

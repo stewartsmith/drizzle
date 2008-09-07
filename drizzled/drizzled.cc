@@ -41,7 +41,7 @@
 #include <libdrizzle/errmsg.h>
 #include <locale.h>
 
-#define mysqld_charset &my_charset_latin1
+#define mysqld_charset &my_charset_utf8_general_ci
 
 #ifdef HAVE_purify
 #define IF_PURIFY(A,B) (A)
