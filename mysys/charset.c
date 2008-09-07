@@ -18,7 +18,6 @@
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <my_dir.h>
-#include <mystrings/my_xml.h>
 
 
 /*
