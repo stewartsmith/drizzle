@@ -26,33 +26,9 @@ AC_ARG_WITH(collation,
    [default_collation="$withval"],
    [default_collation="default"])
 
-
-AC_ARG_WITH(extra-charsets,
-  [  --with-extra-charsets=CHARSET[,CHARSET,...]
-                          Use charsets in addition to default (none, complex,
-                          all, or a list selected from the above sets)],
-  [extra_charsets="$withval"],
-  [extra_charsets="none"])
-
-
 AC_MSG_CHECKING("character sets")
 
 CHARSETS="$default_charset latin1 utf8 utf8mb3"
-
-if test "$extra_charsets" = no; then
-  CHARSETS="$CHARSETS"
-elif test "$extra_charsets" = none; then
-  CHARSETS="$CHARSETS"
-elif test "$extra_charsets" = complex; then
-  CHARSETS="$CHARSETS $CHARSETS_COMPLEX"
-  AC_DEFINE([DEFINE_ALL_CHARACTER_SETS],1,[all charsets are available])
-elif test "$extra_charsets" = all; then
-  CHARSETS="$CHARSETS $CHARSETS_AVAILABLE"
-  AC_DEFINE([DEFINE_ALL_CHARACTER_SETS],1,[all charsets are available])
-else
-  EXTRA_CHARSETS=`echo $extra_charsets | sed -e 's/,/ /g'`
-  CHARSETS="$CHARSETS $EXTRA_CHARSETS"
-fi
 
 for cs in $CHARSETS
 do
