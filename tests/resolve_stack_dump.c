@@ -169,9 +169,9 @@ trace dump and specify the path to it with -s or --symbols-file");
 static uchar hex_val(char c)
 {
   uchar l;
-  if (my_isdigit(&my_charset_latin1,c))
+  if (my_isdigit(&my_charset_utf8_general_ci,c))
     return c - '0';
-  l = my_tolower(&my_charset_latin1,c);
+  l = my_tolower(&my_charset_utf8_general_ci,c);
   if (l < 'a' || l > 'f')
     return HEX_INVALID; 
   return (uchar)10 + ((uchar)c - (uchar)'a');
@@ -197,10 +197,10 @@ static int init_sym_entry(SYM_ENTRY* se, char* buf)
 
   if (!se->addr)
     return -1;
-  while (my_isspace(&my_charset_latin1,*buf++))
+  while (my_isspace(&my_charset_utf8_general_ci,*buf++))
     /* empty */;
 
-  while (my_isspace(&my_charset_latin1,*buf++))
+  while (my_isspace(&my_charset_utf8_general_ci,*buf++))
     /* empty - skip more space */;
   --buf;
   /* now we are on the symbol */
@@ -282,7 +282,7 @@ static void do_resolve(void)
   {
     p = buf;
     /* skip space */
-    while (my_isspace(&my_charset_latin1,*p))
+    while (my_isspace(&my_charset_utf8_general_ci,*p))
       ++p;
 
     if (*p++ == '0' && *p++ == 'x')

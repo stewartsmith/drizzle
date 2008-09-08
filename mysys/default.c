@@ -524,7 +524,7 @@ static char *get_argument(const char *keyword, size_t kwlen,
   /* Skip over "include / includedir keyword" and following whitespace */
 
   for (ptr+= kwlen - 1;
-       my_isspace(&my_charset_latin1, ptr[0]);
+       my_isspace(&my_charset_utf8_general_ci, ptr[0]);
        ptr++)
   {}
 
@@ -534,7 +534,7 @@ static char *get_argument(const char *keyword, size_t kwlen,
     Note that my_isspace() is true for \r and \n
   */
   for (end= ptr + strlen(ptr) - 1;
-       my_isspace(&my_charset_latin1, *(end - 1));
+       my_isspace(&my_charset_utf8_general_ci, *(end - 1));
        end--)
   {}
   end[0]= 0;                                    /* Cut off end space */
@@ -630,7 +630,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   {
     line++;
     /* Ignore comment and empty lines */
-    for (ptr= buff; my_isspace(&my_charset_latin1, *ptr); ptr++)
+    for (ptr= buff; my_isspace(&my_charset_utf8_general_ci, *ptr); ptr++)
     {}
 
     if (*ptr == '#' || *ptr == ';' || !*ptr)
@@ -642,7 +642,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       if (recursion_level >= max_recursion_level)
       {
         for (end= ptr + strlen(ptr) - 1; 
-             my_isspace(&my_charset_latin1, *(end - 1));
+             my_isspace(&my_charset_utf8_general_ci, *(end - 1));
              end--)
         {}
         end[0]= 0;
@@ -654,12 +654,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       }
 
       /* skip over `!' and following whitespace */
-      for (++ptr; my_isspace(&my_charset_latin1, ptr[0]); ptr++)
+      for (++ptr; my_isspace(&my_charset_utf8_general_ci, ptr[0]); ptr++)
       {}
 
       if ((!strncmp(ptr, includedir_keyword,
                     sizeof(includedir_keyword) - 1)) &&
-          my_isspace(&my_charset_latin1, ptr[sizeof(includedir_keyword) - 1]))
+          my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(includedir_keyword) - 1]))
       {
 	if (!(ptr= get_argument(includedir_keyword,
                                 sizeof(includedir_keyword),
@@ -694,7 +694,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         my_dirend(search_dir);
       }
       else if ((!strncmp(ptr, include_keyword, sizeof(include_keyword) - 1)) &&
-               my_isspace(&my_charset_latin1, ptr[sizeof(include_keyword)-1]))
+               my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(include_keyword)-1]))
       {
 	if (!(ptr= get_argument(include_keyword,
                                 sizeof(include_keyword), ptr,
@@ -719,7 +719,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 	goto err;
       }
       /* Remove end space */
-      for ( ; my_isspace(&my_charset_latin1,end[-1]) ; end--) ;
+      for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
       strmake(curr_gr, ptr, min((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
@@ -741,7 +741,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     end= remove_end_comment(ptr);
     if ((value= strchr(ptr, '=')))
       end= value;				/* Option without argument */
-    for ( ; my_isspace(&my_charset_latin1,end[-1]) ; end--) ;
+    for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
     if (!value)
     {
       strmake(stpcpy(option,"--"),ptr, (size_t) (end-ptr));
@@ -752,13 +752,13 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     {
       /* Remove pre- and end space */
       char *value_end;
-      for (value++ ; my_isspace(&my_charset_latin1,*value); value++) ;
+      for (value++ ; my_isspace(&my_charset_utf8_general_ci,*value); value++) ;
       value_end= strchr(value, '\0');
       /*
 	We don't have to test for value_end >= value as we know there is
 	an '=' before
       */
-      for ( ; my_isspace(&my_charset_latin1,value_end[-1]) ; value_end--) ;
+      for ( ; my_isspace(&my_charset_utf8_general_ci,value_end[-1]) ; value_end--) ;
       if (value_end < value)			/* Empty string */
 	value_end=value;
 

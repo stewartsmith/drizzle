@@ -1339,14 +1339,6 @@ insert into t2 values (1);
 update t1 set  s1 = s1 + 1 where 1 = (select x.s1 as A from t2 WHERE t2.s1 > t1.s1 order by A);
 ERROR 42S22: Unknown column 'x.s1' in 'field list'
 DROP TABLE t1, t2;
-CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
-s2 CHAR(5) COLLATE latin1_swedish_ci);
-INSERT INTO t1 VALUES ('z','?');
-select * from t1 where s1 > (select max(s2) from t1);
-ERROR HY000: Illegal mix of collations (latin1_german1_ci,IMPLICIT) and (latin1_swedish_ci,IMPLICIT) for operation '>'
-select * from t1 where s1 > any (select max(s2) from t1);
-ERROR HY000: Illegal mix of collations (latin1_german1_ci,IMPLICIT) and (latin1_swedish_ci,IMPLICIT) for operation '>'
-drop table t1;
 create table t1(toid int,rd int);
 create table t2(userid int,pmnew int,pmtotal int);
 insert into t2 values(1,0,0),(2,0,0);
@@ -2527,26 +2519,6 @@ ERROR 21000: Operand should contain 3 column(s)
 select (select * from t1) = (1,2,3);
 ERROR 21000: Operand should contain 2 column(s)
 drop table t1;
-CREATE TABLE `t1` (
-`itemid` bigint unsigned NOT NULL auto_increment,
-`sessionid` bigint unsigned default NULL,
-`time` int unsigned NOT NULL default '0',
-`data` text collate latin1_general_ci NOT NULL,
-PRIMARY KEY  (`itemid`)
-);
-INSERT INTO `t1` VALUES (1, 1, 1, '');
-CREATE TABLE `t2` (
-`sessionid` bigint unsigned NOT NULL auto_increment,
-`pid` int unsigned NOT NULL default '0',
-`date` int unsigned NOT NULL default '0',
-`ip` varchar(15) collate latin1_general_ci NOT NULL default '',
-PRIMARY KEY  (`sessionid`)
-);
-INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
-SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
-ip	count( e.itemid )
-10.10.10.1	1
-drop tables t1,t2;
 create table t1 (fld enum('0','1'));
 insert into t1 values ('1');
 select * from (select max(fld) from t1) as foo;

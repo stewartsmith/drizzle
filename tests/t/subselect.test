@@ -817,14 +817,14 @@ DROP TABLE t1, t2;
 #
 # collation test
 #
-CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
-                 s2 CHAR(5) COLLATE latin1_swedish_ci);
-INSERT INTO t1 VALUES ('z','?');
--- error 1267
-select * from t1 where s1 > (select max(s2) from t1);
--- error 1267
-select * from t1 where s1 > any (select max(s2) from t1);
-drop table t1;
+#CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
+#                 s2 CHAR(5) COLLATE latin1_swedish_ci);
+#INSERT INTO t1 VALUES ('z','?');
+#-- error 1267
+#select * from t1 where s1 > (select max(s2) from t1);
+#-- error 1267
+#select * from t1 where s1 > any (select max(s2) from t1);
+#drop table t1;
 
 #
 # aggregate functions reinitialization
@@ -1586,24 +1586,24 @@ drop table t1;
 #
 # Item_int_with_ref check (BUG#10020)
 #
-CREATE TABLE `t1` (
-  `itemid` bigint unsigned NOT NULL auto_increment,
-  `sessionid` bigint unsigned default NULL,
-  `time` int unsigned NOT NULL default '0',
-  `data` text collate latin1_general_ci NOT NULL,
-  PRIMARY KEY  (`itemid`)
-);
-INSERT INTO `t1` VALUES (1, 1, 1, '');
-CREATE TABLE `t2` (
-  `sessionid` bigint unsigned NOT NULL auto_increment,
-  `pid` int unsigned NOT NULL default '0',
-  `date` int unsigned NOT NULL default '0',
-  `ip` varchar(15) collate latin1_general_ci NOT NULL default '',
-  PRIMARY KEY  (`sessionid`)
-);
-INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
-SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
-drop tables t1,t2;
+#CREATE TABLE `t1` (
+#  `itemid` bigint unsigned NOT NULL auto_increment,
+#  `sessionid` bigint unsigned default NULL,
+#  `time` int unsigned NOT NULL default '0',
+#  `data` text collate latin1_general_ci NOT NULL,
+#  PRIMARY KEY  (`itemid`)
+#);
+#INSERT INTO `t1` VALUES (1, 1, 1, '');
+#CREATE TABLE `t2` (
+#  `sessionid` bigint unsigned NOT NULL auto_increment,
+#  `pid` int unsigned NOT NULL default '0',
+#  `date` int unsigned NOT NULL default '0',
+#  `ip` varchar(15) collate latin1_general_ci NOT NULL default '',
+#  PRIMARY KEY  (`sessionid`)
+#);
+#INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
+#SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
+#drop tables t1,t2;
 
 # BUG#11821 : Select from subselect using aggregate function on an enum
 # segfaults:

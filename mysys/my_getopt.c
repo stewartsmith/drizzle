@@ -386,10 +386,10 @@ int handle_options(int *argc, char ***argv,
 	      */
 	    (*argc)--;
 	    if (!optend || *optend == '1' ||
-		!my_strcasecmp(&my_charset_latin1, optend, "true"))
+		!my_strcasecmp(&my_charset_utf8_general_ci, optend, "true"))
 	      *((bool*) value)= (bool) 1;
 	    else if (*optend == '0' ||
-		     !my_strcasecmp(&my_charset_latin1, optend, "false"))
+		     !my_strcasecmp(&my_charset_utf8_general_ci, optend, "false"))
 	      *((bool*) value)= (bool) 0;
 	    else
 	    {
