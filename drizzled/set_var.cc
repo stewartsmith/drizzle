@@ -841,7 +841,7 @@ uchar *sys_var_set::value_ptr(THD *thd,
                               LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -1738,7 +1738,7 @@ const CHARSET_INFO *get_old_charset_by_name(const char *name)
  
   for (conv= old_conv; conv->old_name; conv++)
   {
-    if (!my_strcasecmp(&my_charset_latin1, name, conv->old_name))
+    if (!my_strcasecmp(&my_charset_utf8_general_ci, name, conv->old_name))
       return get_charset_by_csname(conv->new_name, MY_CS_PRIMARY, MYF(0));
   }
   return NULL;
@@ -2306,7 +2306,7 @@ uchar *sys_var_log_output::value_ptr(THD *thd,
                                      LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -2433,7 +2433,7 @@ bool sys_var_rand_seed2::update(THD *thd, set_var *var)
 bool sys_var_thd_time_zone::check(THD *thd, set_var *var)
 {
   char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_latin1);
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
   String *res= var->value->val_str(&str);
 
   if (!(var->save_result.time_zone= my_tz_find(thd, res)))
@@ -2492,7 +2492,7 @@ void sys_var_thd_time_zone::set_default(THD *thd, enum_var_type type)
  {
    if (default_tz_name)
    {
-     String str(default_tz_name, &my_charset_latin1);
+     String str(default_tz_name, &my_charset_utf8_general_ci);
      /*
        We are guaranteed to find this time zone since its existence
        is checked during start-up.
@@ -2572,7 +2572,7 @@ bool sys_var_thd_lc_time_names::check(THD *thd __attribute__((unused)),
   else // STRING_RESULT
   {
     char buff[6]; 
-    String str(buff, sizeof(buff), &my_charset_latin1), *res;
+    String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
@@ -3232,7 +3232,7 @@ bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
-  String str(buff, sizeof(buff), &my_charset_latin1), *res;
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
 
   var->save_result.plugin= NULL;
   if (var->value->result_type() == STRING_RESULT)
@@ -3316,7 +3316,7 @@ sys_var_thd_optimizer_switch::
 symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
 
   tmp.length(0);
 

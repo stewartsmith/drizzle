@@ -32,7 +32,7 @@
 
 #include <libdrizzle/gettext.h>
 
-#define log_cs	&my_charset_latin1
+#define log_cs	&my_charset_utf8_general_ci
 
 #define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
 

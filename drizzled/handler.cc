@@ -112,7 +112,7 @@ plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name)
 
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (thd && !my_charset_latin1.coll->strnncoll(&my_charset_latin1,
+  if (thd && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
                            (const uchar *)name->str, name->length,
                            (const uchar *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(thd);
@@ -134,7 +134,7 @@ redo:
   */
   for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
   {
-    if (!my_strnncoll(&my_charset_latin1,
+    if (!my_strnncoll(&my_charset_utf8_general_ci,
                       (const uchar *)name->str, name->length,
                       (const uchar *)table_alias->str, table_alias->length))
     {

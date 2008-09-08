@@ -2043,7 +2043,7 @@ opt_default:
 
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
-        | ASCII_SYM opt_bin_mod { Lex->charset=&my_charset_latin1; }
+        | ASCII_SYM opt_bin_mod { Lex->charset=&my_charset_utf8_general_ci; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
         | UNICODE_SYM opt_bin_mod
           {
@@ -2065,7 +2065,7 @@ opt_bin_mod:
 
 opt_bin_charset:
           /* empty */ { Lex->charset= NULL; }
-        | ASCII_SYM { Lex->charset=&my_charset_latin1; }
+        | ASCII_SYM { Lex->charset=&my_charset_utf8_general_ci; }
         | UNICODE_SYM
           {
             if (!(Lex->charset=get_charset_by_csname("ucs2",
@@ -3855,7 +3855,7 @@ opt_distinct:
 opt_gconcat_separator:
           /* empty */
             {
-              $$= new (YYTHD->mem_root) String(",", 1, &my_charset_latin1);
+              $$= new (YYTHD->mem_root) String(",", 1, &my_charset_utf8_general_ci);
             }
         | SEPARATOR_SYM text_string { $$ = $2; }
         ;
@@ -4567,7 +4567,7 @@ opt_escape:
         | /* empty */
           {
             Lex->escape_used= false;
-            $$= new Item_string("\\", 1, &my_charset_latin1);
+            $$= new Item_string("\\", 1, &my_charset_utf8_general_ci);
           }
         ;
 

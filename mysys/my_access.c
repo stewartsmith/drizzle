@@ -54,7 +54,7 @@ static int str_list_find(const char **list, const char *str)
   const char **name;
   for (name= list; *name; name++)
   {
-    if (!my_strcasecmp(&my_charset_latin1, *name, str))
+    if (!my_strcasecmp(&my_charset_utf8_general_ci, *name, str))
       return 1;
   }
   return 0;

@@ -45,7 +45,7 @@ get_collation_number_internal(const char *name)
        cs++)
   {
     if ( cs[0] && cs[0]->name && 
-         !my_strcasecmp(&my_charset_latin1, cs[0]->name, name))
+         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
       return cs[0]->number;
   }  
   return 0;
@@ -144,7 +144,7 @@ char *get_charsets_dir(char *buf)
 }
 
 CHARSET_INFO *all_charsets[256];
-const CHARSET_INFO *default_charset_info = &my_charset_latin1;
+const CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
 
 void add_compiled_collation(CHARSET_INFO * cs)
 {
@@ -224,7 +224,7 @@ uint get_charset_number(const char *charset_name, uint cs_flags)
        cs++)
   {
     if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) &&
-         !my_strcasecmp(&my_charset_latin1, cs[0]->csname, charset_name))
+         !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
       return cs[0]->number;
   }  
   return 0;

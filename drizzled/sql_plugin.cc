@@ -927,7 +927,7 @@ int plugin_init(int *argc, char **argv, int flags)
         initialize the global default storage engine so that it may
         not be null in any child thread.
       */
-      if (my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM") == 0)
+      if (my_strcasecmp(&my_charset_utf8_general_ci, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
@@ -2365,7 +2365,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
 
   /* support --skip-plugin-foo syntax */
   memcpy(name, plugin_name, namelen + 1);
-  my_casedn_str(&my_charset_latin1, name);
+  my_casedn_str(&my_charset_utf8_general_ci, name);
   strxmov(name + namelen + 1, "plugin-", name, NullS);
   /* Now we have namelen + 1 + 7 + namelen + 1 == namelen * 2 + 9. */
 
@@ -2580,9 +2580,9 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
   memset(opts, 0, sizeof(my_option) * count);
 
-  if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") == 0))
+  if ((my_strcasecmp(&my_charset_utf8_general_ci, p->name.str, "MyISAM") == 0))
     can_disable= false;
-  else if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY") == 0))
+  else if ((my_strcasecmp(&my_charset_utf8_general_ci, p->name.str, "MEMORY") == 0))
     can_disable= false;
   else
     can_disable= true;
@@ -2629,9 +2629,9 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") == 0))
+  if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->name.str, "MyISAM") == 0))
     can_disable= false;
-  else if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY") == 0))
+  else if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->name.str, "MEMORY") == 0))
     can_disable= false;
   else
     can_disable= true;
@@ -2677,7 +2677,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
         len= tmp->name.length + strlen(o->name) + 2;
         varname= (char*) alloc_root(mem_root, len);
         strxmov(varname, tmp->name.str, "-", o->name, NullS);
-        my_casedn_str(&my_charset_latin1, varname);
+        my_casedn_str(&my_charset_utf8_general_ci, varname);
 
         for (p= varname; *p; p++)
           if (*p == '-')
@@ -2724,7 +2724,7 @@ err:
 
 static int option_cmp(my_option *a, my_option *b)
 {
-  return my_strcasecmp(&my_charset_latin1, a->name, b->name);
+  return my_strcasecmp(&my_charset_utf8_general_ci, a->name, b->name);
 }
 
 

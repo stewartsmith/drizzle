@@ -107,7 +107,7 @@ static void drizzle_close_free(DRIZZLE *drizzle);
 static int wait_for_data(int fd, int32_t timeout);
 int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout);
 
-CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
+CHARSET_INFO *default_client_charset_info = &my_charset_utf8_general_ci;
 
 /* Server error code and message */
 unsigned int drizzle_server_last_errno;

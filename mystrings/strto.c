@@ -96,7 +96,7 @@ function (const char *nptr,char **endptr,int base)
   s = nptr;
 
   /* Skip white space.	*/
-  while (my_isspace(&my_charset_latin1, *s))
+  while (my_isspace(&my_charset_utf8_general_ci, *s))
     ++s;
   if (*s == '\0')
   {
@@ -116,7 +116,7 @@ function (const char *nptr,char **endptr,int base)
   }
     
 
-  if (base == 16 && s[0] == '0' && my_toupper (&my_charset_latin1, s[1]) == 'X')
+  if (base == 16 && s[0] == '0' && my_toupper (&my_charset_utf8_general_ci, s[1]) == 'X')
     s += 2;
 
   /* If BASE is zero, figure it out ourselves.	*/
@@ -124,7 +124,7 @@ function (const char *nptr,char **endptr,int base)
   {
     if (*s == '0')
     {
-      if (my_toupper (&my_charset_latin1, s[1]) == 'X')
+      if (my_toupper (&my_charset_utf8_general_ci, s[1]) == 'X')
       {
 	s += 2;
 	base = 16;
@@ -146,10 +146,10 @@ function (const char *nptr,char **endptr,int base)
   i = 0;
   for (c = *s; c != '\0'; c = *++s)
   {
-    if (my_isdigit (&my_charset_latin1, c))
+    if (my_isdigit (&my_charset_utf8_general_ci, c))
       c -= '0';
-    else if (my_isalpha (&my_charset_latin1, c))
-      c = my_toupper (&my_charset_latin1, c) - 'A' + 10;
+    else if (my_isalpha (&my_charset_utf8_general_ci, c))
+      c = my_toupper (&my_charset_utf8_general_ci, c) - 'A' + 10;
     else
       break;
     if (c >= base)
