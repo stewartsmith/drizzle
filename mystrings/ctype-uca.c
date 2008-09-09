@@ -35,8 +35,6 @@
 #include "m_string.h"
 #include "m_ctype.h"
 
-#ifdef HAVE_UCA_COLLATIONS
-
 #define MY_UCA_NPAGES 256
 #define MY_UCA_NCHARS 256
 #define MY_UCA_CMASK  255
@@ -11640,6 +11638,3 @@ CHARSET_INFO my_charset_utf16_sinhala_uca_ci=
 };
 
 #endif /* HAVE_CHARSET_utf16 */
-
-
-#endif /* HAVE_UCA_COLLATIONS */

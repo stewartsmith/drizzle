@@ -21,8 +21,6 @@
   init_compiled_charsets() that only adds those that he wants
 */
 
-#ifdef HAVE_UCA_COLLATIONS
-
 #ifdef HAVE_CHARSET_utf8mb3
 extern CHARSET_INFO my_charset_utf8mb3_icelandic_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb3_latvian_uca_ci;
@@ -70,8 +68,6 @@ extern CHARSET_INFO my_charset_utf8mb4_hungarian_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci;
 #endif /* HAVE_CHARSET_utf8mb4 */
 
-#endif /* HAVE_UCA_COLLATIONS */
-
 
 bool init_compiled_charsets(myf flags __attribute__((unused)))
 {
@@ -90,7 +86,6 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
 #ifdef HAVE_UTF8_GENERAL_CS
   add_compiled_collation(&my_charset_utf8mb3_general_cs);
 #endif
-#ifdef HAVE_UCA_COLLATIONS
   add_compiled_collation(&my_charset_utf8mb3_unicode_ci);
   add_compiled_collation(&my_charset_utf8mb3_icelandic_uca_ci);
   add_compiled_collation(&my_charset_utf8mb3_latvian_uca_ci);
@@ -111,14 +106,12 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
   add_compiled_collation(&my_charset_utf8mb3_esperanto_uca_ci);
   add_compiled_collation(&my_charset_utf8mb3_hungarian_uca_ci);
   add_compiled_collation(&my_charset_utf8mb3_sinhala_uca_ci);
-#endif /* HAVE_UCA_COLLATIONS  */
 #endif /* HAVE_CHARSET_utf8mb3 */
 
 
 #ifdef HAVE_CHARSET_utf8mb4
   add_compiled_collation(&my_charset_utf8mb4_general_ci);
   add_compiled_collation(&my_charset_utf8mb4_bin);
-#ifdef HAVE_UCA_COLLATIONS
   add_compiled_collation(&my_charset_utf8mb4_unicode_ci);
   add_compiled_collation(&my_charset_utf8mb4_icelandic_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_latvian_uca_ci);
@@ -139,7 +132,6 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
   add_compiled_collation(&my_charset_utf8mb4_esperanto_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_hungarian_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_sinhala_uca_ci);
-#endif /* HAVE_UCA_COLLATIONS  */
 #endif /* HAVE_CHARSET_utf8mb4 */
 
   /* Copy compiled charsets */
