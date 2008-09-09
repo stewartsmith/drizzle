@@ -475,36 +475,36 @@ explain extended SELECT t1.a, t1.a in (select t2.a from t2,t3 where t3.a=t2.a) F
 drop table t1,t2,t3;
 
 #LIMIT is not supported now
-create table t1 (a float);
--- error 1235
-select 10.5 IN (SELECT * from t1 LIMIT 1);
--- error 1235
-select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
-drop table t1;
-
-create table t1 (a int, b int, c varchar(10));
-create table t2 (a int);
-insert into t1 values (1,2,'a'),(2,3,'b'),(3,4,'c');
-insert into t2 values (1),(2),(NULL);
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),(select c from t1 where a=t2.a)  from t2;
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,3,'b'),(select c from t1 where a=t2.a) from t2;
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,4,'c'),(select c from t1 where a=t2.a) from t2;
-drop table t1,t2;
-
-create table t1 (a int, b real, c varchar(10));
-insert into t1 values (1, 1, 'a'), (2,2,'b'), (NULL, 2, 'b');
-select ROW(1, 1, 'a') IN (select a,b,c from t1);
-select ROW(1, 2, 'a') IN (select a,b,c from t1);
-select ROW(1, 1, 'a') IN (select b,a,c from t1);
-select ROW(1, 1, 'a') IN (select a,b,c from t1 where a is not null);
-select ROW(1, 2, 'a') IN (select a,b,c from t1 where a is not null);
-select ROW(1, 1, 'a') IN (select b,a,c from t1 where a is not null);
-select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
-select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
-select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
--- error 1235
-select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
-drop table t1;
+#create table t1 (a float);
+#-- error 1235
+#select 10.5 IN (SELECT * from t1 LIMIT 1);
+#-- error 1235
+#select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
+#drop table t1;
+#
+#create table t1 (a int, b int, c varchar(10));
+#create table t2 (a int);
+#insert into t1 values (1,2,'a'),(2,3,'b'),(3,4,'c');
+#insert into t2 values (1),(2),(NULL);
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),(select c from t1 where a=t2.a)  from t2;
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,3,'b'),(select c from t1 where a=t2.a) from t2;
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,4,'c'),(select c from t1 where a=t2.a) from t2;
+#drop table t1,t2;
+#
+#create table t1 (a int, b real, c varchar(10));
+#insert into t1 values (1, 1, 'a'), (2,2,'b'), (NULL, 2, 'b');
+#select ROW(1, 1, 'a') IN (select a,b,c from t1);
+#select ROW(1, 2, 'a') IN (select a,b,c from t1);
+#select ROW(1, 1, 'a') IN (select b,a,c from t1);
+#select ROW(1, 1, 'a') IN (select a,b,c from t1 where a is not null);
+#select ROW(1, 2, 'a') IN (select a,b,c from t1 where a is not null);
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 where a is not null);
+#select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
+#select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
+#-- error 1235
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
+#drop table t1;
 
 #test of uncacheable subqueries
 CREATE TABLE t1 (a int);
