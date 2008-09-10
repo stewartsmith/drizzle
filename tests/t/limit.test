@@ -51,16 +51,6 @@ SELECT * FROM t1;
 DROP TABLE t1;
 
 #
-# Bug#8023 - limit on UNION with from DUAL, causes syntax error
-#
-create table t1 (a integer);
-insert into t1 values (1);
-# both queries must return one row
-select 1 as a from t1 union all select 1 from dual limit 1;
-(select 1 as a from t1) union all (select 1 from dual) limit 1;
-drop table t1;
-
-#
 # Bug #21787: COUNT(*) + ORDER BY + LIMIT returns wrong result
 #
 create table t1 (a int);
@@ -71,27 +61,5 @@ explain select sum(a) c FROM t1 WHERE a > 0 ORDER BY c LIMIT 3;
 select sum(a) c FROM t1 WHERE a > 0 ORDER BY c LIMIT 3;
 drop table t1;
 # End of 4.1 tests
-
-#
-# Bug #28464: a string argument to 'limit ?' PS
-#
-
-prepare s from "select 1 limit ?";
-set @a='qwe';
-execute s using @a;
-set @a=-1;
---error ER_WRONG_ARGUMENTS
-execute s using @a;
-prepare s from "select 1 limit 1, ?";
---error ER_WRONG_ARGUMENTS
-execute s using @a;
-prepare s from "select 1 limit ?, ?";
---error ER_WRONG_ARGUMENTS
-execute s using @a, @a;
-set @a=14632475938453979136;
-execute s using @a, @a;
-set @a=-14632475938453979136;
---error ER_WRONG_ARGUMENTS
-execute s using @a, @a;
 
 --echo End of 5.0 tests
