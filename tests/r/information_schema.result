@@ -69,35 +69,17 @@ latin1		latin1_swedish_ci	1
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-latin1_german1_ci	latin1	5		#	1
 latin1_swedish_ci	latin1	8	Yes	#	1
-latin1_danish_ci	latin1	15		#	1
-latin1_german2_ci	latin1	31		#	2
 latin1_bin	latin1	47		#	1
-latin1_general_ci	latin1	48		#	1
-latin1_general_cs	latin1	49		#	1
-latin1_spanish_ci	latin1	94		#	1
 SHOW COLLATION LIKE 'latin1%';
 Collation	Charset	Id	Default	Compiled	Sortlen
-latin1_german1_ci	latin1	5		#	1
 latin1_swedish_ci	latin1	8	Yes	#	1
-latin1_danish_ci	latin1	15		#	1
-latin1_german2_ci	latin1	31		#	2
 latin1_bin	latin1	47		#	1
-latin1_general_ci	latin1	48		#	1
-latin1_general_cs	latin1	49		#	1
-latin1_spanish_ci	latin1	94		#	1
 select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME
-latin1_german1_ci	latin1
 latin1_swedish_ci	latin1
-latin1_danish_ci	latin1
-latin1_german2_ci	latin1
 latin1_bin	latin1
-latin1_general_ci	latin1
-latin1_general_cs	latin1
-latin1_spanish_ci	latin1
 select * from information_schema.table_names;
 ERROR 42S02: Unknown table 'table_names' in information_schema
 select column_type from information_schema.columns
