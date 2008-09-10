@@ -120,7 +120,7 @@ $opt_threads=1;
 $pid_file="mysql_stress_test.pid";
 $opt_mysqltest= ($^O =~ /mswin32/i) ? "mysqltest.exe" : "mysqltest";
 $opt_check_tests_file="";
-@mysqltest_args=("--silent", "-v", "--skip-safemalloc");
+@mysqltest_args=("--silent", "-v");
 
 # Client ip address
 $client_ip=inet_ntoa((gethostbyname(hostname()))[4]);

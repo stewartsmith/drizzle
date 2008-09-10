@@ -127,13 +127,9 @@ typedef struct my_aio_result {
 #define GETDATE_FIXEDLENGTH	16
 
 	/* defines when allocating data */
-#ifdef SAFEMALLOC
-#else
 #define my_checkmalloc()
 #undef TERMINATE
 #define TERMINATE(A,B) {}
-#define QUICK_SAFEMALLOC
-#define NORMAL_SAFEMALLOC
 extern void *my_malloc(size_t Size,myf MyFlags);
 #define my_malloc_ci(SZ,FLAG) my_malloc( SZ, FLAG )
 extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);
@@ -148,7 +144,6 @@ extern char *my_strndup(const char *from, size_t length,
 #define CALLER_INFO         /* nothing */
 #define ORIG_CALLER_INFO    /* nothing */
 #define TRASH(A,B) /* nothing */
-#endif
 
 #ifdef HAVE_ALLOCA
 #if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
