@@ -177,6 +177,7 @@ test-drizzle:
         key_primary \
         keywords \
         lock \
+        limit \
         lock_tables_lost_commit \
         overflow \
         rollback \
