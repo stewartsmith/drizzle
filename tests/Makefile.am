@@ -158,6 +158,7 @@ test-drizzle:
         func_group_innodb \
         func_isnull \
         func_like \
+				func_math \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \

@@ -131,7 +131,7 @@ DROP TABLE t1;
 # InnoDB is required to reproduce the fault, but it is okay if we default to
 # MyISAM when testing.
 --disable_warnings
-create table t1 (a varchar(90), ts datetime not null, index (a)) engine=innodb default charset=utf8;
+create table t1 (a varchar(90), ts datetime not null, index (a)) engine=innodb;
 --enable_warnings
 insert into t1 values ('http://www.foo.com/', now());
 select a from t1 where a='http://www.foo.com/' order by abs(timediff(ts, 0));
@@ -159,16 +159,16 @@ select truncate(15000111000111000155,-1);
 set names utf8;
 create table t1
 (f1 varchar(32) not null,
- f2 smallint(5) unsigned not null,
- f3 int(10) unsigned not null default '0')
-engine=myisam default charset=utf8;
+ f2 smallint unsigned not null,
+ f3 int unsigned not null default '0')
+engine=myisam;
 insert into t1 values ('zombie',0,0),('gold',1,10000),('silver',2,10000);
 
 create table t2
-(f1 int(10) unsigned not null,
- f2 int(10) unsigned not null,
- f3 smallint(5) unsigned not null)
-engine=myisam default charset=utf8;
+(f1 int unsigned not null,
+ f2 int unsigned not null,
+ f3 smallint unsigned not null)
+engine=myisam;
 insert into t2 values (16777216,16787215,1),(33554432,33564431,2);
 
 select format(t2.f2-t2.f1+1,0) from t1,t2
@@ -212,7 +212,7 @@ select pow(cast(-2 as unsigned), 5), pow(18446744073709551614, 5), pow(-2, 5);
 # Bug #30587: mysql crashes when trying to group by TIME div NUMBER
 #
 
-CREATE TABLE t1 (a timestamp, b varchar(20), c bit(1));
+CREATE TABLE t1 (a timestamp, b varchar(20), c bit);
 INSERT INTO t1 VALUES('1998-09-23', 'str1', 1), ('2003-03-25', 'str2', 0);
 SELECT a DIV 900 y FROM t1 GROUP BY y;
 SELECT DISTINCT a DIV 900 y FROM t1;
@@ -225,11 +225,6 @@ INSERT INTO t1 VALUES('1'),('2'),('3');
 SELECT DISTINCT (a DIV 254576881) FROM t1;
 SELECT (a DIV 254576881) FROM t1 UNION ALL 
   SELECT (a DIV 254576881) FROM t1;
-DROP TABLE t1;
-
-CREATE TABLE t1(a SET('a','b','c'));
-INSERT INTO t1 VALUES ('a');
-SELECT a DIV 2 FROM t1 UNION SELECT a DIV 2 FROM t1;
 DROP TABLE t1;
 
 --echo End of 5.0 tests
