@@ -38,7 +38,7 @@
 /* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
 #include <mysys/my_sys.h>                       
 /* Convenience functions for working with times */
-#include <libdrizzle/my_time.h>
+#include <mysys/my_time.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Custom HASH API */

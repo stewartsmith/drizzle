@@ -19,7 +19,6 @@
 
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
-#include "my_time.h"
 #include "drizzle.h"
 #include "errmsg.h"
 #include <sys/stat.h>
