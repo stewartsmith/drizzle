@@ -142,6 +142,7 @@ test-drizzle:
         bench_count_distinct \
 	bulk_replace \
 	comment_column2 \
+	comment_table \
 	comments \
 	consistent_snapshot \
         count_distinct \
