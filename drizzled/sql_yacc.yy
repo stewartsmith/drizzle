@@ -822,7 +822,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
-%token  UNICODE_SYM
 %token  UNINSTALL_SYM
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
@@ -2017,17 +2016,7 @@ opt_default:
 
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
-        | ASCII_SYM opt_bin_mod { Lex->charset=&my_charset_utf8_general_ci; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | UNICODE_SYM opt_bin_mod
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
         | charset charset_name opt_bin_mod { Lex->charset=$2; }
         | BINARY opt_bin_charset { Lex->type|= BINCMP_FLAG; }
         ;
@@ -2039,16 +2028,6 @@ opt_bin_mod:
 
 opt_bin_charset:
           /* empty */ { Lex->charset= NULL; }
-        | ASCII_SYM { Lex->charset=&my_charset_utf8_general_ci; }
-        | UNICODE_SYM
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
         | charset charset_name { Lex->charset=$2; }
         ;
 
@@ -6234,7 +6213,6 @@ keyword:
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UNICODE_SYM           {}
         | UNINSTALL_SYM         {}
         | WRAPPER_SYM           {}
         | UPGRADE_SYM           {}
