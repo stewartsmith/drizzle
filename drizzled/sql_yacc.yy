@@ -2003,18 +2003,7 @@ opt_default:
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | charset charset_name opt_bin_mod { Lex->charset=$2; }
-        | BINARY opt_bin_charset { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_mod:
-          /* empty */ { }
         | BINARY { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_charset:
-          /* empty */ { Lex->charset= NULL; }
-        | charset charset_name { Lex->charset=$2; }
         ;
 
 ws_nweights:
