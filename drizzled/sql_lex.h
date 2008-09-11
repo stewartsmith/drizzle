@@ -1490,7 +1490,7 @@ typedef struct st_lex : public Query_tables_list
   uint8_t derived_tables;
   bool drop_if_exists, drop_temporary, local_file, one_shot_set;
   bool autocommit;
-  bool verbose, no_write_to_binlog;
+  bool verbose;
 
   bool tx_chain, tx_release;
   bool subqueries, ignore;

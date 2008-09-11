@@ -822,7 +822,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
-%token  UNINSTALL_SYM
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
@@ -857,7 +856,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  WITH_CUBE_SYM                 /* INTERNAL */
 %token  WITH_ROLLUP_SYM               /* INTERNAL */
 %token  WORK_SYM                      /* SQL-2003-N */
-%token  WRAPPER_SYM
 %token  WRITE_SYM                     /* SQL-2003-N */
 %token  XOR
 %token  YEAR_MONTH_SYM
@@ -902,7 +900,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <num>
         type int_type real_type order_dir
         if_exists opt_local opt_table_options table_options
-        table_option opt_if_not_exists opt_no_write_to_binlog
+        table_option opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -2319,7 +2317,6 @@ alter:
             lex->create_info.default_table_charset= NULL;
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
-            lex->no_write_to_binlog= 0;
             lex->alter_info.build_method= $2;
           }
           alter_commands
@@ -2670,11 +2667,10 @@ opt_checksum_type:
         ;
 
 repair:
-          REPAIR opt_no_write_to_binlog table_or_tables
+          REPAIR table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_REPAIR;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list opt_mi_repair_type
@@ -2698,11 +2694,10 @@ mi_repair_type:
         ;
 
 analyze:
-          ANALYZE_SYM opt_no_write_to_binlog table_or_tables
+          ANALYZE_SYM table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
@@ -2749,21 +2744,14 @@ mi_check_type:
         ;
 
 optimize:
-          OPTIMIZE opt_no_write_to_binlog table_or_tables
+          OPTIMIZE table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
           {}
-        ;
-
-opt_no_write_to_binlog:
-          /* empty */ { $$= 0; }
-        | NO_WRITE_TO_BINLOG { $$= 1; }
-        | LOCAL_SYM { $$= 1; }
         ;
 
 rename:
@@ -5471,12 +5459,11 @@ opt_describe_column:
 /* flush things */
 
 flush:
-          FLUSH_SYM opt_no_write_to_binlog
+          FLUSH_SYM
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_FLUSH;
             lex->type= 0;
-            lex->no_write_to_binlog= $2;
           }
           flush_options
           {}
@@ -6213,8 +6200,6 @@ keyword:
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UNINSTALL_SYM         {}
-        | WRAPPER_SYM           {}
         | UPGRADE_SYM           {}
         ;
 

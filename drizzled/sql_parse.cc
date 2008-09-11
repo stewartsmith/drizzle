@@ -1712,13 +1712,10 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_repair_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, REPAIR and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    /*
+      Presumably, REPAIR and binlog writing doesn't require synchronization
+    */
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -1738,13 +1735,7 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_analyze_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, ANALYZE and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -1756,13 +1747,7 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_optimize_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, OPTIMIZE and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -2311,11 +2296,6 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_RESET:
-    /*
-      RESET commands are never written to the binary log, so we have to
-      initialize this variable because RESET shares the same code as FLUSH
-    */
-    lex->no_write_to_binlog= 1;
   case SQLCOM_FLUSH:
   {
     bool write_to_binlog;
@@ -2333,10 +2313,7 @@ end_with_restore_list:
       /*
         Presumably, RESET and binlog writing doesn't require synchronization
       */
-      if (!lex->no_write_to_binlog && write_to_binlog)
-      {
-        write_bin_log(thd, false, thd->query, thd->query_length);
-      }
+      write_bin_log(thd, false, thd->query, thd->query_length);
       my_ok(thd);
     } 
     
