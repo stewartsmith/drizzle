@@ -1717,34 +1717,6 @@ typedef struct old_names_map_st
   const char *new_name;
 } my_old_conv;
 
-static my_old_conv old_conv[]= 
-{
-  {	"cp1251_koi8"		,	"cp1251"	},
-  {	"cp1250_latin2"		,	"cp1250"	},
-  {	"kam_latin2"		,	"keybcs2"	},
-  {	"mac_latin2"		,	"MacRoman"	},
-  {	"macce_latin2"		,	"MacCE"		},
-  {	"pc2_latin2"		,	"pclatin2"	},
-  {	"vga_latin2"		,	"pclatin1"	},
-  {	"koi8_cp1251"		,	"koi8r"		},
-  {	"win1251ukr_koi8_ukr"	,	"win1251ukr"	},
-  {	"koi8_ukr_win1251ukr"	,	"koi8u"		},
-  {	NULL			,	NULL		}
-};
-
-const CHARSET_INFO *get_old_charset_by_name(const char *name)
-{
-  my_old_conv *conv;
- 
-  for (conv= old_conv; conv->old_name; conv++)
-  {
-    if (!my_strcasecmp(&my_charset_utf8_general_ci, name, conv->old_name))
-      return get_charset_by_csname(conv->new_name, MY_CS_PRIMARY, MYF(0));
-  }
-  return NULL;
-}
-
-
 bool sys_var_collation::check(THD *thd __attribute__((unused)),
                               set_var *var)
 {
@@ -1798,8 +1770,7 @@ bool sys_var_character_set::check(THD *thd __attribute__((unused)),
       }
       tmp= NULL;
     }
-    else if (!(tmp=get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))) &&
-             !(tmp=get_old_charset_by_name(res->c_ptr())))
+    else if (!(tmp= get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))))
     {
       my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), res->c_ptr());
       return 1;
