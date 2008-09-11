@@ -992,9 +992,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <symbol> keyword keyword_sp
 
 %type <charset>
-        opt_collate
         charset_name
-        charset_name_or_default
         collation_name
         collation_name_or_default
         UNDERSCORE_CHARSET
@@ -1981,11 +1979,6 @@ charset_name:
         | BINARY { $$= &my_charset_bin; }
         ;
 
-charset_name_or_default:
-          charset_name { $$=$1;   }
-        | DEFAULT    { $$=NULL; }
-        ;
-
 collation_name:
           ident_or_text
           {
@@ -1995,11 +1988,6 @@ collation_name:
               DRIZZLE_YYABORT;
             }
           }
-        ;
-
-opt_collate:
-          /* empty */ { $$=NULL; }
-        | COLLATE_SYM collation_name_or_default { $$=$2; }
         ;
 
 collation_name_or_default:
@@ -2486,23 +2474,16 @@ alter_list_item:
             lex->name= $3->table;
             lex->alter_info.flags|= ALTER_RENAME;
           }
-        | CONVERT_SYM TO_SYM charset charset_name_or_default opt_collate
+        | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$4)
+            if (!$3)
             {
               THD *thd= YYTHD;
-              $4= thd->variables.collation_database;
-            }
-            $5= $5 ? $5 : $4;
-            if (!my_charset_same($4,$5))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $5->name, $4->csname);
-              DRIZZLE_YYABORT;
+              $3= thd->variables.collation_database;
             }
             LEX *lex= Lex;
             lex->create_info.table_charset=
-            lex->create_info.default_table_charset= $5;
+            lex->create_info.default_table_charset= $3;
             lex->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
             lex->alter_info.flags|= ALTER_CONVERT;
@@ -3331,8 +3312,6 @@ simple_expr:
             if (!$$)
               DRIZZLE_YYABORT;
           }
-        | CONVERT_SYM '(' expr USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_conv_charset($3,$5); }
         | DEFAULT '(' simple_ident ')'
           {
             $$= new (YYTHD->mem_root) Item_default_value(Lex->current_context(),
@@ -3357,8 +3336,6 @@ simple_expr:
 function_call_keyword:
           CHAR_SYM '(' expr_list ')'
           { $$= new (YYTHD->mem_root) Item_func_char(*$3); }
-        | CHAR_SYM '(' expr_list USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_char(*$3, $5); }
         | CURRENT_USER optional_braces
           {
             $$= new (YYTHD->mem_root) Item_func_current_user(Lex->current_context());
@@ -6524,17 +6501,10 @@ option_value:
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
           }
-        | NAMES_SYM charset_name_or_default opt_collate
+        | NAMES_SYM COLLATE_SYM collation_name_or_default
           {
             LEX *lex= Lex;
-            $2= $2 ? $2 : global_system_variables.character_set_client;
-            $3= $3 ? $3 : $2;
-            if (!my_charset_same($2,$3))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $3->name, $2->csname);
-              DRIZZLE_YYABORT;
-            }
+            $3= $3 ? $3 : global_system_variables.character_set_client;
             lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;
