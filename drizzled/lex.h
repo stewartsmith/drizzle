@@ -472,7 +472,6 @@ static SYMBOL symbols[] = {
   { "UNDEFINED",	SYM(UNDEFINED_SYM)},
   { "UNDOFILE", 	SYM(UNDOFILE_SYM)},
   { "UNDO",             SYM(UNDO_SYM)},
-  { "UNICODE",	        SYM(UNICODE_SYM)},
   { "UNION",	        SYM(UNION_SYM)},
   { "UNIQUE",		SYM(UNIQUE_SYM)},
   { "UNKNOWN",		SYM(UNKNOWN_SYM)},

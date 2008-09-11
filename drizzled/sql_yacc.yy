@@ -360,10 +360,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 94 shift/reduce conflicts.
+  Currently there are 93 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 94
+%expect 93
 
 /*
    Comments for TOKENS.
@@ -822,7 +822,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
-%token  UNICODE_SYM
 %token  UNINSTALL_SYM
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
@@ -998,11 +997,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_collate
         charset_name
         charset_name_or_default
-        old_or_new_charset_name
-        old_or_new_charset_name_or_default
         collation_name
         collation_name_or_default
-        opt_load_data_charset
         UNDERSCORE_CHARSET
 
 %type <variable> internal_variable_name
@@ -1992,29 +1988,6 @@ charset_name_or_default:
         | DEFAULT    { $$=NULL; }
         ;
 
-opt_load_data_charset:
-          /* Empty */ { $$= NULL; }
-        | charset charset_name_or_default { $$= $2; }
-        ;
-
-old_or_new_charset_name:
-          ident_or_text
-          {
-            if (!($$=get_charset_by_csname($1.str,MY_CS_PRIMARY,MYF(0))) &&
-                !($$=get_old_charset_by_name($1.str)))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        | BINARY { $$= &my_charset_bin; }
-        ;
-
-old_or_new_charset_name_or_default:
-          old_or_new_charset_name { $$=$1;   }
-        | DEFAULT    { $$=NULL; }
-        ;
-
 collation_name:
           ident_or_text
           {
@@ -2043,17 +2016,7 @@ opt_default:
 
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
-        | ASCII_SYM opt_bin_mod { Lex->charset=&my_charset_utf8_general_ci; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | UNICODE_SYM opt_bin_mod
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
         | charset charset_name opt_bin_mod { Lex->charset=$2; }
         | BINARY opt_bin_charset { Lex->type|= BINCMP_FLAG; }
         ;
@@ -2065,16 +2028,6 @@ opt_bin_mod:
 
 opt_bin_charset:
           /* empty */ { Lex->charset= NULL; }
-        | ASCII_SYM { Lex->charset=&my_charset_utf8_general_ci; }
-        | UNICODE_SYM
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
         | charset charset_name { Lex->charset=$2; }
         ;
 
@@ -5679,8 +5632,6 @@ load:
             lex->update_list.empty();
             lex->value_list.empty();
           }
-          opt_load_data_charset
-          { Lex->exchange->cs= $15; }
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
           {}
@@ -6262,7 +6213,6 @@ keyword:
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UNICODE_SYM           {}
         | UNINSTALL_SYM         {}
         | WRAPPER_SYM           {}
         | UPGRADE_SYM           {}
@@ -6588,13 +6538,6 @@ option_value:
           {
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
-          }
-        | charset old_or_new_charset_name_or_default
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            $2= $2 ? $2: global_system_variables.character_set_client;
-            lex->var_list.push_back(new set_var_collation_client($2,thd->variables.collation_database,$2));
           }
         | NAMES_SYM charset_name_or_default opt_collate
           {
