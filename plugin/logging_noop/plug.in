@@ -1,0 +1,3 @@
+DRIZZLE_PLUGIN(logging_noop,[Example Logging Plugin],
+        [Logging Plugin that does nothing.])
+DRIZZLE_PLUGIN_DYNAMIC(logging_noop, [liblogging_noop.la])

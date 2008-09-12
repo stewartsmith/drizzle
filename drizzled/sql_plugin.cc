@@ -16,6 +16,7 @@
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
 #include <authentication.h>
+#include <logging.h>
 #include <drizzled/drizzled_error_messages.h>
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
@@ -63,7 +64,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   initialize_udf,  /* UDF */
   0,  /* UDA */
   0,  /* Audit */
-  0,  /* Logger */
+  logging_initializer,  /* Logger */
   authentication_initializer  /* Auth */
 };
 
@@ -75,7 +76,7 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   finalize_udf,  /* UDF */
   0,  /* UDA */
   0,  /* Audit */
-  0,  /* Logger */
+  logging_finalizer,  /* Logger */
   authentication_finalizer  /* Auth */
 };
 

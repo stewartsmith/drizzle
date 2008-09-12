@@ -18,6 +18,7 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
+#include "logging.h"
 #include <drizzled/drizzled_error_messages.h>
 
 /**
@@ -548,6 +549,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                         packet, packet_length, thd->charset());
     if (!mysql_change_db(thd, &tmp, false))
     {
+      logging_pre_do(thd, NULL);
+      /* TODO remove general_log_write after pluggable logging works */
       general_log_write(thd, command, thd->db, thd->db_length);
       my_ok(thd);
     }
@@ -672,6 +675,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     char *packet_end= thd->query + thd->query_length;
     const char* end_of_stmt= NULL;
 
+    logging_pre_do(thd, NULL);
+    /* TODO remove general_log_write after pluggable logging works */
     general_log_write(thd, command, thd->query, thd->query_length);
 
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
@@ -941,6 +946,8 @@ void log_slow_statement(THD *thd)
       thd_proc_info(thd, "logging slow query");
       thd->status_var.long_query_count++;
       slow_log_print(thd, thd->query, thd->query_length, end_utime_of_query);
+      logging_post_do(thd, NULL);
+      /* TODO remove slow_log_print after pluggable logging works*/
     }
   }
   return;
