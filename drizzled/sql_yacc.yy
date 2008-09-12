@@ -992,7 +992,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <symbol> keyword keyword_sp
 
 %type <charset>
-        charset_name
         collation_name
         collation_name_or_default
         UNDERSCORE_CHARSET
@@ -1965,18 +1964,6 @@ now_or_signed_literal:
 charset:
           CHAR_SYM SET {}
         | CHARSET {}
-        ;
-
-charset_name:
-          ident_or_text
-          {
-            if (!($$=get_charset_by_csname($1.str,MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        | BINARY { $$= &my_charset_bin; }
         ;
 
 collation_name:
