@@ -4,19 +4,13 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
 
-bool logging_noop_func_pre (THD *thd, void *stuff)
+bool logging_noop_func_pre (THD *thd __attribute__((unused)))
 {
-  /* something fake so unused var warning doesnt cause compile fail */
-  return ((void *)thd == stuff);
-
   return 0;
 }
 
-bool logging_noop_func_post (THD *thd, void *stuff)
+bool logging_noop_func_post (THD *thd __attribute__((unused)))
 {
-  /* something fake so unused var warning doesnt cause compile fail */
-  return ((void *)thd == stuff);
-
   return 0;
 }
 

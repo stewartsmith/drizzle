@@ -6,7 +6,7 @@
 int logging_initializer(st_plugin_int *plugin);
 int logging_finalizer(st_plugin_int *plugin);
 
-void logging_pre_do (THD *thd, void *stuff);
-void logging_post_do (THD *thd, void *stuff);
+void logging_pre_do (THD *thd);
+void logging_post_do (THD *thd);
 
 #endif /* DRIZZLED_LOGGING_H */

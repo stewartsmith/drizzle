@@ -7,8 +7,8 @@
 
 typedef struct logging_st
 {
-  bool (*logging_pre)(THD *thd, void *stuff);
-  bool (*logging_post)(THD *thd, void *stuff);
+  bool (*logging_pre)(THD *thd);
+  bool (*logging_post)(THD *thd);
 } logging_t;
 
 #endif /* DRIZZLED_PLUGIN_LOGGING_H */
