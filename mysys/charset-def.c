@@ -76,9 +76,6 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
   add_compiled_collation(&my_charset_bin);
   add_compiled_collation(&my_charset_filename);
   
-  add_compiled_collation(&my_charset_latin1);
-  add_compiled_collation(&my_charset_latin1_bin);
-
 #ifdef HAVE_CHARSET_utf8mb3
   add_compiled_collation(&my_charset_utf8mb3_general_ci);
   add_compiled_collation(&my_charset_utf8mb3_bin);

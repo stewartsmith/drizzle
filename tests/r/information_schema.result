@@ -62,24 +62,16 @@ drop database mysqltest;
 select * from information_schema.CHARACTER_SETS
 where CHARACTER_SET_NAME like 'latin1%';
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-latin1	latin1_swedish_ci		1
 SHOW CHARACTER SET LIKE 'latin1%';
 Charset	Description	Default collation	Maxlen
-latin1		latin1_swedish_ci	1
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-latin1_swedish_ci	latin1	8	Yes	#	1
-latin1_bin	latin1	47		#	1
 SHOW COLLATION LIKE 'latin1%';
 Collation	Charset	Id	Default	Compiled	Sortlen
-latin1_swedish_ci	latin1	8	Yes	#	1
-latin1_bin	latin1	47		#	1
 select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME
-latin1_swedish_ci	latin1
-latin1_bin	latin1
 select * from information_schema.table_names;
 ERROR 42S02: Unknown table 'table_names' in information_schema
 select column_type from information_schema.columns

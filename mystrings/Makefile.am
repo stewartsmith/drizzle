@@ -41,7 +41,6 @@ libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
                                 ctype-gbk.c ctype-sjis.c ctype-tis620.c \
                                 ctype-utf8.c ctype-ucs2.c \
                                 ctype-uca.c ctype-bin.c \
-                                ctype-latin1.c \
                                 decimal.c ctype-extra.c str_alloc.c \
                                 dtoa.c 
 
