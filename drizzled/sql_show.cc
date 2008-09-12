@@ -249,7 +249,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
 	char *end;
         *ext=0;                                 /* Remove extension */
 	unpack_dirname(buff, file->name);
-	end= strend(buff);
+	end= strchr(buff, '\0');
 	if (end != buff && end[-1] == FN_LIBCHAR)
 	  end[-1]= 0;				// Remove end FN_LIBCHAR
         if (stat(buff, file->mystat))
@@ -886,26 +886,6 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
       end= int64_t10_to_str(create_info.auto_increment_value, buff,10);
       packet->append(buff, (uint) (end - buff));
-    }
-
-    
-    if (share->table_charset)
-    {
-      /*
-        IF   check_create_info
-        THEN add DEFAULT CHARSET only if it was used when creating the table
-      */
-      if (!create_info_arg ||
-          (create_info_arg->used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
-      {
-        packet->append(STRING_WITH_LEN(" DEFAULT CHARSET="));
-        packet->append(share->table_charset->csname);
-        if (!(share->table_charset->state & MY_CS_PRIMARY))
-        {
-          packet->append(STRING_WITH_LEN(" COLLATE="));
-          packet->append(table->s->table_charset->name);
-        }
-      }
     }
 
     if (share->min_rows)
@@ -1592,21 +1572,21 @@ static bool show_status_array(THD *thd, const char *wild,
         {
           SHOW_COMP_OPTION tmp= *(SHOW_COMP_OPTION*) value;
           pos= show_comp_option_name[(int) tmp];
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
         case SHOW_CHAR:
         {
           if (!(pos= value))
             pos= "";
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
        case SHOW_CHAR_PTR:
         {
           if (!(pos= *(char**) value))
             pos= "";
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
         case SHOW_KEY_CACHE_LONG:

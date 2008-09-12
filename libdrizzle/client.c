@@ -1,17 +1,23 @@
-/* Copyright (C) 2008 Drizzle Open Source Project
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
   This file is included by both libdrizzle.c (the DRIZZLE client C API)
@@ -101,7 +107,7 @@ static void drizzle_close_free(DRIZZLE *drizzle);
 static int wait_for_data(int fd, int32_t timeout);
 int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout);
 
-CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
+CHARSET_INFO *default_client_charset_info = &my_charset_utf8_general_ci;
 
 /* Server error code and message */
 unsigned int drizzle_server_last_errno;
@@ -1363,7 +1369,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
                              PROTOCOL_VERSION);
     goto error;
   }
-  end=strend((char*) net->read_pos+1);
+  end= strchr((char*) net->read_pos+1, '\0');
   drizzle->thread_id=uint4korr(end+1);
   end+=5;
   /*
@@ -1456,7 +1462,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     read_user_name((char*) end);
 
   /* We have to handle different version of handshake here */
-  end= strend(end) + 1;
+  end= strchr(end, '\0') + 1;
   if (passwd[0])
   {
     {

@@ -47,7 +47,7 @@ static char *opt_password = 0, *current_user = 0,
 static int first_error = 0;
 vector<string> tables4repair;
 static uint opt_protocol=0;
-static const CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 enum operations { DO_CHECK, DO_REPAIR, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
 
@@ -582,7 +582,7 @@ static int process_one_db(char *database)
 static int use_db(char *database)
 {
   if (drizzle_get_server_version(sock) >= 50003 &&
-      !my_strcasecmp(&my_charset_latin1, database, "information_schema"))
+      !my_strcasecmp(&my_charset_utf8_general_ci, database, "information_schema"))
     return 1;
   if (drizzle_select_db(sock, database))
   {

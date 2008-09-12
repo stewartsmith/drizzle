@@ -33,7 +33,7 @@ bin_PROGRAMS =	drizzle \
 				drizzledump \
 				drizzleimport \
 				drizzletest \
-				mysqlslap 
+				drizzleslap
 
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
 drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
@@ -52,7 +52,7 @@ drizzledump_SOURCES=            drizzledump.cc
 
 drizzleimport_SOURCES=		drizzleimport.cc
 
-mysqlslap_SOURCES=		mysqlslap.c
+drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)

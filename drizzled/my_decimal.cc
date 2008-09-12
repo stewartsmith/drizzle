@@ -185,7 +185,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
   if (charset->mbminlen > 1)
   {
     uint dummy_errors;
-    tmp.copy(from, length, charset, &my_charset_latin1, &dummy_errors);
+    tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
     from= tmp.ptr();
     length=  tmp.length();
     charset= &my_charset_bin;
@@ -197,7 +197,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
     /* Give warning if there is something other than end space */
     for ( ; end < from_end; end++)
     {
-      if (!my_isspace(&my_charset_latin1, *end))
+      if (!my_isspace(&my_charset_utf8_general_ci, *end))
       {
         err= E_DEC_TRUNCATED;
         break;

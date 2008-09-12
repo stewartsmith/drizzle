@@ -62,7 +62,7 @@ sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
 
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x"])
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 AC_SUBST(DRIZZLE_NO_DASH_VERSION)
 AC_SUBST(DRIZZLE_BASE_VERSION)
@@ -1068,7 +1068,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy stpncpy getpagesize])
+AC_REPLACE_FUNCS([stpcpy stpncpy])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
@@ -1093,10 +1093,12 @@ AC_CHECK_FUNCS(bsearch \
 AC_LANG_PUSH(C++)
 # Test whether madvise() is declared in C++ code -- it is not on some
 # systems, such as Solaris
-AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
+AC_CHECK_DECLS([madvise], [], [], [AC_INCLUDES_DEFAULT[
+#if HAVE_SYS_MMAN_H
 #include <sys/types.h>
 #include <sys/mman.h>
-#endif])
+#endif
+]])
 AC_LANG_POP()
 
 
@@ -1423,7 +1425,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
- drizzled/share/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/version.h plugin/Makefile dnl

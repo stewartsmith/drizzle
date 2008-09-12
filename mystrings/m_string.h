@@ -63,7 +63,6 @@ extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
 extern	void bchange(unsigned char *dst,size_t old_len,const unsigned char *src,
 		     size_t new_len,size_t tot_len);
-extern	char *strend(const char *s);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
 extern	char *strfill(char * s,size_t len,char fill);
@@ -97,9 +96,6 @@ char *stpncpy(register char *dst, register const char *src, size_t n);
 #if !defined(__cplusplus)
 #ifndef HAVE_STRPBRK
 extern char *strpbrk(const char *, const char *);
-#endif
-#ifndef HAVE_STRSTR
-extern char *strstr(const char *, const char *);
 #endif
 #endif
 extern int is_prefix(const char *, const char *);
@@ -154,22 +150,9 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
 #if SIZEOF_LONG == SIZEOF_LONG_LONG
 #define int64_t2str(A,B,C) int2str((A),(B),(C),1)
 #define int64_t10_to_str(A,B,C) int10_to_str((A),(B),(C))
-#undef strtoll
-#define strtoll(A,B,C) strtol((A),(B),(C))
-#define strtoull(A,B,C) strtoul((A),(B),(C))
-#ifndef HAVE_STRTOULL
-#define HAVE_STRTOULL
-#endif
-#ifndef HAVE_STRTOLL
-#define HAVE_STRTOLL
-#endif
 #else
 extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
-#if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
-extern int64_t strtoll(const char *str, char **ptr, int base);
-extern uint64_t strtoull(const char *str, char **ptr, int base);
-#endif
 #endif
 
 

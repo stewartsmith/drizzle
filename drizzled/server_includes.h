@@ -625,7 +625,7 @@ extern int creating_table;    // How many mysql_create_table() are running
 */
 
 extern time_t server_start_time, flush_status_time;
-extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
+extern char *opt_mysql_tmpdir;
             
 #define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
 extern MY_TMPDIR mysql_tmpdir_list;
@@ -696,7 +696,6 @@ extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
-extern bool opt_sync_frm;
 extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
 extern bool opt_log_slow_admin_statements;
@@ -739,7 +738,6 @@ extern struct rand_struct sql_rand;
 extern const char *opt_date_time_formats[];
 extern KNOWN_DATE_TIME_FORMAT known_date_time_formats[];
 
-extern String null_string;
 extern HASH open_cache, lock_db_cache;
 extern Table *unused_tables;
 extern const char* any_db;

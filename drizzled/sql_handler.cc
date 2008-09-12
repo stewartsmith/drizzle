@@ -174,8 +174,8 @@ static TableList *mysql_ha_find(THD *thd, TableList *tables)
     for (tables= first; tables; tables= tables->next_local)
     {
       if ((! *tables->db ||
-          ! my_strcasecmp(&my_charset_latin1, hash_tables->db, tables->db)) &&
-          ! my_strcasecmp(&my_charset_latin1, hash_tables->table_name,
+          ! my_strcasecmp(&my_charset_utf8_general_ci, hash_tables->db, tables->db)) &&
+          ! my_strcasecmp(&my_charset_utf8_general_ci, hash_tables->table_name,
                           tables->table_name))
         break;
     }

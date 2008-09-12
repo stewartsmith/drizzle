@@ -443,9 +443,9 @@ bool parse_date_time_format(timestamp_type format_type,
       allow_separator= 0;			// Don't allow two separators
       separators++;
       /* Store in separator_map which parts are punct characters */
-      if (my_ispunct(&my_charset_latin1, *ptr))
+      if (my_ispunct(&my_charset_utf8_general_ci, *ptr))
 	separator_map|= (ulong) 1 << (offset-1);
-      else if (!my_isspace(&my_charset_latin1, *ptr))
+      else if (!my_isspace(&my_charset_utf8_general_ci, *ptr))
 	return 1;
     }
   }
@@ -720,7 +720,7 @@ void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level le
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];
   const char *type_str;
-  CHARSET_INFO *cs= &my_charset_latin1;
+  CHARSET_INFO *cs= &my_charset_utf8_general_ci;
   char buff[128];
   String str(buff,(uint32_t) sizeof(buff), system_charset_info);
   str.copy(str_val, str_length, system_charset_info);

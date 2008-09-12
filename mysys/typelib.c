@@ -83,8 +83,8 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
   {
     for (i=x ; 
     	*i && (!(full_name & 8) || *i != field_separator) &&
-        my_toupper(&my_charset_latin1,*i) == 
-    		my_toupper(&my_charset_latin1,*j) ; i++, j++) ;
+        my_toupper(&my_charset_utf8_general_ci,*i) == 
+    		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
     if (! *j)
     {
       while (*i == ' ')
@@ -99,7 +99,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
       findpos=pos;
     }
   }
-  if (find == 0 && (full_name & 4) && x[0] == '#' && strend(x)[-1] == '#' &&
+  if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
       (findpos=atoi(x+1)-1) >= 0 && (uint) findpos < typelib->count)
     find=1;
   else if (find == 0 || ! x[0])

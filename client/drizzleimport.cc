@@ -57,7 +57,7 @@ static char  *opt_password=0, *current_user=0,
 static uint     opt_drizzle_port= 0, opt_protocol= 0;
 static char * opt_drizzle_unix_port=0;
 static int64_t opt_ignore_lines= -1;
-static const CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 static struct my_option my_long_options[] =
 {
@@ -292,7 +292,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   sprintf(sql_statement, "LOAD DATA %s %s INFILE '%s'",
     opt_low_priority ? "LOW_PRIORITY" : "",
     opt_local_file ? "LOCAL" : "", hard_path);
-  end= strend(sql_statement);
+  end= strchr(sql_statement, '\0');
   if (opt_replace)
     end= stpcpy(end, " REPLACE");
   if (ignore)

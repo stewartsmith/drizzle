@@ -118,7 +118,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   /* MY_DIR structure is allocated and completly initialized at this point */
   result= (MY_DIR*)buffer;
 
-  tmp_file=strend(tmp_path);
+  tmp_file= strchr(tmp_path, '\0');
 
   dp= (struct dirent*) dirent_tmp;
   

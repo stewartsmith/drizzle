@@ -1140,7 +1140,7 @@ static int find_uniq_filename(char *name)
 
   length= dirname_part(buff, name, &buf_length);
   start=  name + length;
-  end=    strend(start);
+  end= strchr(start, '\0');
 
   *end='.';
   length= (size_t) (end-start+1);

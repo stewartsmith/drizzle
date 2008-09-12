@@ -2102,7 +2102,7 @@ String *Item_func_charset::val_str(String *str)
   const CHARSET_INFO * const cs= args[0]->collation.collation; 
   null_value= 0;
   str->copy(cs->csname, strlen(cs->csname),
-	    &my_charset_latin1, collation.collation, &dummy_errors);
+	    &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
   return str;
 }
 
@@ -2114,7 +2114,7 @@ String *Item_func_collation::val_str(String *str)
 
   null_value= 0;
   str->copy(cs->name, strlen(cs->name),
-	    &my_charset_latin1, collation.collation, &dummy_errors);
+	    &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
   return str;
 }
 

@@ -1,21 +1,22 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Team
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-   original idea: Brian Aker via playing with ab for too many years
-   coded by: Patrick Galbraith
-*/
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /*
@@ -26,7 +27,7 @@
 
   Drizzle slap runs three stages:
   1) Create schema,table, and optionally any SP or data you want to beign
-     the test with. (single client)
+  the test with. (single client)
   2) Load test (many clients)
   3) Cleanup (disconnection, drop table if specified, single client)
 
@@ -35,18 +36,18 @@
   Supply your own create and query SQL statements, with 50 clients
   querying (200 selects for each):
 
-    drizzleslap --delimiter=";" \
-              --create="CREATE TABLE A (a int);INSERT INTO A VALUES (23)" \
-              --query="SELECT * FROM A" --concurrency=50 --iterations=200
+  drizzleslap --delimiter=";" \
+  --create="CREATE TABLE A (a int);INSERT INTO A VALUES (23)" \
+  --query="SELECT * FROM A" --concurrency=50 --iterations=200
 
   Let the program build the query SQL statement with a table of two int
   columns, three varchar columns, five clients querying (20 times each),
   don't create the table or insert the data (using the previous test's
   schema and data):
 
-    drizzleslap --concurrency=5 --iterations=20 \
-              --number-int-cols=2 --number-char-cols=3 \
-              --auto-generate-sql
+  drizzleslap --concurrency=5 --iterations=20 \
+  --number-int-cols=2 --number-char-cols=3 \
+  --auto-generate-sql
 
   Tell the program to load the create, insert and query SQL statements from
   the specified files, where the create.sql file has multiple table creation
@@ -55,14 +56,14 @@
   load statements, and then run all the queries in the query file
   with five clients (five times each):
 
-    drizzleslap --concurrency=5 \
-              --iterations=5 --query=query.sql --create=create.sql \
-              --delimiter=";"
+  drizzleslap --concurrency=5 \
+  --iterations=5 --query=query.sql --create=create.sql \
+  --delimiter=";"
 
-TODO:
+  TODO:
   Add language for better tests
   String length for files and those put on the command line are not
-    setup to handle binary data.
+  setup to handle binary data.
   More stats
   Break up tests and run them on multiple hosts at once.
   Allow output to be fed into a database directly.
@@ -81,6 +82,7 @@ TODO:
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <string>
 
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
@@ -105,17 +107,17 @@ char **primary_keys;
 unsigned long long primary_keys_number_of;
 
 static char *host= NULL, *opt_password= NULL, *user= NULL,
-            *user_supplied_query= NULL,
-            *user_supplied_pre_statements= NULL,
-            *user_supplied_post_statements= NULL,
-            *default_engine= NULL,
-            *pre_system= NULL,
-            *post_system= NULL,
-            *opt_drizzle_unix_port= NULL;
+  *user_supplied_query= NULL,
+  *user_supplied_pre_statements= NULL,
+  *user_supplied_post_statements= NULL,
+  *default_engine= NULL,
+  *pre_system= NULL,
+  *post_system= NULL,
+  *opt_drizzle_unix_port= NULL;
 
 const char *delimiter= "\n";
 
-const char *create_schema_string= "mysqlslap";
+const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
 static bool debug_info_flag= 0, debug_check_flag= 0;
@@ -123,14 +125,14 @@ static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
 static bool opt_compress= false, tty_password= false,
-               opt_silent= false,
-               auto_generate_sql_autoincrement= false,
-               auto_generate_sql_guid_primary= false,
-               auto_generate_sql= false;
+  opt_silent= false,
+  auto_generate_sql_autoincrement= false,
+  auto_generate_sql_guid_primary= false,
+  auto_generate_sql= false;
 const char *opt_auto_generate_sql_type= "mixed";
 
 static unsigned long connect_flags= CLIENT_MULTI_RESULTS |
-                                    CLIENT_MULTI_STATEMENTS;
+  CLIENT_MULTI_STATEMENTS;
 
 static int verbose, delimiter_length;
 static uint commit_rate;
@@ -167,7 +169,7 @@ const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
 
-const char *default_dbug_option="d:t:o,/tmp/mysqlslap.trace";
+const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
@@ -176,7 +178,7 @@ static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
 
-static const char *load_default_groups[]= { "mysqlslap","client",0 };
+static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
 /* Types */
 typedef enum {
@@ -291,20 +293,20 @@ static int run_query(DRIZZLE *drizzle, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
 
 static const char ALPHANUMERICS[]=
-  "0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
+"0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
 
 #define ALPHANUMERICS_SIZE (sizeof(ALPHANUMERICS)-1)
 
 
 static long int timedif(struct timeval a, struct timeval b)
 {
-    register int us, s;
+  register int us, s;
 
-    us = a.tv_usec - b.tv_usec;
-    us /= 1000;
-    s = a.tv_sec - b.tv_sec;
-    s *= 1000;
-    return s + us;
+  us = a.tv_usec - b.tv_usec;
+  us /= 1000;
+  s = a.tv_sec - b.tv_sec;
+  s *= 1000;
+  return s + us;
 }
 
 int main(int argc, char **argv)
@@ -318,7 +320,7 @@ int main(int argc, char **argv)
   MY_INIT(argv[0]);
 
   if (!(drizzle_thread_safe()))
-      fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
+    fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
 
   load_defaults("my",load_default_groups,&argc,&argv);
   defaults_argv=argv;
@@ -387,7 +389,7 @@ burnin:
       drop_schema(&drizzle, create_schema_string);
 
   } while (eptr ? (eptr= eptr->next) : 0);
- 
+
   if (opt_burnin)
     goto burnin;
 
@@ -482,7 +484,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
       run_statements(drizzle, pre_statements);
 
     run_scheduler(sptr, query_statements, current, client_limit);
-   
+
     if (post_statements)
       run_statements(drizzle, post_statements);
 
@@ -512,189 +514,189 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
 static struct my_option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG,
-    0, 0, 0, 0, 0, 0},
+   0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-select-columns", OPT_SLAP_AUTO_GENERATE_SELECT_COLUMNS,
-    "Provide a string to use for the select fields used in auto tests.",
-    (char**) &auto_generate_selected_columns_opt,
-    (char**) &auto_generate_selected_columns_opt,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Provide a string to use for the select fields used in auto tests.",
+   (char**) &auto_generate_selected_columns_opt,
+   (char**) &auto_generate_selected_columns_opt,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql", 'a',
-    "Generate SQL where not supplied by file or command line.",
-    (char**) &auto_generate_sql, (char**) &auto_generate_sql,
-    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   "Generate SQL where not supplied by file or command line.",
+   (char**) &auto_generate_sql, (char**) &auto_generate_sql,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-add-autoincrement", OPT_SLAP_AUTO_GENERATE_ADD_AUTO,
-    "Add an AUTO_INCREMENT column to auto-generated tables.",
-    (char**) &auto_generate_sql_autoincrement,
-    (char**) &auto_generate_sql_autoincrement,
-    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   "Add an AUTO_INCREMENT column to auto-generated tables.",
+   (char**) &auto_generate_sql_autoincrement,
+   (char**) &auto_generate_sql_autoincrement,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-execute-number", OPT_SLAP_AUTO_GENERATE_EXECUTE_QUERIES,
-    "Set this number to generate a set number of queries to run.",
-    (char**) &auto_actual_queries, (char**) &auto_actual_queries,
-    0, GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Set this number to generate a set number of queries to run.",
+   (char**) &auto_actual_queries, (char**) &auto_actual_queries,
+   0, GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-guid-primary", OPT_SLAP_AUTO_GENERATE_GUID_PRIMARY,
-    "Add GUID based primary keys to auto-generated tables.",
-    (char**) &auto_generate_sql_guid_primary,
-    (char**) &auto_generate_sql_guid_primary,
-    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   "Add GUID based primary keys to auto-generated tables.",
+   (char**) &auto_generate_sql_guid_primary,
+   (char**) &auto_generate_sql_guid_primary,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-load-type", OPT_SLAP_AUTO_GENERATE_SQL_LOAD_TYPE,
-    "Specify test load type: mixed, update, write, key, or read; default is mixed.",
-    (char**) &opt_auto_generate_sql_type, (char**) &opt_auto_generate_sql_type,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Specify test load type: mixed, update, write, key, or read; default is mixed.",
+   (char**) &opt_auto_generate_sql_type, (char**) &opt_auto_generate_sql_type,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-secondary-indexes",
-    OPT_SLAP_AUTO_GENERATE_SECONDARY_INDEXES,
-    "Number of secondary indexes to add to auto-generated tables.",
-    (char**) &auto_generate_sql_secondary_indexes,
-    (char**) &auto_generate_sql_secondary_indexes, 0,
-    GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   OPT_SLAP_AUTO_GENERATE_SECONDARY_INDEXES,
+   "Number of secondary indexes to add to auto-generated tables.",
+   (char**) &auto_generate_sql_secondary_indexes,
+   (char**) &auto_generate_sql_secondary_indexes, 0,
+   GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-unique-query-number",
-    OPT_SLAP_AUTO_GENERATE_UNIQUE_QUERY_NUM,
-    "Number of unique queries to generate for automatic tests.",
-    (char**) &auto_generate_sql_unique_query_number,
-    (char**) &auto_generate_sql_unique_query_number,
-    0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
+   OPT_SLAP_AUTO_GENERATE_UNIQUE_QUERY_NUM,
+   "Number of unique queries to generate for automatic tests.",
+   (char**) &auto_generate_sql_unique_query_number,
+   (char**) &auto_generate_sql_unique_query_number,
+   0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
   {"auto-generate-sql-unique-write-number",
-    OPT_SLAP_AUTO_GENERATE_UNIQUE_WRITE_NUM,
-    "Number of unique queries to generate for auto-generate-sql-write-number.",
-    (char**) &auto_generate_sql_unique_write_number,
-    (char**) &auto_generate_sql_unique_write_number,
-    0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
+   OPT_SLAP_AUTO_GENERATE_UNIQUE_WRITE_NUM,
+   "Number of unique queries to generate for auto-generate-sql-write-number.",
+   (char**) &auto_generate_sql_unique_write_number,
+   (char**) &auto_generate_sql_unique_write_number,
+   0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
   {"auto-generate-sql-write-number", OPT_SLAP_AUTO_GENERATE_WRITE_NUM,
-    "Number of row inserts to perform for each thread (default is 100).",
-    (char**) &auto_generate_sql_number, (char**) &auto_generate_sql_number,
-    0, GET_ULL, REQUIRED_ARG, 100, 0, 0, 0, 0, 0},
+   "Number of row inserts to perform for each thread (default is 100).",
+   (char**) &auto_generate_sql_number, (char**) &auto_generate_sql_number,
+   0, GET_ULL, REQUIRED_ARG, 100, 0, 0, 0, 0, 0},
   {"burnin", OPT_SLAP_BURNIN, "Run full test case in infinite loop.",
-    (char**) &opt_burnin, (char**) &opt_burnin, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-    0, 0, 0},
+   (char**) &opt_burnin, (char**) &opt_burnin, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"ignore-sql-errors", OPT_SLAP_IGNORE_SQL_ERRORS,
-    "Ignore SQL erros in query run.",
-    (char**) &opt_ignore_sql_errors,
-    (char**) &opt_ignore_sql_errors,
-    0, GET_BOOL, NO_ARG, 0, 0, 0,
-    0, 0, 0},
+   "Ignore SQL erros in query run.",
+   (char**) &opt_ignore_sql_errors,
+   (char**) &opt_ignore_sql_errors,
+   0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"commit", OPT_SLAP_COMMIT, "Commit records every X number of statements.",
-    (char**) &commit_rate, (char**) &commit_rate, 0, GET_UINT, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   (char**) &commit_rate, (char**) &commit_rate, 0, GET_UINT, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"compress", 'C', "Use compression in server/client protocol.",
-    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-    0, 0, 0},
+   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"concurrency", 'c', "Number of clients to simulate for query to run.",
-    (char**) &concurrency_str, (char**) &concurrency_str, 0, GET_STR,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &concurrency_str, (char**) &concurrency_str, 0, GET_STR,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"create", OPT_SLAP_CREATE_STRING, "File or string to use create tables.",
-    (char**) &create_string, (char**) &create_string, 0, GET_STR, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   (char**) &create_string, (char**) &create_string, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"create-schema", OPT_CREATE_SLAP_SCHEMA, "Schema to run tests in.",
-    (char**) &create_schema_string, (char**) &create_schema_string, 0, GET_STR,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &create_schema_string, (char**) &create_schema_string, 0, GET_STR,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"csv", OPT_SLAP_CSV,
-  "Generate CSV output to named file or to stdout if no file is named.",
-    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
-    OPT_ARG, 0, 0, 0, 0, 0, 0},
+   "Generate CSV output to named file or to stdout if no file is named.",
+   (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
+   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
+    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
-   (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-start", OPT_SLAP_DELAYED_START,
-    "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
-    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
+   (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delimiter", 'F',
-    "Delimiter to use in SQL statements supplied in file or command line.",
-    (char**) &delimiter, (char**) &delimiter, 0, GET_STR, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   "Delimiter to use in SQL statements supplied in file or command line.",
+   (char**) &delimiter, (char**) &delimiter, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"detach", OPT_SLAP_DETACH,
-    "Detach (close and reopen) connections after X number of requests.",
-    (char**) &detach_rate, (char**) &detach_rate, 0, GET_UINT, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   "Detach (close and reopen) connections after X number of requests.",
+   (char**) &detach_rate, (char**) &detach_rate, 0, GET_UINT, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"engine", 'e', "Storage engine to use for creating the table.",
-    (char**) &default_engine, (char**) &default_engine, 0,
-    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &default_engine, (char**) &default_engine, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &host, (char**) &host, 0, GET_STR,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"iterations", 'i', "Number of times to run the tests.", (char**) &iterations,
-    (char**) &iterations, 0, GET_UINT, REQUIRED_ARG, 1, 0, 0, 0, 0, 0},
+   (char**) &iterations, 0, GET_UINT, REQUIRED_ARG, 1, 0, 0, 0, 0, 0},
   {"label", OPT_SLAP_LABEL, "Label to use for print and csv output.",
-    (char**) &opt_label, (char**) &opt_label, 0,
-    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_label, (char**) &opt_label, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"number-blob-cols", OPT_SLAP_BLOB_COL,
-    "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ",
-    (char**) &num_blob_cols_opt, (char**) &num_blob_cols_opt, 0, GET_STR, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ",
+   (char**) &num_blob_cols_opt, (char**) &num_blob_cols_opt, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"number-char-cols", 'x',
-    "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.",
-    (char**) &num_char_cols_opt, (char**) &num_char_cols_opt, 0, GET_STR, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.",
+   (char**) &num_char_cols_opt, (char**) &num_char_cols_opt, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"number-int-cols", 'y',
-    "Number of INT columns to create in table if specifying --auto-generate-sql.",
-    (char**) &num_int_cols_opt, (char**) &num_int_cols_opt, 0, GET_STR, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   "Number of INT columns to create in table if specifying --auto-generate-sql.",
+   (char**) &num_int_cols_opt, (char**) &num_int_cols_opt, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"number-of-queries", OPT_DRIZZLE_NUMBER_OF_QUERY,
-    "Limit each client to this number of queries (this is not exact).",
-    (char**) &num_of_query, (char**) &num_of_query, 0,
-    GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Limit each client to this number of queries (this is not exact).",
+   (char**) &num_of_query, (char**) &num_of_query, 0,
+   GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"only-print", OPT_DRIZZLE_ONLY_PRINT,
-    "This causes drizzleslap to not connect to the databases, but instead print "
-      "out what it would have done instead.",
-    (char**) &opt_only_print, (char**) &opt_only_print, 0, GET_BOOL,  NO_ARG,
-    0, 0, 0, 0, 0, 0},
+   "This causes drizzleslap to not connect to the databases, but instead print "
+   "out what it would have done instead.",
+   (char**) &opt_only_print, (char**) &opt_only_print, 0, GET_BOOL,  NO_ARG,
+   0, 0, 0, 0, 0, 0},
   {"password", 'p',
-    "Password to use when connecting to server. If password is not given it's "
-      "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
+   "Password to use when connecting to server. If password is not given it's "
+   "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
-    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
-    0},
+   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
+   0},
   {"post-query", OPT_SLAP_POST_QUERY,
-    "Query to run or file containing query to execute after tests have completed.",
-    (char**) &user_supplied_post_statements,
-    (char**) &user_supplied_post_statements,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Query to run or file containing query to execute after tests have completed.",
+   (char**) &user_supplied_post_statements,
+   (char**) &user_supplied_post_statements,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"post-system", OPT_SLAP_POST_SYSTEM,
-    "system() string to execute after tests have completed.",
-    (char**) &post_system,
-    (char**) &post_system,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "system() string to execute after tests have completed.",
+   (char**) &post_system,
+   (char**) &post_system,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"pre-query", OPT_SLAP_PRE_QUERY,
-    "Query to run or file containing query to execute before running tests.",
-    (char**) &user_supplied_pre_statements,
-    (char**) &user_supplied_pre_statements,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Query to run or file containing query to execute before running tests.",
+   (char**) &user_supplied_pre_statements,
+   (char**) &user_supplied_pre_statements,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"pre-system", OPT_SLAP_PRE_SYSTEM,
-    "system() string to execute before running tests.",
-    (char**) &pre_system,
-    (char**) &pre_system,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "system() string to execute before running tests.",
+   (char**) &pre_system,
+   (char**) &pre_system,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"protocol", OPT_DRIZZLE_PROTOCOL,
-    "The protocol of connection (tcp,socket,pipe,memory).",
-    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "The protocol of connection (tcp,socket,pipe,memory).",
+   0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"query", 'q', "Query to run or file containing query to run.",
-    (char**) &user_supplied_query, (char**) &user_supplied_query,
-    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &user_supplied_query, (char**) &user_supplied_query,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"set-random-seed", OPT_SLAP_SET_RANDOM_SEED,
-    "Seed for random number generator (srandom(3))",
-    (char**)&opt_set_random_seed,
-    (char**)&opt_set_random_seed,0,
-    GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Seed for random number generator (srandom(3))",
+   (char**)&opt_set_random_seed,
+   (char**)&opt_set_random_seed,0,
+   GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Run program in silent mode - no output.",
-    (char**) &opt_silent, (char**) &opt_silent, 0, GET_BOOL,  NO_ARG,
-    0, 0, 0, 0, 0, 0},
+   (char**) &opt_silent, (char**) &opt_silent, 0, GET_BOOL,  NO_ARG,
+   0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-    (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"timer-length", OPT_SLAP_TIMER_LENGTH,
-    "Require drizzleslap to run each specific test a certain amount of time in seconds.",
-    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Require drizzleslap to run each specific test a certain amount of time in seconds.",
+   (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &user,
-    (char**) &user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"verbose", 'v',
-    "More verbose output; you can use this multiple times to get even more "
-      "verbose output.", (char**) &verbose, (char**) &verbose, 0,
-      GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   "More verbose output; you can use this multiple times to get even more "
+   "verbose output.", (char**) &verbose, (char**) &verbose, 0,
+   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -779,26 +781,26 @@ build_table_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING table_string;
+  string table_string;
 
-  init_dynamic_string(&table_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
+  table_string.reserve(HUGE_STRING_LENGTH);
 
-  dynstr_append(&table_string, "CREATE TABLE `t1` (");
+  table_string= "CREATE TABLE `t1` (";
 
   if (auto_generate_sql_autoincrement)
   {
-    dynstr_append(&table_string, "id serial");
+    table_string.append("id serial");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (auto_generate_sql_guid_primary)
   {
-    dynstr_append(&table_string, "id varchar(128) primary key");
+    table_string.append("id varchar(128) primary key");
 
     if (num_int_cols || num_char_cols || auto_generate_sql_guid_primary)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (auto_generate_sql_secondary_indexes)
@@ -808,7 +810,7 @@ build_table_string(void)
     for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
       if (count) /* Except for the first pass we add a comma */
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
 
       if (snprintf(buf, HUGE_STRING_LENGTH, "id%d varchar(32) unique key", count)
           > HUGE_STRING_LENGTH)
@@ -816,11 +818,11 @@ build_table_string(void)
         fprintf(stderr, "Memory Allocation error in create table\n");
         exit(1);
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
     }
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&table_string, ",");
+      table_string.append(",");
   }
 
   if (num_int_cols)
@@ -844,10 +846,10 @@ build_table_string(void)
           exit(1);
         }
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
   if (num_char_cols)
@@ -872,10 +874,10 @@ build_table_string(void)
           exit(1);
         }
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
   if (num_blob_cols)
@@ -887,21 +889,20 @@ build_table_string(void)
         fprintf(stderr, "Memory Allocation error in creating table\n");
         exit(1);
       }
-      dynstr_append(&table_string, buf);
+      table_string.append(buf);
 
       if (col_count < num_blob_cols)
-        dynstr_append(&table_string, ",");
+        table_string.append(",");
     }
 
-  dynstr_append(&table_string, ")");
+  table_string.append(")");
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string = (char *)my_malloc(table_string.length+1,
+  ptr->string = (char *)my_malloc(table_string.length()+1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= table_string.length+1;
+  ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
-  stpcpy(ptr->string, table_string.str);
-  dynstr_free(&table_string);
+  stpcpy(ptr->string, table_string.c_str());
   return(ptr);
 }
 
@@ -917,12 +918,11 @@ build_update_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING update_string;
+  string update_string;
 
+  update_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&update_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append(&update_string, "UPDATE t1 SET ");
+  update_string= "UPDATE t1 SET ";
 
   if (num_int_cols)
     for (col_count= 1; col_count <= num_int_cols; col_count++)
@@ -933,10 +933,10 @@ build_update_string(void)
         fprintf(stderr, "Memory Allocation error in creating update\n");
         exit(1);
       }
-      dynstr_append(&update_string, buf);
+      update_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&update_string, ",", 1);
+        update_string.append(",", 1);
     }
 
   if (num_char_cols)
@@ -952,28 +952,27 @@ build_update_string(void)
         fprintf(stderr, "Memory Allocation error in creating update\n");
         exit(1);
       }
-      dynstr_append(&update_string, buf);
+      update_string.append(buf);
 
       if (col_count < num_char_cols)
-        dynstr_append_mem(&update_string, ",", 1);
+        update_string.append(",", 1);
     }
 
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-    dynstr_append(&update_string, " WHERE id = ");
+    update_string.append(" WHERE id = ");
 
 
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
-  ptr->string= (char *)my_malloc(update_string.length + 1,
-                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= update_string.length+1;
+  ptr->string= (char *)my_malloc(update_string.length() + 1,
+                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr->length= update_string.length()+1;
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  stpcpy(ptr->string, update_string.str);
-  dynstr_free(&update_string);
+  stpcpy(ptr->string, update_string.c_str());
   return(ptr);
 }
 
@@ -990,27 +989,26 @@ build_insert_string(void)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  DYNAMIC_STRING insert_string;
+  string insert_string;
 
+  insert_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&insert_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append(&insert_string, "INSERT INTO t1 VALUES (");
+  insert_string= "INSERT INTO t1 VALUES (";
 
   if (auto_generate_sql_autoincrement)
   {
-    dynstr_append(&insert_string, "NULL");
+    insert_string.append("NULL");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (auto_generate_sql_guid_primary)
   {
-    dynstr_append(&insert_string, "uuid()");
+    insert_string.append("uuid()");
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (auto_generate_sql_secondary_indexes)
@@ -1020,13 +1018,13 @@ build_insert_string(void)
     for (count= 0; count < auto_generate_sql_secondary_indexes; count++)
     {
       if (count) /* Except for the first pass we add a comma */
-        dynstr_append(&insert_string, ",");
+        insert_string.append(",");
 
-      dynstr_append(&insert_string, "uuid()");
+      insert_string.append("uuid()");
     }
 
     if (num_int_cols || num_char_cols)
-      dynstr_append(&insert_string, ",");
+      insert_string.append(",");
   }
 
   if (num_int_cols)
@@ -1037,22 +1035,22 @@ build_insert_string(void)
         fprintf(stderr, "Memory Allocation error in creating insert\n");
         exit(1);
       }
-      dynstr_append(&insert_string, buf);
+      insert_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",");
     }
 
   if (num_char_cols)
     for (col_count= 1; col_count <= num_char_cols; col_count++)
     {
       int buf_len= get_random_string(buf, RAND_STRING_SIZE);
-      dynstr_append_mem(&insert_string, "'", 1);
-      dynstr_append_mem(&insert_string, buf, buf_len);
-      dynstr_append_mem(&insert_string, "'", 1);
+      insert_string.append("'", 1);
+      insert_string.append(buf, buf_len);
+      insert_string.append("'", 1);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",", 1);
     }
 
   if (num_blob_cols)
@@ -1062,7 +1060,7 @@ build_insert_string(void)
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
     {
       blob_ptr= (char *)my_malloc(sizeof(char)*num_blob_cols_size,
-                             MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+                                  MYF(MY_ZEROFILL|MY_FAE|MY_WME));
       if (!blob_ptr)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
@@ -1081,39 +1079,37 @@ build_insert_string(void)
       unsigned int difference= num_blob_cols_size - num_blob_cols_size_min;
 
       size= difference ? (num_blob_cols_size_min + (random() % difference)) :
-                          num_blob_cols_size;
+        num_blob_cols_size;
 
       buf_len= get_random_string(blob_ptr, size);
 
-      dynstr_append_mem(&insert_string, "'", 1);
-      dynstr_append_mem(&insert_string, blob_ptr, buf_len);
-      dynstr_append_mem(&insert_string, "'", 1);
+      insert_string.append("'", 1);
+      insert_string.append(blob_ptr, buf_len);
+      insert_string.append("'", 1);
 
       if (col_count < num_blob_cols)
-        dynstr_append_mem(&insert_string, ",", 1);
+        insert_string.append(",", 1);
     }
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
       my_free(blob_ptr, MYF(0));
   }
 
-  dynstr_append_mem(&insert_string, ")", 1);
+  insert_string.append(")", 1);
 
   if (!(ptr= (statement *)my_malloc(sizeof(statement), MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  if (!(ptr->string= (char *)my_malloc(insert_string.length + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
+  if (!(ptr->string= (char *)my_malloc(insert_string.length() + 1, MYF(MY_ZEROFILL|MY_FAE|MY_WME))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  ptr->length= insert_string.length+1;
+  ptr->length= insert_string.length()+1;
   ptr->type= INSERT_TYPE;
-  stpcpy(ptr->string, insert_string.str);
-  dynstr_free(&insert_string);
-
+  stpcpy(ptr->string, insert_string.c_str());
   return(ptr);
 }
 
@@ -1130,15 +1126,14 @@ build_select_string(bool key)
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
-  static DYNAMIC_STRING query_string;
+  string query_string;
 
+  query_string.reserve(HUGE_STRING_LENGTH);
 
-  init_dynamic_string(&query_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
-
-  dynstr_append_mem(&query_string, "SELECT ", 7);
+  query_string.append("SELECT ", 7);
   if (auto_generate_selected_columns_opt)
   {
-    dynstr_append(&query_string, auto_generate_selected_columns_opt);
+    query_string.append(auto_generate_selected_columns_opt);
   }
   else
   {
@@ -1150,10 +1145,10 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_int_cols || num_char_cols > 0)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
 
     }
     for (col_count= 1; col_count <= num_char_cols; col_count++)
@@ -1164,10 +1159,10 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_char_cols || num_blob_cols > 0)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
 
     }
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
@@ -1178,30 +1173,29 @@ build_select_string(bool key)
         fprintf(stderr, "Memory Allocation error in creating select\n");
         exit(1);
       }
-      dynstr_append(&query_string, buf);
+      query_string.append(buf);
 
       if (col_count < num_blob_cols)
-        dynstr_append_mem(&query_string, ",", 1);
+        query_string.append(",", 1);
     }
   }
-  dynstr_append(&query_string, " FROM t1");
+  query_string.append(" FROM t1");
 
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
-    dynstr_append(&query_string, " WHERE id = ");
+    query_string.append(" WHERE id = ");
 
   ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->string= (char *)my_malloc(query_string.length + 1,
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-  ptr->length= query_string.length+1;
+  ptr->string= (char *)my_malloc(query_string.length() + 1,
+                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+  ptr->length= query_string.length()+1;
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
     ptr->type= SELECT_TYPE;
-  stpcpy(ptr->string, query_string.str);
-  dynstr_free(&query_string);
+  stpcpy(ptr->string, query_string.c_str());
   return(ptr);
 }
 
@@ -1231,27 +1225,27 @@ get_options(int *argc,char ***argv)
 
   if (auto_generate_sql && (create_string || user_supplied_query))
   {
-      fprintf(stderr,
-              "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
-              my_progname);
-      exit(1);
+    fprintf(stderr,
+            "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
+            my_progname);
+    exit(1);
   }
 
   if (auto_generate_sql && auto_generate_sql_guid_primary &&
       auto_generate_sql_autoincrement)
   {
-      fprintf(stderr,
-              "%s: Either auto-generate-sql-guid-primary or auto-generate-sql-add-autoincrement can be used!\n",
-              my_progname);
-      exit(1);
+    fprintf(stderr,
+            "%s: Either auto-generate-sql-guid-primary or auto-generate-sql-add-autoincrement can be used!\n",
+            my_progname);
+    exit(1);
   }
 
   if (auto_generate_sql && num_of_query && auto_actual_queries)
   {
-      fprintf(stderr,
-              "%s: Either auto-generate-sql-execute-number or number-of-queries can be used!\n",
-              my_progname);
-      exit(1);
+    fprintf(stderr,
+            "%s: Either auto-generate-sql-execute-number or number-of-queries can be used!\n",
+            my_progname);
+    exit(1);
   }
 
   parse_comma(concurrency_str ? concurrency_str : "1", &concurrency);
@@ -1259,7 +1253,7 @@ get_options(int *argc,char ***argv)
   if (opt_csv_str)
   {
     opt_silent= true;
-   
+
     if (opt_csv_str[0] == '-')
     {
       csv_file= fileno(stdout);
@@ -1479,7 +1473,7 @@ get_options(int *argc,char ***argv)
         exit(1);
       }
       tmp_string= (char *)my_malloc(sbuf.st_size + 1,
-                              MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+                                    MYF(MY_ZEROFILL|MY_FAE|MY_WME));
       my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
@@ -1488,7 +1482,7 @@ get_options(int *argc,char ***argv)
     }
     else if (create_string)
     {
-        parse_delimiter(create_string, &create_statements, delimiter[0]);
+      parse_delimiter(create_string, &create_statements, delimiter[0]);
     }
 
     /* Set this up till we fully support options on user generated queries */
@@ -1639,7 +1633,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
     primary_keys_number_of= 1;
     primary_keys= (char **)my_malloc((uint)(sizeof(char *) *
                                             primary_keys_number_of),
-                                    MYF(MY_ZEROFILL|MY_FAE|MY_WME));
+                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
     /* Yes, we strdup a const string to simplify the interface */
     primary_keys[0]= my_strdup("796c4422-1d94-102a-9d6d-00e0812d", MYF(0));
   }
@@ -1867,7 +1861,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr,
-      PTHREAD_CREATE_DETACHED);
+                              PTHREAD_CREATE_DETACHED);
 
   pthread_mutex_lock(&counter_mutex);
   thread_counter= 0;
@@ -2038,98 +2032,98 @@ pthread_handler_t run_task(void *p)
     run_query(&drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
 limit_not_met:
-    for (ptr= con->stmt, detach_counter= 0;
-         ptr && ptr->length;
-         ptr= ptr->next, detach_counter++)
+  for (ptr= con->stmt, detach_counter= 0;
+       ptr && ptr->length;
+       ptr= ptr->next, detach_counter++)
+  {
+    if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
     {
-      if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
-      {
-        slap_close(&drizzle);
-        slap_connect(&drizzle, true);
-      }
+      slap_close(&drizzle);
+      slap_connect(&drizzle, true);
+    }
+
+    /*
+      We have to execute differently based on query type. This should become a function.
+    */
+    if ((ptr->type == UPDATE_TYPE_REQUIRES_PREFIX) ||
+        (ptr->type == SELECT_TYPE_REQUIRES_PREFIX))
+    {
+      int length;
+      unsigned int key_val;
+      char *key;
+      char buffer[HUGE_STRING_LENGTH];
 
       /*
-        We have to execute differently based on query type. This should become a function.
+        This should only happen if some sort of new engine was
+        implemented that didn't properly handle UPDATEs.
+
+        Just in case someone runs this under an experimental engine we don't
+        want a crash so the if() is placed here.
       */
-      if ((ptr->type == UPDATE_TYPE_REQUIRES_PREFIX) ||
-          (ptr->type == SELECT_TYPE_REQUIRES_PREFIX))
+      assert(primary_keys_number_of);
+      if (primary_keys_number_of)
       {
-        int length;
-        unsigned int key_val;
-        char *key;
-        char buffer[HUGE_STRING_LENGTH];
+        key_val= (unsigned int)(random() % primary_keys_number_of);
+        key= primary_keys[key_val];
 
-        /*
-          This should only happen if some sort of new engine was
-          implemented that didn't properly handle UPDATEs.
+        assert(key);
 
-          Just in case someone runs this under an experimental engine we don't
-          want a crash so the if() is placed here.
-        */
-        assert(primary_keys_number_of);
-        if (primary_keys_number_of)
-        {
-          key_val= (unsigned int)(random() % primary_keys_number_of);
-          key= primary_keys[key_val];
+        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
+                         (int)ptr->length, ptr->string, key);
 
-          assert(key);
-
-          length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
-                           (int)ptr->length, ptr->string, key);
-
-          if (run_query(&drizzle, buffer, length))
-          {
-            fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                    my_progname, (uint)length, buffer, drizzle_error(&drizzle));
-            exit(1);
-          }
-        }
-      }
-      else
-      {
-        if (run_query(&drizzle, ptr->string, ptr->length))
+        if (run_query(&drizzle, buffer, length))
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  my_progname, (uint)ptr->length, ptr->string, drizzle_error(&drizzle));
+                  my_progname, (uint)length, buffer, drizzle_error(&drizzle));
           exit(1);
         }
       }
-
-      if (!opt_only_print)
+    }
+    else
+    {
+      if (run_query(&drizzle, ptr->string, ptr->length))
       {
-        do
-        {
-          if (drizzle_field_count(&drizzle))
-          {
-            result= drizzle_store_result(&drizzle);
-            while ((row = drizzle_fetch_row(result)))
-              counter++;
-            drizzle_free_result(result);
-          }
-        } while(drizzle_next_result(&drizzle) == 0);
+        fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
+                my_progname, (uint)ptr->length, ptr->string, drizzle_error(&drizzle));
+        exit(1);
       }
-      queries++;
-
-      if (commit_rate && (++commit_counter == commit_rate))
-      {
-        commit_counter= 0;
-        run_query(&drizzle, "COMMIT", strlen("COMMIT"));
-      }
-
-      /* If the timer is set, and the alarm is not active then end */
-      if (opt_timer_length && timer_alarm == false)
-        goto end;
-
-      /* If limit has been reached, and we are not in a timer_alarm just end */
-      if (con->limit && queries == con->limit && timer_alarm == false)
-        goto end;
     }
 
-    if (opt_timer_length && timer_alarm == true)
-      goto limit_not_met;
+    if (!opt_only_print)
+    {
+      do
+      {
+        if (drizzle_field_count(&drizzle))
+        {
+          result= drizzle_store_result(&drizzle);
+          while ((row = drizzle_fetch_row(result)))
+            counter++;
+          drizzle_free_result(result);
+        }
+      } while(drizzle_next_result(&drizzle) == 0);
+    }
+    queries++;
 
-    if (con->limit && queries < con->limit)
-      goto limit_not_met;
+    if (commit_rate && (++commit_counter == commit_rate))
+    {
+      commit_counter= 0;
+      run_query(&drizzle, "COMMIT", strlen("COMMIT"));
+    }
+
+    /* If the timer is set, and the alarm is not active then end */
+    if (opt_timer_length && timer_alarm == false)
+      goto end;
+
+    /* If limit has been reached, and we are not in a timer_alarm just end */
+    if (con->limit && queries == con->limit && timer_alarm == false)
+      goto end;
+  }
+
+  if (opt_timer_length && timer_alarm == true)
+    goto limit_not_met;
+
+  if (con->limit && queries < con->limit)
+    goto limit_not_met;
 
 
 end:
@@ -2240,7 +2234,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
        (retstr= strchr(ptr, delm));
        tmp->next=  (statement *)my_malloc(sizeof(statement),
                                           MYF(MY_ZEROFILL|MY_FAE|MY_WME)),
-       tmp= tmp->next)
+         tmp= tmp->next)
   {
     count++;
     tmp->string= my_strndup(ptr, (uint)(retstr - ptr), MYF(MY_FAE));
@@ -2253,7 +2247,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   if (ptr != script+length)
   {
     tmp->string= my_strndup(ptr, (uint)((script + length) - ptr),
-                                       MYF(MY_FAE));
+                            MYF(MY_FAE));
     tmp->length= (size_t)((script + length) - ptr);
     count++;
   }
@@ -2277,7 +2271,7 @@ parse_comma(const char *string, uint **range)
 
   for (;*ptr; ptr++)
     if (*ptr == ',') count++;
- 
+
   /* One extra spot for the NULL */
   nptr= *range= (uint *)my_malloc(sizeof(uint) * (count + 1),
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
@@ -2299,7 +2293,7 @@ print_conclusions(conclusions *con)
 {
   printf("Benchmark\n");
   if (con->engine)
-      printf("\tRunning for engine %s\n", con->engine);
+    printf("\tRunning for engine %s\n", con->engine);
   if (opt_label || opt_auto_generate_sql_type)
   {
     const char *ptr= opt_auto_generate_sql_type ? opt_auto_generate_sql_type : "query";
@@ -2374,7 +2368,7 @@ print_conclusions_csv(conclusions *con)
            con->users, /* Children used max_timing */
            con->real_users, /* Children used max_timing */
            con->avg_rows  /* Queries run */
-          );
+           );
   my_write(csv_file, (uchar*) buffer, (uint)strlen(buffer), MYF(0));
 }
 
@@ -2388,12 +2382,12 @@ generate_stats(conclusions *con, option_string *eng, stats *sptr)
   con->max_timing= sptr->timing;
   con->min_rows= sptr->rows;
   con->max_rows= sptr->rows;
- 
+
   /* At the moment we assume uniform */
   con->users= sptr->users;
   con->real_users= sptr->real_users;
   con->avg_rows= sptr->rows;
- 
+
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
@@ -2417,10 +2411,10 @@ generate_stats(conclusions *con, option_string *eng, stats *sptr)
   /* Now we do the create time operations */
   con->create_min_timing= sptr->create_timing;
   con->create_max_timing= sptr->create_timing;
- 
+
   /* At the moment we assume uniform */
   con->create_count= sptr->create_count;
- 
+
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
@@ -2503,10 +2497,10 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
 
 
     if (drizzle_connect(drizzle, host, user, opt_password,
-                           connect_to_schema ? create_schema_string : NULL,
-                           opt_drizzle_port,
-                           opt_drizzle_unix_port,
-                           connect_flags))
+                        connect_to_schema ? create_schema_string : NULL,
+                        opt_drizzle_port,
+                        opt_drizzle_unix_port,
+                        connect_flags))
     {
       /* Connect suceeded */
       connect_error= 0;
@@ -2529,7 +2523,7 @@ standard_deviation (conclusions *con, stats *sptr)
 {
   unsigned int x;
   long int sum_of_squares;
-  double catch;
+  double the_catch;
   stats *ptr;
 
   if (iterations == 1 || iterations == 0)
@@ -2546,6 +2540,6 @@ standard_deviation (conclusions *con, stats *sptr)
     sum_of_squares+= deviation*deviation;
   }
 
-  catch= sqrt((double)(sum_of_squares/(iterations -1)));
-  con->std_dev= (long int)catch;
+  the_catch= sqrt((double)(sum_of_squares/(iterations -1)));
+  con->std_dev= (long int)the_catch;
 }

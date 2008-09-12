@@ -243,7 +243,7 @@ bool my_use_symdir=0;	/* Set this if you want to use symdirs */
 void symdirget(char *dir)
 {
   char buff[FN_REFLEN];
-  char *pos=strend(dir);
+  char *pos= strchr(dir, '\0');
   if (dir[0] && pos[-1] != FN_DEVCHAR && my_access(dir, F_OK))
   {
     File file;
@@ -349,7 +349,7 @@ static char * expand_tilde(char * *path)
     struct passwd *user_entry;
 
     if (!(str=strchr(*path,FN_LIBCHAR)))
-      str=strend(*path);
+      str= strchr(*path, '\0');
     save= *str; *str= '\0';
     user_entry=getpwnam(*path);
     *str=save;

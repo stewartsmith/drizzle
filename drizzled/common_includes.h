@@ -35,10 +35,10 @@
 #include <drizzled/global.h>                    
 /* Server versioning information and defines */
 #include <drizzled/version.h>                   
-/* Lots of system-wide struct definitions like IO_CACHE, DYNAMIC_STRING, prototypes for all my_* functions */
+/* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
 #include <mysys/my_sys.h>                       
 /* Convenience functions for working with times */
-#include <libdrizzle/my_time.h>
+#include <mysys/my_time.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Custom HASH API */
@@ -55,7 +55,7 @@
 #include <mysys/queues.h>
 /* Custom Bitmap API */
 #include <drizzled/sql_bitmap.h>
-/* Custom templatized, type-safe Dynamic_Array API */
+/* Array of pointers to Elem that uses memory from MEM_ROOT */
 #include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"

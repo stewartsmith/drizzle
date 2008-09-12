@@ -173,9 +173,9 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
   *was_cut= 0;
 
   /* Skip space at start */
-  for (; str != end && my_isspace(&my_charset_latin1, *str) ; str++)
+  for (; str != end && my_isspace(&my_charset_utf8_general_ci, *str) ; str++)
     ;
-  if (str == end || ! my_isdigit(&my_charset_latin1, *str))
+  if (str == end || ! my_isdigit(&my_charset_utf8_general_ci, *str))
   {
     *was_cut= 1;
     return(DRIZZLE_TIMESTAMP_NONE);
@@ -191,7 +191,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
     (YYYY-MM-DD,  YYYYMMDD, YYYYYMMDDHHMMSS)
   */
   for (pos=str;
-       pos != end && (my_isdigit(&my_charset_latin1,*pos) || *pos == 'T');
+       pos != end && (my_isdigit(&my_charset_utf8_general_ci,*pos) || *pos == 'T');
        pos++)
     ;
 
@@ -216,9 +216,9 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
         We do this by checking if there is two numbers separated by
         space in the input.
       */
-      while (pos < end && !my_isspace(&my_charset_latin1, *pos))
+      while (pos < end && !my_isspace(&my_charset_utf8_general_ci, *pos))
         pos++;
-      while (pos < end && !my_isdigit(&my_charset_latin1, *pos))
+      while (pos < end && !my_isdigit(&my_charset_utf8_general_ci, *pos))
         pos++;
       if (pos == end)
       {
@@ -252,12 +252,12 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
   not_zero_date= 0;
   for (i = start_loop;
        i < MAX_DATE_PARTS-1 && str != end &&
-         my_isdigit(&my_charset_latin1,*str);
+         my_isdigit(&my_charset_utf8_general_ci,*str);
        i++)
   {
     const char *start= str;
     uint32_t tmp_value= (uint) (uchar) (*str++ - '0');
-    while (str != end && my_isdigit(&my_charset_latin1,str[0]) &&
+    while (str != end && my_isdigit(&my_charset_utf8_general_ci,str[0]) &&
            (!is_internal_format || --field_length))
     {
       tmp_value=tmp_value*10 + (uint32_t) (uchar) (*str - '0');
@@ -296,10 +296,10 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
       continue;
     }
     while (str != end &&
-           (my_ispunct(&my_charset_latin1,*str) ||
-            my_isspace(&my_charset_latin1,*str)))
+           (my_ispunct(&my_charset_utf8_general_ci,*str) ||
+            my_isspace(&my_charset_utf8_general_ci,*str)))
     {
-      if (my_isspace(&my_charset_latin1,*str))
+      if (my_isspace(&my_charset_utf8_general_ci,*str))
       {
         if (!(allow_space & (1 << i)))
         {
@@ -325,7 +325,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
             continue;                           /* Not AM/PM */
           str+= 2;                              /* Skip AM/PM */
           /* Skip space after AM/PM */
-          while (str != end && my_isspace(&my_charset_latin1,*str))
+          while (str != end && my_isspace(&my_charset_utf8_general_ci,*str))
             str++;
         }
       }
@@ -406,7 +406,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
     {
       for (; str != end ; str++)
       {
-        if (!my_isspace(&my_charset_latin1, *str))
+        if (!my_isspace(&my_charset_utf8_general_ci, *str))
         {
           not_zero_date= 1;                     /* Give warning */
           break;
@@ -425,7 +425,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
 
   for (; str != end ; str++)
   {
-    if (!my_isspace(&my_charset_latin1,*str))
+    if (!my_isspace(&my_charset_utf8_general_ci,*str))
     {
       *was_cut= 1;
       break;
@@ -478,7 +478,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
 
   l_time->neg=0;
   *warning= 0;
-  for (; str != end && my_isspace(&my_charset_latin1,*str) ; str++)
+  for (; str != end && my_isspace(&my_charset_utf8_general_ci,*str) ; str++)
     length--;
   if (str != end && *str == '-')
   {
@@ -505,24 +505,24 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   }
 
   /* Not a timestamp. Try to get this as a DAYS_TO_SECOND string */
-  for (value=0; str != end && my_isdigit(&my_charset_latin1,*str) ; str++)
+  for (value=0; str != end && my_isdigit(&my_charset_utf8_general_ci,*str) ; str++)
     value=value*10L + (long) (*str - '0');
 
   /* Skip all space after 'days' */
   end_of_days= str;
-  for (; str != end && my_isspace(&my_charset_latin1, str[0]) ; str++)
+  for (; str != end && my_isspace(&my_charset_utf8_general_ci, str[0]) ; str++)
     ;
 
   found_days=found_hours=0;
   if ((uint) (end-str) > 1 && str != end_of_days &&
-      my_isdigit(&my_charset_latin1, *str))
+      my_isdigit(&my_charset_utf8_general_ci, *str))
   {                                             /* Found days part */
     date[0]= (uint32_t) value;
     state= 1;                                   /* Assume next is hours */
     found_days= 1;
   }
   else if ((end-str) > 1 &&  *str == time_separator &&
-           my_isdigit(&my_charset_latin1, str[1]))
+           my_isdigit(&my_charset_utf8_general_ci, str[1]))
   {
     date[0]= 0;                                 /* Assume we found hours */
     date[1]= (uint32_t) value;
@@ -544,11 +544,11 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   /* Read hours, minutes and seconds */
   for (;;)
   {
-    for (value=0; str != end && my_isdigit(&my_charset_latin1,*str) ; str++)
+    for (value=0; str != end && my_isdigit(&my_charset_utf8_general_ci,*str) ; str++)
       value=value*10L + (long) (*str - '0');
     date[state++]= (uint32_t) value;
     if (state == 4 || (end-str) < 2 || *str != time_separator ||
-        !my_isdigit(&my_charset_latin1,str[1]))
+        !my_isdigit(&my_charset_utf8_general_ci,str[1]))
       break;
     str++;                                      /* Skip time_separator (':') */
   }
@@ -568,11 +568,11 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
 
 fractional:
   /* Get fractional second part */
-  if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_latin1,str[1]))
+  if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_utf8_general_ci,str[1]))
   {
     int field_length= 5;
     str++; value=(uint) (uchar) (*str - '0');
-    while (++str != end && my_isdigit(&my_charset_latin1, *str))
+    while (++str != end && my_isdigit(&my_charset_utf8_general_ci, *str))
     {
       if (field_length-- > 0)
         value= value*10 + (uint) (uchar) (*str - '0');
@@ -590,16 +590,16 @@ fractional:
   /* (may occur as result of %g formatting of time value) */
   if ((end - str) > 1 &&
       (*str == 'e' || *str == 'E') &&
-      (my_isdigit(&my_charset_latin1, str[1]) ||
+      (my_isdigit(&my_charset_utf8_general_ci, str[1]) ||
        ((str[1] == '-' || str[1] == '+') &&
         (end - str) > 2 &&
-        my_isdigit(&my_charset_latin1, str[2]))))
+        my_isdigit(&my_charset_utf8_general_ci, str[2]))))
     return 1;
 
   if (internal_format_positions[7] != 255)
   {
     /* Read a possible AM/PM */
-    while (str != end && my_isspace(&my_charset_latin1, *str))
+    while (str != end && my_isspace(&my_charset_utf8_general_ci, *str))
       str++;
     if (str+2 <= end && (str[1] == 'M' || str[1] == 'm'))
     {
@@ -637,7 +637,7 @@ fractional:
   {
     do
     {
-      if (!my_isspace(&my_charset_latin1,*str))
+      if (!my_isspace(&my_charset_utf8_general_ci,*str))
       {
         *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
         break;

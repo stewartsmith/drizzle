@@ -32,7 +32,7 @@
 
 #include <libdrizzle/gettext.h>
 
-#define log_cs	&my_charset_latin1
+#define log_cs	&my_charset_utf8_general_ci
 
 #define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
 
@@ -333,10 +333,10 @@ static char *slave_load_file_stem(char *buf, uint file_id,
   fn_format(buf,"SQL_LOAD-",slave_load_tmpdir, "", MY_UNPACK_FILENAME);
   to_unix_path(buf);
 
-  buf = strend(buf);
-  buf = int10_to_str(::server_id, buf, 10);
+  buf= strchr(buf, '\0');
+  buf= int10_to_str(::server_id, buf, 10);
   *buf++ = '-';
-  buf = int10_to_str(event_server_id, buf, 10);
+  buf= int10_to_str(event_server_id, buf, 10);
   *buf++ = '-';
   res= int10_to_str(file_id, buf, 10);
   stpcpy(res, ext);                             // Add extension last
@@ -5758,7 +5758,7 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   p+= fn_pos_start;
   fname= (p= strmake(p, STRING_WITH_LEN(" INFILE \'")));
   p= slave_load_file_stem(p, file_id, server_id, ".data");
-  fname_end= p= strend(p);                      // Safer than p=p+5
+  fname_end= p= strchr(p, '\0');                      // Safer than p=p+5
   *(p++)='\'';
   switch (dup_handling) {
   case LOAD_DUP_IGNORE:

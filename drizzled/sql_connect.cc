@@ -184,7 +184,7 @@ void thd_init_client_charset(THD *thd, uint cs_number)
   */
   if (!opt_character_set_client_handshake ||
       !(thd->variables.character_set_client= get_charset(cs_number, MYF(0))) ||
-      !my_strcasecmp(&my_charset_latin1,
+      !my_strcasecmp(&my_charset_utf8_general_ci,
                      global_system_variables.character_set_client->name,
                      thd->variables.character_set_client->name))
   {
@@ -335,7 +335,7 @@ static int check_connection(THD *thd)
     net->return_status= &thd->server_status;
 
   char *user= end;
-  char *passwd= strend(user)+1;
+  char *passwd= strchr(user, '\0')+1;
   uint user_len= passwd - user - 1;
   char *db= passwd;
   char db_buff[NAME_LEN + 1];           // buffer to store db in utf8

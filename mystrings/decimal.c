@@ -803,7 +803,7 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   sanity(to);
 
   error= E_DEC_BAD_NUM;                         /* In case of bad number */
-  while (s < end_of_string && my_isspace(&my_charset_latin1, *s))
+  while (s < end_of_string && my_isspace(&my_charset_utf8_general_ci, *s))
     s++;
   if (s == end_of_string)
     goto fatal_error;
@@ -814,13 +814,13 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
     s++;
 
   s1=s;
-  while (s < end_of_string && my_isdigit(&my_charset_latin1, *s))
+  while (s < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *s))
     s++;
   intg= (int) (s-s1);
   if (s < end_of_string && *s=='.')
   {
     endp= s+1;
-    while (endp < end_of_string && my_isdigit(&my_charset_latin1, *endp))
+    while (endp < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *endp))
       endp++;
     frac= (int) (endp - s - 1);
   }

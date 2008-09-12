@@ -45,6 +45,10 @@ Note	1003	select abs(-(10)) AS `abs(-10)`,sign(-(5)) AS `sign(-5)`,sign(5) AS `s
 select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
 log(exp(10))	exp(log(sqrt(10))*2)	log(-1)	log(NULL)	log(1,1)	log(3,9)	log(-1,2)	log(NULL,2)
 10	10.000000000000002	NULL	NULL	NULL	2	NULL	NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 explain extended select log(exp(10)),exp(log(sqrt(10))*2),log(-1),log(NULL),log(1,1),log(3,9),log(-1,2),log(NULL,2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
@@ -53,6 +57,9 @@ Note	1003	select log(exp(10)) AS `log(exp(10))`,exp((log(sqrt(10)) * 2)) AS `exp
 select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
 ln(exp(10))	exp(ln(sqrt(10))*2)	ln(-1)	ln(0)	ln(NULL)
 10	10.000000000000002	NULL	NULL	NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
 explain extended select ln(exp(10)),exp(ln(sqrt(10))*2),ln(-1),ln(0),ln(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
@@ -61,6 +68,9 @@ Note	1003	select ln(exp(10)) AS `ln(exp(10))`,exp((ln(sqrt(10)) * 2)) AS `exp(ln
 select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
 log2(8)	log2(15)	log2(-2)	log2(0)	log2(NULL)
 3	3.9068905956085187	NULL	NULL	NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
 explain extended select log2(8),log2(15),log2(-2),log2(0),log2(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
@@ -69,6 +79,9 @@ Note	1003	select log2(8) AS `log2(8)`,log2(15) AS `log2(15)`,log2(-(2)) AS `log2
 select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 log10(100)	log10(18)	log10(-4)	log10(0)	log10(NULL)
 2	1.255272505103306	NULL	NULL	NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
 explain extended select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
@@ -93,12 +106,14 @@ Warnings:
 Note	1003	select rand(999999) AS `rand(999999)`,rand() AS `rand()`
 select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 pi()	format(sin(pi()/2),6)	format(cos(pi()/2),6)	format(abs(tan(pi())),6)	format(cot(1),6)	format(asin(1),6)	format(acos(0),6)	format(atan(1),6)
-3.141593	1.000000	0.000000	0.000000	0.642093	1.570796	1.570796	0.785398
+3.141593	NULL	0.000000	0.000000	0.642093	1.570796	1.570796	0.785398
+Warnings:
+Warning	1292	Incorrect datetime value: '2'
 explain extended select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select pi() AS `pi()`,format(sin((pi() / 2)),6) AS `format(sin(pi()/2),6)`,format(cos((pi() / 2)),6) AS `format(cos(pi()/2),6)`,format(abs(tan(pi())),6) AS `format(abs(tan(pi())),6)`,format((1 / tan(1)),6) AS `format(cot(1),6)`,format(asin(1),6) AS `format(asin(1),6)`,format(acos(0),6) AS `format(acos(0),6)`,format(atan(1),6) AS `format(atan(1),6)`
+Note	1003	select pi() AS `pi()`,format(month((pi() / 2)),6) AS `format(sin(pi()/2),6)`,format(cos((pi() / 2)),6) AS `format(cos(pi()/2),6)`,format(abs(tan(pi())),6) AS `format(abs(tan(pi())),6)`,format((1 / tan(1)),6) AS `format(cot(1),6)`,format(asin(1),6) AS `format(asin(1),6)`,format(acos(0),6) AS `format(acos(0),6)`,format(atan(1),6) AS `format(atan(1),6)`
 select degrees(pi()),radians(360);
 degrees(pi())	radians(360)
 180	6.283185307179586
@@ -165,8 +180,8 @@ create table t1 select round(1, 6);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `round(1, 6)` int(1) NOT NULL DEFAULT '0'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `round(1, 6)` int NOT NULL
+) ENGINE=InnoDB
 select * from t1;
 round(1, 6)
 1
@@ -204,49 +219,13 @@ CAST(RAND(2) * 1000 AS UNSIGNED)	CAST(RAND(a) * 1000 AS UNSIGNED)
 656	405
 122	405
 645	405
-PREPARE stmt FROM 
-"SELECT CAST(RAND(2) * 1000 AS UNSIGNED), CAST(RAND(?) * 1000 AS UNSIGNED)
-    FROM t1 WHERE a = 1";
-set @var=2;
-EXECUTE stmt USING @var;
-CAST(RAND(2) * 1000 AS UNSIGNED)	CAST(RAND(?) * 1000 AS UNSIGNED)
-656	656
-122	122
-645	645
 DROP TABLE t1;
-create table t1 (a varchar(90), ts datetime not null, index (a)) engine=innodb default charset=utf8;
+create table t1 (a varchar(90), ts datetime not null, index (a)) engine=innodb;
 insert into t1 values ('http://www.foo.com/', now());
 select a from t1 where a='http://www.foo.com/' order by abs(timediff(ts, 0));
 a
 http://www.foo.com/
 drop table t1;
-set sql_mode='traditional';
-select ln(-1);
-ln(-1)
-NULL
-Warnings:
-Error	1365	Division by 0
-select log10(-1);
-log10(-1)
-NULL
-Warnings:
-Error	1365	Division by 0
-select log2(-1);
-log2(-1)
-NULL
-Warnings:
-Error	1365	Division by 0
-select log(2,-1);
-log(2,-1)
-NULL
-Warnings:
-Error	1365	Division by 0
-select log(-2,1);
-log(-2,1)
-NULL
-Warnings:
-Error	1365	Division by 0
-set sql_mode='';
 select round(111,-10);
 round(111,-10)
 0
@@ -262,18 +241,17 @@ truncate(-5000111000111000155,-1)
 select truncate(15000111000111000155,-1);
 truncate(15000111000111000155,-1)
 15000111000111000150
-set names utf8;
 create table t1
 (f1 varchar(32) not null,
-f2 smallint(5) unsigned not null,
-f3 int(10) unsigned not null default '0')
-engine=myisam default charset=utf8;
+f2 smallint unsigned not null,
+f3 int unsigned not null default '0')
+engine=myisam;
 insert into t1 values ('zombie',0,0),('gold',1,10000),('silver',2,10000);
 create table t2
-(f1 int(10) unsigned not null,
-f2 int(10) unsigned not null,
-f3 smallint(5) unsigned not null)
-engine=myisam default charset=utf8;
+(f1 int unsigned not null,
+f2 int unsigned not null,
+f3 smallint unsigned not null)
+engine=myisam;
 insert into t2 values (16777216,16787215,1),(33554432,33564431,2);
 select format(t2.f2-t2.f1+1,0) from t1,t2
 where t1.f2 = t2.f3 order by t1.f1;
@@ -281,7 +259,6 @@ format(t2.f2-t2.f1+1,0)
 10,000
 10,000
 drop table t1, t2;
-set names default;
 select cast(-2 as unsigned), 18446744073709551614, -2;
 cast(-2 as unsigned)	18446744073709551614	-2
 18446744073709551614	18446744073709551614	-2
@@ -347,13 +324,13 @@ truncate(1.5, -4294967296)	truncate(1.5, 4294967296)
 0	1.500000000000000000000000000000
 select round(1.5, -9223372036854775808), round(1.5, 9223372036854775808);
 round(1.5, -9223372036854775808)	round(1.5, 9223372036854775808)
-0	1.500000000000000000000000000000
+0	2.000000000000000000000000000000
 select truncate(1.5, -9223372036854775808), truncate(1.5, 9223372036854775808);
 truncate(1.5, -9223372036854775808)	truncate(1.5, 9223372036854775808)
-0	1.500000000000000000000000000000
+0	1.000000000000000000000000000000
 select round(1.5, 18446744073709551615), truncate(1.5, 18446744073709551615);
 round(1.5, 18446744073709551615)	truncate(1.5, 18446744073709551615)
-1.500000000000000000000000000000	1.500000000000000000000000000000
+0.000000000000000000000000000000	0.000000000000000000000000000000
 select round(18446744073709551614, -1), truncate(18446744073709551614, -1);
 round(18446744073709551614, -1)	truncate(18446744073709551614, -1)
 18446744073709551610	18446744073709551610
@@ -369,7 +346,7 @@ mod(5, cast(-2 as unsigned))	mod(5, 18446744073709551614)	mod(5, -2)
 select pow(cast(-2 as unsigned), 5), pow(18446744073709551614, 5), pow(-2, 5);
 pow(cast(-2 as unsigned), 5)	pow(18446744073709551614, 5)	pow(-2, 5)
 2.13598703592091e96	2.13598703592091e96	-32
-CREATE TABLE t1 (a timestamp, b varchar(20), c bit(1));
+CREATE TABLE t1 (a timestamp, b varchar(20), c bit);
 INSERT INTO t1 VALUES('1998-09-23', 'str1', 1), ('2003-03-25', 'str2', 0);
 SELECT a DIV 900 y FROM t1 GROUP BY y;
 y
@@ -399,12 +376,6 @@ SELECT (a DIV 254576881) FROM t1;
 0
 0
 0
-0
-DROP TABLE t1;
-CREATE TABLE t1(a SET('a','b','c'));
-INSERT INTO t1 VALUES ('a');
-SELECT a DIV 2 FROM t1 UNION SELECT a DIV 2 FROM t1;
-a DIV 2
 0
 DROP TABLE t1;
 End of 5.0 tests

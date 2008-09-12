@@ -106,7 +106,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   for (dst_ptr= file_buffer; fgets(linebuff, BUFF_SIZE, cnf_file); )
   {
     /* Skip over whitespaces */
-    for (src_ptr= linebuff; my_isspace(&my_charset_latin1, *src_ptr);
+    for (src_ptr= linebuff; my_isspace(&my_charset_utf8_general_ci, *src_ptr);
 	 src_ptr++)
     {}
 
@@ -119,11 +119,11 @@ int modify_defaults_file(const char *file_location, const char *option,
     /* correct the option (if requested) */
     if (option && in_section && !strncmp(src_ptr, option, opt_len) &&
         (*(src_ptr + opt_len) == '=' ||
-         my_isspace(&my_charset_latin1, *(src_ptr + opt_len)) ||
+         my_isspace(&my_charset_utf8_general_ci, *(src_ptr + opt_len)) ||
          *(src_ptr + opt_len) == '\0'))
     {
       char *old_src_ptr= src_ptr;
-      src_ptr= strend(src_ptr+ opt_len);        /* Find the end of the line */
+      src_ptr= strchr(src_ptr+ opt_len, '\0');        /* Find the end of the line */
 
       /* could be negative */
       reserve_occupied+= (int) new_opt_len - (int) (src_ptr - old_src_ptr);
@@ -168,7 +168,7 @@ int modify_defaults_file(const char *file_location, const char *option,
       {
         src_ptr+= sect_len;
         /* Skip over whitespaces. They are allowed after section name */
-        for (; my_isspace(&my_charset_latin1, *src_ptr); src_ptr++)
+        for (; my_isspace(&my_charset_utf8_general_ci, *src_ptr); src_ptr++)
         {}
 
         if (*src_ptr != ']')

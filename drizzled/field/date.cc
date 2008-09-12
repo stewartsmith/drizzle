@@ -149,7 +149,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
                      (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
-      String str(buff, sizeof(buff), &my_charset_latin1);
+      String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
       make_date((DATE_TIME_FORMAT *) 0, ltime, &str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
@@ -158,7 +158,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
         (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
-      String str(buff, sizeof(buff), &my_charset_latin1);
+      String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                            ER_WARN_DATA_TRUNCATED,

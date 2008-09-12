@@ -27,7 +27,7 @@ uint32_t   my_thread_stack_size= 65536;
 static uint32_t atoi_octal(const char *str)
 {
   long int tmp;
-  while (*str && my_isspace(&my_charset_latin1, *str))
+  while (*str && my_isspace(&my_charset_utf8_general_ci, *str))
     str++;
   str2int(str,
 	  (*str == '0' ? 8 : 10),       /* Octalt or decimalt */

@@ -41,6 +41,8 @@ noinst_HEADERS =	mysys_priv.h \
 			hash.h \
 			sha1.h \
 			thr_alarm.h \
+			my_time.h \
+			drizzle_time.h \
 			thr_lock.h \
 			base64.h
 
@@ -67,10 +69,11 @@ libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_wcomp.c my_gethwaddr.c \
 			mf_qsort.c mf_qsort2.c mf_sort.c \
 			ptr_cmp.c mf_radix.c queues.c \
-			tree.c list.c hash.c array.c string.c typelib.c \
+			tree.c list.c hash.c array.c typelib.c \
 			my_copy.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
 			my_quick.c my_static.c \
+			my_time.c \
 			my_sync.c my_getopt.c my_mkdir.c \
 			default_modify.c default.c \
                         my_compress.c checksum.c \

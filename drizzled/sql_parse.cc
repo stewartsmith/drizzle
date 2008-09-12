@@ -564,7 +564,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     status_var_increment(thd->status_var.com_other);
     char *user= (char*) packet, *packet_end= packet + packet_length;
     /* Safe because there is always a trailing \0 at the end of the packet */
-    char *passwd= strend(user)+1;
+    char *passwd= strchr(user, '\0')+1;
 
 
     thd->clear_error();                         // if errors from rollback
@@ -729,7 +729,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /*
       We have name + wildcard in packet, separated by endzero
     */
-    arg_end= strend(packet);
+    arg_end= strchr(packet, '\0');
     thd->convert_string(&conv_name, system_charset_info,
 			packet, (uint) (arg_end - packet), thd->charset());
     table_list.alias= table_list.table_name= conv_name.str;
@@ -1712,13 +1712,10 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_repair_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, REPAIR and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    /*
+      Presumably, REPAIR and binlog writing doesn't require synchronization
+    */
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -1738,13 +1735,7 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_analyze_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, ANALYZE and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -1756,13 +1747,7 @@ end_with_restore_list:
     thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_optimize_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
-    if (!res && !lex->no_write_to_binlog)
-    {
-      /*
-        Presumably, OPTIMIZE and binlog writing doesn't require synchronization
-      */
-      write_bin_log(thd, true, thd->query, thd->query_length);
-    }
+    write_bin_log(thd, true, thd->query, thd->query_length);
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
     break;
@@ -2311,11 +2296,6 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_RESET:
-    /*
-      RESET commands are never written to the binary log, so we have to
-      initialize this variable because RESET shares the same code as FLUSH
-    */
-    lex->no_write_to_binlog= 1;
   case SQLCOM_FLUSH:
   {
     bool write_to_binlog;
@@ -2333,10 +2313,7 @@ end_with_restore_list:
       /*
         Presumably, RESET and binlog writing doesn't require synchronization
       */
-      if (!lex->no_write_to_binlog && write_to_binlog)
-      {
-        write_bin_log(thd, false, thd->query, thd->query_length);
-      }
+      write_bin_log(thd, false, thd->query, thd->query_length);
       my_ok(thd);
     } 
     

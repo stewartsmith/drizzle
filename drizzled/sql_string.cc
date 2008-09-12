@@ -109,10 +109,10 @@ bool String::set_real(double num,uint decimals, const CHARSET_INFO * const cs)
   if (decimals >= NOT_FIXED_DEC)
   {
     len= my_gcvt(num, MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
-    return copy(buff, len, &my_charset_latin1, cs, &dummy_errors);
+    return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
   len= my_fcvt(num, decimals, buff, NULL);
-  return copy(buff, (uint32_t) len, &my_charset_latin1, cs,
+  return copy(buff, (uint32_t) len, &my_charset_utf8_general_ci, cs,
               &dummy_errors);
 }
 
@@ -308,7 +308,7 @@ bool String::set_ascii(const char *str, uint32_t arg_length)
     return 0;
   }
   uint dummy_errors;
-  return copy(str, arg_length, &my_charset_latin1, str_charset, &dummy_errors);
+  return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
 }
 
 
@@ -360,7 +360,7 @@ bool String::append(const char *s,uint32_t arg_length)
     if (realloc(str_length+ add_length))
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
-				  s, arg_length, &my_charset_latin1,
+				  s, arg_length, &my_charset_utf8_general_ci,
                                   &dummy_errors);
     return false;
   }

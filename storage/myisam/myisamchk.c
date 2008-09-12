@@ -1363,7 +1363,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 	if (share->rec[field].pack_type & PACK_TYPE_ZERO_FILL)
 	{
 	  sprintf(end,", zerofill(%d)",share->rec[field].space_length_bits);
-	  end=strend(end);
+	  end= strchr(end, '\0');
 	}
       }
       if (buff[0] == ',')

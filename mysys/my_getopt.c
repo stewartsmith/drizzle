@@ -386,10 +386,10 @@ int handle_options(int *argc, char ***argv,
 	      */
 	    (*argc)--;
 	    if (!optend || *optend == '1' ||
-		!my_strcasecmp(&my_charset_latin1, optend, "true"))
+		!my_strcasecmp(&my_charset_utf8_general_ci, optend, "true"))
 	      *((bool*) value)= (bool) 1;
 	    else if (*optend == '0' ||
-		     !my_strcasecmp(&my_charset_latin1, optend, "false"))
+		     !my_strcasecmp(&my_charset_utf8_general_ci, optend, "false"))
 	      *((bool*) value)= (bool) 0;
 	    else
 	    {
@@ -1147,7 +1147,7 @@ void my_print_help(const struct my_option *options)
       putchar(' ');
     if (optp->comment && *optp->comment)
     {
-      const char *comment= _(optp->comment), *end= strend(comment);
+      const char *comment= _(optp->comment), *end= strchr(comment, '\0');
 
       while ((uint) (end - comment) > comment_space)
       {

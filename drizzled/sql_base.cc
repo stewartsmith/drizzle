@@ -3885,7 +3885,7 @@ Table *open_temporary_table(THD *thd, const char *path, const char *db,
   memcpy(saved_cache_key, cache_key, key_length);
 
   init_tmp_table_share(thd, share, saved_cache_key, key_length,
-                       strend(saved_cache_key)+1, tmp_path);
+                       strchr(saved_cache_key, '\0')+1, tmp_path);
 
   if (open_table_def(thd, share, 0) ||
       open_table_from_share(thd, share, table_name,
@@ -3939,7 +3939,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   handler *file;
   char *ext;
 
-  stpcpy(ext= strend(path), reg_ext);
+  stpcpy(ext= strchr(path, '\0'), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension

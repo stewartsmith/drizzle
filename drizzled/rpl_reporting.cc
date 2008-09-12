@@ -42,6 +42,6 @@ Slave_reporting_capability::report(loglevel level, int err_code,
   /* If the msg string ends with '.', do not add a ',' it would be ugly */
   report_function(_("Slave %s: %s%s Error_code: %d"),
                   m_thread_name, pbuff,
-                  (pbuff[0] && *(strend(pbuff)-1) == '.') ? "" : ",",
+                  (pbuff[0] && *(strchr(pbuff, '\0')-1) == '.') ? "" : ",",
                   err_code);
 }
