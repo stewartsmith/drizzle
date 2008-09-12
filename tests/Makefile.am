@@ -142,6 +142,7 @@ test-drizzle:
         bench_count_distinct \
 	bulk_replace \
 	comment_column2 \
+	comment_table \
 	comments \
 	consistent_snapshot \
         count_distinct \
@@ -158,6 +159,7 @@ test-drizzle:
         func_group_innodb \
         func_isnull \
         func_like \
+				func_math \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \
