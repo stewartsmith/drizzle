@@ -1,4 +1,4 @@
-# Marathi translation for drizzle
+# Malay translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-09-13 13:20-0700\n"
-"PO-Revision-Date: 2008-08-17 02:42+0000\n"
-"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
-"Language-Team: Marathi <mr@li.org>\n"
+"PO-Revision-Date: 2008-09-11 12:48+0000\n"
+"Last-Translator: jonkoay <Unknown>\n"
+"Language-Team: Malay <ms@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,16 +20,15 @@ msgstr ""
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr "'मदत' चा पर्यायी शब्द"
+msgstr ""
 
 #: client/drizzle.cc:257
-#, fuzzy
 msgid "Clear command."
-msgstr "स्वच्छ करण्याची सूचना"
+msgstr ""
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "सर्वर ला परत 'कनेक्ट' करा. 'डेटाबेस' अथवा 'होस्ट' हे वैकल्पिक पर्याय आहेत."
+msgstr ""
 
 #: client/drizzle.cc:261
 msgid ""
@@ -45,9 +44,8 @@ msgid "Exit drizzle. Same as quit."
 msgstr ""
 
 #: client/drizzle.cc:265
-#, fuzzy
 msgid "Send command to drizzle server."
-msgstr "ड्रीझल सर्वर ला आदेश द्या / (पाठवा)"
+msgstr ""
 
 #: client/drizzle.cc:266
 msgid "Display this help."
@@ -59,7 +57,7 @@ msgstr ""
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Jangan tulis ke 'outfile'"
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -71,11 +69,11 @@ msgstr ""
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
-msgstr "तुमचा  ड्रीझल प्रॉम्प्ट बदला"
+msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr "ड्रीझल बंद करा."
+msgstr ""
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -113,16 +111,14 @@ msgstr ""
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "ड्रीझल क्लाऐंट मध्ये आपले स्वागत असो ... सूचनेचा शेवट ';' अथवा  '\\g' ने करावा."
+msgstr ""
 
 #: client/drizzle.cc:1130
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"तुमचा  ड्रीझल कनेक्शन आय-डी %u\n"
-"सर्वर आवृत्ती: %s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
@@ -137,8 +133,6 @@ msgstr ""
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"मदत हवी असल्यास 'help; ' अथवा '\\h' टाईप करा.  बफर रिकामा करण्या साठी  '\\c' "
-"टाईप करा.\n"
 
 #: client/drizzle.cc:1190
 #, c-format

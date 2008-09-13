@@ -1,4 +1,4 @@
-# Marathi translation for drizzle
+# Polish translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,28 +8,30 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-09-13 13:20-0700\n"
-"PO-Revision-Date: 2008-08-17 02:42+0000\n"
-"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
-"Language-Team: Marathi <mr@li.org>\n"
+"PO-Revision-Date: 2008-09-06 09:16+0000\n"
+"Last-Translator: nickers <2nickers@gmail.com>\n"
+"Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
 "X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr "'मदत' चा पर्यायी शब्द"
+msgstr "Synonim dla \"help\""
 
 #: client/drizzle.cc:257
 #, fuzzy
 msgid "Clear command."
-msgstr "स्वच्छ करण्याची सूचना"
+msgstr "Komenda czyszczenia."
 
 #: client/drizzle.cc:259
+#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "सर्वर ला परत 'कनेक्ट' करा. 'डेटाबेस' अथवा 'होस्ट' हे वैकल्पिक पर्याय आहेत."
+msgstr "Połącz z serwerem. Opcjonalnymi argumentami są baza i host."
 
 #: client/drizzle.cc:261
 msgid ""
@@ -38,28 +40,29 @@ msgstr ""
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "Wysyła polecenie do serwera drizzle, wyświetla wyniki pionowo."
 
 #: client/drizzle.cc:264
+#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Wyjście z drizzle. To samo co \"quit\"."
 
 #: client/drizzle.cc:265
-#, fuzzy
 msgid "Send command to drizzle server."
-msgstr "ड्रीझल सर्वर ला आदेश द्या / (पाठवा)"
+msgstr "Wyślij polecenie do serwera drizzle."
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr ""
+msgstr "Wyświetla ten ekran pomocy."
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
 msgstr ""
 
 #: client/drizzle.cc:268
+#, fuzzy
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Nie zapisuje wyjścia do pliku."
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -70,16 +73,18 @@ msgid "Print current command."
 msgstr ""
 
 #: client/drizzle.cc:272
+#, fuzzy
 msgid "Change your drizzle prompt."
-msgstr "तुमचा  ड्रीझल प्रॉम्प्ट बदला"
+msgstr "Zmienia znak zachęty."
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr "ड्रीझल बंद करा."
+msgstr "Wyjdz z drizzle."
 
 #: client/drizzle.cc:274
+#, fuzzy
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Przebuduj tablicę podpowiedzi."
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -94,8 +99,9 @@ msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 
 #: client/drizzle.cc:281
+#, fuzzy
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "Wybiera aktualną bazę. Pobiera jej nazwę jako argument."
 
 #: client/drizzle.cc:283
 msgid ""
@@ -113,16 +119,14 @@ msgstr ""
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "ड्रीझल क्लाऐंट मध्ये आपले स्वागत असो ... सूचनेचा शेवट ';' अथवा  '\\g' ने करावा."
+msgstr ""
 
 #: client/drizzle.cc:1130
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"तुमचा  ड्रीझल कनेक्शन आय-डी %u\n"
-"सर्वर आवृत्ती: %s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
@@ -137,8 +141,6 @@ msgstr ""
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"मदत हवी असल्यास 'help; ' अथवा '\\h' टाईप करा.  बफर रिकामा करण्या साठी  '\\c' "
-"टाईप करा.\n"
 
 #: client/drizzle.cc:1190
 #, c-format
@@ -146,24 +148,28 @@ msgid "Writing history-file %s\n"
 msgstr ""
 
 #: client/drizzle.cc:1199
+#, fuzzy
 msgid "Aborted"
-msgstr ""
+msgstr "Przerwane"
 
 #: client/drizzle.cc:1199
+#, fuzzy
 msgid "Bye"
-msgstr ""
+msgstr "Do zobaczenia"
 
 #: client/drizzle.cc:1248
+#, fuzzy
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Zapytanie przerwane przy użyciu Ctrl+C\n"
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:74 drizzled/drizzled.cc:3113
+#, fuzzy
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Wyświetl ten ekran pomocy i zakończ."
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Synonim -?"
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -180,10 +186,13 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1283
+#, fuzzy
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"Automatycznie przełącz do trybu pionowego wyświetlania wyników, jeśli "
+"rezultat jest szerszy niż terminal."
 
 #: client/drizzle.cc:1286
 msgid ""
@@ -195,8 +204,9 @@ msgid "Directory where character sets are."
 msgstr ""
 
 #: client/drizzle.cc:1290
+#, fuzzy
 msgid "Display column type information."
-msgstr ""
+msgstr "Wyświetlaj informację o typie kolumny."
 
 #: client/drizzle.cc:1293
 msgid ""

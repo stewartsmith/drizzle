@@ -1,4 +1,4 @@
-# Marathi translation for drizzle
+# Japanese translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,162 +8,168 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-09-13 13:20-0700\n"
-"PO-Revision-Date: 2008-08-17 02:42+0000\n"
-"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
-"Language-Team: Marathi <mr@li.org>\n"
+"PO-Revision-Date: 2008-09-02 05:12+0000\n"
+"Last-Translator: Toshiya Tsuru <turutosiya@gmail.com>\n"
+"Language-Team: Japanese <ja@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr "'मदत' चा पर्यायी शब्द"
+msgstr "ヘルプ"
 
 #: client/drizzle.cc:257
-#, fuzzy
 msgid "Clear command."
-msgstr "स्वच्छ करण्याची सूचना"
+msgstr "コマンドをクリアする。"
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "सर्वर ला परत 'कनेक्ट' करा. 'डेटाबेस' अथवा 'होस्ट' हे वैकल्पिक पर्याय आहेत."
+msgstr "サーバへ再接続する。任意の引数としてdbとhostを指定することが可能。"
 
 #: client/drizzle.cc:261
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"ステートメントの区切り文字を指定する。注意：以降の行から区切り文字が変更され"
+"ます。"
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "drizzleサーバへコマンドを送信し、結果を垂直に表示する。"
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "drizzleを終了する。（quitと同じ。）"
 
 #: client/drizzle.cc:265
-#, fuzzy
 msgid "Send command to drizzle server."
-msgstr "ड्रीझल सर्वर ला आदेश द्या / (पाठवा)"
+msgstr "drizzleサーバへコマンドを送信する。"
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr ""
+msgstr "このヘルプを表示する。"
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "ページャを無効にし、stdoutへ出力する。"
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "outfileへ書き込まない。"
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
+msgstr "ページャを[to_pager]へ変更し、クエリの結果をページャへ表示する。"
 
 #: client/drizzle.cc:271
 msgid "Print current command."
-msgstr ""
+msgstr "現在のコマンドを表示する。"
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
-msgstr "तुमचा  ड्रीझल प्रॉम्प्ट बदला"
+msgstr "drizzleのプロンプトを変更する。"
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr "ड्रीझल बंद करा."
+msgstr "drizzleを終了する。"
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "補完ハッシュを再構築する。"
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
+"SQLスクリプトファイルを実行する。ファイル名を引数として指定して下さい。"
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "サーバから情報を取得する。"
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"outfileを[to_outfile]に設定する。以降の出力はすべてoutfileへ追加されます。"
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "他のデータベースを使用する。データベース名を引数として指定して下さい。"
 
 #: client/drizzle.cc:283
 msgid ""
 "Switch to another charset. Might be needed for processing binlog with multi-"
 "byte charsets."
 msgstr ""
+"文字コードセットを切り替える。マルチバイト文字が含まれたバイナリログを処理す"
+"る際に必要になる場合があります。"
 
 #: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "各ステートメントの後で警告を表示する。"
 
 #: client/drizzle.cc:287
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "各ステートメントの後で警告を表示しない。"
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "ड्रीझल क्लाऐंट मध्ये आपले स्वागत असो ... सूचनेचा शेवट ';' अथवा  '\\g' ने करावा."
+msgstr ""
+"Drizzleクライアントへようこそ！コマンドの区切りは「;」または「\\g」です。"
 
 #: client/drizzle.cc:1130
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"तुमचा  ड्रीझल कनेक्शन आय-डी %u\n"
-"सर्वर आवृत्ती: %s\n"
+"あなたのDrizzleコネクションIDは %u です。\n"
+"サーバのバージョンは %s です。\n"
 
 #: client/drizzle.cc:1160
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "履歴ファイル「%s」を読み込んでいます。\n"
 
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
 msgstr ""
+"一時的な履歴ファイルのためにメモリを割り当てることができませんでした。\n"
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"मदत हवी असल्यास 'help; ' अथवा '\\h' टाईप करा.  बफर रिकामा करण्या साठी  '\\c' "
-"टाईप करा.\n"
+"ヘルプを表示するには「help;」または「\\h」、バッファをクリアするには「\\c」と"
+"入力してください。\n"
 
 #: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "履歴ファイル「%s」に書き込んでいます。\n"
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr ""
+msgstr "中断しました。"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr ""
+msgstr "さようなら。"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "クエリが「Ctrl+C」により中断されました。\n"
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:74 drizzled/drizzled.cc:3113
 msgid "Display this help and exit."
-msgstr ""
+msgstr "ヘルプを表示して終了する。"
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr ""
+msgstr "「-?」と同じ。"
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -171,6 +177,9 @@ msgid ""
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
+"自動的な再ハッシュを有効にする。テーブルやフィールドの補完のために「rehash」"
+"する必要がなくなりますが、起動時間が長くなる場合があります。--disable-auto-"
+"rehashオプションで無効にすることができます。"
 
 #: client/drizzle.cc:1280
 msgid ""
@@ -178,67 +187,76 @@ msgid ""
 "completion. This gives a quicker start of DRIZZLE and disables rehashing on "
 "reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
+"自動的な再ハッシュを無効にする。テーブルやフィールドの補完をするために"
+"「rehash」を使用する必要があります。DRIZZLEの起動時間を短縮することができま"
+"す。警告：このオプションは廃止予定です。代わりに--disable-auto-rehashオプショ"
+"ンを使用して下さい。"
 
 #: client/drizzle.cc:1283
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
-msgstr ""
+msgstr "出力結果がターミナルの幅よりも広い場合、自動的に垂直表示に切り替える。"
 
 #: client/drizzle.cc:1286
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silent"
+"オプションを有効にします。）"
 
 #: client/drizzle.cc:1288 drizzled/drizzled.cc:3183
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "文字コードセットが存在するディレクトリ。"
 
 #: client/drizzle.cc:1290
 msgid "Display column type information."
-msgstr ""
+msgstr "カラムのデータ型に関する情報を表示する。"
 
 #: client/drizzle.cc:1293
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コ"
+"メント機能は無効）で、--commentsオプションをつけることにより有効になります。"
 
 #: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "サーバ・クライアントプロトコルにおいて圧縮を利用する。"
 
 #: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "メモリとオープンしているファイルの使用量を表示して終了する。"
 
 #: client/drizzle.cc:1302
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "デバッグ情報を出力して終了する。"
 
 #: client/drizzle.cc:1304
 msgid "Database to use."
-msgstr ""
+msgstr "使用するデータベース。"
 
 #: client/drizzle.cc:1307 drizzled/drizzled.cc:3179
 msgid "Set the default character set."
-msgstr ""
+msgstr "規定の文字セットを設定する。"
 
 #: client/drizzle.cc:1309
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "区切りに使用する文字。"
 
 #: client/drizzle.cc:1311
+#, fuzzy
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
+msgstr "コマンドを実行して終了する。（--forceと履歴ファイルを無効化）"
 
 #: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
-msgstr ""
+msgstr "結果を縦に表示する。"
 
 #: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
-msgstr ""
+msgstr "sqlエラーが発生しても続行する。"
 
 #: client/drizzle.cc:1320
 msgid ""
@@ -247,6 +265,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
+"指定コマンドを有効にする。指定コマンドとは本プログラムの名言うコマンドのこと"
+"です。詳細は「drizzle> help」を参照してください。有効である場合、指定コマンド"
+"は複数行にクエリがまたがる場合にどの行においても使用することができます。無効"
+"である場合は、先頭行のみで使用することが可能です。--disable-named-commandsオ"
+"プションにより無効にすることが可能です。デフォルトは無効です。"
 
 #: client/drizzle.cc:1324
 msgid ""
@@ -256,62 +279,77 @@ msgid ""
 "G'. Long format commands still work from the first line. WARNING: option "
 "deprecated; use --disable-named-commands instead."
 msgstr ""
+"指定コマンドを無効にする。「\\*」という書式のものをお使い頂くか、指定コマンド"
+"を先頭行（セミコロン「;」まで）のみで使用して下さい。バージョン10.9から、この"
+"オプションはデフォルトになっています。「-G」オプションを指定すると、このオプ"
+"ションが無効になります。長い書式のコマンドは、先頭行においては使用することが"
+"可能です。警告：このオプションは廃止予定です。--disable-named-commandsを代わ"
+"りに使用して下さい。"
 
 #: client/drizzle.cc:1326
 msgid "Ignore space after function names."
-msgstr ""
+msgstr "関数の後のスペースを無視する。"
 
 #: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "LOAD DATA LOCAL INFILEの有効/無効を切り替える。"
 
 #: client/drizzle.cc:1331
 msgid "Turn off beep on error."
-msgstr ""
+msgstr "エラー発生時にビープ音を出さない。"
 
 #: client/drizzle.cc:1333 client/drizzleadmin.cc:76
 msgid "Connect to host."
-msgstr ""
+msgstr "接続するホスト。"
 
 #: client/drizzle.cc:1335
 msgid "Write line numbers for errors."
-msgstr ""
+msgstr "エラーに行番号を表示する。"
 
 #: client/drizzle.cc:1338
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプション"
+"を代わりに使用して下さい。"
 
 #: client/drizzle.cc:1340
+#, fuzzy
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "クエリの後にバッファを毎回フラッシュする。"
 
 #: client/drizzle.cc:1342
 msgid "Write column names in results."
-msgstr ""
+msgstr "結果においてカラム名を記載する。"
 
 #: client/drizzle.cc:1346
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプション"
+"を使用して下さい。"
 
 #: client/drizzle.cc:1349
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+"変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という"
+"書式を用いて直接設定することが出来ます。"
 
 #: client/drizzle.cc:1351
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
+msgstr "SIGINT（CTRL-C）を無視する。"
 
 #: client/drizzle.cc:1355
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する"
+"際に他のデータベースへの更新を止めたい場合などに便利です。"
 
 #: client/drizzle.cc:1358
 msgid ""
@@ -321,24 +359,38 @@ msgid ""
 "work in batch mode. Disable with --disable-pager. This option is disabled by "
 "default."
 msgstr ""
+"結果を表示するためのページャを指定する。もしこのオプションが指定されなかった"
+"場合には、PAGER環境変数で指定されたものが使われる。使用可能なページャはless、"
+"more、cat [> ファイル名]などです。ヘルプ「\\h」も合わせて参照して下さい。この"
+"オプションはバッチモードでは作用しません。「--disable-pager」オプションで無効"
+"にすることができます。このオプションはデフォルトで無効になっています。"
 
 #: client/drizzle.cc:1361
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
 msgstr ""
+"ページャを無効にして標準出力へ表示する。ヘルプ「\\h」も合わせて参照して下さ"
+"い。警告：このオプションは廃止予定です。代わりに「--disable-pager」を使用して"
+"下さい。"
 
 #: client/drizzle.cc:1364 client/drizzleadmin.cc:79
+#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
+"要求されます。"
 
 #: client/drizzle.cc:1366
+#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
+"接続に使用するポート番号。既定値は0。my.cnf, $DRIZZLE_TCP_PORT の順で設定され"
+"る。 "
 
 #: client/drizzle.cc:1367
 msgid "built-in default"
@@ -346,40 +398,45 @@ msgstr ""
 
 #: client/drizzle.cc:1370
 msgid "Set the drizzle prompt to this value."
-msgstr ""
+msgstr "drizzleのプロンプトをこの値にする。"
 
 #: client/drizzle.cc:1373
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "接続に使用するプロトコル。(tcp,socket,pipe,memory)"
 
 #: client/drizzle.cc:1376
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
+"結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場"
+"合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
 
 #: client/drizzle.cc:1378
 msgid "Write fields without conversion. Used with --batch."
 msgstr ""
+"コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
 
 #: client/drizzle.cc:1381
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
+"接続が切れた際に再接続をする。--disable-recconect オプションで無効になりま"
+"す。規定では有効になっています。"
 
 #: client/drizzle.cc:1383
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
-msgstr ""
+msgstr "さらに出力を抑制する。タブ区切り、１行ごとに出力する。"
 
 #: client/drizzle.cc:1385
 msgid "Socket file to use for connection."
-msgstr ""
+msgstr "接続に使用するソケットファイル。"
 
 #: client/drizzle.cc:1388
 msgid "Output in table format."
-msgstr ""
+msgstr "表形式で出力する。"
 
 #: client/drizzle.cc:1391
 msgid ""
@@ -387,52 +444,57 @@ msgid ""
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
+"出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しませ"
+"ん。--disable-tee オプションで無効となります。規定では無効になっています。"
 
 #: client/drizzle.cc:1393
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
 msgstr ""
+"outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予"
+"定です; 代わりに --disable-tee オプションを使用して下さい。"
 
 #: client/drizzle.cc:1396 client/drizzleadmin.cc:89
 msgid "User for login if not current user."
-msgstr ""
+msgstr "別のユーザでログインする際のユーザ名。"
 
 #: client/drizzle.cc:1399
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
+msgstr "キーを使用してUPDATEとDELETEのみを許可する。"
 
 #: client/drizzle.cc:1402
 msgid "Synonym for option --safe-updates, -U."
-msgstr ""
+msgstr "--safe-updates, -U オプションと同じ。"
 
 #: client/drizzle.cc:1405
 msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
+msgstr "詳細を出力する。(-v -v -v で表形式で出力)。"
 
 #: client/drizzle.cc:1407 client/drizzleadmin.cc:94 drizzled/drizzled.cc:3647
 msgid "Output version information and exit."
-msgstr ""
+msgstr "バージョン情報を出力し終了する。"
 
 #: client/drizzle.cc:1409 client/drizzleadmin.cc:96
 msgid "Wait and retry if connection is down."
-msgstr ""
+msgstr "接続が切れた場合に再試行をする。"
 
 #: client/drizzle.cc:1412
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "コネクションタイムアウトとなるまでの時間(秒)。"
 
 #: client/drizzle.cc:1417
 msgid "Max packet length to send to, or receive from server"
-msgstr ""
+msgstr "サーバーに対して送受信できるパケットの最大長。"
 
 #: client/drizzle.cc:1422
 msgid "Buffer for TCP/IP and socket communication"
-msgstr ""
+msgstr "TCP/IPとソケット通信のためのバッファ"
 
 #: client/drizzle.cc:1426
+#, fuzzy
 msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
+msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定される上限"
 
 #: client/drizzle.cc:1431
 msgid "Automatic limit for rows in a join when using --safe-updates"
@@ -440,7 +502,7 @@ msgstr ""
 
 #: client/drizzle.cc:1435
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
+msgstr "古いプロトコル(4.1.1以前)を使用している場合は接続を拒否"
 
 #: client/drizzle.cc:1448
 #, c-format
@@ -459,31 +521,35 @@ msgstr ""
 #: client/drizzle.cc:1459
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
+msgstr "使用方法: %s [オプション] [データベース]\n"
 
 #: client/drizzle.cc:1492
 msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgstr "DELIMITER にはバックスラッシュを含めることはできません。"
 
 #: client/drizzle.cc:1513
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
 msgstr ""
+"警告: このオプションは廃止予定です。代わりに --disable-tee を使用してくださ"
+"い。\n"
 
 #: client/drizzle.cc:1536
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr ""
+"警告: このオプションは廃止予定です。代わりに --disable-pager を使用してくださ"
+"い。\n"
 
 #: client/drizzle.cc:1540
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
+msgstr "警告: --server-arg はこの設定ではサポートされていません。\n"
 
 #: client/drizzle.cc:1912
 #, c-format
 msgid "Unknown command '\\%c'."
-msgstr ""
+msgstr "不明なコマンド '\\%c'。"
 
 #: client/drizzle.cc:2339
 msgid ""
@@ -494,24 +560,24 @@ msgstr ""
 
 #: client/drizzle.cc:2436
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "接続していません。再接続をしています。。。"
 
 #: client/drizzle.cc:2442
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "サーバに接続できません。\n"
 
 #: client/drizzle.cc:2499
 msgid "categories:"
-msgstr ""
+msgstr "カテゴリ:"
 
 #: client/drizzle.cc:2499
 msgid "topics:"
-msgstr ""
+msgstr "項目:"
 
 #: client/drizzle.cc:2550
 #, c-format
 msgid "Name: '%s'\n"
-msgstr ""
+msgstr "名前: '%s'\n"
 
 #: client/drizzle.cc:2551
 #, c-format
@@ -519,6 +585,8 @@ msgid ""
 "Description:\n"
 "%s"
 msgstr ""
+"説明::\n"
+"%s"
 
 #: client/drizzle.cc:2553
 #, c-format
@@ -526,6 +594,8 @@ msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
+"例:\n"
+"%s"
 
 #: client/drizzle.cc:2566
 msgid "Many help items for your request exist."
@@ -540,27 +610,30 @@ msgstr ""
 #: client/drizzle.cc:2573
 #, c-format
 msgid "You asked for help about help category: '%s'\n"
-msgstr ""
+msgstr "次のカテゴリに関するヘルプを要求しました: '%s'\n"
 
 #: client/drizzle.cc:2574
 msgid ""
 "For more information, type 'help <item>', where <item> is one of the "
 "following"
 msgstr ""
+"詳細は 'help <item>' と入力してください。<item>には次のものが入ります。"
 
 #: client/drizzle.cc:2587
 msgid ""
 "\n"
 "Nothing found"
 msgstr ""
+"\n"
+"見つかりません。"
 
 #: client/drizzle.cc:2588
 msgid "Please try to run 'help contents' for a list of all accessible topics\n"
-msgstr ""
+msgstr "参照可能な項目を一覧するには'help contents'を実行してください。\n"
 
 #: client/drizzle.cc:2610
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "すべてのコマンドの一覧:"
 
 #: client/drizzle.cc:2612
 msgid "Note that all text commands must be first on line and end with ';'"
@@ -574,45 +647,43 @@ msgstr ""
 
 #: client/drizzle.cc:2648
 msgid "Usage: \\C char_setname | charset charset_name"
-msgstr ""
+msgstr "使用法: \\C char_setname | charset charset_name"
 
 #: client/drizzle.cc:2658
 msgid "Charset changed"
-msgstr ""
+msgstr "文字セットが変更されました"
 
 #: client/drizzle.cc:2660
 msgid "Charset is not found"
-msgstr ""
+msgstr "文字セットが見つかりません"
 
 #: client/drizzle.cc:2691
 msgid "No query specified\n"
-msgstr ""
+msgstr "クエリがありません\n"
 
 #: client/drizzle.cc:2706
 msgid "Ignoring query to other database"
-msgstr ""
+msgstr "他のデータベースへのクエリを無視します"
 
 #: client/drizzle.cc:2755
 msgid "Empty set"
-msgstr ""
+msgstr "空の結果"
 
 #: client/drizzle.cc:2768
-#, c-format
+#, fuzzy, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%ld 行の結果"
 
 #: client/drizzle.cc:2777
 msgid "Query OK"
-msgstr ""
+msgstr "クエリー完了"
 
 #: client/drizzle.cc:2779
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "クエリ OK, %ld 行が変更されました"
 
 #: client/drizzleadmin.cc:81 drizzled/drizzled.cc:3438
 msgid ""
@@ -622,7 +693,7 @@ msgstr ""
 
 #: client/drizzleadmin.cc:86
 msgid "Silently exit if one can't connect to server."
-msgstr ""
+msgstr "サーバーに接続できなかった時は終了する"
 
 #: client/drizzleadmin.cc:92
 msgid "Write more information."
@@ -634,40 +705,42 @@ msgid ""
 "connect to server at '%s' failed\n"
 "error: '%s'"
 msgstr ""
+"サーバー '%s' への接続に失敗しました\n"
+"エラー: '%s'"
 
 #: client/drizzleadmin.cc:265
 #, c-format
 msgid "Check that drizzled is running on %s"
-msgstr ""
+msgstr "%s でdrizzledが実行されているか確認してください"
 
 #: client/drizzleadmin.cc:266
 #, c-format
 msgid " and that the port is %d.\n"
-msgstr ""
+msgstr " そのポートは %d です。\n"
 
 #: client/drizzleadmin.cc:268
 #, c-format
 msgid "You can check this by doing 'telnet %s %d'\n"
-msgstr ""
+msgstr "'telnet %s %d'を実行しチェックすることができます。\n"
 
 #: client/drizzleadmin.cc:279
 #, c-format
 msgid "Got error: %s\n"
-msgstr ""
+msgstr "エラーが発生しました: %s\n"
 
 #: client/drizzleadmin.cc:286
 msgid "Waiting for Drizzle server to answer"
-msgstr ""
+msgstr "Drizzleサーバーの応答を待っています"
 
 #: client/drizzleadmin.cc:319
 #, c-format
 msgid "shutting down drizzled...\n"
-msgstr ""
+msgstr "drizzledをシャットダウンしています...\n"
 
 #: client/drizzleadmin.cc:323
 #, c-format
 msgid "shutdown failed; error: '%s'"
-msgstr ""
+msgstr "シャットダウンに失敗しました; エラー: '%s'"
 
 #: client/drizzleadmin.cc:330
 #, c-format
@@ -676,21 +749,21 @@ msgstr ""
 
 #: client/drizzleadmin.cc:340
 msgid "drizzled is alive"
-msgstr ""
+msgstr "drizzledは動作しています"
 
 #: client/drizzleadmin.cc:348
 msgid "connection was down, but drizzled is now alive"
-msgstr ""
+msgstr "drizzledは動作していますが、接続が切断されました。"
 
 #: client/drizzleadmin.cc:352
-#, c-format
+#, fuzzy, c-format
 msgid "drizzled doesn't answer to ping, error: '%s'"
-msgstr ""
+msgstr "drizzledはpingに応答していません; エラー: '%s'"
 
 #: client/drizzleadmin.cc:361
 #, c-format
 msgid "Unknown command: '%-.60s'"
-msgstr ""
+msgstr "不明なコマンド: '%-.60s'"
 
 #: client/drizzleadmin.cc:370
 #, c-format
@@ -709,12 +782,12 @@ msgstr ""
 
 #: client/drizzleadmin.cc:379
 msgid "Administration program for the drizzled daemon."
-msgstr ""
+msgstr "drizzledデーモンを管理するためのプログラム"
 
 #: client/drizzleadmin.cc:380
 #, c-format
 msgid "Usage: %s [OPTIONS] command command....\n"
-msgstr ""
+msgstr "使用方法: %s [オプション] コマンド コマンド...\n"
 
 #: client/drizzleadmin.cc:382
 msgid ""
@@ -725,7 +798,7 @@ msgstr ""
 #: libdrizzle/client.c:679
 #, c-format
 msgid "Unknown option to protocol: %s\n"
-msgstr ""
+msgstr "次のプロトコルに対する不明なオプション: %s\n"
 
 #: libdrizzle/client.c:1159
 #, c-format
