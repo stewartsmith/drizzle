@@ -179,7 +179,7 @@ int64_t Field_double::val_int(void)
 warn:
   {
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-    String tmp(buf, sizeof(buf), &my_charset_latin1), *str;
+    String tmp(buf, sizeof(buf), &my_charset_utf8_general_ci), *str;
     str= val_str(&tmp, 0);
     push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,

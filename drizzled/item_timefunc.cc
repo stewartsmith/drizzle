@@ -390,11 +390,11 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       case 'p':
 	if (val_len < 2 || ! usa_time)
 	  goto err;
-	if (!my_strnncoll(&my_charset_latin1,
+	if (!my_strnncoll(&my_charset_utf8_general_ci,
 			  (const uchar *) val, 2, 
 			  (const uchar *) "PM", 2))
 	  daypart= 12;
-	else if (my_strnncoll(&my_charset_latin1,
+	else if (my_strnncoll(&my_charset_utf8_general_ci,
 			      (const uchar *) val, 2, 
 			      (const uchar *) "AM", 2))
 	  goto err;
@@ -575,7 +575,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
   {
     do
     {
-      if (!my_isspace(&my_charset_latin1,*val))
+      if (!my_isspace(&my_charset_utf8_general_ci,*val))
       {
 	make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                      val_begin, length,
@@ -2406,7 +2406,7 @@ void Item_char_typecast::fix_length_and_dec()
   from_cs= (args[0]->result_type() == INT_RESULT || 
             args[0]->result_type() == DECIMAL_RESULT ||
             args[0]->result_type() == REAL_RESULT) ?
-           (cast_cs->mbminlen == 1 ? cast_cs : &my_charset_latin1) :
+           (cast_cs->mbminlen == 1 ? cast_cs : &my_charset_utf8_general_ci) :
            args[0]->collation.collation;
   charset_conversion= (cast_cs->mbmaxlen > 1) ||
                       (!my_charset_same(from_cs, cast_cs) && from_cs != &my_charset_bin && cast_cs != &my_charset_bin);
@@ -3044,7 +3044,7 @@ String *Item_func_get_format::val_str(String *str)
     uint format_name_len;
     format_name_len= strlen(format_name);
     if (val_len == format_name_len &&
-	!my_strnncoll(&my_charset_latin1, 
+	!my_strnncoll(&my_charset_utf8_general_ci, 
 		      (const uchar *) val->ptr(), val_len, 
 		      (const uchar *) format_name, val_len))
     {

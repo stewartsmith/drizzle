@@ -22,7 +22,6 @@
 
 #include "client_priv.h"
 #include <mystrings/m_string.h>
-#undef SAFEMALLOC				// Speed things up
 #include "completion_hash.h"
 
 uint hashpjw(const char *arKey, uint nKeyLength)

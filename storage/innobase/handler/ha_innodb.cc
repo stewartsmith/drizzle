@@ -1612,19 +1612,6 @@ innobase_init(
 
 	data_mysql_default_charset_coll = (ulint)default_charset_info->number;
 
-	ut_a(DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL ==
-					my_charset_latin1.number);
-	ut_a(DATA_DRIZZLE_BINARY_CHARSET_COLL == my_charset_bin.number);
-
-	/* Store the latin1_swedish_ci character ordering table to InnoDB. For
-	non-latin1_swedish_ci charsets we use the MySQL comparison functions,
-	and consequently we do not need to know the ordering internally in
-	InnoDB. */
-
-	ut_a(0 == strcmp((char*)my_charset_latin1.name,
-						(char*)"latin1_swedish_ci"));
-	memcpy(srv_latin1_ordering, my_charset_latin1.sort_order, 256);
-
 	/* Since we in this module access directly the fields of a trx
 	struct, and due to different headers and flags it might happen that
 	mutex_t has a different size in this module and in InnoDB
@@ -2513,8 +2500,6 @@ innobase_mysql_cmp(
 
 		if (charset_number == default_charset_info->number) {
 			charset = default_charset_info;
-		} else if (charset_number == my_charset_latin1.number) {
-			charset = &my_charset_latin1;
 		} else {
 			charset = get_charset(charset_number, MYF(MY_WME));
 
@@ -2596,10 +2581,6 @@ get_innobase_type_from_mysql_type(
 	case DRIZZLE_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
 		if (field->binary()) {
 			return(DATA_BINARY);
-		} else if (strcmp(
-				   field->charset()->name,
-				   "latin1_swedish_ci") == 0) {
-			return(DATA_VARCHAR);
 		} else {
 			return(DATA_VARMYSQL);
 		}

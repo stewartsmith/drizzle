@@ -194,7 +194,7 @@ static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
 static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-static const CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 int drizzle_real_query_for_lazy(const char *buf, int length);
 int drizzle_store_result_for_lazy(DRIZZLE_RES **result);

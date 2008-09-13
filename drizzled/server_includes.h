@@ -625,7 +625,7 @@ extern int creating_table;    // How many mysql_create_table() are running
 */
 
 extern time_t server_start_time, flush_status_time;
-extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
+extern char *opt_mysql_tmpdir;
             
 #define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
 extern MY_TMPDIR mysql_tmpdir_list;

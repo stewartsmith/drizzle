@@ -341,7 +341,7 @@ process_flags:
     }
     else
     {
-      while (my_isdigit(&my_charset_latin1, *fmt)) {
+      while (my_isdigit(&my_charset_utf8_general_ci, *fmt)) {
         minimum_width=(minimum_width * 10) + (*fmt - '0');
         fmt++;
       }
@@ -357,7 +357,7 @@ process_flags:
       }
       else
       {
-        while (my_isdigit(&my_charset_latin1, *fmt)) {
+        while (my_isdigit(&my_charset_utf8_general_ci, *fmt)) {
           precision=(precision * 10) + (*fmt - '0');
           fmt++;
         }

@@ -595,7 +595,6 @@ static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_out
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                    SHOW_LONG},
-  {"character_sets_dir",      mysql_charsets_dir,                   SHOW_CHAR},
   {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
 #ifdef HAVE_MLOCKALL
@@ -842,7 +841,7 @@ uchar *sys_var_set::value_ptr(THD *thd,
                               LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -1718,34 +1717,6 @@ typedef struct old_names_map_st
   const char *new_name;
 } my_old_conv;
 
-static my_old_conv old_conv[]= 
-{
-  {	"cp1251_koi8"		,	"cp1251"	},
-  {	"cp1250_latin2"		,	"cp1250"	},
-  {	"kam_latin2"		,	"keybcs2"	},
-  {	"mac_latin2"		,	"MacRoman"	},
-  {	"macce_latin2"		,	"MacCE"		},
-  {	"pc2_latin2"		,	"pclatin2"	},
-  {	"vga_latin2"		,	"pclatin1"	},
-  {	"koi8_cp1251"		,	"koi8r"		},
-  {	"win1251ukr_koi8_ukr"	,	"win1251ukr"	},
-  {	"koi8_ukr_win1251ukr"	,	"koi8u"		},
-  {	NULL			,	NULL		}
-};
-
-const CHARSET_INFO *get_old_charset_by_name(const char *name)
-{
-  my_old_conv *conv;
- 
-  for (conv= old_conv; conv->old_name; conv++)
-  {
-    if (!my_strcasecmp(&my_charset_latin1, name, conv->old_name))
-      return get_charset_by_csname(conv->new_name, MY_CS_PRIMARY, MYF(0));
-  }
-  return NULL;
-}
-
-
 bool sys_var_collation::check(THD *thd __attribute__((unused)),
                               set_var *var)
 {
@@ -1799,8 +1770,7 @@ bool sys_var_character_set::check(THD *thd __attribute__((unused)),
       }
       tmp= NULL;
     }
-    else if (!(tmp=get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))) &&
-             !(tmp=get_old_charset_by_name(res->c_ptr())))
+    else if (!(tmp= get_charset_by_csname(res->c_ptr(),MY_CS_PRIMARY,MYF(0))))
     {
       my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), res->c_ptr());
       return 1;
@@ -2307,7 +2277,7 @@ uchar *sys_var_log_output::value_ptr(THD *thd,
                                      LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -2434,7 +2404,7 @@ bool sys_var_rand_seed2::update(THD *thd, set_var *var)
 bool sys_var_thd_time_zone::check(THD *thd, set_var *var)
 {
   char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_latin1);
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
   String *res= var->value->val_str(&str);
 
   if (!(var->save_result.time_zone= my_tz_find(thd, res)))
@@ -2493,7 +2463,7 @@ void sys_var_thd_time_zone::set_default(THD *thd, enum_var_type type)
  {
    if (default_tz_name)
    {
-     String str(default_tz_name, &my_charset_latin1);
+     String str(default_tz_name, &my_charset_utf8_general_ci);
      /*
        We are guaranteed to find this time zone since its existence
        is checked during start-up.
@@ -2573,7 +2543,7 @@ bool sys_var_thd_lc_time_names::check(THD *thd __attribute__((unused)),
   else // STRING_RESULT
   {
     char buff[6]; 
-    String str(buff, sizeof(buff), &my_charset_latin1), *res;
+    String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
@@ -3233,7 +3203,7 @@ bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
-  String str(buff, sizeof(buff), &my_charset_latin1), *res;
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
 
   var->save_result.plugin= NULL;
   if (var->value->result_type() == STRING_RESULT)
@@ -3317,7 +3287,7 @@ sys_var_thd_optimizer_switch::
 symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
 
   tmp.length(0);
 

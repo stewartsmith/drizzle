@@ -145,8 +145,8 @@ SELECT * FROM t2 WHERE b = (SELECT MIN(b) FROM t2);
 SELECT * FROM t3 WHERE b = (SELECT MIN(b) FROM t3);
 
 CREATE TABLE `t8` (
-  `pseudo` varchar(35) character set latin1 NOT NULL default '',
-  `email` varchar(60) character set latin1 NOT NULL default '',
+  `pseudo` varchar(35) NOT NULL default '',
+  `email` varchar(60) NOT NULL default '',
   PRIMARY KEY  (`pseudo`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
@@ -171,7 +171,7 @@ drop table if exists t1,t2,t3,t4,t5,t6,t7,t8;
 CREATE TABLE `t1` (
   `topic` bigint unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
-  `pseudo` varchar(35) character set latin1 NOT NULL default '',
+  `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`pseudo`,`date`,`topic`),
   KEY `topic` (`topic`)
 ) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
@@ -475,36 +475,36 @@ explain extended SELECT t1.a, t1.a in (select t2.a from t2,t3 where t3.a=t2.a) F
 drop table t1,t2,t3;
 
 #LIMIT is not supported now
-create table t1 (a float);
--- error 1235
-select 10.5 IN (SELECT * from t1 LIMIT 1);
--- error 1235
-select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
-drop table t1;
-
-create table t1 (a int, b int, c varchar(10));
-create table t2 (a int);
-insert into t1 values (1,2,'a'),(2,3,'b'),(3,4,'c');
-insert into t2 values (1),(2),(NULL);
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),(select c from t1 where a=t2.a)  from t2;
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,3,'b'),(select c from t1 where a=t2.a) from t2;
-select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,4,'c'),(select c from t1 where a=t2.a) from t2;
-drop table t1,t2;
-
-create table t1 (a int, b real, c varchar(10));
-insert into t1 values (1, 1, 'a'), (2,2,'b'), (NULL, 2, 'b');
-select ROW(1, 1, 'a') IN (select a,b,c from t1);
-select ROW(1, 2, 'a') IN (select a,b,c from t1);
-select ROW(1, 1, 'a') IN (select b,a,c from t1);
-select ROW(1, 1, 'a') IN (select a,b,c from t1 where a is not null);
-select ROW(1, 2, 'a') IN (select a,b,c from t1 where a is not null);
-select ROW(1, 1, 'a') IN (select b,a,c from t1 where a is not null);
-select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
-select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
-select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
--- error 1235
-select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
-drop table t1;
+#create table t1 (a float);
+#-- error 1235
+#select 10.5 IN (SELECT * from t1 LIMIT 1);
+#-- error 1235
+#select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
+#drop table t1;
+#
+#create table t1 (a int, b int, c varchar(10));
+#create table t2 (a int);
+#insert into t1 values (1,2,'a'),(2,3,'b'),(3,4,'c');
+#insert into t2 values (1),(2),(NULL);
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,2,'a'),(select c from t1 where a=t2.a)  from t2;
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,3,'b'),(select c from t1 where a=t2.a) from t2;
+#select a, (select a,b,c from t1 where t1.a=t2.a) = ROW(a,4,'c'),(select c from t1 where a=t2.a) from t2;
+#drop table t1,t2;
+#
+#create table t1 (a int, b real, c varchar(10));
+#insert into t1 values (1, 1, 'a'), (2,2,'b'), (NULL, 2, 'b');
+#select ROW(1, 1, 'a') IN (select a,b,c from t1);
+#select ROW(1, 2, 'a') IN (select a,b,c from t1);
+#select ROW(1, 1, 'a') IN (select b,a,c from t1);
+#select ROW(1, 1, 'a') IN (select a,b,c from t1 where a is not null);
+#select ROW(1, 2, 'a') IN (select a,b,c from t1 where a is not null);
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 where a is not null);
+#select ROW(1, 1, 'a') IN (select a,b,c from t1 where c='b' or c='a');
+#select ROW(1, 2, 'a') IN (select a,b,c from t1 where c='b' or c='a');
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 where c='b' or c='a');
+#-- error 1235
+#select ROW(1, 1, 'a') IN (select b,a,c from t1 limit 2);
+#drop table t1;
 
 #test of uncacheable subqueries
 CREATE TABLE t1 (a int);
@@ -514,20 +514,20 @@ drop table t1;
 
 
 CREATE TABLE `t1` (
-  `mot` varchar(30) character set latin1 NOT NULL default '',
+  `mot` varchar(30) NOT NULL default '',
   `topic` bigint unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
-  `pseudo` varchar(35) character set latin1 NOT NULL default '',
+  `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),
   KEY `topic` (`topic`)
 ) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `t2` (
-  `mot` varchar(30) character set latin1 NOT NULL default '',
+  `mot` varchar(30) NOT NULL default '',
   `topic` bigint unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
-  `pseudo` varchar(35) character set latin1 NOT NULL default '',
+  `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
   KEY `pseudo` (`pseudo`,`date`,`topic`),
   KEY `topic` (`topic`)
@@ -629,7 +629,7 @@ drop table t1, t2;
 #
 CREATE TABLE `t1` (
   `id` bigint unsigned NOT NULL auto_increment,
-  `pseudo` varchar(35) character set latin1 NOT NULL default '',
+  `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `pseudo` (`pseudo`)
 ) ENGINE=MyISAM PACK_KEYS=1 ROW_FORMAT=DYNAMIC;
@@ -817,14 +817,14 @@ DROP TABLE t1, t2;
 #
 # collation test
 #
-CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
-                 s2 CHAR(5) COLLATE latin1_swedish_ci);
-INSERT INTO t1 VALUES ('z','?');
--- error 1267
-select * from t1 where s1 > (select max(s2) from t1);
--- error 1267
-select * from t1 where s1 > any (select max(s2) from t1);
-drop table t1;
+#CREATE TABLE t1 (s1 CHAR(5) COLLATE latin1_german1_ci,
+#                 s2 CHAR(5) COLLATE latin1_swedish_ci);
+#INSERT INTO t1 VALUES ('z','?');
+#-- error 1267
+#select * from t1 where s1 > (select max(s2) from t1);
+#-- error 1267
+#select * from t1 where s1 > any (select max(s2) from t1);
+#drop table t1;
 
 #
 # aggregate functions reinitialization
@@ -1287,7 +1287,7 @@ drop table t1,t2;
 #
 # BUG#5003 - like in subselect
 #
-CREATE TABLE t1(`IZAVORGANG_ID` VARCHAR(11) CHARACTER SET latin1 COLLATE latin1_bin,`KUERZEL` VARCHAR(10) CHARACTER SET latin1 COLLATE latin1_bin,`IZAANALYSEART_ID` VARCHAR(11) CHARACTER SET latin1 COLLATE latin1_bin,`IZAPMKZ_ID` VARCHAR(11) CHARACTER SET latin1 COLLATE latin1_bin);
+CREATE TABLE t1(`IZAVORGANG_ID` VARCHAR(11) COLLATE utf8_bin,`KUERZEL` VARCHAR(10) COLLATE utf8_bin,`IZAANALYSEART_ID` VARCHAR(11) COLLATE utf8_bin,`IZAPMKZ_ID` VARCHAR(11) COLLATE utf8_bin);
 CREATE INDEX AK01IZAVORGANG ON t1(izaAnalyseart_id,Kuerzel);
 INSERT INTO t1(`IZAVORGANG_ID`,`KUERZEL`,`IZAANALYSEART_ID`,`IZAPMKZ_ID`)VALUES('D0000000001','601','D0000000001','I0000000001');
 INSERT INTO t1(`IZAVORGANG_ID`,`KUERZEL`,`IZAANALYSEART_ID`,`IZAPMKZ_ID`)VALUES('D0000000002','602','D0000000001','I0000000001');
@@ -1586,24 +1586,24 @@ drop table t1;
 #
 # Item_int_with_ref check (BUG#10020)
 #
-CREATE TABLE `t1` (
-  `itemid` bigint unsigned NOT NULL auto_increment,
-  `sessionid` bigint unsigned default NULL,
-  `time` int unsigned NOT NULL default '0',
-  `data` text collate latin1_general_ci NOT NULL,
-  PRIMARY KEY  (`itemid`)
-);
-INSERT INTO `t1` VALUES (1, 1, 1, '');
-CREATE TABLE `t2` (
-  `sessionid` bigint unsigned NOT NULL auto_increment,
-  `pid` int unsigned NOT NULL default '0',
-  `date` int unsigned NOT NULL default '0',
-  `ip` varchar(15) collate latin1_general_ci NOT NULL default '',
-  PRIMARY KEY  (`sessionid`)
-);
-INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
-SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
-drop tables t1,t2;
+#CREATE TABLE `t1` (
+#  `itemid` bigint unsigned NOT NULL auto_increment,
+#  `sessionid` bigint unsigned default NULL,
+#  `time` int unsigned NOT NULL default '0',
+#  `data` text collate latin1_general_ci NOT NULL,
+#  PRIMARY KEY  (`itemid`)
+#);
+#INSERT INTO `t1` VALUES (1, 1, 1, '');
+#CREATE TABLE `t2` (
+#  `sessionid` bigint unsigned NOT NULL auto_increment,
+#  `pid` int unsigned NOT NULL default '0',
+#  `date` int unsigned NOT NULL default '0',
+#  `ip` varchar(15) collate latin1_general_ci NOT NULL default '',
+#  PRIMARY KEY  (`sessionid`)
+#);
+#INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
+#SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
+#drop tables t1,t2;
 
 # BUG#11821 : Select from subselect using aggregate function on an enum
 # segfaults:

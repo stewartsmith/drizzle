@@ -104,9 +104,7 @@ our @glob_test_mode;
 
 our $glob_basedir;
 
-our $path_charsetsdir;
 our $path_client_bindir;
-our $path_share;
 our $path_timefile;
 our $path_snapshot;
 our $path_drizzletest_log;
@@ -635,15 +633,6 @@ sub command_line_setup () {
   # Look for the client binaries directory
   $path_client_bindir= mtr_path_exists("$glob_basedir/client",
 				       "$glob_basedir/bin");
-
-  # Look for charsetsdir, use same share
-  $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
-                                    "$glob_basedir/drizzled/share",
-                                    "$glob_basedir/share");
-
-  $path_charsetsdir=   mtr_path_exists("$path_share/charsets");
-
-
 
   if (!$opt_extern)
   {
@@ -1396,7 +1385,7 @@ sub environment_setup () {
   # Also command lines in .opt files may contain env vars
   # --------------------------------------------------------------------------
 
-  $ENV{'CHARSETSDIR'}=              $path_charsetsdir;
+  $ENV{'CHARSETSDIR'}=              "";
   $ENV{'UMASK'}=              "0660"; # The octal *string*
   $ENV{'UMASK_DIR'}=          "0770"; # The octal *string*
   
@@ -1503,10 +1492,6 @@ sub environment_setup () {
   my $cmdline_mysqlbinlog=
     mtr_native_path($exe_drizzlebinlog) .
       " --no-defaults --disable-force-if-open --debug-check";
-  if ( !$opt_extern && $mysql_version_id >= 50000 )
-  {
-    $cmdline_mysqlbinlog .=" --character-sets-dir=$path_charsetsdir";
-  }
 
   if ( $opt_debug )
   {
@@ -1521,8 +1506,7 @@ sub environment_setup () {
   my $cmdline_mysql=
     mtr_native_path($exe_drizzle) .
     " --no-defaults --debug-check --host=localhost  --user=root --password= " .
-    "--port=$master->[0]->{'port'} " .
-    "--character-sets-dir=$path_charsetsdir";
+    "--port=$master->[0]->{'port'} ";
 
   $ENV{'MYSQL'}= $cmdline_mysql;
 
@@ -2491,7 +2475,6 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
-  mtr_add_arg($args, "%s--character-sets-dir=%s", $prefix, $path_charsetsdir);
 
   if ( $mysql_version_id >= 50036)
   {
@@ -2504,7 +2487,7 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--log-bin-trust-function-creators", $prefix);
   }
 
-  mtr_add_arg($args, "%s--default-character-set=latin1", $prefix);
+  mtr_add_arg($args, "%s--default-character-set=utf8", $prefix);
   mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent
@@ -3089,7 +3072,6 @@ sub run_check_testcase ($$) {
   mtr_add_arg($args, "--no-defaults");
   mtr_add_arg($args, "--silent");
   mtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
-  mtr_add_arg($args, "--character-sets-dir=%s", $path_charsetsdir);
 
   mtr_add_arg($args, "--port=%d", $mysqld->{'port'});
   mtr_add_arg($args, "--database=test");
@@ -3168,7 +3150,6 @@ sub run_drizzletest ($) {
   mtr_add_arg($args, "--no-defaults");
   mtr_add_arg($args, "--silent");
   mtr_add_arg($args, "--tmpdir=%s", $opt_tmpdir);
-  mtr_add_arg($args, "--character-sets-dir=%s", $path_charsetsdir);
   mtr_add_arg($args, "--logdir=%s/log", $opt_vardir);
 
   # Log line number and time  for each line in .test file

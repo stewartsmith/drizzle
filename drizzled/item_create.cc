@@ -2732,7 +2732,7 @@ Create_func_space::create(THD *thd, Item *arg1)
   {
     uint dummy_errors;
     sp= new (thd->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE, MY_REPERTOIRE_ASCII);
-    sp->str_value.copy(" ", 1, &my_charset_latin1, cs, &dummy_errors);
+    sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
   else
   {

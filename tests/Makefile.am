@@ -137,10 +137,12 @@ test: test-drizzle
 test-drizzle:
 	  $(PERL) -I$(top_srcdir)/tests/lib \
 		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+        1st \
         alter_table \
         bench_count_distinct \
 	bulk_replace \
 	comment_column2 \
+	comment_table \
 	comments \
 	consistent_snapshot \
         count_distinct \
@@ -153,7 +155,11 @@ test-drizzle:
 	drizzleslap \
         endspace \
         flush2 \
+        func_equal \
+        func_group_innodb \
+        func_isnull \
         func_like \
+				func_math \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \
@@ -173,8 +179,10 @@ test-drizzle:
         key_primary \
         keywords \
         lock \
+        limit \
         lock_tables_lost_commit \
         overflow \
+        rollback \
         select \
         subselect \
         subselect3 \
@@ -183,4 +191,5 @@ test-drizzle:
         tablelock \
         type_newdecimal \
         unsafe_binlog_innodb \
-        update
+        update \
+        variables-notembedded

@@ -184,7 +184,7 @@ void thd_init_client_charset(THD *thd, uint cs_number)
   */
   if (!opt_character_set_client_handshake ||
       !(thd->variables.character_set_client= get_charset(cs_number, MYF(0))) ||
-      !my_strcasecmp(&my_charset_latin1,
+      !my_strcasecmp(&my_charset_utf8_general_ci,
                      global_system_variables.character_set_client->name,
                      thd->variables.character_set_client->name))
   {

@@ -63,7 +63,6 @@ using namespace std;
 #define QUERY_REAP_FLAG  2
 
 enum {
-  OPT_SKIP_SAFEMALLOC=OPT_MAX_CLIENT_OPTION,
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
   OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
 };
@@ -133,7 +132,7 @@ static struct st_test_file* cur_file;
 static struct st_test_file* file_stack_end;
 
 
-static const CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
+static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
 
 static int embedded_server_arg_count=0;
 static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];

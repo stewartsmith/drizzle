@@ -41,7 +41,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint length,
                   const CHARSET_INFO * const cs,
                   char **err_pos, uint *err_len, bool *set_warning)
 {
-  const CHARSET_INFO * const strip= cs ? cs : &my_charset_latin1;
+  const CHARSET_INFO * const strip= cs ? cs : &my_charset_utf8_general_ci;
   const char *end= str + strip->cset->lengthsp(strip, str, length);
   uint64_t found= 0;
   *err_pos= 0;                  // No error yet
@@ -226,7 +226,7 @@ uint check_word(TYPELIB *lib, const char *val, const char *end,
   const char *ptr;
 
   /* Fiend end of word */
-  for (ptr= val ; ptr < end && my_isalpha(&my_charset_latin1, *ptr) ; ptr++)
+  for (ptr= val ; ptr < end && my_isalpha(&my_charset_utf8_general_ci, *ptr) ; ptr++)
     ;
   if ((res=find_type(lib, val, (uint) (ptr - val), 1)) > 0)
     *end_of_word= ptr;

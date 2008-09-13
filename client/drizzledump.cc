@@ -125,7 +125,7 @@ static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static const char *drizzle_universal_client_charset=
   DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
-static const CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
 /* have we seen any VIEWs during table scanning? */
 bool seen_views= 0;
@@ -2052,8 +2052,8 @@ static void dump_table(char *table, char *db)
      discarding SHOW CREATE EVENT statements generation. The myslq.event
      table data should be skipped too.
   */
-  if (!opt_events && !my_strcasecmp(&my_charset_latin1, db, "mysql") &&
-      !my_strcasecmp(&my_charset_latin1, table, "event"))
+  if (!opt_events && !my_strcasecmp(&my_charset_utf8_general_ci, db, "mysql") &&
+      !my_strcasecmp(&my_charset_utf8_general_ci, table, "event"))
   {
     verbose_msg("-- Skipping data table mysql.event, --skip-events was used\n");
     return;
@@ -2572,7 +2572,7 @@ int init_dumping_tables(char *qdatabase)
 static int init_dumping(char *database, int init_func(char*))
 {
   if (drizzle_get_server_version(drizzle) >= 50003 &&
-      !my_strcasecmp(&my_charset_latin1, database, "information_schema"))
+      !my_strcasecmp(&my_charset_utf8_general_ci, database, "information_schema"))
     return 1;
 
   if (drizzle_select_db(drizzle, database))
@@ -2623,7 +2623,7 @@ static int dump_all_tables_in_db(char *database)
   char table_buff[NAME_LEN*2+3];
   char hash_key[2*NAME_LEN+2];  /* "db.tablename" */
   char *afterdot;
-  int using_mysql_db= my_strcasecmp(&my_charset_latin1, database, "mysql");
+  int using_mysql_db= my_strcasecmp(&my_charset_utf8_general_ci, database, "mysql");
 
 
   afterdot= stpcpy(hash_key, database);
@@ -3218,7 +3218,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
       If these two types, we do want to skip dumping the table
     */
     if (!opt_no_data &&
-        (!my_strcasecmp(&my_charset_latin1, table_type, "MRG_MyISAM") ||
+        (!my_strcasecmp(&my_charset_utf8_general_ci, table_type, "MRG_MyISAM") ||
          !strcmp(table_type,"MRG_ISAM")))
       result= IGNORE_DATA;
   }

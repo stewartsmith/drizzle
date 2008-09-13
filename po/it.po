@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-09-13 13:20-0700\n"
+"POT-Creation-Date: 2008-09-13 13:24-0700\n"
 "PO-Revision-Date: 2008-09-08 16:46+0000\n"
 "Last-Translator: Federico <federico_raz@yahoo.it>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -1106,12 +1106,12 @@ msgid "Statement closed indirectly because of a preceeding %s() call"
 msgstr ""
 "Statement chiuso indirettamente per via di un precedente chiamata a %s()"
 
-#: libdrizzle/local_infile.c:185 mysys/errors.c:52
+#: libdrizzle/local_infile.c:184 mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
 msgstr "File '%s' non trovato (Errcode: %d)"
 
-#: libdrizzle/local_infile.c:216 mysys/errors.c:26
+#: libdrizzle/local_infile.c:215 mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
 msgstr "Errore di lettura dal file '%s' (Errcode: %d)"
@@ -7221,7 +7221,7 @@ msgstr ""
 msgid "libevent_thread_proc: my_thread_init() failed\n"
 msgstr ""
 
-#: drizzled/set_var.cc:899
+#: drizzled/set_var.cc:898
 msgid "Ambiguous slave modes combination. STRICT will be used"
 msgstr ""
 

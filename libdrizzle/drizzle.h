@@ -43,7 +43,7 @@ extern "C" {
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <libdrizzle/drizzle_com.h>
-#include <libdrizzle/drizzle_time.h>
+#include <mysys/drizzle_time.h>
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
