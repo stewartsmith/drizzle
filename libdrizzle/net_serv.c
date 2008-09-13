@@ -20,11 +20,12 @@
 
 #include <drizzled/global.h>
 #include <drizzle.h>
-#include <drizzled/error.h>
+#include <libdrizzle/errmsg.h>
 #include <vio/violite.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/poll.h>
+#include <zlib.h>
 
 /*
   The following handles the differences when this is linked between the
@@ -41,6 +42,7 @@
 
 #define TEST_BLOCKING        8
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
+#define MIN_COMPRESS_LENGTH		50	/* Don't compress small bl. */
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
@@ -75,7 +77,8 @@ bool my_net_init(NET *net, Vio* vio)
 
 void net_end(NET *net)
 {
-  my_free(net->buff,MYF(MY_ALLOW_ZERO_PTR));
+  if (net->buff != NULL)
+    free(net->buff);
   net->buff=0;
   return;
 }
@@ -92,7 +95,7 @@ bool net_realloc(NET *net, size_t length)
   {
     /* @todo: 1 and 2 codes are identical. */
     net->error= 1;
-    net->last_errno= ER_NET_PACKET_TOO_LARGE;
+    net->last_errno= CR_NET_PACKET_TOO_LARGE;
     return(1);
   }
   pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1);
@@ -100,13 +103,12 @@ bool net_realloc(NET *net, size_t length)
     We must allocate some extra bytes for the end 0 and to be able to
     read big compressed blocks
   */
-  if (!(buff= (uchar*) my_realloc((char*) net->buff, pkt_length +
-                                  NET_HEADER_SIZE + COMP_HEADER_SIZE,
-                                  MYF(MY_WME))))
+  if (!(buff= (uchar*) realloc((char*) net->buff, pkt_length +
+                               NET_HEADER_SIZE + COMP_HEADER_SIZE)))
   {
     /* @todo: 1 and 2 codes are identical. */
     net->error= 1;
-    net->last_errno= ER_OUT_OF_RESOURCES;
+    net->last_errno= CR_OUT_OF_MEMORY;
     /* In the server the error is reported by MY_WME flag. */
     return(1);
   }
@@ -414,19 +416,42 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     size_t complen;
     uchar *b;
     const uint header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
-    if (!(b= (uchar*) my_malloc(len + NET_HEADER_SIZE +
-                                COMP_HEADER_SIZE, MYF(MY_WME))))
+    if (!(b= (uchar*) malloc(len + NET_HEADER_SIZE +
+                             COMP_HEADER_SIZE)))
     {
       net->error= 2;
-      net->last_errno= ER_OUT_OF_RESOURCES;
+      net->last_errno= CR_OUT_OF_MEMORY;
       /* In the server, the error is reported by MY_WME flag. */
       net->reading_or_writing= 0;
       return(1);
     }
     memcpy(b+header_length,packet,len);
 
-    if (my_compress(b+header_length, &len, &complen))
+    complen= len * 120 / 100 + 12;
+    unsigned char * compbuf= (unsigned char *) malloc(complen);
+    if (compbuf != NULL)
+    {
+      uLongf tmp_complen= complen;
+      int res= compress((Bytef*) compbuf, &tmp_complen,
+                        (Bytef*) (b+header_length),
+                        len);
+      complen= tmp_complen;
+
+      free(compbuf);
+
+      if ((res != Z_OK) || (complen >= len))
+        complen= 0;
+      else
+      {
+        size_t tmplen= complen;
+        complen= len;
+        len= tmplen;
+      }
+    }
+    else
+    {
       complen=0;
+    }
     int3store(&b[NET_HEADER_SIZE],complen);
     int3store(b,len);
     b[3]=(uchar) (net->compress_pkt_nr++);
@@ -478,7 +503,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
           if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
             continue;
           net->error= 2;                     /* Close socket */
-          net->last_errno= ER_NET_PACKET_TOO_LARGE;
+          net->last_errno= CR_NET_PACKET_TOO_LARGE;
           goto end;
         }
         retry_count=0;
@@ -495,16 +520,16 @@ net_real_write(NET *net,const uchar *packet, size_t len)
         continue;
       }
       net->error= 2;                /* Close socket */
-      net->last_errno= (interrupted ? ER_NET_WRITE_INTERRUPTED :
-                        ER_NET_ERROR_ON_WRITE);
+      net->last_errno= (interrupted ? CR_NET_WRITE_INTERRUPTED :
+                        CR_NET_ERROR_ON_WRITE);
       break;
     }
     pos+=length;
     update_statistics(thd_increment_bytes_sent(length));
   }
 end:
-  if (net->compress)
-    my_free((char*) packet,MYF(0));
+  if ((net->compress) && (packet != NULL))
+    free((char*) packet);
   net->reading_or_writing=0;
 
   if (net->write_timeout)
@@ -589,9 +614,9 @@ my_real_read(NET *net, size_t *complen)
         len= packet_error;
         net->error= 2;                /* Close socket */
         net->last_errno= (vio_was_interrupted(net->vio) ?
-                          ER_NET_READ_INTERRUPTED :
-                          ER_NET_READ_ERROR);
-        my_error(net->last_errno, MYF(0));
+                          CR_NET_READ_INTERRUPTED :
+                          CR_NET_READ_ERROR);
+        ER(net->last_errno);
         goto end;
       }
       remain -= (uint32_t) length;
@@ -772,15 +797,35 @@ my_net_read(NET *net)
       net->where_b=buf_length;
       if ((packet_len = my_real_read(net,&complen)) == packet_error)
         return packet_error;
-      if (my_uncompress(net->buff + net->where_b, packet_len,
-                        &complen))
+
+      if (complen)
       {
-        net->error= 2;            /* caller will close socket */
-        net->last_errno= ER_NET_UNCOMPRESS_ERROR;
-        return packet_error;
+        unsigned char * compbuf= (unsigned char *) malloc(complen);
+        if (compbuf != NULL)
+        {
+          uLongf tmp_complen= complen;
+          int error= uncompress((Bytef*) compbuf, &tmp_complen,
+                                (Bytef*) (net->buff + net->where_b),
+                                (uLong)packet_len);
+          complen= tmp_complen;
+
+          if (error != Z_OK)
+          {
+            net->error= 2;            /* caller will close socket */
+            net->last_errno= CR_NET_UNCOMPRESS_ERROR;
+          }
+          else
+          {
+            memcpy((net->buff + net->where_b), compbuf, complen);
+          }
+          free(compbuf);
+        }
       }
-      buf_length+= complen;
+      else
+        complen= packet_len;
+
     }
+    buf_length+= complen;
 
     net->read_pos=      net->buff+ first_packet_offset + NET_HEADER_SIZE;
     net->buf_length=    buf_length;
@@ -791,7 +836,7 @@ my_net_read(NET *net)
     net->read_pos[len]=0;        /* Safeguard for drizzle_use_result */
   }
   return len;
-}
+  }
 
 
 void my_net_set_read_timeout(NET *net, uint timeout)

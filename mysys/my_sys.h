@@ -108,7 +108,6 @@ typedef struct my_aio_result {
 	/* Some constants */
 #define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
 #define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
-#define MIN_COMPRESS_LENGTH		50	/* Don't compress small bl. */
 #define DFLT_INIT_HITS  3
 
 	/* root_alloc flags */
@@ -725,10 +724,6 @@ extern int my_search_option_files(const char *conf_file, int *argc,
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
-extern bool my_compress(uchar *, size_t *, size_t *);
-extern bool my_uncompress(uchar *, size_t , size_t *);
-extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
-                                size_t *complen);
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
