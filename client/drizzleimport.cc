@@ -482,9 +482,6 @@ static void * worker_thread(void *arg)
   char *raw_table_name= (char *)arg;
   DRIZZLE *drizzle= 0;
 
-  if (drizzle_thread_init())
-    goto error;
- 
   if (!(drizzle= db_connect(current_host,current_db,current_user,opt_password)))
   {
     goto error;

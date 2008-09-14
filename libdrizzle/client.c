@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1077,17 +1077,9 @@ void drizzle_server_end()
   else
   {
     free_charsets();
-    drizzle_thread_end();
   }
 
   drizzle_client_init= org_my_init_done= 0;
-#ifdef EMBEDDED_SERVER
-  if (stderror_file)
-  {
-    fclose(stderror_file);
-    stderror_file= 0;
-  }
-#endif
 }
 
 

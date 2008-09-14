@@ -286,14 +286,6 @@ void drizzle_server_end(void);
 
 const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
 
-/*
-  Set up and bring down a thread; these function should be called
-  for each thread in an application which opens at least one MySQL
-  connection.  All uses of the connection(s) should be between these
-  function calls.
-*/
-bool drizzle_thread_init(void);
-void drizzle_thread_end(void);
 
 /*
   Functions to get information from the DRIZZLE and DRIZZLE_RES structures
@@ -381,10 +373,7 @@ DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
 DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
 uint32_t  drizzle_escape_string(char *to,const char *from, uint32_t from_length);
 uint32_t  drizzle_hex_string(char *to,const char *from, uint32_t from_length);
-uint32_t        drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
 void    myodbc_remove_escape(const DRIZZLE *drizzle, char *name);
-uint32_t  drizzle_thread_safe(void);
-bool    drizzle_embedded(void);
 bool         drizzle_read_query_result(DRIZZLE *drizzle);
 
 

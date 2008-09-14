@@ -319,9 +319,6 @@ int main(int argc, char **argv)
 
   MY_INIT(argv[0]);
 
-  if (!(drizzle_thread_safe()))
-    fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
-
   load_defaults("my",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(&argc,&argv))
@@ -1963,14 +1960,6 @@ pthread_handler_t timer_thread(void *p)
   struct timespec abstime;
 
 
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
-
   /*
     We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
@@ -1992,7 +1981,6 @@ pthread_handler_t timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  drizzle_thread_end();
   return(0);
 }
 
@@ -2006,13 +1994,6 @@ pthread_handler_t run_task(void *p)
   DRIZZLE_ROW row;
   statement *ptr;
   thread_context *con= (thread_context *)p;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2139,7 +2120,6 @@ end:
 
   my_free(con, MYF(0));
 
-  drizzle_thread_end();
   return(0);
 }
 

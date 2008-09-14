@@ -18,7 +18,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <sys/stat.h>
@@ -53,6 +52,21 @@
 #include "client_settings.h"
 #include <drizzled/version.h>
 
+/* Borrowed from libicu header */
+
+#define U8_IS_SINGLE(c) (((c)&0x80)==0)
+#define U8_LENGTH(c) \
+    ((uint32_t)(c)<=0x7f ? 1 : \
+        ((uint32_t)(c)<=0x7ff ? 2 : \
+            ((uint32_t)(c)<=0xd7ff ? 3 : \
+                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
+                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
+                ) \
+            ) \
+        ) \
+    )
+
+
 #undef net_buffer_length
 #undef max_allowed_packet
 
@@ -77,17 +91,6 @@ const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
-
-bool drizzle_thread_init()
-{
-  return my_thread_init();
-}
-
-void drizzle_thread_end()
-{
-  my_thread_end();
-}
-
 
 /*
   Expand wildcard to a sql string
@@ -538,33 +541,6 @@ const char * drizzle_character_set_name(const DRIZZLE *drizzle)
   return drizzle->charset->csname;
 }
 
-void drizzle_get_character_set_info(const DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
-{
-  csinfo->number   = drizzle->charset->number;
-  csinfo->state    = drizzle->charset->state;
-  csinfo->csname   = drizzle->charset->csname;
-  csinfo->name     = drizzle->charset->name;
-  csinfo->comment  = drizzle->charset->comment;
-  csinfo->mbminlen = drizzle->charset->mbminlen;
-  csinfo->mbmaxlen = drizzle->charset->mbmaxlen;
-
-  if (drizzle->options.charset_dir)
-    csinfo->dir = drizzle->options.charset_dir;
-  else
-    csinfo->dir = charsets_dir;
-}
-
-uint drizzle_thread_safe(void)
-{
-  return 1;
-}
-
-
-bool drizzle_embedded(void)
-{
-  return false;
-}
-
 /****************************************************************************
   Some support functions
 ****************************************************************************/
@@ -596,9 +572,7 @@ void my_net_local_init(NET *net)
   Each character needs two bytes, and you need room for the terminating
   null byte. When drizzle_hex_string() returns, the contents of "to" will
   be a null-terminated string. The return value is the length of the
-  encoded string, not including the terminating null character.
-
-  The return value does not contain any leading 0x or a leading X' and
+  encoded string, not including the terminating null character.  The return value does not contain any leading 0x or a leading X' and
   trailing '. The caller must supply whichever of those is desired.
 */
 
@@ -626,17 +600,73 @@ drizzle_hex_string(char *to, const char *from, uint32_t length)
 uint32_t
 drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
-  return escape_string_for_drizzle(default_charset_info, to, 0, from, length);
+  const char *to_start= to;
+  const char *end, *to_end=to_start + 2*length;
+  bool overflow= false;
+  for (end= from + length; from < end; from++)
+  {
+    uint32_t tmp_length;
+    char escape= 0;
+    if (!U8_IS_SINGLE(*from))
+    {
+      tmp_length= U8_LENGTH(*from);
+      if (to + tmp_length > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      while (tmp_length--)
+        *to++= *from++;
+      from--;
+      continue;
+    }
+    switch (*from) {
+    case 0:                             /* Must be escaped for 'mysql' */
+      escape= '0';
+      break;
+    case '\n':                          /* Must be escaped for logs */
+      escape= 'n';
+      break;
+    case '\r':
+      escape= 'r';
+      break;
+    case '\\':
+      escape= '\\';
+      break;
+    case '\'':
+      escape= '\'';
+      break;
+    case '"':                           /* Better safe than sorry */
+      escape= '"';
+      break;
+    case '\032':                        /* This gives problems on Win32 */
+      escape= 'Z';
+      break;
+    }
+    if (escape)
+    {
+      if (to + 2 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= '\\';
+      *to++= escape;
+    }
+    else
+    {
+      if (to + 1 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= *from;
+    }
+  }
+  *to= 0;
+  return overflow ? (size_t) -1 : (size_t) (to - to_start);
 }
 
-uint32_t
-drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
-       uint32_t length)
-{
-  if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_drizzle(drizzle->charset, to, 0, from, length);
-  return escape_string_for_drizzle(drizzle->charset, to, 0, from, length);
-}
 
 void
 myodbc_remove_escape(const DRIZZLE *drizzle, char *name)

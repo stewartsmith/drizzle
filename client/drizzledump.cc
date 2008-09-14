@@ -1112,7 +1112,7 @@ static void unescape(FILE *file,char *pos,uint length)
   if (!(tmp=(char*) my_malloc(length*2+1, MYF(MY_WME))))
     die(EX_DRIZZLEERR, "Couldn't allocate memory");
 
-  drizzle_real_escape_string(&drizzle_connection, tmp, pos, length);
+  drizzle_escape_string(tmp, pos, length);
   fputc('\'', file);
   fputs(tmp, file);
   fputc('\'', file);
@@ -2278,9 +2278,8 @@ static void dump_table(char *table, char *db)
                 else
                 {
                   extended_row.append("'");
-                  drizzle_real_escape_string(&drizzle_connection,
-                                             tmp_str,
-                                             row[i],length);
+                  drizzle_escape_string(tmp_str,
+                                        row[i],length);
                   extended_row.append(tmp_str);
                   extended_row.append("'");
                 }
