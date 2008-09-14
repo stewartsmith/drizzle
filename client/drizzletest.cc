@@ -47,7 +47,6 @@
 #include "client_priv.h"
 #include <mysys/hash.h>
 #include <stdarg.h>
-#include <vio/violite.h>
 
 #include "errname.h"
 
@@ -3511,8 +3510,7 @@ static void do_close_connection(struct st_command *command)
   {
     if (con->drizzle.net.vio)
     {
-      vio_delete(con->drizzle.net.vio);
-      con->drizzle.net.vio = 0;
+      net_close_dirty(&(con->drizzle.net));
     }
   }
 

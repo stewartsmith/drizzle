@@ -44,7 +44,6 @@
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <vio/violite.h>
 #include <sys/ioctl.h>
 
 

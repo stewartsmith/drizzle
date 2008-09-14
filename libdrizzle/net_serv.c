@@ -83,6 +83,14 @@ void net_end(NET *net)
   return;
 }
 
+void net_close_dirty(NET *net)
+{
+  if (net->vio != NULL)
+  {
+    vio_delete(net->vio);
+    net->vio= 0;
+  }
+}
 
 /** Realloc the packet buffer. */
 
