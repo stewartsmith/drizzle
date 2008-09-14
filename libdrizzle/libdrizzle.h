@@ -34,134 +34,22 @@
 extern "C" {
 #endif
 
-/** 
- * @TODO cleanup global.h and include only the necessary stuff here... 
- * 
- */
-#ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
-#include <sys/types.h>
-#endif /* DRIZZLE_SERVER_GLOBAL_H */
-
 #include <libdrizzle/drizzle_com.h>
 
 extern unsigned int drizzle_port;
-extern char *drizzle_unix_port;
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
 
-#define IS_PRI_KEY(n)  ((n) & PRI_KEY_FLAG)
-#define IS_NOT_NULL(n)  ((n) & NOT_NULL_FLAG)
-#define IS_BLOB(n)  ((n) & BLOB_FLAG)
-#define IS_NUM(t)  ((t) <= DRIZZLE_TYPE_LONGLONG || (t) == DRIZZLE_TYPE_NEWDECIMAL)
-#define IS_NUM_FIELD(f)   ((f)->flags & NUM_FLAG)
-#define INTERNAL_NUM_FIELD(f) (((f)->type <= DRIZZLE_TYPE_LONGLONG && ((f)->type != DRIZZLE_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)))
-#define IS_LONGDATA(t) ((t) == DRIZZLE_TYPE_TINY_BLOB)
+#include <libdrizzle/drizzle_field.h>
+#include <libdrizzle/drizzle_rows.h>
+#include <libdrizzle/drizzle_data.h>
+#include <libdrizzle/drizzle_options.h>
 
-
-typedef struct st_drizzle_field {
-  char *name;                 /* Name of column */
-  char *org_name;             /* Original column name, if an alias */
-  char *table;                /* Table of column if column was a field */
-  char *org_table;            /* Org table name, if table was an alias */
-  char *db;                   /* Database for table */
-  char *catalog;        /* Catalog for table */
-  char *def;                  /* Default value (set by drizzle_list_fields) */
-  uint32_t length;       /* Width of column (create length) */
-  uint32_t max_length;   /* Max width for selected set */
-  unsigned int name_length;
-  unsigned int org_name_length;
-  unsigned int table_length;
-  unsigned int org_table_length;
-  unsigned int db_length;
-  unsigned int catalog_length;
-  unsigned int def_length;
-  unsigned int flags;         /* Div flags */
-  unsigned int decimals;      /* Number of decimals in field */
-  unsigned int charsetnr;     /* Character set */
-  enum enum_field_types type; /* Type of field. See drizzle_com.h for types */
-  void *extension;
-} DRIZZLE_FIELD;
-
-typedef char **DRIZZLE_ROW;    /* return data as array of strings */
-typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
-
-
-#define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
-
-typedef struct st_drizzle_rows {
-  struct st_drizzle_rows *next;    /* list of rows */
-  DRIZZLE_ROW data;
-  unsigned long length;
-} DRIZZLE_ROWS;
-
-typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
-
-typedef struct st_drizzle_data {
-  DRIZZLE_ROWS *data;
-  struct embedded_query_result *embedded_info;
-  uint64_t rows;
-  unsigned int fields;
-  /* extra info for embedded library */
-  void *extension;
-} DRIZZLE_DATA;
-
-enum drizzle_option
-{
-  DRIZZLE_OPT_CONNECT_TIMEOUT, DRIZZLE_OPT_COMPRESS, DRIZZLE_OPT_NAMED_PIPE,
-  DRIZZLE_INIT_COMMAND, DRIZZLE_READ_DEFAULT_FILE, DRIZZLE_READ_DEFAULT_GROUP,
-  DRIZZLE_OPT_LOCAL_INFILE,
-  DRIZZLE_OPT_PROTOCOL, DRIZZLE_SHARED_MEMORY_BASE_NAME, DRIZZLE_OPT_READ_TIMEOUT,
-  DRIZZLE_OPT_WRITE_TIMEOUT, DRIZZLE_OPT_USE_RESULT,
-  DRIZZLE_OPT_USE_REMOTE_CONNECTION,
-  DRIZZLE_OPT_GUESS_CONNECTION, DRIZZLE_SET_CLIENT_IP, DRIZZLE_SECURE_AUTH,
-  DRIZZLE_REPORT_DATA_TRUNCATION, DRIZZLE_OPT_RECONNECT,
-  DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT
-};
-
-struct st_drizzle_options {
-  unsigned int connect_timeout, read_timeout, write_timeout;
-  unsigned int port, protocol;
-  unsigned long client_flag;
-  char *host,*user,*password,*db;
-  char *my_cnf_file,*my_cnf_group;
-  char *ssl_key;        /* PEM key file */
-  char *ssl_cert;        /* PEM cert file */
-  char *ssl_ca;          /* PEM CA file */
-  char *ssl_capath;        /* PEM directory of CA-s? */
-  char *ssl_cipher;        /* cipher to use */
-  char *shared_memory_base_name;
-  unsigned long max_allowed_packet;
-  bool use_ssl;        /* if to use SSL or not */
-  bool compress,named_pipe;
-  bool unused1;
-  bool unused2;
-  bool unused3;
-  bool unused4;
-  enum drizzle_option methods_to_use;
-  char *client_ip;
-  /* Refuse client connecting to server if it uses old (pre-4.1.1) protocol */
-  bool secure_auth;
-  /* 0 - never report, 1 - always report (default) */
-  bool report_data_truncation;
-
-  /* function pointers for local infile support */
-  int (*local_infile_init)(void **, const char *, void *);
-  int (*local_infile_read)(void *, char *, unsigned int);
-  void (*local_infile_end)(void *);
-  int (*local_infile_error)(void *, char *, unsigned int);
-  void *local_infile_userdata;
-  void *extension;
-};
 
 enum drizzle_status
 {
   DRIZZLE_STATUS_READY,DRIZZLE_STATUS_GET_RESULT,DRIZZLE_STATUS_USE_RESULT
-};
-
-enum drizzle_protocol_type
-{
-  DRIZZLE_PROTOCOL_TCP
 };
 
 struct st_drizzle_methods;
@@ -402,4 +290,4 @@ void drizzle_close(DRIZZLE *sock);
 }
 #endif
 
-#endif /* _libdrizzle_drizzle_h */
+#endif /* _libdrizzle_libdrizzle_h */

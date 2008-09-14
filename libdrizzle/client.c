@@ -91,7 +91,6 @@
 #include <libdrizzle/gettext.h>
 
 uint    drizzle_port=0;
-char    *drizzle_unix_port= 0;
 const char  *unknown_sqlstate= "HY000";
 const char  *not_error_sqlstate= "00000";
 const char  *cant_connect_sqlstate= "08001";
@@ -606,7 +605,11 @@ unpack_fields(DRIZZLE_DATA *data, uint fields,
     field->flags=  uint2korr(pos+7);
     field->decimals=  (uint) pos[9];
 
-    if (INTERNAL_NUM_FIELD(field))
+    /* Test if field is Internal Number Format */
+    if (((field->type <= DRIZZLE_TYPE_LONGLONG) &&
+         (field->type != DRIZZLE_TYPE_TIMESTAMP)) ||
+        (field->length == 14) ||
+        (field->length == 8))
       field->flags|= NUM_FLAG;
     if (default_value && row->data[7])
     {
@@ -956,9 +959,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   /*
     Part 0: Grab a socket and connect it to the server
   */
-  if (!net->vio &&
-      (!drizzle->options.protocol ||
-       drizzle->options.protocol == DRIZZLE_PROTOCOL_TCP))
+  if (!net->vio)
   {
     struct addrinfo *res_lst, hints, *t_res;
     int gai_errno;
@@ -1627,7 +1628,6 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.my_cnf_group=strdup(arg);
     break;
   case DRIZZLE_OPT_PROTOCOL:
-    drizzle->options.protocol= *(const uint*) arg;
     break;
   case DRIZZLE_OPT_USE_REMOTE_CONNECTION:
   case DRIZZLE_OPT_GUESS_CONNECTION:

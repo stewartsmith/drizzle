@@ -172,8 +172,6 @@ const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
 
@@ -2467,8 +2465,6 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
 
   if (opt_compress)
     drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
-  /* We always do opt_protocol to TCP/IP */
-  drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
 
   for (x= 0; x < 10; x++)
   {

@@ -192,7 +192,6 @@ static char delimiter[16]= DEFAULT_DELIMITER;
 static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 int drizzle_real_query_for_lazy(const char *buf, int length);
@@ -2956,7 +2955,7 @@ print_table_data(DRIZZLE_RES *result)
       length=max(length,field->length);
     else
       length=max(length,field->max_length);
-    if (length < 4 && !IS_NOT_NULL(field->flags))
+    if (length < 4 && !(field->flags & NOT_NULL_FLAG))
       // Room for "NULL"
       length=4;
     field->max_length=length;
@@ -2981,7 +2980,8 @@ print_table_data(DRIZZLE_RES *result)
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
                                              MAX_COLUMN_LENGTH),
                   field->name);
-      num_flag[off]= IS_NUM(field->type);
+      num_flag[off]= ((field->type <= DRIZZLE_TYPE_LONGLONG) || 
+                      (field->type == DRIZZLE_TYPE_NEWDECIMAL));
     }
     (void) tee_fputs("\n", PAGER);
     tee_puts((char*) separator.c_str(), PAGER);
@@ -3070,7 +3070,7 @@ static int get_field_disp_length(DRIZZLE_FIELD *field)
   else
     length= max(length, field->max_length);
 
-  if (length < 4 && !IS_NOT_NULL(field->flags))
+  if (length < 4 && !(field->flags & NOT_NULL_FLAG))
     length= 4;        /* Room for "NULL" */
 
   return length;
@@ -3742,7 +3742,6 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-  drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];

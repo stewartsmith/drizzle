@@ -3794,8 +3794,6 @@ static void do_connect(struct st_command *command)
   if (opt_compress || con_compress)
     drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4849,7 +4847,7 @@ static void append_metadata(string *ds,
     ds->append("\t", 1);
     replace_append_uint(ds, field->max_length);
     ds->append("\t", 1);
-    ds->append((char*) (IS_NOT_NULL(field->flags) ?
+    ds->append((char*) ((field->flags & NOT_NULL_FLAG) ?
                         "N" : "Y"), 1);
     ds->append("\t", 1);
     replace_append_uint(ds, field->flags);
@@ -5497,8 +5495,6 @@ int main(int argc, char **argv)
   if (opt_compress)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");

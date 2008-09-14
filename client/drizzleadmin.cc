@@ -33,7 +33,6 @@
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
 static bool interrupted= false, opt_verbose= false,tty_password= false; 
-static uint8_t opt_protocol= DRIZZLE_PROTOCOL_TCP;  
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
@@ -192,8 +191,6 @@ int main(int argc,char *argv[])
     uint tmp=opt_connect_timeout;
     drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
-  /* force drizzleadmin to use TCP */
-  drizzle_options(&drizzle, DRIZZLE_OPT_PROTOCOL, (char*)&opt_protocol);
 
   error_flags= (myf)0;
 
