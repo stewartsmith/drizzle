@@ -57,9 +57,7 @@
 
 #define CLI_DRIZZLE_CONNECT drizzle_connect
 
-#include <mystrings/m_string.h>
-#include <drizzled/error.h>
-#include "errmsg.h"
+#include <libdrizzle/errmsg.h>
 #include <vio/violite.h>
 
 #include <sys/stat.h>
@@ -307,8 +305,9 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       return (packet_error);
 #endif /*DRIZZLE_SERVER*/
     end_server(drizzle);
-    set_drizzle_error(drizzle, net->last_errno == ER_NET_PACKET_TOO_LARGE ?
-                    CR_NET_PACKET_TOO_LARGE: CR_SERVER_LOST, unknown_sqlstate);
+    set_drizzle_error(drizzle, net->last_errno == CR_NET_PACKET_TOO_LARGE ?
+                      CR_NET_PACKET_TOO_LARGE : CR_SERVER_LOST,
+                      unknown_sqlstate);
     return (packet_error);
   }
   if (net->read_pos[0] == 255)
@@ -412,7 +411,7 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
   if (net_write_command(net,(uchar) command, header, header_length,
       arg, arg_length))
   {
-    if (net->last_errno == ER_NET_PACKET_TOO_LARGE)
+    if (net->last_errno == CR_NET_PACKET_TOO_LARGE)
     {
       set_drizzle_error(drizzle, CR_NET_PACKET_TOO_LARGE, unknown_sqlstate);
       goto end;
