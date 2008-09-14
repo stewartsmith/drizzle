@@ -27,8 +27,8 @@
 
 */
 
-#ifndef _libdrizzle_drizzle_h
-#define _libdrizzle_drizzle_h
+#ifndef _libdrizzle_libdrizzle_h
+#define _libdrizzle_libdrizzle_h
 
 #ifdef  __cplusplus
 extern "C" {

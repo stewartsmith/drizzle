@@ -37,7 +37,7 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */

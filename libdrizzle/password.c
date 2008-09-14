@@ -59,7 +59,7 @@
 *****************************************************************************/
 
 #include <drizzled/global.h>
-#include "drizzle.h"
+#include "libdrizzle.h"
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/
 

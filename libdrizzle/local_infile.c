@@ -19,7 +19,7 @@
 
 
 #include <drizzled/global.h>
-#include "drizzle.h"
+#include "libdrizzle.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>

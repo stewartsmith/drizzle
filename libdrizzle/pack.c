@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/global.h>
-#include <drizzle.h>
+#include "libdrizzle.h"
 
 /* Get the length of next field. Change parameter to point at fieldstart */
 uint32_t net_field_length(uchar **packet)

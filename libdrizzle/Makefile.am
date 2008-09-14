@@ -25,7 +25,7 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 libdrizzleincludedir = ${includedir}/libdrizzle
-dist_libdrizzleinclude_HEADERS =	drizzle.h \
+dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
 					drizzle_com.h \
 					errmsg.h \
 					sql_common.h

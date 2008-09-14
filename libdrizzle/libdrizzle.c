@@ -18,7 +18,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/global.h>
-#include "drizzle.h"
+#include "libdrizzle.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>

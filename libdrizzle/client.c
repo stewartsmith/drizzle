@@ -44,7 +44,7 @@
 
 #include <drizzled/global.h>
 
-#include "drizzle.h"
+#include "libdrizzle.h"
 
 #include <sys/poll.h>
 #include <sys/ioctl.h>

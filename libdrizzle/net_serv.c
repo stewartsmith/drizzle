@@ -19,7 +19,7 @@
  */
 
 #include <drizzled/global.h>
-#include <drizzle.h>
+#include "libdrizzle.h"
 #include <libdrizzle/errmsg.h>
 #include <vio/violite.h>
 #include <signal.h>
