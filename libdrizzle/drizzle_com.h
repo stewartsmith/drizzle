@@ -428,7 +428,9 @@ bool	net_write_command(NET *net,unsigned char command,
 			  const unsigned char *packet, size_t len);
 int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
 uint32_t my_net_read(NET *net);
-  void   net_close_dirty(NET *net);
+void   net_close(NET *net);
+bool net_init_sock(NET * net, int sock, int flags);
+
 
 
 /** @TODO global.h is actually not needed here... only stdint and protocol.h */

@@ -74,6 +74,29 @@ bool my_net_init(NET *net, Vio* vio)
   return(0);
 }
 
+bool net_init_sock(NET * net, int sock, int flags)
+{
+
+  Vio *vio_tmp= vio_new(sock, VIO_TYPE_TCPIP, flags);
+  if (vio_tmp == NULL)
+    return true;
+  else
+    if (my_net_init(net, vio_tmp))
+    {
+      /* Only delete the temporary vio if we didn't already attach it to the
+       * NET object.
+       */
+      if (vio_tmp && (net->vio != vio_tmp))
+        vio_delete(vio_tmp);
+      else
+      {
+        (void) shutdown(sock, SHUT_RDWR);
+        (void) close(sock);
+      }
+      return true;
+    }
+  return false;
+}
 
 void net_end(NET *net)
 {
@@ -83,7 +106,7 @@ void net_end(NET *net)
   return;
 }
 
-void net_close_dirty(NET *net)
+void net_close(NET *net)
 {
   if (net->vio != NULL)
   {

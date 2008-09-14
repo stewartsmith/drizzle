@@ -3510,7 +3510,7 @@ static void do_close_connection(struct st_command *command)
   {
     if (con->drizzle.net.vio)
     {
-      net_close_dirty(&(con->drizzle.net));
+      net_close(&(con->drizzle.net));
     }
   }
 

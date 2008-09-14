@@ -704,7 +704,7 @@ THD::~THD()
   /* Close connection */
   if (net.vio)
   {
-    vio_delete(net.vio);
+    net_close(&net);
     net_end(&net);
   }
   if (!cleanup_done)
