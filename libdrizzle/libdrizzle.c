@@ -154,15 +154,6 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;
   int rc;
-  const CHARSET_INFO *saved_cs= drizzle->charset;
-
-  /* Get the connection-default character set. */
-
-  if (drizzle_init_character_set(drizzle))
-  {
-    drizzle->charset= saved_cs;
-    return(true);
-  }
 
   /* Use an empty string instead of NULL. */
 
@@ -188,10 +179,9 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   end= strncpy(end, db ? db : "", NAME_LEN) + NAME_LEN + 1;
 
   /* Add character set number. */
-
   if (drizzle->server_capabilities & CLIENT_SECURE_CONNECTION)
   {
-    int2store(end, (ushort) drizzle->charset->number);
+    int2store(end, (ushort) 45); // utf8mb4 number from mystrings/ctype-utf8.c
     end+= 2;
   }
 
@@ -214,10 +204,6 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
     drizzle->user= strdup(user);
     drizzle->passwd= strdup(passwd);
     drizzle->db= db ? strdup(db) : 0;
-  }
-  else
-  {
-    drizzle->charset= saved_cs;
   }
 
   return(rc);
@@ -536,11 +522,6 @@ uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
   return drizzle->thread_id;
 }
 
-const char * drizzle_character_set_name(const DRIZZLE *drizzle)
-{
-  return drizzle->charset->csname;
-}
-
 /****************************************************************************
   Some support functions
 ****************************************************************************/
@@ -665,37 +646,6 @@ drizzle_escape_string(char *to,const char *from, uint32_t length)
   }
   *to= 0;
   return overflow ? (size_t) -1 : (size_t) (to - to_start);
-}
-
-
-void
-myodbc_remove_escape(const DRIZZLE *drizzle, char *name)
-{
-  char *to;
-#ifdef USE_MB
-  bool use_mb_flag= use_mb(drizzle->charset);
-  char *end=NULL;
-  if (use_mb_flag)
-    for (end=name; *end ; end++) ;
-#endif
-
-  for (to=name ; *name ; name++)
-  {
-#ifdef USE_MB
-    int l;
-    if (use_mb_flag && (l = my_ismbchar( drizzle->charset, name , end ) ) )
-    {
-      while (l--)
-        *to++ = *name++;
-      name--;
-      continue;
-    }
-#endif
-    if (*name == '\\' && name[1])
-      name++;
-    *to++= *name;
-  }
-  *to=0;
 }
 
 int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)

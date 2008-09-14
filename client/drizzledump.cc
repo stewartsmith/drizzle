@@ -1065,7 +1065,6 @@ static int connect_to_db(char *host, char *user,char *passwd)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NullS);
   if (opt_protocol)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(&drizzle_connection, DRIZZLE_SET_CHARSET_NAME, default_charset);
   if (!(drizzle= drizzle_connect(&drizzle_connection,host,user,passwd,
                                   NULL,opt_drizzle_port, NULL,
                                   0)))

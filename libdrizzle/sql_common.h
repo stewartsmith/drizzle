@@ -28,9 +28,7 @@ extern const char	*not_error_sqlstate;
 #ifdef	__cplusplus
 extern "C" {
 #endif
-#include <mystrings/m_ctype.h>
 
-extern CHARSET_INFO *default_client_charset_info;
 DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc, uint fields,
 			                 bool default_value);
 void free_rows(DRIZZLE_DATA *cur);

@@ -157,7 +157,6 @@ static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
-static char *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -2470,7 +2469,6 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
     drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   /* We always do opt_protocol to TCP/IP */
   drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
 
   for (x= 0; x < 10; x++)
   {

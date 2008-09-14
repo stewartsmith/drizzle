@@ -57,7 +57,6 @@
 
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
 #include "errmsg.h"
 #include <vio/violite.h>
@@ -106,8 +105,6 @@ static void drizzle_close_free(DRIZZLE *drizzle);
 
 static int wait_for_data(int fd, int32_t timeout);
 int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout);
-
-CHARSET_INFO *default_client_charset_info = &my_charset_utf8_general_ci;
 
 /* Server error code and message */
 unsigned int drizzle_server_last_errno;
@@ -648,14 +645,6 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
         case 16:
         case 23:
           break;
-        case 17:      /* charset-lib */
-          my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
-          break;
-        case 18:
-          my_free(options->charset_name,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_name = my_strdup(opt_arg, MYF(MY_WME));
-          break;
         case 19:        /* Interactive-timeout */
           options->client_flag|= CLIENT_INTERACTIVE;
           break;
@@ -1014,7 +1003,6 @@ drizzle_create(DRIZZLE *ptr)
   }
 
   ptr->options.connect_timeout= CONNECT_TIMEOUT;
-  ptr->charset=default_client_charset_info;
   strcpy(ptr->net.sqlstate, not_error_sqlstate);
 
   /*
@@ -1074,10 +1062,6 @@ void drizzle_server_end()
   {
     my_end(0);
   }
-  else
-  {
-    free_charsets();
-  }
 
   drizzle_client_init= org_my_init_done= 0;
 }
@@ -1116,75 +1100,6 @@ static DRIZZLE_METHODS client_methods=
   0,0,0,0,0
 #endif
 };
-
-C_MODE_START
-int drizzle_init_character_set(DRIZZLE *drizzle)
-{
-  const char *default_collation_name;
- 
-  /* Set character set */
-  if (!drizzle->options.charset_name)
-  {
-    default_collation_name= DRIZZLE_DEFAULT_COLLATION_NAME;
-    if (!(drizzle->options.charset_name=
-       my_strdup(DRIZZLE_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
-    return 1;
-  }
-  else
-    default_collation_name= NULL;
- 
-  {
-    const char *save= charsets_dir;
-    if (drizzle->options.charset_dir)
-      charsets_dir=drizzle->options.charset_dir;
-    drizzle->charset=get_charset_by_csname(drizzle->options.charset_name,
-                                         MY_CS_PRIMARY, MYF(MY_WME));
-    if (drizzle->charset && default_collation_name)
-    {
-      const CHARSET_INFO *collation;
-      if ((collation=
-           get_charset_by_name(default_collation_name, MYF(MY_WME))))
-      {
-        if (!my_charset_same(drizzle->charset, collation))
-        {
-          my_printf_error(ER_UNKNOWN_ERROR,
-                         _("COLLATION %s is not valid for CHARACTER SET %s"),
-                         MYF(0),
-                         default_collation_name, drizzle->options.charset_name);
-          drizzle->charset= NULL;
-        }
-        else
-        {
-          drizzle->charset= collation;
-        }
-      }
-      else
-        drizzle->charset= NULL;
-    }
-    charsets_dir= save;
-  }
-
-  if (!drizzle->charset)
-  {
-    if (drizzle->options.charset_dir)
-      set_drizzle_extended_error(drizzle, CR_CANT_READ_CHARSET, unknown_sqlstate,
-                               ER(CR_CANT_READ_CHARSET),
-                               drizzle->options.charset_name,
-                               drizzle->options.charset_dir);
-    else
-    {
-      char cs_dir_name[FN_REFLEN];
-      get_charsets_dir(cs_dir_name);
-      set_drizzle_extended_error(drizzle, CR_CANT_READ_CHARSET, unknown_sqlstate,
-                               ER(CR_CANT_READ_CHARSET),
-                               drizzle->options.charset_name,
-                               cs_dir_name);
-    }
-    return 1;
-  }
-  return 0;
-}
-C_MODE_END
 
 
 DRIZZLE *
@@ -1394,9 +1309,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     goto error;
   }
 
-  if (drizzle_init_character_set(drizzle))
-    goto error;
-
   /* Save connection information */
   if (!my_multi_malloc(MYF(0),
            &drizzle->host_info, (uint) strlen(host_info)+1,
@@ -1441,7 +1353,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   int4store(buff, client_flag);
   int4store(buff+4, net->max_packet_size);
-  buff[8]= (char) drizzle->charset->number;
+  buff[8]= (char) 45; // utf8 charset number
   memset(buff+9, 0, 32-9);
   end= buff+32;
 
@@ -1576,15 +1488,6 @@ bool drizzle_reconnect(DRIZZLE *drizzle)
     strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
     return(1);
   }
-  if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
-  {
-    memset(&tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
-    drizzle_close(&tmp_drizzle);
-    drizzle->net.last_errno= tmp_drizzle.net.last_errno;
-    strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
-    strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
-    return(1);
-  }
 
   tmp_drizzle.reconnect= 1;
   tmp_drizzle.free_me= drizzle->free_me;
@@ -1632,8 +1535,6 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
   my_free(drizzle->options.db,MYF(MY_ALLOW_ZERO_PTR));
   my_free(drizzle->options.my_cnf_file,MYF(MY_ALLOW_ZERO_PTR));
   my_free(drizzle->options.my_cnf_group,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(drizzle->options.charset_dir,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(drizzle->options.charset_name,MYF(MY_ALLOW_ZERO_PTR));
   my_free(drizzle->options.client_ip,MYF(MY_ALLOW_ZERO_PTR));
   if (drizzle->options.init_commands)
   {
@@ -1963,14 +1864,6 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     my_free(drizzle->options.my_cnf_group,MYF(MY_ALLOW_ZERO_PTR));
     drizzle->options.my_cnf_group=my_strdup(arg,MYF(MY_WME));
     break;
-  case DRIZZLE_SET_CHARSET_DIR:
-    my_free(drizzle->options.charset_dir,MYF(MY_ALLOW_ZERO_PTR));
-    drizzle->options.charset_dir=my_strdup(arg,MYF(MY_WME));
-    break;
-  case DRIZZLE_SET_CHARSET_NAME:
-    my_free(drizzle->options.charset_name,MYF(MY_ALLOW_ZERO_PTR));
-    drizzle->options.charset_name=my_strdup(arg,MYF(MY_WME));
-    break;
   case DRIZZLE_OPT_PROTOCOL:
     drizzle->options.protocol= *(const uint*) arg;
     break;
@@ -2058,42 +1951,4 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
   version= (uint) strtoul(pos, &end_pos, 10);
   return (uint32_t) major*10000L+(uint32_t) (minor*100+version);
 }
-
-
-/*
-   drizzle_set_character_set function sends SET NAMES cs_name to
-   the server (which changes character_set_client, character_set_result
-   and character_set_connection) and updates drizzle->charset so other
-   functions like drizzle_real_escape will work correctly.
-*/
-int drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
-{
-  const CHARSET_INFO *cs;
-  const char *save_csdir= charsets_dir;
-
-  if (drizzle->options.charset_dir)
-    charsets_dir= drizzle->options.charset_dir;
-
-  if (strlen(cs_name) < MY_CS_NAME_SIZE &&
-      (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
-  {
-    char buff[MY_CS_NAME_SIZE + 10];
-    charsets_dir= save_csdir;
-    sprintf(buff, "SET NAMES %s", cs_name);
-    if (!drizzle_real_query(drizzle, buff, strlen(buff)))
-    {
-      drizzle->charset= cs;
-    }
-  }
-  else
-  {
-    char cs_dir_name[FN_REFLEN];
-    get_charsets_dir(cs_dir_name);
-    set_drizzle_extended_error(drizzle, CR_CANT_READ_CHARSET, unknown_sqlstate,
-                             ER(CR_CANT_READ_CHARSET), cs_name, cs_dir_name);
-  }
-  charsets_dir= save_csdir;
-  return drizzle->net.last_errno;
-}
-
 

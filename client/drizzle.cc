@@ -167,8 +167,7 @@ static uint my_end_arg;
 static char * opt_drizzle_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
-  *delimiter_str= 0,* current_prompt= 0,
-  *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
+  *delimiter_str= 0,* current_prompt= 0;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -216,7 +215,7 @@ static int com_quit(string *str,const char*),
   com_connect(string *str,const char*), com_status(string *str,const char*),
   com_use(string *str,const char*), com_source(string *str, const char*),
   com_rehash(string *str, const char*), com_tee(string *str, const char*),
-  com_notee(string *str, const char*), com_charset(string *str,const char*),
+  com_notee(string *str, const char*),
   com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
   com_warnings(string *str, const char*), com_nowarnings(string *str, const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
@@ -279,8 +278,6 @@ static COMMANDS commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") },
   { "use",    'u', com_use,    1,
     N_("Use another database. Takes database name as argument.") },
-  { "charset",    'C', com_charset,    1,
-    N_("Switch to another charset. Might be needed for processing binlog with multi-byte charsets.") },
   { "warnings", 'W', com_warnings,  0,
     N_("Show warnings after every statement.") },
   { "nowarning", 'w', com_nowarnings, 0,
@@ -1304,8 +1301,8 @@ static struct my_option my_long_options[] =
   {"database", 'D', N_("Database to use."), (char**) &current_db,
    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
-   N_("Set the default character set."), (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("(not used)"), 0,
+   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delimiter", OPT_DELIMITER, N_("Delimiter to be used."), (char**) &delimiter_str,
    (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"execute", 'e', N_("Execute command and quit. (Disables --force and history file)"), 0,
@@ -1645,10 +1642,6 @@ static int get_options(int argc, char **argv)
     connect_flag= 0; /* Not in interactive mode */
   }
 
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset,
-                                            MY_CS_PRIMARY, MYF(MY_WME))))
-    exit(1);
   if (argc > 1)
   {
     usage(0);
@@ -2635,31 +2628,6 @@ com_clear(string *buffer,
   return 0;
 }
 
-static int
-com_charset(string *buffer __attribute__((unused)),
-            const char *line)
-{
-  char buff[256], *param;
-  const CHARSET_INFO * new_cs;
-  strmake(buff, line, sizeof(buff) - 1);
-  param= get_arg(buff, 0);
-  if (!param || !*param)
-  {
-    return put_info(_("Usage: \\C char_setname | charset charset_name"),
-                    INFO_ERROR, 0, 0);
-  }
-  new_cs= get_charset_by_csname(param, MY_CS_PRIMARY, MYF(MY_WME));
-  if (new_cs)
-  {
-    charset_info= new_cs;
-    drizzle_set_character_set(&drizzle, charset_info->csname);
-    default_charset= (char *)charset_info->csname;
-    default_charset_used= 1;
-    put_info(_("Charset changed"), INFO_INFO,0,0);
-  }
-  else put_info(_("Charset is not found"), INFO_INFO,0,0);
-  return 0;
-}
 
 /*
   Execute command
@@ -3784,8 +3752,6 @@ sql_connect(char *host,char *database,char *user,char *password,
             select_limit, max_join_size);
     drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }
-  if (default_charset_used)
-    drizzle_options(&drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
   if (!drizzle_connect(&drizzle, host, user, password,
                           database, opt_drizzle_port, opt_drizzle_unix_port,
                           connect_flag | CLIENT_MULTI_STATEMENTS))
@@ -3872,12 +3838,6 @@ com_status(string *buffer __attribute__((unused)),
       tee_fprintf(stdout, "Conn.  characterset:\t%s\n", cur[1] ? cur[1] : "");
     }
     drizzle_free_result(result);
-  }
-  else
-  {
-    /* Probably pre-4.1 server */
-    tee_fprintf(stdout, "Client characterset:\t%s\n", charset_info->csname);
-    tee_fprintf(stdout, "Server characterset:\t%s\n", drizzle.charset->csname);
   }
 
   if (strstr(drizzle_get_host_info(&drizzle),"TCP/IP") || ! drizzle.unix_socket)

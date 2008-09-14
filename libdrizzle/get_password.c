@@ -24,7 +24,6 @@
 #include <drizzled/global.h>
 #include "drizzle.h"
 #include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 
 #if defined(HAVE_BROKEN_GETPASS) && !defined(HAVE_GETPASSPHRASE)
 #undef HAVE_GETPASS

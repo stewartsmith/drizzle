@@ -48,8 +48,4 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * cli_read_statistics(DRIZZLE *drizzle);
 int cli_read_change_user_result(DRIZZLE *drizzle);
 
-C_MODE_START
-extern int drizzle_init_character_set(DRIZZLE *drizzle);
-C_MODE_END
-
 #endif

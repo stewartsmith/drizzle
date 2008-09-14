@@ -116,7 +116,7 @@ enum drizzle_option
 {
   DRIZZLE_OPT_CONNECT_TIMEOUT, DRIZZLE_OPT_COMPRESS, DRIZZLE_OPT_NAMED_PIPE,
   DRIZZLE_INIT_COMMAND, DRIZZLE_READ_DEFAULT_FILE, DRIZZLE_READ_DEFAULT_GROUP,
-  DRIZZLE_SET_CHARSET_DIR, DRIZZLE_SET_CHARSET_NAME, DRIZZLE_OPT_LOCAL_INFILE,
+  DRIZZLE_OPT_LOCAL_INFILE,
   DRIZZLE_OPT_PROTOCOL, DRIZZLE_SHARED_MEMORY_BASE_NAME, DRIZZLE_OPT_READ_TIMEOUT,
   DRIZZLE_OPT_WRITE_TIMEOUT, DRIZZLE_OPT_USE_RESULT,
   DRIZZLE_OPT_USE_REMOTE_CONNECTION,
@@ -131,7 +131,7 @@ struct st_drizzle_options {
   unsigned long client_flag;
   char *host,*user,*password,*unix_socket,*db;
   struct st_dynamic_array *init_commands;
-  char *my_cnf_file,*my_cnf_group, *charset_dir, *charset_name;
+  char *my_cnf_file,*my_cnf_group;
   char *ssl_key;        /* PEM key file */
   char *ssl_cert;        /* PEM cert file */
   char *ssl_ca;          /* PEM CA file */
@@ -171,18 +171,6 @@ enum drizzle_protocol_type
   DRIZZLE_PROTOCOL_TCP
 };
 
-typedef struct character_set
-{
-  unsigned int      number;     /* character set number              */
-  unsigned int      state;      /* character set state               */
-  const char        *csname;    /* collation name                    */
-  const char        *name;      /* character set name                */
-  const char        *comment;   /* comment                           */
-  const char        *dir;       /* character set directory           */
-  unsigned int      mbminlen;   /* min. length for multibyte strings */
-  unsigned int      mbmaxlen;   /* max. length for multibyte strings */
-} MY_CHARSET_INFO;
-
 struct st_drizzle_methods;
 struct st_drizzle_stmt;
 
@@ -192,7 +180,6 @@ typedef struct st_drizzle
   unsigned char  *connector_fd;    /* ConnectorFd for SSL */
   char    *host,*user,*passwd,*unix_socket,*server_version,*host_info;
   char          *info, *db;
-  const struct charset_info_st *charset;
   DRIZZLE_FIELD  *fields;
   MEM_ROOT  field_alloc;
   uint64_t affected_rows;
@@ -330,9 +317,6 @@ int32_t    drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
 DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle);
 DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle);
 
-void        drizzle_get_character_set_info(const DRIZZLE *drizzle,
-                                                   MY_CHARSET_INFO *charset);
-
 /* local infile support */
 
 #define LOCAL_INFILE_ERROR_LEN 512
@@ -373,7 +357,6 @@ DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
 DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
 uint32_t  drizzle_escape_string(char *to,const char *from, uint32_t from_length);
 uint32_t  drizzle_hex_string(char *to,const char *from, uint32_t from_length);
-void    myodbc_remove_escape(const DRIZZLE *drizzle, char *name);
 bool         drizzle_read_query_result(DRIZZLE *drizzle);
 
 
