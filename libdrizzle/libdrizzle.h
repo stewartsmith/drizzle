@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
   dynamically linked libdrizzleclient.
 
   In case the file is changed so the ABI is broken, you must also
-  update the SHAREDLIB_MAJOR_VERSION in configure.ac.
+  update the SHARED_LIB_MAJOR_VERSION in configure.ac.
 
 */
 
@@ -53,6 +53,13 @@ extern unsigned int drizzle_port;
 #include <libdrizzle/drizzle_parameters.h>
 #include <libdrizzle/drizzle_methods.h>
 
+const char * drizzle_get_client_info(void);
+uint32_t drizzle_get_client_version(void);
+uint32_t drizzle_escape_string(char *to,const char *from,
+                               uint32_t from_length);
+uint32_t drizzle_hex_string(char *to,const char *from,
+                            uint32_t from_length);
+
 /*
   Set up and bring down the server; to ensure that applications will
   work when linked against either the standard client library or the
@@ -71,11 +78,6 @@ void drizzle_server_end(void);
 */
 #define drizzle_library_end drizzle_server_end
 
-
-const char *  drizzle_get_client_info(void);
-uint32_t  drizzle_get_client_version(void);
-uint32_t  drizzle_escape_string(char *to,const char *from, uint32_t from_length);
-uint32_t  drizzle_hex_string(char *to,const char *from, uint32_t from_length);
 
 /*
   The following functions are mainly exported because of binlog;
