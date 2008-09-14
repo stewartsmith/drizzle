@@ -358,8 +358,18 @@ void free_rows(DRIZZLE_DATA *cur)
 {
   if (cur)
   {
-    free_root(&cur->alloc,MYF(0));
-    my_free((uchar*) cur,MYF(0));
+    if (cur->data != NULL)
+    {
+      struct st_drizzle_rows * row= cur->data;
+      uint64_t x;
+      for (x= 0; x< cur->rows; x++)
+      {
+        struct st_drizzle_rows * next_row= row->next;
+        free(row);
+        row= next_row;
+      }
+    }
+    free((uchar*) cur);
   }
 }
 
@@ -428,8 +438,19 @@ end:
 void free_old_query(DRIZZLE *drizzle)
 {
   if (drizzle->fields)
-    free_root(&drizzle->field_alloc,MYF(0));
-  init_alloc_root(&drizzle->field_alloc,8192,0); /* Assume rowlength < 8192 */
+  {
+    /* TODO - we need to de-alloc field storage */
+    free(drizzle->fields->catalog);
+    free(drizzle->fields->db);
+    free(drizzle->fields->table);
+    free(drizzle->fields->org_table);
+    free(drizzle->fields->name);
+    free(drizzle->fields->org_name);
+    free(drizzle->fields->def);
+    free(drizzle->fields);
+
+  }
+  /* init_alloc_root(&drizzle->field_alloc,8192,0); */ /* Assume rowlength < 8192 */
   drizzle->fields= 0;
   drizzle->field_count= 0;      /* For API */
   drizzle->warning_count= 0;
@@ -502,8 +523,7 @@ drizzle_free_result(DRIZZLE_RES *result)
       }
     }
     free_rows(result->data);
-    if (result->fields)
-      free_root(&result->field_alloc,MYF(0));
+    /* TODO: free result->fields */
     if (result->row)
       my_free((uchar*) result->row,MYF(0));
     my_free((uchar*) result,MYF(0));
@@ -725,15 +745,14 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
 ***************************************************************************/
 
 DRIZZLE_FIELD *
-unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
+unpack_fields(DRIZZLE_DATA *data, uint fields,
               bool default_value)
 {
   DRIZZLE_ROWS  *row;
   DRIZZLE_FIELD  *field,*result;
   uint32_t lengths[9];        /* Max of fields */
 
-  field= result= (DRIZZLE_FIELD*) alloc_root(alloc,
-             (uint) sizeof(*field)*fields);
+  field= result= (DRIZZLE_FIELD*) malloc((uint) sizeof(*field)*fields);
   if (!result)
   {
     free_rows(data);        /* Free old data */
@@ -747,12 +766,12 @@ unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
     /* fields count may be wrong */
     assert((uint) (field - result) < fields);
     cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
-    field->catalog=   strmake_root(alloc,(char*) row->data[0], lengths[0]);
-    field->db=        strmake_root(alloc,(char*) row->data[1], lengths[1]);
-    field->table=     strmake_root(alloc,(char*) row->data[2], lengths[2]);
-    field->org_table= strmake_root(alloc,(char*) row->data[3], lengths[3]);
-    field->name=      strmake_root(alloc,(char*) row->data[4], lengths[4]);
-    field->org_name=  strmake_root(alloc,(char*) row->data[5], lengths[5]);
+    field->catalog=   strndup((char*) row->data[0], lengths[0]);
+    field->db=        strndup((char*) row->data[1], lengths[1]);
+    field->table=     strndup((char*) row->data[2], lengths[2]);
+    field->org_table= strndup((char*) row->data[3], lengths[3]);
+    field->name=      strndup((char*) row->data[4], lengths[4]);
+    field->org_name=  strndup((char*) row->data[5], lengths[5]);
 
     field->catalog_length=  lengths[0];
     field->db_length=    lengths[1];
@@ -773,7 +792,7 @@ unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
       field->flags|= NUM_FLAG;
     if (default_value && row->data[7])
     {
-      field->def=strmake_root(alloc,(char*) row->data[7], lengths[7]);
+      field->def=strndup((char*) row->data[7], lengths[7]);
       field->def_length= lengths[7];
     }
     else
@@ -806,8 +825,6 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
     set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     return(0);
   }
-  init_alloc_root(&result->alloc,8192,0);  /* Assume rowlength < 8192 */
-  result->alloc.min_malloc=sizeof(DRIZZLE_ROWS);
   prev_ptr= &result->data;
   result->rows=0;
   result->fields=fields;
@@ -822,11 +839,8 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
   while (*(cp=net->read_pos) != DRIZZLE_PROTOCOL_NO_MORE_DATA || pkt_len >= 8)
   {
     result->rows++;
-    if (!(cur= (DRIZZLE_ROWS*) alloc_root(&result->alloc,
-          sizeof(DRIZZLE_ROWS))) ||
-  !(cur->data= ((DRIZZLE_ROW)
-          alloc_root(&result->alloc,
-         (fields+1)*sizeof(char *)+pkt_len))))
+    if (!(cur= (DRIZZLE_ROWS*) malloc(sizeof(DRIZZLE_ROWS))) ||
+        !(cur->data= ((DRIZZLE_ROW) malloc((fields+1)*sizeof(char *)+pkt_len))))
     {
       free_rows(result);
       set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
@@ -1635,8 +1649,7 @@ get_info:
 
   if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, 7)))
     return(1);
-  if (!(drizzle->fields= unpack_fields(fields,&drizzle->field_alloc,
-            (uint) field_count, 0)))
+  if (!(drizzle->fields= unpack_fields(fields, (uint) field_count, 0)))
     return(1);
   drizzle->status= DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count= (uint) field_count;
@@ -1703,11 +1716,9 @@ DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle)
   drizzle->affected_rows= result->row_count= result->data->rows;
   result->data_cursor=  result->data->data;
   result->fields=  drizzle->fields;
-  result->field_alloc=  drizzle->field_alloc;
   result->field_count=  drizzle->field_count;
   /* The rest of result members is zeroed in malloc */
   drizzle->fields=0;        /* fields is now in result */
-  clear_alloc_root(&drizzle->field_alloc);
   /* just in case this was mistakenly called after drizzle_stmt_execute() */
   drizzle->unbuffered_fetch_owner= 0;
   return(result);        /* Data fetched */
@@ -1748,13 +1759,11 @@ static DRIZZLE_RES * cli_use_result(DRIZZLE *drizzle)
     return(0);
   }
   result->fields=  drizzle->fields;
-  result->field_alloc=  drizzle->field_alloc;
   result->field_count=  drizzle->field_count;
   result->current_field=0;
   result->handle=  drizzle;
   result->current_row=  0;
   drizzle->fields=0;      /* fields is now in result */
-  clear_alloc_root(&drizzle->field_alloc);
   drizzle->status=DRIZZLE_STATUS_USE_RESULT;
   drizzle->unbuffered_fetch_owner= &result->unbuffered_fetch_cancelled;
   return(result);      /* Data is read to be fetched */

@@ -43,7 +43,6 @@ extern "C" {
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <libdrizzle/drizzle_com.h>
-#include <mysys/drizzle_time.h>
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
@@ -87,7 +86,6 @@ typedef struct st_drizzle_field {
 typedef char **DRIZZLE_ROW;    /* return data as array of strings */
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
-#include <mysys/typelib.h>
 
 #define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 
@@ -99,13 +97,9 @@ typedef struct st_drizzle_rows {
 
 typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
 
-#include <mysys/my_alloc.h>
-
-typedef struct embedded_query_result EMBEDDED_QUERY_RESULT;
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;
   struct embedded_query_result *embedded_info;
-  MEM_ROOT alloc;
   uint64_t rows;
   unsigned int fields;
   /* extra info for embedded library */
@@ -181,7 +175,6 @@ typedef struct st_drizzle
   char    *host,*user,*passwd,*unix_socket,*server_version,*host_info;
   char          *info, *db;
   DRIZZLE_FIELD  *fields;
-  MEM_ROOT  field_alloc;
   uint64_t affected_rows;
   uint64_t insert_id;    /* id if insert on table with NEXTNR */
   uint64_t extra_info;    /* Not used */
@@ -227,7 +220,6 @@ typedef struct st_drizzle_res {
   const struct st_drizzle_methods *methods;
   DRIZZLE_ROW  row;      /* If unbuffered read */
   DRIZZLE_ROW  current_row;    /* buffer to current row */
-  MEM_ROOT  field_alloc;
   uint32_t  field_count, current_field;
   bool  eof;      /* Used by drizzle_fetch_row */
   /* drizzle_stmt_close() had to cancel this result */
