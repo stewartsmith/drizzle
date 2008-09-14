@@ -35,8 +35,6 @@ void free_rows(DRIZZLE_DATA *cur);
 void free_old_query(DRIZZLE *drizzle);
 void end_server(DRIZZLE *drizzle);
 bool drizzle_reconnect(DRIZZLE *drizzle);
-void drizzle_read_default_options(struct st_drizzle_options *options,
-                                  const char *filename,const char *group);
 bool
 cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
 		     const unsigned char *header, uint32_t header_length,
