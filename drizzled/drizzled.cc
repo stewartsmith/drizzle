@@ -26,6 +26,7 @@
 #include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <vio/violite.h>
 
 #include <storage/myisam/ha_myisam.h>
 
