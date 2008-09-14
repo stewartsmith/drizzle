@@ -49,7 +49,6 @@
 #endif
 
 #include <sql_common.h>
-#include "client_settings.h"
 #include <drizzled/version.h>
 
 /* Borrowed from libicu header */
@@ -117,20 +116,6 @@ append_wild(char *to, char *end, const char *wild)
     to[1]=0;
   }
 }
-
-/**************************************************************************
-  Ignore SIGPIPE handler
-   ARGSUSED
-**************************************************************************/
-
-sig_handler
-my_pipe_sig_handler(int sig __attribute__((unused)))
-{
-#ifdef DONT_REMEMBER_SIGNAL
-  (void) signal(SIGPIPE, my_pipe_sig_handler);
-#endif
-}
-
 
 /**************************************************************************
   Change user and database

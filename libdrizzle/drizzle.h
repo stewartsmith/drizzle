@@ -149,6 +149,19 @@ int drizzle_next_result(DRIZZLE *drizzle);
 void drizzle_close(DRIZZLE *sock);
 
 
+bool
+cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
+		     const unsigned char *header, uint32_t header_length,
+		     const unsigned char *arg, uint32_t arg_length, bool skip_check);
+uint32_t cli_safe_read(DRIZZLE *drizzle);
+DRIZZLE_FIELD * cli_list_fields(DRIZZLE *drizzle);
+DRIZZLE_DATA * cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *drizzle_fields,
+				   uint fields);
+int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
+const char * cli_read_statistics(DRIZZLE *drizzle);
+int cli_read_change_user_result(DRIZZLE *drizzle);
+
+
 #ifdef  __cplusplus
 }
 #endif

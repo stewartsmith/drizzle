@@ -59,8 +59,8 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
-noinst_HEADERS = 	client_settings.h \
-			gettext.h
+noinst_HEADERS =	gettext.h \
+			local_infile.h
 
 EXTRA_DIST =		libdrizzle.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \

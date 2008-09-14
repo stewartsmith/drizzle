@@ -35,11 +35,6 @@ void free_rows(DRIZZLE_DATA *cur);
 void free_old_query(DRIZZLE *drizzle);
 void end_server(DRIZZLE *drizzle);
 bool drizzle_reconnect(DRIZZLE *drizzle);
-bool
-cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
-		     const unsigned char *header, uint32_t header_length,
-		     const unsigned char *arg, uint32_t arg_length, bool skip_check);
-uint32_t cli_safe_read(DRIZZLE *drizzle);
 void net_clear_error(NET *net);
 void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
 #ifdef	__cplusplus

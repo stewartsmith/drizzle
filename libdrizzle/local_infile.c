@@ -50,7 +50,8 @@
 #endif
 
 #include <sql_common.h>
-#include "client_settings.h"
+#include "local_infile.h"
+
 
 
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)

@@ -30,7 +30,6 @@
     drizzle_connect()
   - Support for reading local file with LOAD DATA LOCAL
   - SHARED memory handling
-  - Protection against sigpipe
   - Prepared statements
  
   - Things that only works for the server
@@ -85,10 +84,14 @@
 
 #define CONNECT_TIMEOUT 0
 
-#include "client_settings.h"
 #include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
 #include <libdrizzle/gettext.h>
+#include "local_infile.h"
+
+#define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |  \
+                             CLIENT_TRANSACTIONS |                      \
+                             CLIENT_SECURE_CONNECTION)
 
 uint    drizzle_port=0;
 const char  *unknown_sqlstate= "HY000";
@@ -289,13 +292,9 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 {
   NET *net= &drizzle->net;
   uint32_t len=0;
-  init_sigpipe_variables
 
-  /* Don't give sigpipe errors if the client doesn't want them */
-  set_sigpipe(drizzle);
   if (net->vio != 0)
     len=my_net_read(net);
-  reset_sigpipe(drizzle);
 
   if (len == packet_error || len == 0)
   {
@@ -379,11 +378,7 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
 {
   NET *net= &drizzle->net;
   bool result= 1;
-  init_sigpipe_variables
   bool stmt_skip= false;
-
-  /* Don't give sigpipe errors if the client doesn't want them */
-  set_sigpipe(drizzle);
 
   if (drizzle->net.vio == 0)
   {            /* Do reconnect if possible */
@@ -430,7 +425,6 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
     result= ((drizzle->packet_length=cli_safe_read(drizzle)) == packet_error ?
        1 : 0);
 end:
-  reset_sigpipe(drizzle);
   return(result);
 }
 
@@ -491,10 +485,7 @@ void end_server(DRIZZLE *drizzle)
   int save_errno= errno;
   if (drizzle->net.vio != 0)
   {
-    init_sigpipe_variables
-    set_sigpipe(drizzle);
     vio_delete(drizzle->net.vio);
-    reset_sigpipe(drizzle);
     drizzle->net.vio= 0;          /* Marker */
   }
   net_end(&drizzle->net);
@@ -902,16 +893,12 @@ static DRIZZLE_METHODS client_methods=
   cli_read_rows,                               /* read_rows */
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
-  cli_flush_use_result,                         /* flush_use_result */
-#ifndef DRIZZLE_SERVER
-  cli_list_fields,                            /* list_fields */
+  cli_flush_use_result,                        /* flush_use_result */
+  cli_list_fields,                             /* list_fields */
   cli_unbuffered_fetch,                        /* unbuffered_fetch */
   cli_read_statistics,                         /* read_statistics */
   cli_read_query_result,                       /* next_result */
   cli_read_change_user_result,                 /* read_change_user_result */
-#else
-  0,0,0,0,0
-#endif
 };
 
 
@@ -926,10 +913,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   char          *end,*host_info=NULL;
   uint32_t         pkt_length;
   NET           *net= &drizzle->net;
-  init_sigpipe_variables
 
-  /* Don't give sigpipe errors if the client doesn't want them */
-  set_sigpipe(drizzle);
   drizzle->methods= &client_methods;
   net->vio = 0;        /* If something goes wrong */
   drizzle->client_flag=0;      /* For handshake */
@@ -1212,11 +1196,9 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   }
 
 
-  reset_sigpipe(drizzle);
   return(drizzle);
 
 error:
-  reset_sigpipe(drizzle);
   {
     /* Free alloced memory */
     end_server(drizzle);
