@@ -18,7 +18,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <sys/stat.h>
@@ -53,6 +52,21 @@
 #include "client_settings.h"
 #include <drizzled/version.h>
 
+/* Borrowed from libicu header */
+
+#define U8_IS_SINGLE(c) (((c)&0x80)==0)
+#define U8_LENGTH(c) \
+    ((uint32_t)(c)<=0x7f ? 1 : \
+        ((uint32_t)(c)<=0x7ff ? 2 : \
+            ((uint32_t)(c)<=0xd7ff ? 3 : \
+                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
+                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
+                ) \
+            ) \
+        ) \
+    )
+
+
 #undef net_buffer_length
 #undef max_allowed_packet
 
@@ -77,17 +91,6 @@ const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
-
-bool drizzle_thread_init()
-{
-  return my_thread_init();
-}
-
-void drizzle_thread_end()
-{
-  my_thread_end();
-}
-
 
 /*
   Expand wildcard to a sql string
@@ -151,15 +154,6 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;
   int rc;
-  const CHARSET_INFO *saved_cs= drizzle->charset;
-
-  /* Get the connection-default character set. */
-
-  if (drizzle_init_character_set(drizzle))
-  {
-    drizzle->charset= saved_cs;
-    return(true);
-  }
 
   /* Use an empty string instead of NULL. */
 
@@ -185,10 +179,9 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   end= strncpy(end, db ? db : "", NAME_LEN) + NAME_LEN + 1;
 
   /* Add character set number. */
-
   if (drizzle->server_capabilities & CLIENT_SECURE_CONNECTION)
   {
-    int2store(end, (ushort) drizzle->charset->number);
+    int2store(end, (ushort) 45); // utf8mb4 number from mystrings/ctype-utf8.c
     end+= 2;
   }
 
@@ -211,10 +204,6 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
     drizzle->user= strdup(user);
     drizzle->passwd= strdup(passwd);
     drizzle->db= db ? strdup(db) : 0;
-  }
-  else
-  {
-    drizzle->charset= saved_cs;
   }
 
   return(rc);
@@ -316,7 +305,7 @@ DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
     return NULL;
 
   drizzle->field_count= (uint) query->rows;
-  return unpack_fields(query,&drizzle->field_alloc, drizzle->field_count, 1);
+  return unpack_fields(query, drizzle->field_count, 1);
 }
 
 
@@ -349,7 +338,6 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
   memset(result, 0, sizeof(DRIZZLE_RES));
 
   result->methods= drizzle->methods;
-  result->field_alloc=drizzle->field_alloc;
   drizzle->fields=0;
   result->field_count = drizzle->field_count;
   result->fields= fields;
@@ -373,7 +361,7 @@ drizzle_list_processes(DRIZZLE *drizzle)
   field_count=(uint) net_field_length(&pos);
   if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
-  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,field_count,0)))
+  if (!(drizzle->fields=unpack_fields(fields, field_count, 0)))
     return(0);
   drizzle->status=DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count=field_count;
@@ -533,38 +521,6 @@ uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
   return drizzle->thread_id;
 }
 
-const char * drizzle_character_set_name(const DRIZZLE *drizzle)
-{
-  return drizzle->charset->csname;
-}
-
-void drizzle_get_character_set_info(const DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
-{
-  csinfo->number   = drizzle->charset->number;
-  csinfo->state    = drizzle->charset->state;
-  csinfo->csname   = drizzle->charset->csname;
-  csinfo->name     = drizzle->charset->name;
-  csinfo->comment  = drizzle->charset->comment;
-  csinfo->mbminlen = drizzle->charset->mbminlen;
-  csinfo->mbmaxlen = drizzle->charset->mbmaxlen;
-
-  if (drizzle->options.charset_dir)
-    csinfo->dir = drizzle->options.charset_dir;
-  else
-    csinfo->dir = charsets_dir;
-}
-
-uint drizzle_thread_safe(void)
-{
-  return 1;
-}
-
-
-bool drizzle_embedded(void)
-{
-  return false;
-}
-
 /****************************************************************************
   Some support functions
 ****************************************************************************/
@@ -596,9 +552,7 @@ void my_net_local_init(NET *net)
   Each character needs two bytes, and you need room for the terminating
   null byte. When drizzle_hex_string() returns, the contents of "to" will
   be a null-terminated string. The return value is the length of the
-  encoded string, not including the terminating null character.
-
-  The return value does not contain any leading 0x or a leading X' and
+  encoded string, not including the terminating null character.  The return value does not contain any leading 0x or a leading X' and
   trailing '. The caller must supply whichever of those is desired.
 */
 
@@ -626,46 +580,71 @@ drizzle_hex_string(char *to, const char *from, uint32_t length)
 uint32_t
 drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
-  return escape_string_for_drizzle(default_charset_info, to, 0, from, length);
-}
-
-uint32_t
-drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
-       uint32_t length)
-{
-  if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_drizzle(drizzle->charset, to, 0, from, length);
-  return escape_string_for_drizzle(drizzle->charset, to, 0, from, length);
-}
-
-void
-myodbc_remove_escape(const DRIZZLE *drizzle, char *name)
-{
-  char *to;
-#ifdef USE_MB
-  bool use_mb_flag= use_mb(drizzle->charset);
-  char *end=NULL;
-  if (use_mb_flag)
-    for (end=name; *end ; end++) ;
-#endif
-
-  for (to=name ; *name ; name++)
+  const char *to_start= to;
+  const char *end, *to_end=to_start + 2*length;
+  bool overflow= false;
+  for (end= from + length; from < end; from++)
   {
-#ifdef USE_MB
-    int l;
-    if (use_mb_flag && (l = my_ismbchar( drizzle->charset, name , end ) ) )
+    uint32_t tmp_length;
+    char escape= 0;
+    if (!U8_IS_SINGLE(*from))
     {
-      while (l--)
-        *to++ = *name++;
-      name--;
+      tmp_length= U8_LENGTH(*from);
+      if (to + tmp_length > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      while (tmp_length--)
+        *to++= *from++;
+      from--;
       continue;
     }
-#endif
-    if (*name == '\\' && name[1])
-      name++;
-    *to++= *name;
+    switch (*from) {
+    case 0:                             /* Must be escaped for 'mysql' */
+      escape= '0';
+      break;
+    case '\n':                          /* Must be escaped for logs */
+      escape= 'n';
+      break;
+    case '\r':
+      escape= 'r';
+      break;
+    case '\\':
+      escape= '\\';
+      break;
+    case '\'':
+      escape= '\'';
+      break;
+    case '"':                           /* Better safe than sorry */
+      escape= '"';
+      break;
+    case '\032':                        /* This gives problems on Win32 */
+      escape= 'Z';
+      break;
+    }
+    if (escape)
+    {
+      if (to + 2 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= '\\';
+      *to++= escape;
+    }
+    else
+    {
+      if (to + 1 > to_end)
+      {
+        overflow= true;
+        break;
+      }
+      *to++= *from;
+    }
   }
-  *to=0;
+  *to= 0;
+  return overflow ? (size_t) -1 : (size_t) (to - to_start);
 }
 
 int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)

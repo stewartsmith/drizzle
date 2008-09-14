@@ -95,6 +95,16 @@ const char *client_errors[]=
   N_("Lost connection to Drizzle server while setting initial database, "
      "system error: %d"),
   N_("Statement closed indirectly because of a preceeding %s() call"),
+/* CR_NET_UNCOMPRESS_ERROR 08S01  */
+  N_("Couldn't uncompress communication packet"),
+/* CR_NET_READ_ERROR 08S01  */
+  N_("Got an error reading communication packets"),
+/* CR_NET_READ_INTERRUPTED 08S01  */
+  N_("Got timeout reading communication packets"),
+/* CR_NET_ERROR_ON_WRITE 08S01  */
+  N_("Got an error writing communication packets"),
+/* CR_NET_WRITE_INTERRUPTED 08S01  */
+  N_("Got timeout writing communication packets"),
   ""
 };
 

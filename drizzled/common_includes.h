@@ -75,8 +75,6 @@
 #include <drizzled/error.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
-/* Virtual I/O wrapper library */
-#include <vio/violite.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
 

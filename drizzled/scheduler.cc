@@ -18,6 +18,7 @@
 */
 
 #include <drizzled/server_includes.h>
+#include <vio/violite.h>
 #include "event.h"
 
 

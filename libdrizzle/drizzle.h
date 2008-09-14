@@ -43,7 +43,6 @@ extern "C" {
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <libdrizzle/drizzle_com.h>
-#include <mysys/drizzle_time.h>
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
@@ -87,7 +86,6 @@ typedef struct st_drizzle_field {
 typedef char **DRIZZLE_ROW;    /* return data as array of strings */
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
-#include <mysys/typelib.h>
 
 #define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 
@@ -99,13 +97,9 @@ typedef struct st_drizzle_rows {
 
 typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
 
-#include <mysys/my_alloc.h>
-
-typedef struct embedded_query_result EMBEDDED_QUERY_RESULT;
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;
   struct embedded_query_result *embedded_info;
-  MEM_ROOT alloc;
   uint64_t rows;
   unsigned int fields;
   /* extra info for embedded library */
@@ -116,7 +110,7 @@ enum drizzle_option
 {
   DRIZZLE_OPT_CONNECT_TIMEOUT, DRIZZLE_OPT_COMPRESS, DRIZZLE_OPT_NAMED_PIPE,
   DRIZZLE_INIT_COMMAND, DRIZZLE_READ_DEFAULT_FILE, DRIZZLE_READ_DEFAULT_GROUP,
-  DRIZZLE_SET_CHARSET_DIR, DRIZZLE_SET_CHARSET_NAME, DRIZZLE_OPT_LOCAL_INFILE,
+  DRIZZLE_OPT_LOCAL_INFILE,
   DRIZZLE_OPT_PROTOCOL, DRIZZLE_SHARED_MEMORY_BASE_NAME, DRIZZLE_OPT_READ_TIMEOUT,
   DRIZZLE_OPT_WRITE_TIMEOUT, DRIZZLE_OPT_USE_RESULT,
   DRIZZLE_OPT_USE_REMOTE_CONNECTION,
@@ -129,9 +123,8 @@ struct st_drizzle_options {
   unsigned int connect_timeout, read_timeout, write_timeout;
   unsigned int port, protocol;
   unsigned long client_flag;
-  char *host,*user,*password,*unix_socket,*db;
-  struct st_dynamic_array *init_commands;
-  char *my_cnf_file,*my_cnf_group, *charset_dir, *charset_name;
+  char *host,*user,*password,*db;
+  char *my_cnf_file,*my_cnf_group;
   char *ssl_key;        /* PEM key file */
   char *ssl_cert;        /* PEM cert file */
   char *ssl_ca;          /* PEM CA file */
@@ -171,18 +164,6 @@ enum drizzle_protocol_type
   DRIZZLE_PROTOCOL_TCP
 };
 
-typedef struct character_set
-{
-  unsigned int      number;     /* character set number              */
-  unsigned int      state;      /* character set state               */
-  const char        *csname;    /* collation name                    */
-  const char        *name;      /* character set name                */
-  const char        *comment;   /* comment                           */
-  const char        *dir;       /* character set directory           */
-  unsigned int      mbminlen;   /* min. length for multibyte strings */
-  unsigned int      mbmaxlen;   /* max. length for multibyte strings */
-} MY_CHARSET_INFO;
-
 struct st_drizzle_methods;
 struct st_drizzle_stmt;
 
@@ -192,9 +173,7 @@ typedef struct st_drizzle
   unsigned char  *connector_fd;    /* ConnectorFd for SSL */
   char    *host,*user,*passwd,*unix_socket,*server_version,*host_info;
   char          *info, *db;
-  const struct charset_info_st *charset;
   DRIZZLE_FIELD  *fields;
-  MEM_ROOT  field_alloc;
   uint64_t affected_rows;
   uint64_t insert_id;    /* id if insert on table with NEXTNR */
   uint64_t extra_info;    /* Not used */
@@ -240,7 +219,6 @@ typedef struct st_drizzle_res {
   const struct st_drizzle_methods *methods;
   DRIZZLE_ROW  row;      /* If unbuffered read */
   DRIZZLE_ROW  current_row;    /* buffer to current row */
-  MEM_ROOT  field_alloc;
   uint32_t  field_count, current_field;
   bool  eof;      /* Used by drizzle_fetch_row */
   /* drizzle_stmt_close() had to cancel this result */
@@ -286,14 +264,6 @@ void drizzle_server_end(void);
 
 const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
 
-/*
-  Set up and bring down a thread; these function should be called
-  for each thread in an application which opens at least one MySQL
-  connection.  All uses of the connection(s) should be between these
-  function calls.
-*/
-bool drizzle_thread_init(void);
-void drizzle_thread_end(void);
 
 /*
   Functions to get information from the DRIZZLE and DRIZZLE_RES structures
@@ -338,9 +308,6 @@ int32_t    drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
 DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle);
 DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle);
 
-void        drizzle_get_character_set_info(const DRIZZLE *drizzle,
-                                                   MY_CHARSET_INFO *charset);
-
 /* local infile support */
 
 #define LOCAL_INFILE_ERROR_LEN 512
@@ -381,10 +348,6 @@ DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
 DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
 uint32_t  drizzle_escape_string(char *to,const char *from, uint32_t from_length);
 uint32_t  drizzle_hex_string(char *to,const char *from, uint32_t from_length);
-uint32_t        drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
-void    myodbc_remove_escape(const DRIZZLE *drizzle, char *name);
-uint32_t  drizzle_thread_safe(void);
-bool    drizzle_embedded(void);
 bool         drizzle_read_query_result(DRIZZLE *drizzle);
 
 

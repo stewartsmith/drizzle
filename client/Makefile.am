@@ -16,6 +16,8 @@
 # This file is public domain and comes with NO WARRANTY of any kind
 
 LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
+			$(top_builddir)/mysys/libmysys.la \
+			$(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL) -lz
 
 

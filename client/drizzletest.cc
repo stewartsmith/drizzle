@@ -3794,13 +3794,8 @@ static void do_connect(struct st_command *command)
   if (opt_compress || con_compress)
     drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
   int opt_protocol= DRIZZLE_PROTOCOL_TCP;
   drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -5502,13 +5497,8 @@ int main(int argc, char **argv)
   if (opt_compress)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
   int opt_protocol= DRIZZLE_PROTOCOL_TCP;
   drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");
