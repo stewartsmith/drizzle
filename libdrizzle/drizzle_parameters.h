@@ -36,11 +36,6 @@ typedef struct st_drizzle_parameters
 
 const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
 
-#if !defined(DRIZZLE_SERVER)
-#define max_allowed_packet (*drizzle_get_parameters()->p_max_allowed_packet)
-#define net_buffer_length (*drizzle_get_parameters()->p_net_buffer_length)
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

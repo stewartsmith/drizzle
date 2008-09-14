@@ -1365,9 +1365,7 @@ static bool cli_read_query_result(DRIZZLE *drizzle)
   if ((length = cli_safe_read(drizzle)) == packet_error)
     return(1);
   free_old_query(drizzle);    /* Free old result */
-#ifdef DRIZZLE_CLIENT      /* Avoid warn of unused labels*/
 get_info:
-#endif
   pos=(uchar*) drizzle->net.read_pos;
   if ((field_count= net_field_length(&pos)) == 0)
   {
@@ -1381,7 +1379,6 @@ get_info:
       drizzle->info=(char*) pos;
     return(0);
   }
-#ifdef DRIZZLE_CLIENT
   if (field_count == NULL_LENGTH)    /* LOAD DATA LOCAL INFILE */
   {
     int error;
@@ -1397,7 +1394,6 @@ get_info:
       return(1);
     goto get_info;        /* Get info packet */
   }
-#endif
   if (!(drizzle->server_status & SERVER_STATUS_AUTOCOMMIT))
     drizzle->server_status|= SERVER_STATUS_IN_TRANS;
 

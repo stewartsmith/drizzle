@@ -42,9 +42,11 @@ typedef struct st_drizzle_methods
                            const unsigned char *arg,
                            uint32_t arg_length,
                            bool skip_check);
-  DRIZZLE_DATA *(*read_rows)(DRIZZLE *drizzle,DRIZZLE_FIELD *drizzle_fields, uint32_t fields);
+  DRIZZLE_DATA *(*read_rows)(DRIZZLE *drizzle, DRIZZLE_FIELD *drizzle_fields,
+                             uint32_t fields);
   DRIZZLE_RES * (*use_result)(DRIZZLE *drizzle);
-  void (*fetch_lengths)(uint32_t *to, DRIZZLE_ROW column, uint32_t field_count);
+  void (*fetch_lengths)(uint32_t *to, DRIZZLE_ROW column,
+                        uint32_t field_count);
   void (*flush_use_result)(DRIZZLE *drizzle);
   DRIZZLE_FIELD * (*list_fields)(DRIZZLE *drizzle);
   int32_t (*unbuffered_fetch)(DRIZZLE *drizzle, char **row);
@@ -52,6 +54,10 @@ typedef struct st_drizzle_methods
   bool (*next_result)(DRIZZLE *drizzle);
   int32_t (*read_change_user_result)(DRIZZLE *drizzle);
 } DRIZZLE_METHODS;
+
+#define simple_command(drizzle, command, arg, length, skip_check) \
+  (*(drizzle)->methods->advanced_command)(drizzle, command, 0,          \
+                                          0, arg, length, skip_check)
 
 #ifdef  __cplusplus
 }

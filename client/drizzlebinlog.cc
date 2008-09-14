@@ -1973,5 +1973,6 @@ int main(int argc, char** argv)
   the server
 */
 
+#define max_allowed_packet 1024L*1024L*1024L
 #include <drizzled/log_event.cc>
 

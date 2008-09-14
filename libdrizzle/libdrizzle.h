@@ -40,10 +40,8 @@ extern unsigned int drizzle_port;
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
-#if !defined(DRIZZLE_SERVER) && !defined(DRIZZLE_CLIENT)
-#define DRIZZLE_CLIENT
-#endif
 
+#include <stdint.h>
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_rows.h>
 #include <libdrizzle/drizzle_data.h>
@@ -67,26 +65,6 @@ uint32_t drizzle_hex_string(char *to,const char *from,
 */
 void drizzle_server_end(void);
 
-/*
-  drizzle_server_init/end need to be called when using libdrizzle or
-  libdrizzleclient (exactly, drizzle_server_init() is called by drizzle_init() so
-  you don't need to call it explicitely; but you need to call
-  drizzle_server_end() to free memory). The names are a bit misleading
-  (drizzle_SERVER* to be used when using libdrizzleCLIENT). So we add more general
-  names which suit well whether you're using libdrizzled or libdrizzleclient. We
-  intend to promote these aliases over the drizzle_server* ones.
-*/
-#define drizzle_library_end drizzle_server_end
-
-
-/*
-  The following functions are mainly exported because of binlog;
-  They are not for general usage
-*/
-
-#define simple_command(drizzle, command, arg, length, skip_check) \
-  (*(drizzle)->methods->advanced_command)(drizzle, command, 0,  \
-                                        0, arg, length, skip_check)
 
 #ifdef  __cplusplus
 }
