@@ -159,8 +159,9 @@ char *get_tty_password(const char *opt_message)
 # ifdef HAVE_GETPASS
   passbuff = getpass(opt_message ? opt_message : "Enter password: ");
 
+  memset(buff, 0, 80);
   /* copy the password to buff and clear original (static) buffer */
-  stpncpy(buff, passbuff, sizeof(buff) - 1);
+  strncpy(buff, passbuff, sizeof(buff) - 1);
 #   ifdef _PASSWORD_LEN
   memset(passbuff, 0, _PASSWORD_LEN);
 #   endif
