@@ -574,12 +574,12 @@ unpack_fields(DRIZZLE_DATA *data, uint fields,
     /* fields count may be wrong */
     assert((uint) (field - result) < fields);
     cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
-    field->catalog=   strndup((char*) row->data[0], lengths[0]);
-    field->db=        strndup((char*) row->data[1], lengths[1]);
-    field->table=     strndup((char*) row->data[2], lengths[2]);
-    field->org_table= strndup((char*) row->data[3], lengths[3]);
-    field->name=      strndup((char*) row->data[4], lengths[4]);
-    field->org_name=  strndup((char*) row->data[5], lengths[5]);
+    field->catalog=   strdup((char*) row->data[0]);
+    field->db=        strdup((char*) row->data[1]);
+    field->table=     strdup((char*) row->data[2]);
+    field->org_table= strdup((char*) row->data[3]);
+    field->name=      strdup((char*) row->data[4]);
+    field->org_name=  strdup((char*) row->data[5]);
 
     field->catalog_length=  lengths[0];
     field->db_length=    lengths[1];
@@ -604,7 +604,8 @@ unpack_fields(DRIZZLE_DATA *data, uint fields,
       field->flags|= NUM_FLAG;
     if (default_value && row->data[7])
     {
-      field->def=strndup((char*) row->data[7], lengths[7]);
+      field->def= (char *)malloc(lengths[7]);
+      memcpy(field->def, row->data[7], lengths[7]);
       field->def_length= lengths[7];
     }
     else
