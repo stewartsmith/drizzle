@@ -236,10 +236,6 @@ static int check_connection(THD *thd)
   uint32_t pkt_len= 0;
   char *end;
 
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->set_active_vio(net->vio);
-#endif
-
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];

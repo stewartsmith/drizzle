@@ -1190,9 +1190,6 @@ public:
   } transaction;
   Field      *dup_field;
   sigset_t signals;
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  Vio* active_vio;
-#endif
   /*
     This is to track items changed during execution of a prepared
     statement/stored procedure. It's created by
@@ -1559,21 +1556,6 @@ public:
   void cleanup(void);
   void cleanup_after_query();
   bool store_globals();
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  inline void set_active_vio(Vio* vio)
-  {
-    pthread_mutex_lock(&LOCK_delete);
-    active_vio = vio;
-    pthread_mutex_unlock(&LOCK_delete);
-  }
-  inline void clear_active_vio()
-  {
-    pthread_mutex_lock(&LOCK_delete);
-    active_vio = 0;
-    pthread_mutex_unlock(&LOCK_delete);
-  }
-  void close_active_vio();
-#endif
   void awake(THD::killed_state state_to_set);
 
 #ifndef DRIZZLE_CLIENT
@@ -1697,8 +1679,7 @@ public:
     return;
   }
   inline bool vio_ok() const { return net.vio != 0; }
-  /** Return false if connection to client is broken. */
-  bool vio_is_connected();
+
   /**
     Mark the current error as fatal. Warning: this does not
     set any error, it sets a property of the error, so must be
