@@ -17,9 +17,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
-#include <libdrizzle/my_time.h>
-
+#include <drizzled/server_includes.h>
 #include "tzfile.h"
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
@@ -585,7 +583,7 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
 /*
   String with names of SYSTEM time zone.
 */
-static const String tz_SYSTEM_name("SYSTEM", 6, &my_charset_latin1);
+static const String tz_SYSTEM_name("SYSTEM", 6, &my_charset_utf8_general_ci);
 
 
 /*
@@ -913,7 +911,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
   uint minutes= abs((int)(offset % SECS_PER_HOUR / SECS_PER_MIN));
   ulong length= snprintf(name_buff, sizeof(name_buff), "%s%02d:%02d",
                          (offset>=0) ? "+" : "-", hours, minutes);
-  name.set(name_buff, length, &my_charset_latin1);
+  name.set(name_buff, length, &my_charset_utf8_general_ci);
 }
 
 
@@ -1054,7 +1052,7 @@ my_tz_init(THD *thd, const char *default_tzname,
 {
   if (default_tzname)
   {
-    String tmp_tzname2(default_tzname, &my_charset_latin1);
+    String tmp_tzname2(default_tzname, &my_charset_utf8_general_ci);
     /*
       Time zone tables may be open here, and my_tz_find() may open
       most of them once more, but this is OK for system tables open
@@ -1062,7 +1060,7 @@ my_tz_init(THD *thd, const char *default_tzname,
     */
     if (!(global_system_variables.time_zone= my_tz_find(thd, &tmp_tzname2)))
     {
-      sql_print_error("Fatal error: Illegal or unknown default time zone '%s'",
+      sql_print_error(_("Fatal error: Illegal or unknown default time zone '%s'"),
                       default_tzname);
       return true;
     }
@@ -1120,7 +1118,7 @@ str_to_offset(const char *str, uint length, long *offset)
 
   number_tmp= 0;
 
-  while (str < end && my_isdigit(&my_charset_latin1, *str))
+  while (str < end && my_isdigit(&my_charset_utf8_general_ci, *str))
   {
     number_tmp= number_tmp*10 + *str - '0';
     str++;
@@ -1132,7 +1130,7 @@ str_to_offset(const char *str, uint length, long *offset)
 
   offset_tmp = number_tmp * MINS_PER_HOUR; number_tmp= 0;
 
-  while (str < end && my_isdigit(&my_charset_latin1, *str))
+  while (str < end && my_isdigit(&my_charset_utf8_general_ci, *str))
   {
     number_tmp= number_tmp * 10 + *str - '0';
     str++;

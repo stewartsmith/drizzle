@@ -15,7 +15,8 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
+LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
+			$(LIBINTL) -lz
 
 
 noinst_HEADERS =	completion_hash.h \
@@ -32,32 +33,31 @@ bin_PROGRAMS =	drizzle \
 				drizzledump \
 				drizzleimport \
 				drizzletest \
-				mysqlslap 
+				drizzleslap
 
-drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
-drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) $(GLIB_LIBS) \
+drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
+drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
+drizzle_CXXFLAGS =		${AM_CXXFLAGS} -fexceptions
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/mf_tempdir.c \
-                $(top_srcdir)/mysys/my_new.cc \
                 $(top_srcdir)/mysys/my_bit.c \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
 
-drizzledump_SOURCES=            drizzledump.c 
+drizzlecheck_SOURCES =		drizzlecheck.cc
+drizzledump_SOURCES=            drizzledump.cc 
 
-drizzleimport_SOURCES=		drizzleimport.c
+drizzleimport_SOURCES=		drizzleimport.cc
 
-mysqlslap_SOURCES=		mysqlslap.c
-mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
+drizzleslap_SOURCES=            drizzleslap.cc
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
+drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} $(PCRE_CFLAGS)
 
-# Fix for mit-threads
-DEFS =			-DUNDEF_THREADS_HACK \
-			-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
-			-DDATADIR="\"$(localstatedir)\""
+DEFS =	-DDEFAULT_DRIZZLE_HOME="\"$(prefix)\"" \
+	-DDATADIR="\"$(localstatedir)\"" \
+	-DLOCALEDIR=\"$(localedir)\" @DEFS@

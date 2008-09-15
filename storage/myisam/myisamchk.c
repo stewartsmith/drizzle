@@ -40,7 +40,7 @@ static uint decode_bits;
 static char **default_argv;
 static const char *load_default_groups[]= { "myisamchk", 0 };
 static const char *set_collation_name, *opt_tmpdir;
-static CHARSET_INFO *set_collation;
+static const CHARSET_INFO *set_collation;
 static long opt_myisam_block_size;
 static long opt_key_cache_block_size;
 static const char *my_progname_short;
@@ -73,11 +73,11 @@ static int myisamchk(MI_CHECK *param, char *filename);
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name);
 static int mi_sort_records(MI_CHECK *param, register MI_INFO *info,
                            char * name, uint sort_key,
-			   my_bool write_info, my_bool update_index);
+			   bool write_info, bool update_index);
 static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page,uchar *buff,uint sortkey,
-			     File new_file, my_bool update_index);
+			     File new_file, bool update_index);
 
 MI_CHECK check_param;
 
@@ -278,7 +278,7 @@ static struct my_option my_long_options[] =
   { "key_buffer_size", OPT_KEY_BUFFER_SIZE, "",
     (char**) &check_param.use_buffers, (char**) &check_param.use_buffers, 0,
     GET_ULONG, REQUIRED_ARG, (long) USE_BUFFER_INIT, (long) MALLOC_OVERHEAD,
-    (long) ~0L, (long) MALLOC_OVERHEAD, (long) IO_SIZE, 0},
+    INT32_MAX, (long) MALLOC_OVERHEAD, (long) IO_SIZE, 0},
   { "key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,  "",
     (char**) &opt_key_cache_block_size,
     (char**) &opt_key_cache_block_size, 0,
@@ -292,17 +292,17 @@ static struct my_option my_long_options[] =
     (char**) &check_param.read_buffer_length,
     (char**) &check_param.read_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
-    (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "write_buffer_size", OPT_WRITE_BUFFER_SIZE, "",
     (char**) &check_param.write_buffer_length,
     (char**) &check_param.write_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
-    (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_buffer_size", OPT_SORT_BUFFER_SIZE, "",
     (char**) &check_param.sort_buffer_length,
     (char**) &check_param.sort_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) SORT_BUFFER_INIT, (long) (MIN_SORT_BUFFER + MALLOC_OVERHEAD),
-    (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
+    INT32_MAX, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_key_blocks", OPT_SORT_KEY_BLOCKS, "",
     (char**) &check_param.sort_key_blocks,
     (char**) &check_param.sort_key_blocks, 0, GET_ULONG, REQUIRED_ARG,
@@ -758,7 +758,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   MI_INFO *info;
   File datafile;
   char llbuff[22],llbuff2[22];
-  my_bool state_updated=0;
+  bool state_updated=0;
   MYISAM_SHARE *share;
 
   param->out_flag=error=param->warning_printed=param->error_printed=
@@ -824,7 +824,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   */
   if (param->testflag & (T_FAST | T_CHECK_ONLY_CHANGED))
   {
-    my_bool need_to_check= mi_is_crashed(info) || share->state.open_count != 0;
+    bool need_to_check= mi_is_crashed(info) || share->state.open_count != 0;
 
     if ((param->testflag & (T_REP_ANY | T_SORT_RECORDS)) &&
 	((share->state.changed & (STATE_CHANGED | STATE_CRASHED |
@@ -979,14 +979,14 @@ static int myisamchk(MI_CHECK *param, char * filename)
 	  We can't update the index in mi_sort_records if we have a
 	  prefix compressed or fulltext index
 	*/
-	my_bool update_index=1;
+	bool update_index=1;
 	for (key=0 ; key < share->base.keys; key++)
 	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY))
 	    update_index=0;
 
 	error=mi_sort_records(param,info,filename,param->opt_sort_key,
                            /* what is the following parameter for ? */
-	   		      (my_bool) !(param->testflag & T_REP),
+	   		      (bool) !(param->testflag & T_REP),
 			      update_index);
 	datafile=info->dfile;	/* This is now locked */
 	if (!error && !update_index)
@@ -1069,7 +1069,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   if ((param->testflag & T_AUTO_INC) ||
       ((param->testflag & T_REP_ANY) && info->s->base.auto_key))
     update_auto_increment_key(param, info,
-			      (my_bool) !test(param->testflag & T_AUTO_INC));
+			      (bool) !test(param->testflag & T_AUTO_INC));
 
   if (!(param->testflag & T_DESCRIPT))
   {
@@ -1170,21 +1170,21 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     }
     pos=buff;
     if (share->state.changed & STATE_CRASHED)
-      strmov(buff,"crashed");
+      stpcpy(buff,"crashed");
     else
     {
       if (share->state.open_count)
-	pos=strmov(pos,"open,");
+	pos=stpcpy(pos,"open,");
       if (share->state.changed & STATE_CHANGED)
-	pos=strmov(pos,"changed,");
+	pos=stpcpy(pos,"changed,");
       else
-	pos=strmov(pos,"checked,");
+	pos=stpcpy(pos,"checked,");
       if (!(share->state.changed & STATE_NOT_ANALYZED))
-	pos=strmov(pos,"analyzed,");
+	pos=stpcpy(pos,"analyzed,");
       if (!(share->state.changed & STATE_NOT_OPTIMIZED_KEYS))
-	pos=strmov(pos,"optimized keys,");
+	pos=stpcpy(pos,"optimized keys,");
       if (!(share->state.changed & STATE_NOT_SORTED_PAGES))
-	pos=strmov(pos,"sorted index pages,");
+	pos=stpcpy(pos,"sorted index pages,");
       pos[-1]=0;				/* Remove extra ',' */
     }      
     printf("Status:              %s\n",buff);
@@ -1263,19 +1263,19 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     pos=buff;
     if (keyseg->flag & HA_REVERSE_SORT)
       *pos++ = '-';
-    pos=strmov(pos,type_names[keyseg->type]);
+    pos=stpcpy(pos,type_names[keyseg->type]);
     *pos++ = ' ';
     *pos=0;
     if (keyinfo->flag & HA_PACK_KEY)
-      pos=strmov(pos,prefix_packed_txt);
+      pos=stpcpy(pos,prefix_packed_txt);
     if (keyinfo->flag & HA_BINARY_PACK_KEY)
-      pos=strmov(pos,bin_packed_txt);
+      pos=stpcpy(pos,bin_packed_txt);
     if (keyseg->flag & HA_SPACE_PACK)
-      pos=strmov(pos,diff_txt);
+      pos=stpcpy(pos,diff_txt);
     if (keyseg->flag & HA_BLOB_PART)
-      pos=strmov(pos,blob_txt);
+      pos=stpcpy(pos,blob_txt);
     if (keyseg->flag & HA_NULL_PART)
-      pos=strmov(pos,null_txt);
+      pos=stpcpy(pos,null_txt);
     *pos=0;
 
     printf("%-4d%-6ld%-3d %-8s%-21s",
@@ -1294,14 +1294,14 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
       pos=buff;
       if (keyseg->flag & HA_REVERSE_SORT)
 	*pos++ = '-';
-      pos=strmov(pos,type_names[keyseg->type]);
+      pos=stpcpy(pos,type_names[keyseg->type]);
       *pos++= ' ';
       if (keyseg->flag & HA_SPACE_PACK)
-	pos=strmov(pos,diff_txt);
+	pos=stpcpy(pos,diff_txt);
       if (keyseg->flag & HA_BLOB_PART)
-	pos=strmov(pos,blob_txt);
+	pos=stpcpy(pos,blob_txt);
       if (keyseg->flag & HA_NULL_PART)
-	pos=strmov(pos,null_txt);
+	pos=stpcpy(pos,null_txt);
       *pos=0;
       printf("    %-6ld%-3d         %-21s",
 	     (long) keyseg->start+1,keyseg->length,buff);
@@ -1318,7 +1318,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     for (key=0,uniqueinfo= &share->uniqueinfo[0] ;
 	 key < share->state.header.uniques; key++, uniqueinfo++)
     {
-      my_bool new_row=0;
+      bool new_row=0;
       char null_bit[8],null_pos[8];
       printf("%-8d%-5d",key+1,uniqueinfo->key+1);
       for (keyseg=uniqueinfo->seg ; keyseg->type != HA_KEYTYPE_END ; keyseg++)
@@ -1353,21 +1353,21 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 	type=share->rec[field].base_type;
       else
 	type=(enum en_fieldtype) share->rec[field].type;
-      end=strmov(buff,field_pack[type]);
+      end=stpcpy(buff,field_pack[type]);
       if (share->options & HA_OPTION_COMPRESS_RECORD)
       {
 	if (share->rec[field].pack_type & PACK_TYPE_SELECTED)
-	  end=strmov(end,", not_always");
+	  end=stpcpy(end,", not_always");
 	if (share->rec[field].pack_type & PACK_TYPE_SPACE_FIELDS)
-	  end=strmov(end,", no empty");
+	  end=stpcpy(end,", no empty");
 	if (share->rec[field].pack_type & PACK_TYPE_ZERO_FILL)
 	{
 	  sprintf(end,", zerofill(%d)",share->rec[field].space_length_bits);
-	  end=strend(end);
+	  end= strchr(end, '\0');
 	}
       }
       if (buff[0] == ',')
-	strmov(buff,buff+2);
+	stpcpy(buff,buff+2);
       int10_to_str((long) share->rec[field].length,length,10);
       null_bit[0]=null_pos[0]=0;
       if (share->rec[field].null_bit)
@@ -1397,8 +1397,8 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 static int mi_sort_records(MI_CHECK *param,
 			   register MI_INFO *info, char * name,
 			   uint sort_key,
-			   my_bool write_info,
-			   my_bool update_index)
+			   bool write_info,
+			   bool update_index)
 {
   int got_error;
   uint key;
@@ -1411,8 +1411,8 @@ static int mi_sort_records(MI_CHECK *param,
   SORT_INFO sort_info;
   MI_SORT_PARAM sort_param;
 
-  memset((char*)&sort_info, 0, sizeof(sort_info));
-  memset((char*)&sort_param, 0, sizeof(sort_param));
+  memset(&sort_info, 0, sizeof(sort_info));
+  memset(&sort_param, 0, sizeof(sort_param));
   sort_param.sort_info=&sort_info;
   sort_info.param=param;
   keyinfo= &share->keyinfo[sort_key];
@@ -1571,7 +1571,7 @@ err:
 static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page, uchar *buff, uint sort_key,
-			     File new_file,my_bool update_index)
+			     File new_file,bool update_index)
 {
   uint	nod_flag,used_length,key_length;
   uchar *temp_buff,*keypos,*endpos;
@@ -1638,7 +1638,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
       goto err;
   }
   /* Clear end of block to get better compression if the table is backuped */
-  memset((uchar*) buff+used_length, 0, keyinfo->block_length-used_length);
+  memset(buff+used_length, 0, keyinfo->block_length-used_length);
   if (my_pwrite(info->s->kfile,(uchar*) buff,(uint) keyinfo->block_length,
 		page,param->myf_rw))
   {

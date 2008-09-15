@@ -14,6 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys_priv.h"
+#include <libdrizzle/gettext.h>
 
 #include <mystrings/m_string.h>
 #include <stdlib.h>
@@ -79,9 +80,9 @@ static void default_reporter(enum loglevel level,
   va_list args;
   va_start(args, format);
   if (level == WARNING_LEVEL)
-    fprintf(stderr, "%s", "Warning: ");
+    fprintf(stderr, "%s", _("Warning: "));
   else if (level == INFORMATION_LEVEL)
-    fprintf(stderr, "%s", "Info: ");
+    fprintf(stderr, "%s", _("Info: "));
   vfprintf(stderr, format, args);
   va_end(args);
   fputc('\n', stderr);
@@ -202,12 +203,17 @@ int handle_options(int *argc, char ***argv,
 	  }
 	}
 	opt_str= check_struct_option(cur_arg, key_name);
-	optend= strcend(opt_str, '=');
-	length= (uint) (optend - opt_str);
-	if (*optend == '=')
+	optend= strrchr(opt_str, '=');
+	if (optend != NULL)
+        {
+	  length= (uint) (optend - opt_str);
 	  optend++;
+        }
 	else
+        {
+          length= strlen(opt_str);
 	  optend= 0;
+        }
 
 	/*
 	  Find first the right option. Return error in case of an ambiguous,
@@ -341,8 +347,8 @@ int handle_options(int *argc, char ***argv,
 	{
 	  if (my_getopt_print_errors)
 	    fprintf(stderr,
-		    "%s: %s: Option '%s' used, but is disabled\n", my_progname,
-		    option_is_loose ? "WARNING" : "ERROR", opt_str);
+		    _("%s: %s: Option '%s' used, but is disabled\n"), my_progname,
+		    option_is_loose ? _("WARNING") : _("ERROR"), opt_str);
 	  if (option_is_loose)
 	  {
 	    (*argc)--;
@@ -380,10 +386,10 @@ int handle_options(int *argc, char ***argv,
 	      */
 	    (*argc)--;
 	    if (!optend || *optend == '1' ||
-		!my_strcasecmp(&my_charset_latin1, optend, "true"))
+		!my_strcasecmp(&my_charset_utf8_general_ci, optend, "true"))
 	      *((bool*) value)= (bool) 1;
 	    else if (*optend == '0' ||
-		     !my_strcasecmp(&my_charset_latin1, optend, "false"))
+		     !my_strcasecmp(&my_charset_utf8_general_ci, optend, "false"))
 	      *((bool*) value)= (bool) 0;
 	    else
 	    {
@@ -445,7 +451,7 @@ invalid value '%s'",
 	      {
 		if (my_getopt_print_errors)
 		  fprintf(stderr,
-			  "%s: ERROR: Option '-%c' used, but is disabled\n",
+			  _("%s: ERROR: Option '-%c' used, but is disabled\n"),
 			  my_progname, optp->id);
 		return EXIT_OPTION_DISABLED;
 	      }
@@ -556,8 +562,8 @@ static char *check_struct_option(char *cur_arg, char *key_name)
 {
   char *ptr, *end;
 
-  ptr= strcend(cur_arg + 1, '.'); /* Skip the first character */
-  end= strcend(cur_arg, '=');
+  ptr= strrchr(cur_arg + 1, '.'); /* Skip the first character */
+  end= strrchr(cur_arg, '=');
 
   /* 
      If the first dot is after an equal sign, then it is part
@@ -566,7 +572,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
      NULL, or the character right before equal sign is the first
      dot found, the option is not a struct option.
   */
-  if (end - ptr > 1)
+  if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
     uint len= (uint) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);
@@ -758,7 +764,7 @@ static int64_t eval_num_suffix(char *argument, int *error, char *option_name)
   else if (*endchar)
   {
     fprintf(stderr,
-	    "Unknown suffix '%c' used for variable '%s' (value '%s')\n",
+	    _("Unknown suffix '%c' used for variable '%s' (value '%s')\n"),
 	    *endchar, option_name, argument);
     *error= 1;
     return 0;
@@ -939,7 +945,7 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
   if (end[0] != 0 || error)
   {
     fprintf(stderr,
-            "%s: ERROR: Invalid decimal value for option '%s'\n",
+            _("%s: ERROR: Invalid decimal value for option '%s'\n"),
             my_progname, optp->name);
     *err= EXIT_ARGUMENT_INVALID;
     return 0.0;
@@ -976,7 +982,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     *((long*) variable)= (long) value;
     break;
   case GET_ULONG:
-    *((ulong*) variable)= (ulong) value;
+    *((uint32_t*) variable)= (uint32_t) value;
     break;
   case GET_LL:
     *((int64_t*) variable)= (int64_t) value;
@@ -1141,7 +1147,7 @@ void my_print_help(const struct my_option *options)
       putchar(' ');
     if (optp->comment && *optp->comment)
     {
-      const char *comment= optp->comment, *end= strend(comment);
+      const char *comment= _(optp->comment), *end= strchr(comment, '\0');
 
       while ((uint) (end - comment) > comment_space)
       {
@@ -1161,7 +1167,7 @@ void my_print_help(const struct my_option *options)
     {
       if (optp->def_value != 0)
       {
-        printf("%*s(Defaults to on; use --skip-%s to disable.)\n", name_space, "", optp->name);
+        printf(_("%*s(Defaults to on; use --skip-%s to disable.)\n"), name_space, "", optp->name);
       }
     }
   }
@@ -1181,9 +1187,9 @@ void my_print_variables(const struct my_option *options)
   char buff[255];
   const struct my_option *optp;
 
-  printf("\nVariables (--variable-name=value)\n");
-  printf("and boolean options {false|true}  Value (after reading options)\n");
-  printf("--------------------------------- -----------------------------\n");
+  printf(_("\nVariables (--variable-name=value)\n"
+         "and boolean options {false|true}  Value (after reading options)\n"
+         "--------------------------------- -----------------------------\n"));
   for (optp= options; optp->id; optp++)
   {
     char* *value= (optp->var_type & GET_ASK_ADDR ?
@@ -1197,7 +1203,7 @@ void my_print_variables(const struct my_option *options)
       switch ((optp->var_type & GET_TYPE_MASK)) {
       case GET_SET:
         if (!(llvalue= *(uint64_t*) value))
-	  printf("%s\n", "(No default value)");
+	  printf("%s\n", _("(No default value)"));
 	else
         for (nr= 0, bit= 1; llvalue && nr < optp->typelib->count; nr++, bit<<=1)
 	{
@@ -1213,10 +1219,10 @@ void my_print_variables(const struct my_option *options)
       case GET_STR:
       case GET_STR_ALLOC:                    /* fall through */
 	printf("%s\n", *((char**) value) ? *((char**) value) :
-	       "(No default value)");
+	       _("(No default value)"));
 	break;
       case GET_BOOL:
-	printf("%s\n", *((bool*) value) ? "true" : "false");
+	printf("%s\n", *((bool*) value) ? _("true") : _("false"));
 	break;
       case GET_INT:
 	printf("%d\n", *((int*) value));
@@ -1228,7 +1234,7 @@ void my_print_variables(const struct my_option *options)
 	printf("%ld\n", *((long*) value));
 	break;
       case GET_ULONG:
-	printf("%lu\n", *((ulong*) value));
+	printf("%u\n", *((uint32_t*) value));
 	break;
       case GET_LL:
 	printf("%s\n", llstr(*((int64_t*) value), buff));
@@ -1241,7 +1247,7 @@ void my_print_variables(const struct my_option *options)
 	printf("%g\n", *(double*) value);
 	break;
       default:
-	printf("(Disabled)\n");
+	printf(_("(Disabled)\n"));
 	break;
       }
     }

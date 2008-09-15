@@ -25,6 +25,82 @@
 #ifndef _libdrizzle_drizzle_com_h
 #define _libdrizzle_drizzle_com_h
 
+/*
+   This is included in the server and in the client.
+   Options for select set by the yacc parser (stored in lex->options).
+
+   XXX:
+   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
+   options list are written into binlog. These options can NOT change their
+   values, or it will break replication between version.
+
+   context is encoded as following:
+   SELECT - SELECT_LEX_NODE::options
+   THD    - THD::options
+   intern - neither. used only as
+            func(..., select_node->options | thd->options | OPTION_XXX, ...)
+
+   TODO: separate three contexts above, move them to separate bitfields.
+*/
+
+#define SELECT_DISTINCT         (1ULL << 0)     // SELECT, user
+#define SELECT_STRAIGHT_JOIN    (1ULL << 1)     // SELECT, user
+#define SELECT_DESCRIBE         (1ULL << 2)     // SELECT, user
+#define SELECT_SMALL_RESULT     (1ULL << 3)     // SELECT, user
+#define SELECT_BIG_RESULT       (1ULL << 4)     // SELECT, user
+#define OPTION_FOUND_ROWS       (1ULL << 5)     // SELECT, user
+#define SELECT_NO_JOIN_CACHE    (1ULL << 7)     // intern
+#define OPTION_BIG_TABLES       (1ULL << 8)     // THD, user
+#define OPTION_BIG_SELECTS      (1ULL << 9)     // THD, user
+#define OPTION_LOG_OFF          (1ULL << 10)    // THD, user
+#define OPTION_QUOTE_SHOW_CREATE (1ULL << 11)   // THD, user, unused
+#define TMP_TABLE_ALL_COLUMNS   (1ULL << 12)    // SELECT, intern
+#define OPTION_WARNINGS         (1ULL << 13)    // THD, user
+#define OPTION_AUTO_IS_NULL     (1ULL << 14)    // THD, user, binlog
+#define OPTION_FOUND_COMMENT    (1ULL << 15)    // SELECT, intern, parser
+#define OPTION_SAFE_UPDATES     (1ULL << 16)    // THD, user
+#define OPTION_BUFFER_RESULT    (1ULL << 17)    // SELECT, user
+#define OPTION_BIN_LOG          (1ULL << 18)    // THD, user
+#define OPTION_NOT_AUTOCOMMIT   (1ULL << 19)    // THD, user
+#define OPTION_BEGIN            (1ULL << 20)    // THD, intern
+#define OPTION_TABLE_LOCK       (1ULL << 21)    // THD, intern
+#define OPTION_QUICK            (1ULL << 22)    // SELECT (for DELETE)
+#define OPTION_KEEP_LOG         (1ULL << 23)    // THD, user
+
+/* The following is used to detect a conflict with DISTINCT */
+#define SELECT_ALL              (1ULL << 24)    // SELECT, user, parser
+
+/** The following can be set when importing tables in a 'wrong order'
+   to suppress foreign key checks */
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (1ULL << 26) // THD, user, binlog
+/** The following speeds up inserts to InnoDB tables by suppressing unique
+   key checks in some cases */
+#define OPTION_RELAXED_UNIQUE_CHECKS    (1ULL << 27) // THD, user, binlog
+#define SELECT_NO_UNLOCK                (1ULL << 28) // SELECT, intern
+#define OPTION_SCHEMA_TABLE             (1ULL << 29) // SELECT, intern
+/** Flag set if setup_tables already done */
+#define OPTION_SETUP_TABLES_DONE        (1ULL << 30) // intern
+/** If not set then the thread will ignore all warnings with level notes. */
+#define OPTION_SQL_NOTES                (1ULL << 31) // THD, user
+/**
+  Force the used temporary table to be a MyISAM table (because we will use
+  fulltext functions when reading from it.
+*/
+#define TMP_TABLE_FORCE_MYISAM          (1ULL << 32)
+#define OPTION_PROFILING                (1ULL << 33)
+
+/*
+  Dont report errors for individual rows,
+  But just report error on commit (or read ofcourse)
+*/
+#define OPTION_ALLOW_BATCH              (1ULL << 33) // THD, intern (slave)
+
+/**
+  Maximum length of time zone name that we support
+  (Time zone name is char(64) in db). mysqlbinlog needs it.
+*/
+#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
+
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
 #define NAME_CHAR_LEN	64              /* Field/table name length */
@@ -62,7 +138,7 @@
 enum enum_server_command
 {
   COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
-  COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN, COM_STATISTICS,
+  COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN,
   COM_PROCESS_INFO, COM_CONNECT, COM_PROCESS_KILL, COM_PING,
   COM_TIME, COM_CHANGE_USER, COM_BINLOG_DUMP,
   COM_CONNECT_OUT, COM_REGISTER_SLAVE,
@@ -143,7 +219,7 @@ enum enum_server_command
 #define CLIENT_ODBC		64	/* Odbc client */
 #define CLIENT_LOCAL_FILES	128	/* Can use LOAD DATA LOCAL */
 #define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
-#define CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
+#define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
 #define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
 #define CLIENT_SSL              2048	/* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
@@ -166,7 +242,6 @@ enum enum_server_command
                            CLIENT_ODBC | \
                            CLIENT_LOCAL_FILES | \
                            CLIENT_IGNORE_SPACE | \
-                           CLIENT_PROTOCOL_41 | \
                            CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
@@ -212,7 +287,7 @@ enum enum_server_command
 */
 #define SERVER_QUERY_WAS_SLOW           1024
 
-#define MYSQL_ERRMSG_SIZE	512
+#define DRIZZLE_ERRMSG_SIZE	512
 #define NET_READ_TIMEOUT	30		/* Timeout on read */
 #define NET_WRITE_TIMEOUT	60		/* Timeout on write */
 #define NET_WAIT_TIMEOUT	8*60*60		/* Wait for new query */
@@ -230,10 +305,13 @@ typedef struct st_vio Vio;
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
 #define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
 
+#define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
+
+
 typedef struct st_net {
   Vio *vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
-  my_socket fd;					/* For Perl DBI/dbd */
+  int fd;					/* For Perl DBI/dbd */
   /*
     The following variable is set if we are doing several queries in one
     command ( as in LOAD TABLE ... FROM MASTER ),
@@ -249,7 +327,7 @@ typedef struct st_net {
   unsigned int *return_status;
   unsigned char reading_or_writing;
   char save_char;
-  my_bool compress;
+  bool compress;
   /*
     Pointer to query object in query cache, do not equal NULL (0) for
     queries in cache that have not stored its results yet
@@ -261,7 +339,7 @@ typedef struct st_net {
   unsigned int last_errno;
   unsigned char error; 
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
-  char last_error[MYSQL_ERRMSG_SIZE];
+  char last_error[DRIZZLE_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */
   char sqlstate[SQLSTATE_LENGTH+1];
   void *extension;
@@ -279,9 +357,8 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 			DRIZZLE_TYPE_DATE,   DRIZZLE_TYPE_TIME,
 			DRIZZLE_TYPE_DATETIME,
 			DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-                        DRIZZLE_TYPE_NEWDECIMAL=252,
-			DRIZZLE_TYPE_ENUM=253,
-			DRIZZLE_TYPE_SET=254,
+      DRIZZLE_TYPE_NEWDECIMAL=253,
+			DRIZZLE_TYPE_ENUM=254,
 			DRIZZLE_TYPE_BLOB=255
 };
 
@@ -289,10 +366,10 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 /* Shutdown/kill enums and constants */ 
 
 /* Bits for THD::killable. */
-#define MYSQL_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
-#define MYSQL_SHUTDOWN_KILLABLE_TRANS      (unsigned char)(1 << 1)
-#define MYSQL_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
-#define MYSQL_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
+#define DRIZZLE_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
+#define DRIZZLE_SHUTDOWN_KILLABLE_TRANS      (unsigned char)(1 << 1)
+#define DRIZZLE_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
+#define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
 enum drizzle_enum_shutdown_level {
   /*
@@ -302,15 +379,15 @@ enum drizzle_enum_shutdown_level {
   */
   SHUTDOWN_DEFAULT = 0,
   /* wait for existing connections to finish */
-  SHUTDOWN_WAIT_CONNECTIONS= MYSQL_SHUTDOWN_KILLABLE_CONNECT,
+  SHUTDOWN_WAIT_CONNECTIONS= DRIZZLE_SHUTDOWN_KILLABLE_CONNECT,
   /* wait for existing trans to finish */
-  SHUTDOWN_WAIT_TRANSACTIONS= MYSQL_SHUTDOWN_KILLABLE_TRANS,
+  SHUTDOWN_WAIT_TRANSACTIONS= DRIZZLE_SHUTDOWN_KILLABLE_TRANS,
   /* wait for existing updates to finish (=> no partial MyISAM update) */
-  SHUTDOWN_WAIT_UPDATES= MYSQL_SHUTDOWN_KILLABLE_UPDATE,
+  SHUTDOWN_WAIT_UPDATES= DRIZZLE_SHUTDOWN_KILLABLE_UPDATE,
   /* flush InnoDB buffers and other storage engines' buffers*/
-  SHUTDOWN_WAIT_ALL_BUFFERS= (MYSQL_SHUTDOWN_KILLABLE_UPDATE << 1),
+  SHUTDOWN_WAIT_ALL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1),
   /* don't flush InnoDB buffers, flush other storage engines' buffers*/
-  SHUTDOWN_WAIT_CRITICAL_BUFFERS= (MYSQL_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
+  SHUTDOWN_WAIT_CRITICAL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
   /* Now the 2 levels of the KILL command */
   KILL_QUERY= 254,
   KILL_CONNECTION= 255
@@ -329,8 +406,8 @@ enum enum_cursor_type
 /* options for mysql_set_option */
 enum enum_drizzle_set_option
 {
-  MYSQL_OPTION_MULTI_STATEMENTS_ON,
-  MYSQL_OPTION_MULTI_STATEMENTS_OFF
+  DRIZZLE_OPTION_MULTI_STATEMENTS_ON,
+  DRIZZLE_OPTION_MULTI_STATEMENTS_OFF
 };
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
@@ -352,14 +429,12 @@ bool	net_write_command(NET *net,unsigned char command,
 int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
 uint32_t my_net_read(NET *net);
 
-#ifdef _global_h
+
+/** @TODO global.h is actually not needed here... only stdint and protocol.h */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
 void my_net_set_write_timeout(NET *net, uint timeout);
 void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
-
-struct sockaddr;
-int my_connect(my_socket s, const struct sockaddr *name, unsigned int namelen,
-	       unsigned int timeout);
 
 struct rand_struct {
   unsigned long seed1,seed2,max_value;
@@ -391,11 +466,11 @@ typedef struct st_udf_args
 
 typedef struct st_udf_init
 {
-  my_bool maybe_null;          /* 1 if function can return NULL */
+  bool maybe_null;          /* 1 if function can return NULL */
   unsigned int decimals;       /* for real functions */
   unsigned long max_length;    /* For string functions */
   char *ptr;                   /* free pointer for function data */
-  my_bool const_item;          /* 1 if function always returns the same value */
+  bool const_item;          /* 1 if function always returns the same value */
   void *extension;
 } UDF_INIT;
 /* 
@@ -426,7 +501,7 @@ void hash_password(uint32_t *to, const char *password, uint32_t password_len);
 
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);
-my_bool check_scramble(const char *reply, const char *message,
+bool check_scramble(const char *reply, const char *message,
                        const unsigned char *hash_stage2);
 void get_salt_from_password(unsigned char *res, const char *password);
 void make_password_from_salt(char *to, const unsigned char *hash_stage2);
@@ -435,11 +510,11 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 /* end of password.c */
 
 char *get_tty_password(const char *opt_message);
-const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
+const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
-
-#ifdef _global_h
-ulong STDCALL net_field_length(uchar **packet);
+/** @TODO Is it necessary to include all of drizzled/global.h here? */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
+uint32_t net_field_length(uchar **packet);
 uint64_t net_field_length_ll(uchar **packet);
 uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
@@ -448,8 +523,8 @@ uchar *net_store_length(uchar *pkg, uint64_t length);
 }
 #endif
 
-#define NULL_LENGTH ((unsigned long) ~0) /* For net_store_length */
-#define MYSQL_STMT_HEADER       4
-#define MYSQL_LONG_DATA_HEADER  6
+#define NULL_LENGTH UINT32_MAX /* For net_store_length */
+#define DRIZZLE_STMT_HEADER       4
+#define DRIZZLE_LONG_DATA_HEADER  6
 
 #endif

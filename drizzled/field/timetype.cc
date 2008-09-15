@@ -22,7 +22,9 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/timetype.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /****************************************************************************
 ** time type
@@ -33,7 +35,7 @@
 
 int Field_time::store(const char *from,
                       uint len,
-                      CHARSET_INFO *cs __attribute__((unused)))
+                      const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME ltime;
   long tmp;
@@ -44,21 +46,21 @@ int Field_time::store(const char *from,
   {
     tmp=0L;
     error= 2;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                          from, len, DRIZZLE_TIMESTAMP_TIME, 1);
   }
   else
   {
     if (warning & DRIZZLE_TIME_WARN_TRUNCATED)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_TRUNCATED,
                            from, len, DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
     }
     if (warning & DRIZZLE_TIME_WARN_OUT_OF_RANGE)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE,
                            from, len, DRIZZLE_TIMESTAMP_TIME, !error);
       error= 1;
@@ -93,14 +95,14 @@ int Field_time::store(double nr)
   if (nr > (double)TIME_MAX_VALUE)
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
   else if (nr < (double)-TIME_MAX_VALUE)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
@@ -112,7 +114,7 @@ int Field_time::store(double nr)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME);
       error= 1;
@@ -130,7 +132,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   if (nr < (int64_t) -TIME_MAX_VALUE && !unsigned_val)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -138,7 +140,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   else if (nr > (int64_t) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
                          DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
@@ -149,7 +151,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
                            DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
@@ -212,7 +214,7 @@ bool Field_time::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
   THD *thd= table ? table->in_use : current_thd;
   if (!(fuzzydate & TIME_FUZZY_DATE))
   {
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_DATA_OUT_OF_RANGE,
                         ER(ER_WARN_DATA_OUT_OF_RANGE), field_name,
                         thd->row_count);

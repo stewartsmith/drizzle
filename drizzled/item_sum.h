@@ -366,7 +366,7 @@ public:
   virtual bool setup(THD *thd __attribute__((unused))) {return 0;}
   virtual void make_unique(void) {}
   Item *get_tmp_table_item(THD *thd);
-  virtual Field *create_tmp_field(bool group, TABLE *table,
+  virtual Field *create_tmp_field(bool group, Table *table,
                                   uint convert_blob_length);
   bool walk(Item_processor processor, bool walk_subquery, uchar *argument);
   bool init_sum_func_check(THD *thd);
@@ -464,7 +464,7 @@ protected:
   Hybrid_type val;
   /* storage for unique elements */
   Unique *tree;
-  TABLE *table;
+  Table *table;
   enum enum_field_types table_field_type;
   uint tree_key_length;
 protected:
@@ -567,7 +567,7 @@ class TMP_TABLE_PARAM;
 
 class Item_sum_count_distinct :public Item_sum_int
 {
-  TABLE *table;
+  Table *table;
   uint32_t *field_lengths;
   TMP_TABLE_PARAM *tmp_table_param;
   bool force_copy_fields;
@@ -685,7 +685,7 @@ public:
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, TABLE *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
   void cleanup()
   {
     count= 0;
@@ -777,7 +777,7 @@ public:
   const char *func_name() const
     { return sample ? "var_samp(" : "variance("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, TABLE *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
   enum Item_result result_type () const { return REAL_RESULT; }
   void cleanup()
   {
@@ -860,7 +860,7 @@ protected:
   void cleanup();
   bool any_value() { return was_values; }
   void no_rows_in_result();
-  Field *create_tmp_field(bool group, TABLE *table,
+  Field *create_tmp_field(bool group, Table *table,
 			  uint convert_blob_length);
 };
 
@@ -1059,7 +1059,7 @@ public:
     int err_not_used;
     char *end;
     String *res;
-    CHARSET_INFO *cs;
+    const CHARSET_INFO *cs;
 
     if (!(res= val_str(&str_value)))
       return 0;                                 /* Null value */
@@ -1092,12 +1092,12 @@ public:
   Item *copy_or_same(THD* thd);
 };
 
-class MYSQL_ERROR;
+class DRIZZLE_ERROR;
 
 class Item_func_group_concat : public Item_sum
 {
   TMP_TABLE_PARAM *tmp_table_param;
-  MYSQL_ERROR *warning;
+  DRIZZLE_ERROR *warning;
   String result;
   String *separator;
   TREE tree_base;
@@ -1111,8 +1111,8 @@ class Item_func_group_concat : public Item_sum
      @see Item_func_group_concat::clear
    */
   Unique *unique_filter;
-  TABLE *table;
-  ORDER **order;
+  Table *table;
+  order_st **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
   uint arg_count_order;

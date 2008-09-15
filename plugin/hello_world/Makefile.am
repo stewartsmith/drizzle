@@ -23,7 +23,7 @@ pkgplugindir =		$(pkglibdir)/plugin
 EXTRA_LTLIBRARIES =	libhello_world.la
 pkgplugin_LTLIBRARIES =	@plugin_hello_world_shared_target@
 libhello_world_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-libhello_world_la_CPPFLAGS=	$(AM_CPPFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+libhello_world_la_CPPFLAGS=	$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 libhello_world_la_SOURCES =	hello_world.cc
 
 

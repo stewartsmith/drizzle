@@ -24,7 +24,18 @@
 
 #include "my_handler_errors.h"
 
-int ha_compare_text(CHARSET_INFO *charset_info, uchar *a, uint a_length,
+/**
+  Swap the contents of two variables.
+ */
+#define swap_variables(TYPE, a, b) \
+  do {                             \
+    TYPE dummy;                    \
+    dummy= a;                      \
+    a= b;                          \
+    b= dummy;                      \
+  } while (0)
+
+int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_length,
 		    uchar *b, uint b_length, bool part_key,
 		    bool skip_end_space)
 {

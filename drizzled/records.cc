@@ -20,8 +20,7 @@
   @brief
   Functions for easy reading of records, possible through a cache
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 static int rr_quick(READ_RECORD *info);
 int rr_sequential(READ_RECORD *info);
@@ -54,11 +53,11 @@ static int rr_index(READ_RECORD *info);
 
 void init_read_record_idx(READ_RECORD *info,
                           THD *thd __attribute__((unused)),
-                          TABLE *table,
+                          Table *table,
                           bool print_error, uint idx)
 {
   empty_record(table);
-  memset((char*) info, 0, sizeof(*info));
+  memset(info, 0, sizeof(*info));
   info->table= table;
   info->file=  table->file;
   info->record= table->record[0];
@@ -140,13 +139,13 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
+void init_read_record(READ_RECORD *info,THD *thd, Table *table,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_error)
 {
   IO_CACHE *tempfile;
 
-  memset((char*) info, 0, sizeof(*info));
+  memset(info, 0, sizeof(*info));
   info->thd=thd;
   info->table=table;
   info->file= table->file;
@@ -192,7 +191,6 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
       and table->sort.io_cache is read sequentially
     */
     if (!table->sort.addon_field &&
-        ! (specialflag & SPECIAL_SAFE_MODE) &&
 	thd->variables.read_rnd_buff_size &&
 	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
 	(table->db_stat & HA_READ_ONLY ||
@@ -420,7 +418,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info)
 {
   if (my_b_read(info->io_cache, info->rec_buf, info->ref_length))
     return -1;
-  TABLE *table= info->table;
+  Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->rec_buf);
 
   return 0;
@@ -471,7 +469,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 {
   if (info->cache_pos == info->cache_end)
     return -1;                      /* End of buffer */
-  TABLE *table= info->table;
+  Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->cache_pos);
   info->cache_pos+= info->ref_length;
 
@@ -514,11 +512,11 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 static int rr_from_cache(READ_RECORD *info)
 {
   register uint i;
-  ulong length;
+  uint32_t length;
   my_off_t rest_of_file;
   int16_t error;
   uchar *position,*ref_position,*record_pos;
-  ulong record;
+  uint32_t record;
 
   for (;;)
   {
@@ -542,7 +540,7 @@ static int rr_from_cache(READ_RECORD *info)
     length=info->rec_cache_size;
     rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
     if ((my_off_t) length > rest_of_file)
-      length= (ulong) rest_of_file;
+      length= (uint32_t) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {
       return -1;			/* End of file */

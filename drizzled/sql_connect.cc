@@ -17,8 +17,9 @@
 /*
   Functions to autenticate and handle reqests for a connection
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/authentication.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -69,19 +70,19 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
   should be done with this in mind; 'thd' is INOUT, all other params
   are 'IN'.
 
-  @retval  0  OK; thd->security_ctx->user/master_access/priv_user/db_access and
-              thd->db are updated; OK is sent to the client.
+  @retval  0  OK
   @retval  1  error, e.g. access denied or handshake error, not sent to
               the client. A message is pushed into the error stack.
 */
 
 int
 check_user(THD *thd, enum enum_server_command command,
-           const char *passwd __attribute__((unused)),
+           const char *passwd,
            uint passwd_len, const char *db,
            bool check_count)
 {
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
+  bool is_authenticated;
 
   /*
     Clear thd->db as it points to something, that will be freed when
@@ -91,28 +92,24 @@ check_user(THD *thd, enum enum_server_command command,
   */
   thd->reset_db(NULL, 0);
 
-  bool opt_secure_auth_local;
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  opt_secure_auth_local= opt_secure_auth;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
+    return(1);
+  }
 
-  /*
-    If the server is running in secure auth mode, short scrambles are 
-    forbidden.
-  */
-  if (opt_secure_auth_local && passwd_len == SCRAMBLE_LENGTH_323)
+  is_authenticated= authenticate_user(thd, passwd);
+
+  if (is_authenticated != true)
   {
-    my_error(ER_NOT_SUPPORTED_AUTH_MODE, MYF(0));
-    general_log_print(thd, COM_CONNECT, ER(ER_NOT_SUPPORTED_AUTH_MODE));
-    return(1);
+    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
+             thd->main_security_ctx.user,
+             thd->main_security_ctx.ip,
+             passwd_len ? ER(ER_YES) : ER(ER_NO));
+
+    return 1;
   }
-  if (passwd_len != 0 &&
-      passwd_len != SCRAMBLE_LENGTH &&
-      passwd_len != SCRAMBLE_LENGTH_323)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
-    return(1);
-  }
+
 
   USER_RESOURCES ur;
   thd->security_ctx->skip_grants();
@@ -137,20 +134,10 @@ check_user(THD *thd, enum enum_server_command command,
     break-in attempts.
   */
   general_log_print(thd, command,
-                    (thd->main_security_ctx.priv_user ==
-                     thd->main_security_ctx.user ?
-                     (char*) "%s@%s on %s" :
-                     (char*) "%s@%s as anonymous on %s"),
+                    ((char*) "%s@%s on %s"),
                     thd->main_security_ctx.user,
-                    thd->main_security_ctx.host_or_ip,
+                    thd->main_security_ctx.ip,
                     db ? db : (char*) "");
-
-  /*
-    This is the default access rights for the current database.  It's
-    set to 0 here because we don't have an active database yet (and we
-    may not have an active database to set.
-  */
-  thd->main_security_ctx.db_access=0;
 
   /* Change database if necessary */
   if (db && db[0])
@@ -197,7 +184,7 @@ void thd_init_client_charset(THD *thd, uint cs_number)
   */
   if (!opt_character_set_client_handshake ||
       !(thd->variables.character_set_client= get_charset(cs_number, MYF(0))) ||
-      !my_strcasecmp(&my_charset_latin1,
+      !my_strcasecmp(&my_charset_utf8_general_ci,
                      global_system_variables.character_set_client->name,
                      thd->variables.character_set_client->name))
   {
@@ -246,39 +233,28 @@ bool init_new_connection_handler_thread()
 static int check_connection(THD *thd)
 {
   NET *net= &thd->net;
-  ulong pkt_len= 0;
+  uint32_t pkt_len= 0;
   char *end;
 
 #ifdef SIGNAL_WITH_VIO_CLOSE
   thd->set_active_vio(net->vio);
 #endif
 
-  if (!thd->main_security_ctx.host)         // If TCP/IP connection
+  // TCP/IP connection
   {
     char ip[NI_MAXHOST];
 
     if (vio_peer_addr(net->vio, ip, &thd->peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+      my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.ip);
       return 1;
     }
     if (!(thd->main_security_ctx.ip= my_strdup(ip,MYF(MY_WME))))
       return 1; /* The error is set by my_strdup(). */
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.ip;
-    thd->main_security_ctx.host= ip_to_hostname(&net->vio->remote, 
-                                                net->vio->addrLen);
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
-  }
-  else /* Hostname given means that the connection was on a socket */
-  {
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
-    thd->main_security_ctx.ip= 0;
-    /* Reset sin_addr */
-    memset((char*) &net->vio->remote, 0, sizeof(net->vio->remote));
   }
   vio_keepalive(net->vio, true);
   
-  ulong server_capabilites;
+  uint32_t server_capabilites;
   {
     /* buff[] needs to big enough to hold the server_version variable */
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
@@ -290,7 +266,7 @@ static int check_connection(THD *thd)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= strnmov(buff, server_version, SERVER_VERSION_LENGTH) + 1;
+    end= stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
     int4store((uchar*) end, thd->thread_id);
     end+= 4;
     /*
@@ -323,43 +299,32 @@ static int check_connection(THD *thd)
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0),
-               thd->main_security_ctx.host_or_ip);
+               thd->main_security_ctx.ip);
       return 1;
     }
   }
-#ifdef _CUSTOMCONFIG_
-#include "_cust_sql_parse.h"
-#endif
   if (thd->packet.alloc(thd->variables.net_buffer_length))
     return 1; /* The error is set by alloc(). */
 
   thd->client_capabilities= uint2korr(net->read_pos);
-  if (thd->client_capabilities & CLIENT_PROTOCOL_41)
-  {
-    thd->client_capabilities|= ((ulong) uint2korr(net->read_pos+2)) << 16;
-    thd->max_client_packet_length= uint4korr(net->read_pos+4);
-    thd_init_client_charset(thd, (uint) net->read_pos[8]);
-    thd->update_charset();
-    end= (char*) net->read_pos+32;
-  }
-  else
-  {
-    thd->max_client_packet_length= uint3korr(net->read_pos+2);
-    end= (char*) net->read_pos+5;
-  }
+
+
+  thd->client_capabilities|= ((uint32_t) uint2korr(net->read_pos+2)) << 16;
+  thd->max_client_packet_length= uint4korr(net->read_pos+4);
+  thd_init_client_charset(thd, (uint) net->read_pos[8]);
+  thd->update_charset();
+  end= (char*) net->read_pos+32;
+
   /*
     Disable those bits which are not supported by the server.
     This is a precautionary measure, if the client lies. See Bug#27944.
   */
   thd->client_capabilities&= server_capabilites;
 
-  if (thd->client_capabilities & CLIENT_IGNORE_SPACE)
-    thd->variables.sql_mode|= MODE_IGNORE_SPACE;
-
   if (end >= (char*) net->read_pos+ pkt_len +2)
   {
 
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
     return 1;
   }
 
@@ -370,7 +335,7 @@ static int check_connection(THD *thd)
     net->return_status= &thd->server_status;
 
   char *user= end;
-  char *passwd= strend(user)+1;
+  char *passwd= strchr(user, '\0')+1;
   uint user_len= passwd - user - 1;
   char *db= passwd;
   char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
@@ -396,7 +361,7 @@ static int check_connection(THD *thd)
 
   if (passwd + passwd_len + db_len > (char *)net->read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
     return 1;
   }
 
@@ -525,7 +490,7 @@ void end_connection(THD *thd)
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         thd->thread_id,(thd->db ? thd->db : "unconnected"),
                         sctx->user ? sctx->user : "unauthenticated",
-                        sctx->host_or_ip,
+                        sctx->ip,
                         (thd->main_da.is_error() ? thd->main_da.message() :
                          ER(ER_UNKNOWN_ERROR)));
     }
@@ -552,7 +517,7 @@ void prepare_new_connection_state(THD* thd)
     TODO: refactor this to avoid code duplication there
   */
   thd->version= refresh_version;
-  thd->proc_info= 0;
+  thd->set_proc_info(0);
   thd->command= COM_SLEEP;
   thd->set_time();
   thd->init_for_queries();
@@ -567,10 +532,10 @@ void prepare_new_connection_state(THD* thd)
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         thd->thread_id,(thd->db ? thd->db : "unconnected"),
                         sctx->user ? sctx->user : "unauthenticated",
-                        sctx->host_or_ip, "init_connect command failed");
+                        sctx->ip, "init_connect command failed");
       sql_print_warning("%s", thd->main_da.message());
     }
-    thd->proc_info=0;
+    thd->set_proc_info(0);
     thd->set_time();
     thd->init_for_queries();
   }
@@ -597,7 +562,7 @@ void prepare_new_connection_state(THD* thd)
 pthread_handler_t handle_one_connection(void *arg)
 {
   THD *thd= (THD*) arg;
-  ulong launch_time= (ulong) ((thd->thr_create_utime= my_micro_time()) -
+  uint32_t launch_time= (uint32_t) ((thd->thr_create_utime= my_micro_time()) -
                               thd->connect_utime);
 
   if (thread_scheduler.init_new_connection_thread())

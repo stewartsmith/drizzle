@@ -55,10 +55,10 @@ static void *alarm_handler(void *arg);
 
 static sig_handler thread_alarm(int sig __attribute__((unused)));
 
-static int compare_ulong(void *not_used __attribute__((unused)),
+static int compare_uint32_t(void *not_used __attribute__((unused)),
 			 uchar *a_ptr,uchar* b_ptr)
 {
-  ulong a=*((ulong*) a_ptr),b= *((ulong*) b_ptr);
+  uint32_t a=*((uint32_t*) a_ptr),b= *((uint32_t*) b_ptr);
   return (a < b) ? -1  : (a == b) ? 0 : 1;
 }
 
@@ -68,7 +68,7 @@ void init_thr_alarm(uint max_alarms)
   alarm_aborted=0;
   next_alarm_expire_time= ~ (time_t) 0;
   init_queue(&alarm_queue,max_alarms+1,offsetof(ALARM,expire_time),0,
-	     compare_ulong,NullS);
+	     compare_uint32_t,NullS);
   sigfillset(&full_signal_set);			/* Neaded to block signals */
   pthread_mutex_init(&LOCK_alarm,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&COND_alarm,NULL);
@@ -184,7 +184,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
     }
     max_used_alarms=alarm_queue.elements+1;
   }
-  reschedule= (ulong) next_alarm_expire_time > (ulong) now + sec;
+  reschedule= (uint32_t) next_alarm_expire_time > (uint32_t) now + sec;
   if (!alarm_data)
   {
     if (!(alarm_data=(ALARM*) my_malloc(sizeof(ALARM),MYF(MY_WME))))
@@ -343,8 +343,8 @@ static sig_handler process_alarm_part2(int sig __attribute__((unused)))
     }
     else
     {
-      ulong now=(ulong) my_time(0);
-      ulong next=now+10-(now%10);
+      uint32_t now=(uint32_t) my_time(0);
+      uint32_t next=now+10-(now%10);
       while ((alarm_data=(ALARM*) queue_top(&alarm_queue))->expire_time <= now)
       {
 	alarm_data->alarmed=1;			/* Info to thread */
@@ -474,11 +474,11 @@ void thr_alarm_info(ALARM_INFO *info)
   info->max_used_alarms= max_used_alarms;
   if ((info->active_alarms=  alarm_queue.elements))
   {
-    ulong now=(ulong) my_time(0);
+    uint32_t now=(uint32_t) my_time(0);
     long time_diff;
     ALARM *alarm_data= (ALARM*) queue_top(&alarm_queue);
     time_diff= (long) (alarm_data->expire_time - now);
-    info->next_alarm_time= (ulong) (time_diff < 0 ? 0 : time_diff);
+    info->next_alarm_time= (uint32_t) (time_diff < 0 ? 0 : time_diff);
   }
   pthread_mutex_unlock(&LOCK_alarm);
 }
@@ -522,7 +522,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
   {
     if (alarm_queue.elements)
     {
-      ulong sleep_time,now= my_time(0);
+      uint32_t sleep_time,now= my_time(0);
       if (alarm_aborted)
 	sleep_time=now+1;
       else
@@ -557,7 +557,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
     }
     process_alarm(0);
   }
-  memset((char*) &alarm_thread, 0, sizeof(alarm_thread)); /* For easy debugging */
+  memset(&alarm_thread, 0, sizeof(alarm_thread)); /* For easy debugging */
   alarm_thread_running= 0;
   pthread_cond_signal(&COND_alarm);
   pthread_mutex_unlock(&LOCK_alarm);

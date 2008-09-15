@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include <mysys/base64.h>
 
@@ -116,7 +116,7 @@ void mysql_client_binlog_statement(THD* thd)
       /*
         Checking that the first event in the buffer is not truncated.
       */
-      ulong event_len= uint4korr(bufptr + EVENT_LEN_OFFSET);
+      uint32_t event_len= uint4korr(bufptr + EVENT_LEN_OFFSET);
       if (bytes_decoded < EVENT_LEN_OFFSET || (uint) bytes_decoded < event_len)
       {
         my_error(ER_SYNTAX_ERROR, MYF(0));
@@ -167,7 +167,7 @@ void mysql_client_binlog_statement(THD* thd)
         not used at all: the rli_fake instance is used only for error
         reporting.
       */
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
       if (apply_event_and_update_pos(ev, thd, thd->rli_fake, false))
       {
         /*

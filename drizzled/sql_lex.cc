@@ -16,10 +16,8 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
-#define MYSQL_LEX 1
-#include "mysql_priv.h"
-#include "item_create.h"
-#include <mysys/hash.h>
+#define DRIZZLE_LEX 1
+#include <drizzled/server_includes.h>
 
 static int lex_one_token(void *arg, void *yythd);
 
@@ -245,7 +243,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
 
 void Lex_input_stream::body_utf8_append_literal(THD *thd,
                                                 const LEX_STRING *txt,
-                                                CHARSET_INFO *txt_cs,
+                                                const CHARSET_INFO * const txt_cs,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
@@ -479,7 +477,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   register uchar c,sep;
   uint found_escape=0;
-  CHARSET_INFO *cs= lip->m_thd->charset();
+  const CHARSET_INFO * const cs= lip->m_thd->charset();
 
   lip->tok_bitmap= 0;
   sep= lip->yyGetLast();                        // String should end with this
@@ -555,8 +553,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 	      continue;
 	  }
 #endif
-	  if (!(lip->m_thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-              *str == '\\' && str+1 != end)
+	  if (*str == '\\' && str+1 != end)
 	  {
 	    switch(*++str) {
 	    case 'n':
@@ -765,7 +762,7 @@ int lex_one_token(void *arg, void *yythd)
   Lex_input_stream *lip= thd->m_lip;
   LEX *lex= thd->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
-  CHARSET_INFO *cs= thd->charset();
+  const CHARSET_INFO * const cs= thd->charset();
   uchar *state_map= cs->state_map;
   uchar *ident_map= cs->ident_map;
 
@@ -911,8 +908,8 @@ int lex_one_token(void *arg, void *yythd)
 
       if (yylval->lex_str.str[0] == '_')
       {
-        CHARSET_INFO *cs= get_charset_by_csname(yylval->lex_str.str + 1,
-                                                MY_CS_PRIMARY, MYF(0));
+        const CHARSET_INFO * const cs= get_charset_by_csname(yylval->lex_str.str + 1,
+                                                             MY_CS_PRIMARY, MYF(0));
         if (cs)
         {
           yylval->charset= cs;
@@ -1246,7 +1243,7 @@ int lex_one_token(void *arg, void *yythd)
           /* Accept 'M' 'm' 'm' 'd' 'd' */
           lip->yySkipn(5);
 
-          if (version <= MYSQL_VERSION_ID)
+          if (version <= DRIZZLE_VERSION_ID)
           {
             /* Expand the content of the special comment as real code */
             lip->set_echo(true);
@@ -1475,7 +1472,7 @@ Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
 }
 
 
-void trim_whitespace(CHARSET_INFO *cs, LEX_STRING *str)
+void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 {
   /*
     TODO:
@@ -1817,9 +1814,9 @@ bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint st_select_lex_node::get_in_sum_expr()           { return 0; }
-TABLE_LIST* st_select_lex_node::get_table_list()     { return 0; }
+TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
+TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
                                                    Table_ident *table __attribute__((unused)),
 						  LEX_STRING *alias __attribute__((unused)),
 						  uint32_t table_join_options __attribute__((unused)),
@@ -1912,9 +1909,9 @@ uint st_select_lex::get_in_sum_expr()
 }
 
 
-TABLE_LIST* st_select_lex::get_table_list()
+TableList* st_select_lex::get_table_list()
 {
-  return (TABLE_LIST*) table_list.first;
+  return (TableList*) table_list.first;
 }
 
 List<Item>* st_select_lex::get_item_list()
@@ -1973,7 +1970,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (ORDER *) fake_select_lex->order_list.first,
+        (order_st *) fake_select_lex->order_list.first,
         query_type);
     }
     fake_select_lex->print_limit(thd, str, query_type);
@@ -1982,7 +1979,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
 
 
 void st_select_lex::print_order(String *str,
-                                ORDER *order,
+                                order_st *order,
                                 enum_query_type query_type)
 {
   for (; order; order= order->next)
@@ -2081,7 +2078,7 @@ void Query_tables_list::reset_query_tables_list(bool init)
 {
   if (!init && query_tables)
   {
-    TABLE_LIST *table= query_tables;
+    TableList *table= query_tables;
     for (;;)
     {
       if (query_tables_last == &table->next_global ||
@@ -2394,9 +2391,9 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
       In this case link_to_local is set.
 
 */
-TABLE_LIST *st_lex::unlink_first_table(bool *link_to_local)
+TableList *st_lex::unlink_first_table(bool *link_to_local)
 {
-  TABLE_LIST *first;
+  TableList *first;
   if ((first= query_tables))
   {
     /*
@@ -2447,10 +2444,10 @@ TABLE_LIST *st_lex::unlink_first_table(bool *link_to_local)
 
 void st_lex::first_lists_tables_same()
 {
-  TABLE_LIST *first_table= (TABLE_LIST*) select_lex.table_list.first;
+  TableList *first_table= (TableList*) select_lex.table_list.first;
   if (query_tables != first_table && first_table != 0)
   {
-    TABLE_LIST *next;
+    TableList *next;
     if (query_tables_last == &first_table->next_global)
       query_tables_last= first_table->prev_global;
 
@@ -2481,7 +2478,7 @@ void st_lex::first_lists_tables_same()
     global list
 */
 
-void st_lex::link_first_table_back(TABLE_LIST *first,
+void st_lex::link_first_table_back(TableList *first,
 				   bool link_to_local)
 {
   if (first)
@@ -2494,7 +2491,7 @@ void st_lex::link_first_table_back(TABLE_LIST *first,
 
     if (link_to_local)
     {
-      first->next_local= (TABLE_LIST*) select_lex.table_list.first;
+      first->next_local= (TableList*) select_lex.table_list.first;
       select_lex.context.table_list= first;
       select_lex.table_list.first= (uchar*) first;
       select_lex.table_list.elements++;	//safety
@@ -2604,7 +2601,7 @@ bool st_lex::table_or_sp_used()
 
 */
 
-static void fix_prepare_info_in_table_list(THD *thd, TABLE_LIST *tbl)
+static void fix_prepare_info_in_table_list(THD *thd, TableList *tbl)
 {
   for (; tbl; tbl= tbl->next_local)
   {

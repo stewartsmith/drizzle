@@ -18,7 +18,7 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 
-my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
+bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
 			ha_checksum unique_hash, my_off_t disk_pos)
 {
   my_off_t lastpos=info->lastpos;
@@ -54,7 +54,7 @@ my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
     if (_mi_search_next(info,info->s->keyinfo+def->key, info->lastkey,
 			MI_UNIQUE_HASH_LENGTH, SEARCH_BIGGER,
 			info->s->state.key_root[def->key]) ||
-	memcmp((char*) info->lastkey, (char*) key_buff, MI_UNIQUE_HASH_LENGTH))
+	memcmp(info->lastkey, key_buff, MI_UNIQUE_HASH_LENGTH))
     {
       info->page_changed=1;			/* Can't optimize read next */
       info->lastpos=lastpos;
@@ -75,7 +75,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
 {
   const uchar *pos, *end;
   ha_checksum crc= 0;
-  ulong seed1=0, seed2= 4;
+  uint32_t seed1=0, seed2= 4;
   HA_KEYSEG *keyseg;
 
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)
@@ -109,7 +109,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
     else if (keyseg->flag & HA_BLOB_PART)
     {
       uint tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
-      memcpy((uchar*) &pos,pos+keyseg->bit_start,sizeof(char*));
+      memcpy(&pos,pos+keyseg->bit_start,sizeof(char*));
       if (!length || length > tmp_length)
 	length=tmp_length;			/* The whole blob */
     }
@@ -144,7 +144,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
 */
 
 int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
-		   my_bool null_are_equal)
+		   bool null_are_equal)
 {
   const uchar *pos_a, *pos_b, *end;
   HA_KEYSEG *keyseg;
@@ -204,8 +204,8 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
         set_if_smaller(a_length, keyseg->length);
         set_if_smaller(b_length, keyseg->length);
       }
-      memcpy((uchar*) &pos_a,pos_a+keyseg->bit_start,sizeof(char*));
-      memcpy((uchar*) &pos_b,pos_b+keyseg->bit_start,sizeof(char*));
+      memcpy(&pos_a,pos_a+keyseg->bit_start,sizeof(char*));
+      memcpy(&pos_b,pos_b+keyseg->bit_start,sizeof(char*));
     }
     if (type == HA_KEYTYPE_TEXT || type == HA_KEYTYPE_VARTEXT1 ||
         type == HA_KEYTYPE_VARTEXT2)

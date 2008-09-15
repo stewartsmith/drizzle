@@ -27,7 +27,7 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
     return(my_errno= HA_ERR_WRONG_INDEX);
   }
   info->lastinx= inx;
-  info->current_record= (ulong) ~0L;		/* For heap_rrnd() */
+  info->current_record= UINT32_MAX;		/* For heap_rrnd() */
 
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {
@@ -64,7 +64,7 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
     if (!(keyinfo->flag & HA_NOSAME))
       memcpy(info->lastkey, key, (size_t) keyinfo->length);
   }
-  memcpy(record, pos, (size_t) share->reclength);
+  hp_extract_record(share, record, pos);
   info->update= HA_STATE_AKTIV;
   return(0);
 }

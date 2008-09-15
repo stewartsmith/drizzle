@@ -20,8 +20,7 @@
   Functions to create an item. Used by sql_yac.yy
 */
 
-#include "mysql_priv.h"
-#include "item_create.h"
+#include <drizzled/server_includes.h>
 
 /*
 =============================================================================
@@ -2726,14 +2725,14 @@ Create_func_space::create(THD *thd, Item *arg1)
     The parsed item tree should not depend on
     <code>thd->variables.collation_connection</code>.
   */
-  CHARSET_INFO *cs= thd->variables.collation_connection;
+  const CHARSET_INFO * const cs= thd->variables.collation_connection;
   Item *sp;
 
   if (cs->mbminlen > 1)
   {
     uint dummy_errors;
     sp= new (thd->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE, MY_REPERTOIRE_ASCII);
-    sp->str_value.copy(" ", 1, &my_charset_latin1, cs, &dummy_errors);
+    sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
   else
   {
@@ -3093,7 +3092,7 @@ static HASH native_functions_hash;
 
 extern "C" uchar*
 get_native_fct_hash_key(const uchar *buff, size_t *length,
-                        my_bool /* unused */)
+                        bool /* unused */)
 {
   Native_func_registry *func= (Native_func_registry*) buff;
   *length= func->name.length;
@@ -3163,9 +3162,9 @@ find_native_function_builder(THD *thd __attribute__((unused)),
 
 
 Item*
-create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs)
+create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs)
 {
-  CHARSET_INFO *real_cs= (cs ? cs : thd->variables.collation_connection);
+  const CHARSET_INFO * const real_cs= (cs ? cs : thd->variables.collation_connection);
   return new (thd->mem_root) Item_char_typecast(a, len, real_cs);
 }
 
@@ -3173,10 +3172,10 @@ create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs)
 Item *
 create_func_cast(THD *thd, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
-                 CHARSET_INFO *cs)
+                 const CHARSET_INFO * const cs)
 {
   Item *res;
-  ulong len;
+  uint32_t len;
   uint dec;
 
   switch (cast_type) {

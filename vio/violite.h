@@ -38,11 +38,11 @@ enum enum_vio_type
 #define VIO_BUFFERED_READ 2                     /* use buffered read */
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
-Vio*	vio_new(my_socket sd, enum enum_vio_type type, uint flags);
+Vio*	vio_new(int sd, enum enum_vio_type type, uint flags);
 
 void	vio_delete(Vio* vio);
 int	vio_close(Vio* vio);
-void    vio_reset(Vio* vio, enum enum_vio_type type, my_socket sd, uint32_t flags);
+void    vio_reset(Vio* vio, enum enum_vio_type type, int sd, uint32_t flags);
 size_t	vio_read(Vio *vio, uchar *	buf, size_t size);
 size_t  vio_read_buff(Vio *vio, uchar * buf, size_t size);
 size_t	vio_write(Vio *vio, const uchar * buf, size_t size);
@@ -63,10 +63,10 @@ enum enum_vio_type vio_type(Vio* vio);
 /* Return last error number */
 int	vio_errno(Vio*vio);
 /* Get socket number */
-my_socket vio_fd(Vio*vio);
+int vio_fd(Vio*vio);
 /* Remote peer's address and name in text form */
 bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen);
-bool	vio_poll_read(Vio *vio,uint timeout);
+bool vio_poll_read(Vio *vio, int timeout);
 bool vio_peek_read(Vio *vio, uint *bytes);
 
 void vio_end(void);
@@ -107,7 +107,7 @@ enum SSL_type
 /* This structure is for every connection on both sides */
 struct st_vio
 {
-  my_socket		sd;		/* my_socket - real or imaginary */
+  int		sd;		/* int - real or imaginary */
   int			fcntl_mode;	/* Buffered fcntl(sd,F_GETFL) */
   struct sockaddr_storage	local;		/* Local internet address */
   struct sockaddr_storage	remote;		/* Remote internet address */
@@ -132,7 +132,7 @@ struct st_vio
   bool (*should_retry)(Vio*);
   bool (*was_interrupted)(Vio*);
   int32_t     (*vioclose)(Vio*);
-  void	  (*timeout)(Vio*, uint32_t which, uint32_t timeout);
+  void	  (*timeout)(Vio*, bool is_sndtimeo, int32_t timeout);
   char                  *read_buffer;   /* buffer for vio_read_buff */
 };
 #endif /* vio_violite_h_ */

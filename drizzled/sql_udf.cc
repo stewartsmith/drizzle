@@ -14,24 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* This implements 'user defined functions' */
-
-/*
-   Known bugs:
-  
-*/
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include <mysys/my_pthread.h>
-
-extern "C"
-{
-#include <stdarg.h>
-#include <mysys/hash.h>
-}
+#include <drizzled/server_includes.h>
+#include <libdrizzle/gettext.h>
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;
@@ -52,7 +36,7 @@ void udf_init()
 
   if (hash_init(&udf_hash, system_charset_info, 32, 0, 0, get_hash_key, NULL, 0))
   {
-    sql_print_error("Can't allocate memory for udf structures");
+    sql_print_error(_("Can't allocate memory for udf structures"));
     hash_free(&udf_hash);
     free_root(&mem, MYF(0));
     return;
@@ -113,7 +97,7 @@ int initialize_udf(st_plugin_int *plugin)
 
     if (plugin->plugin->init((void *)udff))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }

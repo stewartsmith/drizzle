@@ -13,11 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MYSQL_LEX 1
-#include "mysql_priv.h"
+#define DRIZZLE_LEX 1
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -37,7 +38,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Drop DB") },
   { C_STRING_WITH_LEN("Refresh") },
   { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Statistics") },
   { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Kill") },
@@ -118,7 +118,7 @@ bool begin_trans(THD *thd)
     LEX *lex= thd->lex;
     thd->options|= OPTION_BEGIN;
     thd->server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & MYSQL_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
       error= ha_start_consistent_snapshot(thd);
   }
   return error;
@@ -127,16 +127,16 @@ bool begin_trans(THD *thd)
 /**
   Returns true if all tables should be ignored.
 */
-inline bool all_tables_not_ok(THD *thd, TABLE_LIST *tables)
+inline bool all_tables_not_ok(THD *thd, TableList *tables)
 {
   return rpl_filter->is_on() && tables &&
          !rpl_filter->tables_ok(thd->db, tables);
 }
 
 
-static bool some_non_temp_table_to_be_updated(THD *thd, TABLE_LIST *tables)
+static bool some_non_temp_table_to_be_updated(THD *thd, TableList *tables)
 {
-  for (TABLE_LIST *table= tables; table; table= table->next_global)
+  for (TableList *table= tables; table; table= table->next_global)
   {
     assert(table->db && table->table_name);
     if (table->updating &&
@@ -164,7 +164,7 @@ uint sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
-  memset((uchar*) &sql_command_flags, 0, sizeof(sql_command_flags));
+  memset(&sql_command_flags, 0, sizeof(sql_command_flags));
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -441,7 +441,7 @@ out:
 */
 
 static bool deny_updates_if_read_only_option(THD *thd,
-                                                TABLE_LIST *all_tables)
+                                                TableList *all_tables)
 {
   if (!opt_readonly)
     return(false);
@@ -525,7 +525,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   switch( command ) {
   /* Ignore these statements. */
-  case COM_STATISTICS:
   case COM_PING:
     break;
   /* Increase id and count all other statements. */
@@ -565,7 +564,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     status_var_increment(thd->status_var.com_other);
     char *user= (char*) packet, *packet_end= packet + packet_length;
     /* Safe because there is always a trailing \0 at the end of the packet */
-    char *passwd= strend(user)+1;
+    char *passwd= strchr(user, '\0')+1;
+
 
     thd->clear_error();                         // if errors from rollback
 
@@ -642,7 +642,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
     /* Clear variables that are allocated */
     thd->user_connect= 0;
-    thd->security_ctx->priv_user= thd->security_ctx->user;
     res= check_user(thd, COM_CHANGE_USER, passwd, passwd_len, db, false);
 
     if (res)
@@ -717,20 +716,20 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   {
     char *fields, *packet_end= packet + packet_length, *arg_end;
     /* Locked closure of all tables */
-    TABLE_LIST table_list;
+    TableList table_list;
     LEX_STRING conv_name;
 
     /* used as fields initializator */
     lex_start(thd);
 
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    memset((char*) &table_list, 0, sizeof(table_list));
+    memset(&table_list, 0, sizeof(table_list));
     if (thd->copy_db_to(&table_list.db, &table_list.db_length))
       break;
     /*
       We have name + wildcard in packet, separated by endzero
     */
-    arg_end= strend(packet);
+    arg_end= strchr(packet, '\0');
     thd->convert_string(&conv_name, system_charset_info,
 			packet, (uint) (arg_end - packet), thd->charset());
     table_list.alias= table_list.table_name= conv_name.str;
@@ -825,42 +824,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     error=true;
     break;
   }
-  case COM_STATISTICS:
-  {
-    STATUS_VAR current_global_status_var;
-    ulong uptime;
-    uint length;
-    uint64_t queries_per_second1000;
-    char buff[250];
-    uint buff_len= sizeof(buff);
-
-    general_log_print(thd, command, NullS);
-    status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_STATUS]);
-    calc_sum_of_all_status(&current_global_status_var);
-    if (!(uptime= (ulong) (thd->start_time - server_start_time)))
-      queries_per_second1000= 0;
-    else
-      queries_per_second1000= thd->query_id * 1000LL / uptime;
-
-    length= snprintf((char*) buff, buff_len - 1,
-                     "Uptime: %lu  Threads: %d  Questions: %lu  "
-                     "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
-                     "Open tables: %u  Queries per second avg: %u.%u",
-                     uptime,
-                     (int) thread_count, (ulong) thd->query_id,
-                     current_global_status_var.long_query_count,
-                     current_global_status_var.opened_tables,
-                     refresh_version,
-                     cached_open_tables(),
-                     (uint) (queries_per_second1000 / 1000),
-                     (uint) (queries_per_second1000 % 1000));
-    /* Store the buffer in permanent memory */
-    my_ok(thd, 0, 0, buff);
-    VOID(my_net_write(net, (uchar*) buff, length));
-    VOID(net_flush(net));
-    thd->main_da.disable_status();
-    break;
-  }
   case COM_PING:
     status_var_increment(thd->status_var.com_other);
     my_ok(thd);				// Tell client we are alive
@@ -883,11 +846,11 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     uint opt_command= uint2korr(packet);
 
     switch (opt_command) {
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_ON:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
       thd->client_capabilities|= CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_OFF:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
       thd->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;
@@ -928,7 +891,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   net_end_statement(thd);
 
-  thd->proc_info= "closing tables";
+  thd->set_proc_info("closing tables");
   /* Free tables */
   close_thread_tables(thd);
 
@@ -985,11 +948,11 @@ void log_slow_statement(THD *thd)
 
 
 /**
-  Create a TABLE_LIST object for an INFORMATION_SCHEMA table.
+  Create a TableList object for an INFORMATION_SCHEMA table.
 
     This function is used in the parser to convert a SHOW or DESCRIBE
     table_name command to a SELECT from INFORMATION_SCHEMA.
-    It prepares a SELECT_LEX and a TABLE_LIST object to represent the
+    It prepares a SELECT_LEX and a TableList object to represent the
     given command as a SELECT parse tree.
 
   @param thd              thread handle
@@ -1044,7 +1007,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   case SCH_STATISTICS:
   {
     assert(table_ident);
-    TABLE_LIST **query_tables_last= lex->query_tables_last;
+    TableList **query_tables_last= lex->query_tables_last;
     schema_select_lex= new SELECT_LEX();
     /* 'parent_lex' is used in init_query() so it must be before it. */
     schema_select_lex->parent_lex= lex;
@@ -1072,7 +1035,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   {
     return(1);
   }
-  TABLE_LIST *table_list= (TABLE_LIST*) select_lex->table_list.first;
+  TableList *table_list= (TableList*) select_lex->table_list.first;
   assert(table_list);
   table_list->schema_select_lex= schema_select_lex;
   table_list->schema_table_reformed= 1;
@@ -1183,9 +1146,9 @@ mysql_execute_command(THD *thd)
   /* first SELECT_LEX (have special meaning for many of non-SELECTcommands) */
   SELECT_LEX *select_lex= &lex->select_lex;
   /* first table of first SELECT_LEX */
-  TABLE_LIST *first_table= (TABLE_LIST*) select_lex->table_list.first;
+  TableList *first_table= (TableList*) select_lex->table_list.first;
   /* list of all tables in query */
-  TABLE_LIST *all_tables;
+  TableList *all_tables;
   /* most outer SELECT_LEX_UNIT of query */
   SELECT_LEX_UNIT *unit= &lex->unit;
   /* Saved variable value */
@@ -1210,7 +1173,7 @@ mysql_execute_command(THD *thd)
   all_tables= lex->query_tables;
   /* set context for commands which do not use setup_tables */
   select_lex->
-    context.resolve_in_table_list_only((TABLE_LIST*)select_lex->
+    context.resolve_in_table_list_only((TableList*)select_lex->
                                        table_list.first);
 
   /*
@@ -1221,7 +1184,7 @@ mysql_execute_command(THD *thd)
     Don't reset warnings when executing a stored routine.
   */
   if (all_tables || !lex->is_single_level_stmt())
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
   if (unlikely(thd->slave_thread))
   {
@@ -1349,17 +1312,17 @@ mysql_execute_command(THD *thd)
   }
   case SQLCOM_SHOW_WARNS:
   {
-    res= mysqld_show_warnings(thd, (ulong)
-			      ((1L << (uint) MYSQL_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR)
+    res= mysqld_show_warnings(thd, (uint32_t)
+			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
 			       ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
-    res= mysqld_show_warnings(thd, (ulong)
-			      (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR));
+    res= mysqld_show_warnings(thd, (uint32_t)
+			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
   case SQLCOM_SHOW_SLAVE_HOSTS:
@@ -1395,7 +1358,7 @@ mysql_execute_command(THD *thd)
     }
     else
     {
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "the master info structure does not exist");
       my_ok(thd);
     }
@@ -1427,8 +1390,8 @@ mysql_execute_command(THD *thd)
     assert(first_table == all_tables && first_table != 0);
     bool link_to_local;
     // Skip first table, which is the table we are creating
-    TABLE_LIST *create_table= lex->unlink_first_table(&link_to_local);
-    TABLE_LIST *select_tables= lex->query_tables;
+    TableList *create_table= lex->unlink_first_table(&link_to_local);
+    TableList *select_tables= lex->query_tables;
     /*
       Code below (especially in mysql_create_table() and select_create
       methods) may modify HA_CREATE_INFO structure in LEX, so we have to
@@ -1504,19 +1467,6 @@ mysql_execute_command(THD *thd)
       select_lex->options|= SELECT_NO_UNLOCK;
       unit->set_limit(select_lex);
 
-      /*
-        Disable non-empty MERGE tables with CREATE...SELECT. Too
-        complicated. See Bug #26379. Empty MERGE tables are read-only
-        and don't allow CREATE...SELECT anyway.
-      */
-      if (create_info.used_fields & HA_CREATE_USED_UNION)
-      {
-        my_error(ER_WRONG_OBJECT, MYF(0), create_table->db,
-                 create_table->table_name, "BASE TABLE");
-        res= 1;
-        goto end_with_restore_list;
-      }
-
       if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
       {
         lex->link_first_table_back(create_table, link_to_local);
@@ -1531,30 +1481,13 @@ mysql_execute_command(THD *thd)
         */
         if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
         {
-          TABLE_LIST *duplicate;
+          TableList *duplicate;
           create_table= lex->unlink_first_table(&link_to_local);
           if ((duplicate= unique_table(thd, create_table, select_tables, 0)))
           {
             update_non_unique_table_error(create_table, "CREATE", duplicate);
             res= 1;
             goto end_with_restore_list;
-          }
-        }
-        /* If we create merge table, we have to test tables in merge, too */
-        if (create_info.used_fields & HA_CREATE_USED_UNION)
-        {
-          TABLE_LIST *tab;
-          for (tab= (TABLE_LIST*) create_info.merge_list.first;
-               tab;
-               tab= tab->next_local)
-          {
-            TABLE_LIST *duplicate;
-            if ((duplicate= unique_table(thd, tab, select_tables, 0)))
-            {
-              update_non_unique_table_error(tab, "CREATE", duplicate);
-              res= 1;
-              goto end_with_restore_list;
-            }
           }
         }
 
@@ -1635,14 +1568,14 @@ end_with_restore_list:
     */
     thd->enable_slow_log= opt_log_slow_admin_statements;
 
-    memset((char*) &create_info, 0, sizeof(create_info));
+    memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
     create_info.default_table_charset= thd->variables.collation_database;
 
     res= mysql_alter_table(thd, first_table->db, first_table->table_name,
                            &create_info, first_table, &alter_info,
-                           0, (ORDER*) 0, 0);
+                           0, (order_st*) 0, 0);
     break;
   }
   case SQLCOM_SLAVE_START:
@@ -1700,18 +1633,18 @@ end_with_restore_list:
       assert(select_lex->db);
 
       { // Rename of table
-          TABLE_LIST tmp_table;
-          memset((char*) &tmp_table, 0, sizeof(tmp_table));
+          TableList tmp_table;
+          memset(&tmp_table, 0, sizeof(tmp_table));
           tmp_table.table_name= lex->name.str;
           tmp_table.db=select_lex->db;
       }
 
       /* Don't yet allow changing of symlinks with ALTER TABLE */
       if (create_info.data_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "DATA DIRECTORY option ignored");
       if (create_info.index_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
@@ -1731,17 +1664,17 @@ end_with_restore_list:
                              first_table,
                              &alter_info,
                              select_lex->order_list.elements,
-                             (ORDER *) select_lex->order_list.first,
+                             (order_st *) select_lex->order_list.first,
                              lex->ignore);
       break;
     }
   case SQLCOM_RENAME_TABLE:
   {
     assert(first_table == all_tables && first_table != 0);
-    TABLE_LIST *table;
+    TableList *table;
     for (table= first_table; table; table= table->next_local->next_local)
     {
-      TABLE_LIST old_list, new_list;
+      TableList old_list, new_list;
       /*
         we do not need initialize old_list and new_list because we will
         come table[0] and table->next[0] there
@@ -1821,9 +1754,7 @@ end_with_restore_list:
   {
     assert(first_table == all_tables && first_table != 0);
     thd->enable_slow_log= opt_log_slow_admin_statements;
-    res= (specialflag & (SPECIAL_SAFE_MODE | SPECIAL_NO_NEW_FUNC)) ?
-      mysql_recreate_table(thd, first_table) :
-      mysql_optimize_table(thd, first_table, &lex->check_opt);
+    res= mysql_optimize_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     if (!res && !lex->no_write_to_binlog)
     {
@@ -1847,7 +1778,7 @@ end_with_restore_list:
                                   lex->value_list,
                                   select_lex->where,
                                   select_lex->order_list.elements,
-                                  (ORDER *) select_lex->order_list.first,
+                                  (order_st *) select_lex->order_list.first,
                                   unit->select_limit_cnt,
                                   lex->duplicates, lex->ignore));
     /* mysql_update return 2 if we need to switch to multi-update */
@@ -1952,7 +1883,7 @@ end_with_restore_list:
     if (!(res= open_and_lock_tables(thd, all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
-      TABLE_LIST *second_table= first_table->next_local;
+      TableList *second_table= first_table->next_local;
       select_lex->table_list.first= (uchar*) second_table;
       select_lex->context.table_list= 
         select_lex->context.first_name_resolution_table= second_table;
@@ -1976,7 +1907,7 @@ end_with_restore_list:
             thd->lock)
         {
           /* INSERT ... SELECT should invalidate only the very first table */
-          TABLE_LIST *save_table= first_table->next_local;
+          TableList *save_table= first_table->next_local;
           first_table->next_local= 0;
           first_table->next_local= save_table;
         }
@@ -2031,8 +1962,8 @@ end_with_restore_list:
   case SQLCOM_DELETE_MULTI:
   {
     assert(first_table == all_tables && first_table != 0);
-    TABLE_LIST *aux_tables=
-      (TABLE_LIST *)thd->lex->auxiliary_table_list.first;
+    TableList *aux_tables=
+      (TableList *)thd->lex->auxiliary_table_list.first;
     multi_delete *del_result;
 
     if (!thd->locked_tables &&
@@ -2066,8 +1997,8 @@ end_with_restore_list:
 			select_lex->with_wild,
 			select_lex->item_list,
 			select_lex->where,
-			0, (ORDER *)NULL, (ORDER *)NULL, (Item *)NULL,
-			(ORDER *)NULL,
+			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
+			(order_st *)NULL,
 			select_lex->options | thd->options |
 			SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
                         OPTION_SETUP_TABLES_DONE,
@@ -2498,7 +2429,7 @@ end_with_restore_list:
         if (((thd->options & OPTION_KEEP_LOG) || 
              thd->transaction.all.modified_non_trans_table) &&
             !thd->slave_thread)
-          push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
         my_ok(thd);
@@ -2604,7 +2535,7 @@ finish:
   return(res || thd->is_error());
 }
 
-bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
+bool execute_sqlcom_select(THD *thd, TableList *all_tables)
 {
   LEX	*lex= thd->lex;
   select_result *result=lex->result;
@@ -2637,7 +2568,7 @@ bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
       }
       if (res)
@@ -2713,8 +2644,8 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
     return 1;
   if (old_info)
   {						// Copy old info from stack
-    memcpy(lex->yacc_yyss, (uchar*) *yyss, old_info*sizeof(**yyss));
-    memcpy(lex->yacc_yyvs, (uchar*) *yyvs, old_info*sizeof(**yyvs));
+    memcpy(lex->yacc_yyss, *yyss, old_info*sizeof(**yyss));
+    memcpy(lex->yacc_yyvs, *yyvs, old_info*sizeof(**yyvs));
   }
   *yyss=(short*) lex->yacc_yyss;
   *yyvs=(YYSTYPE*) lex->yacc_yyvs;
@@ -2846,7 +2777,7 @@ mysql_new_select(LEX *lex, bool move_down)
   {
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
-      my_error(ER_WRONG_USAGE, MYF(0), "UNION", "ORDER BY");
+      my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
       return(1);
     }
     select_lex->include_neighbour(lex->current_select);
@@ -2892,7 +2823,7 @@ void create_select_for_variable(const char *var_name)
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  memset((char*) &null_lex_string.str, 0, sizeof(null_lex_string));
+  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
@@ -2962,7 +2893,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
 
     Lex_input_stream lip(thd, inBuf, length);
 
-    bool err= parse_sql(thd, &lip, NULL);
+    bool err= parse_sql(thd, &lip);
     *found_semicolon= lip.found_semicolon;
 
     if (!err)
@@ -3022,8 +2953,8 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
   lex_start(thd);
   mysql_reset_thd_for_next_command(thd);
 
-  if (!parse_sql(thd, &lip, NULL) &&
-      all_tables_not_ok(thd,(TABLE_LIST*) lex->select_lex.table_list.first))
+  if (!parse_sql(thd, &lip) &&
+      all_tables_not_ok(thd,(TableList*) lex->select_lex.table_list.first))
     error= 1;                  /* Ignore question */
   thd->end_statement();
   thd->cleanup_after_query();
@@ -3046,7 +2977,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, CHARSET_INFO *cs)
+                       List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register Create_field *new_field;
   LEX  *lex= thd->lex;
@@ -3136,10 +3067,10 @@ void store_position_for_column(const char *name)
 bool
 add_proc_to_list(THD* thd, Item *item)
 {
-  ORDER *order;
+  order_st *order;
   Item	**item_ptr;
 
-  if (!(order = (ORDER *) thd->alloc(sizeof(ORDER)+sizeof(Item*))))
+  if (!(order = (order_st *) thd->alloc(sizeof(order_st)+sizeof(Item*))))
     return 1;
   item_ptr = (Item**) (order+1);
   *item_ptr= item;
@@ -3156,8 +3087,8 @@ add_proc_to_list(THD* thd, Item *item)
 
 bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
 {
-  ORDER *order;
-  if (!(order = (ORDER *) thd->alloc(sizeof(ORDER))))
+  order_st *order;
+  if (!(order = (order_st *) thd->alloc(sizeof(order_st))))
     return(1);
   order->item_ptr= item;
   order->item= &order->item_ptr;
@@ -3186,10 +3117,10 @@ bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
   @retval
       0		Error
   @retval
-    \#	Pointer to TABLE_LIST element added to the total table list
+    \#	Pointer to TableList element added to the total table list
 */
 
-TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
+TableList *st_select_lex::add_table_to_list(THD *thd,
 					     Table_ident *table,
 					     LEX_STRING *alias,
 					     uint32_t table_options,
@@ -3197,8 +3128,8 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 					     List<Index_hint> *index_hints_arg,
                                              LEX_STRING *option)
 {
-  register TABLE_LIST *ptr;
-  TABLE_LIST *previous_table_ref; /* The table preceding the current one. */
+  register TableList *ptr;
+  TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= thd->lex;
 
@@ -3230,7 +3161,7 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
     if (!(alias_str= (char*) thd->memdup(alias_str,table->table.length+1)))
       return(0);
   }
-  if (!(ptr = (TABLE_LIST *) thd->calloc(sizeof(TABLE_LIST))))
+  if (!(ptr = (TableList *) thd->calloc(sizeof(TableList))))
     return(0);				/* purecov: inspected */
   if (table->db.str)
   {
@@ -3283,8 +3214,8 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
   /* check that used name is unique */
   if (lock_type != TL_IGNORE)
   {
-    TABLE_LIST *first_table= (TABLE_LIST*) table_list.first;
-    for (TABLE_LIST *tables= first_table ;
+    TableList *first_table= (TableList*) table_list.first;
+    for (TableList *tables= first_table ;
 	 tables ;
 	 tables=tables->next_local)
     {
@@ -3300,18 +3231,18 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
   if (table_list.elements > 0)
   {
     /*
-      table_list.next points to the last inserted TABLE_LIST->next_local'
+      table_list.next points to the last inserted TableList->next_local'
       element
       We don't use the offsetof() macro here to avoid warnings from gcc
     */
-    previous_table_ref= (TABLE_LIST*) ((char*) table_list.next -
+    previous_table_ref= (TableList*) ((char*) table_list.next -
                                        ((char*) &(ptr->next_local) -
                                         (char*) ptr));
     /*
       Set next_name_resolution_table of the previous table reference to point
       to the current table reference. In effect the list
-      TABLE_LIST::next_name_resolution_table coincides with
-      TABLE_LIST::next_local. Later this may be changed in
+      TableList::next_name_resolution_table coincides with
+      TableList::next_local. Later this may be changed in
       store_top_level_join_columns() for NATURAL/USING joins.
     */
     previous_table_ref->next_name_resolution_table= ptr;
@@ -3334,7 +3265,7 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 /**
   Initialize a new table list for a nested join.
 
-    The function initializes a structure of the TABLE_LIST type
+    The function initializes a structure of the TableList type
     for a nested join. It sets up its nested join list as empty.
     The created structure is added to the front of the current
     join list in the st_select_lex object. Then the function
@@ -3352,14 +3283,14 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 
 bool st_select_lex::init_nested_join(THD *thd)
 {
-  TABLE_LIST *ptr;
-  NESTED_JOIN *nested_join;
+  TableList *ptr;
+  nested_join_st *nested_join;
 
-  if (!(ptr= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
-                                       sizeof(NESTED_JOIN))))
+  if (!(ptr= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
+                                       sizeof(nested_join_st))))
     return(1);
   nested_join= ptr->nested_join=
-    ((NESTED_JOIN*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TABLE_LIST))));
+    ((nested_join_st*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TableList))));
 
   join_list->push_front(ptr);
   ptr->embedding= embedding;
@@ -3382,14 +3313,14 @@ bool st_select_lex::init_nested_join(THD *thd)
   @param thd         current thread
 
   @return
-    - Pointer to TABLE_LIST element added to the total table list, if success
+    - Pointer to TableList element added to the total table list, if success
     - 0, otherwise
 */
 
-TABLE_LIST *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
+TableList *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
 {
-  TABLE_LIST *ptr;
-  NESTED_JOIN *nested_join;
+  TableList *ptr;
+  nested_join_st *nested_join;
 
   assert(embedding);
   ptr= embedding;
@@ -3398,7 +3329,7 @@ TABLE_LIST *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
   nested_join= ptr->nested_join;
   if (nested_join->join_list.elements == 1)
   {
-    TABLE_LIST *embedded= nested_join->join_list.head();
+    TableList *embedded= nested_join->join_list.head();
     join_list->pop();
     embedded->join_list= join_list;
     embedded->embedding= embedding;
@@ -3424,20 +3355,20 @@ TABLE_LIST *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
   @retval
     0  Error
   @retval
-    \#  Pointer to TABLE_LIST element created for the new nested join
+    \#  Pointer to TableList element created for the new nested join
 */
 
-TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
+TableList *st_select_lex::nest_last_join(THD *thd)
 {
-  TABLE_LIST *ptr;
-  NESTED_JOIN *nested_join;
-  List<TABLE_LIST> *embedded_list;
+  TableList *ptr;
+  nested_join_st *nested_join;
+  List<TableList> *embedded_list;
 
-  if (!(ptr= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
-                                       sizeof(NESTED_JOIN))))
+  if (!(ptr= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
+                                       sizeof(nested_join_st))))
     return(0);
   nested_join= ptr->nested_join=
-    ((NESTED_JOIN*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TABLE_LIST))));
+    ((nested_join_st*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TableList))));
 
   ptr->embedding= embedding;
   ptr->join_list= join_list;
@@ -3447,7 +3378,7 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
 
   for (uint i=0; i < 2; i++)
   {
-    TABLE_LIST *table= join_list->pop();
+    TableList *table= join_list->pop();
     table->join_list= embedded_list;
     table->embedding= ptr;
     embedded_list->push_back(table);
@@ -3482,7 +3413,7 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
     None
 */
 
-void st_select_lex::add_joined_table(TABLE_LIST *table)
+void st_select_lex::add_joined_table(TableList *table)
 {
   join_list->push_front(table);
   table->join_list= join_list;
@@ -3522,10 +3453,10 @@ void st_select_lex::add_joined_table(TABLE_LIST *table)
     - 0, otherwise
 */
 
-TABLE_LIST *st_select_lex::convert_right_join()
+TableList *st_select_lex::convert_right_join()
 {
-  TABLE_LIST *tab2= join_list->pop();
-  TABLE_LIST *tab1= join_list->pop();
+  TableList *tab2= join_list->pop();
+  TableList *tab1= join_list->pop();
 
   join_list->push_front(tab2);
   join_list->push_front(tab1);
@@ -3549,7 +3480,7 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
 {
   bool for_update= lock_type >= TL_READ_NO_INSERT;
 
-  for (TABLE_LIST *tables= (TABLE_LIST*) table_list.first;
+  for (TableList *tables= (TableList*) table_list.first;
        tables;
        tables= tables->next_local)
   {
@@ -3567,11 +3498,11 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ... 
+    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ... 
     @endvarbatim
     or of the form
     @varbatim
-    (SELECT ... ORDER BY LIMIT n) ORDER BY ...
+    (SELECT ... order_st BY LIMIT n) order_st BY ...
     @endvarbatim
   
   @param thd_arg		   thread handle
@@ -3602,7 +3533,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
   fake_select_lex->select_limit= 0;
 
   fake_select_lex->context.outer_context=first_sl->context.outer_context;
-  /* allow item list resolving in fake select for ORDER BY */
+  /* allow item list resolving in fake select for order_st BY */
   fake_select_lex->context.resolve_in_select_list= true;
   fake_select_lex->context.select_lex= fake_select_lex;
 
@@ -3610,8 +3541,8 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
   {
     /* 
       This works only for 
-      (SELECT ... ORDER BY list [LIMIT n]) ORDER BY order_list [LIMIT m],
-      (SELECT ... LIMIT n) ORDER BY order_list [LIMIT m]
+      (SELECT ... order_st BY list [LIMIT n]) order_st BY order_list [LIMIT m],
+      (SELECT ... LIMIT n) order_st BY order_list [LIMIT m]
       just before the parser starts processing order_list
     */ 
     global_parameters= fake_select_lex;
@@ -3644,7 +3575,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
 
 bool
 push_new_name_resolution_context(THD *thd,
-                                 TABLE_LIST *left_op, TABLE_LIST *right_op)
+                                 TableList *left_op, TableList *right_op)
 {
   Name_resolution_context *on_context;
   if (!(on_context= new (thd->mem_root) Name_resolution_context))
@@ -3672,7 +3603,7 @@ push_new_name_resolution_context(THD *thd,
     true   if all is OK
 */
 
-void add_join_on(TABLE_LIST *b, Item *expr)
+void add_join_on(TableList *b, Item *expr)
 {
   if (expr)
   {
@@ -3725,7 +3656,7 @@ void add_join_on(TABLE_LIST *b, Item *expr)
   @param using_fields    Field names from USING clause
 */
 
-void add_join_natural(TABLE_LIST *a, TABLE_LIST *b, List<String> *using_fields,
+void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
                       SELECT_LEX *lex)
 {
   b->natural_join= a;
@@ -3752,7 +3683,7 @@ void add_join_natural(TABLE_LIST *a, TABLE_LIST *b, List<String> *using_fields,
     @retval !=0  Error; thd->killed is set or thd->is_error() is true
 */
 
-bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables,
+bool reload_cache(THD *thd, ulong options, TableList *tables,
                           bool *write_to_binlog)
 {
   bool result=0;
@@ -3943,7 +3874,7 @@ bool append_file_to_dir(THD *thd, const char **filename_ptr,
     return 1;
   }
   /* Fix is using unix filename format on dos */
-  strmov(buff,*filename_ptr);
+  stpcpy(buff,*filename_ptr);
   end=convert_dirname(buff, *filename_ptr, NullS);
   if (!(ptr= (char*) thd->alloc((size_t) (end-buff) + strlen(table_name)+1)))
     return 1;					// End of memory
@@ -3971,7 +3902,7 @@ bool check_simple_select()
     char command[80];
     Lex_input_stream *lip= thd->m_lip;
     strmake(command, lip->yylval->symbol.str,
-	    min(lip->yylval->symbol.length, sizeof(command)-1));
+	    min((ulong)lip->yylval->symbol.length, sizeof(command)-1));
     my_error(ER_CANT_USE_OPTION_HERE, MYF(0), command);
     return 1;
   }
@@ -4059,7 +3990,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 */
 
 bool multi_update_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((unused)))
+                           TableList *tables __attribute__((unused)))
 {
   const char *msg= 0;
   LEX *lex= thd->lex;
@@ -4096,10 +4027,10 @@ bool multi_update_precheck(THD *thd,
 */
 
 bool multi_delete_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((unused)))
+                           TableList *tables __attribute__((unused)))
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
-  TABLE_LIST **save_query_tables_own_last= thd->lex->query_tables_own_last;
+  TableList **save_query_tables_own_last= thd->lex->query_tables_own_last;
 
   thd->lex->query_tables_own_last= 0;
   thd->lex->query_tables_own_last= save_query_tables_own_last;
@@ -4131,13 +4062,13 @@ bool multi_delete_precheck(THD *thd,
   @return Matching table, NULL otherwise.
 */
 
-static TABLE_LIST *multi_delete_table_match(LEX *lex __attribute__((unused)),
-                                            TABLE_LIST *tbl,
-                                            TABLE_LIST *tables)
+static TableList *multi_delete_table_match(LEX *lex __attribute__((unused)),
+                                            TableList *tbl,
+                                            TableList *tables)
 {
-  TABLE_LIST *match= NULL;
+  TableList *match= NULL;
 
-  for (TABLE_LIST *elem= tables; elem; elem= elem->next_local)
+  for (TableList *elem= tables; elem; elem= elem->next_local)
   {
     int cmp;
 
@@ -4185,17 +4116,17 @@ static TABLE_LIST *multi_delete_table_match(LEX *lex __attribute__((unused)),
 
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
 {
-  TABLE_LIST *tables= (TABLE_LIST*)lex->select_lex.table_list.first;
-  TABLE_LIST *target_tbl;
+  TableList *tables= (TableList*)lex->select_lex.table_list.first;
+  TableList *target_tbl;
 
   lex->table_count= 0;
 
-  for (target_tbl= (TABLE_LIST *)lex->auxiliary_table_list.first;
+  for (target_tbl= (TableList *)lex->auxiliary_table_list.first;
        target_tbl; target_tbl= target_tbl->next_local)
   {
     lex->table_count++;
     /* All tables in aux_tables must be found in FROM PART */
-    TABLE_LIST *walk= multi_delete_table_match(lex, target_tbl, tables);
+    TableList *walk= multi_delete_table_match(lex, target_tbl, tables);
     if (!walk)
       return(true);
     if (!walk->derived)
@@ -4223,7 +4154,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     true  Error
 */
 
-bool update_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
+bool update_precheck(THD *thd, TableList *tables __attribute__((unused)))
 {
   if (thd->lex->select_lex.item_list.elements != thd->lex->value_list.elements)
   {
@@ -4246,7 +4177,7 @@ bool update_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
     true   error
 */
 
-bool insert_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
+bool insert_precheck(THD *thd, TableList *tables __attribute__((unused)))
 {
   LEX *lex= thd->lex;
 
@@ -4277,8 +4208,8 @@ bool insert_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
 */
 
 bool create_table_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((unused)),
-                           TABLE_LIST *create_table)
+                           TableList *tables __attribute__((unused)),
+                           TableList *create_table)
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
@@ -4401,7 +4332,7 @@ bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
 
 
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
+                              uint max_char_length, const CHARSET_INFO * const cs,
                               bool no_error)
 {
   int well_formed_error;
@@ -4426,9 +4357,9 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  CHARSET_INFO *cs= &my_charset_utf8mb3_general_ci;
+  const CHARSET_INFO * const cs= &my_charset_utf8mb3_general_ci;
 #else
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 #endif
   int well_formed_error;
   uint res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
@@ -4507,25 +4438,15 @@ extern int MYSQLparse(void *thd); // from sql_yacc.cc
 
   @param thd Thread context.
   @param lip Lexer context.
-  @param creation_ctx Object creation context.
 
   @return Error status.
     @retval false on success.
     @retval true on parsing error.
 */
 
-bool parse_sql(THD *thd,
-               Lex_input_stream *lip,
-               Object_creation_ctx *creation_ctx)
+bool parse_sql(THD *thd, Lex_input_stream *lip)
 {
   assert(thd->m_lip == NULL);
-
-  /* Backup creation context. */
-
-  Object_creation_ctx *backup_ctx= NULL;
-
-  if (creation_ctx)
-    backup_ctx= creation_ctx->set_n_backup(thd);
 
   /* Set Lex_input_stream. */
 
@@ -4542,11 +4463,6 @@ bool parse_sql(THD *thd,
   /* Reset Lex_input_stream. */
 
   thd->m_lip= NULL;
-
-  /* Restore creation context. */
-
-  if (creation_ctx)
-    creation_ctx->restore_env(thd, backup_ctx);
 
   /* That's it. */
 

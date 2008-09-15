@@ -15,7 +15,7 @@
 
 /* This file is included by all internal myisam files */
 
-#if !defined(MYISAMDEF_H)
+#ifndef MYISAMDEF_H
 #define MYISAMDEF_H
 
 #include "myisam.h"			/* Structs & some defines */
@@ -175,7 +175,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   int (*write_record)(struct st_myisam_info*, const uchar*);
   int (*update_record)(struct st_myisam_info*, my_off_t, const uchar*);
   int (*delete_record)(struct st_myisam_info*);
-  int (*read_rnd)(struct st_myisam_info*, uchar*, my_off_t, my_bool);
+  int (*read_rnd)(struct st_myisam_info*, uchar*, my_off_t, bool);
   int (*compare_record)(struct st_myisam_info*, const uchar *);
   /* Function to use for a row checksum. */
   ha_checksum (*calc_checksum)(struct st_myisam_info*, const uchar *);
@@ -202,9 +202,9 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   myf write_flag;
   enum data_file_type data_file_type;
   /* Below flag is needed to make log tables work with concurrent insert */
-  my_bool is_log_table;
+  bool is_log_table;
 
-  my_bool  changed,			/* If changed since lock */
+  bool  changed,			/* If changed since lock */
     global_changed,			/* If changed since open */
     not_flushed,
     temporary,delay_key_write,
@@ -229,7 +229,7 @@ typedef struct st_mi_bit_buff {		/* Used for packing of record */
 } MI_BIT_BUFF;
 
 
-typedef my_bool (*index_cond_func_t)(void *param);
+typedef bool (*index_cond_func_t)(void *param);
 
 struct st_myisam_info {
   MYISAM_SHARE *s;			/* Shared between open:s */
@@ -285,12 +285,12 @@ struct st_myisam_info {
   IO_CACHE rec_cache;			/* When cacheing records */
   uint  preload_buff_size;              /* When preloading indexes */
   myf lock_wait;			/* is 0 or MY_DONT_WAIT */
-  my_bool was_locked;			/* Was locked in panic */
-  my_bool append_insert_at_end;		/* Set if concurrent insert */
-  my_bool quick_mode;
-  my_bool page_changed;		/* If info->buff can't be used for rnext */
-  my_bool buff_used;		/* If info->buff has to be reread for rnext */
-  my_bool once_flags;           /* For MYISAMMRG */
+  bool was_locked;			/* Was locked in panic */
+  bool append_insert_at_end;		/* Set if concurrent insert */
+  bool quick_mode;
+  bool page_changed;		/* If info->buff can't be used for rnext */
+  bool buff_used;		/* If info->buff has to be reread for rnext */
+  bool once_flags;           /* For MYISAMMRG */
 
   index_cond_func_t index_cond_func;   /* Index condition function */
   void *index_cond_func_arg;           /* parameter for the func */
@@ -324,8 +324,8 @@ typedef struct st_mi_sort_param
   my_off_t pos,max_pos,filepos,start_recpos;
   uint key, key_length,real_key_length,sortbuff_size;
   uint maxbuffers, keys, find_length, sort_keys_length;
-  my_bool fix_datafile, master;
-  my_bool calc_checksum;                /* calculate table checksum */
+  bool fix_datafile, master;
+  bool calc_checksum;                /* calculate table checksum */
   MI_KEYDEF *keyinfo;
   HA_KEYSEG *seg;
   SORT_INFO *sort_info;
@@ -462,7 +462,6 @@ extern LIST *myisam_open_list;
 extern uchar  myisam_file_magic[], myisam_pack_file_magic[];
 extern uint  myisam_read_vec[], myisam_readnext_vec[];
 extern uint myisam_quick_table_bits;
-extern File myisam_log_file;
 extern ulong myisam_pid;
 
 	/* This is used by _mi_calc_xxx_key_length och _mi_store_key */
@@ -475,7 +474,7 @@ typedef struct st_mi_s_param
 	totlength,
 	part_of_prev_key,prev_length,pack_marker;
   uchar *key, *prev_key,*next_key_pos;
-  my_bool store_not_null;
+  bool store_not_null;
 } MI_KEY_PARAM;
 
 	/* Prototypes for intern functions */
@@ -485,7 +484,7 @@ extern int _mi_write_dynamic_record(MI_INFO*, const uchar*);
 extern int _mi_update_dynamic_record(MI_INFO*, my_off_t, const uchar*);
 extern int _mi_delete_dynamic_record(MI_INFO *info);
 extern int _mi_cmp_dynamic_record(MI_INFO *info,const uchar *record);
-extern int _mi_read_rnd_dynamic_record(MI_INFO *, uchar *,my_off_t, my_bool);
+extern int _mi_read_rnd_dynamic_record(MI_INFO *, uchar *,my_off_t, bool);
 extern int _mi_write_blob_record(MI_INFO*, const uchar*);
 extern int _mi_update_blob_record(MI_INFO*, my_off_t, const uchar*);
 extern int _mi_read_static_record(MI_INFO *info, my_off_t filepos,uchar *buf);
@@ -493,7 +492,7 @@ extern int _mi_write_static_record(MI_INFO*, const uchar*);
 extern int _mi_update_static_record(MI_INFO*, my_off_t, const uchar*);
 extern int _mi_delete_static_record(MI_INFO *info);
 extern int _mi_cmp_static_record(MI_INFO *info,const uchar *record);
-extern int _mi_read_rnd_static_record(MI_INFO*, uchar *,my_off_t, my_bool);
+extern int _mi_read_rnd_static_record(MI_INFO*, uchar *,my_off_t, bool);
 extern int _mi_ck_write(MI_INFO *info,uint keynr,uchar *key,uint length);
 extern int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
                                    uchar *key, uint key_length,
@@ -502,9 +501,9 @@ extern int _mi_enlarge_root(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key, my_off_
 extern int _mi_insert(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
 		      uchar *anc_buff,uchar *key_pos,uchar *key_buff,
 		      uchar *father_buff, uchar *father_keypos,
-		      my_off_t father_page, my_bool insert_last);
+		      my_off_t father_page, bool insert_last);
 extern int _mi_split_page(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
-			  uchar *buff,uchar *key_buff, my_bool insert_last);
+			  uchar *buff,uchar *key_buff, bool insert_last);
 extern uchar *_mi_find_half_pos(uint nod_flag,MI_KEYDEF *keyinfo,uchar *page,
 				uchar *key,uint *return_key_length,
 				uchar **after_key);
@@ -546,13 +545,13 @@ extern int _mi_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,uint key_len,
 		      uint nextflag,my_off_t pos);
 extern int _mi_bin_search(struct st_myisam_info *info,MI_KEYDEF *keyinfo,
 			  uchar *page,uchar *key,uint key_len,uint comp_flag,
-			  uchar * *ret_pos,uchar *buff, my_bool *was_last_key);
+			  uchar * *ret_pos,uchar *buff, bool *was_last_key);
 extern int _mi_seq_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *page,
 			  uchar *key,uint key_len,uint comp_flag,
-			  uchar **ret_pos,uchar *buff, my_bool *was_last_key);
+			  uchar **ret_pos,uchar *buff, bool *was_last_key);
 extern int _mi_prefix_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *page,
 			  uchar *key,uint key_len,uint comp_flag,
-			  uchar **ret_pos,uchar *buff, my_bool *was_last_key);
+			  uchar **ret_pos,uchar *buff, bool *was_last_key);
 extern my_off_t _mi_kpos(uint nod_flag,uchar *after_key);
 extern void _mi_kpointer(MI_INFO *info,uchar *buff,my_off_t pos);
 extern my_off_t _mi_dpos(MI_INFO *info, uint nod_flag,uchar *after_key);
@@ -603,16 +602,16 @@ extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
 
 extern ulong _mi_rec_unpack(MI_INFO *info,uchar *to,uchar *from,
 			    ulong reclength);
-extern my_bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *packpos,
-                             ulong packed_length, my_bool with_checkum);
+extern bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *packpos,
+                             ulong packed_length, bool with_checkum);
 extern int _mi_write_part_record(MI_INFO *info,my_off_t filepos,ulong length,
 				 my_off_t next_filepos,uchar **record,
 				 ulong *reclength,int *flag);
 extern void _mi_print_key(FILE *stream,HA_KEYSEG *keyseg,const uchar *key,
 			  uint length);
-extern my_bool _mi_read_pack_info(MI_INFO *info,bool fix_keys);
+extern bool _mi_read_pack_info(MI_INFO *info,bool fix_keys);
 extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,uchar *buf);
-extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
+extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
 extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
@@ -660,14 +659,6 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
 #define SORT_BUFFER_INIT	(2048L*1024L-MALLOC_OVERHEAD)
 #define MIN_SORT_BUFFER		(4096-MALLOC_OVERHEAD)
 
-enum myisam_log_commands {
-  MI_LOG_OPEN,MI_LOG_WRITE,MI_LOG_UPDATE,MI_LOG_DELETE,MI_LOG_CLOSE,MI_LOG_EXTRA,MI_LOG_LOCK,MI_LOG_DELETE_ALL
-};
-
-#define myisam_log(a,b,c,d) if (myisam_log_file >= 0) _myisam_log(a,b,c,d)
-#define myisam_log_command(a,b,c,d,e) if (myisam_log_file >= 0) _myisam_log_command(a,b,c,d,e)
-#define myisam_log_record(a,b,c,d,e) if (myisam_log_file >= 0) _myisam_log_record(a,b,c,d,e)
-
 #define fast_mi_writeinfo(INFO) if (!(INFO)->s->tot_locks) (void) _mi_writeinfo((INFO),0)
 #define fast_mi_readinfo(INFO) ((INFO)->lock_type == F_UNLCK) && _mi_readinfo((INFO),F_RDLCK,1)
 
@@ -681,20 +672,7 @@ extern uint _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     MI_BLOCK_INFO *info, uchar **rec_buff_p,
                                     File file, my_off_t filepos);
 extern void _my_store_blob_length(uchar *pos,uint pack_length,uint length);
-extern void _myisam_log(enum myisam_log_commands command,MI_INFO *info,
-		       const uchar *buffert,uint length);
-extern void _myisam_log_command(enum myisam_log_commands command,
-			       MI_INFO *info, const uchar *buffert,
-			       uint length, int result);
-extern void _myisam_log_record(enum myisam_log_commands command,MI_INFO *info,
-			      const uchar *record,my_off_t filepos,
-			      int result);
 extern void mi_report_error(int errcode, const char *file_name);
-extern my_bool _mi_memmap_file(MI_INFO *info);
-extern void _mi_unmap_file(MI_INFO *info);
-extern uint save_pack_length(uint version, uchar *block_buff, ulong length);
-extern uint read_pack_length(uint version, const uchar *buf, ulong *length);
-extern uint calc_pack_length(uint version, ulong length);
 extern size_t mi_mmap_pread(MI_INFO *info, uchar *Buffer,
                             size_t Count, my_off_t offset, myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const uchar *Buffer,
@@ -706,7 +684,7 @@ extern size_t mi_nommap_pwrite(MI_INFO *info, const uchar *Buffer,
 
 uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite);
 uchar *mi_state_info_read(uchar *ptr, MI_STATE_INFO *state);
-uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, my_bool pRead);
+uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead);
 uint mi_base_info_write(File file, MI_BASE_INFO *base);
 uchar *my_n_base_info_read(uchar *ptr, MI_BASE_INFO *base);
 int mi_keyseg_write(File file, const HA_KEYSEG *keyseg);
@@ -723,7 +701,7 @@ extern int mi_indexes_are_disabled(MI_INFO *info);
 ulong _my_calc_total_blob_length(MI_INFO *info, const uchar *record);
 ha_checksum mi_checksum(MI_INFO *info, const uchar *buf);
 ha_checksum mi_static_checksum(MI_INFO *info, const uchar *buf);
-my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
+bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
 		     ha_checksum unique_hash, my_off_t pos);
 ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *buf);
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
@@ -731,7 +709,7 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 			   const uchar *record, my_off_t pos);
 int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
-		   my_bool null_are_equal);
+		   bool null_are_equal);
 void mi_get_status(void* param, int concurrent_insert);
 void mi_update_status(void* param);
 void mi_restore_status(void* param);
@@ -739,11 +717,11 @@ void mi_copy_status(void* to,void *from);
 bool mi_check_status(void* param);
 
 extern MI_INFO *test_if_reopen(char *filename);
-my_bool check_table_is_closed(const char *name, const char *where);
+bool check_table_is_closed(const char *name, const char *where);
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup);
 int mi_open_keyfile(MYISAM_SHARE *share);
 void mi_setup_functions(register MYISAM_SHARE *share);
-my_bool mi_dynmap_file(MI_INFO *info, my_off_t size);
+bool mi_dynmap_file(MI_INFO *info, my_off_t size);
 void mi_remap_file(MI_INFO *info, my_off_t size);
 
 int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
@@ -759,7 +737,7 @@ pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
-int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages, ulong);
+int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, uint32_t);
 
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);
@@ -781,4 +759,4 @@ void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
 #endif
 
 
-#endif
+#endif /* MYISAMDEF_H */

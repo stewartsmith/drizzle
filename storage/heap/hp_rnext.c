@@ -108,7 +108,7 @@ int heap_rnext(HP_INFO *info, uchar *record)
       my_errno=HA_ERR_END_OF_FILE;
     return(my_errno);
   }
-  memcpy(record,pos,(size_t) share->reclength);
+  hp_extract_record(share, record, pos);
   info->update=HA_STATE_AKTIV | HA_STATE_NEXT_FOUND;
   return(0);
 }

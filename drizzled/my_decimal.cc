@@ -13,11 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <time.h>
+#include <drizzled/drizzled_error_messages.h>
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /**
   report result of decimal operation.
 
@@ -36,22 +37,22 @@ int decimal_operation_results(int result)
   case E_DEC_OK:
     break;
   case E_DEC_TRUNCATED:
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_DATA_TRUNCATED, ER(ER_WARN_DATA_TRUNCATED),
 			"", (long)-1);
     break;
   case E_DEC_OVERFLOW:
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE),
 			"DECIMAL", "");
     break;
   case E_DEC_DIV_ZERO:
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
     break;
   case E_DEC_BAD_NUM:
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
 			ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
 			"decimal", "", "", (long)-1);
@@ -175,7 +176,7 @@ int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
 */
 
 int str2my_decimal(uint mask, const char *from, uint length,
-                   CHARSET_INFO *charset, my_decimal *decimal_value)
+                   const CHARSET_INFO * charset, my_decimal *decimal_value)
 {
   char *end, *from_end;
   int err;
@@ -184,7 +185,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
   if (charset->mbminlen > 1)
   {
     uint dummy_errors;
-    tmp.copy(from, length, charset, &my_charset_latin1, &dummy_errors);
+    tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
     from= tmp.ptr();
     length=  tmp.length();
     charset= &my_charset_bin;
@@ -196,7 +197,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
     /* Give warning if there is something other than end space */
     for ( ; end < from_end; end++)
     {
-      if (!my_isspace(&my_charset_latin1, *end))
+      if (!my_isspace(&my_charset_utf8_general_ci, *end))
       {
         err= E_DEC_TRUNCATED;
         break;
@@ -225,7 +226,7 @@ my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 }
 
 
-void my_decimal_trim(ulong *precision, uint *scale)
+void my_decimal_trim(uint32_t *precision, uint *scale)
 {
   if (!(*precision) && !(*scale))
   {
@@ -240,4 +241,4 @@ void my_decimal_trim(ulong *precision, uint *scale)
 #define DIG_PER_DEC1 9
 #define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
 
-#endif /*MYSQL_CLIENT*/
+#endif /*DRIZZLE_CLIENT*/

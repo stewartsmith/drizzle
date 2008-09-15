@@ -16,15 +16,16 @@
 #ifndef _my_plugin_h
 #define _my_plugin_h
 
+#include <drizzled/global.h>
+
 #ifdef __cplusplus
 class THD;
 class Item;
-#define MYSQL_THD THD*
+#define DRIZZLE_THD THD*
 #else
-#define MYSQL_THD void*
+#define DRIZZLE_THD void*
 #endif
 
-#include <stdint.h>
 
 #ifndef _m_string_h
 /* This definition must match the one given in m_string.h */
@@ -34,9 +35,9 @@ struct st_mysql_lex_string
   unsigned int length;
 };
 #endif /* _m_string_h */
-typedef struct st_mysql_lex_string MYSQL_LEX_STRING;
+typedef struct st_mysql_lex_string DRIZZLE_LEX_STRING;
 
-#define MYSQL_XIDDATASIZE 128
+#define DRIZZLE_XIDDATASIZE 128
 /**
   struct st_mysql_xid is binary compatible with the XID structure as
   in the X/Open CAE Specification, Distributed Transaction Processing:
@@ -49,9 +50,9 @@ struct st_mysql_xid {
   long formatID;
   long gtrid_length;
   long bqual_length;
-  char data[MYSQL_XIDDATASIZE];  /* Not \0-terminated */
+  char data[DRIZZLE_XIDDATASIZE];  /* Not \0-terminated */
 };
-typedef struct st_mysql_xid MYSQL_XID;
+typedef struct st_mysql_xid DRIZZLE_XID;
 
 /*************************************************************************
   Plugin API. Common for all plugin types.
@@ -60,16 +61,16 @@ typedef struct st_mysql_xid MYSQL_XID;
 /*
   The allowable types of plugins
 */
-#define MYSQL_DAEMON_PLUGIN          0  /* Daemon / Raw */
-#define MYSQL_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
-#define MYSQL_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
-#define MYSQL_UDF_PLUGIN             3  /* User-Defined Function */
-#define MYSQL_UDA_PLUGIN             4  /* User-Defined Aggregate function */
-#define MYSQL_AUDIT_PLUGIN           5  /* Audit */
-#define MYSQL_LOGGER_PLUGIN          6  /* Logging */
-#define MYSQL_AUTH_PLUGIN            7  /* Authorization */
+#define DRIZZLE_DAEMON_PLUGIN          0  /* Daemon / Raw */
+#define DRIZZLE_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
+#define DRIZZLE_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
+#define DRIZZLE_UDF_PLUGIN             3  /* User-Defined Function */
+#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate function */
+#define DRIZZLE_AUDIT_PLUGIN           5  /* Audit */
+#define DRIZZLE_LOGGER_PLUGIN          6  /* Logging */
+#define DRIZZLE_AUTH_PLUGIN            7  /* Authorization */
 
-#define MYSQL_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types */
+#define DRIZZLE_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
@@ -87,16 +88,16 @@ typedef struct st_mysql_xid MYSQL_XID;
 */
 
 
-#ifndef MYSQL_DYNAMIC_PLUGIN
-#define __MYSQL_DECLARE_PLUGIN(NAME, DECLS) \
+#ifndef DRIZZLE_DYNAMIC_PLUGIN
+#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
 struct st_mysql_plugin DECLS[]= {
 #else
-#define __MYSQL_DECLARE_PLUGIN(NAME, DECLS) \
+#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
 struct st_mysql_plugin _mysql_plugin_declarations_[]= {
 #endif
 
 #define mysql_declare_plugin(NAME) \
-__MYSQL_DECLARE_PLUGIN(NAME, \
+__DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 
 #define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
@@ -119,7 +120,7 @@ struct st_mysql_show_var {
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(MYSQL_THD, struct st_mysql_show_var*, char *);
+typedef int (*mysql_show_var_func)(DRIZZLE_THD, struct st_mysql_show_var*, char *);
 
 struct st_show_var_func_container {
   mysql_show_var_func func;
@@ -168,7 +169,7 @@ struct st_mysql_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(MYSQL_THD thd,
+typedef int (*mysql_var_check_func)(DRIZZLE_THD thd,
                                     struct st_mysql_sys_var *var,
                                     void *save, struct st_mysql_value *value);
 
@@ -186,7 +187,7 @@ typedef int (*mysql_var_check_func)(MYSQL_THD thd,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(MYSQL_THD thd,
+typedef void (*mysql_var_update_func)(DRIZZLE_THD thd,
                                       struct st_mysql_sys_var *var,
                                       void *var_ptr, const void *save);
 
@@ -199,16 +200,16 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
          PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_NOCMDARG | \
          PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC)
 
-#define MYSQL_PLUGIN_VAR_HEADER \
+#define DRIZZLE_PLUGIN_VAR_HEADER \
   int flags;                    \
   const char *name;             \
   const char *comment;          \
   mysql_var_check_func check;   \
   mysql_var_update_func update
 
-#define MYSQL_SYSVAR_NAME(name) mysql_sysvar_ ## name
-#define MYSQL_SYSVAR(name) \
-  ((struct st_mysql_sys_var *)&(MYSQL_SYSVAR_NAME(name)))
+#define DRIZZLE_SYSVAR_NAME(name) mysql_sysvar_ ## name
+#define DRIZZLE_SYSVAR(name) \
+  ((struct st_mysql_sys_var *)&(DRIZZLE_SYSVAR_NAME(name)))
 
 /*
   for global variables, the value pointer is the first
@@ -218,164 +219,164 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
 */
    
 
-#define DECLARE_MYSQL_SYSVAR_BASIC(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_SYSVAR_BASIC(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   type *value;                  \
   const type def_val;           \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_MYSQL_SYSVAR_SIMPLE(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   type *value; type def_val;    \
   type min_val; type max_val;   \
   type blk_sz;                  \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_MYSQL_SYSVAR_TYPELIB(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   type *value; type def_val;    \
   TYPELIB *typelib;             \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
 #define DECLARE_THDVAR_FUNC(type) \
-  type *(*resolve)(MYSQL_THD thd, int offset)
+  type *(*resolve)(DRIZZLE_THD thd, int offset)
 
-#define DECLARE_MYSQL_THDVAR_BASIC(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_THDVAR_BASIC(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   const type def_val;           \
   DECLARE_THDVAR_FUNC(type);    \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_MYSQL_THDVAR_SIMPLE(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_THDVAR_SIMPLE(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   type def_val; type min_val;   \
   type max_val; type blk_sz;    \
   DECLARE_THDVAR_FUNC(type);    \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_MYSQL_THDVAR_TYPELIB(name, type) struct { \
-  MYSQL_PLUGIN_VAR_HEADER;      \
+#define DECLARE_DRIZZLE_THDVAR_TYPELIB(name, type) struct { \
+  DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   type def_val;                 \
   DECLARE_THDVAR_FUNC(type);    \
   TYPELIB *typelib;             \
-} MYSQL_SYSVAR_NAME(name)
+} DRIZZLE_SYSVAR_NAME(name)
 
 
 /*
   the following declarations are for use by plugin implementors
 */
 
-#define MYSQL_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-DECLARE_MYSQL_SYSVAR_BASIC(name, char) = { \
+#define DRIZZLE_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_SYSVAR_BASIC(name, bool) = { \
   PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
 
-#define MYSQL_SYSVAR_STR(name, varname, opt, comment, check, update, def) \
-DECLARE_MYSQL_SYSVAR_BASIC(name, char *) = { \
+#define DRIZZLE_SYSVAR_STR(name, varname, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_SYSVAR_BASIC(name, char *) = { \
   PLUGIN_VAR_STR | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
 
-#define MYSQL_SYSVAR_INT(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, int) = { \
+#define DRIZZLE_SYSVAR_INT(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, int) = { \
   PLUGIN_VAR_INT | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_UINT(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, unsigned int) = { \
+#define DRIZZLE_SYSVAR_UINT(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, unsigned int) = { \
   PLUGIN_VAR_INT | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_LONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, long) = { \
+#define DRIZZLE_SYSVAR_LONG(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, long) = { \
   PLUGIN_VAR_LONG | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_ULONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, unsigned long) = { \
+#define DRIZZLE_SYSVAR_ULONG(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, unsigned long) = { \
   PLUGIN_VAR_LONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_LONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, int64_t) = { \
+#define DRIZZLE_SYSVAR_LONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, int64_t) = { \
   PLUGIN_VAR_LONGLONG | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_ULONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, uint64_t) = { \
+#define DRIZZLE_SYSVAR_ULONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define MYSQL_SYSVAR_ENUM(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_SYSVAR_TYPELIB(name, unsigned long) = { \
+#define DRIZZLE_SYSVAR_ENUM(name, varname, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, unsigned long) = { \
   PLUGIN_VAR_ENUM | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, typelib }
 
-#define MYSQL_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_SYSVAR_TYPELIB(name, uint64_t) = { \
+#define DRIZZLE_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, uint64_t) = { \
   PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, typelib }
 
-#define MYSQL_THDVAR_BOOL(name, opt, comment, check, update, def) \
-DECLARE_MYSQL_THDVAR_BASIC(name, char) = { \
+#define DRIZZLE_THDVAR_BOOL(name, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_THDVAR_BASIC(name, char) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
-#define MYSQL_THDVAR_STR(name, opt, comment, check, update, def) \
-DECLARE_MYSQL_THDVAR_BASIC(name, char *) = { \
+#define DRIZZLE_THDVAR_STR(name, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_THDVAR_BASIC(name, char *) = { \
   PLUGIN_VAR_STR | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
-#define MYSQL_THDVAR_INT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, int) = { \
+#define DRIZZLE_THDVAR_INT(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, int) = { \
   PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_UINT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, unsigned int) = { \
+#define DRIZZLE_THDVAR_UINT(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, unsigned int) = { \
   PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_LONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, long) = { \
+#define DRIZZLE_THDVAR_LONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, long) = { \
   PLUGIN_VAR_LONG | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_ULONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, unsigned long) = { \
+#define DRIZZLE_THDVAR_ULONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, unsigned long) = { \
   PLUGIN_VAR_LONG | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, int64_t) = { \
+#define DRIZZLE_THDVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, int64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, uint64_t) = { \
+#define DRIZZLE_THDVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_THDVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define MYSQL_THDVAR_ENUM(name, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_THDVAR_TYPELIB(name, unsigned long) = { \
+#define DRIZZLE_THDVAR_ENUM(name, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_THDVAR_TYPELIB(name, unsigned long) = { \
   PLUGIN_VAR_ENUM | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL, typelib }
 
-#define MYSQL_THDVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_THDVAR_TYPELIB(name, uint64_t) = { \
+#define DRIZZLE_THDVAR_SET(name, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_THDVAR_TYPELIB(name, uint64_t) = { \
   PLUGIN_VAR_SET | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL, typelib }
 
 /* accessor macros */
 
 #define SYSVAR(name) \
-  (*(MYSQL_SYSVAR_NAME(name).value))
+  (*(DRIZZLE_SYSVAR_NAME(name).value))
 
 /* when thd == null, result points to global value */
 #define THDVAR(thd, name) \
-  (*(MYSQL_SYSVAR_NAME(name).resolve(thd, MYSQL_SYSVAR_NAME(name).offset)))
+  (*(DRIZZLE_SYSVAR_NAME(name).resolve(thd, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
 /*
@@ -384,7 +385,7 @@ DECLARE_MYSQL_THDVAR_TYPELIB(name, uint64_t) = { \
 
 struct st_mysql_plugin
 {
-  int type;             /* the plugin type (a MYSQL_XXX_PLUGIN value)   */
+  int type;             /* the plugin type (a DRIZZLE_XXX_PLUGIN value)   */
   const char *name;     /* plugin name (for SHOW PLUGINS)               */
   const char *version;  /* plugin version (for SHOW PLUGINS)            */
   const char *author;   /* plugin author (for SHOW PLUGINS)             */
@@ -410,9 +411,9 @@ struct handlerton;
   if you need it to persist.
 */
 
-#define MYSQL_VALUE_TYPE_STRING 0
-#define MYSQL_VALUE_TYPE_REAL   1
-#define MYSQL_VALUE_TYPE_INT    2
+#define DRIZZLE_VALUE_TYPE_STRING 0
+#define DRIZZLE_VALUE_TYPE_REAL   1
+#define DRIZZLE_VALUE_TYPE_INT    2
 
 struct st_mysql_value
 {
@@ -431,17 +432,15 @@ struct st_mysql_value
 extern "C" {
 #endif
 
-int thd_in_lock_tables(const MYSQL_THD thd);
-int thd_tablespace_op(const MYSQL_THD thd);
-int64_t thd_test_options(const MYSQL_THD thd, int64_t test_options);
-int thd_sql_command(const MYSQL_THD thd);
-const char *thd_proc_info(MYSQL_THD thd, const char *info);
-void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
-int thd_tx_isolation(const MYSQL_THD thd);
-char *thd_security_context(MYSQL_THD thd, char *buffer, unsigned int length,
-                           unsigned int max_query_len);
+int thd_in_lock_tables(const DRIZZLE_THD thd);
+int thd_tablespace_op(const DRIZZLE_THD thd);
+int64_t thd_test_options(const DRIZZLE_THD thd, int64_t test_options);
+int thd_sql_command(const DRIZZLE_THD thd);
+const char *thd_proc_info(DRIZZLE_THD thd, const char *info);
+void **thd_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton);
+int thd_tx_isolation(const DRIZZLE_THD thd);
 /* Increments the row counter, see THD::row_count */
-void thd_inc_row_count(MYSQL_THD thd);
+void thd_inc_row_count(DRIZZLE_THD thd);
 
 /**
   Create a temporary file.
@@ -471,7 +470,7 @@ int mysql_tmpfile(const char *prefix);
   @retval 0  the connection is active
   @retval 1  the connection has been killed
 */
-int thd_killed(const MYSQL_THD thd);
+int thd_killed(const DRIZZLE_THD thd);
 
 
 /**
@@ -480,7 +479,7 @@ int thd_killed(const MYSQL_THD thd);
   @param thd  user thread connection handle
   @return  thread id
 */
-unsigned long thd_get_thread_id(const MYSQL_THD thd);
+unsigned long thd_get_thread_id(const DRIZZLE_THD thd);
 
 
 /**
@@ -495,23 +494,23 @@ unsigned long thd_get_thread_id(const MYSQL_THD thd);
 
   @see alloc_root()
 */
-void *thd_alloc(MYSQL_THD thd, unsigned int size);
+void *thd_alloc(DRIZZLE_THD thd, unsigned int size);
 /**
   @see thd_alloc()
 */
-void *thd_calloc(MYSQL_THD thd, unsigned int size);
+void *thd_calloc(DRIZZLE_THD thd, unsigned int size);
 /**
   @see thd_alloc()
 */
-char *thd_strdup(MYSQL_THD thd, const char *str);
+char *thd_strdup(DRIZZLE_THD thd, const char *str);
 /**
   @see thd_alloc()
 */
-char *thd_strmake(MYSQL_THD thd, const char *str, unsigned int size);
+char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size);
 /**
   @see thd_alloc()
 */
-void *thd_memdup(MYSQL_THD thd, const void* str, unsigned int size);
+void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size);
 
 /**
   Create a LEX_STRING in this connection's local memory pool
@@ -526,7 +525,7 @@ void *thd_memdup(MYSQL_THD thd, const void* str, unsigned int size);
 
   @see thd_alloc()
 */
-MYSQL_LEX_STRING *thd_make_lex_string(MYSQL_THD thd, MYSQL_LEX_STRING *lex_str,
+DRIZZLE_LEX_STRING *thd_make_lex_string(DRIZZLE_THD thd, DRIZZLE_LEX_STRING *lex_str,
                                       const char *str, unsigned int size,
                                       int allocate_lex_string);
 
@@ -536,7 +535,7 @@ MYSQL_LEX_STRING *thd_make_lex_string(MYSQL_THD thd, MYSQL_LEX_STRING *lex_str,
   @param thd  user thread connection handle
   @param xid  location where identifier is stored
 */
-void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid);
+void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid);
 
 /**
   Invalidate the query cache for a given table.
@@ -546,7 +545,7 @@ void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid);
   @param key_length  length of key in bytes, including the NUL bytes
   @param using_trx   flag: TRUE if using transactions, FALSE otherwise
 */
-void mysql_query_cache_invalidate4(MYSQL_THD thd,
+void mysql_query_cache_invalidate4(DRIZZLE_THD thd,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
 
@@ -560,7 +559,7 @@ void mysql_query_cache_invalidate4(MYSQL_THD thd,
 */
 inline
 void *
-thd_get_ha_data(const MYSQL_THD thd, const struct handlerton *hton)
+thd_get_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton)
 {
   return *thd_ha_data(thd, hton);
 }
@@ -570,7 +569,7 @@ thd_get_ha_data(const MYSQL_THD thd, const struct handlerton *hton)
 */
 inline
 void
-thd_set_ha_data(const MYSQL_THD thd, const struct handlerton *hton,
+thd_set_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton,
                 const void *ha_data)
 {
   *thd_ha_data(thd, hton)= (void*) ha_data;

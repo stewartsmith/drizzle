@@ -13,12 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include <drizzled/mysql_priv.h>
+#include <drizzled/common_includes.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */
@@ -75,7 +70,7 @@ int ha_blackhole::close(void)
 }
 
 int ha_blackhole::create(const char *name __attribute__((unused)),
-                         TABLE *table_arg __attribute__((unused)),
+                         Table *table_arg __attribute__((unused)),
                          HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   return(0);
@@ -120,7 +115,7 @@ void ha_blackhole::position(const uchar *record __attribute__((unused)))
 
 int ha_blackhole::info(uint flag)
 {
-  memset((char*) &stats, 0, sizeof(stats));
+  memset(&stats, 0, sizeof(stats));
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
@@ -142,7 +137,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
     /*
       Here is where we get into the guts of a row level lock.
       If TL_UNLOCK is set
-      If we are not doing a LOCK TABLE or DISCARD/IMPORT
+      If we are not doing a LOCK Table or DISCARD/IMPORT
       TABLESPACE, then allow multiple writers
     */
 
@@ -237,7 +232,7 @@ static st_blackhole_share *get_share(const char *table_name)
       goto error;
 
     share->table_name_length= length;
-    strmov(share->table_name, table_name);
+    stpcpy(share->table_name, table_name);
     
     if (my_hash_insert(&blackhole_open_tables, (uchar*) share))
     {
@@ -270,7 +265,7 @@ static void blackhole_free_key(st_blackhole_share *share)
 }
 
 static uchar* blackhole_get_key(st_blackhole_share *share, size_t *length,
-                                my_bool not_used __attribute__((unused)))
+                                bool not_used __attribute__((unused)))
 {
   *length= share->table_name_length;
   return (uchar*) share->table_name;
@@ -303,7 +298,7 @@ static int blackhole_fini(void *p __attribute__((unused)))
 
 mysql_declare_plugin(blackhole)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

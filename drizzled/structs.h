@@ -16,7 +16,7 @@
 
 /* The old structures from unireg */
 
-struct st_table;
+class Table;
 class Field;
 
 typedef struct st_date_time_format {
@@ -88,7 +88,7 @@ typedef struct st_key {
     For temporary heap tables this member is NULL.
   */
   ulong *rec_per_key;
-  struct st_table *table;
+  Table *table;
   LEX_STRING comment;
 } KEY;
 
@@ -110,9 +110,9 @@ class handler;
 struct st_join_table;
 
 typedef struct st_read_record {			/* Parameter to read_record */
-  struct st_table *table;			/* Head-form */
+  Table *table;			/* Head-form */
   handler *file;
-  struct st_table **forms;			/* head and ref forms */
+  Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   THD *thd;
   SQL_SELECT *select;

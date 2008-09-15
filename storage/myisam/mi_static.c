@@ -18,9 +18,7 @@
   a shared library
 */
 
-#ifndef _global_h
 #include "myisamdef.h"
-#endif
 
 LIST	*myisam_open_list=0;
 uchar	 myisam_file_magic[]=
@@ -30,18 +28,14 @@ uchar	 myisam_pack_file_magic[]=
 char * myisam_log_filename=(char*) "myisam.log";
 File	myisam_log_file= -1;
 uint	myisam_quick_table_bits=9;
-ulong	myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
+uint32_t myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
 bool myisam_flush= false;
 bool myisam_delay_key_write= false;
 bool myisam_single_user= false;
-#if !defined(DONT_USE_RW_LOCKS)
-ulong myisam_concurrent_insert= 2;
-#else
-ulong myisam_concurrent_insert= 0;
-#endif
+uint32_t myisam_concurrent_insert= 2;
 my_off_t myisam_max_temp_length= MAX_FILE_SIZE;
-ulong    myisam_bulk_insert_tree_size=8192*1024;
-ulong    myisam_data_pointer_size=4;
+uint32_t myisam_bulk_insert_tree_size=8192*1024;
+uint32_t myisam_data_pointer_size=4;
 
 /*
   read_vec[] is used for converting between P_READ_KEY.. and SEARCH_

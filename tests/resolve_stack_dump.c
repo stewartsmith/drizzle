@@ -31,9 +31,6 @@
 #define DUMP_VERSION "1.4"
 #define HEX_INVALID  (uchar)255
 
-typedef ulong my_long_addr_t ; /* at some point, we need to fix configure
-				* to define this for us  
-				*/
 
 typedef struct sym_entry
 {
@@ -66,7 +63,7 @@ static void verify_sort(void);
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
-	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+	 DRIZZLE_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 
@@ -172,19 +169,19 @@ trace dump and specify the path to it with -s or --symbols-file");
 static uchar hex_val(char c)
 {
   uchar l;
-  if (my_isdigit(&my_charset_latin1,c))
+  if (my_isdigit(&my_charset_utf8_general_ci,c))
     return c - '0';
-  l = my_tolower(&my_charset_latin1,c);
+  l = my_tolower(&my_charset_utf8_general_ci,c);
   if (l < 'a' || l > 'f')
     return HEX_INVALID; 
   return (uchar)10 + ((uchar)c - (uchar)'a');
 }
 
-static my_long_addr_t read_addr(char** buf)
+static unsigned long read_addr(char** buf)
 {
   uchar c;
   char* p = *buf;
-  my_long_addr_t addr = 0;
+  unsigned long addr = 0;
 
   while((c = hex_val(*p++)) != HEX_INVALID)
       addr = (addr << 4) + c;
@@ -200,10 +197,10 @@ static int init_sym_entry(SYM_ENTRY* se, char* buf)
 
   if (!se->addr)
     return -1;
-  while (my_isspace(&my_charset_latin1,*buf++))
+  while (my_isspace(&my_charset_utf8_general_ci,*buf++))
     /* empty */;
 
-  while (my_isspace(&my_charset_latin1,*buf++))
+  while (my_isspace(&my_charset_utf8_general_ci,*buf++))
     /* empty - skip more space */;
   --buf;
   /* now we are on the symbol */
@@ -285,7 +282,7 @@ static void do_resolve(void)
   {
     p = buf;
     /* skip space */
-    while (my_isspace(&my_charset_latin1,*p))
+    while (my_isspace(&my_charset_utf8_general_ci,*p))
       ++p;
 
     if (*p++ == '0' && *p++ == 'x')

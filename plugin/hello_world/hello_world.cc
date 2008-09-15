@@ -13,16 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/mysql_priv.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <drizzled/plugin.h>
+#include <drizzled/common_includes.h>
 
 bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* this is how to fail */
   if (args->arg_count != 0)  {
-    strncpy(message, "Too many arguments", MYSQL_ERRMSG_SIZE);
+    strncpy(message, "Too many arguments", DRIZZLE_ERRMSG_SIZE);
     return 1;
   }
 
@@ -96,7 +93,7 @@ static int hello_world_plugin_deinit(void *p)
 
 mysql_declare_plugin(hello_world)
 {
-  MYSQL_UDF_PLUGIN,
+  DRIZZLE_UDF_PLUGIN,
   "hello_world",
   "1.0",
   "Mark Atwood",

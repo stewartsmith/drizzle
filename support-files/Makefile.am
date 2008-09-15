@@ -28,3 +28,5 @@ pkgsupp_SCRIPTS =	drizzle.server
 aclocaldir =		$(datadir)/aclocal
 aclocal_DATA =		drizzle.m4
 
+EXTRA_DIST =		drizzle.m4
+

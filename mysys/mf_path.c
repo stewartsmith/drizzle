@@ -61,10 +61,10 @@ char * my_path(char * to, const char *progname,
 #endif
     }
     VOID(intern_filename(to,end));
-    to=strend(to);
+    to= strchr(to, '\0');
     if (to != start && to[-1] != FN_LIBCHAR)
       *to++ = FN_LIBCHAR;
-    VOID(strmov(to,own_pathname_part));
+    VOID(stpcpy(to,own_pathname_part));
   }
   return(start);
 } /* my_path */
@@ -92,7 +92,7 @@ static char *find_file_in_path(char *to, const char *name)
   {
     if (path != pos)
     {
-      strxmov(strnmov(to,path,(uint) (pos-path)),dir,name,ext,NullS);
+      strxmov(stpncpy(to,path,(uint) (pos-path)),dir,name,ext,NullS);
       if (!access(to,F_OK))
       {
 	to[(uint) (pos-path)+1]=0;	/* Return path only */

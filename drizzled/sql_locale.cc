@@ -19,9 +19,7 @@
 
   !! This file is built from my_locale.pl !!
 */
-
-#include "mysql_priv.h"
-
+#include <drizzled/server_includes.h>
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] = 
@@ -2600,7 +2598,7 @@ MY_LOCALE *my_locale_by_name(const char *name)
   MY_LOCALE **locale;
   for (locale= my_locales; *locale != NULL; locale++) 
   {
-    if (!my_strcasecmp(&my_charset_latin1, (*locale)->name, name))
+    if (!my_strcasecmp(&my_charset_utf8_general_ci, (*locale)->name, name))
     {
       // Check that locale is on its correct position in the array
       assert((*locale) == my_locales[(*locale)->number]);

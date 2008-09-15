@@ -116,14 +116,14 @@ public:
   uint precision() const { return intg + frac; }
 };
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 int decimal_operation_results(int result);
 #else
 inline int decimal_operation_results(int result)
 {
   return result;
 }
-#endif /*MYSQL_CLIENT*/
+#endif /*DRIZZLE_CLIENT*/
 
 inline
 void max_my_decimal(my_decimal *to, int precision, int frac)
@@ -250,7 +250,7 @@ int my_decimal_ceiling(uint mask, const my_decimal *from, my_decimal *to)
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 int my_decimal2string(uint mask, const my_decimal *d, uint fixed_prec,
 		      uint fixed_dec, char filler, String *str);
 #endif
@@ -278,7 +278,7 @@ int my_decimal2double(uint mask __attribute__((unused)),
 
 
 inline
-int str2my_decimal(uint mask, const char *str, my_decimal *d, char **end)
+int str2my_decimal(uint mask, char *str, my_decimal *d, char **end)
 {
   return check_result_and_overflow(mask, string2decimal(str,(decimal_t*)d,end),
                                    d);
@@ -286,9 +286,9 @@ int str2my_decimal(uint mask, const char *str, my_decimal *d, char **end)
 
 
 int str2my_decimal(uint mask, const char *from, uint length,
-                   CHARSET_INFO *charset, my_decimal *decimal_value);
+                   const CHARSET_INFO * charset, my_decimal *decimal_value);
 
-#if defined(MYSQL_SERVER)
+#if defined(DRIZZLE_SERVER)
 inline
 int string2my_decimal(uint mask, const String *str, my_decimal *d)
 {
@@ -299,7 +299,7 @@ int string2my_decimal(uint mask, const String *str, my_decimal *d)
 my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec);
 
 
-#endif /*defined(MYSQL_SERVER) */
+#endif /*defined(DRIZZLE_SERVER) */
 
 inline
 int double2my_decimal(uint mask, double val, my_decimal *d)
@@ -398,7 +398,7 @@ int my_decimal_intg(const my_decimal *a)
 }
 
 
-void my_decimal_trim(ulong *precision, uint *scale);
+void my_decimal_trim(uint32_t *precision, uint *scale);
 
 
 #endif /*my_decimal_h*/

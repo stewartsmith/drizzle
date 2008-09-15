@@ -20,14 +20,10 @@
   @brief
   This file implements classes defined in field.h
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_select.h"
 #include <errno.h>
+#include <drizzled/drizzled_error_messages.h>
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024
@@ -82,8 +78,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -107,8 +101,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -132,8 +124,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -157,8 +147,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -182,8 +170,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -207,8 +193,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_ENUM,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_SET,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -232,8 +216,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -257,8 +239,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -282,8 +262,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -307,8 +285,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -332,8 +308,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -357,8 +331,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -382,8 +354,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -407,8 +377,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -432,33 +400,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
-  /* DRIZZLE_TYPE_SET -> */
-  {
-  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_SET,         DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -482,8 +423,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -529,8 +468,6 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,            STRING_RESULT,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
   DECIMAL_RESULT,           STRING_RESULT,
-  //DRIZZLE_TYPE_SET
-  STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
   STRING_RESULT,
 };
@@ -553,7 +490,8 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
 */
 
 static bool
-test_if_important_data(CHARSET_INFO *cs, const char *str, const char *strend)
+test_if_important_data(const CHARSET_INFO * const cs, const char *str,
+                       const char *strend)
 {
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
@@ -646,7 +584,7 @@ Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
     2   error: garbage at the end of string.
 */
 
-int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length, 
+int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int length, 
                          const char *int_end, int error)
 {
   /* Test if we get an empty string or wrong integer */
@@ -655,17 +593,17 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
     char buff[128];
     String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
     tmp.copy(str, length, system_charset_info);
-    push_warning_printf(table->in_use, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "integer", tmp.c_ptr(), field_name,
-                        (ulong) table->in_use->row_count);
+                        (uint32_t) table->in_use->row_count);
     return 1;
   }
   /* Test if we have garbage at the end of the given string. */
   if (test_if_important_data(cs, int_end, str + length))
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -695,7 +633,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
     1   error
 */
 
-bool Field_num::get_int(CHARSET_INFO *cs, const char *from, uint len,
+bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint len,
                         int64_t *rnd, uint64_t unsigned_max, 
                         int64_t signed_min, int64_t signed_max)
 {
@@ -733,7 +671,7 @@ bool Field_num::get_int(CHARSET_INFO *cs, const char *from, uint len,
   return 0;
 
 out_of_range:
-  set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+  set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   return 1;
 }
 
@@ -753,12 +691,12 @@ int Field::warn_if_overflow(int op_result)
 {
   if (op_result == E_DEC_OVERFLOW)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     return 1;
   }
   if (op_result == E_DEC_TRUNCATED)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
@@ -766,7 +704,7 @@ int Field::warn_if_overflow(int op_result)
 
 
 #ifdef NOT_USED
-static bool test_if_real(const char *str,int length, CHARSET_INFO *cs)
+static bool test_if_real(const char *str,int length, const CHARSET_INFO * const cs)
 {
   cs= system_charset_info; // QQ move test_if_real into CHARSET_INFO struct
 
@@ -826,9 +764,9 @@ static bool test_if_real(const char *str,int length, CHARSET_INFO *cs)
   This is used for printing bit_fields as numbers while debugging.
 */
 
-String *Field::val_int_as_str(String *val_buffer, my_bool unsigned_val)
+String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   int64_t value= val_int();
 
@@ -862,7 +800,7 @@ Field::Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
 }
 
 
-void Field::hash(ulong *nr, ulong *nr2)
+void Field::hash(uint32_t *nr, uint32_t *nr2)
 {
   if (is_null())
   {
@@ -871,7 +809,7 @@ void Field::hash(ulong *nr, ulong *nr2)
   else
   {
     uint len= pack_length();
-    CHARSET_INFO *cs= charset();
+    const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
 }
@@ -926,7 +864,7 @@ int Field::compatible_field_size(uint field_metadata)
 }
 
 
-int Field::store(const char *to, uint length, CHARSET_INFO *cs,
+int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -1109,7 +1047,7 @@ int64_t Field::convert_decimal2int64_t(const my_decimal *val,
   {
     if (val->sign())
     {
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       i= 0;
       *err= 1;
     }
@@ -1179,7 +1117,7 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 
 Field_str::Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uchar null_bit_arg, utype unireg_check_arg,
-                     const char *field_name_arg, CHARSET_INFO *charset_arg)
+                     const char *field_name_arg, const CHARSET_INFO * const charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg)
 {
@@ -1299,7 +1237,7 @@ bool Field::optimize_range(uint idx, uint part)
 }
 
 
-Field *Field::new_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field::new_field(MEM_ROOT *root, Table *new_table,
                         bool keep_type __attribute__((unused)))
 {
   Field *tmp;
@@ -1319,7 +1257,7 @@ Field *Field::new_field(MEM_ROOT *root, struct st_table *new_table,
 }
 
 
-Field *Field::new_key_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
                             uchar *new_ptr, uchar *new_null_ptr,
                             uint new_null_bit)
 {
@@ -1334,9 +1272,9 @@ Field *Field::new_key_field(MEM_ROOT *root, struct st_table *new_table,
 }
 
 
-/* This is used to generate a field in TABLE from TABLE_SHARE */
+/* This is used to generate a field in Table from TABLE_SHARE */
 
-Field *Field::clone(MEM_ROOT *root, struct st_table *new_table)
+Field *Field::clone(MEM_ROOT *root, Table *new_table)
 {
   Field *tmp;
   if ((tmp= (Field*) memdup_root(root,(char*) this,size_of())))
@@ -1353,7 +1291,7 @@ Field *Field::clone(MEM_ROOT *root, struct st_table *new_table)
 ** tiny int
 ****************************************************************************/
 
-int Field_tiny::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_tiny::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int error;
   int64_t rnd;
@@ -1373,13 +1311,13 @@ int Field_tiny::store(double nr)
     if (nr < 0.0)
     {
       *ptr=0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 255.0)
     {
       *ptr=(char) 255;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1390,13 +1328,13 @@ int Field_tiny::store(double nr)
     if (nr < -128.0)
     {
       *ptr= (char) -128;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 127.0)
     {
       *ptr=127;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1415,13 +1353,13 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
     if (nr < 0 && !unsigned_val)
     {
       *ptr= 0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if ((uint64_t) nr > (uint64_t) 255)
     {
       *ptr= (char) 255;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1434,13 +1372,13 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
     if (nr < -128)
     {
       *ptr= (char) -128;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 127)
     {
       *ptr=127;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1469,7 +1407,7 @@ int64_t Field_tiny::val_int(void)
 String *Field_tiny::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,5*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -1511,7 +1449,7 @@ void Field_tiny::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_tiny::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "tinyint(%d)",(int) field_length));
   add_unsigned(res);
@@ -1549,7 +1487,7 @@ check_string_copy_error(Field_str *field,
                         const char *well_formed_error_pos,
                         const char *cannot_convert_error_pos,
                         const char *end,
-                        CHARSET_INFO *cs)
+                        const CHARSET_INFO * const cs)
 {
   const char *pos, *end_orig;
   char tmp[64], *t;
@@ -1595,12 +1533,12 @@ check_string_copy_error(Field_str *field,
   *t= '\0';
   push_warning_printf(field->table->in_use, 
                       field->table->in_use->abort_on_warning ?
-                      MYSQL_ERROR::WARN_LEVEL_ERROR :
-                      MYSQL_ERROR::WARN_LEVEL_WARN,
+                      DRIZZLE_ERROR::WARN_LEVEL_ERROR :
+                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
-                      (ulong) field->table->in_use->row_count);
+                      (uint32_t) field->table->in_use->row_count);
   return true;
 }
 
@@ -1631,12 +1569,12 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
     if (test_if_important_data(field_charset, ptr, end))
     {
       if (table->in_use->abort_on_warning)
-        set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
       else
-        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     }
     else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -1662,9 +1600,9 @@ int Field_str::store(double nr)
   if (error)
   {
     if (table->in_use->abort_on_warning)
-      set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   return store(buff, length, charset());
 }
@@ -1773,7 +1711,7 @@ void Field_enum::store_type(uint64_t value)
     (if there isn't a empty value in the enum)
 */
 
-int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const cs)
 {
   int err= 0;
   uint32_t not_used;
@@ -1802,13 +1740,13 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
       if (err || end != from+length || tmp > typelib->count)
       {
 	tmp=0;
-	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+	set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
       }
       if (!table->in_use->count_cuted_fields)
         err= 0;
     }
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   store_type((uint64_t) tmp);
   return err;
@@ -1827,7 +1765,7 @@ int Field_enum::store(int64_t nr,
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     if (nr != 0 || table->in_use->count_cuted_fields)
     {
       nr= 0;
@@ -1969,7 +1907,7 @@ void Field_enum::sql_type(String &res) const
 }
 
 
-Field *Field_enum::new_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
                              bool keep_type)
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
@@ -2062,7 +2000,6 @@ void Create_field::create_length_to_internal_length(void)
     pack_length= calc_pack_length(sql_type, length);
     break;
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
     /* Pack_length already calculated in sql_parse.cc */
     length*= charset->mbmaxlen;
     key_length= pack_length;
@@ -2124,17 +2061,17 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
+bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
-                        CHARSET_INFO *fld_charset,
+                        const CHARSET_INFO * const fld_charset,
                         uint fld_geom_type __attribute__((unused)),
                         enum column_format_type column_format)
 {
   uint sign_len, allowed_type_modifier= 0;
-  ulong max_field_charlength= MAX_FIELD_CHARLENGTH;
+  uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
 
   field= 0;
   field_name= fld_name;
@@ -2227,29 +2164,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       /* Allow empty as default value. */
       String str,*res;
       res= fld_default_value->val_str(&str);
-      /*
-        A default other than '' is always an error, and any non-NULL
-        specified default is an error in strict mode.
-      */
-      if (res->length() || (thd->variables.sql_mode &
-                            (MODE_STRICT_TRANS_TABLES |
-                             MODE_STRICT_ALL_TABLES)))
-      {
-        my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
-                 fld_name); /* purecov: inspected */
-        return(true);
-      }
-      else
-      {
-        /*
-          Otherwise a default of '' is just a warning.
-        */
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-                            ER_BLOB_CANT_HAVE_DEFAULT,
-                            ER(ER_BLOB_CANT_HAVE_DEFAULT),
-                            fld_name);
-      }
-      def= 0;
     }
     flags|= BLOB_FLAG;
     break;
@@ -2280,7 +2194,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
         and 19 as length of 4.1 compatible representation.
       */
       length= ((length+1)/2)*2; /* purecov: inspected */
-      length= min(length, MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
+      length= min(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
     }
     flags|= UNSIGNED_FLAG;
     if (fld_default_value)
@@ -2334,22 +2248,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case DRIZZLE_TYPE_DATETIME:
     length= MAX_DATETIME_WIDTH;
     break;
-  case DRIZZLE_TYPE_SET:
-    {
-      pack_length= get_set_pack_length(fld_interval_list->elements);
-
-      List_iterator<String> it(*fld_interval_list);
-      String *tmp;
-      while ((tmp= it++))
-        interval_list.push_back(tmp);
-      /*
-        Set fake length to 1 to pass the below conditions.
-        Real length will be set in mysql_prepare_table()
-        when we know the character set of the column
-      */
-      length= 1;
-      break;
-    }
   case DRIZZLE_TYPE_ENUM:
     {
       /* Should be safe. */
@@ -2367,7 +2265,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   char_length= length;
 
   if (!(flags & BLOB_FLAG) &&
-      ((length > max_field_charlength && fld_type != DRIZZLE_TYPE_SET &&
+      ((length > max_field_charlength &&
         fld_type != DRIZZLE_TYPE_ENUM &&
         (fld_type != DRIZZLE_TYPE_VARCHAR || fld_default_value)) ||
        (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
@@ -2388,7 +2286,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
 }
 
 
-enum_field_types get_blob_type_from_length(ulong length __attribute__((unused)))
+enum_field_types get_blob_type_from_length(uint32_t length __attribute__((unused)))
 {
   enum_field_types type;
 
@@ -2418,7 +2316,6 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
   case DRIZZLE_TYPE_NULL	: return 0;
   case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
     abort(); return 0;                          // This shouldn't happen
@@ -2445,7 +2342,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag,
 		  enum_field_types field_type,
-		  CHARSET_INFO *field_charset,
+		  const CHARSET_INFO * field_charset,
 		  Field::utype unireg_check,
 		  TYPELIB *interval,
 		  const char *field_name)
@@ -2498,10 +2395,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 	return new Field_enum(ptr,field_length,null_pos,null_bit,
 				  unireg_check, field_name,
 				  pack_length, interval, field_charset);
-      else
-	return new Field_set(ptr,field_length,null_pos,null_bit,
-			     unireg_check, field_name,
-			     pack_length, interval, field_charset);
     }
   }
 
@@ -2591,7 +2484,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     break;
     /* Change CHAR -> VARCHAR if dynamic record length */
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_VARCHAR:
     /* This is corrected in create_length_to_internal_length */
     length= (length+charset->mbmaxlen-1) / charset->mbmaxlen;
@@ -2659,7 +2551,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 */
 
 bool 
-Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
+Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
                    int cuted_increment)
 {
   /*
@@ -2674,7 +2566,7 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
                         thd->row_count);
     return 0;
   }
-  return level >= MYSQL_ERROR::WARN_LEVEL_WARN;
+  return level >= DRIZZLE_ERROR::WARN_LEVEL_WARN;
 }
 
 
@@ -2695,14 +2587,14 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                             unsigned int code, 
                             const char *str, uint str_length, 
                             timestamp_type ts_type, int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
   if ((thd->really_abort_on_warning() &&
-       level >= MYSQL_ERROR::WARN_LEVEL_WARN) ||
+       level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
     make_truncated_value_warning(thd, level, str, str_length, ts_type,
                                  field_name);
@@ -2725,7 +2617,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
                             int64_t nr, timestamp_type ts_type,
                             int cuted_increment)
 {
@@ -2756,7 +2648,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
                             double nr, timestamp_type ts_type)
 {
   THD *thd= table ? table->in_use : current_thd;

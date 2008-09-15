@@ -23,7 +23,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
   register my_off_t pos;
   uint i;
   uchar old_key[MI_MAX_KEY_BUFF],*new_key;
-  my_bool auto_key_changed=0;
+  bool auto_key_changed=0;
   uint64_t changed;
   MYISAM_SHARE *share= info->s;
   ha_checksum old_checksum= 0;
@@ -88,7 +88,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
         info->update&= ~HA_STATE_RNEXT_SAME;
 
 	if (new_length != old_length ||
-	    memcmp((uchar*) old_key,(uchar*) new_key,new_length))
+	    memcmp(old_key,new_key,new_length))
 	{
 	  if ((int) i == info->lastinx)
 	    key_changed|=HA_STATE_WRITTEN;	/* Mark that keyfile changed */
@@ -124,13 +124,13 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     ha_rows org_split;
     my_off_t org_delete_link;
 
-    memcpy((char*) &state, (char*) info->state, sizeof(state));
+    memcpy(&state, info->state, sizeof(state));
     org_split=	     share->state.split;
     org_delete_link= share->state.dellink;
     if ((*share->update_record)(info,pos,newrec))
       goto err;
     if (!key_changed &&
-	(memcmp((char*) &state, (char*) info->state, sizeof(state)) ||
+	(memcmp(&state, info->state, sizeof(state)) ||
 	 org_split != share->state.split ||
 	 org_delete_link != share->state.dellink))
       key_changed|= HA_STATE_CHANGED;		/* Must update index file */
@@ -143,7 +143,6 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
 
   info->update= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED | HA_STATE_AKTIV |
 		 key_changed);
-  myisam_log_record(MI_LOG_UPDATE,info,newrec,info->lastpos,0);
   /*
     Every myisam function that updates myisam table must end with
     call to _mi_writeinfo(). If operation (second param of
@@ -194,7 +193,6 @@ err:
 		 key_changed);
 
  err_end:
-  myisam_log_record(MI_LOG_UPDATE,info,newrec,info->lastpos,my_errno);
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
   if (save_errno == HA_ERR_KEY_NOT_FOUND)
   {

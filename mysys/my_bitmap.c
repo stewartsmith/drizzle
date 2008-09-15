@@ -62,16 +62,16 @@ void create_last_word_mask(MY_BITMAP *map)
   map->last_word_ptr= map->bitmap + no_words_in_map(map)-1;
   switch (no_bytes_in_map(map) & 3) {
   case 1:
-    map->last_word_mask= ~0U;
+    map->last_word_mask= UINT32_MAX;
     ptr[0]= mask;
     return;
   case 2:
-    map->last_word_mask= ~0U;
+    map->last_word_mask= UINT32_MAX;
     ptr[0]= 0;
     ptr[1]= mask;
     return;
   case 3:
-    map->last_word_mask= 0U;
+    map->last_word_mask= 0;
     ptr[2]= mask;
     ptr[3]= 0xFFU;
     return;
@@ -239,7 +239,7 @@ void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size)
   uchar *m= (uchar *)map->bitmap;
 
   assert(map->bitmap &&
-	      (prefix_size <= map->n_bits || prefix_size == (uint) ~0));
+	      (prefix_size <= map->n_bits || prefix_size == UINT32_MAX));
   set_if_smaller(prefix_size, map->n_bits);
   if ((prefix_bytes= prefix_size / 8))
     memset(m, 0xff, prefix_bytes);

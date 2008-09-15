@@ -95,8 +95,8 @@ my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, uchar *bufs);
    <> 0 Error
 */
 
-int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
-			  ulong sortbuff_size)
+int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
+			  uint32_t sortbuff_size)
 {
   int error,maxbuffer,skr;
   uint memavl,old_memavl,keys,sort_length;
@@ -120,7 +120,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
 
   my_b_clear(&tempfile);
   my_b_clear(&tempfile_for_exceptions);
-  memset((char*) &buffpek, 0, sizeof(buffpek));
+  memset(&buffpek, 0, sizeof(buffpek));
   sort_keys= (uchar **) NULL; error= 1;
   maxbuffer=1;
 
@@ -182,7 +182,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
   if (maxbuffer == 0)
   {
     if (!no_messages)
-      printf("  - Dumping %lu keys\n", (ulong) records);
+      printf("  - Dumping %u keys\n", (uint32_t) records);
     if (write_index(info,sort_keys, (uint) records))
       goto err; /* purecov: inspected */
   }
@@ -192,7 +192,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
     if (maxbuffer >= MERGEBUFF2)
     {
       if (!no_messages)
-	printf("  - Merging %lu keys\n", (ulong) records); /* purecov: tested */
+	printf("  - Merging %u keys\n", (uint32_t) records); /* purecov: tested */
       if (merge_many_buff(info,keys,sort_keys,
                   dynamic_element(&buffpek,0,BUFFPEK *),&maxbuffer,&tempfile))
 	goto err;				/* purecov: inspected */
@@ -329,8 +329,8 @@ pthread_handler_t thr_find_all_keys(void *arg)
 
     my_b_clear(&sort_param->tempfile);
     my_b_clear(&sort_param->tempfile_for_exceptions);
-    memset((char*) &sort_param->buffpek, 0, sizeof(sort_param->buffpek));
-    memset((char*) &sort_param->unique, 0,  sizeof(sort_param->unique));
+    memset(&sort_param->buffpek, 0, sizeof(sort_param->buffpek));
+    memset(&sort_param->unique, 0,  sizeof(sort_param->unique));
     sort_keys= (uchar **) NULL;
 
     memavl=       max(sort_param->sortbuff_size, MIN_SORT_MEMORY);
@@ -469,8 +469,8 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
 {
   SORT_INFO *sort_info= sort_param->sort_info;
   MI_CHECK *param= sort_info->param;
-  ulong length= 0, keys;
-  ulong *rec_per_key_part=param->rec_per_key_part;
+  uint32_t length= 0, keys;
+  ulong *rec_per_key_part= param->rec_per_key_part;
   int got_error=sort_info->got_error;
   uint i;
   MI_INFO *info=sort_info->info;

@@ -30,11 +30,6 @@ typedef struct st_tina_share {
   char data_file_name[FN_REFLEN];
   uint table_name_length, use_count;
   /*
-    Below flag is needed to make log tables work with concurrent insert.
-    For more details see comment to ha_tina::update_status.
-  */
-  my_bool is_log_table;
-  /*
     Here we save the length of the file for readers. This is updated by
     inserts, updates and deletes. The var is initialized along with the
     share initialization.
@@ -152,7 +147,7 @@ public:
   void position(const uchar *record);
   int info(uint);
   int delete_all_rows(void);
-  int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
+  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   bool check_if_incompatible_data(HA_CREATE_INFO *info,
                                   uint table_changes);
 

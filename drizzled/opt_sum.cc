@@ -47,8 +47,8 @@
   (assuming a index for column d of table t2 is defined)
 */
 
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref, Field* field,
                                 COND *cond, uint *range_fl,
@@ -74,10 +74,10 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
     #			Multiplication of number of rows in all tables
 */
 
-static uint64_t get_exact_record_count(TABLE_LIST *tables)
+static uint64_t get_exact_record_count(TableList *tables)
 {
   uint64_t count= 1;
-  for (TABLE_LIST *tl= tables; tl; tl= tl->next_leaf)
+  for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
     ha_rows tmp= tl->table->file->records();
     if ((tmp == HA_POS_ERROR))
@@ -109,7 +109,7 @@ static uint64_t get_exact_record_count(TABLE_LIST *tables)
     HA_ERR_... if a deadlock or a lock wait timeout happens, for example
 */
 
-int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
+int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
 {
   List_iterator_fast<Item> it(all_fields);
   int const_result= 1;
@@ -128,9 +128,9 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
     Analyze outer join dependencies, and, if possible, compute the number
     of returned rows.
   */
-  for (TABLE_LIST *tl= tables; tl; tl= tl->next_leaf)
+  for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
-    TABLE_LIST *embedded;
+    TableList *embedded;
     for (embedded= tl ; embedded; embedded= embedded->embedding)
     {
       if (embedded->on_expr)
@@ -233,7 +233,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
-          TABLE *table= item_field->field->table;
+          Table *table= item_field->field->table;
 
           /* 
             Look for a partial key that can be used for optimization.
@@ -381,7 +381,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
-          TABLE *table= item_field->field->table;
+          Table *table= item_field->field->table;
 
           /* 
             Look for a partial key that can be used for optimization.
@@ -802,7 +802,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
   if (!(field->flags & PART_KEY_FLAG))
     return 0;                                        // Not key field
 
-  TABLE *table= field->table;
+  Table *table= field->table;
   uint idx= 0;
 
   KEY *keyinfo,*keyinfo_end;
@@ -813,7 +813,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
     KEY_PART_INFO *part,*part_end;
     key_part_map key_part_to_use= 0;
     /*
-      Perform a check if index is not disabled by ALTER TABLE
+      Perform a check if index is not disabled by ALTER Table
       or IGNORE INDEX.
     */
     if (!table->keys_in_use_for_query.is_set(idx))

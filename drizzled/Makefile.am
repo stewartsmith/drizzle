@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field . share
+SUBDIRS = field serialize  .
 
 sbin_PROGRAMS =drizzled
 
@@ -36,7 +36,7 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS} 
 
 DTRACE = @DTRACE@
 
@@ -52,26 +52,29 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
-				plugin_audit.h
+				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la
 
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
-	$(top_builddir)/mysys/libmysyslt.la \
-	$(top_builddir)/mystrings/libmystringslt.la \
-	$(ZLIB_LIBS)
+	$(top_builddir)/mysys/libmysys.la \
+	$(top_builddir)/mystrings/libmystrings.la \
+	$(ZLIB_LIBS) $(LIBINTL)
 
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
+		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
+		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
 noinst_HEADERS = item.h \
+		 authentication.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -80,15 +83,14 @@ noinst_HEADERS = item.h \
 		 item_create.h \
 		 item_subselect.h \
 		 item_row.h \
-		 mysql_priv.h \
+		 server_includes.h \
 		 sql_bitmap.h \
 		 sql_class.h \
 		 sql_lex.h \
 		 sql_list.h \
-		 sql_map.h \
+		 sql_locale.h \
 		 sql_state.h \
 		 sql_string.h \
-		 unireg.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \
@@ -126,10 +128,30 @@ noinst_HEADERS = item.h \
 		 sql_plugin.h \
 		 global.h \
 		 base.h \
-		 probes.h
+		 probes.h \
+		 definitions.h \
+		 sql_alloc.h \
+		 sql_parse.h \
+		 error_injection.h \
+		 connect.h \
+		 sql_table.h \
+		 show.h \
+		 tmp_table.h \
+		 sj_tmp_table.h \
+		 table_list.h \
+		 drizzled_error_messages.h \
+		 order.h \
+		 filesort_info.h \
+		 field_iterator.h \
+		 common_includes.h 
 
-drizzled_SOURCES = sql_lex.cc \
+drizzled_SOURCES = \
+		   sql_db.cc \
+		   sql_lex.cc \
+		   authentication.cc \
 		   sql_handler.cc \
+		   natural_join_column.cc \
+		   field_iterator.cc \
 		   item.cc \
 		   item_sum.cc \
 		   item_buff.cc \
@@ -150,7 +172,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   sql_state.c \
 		   lock.cc \
 		   sql_string.cc \
-		   sql_map.cc \
 		   drizzled.cc \
 		   sql_connect.cc \
 		   scheduler.cc \
@@ -178,7 +199,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   opt_sum.cc \
 		   records.cc \
 		   filesort.cc \
-		   sql_db.cc \
 		   sql_table.cc \
 		   sql_rename.cc \
 		   sql_load.cc \
@@ -205,6 +225,8 @@ drizzled_SOURCES = sql_lex.cc \
 		   my_decimal.cc\
 		   sql_plugin.cc \
 		   sql_binlog.cc \
+		   tmp_table.cc \
+		   sj_tmp_table.cc \
 		   sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
@@ -217,11 +239,12 @@ gen_lex_hash_SOURCES =gen_lex_hash.cc
 
 gen_lex_hash_LDFLAGS =  
 
-DEFS =-DMYSQL_SERVER \
-      -DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \
+DEFS =-DDRIZZLE_SERVER \
+      -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \
+      -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
 BUILT_MAINT_SRC = sql_yacc.cc \
@@ -232,6 +255,7 @@ BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		version.h
 
 EXTRA_DIST = $(BUILT_MAINT_SRC) \
+	     drizzledumpslow \
 	     message.mc \
 	     probes.d
 

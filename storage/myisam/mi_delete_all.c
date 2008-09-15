@@ -35,7 +35,7 @@ int mi_delete_all_rows(MI_INFO *info)
 
   info->state->records=info->state->del=state->split=0;
   state->dellink = HA_OFFSET_ERROR;
-  state->sortkey=  (ushort) ~0;
+  state->sortkey=  UINT16_MAX;
   info->state->key_file_length=share->base.keystart;
   info->state->data_file_length=0;
   info->state->empty=info->state->key_empty=0;
@@ -46,24 +46,14 @@ int mi_delete_all_rows(MI_INFO *info)
   for (i=0 ; i < share->base.keys ; i++)
     state->key_root[i]= HA_OFFSET_ERROR;
 
-  myisam_log_command(MI_LOG_DELETE_ALL,info,(uchar*) 0,0,0);
   /*
     If we are using delayed keys or if the user has done changes to the tables
     since it was locked then there may be key blocks in the key cache
   */
   flush_key_blocks(share->key_cache, share->kfile, FLUSH_IGNORE_CHANGED);
-#ifdef HAVE_MMAP
-  if (share->file_map)
-    _mi_unmap_file(info);
-#endif
   if (ftruncate(info->dfile, 0) || ftruncate(share->kfile, share->base.keystart))
     goto err;
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
-#ifdef HAVE_MMAP
-  /* Map again */
-  if (share->file_map)
-    mi_dynmap_file(info, (my_off_t) 0);
-#endif
   return(0);
 
 err:

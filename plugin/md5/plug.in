@@ -1,7 +1,7 @@
-MYSQL_PLUGIN(md5,[MD5 UDF],
+DRIZZLE_PLUGIN(md5,[MD5 UDF],
         [UDF Plugin for MD5])
-MYSQL_PLUGIN_DYNAMIC(md5,   [libmd5udf.la])
-MYSQL_PLUGIN_ACTIONS(md5,  [
+DRIZZLE_PLUGIN_DYNAMIC(md5,   [libmd5udf.la])
+DRIZZLE_PLUGIN_ACTIONS(md5,  [
   AC_CHECK_HEADERS(openssl/md5.h)
   AM_CONDITIONAL(BUILD_MD5_UDF,[test "$ac_cv_header_openssl_md5_h" = "yes"])
 ])

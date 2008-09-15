@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
 
 /**
@@ -74,7 +75,7 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TABLE_SHARE *share,
-                                 CHARSET_INFO *cs)
+                                 const CHARSET_INFO * const cs)
   :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
@@ -93,7 +94,7 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
 
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 CHARSET_INFO *cs)
+                                 const CHARSET_INFO * const cs)
   :Field_str((uchar*) 0, MAX_DATETIME_WIDTH,
              maybe_null_arg ? (uchar*) "": 0, 0,
 	     NONE, field_name_arg, cs)
@@ -142,7 +143,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 int Field_timestamp::store(const char *from,
                            uint len,
-                           CHARSET_INFO *cs __attribute__((unused)))
+                           const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
   my_time_t tmp= 0;
@@ -158,7 +159,7 @@ int Field_timestamp::store(const char *from,
   if (error || !have_smth_to_conv)
   {
     error= 1;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                          from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
   }
 
@@ -167,14 +168,14 @@ int Field_timestamp::store(const char *from,
   {
     if (!(tmp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
     }
     else if (in_dst_time_gap)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
                            from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
@@ -190,7 +191,7 @@ int Field_timestamp::store(double nr)
   int error= 0;
   if (nr < 0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0;					// Avoid overflow on buff
@@ -212,8 +213,7 @@ int Field_timestamp::store(int64_t nr,
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
-                                                 MODE_NO_ZERO_DATE) |
-                                   MODE_NO_ZERO_IN_DATE, &error);
+                                                 MODE_NO_ZERO_DATE), &error);
   if (tmp == -1LL)
   {
     error= 2;
@@ -223,20 +223,20 @@ int Field_timestamp::store(int64_t nr,
   {
     if (!(timestamp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
     if (in_dst_time_gap)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
                            nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
   } else if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_TRUNCATED,
                          nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
 
@@ -361,7 +361,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
   {				      /* Zero time is "000000" */
     if (fuzzydate & TIME_NO_ZERO_DATE)
       return 1;
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
   }
   else
   {

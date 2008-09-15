@@ -38,10 +38,10 @@
     of the table will be preloaded.
 */
 
-int mi_preload(MI_INFO *info, uint64_t key_map, my_bool ignore_leaves)
+int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 {
   uint i;
-  ulong length, block_length= 0;
+  uint32_t length, block_length= 0;
   uchar *buff= NULL;
   MYISAM_SHARE* share= info->s;
   uint keys= share->state.header.keys;
@@ -79,7 +79,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, my_bool ignore_leaves)
   {
     /* Read the next block of index file into the preload buffer */
     if ((my_off_t) length > (key_file_length-pos))
-      length= (ulong) (key_file_length-pos);
+      length= (uint32_t) (key_file_length-pos);
     if (my_pread(share->kfile, (uchar*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
       goto err;
 

@@ -1,17 +1,23 @@
-/* Copyright (C) 2008 Drizzle Open Source Project
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
   This file is included by both libdrizzle.c (the DRIZZLE client C API)
@@ -47,16 +53,14 @@
 #undef max_allowed_packet
 #undef net_buffer_length
 
-#define CLI_DRIZZLE_CONNECT STDCALL drizzle_connect
+#define CLI_DRIZZLE_CONNECT drizzle_connect
 
 #include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
 #include "errmsg.h"
 #include <vio/violite.h>
-#include <mysys/my_pthread.h>        /* because of signal()  */
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -84,7 +88,9 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
+#include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
+#include <libdrizzle/gettext.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;
@@ -98,25 +104,26 @@ static bool org_my_init_done= false;
 static void drizzle_close_free_options(DRIZZLE *drizzle);
 static void drizzle_close_free(DRIZZLE *drizzle);
 
-static int wait_for_data(my_socket fd, uint timeout);
+static int wait_for_data(int fd, int32_t timeout);
+int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout);
 
-CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
+CHARSET_INFO *default_client_charset_info = &my_charset_utf8_general_ci;
 
 /* Server error code and message */
 unsigned int drizzle_server_last_errno;
-char drizzle_server_last_error[MYSQL_ERRMSG_SIZE];
+char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
 
 /****************************************************************************
-  A modified version of connect().  my_connect() allows you to specify
+  A modified version of connect().  connect_with_timeout() allows you to specify
   a timeout value, in seconds, that we should wait until we
   derermine we can't connect to a particular host.  If timeout is 0,
-  my_connect() will behave exactly like connect().
+  connect_with_timeout() will behave exactly like connect().
 
   Base version coded by Steve Bernacki, Jr. <steve@navinet.net>
 *****************************************************************************/
 
-int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
-         uint timeout)
+
+int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout)
 {
   int flags, res, s_err;
 
@@ -143,6 +150,7 @@ int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
   }
   if (res == 0)        /* Connected quickly! */
     return(0);
+
   return wait_for_data(fd, timeout);
 }
 
@@ -154,9 +162,8 @@ int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
   If not, we will use select()
 */
 
-static int wait_for_data(my_socket fd, uint timeout)
+static int wait_for_data(int fd, int32_t timeout)
 {
-#ifdef HAVE_POLL
   struct pollfd ufds;
   int res;
 
@@ -167,81 +174,9 @@ static int wait_for_data(my_socket fd, uint timeout)
     errno= EINTR;
     return -1;
   }
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
+  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)) || (ufds.revents & POLLHUP))
     return -1;
   return 0;
-#else
-  SOCKOPT_OPTLEN_TYPE s_err_size = sizeof(uint);
-  fd_set sfds;
-  struct timeval tv;
-  time_t start_time, now_time;
-  int res, s_err;
-
-  if (fd >= FD_SETSIZE)        /* Check if wrong error */
-    return 0;          /* Can't use timeout */
-
-  /*
-    Our connection is "in progress."  We can use the select() call to wait
-    up to a specified period of time for the connection to suceed.
-    If select() returns 0 (after waiting howevermany seconds), our socket
-    never became writable (host is probably unreachable.)  Otherwise, if
-    select() returns 1, then one of two conditions exist:
-  
-    1. An error occured.  We use getsockopt() to check for this.
-    2. The connection was set up sucessfully: getsockopt() will
-    return 0 as an error.
-  
-    Thanks goes to Andrew Gierth <andrew@erlenstar.demon.co.uk>
-    who posted this method of timing out a connect() in
-    comp.unix.programmer on August 15th, 1997.
-  */
-
-  FD_ZERO(&sfds);
-  FD_SET(fd, &sfds);
-  /*
-    select could be interrupted by a signal, and if it is,
-    the timeout should be adjusted and the select restarted
-    to work around OSes that don't restart select and
-    implementations of select that don't adjust tv upon
-    failure to reflect the time remaining
-   */
-  start_time= my_time(0);
-  for (;;)
-  {
-    tv.tv_sec = (long) timeout;
-    tv.tv_usec = 0;
-#if defined(HPUX10)
-    if ((res = select(fd+1, NULL, (int*) &sfds, NULL, &tv)) > 0)
-      break;
-#else
-    if ((res = select(fd+1, NULL, &sfds, NULL, &tv)) > 0)
-      break;
-#endif
-    if (res == 0)          /* timeout */
-      return -1;
-    now_time= my_time(0);
-    timeout-= (uint) (now_time - start_time);
-    if (errno != EINTR || (int) timeout <= 0)
-      return -1;
-  }
-
-  /*
-    select() returned something more interesting than zero, let's
-    see if we have any errors.  If the next two statements pass,
-    we've got an open socket!
-  */
-
-  s_err=0;
-  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &s_err, &s_err_size) != 0)
-    return(-1);
-
-  if (s_err)
-  {            /* getsockopt could succeed */
-    errno = s_err;
-    return(-1);          /* but return an error... */
-  }
-  return (0);          /* ok */
-#endif /* HAVE_POLL */
 }
 
 
@@ -253,7 +188,7 @@ char* getlogin(void);
 static void read_user_name(char *name)
 {
   if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
+    strcpy(name,"root");    /* allow use of surun */
   else
   {
 #ifdef HAVE_GETPWUID
@@ -267,11 +202,11 @@ static void read_user_name(char *name)
          !(str=getenv("LOGIN")))
   str="UNKNOWN_USER";
     }
-    (void) strmake(name,str,USERNAME_LENGTH);
+    strncpy(name,str,USERNAME_LENGTH);
 #elif HAVE_CUSERID
     (void) cuserid(name);
 #else
-    strmov(name,"UNKNOWN_USER");
+    strcpy(name,"UNKNOWN_USER");
 #endif
   }
   return;
@@ -296,13 +231,13 @@ void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate)
   {
     net= &drizzle->net;
     net->last_errno= errcode;
-    strmov(net->last_error, ER(errcode));
-    strmov(net->sqlstate, sqlstate);
+    strcpy(net->last_error, ER(errcode));
+    strcpy(net->sqlstate, sqlstate);
   }
   else
   {
     drizzle_server_last_errno= errcode;
-    strmov(drizzle_server_last_error, ER(errcode));
+    strcpy(drizzle_server_last_error, ER(errcode));
   }
   return;
 }
@@ -317,7 +252,7 @@ void net_clear_error(NET *net)
 {
   net->last_errno= 0;
   net->last_error[0]= '\0';
-  strmov(net->sqlstate, not_error_sqlstate);
+  strcpy(net->sqlstate, not_error_sqlstate);
 }
 
 /**
@@ -345,7 +280,7 @@ static void set_drizzle_extended_error(DRIZZLE *drizzle, int errcode,
   vsnprintf(net->last_error, sizeof(net->last_error)-1,
                format, args);
   va_end(args);
-  strmov(net->sqlstate, sqlstate);
+  strcpy(net->sqlstate, sqlstate);
 
   return;
 }
@@ -358,7 +293,7 @@ static void set_drizzle_extended_error(DRIZZLE *drizzle, int errcode,
 uint32_t cli_safe_read(DRIZZLE *drizzle)
 {
   NET *net= &drizzle->net;
-  ulong len=0;
+  uint32_t len=0;
   init_sigpipe_variables
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -369,7 +304,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 
   if (len == packet_error || len == 0)
   {
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
     if (net->vio && vio_was_interrupted(net->vio))
       return (packet_error);
 #endif /*DRIZZLE_SERVER*/
@@ -386,10 +321,10 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       net->last_errno=uint2korr(pos);
       pos+=2;
       len-=2;
-      if (protocol_41(drizzle) && pos[0] == '#')
+      if (pos[0] == '#')
       {
-  strmake(net->sqlstate, pos+1, SQLSTATE_LENGTH);
-  pos+= SQLSTATE_LENGTH+1;
+        strncpy(net->sqlstate, pos+1, SQLSTATE_LENGTH);
+        pos+= SQLSTATE_LENGTH+1;
       }
       else
       {
@@ -398,11 +333,11 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
           (unknown error sql state).
         */
 
-        strmov(net->sqlstate, unknown_sqlstate);
+        strcpy(net->sqlstate, unknown_sqlstate);
       }
 
-      (void) strmake(net->last_error,(char*) pos,
-         min((uint) len,(uint) sizeof(net->last_error)-1));
+      strncpy(net->last_error,(char*) pos, min((uint) len,
+              (uint32_t) sizeof(net->last_error)-1));
     }
     else
       set_drizzle_error(drizzle, CR_UNKNOWN_ERROR, unknown_sqlstate);
@@ -437,9 +372,9 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
          const unsigned char *arg, uint32_t arg_length, bool skip_check)
 {
   NET *net= &drizzle->net;
-  my_bool result= 1;
+  bool result= 1;
   init_sigpipe_variables
-  my_bool stmt_skip= false;
+  bool stmt_skip= false;
 
   /* Don't give sigpipe errors if the client doesn't want them */
   set_sigpipe(drizzle);
@@ -514,17 +449,15 @@ static void cli_flush_use_result(DRIZZLE *drizzle)
   /* Clear the current execution status */
   for (;;)
   {
-    ulong pkt_len;
+    uint32_t pkt_len;
     if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
       break;
-    if (pkt_len <= 8 && drizzle->net.read_pos[0] == 254)
+    if (pkt_len <= 8 && drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
     {
-      if (protocol_41(drizzle))
-      {
-        char *pos= (char*) drizzle->net.read_pos + 1;
-        drizzle->warning_count=uint2korr(pos); pos+=2;
-        drizzle->server_status=uint2korr(pos); pos+=2;
-      }
+      char *pos= (char*) drizzle->net.read_pos + 1;
+      drizzle->warning_count=uint2korr(pos); pos+=2;
+      drizzle->server_status=uint2korr(pos); pos+=2;
+
       break;                            /* End of data */
     }
   }
@@ -550,11 +483,10 @@ void end_server(DRIZZLE *drizzle)
   net_end(&drizzle->net);
   free_old_query(drizzle);
   errno= save_errno;
-  return;
 }
 
 
-void STDCALL
+void
 drizzle_free_result(DRIZZLE_RES *result)
 {
   if (result)
@@ -579,7 +511,6 @@ drizzle_free_result(DRIZZLE_RES *result)
       my_free((uchar*) result->row,MYF(0));
     my_free((uchar*) result,MYF(0));
   }
-  return;
 }
 
 /****************************************************************************
@@ -646,134 +577,125 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
     {
       if (option[0][0] == '-' && option[0][1] == '-')
       {
-  char *end=strcend(*option,'=');
-  char *opt_arg=0;
-  if (*end)
-  {
-    opt_arg=end+1;
-    *end=0;        /* Remove '=' */
-  }
-  /* Change all '_' in variable name to '-' */
-  for (end= *option ; *(end= strcend(end,'_')) ; )
-    *end= '-';
-  switch (find_type(*option+2,&option_types,2)) {
-  case 1:        /* port */
-    if (opt_arg)
-      options->port=atoi(opt_arg);
-    break;
-  case 2:        /* socket */
-    if (opt_arg)
-    {
-      my_free(options->unix_socket,MYF(MY_ALLOW_ZERO_PTR));
-      options->unix_socket=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 3:        /* compress */
-    options->compress=1;
-    options->client_flag|= CLIENT_COMPRESS;
-    break;
-  case 4:        /* password */
-    if (opt_arg)
-    {
-      my_free(options->password,MYF(MY_ALLOW_ZERO_PTR));
-      options->password=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-        case 5:
-          options->protocol = DRIZZLE_PROTOCOL_PIPE;
-  case 20:      /* connect_timeout */
-  case 6:        /* timeout */
-    if (opt_arg)
-      options->connect_timeout=atoi(opt_arg);
-    break;
-  case 7:        /* user */
-    if (opt_arg)
-    {
-      my_free(options->user,MYF(MY_ALLOW_ZERO_PTR));
-      options->user=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 8:        /* init-command */
-    add_init_command(options,opt_arg);
-    break;
-  case 9:        /* host */
-    if (opt_arg)
-    {
-      my_free(options->host,MYF(MY_ALLOW_ZERO_PTR));
-      options->host=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 10:      /* database */
-    if (opt_arg)
-    {
-      my_free(options->db,MYF(MY_ALLOW_ZERO_PTR));
-      options->db=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 12:      /* return-found-rows */
-    options->client_flag|=CLIENT_FOUND_ROWS;
-    break;
-  case 13:        /* Ignore SSL options */
-  case 14:
-  case 15:
-  case 16:
-        case 23:
-    break;
-  case 17:      /* charset-lib */
-    my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
-    break;
-  case 18:
-    my_free(options->charset_name,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_name = my_strdup(opt_arg, MYF(MY_WME));
-    break;
-  case 19:        /* Interactive-timeout */
-    options->client_flag|= CLIENT_INTERACTIVE;
-    break;
-  case 21:
-    if (!opt_arg || atoi(opt_arg) != 0)
-      options->client_flag|= CLIENT_LOCAL_FILES;
-    else
-      options->client_flag&= ~CLIENT_LOCAL_FILES;
-    break;
-  case 22:
-    options->client_flag&= ~CLIENT_LOCAL_FILES;
-          break;
-  case 24: /* max-allowed-packet */
+        char *end=strrchr(*option,'=');
+        char *opt_arg=0;
+        if (end != NULL)
+        {
+          opt_arg=end+1;
+          *end=0;        /* Remove '=' */
+        }
+        /* Change all '_' in variable name to '-' */
+        for (end= *option ; *(end= strrchr(end,'_')) ; )
+          *end= '-';
+        switch (find_type(*option+2,&option_types,2)) {
+        case 1:        /* port */
           if (opt_arg)
-      options->max_allowed_packet= atoi(opt_arg);
-    break;
+            options->port=atoi(opt_arg);
+          break;
+        case 2:        /* socket */
+          if (opt_arg)
+          {
+            my_free(options->unix_socket,MYF(MY_ALLOW_ZERO_PTR));
+            options->unix_socket=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 3:        /* compress */
+          options->compress=1;
+          options->client_flag|= CLIENT_COMPRESS;
+          break;
+        case 4:        /* password */
+          if (opt_arg)
+          {
+            my_free(options->password,MYF(MY_ALLOW_ZERO_PTR));
+            options->password=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 20:      /* connect_timeout */
+        case 6:        /* timeout */
+          if (opt_arg)
+            options->connect_timeout=atoi(opt_arg);
+          break;
+        case 7:        /* user */
+          if (opt_arg)
+          {
+            my_free(options->user,MYF(MY_ALLOW_ZERO_PTR));
+            options->user=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 8:        /* init-command */
+          add_init_command(options,opt_arg);
+          break;
+        case 9:        /* host */
+          if (opt_arg)
+          {
+            my_free(options->host,MYF(MY_ALLOW_ZERO_PTR));
+            options->host=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 10:      /* database */
+          if (opt_arg)
+          {
+            my_free(options->db,MYF(MY_ALLOW_ZERO_PTR));
+            options->db=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 12:      /* return-found-rows */
+          options->client_flag|=CLIENT_FOUND_ROWS;
+          break;
+        case 13:        /* Ignore SSL options */
+        case 14:
+        case 15:
+        case 16:
+        case 23:
+          break;
+        case 17:      /* charset-lib */
+          my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
+          options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
+          break;
+        case 18:
+          my_free(options->charset_name,MYF(MY_ALLOW_ZERO_PTR));
+          options->charset_name = my_strdup(opt_arg, MYF(MY_WME));
+          break;
+        case 19:        /* Interactive-timeout */
+          options->client_flag|= CLIENT_INTERACTIVE;
+          break;
+        case 21:
+          if (!opt_arg || atoi(opt_arg) != 0)
+            options->client_flag|= CLIENT_LOCAL_FILES;
+          else
+            options->client_flag&= ~CLIENT_LOCAL_FILES;
+          break;
+        case 22:
+          options->client_flag&= ~CLIENT_LOCAL_FILES;
+          break;
+        case 24: /* max-allowed-packet */
+          if (opt_arg)
+            options->max_allowed_packet= atoi(opt_arg);
+          break;
         case 25: /* protocol */
           if ((options->protocol= find_type(opt_arg,
-              &sql_protocol_typelib,0)) <= 0)
+                                            &sql_protocol_typelib,0)) <= 0)
           {
-            fprintf(stderr, "Unknown option to protocol: %s\n", opt_arg);
+            fprintf(stderr, _("Unknown option to protocol: %s\n"), opt_arg);
             exit(1);
           }
           break;
-        case 26: /* shared_memory_base_name */
-#ifdef HAVE_SMEM
-          if (options->shared_memory_base_name != def_shared_memory_base_name)
-            my_free(options->shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-          options->shared_memory_base_name=my_strdup(opt_arg,MYF(MY_WME));
-#endif
+        case 27: /* multi-results */
+          options->client_flag|= CLIENT_MULTI_RESULTS;
           break;
-  case 27: /* multi-results */
-    options->client_flag|= CLIENT_MULTI_RESULTS;
-    break;
-  case 28: /* multi-statements */
-  case 29: /* multi-queries */
-    options->client_flag|= CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS;
-    break;
+        case 28: /* multi-statements */
+        case 29: /* multi-queries */
+          options->client_flag|= CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS;
+          break;
         case 30: /* secure-auth */
           options->secure_auth= true;
           break;
         case 31: /* report-data-truncation */
           options->report_data_truncation= opt_arg ? test(atoi(opt_arg)) : 1;
           break;
-  default:
+        default:
           break;
-  }
+        }
       }
     }
   }
@@ -803,7 +725,7 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
       continue;
     }
     if (start)          /* Found end of prev string */
-      *prev_length= (ulong) (*column-start-1);
+      *prev_length= (uint32_t) (*column-start-1);
     start= *column;
     prev_length= to;
   }
@@ -814,8 +736,8 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
 ***************************************************************************/
 
 DRIZZLE_FIELD *
-unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
-        my_bool default_value, uint server_capabilities)
+unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
+              bool default_value)
 {
   DRIZZLE_ROWS  *row;
   DRIZZLE_FIELD  *field,*result;
@@ -829,104 +751,59 @@ unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
     return(0);
   }
   memset((char*) field, 0, (uint) sizeof(DRIZZLE_FIELD)*fields);
-  if (server_capabilities & CLIENT_PROTOCOL_41)
+
+  for (row= data->data; row ; row = row->next,field++)
   {
-    /* server is 4.1, and returns the new field result format */
-    for (row=data->data; row ; row = row->next,field++)
+    uchar *pos;
+    /* fields count may be wrong */
+    assert((uint) (field - result) < fields);
+    cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
+    field->catalog=   strmake_root(alloc,(char*) row->data[0], lengths[0]);
+    field->db=        strmake_root(alloc,(char*) row->data[1], lengths[1]);
+    field->table=     strmake_root(alloc,(char*) row->data[2], lengths[2]);
+    field->org_table= strmake_root(alloc,(char*) row->data[3], lengths[3]);
+    field->name=      strmake_root(alloc,(char*) row->data[4], lengths[4]);
+    field->org_name=  strmake_root(alloc,(char*) row->data[5], lengths[5]);
+
+    field->catalog_length=  lengths[0];
+    field->db_length=    lengths[1];
+    field->table_length=  lengths[2];
+    field->org_table_length=  lengths[3];
+    field->name_length=  lengths[4];
+    field->org_name_length=  lengths[5];
+
+    /* Unpack fixed length parts */
+    pos= (uchar*) row->data[6];
+    field->charsetnr= uint2korr(pos);
+    field->length=  (uint) uint4korr(pos+2);
+    field->type=  (enum enum_field_types) pos[6];
+    field->flags=  uint2korr(pos+7);
+    field->decimals=  (uint) pos[9];
+
+    if (INTERNAL_NUM_FIELD(field))
+      field->flags|= NUM_FLAG;
+    if (default_value && row->data[7])
     {
-      uchar *pos;
-      /* fields count may be wrong */
-      assert((uint) (field - result) < fields);
-      cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
-      field->catalog=   strmake_root(alloc,(char*) row->data[0], lengths[0]);
-      field->db=        strmake_root(alloc,(char*) row->data[1], lengths[1]);
-      field->table=     strmake_root(alloc,(char*) row->data[2], lengths[2]);
-      field->org_table= strmake_root(alloc,(char*) row->data[3], lengths[3]);
-      field->name=      strmake_root(alloc,(char*) row->data[4], lengths[4]);
-      field->org_name=  strmake_root(alloc,(char*) row->data[5], lengths[5]);
-
-      field->catalog_length=  lengths[0];
-      field->db_length=    lengths[1];
-      field->table_length=  lengths[2];
-      field->org_table_length=  lengths[3];
-      field->name_length=  lengths[4];
-      field->org_name_length=  lengths[5];
-
-      /* Unpack fixed length parts */
-      pos= (uchar*) row->data[6];
-      field->charsetnr= uint2korr(pos);
-      field->length=  (uint) uint4korr(pos+2);
-      field->type=  (enum enum_field_types) pos[6];
-      field->flags=  uint2korr(pos+7);
-      field->decimals=  (uint) pos[9];
-
-      if (INTERNAL_NUM_FIELD(field))
-        field->flags|= NUM_FLAG;
-      if (default_value && row->data[7])
-      {
-        field->def=strmake_root(alloc,(char*) row->data[7], lengths[7]);
-  field->def_length= lengths[7];
-      }
-      else
-        field->def=0;
-      field->max_length= 0;
+      field->def=strmake_root(alloc,(char*) row->data[7], lengths[7]);
+      field->def_length= lengths[7];
     }
+    else
+      field->def=0;
+    field->max_length= 0;
   }
-#ifndef DELETE_SUPPORT_OF_4_0_PROTOCOL
-  else
-  {
-    /* old protocol, for backward compatibility */
-    for (row=data->data; row ; row = row->next,field++)
-    {
-      cli_fetch_lengths(&lengths[0], row->data, default_value ? 6 : 5);
-      field->org_table= field->table=  strdup_root(alloc,(char*) row->data[0]);
-      field->name=   strdup_root(alloc,(char*) row->data[1]);
-      field->length= (uint) uint3korr(row->data[2]);
-      field->type=   (enum enum_field_types) (uchar) row->data[3][0];
 
-      field->catalog=(char*)  "";
-      field->db=     (char*)  "";
-      field->catalog_length= 0;
-      field->db_length= 0;
-      field->org_table_length=  field->table_length=  lengths[0];
-      field->name_length=  lengths[1];
-
-      if (server_capabilities & CLIENT_LONG_FLAG)
-      {
-        field->flags=   uint2korr(row->data[4]);
-        field->decimals=(uint) (uchar) row->data[4][2];
-      }
-      else
-      {
-        field->flags=   (uint) (uchar) row->data[4][0];
-        field->decimals=(uint) (uchar) row->data[4][1];
-      }
-      if (INTERNAL_NUM_FIELD(field))
-        field->flags|= NUM_FLAG;
-      if (default_value && row->data[5])
-      {
-        field->def=strdup_root(alloc,(char*) row->data[5]);
-  field->def_length= lengths[5];
-      }
-      else
-        field->def=0;
-      field->max_length= 0;
-    }
-  }
-#endif /* DELETE_SUPPORT_OF_4_0_PROTOCOL */
   free_rows(data);        /* Free old data */
   return(result);
 }
 
 /* Read all rows (fields or data) from server */
 
-DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
-        unsigned int fields)
+DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
 {
-  uint  field;
-  ulong pkt_len;
-  ulong len;
-  uchar *cp;
+  uint32_t  field;
+  uint32_t pkt_len;
+  uint32_t len;
+  unsigned char *cp;
   char  *to, *end_to;
   DRIZZLE_DATA *result;
   DRIZZLE_ROWS **prev_ptr,*cur;
@@ -947,14 +824,13 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
   result->fields=fields;
 
   /*
-    The last EOF packet is either a single 254 character or (in DRIZZLE 4.1)
-    254 followed by 1-7 status bytes.
+    The last EOF packet is either a 254 (0xFE) character followed by 1-7 status bytes.
 
     This doesn't conflict with normal usage of 254 which stands for a
     string where the length of the string is 8 bytes. (see net_field_length())
   */
 
-  while (*(cp=net->read_pos) != 254 || pkt_len >= 8)
+  while (*(cp=net->read_pos) != DRIZZLE_PROTOCOL_NO_MORE_DATA || pkt_len >= 8)
   {
     result->rows++;
     if (!(cur= (DRIZZLE_ROWS*) alloc_root(&result->alloc,
@@ -973,27 +849,28 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
     end_to=to+pkt_len-1;
     for (field=0 ; field < fields ; field++)
     {
-      if ((len=(ulong) net_field_length(&cp)) == NULL_LENGTH)
+      if ((len= net_field_length(&cp)) == NULL_LENGTH)
       {            /* null field */
-  cur->data[field] = 0;
+        cur->data[field] = 0;
       }
       else
       {
-  cur->data[field] = to;
-        if (len > (ulong) (end_to - to))
+        cur->data[field] = to;
+        if (len > (uint32_t) (end_to - to))
         {
           free_rows(result);
           set_drizzle_error(drizzle, CR_MALFORMED_PACKET, unknown_sqlstate);
           return(0);
         }
-  memcpy(to,(char*) cp,len); to[len]=0;
-  to+=len+1;
-  cp+=len;
-  if (DRIZZLE_FIELDs)
-  {
-    if (DRIZZLE_FIELDs[field].max_length < len)
-      DRIZZLE_FIELDs[field].max_length=len;
-  }
+        memcpy(to, cp, len);
+        to[len]=0;
+        to+=len+1;
+        cp+=len;
+        if (DRIZZLE_FIELDs)
+        {
+          if (DRIZZLE_FIELDs[field].max_length < len)
+            DRIZZLE_FIELDs[field].max_length=len;
+        }
       }
     }
     cur->data[field]=to;      /* End of last field */
@@ -1022,13 +899,13 @@ static int32_t
 read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengths)
 {
   uint field;
-  ulong pkt_len,len;
+  uint32_t pkt_len,len;
   uchar *pos, *prev_pos, *end_pos;
   NET *net= &drizzle->net;
 
   if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
     return -1;
-  if (pkt_len <= 8 && net->read_pos[0] == 254)
+  if (pkt_len <= 8 && net->read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
   {
     if (pkt_len > 1)        /* DRIZZLE 4.1 protocol */
     {
@@ -1042,14 +919,14 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   end_pos=pos+pkt_len;
   for (field=0 ; field < fields ; field++)
   {
-    if ((len=(ulong) net_field_length(&pos)) == NULL_LENGTH)
+    if ((len= net_field_length(&pos)) == NULL_LENGTH)
     {            /* null field */
       row[field] = 0;
       *lengths++=0;
     }
     else
     {
-      if (len > (ulong) (end_pos - pos))
+      if (len > (uint32_t) (end_pos - pos))
       {
         set_drizzle_error(drizzle, CR_UNKNOWN_ERROR, unknown_sqlstate);
         return -1;
@@ -1085,11 +962,9 @@ drizzle_create(DRIZZLE *ptr)
     if (my_init())
       return NULL;
 
-    init_client_errs();
-
     if (!drizzle_port)
     {
-      drizzle_port = MYSQL_PORT;
+      drizzle_port = DRIZZLE_PORT;
       {
         struct servent *serv_ptr;
         char *env;
@@ -1100,24 +975,17 @@ drizzle_create(DRIZZLE *ptr)
           only if they didn't do we check /etc/services (and, failing
           on that, fall back to the factory default of 4427).
           either default can be overridden by the environment variable
-          MYSQL_TCP_PORT, which in turn can be overridden with command
+          DRIZZLE_TCP_PORT, which in turn can be overridden with command
           line options.
         */
 
-#if MYSQL_PORT_DEFAULT == 0
+#if DRIZZLE_PORT_DEFAULT == 0
         if ((serv_ptr = getservbyname("drizzle", "tcp")))
           drizzle_port = (uint) ntohs((ushort) serv_ptr->s_port);
 #endif
         if ((env = getenv("DRIZZLE_TCP_PORT")))
           drizzle_port =(uint) atoi(env);
       }
-    }
-    if (!drizzle_unix_port)
-    {
-      char *env;
-      drizzle_unix_port = (char*) MYSQL_UNIX_ADDR;
-      if ((env = getenv("DRIZZLE_UNIX_PORT")))
-        drizzle_unix_port = env;
     }
 #if defined(SIGPIPE)
     (void) signal(SIGPIPE, SIG_IGN);
@@ -1158,10 +1026,6 @@ drizzle_create(DRIZZLE *ptr)
   ptr->options.client_flag|= CLIENT_LOCAL_FILES;
 #endif
 
-#ifdef HAVE_SMEM
-  ptr->options.shared_memory_base_name= (char*) def_shared_memory_base_name;
-#endif
-
   ptr->options.methods_to_use= DRIZZLE_OPT_GUESS_CONNECTION;
   ptr->options.report_data_truncation= true;  /* default */
 
@@ -1198,12 +1062,11 @@ drizzle_create(DRIZZLE *ptr)
 */
 
 
-void STDCALL drizzle_server_end()
+void drizzle_server_end()
 {
   if (!drizzle_client_init)
     return;
 
-  finish_client_errs();
   vio_end();
 
   /* If library called my_init(), free memory allocated by it */
@@ -1251,7 +1114,7 @@ static DRIZZLE_METHODS client_methods=
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
   cli_flush_use_result,                         /* flush_use_result */
-#ifndef MYSQL_SERVER
+#ifndef DRIZZLE_SERVER
   cli_list_fields,                            /* list_fields */
   cli_unbuffered_fetch,                        /* unbuffered_fetch */
   cli_read_statistics,                         /* read_statistics */
@@ -1270,9 +1133,9 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
   /* Set character set */
   if (!drizzle->options.charset_name)
   {
-    default_collation_name= MYSQL_DEFAULT_COLLATION_NAME;
+    default_collation_name= DRIZZLE_DEFAULT_COLLATION_NAME;
     if (!(drizzle->options.charset_name=
-       my_strdup(MYSQL_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
+       my_strdup(DRIZZLE_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
     return 1;
   }
   else
@@ -1286,14 +1149,14 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
                                          MY_CS_PRIMARY, MYF(MY_WME));
     if (drizzle->charset && default_collation_name)
     {
-      CHARSET_INFO *collation;
+      const CHARSET_INFO *collation;
       if ((collation=
            get_charset_by_name(default_collation_name, MYF(MY_WME))))
       {
         if (!my_charset_same(drizzle->charset, collation))
         {
           my_printf_error(ER_UNKNOWN_ERROR,
-                         "COLLATION %s is not valid for CHARACTER SET %s",
+                         _("COLLATION %s is not valid for CHARACTER SET %s"),
                          MYF(0),
                          default_collation_name, drizzle->options.charset_name);
           drizzle->charset= NULL;
@@ -1332,7 +1195,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
 C_MODE_END
 
 
-DRIZZLE * STDCALL
+DRIZZLE *
 CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
                        const char *passwd, const char *db,
                        uint32_t port, const char *unix_socket, uint32_t client_flag)
@@ -1341,7 +1204,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   char          *end,*host_info=NULL;
   uint32_t         pkt_length;
   NET           *net= &drizzle->net;
-  struct        sockaddr_un UNIXaddr;
   init_sigpipe_variables
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -1389,81 +1251,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   /*
     Part 0: Grab a socket and connect it to the server
   */
-#if defined(HAVE_SMEM)
-  if ((!drizzle->options.protocol ||
-       drizzle->options.protocol == DRIZZLE_PROTOCOL_MEMORY) &&
-      (!host || !strcmp(host,LOCAL_HOST)))
-  {
-    if ((create_shared_memory(drizzle,net, drizzle->options.connect_timeout)) ==
-  INVALID_HANDLE_VALUE)
-    {
-      if (drizzle->options.protocol == DRIZZLE_PROTOCOL_MEMORY)
-  goto error;
-
-      /*
-        Try also with PIPE or TCP/IP. Clear the error from
-        create_shared_memory().
-      */
-
-      net_clear_error(net);
-    }
-    else
-    {
-      drizzle->options.protocol=DRIZZLE_PROTOCOL_MEMORY;
-      unix_socket = 0;
-      host=drizzle->options.shared_memory_base_name;
-      snprintf(host_info=buff, sizeof(buff)-1,
-               ER(CR_SHARED_MEMORY_CONNECTION), host);
-    }
-  }
-#endif /* HAVE_SMEM */
-  if (!net->vio &&
-      (!drizzle->options.protocol ||
-       drizzle->options.protocol == DRIZZLE_PROTOCOL_SOCKET) &&
-      (unix_socket || drizzle_unix_port) &&
-      (!host || !strcmp(host,LOCAL_HOST)))
-  {
-    my_socket sock= socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock == SOCKET_ERROR)
-    {
-      set_drizzle_extended_error(drizzle, CR_SOCKET_CREATE_ERROR,
-                               unknown_sqlstate,
-                               ER(CR_SOCKET_CREATE_ERROR),
-                               socket_errno);
-      goto error;
-    }
-
-    net->vio= vio_new(sock, VIO_TYPE_SOCKET,
-                      VIO_LOCALHOST | VIO_BUFFERED_READ);
-    if (!net->vio)
-    {
-      set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
-      closesocket(sock);
-      goto error;
-    }
-
-    host= LOCAL_HOST;
-    if (!unix_socket)
-      unix_socket= drizzle_unix_port;
-    host_info= (char*) ER(CR_LOCALHOST_CONNECTION);
-
-    memset((char*) &UNIXaddr, 0, sizeof(UNIXaddr));
-    UNIXaddr.sun_family= AF_UNIX;
-    strmake(UNIXaddr.sun_path, unix_socket, sizeof(UNIXaddr.sun_path)-1);
-
-    if (my_connect(sock, (struct sockaddr *) &UNIXaddr, sizeof(UNIXaddr),
-       drizzle->options.connect_timeout))
-    {
-      set_drizzle_extended_error(drizzle, CR_CONNECTION_ERROR,
-                               unknown_sqlstate,
-                               ER(CR_CONNECTION_ERROR),
-                               unix_socket, socket_errno);
-      vio_delete(net->vio);
-      net->vio= 0;
-      goto error;
-    }
-    drizzle->options.protocol=DRIZZLE_PROTOCOL_SOCKET;
-  }
   if (!net->vio &&
       (!drizzle->options.protocol ||
        drizzle->options.protocol == DRIZZLE_PROTOCOL_TCP))
@@ -1484,8 +1271,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;
-    hints.ai_protocol= IPPROTO_TCP;
-    hints.ai_family= AF_UNSPEC;
 
     snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
@@ -1493,43 +1278,32 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     if (gai_errno != 0)
     {
       set_drizzle_extended_error(drizzle, CR_UNKNOWN_HOST, unknown_sqlstate,
-                               ER(CR_UNKNOWN_HOST), host, errno);
+                                 ER(CR_UNKNOWN_HOST), host, errno);
 
       goto error;
     }
 
-    /* We only look at the first item (something to think about changing in the future) */
-    t_res= res_lst;
+    for (t_res= res_lst; t_res != NULL; t_res= t_res->ai_next)
     {
-      my_socket sock= socket(t_res->ai_family, t_res->ai_socktype,
-                             t_res->ai_protocol);
+      int sock= socket(t_res->ai_family, t_res->ai_socktype,
+                       t_res->ai_protocol);
       if (sock == SOCKET_ERROR)
-      {
-        set_drizzle_extended_error(drizzle, CR_IPSOCK_ERROR, unknown_sqlstate,
-                                 ER(CR_IPSOCK_ERROR), socket_errno);
-        freeaddrinfo(res_lst);
-        goto error;
-      }
+        continue;
 
       net->vio= vio_new(sock, VIO_TYPE_TCPIP, VIO_BUFFERED_READ);
       if (! net->vio )
       {
-        set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
-        closesocket(sock);
-        freeaddrinfo(res_lst);
-        goto error;
+        close(sock);
+        continue;
       }
 
-      if (my_connect(sock, t_res->ai_addr, t_res->ai_addrlen,
-                     drizzle->options.connect_timeout))
+      if (connect_with_timeout(sock, t_res->ai_addr, t_res->ai_addrlen, drizzle->options.connect_timeout))
       {
-        set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
-                                 ER(CR_CONN_HOST_ERROR), host, socket_errno);
         vio_delete(net->vio);
         net->vio= 0;
-        freeaddrinfo(res_lst);
-        goto error;
+        continue;
       }
+      break;
     }
 
     freeaddrinfo(res_lst);
@@ -1537,7 +1311,8 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   if (!net->vio)
   {
-    set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
+    set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
+                               ER(CR_CONN_HOST_ERROR), host, socket_errno);
     goto error;
   }
 
@@ -1567,8 +1342,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       vio_poll_read(net->vio, drizzle->options.connect_timeout))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "waiting for initial communication packet",
+                             ER(CR_SERVER_LOST_INITIAL_COMM_WAIT),
                              errno);
     goto error;
   }
@@ -1581,8 +1355,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading initial communication packet",
+                               ER(CR_SERVER_LOST_INITIAL_COMM_READ),
                                errno);
     goto error;
   }
@@ -1596,14 +1369,14 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
                              PROTOCOL_VERSION);
     goto error;
   }
-  end=strend((char*) net->read_pos+1);
+  end= strchr((char*) net->read_pos+1, '\0');
   drizzle->thread_id=uint4korr(end+1);
   end+=5;
   /*
     Scramble is split into two parts because old clients does not understand
     long scrambles; here goes the first part.
   */
-  strmake(drizzle->scramble, end, SCRAMBLE_LENGTH_323);
+  strncpy(drizzle->scramble, end, SCRAMBLE_LENGTH_323);
   end+= SCRAMBLE_LENGTH_323+1;
 
   if (pkt_length >= (uint) (end+1 - (char*) net->read_pos))
@@ -1617,7 +1390,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   end+= 18;
   if (pkt_length >= (uint) (end + SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1 -
                            (char *) net->read_pos))
-    strmake(drizzle->scramble+SCRAMBLE_LENGTH_323, end,
+    strncpy(drizzle->scramble+SCRAMBLE_LENGTH_323, end,
             SCRAMBLE_LENGTH-SCRAMBLE_LENGTH_323);
   else
     drizzle->server_capabilities&= ~CLIENT_SECURE_CONNECTION;
@@ -1647,13 +1420,13 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     goto error;
   }
-  strmov(drizzle->host_info,host_info);
-  strmov(drizzle->host,host);
+  strcpy(drizzle->host_info,host_info);
+  strcpy(drizzle->host,host);
   if (unix_socket)
-    strmov(drizzle->unix_socket,unix_socket);
+    strcpy(drizzle->unix_socket,unix_socket);
   else
     drizzle->unix_socket=0;
-  strmov(drizzle->server_version,(char*) net->read_pos+1);
+  strcpy(drizzle->server_version,(char*) net->read_pos+1);
   drizzle->port=port;
 
   /*
@@ -1670,43 +1443,32 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   /* Remove options that server doesn't support */
   client_flag= ((client_flag &
-     ~(CLIENT_COMPRESS | CLIENT_SSL | CLIENT_PROTOCOL_41)) |
+     ~(CLIENT_COMPRESS | CLIENT_SSL)) |
     (client_flag & drizzle->server_capabilities));
   client_flag&= ~CLIENT_COMPRESS;
 
-  if (client_flag & CLIENT_PROTOCOL_41)
-  {
-    /* 4.1 server and 4.1 client has a 32 byte option flag */
-    int4store(buff,client_flag);
-    int4store(buff+4, net->max_packet_size);
-    buff[8]= (char) drizzle->charset->number;
-    memset(buff+9, 0, 32-9);
-    end= buff+32;
-  }
-  else
-  {
-    int2store(buff,client_flag);
-    int3store(buff+2,net->max_packet_size);
-    end= buff+5;
-  }
+  int4store(buff, client_flag);
+  int4store(buff+4, net->max_packet_size);
+  buff[8]= (char) drizzle->charset->number;
+  memset(buff+9, 0, 32-9);
+  end= buff+32;
+
   drizzle->client_flag=client_flag;
 
   /* This needs to be changed as it's not useful with big packets */
   if (user && user[0])
-    strmake(end,user,USERNAME_LENGTH);          /* Max user name */
+    strncpy(end,user,USERNAME_LENGTH);          /* Max user name */
   else
     read_user_name((char*) end);
 
   /* We have to handle different version of handshake here */
-#ifdef _CUSTOMCONFIG_
-#include "_cust_libdrizzle.h"
-#endif
-  end= strend(end) + 1;
+  end= strchr(end, '\0') + 1;
   if (passwd[0])
   {
     {
       *end++= SCRAMBLE_LENGTH;
-      scramble(end, drizzle->scramble, passwd);
+      memset(end, 0, SCRAMBLE_LENGTH-1);
+      memcpy(end, passwd, strlen(passwd));
       end+= SCRAMBLE_LENGTH;
     }
   }
@@ -1716,7 +1478,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   /* Add database if needed */
   if (db && (drizzle->server_capabilities & CLIENT_CONNECT_WITH_DB))
   {
-    end= strmake(end, db, NAME_LEN) + 1;
+    end= strncpy(end, db, NAME_LEN) + NAME_LEN + 1;
     drizzle->db= my_strdup(db,MYF(MY_WME));
     db= 0;
   }
@@ -1724,8 +1486,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   if (my_net_write(net, (uchar*) buff, (size_t) (end-buff)) || net_flush(net))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "sending authentication information",
+                             ER(CR_SERVER_LOST_SEND_AUTH),
                              errno);
     goto error;
   }
@@ -1739,8 +1500,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading authorization packet",
+                               ER(CR_SERVER_LOST_READ_AUTH),
                                errno);
     goto error;
   }
@@ -1753,8 +1513,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
         set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                                 ER(CR_SERVER_LOST_EXTENDED),
-                                 "Setting intital database",
+                                 ER(CR_SERVER_LOST_SETTING_DB),
                                  errno);
     goto error;
   }
@@ -1765,13 +1524,13 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     char **ptr= (char**)init_commands->buffer;
     char **end_command= ptr + init_commands->elements;
 
-    my_bool reconnect=drizzle->reconnect;
+    bool reconnect=drizzle->reconnect;
     drizzle->reconnect=0;
 
     for (; ptr < end_command; ptr++)
     {
       DRIZZLE_RES *res;
-      if (drizzle_real_query(drizzle,*ptr, (ulong) strlen(*ptr)))
+      if (drizzle_real_query(drizzle,*ptr, (uint32_t) strlen(*ptr)))
   goto error;
       if (drizzle->fields)
       {
@@ -1792,14 +1551,14 @@ error:
     /* Free alloced memory */
     end_server(drizzle);
     drizzle_close_free(drizzle);
-    if (!(((ulong) client_flag) & CLIENT_REMEMBER_OPTIONS))
+    if (!(((uint32_t) client_flag) & CLIENT_REMEMBER_OPTIONS))
       drizzle_close_free_options(drizzle);
   }
   return(0);
 }
 
 
-my_bool drizzle_reconnect(DRIZZLE *drizzle)
+bool drizzle_reconnect(DRIZZLE *drizzle)
 {
   DRIZZLE tmp_drizzle;
   assert(drizzle);
@@ -1821,17 +1580,17 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
         drizzle->client_flag | CLIENT_REMEMBER_OPTIONS))
   {
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
-    strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
-    strmov(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
+    strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
+    strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
     return(1);
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
   {
-    memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
+    memset(&tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
-    strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
-    strmov(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
+    strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
+    strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
     return(1);
   }
 
@@ -1839,7 +1598,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   tmp_drizzle.free_me= drizzle->free_me;
 
   /* Don't free options as these are now used in tmp_drizzle */
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   drizzle->free_me=0;
   drizzle_close(drizzle);
   *drizzle=tmp_drizzle;
@@ -1853,13 +1612,13 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   Set current database
 **************************************************************************/
 
-int STDCALL
+int
 drizzle_select_db(DRIZZLE *drizzle, const char *db)
 {
   int error;
 
   if ((error=simple_command(drizzle,COM_INIT_DB, (const uchar*) db,
-                            (ulong) strlen(db),0)))
+                            (uint32_t) strlen(db),0)))
     return(error);
   my_free(drizzle->db,MYF(MY_ALLOW_ZERO_PTR));
   drizzle->db=my_strdup(db,MYF(MY_WME));
@@ -1894,11 +1653,7 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
     delete_dynamic(init_commands);
     my_free((char*)init_commands,MYF(MY_WME));
   }
-#ifdef HAVE_SMEM
-  if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
-    my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif /* HAVE_SMEM */
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
 
@@ -1917,7 +1672,7 @@ static void drizzle_close_free(DRIZZLE *drizzle)
 }
 
 
-void STDCALL drizzle_close(DRIZZLE *drizzle)
+void drizzle_close(DRIZZLE *drizzle)
 {
   if (drizzle)          /* Some simple safety */
   {
@@ -1942,14 +1697,14 @@ void STDCALL drizzle_close(DRIZZLE *drizzle)
 static bool cli_read_query_result(DRIZZLE *drizzle)
 {
   uchar *pos;
-  ulong field_count;
+  uint32_t field_count;
   DRIZZLE_DATA *fields;
-  ulong length;
+  uint32_t length;
 
   if ((length = cli_safe_read(drizzle)) == packet_error)
     return(1);
   free_old_query(drizzle);    /* Free old result */
-#ifdef MYSQL_CLIENT      /* Avoid warn of unused labels*/
+#ifdef DRIZZLE_CLIENT      /* Avoid warn of unused labels*/
 get_info:
 #endif
   pos=(uchar*) drizzle->net.read_pos;
@@ -1957,22 +1712,15 @@ get_info:
   {
     drizzle->affected_rows= net_field_length_ll(&pos);
     drizzle->insert_id=    net_field_length_ll(&pos);
-    if (protocol_41(drizzle))
-    {
-      drizzle->server_status=uint2korr(pos); pos+=2;
-      drizzle->warning_count=uint2korr(pos); pos+=2;
-    }
-    else if (drizzle->server_capabilities & CLIENT_TRANSACTIONS)
-    {
-      /* DRIZZLE 4.0 protocol */
-      drizzle->server_status=uint2korr(pos); pos+=2;
-      drizzle->warning_count= 0;
-    }
+
+    drizzle->server_status= uint2korr(pos); pos+=2;
+    drizzle->warning_count= uint2korr(pos); pos+=2;
+
     if (pos < drizzle->net.read_pos+length && net_field_length(&pos))
       drizzle->info=(char*) pos;
     return(0);
   }
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   if (field_count == NULL_LENGTH)    /* LOAD DATA LOCAL INFILE */
   {
     int error;
@@ -1992,11 +1740,10 @@ get_info:
   if (!(drizzle->server_status & SERVER_STATUS_AUTOCOMMIT))
     drizzle->server_status|= SERVER_STATUS_IN_TRANS;
 
-  if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, protocol_41(drizzle) ? 7:5)))
+  if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, 7)))
     return(1);
-  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,
-            (uint) field_count,0,
-            drizzle->server_capabilities)))
+  if (!(drizzle->fields= unpack_fields(fields,&drizzle->field_alloc,
+            (uint) field_count, 0)))
     return(1);
   drizzle->status= DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count= (uint) field_count;
@@ -2010,14 +1757,14 @@ get_info:
   finish processing it.
 */
 
-int32_t STDCALL
+int32_t
 drizzle_send_query(DRIZZLE *drizzle, const char* query, uint32_t length)
 {
   return(simple_command(drizzle, COM_QUERY, (uchar*) query, length, 1));
 }
 
 
-int32_t STDCALL
+int32_t
 drizzle_real_query(DRIZZLE *drizzle, const char *query, uint32_t length)
 {
   if (drizzle_send_query(drizzle,query,length))
@@ -2031,7 +1778,7 @@ drizzle_real_query(DRIZZLE *drizzle, const char *query, uint32_t length)
   drizzle_data_seek may be used.
 **************************************************************************/
 
-DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle)
+DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle)
 {
   DRIZZLE_RES *result;
 
@@ -2044,7 +1791,7 @@ DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle)
   }
   drizzle->status=DRIZZLE_STATUS_READY;    /* server is ready */
   if (!(result=(DRIZZLE_RES*) my_malloc((uint) (sizeof(DRIZZLE_RES)+
-                sizeof(ulong) *
+                sizeof(uint32_t) *
                 drizzle->field_count),
               MYF(MY_WME | MY_ZEROFILL))))
   {
@@ -2096,7 +1843,7 @@ static DRIZZLE_RES * cli_use_result(DRIZZLE *drizzle)
     return(0);
   }
   if (!(result=(DRIZZLE_RES*) my_malloc(sizeof(*result)+
-              sizeof(ulong)*drizzle->field_count,
+              sizeof(uint32_t)*drizzle->field_count,
               MYF(MY_WME | MY_ZEROFILL))))
     return(0);
   result->lengths=(uint32_t*) (result+1);
@@ -2125,7 +1872,7 @@ static DRIZZLE_RES * cli_use_result(DRIZZLE *drizzle)
   Return next row of the query results
 **************************************************************************/
 
-DRIZZLE_ROW STDCALL
+DRIZZLE_ROW
 drizzle_fetch_row(DRIZZLE_RES *res)
 {
   if (!res->data)
@@ -2177,7 +1924,7 @@ drizzle_fetch_row(DRIZZLE_RES *res)
   else the lengths are calculated from the offset between pointers.
 **************************************************************************/
 
-uint32_t * STDCALL
+uint32_t *
 drizzle_fetch_lengths(DRIZZLE_RES *res)
 {
   DRIZZLE_ROW column;
@@ -2190,7 +1937,7 @@ drizzle_fetch_lengths(DRIZZLE_RES *res)
 }
 
 
-int STDCALL
+int
 drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 {
   switch (option) {
@@ -2206,9 +1953,6 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
   case DRIZZLE_OPT_COMPRESS:
     drizzle->options.compress= 1;      /* Remember for connect */
     drizzle->options.client_flag|= CLIENT_COMPRESS;
-    break;
-  case DRIZZLE_OPT_NAMED_PIPE:      /* This option is depricated */
-    drizzle->options.protocol=DRIZZLE_PROTOCOL_PIPE; /* Force named pipe */
     break;
   case DRIZZLE_OPT_LOCAL_INFILE:      /* Allow LOAD DATA LOCAL ?*/
     if (!arg || test(*(uint*) arg))
@@ -2236,17 +1980,9 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.charset_name=my_strdup(arg,MYF(MY_WME));
     break;
   case DRIZZLE_OPT_PROTOCOL:
-    drizzle->options.protocol= *(uint*) arg;
-    break;
-  case DRIZZLE_SHARED_MEMORY_BASE_NAME:
-#ifdef HAVE_SMEM
-    if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
-      my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-    drizzle->options.shared_memory_base_name=my_strdup(arg,MYF(MY_WME));
-#endif
+    drizzle->options.protocol= *(const uint*) arg;
     break;
   case DRIZZLE_OPT_USE_REMOTE_CONNECTION:
-  case DRIZZLE_OPT_USE_EMBEDDED_CONNECTION:
   case DRIZZLE_OPT_GUESS_CONNECTION:
     drizzle->options.methods_to_use= option;
     break;
@@ -2254,16 +1990,16 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.client_ip= my_strdup(arg, MYF(MY_WME));
     break;
   case DRIZZLE_SECURE_AUTH:
-    drizzle->options.secure_auth= *(my_bool *) arg;
+    drizzle->options.secure_auth= *(const bool *) arg;
     break;
   case DRIZZLE_REPORT_DATA_TRUNCATION:
-    drizzle->options.report_data_truncation= test(*(my_bool *) arg);
+    drizzle->options.report_data_truncation= test(*(const bool *) arg);
     break;
   case DRIZZLE_OPT_RECONNECT:
-    drizzle->reconnect= *(my_bool *) arg;
+    drizzle->reconnect= *(const bool *) arg;
     break;
   case DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT:
-    if (*(my_bool*) arg)
+    if (*(const bool*) arg)
       drizzle->options.client_flag|= CLIENT_SSL_VERIFY_SERVER_CERT;
     else
       drizzle->options.client_flag&= ~CLIENT_SSL_VERIFY_SERVER_CERT;
@@ -2281,25 +2017,25 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 ****************************************************************************/
 
 /* DRIZZLE_RES */
-uint64_t STDCALL drizzle_num_rows(const DRIZZLE_RES *res)
+uint64_t drizzle_num_rows(const DRIZZLE_RES *res)
 {
   return res->row_count;
 }
 
-unsigned int STDCALL drizzle_num_fields(const DRIZZLE_RES *res)
+unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 {
   return res->field_count;
 }
 
-uint STDCALL drizzle_errno(const DRIZZLE *drizzle)
+uint drizzle_errno(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_errno : drizzle_server_last_errno;
 }
 
 
-const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
+const char * drizzle_error(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
+  return drizzle ? _(drizzle->net.last_error) : _(drizzle_server_last_error);
 }
 
 
@@ -2320,7 +2056,7 @@ const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
    Signed number > 323000
 */
 
-uint32_t STDCALL
+uint32_t
 drizzle_get_server_version(const DRIZZLE *drizzle)
 {
   uint major, minor, version;
@@ -2328,7 +2064,7 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
   major=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
   minor=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
   version= (uint) strtoul(pos, &end_pos, 10);
-  return (ulong) major*10000L+(ulong) (minor*100+version);
+  return (uint32_t) major*10000L+(uint32_t) (minor*100+version);
 }
 
 
@@ -2338,22 +2074,19 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
    and character_set_connection) and updates drizzle->charset so other
    functions like drizzle_real_escape will work correctly.
 */
-int STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
+int drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
 {
-  struct charset_info_st *cs;
+  const CHARSET_INFO *cs;
   const char *save_csdir= charsets_dir;
 
   if (drizzle->options.charset_dir)
     charsets_dir= drizzle->options.charset_dir;
 
   if (strlen(cs_name) < MY_CS_NAME_SIZE &&
-     (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
+      (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
   {
     char buff[MY_CS_NAME_SIZE + 10];
     charsets_dir= save_csdir;
-    /* Skip execution of "SET NAMES" for pre-4.1 servers */
-    if (drizzle_get_server_version(drizzle) < 40100)
-      return 0;
     sprintf(buff, "SET NAMES %s", cs_name);
     if (!drizzle_real_query(drizzle, buff, strlen(buff)))
     {

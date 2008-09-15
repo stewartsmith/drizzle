@@ -139,7 +139,7 @@ static ha_rows _mi_record_pos(MI_INFO *info, const uchar *key,
 		     info->s->state.key_root[inx]);
   if (pos >= 0.0)
   {
-    return((ulong) (pos*info->state->records+0.5));
+    return((uint32_t) (pos*info->state->records+0.5));
   }
   return(HA_POS_ERROR);
 }
@@ -155,7 +155,7 @@ static double _mi_search_pos(register MI_INFO *info,
 {
   int flag;
   uint nod_flag, keynr, max_keynr= 0;
-  my_bool after_key;
+  bool after_key;
   uchar *keypos,*buff;
   double offset;
 

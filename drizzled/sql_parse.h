@@ -20,20 +20,18 @@ bool begin_trans(THD *thd);
 bool end_active_trans(THD *thd);
 int end_trans(THD *thd, enum enum_mysql_completiontype completion);
 
-bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables);
-bool multi_update_precheck(THD *thd, TABLE_LIST *tables);
-bool multi_delete_precheck(THD *thd, TABLE_LIST *tables);
+bool execute_sqlcom_select(THD *thd, TableList *all_tables);
+bool multi_update_precheck(THD *thd, TableList *tables);
+bool multi_delete_precheck(THD *thd, TableList *tables);
 int mysql_multi_update_prepare(THD *thd);
 int mysql_multi_delete_prepare(THD *thd);
 bool mysql_insert_select_prepare(THD *thd);
-bool update_precheck(THD *thd, TABLE_LIST *tables);
-bool delete_precheck(THD *thd, TABLE_LIST *tables);
-bool insert_precheck(THD *thd, TABLE_LIST *tables);
-bool create_table_precheck(THD *thd, TABLE_LIST *tables,
-                           TABLE_LIST *create_table);
-bool parse_sql(THD *thd,
-               class Lex_input_stream *lip,
-               class Object_creation_ctx *creation_ctx);
+bool update_precheck(THD *thd, TableList *tables);
+bool delete_precheck(THD *thd, TableList *tables);
+bool insert_precheck(THD *thd, TableList *tables);
+bool create_table_precheck(THD *thd, TableList *tables,
+                           TableList *create_table);
+bool parse_sql(THD *thd, class Lex_input_stream *lip);
 
 Item *negate_expression(THD *thd, Item *expr);
 
@@ -53,7 +51,7 @@ inline bool check_identifier_name(LEX_STRING *str)
 bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
                               uint max_byte_length);
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
+                              uint max_char_length, const CHARSET_INFO * const cs,
                               bool no_error);
 
 #endif /* DRIZZLE_SERVER_SQL_PARSE_H */

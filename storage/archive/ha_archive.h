@@ -17,6 +17,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
+#include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
 
@@ -135,7 +136,7 @@ public:
   void position(const uchar *record);
   int info(uint);
   void update_create_info(HA_CREATE_INFO *create_info);
-  int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
+  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   int optimize(THD* thd, HA_CHECK_OPT* check_opt);
   int repair(THD* thd, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);

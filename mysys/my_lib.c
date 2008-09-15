@@ -53,7 +53,7 @@
 #define NAMES_START_SIZE   32768
 
 
-static int	comp_names(struct fileinfo *a,struct fileinfo *b);
+static int comp_names(const struct fileinfo *a, const struct fileinfo *b);
 
 
 	/* We need this because program don't know with malloc we used */
@@ -74,7 +74,7 @@ void my_dirend(MY_DIR *buffer)
 
 	/* Compare in sort of filenames */
 
-static int comp_names(struct fileinfo *a, struct fileinfo *b)
+static int comp_names(const struct fileinfo *a, const struct fileinfo *b)
 {
   return (strcmp(a->name,b->name));
 } /* comp_names */
@@ -118,7 +118,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   /* MY_DIR structure is allocated and completly initialized at this point */
   result= (MY_DIR*)buffer;
 
-  tmp_file=strend(tmp_path);
+  tmp_file= strchr(tmp_path, '\0');
 
   dp= (struct dirent*) dirent_tmp;
   
@@ -134,7 +134,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
         goto error;
       
       memset(finfo.mystat, 0, sizeof(struct stat));
-      VOID(strmov(tmp_file,dp->d_name));
+      VOID(stpcpy(tmp_file,dp->d_name));
       VOID(stat(tmp_path, finfo.mystat));
       if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
@@ -190,7 +190,7 @@ char * directory_file_name (char * dst, const char *src)
 
   if (src[0] == 0)
     src= (char*) ".";				/* Use empty as current */
-  end=strmov(dst, src);
+  end=stpcpy(dst, src);
   if (end[-1] != FN_LIBCHAR)
   {
     end[0]=FN_LIBCHAR;				/* Add last '/' */

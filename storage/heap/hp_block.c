@@ -26,7 +26,7 @@
   {p_0, p_1, ...} serve as indexes to descend the blocks tree.
 */
 
-uchar *hp_find_block(HP_BLOCK *block, ulong pos)
+uchar *hp_find_block(HP_BLOCK *block, uint32_t pos)
 {
   register int i;
   register HP_PTRS *ptr; /* block base ptr */

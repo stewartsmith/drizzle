@@ -22,10 +22,15 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/blob.h>
 
-#define BLOB_PACK_LENGTH_TO_MAX_LENGH(arg) \
-((ulong) ((1LL << min(arg, 4) * 8) - 1LL))
+uint32_t
+blob_pack_length_to_max_length(uint arg)
+{
+  return (1LL << min(arg, 4U) * 8) - 1LL;
+}
+
 
 /****************************************************************************
 ** blob type
@@ -36,8 +41,8 @@
 Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 		       enum utype unireg_check_arg, const char *field_name_arg,
                        TABLE_SHARE *share, uint blob_pack_length,
-		       CHARSET_INFO *cs)
-  :Field_longstr(ptr_arg, BLOB_PACK_LENGTH_TO_MAX_LENGH(blob_pack_length),
+		       const CHARSET_INFO * const cs)
+  :Field_longstr(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
                  null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
                  cs),
    packlength(blob_pack_length)
@@ -149,7 +154,7 @@ void Field_blob::put_length(uchar *pos, uint32_t length)
 }
 
 
-int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_blob::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length, new_length;
   const char *well_formed_error_pos;
@@ -170,7 +175,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
-      memcpy(ptr+packlength, (char*) &from, sizeof(char*));
+      memcpy(ptr+packlength, &from, sizeof(char*));
       return 0;
     }
     if (tmpstr.copy(from, length, cs))
@@ -190,7 +195,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
                                             from, length);
     Field_blob::store_length(copy_length);
     tmp= value.ptr();
-    memcpy(ptr + packlength, (uchar*) &tmp, sizeof(char*));
+    memcpy(ptr + packlength, &tmp, sizeof(char*));
     return 0;
   }
   /*
@@ -208,7 +213,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
 
   Field_blob::store_length(copy_length);
   tmp= value.ptr();
-  memcpy(ptr+packlength, (uchar*) &tmp, sizeof(char*));
+  memcpy(ptr+packlength, &tmp, sizeof(char*));
 
   if (check_string_copy_error(this, well_formed_error_pos,
                               cannot_convert_error_pos, from + length, cs))
@@ -225,7 +230,7 @@ oom_error:
 
 int Field_blob::store(double nr)
 {
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs=charset();
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint) value.length(), cs);
 }
@@ -233,7 +238,7 @@ int Field_blob::store(double nr)
 
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs=charset();
   value.set_int(nr, unsigned_val, cs);
   return Field_blob::store(value.ptr(), (uint) value.length(), cs);
 }
@@ -244,7 +249,7 @@ double Field_blob::val_real(void)
   int not_used;
   char *end_not_used, *blob;
   uint32_t length;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
 
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
@@ -382,7 +387,7 @@ int Field_blob::key_cmp(const uchar *key_ptr, uint max_key_length)
   uchar *blob1;
   uint blob_length=get_length(ptr);
   memcpy(&blob1,ptr+packlength,sizeof(char*));
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   uint local_char_length= max_key_length / cs->mbmaxlen;
   local_char_length= my_charpos(cs, blob1, blob1+blob_length,
                                 local_char_length);
@@ -535,7 +540,7 @@ const uchar *Field_blob::unpack(uchar *to __attribute__((unused)),
 /* Keys for blobs are like keys on varchars */
 
 int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
-                         my_bool insert_or_update)
+                         bool insert_or_update)
 {
   uint a_length, b_length;
   if (key_length_arg > 255)
@@ -556,7 +561,7 @@ int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
 
 
 int Field_blob::pack_cmp(const uchar *b, uint key_length_arg,
-                         my_bool insert_or_update)
+                         bool insert_or_update)
 {
   uchar *a;
   uint a_length, b_length;

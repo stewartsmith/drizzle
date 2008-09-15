@@ -40,14 +40,14 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
 
 static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
 {
-  ulong nr1=1, nr2=4;
-  hash->charset->coll->hash_sort(hash->charset,(uchar*) key,length,&nr1,&nr2);
+  uint32_t nr1=1, nr2=4;
+  hash->charset->coll->hash_sort(hash->charset,(const uchar*) key,length,&nr1,&nr2);
   return nr1;
 }
 
 bool
-_hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
-	   ulong size, size_t key_offset, size_t key_length,
+_hash_init(HASH *hash,uint growth_size, const CHARSET_INFO * const charset,
+	   uint32_t size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
 	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)
 {
@@ -56,7 +56,7 @@ _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
                                growth_size))
   {
     hash->free=0;				/* Allow call to hash_free */
-    return(1);
+    return true;
   }
   hash->key_offset=key_offset;
   hash->key_length=key_length;
@@ -65,7 +65,7 @@ _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
   hash->free=free_element;
   hash->flags=flags;
   hash->charset=charset;
-  return(0);
+  return false;
 }
 
 
@@ -288,8 +288,8 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
   size_t rec_keylength;
   uchar *rec_key= (uchar*) hash_key(hash,pos->data,&rec_keylength,1);
   return ((length && length != rec_keylength) ||
-	  my_strnncoll(hash->charset, (uchar*) rec_key, rec_keylength,
-		       (uchar*) key, rec_keylength));
+	  my_strnncoll(hash->charset, (const uchar*) rec_key, rec_keylength,
+		       (const uchar*) key, rec_keylength));
 }
 
 
@@ -618,7 +618,7 @@ bool hash_update(HASH *hash, uchar *record, uchar *old_key,
 }
 
 
-uchar *hash_element(HASH *hash,ulong idx)
+uchar *hash_element(HASH *hash,uint32_t idx)
 {
   if (idx < hash->records)
     return dynamic_element(&hash->array,idx,HASH_LINK*)->data;

@@ -331,7 +331,7 @@ bool mi_check_status(void *param)
     external lock (in other words: w_locks == 1 means no other threads has
     a write lock)
   */
-  return (my_bool) !(info->s->state.dellink == HA_OFFSET_ERROR ||
+  return (bool) !(info->s->state.dellink == HA_OFFSET_ERROR ||
                      (myisam_concurrent_insert == 2 && info->s->r_locks &&
                       info->s->w_locks == 1));
 }

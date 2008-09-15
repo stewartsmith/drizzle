@@ -15,12 +15,7 @@
 
 
 /* Classes in mysql */
-
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
-#include <drizzled/plugin_audit.h>
+#include <drizzled/global.h>
 #include "log.h"
 #include "rpl_tblmap.h"
 
@@ -219,10 +214,10 @@ public:
 
 typedef struct st_mysql_lock
 {
-  TABLE **table;
+  Table **table;
   uint table_count,lock_count;
   THR_LOCK_DATA **locks;
-} MYSQL_LOCK;
+} DRIZZLE_LOCK;
 
 
 class LEX_COLUMN : public Sql_alloc
@@ -338,14 +333,14 @@ struct system_variables
   plugin_ref table_plugin;
 
   /* Only charset part of these variables is sensible */
-  CHARSET_INFO  *character_set_filesystem;
-  CHARSET_INFO  *character_set_client;
-  CHARSET_INFO  *character_set_results;
+  const CHARSET_INFO  *character_set_filesystem;
+  const CHARSET_INFO  *character_set_client;
+  const CHARSET_INFO  *character_set_results;
 
   /* Both charset and collation parts of these variables are important */
-  CHARSET_INFO	*collation_server;
-  CHARSET_INFO	*collation_database;
-  CHARSET_INFO  *collation_connection;
+  const CHARSET_INFO	*collation_server;
+  const CHARSET_INFO	*collation_database;
+  const CHARSET_INFO  *collation_connection;
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
@@ -444,7 +439,7 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(THD *thd, bool all);
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 
 #define INIT_ARENA_DBUG_INFO is_backup_arena= 0
 
@@ -654,19 +649,15 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  char   *host, *user, *priv_user, *ip;
-  /* The host privilege we are using */
-  char   priv_host[MAX_HOSTNAME];
-  /* points to host if host is available, otherwise points to ip */
-  const char *host_or_ip;
-  ulong db_access;                     /* Privileges for current db */
+  char *user; 
+  char *ip;
 
   void init();
   void destroy();
   void skip_grants();
   inline char *priv_host_name()
   {
-    return (*priv_host ? priv_host : (char *)"%");
+    return (ip ? ip : (char *)"%");
   }
 };
 
@@ -695,7 +686,7 @@ public:
     List of regular tables in use by this thread. Contains temporary and
     base tables that were opened with @see open_tables().
   */
-  TABLE *open_tables;
+  Table *open_tables;
   /**
     List of temporary tables used by this thread. Contains user-level
     temporary tables, created with CREATE TEMPORARY TABLE, and
@@ -703,13 +694,13 @@ public:
     or for an intermediate table used in ALTER.
     XXX Why are internal temporary tables added to this list?
   */
-  TABLE *temporary_tables;
+  Table *temporary_tables;
   /**
     List of tables that were opened with HANDLER OPEN and are
     still in use by this thread.
   */
-  TABLE *handler_tables;
-  TABLE *derived_tables;
+  Table *handler_tables;
+  Table *derived_tables;
   /*
     During a MySQL session, one can lock tables in two modes: automatic
     or manual. In automatic mode all necessary tables are locked just before
@@ -723,21 +714,21 @@ public:
     the 'LOCK_TABLES' chapter of the MySQL manual.
     See also lock_tables() for details.
   */
-  MYSQL_LOCK *lock;
+  DRIZZLE_LOCK *lock;
   /*
     Tables that were locked with explicit or implicit LOCK TABLES.
     (Implicit LOCK TABLES happens when we are prelocking tables for
      execution of statement which uses stored routines. See description
      THD::prelocked_mode for more info.)
   */
-  MYSQL_LOCK *locked_tables;
+  DRIZZLE_LOCK *locked_tables;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
     created. This field is used to keep the extra lock available for
     lower level routines, which would otherwise miss that lock.
    */
-  MYSQL_LOCK *extra_lock;
+  DRIZZLE_LOCK *extra_lock;
 
   ulong	version;
   uint current_tablenr;
@@ -849,7 +840,7 @@ public:
   */
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd) = 0;
 };
 
@@ -927,7 +918,7 @@ public:
 
 private:
   /** Message buffer. Can be used by OK or ERROR status. */
-  char m_message[MYSQL_ERRMSG_SIZE];
+  char m_message[DRIZZLE_ERRMSG_SIZE];
   /**
     SQL error number. One of ER_ codes from share/errmsg.txt.
     Set by set_error_status.
@@ -1070,13 +1061,8 @@ public:
     Set it using the  thd_proc_info(THD *thread, const char *message)
     macro/function.
   */
-#define THD_SET_PROC_INFO(thd, info) \
-    (thd)->proc_info= (info)
-
-  inline const char* get_proc_info() { return proc_info;}
-
-  /* left public for the the storage engines, please avoid direct use */
-  const char *proc_info;
+  void        set_proc_info(const char *info) { proc_info= info; }
+  const char* get_proc_info() const { return proc_info; }
 
   /*
     Used in error messages to tell user in what part of MySQL we found an
@@ -1120,7 +1106,7 @@ public:
 
   /* Place to store various things */
   void *thd_marker;
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   int binlog_setup_trx_data();
 
   /*
@@ -1128,12 +1114,12 @@ public:
   */
   void binlog_start_trans_and_stmt();
   void binlog_set_stmt_begin();
-  int binlog_write_table_map(TABLE *table, bool is_transactional);
-  int binlog_write_row(TABLE* table, bool is_transactional,
+  int binlog_write_table_map(Table *table, bool is_transactional);
+  int binlog_write_row(Table* table, bool is_transactional,
                        const uchar *new_data);
-  int binlog_delete_row(TABLE* table, bool is_transactional,
+  int binlog_delete_row(Table* table, bool is_transactional,
                         const uchar *old_data);
-  int binlog_update_row(TABLE* table, bool is_transactional,
+  int binlog_update_row(Table* table, bool is_transactional,
                         const uchar *old_data, const uchar *new_data);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
@@ -1142,7 +1128,7 @@ public:
     Member functions to handle pending event for row-level logging.
   */
   template <class RowsEventT> Rows_log_event*
-    binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
+    binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                       size_t needed,
                                       bool is_transactional,
 				      RowsEventT* hint);
@@ -1170,7 +1156,7 @@ public:
   void clear_binlog_table_maps() {
     binlog_table_maps= 0;
   }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 public:
 
@@ -1187,7 +1173,7 @@ public:
        List contain only transactional tables, that not invalidated in query
        cache (instead of full list of changed in transaction tables).
     */
-    CHANGED_TABLE_LIST* changed_tables;
+    CHANGED_TableList* changed_tables;
     MEM_ROOT mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
@@ -1197,7 +1183,7 @@ public:
     }
     st_transactions()
     {
-      memset((char*)this, 0, sizeof(*this));
+      memset(this, 0, sizeof(*this));
       xid_state.xid.null();
       init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
     }
@@ -1387,15 +1373,15 @@ public:
   */
   table_map  used_tables;
   USER_CONN *user_connect;
-  CHARSET_INFO *db_charset;
+  const CHARSET_INFO *db_charset;
   /*
     FIXME: this, and some other variables like 'count_cuted_fields'
     maybe should be statement/cursor local, that is, moved to Statement
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List	     <MYSQL_ERROR> warn_list;
-  uint	     warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_END];
+  List	     <DRIZZLE_ERROR> warn_list;
+  uint	     warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint	     total_warn_count;
   Diagnostics_area main_da;
 
@@ -1590,7 +1576,7 @@ public:
 #endif
   void awake(THD::killed_state state_to_set);
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   enum enum_binlog_query_type {
     /*
       The query can be logged row-based or statement-based
@@ -1606,7 +1592,7 @@ public:
       The query represents a change to a table in the "mysql"
       database and is currently mapped to ROW_QUERY_TYPE.
     */
-    MYSQL_QUERY_TYPE,
+    DRIZZLE_QUERY_TYPE,
     QUERY_TYPE_COUNT
   };
   
@@ -1686,15 +1672,15 @@ public:
                               const char* str, uint length,
                               bool allocate_lex_string);
 
-  bool convert_string(LEX_STRING *to, CHARSET_INFO *to_cs,
+  bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 		      const char *from, uint from_length,
-		      CHARSET_INFO *from_cs);
+		      const CHARSET_INFO * const from_cs);
 
-  bool convert_string(String *s, CHARSET_INFO *from_cs, CHARSET_INFO *to_cs);
+  bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
 
-  void add_changed_table(TABLE *table);
+  void add_changed_table(Table *table);
   void add_changed_table(const char *key, long key_length);
-  CHANGED_TABLE_LIST * changed_table_dup(const char *key, long key_length);
+  CHANGED_TableList * changed_table_dup(const char *key, long key_length);
   int send_explain_fields(select_result *result);
   /**
     Clear the current error, if any.
@@ -1737,7 +1723,7 @@ public:
     To raise this flag, use my_error().
   */
   inline bool is_error() const { return main_da.is_error(); }
-  inline CHARSET_INFO *charset() { return variables.character_set_client; }
+  inline const CHARSET_INFO *charset() { return variables.character_set_client; }
   void update_charset();
 
   void change_item_tree(Item **place, Item *new_value)
@@ -1761,12 +1747,7 @@ public:
     killed_state killed_val; /* to cache the volatile 'killed' */
     return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
   }
-  inline void send_kill_message() const
-  {
-    int err= killed_errno();
-    if (err)
-      my_message(err, ER(err), MYF(0));
-  }
+  void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
   inline bool really_abort_on_warning()
   {
@@ -1887,17 +1868,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length)
-  {
-    if (db == NULL)
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-      return true;
-    }
-    *p_db= strmake(db, db_length);
-    *p_db_length= db_length;
-    return false;
-  }
+  bool copy_db_to(char **p_db, size_t *p_db_length);
   thd_scheduler scheduler;
 
 public:
@@ -1914,7 +1885,7 @@ public:
     @return true if the error is handled
   */
   virtual bool handle_error(uint sql_errno, const char *message,
-                            MYSQL_ERROR::enum_warning_level level);
+                            DRIZZLE_ERROR::enum_warning_level level);
 
   /**
     Remove the error handler last pushed.
@@ -1922,6 +1893,8 @@ public:
   void pop_internal_handler();
 
 private:
+  const char *proc_info;
+
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
   /**
@@ -1983,7 +1956,7 @@ public:
   bool opt_enclosed;
   bool dumpfile;
   ulong skip_lines;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   sql_exchange(char *name, bool dumpfile_flag,
                enum_filetype filetype_arg= FILETYPE_CSV);
 };
@@ -2145,14 +2118,14 @@ public:
 
 class select_insert :public select_result_interceptor {
  public:
-  TABLE_LIST *table_list;
-  TABLE *table;
+  TableList *table_list;
+  Table *table;
   List<Item> *fields;
   uint64_t autoinc_value_of_last_inserted_row; // autogenerated or not
   COPY_INFO info;
   bool insert_into_view;
-  select_insert(TABLE_LIST *table_list_par,
-		TABLE *table_par, List<Item> *fields_par,
+  select_insert(TableList *table_list_par,
+		Table *table_par, List<Item> *fields_par,
 		List<Item> *update_fields, List<Item> *update_values,
 		enum_duplicates duplic, bool ignore);
   ~select_insert();
@@ -2170,22 +2143,22 @@ class select_insert :public select_result_interceptor {
 
 
 class select_create: public select_insert {
-  ORDER *group;
-  TABLE_LIST *create_table;
+  order_st *group;
+  TableList *create_table;
   HA_CREATE_INFO *create_info;
-  TABLE_LIST *select_tables;
+  TableList *select_tables;
   Alter_info *alter_info;
   Field **field;
   /* lock data for tmp table */
-  MYSQL_LOCK *m_lock;
+  DRIZZLE_LOCK *m_lock;
   /* m_lock or thd->extra_lock */
-  MYSQL_LOCK **m_plock;
+  DRIZZLE_LOCK **m_plock;
 public:
-  select_create (TABLE_LIST *table_arg,
+  select_create (TableList *table_arg,
 		 HA_CREATE_INFO *create_info_par,
                  Alter_info *alter_info_arg,
 		 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
-                 TABLE_LIST *select_tables_arg)
+                 TableList *select_tables_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
     create_info(create_info_par),
@@ -2195,7 +2168,7 @@ public:
     {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
 
-  void binlog_show_create_table(TABLE **tables, uint count);
+  void binlog_show_create_table(Table **tables, uint count);
   void store_values(List<Item> &values);
   void send_error(uint errcode,const char *err);
   bool send_eof();
@@ -2240,7 +2213,7 @@ public:
   bool  using_indirect_summary_function;
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
   uint  convert_blob_length; 
-  CHARSET_INFO *table_charset; 
+  const CHARSET_INFO *table_charset; 
   bool schema_table;
   /*
     True if GROUP BY and its aggregate functions are already computed
@@ -2282,7 +2255,7 @@ class select_union :public select_result_interceptor
 {
   TMP_TABLE_PARAM tmp_table_param;
 public:
-  TABLE *table;
+  Table *table;
 
   select_union() :table(0) {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
@@ -2419,10 +2392,10 @@ class user_var_entry
   Item_result type;
   bool unsigned_flag;
 
-  double val_real(my_bool *null_value);
-  int64_t val_int(my_bool *null_value) const;
-  String *val_str(my_bool *null_value, String *str, uint decimals);
-  my_decimal *val_decimal(my_bool *null_value, my_decimal *result);
+  double val_real(bool *null_value);
+  int64_t val_int(bool *null_value) const;
+  String *val_str(bool *null_value, String *str, uint decimals);
+  my_decimal *val_decimal(bool *null_value, my_decimal *result);
   DTCollation collation;
 };
 
@@ -2458,7 +2431,7 @@ public:
     return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
   }
 
-  bool get(TABLE *table);
+  bool get(Table *table);
   static double get_use_cost(uint *buffer, uint nkeys, uint key_size, 
                              uint64_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint key_size, 
@@ -2479,7 +2452,7 @@ public:
 
 class multi_delete :public select_result_interceptor
 {
-  TABLE_LIST *delete_tables, *table_being_deleted;
+  TableList *delete_tables, *table_being_deleted;
   Unique **tempfiles;
   ha_rows deleted, found;
   uint num_of_tables;
@@ -2497,7 +2470,7 @@ class multi_delete :public select_result_interceptor
   bool error_handled;
 
 public:
-  multi_delete(TABLE_LIST *dt, uint num_of_tables);
+  multi_delete(TableList *dt, uint num_of_tables);
   ~multi_delete();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
@@ -2511,10 +2484,10 @@ public:
 
 class multi_update :public select_result_interceptor
 {
-  TABLE_LIST *all_tables; /* query/update command tables */
-  TABLE_LIST *leaves;     /* list of leves of join table tree */
-  TABLE_LIST *update_tables, *table_being_updated;
-  TABLE **tmp_tables, *main_table, *table_to_update;
+  TableList *all_tables; /* query/update command tables */
+  TableList *leaves;     /* list of leves of join table tree */
+  TableList *update_tables, *table_being_updated;
+  Table **tmp_tables, *main_table, *table_to_update;
   TMP_TABLE_PARAM *tmp_table_param;
   ha_rows updated, found;
   List <Item> *fields, *values;
@@ -2524,7 +2497,7 @@ class multi_update :public select_result_interceptor
    List of tables referenced in the CHECK OPTION condition of
    the updated view excluding the updated table. 
   */
-  List <TABLE> unupdated_check_opt_tables;
+  List <Table> unupdated_check_opt_tables;
   Copy_field *copy_field;
   enum enum_duplicates handle_duplicates;
   bool do_update, trans_safe;
@@ -2538,7 +2511,7 @@ class multi_update :public select_result_interceptor
   bool error_handled;
 
 public:
-  multi_update(TABLE_LIST *ut, TABLE_LIST *leaves_list,
+  multi_update(TableList *ut, TableList *leaves_list,
 	       List<Item> *fields, List<Item> *values,
 	       enum_duplicates handle_duplicates, bool ignore);
   ~multi_update();
@@ -2591,4 +2564,4 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
-#endif /* MYSQL_SERVER */
+#endif /* DRIZZLE_SERVER */

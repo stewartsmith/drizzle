@@ -276,7 +276,7 @@ static int handle_default_option(void *in_ctx, const char *group_name,
       return 1;
     if (insert_dynamic(ctx->args, (uchar*) &tmp))
       return 1;
-    strmov(tmp, option);
+    stpcpy(tmp, option);
   }
 
   return 0;
@@ -429,7 +429,7 @@ int load_defaults(const char *conf_file, const char **groups,
 
   /* copy name + found arguments + command line arguments to new array */
   res[0]= argv[0][0];  /* Name MUST be set, even by embedded library */
-  memcpy((uchar*) (res+1), args.buffer, args.elements*sizeof(char*));
+  memcpy(res+1, args.buffer, args.elements*sizeof(char*));
   /* Skip --defaults-xxx options */
   (*argc)-= args_used;
   (*argv)+= args_used;
@@ -445,8 +445,7 @@ int load_defaults(const char *conf_file, const char **groups,
   }
 
   if (*argc)
-    memcpy((uchar*) (res+1+args.elements), (char*) ((*argv)+1),
-	   (*argc-1)*sizeof(char*));
+    memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
   res[args.elements+ *argc]=0;			/* last null */
 
   (*argc)+=args.elements;
@@ -475,7 +474,7 @@ int load_defaults(const char *conf_file, const char **groups,
 void free_defaults(char **argv)
 {
   MEM_ROOT ptr;
-  memcpy((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
+  memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
   free_root(&ptr,MYF(0));
 }
 
@@ -525,7 +524,7 @@ static char *get_argument(const char *keyword, size_t kwlen,
   /* Skip over "include / includedir keyword" and following whitespace */
 
   for (ptr+= kwlen - 1;
-       my_isspace(&my_charset_latin1, ptr[0]);
+       my_isspace(&my_charset_utf8_general_ci, ptr[0]);
        ptr++)
   {}
 
@@ -535,7 +534,7 @@ static char *get_argument(const char *keyword, size_t kwlen,
     Note that my_isspace() is true for \r and \n
   */
   for (end= ptr + strlen(ptr) - 1;
-       my_isspace(&my_charset_latin1, *(end - 1));
+       my_isspace(&my_charset_utf8_general_ci, *(end - 1));
        end--)
   {}
   end[0]= 0;                                    /* Cut off end space */
@@ -604,7 +603,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   }
   else
   {
-    strmov(name,config_file);
+    stpcpy(name,config_file);
   }
   fn_format(name,name,"","",4);
   {
@@ -631,7 +630,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   {
     line++;
     /* Ignore comment and empty lines */
-    for (ptr= buff; my_isspace(&my_charset_latin1, *ptr); ptr++)
+    for (ptr= buff; my_isspace(&my_charset_utf8_general_ci, *ptr); ptr++)
     {}
 
     if (*ptr == '#' || *ptr == ';' || !*ptr)
@@ -643,7 +642,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       if (recursion_level >= max_recursion_level)
       {
         for (end= ptr + strlen(ptr) - 1; 
-             my_isspace(&my_charset_latin1, *(end - 1));
+             my_isspace(&my_charset_utf8_general_ci, *(end - 1));
              end--)
         {}
         end[0]= 0;
@@ -655,12 +654,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       }
 
       /* skip over `!' and following whitespace */
-      for (++ptr; my_isspace(&my_charset_latin1, ptr[0]); ptr++)
+      for (++ptr; my_isspace(&my_charset_utf8_general_ci, ptr[0]); ptr++)
       {}
 
       if ((!strncmp(ptr, includedir_keyword,
                     sizeof(includedir_keyword) - 1)) &&
-          my_isspace(&my_charset_latin1, ptr[sizeof(includedir_keyword) - 1]))
+          my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(includedir_keyword) - 1]))
       {
 	if (!(ptr= get_argument(includedir_keyword,
                                 sizeof(includedir_keyword),
@@ -695,7 +694,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
         my_dirend(search_dir);
       }
       else if ((!strncmp(ptr, include_keyword, sizeof(include_keyword) - 1)) &&
-               my_isspace(&my_charset_latin1, ptr[sizeof(include_keyword)-1]))
+               my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(include_keyword)-1]))
       {
 	if (!(ptr= get_argument(include_keyword,
                                 sizeof(include_keyword), ptr,
@@ -720,7 +719,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 	goto err;
       }
       /* Remove end space */
-      for ( ; my_isspace(&my_charset_latin1,end[-1]) ; end--) ;
+      for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
       strmake(curr_gr, ptr, min((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
@@ -742,10 +741,10 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     end= remove_end_comment(ptr);
     if ((value= strchr(ptr, '=')))
       end= value;				/* Option without argument */
-    for ( ; my_isspace(&my_charset_latin1,end[-1]) ; end--) ;
+    for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
     if (!value)
     {
-      strmake(strmov(option,"--"),ptr, (size_t) (end-ptr));
+      strmake(stpcpy(option,"--"),ptr, (size_t) (end-ptr));
       if (opt_handler(handler_ctx, curr_gr, option))
         goto err;
     }
@@ -753,13 +752,13 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     {
       /* Remove pre- and end space */
       char *value_end;
-      for (value++ ; my_isspace(&my_charset_latin1,*value); value++) ;
-      value_end=strend(value);
+      for (value++ ; my_isspace(&my_charset_utf8_general_ci,*value); value++) ;
+      value_end= strchr(value, '\0');
       /*
 	We don't have to test for value_end >= value as we know there is
 	an '=' before
       */
-      for ( ; my_isspace(&my_charset_latin1,value_end[-1]) ; value_end--) ;
+      for ( ; my_isspace(&my_charset_utf8_general_ci,value_end[-1]) ; value_end--) ;
       if (value_end < value)			/* Empty string */
 	value_end=value;
 
@@ -771,7 +770,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 	value++;
 	value_end--;
       }
-      ptr=strnmov(strmov(option,"--"),ptr,(size_t) (end-ptr));
+      ptr=stpncpy(stpcpy(option,"--"),ptr,(size_t) (end-ptr));
       *ptr++= '=';
 
       for ( ; value != value_end; value++)
@@ -949,7 +948,7 @@ void print_defaults(const char *conf_file, const char **groups)
 
 static void init_default_directories(void)
 {
-  memset((char *) default_directories, 0, sizeof(default_directories));
+  memset(default_directories, 0, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
   ADD_DIRECTORY("/etc/mysql/");
 #if defined(DEFAULT_SYSCONFDIR)

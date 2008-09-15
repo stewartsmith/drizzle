@@ -21,16 +21,10 @@
   This file defines all numerical functions
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"				// for wait_for_master_pos
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
-#include <mysys/hash.h>
-#include <time.h>
 #include <mysys/my_bit.h>
+#include <drizzled/drizzled_error_messages.h>
 
 bool check_reserved_words(LEX_STRING *name)
 {
@@ -97,7 +91,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
       if (!(args=(Item**) thd->alloc(sizeof(Item*)*arg_count)))
 	return;
     }
-    memcpy((char*) args, (char*) item->args, sizeof(Item*)*arg_count);
+    memcpy(args, item->args, sizeof(Item*)*arg_count);
   }
 }
 
@@ -444,7 +438,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-Field *Item_func::tmp_table_field(TABLE *table)
+Field *Item_func::tmp_table_field(Table *table)
 {
   Field *field;
 
@@ -605,9 +599,7 @@ void Item_func::count_real_length()
 void Item_func::signal_divide_by_null()
 {
   THD *thd= current_thd;
-  if (thd->variables.sql_mode & MODE_ERROR_FOR_DIVISION_BY_ZERO)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO,
-                 ER(ER_DIVISION_BY_ZERO));
+  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
 
@@ -827,7 +819,7 @@ int64_t Item_func_numhybrid::val_int()
       return 0;
 
     char *end= (char*) res->ptr() + res->length();
-    CHARSET_INFO *cs= str_value.charset();
+    const CHARSET_INFO * const cs= str_value.charset();
     return (*(cs->cset->strtoll10))(cs, res->ptr(), &end, &err_not_used);
   }
   default:
@@ -913,7 +905,7 @@ int64_t Item_func_signed::val_int_from_str(int *error)
     char err_buff[128];
     String err_tmp(err_buff,(uint32_t) sizeof(err_buff), system_charset_info);
     err_tmp.copy(start, length, system_charset_info);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         err_tmp.c_ptr());
@@ -938,7 +930,7 @@ int64_t Item_func_signed::val_int()
   value= val_int_from_str(&error);
   if (value < 0 && error == 0)
   {
-    push_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to signed converted positive out-of-range integer to "
                  "it's negative complement");
   }
@@ -979,7 +971,7 @@ int64_t Item_func_unsigned::val_int()
 
   value= val_int_from_str(&error);
   if (error < 0)
-    push_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to unsigned converted negative integer to it's "
                  "positive complement");
   return value;
@@ -1047,7 +1039,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
   return dec;
 
 err:
-  push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                       ER_WARN_DATA_OUT_OF_RANGE,
                       ER(ER_WARN_DATA_OUT_OF_RANGE),
                       name, 1);
@@ -1151,9 +1143,8 @@ void Item_func_additive_op::result_precision()
 void Item_func_minus::fix_length_and_dec()
 {
   Item_num_op::fix_length_and_dec();
-  if (unsigned_flag &&
-      (current_thd->variables.sql_mode & MODE_NO_UNSIGNED_SUBTRACTION))
-    unsigned_flag=0;
+  if (unsigned_flag)
+    unsigned_flag= 0;
 }
 
 
@@ -1243,7 +1234,7 @@ void Item_func_mul::result_precision()
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
   decimals= min(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
   int precision= min(args[0]->decimal_precision() + args[1]->decimal_precision(),
-                     DECIMAL_MAX_PRECISION);
+                     (unsigned int)DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,unsigned_flag);
 }
 
@@ -1291,13 +1282,13 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 void Item_func_div::result_precision()
 {
   uint precision=min(args[0]->decimal_precision() + prec_increment,
-                     DECIMAL_MAX_PRECISION);
+                     (unsigned int)DECIMAL_MAX_PRECISION);
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= min(args[0]->decimals + prec_increment, DECIMAL_MAX_SCALE);
+  decimals= min(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -2073,7 +2064,7 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   my_decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= min((uint64_t) dec, decimals);
+    dec= min(dec, (int64_t) decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
     
@@ -2642,22 +2633,6 @@ void Item_func_find_in_set::fix_length_and_dec()
 {
   decimals=0;
   max_length=3;					// 1-999
-  if (args[0]->const_item() && args[1]->type() == FIELD_ITEM)
-  {
-    Field *field= ((Item_field*) args[1])->field;
-    if (field->real_type() == DRIZZLE_TYPE_SET)
-    {
-      String *find=args[0]->val_str(&value);
-      if (find)
-      {
-	enum_value= find_type(((Field_enum*) field)->typelib,find->ptr(),
-			      find->length(), 0);
-	enum_bit=0;
-	if (enum_value)
-	  enum_bit=1LL << (enum_value-1);
-      }
-    }
-  }
   agg_arg_charsets(cmp_collation, args, 2, MY_COLL_CMP_CONV, 1);
 }
 
@@ -2690,7 +2665,7 @@ int64_t Item_func_find_in_set::val_int()
   if ((diff=buffer->length() - find->length()) >= 0)
   {
     my_wc_t wc;
-    CHARSET_INFO *cs= cmp_collation.collation;
+    const CHARSET_INFO * const cs= cmp_collation.collation;
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
@@ -2856,7 +2831,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 
   if (u_d->func_init)
   {
-    char init_msg_buff[MYSQL_ERRMSG_SIZE];
+    char init_msg_buff[DRIZZLE_ERRMSG_SIZE];
     char *to=num_buffer;
     for (uint i=0; i < arg_count; i++)
     {
@@ -2914,7 +2889,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
                u_d->name.str, init_msg_buff);
       return(true);
     }
-    func->max_length=min(initid.max_length,MAX_BLOB_WIDTH);
+    func->max_length=min(initid.max_length,(unsigned long)MAX_BLOB_WIDTH);
     func->maybe_null=initid.maybe_null;
     const_item_cache=initid.const_item;
     /* 
@@ -2923,7 +2898,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
     */  
     if (!const_item_cache && !used_tables_cache)
       used_tables_cache= RAND_TABLE_BIT;
-    func->decimals=min(initid.decimals,NOT_FIXED_DEC);
+    func->decimals=min(initid.decimals,(unsigned int)NOT_FIXED_DEC);
   }
   initialized=1;
   if (error)
@@ -3026,7 +3001,7 @@ String *udf_handler::val_str(String *str,String *save_str)
   For the moment, UDF functions are returning DECIMAL values as strings
 */
 
-my_decimal *udf_handler::val_decimal(my_bool *null_value, my_decimal *dec_buf)
+my_decimal *udf_handler::val_decimal(bool *null_value, my_decimal *dec_buf)
 {
   char buf[DECIMAL_MAX_STR_LENGTH+1], *end;
   ulong res_length= DECIMAL_MAX_STR_LENGTH;
@@ -3233,11 +3208,11 @@ public:
   inline bool initialized() { return key != 0; }
   friend void item_user_lock_release(User_level_lock *ull);
   friend uchar *ull_get_key(const User_level_lock *ull, size_t *length,
-                            my_bool not_used);
+                            bool not_used);
 };
 
 uchar *ull_get_key(const User_level_lock *ull, size_t *length,
-                   my_bool not_used __attribute__((unused)))
+                   bool not_used __attribute__((unused)))
 {
   *length= ull->key_length;
   return ull->key;
@@ -3249,7 +3224,7 @@ static bool item_user_lock_inited= 0;
 void item_user_lock_init(void)
 {
   pthread_mutex_init(&LOCK_user_locks,MY_MUTEX_INIT_SLOW);
-  hash_init(&hash_user_locks,system_charset_info,
+  hash_init(&hash_user_locks, system_charset_info,
 	    16,0,0,(hash_get_key) ull_get_key,NULL,0);
   item_user_lock_inited= 1;
 }
@@ -3361,7 +3336,7 @@ int64_t Item_func_benchmark::val_int()
     {
       char buff[22];
       llstr(((int64_t) loop_count), buff);
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
     }
@@ -3516,7 +3491,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 {
   if (result_field)
   {
-    TABLE *table= (TABLE *) arg;
+    Table *table= (Table *) arg;
     if (result_field->table == table || !table)
       bitmap_set_bit(result_field->table->read_set, result_field->field_index);
   }
@@ -3546,7 +3521,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 
 static bool
 update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
-            Item_result type, CHARSET_INFO *cs, Derivation dv,
+            Item_result type, const CHARSET_INFO * const cs, Derivation dv,
             bool unsigned_arg)
 {
   if (set_null)
@@ -3607,7 +3582,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
 bool
 Item_func_set_user_var::update_hash(void *ptr, uint length,
                                     Item_result res_type,
-                                    CHARSET_INFO *cs, Derivation dv,
+                                    const CHARSET_INFO * const cs, Derivation dv,
                                     bool unsigned_arg)
 {
   /*
@@ -3628,7 +3603,7 @@ Item_func_set_user_var::update_hash(void *ptr, uint length,
 
 /** Get the value of a variable as a double. */
 
-double user_var_entry::val_real(my_bool *null_value)
+double user_var_entry::val_real(bool *null_value)
 {
   if ((*null_value= (value == 0)))
     return 0.0;
@@ -3656,7 +3631,7 @@ double user_var_entry::val_real(my_bool *null_value)
 
 /** Get the value of a variable as an integer. */
 
-int64_t user_var_entry::val_int(my_bool *null_value) const
+int64_t user_var_entry::val_int(bool *null_value) const
 {
   if ((*null_value= (value == 0)))
     return 0LL;
@@ -3687,7 +3662,7 @@ int64_t user_var_entry::val_int(my_bool *null_value) const
 
 /** Get the value of a variable as a string. */
 
-String *user_var_entry::val_str(my_bool *null_value, String *str,
+String *user_var_entry::val_str(bool *null_value, String *str,
 				uint decimals)
 {
   if ((*null_value= (value == 0)))
@@ -3718,7 +3693,7 @@ String *user_var_entry::val_str(my_bool *null_value, String *str,
 
 /** Get the value of a variable as a decimal. */
 
-my_decimal *user_var_entry::val_decimal(my_bool *null_value, my_decimal *val)
+my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
 {
   if ((*null_value= (value == 0)))
     return 0;
@@ -4034,7 +4009,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
       (result_type() == REAL_RESULT && field->result_type() == STRING_RESULT))
   {
     String *result;
-    CHARSET_INFO *cs= collation.collation;
+    const CHARSET_INFO * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];		// Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result= entry->val_str(&null_value, &str_value, decimals);
@@ -4361,7 +4336,7 @@ bool Item_user_var_as_out_param::fix_fields(THD *thd, Item **ref)
 }
 
 
-void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
+void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, true, 0, 0, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
@@ -4369,7 +4344,7 @@ void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
 
 
 void Item_user_var_as_out_param::set_value(const char *str, uint length,
-                                           CHARSET_INFO* cs)
+                                           const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);

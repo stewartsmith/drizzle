@@ -17,7 +17,7 @@ show create database `#mysql50#mysqltest-1`;
 show tables in `mysqltest1`;
 show tables in `#mysql50#mysqltest-1`;
 
---exec $MYSQL_CHECK --all-databases --fix-db-names --fix-table-names
+--exec $DRIZZLE_CHECK --all-databases --fix-db-names --fix-table-names
 
 show create database `mysqltest1`;
 show create database `mysqltest-1`;
@@ -50,7 +50,7 @@ drop table `txu#p#p1`;
 # Check if old tables work
 #
 
-system cp $MYSQL_TEST_DIR/std_data/old_table-323.frm $MYSQLTEST_VARDIR/master-data/test/t1.frm;
+system cp $DRIZZLE_TEST_DIR/std_data/old_table-323.frm $MYSQLTEST_VARDIR/master-data/test/t1.frm;
 truncate t1;
 drop table t1;
 

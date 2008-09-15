@@ -41,7 +41,7 @@
 #endif /* DO_NOT_REMOVE_THREAD_WRAPPERS */
 
 static pthread_mutex_t THR_LOCK_mutex;
-static ulong safe_mutex_count= 0;		/* Number of mutexes created */
+static uint32_t safe_mutex_count= 0;		/* Number of mutexes created */
 #ifdef SAFE_MUTEX_DETECT_DESTROY
 static struct st_safe_mutex_info_t *safe_mutex_root= NULL;
 #endif
@@ -57,7 +57,7 @@ int safe_mutex_init(safe_mutex_t *mp,
 		    const char *file,
 		    uint line)
 {
-  memset((char*) mp, 0, sizeof(*mp));
+  memset(mp, 0, sizeof(*mp));
   pthread_mutex_init(&mp->global,MY_MUTEX_INIT_ERRCHK);
   pthread_mutex_init(&mp->mutex,attr);
   /* Mark that mutex is initialized */
@@ -402,10 +402,10 @@ void safe_mutex_end(FILE *file __attribute__((unused)))
 #undef pthread_cond_wait
 #undef pthread_cond_timedwait
 
-ulong mutex_delay(ulong delayloops)
+uint32_t mutex_delay(uint32_t delayloops)
 {
-  ulong	i;
-  volatile ulong j;
+  uint32_t	i;
+  volatile uint32_t j;
 
   j = 0;
 

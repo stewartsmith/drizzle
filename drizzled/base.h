@@ -15,8 +15,15 @@
 
 /* This file includes constants used with all databases */
 
-#ifndef _my_base_h
-#define _my_base_h
+/** 
+ * @TODO Name this file something better and split it out if necessary.  
+ * base.h isn't descriptive, especially compared to global.h 
+ *
+ * @TODO Convert HA_XXX defines into enums and/or bitmaps
+ */
+
+#ifndef DRIZZLE_SERVER_BASE_H
+#define DRIZZLE_SERVER_BASE_H
 
 #ifndef stdin				/* Included first in handler */
 #define CHSIZE_USED
@@ -409,16 +416,16 @@ enum ha_base_keytype {
 #define HA_ERR_TABLESPACE_EXIST   171
 #define HA_ERR_CORRUPT_EVENT      172    /* The event was corrupt, leading to
                                             illegal data being read */
-#define HA_ERR_NEW_FILE	          172	 /* New file format */
-#define HA_ERR_ROWS_EVENT_APPLY   173    /* The event could not be processed
+#define HA_ERR_NEW_FILE	          173	 /* New file format */
+#define HA_ERR_ROWS_EVENT_APPLY   174    /* The event could not be processed
                                             no other hanlder error happened */
-#define HA_ERR_INITIALIZATION     174    /* Error during initialization */
-#define HA_ERR_FILE_TOO_SHORT	  175	 /* File too short */
-#define HA_ERR_WRONG_CRC	  176	 /* Wrong CRC on page */
-#define HA_ERR_LOCK_OR_ACTIVE_TRANSACTION 177
-#define HA_ERR_NO_SUCH_TABLESPACE 178
-#define HA_ERR_TABLESPACE_NOT_EMPTY 179
-#define HA_ERR_LAST               179    /* Copy of last error nr */
+#define HA_ERR_INITIALIZATION     175    /* Error during initialization */
+#define HA_ERR_FILE_TOO_SHORT	  176	 /* File too short */
+#define HA_ERR_WRONG_CRC	  177	 /* Wrong CRC on page */
+#define HA_ERR_LOCK_OR_ACTIVE_TRANSACTION 178
+#define HA_ERR_NO_SUCH_TABLESPACE 179
+#define HA_ERR_TABLESPACE_NOT_EMPTY 180
+#define HA_ERR_LAST               180    /* Copy of last error nr */
 
 /* Number of different errors */
 #define HA_ERR_ERRORS            (HA_ERR_LAST - HA_ERR_FIRST + 1)
@@ -555,4 +562,4 @@ typedef uint64_t	ha_rows;
 /* invalidator function reference for Query Cache */
 typedef void (* invalidator_by_filename)(const char * filename);
 
-#endif /* _my_base_h */
+#endif /* DRIZZLE_SERVER_BASE_H */

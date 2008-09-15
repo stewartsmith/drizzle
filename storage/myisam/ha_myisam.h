@@ -33,7 +33,7 @@ extern TYPELIB myisam_recover_typelib;
 extern ulong myisam_recover_options;
 
 C_MODE_START
-my_bool index_cond_func_myisam(void *arg);
+bool index_cond_func_myisam(void *arg);
 C_MODE_END
 
 class ha_myisam: public handler
@@ -101,7 +101,7 @@ class ha_myisam: public handler
   int end_bulk_insert();
   ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
   void update_create_info(HA_CREATE_INFO *create_info);
-  int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
+  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
@@ -120,7 +120,7 @@ class ha_myisam: public handler
   int assign_to_keycache(THD* thd, HA_CHECK_OPT* check_opt);
   bool check_if_incompatible_data(HA_CREATE_INFO *info, uint table_changes);
 #ifdef HAVE_QUERY_CACHE
-  my_bool register_query_cache_table(THD *thd, char *table_key,
+  bool register_query_cache_table(THD *thd, char *table_key,
                                      uint key_length,
                                      qc_engine_callback
                                      *engine_callback,
@@ -152,6 +152,6 @@ public:
 private:
   DsMrr_impl ds_mrr;
   key_map keys_with_parts;
-  friend my_bool index_cond_func_myisam(void *arg);
+  friend bool index_cond_func_myisam(void *arg);
 };
 

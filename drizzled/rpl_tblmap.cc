@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 #ifdef HAVE_REPLICATION
 
@@ -46,7 +46,7 @@ table_mapping::~table_mapping()
   free_root(&m_mem_root, MYF(0));
 }
 
-st_table* table_mapping::get_table(ulong table_id)
+Table* table_mapping::get_table(ulong table_id)
 {
   entry *e= find_entry(table_id);
   if (e) 
@@ -83,7 +83,7 @@ int table_mapping::expand()
   return 0;
 }
 
-int table_mapping::set_table(ulong table_id, TABLE* table)
+int table_mapping::set_table(ulong table_id, Table* table)
 {
   entry *e= find_entry(table_id);
   if (e == 0)

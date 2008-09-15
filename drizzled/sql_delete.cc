@@ -18,9 +18,9 @@
 
   Multi-table deletes were introduced by Monty and Sinisa
 */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   Implement DELETE SQL word.
@@ -30,13 +30,13 @@
   end of dispatch_command().
 */
 
-bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
+bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows limit, uint64_t options,
                   bool reset_auto_increment)
 {
   bool          will_batch;
   int		error, loc_error;
-  TABLE		*table;
+  Table		*table;
   SQL_SELECT	*select=0;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
@@ -65,17 +65,17 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
   /* check ORDER BY even if it can be ignored */
   if (order && order->elements)
   {
-    TABLE_LIST   tables;
+    TableList   tables;
     List<Item>   fields;
     List<Item>   all_fields;
 
-    memset((char*) &tables, 0, sizeof(tables));
+    memset(&tables, 0, sizeof(tables));
     tables.table = table;
     tables.alias = table_list->alias;
 
       if (select_lex->setup_ref_array(thd, order->elements) ||
 	  setup_order(thd, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (ORDER*) order->first))
+                    fields, all_fields, (order_st*) order->first))
     {
       delete select;
       free_underlaid_joins(thd, &thd->lex->select_lex);
@@ -121,7 +121,6 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
       - there should be no delete triggers associated with the table.
   */
   if (!using_limit && const_cond_result &&
-      !(specialflag & (SPECIAL_NO_NEW_FUNC | SPECIAL_SAFE_MODE)) &&
       (thd->lex->sql_command == SQLCOM_TRUNCATE ||
        (!thd->current_stmt_binlog_row_based)))
   {
@@ -163,7 +162,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
     delete select;
     free_underlaid_joins(thd, select_lex);
     thd->row_count_func= 0;
-    MYSQL_DELETE_END();
+    DRIZZLE_DELETE_END();
     my_ok(thd, (ha_rows) thd->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -196,14 +195,14 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
     ha_rows examined_rows;
     
     if ((!select || table->quick_keys.is_clear_all()) && limit != HA_POS_ERROR)
-      usable_index= get_index_for_order(table, (ORDER*)(order->first), limit);
+      usable_index= get_index_for_order(table, (order_st*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
       table->sort.io_cache= (IO_CACHE *) my_malloc(sizeof(IO_CACHE),
                                                    MYF(MY_FAE | MY_ZEROFILL));
     
-      if (!(sortorder= make_unireg_sortorder((ORDER*) order->first,
+      if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
                                              &length, NULL)) ||
 	  (table->sort.found_records = filesort(thd, table, sortorder, length,
                                                 select, HA_POS_ERROR, 1,
@@ -341,7 +340,7 @@ cleanup:
   assert(transactional_table || !deleted || thd->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(thd, select_lex);
 
-  MYSQL_DELETE_END();
+  DRIZZLE_DELETE_END();
   if (error < 0 || (thd->lex->ignore && !thd->is_fatal_error))
   {
     thd->row_count_func= deleted;
@@ -350,7 +349,7 @@ cleanup:
   return(error >= 0 || thd->is_error());
 
 err:
-  MYSQL_DELETE_END();
+  DRIZZLE_DELETE_END();
   return(true);
 }
 
@@ -368,7 +367,7 @@ err:
     false OK
     true  error
 */
-int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
+int mysql_prepare_delete(THD *thd, TableList *table_list, Item **conds)
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   
@@ -395,7 +394,7 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
       setup_conds(thd, table_list, select_lex->leaf_tables, conds))
     return(true);
   {
-    TABLE_LIST *duplicate;
+    TableList *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 0)))
     {
       update_non_unique_table_error(table_list, "DELETE", duplicate);
@@ -438,8 +437,8 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 int mysql_multi_delete_prepare(THD *thd)
 {
   LEX *lex= thd->lex;
-  TABLE_LIST *aux_tables= (TABLE_LIST *)lex->auxiliary_table_list.first;
-  TABLE_LIST *target_tbl;
+  TableList *aux_tables= (TableList *)lex->auxiliary_table_list.first;
+  TableList *target_tbl;
   
 
   /*
@@ -461,7 +460,7 @@ int mysql_multi_delete_prepare(THD *thd)
   */
   lex->select_lex.exclude_from_table_unique_test= true;
   /* Fix tables-to-be-deleted-from list to point at opened tables */
-  for (target_tbl= (TABLE_LIST*) aux_tables;
+  for (target_tbl= (TableList*) aux_tables;
        target_tbl;
        target_tbl= target_tbl->next_local)
   {
@@ -479,7 +478,7 @@ int mysql_multi_delete_prepare(THD *thd)
       inside subqueries/view.
     */
     {
-      TABLE_LIST *duplicate;
+      TableList *duplicate;
       if ((duplicate= unique_table(thd, target_tbl->correspondent_table,
                                    lex->query_tables, 0)))
       {
@@ -493,7 +492,7 @@ int mysql_multi_delete_prepare(THD *thd)
 }
 
 
-multi_delete::multi_delete(TABLE_LIST *dt, uint num_of_tables_arg)
+multi_delete::multi_delete(TableList *dt, uint num_of_tables_arg)
   : delete_tables(dt), deleted(0), found(0),
     num_of_tables(num_of_tables_arg), error(0),
     do_delete(0), transactional_tables(0), normal_tables(0), error_handled(0)
@@ -517,7 +516,7 @@ multi_delete::prepare(List<Item> &values __attribute__((unused)),
 bool
 multi_delete::initialize_tables(JOIN *join)
 {
-  TABLE_LIST *walk;
+  TableList *walk;
   Unique **tempfiles_ptr;
   
 
@@ -537,7 +536,7 @@ multi_delete::initialize_tables(JOIN *join)
     if (tab->table->map & tables_to_delete_from)
     {
       /* We are going to delete from this table */
-      TABLE *tbl=walk->table=tab->table;
+      Table *tbl=walk->table=tab->table;
       walk= walk->next_local;
       /* Don't use KEYREAD optimization on this table */
       tbl->no_keyread=1;
@@ -571,7 +570,7 @@ multi_delete::initialize_tables(JOIN *join)
   }
   for (;walk ;walk= walk->next_local)
   {
-    TABLE *table=walk->table;
+    Table *table=walk->table;
     *tempfiles_ptr++= new Unique (refpos_order_cmp,
 				  (void *) table->file,
 				  table->file->ref_length,
@@ -587,7 +586,7 @@ multi_delete::~multi_delete()
        table_being_deleted;
        table_being_deleted= table_being_deleted->next_local)
   {
-    TABLE *table= table_being_deleted->table;
+    Table *table= table_being_deleted->table;
     table->no_keyread=0;
   }
 
@@ -602,14 +601,14 @@ multi_delete::~multi_delete()
 bool multi_delete::send_data(List<Item> &values __attribute__((unused)))
 {
   int secure_counter= delete_while_scanning ? -1 : 0;
-  TABLE_LIST *del_table;
+  TableList *del_table;
   
 
   for (del_table= delete_tables;
        del_table;
        del_table= del_table->next_local, secure_counter++)
   {
-    TABLE *table= del_table->table;
+    Table *table= del_table->table;
 
     /* Check if we are using outer join and we didn't find the row */
     if (table->status & (STATUS_NULL_ROW | STATUS_DELETED))
@@ -732,7 +731,7 @@ int multi_delete::do_deletes()
        table_being_deleted= table_being_deleted->next_local, counter++)
   { 
     ha_rows last_deleted= deleted;
-    TABLE *table = table_being_deleted->table;
+    Table *table = table_being_deleted->table;
     if (tempfiles[counter]->get(table))
     {
       local_error=1;
@@ -827,7 +826,7 @@ bool multi_delete::send_eof()
 
 
 /***************************************************************************
-  TRUNCATE TABLE
+  TRUNCATE Table
 ****************************************************************************/
 
 /*
@@ -842,16 +841,16 @@ bool multi_delete::send_eof()
   - If we want to have a name lock on the table on exit without errors.
 */
 
-bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
+bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
 {
   HA_CREATE_INFO create_info;
   char path[FN_REFLEN];
-  TABLE *table;
+  Table *table;
   bool error;
   uint path_length;
   
 
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
   if (!dont_send_ok && (table= find_temporary_table(thd, table_list)))
   {

@@ -341,7 +341,7 @@ process_flags:
     }
     else
     {
-      while (my_isdigit(&my_charset_latin1, *fmt)) {
+      while (my_isdigit(&my_charset_utf8_general_ci, *fmt)) {
         minimum_width=(minimum_width * 10) + (*fmt - '0');
         fmt++;
       }
@@ -357,7 +357,7 @@ process_flags:
       }
       else
       {
-        while (my_isdigit(&my_charset_latin1, *fmt)) {
+        while (my_isdigit(&my_charset_utf8_general_ci, *fmt)) {
           precision=(precision * 10) + (*fmt - '0');
           fmt++;
         }
@@ -370,14 +370,14 @@ process_flags:
       size_t length2 = strlen(par);
       /* TODO: implement precision */
       out_length+= length2;
-      if (my_b_write(info, (uchar*) par, length2))
+      if (my_b_write(info, (const uchar*) par, length2))
 	goto err;
     }
     else if (*fmt == 'b')                       /* Sized buffer parameter, only precision makes sense */
     {
       char *par = va_arg(args, char *);
       out_length+= precision;
-      if (my_b_write(info, (uchar*) par, precision))
+      if (my_b_write(info, (const uchar*) par, precision))
         goto err;
     }
     else if (*fmt == 'd' || *fmt == 'u')	/* Integer parameter */
@@ -395,19 +395,15 @@ process_flags:
       /* minimum width padding */
       if (minimum_width > length2) 
       {
-        uchar *buffz;
-                    
-        buffz= my_alloca(minimum_width - length2);
-        if (is_zero_padded)
-          memset(buffz, '0', minimum_width - length2);
-        else
-          memset(buffz, ' ', minimum_width - length2);
-        my_b_write(info, buffz, minimum_width - length2);
+        const size_t buflen = minimum_width - length2;
+        uchar *buffz= my_alloca(buflen);
+        memset(buffz, is_zero_padded ? '0' : ' ', buflen);
+        my_b_write(info, buffz, buflen);
         my_afree(buffz);
       }
 
       out_length+= length2;
-      if (my_b_write(info, (uchar*) buff, length2))
+      if (my_b_write(info, (const uchar *)buff, length2))
 	goto err;
     }
     else if ((*fmt == 'l' && fmt[1] == 'd') || fmt[1] == 'u')
@@ -429,7 +425,7 @@ process_flags:
     else
     {
       /* %% or unknown code */
-      if (my_b_write(info, (uchar*) backtrack, (size_t) (fmt-backtrack)))
+      if (my_b_write(info, (const uchar*) backtrack, (size_t) (fmt-backtrack)))
         goto err;
       out_length+= fmt-backtrack;
     }

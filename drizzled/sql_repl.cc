@@ -13,13 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
-#ifdef HAVE_REPLICATION
+#include <drizzled/server_includes.h>
 
+#ifdef HAVE_REPLICATION
 #include "rpl_mi.h"
 #include "sql_repl.h"
 #include "log_event.h"
 #include "rpl_filter.h"
+#include <drizzled/drizzled_error_messages.h>
 
 int max_binlog_dump_events = 0; // unlimited
 
@@ -53,7 +54,7 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
 
   char* p = log_file_name+dirname_length(log_file_name);
   uint ident_len = (uint) strlen(p);
-  ulong event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
+  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
   int2store(header + FLAGS_OFFSET, 0);
@@ -97,7 +98,7 @@ static int send_file(THD *thd)
   */
   if (net_flush(net) || (packet_len = my_net_read(net)) == packet_error)
   {
-    errmsg = "while reading file name";
+    errmsg = _("Failed in send_file() while reading file name");
     goto err;
   }
 
@@ -110,7 +111,7 @@ static int send_file(THD *thd)
 
   if ((fd = my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
-    errmsg = "on open of file";
+    errmsg = _("Failed in send_file() on open of file");
     goto err;
   }
 
@@ -118,7 +119,7 @@ static int send_file(THD *thd)
   {
     if (my_net_write(net, buf, bytes))
     {
-      errmsg = "while writing data to client";
+      errmsg = _("Failed in send_file() while writing data to client");
       goto err;
     }
   }
@@ -127,7 +128,7 @@ static int send_file(THD *thd)
   if (my_net_write(net, (uchar*) "", 0) || net_flush(net) ||
       (my_net_read(net) == packet_error))
   {
-    errmsg = "while negotiating file transfer close";
+    errmsg = _("Failed in send_file() while negotiating file transfer close");
     goto err;
   }
   error = 0;
@@ -138,7 +139,7 @@ static int send_file(THD *thd)
     (void) my_close(fd, MYF(0));
   if (errmsg)
   {
-    sql_print_error("Failed in send_file() %s", errmsg);
+    sql_print_error(errmsg);
   }
   return(error);
 }
@@ -209,8 +210,7 @@ bool log_in_use(const char* log_name)
     if ((linfo = tmp->current_linfo))
     {
       pthread_mutex_lock(&linfo->lock);
-      result = !memcmp((uchar*) log_name, (uchar*) linfo->log_file_name,
-                     log_name_len);
+      result = !memcmp(log_name, linfo->log_file_name, log_name_len);
       pthread_mutex_unlock(&linfo->lock);
       if (result)
 	break;
@@ -316,7 +316,7 @@ Increase max_allowed_packet on master";
 */ 
 static uint64_t get_heartbeat_period(THD * thd)
 {
-  my_bool null_value;
+  bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
   user_var_entry *entry= 
     (user_var_entry*) hash_search(&thd->user_vars, (uchar*) name.str,
@@ -353,7 +353,7 @@ static int send_heartbeat_event(NET* net, String* packet,
   char* p= coord->file_name + dirname_length(coord->file_name);
 
   uint ident_len = strlen(p);
-  ulong event_len = ident_len + LOG_EVENT_HEADER_LEN;
+  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
   int2store(header + FLAGS_OFFSET, 0);
@@ -391,7 +391,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   pthread_mutex_t *log_lock;
   bool binlog_can_be_corrupted= false;
 
-  memset((char*) &log, 0, sizeof(log));
+  memset(&log, 0, sizeof(log));
   /* 
      heartbeat_period from @master_heartbeat_period user variable
   */
@@ -540,7 +540,7 @@ impossible position";
            to avoid destroying temp tables.
           */
          int4store((char*) packet->ptr()+LOG_EVENT_MINIMAL_HEADER_LEN+
-                   ST_CREATED_OFFSET+1, (ulong) 0);
+                   ST_CREATED_OFFSET+1, (uint32_t) 0);
          /* send it */
          if (my_net_write(net, (uchar*) packet->ptr(), packet->length()))
          {
@@ -910,7 +910,7 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
 
           /* Issuing warning then started without --skip-slave-start */
           if (!opt_skip_slave_start)
-            push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+            push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                          ER_MISSING_SKIP_SLAVE,
                          ER(ER_MISSING_SKIP_SLAVE));
         }
@@ -918,7 +918,7 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
         pthread_mutex_unlock(&mi->rli.data_lock);
       }
       else if (thd->lex->mi.pos || thd->lex->mi.relay_log_pos)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE, ER_UNTIL_COND_IGNORED,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_UNTIL_COND_IGNORED,
                      ER(ER_UNTIL_COND_IGNORED));
 
       if (!slave_errno)
@@ -934,7 +934,7 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
   else
   {
     /* no error if all threads are already started, only a warning */
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_RUNNING,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_RUNNING,
                  ER(ER_SLAVE_WAS_RUNNING));
   }
 
@@ -982,7 +982,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
   {
     //no error if both threads are already stopped, only a warning
     slave_errno= 0;
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_NOT_RUNNING,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_NOT_RUNNING,
                  ER(ER_SLAVE_WAS_NOT_RUNNING));
   }
   unlock_slave_threads(mi);
@@ -1186,7 +1186,7 @@ bool change_master(THD* thd, Master_info* mi)
   if (lex_mi->heartbeat_opt != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
     mi->heartbeat_period = lex_mi->heartbeat_period;
   else
-    mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
+    mi->heartbeat_period= (float) min((double)SLAVE_MAX_HEARTBEAT_PERIOD,
                                       (slave_net_timeout/2.0));
   mi->received_heartbeats= 0LL; // counter lives until master is CHANGEd
   if (lex_mi->ssl != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
@@ -1209,7 +1209,7 @@ bool change_master(THD* thd, Master_info* mi)
   if (lex_mi->ssl || lex_mi->ssl_ca || lex_mi->ssl_capath ||
       lex_mi->ssl_cert || lex_mi->ssl_cipher || lex_mi->ssl_key ||
       lex_mi->ssl_verify_server_cert )
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_SLAVE_IGNORED_SSL_PARAMS, ER(ER_SLAVE_IGNORED_SSL_PARAMS));
 
   if (lex_mi->relay_log_name)
@@ -1252,8 +1252,9 @@ bool change_master(THD* thd, Master_info* mi)
        of replication is not 100% clear, so we guard against problems using
        max().
       */
-     mi->master_log_pos = max(BIN_LOG_HEADER_SIZE,
-			      mi->rli.group_master_log_pos);
+     mi->master_log_pos = ((BIN_LOG_HEADER_SIZE > mi->rli.group_master_log_pos)
+                           ? BIN_LOG_HEADER_SIZE
+			   : mi->rli.group_master_log_pos);
      strmake(mi->master_log_name, mi->rli.group_master_log_name,
              sizeof(mi->master_log_name)-1);
   }
@@ -1393,7 +1394,7 @@ bool mysql_show_binlog_events(THD* thd)
     LEX_MASTER_INFO *lex_mi= &thd->lex->mi;
     SELECT_LEX_UNIT *unit= &thd->lex->unit;
     ha_rows event_count, limit_start, limit_end;
-    my_off_t pos = max(BIN_LOG_HEADER_SIZE, lex_mi->pos); // user-friendly
+    my_off_t pos = max((uint64_t)BIN_LOG_HEADER_SIZE, lex_mi->pos); // user-friendly
     char search_file_name[FN_REFLEN], *name;
     const char *log_file_name = lex_mi->log_file_name;
     pthread_mutex_t *log_lock = mysql_bin_log.get_log_lock();
@@ -1711,7 +1712,7 @@ static void fix_slave_net_timeout(THD *thd,
 #ifdef HAVE_REPLICATION
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                         "The currect value for master_heartbeat_period"
                         " exceeds the new value of `slave_net_timeout' sec."
@@ -1769,7 +1770,7 @@ static int show_slave_skip_errors(THD *thd __attribute__((unused)),
     if (var->value != buff)
       buff--;				// Remove last ','
     if (i < MAX_SLAVE_ERROR)
-      buff= strmov(buff, "...");  // Couldn't show all errors
+      buff= stpcpy(buff, "...");  // Couldn't show all errors
     *buff=0;
   }
   return 0;
@@ -1832,7 +1833,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
 bool sys_var_sync_binlog_period::update(THD *thd __attribute__((unused)),
                                         set_var *var)
 {
-  sync_binlog_period= (ulong) var->save_result.uint64_t_value;
+  sync_binlog_period= (uint32_t) var->save_result.uint64_t_value;
   return 0;
 }
 
@@ -1850,5 +1851,3 @@ int init_replication_sys_vars()
 }
 
 #endif /* HAVE_REPLICATION */
-
-

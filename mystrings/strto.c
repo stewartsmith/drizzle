@@ -35,8 +35,8 @@
 */
 
 
-#if !defined(_global_h) || !defined(_m_string_h)
-#  error  Calling file must include 'my_global.h' and 'm_string.h'
+#if !defined(DRIZZLE_SERVER_GLOBAL_H) || !defined(_m_string_h)
+#  error  Calling file must include 'drizzled/global.h' and 'mystrings/m_string.h'
    /* see 'strtoll.c' and 'strtoull.c' for the reasons */
 #endif
 
@@ -49,7 +49,6 @@
 #undef strtoul
 #undef strtol
 #ifdef USE_LONGLONG
-#define UTYPE_MAX (~(uint64_t) 0)
 #define TYPE_MIN LONGLONG_MIN
 #define TYPE_MAX LONGLONG_MAX
 #define longtype int64_t
@@ -60,7 +59,6 @@
 #define function longtype strtoll
 #endif
 #else
-#define UTYPE_MAX (ulong) ~0L
 #define TYPE_MIN LONG_MIN
 #define TYPE_MAX LONG_MAX
 #define longtype long
@@ -98,7 +96,7 @@ function (const char *nptr,char **endptr,int base)
   s = nptr;
 
   /* Skip white space.	*/
-  while (my_isspace(&my_charset_latin1, *s))
+  while (my_isspace(&my_charset_utf8_general_ci, *s))
     ++s;
   if (*s == '\0')
   {
@@ -118,7 +116,7 @@ function (const char *nptr,char **endptr,int base)
   }
     
 
-  if (base == 16 && s[0] == '0' && my_toupper (&my_charset_latin1, s[1]) == 'X')
+  if (base == 16 && s[0] == '0' && my_toupper (&my_charset_utf8_general_ci, s[1]) == 'X')
     s += 2;
 
   /* If BASE is zero, figure it out ourselves.	*/
@@ -126,7 +124,7 @@ function (const char *nptr,char **endptr,int base)
   {
     if (*s == '0')
     {
-      if (my_toupper (&my_charset_latin1, s[1]) == 'X')
+      if (my_toupper (&my_charset_utf8_general_ci, s[1]) == 'X')
       {
 	s += 2;
 	base = 16;
@@ -141,17 +139,17 @@ function (const char *nptr,char **endptr,int base)
   /* Save the pointer so we can check later if anything happened.  */
   save = s;
 
-  cutoff = UTYPE_MAX / (unsigned long int) base;
-  cutlim = (uint) (UTYPE_MAX % (unsigned long int) base);
+  cutoff = UINT64_MAX / (unsigned long int) base;
+  cutlim = (uint) (UINT64_MAX % (unsigned long int) base);
 
   overflow = 0;
   i = 0;
   for (c = *s; c != '\0'; c = *++s)
   {
-    if (my_isdigit (&my_charset_latin1, c))
+    if (my_isdigit (&my_charset_utf8_general_ci, c))
       c -= '0';
-    else if (my_isalpha (&my_charset_latin1, c))
-      c = my_toupper (&my_charset_latin1, c) - 'A' + 10;
+    else if (my_isalpha (&my_charset_utf8_general_ci, c))
+      c = my_toupper (&my_charset_utf8_general_ci, c) - 'A' + 10;
     else
       break;
     if (c >= base)
@@ -191,7 +189,7 @@ function (const char *nptr,char **endptr,int base)
   {
     my_errno=ERANGE;
 #ifdef USE_UNSIGNED
-    return UTYPE_MAX;
+    return UINT64_MAX;
 #else
     return negative ? TYPE_MIN : TYPE_MAX;
 #endif

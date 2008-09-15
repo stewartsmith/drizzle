@@ -19,7 +19,6 @@ AUTOMAKE_OPTIONS =	foreign
 
 # extra plugin example files are listed here, to
 # keep its Makefile.am cleaner as a template
-#EXTRA_DIST =	fulltext/configure.in	
 
 SUBDIRS =	@mysql_pg_dirs@
-DIST_SUBDIRS =	hello_world md5 crc32
+DIST_SUBDIRS =	auth_pam hello_world md5 crc32

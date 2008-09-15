@@ -264,56 +264,6 @@ show table status like 't1';
 drop table t1;
 
 #
-# Test that data get converted when character set is changed
-# Test that data doesn't get converted when src or dst is BINARY/BLOB
-#
-set names koi8r;
-create table t1 (a char(10) character set koi8r);
-insert into t1 values ('тест');
-select a,hex(a) from t1;
-alter table t1 change a a char(10) character set cp1251;
-select a,hex(a) from t1;
-alter table t1 change a a varbinary(4);
-select a,hex(a) from t1;
-alter table t1 change a a char(10) character set cp1251;
-select a,hex(a) from t1;
-alter table t1 change a a char(10) character set koi8r;
-select a,hex(a) from t1;
-alter table t1 change a a varchar(10) character set cp1251;
-select a,hex(a) from t1;
-alter table t1 change a a char(10) character set koi8r;
-select a,hex(a) from t1;
-alter table t1 change a a text character set cp1251;
-select a,hex(a) from t1;
-alter table t1 change a a char(10) character set koi8r;
-select a,hex(a) from t1;
-delete from t1;
-
-#
-# Test ALTER TABLE .. CHARACTER SET ..
-#
-show create table t1;
-alter table t1 DEFAULT CHARACTER SET latin1;
-show create table t1;
-alter table t1 CONVERT TO CHARACTER SET latin1;
-show create table t1;
-alter table t1 DEFAULT CHARACTER SET cp1251;
-show create table t1;
-
-drop table t1;
-
-#
-# Bug#2821
-# Test that table CHARACTER SET does not affect blobs
-#
-create table t1 (myblob longblob,mytext longtext) 
-default charset latin1 collate latin1_general_cs;
-show create table t1;
-alter table t1 character set latin2;
-show create table t1;
-drop table t1;
-
-#
 # Bug 2361 (Don't drop UNIQUE with DROP PRIMARY KEY)
 #
 
@@ -341,19 +291,6 @@ CREATE TABLE T12207(a int) ENGINE=MYISAM;
 --error ER_ILLEGAL_HA
 ALTER TABLE T12207 DISCARD TABLESPACE;
 DROP TABLE T12207;
-
-#
-# Bug #6479  ALTER TABLE ... changing charset fails for TEXT columns
-#
-# The column's character set was changed but the actual data was not
-# modified. In other words, the values were reinterpreted
-# as UTF8 instead of being converted.
-create table t1 (a text) character set koi8r;
-insert into t1 values (_koi8r'тест');
-select hex(a) from t1;
-alter table t1 convert to character set cp1251;
-select hex(a) from t1;
-drop table t1;
 
 #
 # Test for bug #7884 "Able to add invalid unique index on TIMESTAMP prefix"
@@ -676,8 +613,7 @@ drop table t1;
 # without # prefix is not allowed for TEXT columns, while index
 # is defined with prefix.
 # 
-create table t1 (t varchar(255) default null, key t (t(80)))
-engine=myisam default charset=latin1;
+create table t1 (t varchar(255) default null, key t (t(80))) engine=myisam;
 alter table t1 change t t text;
 drop table t1;
 

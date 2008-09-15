@@ -22,12 +22,11 @@
   Drizzle has a different form of DELAYED then MySQL. DELAYED is just
   a hint to the the sorage engine (which can then do whatever it likes.
 */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
-#include "sql_show.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/sql_show.h>
 #include "rpl_mi.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
@@ -62,12 +61,12 @@
     -1          Error
 */
 
-static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
+static int check_insert_fields(THD *thd, TableList *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
                                table_map *map __attribute__((unused)))
 {
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
 
   if (fields.elements == 0 && values.elements != 0)
   {
@@ -158,11 +157,11 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
     -1          Error
 */
 
-static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
+static int check_update_fields(THD *thd, TableList *insert_table_list,
                                List<Item> &update_fields,
                                table_map *map __attribute__((unused)))
 {
-  TABLE *table= insert_table_list->table;
+  Table *table= insert_table_list->table;
   bool timestamp_mark= false;
 
   if (table->timestamp_field)
@@ -225,7 +224,7 @@ void upgrade_lock_type(THD *thd __attribute__((unused)),
   end of dispatch_command().
 */
 
-bool mysql_insert(THD *thd,TABLE_LIST *table_list,
+bool mysql_insert(THD *thd,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -241,7 +240,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   ulong counter = 1;
   uint64_t id;
   COPY_INFO info;
-  TABLE *table= 0;
+  Table *table= 0;
   List_iterator_fast<List_item> its(values_list);
   List_item *values;
   Name_resolution_context *context;
@@ -331,7 +330,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   /*
     Fill in the given fields and dump it to the table file
   */
-  memset((char*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=duplic;
   info.update_fields= &update_fields;
@@ -436,7 +435,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   {
     /*
       Do not do this release if this is a delayed insert, it would steal
-      auto_inc values from the delayed_insert thread as they share TABLE.
+      auto_inc values from the delayed_insert thread as they share Table.
     */
     table->file->ha_release_auto_increment();
     if (table->file->ha_end_bulk_insert() && !error)
@@ -552,7 +551,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
     ::my_ok(thd, (ulong) thd->row_count_func, id, buff);
   }
   thd->abort_on_warning= 0;
-  MYSQL_INSERT_END();
+  DRIZZLE_INSERT_END();
   return(false);
 
 abort:
@@ -561,7 +560,7 @@ abort:
   if (!joins_freed)
     free_underlaid_joins(thd, &thd->lex->select_lex);
   thd->abort_on_warning= 0;
-  MYSQL_INSERT_END();
+  DRIZZLE_INSERT_END();
   return(true);
 }
 
@@ -582,7 +581,7 @@ abort:
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
+static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
                                              List<Item> &fields __attribute__((unused)),
                                              bool select_insert)
 {
@@ -637,8 +636,8 @@ static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
     true  error
 */
 
-bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
-                          TABLE *table, List<Item> &fields, List_item *values,
+bool mysql_prepare_insert(THD *thd, TableList *table_list,
+                          Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
                           COND **where __attribute__((unused)),
@@ -737,7 +736,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
   if (!select_insert)
   {
-    TABLE_LIST *duplicate;
+    TableList *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 1)))
     {
       update_non_unique_table_error(table_list, "INSERT", duplicate);
@@ -753,7 +752,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
 	/* Check if there is more uniq keys after field */
 
-static int last_uniq_key(TABLE *table,uint keynr)
+static int last_uniq_key(Table *table,uint keynr)
 {
   while (++keynr < table->s->keys)
     if (table->key_info[keynr].flags & HA_NOSAME)
@@ -789,7 +788,7 @@ static int last_uniq_key(TABLE *table,uint keynr)
 */
 
 
-int write_record(THD *thd, TABLE *table,COPY_INFO *info)
+int write_record(THD *thd, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
@@ -903,7 +902,7 @@ int write_record(THD *thd, TABLE *table,COPY_INFO *info)
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
-            compare_record(table))
+            table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
                                                 table->record[0])) &&
@@ -1035,8 +1034,8 @@ before_err:
   Check that all fields with arn't null_fields are used
 ******************************************************************************/
 
-int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
-                                           TABLE_LIST *table_list)
+int check_that_all_fields_are_given_values(THD *thd, Table *entry,
+                                           TableList *table_list)
 {
   int err= 0;
   MY_BITMAP *write_set= entry->write_set;
@@ -1054,7 +1053,7 @@ int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
         view= test(0);
       }
       {
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_NO_DEFAULT_FOR_FIELD,
                             ER(ER_NO_DEFAULT_FOR_FIELD),
                             (*field)->field_name);
@@ -1086,7 +1085,6 @@ bool mysql_insert_select_prepare(THD *thd)
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  TABLE_LIST *first_select_leaf_table;
   
 
   /*
@@ -1121,19 +1119,12 @@ bool mysql_insert_select_prepare(THD *thd)
   assert(select_lex->leaf_tables != 0);
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
-  for (first_select_leaf_table= select_lex->leaf_tables->next_leaf;
-       first_select_leaf_table &&
-       first_select_leaf_table->belong_to_view &&
-       first_select_leaf_table->belong_to_view ==
-       lex->leaf_tables_insert->belong_to_view;
-       first_select_leaf_table= first_select_leaf_table->next_leaf)
-  {}
-  select_lex->leaf_tables= first_select_leaf_table;
+  select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
   return(false);
 }
 
 
-select_insert::select_insert(TABLE_LIST *table_list_par, TABLE *table_par,
+select_insert::select_insert(TableList *table_list_par, Table *table_par,
                              List<Item> *fields_par,
                              List<Item> *update_fields,
                              List<Item> *update_values,
@@ -1143,7 +1134,7 @@ select_insert::select_insert(TABLE_LIST *table_list_par, TABLE *table_par,
    autoinc_value_of_last_inserted_row(0),
    insert_into_view(table_list_par && 0 != 0)
 {
-  memset((char*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
   info.handle_duplicates= duplic;
   info.ignore= ignore_check_option_errors;
   info.update_fields= update_fields;
@@ -1528,7 +1519,7 @@ void select_insert::abort() {
 ***************************************************************************/
 
 /*
-  Create table from lists of fields and items (or just return TABLE
+  Create table from lists of fields and items (or just return Table
   object for pre-opened existing table).
 
   SYNOPSIS
@@ -1536,14 +1527,14 @@ void select_insert::abort() {
       thd          in     Thread object
       create_info  in     Create information (like MAX_ROWS, ENGINE or
                           temporary table flag)
-      create_table in     Pointer to TABLE_LIST object providing database
+      create_table in     Pointer to TableList object providing database
                           and name for table to be created or to be open
       alter_info   in/out Initial list of columns and indexes for the table
                           to be created
       items        in     List of items which should be used to produce rest
                           of fields for the table (corresponding fields will
                           be added to the end of alter_info->create_list)
-      lock         out    Pointer to the MYSQL_LOCK object for table created
+      lock         out    Pointer to the DRIZZLE_LOCK object for table created
                           (or open temporary table) will be returned in this
                           parameter. Since this table is not included in
                           THD::lock caller is responsible for explicitly
@@ -1554,7 +1545,7 @@ void select_insert::abort() {
     This function behaves differently for base and temporary tables:
     - For base table we assume that either table exists and was pre-opened
       and locked at open_and_lock_tables() stage (and in this case we just
-      emit error or warning and return pre-opened TABLE object) or special
+      emit error or warning and return pre-opened Table object) or special
       placeholder was put in table cache that guarantees that this table
       won't be created or opened until the placeholder will be removed
       (so there is an exclusive lock on this table).
@@ -1565,20 +1556,20 @@ void select_insert::abort() {
     SELECT it should be changed before it can be used in other contexts.
 
   RETURN VALUES
-    non-zero  Pointer to TABLE object for table created or opened
+    non-zero  Pointer to Table object for table created or opened
     0         Error
 */
 
-static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
-                                      TABLE_LIST *create_table,
+static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
+                                      TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
-                                      MYSQL_LOCK **lock,
+                                      DRIZZLE_LOCK **lock,
                                       TABLEOP_HOOKS *hooks)
 {
-  TABLE tmp_table;		// Used during 'Create_field()'
+  Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
-  TABLE *table= 0;
+  Table *table= 0;
   uint select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
@@ -1593,7 +1584,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
       create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           create_table->table_name);
       return(create_table->table);
@@ -1613,7 +1604,8 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   tmp_table.s->db_low_byte_first= 
         test(create_info->db_type == myisam_hton ||
              create_info->db_type == heap_hton);
-  tmp_table.null_row=tmp_table.maybe_null=0;
+  tmp_table.null_row= false;
+  tmp_table.maybe_null= false;
 
   while ((item=it++))
   {
@@ -1651,7 +1643,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     binlog when a HEAP table is opened for the first time since startup, must
     not be written: 1) it would be wrong (imagine we're in CREATE SELECT: we
     don't want to delete from it) 2) it would be written before the CREATE
-    TABLE, which is a wrong order. So we keep binary logging disabled when we
+    Table, which is a wrong order. So we keep binary logging disabled when we
     open_table().
   */
   {
@@ -1688,8 +1680,8 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       }
       else
       {
-        if (!(table= open_table(thd, create_table, thd->mem_root, (bool*) 0,
-                                MYSQL_OPEN_TEMPORARY_ONLY)) &&
+        if (!(table= open_table(thd, create_table, (bool*) 0,
+                                DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {
           /*
@@ -1709,7 +1701,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   table->reginfo.lock_type=TL_WRITE;
   hooks->prelock(&table, 1);                    // Call prelock hooks
   if (! ((*lock)= mysql_lock_tables(thd, &table, 1,
-                                    MYSQL_LOCK_IGNORE_FLUSH, &not_used)) ||
+                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)) ||
         hooks->postlock(&table, 1))
   {
     if (*lock)
@@ -1729,7 +1721,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
-  MYSQL_LOCK *extra_lock= NULL;
+  DRIZZLE_LOCK *extra_lock= NULL;
   
 
   TABLEOP_HOOKS *hook_ptr= NULL;
@@ -1753,21 +1745,21 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
    */
   class MY_HOOKS : public TABLEOP_HOOKS {
   public:
-    MY_HOOKS(select_create *x, TABLE_LIST *create_table,
-             TABLE_LIST *select_tables)
+    MY_HOOKS(select_create *x, TableList *create_table,
+             TableList *select_tables)
       : ptr(x), all_tables(*create_table)
       {
         all_tables.next_global= select_tables;
       }
 
   private:
-    virtual int do_postlock(TABLE **tables, uint count)
+    virtual int do_postlock(Table **tables, uint count)
     {
       THD *thd= const_cast<THD*>(ptr->get_thd());
       if (int error= decide_logging_format(thd, &all_tables))
         return error;
 
-      TABLE const *const table = *tables;
+      Table const *const table = *tables;
       if (thd->current_stmt_binlog_row_based  &&
           !table->s->tmp_table &&
           !ptr->get_create_info()->table_existed)
@@ -1778,7 +1770,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     }
 
     select_create *ptr;
-    TABLE_LIST all_tables;
+    TableList all_tables;
   };
 
   MY_HOOKS hooks(this, create_table, select_tables);
@@ -1849,7 +1841,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 }
 
 void
-select_create::binlog_show_create_table(TABLE **tables, uint count)
+select_create::binlog_show_create_table(Table **tables, uint count)
 {
   /*
     Note 1: In RBR mode, we generate a CREATE TABLE statement for the
@@ -1874,7 +1866,7 @@ select_create::binlog_show_create_table(TABLE **tables, uint count)
   char buf[2048];
   String query(buf, sizeof(buf), system_charset_info);
   int result;
-  TABLE_LIST tmp_table_list;
+  TableList tmp_table_list;
 
   memset(&tmp_table_list, 0, sizeof(tmp_table_list));
   tmp_table_list.table = *tables;

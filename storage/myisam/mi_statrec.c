@@ -191,7 +191,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
 
 int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
 			       register my_off_t filepos,
-			       my_bool skip_deleted_blocks)
+			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;
   uint cache_length;

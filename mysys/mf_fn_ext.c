@@ -48,5 +48,5 @@ char *fn_ext(const char *name)
     gpos= name;
 #endif
   pos=strchr(gpos,FN_EXTCHAR);
-  return((char*) (pos ? pos : strend(gpos)));
+  return((char*) (pos ? pos : strchr(gpos, '\0')));
 } /* fn_ext */

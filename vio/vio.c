@@ -27,12 +27,12 @@
  */
 
 static void vio_init(Vio* vio, enum enum_vio_type type,
-                     my_socket sd, uint32_t flags)
+                     int sd, uint32_t flags)
 {
 #ifndef HAVE_VIO_READ_BUFF
   flags&= ~VIO_BUFFERED_READ;
 #endif
-  memset((char*) vio, 0, sizeof(*vio));
+  memset(vio, 0, sizeof(*vio));
   vio->type	= type;
   vio->sd	= sd;
   if ((flags & VIO_BUFFERED_READ) &&
@@ -59,7 +59,7 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
 /* Reset initialized VIO to use with another transport type */
 
 void vio_reset(Vio* vio, enum enum_vio_type type,
-               my_socket sd, uint flags)
+               int sd, uint flags)
 {
   my_free(vio->read_buffer, MYF(MY_ALLOW_ZERO_PTR));
   vio_init(vio, type, sd, flags);
@@ -68,7 +68,7 @@ void vio_reset(Vio* vio, enum enum_vio_type type,
 
 /* Open the socket or TCP/IP connection and read the fnctl() status */
 
-Vio *vio_new(my_socket sd, enum enum_vio_type type, uint flags)
+Vio *vio_new(int sd, enum enum_vio_type type, uint flags)
 {
   Vio *vio;
 

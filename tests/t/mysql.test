@@ -44,7 +44,7 @@ drop table t1;
 #
 # Bug#16859 -- NULLs in columns must not truncate data as if a C-language "string".
 #
---exec $MYSQL -t test -e "create table t1 (col1 binary(4), col2 varchar(10), col3 int); insert into t1 values ('a', 'b', 123421),('a ', '0123456789', 4), ('abcd', '', 4); select concat('>',col1,'<'), col2, col3 from t1; drop table t1;" 2>&1
+#--exec $MYSQL -t test -e "create table t1 (col1 binary(4), col2 varchar(10), col3 int); insert into t1 values ('a', 'b', 123421),('a ', '0123456789', 4), ('abcd', '', 4); select concat('>',col1,'<'), col2, col3 from t1; drop table t1;" 2>&1
 
 #
 # Bug#17939 Wrong table format when using UTF8 strings
@@ -87,9 +87,9 @@ drop table t1;
 #
 # Bug#21042  	mysql client segfaults on importing a mysqldump export
 #
---error 1
---exec $MYSQL test -e "connect verylongdatabasenamethatshouldblowthe256byteslongbufferincom_connectfunctionxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxendcccccccdxxxxxxxxxxxxxxxxxkskskskskkskskskskskskskskskskkskskskskkskskskskskskskskskend" 2>&1
---enable_parsing
+#--error 1
+#--exec $MYSQL test -e "connect verylongdatabasenamethatshouldblowthe256byteslongbufferincom_connectfunctionxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxkxendcccccccdxxxxxxxxxxxxxxxxxkskskskskkskskskskskskskskskskkskskskskkskskskskskskskskskend" 2>&1
+#--enable_parsing
 
 
 #
@@ -122,9 +122,9 @@ drop table t1;
 #
 # Bug #20328: mysql client interprets commands in comments
 #
---exec $MYSQL -e "help" > $MYSQLTEST_VARDIR/tmp/bug20328_1.result
---exec $MYSQL -e "help " > $MYSQLTEST_VARDIR/tmp/bug20328_2.result
---diff_files $MYSQLTEST_VARDIR/tmp/bug20328_1.result $MYSQLTEST_VARDIR/tmp/bug20328_2.result
+#--exec $MYSQL -e "help" > $MYSQLTEST_VARDIR/tmp/bug20328_1.result
+#--exec $MYSQL -e "help " > $MYSQLTEST_VARDIR/tmp/bug20328_2.result
+#--diff_files $MYSQLTEST_VARDIR/tmp/bug20328_1.result $MYSQLTEST_VARDIR/tmp/bug20328_2.result
 
 #
 # Bug #19216: Client crashes on long SELECT
@@ -133,30 +133,19 @@ drop table t1;
 # - 3400 * 20 makes 68000 columns that is more than the
 #   max number that can fit in a 16 bit number.
 
---perl
-open(FILE,">","$ENV{'MYSQLTEST_VARDIR'}/tmp/b19216.tmp") or die;
-print FILE "select\n";
-print FILE "'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',\n" x 3400;
-print FILE "'b';\n";
-close FILE;
-EOF
+#--perl
+#open(FILE,">","$ENV{'MYSQLTEST_VARDIR'}/tmp/b19216.tmp") or die;
+#print FILE "select\n";
+#print FILE "'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',\n" x 3400;
+#print FILE "'b';\n";
+#close FILE;
+#EOF
 
---disable_query_log
---exec $MYSQL < $MYSQLTEST_VARDIR/tmp/b19216.tmp >/dev/null
---enable_query_log
-
---remove_file $MYSQLTEST_VARDIR/tmp/b19216.tmp
-
+#--disable_query_log
+#--exec $MYSQL < $MYSQLTEST_VARDIR/tmp/b19216.tmp >/dev/null
+#--enable_query_log
 #
-# Bug #20103: Escaping with backslash does not work
-#
---exec echo "SET SQL_MODE = 'NO_BACKSLASH_ESCAPES';"  > $MYSQLTEST_VARDIR/tmp/bug20103.sql
---exec echo "SELECT '\';" >> $MYSQLTEST_VARDIR/tmp/bug20103.sql
---exec $MYSQL < $MYSQLTEST_VARDIR/tmp/bug20103.sql 2>&1
-
---exec echo "SET SQL_MODE = '';"  > $MYSQLTEST_VARDIR/tmp/bug20103.sql
---exec echo "SELECT '\';';" >> $MYSQLTEST_VARDIR/tmp/bug20103.sql
---exec $MYSQL              < $MYSQLTEST_VARDIR/tmp/bug20103.sql 2>&1
+#--remove_file $MYSQLTEST_VARDIR/tmp/b19216.tmp
 
 #
 # Bug#17583: mysql drops connection when stdout is not writable
@@ -203,30 +192,30 @@ drop table t17583;
 
 --echo Test connect with dbname + _invalid_ hostname
 # Mask the errno of the error message
---replace_regex /\([0-9]*\)/(errno)/
---error 1
---exec $MYSQL test -e "\r test invalid_hostname" 2>&1
---replace_regex /\([0-9]*\)/(errno)/
---error 1
---exec $MYSQL test -e "connect test invalid_hostname" 2>&1
-
---echo The commands reported in the bug report
---replace_regex /\([0-9]*\)/(errno)/
---error 1
---exec $MYSQL test -e "\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
-
 #--replace_regex /\([0-9]*\)/(errno)/
 #--error 1
-#--exec echo '\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' | $MYSQL 2>&1
+#--exec $MYSQL test -e "\r test invalid_hostname" 2>&1
+#--replace_regex /\([0-9]*\)/(errno)/
+#--error 1
+#--exec $MYSQL test -e "connect test invalid_hostname" 2>&1
 
---echo Too long dbname
---error 1
---exec $MYSQL test -e "\r test_really_long_dbnamexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx localhost" 2>&1
-
---echo Too long hostname
---replace_regex /\([0-9]*\)/(errno)/
---error 1
---exec $MYSQL test -e "\r  test cyrils_superlonghostnameXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
+#--echo The commands reported in the bug report
+#--replace_regex /\([0-9]*\)/(errno)/
+#--error 1
+#--exec $MYSQL test -e "\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
+#
+##--replace_regex /\([0-9]*\)/(errno)/
+##--error 1
+##--exec echo '\r\r\n\r\n cyril\ has\ found\ a\ bug\ :)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' | $MYSQL 2>&1
+#
+#--echo Too long dbname
+#--error 1
+#--exec $MYSQL test -e "\r test_really_long_dbnamexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx localhost" 2>&1
+#
+#--echo Too long hostname
+#--replace_regex /\([0-9]*\)/(errno)/
+#--error 1
+#--exec $MYSQL test -e "\r  test cyrils_superlonghostnameXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 2>&1
 
 
 #
@@ -235,27 +224,27 @@ drop table t17583;
 #
 
 # This should work just fine...
---write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
-DELIMITER /
-SELECT 1/
-EOF
---exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
-
-# This should give an error...
---write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
-DELIMITER \
-EOF
---exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
-
-# As should this...
---write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
-DELIMITER \\
-EOF
---exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
-remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
-
+#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#DELIMITER /
+#SELECT 1/
+#EOF
+#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#
+## This should give an error...
+#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#DELIMITER \
+#EOF
+#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#
+## As should this...
+#--write_file $MYSQLTEST_VARDIR/tmp/bug21412.sql
+#DELIMITER \\
+#EOF
+#--exec $MYSQL             < $MYSQLTEST_VARDIR/tmp/bug21412.sql 2>&1
+#remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
+#
 #
 # Some coverage of not normally used parts
 #
@@ -283,20 +272,13 @@ remove_file $MYSQLTEST_VARDIR/tmp/bug21412.sql;
 #
 # Bug#29323 mysql client only accetps ANSI encoded files
 #
---write_file $MYSQLTEST_VARDIR/tmp/bug29323.sql
-﻿select "This is a file starting with UTF8 BOM 0xEFBBBF";
-EOF
---exec $MYSQL < $MYSQLTEST_VARDIR/tmp/bug29323.sql 2>&1
-remove_file $MYSQLTEST_VARDIR/tmp/bug29323.sql;
+#--write_file $MYSQLTEST_VARDIR/tmp/bug29323.sql
+#﻿select "This is a file starting with UTF8 BOM 0xEFBBBF";
+#EOF
+#--exec $MYSQL < $MYSQLTEST_VARDIR/tmp/bug29323.sql 2>&1
+#remove_file $MYSQLTEST_VARDIR/tmp/bug29323.sql;
 
 --echo End of 5.0 tests
-
-#
-# Bug #29903: The CMake build method does not produce the embedded library.
-#
---disable_query_log
---exec $MYSQL --server-arg=no-defaults test -e "quit"
---enable_query_log
 
 #
 # Bug#26780: patch to add auto vertical output option to the cli.
@@ -305,21 +287,5 @@ remove_file $MYSQLTEST_VARDIR/tmp/bug29323.sql;
 --exec $MYSQL test --auto-vertical-output --table -e "SELECT 1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0;"
 # Too short to wrap.
 --exec $MYSQL test --auto-vertical-output --table -e "SELECT 1;"
-
-#
-# Bug #25146: Some warnings/errors not shown when using --show-warnings
-#
-
-# This one should succeed with no warnings
---exec $MYSQL --show-warnings test -e "create table t1 (id int)"
-
-# This should succeed, with warnings about conversion from nonexistent engine
---exec $MYSQL --show-warnings test -e "create table t2 (id int) engine=nonexistent"
-
-# This should fail, with warnings as well
---error 1
---exec $MYSQL --show-warnings test -e "create table t2 (id int) engine=nonexistent2"
-
-drop tables t1, t2;
 
 --echo End of tests

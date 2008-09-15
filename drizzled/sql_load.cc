@@ -15,26 +15,10 @@
 
 
 /* Copy data from a textfile to table */
-/* 2006-12 Erik Wetterberg : LOAD XML added */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
-
-class XML_TAG {
-public:
-  int level;
-  String field;
-  String value;
-  XML_TAG(int l, String f, String v);
-};
-
-
-XML_TAG::XML_TAG(int l, String f, String v)
-{
-  level= l;
-  field.append(f);
-  value.append(v);
-}
+#include <drizzled/drizzled_error_messages.h>
 
 
 class READ_INFO {
@@ -51,15 +35,14 @@ class READ_INFO {
   bool  need_end_io_cache;
   IO_CACHE cache;
   NET *io_net;
-  int level; /* for load xml */
 
 public:
   bool error,line_cuted,found_null,enclosed;
   uchar	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
-  CHARSET_INFO *read_charset;
+  const CHARSET_INFO *read_charset;
 
-  READ_INFO(File file,uint tot_length,CHARSET_INFO *cs,
+  READ_INFO(File file,uint tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape,bool get_it_from_net, bool is_fifo);
   ~READ_INFO();
@@ -69,11 +52,6 @@ public:
   char unescape(char chr);
   int terminator(char *ptr,uint length);
   bool find_start_of_fields();
-  /* load xml */
-  List<XML_TAG> taglist;
-  int read_value(int delim, String *val);
-  int read_xml();
-  int clear_level(int level);
 
   /*
     We need to force cache close before destructor is invoked to log
@@ -93,22 +71,16 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
-			     ulong skip_lines,
+			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
-			  String &enclosed, ulong skip_lines,
+			  String &enclosed, uint32_t skip_lines,
 			  bool ignore_check_option_errors);
-
-static int read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
-                          List<Item> &fields_vars, List<Item> &set_fields,
-                          List<Item> &set_values, READ_INFO &read_info,
-                          String &enclosed, ulong skip_lines,
-                          bool ignore_check_option_errors);
 
 static bool write_execute_load_query_log_event(THD *thd,
 					       bool duplicates, bool ignore,
@@ -136,7 +108,7 @@ static bool write_execute_load_query_log_event(THD *thd,
     true - error / false - success
 */
 
-int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
+int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,
@@ -144,7 +116,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
 {
   char name[FN_REFLEN];
   File file;
-  TABLE *table= NULL;
+  Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
@@ -157,7 +129,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     loaded is located
   */
   char *tdb= thd->db ? thd->db : db;		// Result is never null
-  ulong skip_lines= ex->skip_lines;
+  uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
   THD::killed_state killed_status= THD::NOT_KILLED;
 
@@ -326,7 +298,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   }
 
   COPY_INFO info;
-  memset((char*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
@@ -354,7 +326,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   thd->count_cuted_fields= CHECK_FIELD_WARN;		/* calc cuted fields */
   thd->cuted_fields=0L;
   /* Skip lines if there is a line terminator */
-  if (ex->line_term->length() && ex->filetype != FILETYPE_XML)
+  if (ex->line_term->length())
   {
     /* ex->skip_lines needs to be preserved for logging */
     while (skip_lines > 0)
@@ -377,16 +349,9 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     table->file->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    thd->abort_on_warning= (!ignore &&
-                            (thd->variables.sql_mode &
-                             (MODE_STRICT_TRANS_TABLES |
-                              MODE_STRICT_ALL_TABLES)));
+    thd->abort_on_warning= true;
 
-    if (ex->filetype == FILETYPE_XML) /* load xml */
-      error= read_xml_field(thd, info, table_list, fields_vars,
-                            set_fields, set_values, read_info,
-                            *(ex->line_term), skip_lines, ignore);
-    else if (!field_term->length() && !enclosed->length())
+    if (!field_term->length() && !enclosed->length())
       error= read_fixed_length(thd, info, table_list, fields_vars,
                                set_fields, set_values, read_info,
 			       skip_lines, ignore);
@@ -464,8 +429,8 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     error= -1;				// Error on read
     goto err;
   }
-  sprintf(name, ER(ER_LOAD_INFO), (ulong) info.records, (ulong) info.deleted,
-	  (ulong) (info.records - info.copied), (ulong) thd->cuted_fields);
+  sprintf(name, ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
+	  (uint32_t) (info.records - info.copied), (uint32_t) thd->cuted_fields);
 
   if (thd->transaction.stmt.modified_non_trans_table)
     thd->transaction.all.modified_non_trans_table= true;
@@ -533,14 +498,14 @@ static bool write_execute_load_query_log_event(THD *thd,
 ****************************************************************************/
 
 static int
-read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
-                  ulong skip_lines, bool ignore_check_option_errors)
+                  uint32_t skip_lines, bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
   Item_field *sql_field;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint64_t id;
   bool err;
 
@@ -590,7 +555,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
       if (pos == read_info.row_end)
       {
         thd->cuted_fields++;			/* Not enough fields */
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                             ER_WARN_TOO_FEW_RECORDS, 
                             ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
         if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
@@ -613,7 +578,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
     if (pos != read_info.row_end)
     {
       thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, 
                           ER(ER_WARN_TOO_MANY_RECORDS), thd->row_count); 
     }
@@ -637,7 +602,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
     if (read_info.line_cuted)
     {
       thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, 
                           ER(ER_WARN_TOO_MANY_RECORDS), thd->row_count); 
     }
@@ -649,15 +614,15 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 
 
 static int
-read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
-	       String &enclosed, ulong skip_lines,
+	       String &enclosed, uint32_t skip_lines,
 	       bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint enclosed_length;
   uint64_t id;
   bool err;
@@ -712,7 +677,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
             if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
               ((Field_timestamp*) field)->set_time();
             else if (field != table->next_number_field)
-              field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+              field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  ER_WARN_NULL_TO_NOTNULL, 1);
           }
 	}
@@ -783,7 +748,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
             in the end ?)
           */
           thd->cuted_fields++;
-          push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_WARN_TOO_FEW_RECORDS,
                               ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
         }
@@ -818,7 +783,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
     if (read_info.line_cuted)
     {
       thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS), 
                           thd->row_count);   
       if (thd->killed)
@@ -828,148 +793,6 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
   }
   return(test(read_info.error));
 }
-
-
-/****************************************************************************
-** Read rows in xml format
-****************************************************************************/
-static int
-read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
-               List<Item> &fields_vars, List<Item> &set_fields,
-               List<Item> &set_values, READ_INFO &read_info,
-               String &row_tag __attribute__((unused)),
-               ulong skip_lines,
-               bool ignore_check_option_errors)
-{
-  List_iterator_fast<Item> it(fields_vars);
-  Item *item;
-  TABLE *table= table_list->table;
-  bool no_trans_update_stmt;
-  CHARSET_INFO *cs= read_info.read_charset;
-
-  no_trans_update_stmt= !table->file->has_transactions();
-
-  for ( ; ; it.rewind())
-  {
-    if (thd->killed)
-    {
-      thd->send_kill_message();
-      return(1);
-    }
-    
-    // read row tag and save values into tag list
-    if (read_info.read_xml())
-      break;
-    
-    List_iterator_fast<XML_TAG> xmlit(read_info.taglist);
-    xmlit.rewind();
-    XML_TAG *tag= NULL;
-    
-    
-    restore_record(table, s->default_values);
-    
-    while ((item= it++))
-    {
-      /* If this line is to be skipped we don't want to fill field or var */
-      if (skip_lines)
-        continue;
-      
-      /* find field in tag list */
-      xmlit.rewind();
-      tag= xmlit++;
-      
-      while(tag && strcmp(tag->field.c_ptr(), item->name) != 0)
-        tag= xmlit++;
-      
-      if (!tag) // found null
-      {
-        if (item->type() == Item::FIELD_ITEM)
-        {
-          Field *field= ((Item_field *) item)->field;
-          field->reset();
-          field->set_null();
-          if (field == table->next_number_field)
-            table->auto_increment_field_not_null= true;
-          if (!field->maybe_null())
-          {
-            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-              ((Field_timestamp *) field)->set_time();
-            else if (field != table->next_number_field)
-              field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                 ER_WARN_NULL_TO_NOTNULL, 1);
-          }
-        }
-        else
-          ((Item_user_var_as_out_param *) item)->set_null_value(cs);
-        continue;
-      }
-
-      if (item->type() == Item::FIELD_ITEM)
-      {
-
-        Field *field= ((Item_field *)item)->field;
-        field->set_notnull();
-        if (field == table->next_number_field)
-          table->auto_increment_field_not_null= true;
-        field->store((char *) tag->value.ptr(), tag->value.length(), cs);
-      }
-      else
-        ((Item_user_var_as_out_param *) item)->set_value(
-                                                 (char *) tag->value.ptr(), 
-                                                 tag->value.length(), cs);
-    }
-    
-    if (read_info.error)
-      break;
-    
-    if (skip_lines)
-    {
-      skip_lines--;
-      continue;
-    }
-    
-    if (item)
-    {
-      /* Have not read any field, thus input file is simply ended */
-      if (item == fields_vars.head())
-        break;
-      
-      for ( ; item; item= it++)
-      {
-        if (item->type() == Item::FIELD_ITEM)
-        {
-          /*
-            QQ: We probably should not throw warning for each field.
-            But how about intention to always have the same number
-            of warnings in THD::cuted_fields (and get rid of cuted_fields
-            in the end ?)
-          */
-          thd->cuted_fields++;
-          push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-                              ER_WARN_TOO_FEW_RECORDS,
-                              ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
-        }
-        else
-          ((Item_user_var_as_out_param *)item)->set_null_value(cs);
-      }
-    }
-
-    if (thd->killed || fill_record(thd, set_fields, set_values,
-                    ignore_check_option_errors))
-      return(1);
-
-    if (write_record(thd, table, &info))
-      return(1);
-    
-    /*
-      We don't need to reset auto-increment field since we are restoring
-      its default value at the beginning of each loop iteration.
-    */
-    thd->transaction.stmt.modified_non_trans_table= no_trans_update_stmt;
-    thd->row_count++;
-  }
-  return(test(read_info.error));
-} /* load xml end */
 
 
 /* Unescape all escape characters, mark \N as null */
@@ -999,7 +822,7 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, uint tot_length, CHARSET_INFO *cs,
+READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool get_it_from_net,
 		     bool is_fifo)
@@ -1010,7 +833,6 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, CHARSET_INFO *cs,
   field_term_length= field_term.length();
   line_term_ptr=(char*) line_term.ptr();
   line_term_length= line_term.length();
-  level= 0; /* for load xml */
   if (line_start.length() == 0)
   {
     line_start_ptr=0;
@@ -1084,10 +906,6 @@ READ_INFO::~READ_INFO()
     my_free((uchar*) buffer,MYF(0));
     error=1;
   }
-  List_iterator<XML_TAG> xmlit(taglist);
-  XML_TAG *t;
-  while ((t= xmlit++))
-    delete(t);
 }
 
 
@@ -1421,294 +1239,3 @@ bool READ_INFO::find_start_of_fields()
 }
 
 
-/*
-  Clear taglist from tags with a specified level
-*/
-int READ_INFO::clear_level(int level)
-{
-  List_iterator<XML_TAG> xmlit(taglist);
-  xmlit.rewind();
-  XML_TAG *tag;
-  
-  while ((tag= xmlit++))
-  {
-     if(tag->level >= level)
-     {
-       xmlit.remove();
-       delete tag;
-     }
-  }
-  return(0);
-}
-
-
-/*
-  Convert an XML entity to Unicode value.
-  Return -1 on error;
-*/
-static int
-my_xml_entity_to_char(const char *name, uint length)
-{
-  if (length == 2)
-  {
-    if (!memcmp(name, "gt", length))
-      return '>';
-    if (!memcmp(name, "lt", length))
-      return '<';
-  }
-  else if (length == 3)
-  {
-    if (!memcmp(name, "amp", length))
-      return '&';
-  }
-  else if (length == 4)
-  {
-    if (!memcmp(name, "quot", length))
-      return '"';
-    if (!memcmp(name, "apos", length))
-      return '\'';
-  }
-  return -1;
-}
-
-
-/**
-  @brief Convert newline, linefeed, tab to space
-  
-  @param chr    character
-  
-  @details According to the "XML 1.0" standard,
-           only space (#x20) characters, carriage returns,
-           line feeds or tabs are considered as spaces.
-           Convert all of them to space (#x20) for parsing simplicity.
-*/
-static int
-my_tospace(int chr)
-{
-  return (chr == '\t' || chr == '\r' || chr == '\n') ? ' ' : chr;
-}
-
-
-/*
-  Read an xml value: handle multibyte and xml escape
-*/
-int READ_INFO::read_value(int delim, String *val)
-{
-  int chr;
-  String tmp;
-
-  for (chr= my_tospace(GET); chr != delim && chr != my_b_EOF; )
-  {
-#ifdef USE_MB
-    if (my_mbcharlen(read_charset, chr) > 1)
-    {
-      int i, ml= my_mbcharlen(read_charset, chr);
-      for (i= 1; i < ml; i++) 
-      {
-        val->append(chr);
-        /*
-          Don't use my_tospace() in the middle of a multi-byte character
-          TODO: check that the multi-byte sequence is valid.
-        */
-        chr= GET; 
-        if (chr == my_b_EOF)
-          return chr;
-      }
-    }
-#endif
-    if(chr == '&')
-    {
-      tmp.length(0);
-      for (chr= my_tospace(GET) ; chr != ';' ; chr= my_tospace(GET))
-      {
-        if (chr == my_b_EOF)
-          return chr;
-        tmp.append(chr);
-      }
-      if ((chr= my_xml_entity_to_char(tmp.ptr(), tmp.length())) >= 0)
-        val->append(chr);
-      else
-      {
-        val->append('&');
-        val->append(tmp);
-        val->append(';'); 
-      }
-    }
-    else
-      val->append(chr);
-    chr= my_tospace(GET);
-  }            
-  return chr;
-}
-
-
-/*
-  Read a record in xml format
-  tags and attributes are stored in taglist
-  when tag set in ROWS IDENTIFIED BY is closed, we are ready and return
-*/
-int READ_INFO::read_xml()
-{
-  int chr, chr2, chr3;
-  int delim= 0;
-  String tag, attribute, value;
-  bool in_tag= false;
-  
-  tag.length(0);
-  attribute.length(0);
-  value.length(0);
-  
-  for (chr= my_tospace(GET); chr != my_b_EOF ; )
-  {
-    switch(chr){
-    case '<':  /* read tag */
-        /* TODO: check if this is a comment <!-- comment -->  */
-      chr= my_tospace(GET);
-      if(chr == '!')
-      {
-        chr2= GET;
-        chr3= GET;
-        
-        if(chr2 == '-' && chr3 == '-')
-        {
-          chr2= 0;
-          chr3= 0;
-          chr= my_tospace(GET);
-          
-          while(chr != '>' || chr2 != '-' || chr3 != '-')
-          {
-            if(chr == '-')
-            {
-              chr3= chr2;
-              chr2= chr;
-            }
-            else if (chr2 == '-')
-            {
-              chr2= 0;
-              chr3= 0;
-            }
-            chr= my_tospace(GET);
-            if (chr == my_b_EOF)
-              goto found_eof;
-          }
-          break;
-        }
-      }
-      
-      tag.length(0);
-      while(chr != '>' && chr != ' ' && chr != '/' && chr != my_b_EOF)
-      {
-        if(chr != delim) /* fix for the '<field name =' format */
-          tag.append(chr);
-        chr= my_tospace(GET);
-      }
-      
-      if(chr == ' ' || chr == '>')
-      {
-        level++;
-        clear_level(level + 1);
-      }
-      
-      if (chr == ' ')
-        in_tag= true;
-      else 
-        in_tag= false;
-      break;
-      
-    case ' ': /* read attribute */
-      while(chr == ' ')  /* skip blanks */
-        chr= my_tospace(GET);
-      
-      if(!in_tag)
-        break;
-      
-      while(chr != '=' && chr != '/' && chr != '>' && chr != my_b_EOF)
-      {
-        attribute.append(chr);
-        chr= my_tospace(GET);
-      }
-      break;
-      
-    case '>': /* end tag - read tag value */
-      in_tag= false;
-      chr= read_value('<', &value);
-      if(chr == my_b_EOF)
-        goto found_eof;
-      
-      /* save value to list */
-      if(tag.length() > 0 && value.length() > 0)
-        taglist.push_front( new XML_TAG(level, tag, value));
-
-      tag.length(0);
-      value.length(0);
-      attribute.length(0);
-      break;
-      
-    case '/': /* close tag */
-      level--;
-      chr= my_tospace(GET);
-      if(chr != '>')   /* if this is an empty tag <tag   /> */
-        tag.length(0); /* we should keep tag value          */
-      while(chr != '>' && chr != my_b_EOF)
-      {
-        tag.append(chr);
-        chr= my_tospace(GET);
-      }
-      
-      if((tag.length() == line_term_length -2) &&
-         (strncmp(tag.c_ptr_safe(), line_term_ptr + 1, tag.length()) == 0))
-         return(0); //normal return
-
-      chr= my_tospace(GET);
-      break;   
-      
-    case '=': /* attribute name end - read the value */
-      //check for tag field and attribute name
-      if(!memcmp(tag.c_ptr_safe(), STRING_WITH_LEN("field")) &&
-         !memcmp(attribute.c_ptr_safe(), STRING_WITH_LEN("name")))
-      {
-        /*
-          this is format <field name="xx">xx</field>
-          where actual fieldname is in attribute
-        */
-        delim= my_tospace(GET);
-        tag.length(0);
-        attribute.length(0);
-        chr= '<'; /* we pretend that it is a tag */
-        level--;
-        break;
-      }
-      
-      //check for " or '
-      chr= GET;
-      if (chr == my_b_EOF)
-        goto found_eof;
-      if(chr == '"' || chr == '\'')
-      {
-        delim= chr;
-      }
-      else
-      {
-        delim= ' '; /* no delimiter, use space */
-        PUSH(chr);
-      }
-      
-      chr= read_value(delim, &value);
-      if(attribute.length() > 0 && value.length() > 0)
-        taglist.push_front(new XML_TAG(level + 1, attribute, value));
-
-      attribute.length(0);
-      value.length(0);
-      if (chr != ' ')
-        chr= my_tospace(GET);
-      break;
-    
-    default:
-      chr= my_tospace(GET);
-    } /* end switch */
-  } /* end while */
-  
-found_eof:
-  eof= 1;
-  return(1);
-}

@@ -55,7 +55,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (!ci)
   {
-    memset((char*) &tmp_create_info, 0, sizeof(tmp_create_info));
+    memset(&tmp_create_info, 0, sizeof(tmp_create_info));
     ci=&tmp_create_info;
   }
 
@@ -65,7 +65,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   errpos= 0;
   options= 0;
-  memset((uchar*) &share, 0, sizeof(share));
+  memset(&share, 0, sizeof(share));
 
   if (flags & HA_DONT_TOUCH_DATA)
   {
@@ -413,7 +413,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     goto err;
   }
 
-  memcpy(share.state.header.file_version,(uchar*) myisam_file_magic,4);
+  memcpy(share.state.header.file_version,myisam_file_magic,4);
   ci->old_options=options| (ci->old_options & HA_OPTION_TEMP_COMPRESS_RECORD ?
 			HA_OPTION_COMPRESS_RECORD |
 			HA_OPTION_TEMP_COMPRESS_RECORD: 0);
@@ -431,7 +431,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   share.state.unique=	(ulong) 0;
   share.state.update_count=(ulong) 0;
   share.state.version=	(ulong) time((time_t*) 0);
-  share.state.sortkey=  (ushort) ~0;
+  share.state.sortkey=  UINT16_MAX;
   share.state.auto_increment=ci->auto_increment;
   share.options=options;
   share.base.rec_reflength=pointer;
@@ -613,8 +613,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   /* Create extra keys for unique definitions */
   offset=reclength-uniques*MI_UNIQUE_HASH_LENGTH;
-  memset((char*) &tmp_keydef, 0, sizeof(tmp_keydef));
-  memset((char*) &tmp_keyseg, 0, sizeof(tmp_keyseg));
+  memset(&tmp_keydef, 0, sizeof(tmp_keydef));
+  memset(&tmp_keyseg, 0, sizeof(tmp_keyseg));
   for (i=0; i < uniques ; i++)
   {
     tmp_keydef.keysegs=1;

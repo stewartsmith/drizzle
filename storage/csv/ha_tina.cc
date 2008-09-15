@@ -40,12 +40,7 @@ TODO:
 
  -Brian
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation        // gcc: Class implementation
-#endif
-
-#include <drizzled/mysql_priv.h>
+#include <drizzled/common_includes.h>
 #include "ha_tina.h"
 
 
@@ -63,7 +58,7 @@ TODO:
 #define CSM_EXT ".CSM"               // Meta file
 
 
-static TINA_SHARE *get_share(const char *table_name, TABLE *table);
+static TINA_SHARE *get_share(const char *table_name, Table *table);
 static int free_share(TINA_SHARE *share);
 static int read_meta_file(File meta_file, ha_rows *rows);
 static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
@@ -132,7 +127,7 @@ static int tina_done_func(void *p __attribute__((unused)))
   Simple lock controls.
 */
 static TINA_SHARE *get_share(const char *table_name,
-                             TABLE *table __attribute__((unused)))
+                             Table *table __attribute__((unused)))
 {
   TINA_SHARE *share;
   char meta_file_name[FN_REFLEN];
@@ -161,7 +156,6 @@ static TINA_SHARE *get_share(const char *table_name,
     }
 
     share->use_count= 0;
-    share->is_log_table= false;
     share->table_name_length= length;
     share->table_name= tmp_name;
     share->crashed= false;
@@ -169,7 +163,7 @@ static TINA_SHARE *get_share(const char *table_name,
     share->update_file_opened= false;
     share->tina_write_opened= false;
     share->data_file_version= 0;
-    strmov(share->table_name, table_name);
+    stpcpy(share->table_name, table_name);
     fn_format(share->data_file_name, table_name, "", CSV_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
     fn_format(meta_file_name, table_name, "", CSM_EXT,
@@ -455,7 +449,6 @@ int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
   String attribute(attribute_buffer, sizeof(attribute_buffer),
                    &my_charset_bin);
 
-  my_bitmap_map *org_bitmap= dbug_tmp_use_all_columns(table, table->read_set);
   buffer.length(0);
 
   for (Field **field=table->field ; *field ; field++)
@@ -530,7 +523,6 @@ int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
 
   //buffer.replace(buffer.length(), 0, "\n", 1);
 
-  dbug_tmp_restore_column_map(table->read_set, org_bitmap);
   return (buffer.length());
 }
 
@@ -583,7 +575,6 @@ int ha_tina::find_current_row(uchar *buf)
 {
   off_t end_offset, curr_offset= current_position;
   int eoln_len;
-  my_bitmap_map *org_bitmap;
   int error;
   bool read_all;
 
@@ -600,8 +591,6 @@ int ha_tina::find_current_row(uchar *buf)
 
   /* We must read all columns in case a table is opened for update */
   read_all= !bitmap_is_clear_all(table->write_set);
-  /* Avoid asserts in ::store() for columns that are not going to be updated */
-  org_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
@@ -698,7 +687,6 @@ int ha_tina::find_current_row(uchar *buf)
   error= 0;
 
 err:
-  dbug_tmp_restore_column_map(table->write_set, org_bitmap);
 
   return(error);
 }
@@ -756,17 +744,6 @@ bool tina_check_status(void* param __attribute__((unused)))
 
 void ha_tina::get_status()
 {
-  if (share->is_log_table)
-  {
-    /*
-      We have to use mutex to follow pthreads memory visibility
-      rules for share->saved_data_file_length
-    */
-    pthread_mutex_lock(&share->mutex);
-    local_saved_data_file_length= share->saved_data_file_length;
-    pthread_mutex_unlock(&share->mutex);
-    return;
-  }
   local_saved_data_file_length= share->saved_data_file_length;
 }
 
@@ -788,8 +765,7 @@ void ha_tina::get_status()
     For log tables concurrent insert works different. The reason is that
     log tables are always opened and locked. And as they do not unlock
     tables, the file length after writes should be updated in a different
-    way. For this purpose we need is_log_table flag. When this flag is set
-    we call update_status() explicitly after each row write.
+    way. 
 */
 
 void ha_tina::update_status()
@@ -882,8 +858,6 @@ int ha_tina::write_row(uchar * buf)
   pthread_mutex_lock(&share->mutex);
   share->rows_recorded++;
   /* update status for the log tables */
-  if (share->is_log_table)
-    update_status();
   pthread_mutex_unlock(&share->mutex);
 
   stats.records++;
@@ -949,9 +923,6 @@ int ha_tina::update_row(const uchar * old_data __attribute__((unused)),
   temp_file_length+= size;
   rc= 0;
 
-  /* UPDATE should never happen on the log tables */
-  assert(!share->is_log_table);
-
 err:
   return(rc);
 }
@@ -979,9 +950,6 @@ int ha_tina::delete_row(const uchar * buf __attribute__((unused)))
   pthread_mutex_lock(&share->mutex);
   share->rows_recorded--;
   pthread_mutex_unlock(&share->mutex);
-
-  /* DELETE should never happen on the log table */
-  assert(!share->is_log_table);
 
   return(0);
 }
@@ -1463,7 +1431,7 @@ THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
   this (the database will call ::open() if it needs to).
 */
 
-int ha_tina::create(const char *name, TABLE *table_arg,
+int ha_tina::create(const char *name, Table *table_arg,
                     HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   char name_buff[FN_REFLEN];
@@ -1558,7 +1526,7 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((unu
 
 mysql_declare_plugin(csv)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

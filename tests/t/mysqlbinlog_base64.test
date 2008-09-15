@@ -16,7 +16,7 @@ load data infile '../std_data_ln/words.dat' into table t2;
 #  Save binlog
 #
 flush logs;
---exec $MYSQL_BINLOG --hexdump $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_base64.sql
+--exec $DRIZZLE_BINLOG --hexdump $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_base64.sql
 
 #
 #  Clear database and restore from binlog
@@ -51,7 +51,7 @@ insert into t2 select * from t2;
 select count(*) from t2;
 
 flush logs;
---exec $MYSQL_BINLOG --hexdump $MYSQLTEST_VARDIR/log/master-bin.000003 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_base64.sql
+--exec $DRIZZLE_BINLOG --hexdump $MYSQLTEST_VARDIR/log/master-bin.000003 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_base64.sql
 --exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/mysqlbinlog_base64.sql
 
 #

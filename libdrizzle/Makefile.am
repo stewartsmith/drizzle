@@ -27,33 +27,33 @@ MYSQLBASEdir=			$(prefix)
 libdrizzleincludedir = ${includedir}/libdrizzle
 dist_libdrizzleinclude_HEADERS =	drizzle.h \
 					drizzle_com.h \
-					drizzle_time.h \
 					errmsg.h \
 					sql_common.h
 
-pkglib_LTLIBRARIES = libdrizzle.la
+lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c local_infile.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \
-			${top_builddir}/mysys/libmysyslt.la \
-			${top_builddir}/mystrings/libmystringslt.la \
+			${top_builddir}/mysys/libmysys.la \
+			${top_builddir}/mystrings/libmystrings.la \
 			libsqlcommon.la \
 			${top_builddir}/vio/libviolt.la 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
 
 noinst_LTLIBRARIES = libsqlcommon.la
-libsqlcommon_la_SOURCES = pack.c my_time.c errmsg.c password.c
+libsqlcommon_la_SOURCES = pack.c errmsg.c password.c
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
-			-DDEFAULT_HOME_ENV=MYSQL_HOME \
-			-DDEFAULT_GROUP_SUFFIX_ENV=MYSQL_GROUP_SUFFIX \
+			-DDEFAULT_HOME_ENV=DRIZZLE_HOME \
+			-DDEFAULT_GROUP_SUFFIX_ENV=DRIZZLE_GROUP_SUFFIX \
 			-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 noinst_HEADERS = 	client_settings.h \
-			my_time.h
+			gettext.h
 
+EXTRA_DIST =		libdrizzle.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)
 

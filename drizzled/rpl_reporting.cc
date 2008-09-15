@@ -1,5 +1,4 @@
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_reporting.h"
 
 void
@@ -41,8 +40,8 @@ Slave_reporting_capability::report(loglevel level, int err_code,
   va_end(args);
 
   /* If the msg string ends with '.', do not add a ',' it would be ugly */
-  report_function("Slave %s: %s%s Error_code: %d",
+  report_function(_("Slave %s: %s%s Error_code: %d"),
                   m_thread_name, pbuff,
-                  (pbuff[0] && *(strend(pbuff)-1) == '.') ? "" : ",",
+                  (pbuff[0] && *(strchr(pbuff, '\0')-1) == '.') ? "" : ",",
                   err_code);
 }

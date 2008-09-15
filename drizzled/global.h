@@ -15,8 +15,8 @@
 
 /* This is the include file that should be included 'first' in every C file. */
 
-#ifndef _global_h
-#define _global_h
+#ifndef DRIZZLE_SERVER_GLOBAL_H
+#define DRIZZLE_SERVER_GLOBAL_H
 
 #define HAVE_REPLICATION
 #define HAVE_EXTERNAL_CLIENT
@@ -51,12 +51,6 @@
 #endif
 
 #include "config.h"
-#if defined(__cplusplus) && defined(inline)
-#undef inline				/* fix configure problem */
-#endif
-
-/* Make it easier to add conditionl code for windows */
-#define IF_WIN(A,B) (B)
 
 /*
   The macros below are borrowed from include/linux/compiler.h in the
@@ -73,61 +67,6 @@
 
 #define likely(x)	__builtin_expect((x),1)
 #define unlikely(x)	__builtin_expect((x),0)
-
-
-/*
-  The macros below are useful in optimising places where it has been
-  discovered that cache misses stall the process and where a prefetch
-  of the cache line can improve matters. This is available in GCC 3.1.1
-  and later versions.
-  PREFETCH_READ says that addr is going to be used for reading and that
-  it is to be kept in caches if possible for a while
-  PREFETCH_WRITE also says that the item to be cached is likely to be
-  updated.
-  The *LOCALITY scripts are also available for experimentation purposes
-  mostly and should only be used if they are verified to improve matters.
-  For more input see GCC manual (available in GCC 3.1.1 and later)
-*/
-
-#if (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR > 10)
-#define PREFETCH_READ(addr) __builtin_prefetch(addr, 0, 3)
-#define PREFETCH_WRITE(addr) \
-  __builtin_prefetch(addr, 1, 3)
-#define PREFETCH_READ_LOCALITY(addr, locality) \
-  __builtin_prefetch(addr, 0, locality)
-#define PREFETCH_WRITE_LOCALITY(addr, locality) \
-  __builtin_prefetch(addr, 1, locality)
-#else
-#define PREFETCH_READ(addr)
-#define PREFETCH_READ_LOCALITY(addr, locality)
-#define PREFETCH_WRITE(addr)
-#define PREFETCH_WRITE_LOCALITY(addr, locality)
-#endif
-
-/*
-  now let's figure out if inline functions are supported
-  autoconf defines 'inline' to be empty, if not
-*/
-#if defined(inline)
-#define HAVE_INLINE
-#endif
-/* helper macro for "instantiating" inline functions */
-#define STATIC_INLINE static inline
-
-/*
-  The following macros are used to control inlining a bit more than
-  usual. These macros are used to ensure that inlining always or
-  never occurs (independent of compilation mode).
-  For more input see GCC manual (available in GCC 3.1.1 and later)
-*/
-
-#if (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR > 10)
-#define ALWAYS_INLINE __attribute__ ((always_inline))
-#define NEVER_INLINE __attribute__ ((noinline))
-#else
-#define ALWAYS_INLINE
-#define NEVER_INLINE
-#endif
 
 /*
  *   Disable __attribute__ for non GNU compilers, since we're using them
@@ -155,15 +94,156 @@
 #include <sys/types.h>
 #endif
 
-#ifdef HAVE_THREADS_WITHOUT_SOCKETS
-/* MIT pthreads does not work with unix sockets */
-#undef HAVE_SYS_UN_H
+#define __EXTENSIONS__ 1	/* We want some extension */
+
+#if defined(HAVE_STDINT_H)
+/* Need to include this _before_ stdlib, so that all defines are right */
+/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+/* Enable some extra C99 extensions */
+#undef _STDINT_H
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+/* 
+  We include the following because currently Google #$@#$ Protocol Buffers possibly break stdint defines. 
+  Or I am wrong, very possible, and hope someone finds the solution.
+
+  Taken from /usr/include/stdint.h
+*/
+
+/* 7.18.2 Limits of specified-width integer types:
+ *   These #defines specify the minimum and maximum limits
+ *   of each of the types declared above.
+ */
+
+
+#if (!defined(INT16_MAX))
+/* 7.18.2.1 Limits of exact-width integer types */
+#define INT8_MAX         127
+#define INT16_MAX        32767
+#define INT32_MAX        2147483647
+#define INT64_MAX        9223372036854775807LL
+
+#define INT8_MIN          -128
+#define INT16_MIN         -32768
+
+   /*
+      Note:  the literal "most negative int" cannot be written in C --
+      the rules in the standard (section 6.4.4.1 in C99) will give it
+      an unsigned type, so INT32_MIN (and the most negative member of
+      any larger signed type) must be written via a constant expression.
+   */
+#define INT32_MIN        (-INT32_MAX-1)
+#define INT64_MIN        (-INT64_MAX-1)
+
+#define UINT8_MAX         255
+#define UINT16_MAX        65535
+#define UINT32_MAX        4294967295U
+#define UINT64_MAX        18446744073709551615ULL
+
+/* 7.18.2.2 Limits of minimum-width integer types */
+#define INT_LEAST8_MIN    INT8_MIN
+#define INT_LEAST16_MIN   INT16_MIN
+#define INT_LEAST32_MIN   INT32_MIN
+#define INT_LEAST64_MIN   INT64_MIN
+
+#define INT_LEAST8_MAX    INT8_MAX
+#define INT_LEAST16_MAX   INT16_MAX
+#define INT_LEAST32_MAX   INT32_MAX
+#define INT_LEAST64_MAX   INT64_MAX
+
+#define UINT_LEAST8_MAX   UINT8_MAX
+#define UINT_LEAST16_MAX  UINT16_MAX
+#define UINT_LEAST32_MAX  UINT32_MAX
+#define UINT_LEAST64_MAX  UINT64_MAX
+
+/* 7.18.2.3 Limits of fastest minimum-width integer types */
+#define INT_FAST8_MIN     INT8_MIN
+#define INT_FAST16_MIN    INT16_MIN
+#define INT_FAST32_MIN    INT32_MIN
+#define INT_FAST64_MIN    INT64_MIN
+
+#define INT_FAST8_MAX     INT8_MAX
+#define INT_FAST16_MAX    INT16_MAX
+#define INT_FAST32_MAX    INT32_MAX
+#define INT_FAST64_MAX    INT64_MAX
+
+#define UINT_FAST8_MAX    UINT8_MAX
+#define UINT_FAST16_MAX   UINT16_MAX
+#define UINT_FAST32_MAX   UINT32_MAX
+#define UINT_FAST64_MAX   UINT64_MAX
+
+/* 7.18.2.4 Limits of integer types capable of holding object pointers */
+
+#if __WORDSIZE == 64
+#define INTPTR_MIN	  INT64_MIN
+#define INTPTR_MAX	  INT64_MAX
+#else
+#define INTPTR_MIN        INT32_MIN
+#define INTPTR_MAX        INT32_MAX
 #endif
 
-#define __EXTENSIONS__ 1	/* We want some extension */
-#ifndef __STDC_EXT__
-#define __STDC_EXT__ 1          /* To get large file support on hpux */
+#if __WORDSIZE == 64
+#define UINTPTR_MAX	  UINT64_MAX
+#else
+#define UINTPTR_MAX       UINT32_MAX
 #endif
+
+/* 7.18.2.5 Limits of greatest-width integer types */
+#define INTMAX_MIN        INT64_MIN
+#define INTMAX_MAX        INT64_MAX
+
+#define UINTMAX_MAX       UINT64_MAX
+
+/* 7.18.3 "Other" */
+#if __WORDSIZE == 64
+#define PTRDIFF_MIN	  INT64_MIN
+#define PTRDIFF_MAX	  INT64_MAX
+#else
+#define PTRDIFF_MIN       INT32_MIN
+#define PTRDIFF_MAX       INT32_MAX
+#endif
+
+/* We have no sig_atomic_t yet, so no SIG_ATOMIC_{MIN,MAX}.
+   Should end up being {-127,127} or {0,255} ... or bigger.
+   My bet would be on one of {U}INT32_{MIN,MAX}. */
+
+#if __WORDSIZE == 64
+#define SIZE_MAX	  UINT64_MAX
+#else
+#define SIZE_MAX          UINT32_MAX
+#endif
+
+#ifndef WCHAR_MAX
+#  ifdef __WCHAR_MAX__
+#    define WCHAR_MAX     __WCHAR_MAX__
+#  else
+#    define WCHAR_MAX     0x7fffffff
+#  endif
+#endif
+
+/* WCHAR_MIN should be 0 if wchar_t is an unsigned type and
+   (-WCHAR_MAX-1) if wchar_t is a signed type.  Unfortunately,
+   it turns out that -fshort-wchar changes the signedness of
+   the type. */
+#ifndef WCHAR_MIN
+#  if WCHAR_MAX == 0xffff
+#    define WCHAR_MIN       0
+#  else
+#    define WCHAR_MIN       (-WCHAR_MAX-1)
+#  endif
+#endif
+
+#define WINT_MIN	  INT32_MIN
+#define WINT_MAX	  INT32_MAX
+
+#define SIG_ATOMIC_MIN	  INT32_MIN
+#define SIG_ATOMIC_MAX	  INT32_MAX
+#endif
+
+#else
+#error "You must have inttypes!"
+#endif
+
 
 /*
   Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
@@ -203,35 +283,15 @@
 
 #define _REENTRANT	1	/* Some thread libraries require this */
 
-#if !defined(_THREAD_SAFE) && !defined(_AIX)
-#define _THREAD_SAFE            /* Required for OSF1 */
-#endif
-
 #include <pthread.h>		/* AIX must have this included first */
 
 #define _REENTRANT	1	/* Threads requires reentrant code */
 
-/* Go around some bugs in different OS and compilers */
-
-#if defined(HAVE_BROKEN_INLINE) && !defined(__cplusplus)
-#undef inline
-#define inline
-#endif
 
 /* gcc/egcs issues */
 
 #if defined(__GNUC) && defined(__EXCEPTIONS)
 #error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
-#endif
-
-#if defined(HAVE_STDINT_H)
-/* Need to include this _before_ stdlib, so that all defines are right */
-/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
-/* Enable some extra C99 extensions */
-#define __STDC_LIMIT_MACROS
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#include <stdint.h>
 #endif
 
 #ifndef stdin
@@ -317,8 +377,6 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 #define MASTER 1		/* Compile without unireg */
 #define ENGLISH 1		/* Messages in English */
 #define POSIX_MISTAKE 1		/* regexp: Fix stupid spec error */
-/* Do not define for ultra sparcs */
-#define USE_BMOVE512 1		/* Use this unless system bmove is faster */
 
 #define QUOTE_ARG(x)		#x	/* Quote argument (before cpp) */
 #define STRINGIFY_ARG(x) QUOTE_ARG(x)	/* Quote argument, after cpp */
@@ -345,9 +403,12 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 #endif
 
+/* Declared in int2str() */
+extern char _dig_vec_upper[];
+extern char _dig_vec_lower[];
+
 #define CMP_NUM(a,b)    (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
 #define sgn(a)		(((a) < 0) ? -1 : ((a) > 0) ? 1 : 0)
-#define swap_variables(t, a, b) { register t dummy; dummy= a; a= b; b= dummy; }
 #define test(a)		((a) ? 1 : 0)
 #define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
@@ -387,10 +448,6 @@ typedef unsigned short ushort;
 /* Some types that is different between systems */
 
 typedef int	File;		/* File descriptor */
-#ifndef Socket_defined
-typedef int	my_socket;	/* File descriptor for sockets */
-#define INVALID_SOCKET -1
-#endif
 /* Type for fuctions that handles signals */
 #define sig_handler RETSIGTYPE
 C_MODE_START
@@ -492,7 +549,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 /* Some defines of functions for portability */
 
 #undef remove		/* Crashes MySQL on SCO 5.0.0 */
-#define closesocket(A)	close(A)
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #define my_off_t2double(A)  ((double) (my_off_t) (A))
@@ -603,8 +659,6 @@ typedef int64_t 	my_ptrdiff_t;
 
 #define NullS		(char *) 0
 
-#define STDCALL
-
 /* Typdefs for easyier portability */
 
 #ifndef HAVE_UCHAR
@@ -627,7 +681,6 @@ typedef unsigned long my_off_t;
 typedef off_t os_off_t;
 
 #define socket_errno	errno
-#define closesocket(A)	close(A)
 #define SOCKET_EINTR	EINTR
 #define SOCKET_EAGAIN	EAGAIN
 #define SOCKET_ETIMEDOUT SOCKET_EINTR
@@ -639,7 +692,6 @@ typedef off_t os_off_t;
 typedef uint8_t		int7;	/* Most effective integer 0 <= x <= 127 */
 typedef short		int15;	/* Most effective integer 0 <= x <= 32767 */
 typedef int		myf;	/* Type of MyFlags in my_funcs */
-typedef char		my_bool; /* Small bool */
 #if !defined(bool) && (!defined(HAVE_BOOL) || !defined(__cplusplus))
 typedef char		bool;	/* Ordinary boolean values 0 1 */
 #endif
@@ -734,9 +786,9 @@ do { doubleget_union _tmp; \
                          } while (0)
 #define float4get(V,M)   do { *((float *) &(V)) = *((float*) (M)); } while(0)
 #define float8get(V,M)   doubleget((V),(M))
-#define float4store(V,M) memcpy((uchar*) V,(uchar*) (&M),sizeof(float))
-#define floatstore(T,V)  memcpy((uchar*)(T), (uchar*)(&V),sizeof(float))
-#define floatget(V,M)    memcpy((uchar*) &V,(uchar*) (M),sizeof(float))
+#define float4store(V,M) memcpy(V, (&M), sizeof(float))
+#define floatstore(T,V)  memcpy((T), (&V), sizeof(float))
+#define floatget(V,M)    memcpy(&V, (M), sizeof(float))
 #define float8store(V,M) doublestore((V),(M))
 #else
 
@@ -849,8 +901,8 @@ do { doubleget_union _tmp; \
                               ((uchar*) &def_temp)[7]=(M)[0];\
                               (V) = def_temp; } while(0)
 #else
-#define float4get(V,M)   memcpy((uchar*) &V,(uchar*) (M),sizeof(float))
-#define float4store(V,M) memcpy((uchar*) V,(uchar*) (&M),sizeof(float))
+#define float4get(V,M)   memcpy(&V, (M), sizeof(float))
+#define float4store(V,M) memcpy(V, (&M), sizeof(float))
 
 #if defined(__FLOAT_WORD_ORDER) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN)
 #define doublestore(T,V) do { *(((char*)T)+0)=(char) ((uchar *) &V)[4];\
@@ -920,12 +972,12 @@ do { doubleget_union _tmp; \
                              *(((char*)T)+1)=(((A) >> 16));\
                              *(((char*)T)+0)=(((A) >> 24)); } while(0)
 
-#define floatget(V,M)     memcpy((uchar*) &V,(uchar*) (M), sizeof(float))
-#define floatstore(T,V)   memcpy((uchar*) (T),(uchar*)(&V), sizeof(float))
-#define doubleget(V,M)	  memcpy((uchar*) &V,(uchar*) (M), sizeof(double))
-#define doublestore(T,V)  memcpy((uchar*) (T),(uchar*) &V, sizeof(double))
-#define int64_tget(V,M)   memcpy((uchar*) &V,(uchar*) (M), sizeof(uint64_t))
-#define int64_tstore(T,V) memcpy((uchar*) (T),(uchar*) &V, sizeof(uint64_t))
+#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
+#define floatstore(T, V)   memcpy((T), (&V), sizeof(float))
+#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doublestore(T, V)  memcpy((T), &V, sizeof(double))
+#define int64_tget(V, M)   memcpy(&V, (M), sizeof(uint64_t))
+#define int64_tstore(T, V) memcpy((T), &V, sizeof(uint64_t))
 
 #else
 
@@ -936,24 +988,24 @@ do { doubleget_union _tmp; \
 #define shortstore(T,V) int2store(T,V)
 #define longstore(T,V)	int4store(T,V)
 #ifndef floatstore
-#define floatstore(T,V)   memcpy((uchar*) (T),(uchar*) (&V),sizeof(float))
-#define floatget(V,M)     memcpy((uchar*) &V, (uchar*) (M), sizeof(float))
+#define floatstore(T,V)   memcpy((T), (&V), sizeof(float))
+#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #endif
 #ifndef doubleget
-#define doubleget(V,M)	  memcpy((uchar*) &V,(uchar*) (M),sizeof(double))
-#define doublestore(T,V)  memcpy((uchar*) (T),(uchar*) &V,sizeof(double))
+#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doublestore(T,V)  memcpy((T), &V, sizeof(double))
 #endif /* doubleget */
-#define int64_tget(V,M)   memcpy((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
-#define int64_tstore(T,V) memcpy((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
+#define int64_tget(V,M)   memcpy(&V, (M), sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy((T), &V, sizeof(uint64_t))
 
 #endif /* WORDS_BIGENDIAN */
 
 /* my_sprintf  was here. RIP */
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
-#define MYSQL_UNIVERSAL_CLIENT_CHARSET "utf8"
+#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET "utf8"
 #else
-#define MYSQL_UNIVERSAL_CLIENT_CHARSET MYSQL_DEFAULT_CHARSET_NAME
+#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET DRIZZLE_DEFAULT_CHARSET_NAME
 #endif
 
 #include <dlfcn.h>
@@ -968,7 +1020,12 @@ do { doubleget_union _tmp; \
  */
 #ifdef __cplusplus
 #include <new>
+#include <string>
+#include <algorithm>
+using namespace std;
 #endif
+#define max(a, b)       ((a) > (b) ? (a) : (b))
+#define min(a, b)       ((a) < (b) ? (a) : (b))
 
 /* Length of decimal number represented by INT32. */
 #define MY_INT32_NUM_DECIMAL_DIGITS 11
@@ -976,15 +1033,6 @@ do { doubleget_union _tmp; \
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
 
-#ifdef _cplusplus
-#include <string>
-#endif
-
-/* Define some useful general macros (should be done after all headers). */
-#if !defined(max)
-#define max(a, b)	((a) > (b) ? (a) : (b))
-#define min(a, b)	((a) < (b) ? (a) : (b))
-#endif  
 /*
   Only Linux is known to need an explicit sync of the directory to make sure a
   file creation/deletion/renaming in(from,to) this directory durable.
@@ -993,4 +1041,6 @@ do { doubleget_union _tmp; \
 #define NEED_EXPLICIT_SYNC_DIR 1
 #endif
 
-#endif /* my_global_h */
+#include <libdrizzle/gettext.h>
+
+#endif /* DRIZZLE_SERVER_GLOBAL_H */

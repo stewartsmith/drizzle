@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_SHORT
 #define DRIZZLE_SERVER_FIELD_SHORT
 
-#include <drizzled/mysql_priv.h>
-
 class Field_short :public Field_num {
 public:
   Field_short(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
@@ -42,7 +40,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_SHORT;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_USHORT_INT : HA_KEYTYPE_SHORT_INT;}
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=0; return 0; }

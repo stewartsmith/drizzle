@@ -15,9 +15,7 @@
 
 #ifdef HAVE_REPLICATION
 
-#include "mysql_priv.h"
-#include <mysys/my_sys.h>
-#include "slave.h"
+#include <drizzled/server_includes.h>
 
 typedef enum {RPL_AUTH_MASTER=0,RPL_ACTIVE_SLAVE,RPL_IDLE_SLAVE,
 	      RPL_LOST_SOLDIER,RPL_TROOP_SOLDIER,

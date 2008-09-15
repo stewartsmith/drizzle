@@ -77,7 +77,7 @@ multiple read locks.
 #include <errno.h>
 
 bool thr_lock_inited=0;
-ulong locks_immediate = 0L, locks_waited = 0L;
+uint32_t locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
@@ -299,7 +299,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  memset((char*) lock, 0, sizeof(*lock));
+  memset(lock, 0, sizeof(*lock));
   VOID(pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST));
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;
@@ -1200,65 +1200,6 @@ bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 
 #include <my_sys.h>
 
-static void thr_print_lock(const char* name,struct st_lock_list *list)
-{
-  THR_LOCK_DATA *data,**prev;
-  uint count=0;
-
-  if (list->data)
-  {
-    printf("%-10s: ",name);
-    prev= &list->data;
-    for (data=list->data; data && count++ < MAX_LOCKS ; data=data->next)
-    {
-      printf("0x%lx (%lu:%d); ", (ulong) data, data->owner->info->thread_id,
-             (int) data->type);
-      if (data->prev != prev)
-	printf("\nWarning: prev didn't point at previous lock\n");
-      prev= &data->next;
-    }
-    puts("");
-    if (prev != list->last)
-      printf("Warning: last didn't point at last lock\n");
-  }
-}
-
-void thr_print_locks(void)
-{
-  LIST *list;
-  uint count=0;
-
-  pthread_mutex_lock(&THR_LOCK_lock);
-  puts("Current locks:");
-  for (list= thr_lock_thread_list; list && count++ < MAX_THREADS;
-       list= list_rest(list))
-  {
-    THR_LOCK *lock=(THR_LOCK*) list->data;
-    VOID(pthread_mutex_lock(&lock->mutex));
-    printf("lock: 0x%lx:",(ulong) lock);
-    if ((lock->write_wait.data || lock->read_wait.data) &&
-	(! lock->read.data && ! lock->write.data))
-      printf(" WARNING: ");
-    if (lock->write.data)
-      printf(" write");
-    if (lock->write_wait.data)
-      printf(" write_wait");
-    if (lock->read.data)
-      printf(" read");
-    if (lock->read_wait.data)
-      printf(" read_wait");
-    puts("");
-    thr_print_lock("write",&lock->write);
-    thr_print_lock("write_wait",&lock->write_wait);
-    thr_print_lock("read",&lock->read);
-    thr_print_lock("read_wait",&lock->read_wait);
-    VOID(pthread_mutex_unlock(&lock->mutex));
-    puts("");
-  }
-  fflush(stdout);
-  pthread_mutex_unlock(&THR_LOCK_lock);
-}
-
 /*****************************************************************************
 ** Test of thread locks
 ****************************************************************************/
@@ -1316,7 +1257,7 @@ int lock_counts[]= {sizeof(test_0)/sizeof(struct st_test),
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
 static uint thread_count;
-static ulong sum=0;
+static uint32_t sum=0;
 
 #define MAX_LOCK_COUNT 8
 
@@ -1375,8 +1316,8 @@ static void *test_thread(void *arg)
 	sleep(2);
       else
       {
-	ulong k;
-	for (k=0 ; k < (ulong) (tmp-2)*100000L ; k++)
+	uint32_t k;
+	for (k=0 ; k < (uint32_t) (tmp-2)*100000L ; k++)
 	  sum+=k;
       }
     }

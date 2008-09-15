@@ -22,13 +22,14 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/long.h>
 
 /****************************************************************************
 ** long int
 ****************************************************************************/
 
-int Field_long::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_long::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   long store_tmp;
   int error;
@@ -63,11 +64,11 @@ int Field_long::store(double nr)
     else if (nr > (double) UINT32_MAX)
     {
       res= INT32_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
-      res=(int32_t) (ulong) nr;
+      res=(int32_t) (uint32_t) nr;
   }
   else
   {
@@ -85,7 +86,7 @@ int Field_long::store(double nr)
       res=(int32_t) (int64_t) nr;
   }
   if (error)
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -111,9 +112,9 @@ int Field_long::store(int64_t nr, bool unsigned_val)
       res=0;
       error= 1;
     }
-    else if ((uint64_t) nr >= (1LL << 32))
+    else if (nr > INT32_MAX)
     {
-      res=(int32_t) (uint32_t) ~0L;
+      res= INT32_MAX;
       error= 1;
     }
     else
@@ -137,7 +138,7 @@ int Field_long::store(int64_t nr, bool unsigned_val)
       res=(int32_t) nr;
   }
   if (error)
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -180,7 +181,7 @@ int64_t Field_long::val_int(void)
 String *Field_long::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,12*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -257,7 +258,7 @@ void Field_long::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_long::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
   add_unsigned(res);
 }

@@ -78,7 +78,7 @@ static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 /* Get key and length for a SAFE_HASH_ENTRY */
 
 static uchar *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
-                                  my_bool not_used __attribute__((unused)))
+                                  bool not_used __attribute__((unused)))
 {
   *length=entry->length;
   return (uchar*) entry->key;
@@ -103,7 +103,7 @@ static uchar *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
     1  error
 */
 
-static my_bool safe_hash_init(SAFE_HASH *hash, uint elements,
+static bool safe_hash_init(SAFE_HASH *hash, uint elements,
 			      uchar *default_value)
 {
   if (hash_init(&hash->hash, &my_charset_bin, elements,
@@ -179,11 +179,11 @@ static uchar *safe_hash_search(SAFE_HASH *hash, const uchar *key, uint length)
     1  error (Can only be EOM). In this case my_message() is called.
 */
 
-static my_bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
+static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
 			     uchar *data)
 {
   SAFE_HASH_ENTRY *entry;
-  my_bool error= 0;
+  bool error= 0;
 
   rw_wrlock(&hash->mutex);
   entry= (SAFE_HASH_ENTRY*) hash_search(&hash->hash, key, length);
@@ -217,7 +217,7 @@ static my_bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
       goto end;
     }
     entry->key= (uchar*) (entry +1);
-    memcpy((char*) entry->key, (char*) key, length);
+    memcpy(entry->key, key, length);
     entry->length= length;
     entry->data= data;
     /* Link entry to list */
@@ -290,7 +290,7 @@ static void safe_hash_change(SAFE_HASH *hash, uchar *old_data, uchar *new_data)
 static SAFE_HASH key_cache_hash;
 
 
-my_bool multi_keycache_init(void)
+bool multi_keycache_init(void)
 {
   return safe_hash_init(&key_cache_hash, 16, (uchar*) dflt_key_cache);
 }
@@ -342,7 +342,7 @@ KEY_CACHE *multi_key_cache_search(uchar *key, uint length)
 */
 
 
-my_bool multi_key_cache_set(const uchar *key, uint length,
+bool multi_key_cache_set(const uchar *key, uint length,
 			    KEY_CACHE *key_cache)
 {
   return safe_hash_set(&key_cache_hash, key, length, (uchar*) key_cache);

@@ -30,23 +30,21 @@ class ha_heap: public handler
   /* number of records changed since last statistics update */
   uint    records_changed;
   uint    key_stat_version;
-  my_bool internal_table;
+  bool internal_table;
 public:
   ha_heap(handlerton *hton, TABLE_SHARE *table);
   ~ha_heap() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *table_type() const
   {
-    return (table->in_use->variables.sql_mode & MODE_MYSQL323) ?
-           "HEAP" : "MEMORY";
+    return "MEMORY";
   }
   const char *index_type(uint inx)
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
             "BTREE" : "HASH");
   }
-  /* Rows also use a fixed-size format */
-  enum row_type get_row_type() const { return ROW_TYPE_FIXED; }
+  enum row_type get_row_type() const;
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
@@ -108,7 +106,7 @@ public:
   int delete_table(const char *from);
   void drop_table(const char *name);
   int rename_table(const char * from, const char * to);
-  int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
+  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,

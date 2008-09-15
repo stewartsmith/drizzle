@@ -475,7 +475,7 @@ struct mysql_row_templ_struct {
 	ulint	rec_field_no;		/* field number of the column in an
 					Innobase record in the current index;
 					not defined if template_type is
-					ROW_MYSQL_WHOLE_ROW */
+					ROW_DRIZZLE_WHOLE_ROW */
 	ulint	mysql_col_offset;	/* offset of the column in the MySQL
 					row format */
 	ulint	mysql_col_len;		/* length of the column in the MySQL
@@ -489,7 +489,7 @@ struct mysql_row_templ_struct {
 	ulint	mysql_type;		/* MySQL type code; this is always
 					< 256 */
 	ulint	mysql_length_bytes;	/* if mysql_type
-					== DATA_MYSQL_TRUE_VARCHAR, this tells
+					== DATA_DRIZZLE_TRUE_VARCHAR, this tells
 					whether we should use 1 or 2 bytes to
 					store the MySQL true VARCHAR data
 					length at the start of row in the MySQL
@@ -507,14 +507,14 @@ struct mysql_row_templ_struct {
 					it is an unsigned integer type */
 };
 
-#define MYSQL_FETCH_CACHE_SIZE		8
+#define DRIZZLE_FETCH_CACHE_SIZE		8
 /* After fetching this many rows, we start caching them in fetch_cache */
-#define MYSQL_FETCH_CACHE_THRESHOLD	4
+#define DRIZZLE_FETCH_CACHE_THRESHOLD	4
 
 #define ROW_PREBUILT_ALLOCATED	78540783
 #define ROW_PREBUILT_FREED	26423527
 
-typedef my_bool (*index_cond_func_t)(void *param);
+typedef int64_t (*index_cond_func_t)(void *param);
 
 /* A struct for (sometimes lazily) prebuilt structures in an Innobase table
 handle used within MySQL; these are used to save CPU time. */
@@ -557,10 +557,10 @@ struct row_prebuilt_struct {
 					unique search from a clustered index,
 					because HANDLER allows NEXT and PREV
 					in such a situation */
-	ulint		template_type;	/* ROW_MYSQL_WHOLE_ROW,
-					ROW_MYSQL_REC_FIELDS,
-					ROW_MYSQL_DUMMY_TEMPLATE, or
-					ROW_MYSQL_NO_TEMPLATE */
+	ulint		template_type;	/* ROW_DRIZZLE_WHOLE_ROW,
+					ROW_DRIZZLE_REC_FIELDS,
+					ROW_DRIZZLE_DUMMY_TEMPLATE, or
+					ROW_DRIZZLE_NO_TEMPLATE */
 	ulint		n_template;	/* number of elements in the
 					template */
 	ulint		null_bitmap_len;/* number of bytes in the SQL NULL
@@ -653,7 +653,7 @@ struct row_prebuilt_struct {
 	ulint		n_rows_fetched;	/* number of rows fetched after
 					positioning the current cursor */
 	ulint		fetch_direction;/* ROW_SEL_NEXT or ROW_SEL_PREV */
-	byte*		fetch_cache[MYSQL_FETCH_CACHE_SIZE];
+	byte*		fetch_cache[DRIZZLE_FETCH_CACHE_SIZE];
 					/* a cache for fetched rows if we
 					fetch many rows from the same cursor:
 					it saves CPU time to fetch them in a
@@ -689,10 +689,10 @@ struct row_prebuilt_struct {
 
 #define ROW_PREBUILT_FETCH_MAGIC_N	465765687
 
-#define ROW_MYSQL_WHOLE_ROW	0
-#define ROW_MYSQL_REC_FIELDS	1
-#define ROW_MYSQL_NO_TEMPLATE	2
-#define ROW_MYSQL_DUMMY_TEMPLATE 3	/* dummy template used in
+#define ROW_DRIZZLE_WHOLE_ROW	0
+#define ROW_DRIZZLE_REC_FIELDS	1
+#define ROW_DRIZZLE_NO_TEMPLATE	2
+#define ROW_DRIZZLE_DUMMY_TEMPLATE 3	/* dummy template used in
 					row_scan_and_check_index */
 
 /* Values for hint_need_to_fetch_extra_cols */

@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
-
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 
 #ifdef HAVE_REPLICATION
@@ -29,7 +28,7 @@ int init_floatvar_from_file(float* var, IO_CACHE* f, float default_val);
 
 Master_info::Master_info()
   :Slave_reporting_capability("I/O"),
-   ssl(0), ssl_verify_server_cert(0), fd(-1),  io_thd(0), port(MYSQL_PORT),
+   ssl(0), ssl_verify_server_cert(0), fd(-1),  io_thd(0), port(DRIZZLE_PORT),
    connect_retry(DEFAULT_CONNECT_RETRY), heartbeat_period(0),
    received_heartbeats(0), inited(0),
    abort_slave(0), slave_running(0), slave_run_id(0)
@@ -38,7 +37,7 @@ Master_info::Master_info()
   ssl_ca[0]= 0; ssl_capath[0]= 0; ssl_cert[0]= 0;
   ssl_cipher[0]= 0; ssl_key[0]= 0;
 
-  memset((char*) &file, 0, sizeof(file));
+  memset(&file, 0, sizeof(file));
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&data_cond, NULL);
@@ -66,7 +65,7 @@ void init_master_log_pos(Master_info* mi)
     if CHANGE MASTER did not specify it.  (no data loss in conversion
     as hb period has a max)
   */
-  mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
+  mi->heartbeat_period= (float) min((double)SLAVE_MAX_HEARTBEAT_PERIOD,
                                     (slave_net_timeout/2.0));
   assert(mi->heartbeat_period > (float) 0.001
               || mi->heartbeat_period == 0);
@@ -146,13 +145,13 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
       my_close(fd, MYF(MY_WME));
     if ((fd = my_open(fname, O_CREAT|O_RDWR|O_BINARY, MYF(MY_WME))) < 0 )
     {
-      sql_print_error("Failed to create a new master info file (file '%s', errno %d)", fname, my_errno);
+      sql_print_error(_("Failed to create a new master info file (file '%s', errno %d)"), fname, my_errno);
       goto err;
     }
     if (init_io_cache(&mi->file, fd, IO_SIZE*2, READ_CACHE, 0L,0,
                       MYF(MY_WME)))
     {
-      sql_print_error("Failed to create a cache on master info file (file '%s')", fname);
+      sql_print_error(_("Failed to create a cache on master info file (file '%s')"), fname);
       goto err;
     }
 
@@ -168,13 +167,13 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     {
       if ((fd = my_open(fname, O_RDWR|O_BINARY, MYF(MY_WME))) < 0 )
       {
-        sql_print_error("Failed to open the existing master info file (file '%s', errno %d)", fname, my_errno);
+        sql_print_error(_("Failed to open the existing master info file (file '%s', errno %d)"), fname, my_errno);
         goto err;
       }
       if (init_io_cache(&mi->file, fd, IO_SIZE*2, READ_CACHE, 0L,
                         0, MYF(MY_WME)))
       {
-        sql_print_error("Failed to create a cache on master info file (file '%s')", fname);
+        sql_print_error(_("Failed to create a cache on master info file (file '%s')"), fname);
         goto err;
       }
     }
@@ -232,7 +231,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
         init_strvar_from_file(mi->user, sizeof(mi->user), &mi->file, "test") ||
         init_strvar_from_file(mi->password, SCRAMBLED_PASSWORD_CHAR_LENGTH+1,
                               &mi->file, 0 ) ||
-        init_intvar_from_file(&port, &mi->file, MYSQL_PORT) ||
+        init_intvar_from_file(&port, &mi->file, DRIZZLE_PORT) ||
         init_intvar_from_file(&connect_retry, &mi->file, DEFAULT_CONNECT_RETRY))
       goto errwithmsg;
 
@@ -274,9 +273,9 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     }
 
     if (ssl)
-      sql_print_warning("SSL information in the master info file "
-                      "('%s') are ignored because this MySQL slave was "
-                      "compiled without SSL support.", fname);
+      sql_print_warning(_("SSL information in the master info file "
+                          "('%s') are ignored because this MySQL slave was "
+                          "compiled without SSL support."), fname);
 
     /*
       This has to be handled here as init_intvar_from_file can't handle
@@ -298,12 +297,12 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
   // now change cache READ -> WRITE - must do this before flush_master_info
   reinit_io_cache(&mi->file, WRITE_CACHE, 0L, 0, 1);
   if ((error=test(flush_master_info(mi, 1))))
-    sql_print_error("Failed to flush master info file");
+    sql_print_error(_("Failed to flush master info file"));
   pthread_mutex_unlock(&mi->data_lock);
   return(error);
 
 errwithmsg:
-  sql_print_error("Error reading master configuration");
+  sql_print_error(_("Error reading master configuration"));
 
 err:
   if (fd >= 0)

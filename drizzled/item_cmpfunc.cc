@@ -21,17 +21,13 @@
   This file defines all compare functions
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 static bool convert_constant_item(THD *, Item_field *, Item **);
 
 static Item_result item_store_type(Item_result a, Item *item,
-                                   my_bool unsigned_flag)
+                                   bool unsigned_flag)
 {
   Item_result b= item->result_type();
 
@@ -49,7 +45,7 @@ static Item_result item_store_type(Item_result a, Item *item,
 static void agg_result_type(Item_result *type, Item **items, uint nitems)
 {
   Item **item, **item_end;
-  my_bool unsigned_flag= 0;
+  bool unsigned_flag= 0;
 
   *type= STRING_RESULT;
   /* Skip beginning NULL items */
@@ -390,18 +386,10 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
 
   if (!(*item)->with_subselect && (*item)->const_item())
   {
-    TABLE *table= field->table;
     ulong orig_sql_mode= thd->variables.sql_mode;
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
-    my_bitmap_map *old_write_map;
-    my_bitmap_map *old_read_map;
     uint64_t orig_field_val= 0; /* original field value if valid */
 
-    if (table)
-    {
-      old_write_map= dbug_tmp_use_all_columns(table, table->write_set);
-      old_read_map= dbug_tmp_use_all_columns(table, table->read_set);
-    }
     /* For comparison purposes allow invalid dates like 2000-01-32 */
     thd->variables.sql_mode= (orig_sql_mode & ~MODE_NO_ZERO_DATE) | 
                              MODE_INVALID_DATES;
@@ -430,11 +418,6 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     }
     thd->variables.sql_mode= orig_sql_mode;
     thd->count_cuted_fields= orig_count_cuted_fields;
-    if (table)
-    {
-      dbug_tmp_restore_column_map(table->write_set, old_write_map);
-      dbug_tmp_restore_column_map(table->read_set, old_read_map);
-    }
   }
   return result;
 }
@@ -655,8 +638,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (thd->variables.sql_mode &
-                         (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE))),
+                        (thd->variables.sql_mode & MODE_NO_ZERO_DATE)),
                        &error);
 
   if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
@@ -675,7 +657,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
   }
 
   if (error > 0)
-    make_truncated_value_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
                                  warn_type, warn_name);
 
@@ -1887,7 +1869,7 @@ int64_t Item_func_interval::val_int()
     {
       uint mid= (start + end + 1) / 2;
       interval_range *range= intervals + mid;
-      my_bool cmp_result;
+      bool cmp_result;
       /*
         The values in the range intervall may have different types,
         Only do a decimal comparision of the first argument is a decimal
@@ -2230,7 +2212,7 @@ enum_field_types Item_func_ifnull::field_type() const
   return cached_field_type;
 }
 
-Field *Item_func_ifnull::tmp_table_field(TABLE *table)
+Field *Item_func_ifnull::tmp_table_field(Table *table)
 {
   return tmp_table_field_from_field_type(table, 0);
 }
@@ -3090,7 +3072,7 @@ int in_vector::find(Item *item)
   return (int) ((*compare)(collation, base+start*size, result) == 0);
 }
 
-in_string::in_string(uint elements,qsort2_cmp cmp_func, CHARSET_INFO *cs)
+in_string::in_string(uint elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs)
   :in_vector(elements, sizeof(String), cmp_func, cs),
    tmp(buff, sizeof(buff), &my_charset_bin)
 {}
@@ -3120,7 +3102,7 @@ void in_string::set(uint pos,Item *item)
   }
   if (!str->charset())
   {
-    CHARSET_INFO *cs;
+    const CHARSET_INFO *cs;
     if (!(cs= item->collation.collation))
       cs= &my_charset_bin;		// Should never happen for STR items
     str->set_charset(cs);
@@ -3254,7 +3236,7 @@ uchar *in_decimal::get_value(Item *item)
 
 
 cmp_item* cmp_item::get_comparator(Item_result type,
-                                   CHARSET_INFO *cs)
+                                   const CHARSET_INFO * const cs)
 {
   switch (type) {
   case STRING_RESULT:
@@ -3523,7 +3505,7 @@ Item_func_in::fix_fields(THD *thd, Item **ref)
 }
 
 
-static int srtcmp_in(CHARSET_INFO *cs, const String *x,const String *y)
+static int srtcmp_in(const CHARSET_INFO * const cs, const String *x,const String *y)
 {
   return cs->coll->strnncollsp(cs,
                                (uchar *) x->ptr(),x->length(),
@@ -4436,10 +4418,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      if (escape_used_in_parsing && (
-             (((thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-                escape_str->numchars() != 1) ||
-               escape_str->numchars() > 1)))
+      if (escape_used_in_parsing && escape_str->numchars() > 1)
       {
         my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
         return true;
@@ -4447,7 +4426,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
 
       if (use_mb(cmp.cmp_collation.collation))
       {
-        CHARSET_INFO *cs= escape_str->charset();
+        const CHARSET_INFO * const cs= escape_str->charset();
         my_wc_t wc;
         int rc= cs->cset->mb_wc(cs, &wc,
                                 (const uchar*) escape_str->ptr(),
@@ -4462,7 +4441,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
           code instead of Unicode code as "escape" argument.
           Convert to "cs" if charset of escape differs.
         */
-        CHARSET_INFO *cs= cmp.cmp_collation.collation;
+        const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
         uint32_t unused;
         if (escape_str->needs_conversion(escape_str->length(),
                                          escape_str->charset(), cs, &unused))
@@ -4485,8 +4464,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation) &&
-       !(specialflag & SPECIAL_NO_NEW_FUNC))
+    if (args[1]->const_item() && !use_strnxfrm(collation.collation)) 
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)
@@ -4548,7 +4526,7 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
   int            f = 0;
   int            g = plm1;
   int *const splm1 = suff + plm1;
-  CHARSET_INFO	*cs= cmp.cmp_collation.collation;
+  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
 
   *splm1 = pattern_len;
 
@@ -4648,7 +4626,7 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   int *end = bmBc + alphabet_size;
   int j;
   const int plm1 = pattern_len - 1;
-  CHARSET_INFO	*cs= cmp.cmp_collation.collation;
+  const CHARSET_INFO *const cs= cmp.cmp_collation.collation;
 
   for (i = bmBc; i < end; i++)
     *i = pattern_len;
@@ -4680,7 +4658,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   int shift = pattern_len;
   int j     = 0;
   int u     = 0;
-  CHARSET_INFO	*cs= cmp.cmp_collation.collation;
+  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
 
   const int plm1=  pattern_len - 1;
   const int tlmpl= text_len - pattern_len;
@@ -4703,10 +4681,10 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register const int v = plm1 - i;
       turboShift = u - v;
       bcShift    = bmBc[(uint) (uchar) text[i + j]] - plm1 + i;
-      shift      = max(turboShift, bcShift);
-      shift      = max(shift, bmGs[i]);
+      shift      = (turboShift > bcShift) ? turboShift : bcShift;
+      shift      = (shift > bmGs[i]) ? shift : bmGs[i];
       if (shift == bmGs[i])
-	u = min(pattern_len - shift, v);
+	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
 	if (turboShift < bcShift)
@@ -4734,10 +4712,10 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register const int v = plm1 - i;
       turboShift = u - v;
       bcShift    = bmBc[(uint) likeconv(cs, text[i + j])] - plm1 + i;
-      shift      = max(turboShift, bcShift);
+      shift      = (turboShift > bcShift) ? turboShift : bcShift;
       shift      = max(shift, bmGs[i]);
       if (shift == bmGs[i])
-	u = min(pattern_len - shift, v);
+	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
 	if (turboShift < bcShift)

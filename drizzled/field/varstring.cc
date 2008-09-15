@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/varstring.h>
 
 /****************************************************************************
@@ -61,7 +62,7 @@ int Field_varstring::do_save_field_metadata(uchar *metadata_ptr)
   return 2;
 }
 
-int Field_varstring::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_varstring::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length;
   const char *well_formed_error_pos;
@@ -246,18 +247,14 @@ enum ha_base_keytype Field_varstring::key_type() const
 
 void Field_varstring::sql_type(String &res) const
 {
-  THD *thd= table->in_use;
-  CHARSET_INFO *cs=res.charset();
-  ulong length;
+  const CHARSET_INFO * const cs=res.charset();
+  uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
                               (has_charset() ? "varchar" : "varbinary"),
                              (int) field_length / charset()->mbmaxlen);
   res.length(length);
-  if ((thd->variables.sql_mode & (MODE_MYSQL323 | MODE_MYSQL40)) &&
-      has_charset() && (charset()->state & MY_CS_BINSORT))
-    res.append(STRING_WITH_LEN(" binary"));
 }
 
 
@@ -426,7 +423,7 @@ Field_varstring::unpack(uchar *to, const uchar *from,
 
 int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
                               uint key_length_arg,
-                              my_bool insert_or_update)
+                              bool insert_or_update)
 {
   uint a_length, b_length;
   if (key_length_arg > 255)
@@ -447,7 +444,7 @@ int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
 
 
 int Field_varstring::pack_cmp(const uchar *b, uint key_length_arg,
-                              my_bool insert_or_update)
+                              bool insert_or_update)
 {
   uchar *a= ptr+ length_bytes;
   uint a_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
@@ -546,8 +543,7 @@ int Field_varstring::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 }
 
 
-Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
-                                  bool keep_type)
+Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field_varstring *res= (Field_varstring*) Field::new_field(root, new_table,
                                                             keep_type);
@@ -558,7 +554,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
 
 
 Field *Field_varstring::new_key_field(MEM_ROOT *root,
-                                      struct st_table *new_table,
+                                      Table *new_table,
                                       uchar *new_ptr, uchar *new_null_ptr,
                                       uint new_null_bit)
 {
@@ -592,7 +588,7 @@ uint Field_varstring::is_equal(Create_field *new_field)
 }
 
 
-void Field_varstring::hash(ulong *nr, ulong *nr2)
+void Field_varstring::hash(uint32_t *nr, uint32_t *nr2)
 {
   if (is_null())
   {
@@ -600,8 +596,8 @@ void Field_varstring::hash(ulong *nr, ulong *nr2)
   }
   else
   {
-    uint len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
-    CHARSET_INFO *cs= charset();
+    uint32_t len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+    const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
   }
 }

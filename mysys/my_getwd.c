@@ -71,7 +71,7 @@ int my_getwd(char * buf, size_t size, myf MyFlags)
 #else
 #error "No way to get current directory"
 #endif
-    if (*((pos=strend(buf))-1) != FN_LIBCHAR)  /* End with FN_LIBCHAR */
+    if (*((pos= strchr(buf, '\0'))-1) != FN_LIBCHAR)  /* End with FN_LIBCHAR */
     {
       pos[0]= FN_LIBCHAR;
       pos[1]=0;
@@ -88,17 +88,18 @@ int my_setwd(const char *dir, myf MyFlags)
 {
   int res;
   size_t length;
-  char *start, *pos;
+  const char *start;
+  char *pos;
 #if defined(VMS)
   char buff[FN_REFLEN];
 #endif
 
-  start=(char *) dir;
+  start= dir;
   if (! dir[0] || (dir[0] == FN_LIBCHAR && dir[1] == 0))
     dir=FN_ROOTDIR;
 #ifdef VMS
   {
-    pos=strmov(buff,dir);
+    pos=stpcpy(buff,dir);
     if (pos[-1] != FN_LIBCHAR)
     {
       pos[0]=FN_LIBCHAR;		/* Mark as directory */
@@ -108,7 +109,7 @@ int my_setwd(const char *dir, myf MyFlags)
     dir=buff;
   }
 #endif /* VMS */
-  if ((res=chdir((char*) dir)) != 0)
+  if ((res=chdir(dir)) != 0)
   {
     my_errno=errno;
     if (MyFlags & MY_WME)

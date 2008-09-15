@@ -74,7 +74,7 @@ static struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static void usage(my_bool version)
+static void usage(bool version)
 {
   printf("%s  Ver 1.6 for %s at %s\n",my_progname,SYSTEM_TYPE,
 	 MACHINE_TYPE);
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
   /* Copy defaults-xxx arguments & program name */
   count=args_used+1;
   arguments= tmp_arguments;
-  memcpy((char*) arguments, (char*) org_argv, count * sizeof(*org_argv));
+  memcpy(arguments, org_argv, count * sizeof(*org_argv));
   arguments[count]= 0;
 
   /* Check out the args */
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     exit(1);
   if (get_options(&argc,&argv))
     exit(1);
-  memcpy((char*) load_default_groups, (char*) argv, (argc + 1) * sizeof(*argv));
+  memcpy(load_default_groups, argv, (argc + 1) * sizeof(*argv));
 
   if ((error= load_defaults(config_file, (const char **) load_default_groups,
 			   &count, &arguments)))

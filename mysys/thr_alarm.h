@@ -34,7 +34,7 @@ extern "C" {
 
 typedef struct st_alarm_info
 {
-  ulong next_alarm_time;
+  uint32_t next_alarm_time;
   uint active_alarms;
   uint max_used_alarms;
 } ALARM_INFO;
@@ -68,7 +68,7 @@ typedef int thr_alarm_entry;
 typedef thr_alarm_entry* thr_alarm_t;
 
 typedef struct st_alarm {
-  ulong expire_time;
+  uint32_t expire_time;
   thr_alarm_entry alarmed;		/* set when alarm is due */
   pthread_t thread;
   my_thread_id thread_id;

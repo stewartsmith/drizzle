@@ -61,7 +61,7 @@ static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
     1  error.
 */
 
-my_bool mi_dynmap_file(MI_INFO *info, my_off_t size)
+bool mi_dynmap_file(MI_INFO *info, my_off_t size)
 {
   if (size > (my_off_t) (~((size_t) 0)) - MEMMAP_EXTRA_MARGIN)
   {
@@ -419,7 +419,7 @@ static int _mi_find_writepos(MI_INFO *info,
   a big block.
 */
 
-static my_bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
+static bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
 {
   if (block_info->filepos == info->s->state.dellink)
   {
@@ -516,7 +516,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
   uint length,b_type;
   MI_BLOCK_INFO block_info,del_block;
   int error;
-  my_bool remove_next_block;
+  bool remove_next_block;
 
   /* First add a link from the last block to the new one */
   error= update_backward_delete_link(info, info->s->state.dellink, filepos);
@@ -680,9 +680,9 @@ int _mi_write_part_record(MI_INFO *info,
 	/* Make a long block for one write */
   record_end= *record+length-head_length;
   del_length=(res_length ? MI_DYN_DELETE_BLOCK_HEADER : 0);
-  memcpy((uchar*) (*record-head_length),(uchar*) temp,head_length);
+  memcpy(*record - head_length, temp, head_length);
   memcpy(temp,record_end,(size_t) (extra_length+del_length));
-  memset((uchar*) record_end, 0, extra_length);
+  memset(record_end, 0, extra_length);
 
   if (res_length)
   {
@@ -737,7 +737,7 @@ int _mi_write_part_record(MI_INFO *info,
 		  del_length,filepos,info->s->write_flag))
       goto err;
   }
-  memcpy(record_end,temp,(size_t) (extra_length+del_length));
+  memcpy(record_end, temp, extra_length + del_length);
   *record=record_end;
   *reclength-=(length-head_length);
   *flag=6;
@@ -947,20 +947,21 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
 	{
 	  char *temp_pos;
 	  size_t tmp_length=length-portable_sizeof_char_ptr;
-	  memcpy((uchar*) to,from,tmp_length);
+	  memcpy(to,from,tmp_length);
 	  memcpy(&temp_pos,from+tmp_length,sizeof(char*));
-	  memcpy(to+tmp_length,temp_pos,(size_t) blob->length);
+	  memcpy(to + tmp_length, temp_pos, blob->length);
 	  to+=tmp_length+blob->length;
 	}
 	blob++;
       }
       else if (type == FIELD_SKIP_ZERO)
       {
-	if (memcmp((uchar*) from,zero_string,length) == 0)
+	if (memcmp(from,zero_string,length) == 0)
 	  flag|=bit;
 	else
 	{
-	  memcpy((uchar*) to,from,(size_t) length); to+=length;
+	  memcpy(to, from, length);
+          to+=length;
 	}
       }
       else if (type == FIELD_SKIP_ENDSPACE ||
@@ -989,12 +990,14 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
           }
           else
             *to++= (uchar) new_length;
-	  memcpy((uchar*) to,pos,(size_t) new_length); to+=new_length;
+	  memcpy(to, pos, new_length);
+          to+=new_length;
 	  flag|=bit;
 	}
 	else
 	{
-	  memcpy(to,from,(size_t) length); to+=length;
+	  memcpy(to, from, length);
+          to+=length;
 	}
       }
       else if (type == FIELD_VARCHAR)
@@ -1011,13 +1014,14 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
           tmp_length= uint2korr(from);
           store_key_length_inc(to,tmp_length);
         }
-        memcpy(to, from+pack_length,tmp_length);
+        memcpy(to, from+pack_length, tmp_length);
         to+= tmp_length;
         continue;
       }
       else
       {
-	memcpy(to,from,(size_t) length); to+=length;
+	memcpy(to, from, length);
+        to+=length;
 	continue;				/* Normal field */
       }
       if ((bit= bit << 1) >= 256)
@@ -1028,7 +1032,8 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
     }
     else
     {
-      memcpy(to,from,(size_t) length); to+=length;
+      memcpy(to, from, length);
+      to+=length;
     }
   }
   if (bit != 1)
@@ -1045,8 +1050,8 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
   Returns 0 if record is ok.
 */
 
-my_bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *rec_buff,
-                      ulong packed_length, my_bool with_checksum)
+bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *rec_buff,
+                      ulong packed_length, bool with_checksum)
 {
   uint		length,new_length,flag,bit,i;
   uchar		*pos,*end,*packpos,*to;
@@ -1073,7 +1078,7 @@ my_bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *rec_buff,
       }
       else if (type == FIELD_SKIP_ZERO)
       {
-	if (memcmp((uchar*) record,zero_string,length) == 0)
+	if (memcmp(record,zero_string,length) == 0)
 	{
 	  if (!(flag & bit))
 	    goto err;
@@ -1217,7 +1222,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
       if (flag & bit)
       {
 	if (type == FIELD_BLOB || type == FIELD_SKIP_ZERO)
-	  memset((uchar*) to, 0, rec_length);
+	  memset(to, 0, rec_length);
 	else if (type == FIELD_SKIP_ENDSPACE ||
 		 type == FIELD_SKIP_PRESPACE)
 	{
@@ -1239,13 +1244,13 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
 	    goto err;
 	  if (type == FIELD_SKIP_ENDSPACE)
 	  {
-	    memcpy(to,(uchar*) from,(size_t) length);
-	    memset((uchar*) to+length, ' ', rec_length-length);
+	    memcpy(to, from, length);
+	    memset(to+length, ' ', rec_length-length);
 	  }
 	  else
 	  {
-	    memset((uchar*) to, ' ', rec_length-length);
-	    memcpy(to+rec_length-length,(uchar*) from,(size_t) length);
+	    memset(to, ' ', rec_length-length);
+	    memcpy(to + rec_length - length, from, length);
 	  }
 	  from+=length;
 	}
@@ -1259,9 +1264,9 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
             from_left - size_length < blob_length ||
             from_left - size_length - blob_length < min_pack_length)
           goto err;
-	memcpy((uchar*) to,(uchar*) from,(size_t) size_length);
+	memcpy(to, from, size_length);
 	from+=size_length;
-	memcpy((uchar*) to+size_length,(uchar*) &from,sizeof(char*));
+	memcpy(to+size_length, &from, sizeof(char*));
 	from+=blob_length;
       }
       else
@@ -1270,7 +1275,8 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
 	  min_pack_length--;
 	if (min_pack_length + rec_length > (uint) (from_end - from))
 	  goto err;
-	memcpy(to,(uchar*) from,(size_t) rec_length); from+=rec_length;
+        memcpy(to, from, rec_length);
+        from+=rec_length;
       }
       if ((bit= bit << 1) >= 256)
       {
@@ -1282,7 +1288,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
       if (min_pack_length > (uint) (from_end - from))
 	goto err;
       min_pack_length-=rec_length;
-      memcpy(to, (uchar*) from, (size_t) rec_length);
+      memcpy(to, from, rec_length);
       from+=rec_length;
     }
   }
@@ -1443,7 +1449,7 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *buf)
           prefetch_len= block_info.data_len;
         if (prefetch_len)
         {
-          memcpy((uchar*) to, block_info.header + offset, prefetch_len);
+          memcpy(to, block_info.header + offset, prefetch_len);
           block_info.data_len-= prefetch_len;
           left_length-= prefetch_len;
           to+= prefetch_len;
@@ -1654,7 +1660,7 @@ err:
 
 int _mi_read_rnd_dynamic_record(MI_INFO *info, uchar *buf,
 				register my_off_t filepos,
-				my_bool skip_deleted_blocks)
+				bool skip_deleted_blocks)
 {
   int block_of_record, info_read, save_errno;
   uint left_len,b_type;
@@ -1756,7 +1762,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, uchar *buf,
 	tmp_length= block_info.data_len;
       if (tmp_length)
       {
-	memcpy((uchar*) to, block_info.header+offset,tmp_length);
+	memcpy(to, block_info.header+offset,tmp_length);
 	block_info.data_len-=tmp_length;
 	left_len-=tmp_length;
 	to+=tmp_length;
@@ -1862,11 +1868,11 @@ uint _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
     info->prev_filepos=mi_sizekorr(header+12);
 #if SIZEOF_OFF_T == 4
     if ((mi_uint4korr(header+4) != 0 &&
-	 (mi_uint4korr(header+4) != (ulong) ~0 ||
-	  info->next_filepos != (ulong) ~0)) ||
+	 (mi_uint4korr(header+4) != UINT32_MAX ||
+	  info->next_filepos != UINT32_MAX) ||
 	(mi_uint4korr(header+12) != 0 &&
-	 (mi_uint4korr(header+12) != (ulong) ~0 ||
-	  info->prev_filepos != (ulong) ~0)))
+	 (mi_uint4korr(header+12) != UINT32_MAX ||
+	  info->prev_filepos != UINT32_MAX))
       goto err;
 #endif
     return return_val | BLOCK_DELETED;		/* Deleted block */

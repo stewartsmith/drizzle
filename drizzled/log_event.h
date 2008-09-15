@@ -28,13 +28,13 @@
 #ifndef _log_event_h
 #define _log_event_h
 
-#if defined(USE_PRAGMA_INTERFACE) && !defined(MYSQL_CLIENT)
+#if defined(USE_PRAGMA_INTERFACE) && !defined(DRIZZLE_CLIENT)
 #pragma interface			/* gcc class implementation */
 #endif
 
 #include <mysys/my_bitmap.h>
 #include "rpl_constants.h"
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 #include "rpl_record.h"
 #include "rpl_reporting.h"
 #else
@@ -211,7 +211,7 @@ struct sql_ex_info
    event's ID, LOG_EVENT_HEADER_LEN will be something like 26, but
    LOG_EVENT_MINIMAL_HEADER_LEN will remain 19.
 */
-#define LOG_EVENT_MINIMAL_HEADER_LEN 19
+#define LOG_EVENT_MINIMAL_HEADER_LEN (uint8_t)19
 
 /* event-specific post-header sizes */
 // where 3.23, 4.x and 5.0 agree
@@ -400,7 +400,7 @@ struct sql_ex_info
 /**
   @def LOG_EVENT_THREAD_SPECIFIC_F
 
-  If the query depends on the thread (for example: TEMPORARY TABLE).
+  If the query depends on the thread (for example: TEMPORARY Table).
   Currently this is used by mysqlbinlog to know it must print
   SET @@PSEUDO_THREAD_ID=xx; before the query (it would not hurt to print it
   for every query but this would be slow).
@@ -547,16 +547,16 @@ enum Int_event_type
 };
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 class String;
-class MYSQL_BIN_LOG;
+class DRIZZLE_BIN_LOG;
 class THD;
 #endif
 
 class Format_description_log_event;
 class Relay_log_info;
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 enum enum_base64_output_mode {
   BASE64_OUTPUT_NEVER= 0,
   BASE64_OUTPUT_AUTO= 1,
@@ -595,7 +595,7 @@ typedef struct st_print_event_info
   bool charset_inited;
   char charset[6]; // 3 variables, each of them storable in 2 bytes
   char time_zone_str[MAX_TIME_ZONE_NAME_LENGTH];
-  uint lc_time_names_number;
+  uint32_t lc_time_names_number;
   uint charset_database_number;
   uint thread_id;
   bool thread_id_printed;
@@ -867,7 +867,7 @@ public:
   */
   ulong slave_exec_mode;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   THD* thd;
 
   Log_event();
@@ -940,7 +940,7 @@ public:
   static void *operator new(size_t, void* ptr) { return ptr; }
   static void operator delete(void*, void*) { }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write_header(IO_CACHE* file, ulong data_length);
   virtual bool write(IO_CACHE* file)
   {
@@ -1000,7 +1000,7 @@ public:
 
   /* Return start of query time or current time */
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 public:
 
   /**
@@ -1554,7 +1554,7 @@ public:
   uint lc_time_names_number; /* 0 means en_US */
   uint charset_database_number;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
   Query_log_event(THD* thd_arg, const char* query_arg, ulong query_length,
                   bool using_trans, bool suppress_use,
@@ -1578,7 +1578,7 @@ public:
       my_free((uchar*) data_buf, MYF(0));
   }
   Log_event_type get_type_code() { return QUERY_EVENT; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((unused)))
   { return false; }
@@ -1593,7 +1593,7 @@ public:
   /* Writes derived event-specific part of post header. */
 
 public:        /* !!! Public in this patch to allow old usage */
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
@@ -1668,7 +1668,7 @@ public:
   int master_log_len;
   uint16_t master_port;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Slave_log_event(THD* thd_arg, Relay_log_info* rli);
   void pack_info(Protocol* protocol);
 #else
@@ -1680,12 +1680,12 @@ public:
   int get_data_size();
   bool is_valid() const { return master_host != 0; }
   Log_event_type get_type_code() { return SLAVE_EVENT; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const* rli);
 #endif
 };
@@ -1703,7 +1703,7 @@ private:
    (1)    USE db;
    (2)    LOAD DATA [LOCAL] INFILE 'file_name'
    (3)    [REPLACE | IGNORE]
-   (4)    INTO TABLE 'table_name'
+   (4)    INTO Table 'table_name'
    (5)    [FIELDS
    (6)      [TERMINATED BY 'field_term']
    (7)      [[OPTIONALLY] ENCLOSED BY 'enclosed']
@@ -1939,7 +1939,7 @@ public:
     return local_fname;
   }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   String field_lens_buf;
   String fields_buf;
 
@@ -1972,7 +1972,7 @@ public:
   {
     return sql_ex.new_format() ? NEW_LOAD_EVENT: LOAD_EVENT;
   }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write_data_header(IO_CACHE* file);
   bool write_data_body(IO_CACHE* file);
 #endif
@@ -1985,7 +1985,7 @@ public:
   }
 
 public:        /* !!! Public in this patch to allow old usage */
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const* rli)
   {
     return do_apply_event(thd->slave_net,rli,0);
@@ -2053,7 +2053,7 @@ public:
   */
   bool dont_set_created;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Start_log_event_v3();
 #ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
@@ -2067,7 +2067,7 @@ public:
                      const Format_description_log_event* description_event);
   ~Start_log_event_v3() {}
   Log_event_type get_type_code() { return START_EVENT_V3;}
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const { return 1; }
@@ -2078,7 +2078,7 @@ public:
   virtual bool is_artificial_event() { return artificial_event; }
 
 protected:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info*)
   {
@@ -2130,7 +2130,7 @@ public:
     my_free((uchar*)post_header_len, MYF(MY_ALLOW_ZERO_PTR));
   }
   Log_event_type get_type_code() { return FORMAT_DESCRIPTION_EVENT;}
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const
@@ -2152,7 +2152,7 @@ public:
   void calc_server_version_split();
 
 protected:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -2203,7 +2203,7 @@ public:
   uint64_t val;
   uchar type;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Intvar_log_event(THD* thd_arg,uchar type_arg, uint64_t val_arg)
     :Log_event(thd_arg,0,0),val(val_arg),type(type_arg)
   {}
@@ -2220,13 +2220,13 @@ public:
   Log_event_type get_type_code() { return INTVAR_EVENT;}
   const char* get_var_type_name();
   int get_data_size() { return  9; /* sizeof(type) + sizeof(val) */;}
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -2278,7 +2278,7 @@ class Rand_log_event: public Log_event
   uint64_t seed1;
   uint64_t seed2;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Rand_log_event(THD* thd_arg, uint64_t seed1_arg, uint64_t seed2_arg)
     :Log_event(thd_arg,0,0),seed1(seed1_arg),seed2(seed2_arg)
   {}
@@ -2294,13 +2294,13 @@ class Rand_log_event: public Log_event
   ~Rand_log_event() {}
   Log_event_type get_type_code() { return RAND_EVENT;}
   int get_data_size() { return 16; /* sizeof(uint64_t) * 2*/ }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -2315,7 +2315,7 @@ private:
 
   @section Xid_log_event_binary_format Binary Format  
 */
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 typedef uint64_t my_xid; // this line is the same as in handler.h
 #endif
 
@@ -2324,7 +2324,7 @@ class Xid_log_event: public Log_event
  public:
    my_xid xid;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Xid_log_event(THD* thd_arg, my_xid x): Log_event(thd_arg,0,0), xid(x) {}
 #ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
@@ -2338,13 +2338,13 @@ class Xid_log_event: public Log_event
   ~Xid_log_event() {}
   Log_event_type get_type_code() { return XID_EVENT;}
   int get_data_size() { return sizeof(xid); }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   enum_skip_reason do_shall_skip(Relay_log_info *rli);
 #endif
@@ -2369,7 +2369,7 @@ public:
   Item_result type;
   uint charset_number;
   bool is_null;
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   User_var_log_event(THD* thd_arg __attribute__((unused)),
                      char *name_arg, uint name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
@@ -2386,13 +2386,13 @@ public:
                      const Format_description_log_event *description_event);
   ~User_var_log_event() {}
   Log_event_type get_type_code() { return USER_VAR_EVENT;}
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -2411,7 +2411,7 @@ private:
 class Stop_log_event: public Log_event
 {
 public:
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Stop_log_event() :Log_event()
   {}
 #else
@@ -2427,7 +2427,7 @@ public:
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((unused)))
   {
@@ -2502,7 +2502,7 @@ public:
   uint64_t pos;
   uint ident_len;
   uint flags;
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Rotate_log_event(const char* new_log_ident_arg,
 		   uint ident_len_arg,
 		   uint64_t pos_arg, uint flags);
@@ -2523,12 +2523,12 @@ public:
   Log_event_type get_type_code() { return ROTATE_EVENT;}
   int get_data_size() { return  ident_len + ROTATE_HEADER_LEN;}
   bool is_valid() const { return new_log_ident != 0; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
 #endif
@@ -2559,7 +2559,7 @@ public:
   uint file_id;
   bool inited_from_old;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Create_file_log_event(THD* thd, sql_exchange* ex, const char* db_arg,
 			const char* table_name_arg,
 			List<Item>& fields_arg,
@@ -2593,7 +2593,7 @@ public:
 	    4 + 1 + block_len);
   }
   bool is_valid() const { return inited_from_old || block != 0; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write_data_header(IO_CACHE* file);
   bool write_data_body(IO_CACHE* file);
   /*
@@ -2604,7 +2604,7 @@ public:
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 };
@@ -2635,7 +2635,7 @@ public:
   */
   const char* db;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Append_block_log_event(THD* thd, const char* db_arg, uchar* block_arg,
 			 uint block_len_arg, bool using_trans);
 #ifdef HAVE_REPLICATION
@@ -2653,13 +2653,13 @@ public:
   Log_event_type get_type_code() { return APPEND_BLOCK_EVENT;}
   int get_data_size() { return  block_len + APPEND_BLOCK_HEADER_LEN ;}
   bool is_valid() const { return block != 0; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 };
@@ -2677,7 +2677,7 @@ public:
   uint file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Delete_file_log_event(THD* thd, const char* db_arg, bool using_trans);
 #ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
@@ -2694,13 +2694,13 @@ public:
   Log_event_type get_type_code() { return DELETE_FILE_EVENT;}
   int get_data_size() { return DELETE_FILE_HEADER_LEN ;}
   bool is_valid() const { return file_id != 0; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 };
@@ -2718,7 +2718,7 @@ public:
   uint file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Execute_load_log_event(THD* thd, const char* db_arg, bool using_trans);
 #ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
@@ -2734,13 +2734,13 @@ public:
   Log_event_type get_type_code() { return EXEC_LOAD_EVENT;}
   int get_data_size() { return  EXEC_LOAD_HEADER_LEN ;}
   bool is_valid() const { return file_id != 0; }
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 };
@@ -2758,7 +2758,7 @@ private:
 class Begin_load_query_log_event: public Append_block_log_event
 {
 public:
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Begin_load_query_log_event(THD* thd_arg, const char *db_arg,
                              uchar* block_arg, uint block_len_arg,
                              bool using_trans);
@@ -2773,7 +2773,7 @@ public:
   ~Begin_load_query_log_event() {}
   Log_event_type get_type_code() { return BEGIN_LOAD_QUERY_EVENT; }
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
 #endif
 };
@@ -2809,7 +2809,7 @@ public:
   */
   enum_load_dup_handling dup_handling;
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Execute_load_query_log_event(THD* thd, const char* query_arg,
                                ulong query_length, uint fn_pos_start_arg,
                                uint fn_pos_end_arg,
@@ -2835,18 +2835,18 @@ public:
   bool is_valid() const { return Query_log_event::is_valid() && file_id != 0; }
 
   ulong get_post_header_size_for_derived();
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   bool write_post_header_for_derived(IO_CACHE* file);
 #endif
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 };
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 /**
   @class Unknown_log_event
 
@@ -3163,8 +3163,8 @@ public:
   void clear_flags(flag_set flag) { m_flags &= ~flag; }
   flag_set get_flags(flag_set flag) const { return m_flags & flag; }
 
-#ifndef MYSQL_CLIENT
-  Table_map_log_event(THD *thd, TABLE *tbl, ulong tid, 
+#ifndef DRIZZLE_CLIENT
+  Table_map_log_event(THD *thd, Table *tbl, ulong tid, 
 		      bool is_transactional, uint16_t flags);
 #endif
 #ifdef HAVE_REPLICATION
@@ -3178,31 +3178,31 @@ public:
   virtual bool is_valid() const { return m_memory != NULL; /* we check malloc */ }
 
   virtual int get_data_size() { return m_data_size; } 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   virtual int save_field_metadata();
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
   virtual const char *get_db() { return m_dbnam; }
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual void pack_info(Protocol *protocol);
 #endif
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
 #endif
 
 
 private:
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
 #endif
 
-#ifndef MYSQL_CLIENT
-  TABLE         *m_table;
+#ifndef DRIZZLE_CLIENT
+  Table         *m_table;
 #endif
   char const    *m_dbnam;
   size_t         m_dblen;
@@ -3297,16 +3297,16 @@ public:
   void clear_flags(flag_set flags_arg) { m_flags &= ~flags_arg; }
   flag_set get_flags(flag_set flags_arg) const { return m_flags & flags_arg; }
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual void pack_info(Protocol *protocol);
 #endif
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   /* not for direct call, each derived has its own ::print() */
   virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info)= 0;
 #endif
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   int add_row_data(uchar *data, size_t length)
   {
     return do_add_row_data(data,length); 
@@ -3320,7 +3320,7 @@ public:
   size_t get_width() const          { return m_width; }
   ulong get_table_id() const        { return m_table_id; }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
   virtual const char *get_db() { return m_table->s->db.str; }
@@ -3343,24 +3343,24 @@ protected:
      The constructors are protected since you're supposed to inherit
      this class, not create instances of this class.
   */
-#ifndef MYSQL_CLIENT
-  Rows_log_event(THD*, TABLE*, ulong table_id, 
+#ifndef DRIZZLE_CLIENT
+  Rows_log_event(THD*, Table*, ulong table_id, 
 		 MY_BITMAP const *cols, bool is_transactional);
 #endif
   Rows_log_event(const char *row_data, uint event_len, 
 		 Log_event_type event_type,
 		 const Format_description_log_event *description_event);
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   void print_helper(FILE *, PRINT_EVENT_INFO *, char const *const name);
 #endif
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   virtual int do_add_row_data(uchar *data, size_t length);
 #endif
 
-#ifndef MYSQL_CLIENT
-  TABLE *m_table;		/* The table the rows belong to */
+#ifndef DRIZZLE_CLIENT
+  Table *m_table;		/* The table the rows belong to */
 #endif
   ulong       m_table_id;	/* Table ID */
   MY_BITMAP   m_cols;		/* Bitmap denoting columns available */
@@ -3388,7 +3388,7 @@ protected:
 
   /* helper functions */
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   const uchar *m_curr_row;     /* Start of the row being processed */
   const uchar *m_curr_row_end; /* One-after the end of the current row */
   uchar    *m_key;      /* Buffer to keep key value during searches */
@@ -3413,7 +3413,7 @@ protected:
 
 private:
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -3468,7 +3468,7 @@ private:
       
   */
   virtual int do_exec_row(const Relay_log_info *const rli) = 0;
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
   friend class Old_rows_log_event;
 };
@@ -3491,16 +3491,16 @@ public:
     TYPE_CODE = WRITE_ROWS_EVENT
   };
 
-#if !defined(MYSQL_CLIENT)
-  Write_rows_log_event(THD*, TABLE*, ulong table_id, 
+#if !defined(DRIZZLE_CLIENT)
+  Write_rows_log_event(THD*, Table*, ulong table_id, 
 		       bool is_transactional);
 #endif
 #ifdef HAVE_REPLICATION
   Write_rows_log_event(const char *buf, uint event_len, 
                        const Format_description_log_event *description_event);
 #endif
-#if !defined(MYSQL_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+#if !defined(DRIZZLE_CLIENT) 
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record
                                           __attribute__((unused)),
@@ -3513,11 +3513,11 @@ public:
 private:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
@@ -3546,8 +3546,8 @@ public:
     TYPE_CODE = UPDATE_ROWS_EVENT
   };
 
-#ifndef MYSQL_CLIENT
-  Update_rows_log_event(THD*, TABLE*, ulong table_id,
+#ifndef DRIZZLE_CLIENT
+  Update_rows_log_event(THD*, Table*, ulong table_id,
                         bool is_transactional);
 
   void init(MY_BITMAP const *cols);
@@ -3560,8 +3560,8 @@ public:
 			const Format_description_log_event *description_event);
 #endif
 
-#if !defined(MYSQL_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+#if !defined(DRIZZLE_CLIENT) 
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record,
                                           const uchar *after_record)
@@ -3579,15 +3579,15 @@ public:
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 };
 
 /**
@@ -3619,16 +3619,16 @@ public:
     TYPE_CODE = DELETE_ROWS_EVENT
   };
 
-#ifndef MYSQL_CLIENT
-  Delete_rows_log_event(THD*, TABLE*, ulong, 
+#ifndef DRIZZLE_CLIENT
+  Delete_rows_log_event(THD*, Table*, ulong, 
 			bool is_transactional);
 #endif
 #ifdef HAVE_REPLICATION
   Delete_rows_log_event(const char *buf, uint event_len, 
 			const Format_description_log_event *description_event);
 #endif
-#if !defined(MYSQL_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+#if !defined(DRIZZLE_CLIENT) 
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record,
                                           const uchar *after_record
@@ -3641,11 +3641,11 @@ public:
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
@@ -3691,7 +3691,7 @@ protected:
 */
 class Incident_log_event : public Log_event {
 public:
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   Incident_log_event(THD *thd_arg, Incident incident)
     : Log_event(thd_arg, 0, false), m_incident(incident)
   {
@@ -3708,7 +3708,7 @@ public:
   }
 #endif
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   void pack_info(Protocol*);
 #endif
 
@@ -3717,11 +3717,11 @@ public:
 
   virtual ~Incident_log_event();
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
 #endif
 
@@ -3742,7 +3742,7 @@ private:
   LEX_STRING m_message;
 };
 
-int append_query_string(CHARSET_INFO *csinfo,
+int append_query_string(const CHARSET_INFO * const csinfo,
                         String const *from, String *to);
 
 static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
@@ -3753,7 +3753,7 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
     reinit_io_cache(cache, WRITE_CACHE, 0, false, true);
 }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /*****************************************************************************
 
   Heartbeat Log Event class

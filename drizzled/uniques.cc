@@ -30,7 +30,7 @@
   deletes in disk order.
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_sort.h"
 
 
@@ -570,11 +570,11 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 }
 
 /*
-  Modify the TABLE element so that when one calls init_records()
+  Modify the Table element so that when one calls init_records()
   the rows will be read in priority order.
 */
 
-bool Unique::get(TABLE *table)
+bool Unique::get(Table *table)
 {
   SORTPARAM sort_param;
   table->sort.found_records=elements+tree.elements_in_tree;
@@ -609,7 +609,7 @@ bool Unique::get(TABLE *table)
     return 1;
   reinit_io_cache(outfile,WRITE_CACHE,0L,0,0);
 
-  memset((char*) &sort_param, 0, sizeof(sort_param));
+  memset(&sort_param, 0, sizeof(sort_param));
   sort_param.max_rows= elements;
   sort_param.sort_form=table;
   sort_param.rec_length= sort_param.sort_length= sort_param.ref_length=

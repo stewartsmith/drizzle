@@ -24,9 +24,9 @@ char *sql_strmake(const char *str, size_t len);
 void *sql_memdup(const void * ptr, size_t size);
 void sql_element_free(void *ptr);
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       CHARSET_INFO *from_cs,
+			       const CHARSET_INFO * const from_cs,
 			       size_t max_res_length,
-			       CHARSET_INFO *to_cs, size_t *result_length);
+			       const CHARSET_INFO * const to_cs, size_t *result_length);
 void sql_kill(THD *thd, ulong id, bool only_kill_query);
 bool net_request_file(NET* net, const char* fname);
 char* query_table_status(THD *thd,const char *db,const char *table_name);

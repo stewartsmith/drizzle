@@ -13,8 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#include <drizzled/server_includes.h>
 #include "rpl_utility.h"
 #include "rpl_rli.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /*********************************************************************
  *                   table_def member definitions                    *
@@ -41,7 +43,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
     both are mapped to type DRIZZLE_TYPE_STRING and their real types
     are encoded in the field metadata.
   */
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
   {
     length= m_field_metadata[col] & 0x00ff;
@@ -98,7 +99,7 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
 
 */
 int
-table_def::compatible_with(Relay_log_info const *rli_arg, TABLE *table)
+table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
   const
 {
   /*
@@ -118,8 +119,8 @@ table_def::compatible_with(Relay_log_info const *rli_arg, TABLE *table)
       assert(tsh->db.str && tsh->table_name.str);
       error= 1;
       char buf[256];
-      snprintf(buf, sizeof(buf), "Column %d type mismatch - "
-                "received type %d, %s.%s has type %d",
+      snprintf(buf, sizeof(buf), _("Column %d type mismatch - "
+                "received type %d, %s.%s has type %d"),
                 col, type(col), tsh->db.str, tsh->table_name.str,
                 table->field[col]->type());
       rli->report(ERROR_LEVEL, ER_BINLOG_ROW_WRONG_TABLE_DEF,
@@ -133,10 +134,10 @@ table_def::compatible_with(Relay_log_info const *rli_arg, TABLE *table)
     {
       error= 1;
       char buf[256];
-      snprintf(buf, sizeof(buf), "Column %d size mismatch - "
+      snprintf(buf, sizeof(buf), _("Column %d size mismatch - "
                "master has size %d, %s.%s on slave has size %d."
                " Master's column size should be <= the slave's "
-               "column size.", col,
+               "column size."), col,
                table->field[col]->pack_length_from_metadata(
                                     m_field_metadata[col]),
                tsh->db.str, tsh->table_name.str, 

@@ -15,24 +15,24 @@
 
 #include "mysys_priv.h"
 #include "my_static.h"
-#include "mysys_err.h"
+#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <signal.h>
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
-ulong   my_thread_stack_size= 65536;
+uint32_t   my_thread_stack_size= 65536;
 
-static ulong atoi_octal(const char *str)
+static uint32_t atoi_octal(const char *str)
 {
   long int tmp;
-  while (*str && my_isspace(&my_charset_latin1, *str))
+  while (*str && my_isspace(&my_charset_utf8_general_ci, *str))
     str++;
   str2int(str,
 	  (*str == '0' ? 8 : 10),       /* Octalt or decimalt */
 	  0, INT_MAX, &tmp);
-  return (ulong) tmp;
+  return (uint32_t) tmp;
 }
 
 
@@ -118,7 +118,7 @@ void my_end(int infoflag)
     struct rusage rus;
 #ifdef HAVE_purify
     /* Purify assumes that rus is uninitialized after getrusage call */
-    memset((char*) &rus, 0, sizeof(rus));
+    memset(&rus, 0, sizeof(rus));
 #endif
     if (!getrusage(RUSAGE_SELF, &rus))
       fprintf(info_file,"\n\

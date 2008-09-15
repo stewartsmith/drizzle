@@ -20,14 +20,14 @@
 
 size_t dirname_length(const char *name)
 {
-  register char *pos, *gpos;
+  register const char *pos, *gpos;
 #ifdef BASKSLASH_MBTAIL
   CHARSET_INFO *fs= fs_character_set();
 #endif
 #ifdef FN_DEVCHAR
   if ((pos=(char*)strrchr(name,FN_DEVCHAR)) == 0)
 #endif
-    pos=(char*) name-1;
+    pos=name-1;
 
   gpos= pos++;
   for ( ; *pos ; pos++)				/* Find last FN_LIBCHAR */
@@ -47,7 +47,7 @@ size_t dirname_length(const char *name)
 	)
       gpos=pos;
   }
-  return (size_t) (gpos+1-(char*) name);
+  return gpos-name+1;
 }
 
 

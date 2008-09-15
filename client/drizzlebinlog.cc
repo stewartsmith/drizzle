@@ -28,9 +28,12 @@
    Format_desc_of_slave, Rotate_of_master, Format_desc_of_master.
 */
 
-#define MYSQL_CLIENT
-#undef MYSQL_SERVER
-#include <libdrizzle/my_time.h>
+#define DRIZZLE_CLIENT
+#undef DRIZZLE_SERVER
+
+#include <map>
+
+#include <mysys/my_time.h>
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
@@ -38,10 +41,10 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include <drizzled/mysql_priv.h>
 #include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
+using namespace std;
 
 enum options_drizzlebinlog
 {
@@ -59,12 +62,12 @@ enum options_drizzlebinlog
 #define CLIENT_CAPABILITIES  (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_LOCAL_FILES)
 
 char server_version[SERVER_VERSION_LENGTH];
-ulong server_id = 0;
+uint32_t server_id = 0;
 
 // needed by net_serv.c
-ulong bytes_sent = 0L, bytes_received = 0L;
-ulong drizzled_net_retry_count = 10L;
-ulong open_files_limit;
+uint32_t bytes_sent = 0L, bytes_received = 0L;
+uint32_t drizzled_net_retry_count = 10L;
+uint32_t open_files_limit;
 uint test_flags = 0;
 static uint opt_protocol= 0;
 static FILE *result_file;
@@ -142,7 +145,7 @@ class Load_log_processor
   /*
     When we see first event corresponding to some LOAD DATA statement in
     binlog, we create temporary file to store data to be loaded.
-    We add name of this file to file_names array using its file_id as index.
+    We add name of this file to file_names map using its file_id as index.
     If we have Create_file event (i.e. we have binary log in pre-5.0.3
     format) we also store save event object to be able which is needed to
     emit LOAD DATA statement when we will meet Exec_load_data event.
@@ -154,14 +157,8 @@ class Load_log_processor
     char *fname;
     Create_file_log_event *event;
   };
-  /*
-    @todo Should be a map (e.g., a hash map), not an array.  With the
-    present implementation, the number of elements in this array is
-    about the number of files loaded since the server started, which
-    may be big after a few years.  We should be able to use existing
-    library data structures for this. /Sven
-  */
-  DYNAMIC_ARRAY file_names;
+
+  map<unsigned int, File_name_record *> file_names;
 
   /**
     Looks for a non-existing filename by adding a numerical suffix to
@@ -196,12 +193,6 @@ public:
   Load_log_processor() {}
   ~Load_log_processor() {}
 
-  int init()
-  {
-    return init_dynamic_array(&file_names, sizeof(File_name_record),
-            100,100 CALLER_INFO);
-  }
-
   void init_by_dir_name(const char *dir)
     {
       target_dir_name_len= (convert_dirname(target_dir_name, dir, NullS) -
@@ -215,19 +206,18 @@ public:
     }
   void destroy()
   {
-    File_name_record *ptr= (File_name_record *)file_names.buffer;
-    File_name_record *end= ptr + file_names.elements;
-    for (; ptr < end; ptr++)
+    // TODO: Is this necessary? Can't we make the map dtor do this for us?
+    map<unsigned int, File_name_record *>::iterator i;
+    for ( i= file_names.begin() ; i != file_names.end() ; i++)
     {
-      if (ptr->fname)
+      File_name_record *record_to_delete = file_names[i->first];
+      if (record_to_delete->fname)
       {
-        my_free(ptr->fname, MYF(MY_WME));
-        delete ptr->event;
-        memset((char *)ptr, 0, sizeof(File_name_record));
+        free(record_to_delete->fname);
+        delete record_to_delete->event;
       }
+      file_names.erase(i->first);
     }
-
-    delete_dynamic(&file_names);
   }
 
   /**
@@ -248,14 +238,12 @@ public:
   Create_file_log_event *grab_event(uint file_id)
     {
       File_name_record *ptr;
-      Create_file_log_event *res;
 
-      if (file_id >= file_names.elements)
-        return 0;
-      ptr= dynamic_element(&file_names, file_id, File_name_record*);
-      if ((res= ptr->event))
-        memset((char *)ptr, 0, sizeof(File_name_record));
-      return res;
+      if ((ptr= file_names[file_id]))
+      {
+        file_names.erase(file_id);
+      }
+      return ptr->event;
     }
 
   /**
@@ -276,18 +264,19 @@ public:
   char *grab_fname(uint file_id)
     {
       File_name_record *ptr;
-      char *res= 0;
+      char *res= NULL;
 
-      if (file_id >= file_names.elements)
-        return 0;
-      ptr= dynamic_element(&file_names, file_id, File_name_record*);
-      if (!ptr->event)
+      if ((ptr= file_names[file_id]))
       {
-        res= ptr->fname;
-        memset((char *)ptr, 0, sizeof(File_name_record));
+        if (ptr->event != NULL)
+        {
+          res= ptr->fname;
+          file_names.erase(file_id);
+        }
       }
       return res;
     }
+
   Exit_status process(Create_file_log_event *ce);
   Exit_status process(Begin_load_query_log_event *ce);
   Exit_status process(Append_block_log_event *ae);
@@ -365,7 +354,7 @@ Exit_status Load_log_processor::load_old_format_file(NET* net,
 
   for (;;)
   {
-    ulong packet_len = my_net_read(net);
+    uint32_t packet_len = my_net_read(net);
     if (packet_len == 0)
     {
       if (my_net_write(net, (uchar*) "", 0) || net_flush(net))
@@ -430,7 +419,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
   Exit_status retval= OK_CONTINUE;
   char *fname, *ptr;
   File file;
-  File_name_record rec;
+  File_name_record *rec;
 
 
   if (!(fname= (char*) my_malloc(full_len,MYF(MY_WME))))
@@ -454,15 +443,11 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
     return(ERROR_STOP);
   }
 
-  rec.fname= fname;
-  rec.event= ce;
+  rec= (File_name_record *)malloc(sizeof(File_name_record));
+  rec->fname= fname;
+  rec->event= ce;
 
-  if (set_dynamic(&file_names, (uchar*)&rec, file_id))
-  {
-    error("Out of memory.");
-    delete ce;
-    return(ERROR_STOP);
-  }
+  file_names[file_id]= rec;
 
   if (ce)
     ce->set_fname_outside_temp_buf(fname, strlen(fname));
@@ -543,9 +528,13 @@ Exit_status Load_log_processor::process(Begin_load_query_log_event *blqe)
 Exit_status Load_log_processor::process(Append_block_log_event *ae)
 {
 
-  const char* fname= ((ae->file_id < file_names.elements) ?
-                       dynamic_element(&file_names, ae->file_id,
-                                       File_name_record*)->fname : 0);
+
+  const char* fname= 0;
+  File_name_record *ptr= file_names[ae->file_id];
+  if (ptr != NULL)
+  {
+    fname= ptr->fname;
+  }
 
   if (fname)
   {
@@ -989,11 +978,8 @@ static struct my_option my_long_options[] =
   {"password", 'p', "Password to connect to remote server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
    (char**) &port, (char**) &port, 0, GET_INT, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"position", 'j', "Deprecated. Use --start-position instead.",
@@ -1112,6 +1098,7 @@ static void error(const char *format,...)
   @param format Printf-style format string, followed by printf
   varargs.
 */
+static void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
 static void sql_print_error(const char *format,...)
 {
   va_list args;
@@ -1326,14 +1313,14 @@ static Exit_status dump_log_entries(const char* logname)
      like CREATE PROCEDURE safely
   */
   fprintf(result_file, "DELIMITER /*!*/;\n");
-  strmov(print_event_info.delimiter, "/*!*/;");
+  stpcpy(print_event_info.delimiter, "/*!*/;");
 
   rc= (remote_opt ? dump_remote_log_entries(&print_event_info, logname) :
        dump_local_log_entries(&print_event_info, logname));
 
   /* Set delimiter back to semicolon */
   fprintf(result_file, "DELIMITER ;\n");
-  strmov(print_event_info.delimiter, ";");
+  stpcpy(print_event_info.delimiter, ";");
   return rc;
 }
 
@@ -1432,7 +1419,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
 
 {
   uchar buf[128];
-  ulong len;
+  uint32_t len;
   uint logname_len;
   NET* net;
   my_off_t old_off= start_position_mot;
@@ -1915,8 +1902,6 @@ int main(int argc, char** argv)
     dirname_for_local_load= my_strdup(my_tmpdir(&tmpdir), MY_WME);
   }
 
-  if (load_processor.init())
-    exit(1);
   if (dirname_for_local_load)
     load_processor.init_by_dir_name(dirname_for_local_load);
   else

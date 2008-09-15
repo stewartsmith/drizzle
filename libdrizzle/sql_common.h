@@ -28,14 +28,15 @@ extern const char	*not_error_sqlstate;
 #ifdef	__cplusplus
 extern "C" {
 #endif
+#include <mystrings/m_ctype.h>
 
 extern CHARSET_INFO *default_client_charset_info;
-DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
-			   my_bool default_value, uint server_capabilities);
+DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc, uint fields,
+			                 bool default_value);
 void free_rows(DRIZZLE_DATA *cur);
 void free_old_query(DRIZZLE *drizzle);
 void end_server(DRIZZLE *drizzle);
-my_bool drizzle_reconnect(DRIZZLE *drizzle);
+bool drizzle_reconnect(DRIZZLE *drizzle);
 void drizzle_read_default_options(struct st_drizzle_options *options,
 				const char *filename,const char *group);
 bool
@@ -48,7 +49,5 @@ void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
 #ifdef	__cplusplus
 }
 #endif
-
-#define protocol_41(A) ((A)->server_capabilities & CLIENT_PROTOCOL_41)
 
 #endif

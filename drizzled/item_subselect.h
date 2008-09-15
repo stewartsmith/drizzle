@@ -32,7 +32,7 @@ class Cached_item;
 
 class Item_subselect :public Item_result_field
 {
-  my_bool value_assigned; /* value already assigned to subselect */
+  bool value_assigned; /* value already assigned to subselect */
 public:
   /* thread handler, will be assigned in fix_fields only */
   THD *thd;
@@ -292,9 +292,9 @@ public:
   /* 
     Location of the subquery predicate. It is either
      - pointer to join nest if the subquery predicate is in the ON expression
-     - (TABLE_LIST*)1 if the predicate is in the WHERE.
+     - (TableList*)1 if the predicate is in the WHERE.
   */
-  TABLE_LIST *expr_join_nest;
+  TableList *expr_join_nest;
 
   /* The method chosen to execute the IN predicate.  */
   enum enum_exec_method {
@@ -444,7 +444,7 @@ public:
   virtual void exclude()= 0;
   virtual bool may_be_null() { return maybe_null; };
   virtual table_map upper_select_const_tables()= 0;
-  static table_map calc_const_tables(TABLE_LIST *);
+  static table_map calc_const_tables(TableList *);
   virtual void print(String *str, enum_query_type query_type)= 0;
   virtual bool change_result(Item_subselect *si,
                              select_result_interceptor *result)= 0;
@@ -461,9 +461,9 @@ protected:
 
 class subselect_single_select_engine: public subselect_engine
 {
-  my_bool prepared; /* simple subselect is prepared */
-  my_bool optimized; /* simple subselect is optimized */
-  my_bool executed; /* simple subselect is executed */
+  bool prepared; /* simple subselect is prepared */
+  bool optimized; /* simple subselect is optimized */
+  bool executed; /* simple subselect is executed */
   st_select_lex *select_lex; /* corresponding select_lex */
   JOIN * join; /* corresponding JOIN structure */
 public:

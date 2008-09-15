@@ -22,7 +22,6 @@
 ** This is an own file to avoid conflicts with curses
 */
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "drizzle.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
@@ -108,7 +107,7 @@ char *get_tty_password(const char *opt_message)
   to will not include the eol characters.
 */
 
-static void get_password(char *to,uint length,int fd, my_bool echo)
+static void get_password(char *to,uint length,int fd, bool echo)
 {
   char *pos=to,*end=to+length;
 
@@ -162,7 +161,7 @@ char *get_tty_password(const char *opt_message)
   passbuff = getpass(opt_message ? opt_message : "Enter password: ");
 
   /* copy the password to buff and clear original (static) buffer */
-  strnmov(buff, passbuff, sizeof(buff) - 1);
+  stpncpy(buff, passbuff, sizeof(buff) - 1);
 #   ifdef _PASSWORD_LEN
   memset(passbuff, 0, _PASSWORD_LEN);
 #   endif
@@ -203,6 +202,6 @@ char *get_tty_password(const char *opt_message)
     fputc('\n',stdout);
 # endif /* HAVE_GETPASS */
 
-  return(my_strdup(buff,MYF(MY_FAE)));
+  return strdup(buff);
 }
 #endif /*__WIN__*/

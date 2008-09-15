@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_BLOB
 #define DRIZZLE_SERVER_FIELD_BLOB
 
-#include <drizzled/mysql_priv.h>
-
 class Field_blob :public Field_longstr {
 protected:
   uint packlength;
@@ -30,9 +28,9 @@ protected:
 public:
   Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TABLE_SHARE *share, uint blob_pack_length, CHARSET_INFO *cs);
+	     TABLE_SHARE *share, uint blob_pack_length, const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-             CHARSET_INFO *cs)
+             const CHARSET_INFO * const cs)
     :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),
     packlength(4)
@@ -40,7 +38,7 @@ public:
     flags|= BLOB_FLAG;
   }
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs, bool set_packlength)
+	     const CHARSET_INFO * const cs, bool set_packlength)
     :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs)
   {
@@ -60,18 +58,18 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint max_length);
+  int cmp_max(const uchar *, const uchar *, uint32_t max_length);
   int cmp(const uchar *a,const uchar *b)
-    { return cmp_max(a, b, ~0L); }
+    { return cmp_max(a, b, UINT32_MAX); }
   int cmp(const uchar *a, uint32_t a_length, const uchar *b, uint32_t b_length);
-  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=~0L);
+  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const uchar *,const uchar*);
   int key_cmp(const uchar *str, uint length);
   uint32_t key_length() const { return 0; }
@@ -96,7 +94,7 @@ public:
     return (uint32_t) (((uint64_t) 1 << (packlength*8)) -1);
   }
   int reset(void) { memset(ptr, 0, packlength+sizeof(uchar*)); return 0; }
-  void reset_fields() { memset((uchar*) &value, 0, sizeof(value)); }
+  void reset_fields() { memset(&value, 0, sizeof(value)); }
 #ifndef WORDS_BIGENDIAN
   static
 #endif
@@ -129,11 +127,11 @@ public:
   void put_length(uchar *pos, uint32_t length);
   inline void get_ptr(uchar **str)
     {
-      memcpy((uchar*) str,ptr+packlength,sizeof(uchar*));
+      memcpy(str,ptr+packlength,sizeof(uchar*));
     }
   inline void get_ptr(uchar **str, uint row_offset)
     {
-      memcpy((uchar*) str,ptr+packlength+row_offset,sizeof(char*));
+      memcpy(str,ptr+packlength+row_offset,sizeof(char*));
     }
   inline void set_ptr(uchar *length, uchar *data)
     {
@@ -177,12 +175,12 @@ public:
   const uchar *unpack_key(uchar* to, const uchar *from,
                           uint max_length, bool low_byte_first);
   int pack_cmp(const uchar *a, const uchar *b, uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
+               bool insert_or_update);
+  int pack_cmp(const uchar *b, uint key_length,bool insert_or_update);
   uint packed_col_length(const uchar *col_ptr, uint length);
   uint max_packed_col_length(uint max_length);
   void free() { value.free(); }
-  inline void clear_temporary() { memset((uchar*) &value, 0, sizeof(value)); }
+  inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
   uint size_of() const { return sizeof(*this); }
   bool has_charset(void) const

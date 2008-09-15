@@ -27,20 +27,20 @@
 #endif
 
 class String;
-int sortcmp(const String *a,const String *b, CHARSET_INFO *cs);
+int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-uint32_t copy_and_convert(char *to, uint32_t to_length, CHARSET_INFO *to_cs,
+uint32_t copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
 			const char *from, uint32_t from_length,
-			CHARSET_INFO *from_cs, uint *errors);
-uint32_t well_formed_copy_nchars(CHARSET_INFO *to_cs,
+			const CHARSET_INFO * const from_cs, uint *errors);
+uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
                                char *to, uint to_length,
-                               CHARSET_INFO *from_cs,
+                               const CHARSET_INFO * const from_cs,
                                const char *from, uint from_length,
                                uint nchars,
                                const char **well_formed_error_pos,
                                const char **cannot_convert_error_pos,
                                const char **from_end_pos);
-size_t my_copy_with_hex_escaping(CHARSET_INFO *cs,
+size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
                                  char *dst, size_t dstlen,
                                  const char *src, size_t srclen);
 
@@ -49,7 +49,7 @@ class String
   char *Ptr;
   uint32_t str_length,Alloced_length;
   bool alloced;
-  CHARSET_INFO *str_charset;
+  const CHARSET_INFO *str_charset;
 public:
   String()
   { 
@@ -61,17 +61,17 @@ public:
     alloced=0; Alloced_length=0; (void) real_alloc(length_arg); 
     str_charset= &my_charset_bin;
   }
-  String(const char *str, CHARSET_INFO *cs)
+  String(const char *str, const CHARSET_INFO * const cs)
   { 
     Ptr=(char*) str; str_length=(uint) strlen(str); Alloced_length=0; alloced=0;
     str_charset=cs;
   }
-  String(const char *str,uint32_t len, CHARSET_INFO *cs)
+  String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
   { 
     Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
     str_charset=cs;
   }
-  String(char *str,uint32_t len, CHARSET_INFO *cs)
+  String(char *str,uint32_t len, const CHARSET_INFO * const cs)
   { 
     Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
     str_charset=cs;
@@ -92,15 +92,16 @@ public:
   { /* never called */ }
   ~String() { free(); }
 
-  inline void set_charset(CHARSET_INFO *charset_arg)
+  inline void set_charset(const CHARSET_INFO * const charset_arg)
   { str_charset= charset_arg; }
-  inline CHARSET_INFO *charset() const { return str_charset; }
+  inline const CHARSET_INFO *charset() const { return str_charset; }
   inline uint32_t length() const { return str_length;}
   inline uint32_t alloced_length() const { return Alloced_length;}
   inline char& operator [] (uint32_t i) const { return Ptr[i]; }
   inline void length(uint32_t len) { str_length=len ; }
   inline bool is_empty() { return (str_length == 0); }
   inline void mark_as_const() { Alloced_length= 0;}
+  inline char *ptr() { return Ptr; }
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {
@@ -134,20 +135,20 @@ public:
       Alloced_length=0;
     str_charset=str.str_charset;
   }
-  inline void set(char *str,uint32_t arg_length, CHARSET_INFO *cs)
+  inline void set(char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
     Ptr=(char*) str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
-  inline void set(const char *str,uint32_t arg_length, CHARSET_INFO *cs)
+  inline void set(const char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
     Ptr=(char*) str; str_length=arg_length; Alloced_length=0 ; alloced=0;
     str_charset=cs;
   }
   bool set_ascii(const char *str, uint32_t arg_length);
-  inline void set_quick(char *str,uint32_t arg_length, CHARSET_INFO *cs)
+  inline void set_quick(char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     if (!alloced)
     {
@@ -155,12 +156,12 @@ public:
     }
     str_charset=cs;
   }
-  bool set_int(int64_t num, bool unsigned_flag, CHARSET_INFO *cs);
-  bool set(int64_t num, CHARSET_INFO *cs)
+  bool set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs);
+  bool set(int64_t num, const CHARSET_INFO * const cs)
   { return set_int(num, false, cs); }
-  bool set(uint64_t num, CHARSET_INFO *cs)
+  bool set(uint64_t num, const CHARSET_INFO * const cs)
   { return set_int((int64_t)num, true, cs); }
-  bool set_real(double num,uint decimals, CHARSET_INFO *cs);
+  bool set_real(double num,uint decimals, const CHARSET_INFO * const cs);
 
   /*
     PMG 2004.11.12
@@ -244,19 +245,19 @@ public:
 
   bool copy();					// Alloc string if not alloced
   bool copy(const String &s);			// Allocate new string
-  bool copy(const char *s,uint32_t arg_length, CHARSET_INFO *cs);	// Allocate new string
+  bool copy(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);	// Allocate new string
   static bool needs_conversion(uint32_t arg_length,
-  			       CHARSET_INFO *cs_from, CHARSET_INFO *cs_to,
+  			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
 			       uint32_t *offset);
   bool copy_aligned(const char *s, uint32_t arg_length, uint32_t offset,
-		    CHARSET_INFO *cs);
-  bool set_or_copy_aligned(const char *s, uint32_t arg_length, CHARSET_INFO *cs);
-  bool copy(const char*s,uint32_t arg_length, CHARSET_INFO *csfrom,
-	    CHARSET_INFO *csto, uint *errors);
+		    const CHARSET_INFO * const cs);
+  bool set_or_copy_aligned(const char *s, uint32_t arg_length, const CHARSET_INFO * const cs);
+  bool copy(const char*s,uint32_t arg_length, const CHARSET_INFO * const csfrom,
+	    const CHARSET_INFO * const csto, uint *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,uint32_t arg_length);
-  bool append(const char *s,uint32_t arg_length, CHARSET_INFO *cs);
+  bool append(const char *s,uint32_t arg_length, const CHARSET_INFO * const cs);
   bool append(IO_CACHE* file, uint32_t arg_length);
   bool append_with_prefill(const char *s, uint32_t arg_length, 
 			   uint32_t full_length, char fill_char);
@@ -279,8 +280,7 @@ public:
     return 0;
   }
   bool fill(uint32_t max_length,char fill);
-  void strip_sp();
-  friend int sortcmp(const String *a,const String *b, CHARSET_INFO *cs);
+  friend int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
   uint32_t numchars();
@@ -373,7 +373,7 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(CHARSET_INFO *cs, char *str, 
+static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str, 
                                            char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;

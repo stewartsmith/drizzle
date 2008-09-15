@@ -1,17 +1,22 @@
-/* Copyright (C) 2008 Drizzle Open Source Project 
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /* maintaince of drizzle databases */
 
@@ -19,6 +24,9 @@
 #include <signal.h>
 #include <mysys/my_pthread.h>				/* because of signal()	*/
 #include <sys/stat.h>
+
+/* Added this for string translation. */
+#include <libdrizzle/gettext.h>
 
 #define ADMIN_VERSION "8.42"
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */
@@ -63,32 +71,29 @@ static TYPELIB command_typelib=
 
 static struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG,
+  {"help", '?', N_("Display this help and exit."), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"host", 'h', "Connect to host.", (char**) &host, (char**) &host, 0, GET_STR,
+  {"host", 'h', N_("Connect to host."), (char**) &host, (char**) &host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"password", 'p',
-   "Password to use when connecting to server. If password is not given it's asked from the tty.",
+   N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+  {"port", 'P', N_("Port number to use for connection or 0 for default to, in "
+   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &tcp_port,
    (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"silent", 's', "Silently exit if one can't connect to server.",
+  {"silent", 's', N_("Silently exit if one can't connect to server."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
-  {"user", 'u', "User for login if not current user.", (char**) &user,
+  {"user", 'u', N_("User for login if not current user."), (char**) &user,
    (char**) &user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif
-  {"verbose", 'v', "Write more information.", (char**) &opt_verbose,
+  {"verbose", 'v', N_("Write more information."), (char**) &opt_verbose,
    (char**) &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
+  {"version", 'V', N_("Output version information and exit."), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"wait", 'w', "Wait and retry if connection is down.", 0, 0, 0, GET_UINT,
+  {"wait", 'w', N_("Wait and retry if connection is down."), 0, 0, 0, GET_UINT,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"connect_timeout", OPT_CONNECT_TIMEOUT, "", (char**) &opt_connect_timeout,
    (char**) &opt_connect_timeout, 0, GET_ULONG, REQUIRED_ARG, 3600*12, 0,
@@ -251,34 +256,34 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
         if (!host)
           host= (char*) LOCAL_HOST;
 
-        my_printf_error(0,"connect to server at '%s' failed\nerror: '%s'",
+        my_printf_error(0,_("connect to server at '%s' failed\nerror: '%s'"),
         error_flags, host, drizzle_error(drizzle));
 
         if (drizzle_errno(drizzle) == CR_CONN_HOST_ERROR ||
           drizzle_errno(drizzle) == CR_UNKNOWN_HOST)
         {
-          fprintf(stderr,"Check that drizzled is running on %s",host);
-          fprintf(stderr," and that the port is %d.\n",
+          fprintf(stderr,_("Check that drizzled is running on %s"),host);
+          fprintf(stderr,_(" and that the port is %d.\n"),
           tcp_port ? tcp_port: drizzle_port);
-          fprintf(stderr,"You can check this by doing 'telnet %s %d'\n",
+          fprintf(stderr,_("You can check this by doing 'telnet %s %d'\n"),
                   host, tcp_port ? tcp_port: drizzle_port);
         }
       }
       return 1;
     }
-    if (wait != (uint) ~0)
+    if (wait != UINT32_MAX)
       wait--;				/* One less retry */
     if ((drizzle_errno(drizzle) != CR_CONN_HOST_ERROR) &&
         (drizzle_errno(drizzle) != CR_CONNECTION_ERROR))
     {
-      fprintf(stderr,"Got error: %s\n", drizzle_error(drizzle));
+      fprintf(stderr,_("Got error: %s\n"), drizzle_error(drizzle));
     }
     else if (!option_silent)
     {
       if (!info)
       {
         info=1;
-        fputs("Waiting for Drizzle server to answer",stderr);
+        fputs(_("Waiting for Drizzle server to answer"),stderr);
         (void) fflush(stderr);
       }
       else
@@ -311,18 +316,18 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
     case ADMIN_SHUTDOWN:
     {
       if (opt_verbose)
-        printf("shutting down drizzled...\n");
+        printf(_("shutting down drizzled...\n"));
 
       if (drizzle_shutdown(drizzle, SHUTDOWN_DEFAULT))
       {
-        my_printf_error(0, "shutdown failed; error: '%s'", error_flags,
+        my_printf_error(0, _("shutdown failed; error: '%s'"), error_flags,
                         drizzle_error(drizzle));
         return -1;
       }
       drizzle_close(drizzle);	/* Close connection to avoid error messages */
 
       if (opt_verbose)
-        printf("done\n");
+        printf(_("done\n"));
 
       argc=1;             /* Force SHUTDOWN to be the last command */
       break;
@@ -332,7 +337,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (!drizzle_ping(drizzle))
       {
         if (option_silent < 2)
-          puts("drizzled is alive");
+          puts(_("drizzled is alive"));
       }
       else
       {
@@ -340,11 +345,11 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
         {
           drizzle->reconnect=1;
           if (!drizzle_ping(drizzle))
-            puts("connection was down, but drizzled is now alive");
+            puts(_("connection was down, but drizzled is now alive"));
         }
         else
 	      {
-          my_printf_error(0,"drizzled doesn't answer to ping, error: '%s'",
+          my_printf_error(0,_("drizzled doesn't answer to ping, error: '%s'"),
           error_flags, drizzle_error(drizzle));
           return -1;
         }
@@ -353,7 +358,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       break;
 
     default:
-      my_printf_error(0, "Unknown command: '%-.60s'", error_flags, argv[0]);
+      my_printf_error(0, _("Unknown command: '%-.60s'"), error_flags, argv[0]);
       return 1;
     }
   }
@@ -362,19 +367,19 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s on %s\n",my_progname,ADMIN_VERSION,
-	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+  printf(_("%s  Ver %s Distrib %s, for %s on %s\n"),my_progname,ADMIN_VERSION,
+	 drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2000-2006 DRIZZLE AB");
-  puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
-  puts("Administration program for the drizzled daemon.");
-  printf("Usage: %s [OPTIONS] command command....\n", my_progname);
+  puts(_("Copyright (C) 2000-2008 MySQL AB"));
+  puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
+  puts(_("Administration program for the drizzled daemon."));
+  printf(_("Usage: %s [OPTIONS] command command....\n"), my_progname);
   my_print_help(my_long_options);
-  puts("\
+  puts(_("\
   ping         Check if server is down\n\
-  shutdown     Take server down\n");
+  shutdown     Take server down\n"));
 }

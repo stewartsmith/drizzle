@@ -216,8 +216,8 @@ static void release_whole_queue(KEYCACHE_WQUEUE *wqueue);
 static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
 
 #define KEYCACHE_HASH(f, pos)                                                 \
-(((ulong) ((pos) / keycache->key_cache_block_size) +                          \
-                                     (ulong) (f)) & (keycache->hash_entries-1))
+(((uint32_t) ((pos) / keycache->key_cache_block_size) +                          \
+                                     (uint32_t) (f)) & (keycache->hash_entries-1))
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
 #define BLOCK_NUMBER(b)                                                       \
@@ -271,7 +271,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 		   size_t use_mem, uint division_limit,
 		   uint age_threshold)
 {
-  ulong blocks, hash_links;
+  uint32_t blocks, hash_links;
   size_t length;
   int error;
   assert(key_cache_block_size >= 512);
@@ -303,7 +303,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
   keycache->key_cache_mem_size= use_mem;
   keycache->key_cache_block_size= key_cache_block_size;
 
-  blocks= (ulong) (use_mem / (sizeof(BLOCK_LINK) + 2 * sizeof(HASH_LINK) +
+  blocks= (uint32_t) (use_mem / (sizeof(BLOCK_LINK) + 2 * sizeof(HASH_LINK) +
                               sizeof(HASH_LINK*) * 5/4 + key_cache_block_size));
   /* It doesn't make sense to have too few blocks (less than 8) */
   if (blocks >= 8)
@@ -353,11 +353,11 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
     keycache->hash_link_root= (HASH_LINK*) ((char*) keycache->hash_root +
 				            ALIGN_SIZE((sizeof(HASH_LINK*) *
 							keycache->hash_entries)));
-    memset((uchar*) keycache->block_root, 0,
+    memset(keycache->block_root, 0,
            keycache->disk_blocks * sizeof(BLOCK_LINK));
-    memset((uchar*) keycache->hash_root, 0,
+    memset(keycache->hash_root, 0,
            keycache->hash_entries * sizeof(HASH_LINK*));
-    memset((uchar*) keycache->hash_link_root, 0,
+    memset(keycache->hash_link_root, 0,
            keycache->hash_links * sizeof(HASH_LINK));
     keycache->hash_links_used= 0;
     keycache->free_hash_list= NULL;
@@ -383,9 +383,9 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 
     keycache->waiting_for_hash_link.last_thread= NULL;
     keycache->waiting_for_block.last_thread= NULL;
-    memset((uchar*) keycache->changed_blocks, 0,
+    memset(keycache->changed_blocks, 0,
            sizeof(keycache->changed_blocks[0]) * CHANGED_BLOCKS_HASH);
-    memset((uchar*) keycache->file_blocks, 0,
+    memset(keycache->file_blocks, 0,
            sizeof(keycache->file_blocks[0]) * CHANGED_BLOCKS_HASH);
   }
   else
@@ -607,7 +607,7 @@ void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
     none
 */
 
-void end_key_cache(KEY_CACHE *keycache, my_bool cleanup)
+void end_key_cache(KEY_CACHE *keycache, bool cleanup)
 {
   if (!keycache->key_cache_inited)
     return;
@@ -861,7 +861,7 @@ static inline void link_changed(BLOCK_LINK *block, BLOCK_LINK **phead)
 
 static void link_to_file_list(KEY_CACHE *keycache,
                               BLOCK_LINK *block, int file,
-                              my_bool unlink_block)
+                              bool unlink_block)
 {
   assert(block->status & BLOCK_IN_USE);
   assert(block->hash_link && block->hash_link->block == block);
@@ -955,8 +955,8 @@ static void link_to_changed_list(KEY_CACHE *keycache,
     not linked in the LRU ring.
 */
 
-static void link_block(KEY_CACHE *keycache, BLOCK_LINK *block, my_bool hot,
-                       my_bool at_end)
+static void link_block(KEY_CACHE *keycache, BLOCK_LINK *block, bool hot,
+                       bool at_end)
 {
   BLOCK_LINK *ins;
   BLOCK_LINK **pins;
@@ -1149,7 +1149,7 @@ static void unreg_request(KEY_CACHE *keycache,
   assert(!block->prev_used);
   if (! --block->requests)
   {
-    my_bool hot;
+    bool hot;
     if (block->hits_left)
       block->hits_left--;
     hot= !block->hits_left && at_end &&
@@ -1160,7 +1160,7 @@ static void unreg_request(KEY_CACHE *keycache,
         keycache->warm_blocks--;
       block->temperature= BLOCK_HOT;
     }
-    link_block(keycache, block, hot, (my_bool)at_end);
+    link_block(keycache, block, hot, (bool)at_end);
     block->last_hit_time= keycache->keycache_time;
     keycache->keycache_time++;
     /*
@@ -1774,10 +1774,10 @@ restart:
         {
           /* There are some never used blocks, take first of them */
           assert(keycache->blocks_used <
-                      (ulong) keycache->disk_blocks);
+                      (uint32_t) keycache->disk_blocks);
           block= &keycache->block_root[keycache->blocks_used];
           block->buffer= ADD_TO_PTR(keycache->block_mem,
-                                    ((ulong) keycache->blocks_used*
+                                    ((uint32_t) keycache->blocks_used*
                                      keycache->key_cache_block_size),
                                     uchar*);
           keycache->blocks_used++;
@@ -2099,7 +2099,7 @@ restart:
 
 static void read_block(KEY_CACHE *keycache,
                        BLOCK_LINK *block, uint read_length,
-                       uint min_length, my_bool primary)
+                       uint min_length, bool primary)
 {
   uint got_length;
 
@@ -2203,7 +2203,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
                       uint block_length __attribute__((unused)),
                       int return_buffer __attribute__((unused)))
 {
-  my_bool locked_and_incremented= false;
+  bool locked_and_incremented= false;
   int error=0;
   uchar *start= buff;
 
@@ -2281,7 +2281,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
           /* The requested page is to be read into the block buffer */
           read_block(keycache, block,
                      keycache->key_cache_block_size, read_length+offset,
-                     (my_bool)(page_st == PAGE_TO_BE_READ));
+                     (bool)(page_st == PAGE_TO_BE_READ));
           /*
             A secondary request must now have the block assigned to the
             requested file block. It does not hurt to check it for
@@ -2314,10 +2314,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
 #endif
 
           /* Copy data from the cache buffer */
-          if (!(read_length & 511))
-            bmove512(buff, block->buffer+offset, read_length);
-          else
-            memcpy(buff, block->buffer+offset, (size_t) read_length);
+          memcpy(buff, block->buffer+offset, (size_t) read_length);
 
 #if !defined(SERIALIZED_READ_FROM_CACHE)
           keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2405,7 +2402,7 @@ int key_cache_insert(KEY_CACHE *keycache,
     uint read_length;
     uint offset;
     int page_st;
-    my_bool locked_and_incremented= false;
+    bool locked_and_incremented= false;
 
     /*
       When the keycache is once initialized, we use the cache_lock to
@@ -2517,10 +2514,7 @@ int key_cache_insert(KEY_CACHE *keycache,
 #endif
 
           /* Copy data from buff */
-          if (!(read_length & 511))
-            bmove512(block->buffer+offset, buff, read_length);
-          else
-            memcpy(block->buffer+offset, buff, (size_t) read_length);
+          memcpy(block->buffer+offset, buff, (size_t) read_length);
 
 #if !defined(SERIALIZED_READ_FROM_CACHE)
           keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2635,7 +2629,7 @@ int key_cache_write(KEY_CACHE *keycache,
                     uint block_length  __attribute__((unused)),
                     int dont_write)
 {
-  my_bool locked_and_incremented= false;
+  bool locked_and_incremented= false;
   int error=0;
 
   if (!dont_write)
@@ -2810,10 +2804,7 @@ int key_cache_write(KEY_CACHE *keycache,
 #if !defined(SERIALIZED_READ_FROM_CACHE)
         keycache_pthread_mutex_unlock(&keycache->cache_lock);
 #endif
-        if (!(read_length & 511))
-	  bmove512(block->buffer+offset, buff, read_length);
-        else
-          memcpy(block->buffer+offset, buff, (size_t) read_length);
+        memcpy(block->buffer+offset, buff, (size_t) read_length);
 
 #if !defined(SERIALIZED_READ_FROM_CACHE)
         keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -3807,7 +3798,7 @@ static void keycache_dump(KEY_CACHE *keycache)
       page= (KEYCACHE_PAGE *) thread->opt_info;
       fprintf(keycache_dump_file,
               "thread:%u, (file,filepos)=(%u,%lu)\n",
-              thread->id,(uint) page->file,(ulong) page->filepos);
+              thread->id,(uint) page->file,(uint32_t) page->filepos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }
@@ -3822,9 +3813,9 @@ static void keycache_dump(KEY_CACHE *keycache)
       thread=thread->next;
       hash_link= (HASH_LINK *) thread->opt_info;
       fprintf(keycache_dump_file,
-        "thread:%u hash_link:%u (file,filepos)=(%u,%lu)\n",
+        "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
         thread->id, (uint) HASH_LINK_NUMBER(hash_link),
-        (uint) hash_link->file,(ulong) hash_link->diskpos);
+        (uint) hash_link->file,(uint32_t) hash_link->diskpos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }

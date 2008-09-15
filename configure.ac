@@ -3,12 +3,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT
+AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(-Wall -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -23,47 +23,51 @@ SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
 # We take some made up examples
 #
 #  VERSION                  5.1.40sp1-alpha     5.0.34a
-#  MYSQL_NO_DASH_VERSION    5.1.40sp1           5.0.34a
-#  MYSQL_NUMERIC_VERSION    5.1.40              5.0.34
-#  MYSQL_BASE_VERSION       5.1                 5.0
-#  MYSQL_VERSION_ID         50140               50034
+#  DRIZZLE_NO_DASH_VERSION    5.1.40sp1           5.0.34a
+#  DRIZZLE_NUMERIC_VERSION    5.1.40              5.0.34
+#  DRIZZLE_BASE_VERSION       5.1                 5.0
+#  DRIZZLE_VERSION_ID         50140               50034
 #
-MYSQL_NO_DASH_VERSION=`echo $VERSION | sed -e "s|-.*$||"`
-MYSQL_NUMERIC_VERSION=`echo $MYSQL_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]*$||"`
-MYSQL_BASE_VERSION=`echo $MYSQL_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
-MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
+DRIZZLE_NO_DASH_VERSION=`echo $VERSION | sed -e "s|-.*$||"`
+DRIZZLE_NUMERIC_VERSION=`echo $DRIZZLE_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]*$||"`
+DRIZZLE_BASE_VERSION=`echo $DRIZZLE_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
+DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
 
 # The port should be constant for a LONG time
-MYSQL_TCP_PORT_DEFAULT=4427
+DRIZZLE_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
-sinclude(config/ac-macros/alloca.m4)
-sinclude(config/ac-macros/check_cpu.m4)
-sinclude(config/ac-macros/character_sets.m4)
-sinclude(config/ac-macros/compiler_flag.m4)
-sinclude(config/ac-macros/dtrace.m4)
-sinclude(config/ac-macros/plugins.m4)
-sinclude(config/ac-macros/large_file.m4)
-sinclude(config/ac-macros/misc.m4)
-sinclude(config/ac-macros/readline.m4)
-sinclude(config/ac-macros/ssl.m4)
-sinclude(config/ac-macros/pkg.m4)
-sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
+sinclude(m4/alloca.m4)
+sinclude(m4/check_cpu.m4)
+sinclude(m4/character_sets.m4)
+sinclude(m4/compiler_flag.m4)
+sinclude(m4/dtrace.m4)
+sinclude(m4/plugins.m4)
+sinclude(m4/large_file.m4)
+sinclude(m4/misc.m4)
+sinclude(m4/readline.m4)
+sinclude(m4/ssl.m4)
+sinclude(m4/pkg.m4)
+sinclude(m4/lib-link.m4)
+sinclude(m4/lib-prefix.m4)
+sinclude(m4/gettext.m4)
+sinclude(m4/progtest.m4)
+sinclude(m4/po.m4)
+sinclude(m4/nls.m4)
+sinclude(m4/iconv.m4)
+sinclude(m4/lib-ld.m4)
+sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
-# Remember to add a directory drizzled/share/LANGUAGE
-AVAILABLE_LANGUAGES="\
-czech danish dutch english estonian french german greek hungarian \
-italian japanese korean norwegian norwegian-ny polish portuguese \
-romanian russian serbian slovak spanish swedish ukrainian"
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.17)
 
-#####
-#####
+AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
-AC_SUBST(MYSQL_NO_DASH_VERSION)
-AC_SUBST(MYSQL_BASE_VERSION)
-AC_SUBST(MYSQL_VERSION_ID)
-AC_SUBST(MYSQL_PREVIOUS_BASE_VERSION)
+AC_SUBST(DRIZZLE_NO_DASH_VERSION)
+AC_SUBST(DRIZZLE_BASE_VERSION)
+AC_SUBST(DRIZZLE_VERSION_ID)
+AC_SUBST(DRIZZLE_PREVIOUS_BASE_VERSION)
 AC_SUBST(PROTOCOL_VERSION)
 AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
                    [mysql client protocol version])
@@ -172,8 +176,8 @@ AM_PROG_CC_C_O
 
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in
-  *netware*)
-CC_VERSION=`$CC -version | grep -i version`
+  *apple-darwin*)
+    AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
     ;;
   *)
 CC_VERSION=`$CC --version | sed 1q`
@@ -187,7 +191,7 @@ else
 CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
-MYSQL_CHECK_CXX_VERSION
+DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
 
@@ -252,8 +256,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      AM_CFLAGS="$CFLAGS -mno-fused-madd"
+      AM_CXXFLAGS="$CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -271,26 +275,51 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
 if test "$GCC" = "yes"
 then
-  # mysqld requires -fno-implicit-templates.
   # Disable exceptions as they seams to create problems with gcc and threads.
-  # mysqld doesn't use run-time-type-checking, so we disable it.
-  # We should use -Wno-invalid-offsetof flag to disable some warnings from gcc
-  # regarding offset() usage in C++ which are done in a safe manner in the
-  # server
-  CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
-  AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
-    [1], [Defined by configure. Use explicit template instantiation.])
+  # drizzled doesn't use run-time-type-checking, so we disable it.
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
 fi
 
-MYSQL_PROG_AR
+DRIZZLE_PROG_AR
 
-# libmysqlclient versioning when linked with GNU ld.
+# libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
-  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+#--------------------------------------------------------------------
+# Check for Google Proto Buffers
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([google/protobuf/message.h])
+if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
+fi
+
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS=""
+LIBS="-lprotobuf"
+
+AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+  AC_TRY_LINK([
+#include <google/protobuf/descriptor.pb.h>
+  ],[
+    google::protobuf::FileDescriptorProto testFdp;
+  ], ac_libprotobuf_works=yes, [
+        AC_ERROR([could not find Google's libprotobuf])
+  ])
+
+])
+
+PROTOBUF_LIBS="${LIBS}"
+AC_SUBST(PROTOBUF_LIBS)
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libevent
@@ -329,7 +358,7 @@ else
        LIBEVENT_CFLAGS="-I$withval/include"
        LIBEVENT_LIBS="-L$withval/lib -levent"
     else
-       AC_ERROR(event.h or libevent.a not found in $withval)
+       AC_MSG_ERROR([event.h or libevent.a not found in $withval])
     fi
 fi
 
@@ -423,7 +452,7 @@ AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
 #include <readline/readline.h>
 ]])
 
-MYSQL_CHECK_NEW_RL_INTERFACE
+DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 my_save_LIBS="$LIBS"
 LIBS=""
@@ -434,6 +463,7 @@ AC_CHECK_LIB(readline, rl_initialize, [],
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -562,6 +592,7 @@ else
       ;;
     *)
       AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
+      ;;
   esac
 fi
 AC_SUBST(FIND_PROC)
@@ -602,10 +633,10 @@ fi
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
       [Append value to the version string.])],
-    [ MYSQL_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
-    [ MYSQL_SERVER_SUFFIX= ]
+    [ DRIZZLE_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
+    [ DRIZZLE_SERVER_SUFFIX= ]
     )
-AC_SUBST(MYSQL_SERVER_SUFFIX)
+AC_SUBST(DRIZZLE_SERVER_SUFFIX)
 
 # Force use of a curses libs
 AC_ARG_WITH([named-curses-libs],
@@ -616,41 +647,19 @@ AC_ARG_WITH([named-curses-libs],
     [ with_named_curses=no ]
     )
 
-# compile with strings functions in assembler
-AC_ARG_ENABLE([assembler],
-    [AS_HELP_STRING([--enable-assembler],
-	    [Use assembler versions of some string functions if available.])],
-    [ ENABLE_ASSEMBLER=$enableval ],
-    [ ENABLE_ASSEMBLER=no ]
-    )
-
-AC_MSG_CHECKING(if we should use assembler functions)
-# For now we only support assembler on i386 and sparc systems
-AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS mystrings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
-AM_CONDITIONAL(ASSEMBLER_sparc32, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparc")
-AM_CONDITIONAL(ASSEMBLER_sparc64, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparcv9")
-AM_CONDITIONAL(ASSEMBLER, test "$ASSEMBLER_x86_TRUE" = "" -o "$ASSEMBLER_sparc32_TRUE" = "")
-
-if test "$ASSEMBLER_TRUE" = ""
-then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle services @<:@default=4427@:>@])],
-    [ MYSQL_TCP_PORT=$withval ],
-    [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
+    [ DRIZZLE_TCP_PORT=$withval ],
+    [ DRIZZLE_TCP_PORT=$DRIZZLE_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
-      # --with-tcp-port=<MYSQL_TCP_PORT_DEFAULT> which might in theory
+      # --with-tcp-port=<DRIZZLE_TCP_PORT_DEFAULT> which might in theory
       # happen if whole batch of servers was built from a script), set
       # the default to zero to indicate that; we don't lose information
       # that way, because 0 obviously indicates that we can get the
-      # default value from MYSQL_TCP_PORT. this seems really evil, but
-      # testing for MYSQL_TCP_PORT==MYSQL_TCP_PORT_DEFAULT would make a
-      # a port of MYSQL_TCP_PORT_DEFAULT magic even if the builder did not
+      # default value from DRIZZLE_TCP_PORT. this seems really evil, but
+      # testing for DRIZZLE_TCP_PORT==DRIZZLE_TCP_PORT_DEFAULT would make a
+      # a port of DRIZZLE_TCP_PORT_DEFAULT magic even if the builder did not
       # intend it to mean "use the default, in fact, look up a good default
       # from /etc/services if you can", but really, really meant 4427 when
       # they passed in 4427. When they pass in a specific value, let them
@@ -661,19 +670,19 @@ AC_ARG_WITH([tcp-port],
       # - if a port was set during build, use that as a default.
       #
       # - otherwise, try to look up a port in /etc/services; if that fails,
-      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 4427)
+      #   use DRIZZLE_TCP_PORT_DEFAULT (at the time of this writing 4427)
       #
-      # - allow the MYSQL_TCP_PORT environment variable to override that.
+      # - allow the DRIZZLE_TCP_PORT environment variable to override that.
       #
       # - allow command-line parameters to override all of the above.
       #
-      # the top-most MYSQL_TCP_PORT_DEFAULT is read from win/configure.js,
+      # the top-most DRIZZLE_TCP_PORT_DEFAULT is read from win/configure.js,
       # so don't mess with that.
-      MYSQL_TCP_PORT_DEFAULT=0 ]
+      DRIZZLE_TCP_PORT_DEFAULT=0 ]
     )
-AC_SUBST(MYSQL_TCP_PORT)
+AC_SUBST(DRIZZLE_TCP_PORT)
 # We might want to document the assigned port in the manual.
-AC_SUBST(MYSQL_TCP_PORT_DEFAULT)
+AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([mysqld-user],
@@ -701,7 +710,7 @@ else
   AC_MSG_RESULT([no])
 fi
 
-MYSQL_SYS_LARGEFILE
+DRIZZLE_SYS_LARGEFILE
 
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T
@@ -734,12 +743,12 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
 AC_CHECK_FUNCS(log2)
 
-AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
-AC_CHECK_FUNC(yp_get_default_domain, ,
-  AC_CHECK_LIB(nsl, yp_get_default_domain))
-AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
+AC_CHECK_FUNC(yp_get_default_domain, [],
+  [AC_CHECK_LIB(nsl, yp_get_default_domain)])
+AC_CHECK_FUNC(p2open, [], [AC_CHECK_LIB(gen, p2open)])
 # This may get things to compile even if bind-8 is installed
-AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
 # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
 AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 
@@ -747,12 +756,13 @@ AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 AC_CHECK_LIB(rt, aio_read)
 
 # For the sched_yield() function on Solaris
-AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield,
-[AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"]))
+AC_CHECK_FUNC(sched_yield, [],
+  [AC_CHECK_LIB(posix4, [sched_yield],
+    [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"])])
 
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
-  AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
+  AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
 AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
@@ -784,7 +794,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes"
 then
   SYMBOLS_CFLAGS="-ggdb3"
   DEBUG_OPTIMIZE_CC="-O0"
-  OPTIMIZE_CFLAGS="-O2"
+  OPTIMIZE_CFLAGS="-O3"
 else
   SYMBOLS_CFLAGS="-g"
   DEBUG_OPTIMIZE_CC=""
@@ -794,7 +804,7 @@ if test "$ac_cv_prog_cxx_g" = "yes"
 then
   SYMBOLS_CXXFLAGS="-ggdb3"
   DEBUG_OPTIMIZE_CXX="-O0"
-  OPTIMIZE_CXXFLAGS="-O2"
+  OPTIMIZE_CXXFLAGS="-O3"
 else
   SYMBOLS_CXXFLAGS="-g"
   DEBUG_OPTIMIZE_CXX=""
@@ -818,7 +828,7 @@ dnl TODO: Remove this define once we are using 2.61 across the board.
 # AC_HEADER_ASSERT
 # ----------------
 # Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
 [
   AC_MSG_CHECKING([whether to enable assertions])
   AC_ARG_ENABLE([assert],
@@ -826,7 +836,7 @@ ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
     [AC_MSG_RESULT([no])
      AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
     [AC_MSG_RESULT(yes)])
-]))
+])])
 
 AC_HEADER_ASSERT
 
@@ -862,6 +872,8 @@ then
 			[Define to 1 if you want to use fast mutexes])
 fi
 
+AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
+
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],
             [Comment about compilation environment. @<:@default=off@:>@])],
@@ -889,7 +901,6 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-MYSQL_NEEDS_MYSYS_NEW
 # AC_CHECK_SIZEOF return 0 when it does not find the size of a
 # type. We want a error instead.
 AC_CHECK_SIZEOF(char, 1)
@@ -925,7 +936,7 @@ dnl
 dnl check if time_t is unsigned
 dnl
 
-MYSQL_CHECK_TIME_T
+DRIZZLE_CHECK_TIME_T
 
 
 # do we need #pragma interface/#pragma implementation ?
@@ -943,25 +954,25 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 AC_C_BIGENDIAN
 #---START: Used in for client configure
 # Check base type of last arg to accept
-MYSQL_TYPE_ACCEPT
+DRIZZLE_TYPE_ACCEPT
 #---END:
 # Figure out what type of struct rlimit to use with setrlimit
-MYSQL_TYPE_STRUCT_RLIMIT
+DRIZZLE_TYPE_STRUCT_RLIMIT
 # Find where the stack goes
-MYSQL_STACK_DIRECTION
+DRIZZLE_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
-MYSQL_FUNC_ALLOCA
+DRIZZLE_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
 DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
-MYSQL_TZNAME
+DRIZZLE_TZNAME
 # Do the c++ compiler have a bool type
-MYSQL_CXX_BOOL
+DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
 AC_CHECK_TYPES([u_int32_t])
 
-MYSQL_PTHREAD_YIELD
+DRIZZLE_PTHREAD_YIELD
 
 
 dnl Checks for header files.
@@ -999,18 +1010,18 @@ paths.h semaphore.h)
 AC_CHECK_FUNCS(lstat putenv select setenv setlocale strcoll tcgetattr)
 
 AC_HEADER_STAT
-MYSQL_SIGNAL_CHECK
-MYSQL_CHECK_GETPW_FUNCS
-MYSQL_HAVE_TIOCGWINSZ
-MYSQL_HAVE_FIONREAD
-MYSQL_HAVE_TIOCSTAT
-MYSQL_STRUCT_DIRENT_D_INO
-MYSQL_STRUCT_DIRENT_D_NAMLEN
-MYSQL_TYPE_SIGHANDLER
-MYSQL_CHECK_MULTIBYTE
+DRIZZLE_SIGNAL_CHECK
+DRIZZLE_CHECK_GETPW_FUNCS
+DRIZZLE_HAVE_TIOCGWINSZ
+DRIZZLE_HAVE_FIONREAD
+DRIZZLE_HAVE_TIOCSTAT
+DRIZZLE_STRUCT_DIRENT_D_INO
+DRIZZLE_STRUCT_DIRENT_D_NAMLEN
+DRIZZLE_TYPE_SIGHANDLER
+DRIZZLE_CHECK_MULTIBYTE
 if test "$with_named_curses" = "no"
 then
-  MYSQL_CHECK_LIB_TERMCAP
+  DRIZZLE_CHECK_LIB_TERMCAP
 else
   TERMCAP_LIBS="$with_named_curses"
 fi
@@ -1046,7 +1057,7 @@ fi
 
 #AC_FUNC_MMAP
 AC_TYPE_SIGNAL
-MYSQL_TYPE_QSORT
+DRIZZLE_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
@@ -1056,6 +1067,9 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
+AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_REPLACE_FUNCS([stpcpy stpncpy])
+
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
@@ -1064,7 +1078,7 @@ AC_CHECK_FUNCS(bsearch \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \
   memmove \
-  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
+  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
@@ -1072,9 +1086,23 @@ AC_CHECK_FUNCS(bsearch \
   realpath rename rint rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
-  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk strstr \
-  strtol strtoll strtoul strtoull tell tempnam vidattr \
+  snprintf socket strcasecmp strerror strsignal strpbrk \
+  tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
+
+AC_LANG_PUSH(C++)
+# Test whether madvise() is declared in C++ code -- it is not on some
+# systems, such as Solaris
+AC_CHECK_DECLS([madvise], [], [], [AC_INCLUDES_DEFAULT[
+#if HAVE_SYS_MMAN_H
+#include <sys/types.h>
+#include <sys/mman.h>
+#endif
+]])
+AC_LANG_POP()
+
+
+AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
 # Check that isinf() is available in math.h and can be used in both C and C++
 # code
@@ -1114,13 +1142,15 @@ fi]
 )
 
 # Check definition of pthread_getspecific
-AC_CACHE_CHECK("args to pthread_getspecific", mysql_cv_getspecific_args,
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
+AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
 #define _REENTRANT
 #endif
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX],[mysql_cv_getspecific_args=other]))
+pthread_getspecific((pthread_key_t) NULL); ]])],
+    [mysql_cv_getspecific_args=POSIX],
+    [mysql_cv_getspecific_args=other])])
   if test "$mysql_cv_getspecific_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_GETSPECIFIC], [1],
@@ -1128,13 +1158,15 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
   fi
 
   # Check definition of pthread_mutex_init
-  AC_CACHE_CHECK("args to pthread_mutex_init", mysql_cv_mutex_init_args,
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+  AC_CACHE_CHECK([args to pthread_mutex_init], [mysql_cv_mutex_init_args],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ 
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
-  pthread_mutex_init(&mp,&attr); ]])],[mysql_cv_mutex_init_args=POSIX],[mysql_cv_mutex_init_args=other]))
+  pthread_mutex_init(&mp,&attr); ]])],
+      [mysql_cv_mutex_init_args=POSIX],
+      [mysql_cv_mutex_init_args=other])])
   if test "$mysql_cv_mutex_init_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_MUTEX_INIT], [1],
@@ -1144,27 +1176,35 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
 
 #---START: Used in for client configure
 # Check definition of readdir_r
-AC_CACHE_CHECK("args to readdir_r", mysql_cv_readdir_r,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
 #include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
-readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],[mysql_cv_readdir_r=POSIX],[mysql_cv_readdir_r=other]))
+readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],
+    [mysql_cv_readdir_r=POSIX],
+    [mysql_cv_readdir_r=other])])
 if test "$mysql_cv_readdir_r" = "POSIX"
 then
   AC_DEFINE([HAVE_READDIR_R], [1], [POSIX readdir_r])
 fi
 
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[#ifndef _AIX
+#include <signal.h>
+      ]], [[
+#ifndef _AIX
 sigset_t set;
 int sig;
 sigwait(&set,&sig);
-#endif]])],[mysql_cv_sigwait=POSIX],[mysql_cv_sigwait=other]))
+#endif
+      ]])],
+    [mysql_cv_sigwait=POSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "POSIX"
 then
   AC_DEFINE([HAVE_SIGWAIT], [1], [POSIX sigwait])
@@ -1174,13 +1214,19 @@ if test "$mysql_cv_sigwait" != "POSIX"
 then
 unset mysql_cv_sigwait
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[sigset_t set;
+#include <signal.h>
+      ]], [[
+sigset_t set;
 int sig;
-sigwait(&set);]])],[mysql_cv_sigwait=NONPOSIX],[mysql_cv_sigwait=other]))
+sigwait(&set);
+      ]])],
+    [mysql_cv_sigwait=NONPOSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "NONPOSIX"
 then
   AC_DEFINE([HAVE_NONPOSIX_SIGWAIT], [1], [sigwait with one argument])
@@ -1189,11 +1235,17 @@ fi
 #---END:
 
 # Check if pthread_attr_setscope() exists
-AC_CACHE_CHECK("for pthread_attr_setscope", mysql_cv_pthread_attr_setscope,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h>]], [[pthread_attr_t thr_attr;
-pthread_attr_setscope(&thr_attr,0);]])],[mysql_cv_pthread_attr_setscope=yes],[mysql_cv_pthread_attr_setscope=no]))
+#include <pthread.h>
+      ]], [[
+pthread_attr_t thr_attr;
+pthread_attr_setscope(&thr_attr,0);
+      ]])],
+    [mysql_cv_pthread_attr_setscope=yes],
+    [mysql_cv_pthread_attr_setscope=no])])
 if test "$mysql_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
@@ -1231,9 +1283,9 @@ fi
 # Check for requested features
 #--------------------------------------------------------------------
 
-MYSQL_CHECK_BIG_TABLES
-MYSQL_CHECK_MAX_INDEXES
-MYSQL_CHECK_VIO
+DRIZZLE_CHECK_BIG_TABLES
+DRIZZLE_CHECK_MAX_INDEXES
+DRIZZLE_CHECK_VIO
 
 #--------------------------------------------------------------------
 # Declare our plugin modules
@@ -1241,7 +1293,7 @@ MYSQL_CHECK_VIO
 # functions tested above
 #--------------------------------------------------------------------
 
-MYSQL_CONFIGURE_PLUGINS([none])
+DRIZZLE_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
@@ -1341,12 +1393,14 @@ then
   GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
-  CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
-  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
+  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_CXXFLAGS])
 
 # Some usefull subst
 AC_SUBST(CC)
@@ -1363,13 +1417,13 @@ case $SYSTEM_TYPE in
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
-AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
- vio/Makefile dnl
+AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+ mystrings/Makefile storage/Makefile dnl
+ vio/Makefile po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
- drizzled/share/Makefile dnl
+ drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
@@ -1380,6 +1434,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
-AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS'")
+AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT

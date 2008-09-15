@@ -19,8 +19,11 @@
 #include <mystrings/m_ctype.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
-#define get_next_element(to,pos,size) { memcpy((char*) to,pos,(size_t) size); \
-					pos+=size;}
+#define get_next_element(to,pos,size) \
+  do {                                \
+    memcpy(to, pos, size);            \
+    pos+=size;                        \
+  } while (0)
 
 
 #define disk_pos_assert(pos, end_pos) \
@@ -77,7 +80,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   lock_error=1;
   errpos=0;
   head_length=sizeof(share_buff.state.header);
-  memset((uchar*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
 
   my_realpath(name_buff, fn_format(org_name,name,"",MI_NAME_IEXT,
                                    MY_UNPACK_FILENAME),MYF(0));
@@ -85,7 +88,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   if (!(old_info=test_if_reopen(name_buff)))
   {
     share= &share_buff;
-    memset((uchar*) &share_buff, 0, sizeof(share_buff));
+    memset(&share_buff, 0, sizeof(share_buff));
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
@@ -107,8 +110,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       my_errno= HA_ERR_NOT_A_TABLE;
       goto err;
     }
-    if (memcmp((uchar*) share->state.header.file_version,
-	       (uchar*) myisam_file_magic, 4))
+    if (memcmp(share->state.header.file_version, myisam_file_magic, 4))
     {
       my_errno=HA_ERR_NOT_A_TABLE;
       goto err;
@@ -133,7 +135,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     /* Don't call realpath() if the name can't be a link */
     if (!strcmp(name_buff, org_name) ||
         my_readlink(index_name, org_name, MYF(0)) == -1)
-      (void) strmov(index_name, org_name);
+      (void) stpcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
@@ -242,17 +244,16 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       goto err;
     errpos=4;
     *share=share_buff;
-    memcpy((char*) share->state.rec_per_key_part,
-	   (char*) rec_per_key_part, sizeof(long)*key_parts);
-    memcpy((char*) share->state.key_root,
-	   (char*) key_root, sizeof(my_off_t)*keys);
-    memcpy((char*) share->state.key_del,
-	   (char*) key_del, (sizeof(my_off_t) *
-			     share->state.header.max_block_size_index));
-    strmov(share->unique_file_name, name_buff);
+    memcpy(share->state.rec_per_key_part, rec_per_key_part,
+           sizeof(long)*key_parts);
+    memcpy(share->state.key_root, key_root,
+           sizeof(my_off_t)*keys);
+    memcpy(share->state.key_del, key_del,
+           sizeof(my_off_t) * share->state.header.max_block_size_index);
+    stpcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
-    strmov(share->index_file_name,  index_name);
-    strmov(share->data_file_name,   data_name);
+    stpcpy(share->index_file_name,  index_name);
+    stpcpy(share->data_file_name,   data_name);
 
     share->blocksize=min(IO_SIZE,myisam_block_size);
     {
@@ -375,19 +376,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 					 share->blocksize * keys : 0));
     share->blocksize=min(IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
-    if (share->options & HA_OPTION_COMPRESS_RECORD)
-    {
-      share->data_file_type = COMPRESSED_RECORD;
-      share->options|= HA_OPTION_READ_ONLY_DATA;
-      info.s=share;
-      if (_mi_read_pack_info(&info,
-			     (bool)
-			     test(!(share->options &
-				    (HA_OPTION_PACK_RECORD |
-				     HA_OPTION_TEMP_COMPRESS_RECORD)))))
-	goto err;
-    }
-    else if (share->options & HA_OPTION_PACK_RECORD)
+    if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
     my_afree(disk_cache);
     mi_setup_functions(share);
@@ -458,7 +447,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  strmov(info.filename,name);
+  stpcpy(info.filename,name);
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -518,11 +507,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   myisam_open_list=list_add(myisam_open_list,&m_info->open_list);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (myisam_log_file >= 0)
-  {
-    intern_filename(name_buff,share->index_file_name);
-    _myisam_log(MI_LOG_OPEN, m_info, (uchar*) name_buff, strlen(name_buff));
-  }
   return(m_info);
 
 err:
@@ -611,18 +595,7 @@ uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 
 void mi_setup_functions(register MYISAM_SHARE *share)
 {
-  if (share->options & HA_OPTION_COMPRESS_RECORD)
-  {
-    share->read_record=_mi_read_pack_record;
-    share->read_rnd=_mi_read_rnd_pack_record;
-    if (!(share->options & HA_OPTION_TEMP_COMPRESS_RECORD))
-      share->calc_checksum=0;				/* No checksum */
-    else if (share->options & HA_OPTION_PACK_RECORD)
-      share->calc_checksum= mi_checksum;
-    else
-      share->calc_checksum= mi_static_checksum;
-  }
-  else if (share->options & HA_OPTION_PACK_RECORD)
+  if (share->options & HA_OPTION_PACK_RECORD)
   {
     share->read_record=_mi_read_dynamic_record;
     share->read_rnd=_mi_read_rnd_dynamic_record;
@@ -836,7 +809,7 @@ uchar *mi_state_info_read(uchar *ptr, MI_STATE_INFO *state)
 }
 
 
-uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, my_bool pRead)
+uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 {
   uchar	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 

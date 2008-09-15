@@ -22,12 +22,12 @@
 
 static const char field_separator=',';
 
-int find_type_or_exit(const char *x, TYPELIB *typelib, const char *option)
+int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
 {
   int res;
   const char **ptr;
 
-  if ((res= find_type((char *) x, typelib, 2)) <= 0)
+  if ((res= find_type(x, typelib, 2)) <= 0)
   {
     ptr= typelib->type_names;
     if (!*x)
@@ -83,8 +83,8 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
   {
     for (i=x ; 
     	*i && (!(full_name & 8) || *i != field_separator) &&
-        my_toupper(&my_charset_latin1,*i) == 
-    		my_toupper(&my_charset_latin1,*j) ; i++, j++) ;
+        my_toupper(&my_charset_utf8_general_ci,*i) == 
+    		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
     if (! *j)
     {
       while (*i == ' ')
@@ -99,7 +99,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
       findpos=pos;
     }
   }
-  if (find == 0 && (full_name & 4) && x[0] == '#' && strend(x)[-1] == '#' &&
+  if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
       (findpos=atoi(x+1)-1) >= 0 && (uint) findpos < typelib->count)
     find=1;
   else if (find == 0 || ! x[0])
@@ -111,7 +111,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) strmov(x,typelib->type_names[findpos]);
+    (void) stpcpy(x,typelib->type_names[findpos]);
   return(findpos+1);
 } /* find_type */
 
@@ -125,7 +125,7 @@ void make_type(register char * to, register uint nr,
   if (!nr)
     to[0]=0;
   else
-    (void) strmov(to,get_type(typelib,nr-1));
+    (void) stpcpy(to,get_type(typelib,nr-1));
   return;
 } /* make_type */
 

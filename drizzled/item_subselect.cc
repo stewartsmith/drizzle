@@ -23,13 +23,9 @@
     - add function from mysql_select that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/drizzled_error_messages.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {
@@ -234,7 +230,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
-      ORDER *order;
+      order_st *order;
 
       if (lex->where && (lex->where)->walk(processor, walk_subquery, argument))
         return 1;
@@ -247,12 +243,12 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
         if (item->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (ORDER*) lex->order_list.first ; order; order= order->next)
+      for (order= (order_st*) lex->order_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (ORDER*) lex->group_list.first ; order; order= order->next)
+      for (order= (order_st*) lex->group_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
@@ -499,9 +495,9 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     have_to_be_excluded= 1;
     if (thd->lex->describe)
     {
-      char warn_buff[MYSQL_ERRMSG_SIZE];
+      char warn_buff[DRIZZLE_ERRMSG_SIZE];
       sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
     substitution= select_lex->item_list.head();
@@ -1289,9 +1285,9 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creat
 	have_to_be_excluded= 1;
 	if (thd->lex->describe)
 	{
-	  char warn_buff[MYSQL_ERRMSG_SIZE];
+	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	  sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-	  push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+	  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		       ER_SELECT_REDUCED, warn_buff);
 	}
 	return(RES_REDUCE);
@@ -1617,7 +1613,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, Comp_creator *func)
   {
     /*
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
-      ORDER BY clause becomes meaningless thus we drop it here.
+      order_st BY clause becomes meaningless thus we drop it here.
     */
     SELECT_LEX *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
@@ -2009,15 +2005,15 @@ int subselect_single_select_engine::prepare()
   SELECT_LEX *save_select= thd->lex->current_select;
   thd->lex->current_select= select_lex;
   if (join->prepare(&select_lex->ref_pointer_array,
-		    (TABLE_LIST*) select_lex->table_list.first,
+		    (TableList*) select_lex->table_list.first,
 		    select_lex->with_wild,
 		    select_lex->where,
 		    select_lex->order_list.elements +
 		    select_lex->group_list.elements,
-		    (ORDER*) select_lex->order_list.first,
-		    (ORDER*) select_lex->group_list.first,
+		    (order_st*) select_lex->order_list.first,
+		    (order_st*) select_lex->group_list.first,
 		    select_lex->having,
-		    (ORDER*) 0, select_lex,
+		    (order_st*) 0, select_lex,
 		    select_lex->master_unit()))
     return 1;
   thd->lex->current_select= save_select;
@@ -2264,7 +2260,7 @@ int subselect_union_engine::exec()
 int subselect_uniquesubquery_engine::scan_table()
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   if (table->file->inited)
     table->file->ha_index_end();
@@ -2278,7 +2274,7 @@ int subselect_uniquesubquery_engine::scan_table()
     error=table->file->rnd_next(table->record[0]);
     if (error && error != HA_ERR_END_OF_FILE)
     {
-      error= report_error(table, error);
+      error= table->report_error(error);
       break;
     }
     /* No more rows */
@@ -2426,7 +2422,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 int subselect_uniquesubquery_engine::exec()
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
   empty_result_set= true;
   table->status= 0;
  
@@ -2454,7 +2450,7 @@ int subselect_uniquesubquery_engine::exec()
                                      HA_READ_KEY_EXACT);
   if (error &&
       error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-    error= report_error(table, error);
+    error= table->report_error(error);
   else
   {
     error= 0;
@@ -2528,7 +2524,7 @@ int subselect_indexsubquery_engine::exec()
 {
   int error;
   bool null_finding= 0;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   ((Item_in_subselect *) item)->value= 0;
   empty_result_set= true;
@@ -2567,7 +2563,7 @@ int subselect_indexsubquery_engine::exec()
                                      HA_READ_KEY_EXACT);
   if (error &&
       error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-    error= report_error(table, error);
+    error= table->report_error(error);
   else
   {
     for (;;)
@@ -2590,7 +2586,7 @@ int subselect_indexsubquery_engine::exec()
                                             tab->ref.key_length);
         if (error && error != HA_ERR_END_OF_FILE)
         {
-          error= report_error(table, error);
+          error= table->report_error(error);
           break;
         }
       }
@@ -2652,12 +2648,12 @@ void subselect_uniquesubquery_engine::exclude()
 }
 
 
-table_map subselect_engine::calc_const_tables(TABLE_LIST *table)
+table_map subselect_engine::calc_const_tables(TableList *table)
 {
   table_map map= 0;
   for (; table; table= table->next_leaf)
   {
-    TABLE *tbl= table->table;
+    Table *tbl= table->table;
     if (tbl && tbl->const_table)
       map|= tbl->map;
   }
@@ -2667,14 +2663,14 @@ table_map subselect_engine::calc_const_tables(TABLE_LIST *table)
 
 table_map subselect_single_select_engine::upper_select_const_tables()
 {
-  return calc_const_tables((TABLE_LIST *) select_lex->outer_select()->
+  return calc_const_tables((TableList *) select_lex->outer_select()->
 			   leaf_tables);
 }
 
 
 table_map subselect_union_engine::upper_select_const_tables()
 {
-  return calc_const_tables((TABLE_LIST *) unit->outer_select()->leaf_tables);
+  return calc_const_tables((TableList *) unit->outer_select()->leaf_tables);
 }
 
 
@@ -2926,7 +2922,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   /* The result sink where we will materialize the subquery result. */
   select_union  *tmp_result_sink;
   /* The table into which the subquery is materialized. */
-  TABLE         *tmp_table;
+  Table         *tmp_table;
   KEY           *tmp_key; /* The only index on the temporary table. */
   uint          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;
@@ -2964,7 +2960,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
       tmp_table->s->uniques ||
       tmp_table->key_info->key_length >= tmp_table->file->max_key_length() ||
       tmp_table->key_info->key_parts > tmp_table->file->max_key_parts());
-    free_tmp_table(thd, tmp_table);
+    tmp_table->free_tmp_table(thd);
     delete result;
     result= NULL;
     return(true);
@@ -3055,7 +3051,7 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
 {
   delete result;
   if (tab)
-    free_tmp_table(thd, tab->table);
+    tab->table->free_tmp_table(thd);
 }
 
 

@@ -16,23 +16,23 @@
 /*
   Atomic rename of table;  RENAME TABLE t1 to t2, tmp to t1 [,...]
 */
+#include <drizzled/server_includes.h>
+#include <drizzled/drizzled_error_messages.h>
 
-#include "mysql_priv.h"
-
-static TABLE_LIST *rename_tables(THD *thd, TABLE_LIST *table_list,
+static TableList *rename_tables(THD *thd, TableList *table_list,
 				 bool skip_error);
 
-static TABLE_LIST *reverse_table_list(TABLE_LIST *table_list);
+static TableList *reverse_table_list(TableList *table_list);
 
 /*
   Every second entry in the table_list is the original name and every
   second entry is the new name.
 */
 
-bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
+bool mysql_rename_tables(THD *thd, TableList *table_list, bool silent)
 {
   bool error= 1;
-  TABLE_LIST *ren_table= 0;
+  TableList *ren_table= 0;
 
   /*
     Avoid problems with a rename on a table that we have locked or
@@ -61,7 +61,7 @@ bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
   if ((ren_table=rename_tables(thd,table_list,0)))
   {
     /* Rename didn't succeed;  rename back the tables in reverse order */
-    TABLE_LIST *table;
+    TableList *table;
 
     /* Reverse the table list */
     table_list= reverse_table_list(table_list);
@@ -96,7 +96,7 @@ bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
   }
 
   pthread_mutex_lock(&LOCK_open);
-  unlock_table_names(thd, table_list, (TABLE_LIST*) 0);
+  unlock_table_names(thd, table_list, (TableList*) 0);
   pthread_mutex_unlock(&LOCK_open);
 
 err:
@@ -115,13 +115,13 @@ err:
   RETURN
     pointer to new (reversed) list
 */
-static TABLE_LIST *reverse_table_list(TABLE_LIST *table_list)
+static TableList *reverse_table_list(TableList *table_list)
 {
-  TABLE_LIST *prev= 0;
+  TableList *prev= 0;
 
   while (table_list)
   {
-    TABLE_LIST *next= table_list->next_local;
+    TableList *next= table_list->next_local;
     table_list->next_local= prev;
     prev= table_list;
     table_list= next;
@@ -151,7 +151,7 @@ static TABLE_LIST *reverse_table_list(TABLE_LIST *table_list)
 */
 
 bool
-do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
+do_rename(THD *thd, TableList *ren_table, char *new_db, char *new_table_name,
           char *new_table_alias, bool skip_error)
 {
   int rc= 1;
@@ -214,10 +214,10 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
     true      rename failed
 */
 
-static TABLE_LIST *
-rename_tables(THD *thd, TABLE_LIST *table_list, bool skip_error)
+static TableList *
+rename_tables(THD *thd, TableList *table_list, bool skip_error)
 {
-  TABLE_LIST *ren_table, *new_table;
+  TableList *ren_table, *new_table;
 
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {

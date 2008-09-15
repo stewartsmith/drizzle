@@ -23,8 +23,8 @@
     str is a (long) to record position where 0 is the first position.
 */
 
-#include "mysql_priv.h"
-#include <assert.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define FCOMP			17		/* Bytes for a packed field */
 
@@ -57,7 +57,7 @@ struct Pack_header_error_handler: public Internal_error_handler
 {
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
   bool is_handled;
   Pack_header_error_handler() :is_handled(false) {}
@@ -68,7 +68,7 @@ bool
 Pack_header_error_handler::
 handle_error(uint sql_errno,
              const char * /* message */,
-             MYSQL_ERROR::enum_warning_level /* level */,
+             DRIZZLE_ERROR::enum_warning_level /* level */,
              THD * /* thd */)
 {
   is_handled= (sql_errno == ER_TOO_MANY_FIELDS);
@@ -184,7 +184,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if (tmp_len < create_info->comment.length)
   {
     my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-             create_info->comment.str,"TABLE COMMENT",
+             create_info->comment.str,"Table COMMENT",
              (uint) TABLE_COMMENT_MAXLEN);
     my_free(screen_buff,MYF(0));
     return(1);
@@ -206,7 +206,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
       payload with a magic value to detect wrong buffer-sizes. We
       explicitly zero that segment again.
     */
-    memset((char*) forminfo+47 + forminfo[46], 0, 61 - forminfo[46]);
+    memset(forminfo+47 + forminfo[46], 0, 61 - forminfo[46]);
 #endif
   }
 
@@ -257,7 +257,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     goto err;
 
   {
-    memset((uchar*) buff, 0, 6);
+    memset(buff, 0, 6);
     if (my_write(file, (uchar*) buff, 6, MYF_RW))
       goto err;
   }
@@ -314,7 +314,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   my_free(screen_buff,MYF(0));
   my_free(keybuff, MYF(0));
 
-  if (opt_sync_frm && !(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
+  if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       (my_sync(file, MYF(MY_WME)) ||
        my_sync_dir_by_file(file_name, MYF(MY_WME))))
       goto err2;
@@ -468,7 +468,7 @@ static uchar *pack_screens(List<Create_field> &create_fields,
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) min(cfield->length,cols-(length+2));
+    cfield->sc_length=(uint8_t) min(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -522,7 +522,7 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
   *pos++=(uchar) NAMES_SEP_CHAR;
   for (key=keyinfo ; key != end ; key++)
   {
-    uchar *tmp=(uchar*) strmov((char*) pos,key->name);
+    uchar *tmp=(uchar*) stpcpy((char*) pos,key->name);
     *tmp++= (uchar) NAMES_SEP_CHAR;
     *tmp=0;
     pos=tmp;
@@ -534,7 +534,7 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
     if (key->flags & HA_USES_COMMENT)
     {
       int2store(pos, key->comment.length);
-      uchar *tmp= (uchar*)strnmov((char*) pos+2,key->comment.str,key->comment.length);
+      uchar *tmp= (uchar*)stpncpy((char*) pos+2,key->comment.str,key->comment.length);
       pos= tmp;
     }
   }
@@ -686,7 +686,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
   /* Hack to avoid bugs with small static rows in MySQL */
-  reclength=max(file->min_record_length(table_options),reclength);
+  reclength=max((ulong)file->min_record_length(table_options),reclength);
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
       n_length+int_length+com_length > 65535L || int_count > 255)
   {
@@ -694,7 +694,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
 
-  memset((char*)forminfo, 0, 288);
+  memset(forminfo, 0, 288);
   length=(info_length+create_fields.elements*FCOMP+288+n_length+int_length+
 	  com_length);
   int2store(forminfo,length);
@@ -795,7 +795,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   it.rewind();
   while ((field=it++))
   {
-    char *pos= strmov((char*) buff,field->field_name);
+    char *pos= stpcpy((char*) buff,field->field_name);
     *pos++=NAMES_SEP_CHAR;
     if (i == create_fields.elements-1)
       *pos++=0;
@@ -892,15 +892,15 @@ static bool make_empty_rec(THD *thd, File file,
   Field::utype type;
   uint null_count;
   uchar *buff,*null_pos;
-  TABLE table;
+  Table table;
   TABLE_SHARE share;
   Create_field *field;
   enum_check_fields old_count_cuted_fields= thd->count_cuted_fields;
   
 
   /* We need a table to generate columns for default values */
-  memset((char*) &table, 0, sizeof(table));
-  memset((char*) &share, 0, sizeof(share));
+  memset(&table, 0, sizeof(table));
+  memset(&share, 0, sizeof(share));
   table.s= &share;
 
   if (!(buff=(uchar*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))

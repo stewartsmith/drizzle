@@ -161,7 +161,7 @@ public:
   void signal_divide_by_null();
   friend class udf_handler;
   Field *tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg);
+  Field *tmp_table_field(Table *t_arg);
   Item *get_tmp_table_item(THD *thd);
 
   my_decimal *val_decimal(my_decimal *);
@@ -1214,7 +1214,7 @@ public:
   String *str_result(String *str);
   my_decimal *val_decimal_result(my_decimal *);
   bool update_hash(void *ptr, uint length, enum Item_result type,
-  		   CHARSET_INFO *cs, Derivation dv, bool unsigned_arg);
+  		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
   bool send(Protocol *protocol, String *str_arg);
   void make_field(Send_field *tmp_field);
   bool check(bool use_result_field);
@@ -1290,8 +1290,8 @@ public:
   /* fix_fields() binds variable name with its entry structure */
   bool fix_fields(THD *thd, Item **ref);
   virtual void print(String *str, enum_query_type query_type);
-  void set_null_value(CHARSET_INFO* cs);
-  void set_value(const char *str, uint length, CHARSET_INFO* cs);
+  void set_null_value(const CHARSET_INFO * const cs);
+  void set_value(const char *str, uint length, const CHARSET_INFO * const cs);
 };
 
 

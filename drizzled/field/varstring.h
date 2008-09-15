@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_VARSTRING
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
-#include <drizzled/mysql_priv.h>
-
 class Field_varstring :public Field_longstr {
 public:
   /*
@@ -36,7 +34,7 @@ public:
                   uint32_t len_arg, uint length_bytes_arg,
                   uchar *null_ptr_arg, uchar null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
-		  TABLE_SHARE *share, CHARSET_INFO *cs)
+		  TABLE_SHARE *share, const CHARSET_INFO * const cs)
     :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                    unireg_check_arg, field_name_arg, cs),
      length_bytes(length_bytes_arg)
@@ -45,7 +43,7 @@ public:
   }
   Field_varstring(uint32_t len_arg,bool maybe_null_arg,
                   const char *field_name_arg,
-                  TABLE_SHARE *share, CHARSET_INFO *cs)
+                  TABLE_SHARE *share, const CHARSET_INFO * const cs)
     :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),
      length_bytes(len_arg < 256 ? 1 :2)
@@ -65,17 +63,17 @@ public:
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
                                     length_bytes : 0);
   }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint max_length);
+  int cmp_max(const uchar *, const uchar *, uint32_t max_length);
   int cmp(const uchar *a,const uchar *b)
   {
-    return cmp_max(a, b, ~0L);
+    return cmp_max(a, b, UINT32_MAX);
   }
   void sort_string(uchar *buff,uint length);
   uint get_key_image(uchar *buff,uint length, imagetype type);
@@ -91,9 +89,9 @@ public:
   const uchar *unpack_key(uchar* to, const uchar *from,
                           uint max_length, bool low_byte_first);
   int pack_cmp(const uchar *a, const uchar *b, uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
-  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=~0L);
+               bool insert_or_update);
+  int pack_cmp(const uchar *b, uint key_length,bool insert_or_update);
+  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const uchar *,const uchar*);
   int key_cmp(const uchar *str, uint length);
   uint packed_col_length(const uchar *to, uint length);
@@ -104,12 +102,12 @@ public:
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
-  Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
-  Field *new_key_field(MEM_ROOT *root, struct st_table *new_table,
+  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
+  Field *new_key_field(MEM_ROOT *root, Table *new_table,
                        uchar *new_ptr, uchar *new_null_ptr,
                        uint new_null_bit);
   uint is_equal(Create_field *new_field);
-  void hash(ulong *nr, ulong *nr2);
+  void hash(uint32_t *nr, uint32_t *nr2);
 private:
   int do_save_field_metadata(uchar *first_byte);
 };

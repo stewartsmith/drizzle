@@ -23,12 +23,12 @@ typedef int32_t decimal_digit_t;
 
 typedef struct st_decimal_t {
   int    intg, frac, len;
-  my_bool sign;
+  bool sign;
   decimal_digit_t *buf;
 } decimal_t;
 
-int internal_str2dec(const char *from, decimal_t *to, char **end,
-                     my_bool fixed);
+int internal_str2dec(char *from, decimal_t *to, char **end,
+                     bool fixed);
 int decimal2string(decimal_t *from, char *to, int *to_len,
                    int fixed_precision, int fixed_decimals,
                    char filler);

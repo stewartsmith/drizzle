@@ -22,7 +22,9 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/fstring.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE 128
@@ -33,7 +35,7 @@
 ****************************************************************************/
 
 /* Copy a string and fill with space */
-int Field_string::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_string::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length;
   const char *well_formed_error_pos;
@@ -69,7 +71,7 @@ int Field_string::store(int64_t nr, bool unsigned_val)
 {
   char buff[64];
   int  l;
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs= charset();
   l= (cs->cset->int64_t10_to_str)(cs,buff,sizeof(buff),
                                    unsigned_val ? 10 : -10, nr);
   return Field_string::store(buff,(uint)l,cs);
@@ -80,7 +82,7 @@ double Field_string::val_real(void)
 {
   int error;
   char *end;
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   double result;
   
   result=  my_strntod(cs,(char*) ptr,field_length,&end,&error);
@@ -92,7 +94,7 @@ double Field_string::val_real(void)
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DOUBLE", tmp.c_ptr());
@@ -105,7 +107,7 @@ int64_t Field_string::val_int(void)
 {
   int error;
   char *end;
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   int64_t result;
 
   result= my_strntoll(cs, (char*) ptr,field_length,10,&end,&error);
@@ -117,7 +119,7 @@ int64_t Field_string::val_int(void)
     char buf[LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "INTEGER", tmp.c_ptr());
@@ -132,13 +134,10 @@ String *Field_string::val_str(String *val_buffer __attribute__((unused)),
   /* See the comment for Field_long::store(long long) */
   assert(table->in_use == current_thd);
   uint length;
-  if (table->in_use->variables.sql_mode &
-      MODE_PAD_CHAR_TO_FULL_LENGTH)
-    length= my_charpos(field_charset, ptr, ptr + field_length, field_length);
-  else
-    length= field_charset->cset->lengthsp(field_charset, (const char*) ptr,
-                                          field_length);
+
+  length= field_charset->cset->lengthsp(field_charset, (const char*) ptr, field_length);
   val_ptr->set((const char*) ptr, length, field_charset);
+
   return val_ptr;
 }
 
@@ -150,10 +149,10 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
   if (!table->in_use->no_errors && err)
   {
     char buf[DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE];
-    CHARSET_INFO *cs= charset();
+    const CHARSET_INFO * const cs= charset();
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DECIMAL", tmp.c_ptr());
@@ -198,8 +197,8 @@ void Field_string::sort_string(uchar *to,uint length)
 void Field_string::sql_type(String &res) const
 {
   THD *thd= table->in_use;
-  CHARSET_INFO *cs=res.charset();
-  ulong length;
+  const CHARSET_INFO * const cs= res.charset();
+  uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
@@ -313,7 +312,7 @@ int Field_string::do_save_field_metadata(uchar *metadata_ptr)
 */
 
 int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
-                           my_bool insert_or_update)
+                           bool insert_or_update)
 {
   uint a_length, b_length;
   if (length > 255)
@@ -351,7 +350,7 @@ int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
 */
 
 int Field_string::pack_cmp(const uchar *key, uint length,
-                           my_bool insert_or_update)
+                           bool insert_or_update)
 {
   uint row_length, local_key_length;
   uchar *end;
@@ -405,8 +404,7 @@ uint Field_string::get_key_image(uchar *buff,
 }
 
 
-Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
-                               bool keep_type)
+Field *Field_string::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field *field;
   field= Field::new_field(root, new_table, keep_type);

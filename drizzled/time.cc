@@ -16,7 +16,8 @@
 
 /* Functions to handle date and time */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/drizzled_error_messages.h>
 
 
 	/* Some functions to calculate dates */
@@ -229,7 +230,7 @@ str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NullS);
   return ts_type;
 }
@@ -283,7 +284,7 @@ str_to_time_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time)
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, DRIZZLE_TIMESTAMP_TIME, NullS);
   return ret_val;
 }
@@ -442,9 +443,9 @@ bool parse_date_time_format(timestamp_type format_type,
       allow_separator= 0;			// Don't allow two separators
       separators++;
       /* Store in separator_map which parts are punct characters */
-      if (my_ispunct(&my_charset_latin1, *ptr))
+      if (my_ispunct(&my_charset_utf8_general_ci, *ptr))
 	separator_map|= (ulong) 1 << (offset-1);
-      else if (!my_isspace(&my_charset_latin1, *ptr))
+      else if (!my_isspace(&my_charset_utf8_general_ci, *ptr))
 	return 1;
     }
   }
@@ -625,11 +626,11 @@ DATE_TIME_FORMAT *date_time_format_copy(THD *thd, DATE_TIME_FORMAT *format)
   {
     /* Put format string after current pos */
     new_format->format.str= (char*) (new_format+1);
-    memcpy((char*) new_format->positions, (char*) format->positions,
+    memcpy(new_format->positions, format->positions,
 	   sizeof(format->positions));
     new_format->time_separator= format->time_separator;
     /* We make the string null terminated for easy printf in SHOW VARIABLES */
-    memcpy((char*) new_format->format.str, format->format.str,
+    memcpy(new_format->format.str, format->format.str,
 	   format->format.length);
     new_format->format.str[format->format.length]= 0;
     new_format->format.length= format->format.length;
@@ -712,14 +713,14 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
+void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint str_length, timestamp_type time_type,
                                   const char *field_name)
 {
-  char warn_buff[MYSQL_ERRMSG_SIZE];
+  char warn_buff[DRIZZLE_ERRMSG_SIZE];
   const char *type_str;
-  CHARSET_INFO *cs= &my_charset_latin1;
+  CHARSET_INFO *cs= &my_charset_utf8_general_ci;
   char buff[128];
   String str(buff,(uint32_t) sizeof(buff), system_charset_info);
   str.copy(str_val, str_length, system_charset_info);
@@ -859,7 +860,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   return 0;					// Ok
 
 invalid_date:
-  push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_DATETIME_FUNCTION_OVERFLOW,
                       ER(ER_DATETIME_FUNCTION_OVERFLOW),
                       "datetime");

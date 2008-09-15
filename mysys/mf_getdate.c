@@ -67,14 +67,14 @@ void get_date(register char * to, int flag, time_t date)
 	     start_time->tm_mon+1,
 	     start_time->tm_mday);
    if (flag & GETDATE_DATE_TIME)
-     sprintf(strend(to),
+     sprintf(strchr(to, '\0'),
 	     ((flag & GETDATE_FIXEDLENGTH) ?
 	      " %02d:%02d:%02d" : " %2d:%02d:%02d"),
 	     start_time->tm_hour,
 	     start_time->tm_min,
 	     start_time->tm_sec);
    else if (flag & GETDATE_HHMMSSTIME)
-     sprintf(strend(to),"%02d%02d%02d",
+     sprintf(strchr(to, '\0'),"%02d%02d%02d",
 	     start_time->tm_hour,
 	     start_time->tm_min,
 	     start_time->tm_sec);

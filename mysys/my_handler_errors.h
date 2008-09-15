@@ -1,3 +1,4 @@
+#include <libdrizzle/gettext.h>
 
 /*
   Errors a handler can give you
@@ -6,126 +7,126 @@
 static const char *handler_error_messages[]=
 {
   /* HA_ERR_KEY_NOT_FOUND */
-  "Didn't find key on read or update",
+  N_("Didn't find key on read or update"),
   /* HA_ERR_FOUND_DUPP_KEY */
-  "Duplicate key on write or update",
+  N_("Duplicate key on write or update"),
   /* HA_ERR_INTERNAL_ERROR */
-  "Internal (unspecified) error in handler",
+  N_("Internal (unspecified) error in handler"),
   /* HA_ERR_RECORD_CHANGED */
-  "Someone has changed the row since it was read (while the table was locked to prevent it)",
+  N_("Someone has changed the row since it was read (while the table was locked to prevent it)"),
   /* HA_ERR_WRONG_INDEX */
-  "Wrong index given to function",
+  N_("Wrong index given to function"),
   /* empty */
-  "Undefined handler error 125",
+  N_("Undefined handler error 125"),
   /* HA_ERR_CRASHED */
-  "Index file is crashed",
+  N_("Index file is crashed"),
   /* HA_ERR_WRONG_IN_RECORD */
-  "Record file is crashed",
+  N_("Record file is crashed"),
   /* HA_ERR_OUT_OF_MEM */
-  "Out of memory in engine",
+  N_("Out of memory in engine"),
   /* empty */
-  "Undefined handler error 129",
+  N_("Undefined handler error 129"),
   /* HA_ERR_NOT_A_TABLE */
-  "Incorrect file format",
+  N_("Incorrect file format"),
   /* HA_ERR_WRONG_COMMAND */
-  "Command not supported by database",
+  N_("Command not supported by database"),
   /* HA_ERR_OLD_FILE */
-  "Old database file",
+  N_("Old database file"),
   /* HA_ERR_NO_ACTIVE_RECORD */
-  "No record read before update",
+  N_("No record read before update"),
   /* HA_ERR_RECORD_DELETED */
-  "Record was already deleted (or record file crashed)",
+  N_("Record was already deleted (or record file crashed)"),
   /* HA_ERR_RECORD_FILE_FULL */
-  "No more room in record file",
+  N_("No more room in record file"),
   /* HA_ERR_INDEX_FILE_FULL */
-  "No more room in index file",
+  N_("No more room in index file"),
   /* HA_ERR_END_OF_FILE */
-  "No more records (read after end of file)",
+  N_("No more records (read after end of file)"),
   /* HA_ERR_UNSUPPORTED */
-  "Unsupported extension used for table",
+  N_("Unsupported extension used for table"),
   /* HA_ERR_TO_BIG_ROW */
-  "Too big row",
+  N_("Too big row"),
   /* HA_WRONG_CREATE_OPTION */
-  "Wrong create options",
+  N_("Wrong create options"),
   /* HA_ERR_FOUND_DUPP_UNIQUE */
-  "Duplicate unique key or constraint on write or update",
+  N_("Duplicate unique key or constraint on write or update"),
   /* HA_ERR_UNKNOWN_CHARSET */
-  "Unknown character set used in table",
+  N_("Unknown character set used in table"),
   /* HA_ERR_WRONG_MRG_TABLE_DEF */
-  "Conflicting table definitions in sub-tables of MERGE table",
+  N_("Conflicting table definitions in sub-tables of MERGE table"),
   /* HA_ERR_CRASHED_ON_REPAIR */
-  "Table is crashed and last repair failed",
+  N_("Table is crashed and last repair failed"),
   /* HA_ERR_CRASHED_ON_USAGE */
-  "Table was marked as crashed and should be repaired",
+  N_("Table was marked as crashed and should be repaired"),
   /* HA_ERR_LOCK_WAIT_TIMEOUT */
-  "Lock timed out; Retry transaction",
+  N_("Lock timed out; Retry transaction"),
   /* HA_ERR_LOCK_TABLE_FULL */
-  "Lock table is full;  Restart program with a larger locktable",
+  N_("Lock table is full;  Restart program with a larger locktable"),
   /* HA_ERR_READ_ONLY_TRANSACTION */
-  "Updates are not allowed under a read only transactions",
+  N_("Updates are not allowed under a read only transactions"),
   /* HA_ERR_LOCK_DEADLOCK */
-  "Lock deadlock; Retry transaction",
+  N_("Lock deadlock; Retry transaction"),
   /* HA_ERR_CANNOT_ADD_FOREIGN */
-  "Foreign key constraint is incorrectly formed",
+  N_("Foreign key constraint is incorrectly formed"),
   /* HA_ERR_NO_REFERENCED_ROW */
-  "Cannot add a child row",
+  N_("Cannot add a child row"),
   /* HA_ERR_ROW_IS_REFERENCED */
-  "Cannot delete a parent row",
+  N_("Cannot delete a parent row"),
   /* HA_ERR_NO_SAVEPOINT */
-  "No savepoint with that name",
+  N_("No savepoint with that name"),
   /* HA_ERR_NON_UNIQUE_BLOCK_SIZE */
-  "Non unique key block size",
+  N_("Non unique key block size"),
   /* HA_ERR_NO_SUCH_TABLE */
-  "The table does not exist in engine",
+  N_("The table does not exist in engine"),
   /* HA_ERR_TABLE_EXIST */
-  "The table already existed in storage engine",
+  N_("The table already existed in storage engine"),
   /* HA_ERR_NO_CONNECTION */
-  "Could not connect to storage engine",
+  N_("Could not connect to storage engine"),
   /* HA_ERR_NULL_IN_SPATIAL */
-  "Unexpected null pointer found when using spatial index",
+  N_("Unexpected null pointer found when using spatial index"),
   /* HA_ERR_TABLE_DEF_CHANGED */
-  "The table changed in storage engine",
+  N_("The table changed in storage engine"),
   /* HA_ERR_NO_PARTITION_FOUND */
-  "There's no partition in table for the given value",
+  N_("There's no partition in table for the given value"),
   /* HA_ERR_RBR_LOGGING_FAILED */
-  "Row-based binlogging of row failed",
+  N_("Row-based binlogging of row failed"),
   /* HA_ERR_DROP_INDEX_FK */
-  "Index needed in foreign key constraint",
+  N_("Index needed in foreign key constraint"),
   /* HA_ERR_FOREIGN_DUPLICATE_KEY */
-  "Upholding foreign key constraints would lead to a duplicate key error in "
+  N_("Upholding foreign key constraints would lead to a duplicate key error"),
   /* HA_ERR_TABLE_NEEDS_UPGRADE */
-  "Table needs to be upgraded before it can be used",
+  N_("Table needs to be upgraded before it can be used"),
   /* HA_ERR_TABLE_READONLY */
-  "Table is read only",
+  N_("Table is read only"),
   /* HA_ERR_AUTOINC_READ_FAILED */
-  "Failed to get next auto increment value",
+  N_("Failed to get next auto increment value"),
   /* HA_ERR_AUTOINC_ERANGE */
-  "Failed to set row auto increment value",
+  N_("Failed to set row auto increment value"),
   /* HA_ERR_GENERIC */
-  "Unknown (generic) error from engine",
+  N_("Unknown (generic) error from engine"),
   /* HA_ERR_RECORD_IS_THE_SAME */
-  "Record is the same",
+  N_("Record is the same"),
   /* HA_ERR_LOGGING_IMPOSSIBLE */
-  "It is not possible to log this statement",
+  N_("It is not possible to log this statement"),
   /* HA_ERR_TABLESPACE_EXIST */
-  "Tablespace exists",
+  N_("Tablespace exists"),
   /* HA_ERR_CORRUPT_EVENT */
-  "The event was corrupt, leading to illegal data being read",
+  N_("The event was corrupt, leading to illegal data being read"),
   /* HA_ERR_NEW_FILE */
-  "The table is of a new format not supported by this version",
+  N_("The table is of a new format not supported by this version"),
   /* HA_ERR_ROWS_EVENT_APPLY */
-  "The event could not be processed no other hanlder error happened",
+  N_("The event could not be processed no other hanlder error happened"),
   /* HA_ERR_INITIALIZATION */
-  "Got a fatal error during initialzaction of handler",
+  N_("Got a fatal error during initialzaction of handler"),
   /* HA_ERR_FILE_TOO_SHORT */
-  "File to short; Expected more data in file",
+  N_("File to short; Expected more data in file"),
   /* HA_ERR_WRONG_CRC */
-  "Read page with wrong checksum",
+  N_("Read page with wrong checksum"),
   /* HA_ERR_LOCK_OR_ACTIVE_TRANSACTION */
-  "Lock or active transaction", /* TODO: get a better message */
+  N_("Lock or active transaction"), /* TODO: get a better message */
   /* HA_ERR_NO_SUCH_TABLESPACE */
-  "No such table space", /* TODO: get a better message */
+  N_("No such table space"), /* TODO: get a better message */
   /* HA_ERR_TABLESPACE_NOT_EMPTY */
-  "Tablespace not empty" /* TODO: get a better message */
+  N_("Tablespace not empty") /* TODO: get a better message */
 };
 

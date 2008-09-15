@@ -210,7 +210,7 @@ dtype_get_pad_char(
 	case DATA_FIXBINARY:
 	case DATA_BINARY:
 		if (UNIV_UNLIKELY(dtype_get_charset_coll(prtype)
-				  == DATA_MYSQL_BINARY_CHARSET_COLL)) {
+				  == DATA_DRIZZLE_BINARY_CHARSET_COLL)) {
 			/* Starting from 5.0.18, do not pad
 			VARBINARY or BINARY columns. */
 			return(ULINT_UNDEFINED);
@@ -377,7 +377,7 @@ dtype_get_fixed_size_low(
 	switch (mtype) {
 	case DATA_SYS:
 #ifdef UNIV_DEBUG
-		switch (prtype & DATA_MYSQL_TYPE_MASK) {
+		switch (prtype & DATA_DRIZZLE_TYPE_MASK) {
 		case DATA_ROW_ID:
 			ut_ad(len == DATA_ROW_ID_LEN);
 			break;
@@ -470,7 +470,7 @@ dtype_get_min_size_low(
 	switch (mtype) {
 	case DATA_SYS:
 #ifdef UNIV_DEBUG
-		switch (prtype & DATA_MYSQL_TYPE_MASK) {
+		switch (prtype & DATA_DRIZZLE_TYPE_MASK) {
 		case DATA_ROW_ID:
 			ut_ad(len == DATA_ROW_ID_LEN);
 			break;

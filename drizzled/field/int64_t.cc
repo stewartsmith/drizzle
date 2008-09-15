@@ -22,13 +22,14 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
 ****************************************************************************/
 
-int Field_int64_t::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_int64_t::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int error= 0;
   char *end;
@@ -37,7 +38,7 @@ int Field_int64_t::store(const char *from,uint len,CHARSET_INFO *cs)
   tmp= cs->cset->strntoull10rnd(cs,from,len,unsigned_flag,&end,&error);
   if (error == MY_ERRNO_ERANGE)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
   else if (table->in_use->count_cuted_fields && 
@@ -94,7 +95,7 @@ int Field_int64_t::store(double nr)
       res=(int64_t) nr;
   }
   if (error)
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -121,7 +122,7 @@ int Field_int64_t::store(int64_t nr, bool unsigned_val)
     if (unsigned_flag != unsigned_val)
     {
       nr= unsigned_flag ? (uint64_t) 0 : (uint64_t) INT64_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
   }
@@ -175,7 +176,7 @@ int64_t Field_int64_t::val_int(void)
 String *Field_int64_t::val_str(String *val_buffer,
 				String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -260,7 +261,7 @@ void Field_int64_t::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_int64_t::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
   add_unsigned(res);
 }

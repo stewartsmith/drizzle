@@ -250,7 +250,7 @@ bool my_thread_init(void)
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",
-          (ulong) pthread_self());
+          (uint32_t) pthread_self());
 #endif  
 
   if (pthread_getspecific(THR_KEY_mysys))

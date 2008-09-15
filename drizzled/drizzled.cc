@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
@@ -25,6 +25,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #include <storage/myisam/ha_myisam.h>
 
@@ -38,8 +39,9 @@
 
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
+#include <locale.h>
 
-#define mysqld_charset &my_charset_latin1
+#define mysqld_charset &my_charset_utf8_general_ci
 
 #ifdef HAVE_purify
 #define IF_PURIFY(A,B) (A)
@@ -48,7 +50,7 @@
 #endif
 
 #if SIZEOF_CHARP == 4
-#define MAX_MEM_TABLE_SIZE ~(ulong) 0
+#define MAX_MEM_TABLE_SIZE ~(uint32_t) 0
 #else
 #define MAX_MEM_TABLE_SIZE ~(uint64_t) 0
 #endif
@@ -93,7 +95,7 @@ extern "C" {					// Because of SCO 3.2V4.2
 #endif
 
 #define SIGNAL_FMT "signal %d"
-  
+
 
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
@@ -142,9 +144,11 @@ inline void setup_fpu()
 
 } /* cplusplus */
 
-#define MYSQL_KILL_SIGNAL SIGTERM
+#define DRIZZLE_KILL_SIGNAL SIGTERM
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
+
+#include <libdrizzle/gettext.h>
 
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
@@ -198,7 +202,7 @@ const char *my_localhost= "localhost";
 /*
   Used with --help for detailed option
 */
-static bool opt_help= 0, opt_verbose= 0;
+static bool opt_help= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -210,7 +214,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 const char *log_output_names[] = { "NONE", "FILE", NullS};
 static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
-                             log_output_names, 
+                             log_output_names,
                              (unsigned int *) log_output_names_len};
 
 /* static variables */
@@ -219,20 +223,19 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
-static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
-static ulong killed_threads, thread_created;
-static ulong max_used_connections;
-static volatile ulong cached_thread_count= 0;
+static uint32_t killed_threads, thread_created;
+static uint32_t max_used_connections;
+static volatile uint32_t cached_thread_count= 0;
 static char *mysqld_user, *mysqld_chroot, *log_error_file_ptr;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
 static char *my_bind_addr_str;
-static char *default_collation_name; 
+static char *default_collation_name;
 static char *default_storage_engine_str;
-static char compiled_default_collation_name[]= MYSQL_DEFAULT_COLLATION_NAME;
+static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
 static double long_query_time;
 
@@ -241,11 +244,11 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log; 
+bool opt_log;
 bool opt_slow_log;
 ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
-bool opt_error_log= IF_WIN(1,0);
+bool opt_error_log= 0;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
@@ -274,7 +277,6 @@ handlerton *myisam_hton;
 bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
-bool opt_sync_frm;
 bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
 bool opt_log_slow_admin_statements= 0;
@@ -293,7 +295,7 @@ const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NullS};
 TYPELIB binlog_format_typelib=
   { array_elements(binlog_format_names) - 1, "",
     binlog_format_names, NULL };
-ulong opt_binlog_format_id= (ulong) BINLOG_FORMAT_UNSPEC;
+uint32_t opt_binlog_format_id= (uint32_t) BINLOG_FORMAT_UNSPEC;
 const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
@@ -308,23 +310,33 @@ uint64_t thd_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
-ulong query_buff_size, slow_launch_time, slave_open_temp_tables;
-ulong open_files_limit, max_binlog_size, max_relay_log_size;
-ulong slave_net_timeout, slave_trans_retries;
+ulong slow_launch_time, slave_open_temp_tables;
+ulong open_files_limit;
+ulong max_binlog_size;
+ulong max_relay_log_size;
+ulong slave_net_timeout;
+ulong slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-ulong thread_cache_size=0, thread_pool_size= 0;
-ulong binlog_cache_size=0, max_binlog_cache_size=0;
-ulong refresh_version;  /* Increments on each reload */
+ulong thread_cache_size= 0;
+ulong thread_pool_size= 0;
+ulong binlog_cache_size= 0;
+ulong max_binlog_cache_size= 0;
+uint32_t refresh_version;  /* Increments on each reload */
 query_id_t global_query_id;
-ulong aborted_threads, aborted_connects;
-ulong specialflag=0;
-ulong binlog_cache_use= 0, binlog_cache_disk_use= 0;
-ulong max_connections, max_connect_errors;
+ulong aborted_threads;
+ulong aborted_connects;
+ulong specialflag= 0;
+ulong binlog_cache_use= 0;
+ulong binlog_cache_disk_use= 0;
+ulong max_connections;
+ulong max_connect_errors;
 uint  max_user_connections= 0;
-ulong thread_id=1L,current_pid;
-ulong slow_launch_threads = 0, sync_binlog_period;
+ulong thread_id=1L;
+ulong current_pid;
+ulong slow_launch_threads = 0;
+ulong sync_binlog_period;
 ulong expire_logs_days = 0;
 ulong rpl_recovery_rank=0;
 const char *log_output_str= "FILE";
@@ -382,7 +394,6 @@ uint mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
-const char **errmesg;			/**< Error messages */
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -415,9 +426,9 @@ struct system_status_var global_status_var;
 MY_TMPDIR mysql_tmpdir_list;
 MY_BITMAP temp_pool;
 
-CHARSET_INFO *system_charset_info, *files_charset_info ;
-CHARSET_INFO *national_charset_info, *table_alias_charset;
-CHARSET_INFO *character_set_filesystem;
+const CHARSET_INFO *system_charset_info, *files_charset_info ;
+const CHARSET_INFO *national_charset_info, *table_alias_charset;
+const CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
@@ -429,7 +440,7 @@ SHOW_COMP_OPTION have_compress;
 pthread_key(MEM_ROOT**,THR_MALLOC);
 pthread_key(THD*, THR_THD);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
-		LOCK_mapped_file, LOCK_status, LOCK_global_read_lock,
+		LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
 	        LOCK_global_system_variables,
 		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
@@ -443,7 +454,7 @@ pthread_attr_t connection_attrib;
 pthread_cond_t  COND_server_started;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
-uint report_port= MYSQL_PORT;
+uint report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
 char *relay_log_info_file, *report_user, *report_password, *report_host;
@@ -456,9 +467,8 @@ static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static bool opt_myisam_log;
 static int cleanup_done;
-static ulong opt_specialflag, opt_myisam_block_size;
+static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *mysql_home_ptr, *pidfile_name_ptr;
@@ -497,8 +507,8 @@ static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
 pthread_handler_t handle_slave(void *arg);
-static ulong find_bit_type(const char *x, TYPELIB *bit_lib);
-static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
+static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
+static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
 static void clean_up(bool print_message);
 
@@ -546,7 +556,7 @@ static void close_connections(void)
     }
 #ifdef EXTRA_DEBUG
     if (error != 0 && !count++)
-      sql_print_error("Got error %d from pthread_cond_timedwait",error);
+      sql_print_error(_("Got error %d from pthread_cond_timedwait"),error);
 #endif
     close_server_sock();
   }
@@ -556,14 +566,14 @@ static void close_connections(void)
   /* Abort listening to new connections */
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
-      if (fds[x].fd != INVALID_SOCKET)
+      if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) closesocket(fds[x].fd);
-        fds[x].fd= INVALID_SOCKET;
+        (void) close(fds[x].fd);
+        fds[x].fd= -1;
       }
     }
   }
@@ -650,14 +660,14 @@ static void close_server_sock()
 #ifdef HAVE_CLOSE_SERVER_SOCK
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
-      if (fds[x].fd != INVALID_SOCKET)
+      if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) closesocket(fds[x].fd);
-        fds[x].fd= INVALID_SOCKET;
+        (void) close(fds[x].fd);
+        fds[x].fd= -1;
       }
     }
   }
@@ -674,9 +684,9 @@ void kill_mysql(void)
 #endif
 
 #if defined(HAVE_PTHREAD_KILL)
-  pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
+  pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
 #elif !defined(SIGNALS_DONT_BREAK_READ)
-  kill(current_pid, MYSQL_KILL_SIGNAL);
+  kill(current_pid, DRIZZLE_KILL_SIGNAL);
 #endif
   shutdown_in_progress=1;			// Safety if kill didn't work
 #ifdef SIGNALS_DONT_BREAK_READ
@@ -686,7 +696,7 @@ void kill_mysql(void)
     abort_loop=1;
     if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) 0))
-      sql_print_error("Can't create thread to kill server");
+      sql_print_error(_("Can't create thread to kill server"));
   }
 #endif
   return;;
@@ -714,13 +724,13 @@ static void *kill_server(void *sig_ptr)
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
-  if (sig == MYSQL_KILL_SIGNAL || sig == 0)
-    sql_print_information(ER(ER_NORMAL_SHUTDOWN),my_progname);
+  if (sig == DRIZZLE_KILL_SIGNAL || sig == 0)
+    sql_print_information(_(ER(ER_NORMAL_SHUTDOWN)),my_progname);
   else
-    sql_print_error(ER(ER_GOT_SIGNAL),my_progname,sig); /* purecov: inspected */
-  
+    sql_print_error(_(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
+
   close_connections();
-  if (sig != MYSQL_KILL_SIGNAL &&
+  if (sig != DRIZZLE_KILL_SIGNAL &&
       sig != 0)
     unireg_abort(1);				/* purecov: inspected */
   else
@@ -753,7 +763,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 extern "C" sig_handler print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning("Got signal %d from thread %ld", sig,my_thread_id());
+    sql_print_warning(_("Got signal %d from thread %ld"), sig,my_thread_id());
 #ifdef DONT_REMEMBER_SIGNAL
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -787,7 +797,7 @@ extern "C" void unireg_abort(int exit_code)
 {
 
   if (exit_code)
-    sql_print_error("Aborting\n");
+    sql_print_error(_("Aborting\n"));
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
@@ -864,12 +874,15 @@ void clean_up(bool print_message)
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
-  if (print_message && errmesg && server_start_time)
-    sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
+  if (print_message && server_start_time)
+    sql_print_information(_(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
   thread_scheduler.end();
-  finish_client_errs();
-  my_free((uchar*) my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST),
-          MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+  /* Returns NULL on globerrs, we don't want to try to free that */
+  //void *freeme=
+  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
+  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
+/*  if (freeme != NULL)
+    my_free(freeme, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));  */
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -898,7 +911,7 @@ static void wait_for_signal_thread_to_end()
   */
   for (i= 0 ; i < 100 && signal_thread_in_use; i++)
   {
-    if (pthread_kill(signal_thread, MYSQL_KILL_SIGNAL) != ESRCH)
+    if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
       break;
     my_sleep(100);				// Give it time to die
   }
@@ -911,7 +924,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
-  (void) pthread_mutex_destroy(&LOCK_mapped_file);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
@@ -942,7 +954,7 @@ static void set_ports()
   char	*env;
   if (!mysqld_port)
   {					// Get port if not from commandline
-    mysqld_port= MYSQL_PORT;
+    mysqld_port= DRIZZLE_PORT;
 
     /*
       if builder specifically requested a default port, use that
@@ -950,15 +962,15 @@ static void set_ports()
       only if they didn't do we check /etc/services (and, failing
       on that, fall back to the factory default of 4427).
       either default can be overridden by the environment variable
-      MYSQL_TCP_PORT, which in turn can be overridden with command
+      DRIZZLE_TCP_PORT, which in turn can be overridden with command
       line options.
     */
 
     struct  servent *serv_ptr;
-    if ((serv_ptr= getservbyname("mysql", "tcp")))
+    if ((serv_ptr= getservbyname("drizzle", "tcp")))
       mysqld_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
 
-    if ((env = getenv("MYSQL_TCP_PORT")))
+    if ((env = getenv("DRIZZLE_TCP_PORT")))
       mysqld_port= (uint) atoi(env);		/* purecov: inspected */
 
     assert(mysqld_port);
@@ -981,16 +993,17 @@ static struct passwd *check_user(const char *user)
       /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
-	  global_system_variables.log_warnings)
-        sql_print_warning(
-                    "One can only use the --user switch if running as root\n");
+          global_system_variables.log_warnings)
+        sql_print_warning(_("One can only use the --user switch "
+                            "if running as root\n"));
       /* purecov: end */
     }
     return NULL;
   }
   if (!user)
   {
-    sql_print_error("Fatal error: Please read \"Security\" section of the manual to find out how to run mysqld as root!\n");
+    sql_print_error(_("Fatal error: Please read \"Security\" section of "
+                      "the manual to find out how to run mysqld as root!\n"));
     unireg_abort(1);
 
     return NULL;
@@ -1013,7 +1026,8 @@ static struct passwd *check_user(const char *user)
   /* purecov: end */
 
 err:
-  sql_print_error("Fatal error: Can't change to run as user '%s' ;  Please check that the user exists!\n",user);
+  sql_print_error(_("Fatal error: Can't change to run as user '%s' ;  "
+                    "Please check that the user exists!\n"),user);
   unireg_abort(1);
 
 #ifdef PR_SET_DUMPABLE
@@ -1105,8 +1119,6 @@ static void network_init(void)
   memset(&hints, 0, sizeof (hints));
   hints.ai_flags= AI_PASSIVE;
   hints.ai_socktype= SOCK_STREAM;
-  hints.ai_family= AF_INET;
-  hints.ai_protocol= IPPROTO_TCP;
 
   snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
   error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
@@ -1122,7 +1134,7 @@ static void network_init(void)
 
     ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
 
-    if (ip_sock == INVALID_SOCKET)
+    if (ip_sock == -1)
     {
       sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
       unireg_abort(1);				/* purecov: tested */
@@ -1133,13 +1145,45 @@ static void network_init(void)
 
     /* Add options for our listening socket */
     {
+      int error;
       struct linger ling = {0, 0};
       int flags =1;
 
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
-      (void) setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+#ifdef IPV6_V6ONLY
+      if (next->ai_family == AF_INET6) 
+      {
+        error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
+        if (error != 0)
+        {
+          perror("setsockopt");
+          assert(error == 0);
+        }
+      }
+#endif   
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
     }
 
 
@@ -1157,26 +1201,27 @@ static void network_init(void)
           (socket_errno != SOCKET_EADDRINUSE) ||
           (waited >= mysqld_port_timeout))
         break;
-      sql_print_information("Retrying bind on TCP/IP port %u", mysqld_port);
+      sql_print_information(_("Retrying bind on TCP/IP port %u"), mysqld_port);
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
-    freeaddrinfo(ai);
     if (ret < 0)
     {
-      sql_perror("Can't start server: Bind on TCP/IP port");
-      sql_print_error("Do you already have another drizzled server running on port: %d ?",mysqld_port);
+      sql_perror(_("Can't start server: Bind on TCP/IP port"));
+      sql_print_error(_("Do you already have another drizzled server running "
+                        "on port: %d ?"),mysqld_port);
       unireg_abort(1);
     }
     if (listen(ip_sock,(int) back_log) < 0)
     {
-      sql_perror("Can't start server: listen() on TCP/IP port");
-      sql_print_error("listen() on TCP/IP failed with error %d",
-		      socket_errno);
+      sql_perror(_("Can't start server: listen() on TCP/IP port"));
+      sql_print_error(_("listen() on TCP/IP failed with error %d"),
+                      socket_errno);
       unireg_abort(1);
     }
   }
 
+  freeaddrinfo(ai);
   return;
 }
 
@@ -1388,7 +1433,7 @@ extern "C" sig_handler handle_segfault(int sig)
   */
   if (segfaulted)
   {
-    fprintf(stderr, "Fatal " SIGNAL_FMT " while backtracing\n", sig);
+    fprintf(stderr, _("Fatal " SIGNAL_FMT " while backtracing\n"), sig);
     exit(1);
   }
 
@@ -1397,33 +1442,37 @@ extern "C" sig_handler handle_segfault(int sig)
   curr_time= my_time(0);
   localtime_r(&curr_time, &tm);
 
-  fprintf(stderr,"\
-%02d%02d%02d %2d:%02d:%02d - mysqld got " SIGNAL_FMT " ;\n\
-This could be because you hit a bug. It is also possible that this binary\n\
-or one of the libraries it was linked against is corrupt, improperly built,\n\
-or misconfigured. This error can also be caused by malfunctioning hardware.\n",
+  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - mysqld got "
+          SIGNAL_FMT " ;\n"
+          "This could be because you hit a bug. It is also possible that "
+          "this binary\n or one of the libraries it was linked against is "
+          "corrupt, improperly built,\n or misconfigured. This error can "
+          "also be caused by malfunctioning hardware.\n",
           tm.tm_year % 100, tm.tm_mon+1, tm.tm_mday,
           tm.tm_hour, tm.tm_min, tm.tm_sec,
-	  sig);
-  fprintf(stderr, "\
-We will try our best to scrape up some info that will hopefully help diagnose\n\
-the problem, but since we have already crashed, something is definitely wrong\n\
-and this may fail.\n\n");
-  fprintf(stderr, "key_buffer_size=%lu\n",
-          (ulong) dflt_key_cache->key_cache_mem_size);
+          sig);
+  fprintf(stderr, _("We will try our best to scrape up some info that "
+                    "will hopefully help diagnose\n"
+                    "the problem, but since we have already crashed, "
+                    "something is definitely wrong\nand this may fail.\n\n"));
+  fprintf(stderr, "key_buffer_size=%u\n",
+          (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
-  fprintf(stderr, "max_used_connections=%lu\n", max_used_connections);
+  fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
   fprintf(stderr, "thread_count=%u\n", thread_count);
   fprintf(stderr, "connection_count=%u\n", connection_count);
-  fprintf(stderr, "It is possible that mysqld could use up to \n\
-key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %lu K\n\
-bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
-		     (global_system_variables.read_buff_size +
-		      global_system_variables.sortbuff_size) *
-		     thread_scheduler.max_threads +
+  fprintf(stderr, _("It is possible that mysqld could use up to \n"
+                    "key_buffer_size + (read_buffer_size + "
+                    "sort_buffer_size)*max_threads = %lu K\n"
+                    "bytes of memory\n"
+                    "Hope that's ok; if not, decrease some variables in the "
+                    "equation.\n\n"),
+                    ((uint32_t) dflt_key_cache->key_cache_mem_size +
+                     (global_system_variables.read_buff_size +
+                      global_system_variables.sortbuff_size) *
+                     thread_scheduler.max_threads +
                      max_connections * sizeof(THD)) / 1024);
-  fprintf(stderr, "Hope that's ok; if not, decrease some variables in the equation.\n\n");
 
 #ifdef HAVE_STACKTRACE
   THD *thd= current_thd;
@@ -1431,10 +1480,11 @@ bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
   if (!(test_flags & TEST_NO_STACKTRACE))
   {
     fprintf(stderr,"thd: 0x%lx\n",(long) thd);
-    fprintf(stderr,"\
-Attempting backtrace. You can use the following information to find out\n\
-where mysqld died. If you see no messages after this, something went\n\
-terribly wrong...\n");  
+    fprintf(stderr,_("Attempting backtrace. You can use the following "
+                     "information to find out\n"
+                     "where mysqld died. If you see no messages after this, "
+                     "something went\n"
+                     "terribly wrong...\n"));
     print_stacktrace(thd ? (uchar*) thd->thread_stack : (uchar*) 0,
                      my_thread_stack_size);
   }
@@ -1458,52 +1508,62 @@ terribly wrong...\n");
       kreason= "KILLED_NO_VALUE";
       break;
     }
-    fprintf(stderr, "Trying to get some variables.\n\
-Some pointers may be invalid and cause the dump to abort...\n");
+    fprintf(stderr, _("Trying to get some variables.\n"
+                      "Some pointers may be invalid and cause the "
+                      "dump to abort...\n"));
     safe_print_str("thd->query", thd->query, 1024);
-    fprintf(stderr, "thd->thread_id=%lu\n", (ulong) thd->thread_id);
+    fprintf(stderr, "thd->thread_id=%"PRIu32"\n", (uint32_t) thd->thread_id);
     fprintf(stderr, "thd->killed=%s\n", kreason);
   }
-  fprintf(stderr, "\
-The manual page at http://dev.mysql.com/doc/mysql/en/crashing.html contains\n\
-information that should help you find out what is causing the crash.\n");
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
 
 #ifdef HAVE_INITGROUPS
   if (calling_initgroups)
-    fprintf(stderr, "\n\
-This crash occured while the server was calling initgroups(). This is\n\
-often due to the use of a mysqld that is statically linked against glibc\n\
-and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n\
-upgrade to a version of glibc that does not have this problem (2.3.4 or\n\
-later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n\
-mysqld that is not statically linked.\n");
+    fprintf(stderr, _("\nThis crash occured while the server was calling "
+                      "initgroups(). This is\n"
+                      "often due to the use of a drizzled that is statically "
+                      "linked against glibc\n"
+                      "and configured to use LDAP in /etc/nsswitch.conf. "
+                      "You will need to either\n"
+                      "upgrade to a version of glibc that does not have this "
+                      "problem (2.3.4 or\n"
+                      "later when used with nscd), disable LDAP in your "
+                      "nsswitch.conf, or use a\n"
+                      "drizzled that is not statically linked.\n"));
 #endif
 
   if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
-    fprintf(stderr,"\n\
-You are running a statically-linked LinuxThreads binary on an NPTL system.\n\
-This can result in crashes on some distributions due to LT/NPTL conflicts.\n\
-You should either build a dynamically-linked binary, or force LinuxThreads\n\
-to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n\
-the documentation for your distribution on how to do that.\n");
-  
+    fprintf(stderr,
+            _("\nYou are running a statically-linked LinuxThreads binary "
+              "on an NPTL system.\n"
+              "This can result in crashes on some distributions due "
+              "to LT/NPTL conflicts.\n"
+              "You should either build a dynamically-linked binary, or force "
+              "LinuxThreads\n"
+              "to be used with the LD_ASSUME_KERNEL environment variable. "
+              "Please consult\n"
+              "the documentation for your distribution on how to do that.\n"));
+
   if (locked_in_memory)
   {
-    fprintf(stderr, "\n\
-The \"--memlock\" argument, which was enabled, uses system calls that are\n\
-unreliable and unstable on some operating systems and operating-system\n\
-versions (notably, some versions of Linux).  This crash could be due to use\n\
-of those buggy OS calls.  You should consider whether you really need the\n\
-\"--memlock\" parameter and/or consult the OS distributer about \"mlockall\"\n\
-bugs.\n");
+    fprintf(stderr,
+            _("\nThe '--memlock' argument, which was enabled, uses system "
+              "calls that are\n"
+              "unreliable and unstable on some operating systems and "
+              "operating-system\n"
+              "versions (notably, some versions of Linux).  "
+              "This crash could be due to use\n"
+              "of those buggy OS calls.  You should consider whether you "
+              "really need the\n"
+              "'--memlock' parameter and/or consult the OS "
+              "distributor about 'mlockall'\n bugs.\n"));
   }
 
 #ifdef HAVE_WRITE_CORE
   if (test_flags & TEST_CORE_ON_SIGNAL)
   {
-    fprintf(stderr, "Writing a core file\n");
+    fprintf(stderr, _("Writing a core file\n"));
     fflush(stderr);
     write_core(sig);
   }
@@ -1550,7 +1610,9 @@ static void init_signals(void)
     STRUCT_RLIMIT rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-      sql_print_warning("setrlimit could not change the size of core files to 'infinity';  We may not be able to generate a core file on signals");
+      sql_print_warning(_("setrlimit could not change the size of core files "
+                          "to 'infinity';  We may not be able to generate a "
+                          "core file on signals"));
   }
 #endif
   (void) sigemptyset(&set);
@@ -1597,7 +1659,6 @@ static void start_signal_handler(void)
   (void) pthread_attr_init(&thr_attr);
   pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
   (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -1617,8 +1678,8 @@ static void start_signal_handler(void)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
   {
-    sql_print_error("Can't create interrupt-thread (error %d, errno: %d)",
-		    error,errno);
+    sql_print_error(_("Can't create interrupt-thread (error %d, errno: %d)"),
+                    error,errno);
     exit(1);
   }
   (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
@@ -1667,7 +1728,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   if (opt_do_pstack)
   {
-    sprintf(pstack_file_name,"mysqld-%lu-%%d-%%d.backtrace", (ulong)getpid());
+    sprintf(pstack_file_name,"mysqld-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
     pstack_install_segv_action(pstack_file_name);
   }
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
@@ -1705,7 +1766,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
     case SIGQUIT:
     case SIGKILL:
 #ifdef EXTRA_DEBUG
-      sql_print_information("Got signal %d to shutdown mysqld",sig);
+      sql_print_information(_("Got signal %d to shutdown mysqld"),sig);
 #endif
       /* switch to the old log message processing */
       logger.set_handlers(LOG_FILE, opt_slow_log ? LOG_FILE:LOG_NONE,
@@ -1715,7 +1776,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 	abort_loop=1;				// mark abort for threads
 #ifdef USE_ONE_SIGNAL_HAND
 	pthread_t tmp;
-	if (!(opt_specialflag & SPECIAL_NO_PRIOR))
         {
           struct sched_param tmp_sched_param;
 
@@ -1725,7 +1785,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
         }
 	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) &sig))
-	  sql_print_error("Can't create thread to kill server");
+          sql_print_error(_("Can't create thread to kill server"));
 #else
 	kill_server((void*) sig);	// MIT THREAD has a alarm thread
 #endif
@@ -1739,7 +1799,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
                       REFRESH_THREADS | REFRESH_HOSTS),
-                     (TABLE_LIST*) 0, &not_used); // Flush logs
+                     (TableList*) 0, &not_used); // Flush logs
       }
       logger.set_handlers(LOG_FILE,
                           opt_slow_log ? log_output_options : LOG_NONE,
@@ -1752,7 +1812,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #endif
     default:
 #ifdef EXTRA_DEBUG
-      sql_print_warning("Got signal: %d  error: %d",sig,error); /* purecov: tested */
+      sql_print_warning(_("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
 #endif
       break;					/* purecov: tested */
     }
@@ -1786,7 +1846,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       thd->is_fatal_error= 1;
 
 #ifdef BUG_36098_FIXED
-    mysql_audit_general(thd,MYSQL_AUDIT_GENERAL_ERROR,error,my_time(0),
+    mysql_audit_general(thd,DRIZZLE_AUDIT_GENERAL_ERROR,error,my_time(0),
                         0,0,str,str ? strlen(str) : 0,
                         thd->query,thd->query_length,
                         thd->variables.character_set_client,
@@ -1799,7 +1859,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       this could be improved by having a common stack of handlers.
     */
     if (thd->handle_error(error, str,
-                          MYSQL_ERROR::WARN_LEVEL_ERROR))
+                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
     thd->is_slave_error=  1; // needed to catch query errors during replication
@@ -1828,7 +1888,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
         inside push_warning.
       */
       thd->no_warnings_for_error= true;
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error, str);
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       thd->no_warnings_for_error= false;
     }
   }
@@ -1854,7 +1914,7 @@ void my_str_free_mysqld(void *ptr)
 
 
 static const char *load_default_groups[]= {
-"mysqld","server", MYSQL_BASE_VERSION, 0, 0};
+"mysqld","server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -1891,7 +1951,7 @@ static bool init_global_datetime_format(timestamp_type format_type,
   }
   if (!(*var_ptr= date_time_format_make(format_type, str, strlen(str))))
   {
-    fprintf(stderr, "Wrong date/time format specifier: %s\n", str);
+    fprintf(stderr, _("Wrong date/time format specifier: %s\n"), str);
     return 1;
   }
   return 0;
@@ -1978,11 +2038,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
-  max_system_variables.pseudo_thread_id= (ulong)~0;
+  max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= my_time(0);
   rpl_filter= new Rpl_filter;
   binlog_filter= new Rpl_filter;
-  if (!rpl_filter || !binlog_filter) 
+  if (!rpl_filter || !binlog_filter)
   {
     sql_perror("Could not allocate replication and binlog filters");
     exit(1);
@@ -2010,9 +2070,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.time_zone= my_tz_SYSTEM;
 
   /*
-    Init mutexes for the global MYSQL_BIN_LOG objects.
+    Init mutexes for the global DRIZZLE_BIN_LOG objects.
     As safe_mutex depends on what MY_INIT() does, we can't init the mutexes of
-    global MYSQL_BIN_LOGs in their constructors, because then they would be
+    global DRIZZLE_BIN_LOGs in their constructors, because then they would be
     inited before MY_INIT(). So we do it here.
   */
   mysql_bin_log.init_pthread_objects();
@@ -2020,13 +2080,13 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strmake(glob_hostname, STRING_WITH_LEN("localhost"));
-    sql_print_warning("gethostname failed, using '%s' as hostname",
+    sql_print_warning(_("gethostname failed, using '%s' as hostname"),
                       glob_hostname);
     strmake(pidfile_name, STRING_WITH_LEN("mysql"));
   }
   else
   strmake(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strmov(fn_ext(pidfile_name),".pid");		// Add proper extension
+  stpcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
     Add server status variables to the dynamic list of
@@ -2060,7 +2120,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
       can't get max_connections*5 but still got no less than was
       requested (value of wanted_files).
     */
-    max_open_files= max(max(wanted_files, max_connections*5),
+    max_open_files= max(max((uint32_t)wanted_files, max_connections*5),
                         open_files_limit);
     files= my_set_max_open_files(max_open_files);
 
@@ -2072,7 +2132,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
           If we have requested too much file handles than we bring
           max_connections in supported bounds.
         */
-        max_connections= (ulong) min(files-10-TABLE_OPEN_CACHE_MIN*2,
+        max_connections= (uint32_t) min((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
                                      max_connections);
         /*
           Decrease table_cache_size according to max_connections, but
@@ -2080,22 +2140,24 @@ static int init_common_variables(const char *conf_file_name, int argc,
           never increase table_cache_size automatically (that could
           happen if max_connections is decreased above).
         */
-        table_cache_size= (ulong) min(max((files-10-max_connections)/2,
-                                          TABLE_OPEN_CACHE_MIN),
+        table_cache_size= (uint32_t) min(max((files-10-max_connections)/2,
+                                          (uint32_t)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
-	if (global_system_variables.log_warnings)
-	  sql_print_warning("Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld",
-			files, max_connections, table_cache_size);
+        if (global_system_variables.log_warnings)
+          sql_print_warning(_("Changed limits: max_open_files: %u  "
+                              "max_connections: %ld  table_cache: %ld"),
+                            files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
-	sql_print_warning("Could not increase number of max_open_files to more than %u (request: %u)", files, wanted_files);
+        sql_print_warning(_("Could not increase number of max_open_files "
+                            "to more than %u (request: %u)"),
+                          files, wanted_files);
     }
     open_files_limit= files;
   }
-  unireg_init(opt_specialflag); /* Set up extern variabels */
+  unireg_init(0); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
-  init_client_errs();
   lex_init();
   if (item_create_init())
     return 1;
@@ -2133,18 +2195,18 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (default_collation_name)
   {
-    CHARSET_INFO *default_collation;
-    default_collation= get_charset_by_name(default_collation_name, MYF(0));
+    const CHARSET_INFO * const default_collation=
+      get_charset_by_name(default_collation_name, MYF(0));
     if (!default_collation)
     {
-      sql_print_error(ER(ER_UNKNOWN_COLLATION), default_collation_name);
+      sql_print_error(_(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
     if (!my_charset_same(default_charset_info, default_collation))
     {
-      sql_print_error(ER(ER_COLLATION_CHARSET_MISMATCH),
-		      default_collation_name,
-		      default_charset_info->csname);
+      sql_print_error(_(ER(ER_COLLATION_CHARSET_MISMATCH)),
+                      default_collation_name,
+                      default_charset_info->csname);
       return 1;
     }
     default_charset_info= default_collation;
@@ -2159,7 +2221,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
-  if (!(character_set_filesystem= 
+  if (!(character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name,
                               MY_CS_PRIMARY, MYF(MY_WME))))
     return 1;
@@ -2168,11 +2230,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-    sql_print_error("Unknown locale: '%s'", lc_time_names_name);
+    sql_print_error(_("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
-  
+
   sys_init_connect.value_length= 0;
   if ((sys_init_connect.value= opt_init_connect))
     sys_init_connect.value_length= strlen(opt_init_connect);
@@ -2188,15 +2250,17 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* check log options and issue warnings if needed */
   if (opt_log && opt_logname && !(log_output_options & LOG_FILE) &&
       !(log_output_options & LOG_NONE))
-    sql_print_warning("Although a path was specified for the "
-                      "--log option, log tables are used. "
-                      "To enable logging to files use the --log-output option.");
+    sql_print_warning(_("Although a path was specified for the "
+                        "--log option, log tables are used. "
+                        "To enable logging to files use the "
+                        "--log-output option."));
 
   if (opt_slow_log && opt_slow_logname && !(log_output_options & LOG_FILE)
       && !(log_output_options & LOG_NONE))
-    sql_print_warning("Although a path was specified for the "
-                      "--log-slow-queries option, log tables are used. "
-                      "To enable logging to files use the --log-output=file option.");
+    sql_print_warning(_("Although a path was specified for the "
+                        "--log-slow-queries option, log tables are used. "
+                        "To enable logging to files use the "
+                        "--log-output=file option."));
 
   s= opt_logname ? opt_logname : make_default_log_name(buff, ".log");
   sys_var_general_log_path.value= my_strdup(s, MYF(0));
@@ -2226,7 +2290,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_lock_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_mapped_file,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
@@ -2251,7 +2314,6 @@ static int init_thread_environment()
   (void) pthread_attr_setdetachstate(&connection_attrib,
 				     PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&connection_attrib, PTHREAD_SCOPE_SYSTEM);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -2263,7 +2325,7 @@ static int init_thread_environment()
   if (pthread_key_create(&THR_THD,NULL) ||
       pthread_key_create(&THR_MALLOC,NULL))
   {
-    sql_print_error("Can't create thread-keys");
+    sql_print_error(_("Can't create thread-keys"));
     return 1;
   }
   return 0;
@@ -2279,7 +2341,7 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  randominit(&sql_rand,(ulong) server_start_time,(ulong) server_start_time/2);
+  randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
   init_slave_list();
@@ -2310,15 +2372,15 @@ static int init_server_components()
 
   if (xid_cache_init())
   {
-    sql_print_error("Out of memory");
+    sql_print_error(_("Out of memory"));
     unireg_abort(1);
   }
 
   if (!opt_bin_log)
     if (opt_binlog_format_id != BINLOG_FORMAT_UNSPEC)
     {
-      sql_print_error("You need to use --log-bin to make "
-                      "--binlog-format work.");
+      sql_print_error(_("You need to use --log-bin to make "
+                        "--binlog-format work."));
       unireg_abort(1);
     }
     else
@@ -2329,7 +2391,7 @@ static int init_server_components()
     if (opt_binlog_format_id == BINLOG_FORMAT_UNSPEC)
       global_system_variables.binlog_format= BINLOG_FORMAT_MIXED;
     else
-    { 
+    {
       assert(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
     }
 
@@ -2339,10 +2401,9 @@ static int init_server_components()
 
   if (opt_log_slave_updates && replicate_same_server_id)
   {
-    sql_print_error("\
-using --replicate-same-server-id in conjunction with \
---log-slave-updates is impossible, it would lead to infinite loops in this \
-server.");
+    sql_print_error(_("using --replicate-same-server-id in conjunction with "
+                      "--log-slave-updates is impossible, it would lead to "
+                      "infinite loops in this server."));
     unireg_abort(1);
   }
 
@@ -2360,11 +2421,11 @@ server.");
         require a name. But as we don't want to break many existing setups, we
         only give warning, not error.
       */
-      sql_print_warning("No argument was provided to --log-bin, and "
-                        "--log-bin-index was not used; so replication "
-                        "may break when this MySQL server acts as a "
-                        "master and has his hostname changed!! Please "
-                        "use '--log-bin=%s' to avoid this problem.", ln);
+      sql_print_warning(_("No argument was provided to --log-bin, and "
+                          "--log-bin-index was not used; so replication "
+                          "may break when this Drizzle server acts as a "
+                          "master and has his hostname changed!! Please "
+                          "use '--log-bin=%s' to avoid this problem."), ln);
     }
     if (ln == buf)
     {
@@ -2394,7 +2455,7 @@ server.");
                   (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
                   (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
-    sql_print_error("Failed to initialize plugins.");
+    sql_print_error(_("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
@@ -2424,21 +2485,18 @@ server.");
 
     if (defaults_argc)
     {
-      fprintf(stderr, "%s: Too many arguments (first extra is '%s').\n"
-              "Use --verbose --help to get a list of available options\n",
+      fprintf(stderr,
+              _("%s: Too many arguments (first extra is '%s').\n"
+                "Use --verbose --help to get a list of available options\n"),
               my_progname, *tmp_argv);
       unireg_abort(1);
     }
   }
 
-  /* if the errmsg.sys is not loaded, terminate to maintain behaviour */
-  if (!errmesg[0][0])
-    unireg_abort(1);
-
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
-    sql_print_error("Can't init databases");
+    sql_print_error(_("Can't init databases"));
     unireg_abort(1);
   }
 
@@ -2454,18 +2512,20 @@ server.");
                        strlen(default_storage_engine_str) };
     plugin_ref plugin;
     handlerton *hton;
-    
+
     if ((plugin= ha_resolve_by_name(0, &name)))
-      hton= plugin_data(plugin, handlerton*);
+    {
+      hton= plugin_data(plugin,handlerton *);
+    }
     else
     {
-      sql_print_error("Unknown/unsupported table type: %s",
+      sql_print_error(_("Unknown/unsupported table type: %s"),
                       default_storage_engine_str);
       unireg_abort(1);
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-      sql_print_error("Default storage engine (%s) is not available",
+      sql_print_error(_("Default storage engine (%s) is not available"),
                       default_storage_engine_str);
       unireg_abort(1);
       assert(global_system_variables.table_plugin);
@@ -2473,7 +2533,7 @@ server.");
     else
     {
       /*
-        Need to unlock as global_system_variables.table_plugin 
+        Need to unlock as global_system_variables.table_plugin
         was acquired during plugin_init()
       */
       plugin_unlock(0, global_system_variables.table_plugin);
@@ -2488,7 +2548,7 @@ server.");
 
   if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
   {
-    sql_print_error("Can't init tc log");
+    sql_print_error(_("Can't initialize tc_log"));
     unireg_abort(1);
   }
 
@@ -2508,9 +2568,6 @@ server.");
       mysql_bin_log.purge_logs_before_date(purge_time);
   }
 
-  if (opt_myisam_log)
-    (void) mi_log(1);
-
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
   {
@@ -2522,7 +2579,7 @@ server.");
     if (mlockall(MCL_CURRENT))
     {
       if (global_system_variables.log_warnings)
-	sql_print_warning("Failed to lock memory. Errno: %d\n",errno);
+        sql_print_warning(_("Failed to lock memory. Errno: %d\n"),errno);
       locked_in_memory= 0;
     }
     if (user_info)
@@ -2539,6 +2596,15 @@ server.");
 
 int main(int argc, char **argv)
 {
+
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
+  setlocale(LC_ALL, "");
+# endif
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+#endif
+
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
 
@@ -2563,7 +2629,7 @@ int main(int argc, char **argv)
   }
 #endif
 
-  if (init_common_variables(MYSQL_CONFIG_NAME,
+  if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
 
@@ -2580,8 +2646,12 @@ int main(int argc, char **argv)
     if (stack_size && stack_size < my_thread_stack_size)
     {
       if (global_system_variables.log_warnings)
-	sql_print_warning("Asked for %lu thread stack, but got %ld",
-			  my_thread_stack_size, (long) stack_size);
+      {
+        /* %zu is not yet in C++ */
+        unsigned long long size_tmp= (uint64_t)stack_size;
+        sql_print_warning(_("Asked for %u thread stack, but got %llu"),
+                          my_thread_stack_size, size_tmp);
+      }
       my_thread_stack_size= stack_size;
     }
   }
@@ -2615,10 +2685,10 @@ int main(int argc, char **argv)
   {
     server_id= 1;
 #ifdef EXTRA_DEBUG
-    sql_print_warning("You have enabled the binary log, but you haven't set "
-                      "server-id to a non-zero value: we force server id to 1; "
-                      "updates will be logged to the binary log, but "
-                      "connections from slaves will not be accepted.");
+    sql_print_warning(_("You have enabled the binary log, but you haven't set "
+                        "server-id to a non-zero value: we force server id to "
+                        "1; updates will be logged to the binary log, but "
+                        "connections from slaves will not be accepted."));
 #endif
   }
 
@@ -2644,7 +2714,7 @@ int main(int argc, char **argv)
   {
     abort_loop=1;
     select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
+    (void) pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
 
     (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
 
@@ -2663,24 +2733,24 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  sql_print_information(ER(ER_STARTUP),my_progname,server_version,
-                        "", mysqld_port, MYSQL_COMPILATION_COMMENT);
+  sql_print_information(_(ER(ER_STARTUP)),my_progname,server_version,
+                        "", mysqld_port, DRIZZLE_COMPILATION_COMMENT);
 
 
   handle_connections_sockets();
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
-  
+
 
 #ifdef EXTRA_DEBUG2
-  sql_print_error("Before Lock_thread_count");
+  sql_print_error(_("Before Lock_thread_count"));
 #endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 #ifdef EXTRA_DEBUG2
-  sql_print_error("After lock_thread_count");
+  sql_print_error(_("After lock_thread_count"));
 #endif
 
   /* Wait until cleanup is done */
@@ -2756,11 +2826,11 @@ static void create_new_thread(THD *thd)
 inline void kill_broken_server()
 {
   /* hack to get around signals ignored in syscalls for problem OS's */
-  if ((ip_sock == INVALID_SOCKET))
+  if ((ip_sock == -1))
   {
     select_thread_in_use = 0;
     /* The following call will never return */
-    kill_server((void*) MYSQL_KILL_SIGNAL);
+    kill_server((void*) DRIZZLE_KILL_SIGNAL);
   }
 }
 #define MAYBE_BROKEN_SYSCALL kill_broken_server();
@@ -2773,7 +2843,7 @@ inline void kill_broken_server()
 void handle_connections_sockets()
 {
   int x;
-  my_socket sock,new_sock;
+  int sock,new_sock;
   uint error_count=0;
   THD *thd;
   struct sockaddr_storage cAddr;
@@ -2788,15 +2858,16 @@ void handle_connections_sockets()
     {
       if (socket_errno != SOCKET_EINTR)
       {
-	if (!select_errors++ && !abort_loop)	/* purecov: inspected */
-	  sql_print_error("mysqld: Got error %d from select",socket_errno); /* purecov: inspected */
+        if (!select_errors++ && !abort_loop)	/* purecov: inspected */
+          sql_print_error(_("drizzled: Got error %d from select"),
+                          socket_errno); /* purecov: inspected */
       }
       MAYBE_BROKEN_SYSCALL
       continue;
     }
     if (number_of == 0)
       continue;
-    
+
 #ifdef FIXME_IF_WE_WERE_KEEPING_THIS
     assert(number_of > 1); /* Not handling this at the moment */
 #endif
@@ -2822,12 +2893,12 @@ void handle_connections_sockets()
       size_socket length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
-      if (new_sock != INVALID_SOCKET || (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
+      if (new_sock != -1 || (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
 	break;
     }
 
 
-    if (new_sock == INVALID_SOCKET)
+    if (new_sock == -1)
     {
       if ((error_count++ & 255) == 0)		// This can happen often
 	sql_perror("Error in accept");
@@ -2841,13 +2912,22 @@ void handle_connections_sockets()
       size_socket dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
-      if (  getsockname(new_sock,(struct sockaddr *)&dummy, 
-                  (socklen_t *)&dummyLen) < 0  )
+      if (  getsockname(new_sock,(struct sockaddr *)&dummy,
+                        (socklen_t *)&dummyLen) < 0  )
       {
-	sql_perror("Error on new connection socket");
-	(void) shutdown(new_sock, SHUT_RDWR);
-	(void) closesocket(new_sock);
-	continue;
+        sql_perror("Error on new connection socket");
+        (void) shutdown(new_sock, SHUT_RDWR);
+        (void) close(new_sock);
+        continue;
+      }
+      dummyLen = sizeof(dummy);
+      if ( getpeername(new_sock, (struct sockaddr *)&dummy,
+                       (socklen_t *)&dummyLen) < 0)
+      {
+        sql_perror("Error on new connection socket");
+        (void) shutdown(new_sock, SHUT_RDWR);
+        (void) close(new_sock);
+         continue;
       }
     }
 
@@ -2858,7 +2938,7 @@ void handle_connections_sockets()
     if (!(thd= new THD))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
-      VOID(closesocket(new_sock));
+      VOID(close(new_sock));
       continue;
     }
     if (!(vio_tmp=vio_new(new_sock, VIO_TYPE_TCPIP, sock == 0)) ||
@@ -2874,7 +2954,7 @@ void handle_connections_sockets()
       else
       {
 	(void) shutdown(new_sock, SHUT_RDWR);
-	(void) closesocket(new_sock);
+	(void) close(new_sock);
       }
       delete thd;
       continue;
@@ -2891,11 +2971,11 @@ void handle_connections_sockets()
 
 enum options_mysqld
 {
-  OPT_ISAM_LOG=256,            OPT_SKIP_NEW, 
-  OPT_SKIP_GRANT,              
+  OPT_ISAM_LOG=256,            OPT_SKIP_NEW,
+  OPT_SKIP_GRANT,
   OPT_ENABLE_LOCK,             OPT_USE_LOCKING,
   OPT_SOCKET,                  OPT_UPDATE_LOG,
-  OPT_BIN_LOG,                 
+  OPT_BIN_LOG,
   OPT_BIN_LOG_INDEX,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,
@@ -2912,7 +2992,7 @@ enum options_mysqld
   OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
   OPT_BINLOG_FORMAT,
-  OPT_BINLOG_ROWS_EVENT_MAX_SIZE, 
+  OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
   OPT_REPLICATE_REWRITE_DB,    OPT_SERVER_ID,
@@ -2923,7 +3003,7 @@ enum options_mysqld
   OPT_DISCONNECT_SLAVE_EVENT_COUNT, OPT_TC_HEURISTIC_RECOVER,
   OPT_ABORT_SLAVE_EVENT_COUNT,
   OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-  OPT_ENGINE_CONDITION_PUSHDOWN, 
+  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_MAX_BINLOG_DUMP_EVENTS, OPT_SPORADIC_BINLOG_DUMP_FAIL,
@@ -3026,175 +3106,205 @@ enum options_mysqld
 };
 
 
-#define LONG_TIMEOUT ((ulong) 3600L*24L*365L)
+#define LONG_TIMEOUT ((uint32_t) 3600L*24L*365L)
 
 struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.", 
+  {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
-   "Auto-increment columns are incremented by this",
+   N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
    (char**) &max_system_variables.auto_increment_increment, 0, GET_ULONG,
    OPT_ARG, 1, 1, 65535, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
-   "Offset added to Auto-increment columns. Used when auto-increment-increment != 1",
+   N_("Offset added to Auto-increment columns. Used when "
+      "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
    (char**) &max_system_variables.auto_increment_offset, 0, GET_ULONG, OPT_ARG,
    1, 1, 65535, 0, 1, 0 },
   {"basedir", 'b',
-   "Path to installation directory. All paths are usually resolved relative to this.",
+   N_("Path to installation directory. All paths are usually resolved "
+      "relative to this."),
    (char**) &mysql_home_ptr, (char**) &mysql_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"bind-address", OPT_BIND_ADDRESS, "IP address to bind to.",
+  {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog_format", OPT_BINLOG_FORMAT,
-   "Does not have any effect without '--log-bin'. "
-   "Tell the master the form of binary logging to use: either 'row' for "
-   "row-based binary logging, or 'statement' for statement-based binary "
-   "logging, or 'mixed'. 'mixed' is statement-based binary logging except "
-   "for those statements where only row-based is correct: those which "
-   "involve user-defined functions (i.e. UDFs) or the UUID() function; for "
-   "those, row-based binary logging is automatically used. "
+   N_("Does not have any effect without '--log-bin'. "
+      "Tell the master the form of binary logging to use: either 'row' for "
+      "row-based binary logging, or 'statement' for statement-based binary "
+      "logging, or 'mixed'. 'mixed' is statement-based binary logging except "
+      "for those statements where only row-based is correct: those which "
+      "involve user-defined functions (i.e. UDFs) or the UUID() function; for "
+      "those, row-based binary logging is automatically used. ")
    ,(char**) &opt_binlog_format, (char**) &opt_binlog_format,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-do-db", OPT_BINLOG_DO_DB,
-   "Tells the master it should log updates for the specified database, and exclude all others not explicitly mentioned.",
+   N_("Tells the master it should log updates for the specified database, and "
+      "exclude all others not explicitly mentioned."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-ignore-db", OPT_BINLOG_IGNORE_DB,
-   "Tells the master that updates to the given database should not be logged tothe binary log.",
+   N_("Tells the master that updates to the given database should not "
+      "be logged tothe binary log."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
-   "The maximum size of a row-based binary log event in bytes. Rows will be "
-   "grouped into events smaller than this size if possible. "
-   "The value has to be a multiple of 256.",
-   (char**) &opt_binlog_rows_event_max_size, 
-   (char**) &opt_binlog_rows_event_max_size, 0, 
-   GET_ULONG, REQUIRED_ARG, 
-   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX, 
-   /* sub_size */     0, /* block_size */ 256, 
+   N_("The maximum size of a row-based binary log event in bytes. Rows will "
+      "be grouped into events smaller than this size if possible. "
+      "The value has to be a multiple of 256."),
+   (char**) &opt_binlog_rows_event_max_size,
+   (char**) &opt_binlog_rows_event_max_size, 0,
+   GET_ULONG, REQUIRED_ARG,
+   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
+   /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
   {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
-   "Don't ignore client side character set value sent during handshake.",
+   N_("Don't ignore client side character set value sent during handshake."),
    (char**) &opt_character_set_client_handshake,
    (char**) &opt_character_set_client_handshake,
     0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
-   "Set the filesystem character set.",
+   N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
    (char**) &character_set_filesystem_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-set-server", 'C', "Set the default character set.",
+  {"character-set-server", 'C',
+   N_("Set the default character set."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
+   N_("Directory where character sets are."), (char**) &charsets_dir,
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"chroot", 'r', "Chroot mysqld daemon during startup.",
+  {"chroot", 'r',
+   N_("Chroot mysqld daemon during startup."),
    (char**) &mysqld_chroot, (char**) &mysqld_chroot, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"collation-server", OPT_DEFAULT_COLLATION, "Set the default collation.",
+  {"collation-server", OPT_DEFAULT_COLLATION,
+   N_("Set the default collation."),
    (char**) &default_collation_name, (char**) &default_collation_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"completion-type", OPT_COMPLETION_TYPE, "Default completion type.",
+  {"completion-type", OPT_COMPLETION_TYPE,
+   N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
    (char**) &max_system_variables.completion_type, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
-  {"console", OPT_CONSOLE, "Write error output on screen; Don't remove the console window on windows.",
+  {"console", OPT_CONSOLE,
+   N_("Write error output on screen."),
    (char**) &opt_console, (char**) &opt_console, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"core-file", OPT_WANT_CORE, "Write core on errors.", 0, 0, 0, GET_NO_ARG,
+  {"core-file", OPT_WANT_CORE,
+   N_("Write core on errors."),
+   0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"datadir", 'h', "Path to the database root.", (char**) &mysql_data_home,
+  {"datadir", 'h',
+   N_("Path to the database root."),
+   (char**) &mysql_data_home,
    (char**) &mysql_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", 'C', "Set the default character set (deprecated option, use --character-set-server instead).",
+  {"default-character-set", 'C',
+   N_("Set the default character set (deprecated option, use "
+      "--character-set-server instead)."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"default-collation", OPT_DEFAULT_COLLATION, "Set the default collation (deprecated option, use --collation-server instead).",
+  {"default-collation", OPT_DEFAULT_COLLATION,
+   N_("Set the default collation (deprecated option, use --collation-server "
+      "instead)."),
    (char**) &default_collation_name, (char**) &default_collation_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"default-storage-engine", OPT_STORAGE_ENGINE,
-   "Set the default storage engine (table type) for tables.",
+   N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-time-zone", OPT_DEFAULT_TIME_ZONE, "Set the default time zone.",
+  {"default-time-zone", OPT_DEFAULT_TIME_ZONE,
+   N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE, "Type of DELAY_KEY_WRITE.",
+  {"delay-key-write", OPT_DELAY_KEY_WRITE,
+   N_("Type of DELAY_KEY_WRITE."),
    0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"delay-key-write-for-all-tables", OPT_DELAY_KEY_WRITE_ALL,
-   "Don't flush key buffers between writes for any MyISAM table (Deprecated option, use --delay-key-write=all instead).",
+   N_("Don't flush key buffers between writes for any MyISAM table "
+      "(Deprecated option, use --delay-key-write=all instead)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disconnect-slave-event-count", OPT_DISCONNECT_SLAVE_EVENT_COUNT,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &disconnect_slave_event_count,
    (char**) &disconnect_slave_event_count, 0, GET_INT, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
-  {"enable-pstack", OPT_DO_PSTACK, "Print a symbolic stack trace on failure.",
+  {"enable-pstack", OPT_DO_PSTACK,
+   N_("Print a symbolic stack trace on failure."),
    (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
   {"engine-condition-pushdown",
    OPT_ENGINE_CONDITION_PUSHDOWN,
-   "Push supported query conditions to the storage engine.",
+   N_("Push supported query conditions to the storage engine."),
    (char**) &global_system_variables.engine_condition_pushdown,
    (char**) &global_system_variables.engine_condition_pushdown,
    0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
-  {"exit-info", 'T', "Used for debugging;  Use at your own risk!", 0, 0, 0,
-   GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"flush", OPT_FLUSH, "Flush tables to disk between SQL commands.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"exit-info", 'T',
+   N_("Used for debugging;  Use at your own risk!"),
+   0, 0, 0, GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
+  {"flush", OPT_FLUSH,
+   N_("Flush tables to disk between SQL commands."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   /* We must always support the next option to make scripts like mysqltest
      easier to do */
   {"gdb", OPT_DEBUGGING,
-   "Set up signals usable for debugging",
+   N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"general-log", OPT_GENERAL_LOG,
-   "Enable|disable general log", (char**) &opt_log,
+   N_("Enable general query log"),
+   (char**) &opt_log,
    (char**) &opt_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-connect", OPT_INIT_CONNECT, "Command(s) that are executed for each new connection",
+  {"init-connect", OPT_INIT_CONNECT,
+   N_("Command(s) that are executed for each new connection"),
    (char**) &opt_init_connect, (char**) &opt_init_connect, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-file", OPT_INIT_FILE, "Read SQL commands from this file at startup.",
+  {"init-file", OPT_INIT_FILE,
+   N_("Read SQL commands from this file at startup."),
    (char**) &opt_init_file, (char**) &opt_init_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"init-slave", OPT_INIT_SLAVE, "Command(s) that are executed when a slave connects to this master",
+  {"init-slave", OPT_INIT_SLAVE,
+   N_("Command(s) that are executed when a slave connects to this master"),
    (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
-   "Client error messages in given language. May be given as a full path.",
+   N_("(IGNORED)"),
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
-   "Set the language used for the month names and the days of the week.",
+   N_("Set the language used for the month names and the days of the week."),
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"local-infile", OPT_LOCAL_INFILE,
-   "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0).",
+   N_("Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."),
    (char**) &opt_local_infile,
    (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG,
    1, 0, 0, 0, 0, 0},
-  {"log", 'l', "Log connections and queries to file.", (char**) &opt_logname,
+  {"log", 'l',
+   N_("Log connections and queries to file."),
+   (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-bin", OPT_BIN_LOG,
-   "Log update queries in binary format. Optional (but strongly recommended "
-   "to avoid replication problems if server's hostname changes) argument "
-   "should be the chosen location for the binary log files.",
+   N_("Log update queries in binary format. Optional argument is the "
+      "location for the binary log files.(Strongly "
+      "recommended to avoid replication problems if server's hostname "
+      "changes)"),
    (char**) &opt_bin_logname, (char**) &opt_bin_logname, 0, GET_STR_ALLOC,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-bin-index", OPT_BIN_LOG_INDEX,
-   "File that holds the names for last binary log files.",
+   N_("File that holds the names for last binary log files."),
    (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   /*
@@ -3202,222 +3312,291 @@ struct my_option my_long_options[] =
     binary logging.
   */
   {"log-bin-trust-function-creators", OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-   "If equal to 0 (the default), then when --log-bin is used, creation of "
-   "a stored function (or trigger) is allowed only to users having the SUPER privilege "
-   "and only if this stored function (trigger) may not break binary logging."
-   "Note that if ALL connections to this server ALWAYS use row-based binary "
-   "logging, the security issues do not exist and the binary logging cannot "
-   "break, so you can safely set this to 1."
+   N_("If equal to 0 (the default), then when --log-bin is used, creation of "
+      "a stored function (or trigger) is allowed only to users having the "
+      "SUPER privilege and only if this stored function (trigger) may not "
+      "break binary logging. Note that if ALL connections to this server "
+      "ALWAYS use row-based binary logging, the security issues do not exist "
+      "and the binary logging cannot break, so you can safely set this to 1.")
    ,(char**) &trust_function_creators, (char**) &trust_function_creators, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-error", OPT_ERROR_LOG_FILE, "Error log file.",
+  {"log-error", OPT_ERROR_LOG_FILE,
+   N_("Error log file."),
    (char**) &log_error_file_ptr, (char**) &log_error_file_ptr, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-isam", OPT_ISAM_LOG, "Log all MyISAM changes to file.",
+  {"log-isam", OPT_ISAM_LOG,
+   N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-long-format", '0',
-   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.", 
+   N_("Log some extra information to update log. Please note that this option "
+      "is deprecated; see --log-queries-not-using-indexes option."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef WITH_CSV_STORAGE_ENGINE
   {"log-output", OPT_LOG_OUTPUT,
-   "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-   "FILE or NONE.",
+   N_("Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
+      "FILE or NONE."),
    (char**) &log_output_str, (char**) &log_output_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"log-queries-not-using-indexes", OPT_LOG_QUERIES_NOT_USING_INDEXES,
-   "Log queries that are executed without benefit of any index to the slow log if it is open.",
-   (char**) &opt_log_queries_not_using_indexes, (char**) &opt_log_queries_not_using_indexes,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-short-format", OPT_SHORT_LOG_FORMAT,
-   "Don't log extra information to update and slow-query logs.",
-   (char**) &opt_short_log_format, (char**) &opt_short_log_format,
+   N_("Log queries that are executed without benefit of any index to the "
+      "slow log if it is open."),
+   (char**) &opt_log_queries_not_using_indexes,
+   (char**) &opt_log_queries_not_using_indexes,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
-   "Tells the slave to log the updates from the slave thread to the binary log. You will need to turn it on if you plan to daisy-chain the slaves.",
-   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates, 0, GET_BOOL,
+   N_("Tells the slave to log the updates from the slave thread to the binary "
+      "log. You will need to turn it on if you plan to "
+      "daisy-chain the slaves."),
+   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates,
+   0, GET_BOOL,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slow-admin-statements", OPT_LOG_SLOW_ADMIN_STATEMENTS,
-   "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to the slow log if it is open.",
+   N_("Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements "
+      "to the slow log if it is open."),
    (char**) &opt_log_slow_admin_statements,
    (char**) &opt_log_slow_admin_statements,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
  {"log-slow-slave-statements", OPT_LOG_SLOW_SLAVE_STATEMENTS,
-  "Log slow statements executed by slave thread to the slow log if it is open.",
+  N_("Log slow statements executed by slave thread to the slow log if it is "
+     "open."),
   (char**) &opt_log_slow_slave_statements,
   (char**) &opt_log_slow_slave_statements,
   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slow-queries", OPT_SLOW_QUERY_LOG,
-    "Log slow queries to a table or log file. Defaults logging to table mysql.slow_log or hostname-slow.log if --log-output=file is used. Must be enabled to activate other slow log options.",
+   N_("Log slow queries to a table or log file. Defaults logging to table "
+      "mysql.slow_log or hostname-slow.log if --log-output=file is used. "
+      "Must be enabled to activate other slow log options."),
    (char**) &opt_slow_logname, (char**) &opt_slow_logname, 0, GET_STR, OPT_ARG,
    0, 0, 0, 0, 0, 0},
   {"log-tc", OPT_LOG_TC,
-   "Path to transaction coordinator log (used for transactions that affect "
-   "more than one storage engine, when binary log is disabled)",
+   N_("Path to transaction coordinator log (used for transactions that affect "
+      "more than one storage engine, when binary log is disabled)"),
    (char**) &opt_tc_log_file, (char**) &opt_tc_log_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_MMAP
-  {"log-tc-size", OPT_LOG_TC_SIZE, "Size of transaction coordinator log.",
+  {"log-tc-size", OPT_LOG_TC_SIZE,
+   N_("Size of transaction coordinator log."),
    (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULONG,
    REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
    TC_LOG_PAGE_SIZE, 0},
 #endif
-  {"log-warnings", 'W', "Log some not critical warnings to the log file.",
+  {"log-warnings", 'W',
+   N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"low-priority-updates", OPT_LOW_PRIORITY_UPDATES,
-   "INSERT/DELETE/UPDATE has lower priority than selects.",
+   N_("INSERT/DELETE/UPDATE has lower priority than selects."),
    (char**) &global_system_variables.low_priority_updates,
    (char**) &max_system_variables.low_priority_updates,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"master-info-file", OPT_MASTER_INFO_FILE,
-   "The location and name of the file that remembers the master and where the I/O replication \
-thread is in the master's binlogs.",
+   N_("The location and name of the file that remembers the master and "
+      "where the I/O replication thread is in the master's binlogs."),
    (char**) &master_info_file, (char**) &master_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"master-retry-count", OPT_MASTER_RETRY_COUNT,
-   "The number of tries the slave will make to connect to the master before giving up.",
+   N_("The number of tries the slave will make to connect to the master "
+      "before giving up."),
    (char**) &master_retry_count, (char**) &master_retry_count, 0, GET_ULONG,
    REQUIRED_ARG, 3600*24, 0, 0, 0, 0, 0},
   {"max-binlog-dump-events", OPT_MAX_BINLOG_DUMP_EVENTS,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &max_binlog_dump_events, (char**) &max_binlog_dump_events, 0,
    GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"memlock", OPT_MEMLOCK, "Lock mysqld in memory.", (char**) &locked_in_memory,
+  {"memlock", OPT_MEMLOCK,
+   N_("Lock mysqld in memory."),
+   (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"myisam-recover", OPT_MYISAM_RECOVER,
-   "Syntax: myisam-recover[=option[,option...]], where option can be DEFAULT, BACKUP, FORCE or QUICK.",
+   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
+      "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"new", 'n', "Use very new possible 'unsafe' functions.",
+  {"new", 'n',
+   N_("Use very new possible 'unsafe' functions."),
    (char**) &global_system_variables.new_mode,
    (char**) &max_system_variables.new_mode,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-alter-table", OPT_OLD_ALTER_TABLE,
-   "Use old, non-optimized alter table.",
+   N_("Use old, non-optimized alter table."),
    (char**) &global_system_variables.old_alter_table,
    (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
-   "Enable old-style user limits (before 5.0.3 user resources were counted per each user+host vs. per account)",
+   N_("Enable old-style user limits (before 5.0.3 user resources were counted "
+      "per each user+host vs. per account)"),
    (char**) &opt_old_style_user_limits, (char**) &opt_old_style_user_limits,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"pid-file", OPT_PID_FILE, "Pid file used by safe_mysqld.",
+  {"pid-file", OPT_PID_FILE,
+   N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+  {"port", 'P',
+   N_("Port number to use for connection or 0 for default to, in "
+      "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+      "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &mysqld_port,
    (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
-   "Maximum time in seconds to wait for the port to become free. "
-   "(Default: no wait)", (char**) &mysqld_port_timeout,
+   N_("Maximum time in seconds to wait for the port to become free. "
+      "(Default: no wait)"),
+   (char**) &mysqld_port_timeout,
    (char**) &mysqld_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log", OPT_RELAY_LOG,
-   "The location and name to use for relay logs.",
+   N_("The location and name to use for relay logs."),
    (char**) &opt_relay_logname, (char**) &opt_relay_logname, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log-index", OPT_RELAY_LOG_INDEX,
-   "The location and name to use for the file that keeps a list of the last \
-relay logs.",
+   N_("The location and name to use for the file that keeps a list of the "
+      "last relay logs."),
    (char**) &opt_relaylog_index_name, (char**) &opt_relaylog_index_name, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log-info-file", OPT_RELAY_LOG_INFO_FILE,
-   "The location and name of the file that remembers where the SQL replication \
-thread is in the relay logs.",
+   N_("The location and name of the file that remembers where the SQL "
+      "replication thread is in the relay logs."),
    (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-do-db", OPT_REPLICATE_DO_DB,
-   "Tells the slave thread to restrict replication to the specified database. To specify more than one database, use the directive multiple times, once for each database. Note that this will only work if you do not use cross-database queries such as UPDATE some_db.some_table SET foo='bar' while having selected a different or no database. If you need cross database updates to work, make sure you have 3.23.28 or later, and use replicate-wild-do-table=db_name.%.",
+   N_("Tells the slave thread to restrict replication to the specified "
+      "database. To specify more than one database, use the directive "
+      "multiple times, once for each database. Note that this will only work "
+      "if you do not use cross-database queries such as UPDATE "
+      "some_db.some_table SET foo='bar' while having selected a different or "
+      "no database. If you need cross database updates to work, use "
+      "replicate-wild-do-table=db_name.%."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-do-table", OPT_REPLICATE_DO_TABLE,
-   "Tells the slave thread to restrict replication to the specified table. To specify more than one table, use the directive multiple times, once for each table. This will work for cross-database updates, in contrast to replicate-do-db.",
+   N_("Tells the slave thread to restrict replication to the specified table. "
+      "To specify more than one table, use the directive multiple times, once "
+      "for each table. This will work for cross-database updates, in contrast "
+      "to replicate-do-db."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-ignore-db", OPT_REPLICATE_IGNORE_DB,
-   "Tells the slave thread to not replicate to the specified database. To specify more than one database to ignore, use the directive multiple times, once for each database. This option will not work if you use cross database updates. If you need cross database updates to work, make sure you have 3.23.28 or later, and use replicate-wild-ignore-table=db_name.%. ",
+   N_("Tells the slave thread to not replicate to the specified database. To "
+      "specify more than one database to ignore, use the directive multiple "
+      "times, once for each database. This option will not work if you use "
+      "cross database updates. If you need cross database updates to work, "
+      "use replicate-wild-ignore-table=db_name.%. "),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-ignore-table", OPT_REPLICATE_IGNORE_TABLE,
-   "Tells the slave thread to not replicate to the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table. This will work for cross-datbase updates, in contrast to replicate-ignore-db.",
+   N_("Tells the slave thread to not replicate to the specified table. To "
+      "specify more than one table to ignore, use the directive multiple "
+      "times, once for each table. This will work for cross-datbase updates, "
+      "in contrast to replicate-ignore-db."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-rewrite-db", OPT_REPLICATE_REWRITE_DB,
-   "Updates to a database with a different name than the original. Example: replicate-rewrite-db=master_db_name->slave_db_name.",
+   N_("Updates to a database with a different name than the original. "
+      "Example: replicate-rewrite-db=master_db_name->slave_db_name."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
-   "In replication, if set to 1, do not skip events having our server id. \
-Default value is 0 (to break infinite loops in circular replication). \
-Can't be set to 1 if --log-slave-updates is used.",
+   N_("In replication, if set to 1, do not skip events having our server id. "
+      "Default value is 0 (to break infinite loops in circular replication). "
+      "Can't be set to 1 if --log-slave-updates is used."),
    (char**) &replicate_same_server_id,
    (char**) &replicate_same_server_id,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-wild-do-table", OPT_REPLICATE_WILD_DO_TABLE,
-   "Tells the slave thread to restrict replication to the tables that match the specified wildcard pattern. To specify more than one table, use the directive multiple times, once for each table. This will work for cross-database updates. Example: replicate-wild-do-table=foo%.bar% will replicate only updates to tables in all databases that start with foo and whose table names start with bar.",
+   N_("Tells the slave thread to restrict replication to the tables that "
+      "match the specified wildcard pattern. To specify more than one table, "
+      "use the directive multiple times, once for each table. This will work "
+      "for cross-database updates. Example: replicate-wild-do-table=foo%.bar% "
+      "will replicate only updates to tables in all databases that start with "
+      "foo and whose table names start with bar."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-wild-ignore-table", OPT_REPLICATE_WILD_IGNORE_TABLE,
-   "Tells the slave thread to not replicate to the tables that match the given wildcard pattern. To specify more than one table to ignore, use the directive multiple times, once for each table. This will work for cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% will not do updates to tables in databases that start with foo and whose table names start with bar.",
+   N_("Tells the slave thread to not replicate to the tables that match the "
+      "given wildcard pattern. To specify more than one table to ignore, use "
+      "the directive multiple times, once for each table. This will work for "
+      "cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% "
+      "will not do updates to tables in databases that start with foo and "
+      "whose table names start with bar."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   // In replication, we may need to tell the other servers how to connect
   {"report-host", OPT_REPORT_HOST,
-   "Hostname or IP of the slave to be reported to to the master during slave registration. Will appear in the output of SHOW SLAVE HOSTS. Leave unset if you do not want the slave to register itself with the master. Note that it is not sufficient for the master to simply read the IP of the slave off the socket once the slave connects. Due to NAT and other routing issues, that IP may not be valid for connecting to the slave from the master or other hosts.",
+   N_("Hostname or IP of the slave to be reported to to the master during "
+      "slave registration. Will appear in the output of SHOW SLAVE HOSTS. "
+      "Leave unset if you do not want the slave to register itself with the "
+      "master. Note that it is not sufficient for the master to simply read "
+      "the IP of the slave off the socket once the slave connects. Due to NAT "
+      "and other routing issues, that IP may not be valid for connecting to "
+      "the slave from the master or other hosts."),
    (char**) &report_host, (char**) &report_host, 0, GET_STR, REQUIRED_ARG, 0, 0,
    0, 0, 0, 0},
   {"report-password", OPT_REPORT_PASSWORD, "Undocumented.",
    (char**) &report_password, (char**) &report_password, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"report-port", OPT_REPORT_PORT,
-   "Port for connecting to slave reported to the master during slave registration. Set it only if the slave is listening on a non-default port or if you have a special tunnel from the master or other clients to the slave. If not sure, leave this option unset.",
+   N_("Port for connecting to slave reported to the master during slave "
+      "registration. Set it only if the slave is listening on a non-default "
+      "port or if you have a special tunnel from the master or other clients "
+      "to the slave. If not sure, leave this option unset."),
    (char**) &report_port, (char**) &report_port, 0, GET_UINT, REQUIRED_ARG,
-   MYSQL_PORT, 0, 0, 0, 0, 0},
-  {"safe-mode", OPT_SAFE, "Skip some optimize stages (for testing).",
+   DRIZZLE_PORT, 0, 0, 0, 0, 0},
+  {"safe-mode", OPT_SAFE,
+   N_("Skip some optimize stages (for testing)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
-   "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within specified directory",
+   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
+      "within specified directory"),
    (char**) &opt_secure_file_priv, (char**) &opt_secure_file_priv, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"server-id",	OPT_SERVER_ID,
-   "Uniquely identifies the server instance in the community of replication partners.",
+   N_("Uniquely identifies the server instance in the community of "
+      "replication partners."),
    (char**) &server_id, (char**) &server_id, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
   {"set-variable", 'O',
-   "Change the value of a variable. Please note that this option is deprecated;you can set variables directly with --variable-name=value.",
+   N_("Change the value of a variable. Please note that this option is "
+      "deprecated;you can set variables directly with --variable-name=value."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"skip-new", OPT_SKIP_NEW, "Don't use new, possible wrong routines.",
+  {"skip-new", OPT_SKIP_NEW,
+   N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-slave-start", OPT_SKIP_SLAVE_START,
-   "If set, slave is not autostarted.", (char**) &opt_skip_slave_start,
+   N_("If set, slave is not autostarted."),
+   (char**) &opt_skip_slave_start,
    (char**) &opt_skip_slave_start, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
-   "Don't print a stack trace on failure.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
+   N_("Don't print a stack trace on failure."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-symlink", OPT_SKIP_SYMLINKS, "Don't allow symlinking of tables. Deprecated option.  Use --skip-symbolic-links instead.",
+  {"skip-symlink", OPT_SKIP_SYMLINKS,
+   N_("Don't allow symlinking of tables. Deprecated option.  Use "
+      "--skip-symbolic-links instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-thread-priority", OPT_SKIP_PRIOR,
-   "Don't give threads different priorities.", 0, 0, 0, GET_NO_ARG, NO_ARG,
+   N_("Don't give threads different priorities."),
+   0, 0, 0, GET_NO_ARG, NO_ARG,
    DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
   {"slave-load-tmpdir", OPT_SLAVE_LOAD_TMPDIR,
-   "The location where the slave should put its temporary files when \
-replicating a LOAD DATA INFILE command.",
+   N_("The location where the slave should put its temporary files when "
+      "replicating a LOAD DATA INFILE command."),
    (char**) &slave_load_tmpdir, (char**) &slave_load_tmpdir, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slave-skip-errors", OPT_SLAVE_SKIP_ERRORS,
-   "Tells the slave thread to continue replication when a query event returns an error from the provided list.",
+   N_("Tells the slave thread to continue replication when a query event "
+      "returns an error from the provided list."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slave-exec-mode", OPT_SLAVE_EXEC_MODE,
-   "Modes for how replication events should be executed.  Legal values are STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not stop for operations that are idempotent. In STRICT mode, replication will stop on any unexpected difference between the master and the slave.",
-   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Modes for how replication events should be executed.  Legal values are "
+      "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will "
+      "not stop for operations that are idempotent. In STRICT mode, "
+      "replication will stop on any unexpected difference between the master "
+      "and the slave."),
+   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slow-query-log", OPT_SLOW_LOG,
-   "Enable|disable slow query log", (char**) &opt_slow_log,
+   N_("Enable|disable slow query log"),
+   (char**) &opt_slow_log,
    (char**) &opt_slow_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
-   "The update log is deprecated since version 5.0, is replaced by the binary \
-log and this option does nothing anymore.",
+   N_("(INGORED)"),
    0, 0, 0, GET_DISABLED, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"symbolic-links", 's', "Enable symbolic link support.",
+  {"symbolic-links", 's',
+   N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
    /*
      The system call realpath() produces warnings under valgrind and
@@ -3426,333 +3605,393 @@ log and this option does nothing anymore.",
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
   {"sysdate-is-now", OPT_SYSDATE_IS_NOW,
-   "Non-default option to alias SYSDATE() to NOW() to make it safe-replicable. Since 5.0, SYSDATE() returns a `dynamic' value different for different invocations, even within the same statement.",
+   N_("Non-default option to alias SYSDATE() to NOW() to make it "
+      "safe-replicable."),
    (char**) &global_system_variables.sysdate_is_now,
    0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"tc-heuristic-recover", OPT_TC_HEURISTIC_RECOVER,
-   "Decision to use in heuristic recover process. Possible values are COMMIT or ROLLBACK.",
+   N_("Decision to use in heuristic recover process. Possible values are "
+      "COMMIT or ROLLBACK."),
    (char**) &opt_tc_heuristic_recover, (char**) &opt_tc_heuristic_recover,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"temp-pool", OPT_TEMP_POOL,
-   "Using this option will cause most temporary files created to use a small set of names, rather than a unique name for each new file.",
+   N_("Using this option will cause most temporary files created to use a "
+      "small set of names, rather than a unique name for each new file."),
    (char**) &use_temp_pool, (char**) &use_temp_pool, 0, GET_BOOL, NO_ARG, 1,
    0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
-   "Specify whether to time mutexes (only InnoDB mutexes are currently supported)",
-   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0, 
+   N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
+      "supported)"),
+   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
-   "Path for temporary files. Several paths may be specified, separated by a "
-   "colon (:)"
-   ", in this case they are used in a round-robin fashion.",
+   N_("Path for temporary files. Several paths may be specified, separated "
+      "by a colon (:)"
+      ", in this case they are used in a round-robin fashion."),
    (char**) &opt_mysql_tmpdir,
    (char**) &opt_mysql_tmpdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
-   "Default transaction isolation level.", 0, 0, 0, GET_STR, REQUIRED_ARG, 0,
+   N_("Default transaction isolation level."),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
    0, 0, 0, 0, 0},
-  {"use-symbolic-links", 's', "Enable symbolic link support. Deprecated option; use --symbolic-links instead.",
+  {"use-symbolic-links", 's',
+   N_("Enable symbolic link support. Deprecated option; use --symbolic-links "
+      "instead."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"user", 'u', "Run mysqld daemon as user.", 0, 0, 0, GET_STR, REQUIRED_ARG,
+  {"user", 'u',
+   N_("Run mysqld daemon as user."),
+   0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"verbose", 'v', "Used with --help option for detailed help",
-   (char**) &opt_verbose, (char**) &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
+  {"version", 'V',
+   N_("Output version information and exit."),
+   0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"warnings", 'W', "Deprecated; use --log-warnings instead.",
+  {"warnings", 'W',
+   N_("Deprecated; use --log-warnings instead."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG,
    1, 0, ULONG_MAX, 0, 0, 0},
-  { "back_log", OPT_BACK_LOG,
-    "The number of outstanding connection requests MySQL can have. This comes into play when the main MySQL thread gets very many connection requests in a very short time.",
+  {"back_log", OPT_BACK_LOG,
+   N_("The number of outstanding connection requests MySQL can have. This "
+      "comes into play when the main MySQL thread gets very many connection "
+      "requests in a very short time."),
     (char**) &back_log, (char**) &back_log, 0, GET_ULONG,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
-  {"binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
-   "The size of the cache to hold the SQL statements for the binary log during a transaction. If you often use big, multi-statement transactions you can increase this to get more performance.",
-   (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
-   REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
-  {"bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
-   "Size of tree cache used in bulk insert optimisation. Note that this is a limit per thread!",
-   (char**) &global_system_variables.bulk_insert_buff_size,
-   (char**) &max_system_variables.bulk_insert_buff_size,
-   0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
-  {"connect_timeout", OPT_CONNECT_TIMEOUT,
-   "The number of seconds the mysqld server is waiting for a connect packet before responding with 'Bad handshake'.",
+  { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
+    N_("The size of the cache to hold the SQL statements for the binary log "
+       "during a transaction. If you often use big, multi-statement "
+       "transactions you can increase this to get more performance."),
+    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
+    REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
+  { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
+    N_("Size of tree cache used in bulk insert optimisation. Note that this is "
+       "a limit per thread!"),
+    (char**) &global_system_variables.bulk_insert_buff_size,
+    (char**) &max_system_variables.bulk_insert_buff_size,
+    0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+  { "connect_timeout", OPT_CONNECT_TIMEOUT,
+    N_("The number of seconds the mysqld server is waiting for a connect "
+       "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-   0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
-    "The DATE format (For future).",
+    N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "datetime_format", OPT_DATETIME_FORMAT,
-    "The DATETIME/TIMESTAMP format (for future).",
+    N_("The DATETIME/TIMESTAMP format (for future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "default_week_format", OPT_DEFAULT_WEEK_FORMAT,
-    "The default week format used by WEEK() functions.",
+    N_("The default week format used by WEEK() functions."),
     (char**) &global_system_variables.default_week_format,
     (char**) &max_system_variables.default_week_format,
     0, GET_ULONG, REQUIRED_ARG, 0, 0, 7L, 0, 1, 0},
-  {"div_precision_increment", OPT_DIV_PRECINCREMENT,
-   "Precision of the result of '/' operator will be increased on that value.",
+  { "div_precision_increment", OPT_DIV_PRECINCREMENT,
+   N_("Precision of the result of '/' operator will be increased on that "
+      "value."),
    (char**) &global_system_variables.div_precincrement,
    (char**) &max_system_variables.div_precincrement, 0, GET_ULONG,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
-  {"expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
-   "If non-zero, binary logs will be purged after expire_logs_days "
-   "days; possible purges happen at startup and at binary log rotation.",
-   (char**) &expire_logs_days,
-   (char**) &expire_logs_days, 0, GET_ULONG,
-   REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
+  { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
+    N_("If non-zero, binary logs will be purged after expire_logs_days "
+       "days; possible purges happen at startup and at binary log rotation."),
+    (char**) &expire_logs_days,
+    (char**) &expire_logs_days, 0, GET_ULONG,
+    REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
-    "The maximum length of the result of function  group_concat.",
+    N_("The maximum length of the result of function  group_concat."),
     (char**) &global_system_variables.group_concat_max_len,
     (char**) &max_system_variables.group_concat_max_len, 0, GET_ULONG,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
-  {"interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
-   "The number of seconds the server waits for activity on an interactive connection before closing it.",
+  { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
+    N_("The number of seconds the server waits for activity on an interactive "
+       "connection before closing it."),
    (char**) &global_system_variables.net_interactive_timeout,
    (char**) &max_system_variables.net_interactive_timeout, 0,
    GET_ULONG, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"join_buffer_size", OPT_JOIN_BUFF_SIZE,
-   "The size of the buffer that is used for full joins.",
+  { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
+    N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
    (char**) &max_system_variables.join_buff_size, 0, GET_ULONG,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   "Don't overwrite stale .MYD and .MYI even if no directory is specified.",
+   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
    (char**) &global_system_variables.keep_files_on_create,
    (char**) &max_system_variables.keep_files_on_create,
    0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
-   "The size of the buffer used for index blocks for MyISAM tables. Increase this to get better index handling (for all reads and multiple writes) to as much as you can afford; 64M on a 256M machine that mainly runs MySQL is quite common.",
+   N_("The size of the buffer used for index blocks for MyISAM tables. "
+      "Increase this to get better index handling (for all reads and multiple "
+      "writes) to as much as you can afford;"),
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL | GET_ASK_ADDR),
    REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
-   "This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache",
+   N_("This characterizes the number of hits a hot block has to be untouched "
+      "until it is considered aged enough to be downgraded to a warm block. "
+      "This specifies the percentage ratio of that number of hits to the "
+      "total number of blocks in key cache"),
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG, 
+   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
-   "The default size of key cache blocks",
+   N_("The default size of key cache blocks"),
    (char**) &dflt_key_cache_var.param_block_size,
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
   {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
-   "The minimum percentage of warm blocks in key cache",
+   N_("The minimum percentage of warm blocks in key cache"),
    (char**) &dflt_key_cache_var.param_division_limit,
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
   {"long_query_time", OPT_LONG_QUERY_TIME,
-   "Log all queries that have taken more than long_query_time seconds to execute to file. "
-   "The argument will be treated as a decimal value with microsecond precission.",
+   N_("Log all queries that have taken more than long_query_time seconds to "
+      "execute to file. The argument will be treated as a decimal value with "
+      "microsecond precission."),
    (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
    REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
-   "Max packetlength to send/receive from to server.",
+   N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_binlog_cache_size", OPT_MAX_BINLOG_CACHE_SIZE,
-   "Can be used to restrict the total size used to cache a multi-transaction query.",
+   N_("Can be used to restrict the total size used to cache a "
+      "multi-transaction query."),
    (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
    GET_ULONG, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
-   "Binary log will be rotated automatically when the size exceeds this \
-value. Will also apply to relay logs if max_relay_log_size is 0. \
-The minimum value for this variable is 4096.",
+   N_("Binary log will be rotated automatically when the size exceeds this "
+      "value. Will also apply to relay logs if max_relay_log_size is 0. "
+      "The minimum value for this variable is 4096."),
    (char**) &max_binlog_size, (char**) &max_binlog_size, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L*1024L, IO_SIZE, 1024*1024L*1024L, 0, IO_SIZE, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
-   "If there is more than this number of interrupted connections from a host this host will be blocked from further connections.",
+   N_("If there is more than this number of interrupted connections from a "
+      "host this host will be blocked from further connections."),
    (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
-    REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
+   REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
   // Default max_connections of 151 is larger than Apache's default max
   // children, to avoid "too many connections" error in a common setup
   {"max_connections", OPT_MAX_CONNECTIONS,
-   "The number of simultaneous clients allowed.", (char**) &max_connections,
+   N_("The number of simultaneous clients allowed."),
+   (char**) &max_connections,
    (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 151, 1, 100000, 0, 1,
    0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
-   "Max number of errors/warnings to store for a statement.",
+   N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
    (char**) &max_system_variables.max_error_count,
    0, GET_ULONG, REQUIRED_ARG, DEFAULT_ERROR_COUNT, 0, 65535, 0, 1, 0},
   {"max_heap_table_size", OPT_MAX_HEP_TABLE_SIZE,
-   "Don't allow creation of heap tables bigger than this.",
+   N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
-   "Joins that are probably going to read more than max_join_size records return an error.",
+   N_("Joins that are probably going to read more than max_join_size records "
+      "return an error."),
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
-   ~0L, 1, ~0L, 0, 1, 0},
-   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
-    "Max number of bytes in sorted records.",
-    (char**) &global_system_variables.max_length_for_sort_data,
-    (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
-    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
+   INT32_MAX, 1, INT32_MAX, 0, 1, 0},
+  {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
+   N_("Max number of bytes in sorted records."),
+   (char**) &global_system_variables.max_length_for_sort_data,
+   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
+   REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
-   "If non-zero: relay log will be rotated automatically when the size exceeds this value; if zero (the default): when the size exceeds max_binlog_size. 0 excepted, the minimum value for this variable is 4096.",
+   N_("If non-zero: relay log will be rotated automatically when the size "
+      "exceeds this value; if zero (the default): when the size exceeds "
+      "max_binlog_size. 0 excepted, the minimum value for this variable "
+      "is 4096."),
    (char**) &max_relay_log_size, (char**) &max_relay_log_size, 0, GET_ULONG,
    REQUIRED_ARG, 0L, 0L, 1024*1024L*1024L, 0, IO_SIZE, 0},
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
-    "Limit assumed max number of seeks when looking up rows based on a key",
+    N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
     (char**) &max_system_variables.max_seeks_for_key, 0, GET_ULONG,
     REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
-   "The number of bytes to use when sorting BLOB or TEXT values (only the first max_sort_length bytes of each value are used; the rest are ignored).",
+   N_("The number of bytes to use when sorting BLOB or TEXT values "
+      "(only the first max_sort_length bytes of each value are used; the "
+      "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
    (char**) &max_system_variables.max_sort_length, 0, GET_ULONG,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
-   "Maximum number of temporary tables a client can keep open at a time.",
+   N_("Maximum number of temporary tables a client can keep open at a time."),
    (char**) &global_system_variables.max_tmp_tables,
    (char**) &max_system_variables.max_tmp_tables, 0, GET_ULONG,
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
-   "After this many write locks, allow some read locks to run in between.",
+   N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULONG,
    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
-   "Don't log queries which examine less than min_examined_row_limit rows to file.",
+   N_("Don't log queries which examine less than min_examined_row_limit "
+      "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULONG,
-  REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
+   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
-   "Block size to be used for MyISAM index pages.",
+   N_("Block size to be used for MyISAM index pages."),
    (char**) &opt_myisam_block_size,
    (char**) &opt_myisam_block_size, 0, GET_ULONG, REQUIRED_ARG,
    MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, MI_MAX_KEY_BLOCK_LENGTH,
    0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
-   "Default pointer size to be used for MyISAM tables.",
+   N_("Default pointer size to be used for MyISAM tables."),
    (char**) &myisam_data_pointer_size,
    (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
    6, 2, 7, 0, 1, 0},
   {"myisam_max_extra_sort_file_size", OPT_MYISAM_MAX_EXTRA_SORT_FILE_SIZE,
-   "Deprecated option",
+   N_("(Deprecated option)"),
    (char**) &global_system_variables.myisam_max_extra_sort_file_size,
    (char**) &max_system_variables.myisam_max_extra_sort_file_size,
    0, GET_ULL, REQUIRED_ARG, (uint64_t) MI_MAX_TEMP_LENGTH,
    0, (uint64_t) MAX_FILE_SIZE, 0, 1, 0},
   {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
-   "Don't use the fast sort index method to created index if the temporary file would get bigger than this.",
+   N_("Don't use the fast sort index method to created index if the "
+      "temporary file would get bigger than this."),
    (char**) &global_system_variables.myisam_max_sort_file_size,
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
    GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
   {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
-   "Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair.",
+   N_("Number of threads to use when repairing MyISAM tables. The value of "
+      "1 disables parallel repair."),
    (char**) &global_system_variables.myisam_repair_threads,
    (char**) &max_system_variables.myisam_repair_threads, 0,
    GET_ULONG, REQUIRED_ARG, 1, 1, ULONG_MAX, 0, 1, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
-   "The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE.",
+   N_("The buffer that is allocated when sorting the index when doing a "
+      "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, ~0L, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, INT32_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
-   "Specifies how MyISAM index statistics collection code should threat NULLs. "
-   "Possible values of name are \"nulls_unequal\" (default behavior for 4.1/5.0), "
-   "\"nulls_equal\" (emulate 4.0 behavior), and \"nulls_ignored\".",
+   N_("Specifies how MyISAM index statistics collection code should threat "
+      "NULLs. Possible values of name are 'nulls_unequal' "
+      "(default behavior), "
+      "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."),
    (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
     GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   "Buffer length for TCP/IP and socket communication.",
+   N_("Buffer length for TCP/IP and socket communication."),
    (char**) &global_system_variables.net_buffer_length,
    (char**) &max_system_variables.net_buffer_length, 0, GET_ULONG,
    REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
   {"net_read_timeout", OPT_NET_READ_TIMEOUT,
-   "Number of seconds to wait for more data from a connection before aborting the read.",
+   N_("Number of seconds to wait for more data from a connection before "
+      "aborting the read."),
    (char**) &global_system_variables.net_read_timeout,
    (char**) &max_system_variables.net_read_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"net_retry_count", OPT_NET_RETRY_COUNT,
-   "If a read on a communication port is interrupted, retry this many times before giving up.",
+   N_("If a read on a communication port is interrupted, retry this many "
+      "times before giving up."),
    (char**) &global_system_variables.net_retry_count,
    (char**) &max_system_variables.net_retry_count,0,
    GET_ULONG, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
   {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
-   "Number of seconds to wait for a block to be written to a connection  before aborting the write.",
+   N_("Number of seconds to wait for a block to be written to a connection "
+      "before aborting the write."),
    (char**) &global_system_variables.net_write_timeout,
    (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  { "old", OPT_OLD_MODE, "Use compatible behavior.", 
+  { "old", OPT_OLD_MODE,
+    N_("Use compatible behavior."),
     (char**) &global_system_variables.old_mode,
-    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG, 
+    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"open_files_limit", OPT_OPEN_FILES_LIMIT,
-   "If this is not 0, then mysqld will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 then mysqld will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of files.",
+   N_("If this is not 0, then mysqld will use this value to reserve file "
+      "descriptors to use with setrlimit(). If this value is 0 then mysqld "
+      "will reserve max_connections*5 or max_connections + table_cache*2 "
+      "(whichever is larger) number of files."),
    (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
-   "Controls the heuristic(s) applied during query optimization to prune less-promising partial plans from the optimizer search space. Meaning: 0 - do not apply any heuristic, thus perform exhaustive search; 1 - prune plans based on number of retrieved rows.",
+   N_("Controls the heuristic(s) applied during query optimization to prune "
+      "less-promising partial plans from the optimizer search space. Meaning: "
+      "0 - do not apply any heuristic, thus perform exhaustive search; "
+      "1 - prune plans based on number of retrieved rows."),
    (char**) &global_system_variables.optimizer_prune_level,
    (char**) &max_system_variables.optimizer_prune_level,
    0, GET_ULONG, OPT_ARG, 1, 0, 1, 0, 1, 0},
   {"optimizer_search_depth", OPT_OPTIMIZER_SEARCH_DEPTH,
-   "Maximum depth of search performed by the query optimizer. Values larger than the number of relations in a query result in better query plans, but take longer to compile a query. Smaller values than the number of tables in a relation result in faster optimization, but may produce very bad query plans. If set to 0, the system will automatically pick a reasonable value; if set to MAX_TABLES+2, the optimizer will switch to the original find_best (used for testing/comparison).",
+   N_("Maximum depth of search performed by the query optimizer. Values "
+      "larger than the number of relations in a query result in better query "
+      "plans, but take longer to compile a query. Smaller values than the "
+      "number of tables in a relation result in faster optimization, but may "
+      "produce very bad query plans. If set to 0, the system will "
+      "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
+      "optimizer will switch to the original find_best (used for "
+      "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_ULONG, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
-   "Directory for plugins.",
+   N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
-   "Optional colon separated list of plugins to load, where each plugin is "
-   "identified by name and path to library seperated by an equals.",
+   N_("Optional comma separated list of plugins to load, where each plugin is "
+      "identified by the name of the shared library. "
+      "[for example: --plugin_load=libmd5udf.so]"),
    (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
-   "The size of the buffer that is allocated when preloading indexes",
+   N_("The size of the buffer that is allocated when preloading indexes"),
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULONG,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
-   "Allocation block size for query parsing and execution",
+   N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
    (char**) &max_system_variables.query_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
-   "Persistent buffer for query parsing and execution",
+   N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
    (char**) &max_system_variables.query_prealloc_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
    ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
-   "Allocation block size for storing ranges during optimization",
+   N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
-   "Each thread that does a sequential scan allocates a buffer of this size for each table it scans. If you do many sequential scans, you may want to increase this value.",
+   N_("Each thread that does a sequential scan allocates a buffer of this "
+      "size for each table it scans. If you do many sequential scans, you may "
+      "want to increase this value."),
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
    128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
    0},
   {"read_only", OPT_READONLY,
-   "Make all non-temporary tables read-only, with the exception for replication (slave) threads and users with the SUPER privilege",
+   N_("Make all non-temporary tables read-only, with the exception for "
+      "replication (slave) threads and users with the SUPER privilege"),
    (char**) &opt_readonly,
    (char**) &opt_readonly,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"read_rnd_buffer_size", OPT_RECORD_RND_BUFFER,
-   "When reading rows in sorted order after a sort, the rows are read through this buffer to avoid a disk seeks. If not set, then it's set to the value of record_buffer.",
+   N_("When reading rows in sorted order after a sort, the rows are read "
+      "through this buffer to avoid a disk seeks. If not set, then it's set "
+      "to the value of record_buffer."),
    (char**) &global_system_variables.read_rnd_buff_size,
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_ULONG, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
@@ -3761,109 +4000,114 @@ The minimum value for this variable is 4096.",
    "Alias for read_buffer_size",
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
+   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD,
+   INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
-   "0 = do not purge relay logs. 1 = purge them as soon as they are no more needed.",
+   N_("0 = do not purge relay logs. "
+      "1 = purge them as soon as they are no more needed."),
    (char**) &relay_log_purge,
    (char**) &relay_log_purge, 0, GET_BOOL, NO_ARG,
    1, 0, 1, 0, 1, 0},
   {"relay_log_space_limit", OPT_RELAY_LOG_SPACE_LIMIT,
-   "Maximum space to use for all relay logs.",
+   N_("Maximum space to use for all relay logs."),
    (char**) &relay_log_space_limit,
    (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
    (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
-   "Use compression on master/slave protocol.",
+   N_("Use compression on master/slave protocol."),
    (char**) &opt_slave_compressed_protocol,
    (char**) &opt_slave_compressed_protocol,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"slave_net_timeout", OPT_SLAVE_NET_TIMEOUT,
-   "Number of seconds to wait for more data from a master/slave connection before aborting the read.",
+   N_("Number of seconds to wait for more data from a master/slave connection "
+      "before aborting the read."),
    (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
    GET_ULONG, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
-   "Number of times the slave SQL thread will retry a transaction in case "
-   "it failed with a deadlock or elapsed lock wait timeout, "
-   "before giving up and stopping.",
+   N_("Number of times the slave SQL thread will retry a transaction in case "
+      "it failed with a deadlock or elapsed lock wait timeout, "
+      "before giving up and stopping."),
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
    GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
-   "Allow slave to batch requests.",
+   N_("Allow slave to batch requests."),
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
-   "If creating the thread takes longer than this value (in seconds), the Slow_launch_threads counter will be incremented.",
+   N_("If creating the thread takes longer than this value (in seconds), the "
+      "Slow_launch_threads counter will be incremented."),
    (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULONG,
    REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
-   "Each thread that needs to do a sort allocates a buffer of this size.",
+   N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, ULONG_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
-   "Synchronously flush binary log to disk after every #th event. "
-   "Use 0 (default) to disable synchronous flushing.",
+   N_("Synchronously flush binary log to disk after every #th event. "
+      "Use 0 (default) to disable synchronous flushing."),
    (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
-  {"sync-frm", OPT_SYNC_FRM, "Sync .frm to disk on create. Enabled by default.",
-   (char**) &opt_sync_frm, (char**) &opt_sync_frm, 0, GET_BOOL, NO_ARG, 1, 0,
-   0, 0, 0, 0},
   {"table_cache", OPT_TABLE_OPEN_CACHE,
-   "Deprecated; use --table_open_cache instead.",
+   N_("Deprecated; use --table_open_cache instead."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
-   "The number of cached table definitions.",
+   N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
    0, GET_ULONG, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
-   "The number of cached open tables.",
+   N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
-   "Timeout in seconds to wait for a table level lock before returning an "
-   "error. Used only if the connection has active cursors.",
+   N_("Timeout in seconds to wait for a table level lock before returning an "
+      "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULONG, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
   {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
-   "How many threads we should keep in a cache for reuse.",
+   N_("How many threads we should keep in a cache for reuse."),
    (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-   "How many threads we should create to handle query requests in case of 'thread_handling=pool-of-threads'",
+   N_("How many threads we should create to handle query requests in case of "
+      "'thread_handling=pool-of-threads'"),
    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
    REQUIRED_ARG, 20, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
-   "The stack size for each thread.", (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULONG, REQUIRED_ARG,DEFAULT_THREAD_STACK,
+   N_("The stack size for each thread."),
+   (char**) &my_thread_stack_size,
+   (char**) &my_thread_stack_size, 0, GET_ULONG,
+   REQUIRED_ARG,DEFAULT_THREAD_STACK,
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
-    "The TIME format (for future).",
+    N_("The TIME format (for future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
-   "If an internal in-memory temporary table exceeds this size, MySQL will"
-   " automatically convert it to an on-disk MyISAM table.",
+   N_("If an internal in-memory temporary table exceeds this size, MySQL will"
+      " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
-   "Allocation block size for transactions to be stored in binary log",
+   N_("Allocation block size for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_alloc_block_size,
    (char**) &max_system_variables.trans_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
-   "Persistent buffer for transactions to be stored in binary log",
+   N_("Persistent buffer for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_prealloc_size,
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_ULONG,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"wait_timeout", OPT_WAIT_TIMEOUT,
-   "The number of seconds the server waits for activity on a connection before closing it.",
+   N_("The number of seconds the server waits for activity on a connection "
+      "before closing it."),
    (char**) &global_system_variables.net_wait_timeout,
    (char**) &max_system_variables.net_wait_timeout, 0, GET_ULONG,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, IF_WIN(INT32_MAX/1000, LONG_TIMEOUT),
+   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
    0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -4095,7 +4339,7 @@ static void print_version(void)
     version from the output of 'mysqld --version', so don't change it!
   */
   printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
-	 server_version,SYSTEM_TYPE,MACHINE_TYPE, MYSQL_COMPILATION_COMMENT);
+	 server_version,SYSTEM_TYPE,MACHINE_TYPE, DRIZZLE_COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -4107,27 +4351,26 @@ static void usage(void)
   if (!default_collation_name)
     default_collation_name= (char*) default_charset_info->name;
   print_version();
-  puts("\
-Copyright (C) 2000 MySQL AB, by Monty and others\n\
-This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
-and you are welcome to modify and redistribute it under the GPL license\n\n\
-Starts the MySQL database server\n");
+  puts(_("Copyright (C) 2000 MySQL AB, by Monty and others\n"
+         "This software comes with ABSOLUTELY NO WARRANTY. "
+         "This is free software,\n"
+         "and you are welcome to modify and redistribute it under the GPL "
+         "license\n\n"
+         "Starts the Drizzle database server\n"));
 
-  printf("Usage: %s [OPTIONS]\n", my_progname);
-  if (!opt_verbose)
-    puts("\nFor more help options (several pages), use mysqld --verbose --help");
-  else
+  printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
-  print_defaults(MYSQL_CONFIG_NAME,load_default_groups);
+#ifdef FOO
+  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
   puts("");
   set_ports();
+#endif
 
   /* Print out all the options including plugin supplied options */
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
-  puts("\n\
-To see what values a running DrizzleD server is using, type\n\
-'drizzleadmin variables' instead of 'mysqld --verbose --help'.");
+  puts(_("\nTo see what values a running Drizzle server is using, type\n"
+         "'drizzleadmin variables' instead of 'drizzled --help'."));
   }
 }
 
@@ -4161,7 +4404,6 @@ static void mysql_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
-  opt_myisam_log= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;
@@ -4180,10 +4422,9 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
-  memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
-  memset((char *) &global_status_var, 0, sizeof(global_status_var));
+  memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
+  memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
   /* Character sets */
@@ -4200,7 +4441,6 @@ static void mysql_init_variables(void)
   slave_exec_mode_options= 0;
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
-  opt_specialflag= SPECIAL_ENGLISH;
   mysql_home_ptr= mysql_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;
@@ -4212,7 +4452,7 @@ static void mysql_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   global_query_id= thread_id= 1L;
-  strmov(server_version, MYSQL_SERVER_VERSION);
+  stpcpy(server_version, DRIZZLE_SERVER_VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4240,7 +4480,7 @@ static void mysql_init_variables(void)
 
   /* Variables in libraries */
   charsets_dir= 0;
-  default_character_set_name= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+  default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
   sys_charset_system.set((char*) system_charset_info->csname);
   character_set_filesystem_name= (char*) "binary";
@@ -4262,7 +4502,7 @@ static void mysql_init_variables(void)
   global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
-  opt_error_log= IF_WIN(1,0);
+  opt_error_log= 0;
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
 #else
@@ -4276,7 +4516,7 @@ static void mysql_init_variables(void)
 
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = DEFAULT_MYSQL_HOME;
+    tmpenv = DEFAULT_DRIZZLE_HOME;
   (void) strmake(mysql_home, tmpenv, sizeof(mysql_home)-1);
 }
 
@@ -4313,7 +4553,9 @@ mysqld_get_one_option(int optid,
     if (!mysqld_user || !strcmp(mysqld_user, argument))
       mysqld_user= argument;
     else
-      sql_print_warning("Ignoring user change to '%s' because the user was set to '%s' earlier on the command line\n", argument, mysqld_user);
+      sql_print_warning(_("Ignoring user change to '%s' because the user was "
+                          "set to '%s' earlier on the command line\n"),
+                        argument, mysqld_user);
     break;
   case 'L':
     strmake(language, argument, sizeof(language)-1);
@@ -4340,9 +4582,6 @@ mysqld_get_one_option(int optid,
     test_flags= argument ? (uint) atoi(argument) : 0;
     opt_endinfo=1;
     break;
-  case (int) OPT_ISAM_LOG:
-    opt_myisam_log=1;
-    break;
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);
     break;
@@ -4366,7 +4605,7 @@ mysqld_get_one_option(int optid,
       if (!(p= strstr(argument, "->")))
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - missing '->'!\n");
+                _("Bad syntax in replicate-rewrite-db - missing '->'!\n"));
         exit(1);
       }
       val= p--;
@@ -4375,7 +4614,7 @@ mysqld_get_one_option(int optid,
       if (p == argument)
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
+                _("Bad syntax in replicate-rewrite-db - empty FROM db!\n"));
         exit(1);
       }
       *val= 0;
@@ -4385,7 +4624,7 @@ mysqld_get_one_option(int optid,
       if (!*val)
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - empty TO db!\n");
+                _("Bad syntax in replicate-rewrite-db - empty TO db!\n"));
         exit(1);
       }
 
@@ -4414,7 +4653,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_do_table(argument))
       {
-        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4423,7 +4662,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_wild_do_table(argument))
       {
-        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4432,7 +4671,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_wild_ignore_table(argument))
       {
-        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4441,7 +4680,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_ignore_table(argument))
       {
-        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4466,9 +4705,6 @@ mysqld_get_one_option(int optid,
       break;
     }
 #endif
-  case (int) OPT_SKIP_PRIOR:
-    opt_specialflag|= SPECIAL_NO_PRIOR;
-    break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;
@@ -4480,21 +4716,22 @@ mysqld_get_one_option(int optid,
     break;
   case (int) OPT_BIND_ADDRESS:
     {
-      struct addrinfo *res_lst, hints;    
+      struct addrinfo *res_lst, hints;
 
       memset(&hints, 0, sizeof(struct addrinfo));
       hints.ai_socktype= SOCK_STREAM;
       hints.ai_protocol= IPPROTO_TCP;
 
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0) 
+      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
-        sql_print_error("Can't start server: cannot resolve hostname!");
+        sql_print_error(_("Can't start server: cannot resolve hostname!"));
         exit(1);
       }
 
       if (res_lst->ai_next)
       {
-        sql_print_error("Can't start server: bind-address refers to multiple interfaces!");
+        sql_print_error(_("Can't start server: bind-address refers to "
+                          "multiple interfaces!"));
         exit(1);
       }
       freeaddrinfo(res_lst);
@@ -4569,7 +4806,7 @@ mysqld_get_one_option(int optid,
     break;
   case OPT_MYISAM_STATS_METHOD:
     {
-      ulong method_conv;
+      uint32_t method_conv;
       int method;
 
       myisam_stats_method_str= argument;
@@ -4668,7 +4905,10 @@ static void get_options(int *argc,char **argv)
   if ((opt_log_slow_admin_statements || opt_log_queries_not_using_indexes ||
        opt_log_slow_slave_statements) &&
       !opt_slow_log)
-    sql_print_warning("options --log-slow-admin-statements, --log-queries-not-using-indexes and --log-slow-slave-statements have no effect if --log-slow-queries is not set");
+    sql_print_warning(_("options --log-slow-admin-statements, "
+                        "--log-queries-not-using-indexes and "
+                        "--log-slow-slave-statements have no effect if "
+                        "--log-slow-queries is not set"));
 
 #if defined(HAVE_BROKEN_REALPATH)
   my_use_symdir=0;
@@ -4711,9 +4951,6 @@ static void get_options(int *argc,char **argv)
   global_system_variables.long_query_time= max_system_variables.long_query_time=
     (int64_t) (long_query_time * 1000000.0);
 
-  if (opt_short_log_format)
-    opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;
-
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
       init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
@@ -4730,25 +4967,25 @@ static void get_options(int *argc,char **argv)
   Create version name for running mysqld version
   We automaticly add suffixes -debug, -embedded and -log to the version
   name to make the version more descriptive.
-  (MYSQL_SERVER_SUFFIX is set by the compilation environment)
+  (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
 */
 
 static void set_server_version(void)
 {
-  char *end= strxmov(server_version, MYSQL_SERVER_VERSION,
-                     MYSQL_SERVER_SUFFIX_STR, NullS);
+  char *end= strxmov(server_version, DRIZZLE_SERVER_VERSION,
+                     DRIZZLE_SERVER_SUFFIX_STR, NullS);
   if (opt_log || opt_slow_log || opt_bin_log)
-    strmov(end, "-log");                        // This may slow down system
+    stpcpy(end, "-log");                        // This may slow down system
 }
 
 
 static char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,DEFAULT_MYSQL_HOME) &&
-      strcmp(DEFAULT_MYSQL_HOME,FN_ROOTDIR))
+      is_prefix(path,DEFAULT_DRIZZLE_HOME) &&
+      strcmp(DEFAULT_DRIZZLE_HOME,FN_ROOTDIR))
   {
-    path+=(uint) strlen(DEFAULT_MYSQL_HOME);
+    path+=(uint) strlen(DEFAULT_DRIZZLE_HOME);
     while (*path == FN_LIBCHAR)
       path++;
   }
@@ -4786,7 +5023,7 @@ static void fix_paths(void)
   /* Resolve symlinks to allow 'mysql_home' to be a relative symlink */
   my_realpath(mysql_home,mysql_home,MYF(0));
   /* Ensure that mysql_home ends in FN_LIBCHAR */
-  pos=strend(mysql_home);
+  pos= strchr(mysql_home, '\0');
   if (pos[-1] != FN_LIBCHAR)
   {
     pos[0]= FN_LIBCHAR;
@@ -4842,21 +5079,22 @@ static void fix_paths(void)
 }
 
 
-static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
+static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option)
 {
-  ulong res;
+  uint32_t res;
 
   const char **ptr;
-  
-  if ((res= find_bit_type(x, bit_lib)) == ~(ulong) 0)
+
+  if ((res= find_bit_type(x, bit_lib)) == ~(uint32_t) 0)
   {
     ptr= bit_lib->type_names;
     if (!*x)
-      fprintf(stderr, "No option given to %s\n", option);
+      fprintf(stderr, _("No option given to %s\n"), option);
     else
-      fprintf(stderr, "Wrong option to %s. Option(s) given: %s\n", option, x);
-    fprintf(stderr, "Alternatives are: '%s'", *ptr);
+      fprintf(stderr, _("Wrong option to %s. Option(s) given: %s\n"),
+              option, x);
+    fprintf(stderr, _("Alternatives are: '%s'"), *ptr);
     while (*++ptr)
       fprintf(stderr, ",'%s'", *ptr);
     fprintf(stderr, "\n");
@@ -4870,16 +5108,16 @@ static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
   @return
     a bitfield from a string of substrings separated by ','
     or
-    ~(ulong) 0 on error.
+    ~(uint32_t) 0 on error.
 */
 
-static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
+static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib)
 {
   bool found_end;
   int  found_count;
   const char *end,*i,*j;
   const char **array, *pos;
-  ulong found,found_int,bit;
+  uint32_t found,found_int,bit;
 
   found=0;
   found_end= 0;
@@ -4888,11 +5126,16 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
   found_end= *pos == 0;
   while (!found_end)
   {
-    if (!*(end=strcend(pos,',')))		/* Let end point at fieldend */
+    if ((end=strrchr(pos,',')) != NULL)		/* Let end point at fieldend */
     {
       while (end > pos && end[-1] == ' ')
 	end--;					/* Skip end-space */
       found_end=1;
+    }
+    else
+    {
+        end=pos+strlen(pos);
+        found_end=1;
     }
     found_int=0; found_count=0;
     for (array=bit_lib->type_names, bit=1 ; (i= *array++) ; bit<<=1)
@@ -4917,7 +5160,7 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
 skip: ;
     }
     if (found_count != 1)
-      return(~(ulong) 0);				// No unique value
+      return(~(uint32_t) 0);				// No unique value
     found|=found_int;
     pos=end+1;
   }
@@ -4958,7 +5201,7 @@ void refresh_status(THD *thd)
   add_to_status(&global_status_var, &thd->status_var);
 
   /* Reset thread's status variables */
-  memset((uchar*) &thd->status_var, 0, sizeof(thd->status_var));
+  memset(&thd->status_var, 0, sizeof(thd->status_var));
 
   /* Reset some global variables */
   reset_status_vars();

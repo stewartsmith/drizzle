@@ -164,10 +164,10 @@ enum enum_log_state { LOG_OPENED, LOG_CLOSED, LOG_TO_BE_OPENED };
   (mmap+fsync is two times faster than write+fsync)
 */
 
-class MYSQL_LOG
+class DRIZZLE_LOG
 {
 public:
-  MYSQL_LOG();
+  DRIZZLE_LOG();
   void init_pthread_objects();
   void cleanup();
   bool open(const char *log_name,
@@ -195,10 +195,10 @@ public:
   friend class Log_event;
 };
 
-class MYSQL_QUERY_LOG: public MYSQL_LOG
+class DRIZZLE_QUERY_LOG: public DRIZZLE_LOG
 {
 public:
-  MYSQL_QUERY_LOG() : last_time(0) {}
+  DRIZZLE_QUERY_LOG() : last_time(0) {}
   void reopen_file();
   bool write(time_t event_time, const char *user_host,
              uint user_host_len, int thread_id,
@@ -225,7 +225,7 @@ private:
   time_t last_time;
 };
 
-class MYSQL_BIN_LOG: public TC_LOG, private MYSQL_LOG
+class DRIZZLE_BIN_LOG: public TC_LOG, private DRIZZLE_LOG
 {
  private:
   /* LOCK_log and LOCK_index are inited by init_pthread_objects() */
@@ -274,8 +274,8 @@ class MYSQL_BIN_LOG: public TC_LOG, private MYSQL_LOG
   void new_file_impl(bool need_lock);
 
 public:
-  MYSQL_LOG::generate_name;
-  MYSQL_LOG::is_open;
+  DRIZZLE_LOG::generate_name;
+  DRIZZLE_LOG::is_open;
   /*
     These describe the log's format. This is used only for relay logs.
     _for_exec is used by the SQL thread, _for_queue by the I/O thread. It's
@@ -287,9 +287,9 @@ public:
   Format_description_log_event *description_event_for_exec,
     *description_event_for_queue;
 
-  MYSQL_BIN_LOG();
+  DRIZZLE_BIN_LOG();
   /*
-    note that there's no destructor ~MYSQL_BIN_LOG() !
+    note that there's no destructor ~DRIZZLE_BIN_LOG() !
     The reason is that we don't want it to be automatically called
     on exit() - but only during the correct shutdown process
   */
@@ -299,8 +299,8 @@ public:
   int log_xid(THD *thd, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
-#if !defined(MYSQL_CLIENT)
-  bool is_table_mapped(TABLE *table) const
+#if !defined(DRIZZLE_CLIENT)
+  bool is_table_mapped(Table *table) const
   {
     return table->s->table_map_version == table_map_version();
   }
@@ -310,7 +310,7 @@ public:
 
   int flush_and_set_pending_rows_event(THD *thd, Rows_log_event* event);
 
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */
   void reset_bytes_written()
   {
     bytes_written = 0;
@@ -406,7 +406,7 @@ public:
                            uint user_host_len, int thread_id,
                            const char *command_type, uint command_type_len,
                            const char *sql_text, uint sql_text_len,
-                           CHARSET_INFO *client_cs)= 0;
+                           const CHARSET_INFO * const client_cs)= 0;
   virtual ~Log_event_handler() {}
 };
 
@@ -417,8 +417,8 @@ public:
 
 class Log_to_file_event_handler: public Log_event_handler
 {
-  MYSQL_QUERY_LOG mysql_log;
-  MYSQL_QUERY_LOG mysql_slow_log;
+  DRIZZLE_QUERY_LOG mysql_log;
+  DRIZZLE_QUERY_LOG mysql_slow_log;
   bool is_initialized;
 public:
   Log_to_file_event_handler(): is_initialized(false)
@@ -437,11 +437,11 @@ public:
                            uint user_host_len, int thread_id,
                            const char *command_type, uint command_type_len,
                            const char *sql_text, uint sql_text_len,
-                           CHARSET_INFO *client_cs);
+                           const CHARSET_INFO * const client_cs);
   void flush();
   void init_pthread_objects();
-  MYSQL_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }
-  MYSQL_QUERY_LOG *get_mysql_log() { return &mysql_log; }
+  DRIZZLE_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }
+  DRIZZLE_QUERY_LOG *get_mysql_log() { return &mysql_log; }
 };
 
 
@@ -499,13 +499,13 @@ public:
   void init_general_log(uint general_log_printer);
   void deactivate_log_handler(THD* thd, uint log_type);
   bool activate_log_handler(THD* thd, uint log_type);
-  MYSQL_QUERY_LOG *get_slow_log_file_handler()
+  DRIZZLE_QUERY_LOG *get_slow_log_file_handler()
   { 
     if (file_log_handler)
       return file_log_handler->get_mysql_slow_log();
     return NULL;
   }
-  MYSQL_QUERY_LOG *get_log_file_handler()
+  DRIZZLE_QUERY_LOG *get_log_file_handler()
   { 
     if (file_log_handler)
       return file_log_handler->get_mysql_log();

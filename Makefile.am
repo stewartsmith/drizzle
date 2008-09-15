@@ -14,8 +14,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Process this file with automake to create Makefile.in
+if BUILD_GETTEXT
+  po=po
+endif
 
-SUBDIRS = . vio \
+SUBDIRS = ${po} . vio \
 	  mystrings \
 	  mysys \
 	  extra \
@@ -27,10 +30,7 @@ SUBDIRS = . vio \
 	  tests \
 	  support-files
 
-DIST_SUBDIRS = $(SUBDIRS) \
-	       mysys/tests \
-	       mystrings/tests
-
+EXTRA_DIST = config/config.rpath
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
@@ -61,7 +61,6 @@ distclean-local:
     test-ext-jp \
     test-ext-stress \
     test-ext \
-    test-embedded \
     test-fast \
     test-fast-cursor \
     test-fast-view \
@@ -92,3 +91,6 @@ test: test-drizzle
 test-drizzle:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test 
+
+doxygen:
+	doxygen Doxyfile

@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_filter.h"
 
 #define TABLE_RULE_HASH_SIZE   16
@@ -50,7 +50,7 @@ Rpl_filter::~Rpl_filter()
 
   SYNOPSIS
     tables_ok()
-    db              db to use if db in TABLE_LIST is undefined for a table
+    db              db to use if db in TableList is undefined for a table
     tables          list of tables to check
 
   NOTES
@@ -84,7 +84,7 @@ Rpl_filter::~Rpl_filter()
 */
 
 bool 
-Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
+Rpl_filter::tables_ok(const char* db, TableList* tables)
 {
   bool some_tables_updating= 0;
   
@@ -97,9 +97,9 @@ Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
     if (!tables->updating) 
       continue;
     some_tables_updating= 1;
-    end= strmov(hash_key, tables->db ? tables->db : db);
+    end= stpcpy(hash_key, tables->db ? tables->db : db);
     *end++= '.';
-    len= (uint) (strmov(end, tables->table_name) - hash_key);
+    len= (uint) (stpcpy(end, tables->table_name) - hash_key);
     if (do_table_inited) // if there are any do's
     {
       if (hash_search(&do_table, (uchar*) hash_key, len))
@@ -217,7 +217,7 @@ Rpl_filter::db_ok_with_wild_table(const char *db)
   char hash_key[NAME_LEN+2];
   char *end;
   int len;
-  end= strmov(hash_key, db);
+  end= stpcpy(hash_key, db);
   *end++= '.';
   len= end - hash_key ;
   if (wild_do_table_inited && find_wild(&wild_do_table, hash_key, len))

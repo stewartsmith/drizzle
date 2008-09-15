@@ -29,8 +29,9 @@ noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
-LDADD=			$(top_builddir)/mysys/libmysyslt.la \
-                        $(top_builddir)/mystrings/libmystringslt.la 
+LDADD=			$(top_builddir)/mysys/libmysys.la \
+                        $(top_builddir)/mystrings/libmystrings.la \
+			$(LIBINTL)
 
 
 
@@ -130,25 +131,63 @@ test-binlog-statement:
 
 test: test-drizzle
 
+# Please keep the list of tests in alphabetical order for ease of
+# maintenance and verification
+
 test-drizzle:
 	  $(PERL) -I$(top_srcdir)/tests/lib \
 		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
-	  alter_table \
-	  join_crash \
-	  join_nested \
-	  join_outer_innodb \
-	  delete \
-	  join_outer \
-	  distinct \
-	  type_newdecimal \
-	  join \
-	  subselect \
-	  subselect3 \
-	  subselect_innodb \
-	  insert \
-	  select \
-	  update \
-	  information_schema \
-	  mysqlslap \
-	  lock \
-	  lock_tables_lost_commit
+        1st \
+        alter_table \
+        bench_count_distinct \
+	bulk_replace \
+	comment_column2 \
+	comments \
+	consistent_snapshot \
+        count_distinct \
+        count_distinct2 \
+        count_distinct3 \
+	create_select_tmp \
+        ctype_filename \
+        delete \
+        distinct \
+	drizzleslap \
+        endspace \
+        flush2 \
+        func_equal \
+        func_group_innodb \
+        func_isnull \
+        func_like \
+        greedy_optimizer \
+        group_min_max_innodb \
+        heap_auto_increment \
+        heap_btree \
+        heap_var \
+        information_schema \
+        innodb-lock \
+        innodb-semi-consistent \
+        innodb_timeout_rollback \
+        insert \
+        join \
+        join_crash \
+        join_nested \
+        join_outer \
+        join_outer_innodb \
+        key_diff \
+        key_primary \
+        keywords \
+        lock \
+        limit \
+        lock_tables_lost_commit \
+        overflow \
+        rollback \
+        select \
+        subselect \
+        subselect3 \
+        subselect_innodb \
+        sum_distinct \
+        tablelock \
+        type_newdecimal \
+        unsafe_binlog_innodb \
+        update \
+        variables-notembedded

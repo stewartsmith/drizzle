@@ -23,7 +23,7 @@
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |	  \
                              CLIENT_TRANSACTIONS | \
-			     CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION)
+			     			 CLIENT_SECURE_CONNECTION)
 
 sig_handler my_pipe_sig_handler(int sig);
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
@@ -34,11 +34,10 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 #define set_sigpipe(drizzle)
 #define reset_sigpipe(drizzle)
 
-void mysql_detach_stmt_list(LIST **stmt_list, const char *func_name);
-DRIZZLE * STDCALL
+DRIZZLE *
 cli_drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 		       const char *passwd, const char *db,
-		       uint port, const char *unix_socket,ulong client_flag);
+		       uint port, const char *unix_socket,uint32_t client_flag);
 
 void cli_drizzle_close(DRIZZLE *drizzle);
 

@@ -23,9 +23,9 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_filter.h"
-#include <errno.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /*
   While we have legacy_db_type, we have this array to
@@ -112,12 +112,12 @@ plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name)
 
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (thd && !my_charset_latin1.coll->strnncoll(&my_charset_latin1,
+  if (thd && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
                            (const uchar *)name->str, name->length,
                            (const uchar *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(thd);
 
-  if ((plugin= my_plugin_lock_by_name(thd, name, MYSQL_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= my_plugin_lock_by_name(thd, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags & HTON_NOT_USER_SELECTABLE))
@@ -134,7 +134,7 @@ redo:
   */
   for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
   {
-    if (!my_strnncoll(&my_charset_latin1,
+    if (!my_strnncoll(&my_charset_utf8_general_ci,
                       (const uchar *)name->str, name->length,
                       (const uchar *)table_alias->str, table_alias->length))
     {
@@ -359,7 +359,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(hton))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -387,12 +387,12 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
 
         if (idx == (int) DB_TYPE_DEFAULT)
         {
-          sql_print_warning("Too many storage engines!");
+          sql_print_warning(_("Too many storage engines!"));
           return(1);
         }
         if (hton->db_type != DB_TYPE_UNKNOWN)
-          sql_print_warning("Storage engine '%s' has conflicting typecode. "
-                            "Assigning value %d.", plugin->plugin->name, idx);
+          sql_print_warning(_("Storage engine '%s' has conflicting typecode. "
+                            "Assigning value %d."), plugin->plugin->name, idx);
         hton->db_type= (enum legacy_db_type) idx;
       }
       installed_htons[hton->db_type]= hton;
@@ -475,7 +475,7 @@ static bool dropdb_handlerton(THD *unused1 __attribute__((unused)),
 
 void ha_drop_database(char* path)
 {
-  plugin_foreach(NULL, dropdb_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, path);
+  plugin_foreach(NULL, dropdb_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, path);
 }
 
 
@@ -500,7 +500,7 @@ static bool closecon_handlerton(THD *thd, plugin_ref plugin,
 */
 void ha_close_connection(THD* thd)
 {
-  plugin_foreach(thd, closecon_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, 0);
+  plugin_foreach(thd, closecon_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
 }
 
 /* ========================================================================
@@ -776,12 +776,12 @@ void ha_close_connection(THD* thd)
   to maintain atomicity: if CREATE TABLE .. SELECT failed,
   the newly created table is deleted.
   In addition, some DDL statements issue interim transaction
-  commits: e.g. ALTER TABLE issues a commit after data is copied
+  commits: e.g. ALTER Table issues a commit after data is copied
   from the original table to the internal temporary table. Other
   statements, e.g. CREATE TABLE ... SELECT do not always commit
   after itself.
   And finally there is a group of DDL statements such as
-  RENAME/DROP TABLE that doesn't start a new transaction
+  RENAME/DROP Table that doesn't start a new transaction
   and doesn't commit.
 
   This diversity makes it hard to say what will happen if
@@ -866,7 +866,7 @@ int ha_prepare(THD *thd)
       }
       else
       {
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                             ha_resolve_storage_engine_name(ht));
       }
@@ -1156,7 +1156,7 @@ int ha_rollback_trans(THD *thd, bool all)
   */
   if (is_real_trans && thd->transaction.all.modified_non_trans_table &&
       !thd->slave_thread && thd->killed != THD::KILL_CONNECTION)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
   return(error);
@@ -1234,7 +1234,7 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
   xaop.result= 1;
 
   plugin_foreach(NULL, commit ? xacommit_handlerton : xarollback_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &xaop);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &xaop);
 
   return xaop.result;
 }
@@ -1275,7 +1275,7 @@ static bool xarecover_handlerton(THD *unused __attribute__((unused)),
   {
     while ((got= hton->recover(hton, info->list, info->len)) > 0 )
     {
-      sql_print_information("Found %d prepared transaction(s) in %s",
+      sql_print_information(_("Found %d prepared transaction(s) in %s"),
                             got, ha_resolve_storage_engine_name(hton));
       for (int i=0; i < got; i ++)
       {
@@ -1327,7 +1327,7 @@ int ha_recover(HASH *commit_list)
     return(0);
 
   if (info.commit_list)
-    sql_print_information("Starting crash recovery...");
+    sql_print_information(_("Starting crash recovery..."));
 
 
 #ifndef WILL_BE_DELETED_LATER
@@ -1355,25 +1355,25 @@ int ha_recover(HASH *commit_list)
   }
 
   plugin_foreach(NULL, xarecover_handlerton, 
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &info);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
   my_free((uchar*)info.list, MYF(0));
   if (info.found_foreign_xids)
-    sql_print_warning("Found %d prepared XA transactions", 
+    sql_print_warning(_("Found %d prepared XA transactions"), 
                       info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
-    sql_print_error("Found %d prepared transactions! It means that mysqld was "
-                    "not shut down properly last time and critical recovery "
-                    "information (last binlog or %s file) was manually deleted "
-                    "after a crash. You have to start mysqld with "
-                    "--tc-heuristic-recover switch to commit or rollback "
-                    "pending transactions.",
+    sql_print_error(_("Found %d prepared transactions! It means that drizzled "
+                    "was not shut down properly last time and critical "
+                    "recovery information (last binlog or %s file) was "
+                    "manually deleted after a crash. You have to start "
+                    "drizzled with the --tc-heuristic-recover switch to "
+                    "commit or rollback pending transactions."),
                     info.found_my_xids, opt_tc_log_file);
     return(1);
   }
   if (info.commit_list)
-    sql_print_information("Crash recovery finished.");
+    sql_print_information(_("Crash recovery finished."));
   return(0);
 }
 
@@ -1457,7 +1457,7 @@ static bool release_temporary_latches(THD *thd, plugin_ref plugin,
 
 int ha_release_temporary_latches(THD *thd)
 {
-  plugin_foreach(thd, release_temporary_latches, MYSQL_STORAGE_ENGINE_PLUGIN, 
+  plugin_foreach(thd, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
                  NULL);
 
   return 0;
@@ -1590,14 +1590,14 @@ int ha_start_consistent_snapshot(THD *thd)
 {
   bool warn= true;
 
-  plugin_foreach(thd, snapshot_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, &warn);
+  plugin_foreach(thd, snapshot_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
 
   /*
     Same idea as when one wants to CREATE TABLE in one engine which does not
     exist:
   */
   if (warn)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "This MySQL server does not support any "
                  "consistent-read capable storage engine");
   return 0;
@@ -1621,7 +1621,7 @@ bool ha_flush_logs(handlerton *db_type)
   if (db_type == NULL)
   {
     if (plugin_foreach(NULL, flush_handlerton,
-                          MYSQL_STORAGE_ENGINE_PLUGIN, 0))
+                          DRIZZLE_STORAGE_ENGINE_PLUGIN, 0))
       return true;
   }
   else
@@ -1641,7 +1641,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 
   /* Ensure that table handler get path in lower case */
   if (tmp_path != path)
-    strmov(tmp_path, path);
+    stpcpy(tmp_path, path);
 
   /*
     we only should turn into lowercase database/table part
@@ -1663,9 +1663,9 @@ struct Ha_delete_table_error_handler: public Internal_error_handler
 public:
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
-  char buff[MYSQL_ERRMSG_SIZE];
+  char buff[DRIZZLE_ERRMSG_SIZE];
 };
 
 
@@ -1673,7 +1673,7 @@ bool
 Ha_delete_table_error_handler::
 handle_error(uint sql_errno  __attribute__((unused)),
              const char *message,
-             MYSQL_ERROR::enum_warning_level level __attribute__((unused)),
+             DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
              THD *thd __attribute__((unused)))
 {
   /* Grab the error message */
@@ -1692,14 +1692,14 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
   handler *file;
   char tmp_path[FN_REFLEN];
   int error;
-  TABLE dummy_table;
+  Table dummy_table;
   TABLE_SHARE dummy_share;
 
-  memset((char*) &dummy_table, 0, sizeof(dummy_table));
-  memset((char*) &dummy_share, 0, sizeof(dummy_share));
+  memset(&dummy_table, 0, sizeof(dummy_table));
+  memset(&dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
-  /* DB_TYPE_UNKNOWN is used in ALTER TABLE when renaming only .frm files */
+  /* DB_TYPE_UNKNOWN is used in ALTER Table when renaming only .frm files */
   if (table_type == NULL ||
       ! (file=get_new_handler((TABLE_SHARE*)0, thd->mem_root, table_type)))
     return(ENOENT);
@@ -1735,7 +1735,7 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
                 ha_delete_table_error_handler.buff);
   }
   delete file;
@@ -1757,7 +1757,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
                                            table->s->normalized_path.str,
-                                           table->db_stat,
+                                           table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -1787,7 +1787,7 @@ THD *handler::ha_thd(void) const
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int handler::ha_open(TABLE *table_arg, const char *name, int mode,
+int handler::ha_open(Table *table_arg, const char *name, int mode,
                      int test_if_locked)
 {
   int error;
@@ -2042,8 +2042,7 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  if (((nr= table->next_number_field->val_int()) != 0) || 
-      (table->auto_increment_field_not_null && (thd->variables.sql_mode & MODE_NO_AUTO_VALUE_ON_ZERO)))
+  if ((nr= table->next_number_field->val_int()) != 0)
   {
     /*
       Update next_insert_id if we had already generated a value in this
@@ -2295,7 +2294,7 @@ void handler::print_keydup_error(uint key_nr, const char *msg)
   {
     /* Table is opened and defined at this point */
     key_unpack(&str,table,(uint) key_nr);
-    uint max_length=MYSQL_ERRMSG_SIZE-(uint) strlen(msg);
+    uint max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
     if (str.length() >= max_length)
     {
       str.length(max_length-4);
@@ -2359,7 +2358,7 @@ void handler::print_error(int error, myf errflag)
       String str(key,sizeof(key),system_charset_info);
       /* Table is opened and defined at this point */
       key_unpack(&str,table,(uint) key_nr);
-      max_length= (MYSQL_ERRMSG_SIZE-
+      max_length= (DRIZZLE_ERRMSG_SIZE-
                    (uint) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
       if (str.length() >= max_length)
       {
@@ -2555,7 +2554,7 @@ int handler::check_old_types()
 }
 
 
-static bool update_frm_version(TABLE *table)
+static bool update_frm_version(Table *table)
 {
   char path[FN_REFLEN];
   File file;
@@ -2567,7 +2566,7 @@ static bool update_frm_version(TABLE *table)
     update frm version for temporary tables as this code doesn't support
     temporary tables.
   */
-  if (table->s->mysql_version == MYSQL_VERSION_ID)
+  if (table->s->mysql_version == DRIZZLE_VERSION_ID)
     return(0);
 
   strxmov(path, table->s->normalized_path.str, reg_ext, NullS);
@@ -2577,10 +2576,10 @@ static bool update_frm_version(TABLE *table)
     uchar version[4];
     char *key= table->s->table_cache_key.str;
     uint key_length= table->s->table_cache_key.length;
-    TABLE *entry;
+    Table *entry;
     HASH_SEARCH_STATE state;
 
-    int4store(version, MYSQL_VERSION_ID);
+    int4store(version, DRIZZLE_VERSION_ID);
 
     if (pwrite(file, (uchar*)version, 4, 51L) == 0)
     {
@@ -2588,10 +2587,10 @@ static bool update_frm_version(TABLE *table)
       goto err;
     }
 
-    for (entry=(TABLE*) hash_first(&open_cache,(uchar*) key,key_length, &state);
+    for (entry=(Table*) hash_first(&open_cache,(uchar*) key,key_length, &state);
          entry;
-         entry= (TABLE*) hash_next(&open_cache,(uchar*) key,key_length, &state))
-      entry->s->mysql_version= MYSQL_VERSION_ID;
+         entry= (Table*) hash_next(&open_cache,(uchar*) key,key_length, &state))
+      entry->s->mysql_version= DRIZZLE_VERSION_ID;
   }
 err:
   if (file >= 0)
@@ -2679,7 +2678,7 @@ void handler::drop_table(const char *name)
 /**
   Performs checks upon the table.
 
-  @param thd                thread doing CHECK TABLE operation
+  @param thd                thread doing CHECK Table operation
   @param check_opt          options from the parser
 
   @retval
@@ -2687,7 +2686,7 @@ void handler::drop_table(const char *name)
   @retval
     HA_ADMIN_NEEDS_UPGRADE    Table has structures requiring upgrade
   @retval
-    HA_ADMIN_NEEDS_ALTER      Table has structures requiring ALTER TABLE
+    HA_ADMIN_NEEDS_ALTER      Table has structures requiring ALTER Table
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
@@ -2695,11 +2694,11 @@ int handler::ha_check(THD *thd, HA_CHECK_OPT *check_opt)
 {
   int error;
 
-  if ((table->s->mysql_version >= MYSQL_VERSION_ID) &&
+  if ((table->s->mysql_version >= DRIZZLE_VERSION_ID) &&
       (check_opt->sql_flags & TT_FOR_UPGRADE))
     return 0;
 
-  if (table->s->mysql_version < MYSQL_VERSION_ID)
+  if (table->s->mysql_version < DRIZZLE_VERSION_ID)
   {
     if ((error= check_old_types()))
       return error;
@@ -2968,7 +2967,7 @@ handler::ha_drop_table(const char *name)
 */
 
 int
-handler::ha_create(const char *name, TABLE *form, HA_CREATE_INFO *info)
+handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *info)
 {
   mark_trx_read_write();
 
@@ -2995,7 +2994,7 @@ handler::ha_create_handler_files(const char *name, const char *old_name,
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
   handler. It is a hint that ACID is not required - it is used in NDB for
-  ALTER TABLE, for example, when data are copied to temporary table.
+  ALTER Table, for example, when data are copied to temporary table.
   A storage engine may treat this hint any way it likes. NDB for example
   starts to commit every now and then automatically.
   This hint can be safely ignored.
@@ -3087,7 +3086,7 @@ int ha_create_table(THD *thd, const char *path,
 		    bool update_create_info)
 {
   int error= 1;
-  TABLE table;
+  Table table;
   char name_buff[FN_REFLEN];
   const char *name;
   TABLE_SHARE share;
@@ -3099,7 +3098,7 @@ int ha_create_table(THD *thd, const char *path,
     goto err;
 
   if (update_create_info)
-    update_create_info_from_table(create_info, &table);
+    table.updateCreateInfo(create_info);
 
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
@@ -3135,10 +3134,10 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   size_t frmlen;
   char path[FN_REFLEN];
   HA_CREATE_INFO create_info;
-  TABLE table;
+  Table table;
   TABLE_SHARE share;
 
-  memset((uchar*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   if ((error= ha_discover(thd, db, name, &frmblob, &frmlen)))
   {
     /* Table could not be discovered and thus not created */
@@ -3168,7 +3167,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
     return(3);
   }
 
-  update_create_info_from_table(&create_info, &table);
+  table.updateCreateInfo(&create_info);
   create_info.table_options|= HA_OPTION_CREATE_FROM_ENGINE;
 
   check_lowercase_names(table.file, path, path);
@@ -3317,7 +3316,7 @@ int ha_discover(THD *thd, const char *db, const char *name,
     return(error);
 
   if (plugin_foreach(thd, discover_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &args))
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &args))
     error= 0;
 
   if (!error)
@@ -3378,7 +3377,7 @@ int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
 {
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
   plugin_foreach(thd, table_exists_in_engine_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &args);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
   return(args.err);
 }
 
@@ -4073,7 +4072,7 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
 }
 
 
-static void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost);
+static void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost);
 
 
 /**
@@ -4124,7 +4123,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
   else
   {
     cost->zero();
-    *buffer_size= max(*buffer_size, 
+    *buffer_size= max((ulong)*buffer_size, 
                       (size_t)(1.2*rows_in_last_step) * elem_size + 
                       h->ref_length + table->key_info[keynr].key_length);
   }
@@ -4161,7 +4160,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
 */
 
 static 
-void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
+void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 {
   if (nrows)
   {
@@ -4220,7 +4219,7 @@ void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
   @param cost         OUT  The cost.
 */
 
-void get_sweep_read_cost(TABLE *table, ha_rows nrows, bool interrupted, 
+void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
                          COST_VECT *cost)
 {
   cost->zero();
@@ -4446,7 +4445,7 @@ TYPELIB *ha_known_exts(void)
     known_extensions_id= mysys_usage_id;
 
     plugin_foreach(NULL, exts_handlerton,
-                   MYSQL_STORAGE_ENGINE_PLUGIN, &found_exts);
+                   DRIZZLE_STORAGE_ENGINE_PLUGIN, &found_exts);
 
     ext= (const char **) my_once_alloc(sizeof(char *)*
                                        (found_exts.elements+1),
@@ -4514,7 +4513,7 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
   - table is not mysql.event
 */
 
-static bool check_table_binlog_row_based(THD *thd, TABLE *table)
+static bool check_table_binlog_row_based(THD *thd, Table *table)
 {
   if (table->s->cached_row_logging_check == -1)
   {
@@ -4556,22 +4555,22 @@ static int write_locked_table_maps(THD *thd)
 {
   if (thd->get_binlog_table_maps() == 0)
   {
-    MYSQL_LOCK *locks[3];
+    DRIZZLE_LOCK *locks[3];
     locks[0]= thd->extra_lock;
     locks[1]= thd->lock;
     locks[2]= thd->locked_tables;
     for (uint i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
     {
-      MYSQL_LOCK const *const lock= locks[i];
+      DRIZZLE_LOCK const *const lock= locks[i];
       if (lock == NULL)
         continue;
 
-      TABLE **const end_ptr= lock->table + lock->table_count;
-      for (TABLE **table_ptr= lock->table ; 
+      Table **const end_ptr= lock->table + lock->table_count;
+      for (Table **table_ptr= lock->table ; 
            table_ptr != end_ptr ;
            ++table_ptr)
       {
-        TABLE *const table= *table_ptr;
+        Table *const table= *table_ptr;
         if (table->current_lock == F_WRLCK &&
             check_table_binlog_row_based(thd, table))
         {
@@ -4591,9 +4590,9 @@ static int write_locked_table_maps(THD *thd)
 }
 
 
-typedef bool Log_func(THD*, TABLE*, bool, const uchar*, const uchar*);
+typedef bool Log_func(THD*, Table*, bool, const uchar*, const uchar*);
 
-static int binlog_log_row(TABLE* table,
+static int binlog_log_row(Table* table,
                           const uchar *before_record,
                           const uchar *after_record,
                           Log_func *log_func)
@@ -4632,7 +4631,7 @@ int handler::ha_external_lock(THD *thd, int lock_type)
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
-  MYSQL_EXTERNAL_LOCK(lock_type);
+  DRIZZLE_EXTERNAL_LOCK(lock_type);
 
   int error= external_lock(thd, lock_type);
   if (error == 0)
@@ -4666,7 +4665,7 @@ int handler::ha_write_row(uchar *buf)
 {
   int error;
   Log_func *log_func= Write_rows_log_event::binlog_row_logging_function;
-  MYSQL_INSERT_ROW_START();
+  DRIZZLE_INSERT_ROW_START();
 
   mark_trx_read_write();
 
@@ -4674,7 +4673,7 @@ int handler::ha_write_row(uchar *buf)
     return(error);
   if (unlikely(error= binlog_log_row(table, 0, buf, log_func)))
     return(error); /* purecov: inspected */
-  MYSQL_INSERT_ROW_END();
+  DRIZZLE_INSERT_ROW_END();
   return(0);
 }
 

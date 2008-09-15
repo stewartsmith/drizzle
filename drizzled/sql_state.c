@@ -14,13 +14,12 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Functions to map mysqld errno to sql_state */
-
-#include "global.h"
+#include <drizzled/global.h>
 #include <drizzled/error.h>
 #include <libdrizzle/drizzle.h>
 #include "sql_state.h"
 
-const char *mysql_errno_to_sqlstate(uint mysql_errno)
+const char *drizzle_errno_to_sqlstate(uint mysql_errno)
 {
   uint first=0, end= array_elements(sqlstate_map)-1;
   struct st_map_errno_to_sqlstate *map;

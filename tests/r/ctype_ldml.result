@@ -5,7 +5,7 @@ with all Unicode character sets
 set names utf8;
 show variables like 'character_sets_dir%';
 Variable_name	Value
-character_sets_dir	MYSQL_TEST_DIR/std_data/
+character_sets_dir	DRIZZLE_TEST_DIR/std_data/
 show collation like 'utf8_test_ci';
 Collation	Charset	Id	Default	Compiled	Sortlen
 utf8_test_ci	utf8	253			8

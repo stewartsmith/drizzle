@@ -19,7 +19,7 @@ STOP SLAVE;
 
 --echo
 --echo **** On Master ****
---exec cp $MYSQL_TEST_DIR/suite/bugs/data/rpl_bug12691.dat $MYSQLTEST_VARDIR/tmp/
+--exec cp $DRIZZLE_TEST_DIR/suite/bugs/data/rpl_bug12691.dat $MYSQLTEST_VARDIR/tmp/
 --echo LOAD DATA INFILE FILENAME
 --disable_query_log
 --eval LOAD DATA INFILE '$MYSQLTEST_VARDIR/tmp/rpl_bug12691.dat' INTO TABLE t1 FIELDS TERMINATED BY '|'

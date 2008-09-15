@@ -213,7 +213,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
   set.
   This is actually removed even before it was introduced the first time.
   The new idea is that handlers will handle the lock level already in
-  store_lock for ALTER TABLE partitions.
+  store_lock for ALTER Table partitions.
 
   HA_PARTITION_ONE_PHASE is a flag that can be set by handlers that take
   care of changing the partitions online and in one phase. Thus all phases
@@ -259,7 +259,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_BLOCK_LOCK		256	/* unlock when reading some records */
 #define HA_OPEN_TEMPORARY	512
 
-/* For transactional LOCK TABLE. handler::lock_table() */
+/* For transactional LOCK Table. handler::lock_table() */
 #define HA_LOCK_IN_SHARE_MODE      F_RDLCK
 #define HA_LOCK_IN_EXCLUSIVE_MODE  F_WRLCK
 
@@ -281,7 +281,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_CACHE_TBL_TRANSACT    4
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
-#define MYSQL_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
+#define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
 
 /* Flags for method is_fatal_error */
 #define HA_CHECK_DUP_KEY 1
@@ -342,8 +342,11 @@ enum enum_binlog_command {
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
+#ifdef DEAD_OPTIONS
 #define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
+#define HA_CREATE_USED_PASSWORD         (1L << 17)
+#endif
 #define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
 #define HA_CREATE_USED_MIN_ROWS         (1L << 4)
 #define HA_CREATE_USED_MAX_ROWS         (1L << 5)
@@ -358,19 +361,19 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
-#define HA_CREATE_USED_PASSWORD         (1L << 17)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)
 #define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
+#define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 typedef uint64_t my_xid; // this line is the same as in log_event.h
-#define MYSQL_XID_PREFIX "MySQLXid"
-#define MYSQL_XID_PREFIX_LEN 8 // must be a multiple of 8
-#define MYSQL_XID_OFFSET (MYSQL_XID_PREFIX_LEN+sizeof(server_id))
-#define MYSQL_XID_GTRID_LEN (MYSQL_XID_OFFSET+sizeof(my_xid))
+#define DRIZZLE_XID_PREFIX "MySQLXid"
+#define DRIZZLE_XID_PREFIX_LEN 8 // must be a multiple of 8
+#define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
+#define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
 
-#define XIDDATASIZE MYSQL_XIDDATASIZE
+#define XIDDATASIZE DRIZZLE_XIDDATASIZE
 #define MAXGTRIDSIZE 64
 #define MAXBQUALSIZE 64
 
@@ -387,7 +390,7 @@ typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
   The XA Specification, X/Open Company Ltd., 1991.
   http://www.opengroup.org/bookstore/catalog/c193.htm
 
-  @see MYSQL_XID in mysql/plugin.h
+  @see DRIZZLE_XID in mysql/plugin.h
 */
 struct xid_t {
   long formatID;
@@ -412,11 +415,11 @@ struct xid_t {
   {
     my_xid tmp;
     formatID= 1;
-    set(MYSQL_XID_PREFIX_LEN, 0, MYSQL_XID_PREFIX);
-    memcpy(data+MYSQL_XID_PREFIX_LEN, &server_id, sizeof(server_id));
+    set(DRIZZLE_XID_PREFIX_LEN, 0, DRIZZLE_XID_PREFIX);
+    memcpy(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id));
     tmp= xid;
-    memcpy(data+MYSQL_XID_OFFSET, &tmp, sizeof(tmp));
-    gtrid_length=MYSQL_XID_GTRID_LEN;
+    memcpy(data+DRIZZLE_XID_OFFSET, &tmp, sizeof(tmp));
+    gtrid_length=DRIZZLE_XID_GTRID_LEN;
   }
   void set(long g, long b, const char *d)
   {
@@ -430,14 +433,14 @@ struct xid_t {
   my_xid quick_get_my_xid()
   {
     my_xid tmp;
-    memcpy(&tmp, data+MYSQL_XID_OFFSET, sizeof(tmp));
+    memcpy(&tmp, data+DRIZZLE_XID_OFFSET, sizeof(tmp));
     return tmp;
   }
   my_xid get_my_xid()
   {
-    return gtrid_length == MYSQL_XID_GTRID_LEN && bqual_length == 0 &&
-           !memcmp(data+MYSQL_XID_PREFIX_LEN, &server_id, sizeof(server_id)) &&
-           !memcmp(data, MYSQL_XID_PREFIX, MYSQL_XID_PREFIX_LEN) ?
+    return gtrid_length == DRIZZLE_XID_GTRID_LEN && bqual_length == 0 &&
+           !memcmp(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id)) &&
+           !memcmp(data, DRIZZLE_XID_PREFIX, DRIZZLE_XID_PREFIX_LEN) ?
            quick_get_my_xid() : 0;
   }
   uint length()
@@ -462,10 +465,9 @@ typedef struct xid_t XID;
 
 struct handlerton;
 
-/* The handler for a table type.  Will be included in the TABLE structure */
+/* The handler for a table type.  Will be included in the Table structure */
 
-struct st_table;
-typedef struct st_table TABLE;
+class Table;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
@@ -560,7 +562,7 @@ struct handlerton
    bool (*flush_logs)(handlerton *hton);
    bool (*show_status)(handlerton *hton, THD *thd, stat_print_fn *print, enum ha_stat_type stat);
    int (*fill_files_table)(handlerton *hton, THD *thd,
-                           TABLE_LIST *tables,
+                           TableList *tables,
                            class Item *cond);
    uint32_t flags;                                /* global handler flags */
    int (*release_temporary_latches)(handlerton *hton, THD *thd);
@@ -752,7 +754,7 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
 typedef struct st_ha_create_information
 {
-  CHARSET_INFO *table_charset, *default_table_charset;
+  const CHARSET_INFO *table_charset, *default_table_charset;
   LEX_STRING connect_string;
   LEX_STRING comment;
   const char *data_file_name, *index_file_name;
@@ -763,6 +765,7 @@ typedef struct st_ha_create_information
   uint32_t avg_row_length;
   uint32_t used_fields;
   uint32_t key_block_size;
+  uint32_t block_size;
   SQL_LIST merge_list;
   handlerton *db_type;
   enum row_type row_type;
@@ -819,18 +822,18 @@ public:
   TABLEOP_HOOKS() {}
   virtual ~TABLEOP_HOOKS() {}
 
-  inline void prelock(TABLE **tables, uint count)
+  inline void prelock(Table **tables, uint count)
   {
     do_prelock(tables, count);
   }
 
-  inline int postlock(TABLE **tables, uint count)
+  inline int postlock(Table **tables, uint count)
   {
     return do_postlock(tables, count);
   }
 private:
   /* Function primitive that is called prior to locking tables */
-  virtual void do_prelock(TABLE **tables __attribute__((unused)),
+  virtual void do_prelock(Table **tables __attribute__((unused)),
                           uint count __attribute__((unused)))
   {
     /* Default is to do nothing */
@@ -844,7 +847,7 @@ private:
 
      @return Error code or zero.
    */
-  virtual int do_postlock(TABLE **tables __attribute__((unused)),
+  virtual int do_postlock(Table **tables __attribute__((unused)),
                           uint count __attribute__((unused)))
   {
     return 0;                           /* Default is to do nothing */
@@ -976,7 +979,7 @@ public:
   }
 };
 
-void get_sweep_read_cost(TABLE *table, ha_rows nrows, bool interrupted, 
+void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
                          COST_VECT *cost);
 
 /*
@@ -1058,7 +1061,7 @@ public:
   {}
 };
 
-uint calculate_key_len(TABLE *, uint, const uchar *, key_part_map);
+uint calculate_key_len(Table *, uint, const uchar *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
@@ -1124,7 +1127,7 @@ public:
   typedef uint64_t Table_flags;
 protected:
   struct st_table_share *table_share;   /* The table definition */
-  struct st_table *table;               /* The current open table */
+  Table *table;               /* The current open table */
   Table_flags cached_table_flags;       /* Set on init() and open() */
 
   ha_rows estimation_rows_to_insert;
@@ -1218,7 +1221,7 @@ public:
   }
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(TABLE *table, const char *name, int mode, int test_if_locked);
+  int ha_open(Table *table, const char *name, int mode, int test_if_locked);
   int ha_index_init(uint idx, bool sorted)
   {
     int result;
@@ -1296,7 +1299,7 @@ public:
   int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
 
-  int ha_create(const char *name, TABLE *form, HA_CREATE_INFO *info);
+  int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
 
   int ha_create_handler_files(const char *name, const char *old_name,
                               int action_flag, HA_CREATE_INFO *info);
@@ -1307,7 +1310,7 @@ public:
   virtual void print_error(int error, myf errflag);
   virtual bool get_error_message(int error, String *buf);
   uint get_dup_key(int error);
-  virtual void change_table_ptr(TABLE *table_arg, TABLE_SHARE *share)
+  virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share)
   {
     table= table_arg;
     table_share= share;
@@ -1594,7 +1597,7 @@ public:
   { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return(NULL);}  /* gets foreign key create string from InnoDB */
-  /** used in ALTER TABLE; 1 if changing storage engine is allowed */
+  /** used in ALTER Table; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
   virtual int get_foreign_key_list(THD *thd __attribute__((unused)),
@@ -1615,7 +1618,7 @@ public:
     and data file), the order of elements is relevant. First element of engine
     file name extentions array should be meta/index file extention. Second
     element - data file extention. This order is assumed by
-    prepare_for_repair() when REPAIR TABLE ... USE_FRM is issued.
+    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
   */
   virtual const char **bas_ext() const =0;
 
@@ -1629,27 +1632,27 @@ public:
 
   virtual uint32_t index_flags(uint idx, uint part, bool all_parts) const =0;
 
-  virtual int add_index(TABLE *table_arg __attribute__((unused)),
+  virtual int add_index(Table *table_arg __attribute__((unused)),
                         KEY *key_info __attribute__((unused)),
                         uint num_of_keys __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
-  virtual int prepare_drop_index(TABLE *table_arg __attribute__((unused)),
+  virtual int prepare_drop_index(Table *table_arg __attribute__((unused)),
                                  uint *key_num __attribute__((unused)),
                                  uint num_of_keys __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
-  virtual int final_drop_index(TABLE *table_arg __attribute__((unused)))
+  virtual int final_drop_index(Table *table_arg __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
 
   uint max_record_length() const
-  { return min(HA_MAX_REC_LENGTH, max_supported_record_length()); }
+  { return min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
   uint max_keys() const
-  { return min(MAX_KEY, max_supported_keys()); }
+  { return min((unsigned int)MAX_KEY, max_supported_keys()); }
   uint max_key_parts() const
-  { return min(MAX_REF_PARTS, max_supported_key_parts()); }
+  { return min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
   uint max_key_length() const
-  { return min(MAX_KEY_LENGTH, max_supported_key_length()); }
+  { return min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
   uint max_key_part_length(void) const
-  { return min(MAX_KEY_LENGTH, max_supported_key_part_length()); }
+  { return min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
 
   virtual uint max_supported_record_length(void) const
   { return HA_MAX_REC_LENGTH; }
@@ -1797,7 +1800,7 @@ public:
                               uint table_changes __attribute__((unused)))
  { return COMPATIBLE_DATA_NO; }
 
- /* On-line ALTER TABLE interface */
+ /* On-line ALTER Table interface */
 
  /**
     Check if a storage engine supports a particular alter table on-line
@@ -1823,7 +1826,7 @@ public:
       implementation.
  */
  virtual int
-   check_if_supported_alter(TABLE *altered_table __attribute__((unused)),
+   check_if_supported_alter(Table *altered_table __attribute__((unused)),
                             HA_CREATE_INFO *create_info,
                             HA_ALTER_FLAGS *alter_flags __attribute__((unused)),
                             uint table_changes)
@@ -1848,7 +1851,7 @@ public:
    @retval   error  error code passed from storage engine
  */
  virtual int alter_table_phase1(THD *thd __attribute__((unused)),
-                                TABLE *altered_table __attribute__((unused)),
+                                Table *altered_table __attribute__((unused)),
                                 HA_CREATE_INFO *create_info __attribute__((unused)),
                                 HA_ALTER_INFO *alter_info __attribute__((unused)),
                                 HA_ALTER_FLAGS *alter_flags  __attribute__((unused)))
@@ -1874,7 +1877,7 @@ public:
       supported.
  */
  virtual int alter_table_phase2(THD *thd  __attribute__((unused)),
-                                TABLE *altered_table  __attribute__((unused)),
+                                Table *altered_table  __attribute__((unused)),
                                 HA_CREATE_INFO *create_info __attribute__((unused)),
                                 HA_ALTER_INFO *alter_info __attribute__((unused)),
                                 HA_ALTER_FLAGS *alter_flags __attribute__((unused)))
@@ -1889,7 +1892,7 @@ public:
     @param    table             The altered table, re-opened
  */
  virtual int alter_table_phase3(THD *thd __attribute__((unused)),
-                                TABLE *table __attribute__((unused)))
+                                Table *table __attribute__((unused)))
  {
    return HA_ERR_UNSUPPORTED;
  }
@@ -2107,7 +2110,7 @@ private:
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
   virtual int create(const char *name __attribute__((unused)),
-                     TABLE *form __attribute__((unused)),
+                     Table *form __attribute__((unused)),
                      HA_CREATE_INFO *info __attribute__((unused)))=0;
 
   virtual int create_handler_files(const char *name __attribute__((unused)),
@@ -2138,7 +2141,7 @@ public:
     : h2(NULL) {};
 
   handler *h; /* The "owner" handler object. It is used for scanning the index */
-  TABLE *table; /* Always equal to h->table */
+  Table *table; /* Always equal to h->table */
 private:
   /*
     Secondary handler object. It is used to retrieve full table rows by
@@ -2159,7 +2162,7 @@ private:
 
   bool use_default_impl; /* true <=> shortcut all calls to default MRR impl */
 public:
-  void init(handler *h_arg, TABLE *table_arg)
+  void init(handler *h_arg, Table *table_arg)
   {
     h= h_arg; 
     table= table_arg;

@@ -26,13 +26,14 @@
 char * fn_format(char * to, const char *name, const char *dir,
 		    const char *extension, uint flag)
 {
-  char dev[FN_REFLEN], buff[FN_REFLEN], *pos, *startpos;
+  char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
+  const char *startpos = name;
   const char *ext;
   register size_t length;
   size_t dev_length;
 
   /* Copy and skip directory */
-  name+=(length=dirname_part(dev, (startpos=(char *) name), &dev_length));
+  name+=(length=dirname_part(dev, startpos, &dev_length));
   if (length == 0 || (flag & MY_REPLACE_DIR))
   {
     /* Use given directory */
@@ -84,11 +85,11 @@ char * fn_format(char * to, const char *name, const char *dir,
   {
     if (to == startpos)
     {
-      memcpy(buff, (uchar*) name, length); /* Save name for last copy */
+      memcpy(buff, name, length); /* Save name for last copy */
       name=buff;
     }
-    pos=strmake(strmov(to,dev),name,length);
-    (void) strmov(pos,ext);			/* Don't convert extension */
+    pos=strmake(stpcpy(to,dev),name,length);
+    (void) stpcpy(pos,ext);			/* Don't convert extension */
   }
   /*
     If MY_RETURN_REAL_PATH and MY_RESOLVE_SYMLINK is given, only do
@@ -99,7 +100,7 @@ char * fn_format(char * to, const char *name, const char *dir,
 				   MY_RESOLVE_LINK: 0));
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
-    strmov(buff,to);
+    stpcpy(buff,to);
     (void) my_readlink(to, buff, MYF(0));
   }
   return(to);

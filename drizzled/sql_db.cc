@@ -15,11 +15,17 @@
 
 
 /* create and drop of databases */
-
-#include "mysql_priv.h"
+#include <string>
+#include <fstream>
+#include <drizzled/serialize/serialize.h>
+using namespace std;
+#include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include "log.h"
+#include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
+
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -29,12 +35,12 @@ static TYPELIB deletable_extentions=
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint level, 
-                                 TABLE_LIST **dropped_tables);
+                                 TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
-                                 CHARSET_INFO *new_db_charset);
+                                 const CHARSET_INFO * const new_db_charset);
 
 
 /* Database lock hash */
@@ -101,7 +107,7 @@ typedef struct my_dbopt_st
 {
   char *name;			/* Database name                  */
   uint name_length;		/* Database length name           */
-  CHARSET_INFO *charset;	/* Database default character set */
+  const CHARSET_INFO *charset;	/* Database default character set */
 } my_dbopt_t;
 
 
@@ -280,7 +286,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
     }
     
     opt->name= tmp_name;
-    strmov(opt->name, dbname);
+    stpcpy(opt->name, dbname);
     opt->name_length= length;
     
     if ((error= my_hash_insert(&dboptions, (uchar*) opt)))
@@ -325,11 +331,12 @@ void del_dbopt(const char *path)
   1	Could not create file or write to it.  Error sent through my_error()
 */
 
-static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
+static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE_INFO *create)
 {
-  register File file;
-  char buf[256]; // Should be enough for one option
   bool error= true;
+  drizzle::Schema db;
+
+  assert(name);
 
   if (!create->default_table_charset)
     create->default_table_charset= thd->variables.collation_server;
@@ -337,20 +344,14 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   if (put_dbopt(path, create))
     return 1;
 
-  if ((file=my_create(path, CREATE_MODE,O_RDWR | O_TRUNC,MYF(MY_WME))) >= 0)
-  {
-    ulong length;
-    length= (ulong) (strxnmov(buf, sizeof(buf)-1, "default-character-set=",
-                              create->default_table_charset->csname,
-                              "\ndefault-collation=",
-                              create->default_table_charset->name,
-                              "\n", NullS) - buf);
+  db.set_name(name);
+  db.set_characterset(create->default_table_charset->csname);
+  db.set_collation(create->default_table_charset->name);
 
-    /* Error is written by my_write */
-    if (!my_write(file,(uchar*) buf, length, MYF(MY_NABP+MY_WME)))
-      error= false;
-    my_close(file,MYF(0));
-  }
+  fstream output(path, ios::out | ios::trunc | ios::binary);
+  if (!db.SerializeToOstream(&output)) 
+    error= false;
+
   return error;
 }
 
@@ -372,66 +373,39 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 
 bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
-  File file;
-  char buf[256];
   bool error=1;
-  uint nbytes;
+  drizzle::Schema db;
+  string buffer;
 
-  memset((char*) create, 0, sizeof(*create));
+  memset(create, 0, sizeof(*create));
   create->default_table_charset= thd->variables.collation_server;
 
   /* Check if options for this database are already in the hash */
   if (!get_dbopt(path, create))
     return(0);
 
-  /* Otherwise, load options from the .opt file */
-  if ((file=my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
+  fstream input(path, ios::in | ios::binary);
+  if (!input)
+    goto err1;
+  else if (!db.ParseFromIstream(&input))
     goto err1;
 
-  IO_CACHE cache;
-  if (init_io_cache(&cache, file, IO_SIZE, READ_CACHE, 0, 0, MYF(0)))
-    goto err2;
-
-  while ((int) (nbytes= my_b_gets(&cache, (char*) buf, sizeof(buf))) > 0)
+  buffer= db.characterset();
+  if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
   {
-    char *pos= buf+nbytes-1;
-    /* Remove end space and control characters */
-    while (pos > buf && !my_isgraph(&my_charset_latin1, pos[-1]))
-      pos--;
-    *pos=0;
-    if ((pos= strchr(buf, '=')))
-    {
-      if (!strncmp(buf,"default-character-set", (pos-buf)))
-      {
-        /*
-           Try character set name, and if it fails
-           try collation name, probably it's an old
-           4.1.0 db.opt file, which didn't have
-           separate default-character-set and
-           default-collation commands.
-        */
-        if (!(create->default_table_charset=
-        get_charset_by_csname(pos+1, MY_CS_PRIMARY, MYF(0))) &&
-            !(create->default_table_charset=
-              get_charset_by_name(pos+1, MYF(0))))
-        {
-          sql_print_error("Error while loading database options: '%s':",path);
-          sql_print_error(ER(ER_UNKNOWN_CHARACTER_SET),pos+1);
-          create->default_table_charset= default_charset_info;
-        }
-      }
-      else if (!strncmp(buf,"default-collation", (pos-buf)))
-      {
-        if (!(create->default_table_charset= get_charset_by_name(pos+1,
-                                                           MYF(0))))
-        {
-          sql_print_error("Error while loading database options: '%s':",path);
-          sql_print_error(ER(ER_UNKNOWN_COLLATION),pos+1);
-          create->default_table_charset= default_charset_info;
-        }
-      }
-    }
+    sql_print_error(_("Error while loading database options: '%s':"),path);
+    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    create->default_table_charset= default_charset_info;
   }
+
+  buffer= db.collation();
+  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
+  {
+    sql_print_error(_("Error while loading database options: '%s':"),path);
+    sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+    create->default_table_charset= default_charset_info;
+  }
+
   /*
     Put the loaded value into the hash.
     Note that another thread could've added the same
@@ -441,9 +415,6 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   */
   error= put_dbopt(path, create);
 
-  end_io_cache(&cache);
-err2:
-  my_close(file,MYF(0));
 err1:
   return(error);
 }
@@ -505,7 +476,7 @@ bool load_db_opt_by_name(THD *thd, const char *db_name,
     set, even if the database does not exist.
 */
 
-CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
 {
   HA_CREATE_INFO db_info;
 
@@ -599,7 +570,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
       error= -1;
       goto exit;
     }
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
     if (!silent)
       my_ok(thd);
@@ -623,7 +594,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
 
   path[path_len-1]= FN_LIBCHAR;
   strmake(path+path_len, MY_DB_OPT_FILE, sizeof(path)-path_len-1);
-  if (write_db_opt(thd, path, create_info))
+  if (write_db_opt(thd, path, db, create_info))
   {
     /*
       Could not create options file.
@@ -733,7 +704,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
      "table name to file name" encoding.
   */
   build_table_filename(path, sizeof(path), db, "", MY_DB_OPT_FILE, 0);
-  if ((error=write_db_opt(thd, path, create_info)))
+  if ((error=write_db_opt(thd, path, db, create_info)))
     goto exit;
 
   /* Change options if current database is being altered. */
@@ -801,7 +772,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint length;
-  TABLE_LIST* dropped_tables= 0;
+  TableList* dropped_tables= 0;
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
@@ -837,7 +808,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   thd->clear_current_stmt_binlog_row_based();
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
-  strmov(path+length, MY_DB_OPT_FILE);		// Append db option file name
+  stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
   del_dbopt(path);				// Remove dboption hash entry
   path[length]= '\0';				// Remove file name
 
@@ -851,7 +822,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       goto exit;
     }
     else
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS), db);
   }
   else
@@ -872,7 +843,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   if (!silent && deleted>=0)
   {
     const char *query;
-    ulong query_length;
+    uint32_t query_length;
     if (!thd->query)
     {
       /* The client used the old obsolete mysql_drop_db() call */
@@ -903,18 +874,18 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
     }
     thd->clear_error();
     thd->server_status|= SERVER_STATUS_DB_DROPPED;
-    my_ok(thd, (ulong) deleted);
+    my_ok(thd, (uint32_t) deleted);
     thd->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
   else if (mysql_bin_log.is_open())
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    TABLE_LIST *tbl;
+    TableList *tbl;
     uint db_len;
 
     if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
-    query_pos= query_data_start= strmov(query,"drop table ");
+    query_pos= query_data_start= stpcpy(query,"drop table ");
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= strlen(db);
 
@@ -932,7 +903,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       }
 
       *query_pos++ = '`';
-      query_pos= strmov(query_pos,tbl->table_name);
+      query_pos= stpcpy(query_pos,tbl->table_name);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -966,12 +937,12 @@ exit2:
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 				 const char *org_path, uint level,
-                                 TABLE_LIST **dropped_tables)
+                                 TableList **dropped_tables)
 {
   long deleted=0;
-  ulong found_other_files=0;
+  uint32_t found_other_files=0;
   char filePath[FN_REFLEN];
-  TABLE_LIST *tot_list=0, **tot_list_next;
+  TableList *tot_list=0, **tot_list_next;
 
   tot_list_next= &tot_list;
 
@@ -988,7 +959,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       continue;
 
     if (!(extension= strrchr(file->name, '.')))
-      extension= strend(file->name);
+      extension= strchr(file->name, '\0');
     if (find_type(extension, &deletable_extentions,1+2) <= 0)
     {
       if (find_type(extension, ha_known_exts(),1+2) <= 0)
@@ -1001,7 +972,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
     {
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
-      TABLE_LIST *table_list=(TABLE_LIST*)
+      TableList *table_list=(TableList*)
                               thd->calloc(sizeof(*table_list) + 
                                           strlen(db) + 1 +
                                           MYSQL50_TABLE_NAME_PREFIX_LENGTH + 
@@ -1010,7 +981,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       if (!table_list)
         goto err;
       table_list->db= (char*) (table_list+1);
-      table_list->table_name= strmov(table_list->db, db) + 1;
+      table_list->table_name= stpcpy(table_list->db, db) + 1;
       VOID(filename_to_tablename(file->name, table_list->table_name,
                                  MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                                  strlen(file->name) + 1));
@@ -1085,7 +1056,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   char tmp2_path[FN_REFLEN];
 
   /* Remove end FN_LIBCHAR as this causes problem on Linux in readlink */
-  pos= strend(path);
+  pos= strchr(path, '\0');
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;
 
@@ -1102,7 +1073,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   }
 #endif
   /* Remove last FN_LIBCHAR to not cause a problem on OS/2 */
-  pos= strend(path);
+  pos= strchr(path, '\0');
 
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;
@@ -1128,7 +1099,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
-                                 CHARSET_INFO *new_db_charset)
+                                 const CHARSET_INFO * const new_db_charset)
 {
   /* 1. Change current database in THD. */
 
@@ -1293,7 +1264,7 @@ cmp_db_names(const char *db1_name,
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
-  CHARSET_INFO *db_default_cl;
+  const CHARSET_INFO *db_default_cl;
 
   if (new_db_name == NULL ||
       new_db_name->length == 0)
@@ -1372,7 +1343,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
     {
       /* Throw a warning and free new_db_file_name. */
 
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
                           new_db_file_name.str);
 

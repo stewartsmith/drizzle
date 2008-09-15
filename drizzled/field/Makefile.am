@@ -25,7 +25,6 @@ libfield_la_SOURCES = 	blob.cc \
 			int64_t.cc \
 			long.cc \
 			null.cc \
-			set.cc \
 			short.cc \
 			fstring.cc \
 			timestamp.cc \
@@ -40,7 +39,6 @@ noinst_HEADERS = blob.h \
 		 int64_t.h \
 		 long.h \
 		 null.h \
-		 set.h \
 		 short.h \
 		 fstring.h \
 		 timestamp.h \
@@ -48,4 +46,4 @@ noinst_HEADERS = blob.h \
 		 varstring.h
 	
 
-DEFS= -DMYSQL_SERVER @DEFS@
+DEFS= -DDRIZZLE_SERVER @DEFS@

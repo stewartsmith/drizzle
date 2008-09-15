@@ -175,16 +175,16 @@ extern void (*error_handler_hook)(uint my_err, const char *str,myf MyFlags);
 extern void (*fatal_error_handler_hook)(uint my_err, const char *str,
                                         myf MyFlags);
 extern uint my_file_limit;
-extern ulong my_thread_stack_size;
+extern uint32_t my_thread_stack_size;
 
 /* charsets */
-extern CHARSET_INFO *default_charset_info;
+extern const CHARSET_INFO *default_charset_info;
 extern CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
 /* statistics */
-extern ulong	my_file_opened,my_stream_opened, my_tmp_file_created;
-extern ulong    my_file_total_opened;
+extern uint32_t	my_file_opened,my_stream_opened, my_tmp_file_created;
+extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
@@ -200,9 +200,9 @@ extern int my_umask,		/* Default creation mask  */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
 	   my_dont_interrupt;	/* call remember_intr when set */
 extern bool mysys_uses_curses, my_use_symdir;
-extern ulong sf_malloc_cur_memory, sf_malloc_max_memory;
+extern uint32_t sf_malloc_cur_memory, sf_malloc_max_memory;
 
-extern ulong	my_default_record_cache_size;
+extern uint32_t	my_default_record_cache_size;
 extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
@@ -279,12 +279,6 @@ typedef struct st_my_tmpdir
   uint cur, max;
   pthread_mutex_t mutex;
 } MY_TMPDIR;
-
-typedef struct st_dynamic_string
-{
-  char *str;
-  size_t length,max_length,alloc_increment;
-} DYNAMIC_STRING;
 
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
@@ -395,7 +389,7 @@ typedef struct st_io_cache		/* Used when cacheing files */
     Counts the number of times, when we were forced to use disk. We use it to
     increase the binlog_cache_disk_use status variable.
   */
-  ulong disk_writes;
+  uint32_t disk_writes;
   void* arg;				/* for use by pre/post_read */
   char *file_name;			/* if used with 'open_cached_file' */
   char *dir,*prefix;
@@ -494,7 +488,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 	/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
-extern int my_append(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern int my_getwd(char * buf,size_t size,myf MyFlags);
 extern int my_setwd(const char *dir,myf MyFlags);
@@ -525,11 +518,9 @@ extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
 extern my_off_t my_tell(File fd,myf MyFlags);
 extern size_t my_write(File Filedes,const uchar *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fread(FILE *stream,uchar *Buffer,size_t Count,myf MyFlags);
 extern size_t my_fwrite(FILE *stream,const uchar *Buffer,size_t Count,
 		      myf MyFlags);
 extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_ftell(FILE *stream,myf MyFlags);
 extern void *_mymalloc(size_t uSize,const char *sFile,
                        uint uLine, myf MyFlag);
 extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
@@ -545,11 +536,6 @@ extern char *_my_strndup(const char *from, size_t length,
                          const char *sFile, uint uLine,
                          myf MyFlag);
 
-/* implemented in my_memmem.c */
-extern void *my_memmem(const void *haystack, size_t haystacklen,
-                       const void *needle, size_t needlelen);
-
-
 #define my_access access
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
@@ -561,7 +547,6 @@ extern void TERMINATE(FILE *file, uint flag);
 #endif
 extern void init_glob_errs(void);
 extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
-extern FILE *my_fdopen(File Filedes,const char *name, int Flags,myf MyFlags);
 extern int my_fclose(FILE *fd,myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
@@ -620,7 +605,6 @@ extern int wild_compare(const char *str,const char *wildstr,
 extern WF_PACK *wf_comp(char * str);
 extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
 extern void wf_end(struct wild_file_pack *buffer);
-extern size_t strip_sp(char * str);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
@@ -634,7 +618,6 @@ extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const uchar *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
-extern long my_clock(void);
 extern sig_handler sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
@@ -717,24 +700,8 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, uchar * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
-extern bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
-				   size_t init_alloc,size_t alloc_increment);
-extern bool dynstr_append(DYNAMIC_STRING *str, const char *append);
-bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
-			  size_t length);
-extern bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append,
-                                       ...);
-extern bool dynstr_set(DYNAMIC_STRING *str, const char *init_str);
-extern bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size);
-extern bool dynstr_trunc(DYNAMIC_STRING *str, size_t n);
-extern void dynstr_free(DYNAMIC_STRING *str);
-#ifdef HAVE_MLOCK
-extern void *my_malloc_lock(size_t length,myf flags);
-extern void my_free_lock(void *ptr,myf flags);
-#else
 #define my_malloc_lock(A,B) my_malloc((A),(B))
 #define my_free_lock(A,B) my_free((A),(B))
-#endif
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define clear_alloc_root(A) do { (A)->free= (A)->used= (A)->pre_alloc= 0; (A)->min_malloc=0;} while(0)
@@ -769,7 +736,7 @@ extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
                                 size_t *complen);
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
-extern void my_sleep(ulong m_seconds);
+extern void my_sleep(uint32_t m_seconds);
 extern uint my_set_max_open_files(uint files);
 void my_free_open_file_info(void);
 
@@ -779,7 +746,6 @@ extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(uint64_t microtime);
 extern bool my_gethwaddr(uchar *to);
-extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -814,29 +780,21 @@ void *my_mmap(void *, size_t, int, int, int, my_off_t);
 int my_munmap(void *, size_t);
 #endif
 
-/* my_getpagesize */
-#ifdef HAVE_GETPAGESIZE
-#define my_getpagesize()        getpagesize()
-#else
-int my_getpagesize(void);
-#endif
-
 /* character sets */
 extern uint get_charset_number(const char *cs_name, uint cs_flags);
 extern uint get_collation_number(const char *name);
 extern const char *get_charset_name(uint cs_number);
 
-extern CHARSET_INFO *get_charset(uint cs_number, myf flags);
-extern CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
-extern CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-					   uint cs_flags, myf my_flags);
+extern const CHARSET_INFO *get_charset(uint cs_number, myf flags);
+extern const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
+extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint cs_flags, myf my_flags);
 
 extern bool resolve_charset(const char *cs_name,
-                               CHARSET_INFO *default_cs,
-                               CHARSET_INFO **cs);
+                            const CHARSET_INFO *default_cs,
+                            const CHARSET_INFO **cs);
 extern bool resolve_collation(const char *cl_name,
-                                 CHARSET_INFO *default_cl,
-                                 CHARSET_INFO **cl);
+                             const CHARSET_INFO *default_cl,
+                             const CHARSET_INFO **cl);
 
 extern void free_charsets(void);
 extern char *get_charsets_dir(char *buf);
@@ -850,9 +808,9 @@ extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
                                         char *to, size_t to_length,
                                         const char *from, size_t length);
 
-extern void thd_increment_bytes_sent(ulong length);
-extern void thd_increment_bytes_received(ulong length);
-extern void thd_increment_net_big_packet_count(ulong length);
+extern void thd_increment_bytes_sent(uint32_t length);
+extern void thd_increment_bytes_received(uint32_t length);
+extern void thd_increment_net_big_packet_count(uint32_t length);
 
 C_MODE_END
 #endif /* _my_sys_h */

@@ -18,14 +18,14 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#define MYSQL_SERVER 1
-#include <drizzled/mysql_priv.h>
-#include <mystrings/m_ctype.h>
+#define DRIZZLE_SERVER 1
+
+#include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
 #include <myisampack.h>
 #include "ha_myisam.h"
-#include <stdarg.h>
 #include "myisamdef.h"
+#include <drizzled/drizzled_error_messages.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -102,11 +102,11 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
 
 /*
-  Convert TABLE object to MyISAM key and column definition
+  Convert Table object to MyISAM key and column definition
 
   SYNOPSIS
     table2myisam()
-      table_arg   in     TABLE object.
+      table_arg   in     Table object.
       keydef_out  out    MyISAM key definition.
       recinfo_out out    MyISAM column definition.
       records_out out    Number of fields.
@@ -125,7 +125,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     !0 error code
 */
 
-int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
+int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
                  MI_COLUMNDEF **recinfo_out, uint *records_out)
 {
   uint i, j, recpos, minpos, fieldpos, temp_length, length;
@@ -237,7 +237,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     }
     if (recpos != minpos)
     { // Reserved space (Null bits?)
-      memset((char*) recinfo_pos, 0, sizeof(*recinfo_pos));
+      memset(recinfo_pos, 0, sizeof(*recinfo_pos));
       recinfo_pos->type= (int) FIELD_NORMAL;
       recinfo_pos++->length= (uint16_t) (minpos - recpos);
     }
@@ -444,7 +444,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   THD *cur_thd;
   LIST *element;
-  char buf[1024];
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_thd= (THD*) file->in_use.data))
     sql_print_error("Got an error from thread_id=%lu, %s:%d", cur_thd->thread_id,
@@ -455,9 +454,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     sql_print_error("%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    THD *thd= (THD*) element->data;
-    sql_print_error("%s", thd ? thd_security_context(thd, buf, sizeof(buf), 0)
-                              : "Unknown thread accessing table");
+    sql_print_error("%s", "Unknown thread accessing table");
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }
@@ -621,7 +618,7 @@ int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
   int error;
   MI_CHECK param;
   MYISAM_SHARE* share = file->s;
-  const char *old_proc_info=thd->proc_info;
+  const char *old_proc_info= thd->get_proc_info();
 
   thd_proc_info(thd, "Checking table");
   myisamchk_init(&param);
@@ -818,7 +815,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   int error=0;
   uint local_testflag=param.testflag;
   bool optimize_done= !do_optimize, statistics_done=0;
-  const char *old_proc_info=thd->proc_info;
+  const char *old_proc_info= thd->get_proc_info();
   char fixed_name[FN_REFLEN];
   MYISAM_SHARE* share = file->s;
   ha_rows rows= file->state->records;
@@ -846,9 +843,9 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   param.thd= thd;
   param.tmpdir= &mysql_tmpdir_list;
   param.out_flag= 0;
-  strmov(fixed_name,file->filename);
+  stpcpy(fixed_name,file->filename);
 
-  // Don't lock tables if we have used LOCK TABLE
+  // Don't lock tables if we have used LOCK Table
   if (!thd->locked_tables && 
       mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
@@ -976,7 +973,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   const char *errmsg= 0;
   int error= HA_ADMIN_OK;
   uint64_t map;
-  TABLE_LIST *table_list= table->pos_in_table_list;
+  TableList *table_list= table->pos_in_table_list;
 
   table->keys_in_use_for_query.clear_all();
 
@@ -1107,7 +1104,7 @@ int ha_myisam::enable_indexes(uint mode)
   {
     THD *thd=current_thd;
     MI_CHECK param;
-    const char *save_proc_info=thd->proc_info;
+    const char *save_proc_info= thd->get_proc_info();
     thd_proc_info(thd, "Creating index");
     myisamchk_init(&param);
     param.op_name= "recreating_index";
@@ -1193,24 +1190,22 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
   can_enable_indexes= mi_is_all_keys_active(file->s->state.key_map,
                                             file->s->base.keys);
 
-  if (!(specialflag & SPECIAL_SAFE_MODE))
-  {
-    /*
-      Only disable old index if the table was empty and we are inserting
-      a lot of rows.
-      We should not do this for only a few rows as this is slower and
-      we don't want to update the key statistics based of only a few rows.
-    */
-    if (file->state->records == 0 && can_enable_indexes &&
-        (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
-      mi_disable_non_unique_index(file,rows);
-    else
+  /*
+    Only disable old index if the table was empty and we are inserting
+    a lot of rows.
+    We should not do this for only a few rows as this is slower and
+    we don't want to update the key statistics based of only a few rows.
+  */
+  if (file->state->records == 0 && can_enable_indexes &&
+      (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
+    mi_disable_non_unique_index(file,rows);
+  else
     if (!file->bulk_insert &&
         (!rows || rows >= MI_MIN_ROWS_TO_USE_BULK_INSERT))
     {
       mi_init_bulk_insert(file, thd->variables.bulk_insert_buff_size, rows);
     }
-  }
+
   return;
 }
 
@@ -1298,7 +1293,7 @@ int ha_myisam::delete_row(const uchar *buf)
 
 C_MODE_START
 
-my_bool index_cond_func_myisam(void *arg)
+bool index_cond_func_myisam(void *arg)
 {
   ha_myisam *h= (ha_myisam*)arg;
   /*if (h->in_range_read)*/
@@ -1307,7 +1302,7 @@ my_bool index_cond_func_myisam(void *arg)
     if (h->compare_key2(h->end_range) > 0)
       return 2; /* caller should return HA_ERR_END_OF_FILE already */
   }
-  return (my_bool)h->pushed_idx_cond->val_int();
+  return (bool)h->pushed_idx_cond->val_int();
 }
 
 C_MODE_END
@@ -1512,8 +1507,8 @@ int ha_myisam::info(uint flag)
     share->keys_for_keyread.intersect(share->keys_in_use);
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
-      memcpy((char*) table->key_info[0].rec_per_key,
-	     (char*) misam_info.rec_per_key,
+      memcpy(table->key_info[0].rec_per_key,
+	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_unlock(&share->mutex);
@@ -1548,8 +1543,6 @@ int ha_myisam::info(uint flag)
 
 int ha_myisam::extra(enum ha_extra_function operation)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_KEYREAD)
-    return 0;
   return mi_extra(file, operation, 0);
 }
 
@@ -1566,8 +1559,6 @@ int ha_myisam::reset(void)
 
 int ha_myisam::extra_opt(enum ha_extra_function operation, uint32_t cache_size)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_WRITE_CACHE)
-    return 0;
   return mi_extra(file, operation, (void*) &cache_size);
 }
 
@@ -1612,7 +1603,7 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register TABLE *table_arg,
+int ha_myisam::create(const char *name, register Table *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
@@ -1625,7 +1616,7 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
   uint options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows= share->max_rows;
   create_info.reloc_rows= share->min_rows;
   create_info.with_auto_increment= share->next_number_key_offset == 0;
@@ -1851,7 +1842,7 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 
 mysql_declare_plugin(myisam)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
   "1.0",
   "MySQL AB",

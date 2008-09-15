@@ -13,10 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/mysql_priv.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <drizzled/plugin.h>
+#include <drizzled/common_includes.h>
 #include <zlib.h>
 
 bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
@@ -85,7 +82,7 @@ static int crc32udf_plugin_deinit(void *p)
 
 mysql_declare_plugin(crc32)
 {
-  MYSQL_UDF_PLUGIN,
+  DRIZZLE_UDF_PLUGIN,
   "crc32",
   "1.0",
   "Stewart Smith",

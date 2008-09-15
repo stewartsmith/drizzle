@@ -21,13 +21,9 @@
   Sorts a database
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_sort.h"
-
-/// How to write record_ref.
-#define WRITE_REF(file,from) \
-if (my_b_write((file),(uchar*) (from),param->ref_length)) \
-  return(1);
+#include <drizzled/drizzled_error_messages.h>
 
 	/* functions defined in this file */
 
@@ -47,8 +43,8 @@ static int merge_index(SORTPARAM *param,uchar *sort_buffer,
 		       uint maxbuffer,IO_CACHE *tempfile,
 		       IO_CACHE *outfile);
 static bool save_index(SORTPARAM *param,uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort);
-static uint suffix_length(ulong string_length);
+                       filesort_info_st *table_sort);
+static uint suffix_length(uint32_t string_length);
 static uint sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
 		       bool *multi_byte_charset);
 static SORT_ADDON_FIELD *get_addon_fields(THD *thd, Field **ptabfield,
@@ -74,7 +70,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
   @param select		condition to apply to the rows
   @param max_rows	Return only this many rows
   @param sort_positions	Set to 1 if we want to force sorting by position
-			(Needed by UPDATE/INSERT or ALTER TABLE)
+			(Needed by UPDATE/INSERT or ALTER Table)
   @param examined_rows	Store number of examined rows here
 
   @todo
@@ -91,12 +87,12 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
+ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
-  ulong memavl, min_sort_memory;
+  uint32_t memavl, min_sort_memory;
   uint maxbuffer;
   BUFFPEK *buffpek;
   ha_rows records= HA_POS_ERROR;
@@ -105,11 +101,11 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   SORTPARAM param;
   bool multi_byte_charset;
 
-  FILESORT_INFO table_sort;
-  TABLE_LIST *tab= table->pos_in_table_list;
+  filesort_info_st table_sort;
+  TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  MYSQL_FILESORT_START();
+  DRIZZLE_FILESORT_START();
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -122,7 +118,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end 
     when index_merge select has finished with it.
   */
-  memcpy(&table_sort, &table->sort, sizeof(FILESORT_INFO));
+  memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));
   table->sort.io_cache= NULL;
   
   outfile= table_sort.io_cache;
@@ -130,7 +126,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   my_b_clear(&buffpek_pointers);
   buffpek=0;
   error= 1;
-  memset((char*) &param, 0, sizeof(param));
+  memset(&param, 0, sizeof(param));
   param.sort_length= sortlength(thd, sortorder, s_length, &multi_byte_charset);
   param.ref_length= table->file->ref_length;
   param.addon_field= 0;
@@ -202,11 +198,11 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     goto err;
 
   memavl= thd->variables.sortbuff_size;
-  min_sort_memory= max(MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
+  min_sort_memory= max((uint)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
-    ulong old_memavl;
-    ulong keys= memavl/(param.rec_length+sizeof(char*));
+    uint32_t old_memavl;
+    uint32_t keys= memavl/(param.rec_length+sizeof(char*));
     param.keys=(uint) min(records+1, keys);
     if ((table_sort.sort_keys=
 	 (uchar **) make_char_array((char **) table_sort.sort_keys,
@@ -313,15 +309,15 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
                MYF(ME_ERROR+ME_WAITTANG));
   else
     statistic_add(thd->status_var.filesort_rows,
-		  (ulong) records, &LOCK_status);
+		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
-  memcpy(&table->sort, &table_sort, sizeof(FILESORT_INFO));
-  MYSQL_FILESORT_END();
+  memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
+  DRIZZLE_FILESORT_END();
   return(error ? HA_POS_ERROR : records);
 } /* filesort */
 
 
-void filesort_free_buffers(TABLE *table, bool full)
+void filesort_free_buffers(Table *table, bool full)
 {
   if (table->sort.record_pointers)
   {
@@ -376,7 +372,7 @@ static char **make_char_array(char **old_pos, register uint fields,
 static uchar *read_buffpek_from_file(IO_CACHE *buffpek_pointers, uint count,
                                      uchar *buf)
 {
-  ulong length= sizeof(BUFFPEK)*count;
+  uint32_t length= sizeof(BUFFPEK)*count;
   uchar *tmp= buf;
   if (count > UINT_MAX/sizeof(BUFFPEK))
     return 0; /* sizeof(BUFFPEK)*count will overflow */
@@ -441,7 +437,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   uint idx,indexpos,ref_length;
   uchar *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
-  TABLE *sort_form;
+  Table *sort_form;
   THD *thd= current_thd;
   volatile THD::killed_state *killed= &thd->killed;
   handler *file;
@@ -692,7 +688,7 @@ static void make_sortkey(register SORTPARAM *param,
 	  if (sort_field->reverse)
 	    memset(to, 255, sort_field->length+1);
 	  else
-	    memset((char*) to, 0, sort_field->length+1);
+	    memset(to, 0, sort_field->length+1);
 	  to+= sort_field->length+1;
 	  continue;
 	}
@@ -708,7 +704,7 @@ static void make_sortkey(register SORTPARAM *param,
       switch (sort_field->result_type) {
       case STRING_RESULT:
       {
-        CHARSET_INFO *cs=item->collation.collation;
+        const CHARSET_INFO * const cs=item->collation.collation;
         char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
         int diff;
         uint sort_field_length;
@@ -721,7 +717,7 @@ static void make_sortkey(register SORTPARAM *param,
         if (!res)
         {
           if (maybe_null)
-            memset((char*) to-1, 0, sort_field->length+1);
+            memset(to-1, 0, sort_field->length+1);
           else
           {
             /* purecov: begin deadcode */
@@ -731,7 +727,7 @@ static void make_sortkey(register SORTPARAM *param,
               This code is here mainly to avoid a hard crash in this case.
             */
             assert(0);
-            memset((char*) to, 0, sort_field->length);	// Avoid crash
+            memset(to, 0, sort_field->length);	// Avoid crash
             /* purecov: end */
           }
           break;
@@ -780,10 +776,10 @@ static void make_sortkey(register SORTPARAM *param,
             if (item->null_value)
             {
               if (maybe_null)
-                memset((char*) to-1, 0, sort_field->length+1);
+                memset(to-1, 0, sort_field->length+1);
               else
               {
-                memset((char*) to, 0, sort_field->length);
+                memset(to, 0, sort_field->length);
               }
               break;
             }
@@ -818,7 +814,7 @@ static void make_sortkey(register SORTPARAM *param,
           {
             if (item->null_value)
             { 
-              memset((char*)to, 0, sort_field->length+1);
+              memset(to, 0, sort_field->length+1);
               to++;
               break;
             }
@@ -836,7 +832,7 @@ static void make_sortkey(register SORTPARAM *param,
           {
             if (item->null_value)
             {
-              memset((char*) to, 0, sort_field->length+1);
+              memset(to, 0, sort_field->length+1);
               to++;
               break;
             }
@@ -878,7 +874,7 @@ static void make_sortkey(register SORTPARAM *param,
     SORT_ADDON_FIELD *addonf= param->addon_field;
     uchar *nulls= to;
     assert(addonf != 0);
-    memset((char *) nulls, 0, addonf->offset);
+    memset(nulls, 0, addonf->offset);
     to+= addonf->offset;
     for ( ; (field= addonf->field) ; addonf++)
     {
@@ -907,7 +903,7 @@ static void make_sortkey(register SORTPARAM *param,
   else
   {
     /* Save filepos last */
-    memcpy((uchar*) to, ref_pos, (size_t) param->ref_length);
+    memcpy(to, ref_pos, (size_t) param->ref_length);
   }
   return;
 }
@@ -920,7 +916,7 @@ static void make_sortkey(register SORTPARAM *param,
 static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
-  TABLE *table=param->sort_form;
+  Table *table=param->sort_form;
   MY_BITMAP *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;
@@ -956,7 +952,7 @@ static void register_used_fields(SORTPARAM *param)
 
 
 static bool save_index(SORTPARAM *param, uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort)
+                       filesort_info_st *table_sort)
 {
   uint offset,res_length;
   uchar *to;
@@ -1115,7 +1111,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   int error;
   uint rec_length,res_length,offset;
   size_t sort_length;
-  ulong maxcount;
+  uint32_t maxcount;
   ha_rows max_rows,org_max_rows;
   my_off_t to_start_filepos;
   uchar *strpos;
@@ -1138,7 +1134,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   res_length= param->res_length;
   sort_length= param->sort_length;
   offset= rec_length-res_length;
-  maxcount= (ulong) (param->keys/((uint) (Tb-Fb) +1));
+  maxcount= (uint32_t) (param->keys/((uint) (Tb-Fb) +1));
   to_start_filepos= my_b_tell(to_file);
   strpos= (uchar*) sort_buffer;
   org_max_rows=max_rows= param->max_rows;
@@ -1213,7 +1209,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
         if (!(*cmp)(first_cmp_arg, &(param->unique_buff),
                     (uchar**) &buffpek->key))
               goto skip_duplicate;
-            memcpy(param->unique_buff, (uchar*) buffpek->key, rec_length);
+            memcpy(param->unique_buff, buffpek->key, rec_length);
       }
       if (flag == 0)
       {
@@ -1325,7 +1321,7 @@ static int merge_index(SORTPARAM *param, uchar *sort_buffer,
 } /* merge_index */
 
 
-static uint suffix_length(ulong string_length)
+static uint suffix_length(uint32_t string_length)
 {
   if (string_length < 256)
     return 1;
@@ -1361,7 +1357,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
            bool *multi_byte_charset)
 {
   register uint length;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   *multi_byte_charset= 0;
 
   length=0;
@@ -1583,7 +1579,7 @@ void change_double_for_sort(double nr,uchar *to)
   if (nr == 0.0)
   {						/* Change to zero string */
     tmp[0]=(uchar) 128;
-    memset((char*) tmp+1, 0, sizeof(nr)-1);
+    memset(tmp+1, 0, sizeof(nr)-1);
   }
   else
   {

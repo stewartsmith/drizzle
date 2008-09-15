@@ -22,13 +22,14 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/short.h>
 
 /****************************************************************************
  Field type short int (2 byte)
 ****************************************************************************/
 
-int Field_short::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_short::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int store_tmp;
   int error;
@@ -58,13 +59,13 @@ int Field_short::store(double nr)
     if (nr < 0)
     {
       res=0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > (double) UINT16_MAX)
     {
       res=(int16_t) UINT16_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -75,13 +76,13 @@ int Field_short::store(double nr)
     if (nr < (double) INT16_MIN)
     {
       res=INT16_MIN;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > (double) INT16_MAX)
     {
       res=INT16_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -109,13 +110,13 @@ int Field_short::store(int64_t nr, bool unsigned_val)
     if (nr < 0L && !unsigned_val)
     {
       res=0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if ((uint64_t) nr > (uint64_t) UINT16_MAX)
     {
       res=(int16_t) UINT16_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -129,13 +130,13 @@ int Field_short::store(int64_t nr, bool unsigned_val)
     if (nr < INT16_MIN)
     {
       res=INT16_MIN;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > (int64_t) INT16_MAX)
     {
       res=INT16_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -181,7 +182,7 @@ int64_t Field_short::val_int(void)
 String *Field_short::val_str(String *val_buffer,
 			     String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,7*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -257,7 +258,7 @@ void Field_short::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_short::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs= res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "smallint"));
   add_unsigned(res);
 }

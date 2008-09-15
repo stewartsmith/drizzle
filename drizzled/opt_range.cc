@@ -103,12 +103,8 @@
            subject and may omit some details.
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 #ifndef EXTRA_DEBUG
 #define test_rb_tree(A,B) {}
@@ -614,7 +610,7 @@ public:
   SEL_TREE() :type(KEY)
   {
     keys_map.clear_all();
-    memset((char*) keys, 0, sizeof(keys));
+    memset(keys, 0, sizeof(keys));
   }
   /*
     Note: there may exist SEL_TREE objects with sel_tree->type=KEY and
@@ -644,7 +640,7 @@ class RANGE_OPT_PARAM
 {
 public:
   THD	*thd;   /* Current thread handle */
-  TABLE *table; /* Table being analyzed */
+  Table *table; /* Table being analyzed */
   COND *cond;   /* Used inside get_mm_tree(). */
   table_map prev_tables;
   table_map read_tables;
@@ -758,7 +754,7 @@ TRP_GROUP_MIN_MAX *get_best_group_min_max(PARAM *param, SEL_TREE *tree);
 
 static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
                            const char *msg);
-static void print_ror_scans_arr(TABLE *table, const char *msg,
+static void print_ror_scans_arr(Table *table, const char *msg,
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end);
 
@@ -1003,7 +999,7 @@ int imerge_list_or_tree(RANGE_OPT_PARAM *param,
 	   1 = Got some error (out of memory?)
 	   */
 
-SQL_SELECT *make_select(TABLE *head, table_map const_tables,
+SQL_SELECT *make_select(Table *head, table_map const_tables,
 			table_map read_tables, COND *conds,
                         bool allow_null_cond,
                         int *error)
@@ -1067,7 +1063,7 @@ QUICK_SELECT_I::QUICK_SELECT_I()
    used_key_parts(0)
 {}
 
-QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, TABLE *table, uint key_nr,
+QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, Table *table, uint key_nr,
                                        bool no_alloc, MEM_ROOT *parent_alloc,
                                        bool *create_error)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
@@ -1092,7 +1088,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, TABLE *table, uint key_nr,
     thd->mem_root= &alloc;
   }
   else
-    memset((char*) &alloc, 0, sizeof(alloc));
+    memset(&alloc, 0, sizeof(alloc));
   file= head->file;
   record= head->record[0];
   save_read_set= head->read_set;
@@ -1157,7 +1153,7 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
 
 
 QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(THD *thd_param,
-                                                   TABLE *table)
+                                                   Table *table)
   :pk_quick_select(NULL), thd(thd_param)
 {
   index= MAX_KEY;
@@ -1207,7 +1203,7 @@ QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
 
 
 QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(THD *thd_param,
-                                                       TABLE *table,
+                                                       Table *table,
                                                        bool retrieve_full_rows,
                                                        MEM_ROOT *parent_alloc)
   : cpk_quick(NULL), thd(thd_param), need_to_fetch_row(retrieve_full_rows),
@@ -1446,7 +1442,7 @@ QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
 
 
 QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(THD *thd_param,
-                                               TABLE *table)
+                                               Table *table)
   : thd(thd_param), scans_inited(false)
 {
   index= MAX_KEY;
@@ -1781,11 +1777,11 @@ SEL_ARG *SEL_ARG::clone_tree(RANGE_OPT_PARAM *param)
     MAX_KEY if no such index was found.
 */
 
-uint get_index_for_order(TABLE *table, ORDER *order, ha_rows limit)
+uint get_index_for_order(Table *table, order_st *order, ha_rows limit)
 {
   uint idx;
   uint match_key= MAX_KEY, match_key_len= MAX_KEY_LENGTH + 1;
-  ORDER *ord;
+  order_st *ord;
   
   for (ord= order; ord; ord= ord->next)
     if (!ord->asc)
@@ -2056,7 +2052,7 @@ public:
 
 static int fill_used_fields_bitmap(PARAM *param)
 {
-  TABLE *table= param->table;
+  Table *table= param->table;
   my_bitmap_map *tmp;
   uint pk;
   param->tmp_covered_fields.bitmap= 0;
@@ -2250,7 +2246,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     /* Calculate cost of full index read for the shortest covering index */
     if (!head->covering_keys.is_clear_all())
     {
-      int key_for_use= find_shortest_key(head, &head->covering_keys);
+      int key_for_use= head->find_shortest_key(&head->covering_keys);
       double key_read_time= 
         param.table->file->index_only_read_time(key_for_use, 
                                                 rows2double(records)) +
@@ -4915,7 +4911,7 @@ tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
     {
       /* one tree is index merge tree and another is range tree */
       if (tree1->merges.is_empty())
-        swap_variables(SEL_TREE*, tree1, tree2);
+        std::swap(tree1, tree2);
       
       if (param->remove_jump_scans && remove_nonrange_trees(param, tree2))
          return(new SEL_TREE(SEL_TREE::ALWAYS));
@@ -5001,7 +4997,7 @@ key_and(RANGE_OPT_PARAM *param, SEL_ARG *key1, SEL_ARG *key2, uint clone_flag)
   {
     if (key1->part > key2->part)
     {
-      swap_variables(SEL_ARG *, key1, key2);
+      std::swap(key1, key2);
       clone_flag=swap_clone_flag(clone_flag);
     }
     // key1->part < key2->part
@@ -5017,7 +5013,7 @@ key_and(RANGE_OPT_PARAM *param, SEL_ARG *key1, SEL_ARG *key2, uint clone_flag)
        key2->type != SEL_ARG::MAYBE_KEY) ||
       key1->type == SEL_ARG::MAYBE_KEY)
   {						// Put simple key in key2
-    swap_variables(SEL_ARG *, key1, key2);
+    std::swap(key1, key2);
     clone_flag=swap_clone_flag(clone_flag);
   }
 
@@ -5160,7 +5156,7 @@ key_or(RANGE_OPT_PARAM *param, SEL_ARG *key1,SEL_ARG *key2)
   {
     if (key2->use_count == 0 || key1->elements > key2->elements)
     {
-      swap_variables(SEL_ARG *,key1,key2);
+      std::swap(key1,key2);
     }
     if (key1->use_count > 0 || !(key1=key1->clone_tree(param)))
       return 0;					// OOM
@@ -6131,7 +6127,7 @@ walk_up_n_right:
     }
   }
   seq->param->range_count++;
-  seq->param->max_key_part=max(seq->param->max_key_part,key_tree->part);
+  seq->param->max_key_part=max(seq->param->max_key_part,(uint)key_tree->part);
   return 0;
 }
 
@@ -6600,7 +6596,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
     NULL on error.
 */
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
                                              TABLE_REF *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
@@ -6629,7 +6625,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
     goto err;
   quick->records= records;
 
-  if ((cp_buffer_from_ref(thd, table, ref) && thd->is_fatal_error) ||
+  if ((cp_buffer_from_ref(thd, ref) && thd->is_fatal_error) ||
       !(range= new(alloc) QUICK_RANGE()))
     goto err;                                   // out of memory
 
@@ -7253,13 +7249,13 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint prefix_length,
     last_range= *(cur_range++);
 
     start_key.key=    (const uchar*) last_range->min_key;
-    start_key.length= min(last_range->min_length, prefix_length);
+    start_key.length= min(last_range->min_length, (uint16_t)prefix_length);
     start_key.keypart_map= last_range->min_keypart_map & keypart_map;
     start_key.flag=   ((last_range->flag & NEAR_MIN) ? HA_READ_AFTER_KEY :
 		       (last_range->flag & EQ_RANGE) ?
 		       HA_READ_KEY_EXACT : HA_READ_KEY_OR_NEXT);
     end_key.key=      (const uchar*) last_range->max_key;
-    end_key.length=   min(last_range->max_length, prefix_length);
+    end_key.length=   min(last_range->max_length, (uint16_t)prefix_length);
     end_key.keypart_map= last_range->max_keypart_map & keypart_map;
     /*
       We use READ_AFTER_KEY here because if we are reading on a key
@@ -7697,7 +7693,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
                                Field::imagetype image_type);
 
 static void
-cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
+cost_group_min_max(Table* table, KEY *index_info, uint used_key_parts,
                    uint group_key_parts, SEL_TREE *range_tree,
                    SEL_ARG *index_tree, ha_rows quick_prefix_records,
                    bool have_min, bool have_max,
@@ -7837,7 +7833,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 {
   THD *thd= param->thd;
   JOIN *join= thd->lex->current_select->join;
-  TABLE *table= param->table;
+  Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
   Item_field *min_max_arg_item= NULL; // The argument of all MIN/MAX functions
@@ -7851,7 +7847,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
   uint key_infix_len= 0;          /* Length of key_infix. */
   TRP_GROUP_MIN_MAX *read_plan= NULL; /* The eventually constructed TRP. */
   uint key_part_nr;
-  ORDER *tmp_group;
+  order_st *tmp_group;
   Item *item;
   Item_field *item_field;
 
@@ -8009,10 +8005,10 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     }
     /*
       Check (GA2) if this is a DISTINCT query.
-      If GA2, then Store a new ORDER object in group_fields_array at the
-      position of the key part of item_field->field. Thus we get the ORDER
+      If GA2, then Store a new order_st object in group_fields_array at the
+      position of the key part of item_field->field. Thus we get the order_st
       objects for each field ordered as the corresponding key parts.
-      Later group_fields_array of ORDER objects is used to convert the query
+      Later group_fields_array of order_st objects is used to convert the query
       to a GROUP query.
     */
     else if (join->select_distinct)
@@ -8589,7 +8585,7 @@ SEL_ARG * get_index_range_tree(uint index, SEL_TREE* range_tree, PARAM *param,
     None
 */
 
-void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
+void cost_group_min_max(Table* table, KEY *index_info, uint used_key_parts,
                         uint group_key_parts, SEL_TREE *range_tree,
                         SEL_ARG *index_tree __attribute__((unused)),
                         ha_rows quick_prefix_records,
@@ -8644,7 +8640,7 @@ void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
       p_overlap= (blocks_per_group * (keys_per_subgroup - 1)) / keys_per_group;
       p_overlap= min(p_overlap, 1.0);
     }
-    io_cost= (double) min(num_groups * (1 + p_overlap), num_blocks);
+    io_cost= (double) min(num_groups * (1 + p_overlap), (double)num_blocks);
   }
   else
     io_cost= (keys_per_group > keys_per_block) ?
@@ -8786,7 +8782,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param,
 */
 
 QUICK_GROUP_MIN_MAX_SELECT::
-QUICK_GROUP_MIN_MAX_SELECT(TABLE *table, JOIN *join_arg, bool have_min_arg,
+QUICK_GROUP_MIN_MAX_SELECT(Table *table, JOIN *join_arg, bool have_min_arg,
                            bool have_max_arg,
                            KEY_PART_INFO *min_max_arg_part_arg,
                            uint group_prefix_len_arg, uint group_key_parts_arg,
@@ -9766,7 +9762,7 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
 }
 
 
-static void print_ror_scans_arr(TABLE *table,
+static void print_ror_scans_arr(Table *table,
                                 const char *msg __attribute__((unused)),
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end)

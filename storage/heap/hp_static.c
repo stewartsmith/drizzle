@@ -18,8 +18,6 @@
   a shared library
 */
 
-#ifndef _global_h
 #include "heapdef.h"
-#endif
 
 LIST *heap_open_list=0,*heap_share_list=0;

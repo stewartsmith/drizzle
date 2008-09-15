@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/datetime.h>
 
 /****************************************************************************
@@ -33,7 +34,7 @@
 
 int Field_datetime::store(const char *from,
                           uint len,
-                          CHARSET_INFO *cs __attribute__((unused)))
+                          const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME time_tmp;
   int error;
@@ -44,8 +45,7 @@ int Field_datetime::store(const char *from,
   func_res= str_to_datetime(from, len, &time_tmp,
                             (TIME_FUZZY_DATE |
                              (thd->variables.sql_mode &
-                              (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                               MODE_INVALID_DATES))),
+                              (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) DRIZZLE_TIMESTAMP_ERROR)
     tmp= TIME_to_uint64_t_datetime(&time_tmp);
@@ -53,7 +53,7 @@ int Field_datetime::store(const char *from,
     error= 1;                                 // Fix if invalid zero date
 
   if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
 
@@ -74,7 +74,7 @@ int Field_datetime::store(double nr)
   int error= 0;
   if (nr < 0.0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0.0;
@@ -95,8 +95,7 @@ int Field_datetime::store(int64_t nr,
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
                                          (thd->variables.sql_mode &
-                                          (MODE_NO_ZERO_IN_DATE |
-                                           MODE_NO_ZERO_DATE |
+                                          (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
   if (nr == -1LL)
@@ -106,7 +105,7 @@ int Field_datetime::store(int64_t nr,
   }
 
   if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
                          ER_WARN_DATA_TRUNCATED, initial_nr,
                          DRIZZLE_TIMESTAMP_DATETIME, 1);
@@ -139,13 +138,12 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
                     (current_thd->variables.sql_mode &
-                     (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                      MODE_INVALID_DATES))), &error))
+                     (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
-      String str(buff, sizeof(buff), &my_charset_latin1);
+      String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATETIME,1);
     }
   }
@@ -153,7 +151,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)

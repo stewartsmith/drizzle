@@ -25,17 +25,13 @@
     (This shouldn't be needed)
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
 C_MODE_START
 #include <mysys/my_static.h>			// For soundex_map
 C_MODE_END
+#include <drizzled/drizzled_error_messages.h>
 
 String my_empty_string("",default_charset_info);
 
@@ -49,9 +45,7 @@ bool Item_str_func::fix_fields(THD *thd, Item **ref)
     In Item_str_func::check_well_formed_result() we may set null_value
     flag on the same condition as in test() below.
   */
-  maybe_null= (maybe_null ||
-               test(thd->variables.sql_mode &
-                    (MODE_STRICT_TRANS_TABLES | MODE_STRICT_ALL_TABLES)));
+  maybe_null= (maybe_null || true);
   return res;
 }
 
@@ -130,7 +124,7 @@ String *Item_func_concat::val_str(String *str)
       if (res->length()+res2->length() >
 	  current_thd->variables.max_allowed_packet)
       {
-	push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			    ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			    ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
 			    current_thd->variables.max_allowed_packet);
@@ -291,7 +285,7 @@ String *Item_func_concat_ws::val_str(String *str)
     if (res->length() + sep_str->length() + res2->length() >
 	current_thd->variables.max_allowed_packet)
     {
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			  ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			  ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
 			  current_thd->variables.max_allowed_packet);
@@ -548,7 +542,7 @@ redo:
           if (res->length()-from_length + to_length >
 	      current_thd->variables.max_allowed_packet)
 	  {
-	    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 				ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 				func_name(),
@@ -577,7 +571,7 @@ skip:
       if (res->length()-from_length + to_length >
 	  current_thd->variables.max_allowed_packet)
       {
-	push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			    ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			    ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
 			    current_thd->variables.max_allowed_packet);
@@ -655,7 +649,7 @@ String *Item_func_insert::val_str(String *str)
   if ((uint64_t) (res->length() - length + res2->length()) >
       (uint64_t) current_thd->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), current_thd->variables.max_allowed_packet);
@@ -1251,7 +1245,7 @@ void Item_func_trim::print(String *str, enum_query_type query_type)
 }
 
 
-Item *Item_func_sysconst::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
   uint conv_errors;
@@ -1297,7 +1291,7 @@ bool Item_func_user::init(const char *user, const char *host)
   // For system threads (e.g. replication SQL thread) user may be empty
   if (user)
   {
-    CHARSET_INFO *cs= str_value.charset();
+    const CHARSET_INFO * const cs= str_value.charset();
     uint res_length= (strlen(user)+strlen(host)+2) * cs->mbmaxlen;
 
     if (str_value.alloc(res_length))
@@ -1319,7 +1313,7 @@ bool Item_func_user::fix_fields(THD *thd, Item **ref)
 {
   return (Item_func_sysconst::fix_fields(thd, ref) ||
           init(thd->main_security_ctx.user,
-               thd->main_security_ctx.host_or_ip));
+               thd->main_security_ctx.ip));
 }
 
 
@@ -1330,7 +1324,7 @@ bool Item_func_current_user::fix_fields(THD *thd, Item **ref)
 
   Security_context *ctx=
                          thd->security_ctx;
-  return init(ctx->priv_user, ctx->priv_host);
+  return init(ctx->user, ctx->ip);
 }
 
 
@@ -1734,7 +1728,7 @@ String *Item_func_repeat::val_str(String *str)
   // Safe length check
   if (length > current_thd->variables.max_allowed_packet / (uint) count)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), current_thd->variables.max_allowed_packet);
@@ -1824,7 +1818,7 @@ String *Item_func_rpad::val_str(String *str)
   byte_count= count * collation.collation->mbmaxlen;
   if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), current_thd->variables.max_allowed_packet);
@@ -1929,7 +1923,7 @@ String *Item_func_lpad::val_str(String *str)
   
   if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), current_thd->variables.max_allowed_packet);
@@ -2039,7 +2033,7 @@ String *Item_func_set_collation::val_str(String *str)
 
 void Item_func_set_collation::fix_length_and_dec()
 {
-  CHARSET_INFO *set_collation;
+  const CHARSET_INFO *set_collation;
   const char *colname;
   String tmp, *str= args[1]->val_str(&tmp);
   colname= str->c_ptr();
@@ -2105,10 +2099,10 @@ String *Item_func_charset::val_str(String *str)
   assert(fixed == 1);
   uint dummy_errors;
 
-  CHARSET_INFO *cs= args[0]->collation.collation; 
+  const CHARSET_INFO * const cs= args[0]->collation.collation; 
   null_value= 0;
   str->copy(cs->csname, strlen(cs->csname),
-	    &my_charset_latin1, collation.collation, &dummy_errors);
+	    &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
   return str;
 }
 
@@ -2116,18 +2110,18 @@ String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
   uint dummy_errors;
-  CHARSET_INFO *cs= args[0]->collation.collation; 
+  const CHARSET_INFO * const cs= args[0]->collation.collation; 
 
   null_value= 0;
   str->copy(cs->name, strlen(cs->name),
-	    &my_charset_latin1, collation.collation, &dummy_errors);
+	    &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
   return str;
 }
 
 
 void Item_func_weight_string::fix_length_and_dec()
 {
-  CHARSET_INFO *cs= args[0]->collation.collation;
+  const CHARSET_INFO * const cs= args[0]->collation.collation;
   collation.set(&my_charset_bin, args[0]->collation.derivation);
   flags= my_strxfrm_flag_normalize(flags, cs->levels_for_order);
   max_length= cs->mbmaxlen * max(args[0]->max_length, nweights);
@@ -2139,7 +2133,7 @@ void Item_func_weight_string::fix_length_and_dec()
 String *Item_func_weight_string::val_str(String *str)
 {
   String *res;
-  CHARSET_INFO *cs= args[0]->collation.collation;
+  const CHARSET_INFO * const cs= args[0]->collation.collation;
   uint tmp_length, frm_length;
   assert(fixed == 1);
 
@@ -2291,7 +2285,7 @@ String *Item_load_file::val_str(String *str)
   }
   if (stat_info.st_size > (long) current_thd->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), current_thd->variables.max_allowed_packet);
@@ -2391,7 +2385,7 @@ void Item_func_export_set::fix_length_and_dec()
   uint sep_length=(arg_count > 3 ? args[3]->max_length : 1);
   max_length=length*64+sep_length*63;
 
-  if (agg_arg_charsets(collation, args+1, min(4,arg_count)-1,
+  if (agg_arg_charsets(collation, args+1, min((uint)4,arg_count)-1,
                        MY_COLL_ALLOW_CONV, 1))
     return;
 }
@@ -2563,7 +2557,7 @@ String *Item_func_compress::val_str(String *str)
 		     (const Bytef*)res->ptr(), res->length())) != Z_OK)
   {
     code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
-    push_warning(current_thd,MYSQL_ERROR::WARN_LEVEL_ERROR,code,ER(code));
+    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
     null_value= 1;
     return 0;
   }
@@ -2601,7 +2595,7 @@ String *Item_func_uncompress::val_str(String *str)
   /* If length is less than 4 bytes, data is corrupt */
   if (res->length() <= 4)
   {
-    push_warning_printf(current_thd,MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_ZLIB_Z_DATA_ERROR,
 			ER(ER_ZLIB_Z_DATA_ERROR));
     goto err;
@@ -2611,7 +2605,7 @@ String *Item_func_uncompress::val_str(String *str)
   new_size= uint4korr(res->ptr()) & 0x3FFFFFFF;
   if (new_size > current_thd->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd,MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_TOO_BIG_FOR_UNCOMPRESS,
 			ER(ER_TOO_BIG_FOR_UNCOMPRESS),
                         current_thd->variables.max_allowed_packet);
@@ -2629,7 +2623,7 @@ String *Item_func_uncompress::val_str(String *str)
 
   code= ((err == Z_BUF_ERROR) ? ER_ZLIB_Z_BUF_ERROR :
 	 ((err == Z_MEM_ERROR) ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_DATA_ERROR));
-  push_warning(current_thd,MYSQL_ERROR::WARN_LEVEL_ERROR,code,ER(code));
+  push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
 
 err:
   null_value= 1;
@@ -2746,6 +2740,6 @@ String *Item_func_uuid::val_str(String *str)
   tohex(s, time_low, 8);
   tohex(s+9, time_mid, 4);
   tohex(s+14, time_hi_and_version, 4);
-  strmov(s+18, clock_seq_and_node_str);
+  stpcpy(s+18, clock_seq_and_node_str);
   return str;
 }

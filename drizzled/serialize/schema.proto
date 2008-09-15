@@ -1,0 +1,7 @@
+package drizzle;
+
+message Schema {
+  required string name = 1;
+  optional string characterset = 2;
+  optional string collation = 3;
+}

@@ -78,6 +78,7 @@ static SYMBOL symbols[] = {
   { "BIT",		SYM(BIT_SYM)},
   { "BLOB",		SYM(BLOB_SYM)},
   { "BLOCK",  SYM(BLOCK_SYM)},
+  { "BLOCK_SIZE", SYM(BLOCK_SIZE_SYM)},
   { "BOOL",		SYM(BOOL_SYM)},
   { "BOOLEAN",		SYM(BOOLEAN_SYM)},
   { "BOTH",		SYM(BOTH)},
@@ -508,7 +509,6 @@ static SYMBOL symbols[] = {
   { "WRAPPER",		SYM(WRAPPER_SYM)},
   { "WRITE",		SYM(WRITE_SYM)},
   { "XOR",		SYM(XOR)},
-  { "XML",              SYM(XML_SYM)}, /* LOAD XML Arnold/Erik */
   { "YEAR",		SYM(YEAR_SYM)},
   { "YEAR_MONTH",	SYM(YEAR_MONTH_SYM)},
 };

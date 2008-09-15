@@ -13,13 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#define MYSQL_SERVER 1
-#include <drizzled/mysql_priv.h>
+#define DRIZZLE_SERVER 1
+#include <drizzled/server_includes.h>
 #include "ha_heap.h"
 #include "heapdef.h"
 
@@ -354,7 +349,7 @@ int ha_heap::rnd_pos(uchar * buf, uchar *pos)
   int error;
   HEAP_PTR heap_position;
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  memcpy((char*) &heap_position, pos, sizeof(HEAP_PTR));
+  memcpy(&heap_position, pos, sizeof(HEAP_PTR));
   error=heap_rrnd(file, buf, heap_position);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -390,6 +385,14 @@ int ha_heap::info(uint flag)
   return 0;
 }
 
+
+enum row_type ha_heap::get_row_type() const
+{
+  if (file->s->recordspace.is_variable_size)
+    return ROW_TYPE_DYNAMIC;
+
+  return ROW_TYPE_FIXED;
+}
 
 int ha_heap::extra(enum ha_extra_function operation)
 {
@@ -589,17 +592,52 @@ ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
 }
 
 
-int ha_heap::create(const char *name, TABLE *table_arg,
+int ha_heap::create(const char *name, Table *table_arg,
 		    HA_CREATE_INFO *create_info)
 {
-  uint key, parts, mem_per_row= 0, keys= table_arg->s->keys;
+  uint key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
   uint auto_key= 0, auto_key_type= 0;
-  ha_rows max_rows;
+  uint max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
+  uint column_idx, column_count= table_arg->s->fields;
+  HP_COLUMNDEF *columndef;
   HP_KEYDEF *keydef;
   HA_KEYSEG *seg;
+  char buff[FN_REFLEN];
   int error;
   TABLE_SHARE *share= table_arg->s;
   bool found_real_auto_increment= 0;
+
+  if (!(columndef= (HP_COLUMNDEF*) my_malloc(column_count * sizeof(HP_COLUMNDEF), MYF(MY_WME))))
+    return my_errno;
+
+  for (column_idx= 0; column_idx < column_count; column_idx++)
+  {
+    Field* field= *(table_arg->field + column_idx);
+    HP_COLUMNDEF* column= columndef + column_idx;
+    column->type= (uint16_t)field->type();
+    column->length= field->pack_length();
+    column->offset= field->offset(field->table->record[0]);
+
+    if (field->null_bit)
+    {
+      column->null_bit= field->null_bit;
+      column->null_pos= (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+    }
+    else
+    {
+      column->null_bit= 0;
+      column->null_pos= 0;
+    }
+
+    if (field->type() == DRIZZLE_TYPE_VARCHAR)
+    {
+      column->length_bytes= (uint8_t)(((Field_varstring*)field)->length_bytes);
+    }
+    else
+    {
+      column->length_bytes= 0;
+    }
+  }
 
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
@@ -607,7 +645,11 @@ int ha_heap::create(const char *name, TABLE *table_arg,
   if (!(keydef= (HP_KEYDEF*) my_malloc(keys * sizeof(HP_KEYDEF) +
 				       parts * sizeof(HA_KEYSEG),
 				       MYF(MY_WME))))
+  {
+    my_free((void *) columndef, MYF(0));
     return my_errno;
+  }
+
   seg= my_reinterpret_cast(HA_KEYSEG*) (keydef + keys);
   for (key= 0; key < keys; key++)
   {
@@ -623,11 +665,11 @@ int ha_heap::create(const char *name, TABLE *table_arg,
     case HA_KEY_ALG_UNDEF:
     case HA_KEY_ALG_HASH:
       keydef[key].algorithm= HA_KEY_ALG_HASH;
-      mem_per_row+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
+      mem_per_row_keys+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
       break;
     case HA_KEY_ALG_BTREE:
       keydef[key].algorithm= HA_KEY_ALG_BTREE;
-      mem_per_row+=sizeof(TREE_ELEMENT)+pos->key_length+sizeof(char*);
+      mem_per_row_keys+=sizeof(TREE_ELEMENT)+pos->key_length+sizeof(char*);
       break;
     default:
       assert(0); // cannot happen
@@ -651,6 +693,16 @@ int ha_heap::create(const char *name, TABLE *table_arg,
       seg->start=   (uint) key_part->offset;
       seg->length=  (uint) key_part->length;
       seg->flag=    key_part->key_part_flag;
+
+      next_field_pos= seg->start + seg->length;
+      if (field->type() == DRIZZLE_TYPE_VARCHAR)
+      {
+        next_field_pos+= (uint8_t)(((Field_varstring*)field)->length_bytes);
+      }
+
+      if (next_field_pos > key_part_size) {
+        key_part_size= next_field_pos;
+      }
 
       if (field->flags & (ENUM_FLAG | SET_FLAG))
         seg->charset= &my_charset_bin;
@@ -677,11 +729,22 @@ int ha_heap::create(const char *name, TABLE *table_arg,
         auto_key= key+ 1;
 	auto_key_type= field->key_type();
       }
+      if ((uint)field->field_index + 1 > max_key_fieldnr)
+      {
+        /* Do not use seg->fieldnr as it's not reliable in case of temp tables */
+        max_key_fieldnr= field->field_index + 1;
+      }
     }
   }
-  mem_per_row+= MY_ALIGN(share->reclength + 1, sizeof(char*));
-  max_rows = (ha_rows) (table_arg->in_use->variables.max_heap_table_size /
-			(uint64_t) mem_per_row);
+  
+  if (key_part_size < share->null_bytes + ((share->last_null_bit_pos+7) >> 3))
+  {
+    /* Make sure to include null fields regardless of the presense of keys */
+    key_part_size = share->null_bytes + ((share->last_null_bit_pos+7) >> 3);
+  }
+
+  
+  
   if (table_arg->found_next_number_field)
   {
     keydef[share->next_number_index].flag|= HA_AUTO_KEY;
@@ -695,14 +758,19 @@ int ha_heap::create(const char *name, TABLE *table_arg,
   hp_create_info.max_table_size=current_thd->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
-  max_rows = (ha_rows) (hp_create_info.max_table_size / mem_per_row);
-  error= heap_create(name,
-		     keys, keydef, share->reclength,
-		     (ulong) ((share->max_rows < max_rows &&
-			       share->max_rows) ? 
-			      share->max_rows : max_rows),
-		     (ulong) share->min_rows, &hp_create_info, &internal_share);
+  hp_create_info.max_chunk_size= share->block_size;
+  hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
+  error= heap_create(fn_format(buff,name,"","",
+                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
+                   keys, keydef,
+         column_count, columndef,
+         max_key_fieldnr, key_part_size,
+         share->reclength, mem_per_row_keys,
+         (uint32_t) share->max_rows, (uint32_t) share->min_rows,
+         &hp_create_info, &internal_share);
+  
   my_free((uchar*) keydef, MYF(0));
+  my_free((void *) columndef, MYF(0));
   assert(file == 0);
   return (error);
 }
@@ -713,6 +781,13 @@ void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
   table->file->info(HA_STATUS_AUTO);
   if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
     create_info->auto_increment_value= stats.auto_increment_value;
+  if (!(create_info->used_fields & HA_CREATE_USED_BLOCK_SIZE))
+  {
+    if (file->s->recordspace.is_variable_size)
+      create_info->block_size= file->s->recordspace.chunk_length;
+    else
+      create_info->block_size= 0;
+  }
 }
 
 void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
@@ -742,7 +817,7 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
 
 mysql_declare_plugin(heap)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
   "1.0",
   "MySQL AB",

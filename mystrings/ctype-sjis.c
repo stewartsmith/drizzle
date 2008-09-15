@@ -181,13 +181,13 @@ static uchar sort_order_sjis[]=
                        (0x80<=(c) && (c)<=0xfc))
 
 
-static uint ismbchar_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+static uint ismbchar_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
 			 const char* p, const char *e)
 {
   return (issjishead((uchar) *p) && (e-p)>1 && issjistail((uchar)p[1]) ? 2: 0);
 }
 
-static uint mbcharlen_sjis(const CHARSET_INFO *cs __attribute__((unused)),uint c)
+static uint mbcharlen_sjis(const CHARSET_INFO * const cs __attribute__((unused)),uint c)
 {
   return (issjishead((uchar) c) ? 2 : 1);
 }
@@ -196,7 +196,7 @@ static uint mbcharlen_sjis(const CHARSET_INFO *cs __attribute__((unused)),uint c
 #define sjiscode(c,d)	((((uint) (uchar)(c)) << 8) | (uint) (uchar) (d))
 
 
-static int my_strnncoll_sjis_internal(const CHARSET_INFO *cs,
+static int my_strnncoll_sjis_internal(const CHARSET_INFO * const cs,
 				      const uchar **a_res, size_t a_length,
 				      const uchar **b_res, size_t b_length)
 {
@@ -228,10 +228,10 @@ static int my_strnncoll_sjis_internal(const CHARSET_INFO *cs,
 }
 
 
-static int my_strnncoll_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+static int my_strnncoll_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
                              const uchar *a, size_t a_length, 
                              const uchar *b, size_t b_length,
-                             my_bool b_is_prefix)
+                             bool b_is_prefix)
 {
   int res= my_strnncoll_sjis_internal(cs, &a, a_length, &b, b_length);
   if (b_is_prefix && a_length > b_length)
@@ -240,10 +240,10 @@ static int my_strnncoll_sjis(const CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static int my_strnncollsp_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+static int my_strnncollsp_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
 			       const uchar *a, size_t a_length, 
 			       const uchar *b, size_t b_length,
-                               my_bool diff_if_only_endspace_difference)
+                               bool diff_if_only_endspace_difference)
 {
   const uchar *a_end= a + a_length, *b_end= b + b_length;
   int res= my_strnncoll_sjis_internal(cs, &a, a_length, &b, b_length);
@@ -298,7 +298,7 @@ static int my_strnncollsp_sjis(const CHARSET_INFO *cs __attribute__((unused)),
 
 #define max_sort_char ((char) 255)
 
-static my_bool my_like_range_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+static bool my_like_range_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
 				  const char *ptr,size_t ptr_length,
 				  char escape, char w_one, char w_many,
 				  size_t res_length,
@@ -4461,7 +4461,7 @@ static int func_uni_sjis_onechar(int code){
 
 
 static int
-my_wc_mb_sjis(const CHARSET_INFO *cs  __attribute__((unused)),
+my_wc_mb_sjis(const CHARSET_INFO * const cs  __attribute__((unused)),
 	      my_wc_t wc, uchar *s, uchar *e)
 {
   int code;
@@ -4500,7 +4500,7 @@ mb:
 
 
 static int 
-my_mb_wc_sjis(const CHARSET_INFO *cs  __attribute__((unused)),
+my_mb_wc_sjis(const CHARSET_INFO * const cs  __attribute__((unused)),
 	      my_wc_t *pwc, const uchar *s, const uchar *e){
   int hi;
   
@@ -4529,7 +4529,7 @@ my_mb_wc_sjis(const CHARSET_INFO *cs  __attribute__((unused)),
 }
 
 static
-size_t my_numcells_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+size_t my_numcells_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
                       const char *str, const char *str_end)
 {
   size_t clen;
@@ -4562,7 +4562,7 @@ size_t my_numcells_sjis(const CHARSET_INFO *cs __attribute__((unused)),
   CP932 additional characters are also accepted.
 */
 static
-size_t my_well_formed_len_sjis(const CHARSET_INFO *cs __attribute__((unused)),
+size_t my_well_formed_len_sjis(const CHARSET_INFO * const cs __attribute__((unused)),
                                const char *b, const char *e,
                                size_t pos, int *error)
 {

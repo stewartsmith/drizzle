@@ -20,7 +20,7 @@
 #include "rpl_reporting.h"
 #include "rpl_utility.h"
 
-struct RPL_TABLE_LIST;
+struct RPL_TableList;
 class Master_info;
 
 /****************************************************************************
@@ -92,7 +92,7 @@ public:
     Protected with internal locks.
     Must get data_lock when resetting the logs.
   */
-  MYSQL_BIN_LOG relay_log;
+  DRIZZLE_BIN_LOG relay_log;
   LOG_INFO linfo;
   IO_CACHE cache_buf,*cur_log;
 
@@ -106,7 +106,7 @@ public:
     created temporary tables. Modified only on init/end and by the SQL
     thread, read only by SQL thread.
   */
-  TABLE *save_temporary_tables;
+  Table *save_temporary_tables;
 
   /*
     standard lock acquistion order to avoid deadlocks:
@@ -297,16 +297,16 @@ public:
 	    group_relay_log_pos);
   }
 
-  RPL_TABLE_LIST *tables_to_lock;           /* RBR: Tables to lock  */
+  RPL_TableList *tables_to_lock;           /* RBR: Tables to lock  */
   uint32_t tables_to_lock_count;        /* RBR: Count of tables to lock */
   table_mapping m_table_map;      /* RBR: Mapping table-id to table */
 
-  inline table_def *get_tabledef(TABLE *tbl)
+  inline table_def *get_tabledef(Table *tbl)
   {
     table_def *td= 0;
-    for (TABLE_LIST *ptr= tables_to_lock; ptr && !td; ptr= ptr->next_global)
+    for (TableList *ptr= tables_to_lock; ptr && !td; ptr= ptr->next_global)
       if (ptr->table == tbl)
-        td= &((RPL_TABLE_LIST *)ptr)->m_tabledef;
+        td= &((RPL_TableList *)ptr)->m_tabledef;
     return (td);
   }
 

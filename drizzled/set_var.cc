@@ -46,19 +46,15 @@
     them you must first assign a value to them (in specific ::check() for
     example).
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
+#include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
-extern CHARSET_INFO *character_set_filesystem;
+extern const CHARSET_INFO *character_set_filesystem;
 
 
 static DYNAMIC_ARRAY fixed_show_vars;
@@ -195,8 +191,6 @@ static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      &default_charset_info,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_long_ptr	sys_concurrent_insert(&vars, "concurrent_insert",
-                                              &myisam_concurrent_insert);
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
 					    &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", mysql_real_data_home);
@@ -283,8 +277,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 						 &max_write_lock_count);
 static sys_var_thd_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                           &SV::min_examined_row_limit);
-static sys_var_long_ptr	sys_myisam_data_pointer_size(&vars, "myisam_data_pointer_size",
-                                                    &myisam_data_pointer_size);
 static sys_var_thd_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_thd_ulong       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_thd_ulong	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
@@ -381,15 +373,9 @@ static sys_var_thd_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
 */
 static sys_var_thd_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
                                      &SV::optimizer_switch);
-static sys_var_const_str	sys_ssl_ca(&vars, "ssl_ca", NULL);
-static sys_var_const_str	sys_ssl_capath(&vars, "ssl_capath", NULL);
-static sys_var_const_str	sys_ssl_cert(&vars, "ssl_cert", NULL);
-static sys_var_const_str	sys_ssl_cipher(&vars, "ssl_cipher", NULL);
-static sys_var_const_str	sys_ssl_key(&vars, "ssl_key", NULL);
 
 static sys_var_thd_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::table_plugin);
-static sys_var_bool_ptr	sys_sync_frm(&vars, "sync_frm", &opt_sync_frm);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
 static sys_var_long_ptr	sys_table_def_size(&vars, "table_definition_cache",
@@ -412,7 +398,7 @@ static sys_var_thd_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
-                                            MYSQL_COMPILATION_COMMENT);
+                                            DRIZZLE_COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
@@ -609,7 +595,6 @@ static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_out
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                    SHOW_LONG},
-  {"character_sets_dir",      mysql_charsets_dir,                   SHOW_CHAR},
   {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
 #ifdef HAVE_MLOCKALL
@@ -856,7 +841,7 @@ uchar *sys_var_set::value_ptr(THD *thd,
                               LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -910,8 +895,8 @@ void fix_slave_exec_mode(enum_var_type type __attribute__((unused)))
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
-    sql_print_error("Ambiguous slave modes combination."
-                    " STRICT will be used");
+    sql_print_error(_("Ambiguous slave modes combination."
+                    " STRICT will be used"));
     bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)
@@ -1026,7 +1011,7 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
     else
       llstr(val, buf);
 
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
   }
@@ -1400,7 +1385,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
   {
     if (!(res= var->value->val_str(&str)))
     {
-      strmov(buff, "NULL");
+      stpcpy(buff, "NULL");
       goto err;
     }
 
@@ -1419,7 +1404,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, min(sizeof(buff) - 1, error_len));
+      strmake(buff, error, min(sizeof(buff) - 1, (ulong)error_len));
       goto err;
     }
   }
@@ -1747,13 +1732,13 @@ static my_old_conv old_conv[]=
   {	NULL			,	NULL		}
 };
 
-CHARSET_INFO *get_old_charset_by_name(const char *name)
+const CHARSET_INFO *get_old_charset_by_name(const char *name)
 {
   my_old_conv *conv;
  
   for (conv= old_conv; conv->old_name; conv++)
   {
-    if (!my_strcasecmp(&my_charset_latin1, name, conv->old_name))
+    if (!my_strcasecmp(&my_charset_utf8_general_ci, name, conv->old_name))
       return get_charset_by_csname(conv->new_name, MY_CS_PRIMARY, MYF(0));
   }
   return NULL;
@@ -1763,7 +1748,7 @@ CHARSET_INFO *get_old_charset_by_name(const char *name)
 bool sys_var_collation::check(THD *thd __attribute__((unused)),
                               set_var *var)
 {
-  CHARSET_INFO *tmp;
+  const CHARSET_INFO *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1798,7 +1783,7 @@ bool sys_var_collation::check(THD *thd __attribute__((unused)),
 bool sys_var_character_set::check(THD *thd __attribute__((unused)),
                                   set_var *var)
 {
-  CHARSET_INFO *tmp;
+  const CHARSET_INFO *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1846,7 +1831,7 @@ bool sys_var_character_set::update(THD *thd, set_var *var)
 uchar *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
-  CHARSET_INFO *cs= ci_ptr(thd,type)[0];
+  const CHARSET_INFO * const cs= ci_ptr(thd,type)[0];
   return cs ? (uchar*) cs->csname : (uchar*) NULL;
 }
 
@@ -1861,7 +1846,7 @@ void sys_var_character_set_sv::set_default(THD *thd, enum_var_type type)
     thd->update_charset();
   }
 }
-CHARSET_INFO **sys_var_character_set_sv::ci_ptr(THD *thd, enum_var_type type)
+const CHARSET_INFO **sys_var_character_set_sv::ci_ptr(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     return &(global_system_variables.*offset);
@@ -1885,7 +1870,7 @@ bool sys_var_character_set_client::check(THD *thd, set_var *var)
 }
 
 
-CHARSET_INFO ** sys_var_character_set_database::ci_ptr(THD *thd,
+const CHARSET_INFO ** sys_var_character_set_database::ci_ptr(THD *thd,
 						       enum_var_type type)
 {
   if (type == OPT_GLOBAL)
@@ -1935,7 +1920,7 @@ void sys_var_collation_sv::set_default(THD *thd, enum_var_type type)
 uchar *sys_var_collation_sv::value_ptr(THD *thd, enum_var_type type,
                                        LEX_STRING *base __attribute__((unused)))
 {
-  CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
+  const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
 		     global_system_variables.*offset : thd->variables.*offset);
   return cs ? (uchar*) cs->name : (uchar*) "NULL";
 }
@@ -2004,7 +1989,7 @@ bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
   {
     if (key_cache == dflt_key_cache)
     {
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
                           ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
       goto end;					// Ignore default key cache
@@ -2198,7 +2183,7 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
                              set_var *var, const char *log_ext,
                              bool log_state, uint log_type)
 {
-  MYSQL_QUERY_LOG *file_log;
+  DRIZZLE_QUERY_LOG *file_log;
   char buff[FN_REFLEN];
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   bool result= 0;
@@ -2321,7 +2306,7 @@ uchar *sys_var_log_output::value_ptr(THD *thd,
                                      LEX_STRING *base __attribute__((unused)))
 {
   char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
   ulong length;
   ulong val= *value;
 
@@ -2448,7 +2433,7 @@ bool sys_var_rand_seed2::update(THD *thd, set_var *var)
 bool sys_var_thd_time_zone::check(THD *thd, set_var *var)
 {
   char buff[MAX_TIME_ZONE_NAME_LENGTH];
-  String str(buff, sizeof(buff), &my_charset_latin1);
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
   String *res= var->value->val_str(&str);
 
   if (!(var->save_result.time_zone= my_tz_find(thd, res)))
@@ -2507,7 +2492,7 @@ void sys_var_thd_time_zone::set_default(THD *thd, enum_var_type type)
  {
    if (default_tz_name)
    {
-     String str(default_tz_name, &my_charset_latin1);
+     String str(default_tz_name, &my_charset_utf8_general_ci);
      /*
        We are guaranteed to find this time zone since its existence
        is checked during start-up.
@@ -2587,7 +2572,7 @@ bool sys_var_thd_lc_time_names::check(THD *thd __attribute__((unused)),
   else // STRING_RESULT
   {
     char buff[6]; 
-    String str(buff, sizeof(buff), &my_charset_latin1), *res;
+    String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
@@ -2752,12 +2737,12 @@ static bool set_log_update(THD *thd __attribute__((unused)),
 
   if (opt_sql_bin_update)
   {
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_TRANSLATED,
                  ER(ER_UPDATE_LOG_DEPRECATED_TRANSLATED));
   }
   else
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_IGNORED,
                  ER(ER_UPDATE_LOG_DEPRECATED_IGNORED));
   set_option_bit(thd, var);
@@ -2775,16 +2760,16 @@ static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
 static uchar *get_warning_count(THD *thd)
 {
   thd->sys_var_tmp.long_value=
-    (thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_NOTE] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_WARN]);
+    (thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 
 static uchar *get_error_count(THD *thd)
 {
   thd->sys_var_tmp.long_value= 
-    thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR];
+    thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 
@@ -3247,7 +3232,7 @@ bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
-  String str(buff, sizeof(buff), &my_charset_latin1), *res;
+  String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
 
   var->save_result.plugin= NULL;
   if (var->value->result_type() == STRING_RESULT)
@@ -3331,7 +3316,7 @@ sys_var_thd_optimizer_switch::
 symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
-  String tmp(buff, sizeof(buff), &my_charset_latin1);
+  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
 
   tmp.length(0);
 

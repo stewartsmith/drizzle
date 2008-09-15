@@ -24,7 +24,7 @@
     gives much more speed.
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 static void do_field_eq(Copy_field *copy)
 {
@@ -123,7 +123,7 @@ set_field_to_null(Field *field)
   field->reset();
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
-    field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 0;
   }
   if (!field->table->in_use->no_errors)
@@ -179,7 +179,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   }
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
-    field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
     return 0;
   }
   if (!field->table->in_use->no_errors)
@@ -228,7 +228,7 @@ static void do_copy_not_null(Copy_field *copy)
 {
   if (*copy->from_null_ptr & copy->from_bit)
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                 ER_WARN_DATA_TRUNCATED, 1);
     copy->to_field->reset();
   }
@@ -346,7 +346,7 @@ static void do_field_decimal(Copy_field *copy)
 
 static void do_cut_string(Copy_field *copy)
 {
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr,copy->from_ptr,copy->to_length);
 
   /* Check if we loosed any important characters */
@@ -355,7 +355,7 @@ static void do_cut_string(Copy_field *copy)
                      (char*) copy->from_ptr + copy->from_length,
                      MY_SEQ_SPACES) < copy->from_length - copy->to_length)
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                 ER_WARN_DATA_TRUNCATED, 1);
   }
 }
@@ -369,7 +369,7 @@ static void do_cut_string(Copy_field *copy)
 static void do_cut_string_complex(Copy_field *copy)
 {						// Shorter string field
   int well_formed_error;
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   const uchar *from_end= copy->from_ptr + copy->from_length;
   uint copy_length= cs->cset->well_formed_len(cs,
                                               (char*) copy->from_ptr,
@@ -386,7 +386,7 @@ static void do_cut_string_complex(Copy_field *copy)
                      (char*) from_end,
                      MY_SEQ_SPACES) < (copy->from_length - copy_length))
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                 ER_WARN_DATA_TRUNCATED, 1);
   }
 
@@ -400,7 +400,7 @@ static void do_cut_string_complex(Copy_field *copy)
 
 static void do_expand_binary(Copy_field *copy)
 {
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
                      copy->to_length-copy->from_length, '\0');
@@ -410,7 +410,7 @@ static void do_expand_binary(Copy_field *copy)
 
 static void do_expand_string(Copy_field *copy)
 {
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
                      copy->to_length-copy->from_length, ' ');
@@ -424,7 +424,7 @@ static void do_varstring1(Copy_field *copy)
   {
     length=copy->to_length - 1;
     if (copy->from_field->table->in_use->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
   *(uchar*) copy->to_ptr= (uchar) length;
@@ -435,7 +435,7 @@ static void do_varstring1(Copy_field *copy)
 static void do_varstring1_mb(Copy_field *copy)
 {
   int well_formed_error;
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   uint from_length= (uint) *(uchar*) copy->from_ptr;
   const uchar *from_ptr= copy->from_ptr + 1;
   uint to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
@@ -445,7 +445,7 @@ static void do_varstring1_mb(Copy_field *copy)
   if (length < from_length)
   {
     if (current_thd->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
   *copy->to_ptr= (uchar) length;
@@ -460,7 +460,7 @@ static void do_varstring2(Copy_field *copy)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
     if (copy->from_field->table->in_use->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
   int2store(copy->to_ptr,length);
@@ -472,7 +472,7 @@ static void do_varstring2(Copy_field *copy)
 static void do_varstring2_mb(Copy_field *copy)
 {
   int well_formed_error;
-  CHARSET_INFO *cs= copy->from_field->charset();
+  const CHARSET_INFO * const cs= copy->from_field->charset();
   uint char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
   uint from_length= uint2korr(copy->from_ptr);
   const uchar *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
@@ -482,7 +482,7 @@ static void do_varstring2_mb(Copy_field *copy)
   if (length < from_length)
   {
     if (current_thd->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }  
   int2store(copy->to_ptr, length);
@@ -637,16 +637,14 @@ Copy_field::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_NEWDATE) || to->type() == DRIZZLE_TYPE_DATETIME))
+          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_NEWDATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
-	if (from->real_type() == DRIZZLE_TYPE_ENUM ||
-	    from->real_type() == DRIZZLE_TYPE_SET)
+	if (from->real_type() == DRIZZLE_TYPE_ENUM)
 	  if (to->result_type() != STRING_RESULT)
 	    return do_field_int;		// Convert SET to number
 	return do_field_string;
       }
-      if (to->real_type() == DRIZZLE_TYPE_ENUM ||
-	  to->real_type() == DRIZZLE_TYPE_SET)
+      if (to->real_type() == DRIZZLE_TYPE_ENUM)
       {
 	if (!to->eq_def(from))
         {
@@ -728,11 +726,10 @@ int field_conv(Field *to,Field *from)
     if (to->pack_length() == from->pack_length() && 
         !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) && 
         to->real_type() != DRIZZLE_TYPE_ENUM && 
-        to->real_type() != DRIZZLE_TYPE_SET &&
         (to->real_type() != DRIZZLE_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_NEWDATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
+        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_NEWDATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
         (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
 #ifdef HAVE_purify
@@ -766,8 +763,7 @@ int field_conv(Field *to,Field *from)
   }
   else if ((from->result_type() == STRING_RESULT &&
             (to->result_type() == STRING_RESULT ||
-             (from->real_type() != DRIZZLE_TYPE_ENUM &&
-              from->real_type() != DRIZZLE_TYPE_SET))))
+             (from->real_type() != DRIZZLE_TYPE_ENUM))))
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());

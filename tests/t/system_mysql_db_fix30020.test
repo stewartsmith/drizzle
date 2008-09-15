@@ -1,8 +1,8 @@
-# Don't run this test if $MYSQL_FIX_SYSTEM_TABLES isn't set
+# Don't run this test if $DRIZZLE_FIX_SYSTEM_TABLES isn't set
 # to the location of mysql_fix_privilege_tables.sql
-if (`SELECT LENGTH("$MYSQL_FIX_SYSTEM_TABLES") <= 0`)
+if (`SELECT LENGTH("$DRIZZLE_FIX_SYSTEM_TABLES") <= 0`)
 {
-  skip Test need MYSQL_FIX_SYSTEM_TABLES;
+  skip Test need DRIZZLE_FIX_SYSTEM_TABLES;
 }
 # check that CSV engine was compiled in, as the test relies on the presence
 # of the log tables (which are CSV-based)
@@ -86,8 +86,8 @@ engine=MyISAM;
 INSERT INTO user VALUES ('localhost','root','','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 INSERT INTO user VALUES ('localhost','',    '','N','N','N','N','N','N','N','N','N');
 
-# Call the "shell script" $MYSQL_FIX_SYSTEM_TABLES using system
--- system $MYSQL_FIX_SYSTEM_TABLES --database=test > $MYSQLTEST_VARDIR/log/system_mysql_db_fix30020.log 2>&1
+# Call the "shell script" $DRIZZLE_FIX_SYSTEM_TABLES using system
+-- system $DRIZZLE_FIX_SYSTEM_TABLES --database=test > $MYSQLTEST_VARDIR/log/system_mysql_db_fix30020.log 2>&1
 -- enable_query_log
 -- enable_result_log
 

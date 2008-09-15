@@ -61,8 +61,8 @@ public:
     Note that you can use table->in_use as replacement for current_thd member 
     only inside of val_*() and store() members (e.g. you can't use it in cons)
   */
-  struct st_table *table;		// Pointer for table
-  struct st_table *orig_table;		// Pointer to original table
+  Table *table;		// Pointer for table
+  Table *orig_table;		// Pointer to original table
   const char	**table_name, *field_name;
   LEX_STRING	comment;
   /* Field is part of the following keys */
@@ -103,12 +103,12 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int  store(const char *to, uint length,CHARSET_INFO *cs)=0;
+  virtual int  store(const char *to, uint length, const CHARSET_INFO * const cs)=0;
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
   virtual int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
-  int store(const char *to, uint length, CHARSET_INFO *cs,
+  int store(const char *to, uint length, const CHARSET_INFO * const cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
   virtual int64_t val_int(void)=0;
@@ -127,7 +127,7 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*,String *)=0;
-  String *val_int_as_str(String *val_buffer, my_bool unsigned_flag);
+  String *val_int_as_str(String *val_buffer, bool unsigned_flag);
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -205,7 +205,7 @@ public:
   virtual void reset_fields() {}
   virtual void set_default()
   {
-    my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->s->default_values - table->record[0]);
+    my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
     memcpy(ptr, ptr + l_offset, pack_length());
     if (null_ptr)
       *null_ptr= ((*null_ptr & (uchar) ~null_bit) | (null_ptr[l_offset] & null_bit));
@@ -222,7 +222,7 @@ public:
     { return cmp(a, b); }
   virtual int cmp(const uchar *,const uchar *)=0;
   virtual int cmp_binary(const uchar *a,const uchar *b,
-                         uint32_t  __attribute__((unused)) max_length=~0)
+                         uint32_t  __attribute__((unused)) max_length=UINT32_MAX)
   { return memcmp(a,b,pack_length()); }
   virtual int cmp_offset(uint row_offset)
   { return cmp(ptr,ptr+row_offset); }
@@ -285,7 +285,7 @@ public:
    */
   size_t last_null_byte() const {
     size_t bytes= do_last_null_byte();
-    assert(bytes <= table->s->null_bytes);
+    assert(bytes <= table->getNullBytes());
     return bytes;
   }
 
@@ -301,12 +301,12 @@ public:
   */
   virtual bool can_be_compared_as_int64_t() const { return false; }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root, struct st_table *new_table,
+  virtual Field *new_field(MEM_ROOT *root, Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(MEM_ROOT *root, struct st_table *new_table,
+  virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
                                uchar *new_ptr, uchar *new_null_ptr,
                                uint new_null_bit);
-  Field *clone(MEM_ROOT *mem_root, struct st_table *new_table);
+  Field *clone(MEM_ROOT *mem_root, Table *new_table);
   inline void move_field(uchar *ptr_arg,uchar *null_ptr_arg,uchar null_bit_arg)
   {
     ptr=ptr_arg; null_ptr=null_ptr_arg; null_bit=null_bit_arg;
@@ -319,10 +319,10 @@ public:
       null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,uchar*);
   }
   virtual void get_image(uchar *buff, uint length,
-                         CHARSET_INFO *cs __attribute__((unused)))
+                         const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(buff,ptr,length); }
   virtual void set_image(const uchar *buff,uint length,
-                         CHARSET_INFO *cs __attribute__((unused)))
+                         const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(ptr,buff,length); }
 
 
@@ -431,11 +431,11 @@ public:
 
   virtual int pack_cmp(const uchar *a,const uchar *b,
                        uint key_length_arg __attribute__((unused)),
-                       my_bool insert_or_update __attribute__((unused)))
+                       bool insert_or_update __attribute__((unused)))
   { return cmp(a,b); }
   virtual int pack_cmp(const uchar *b,
                        uint key_length_arg __attribute__((unused)),
-                       my_bool insert_or_update __attribute__((unused)))
+                       bool insert_or_update __attribute__((unused)))
   { return cmp(ptr,b); }
   uint offset(uchar *record)
   {
@@ -445,31 +445,31 @@ public:
   uint fill_cache_field(struct st_cache_field *copy);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
-  virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
+  virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
+  virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(CHARSET_INFO *charset_arg __attribute__((unused)))
+  virtual void set_charset(const CHARSET_INFO * const charset_arg __attribute__((unused)))
   { }
   virtual enum Derivation derivation(void) const
   { return DERIVATION_IMPLICIT; }
   virtual void set_derivation(enum Derivation derivation_arg __attribute__((unused)))
   { }
-  bool set_warning(MYSQL_ERROR::enum_warning_level, unsigned int code,
+  bool set_warning(DRIZZLE_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             const char *str, uint str_len,
                             timestamp_type ts_type, int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             int64_t nr, timestamp_type ts_type,
                             int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, const uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint code, 
                             double nr, timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);
   }
   int warn_if_overflow(int op_result);
-  void init(TABLE *table_arg)
+  void init(Table *table_arg)
   {
     orig_table= table= table_arg;
     table_name= &table_arg->alias;
@@ -495,9 +495,9 @@ public:
   }
 
   /* Hash value */
-  virtual void hash(ulong *nr, ulong *nr2);
-  friend bool reopen_table(THD *,struct st_table *,bool);
-  friend int cre_myisam(char * name, register TABLE *form, uint options,
+  virtual void hash(uint32_t *nr, uint32_t *nr2);
+  friend bool reopen_table(THD *,Table *,bool);
+  friend int cre_myisam(char * name, register Table *form, uint options,
 			uint64_t auto_increment_value);
   friend class Copy_field;
   friend class Item_avg_field;
@@ -560,9 +560,9 @@ public:
   int store_decimal(const my_decimal *);
   my_decimal *val_decimal(my_decimal *);
   uint is_equal(Create_field *new_field);
-  int check_int(CHARSET_INFO *cs, const char *str, int length,
+  int check_int(const CHARSET_INFO * const cs, const char *str, int length,
                 const char *int_end, int error);
-  bool get_int(CHARSET_INFO *cs, const char *from, uint len, 
+  bool get_int(const CHARSET_INFO * const cs, const char *from, uint len, 
                int64_t *rnd, uint64_t unsigned_max, 
                int64_t signed_min, int64_t signed_max);
 };
@@ -571,21 +571,21 @@ public:
 
 class Field_str :public Field {
 protected:
-  CHARSET_INFO *field_charset;
+  const CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
 public:
   Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
-	    const char *field_name_arg, CHARSET_INFO *charset);
+	    const char *field_name_arg, const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint decimals() const { return NOT_FIXED_DEC; }
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val)=0;
   int  store_decimal(const my_decimal *);
-  int  store(const char *to,uint length,CHARSET_INFO *cs)=0;
+  int  store(const char *to,uint length, const CHARSET_INFO * const cs)=0;
   uint size_of() const { return sizeof(*this); }
-  CHARSET_INFO *charset(void) const { return field_charset; }
-  void set_charset(CHARSET_INFO *charset_arg) { field_charset= charset_arg; }
+  const CHARSET_INFO *charset(void) const { return field_charset; }
+  void set_charset(const CHARSET_INFO * const charset_arg) { field_charset= charset_arg; }
   enum Derivation derivation(void) const { return field_derivation; }
   virtual void set_derivation(enum Derivation derivation_arg)
   { field_derivation= derivation_arg; }
@@ -608,7 +608,7 @@ protected:
 public:
   Field_longstr(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
                 uchar null_bit_arg, utype unireg_check_arg,
-                const char *field_name_arg, CHARSET_INFO *charset_arg)
+                const char *field_name_arg, const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
                field_name_arg, charset_arg)
     {}
@@ -620,7 +620,7 @@ public:
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {
 public:
-  my_bool not_fixed;
+  bool not_fixed;
 
   Field_real(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
              uchar null_bit_arg, utype unireg_check_arg,
@@ -656,7 +656,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=0; return 0; }
@@ -698,19 +698,19 @@ public:
              enum utype unireg_check_arg, const char *field_name_arg,
              uint packlength_arg,
              TYPELIB *typelib_arg,
-             CHARSET_INFO *charset_arg)
+             const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
 	       unireg_check_arg, field_name_arg, charset_arg),
     packlength(packlength_arg),typelib(typelib_arg)
   {
       flags|=ENUM_FLAG;
   }
-  Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
+  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
   enum_field_types type() const { return DRIZZLE_TYPE_ENUM; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
@@ -733,7 +733,7 @@ public:
   bool eq_def(Field *field);
   bool has_charset(void) const { return true; }
   /* enum and set are sorted as integers */
-  CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
+  const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 private:
   int do_save_field_metadata(uchar *first_byte);
 };
@@ -755,7 +755,7 @@ public:
     At various stages in execution this can be length of field in bytes or
     max number of characters. 
   */
-  ulong length;
+  uint32_t length;
   /*
     The value of `length' as set by parser: is the number of characters
     for most of the types, or of bytes for BLOBs or numeric types.
@@ -767,7 +767,7 @@ public:
   TYPELIB *save_interval;               // Temporary copy for the above
                                         // Used only for UCS2 intervals
   List<String> interval_list;
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
   uint8_t row,col,sc_length,interval_id;	// For rea_create_table
@@ -793,7 +793,7 @@ public:
   bool init(THD *thd, char *field_name, enum_field_types type, char *length,
             char *decimals, uint type_modifier, Item *default_value,
             Item *on_update_value, LEX_STRING *comment, char *change,
-            List<String> *interval_list, CHARSET_INFO *cs,
+            List<String> *interval_list, const CHARSET_INFO * const cs,
             uint uint_geom_type,
             enum column_format_type column_format);
 };
@@ -808,7 +808,7 @@ class Send_field {
   const char *db_name;
   const char *table_name,*org_table_name;
   const char *col_name,*org_col_name;
-  ulong length;
+  uint32_t length;
   uint charsetnr, flags, decimals;
   enum_field_types type;
   Send_field() {}
@@ -829,7 +829,7 @@ class Copy_field :public Sql_alloc {
 public:
   uchar *from_ptr,*to_ptr;
   uchar *from_null_ptr,*to_null_ptr;
-  my_bool *null_row;
+  bool *null_row;
   uint	from_bit,to_bit;
   uint from_length,to_length;
   Field *from_field,*to_field;
@@ -847,11 +847,11 @@ public:
 Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag, enum_field_types field_type,
-		  CHARSET_INFO *cs,
+		  const CHARSET_INFO * cs,
 		  Field::utype unireg_check,
 		  TYPELIB *interval, const char *field_name);
 uint pack_length_to_packflag(uint type);
-enum_field_types get_blob_type_from_length(ulong length);
+enum_field_types get_blob_type_from_length(uint32_t length);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
@@ -861,7 +861,7 @@ check_string_copy_error(Field_str *field,
                         const char *well_formed_error_pos,
                         const char *cannot_convert_error_pos,
                         const char *end,
-                        CHARSET_INFO *cs);
+                        const CHARSET_INFO * const cs);
 
 /*
   Field subclasses
@@ -879,7 +879,6 @@ check_string_copy_error(Field_str *field,
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/fstring.h>
 #include <drizzled/field/varstring.h>
-#include <drizzled/field/set.h>
 
 /*
   The following are for the interface with the .frm file

@@ -15,11 +15,11 @@
 
 
 /* Basic functions needed by many modules */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <mysys/my_dir.h>
-#include <mysys/hash.h>
+#include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 
@@ -27,26 +27,25 @@
   @defgroup Data_Dictionary Data Dictionary
   @{
 */
-TABLE *unused_tables;				/* Used by mysql_test */
+Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
 static HASH table_def_cache;
 static TABLE_SHARE *oldest_unused_share, end_of_unused_share;
 static pthread_mutex_t LOCK_table_share;
 static bool table_def_inited= 0;
 
-static int open_unireg_entry(THD *thd, TABLE *entry, TABLE_LIST *table_list,
-			     const char *alias,
-                             char *cache_key, uint cache_key_length,
-			     MEM_ROOT *mem_root, uint flags);
-static void free_cache_entry(TABLE *entry);
-static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
+static int open_unireg_entry(THD *thd, Table *entry, TableList *table_list,
+                             const char *alias,
+                             char *cache_key, uint cache_key_length);
+static void free_cache_entry(Table *entry);
+static void close_old_data_files(THD *thd, Table *table, bool morph_locks,
                                  bool send_refresh);
 
 
 extern "C" uchar *table_cache_key(const uchar *record, size_t *length,
                                   bool not_used __attribute__((unused)))
 {
-  TABLE *entry=(TABLE*) record;
+  Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
   return (uchar*) entry->s->table_cache_key.str;
 }
@@ -56,7 +55,7 @@ bool table_cache_init(void)
 {
   return hash_init(&open_cache, &my_charset_bin, table_cache_size+16,
 		   0, 0, table_cache_key,
-		   (hash_free_key) free_cache_entry, 0) != 0;
+		   (hash_free_key) free_cache_entry, 0);
 }
 
 void table_cache_free(void)
@@ -100,10 +99,10 @@ uint cached_open_tables(void)
     Length of key
 */
 
-uint create_table_def_key(THD *thd, char *key, TABLE_LIST *table_list,
+uint create_table_def_key(THD *thd, char *key, TableList *table_list,
                           bool tmp_table)
 {
-  uint key_length= (uint) (strmov(strmov(key, table_list->db)+1,
+  uint key_length= (uint) (stpcpy(stpcpy(key, table_list->db)+1,
                                   table_list->table_name)-key)+1;
   if (tmp_table)
   {
@@ -153,7 +152,7 @@ bool table_def_init(void)
 
   return hash_init(&table_def_cache, &my_charset_bin, table_def_size,
 		   0, 0, table_def_key,
-		   (hash_free_key) table_def_free_entry, 0) != 0;
+		   (hash_free_key) table_def_free_entry, 0);
 }
 
 
@@ -200,7 +199,7 @@ uint cached_table_definitions(void)
    #  Share for table
 */
 
-TABLE_SHARE *get_table_share(THD *thd, TABLE_LIST *table_list, char *key,
+TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
                              uint key_length, uint db_flags, int *error)
 {
   TABLE_SHARE *share;
@@ -303,7 +302,7 @@ found:
 */
 
 static TABLE_SHARE
-*get_table_share_with_create(THD *thd, TABLE_LIST *table_list,
+*get_table_share_with_create(THD *thd, TableList *table_list,
                              char *key, uint key_length,
                              uint db_flags, int *error)
 {
@@ -328,7 +327,7 @@ static TABLE_SHARE
     Finally, if share is still NULL, it's a real error and we need
     to abort.
 
-    @todo Rework alternative ways to deal with ER_NO_SUCH TABLE.
+    @todo Rework alternative ways to deal with ER_NO_SUCH Table.
   */
   if (share || (thd->is_error() && (thd->main_da.sql_errno() != ER_NO_SUCH_TABLE)))
 
@@ -337,22 +336,8 @@ static TABLE_SHARE
   /* Table didn't exist. Check if some engine can provide it */
   if ((tmp= ha_create_table_from_engine(thd, table_list->db,
                                         table_list->table_name)) < 0)
-  {
-    /*
-      No such table in any engine.
-      Hide "Table doesn't exist" errors if the table belongs to a view.
-      The check for thd->is_error() is necessary to not push an
-      unwanted error in case of pre-locking, which silences
-      "no such table" errors.
-      @todo Rework the alternative ways to deal with ER_NO_SUCH TABLE.
-    */
-    if (thd->is_error() && table_list->belong_to_view)
-    {
-      thd->clear_error();
-      my_error(ER_VIEW_INVALID, MYF(0), "", "");
-    }
     return(0);
-  }
+
   if (tmp)
   {
     /* Give right error message */
@@ -364,7 +349,7 @@ static TABLE_SHARE
     return(0);
   }
   /* Table existed in engine. Let's open it */
-  mysql_reset_errors(thd, 1);                   // Clear warnings
+  drizzle_reset_errors(thd, 1);                   // Clear warnings
   thd->clear_error();                           // Clear error message
   return(get_table_share(thd, table_list, key, key_length,
                               db_flags, error));
@@ -445,7 +430,7 @@ void release_table_share(TABLE_SHARE *share,
 TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
 {
   char key[NAME_LEN*2+2];
-  TABLE_LIST table_list;
+  TableList table_list;
   uint key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -474,7 +459,7 @@ TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
 */
 
 
-void close_handle_and_leave_table_as_lock(TABLE *table)
+void close_handle_and_leave_table_as_lock(Table *table)
 {
   TABLE_SHARE *share, *old_share= table->s;
   char *key_buff;
@@ -492,7 +477,7 @@ void close_handle_and_leave_table_as_lock(TABLE *table)
                        &key_buff, old_share->table_cache_key.length,
                        NULL))
   {
-    memset((char*) share, 0, sizeof(*share));
+    memset(share, 0, sizeof(*share));
     share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
                                old_share->table_cache_key.length);
     share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
@@ -527,22 +512,22 @@ void close_handle_and_leave_table_as_lock(TABLE *table)
     #		Pointer to list of names of open tables.
 */
 
-OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
+OPEN_TableList *list_open_tables(THD *thd __attribute__((unused)),
                                   const char *db, const char *wild)
 {
   int result = 0;
-  OPEN_TABLE_LIST **start_list, *open_list;
-  TABLE_LIST table_list;
+  OPEN_TableList **start_list, *open_list;
+  TableList table_list;
 
   VOID(pthread_mutex_lock(&LOCK_open));
-  memset((char*) &table_list, 0, sizeof(table_list));
+  memset(&table_list, 0, sizeof(table_list));
   start_list= &open_list;
   open_list=0;
 
   for (uint idx=0 ; result == 0 && idx < open_cache.records; idx++)
   {
-    OPEN_TABLE_LIST *table;
-    TABLE *entry=(TABLE*) hash_element(&open_cache,idx);
+    OPEN_TableList *table;
+    Table *entry=(Table*) hash_element(&open_cache,idx);
     TABLE_SHARE *share= entry->s;
 
     if (db && my_strcasecmp(system_charset_info, db, share->db.str))
@@ -569,14 +554,14 @@ OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
     }
     if (table)
       continue;
-    if (!(*start_list = (OPEN_TABLE_LIST *)
+    if (!(*start_list = (OPEN_TableList *)
 	  sql_alloc(sizeof(**start_list)+share->table_cache_key.length)))
     {
       open_list=0;				// Out of memory
       break;
     }
-    strmov((*start_list)->table=
-	   strmov(((*start_list)->db= (char*) ((*start_list)+1)),
+    stpcpy((*start_list)->table=
+	   stpcpy(((*start_list)->db= (char*) ((*start_list)+1)),
 		  share->db.str)+1,
 	   share->table_name.str);
     (*start_list)->in_use= entry->in_use ? 1 : 0;
@@ -593,7 +578,7 @@ OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
  ****************************************************************************/
 
 
-void intern_close_table(TABLE *table)
+void intern_close_table(Table *table)
 {						// Free all structures
   free_io_cache(table);
   if (table->file)                              // Not true if name lock
@@ -612,7 +597,7 @@ void intern_close_table(TABLE *table)
     We need to have a lock on LOCK_open when calling this
 */
 
-static void free_cache_entry(TABLE *table)
+static void free_cache_entry(Table *table)
 {
   intern_close_table(table);
   if (!table->in_use)
@@ -632,7 +617,7 @@ static void free_cache_entry(TABLE *table)
 
 /* Free resources allocated by filesort() and read_record() */
 
-void free_io_cache(TABLE *table)
+void free_io_cache(Table *table)
 {
   if (table->sort.io_cache)
   {
@@ -659,7 +644,7 @@ void free_io_cache(TABLE *table)
           and tables must be NULL.
 */
 
-bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
+bool close_cached_tables(THD *thd, TableList *tables, bool have_lock,
                          bool wait_for_refresh, bool wait_for_placeholders)
 {
   bool result=0;
@@ -726,7 +711,7 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
       */
       for (uint idx=0 ; idx < open_cache.records ; idx++)
       {
-        TABLE *table=(TABLE*) hash_element(&open_cache,idx);
+        Table *table=(Table*) hash_element(&open_cache,idx);
         if (table->in_use)
           table->in_use->some_tables_deleted= 1;
       }
@@ -735,7 +720,7 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
   else
   {
     bool found=0;
-    for (TABLE_LIST *table= tables; table; table= table->next_local)
+    for (TableList *table= tables; table; table= table->next_local)
     {
       if (remove_table_from_cache(thd, table->db, table->table_name,
                                   RTFC_OWNED_BY_THD_FLAG))
@@ -765,13 +750,13 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
       found=0;
       for (uint idx=0 ; idx < open_cache.records ; idx++)
       {
-	TABLE *table=(TABLE*) hash_element(&open_cache,idx);
+	Table *table=(Table*) hash_element(&open_cache,idx);
         /* Avoid a self-deadlock. */
         if (table->in_use == thd)
           continue;
         /*
           Note that we wait here only for tables which are actually open, and
-          not for placeholders with TABLE::open_placeholder set. Waiting for
+          not for placeholders with Table::open_placeholder set. Waiting for
           latter will cause deadlock in the following scenario, for example:
 
           conn1: lock table t1 write;
@@ -801,7 +786,7 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
     result=reopen_tables(thd,1,1);
     thd->in_lock_tables=0;
     /* Set version for table */
-    for (TABLE *table=thd->open_tables; table ; table= table->next)
+    for (Table *table=thd->open_tables; table ; table= table->next)
     {
       /*
         Preserve the version (0) of write locked tables so that a impending
@@ -834,11 +819,11 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
                                     LEX_STRING *connection, bool have_lock)
 {
   uint idx;
-  TABLE_LIST tmp, *tables= NULL;
+  TableList tmp, *tables= NULL;
   bool result= false;
   assert(thd);
 
-  memset(&tmp, 0, sizeof(TABLE_LIST));
+  memset(&tmp, 0, sizeof(TableList));
 
   if (!have_lock)
     VOID(pthread_mutex_lock(&LOCK_open));
@@ -866,8 +851,8 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
     tmp.table_name= share->table_name.str;
     tmp.next_local= tables;
 
-    tables= (TABLE_LIST *) memdup_root(thd->mem_root, (char*)&tmp, 
-                                       sizeof(TABLE_LIST));
+    tables= (TableList *) memdup_root(thd->mem_root, (char*)&tmp, 
+                                       sizeof(TableList));
   }
 
   if (tables)
@@ -881,7 +866,7 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
     pthread_mutex_lock(&thd->mysys_var->mutex);
     thd->mysys_var->current_mutex= 0;
     thd->mysys_var->current_cond= 0;
-    thd->proc_info=0;
+    thd->set_proc_info(0);
     pthread_mutex_unlock(&thd->mysys_var->mutex);
   }
 
@@ -901,7 +886,7 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
 
 static void mark_temp_tables_as_free_for_reuse(THD *thd)
 {
-  for (TABLE *table= thd->temporary_tables ; table ; table= table->next)
+  for (Table *table= thd->temporary_tables ; table ; table= table->next)
   {
     if ((table->query_id == thd->query_id) && ! table->open_by_handler)
     {
@@ -935,7 +920,7 @@ static void mark_temp_tables_as_free_for_reuse(THD *thd)
     set to query_id of original query.
 */
 
-static void mark_used_tables_as_free_for_reuse(THD *thd, TABLE *table)
+static void mark_used_tables_as_free_for_reuse(THD *thd, Table *table)
 {
   for (; table ; table= table->next)
   {
@@ -1001,7 +986,7 @@ static void close_open_tables(THD *thd)
 
 void close_thread_tables(THD *thd)
 {
-  TABLE *table;
+  Table *table;
 
   /*
     We are assuming here that thd->derived_tables contains ONLY derived
@@ -1016,7 +1001,7 @@ void close_thread_tables(THD *thd)
   */
   if (thd->derived_tables)
   {
-    TABLE *next;
+    Table *next;
     /*
       Close all derived tables generated in queries like
       SELECT * FROM (SELECT * FROM t1)
@@ -1024,7 +1009,7 @@ void close_thread_tables(THD *thd)
     for (table= thd->derived_tables ; table ; table= next)
     {
       next= table->next;
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
     }
     thd->derived_tables= 0;
   }
@@ -1092,10 +1077,10 @@ void close_thread_tables(THD *thd)
 
 /* move one table to free list */
 
-bool close_thread_table(THD *thd, TABLE **table_ptr)
+bool close_thread_table(THD *thd, Table **table_ptr)
 {
   bool found_old_table= 0;
-  TABLE *table= *table_ptr;
+  Table *table= *table_ptr;
 
   assert(table->key_read == 0);
   assert(!table->file || table->file->inited == handler::NONE);
@@ -1111,7 +1096,7 @@ bool close_thread_table(THD *thd, TABLE **table_ptr)
   else
   {
     /*
-      Open placeholders have TABLE::db_stat set to 0, so they should be
+      Open placeholders have Table::db_stat set to 0, so they should be
       handled by the first alternative.
     */
     assert(!table->open_placeholder);
@@ -1135,7 +1120,7 @@ bool close_thread_table(THD *thd, TABLE **table_ptr)
 
 /* close_temporary_tables' internal, 4 is due to uint4korr definition */
 static inline uint  tmpkeyval(THD *thd __attribute__((unused)),
-                              TABLE *table)
+                              Table *table)
 {
   return uint4korr(table->s->table_cache_key.str + table->s->table_cache_key.length - 4);
 }
@@ -1143,14 +1128,14 @@ static inline uint  tmpkeyval(THD *thd __attribute__((unused)),
 
 /*
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
-  creates one DROP TEMPORARY TABLE binlog event for each pseudo-thread 
+  creates one DROP TEMPORARY Table binlog event for each pseudo-thread 
 */
 
 void close_temporary_tables(THD *thd)
 {
-  TABLE *table;
-  TABLE *next= NULL;
-  TABLE *prev_table;
+  Table *table;
+  Table *next= NULL;
+  Table *prev_table;
   /* Assume thd->options has OPTION_QUOTE_SHOW_CREATE */
   bool was_quote_show= true;
 
@@ -1159,7 +1144,7 @@ void close_temporary_tables(THD *thd)
 
   if (!mysql_bin_log.is_open() || thd->current_stmt_binlog_row_based)
   {
-    TABLE *tmp_next;
+    Table *tmp_next;
     for (table= thd->temporary_tables; table; table= tmp_next)
     {
       tmp_next= table->next;
@@ -1170,7 +1155,7 @@ void close_temporary_tables(THD *thd)
   }
 
   /* Better add "if exists", in case a RESET MASTER has been done */
-  const char stub[]= "DROP /*!40005 TEMPORARY */ TABLE IF EXISTS ";
+  const char stub[]= "DROP /*!40005 TEMPORARY */ Table IF EXISTS ";
   uint stub_len= sizeof(stub) - 1;
   char buf[256];
   String s_query= String(buf, sizeof(buf), system_charset_info);
@@ -1187,7 +1172,7 @@ void close_temporary_tables(THD *thd)
        table;
        prev_table= table, table= table->next)
   {
-    TABLE *prev_sorted /* same as for prev_table */, *sorted;
+    Table *prev_sorted /* same as for prev_table */, *sorted;
     if (is_user_table(table))
     {
       if (!found_user_tables)
@@ -1253,7 +1238,7 @@ void close_temporary_tables(THD *thd)
         close_temporary(table, 1, 1);
       }
       thd->clear_error();
-      CHARSET_INFO *cs_save= thd->variables.character_set_client;
+      const CHARSET_INFO * const cs_save= thd->variables.character_set_client;
       thd->variables.character_set_client= system_charset_info;
       Query_log_event qinfo(thd, s_query.ptr(),
                             s_query.length() - 1 /* to remove trailing ',' */,
@@ -1303,8 +1288,8 @@ void close_temporary_tables(THD *thd)
     #		Pointer to found table.
 */
 
-TABLE_LIST *find_table_in_list(TABLE_LIST *table,
-                               TABLE_LIST *TABLE_LIST::*link,
+TableList *find_table_in_list(TableList *table,
+                               TableList *TableList::*link,
                                const char *db_name,
                                const char *table_name)
 {
@@ -1343,7 +1328,7 @@ TABLE_LIST *find_table_in_list(TABLE_LIST *table,
     Also SELECT::exclude_from_table_unique_test used to exclude from check
     tables of main SELECT of multi-delete and multi-update
 
-    We also skip tables with TABLE_LIST::prelocking_placeholder set,
+    We also skip tables with TableList::prelocking_placeholder set,
     because we want to allow SELECTs from them, and their modification
     will rise the error anyway.
 
@@ -1355,20 +1340,20 @@ TABLE_LIST *find_table_in_list(TABLE_LIST *table,
     0 if table is unique
 */
 
-TABLE_LIST* unique_table(THD *thd, TABLE_LIST *table, TABLE_LIST *table_list,
+TableList* unique_table(THD *thd, TableList *table, TableList *table_list,
                          bool check_alias)
 {
-  TABLE_LIST *res;
+  TableList *res;
   const char *d_name, *t_name, *t_alias;
 
   /*
     If this function called for query which update table (INSERT/UPDATE/...)
-    then we have in table->table pointer to TABLE object which we are
-    updating even if it is VIEW so we need TABLE_LIST of this TABLE object
+    then we have in table->table pointer to Table object which we are
+    updating even if it is VIEW so we need TableList of this Table object
     to get right names (even if lower_case_table_names used).
 
     If this function called for CREATE command that we have not opened table
-    (table->table equal to 0) and right names is in current TABLE_LIST
+    (table->table equal to 0) and right names is in current TableList
     object.
   */
   if (table->table)
@@ -1378,7 +1363,7 @@ TABLE_LIST* unique_table(THD *thd, TABLE_LIST *table, TABLE_LIST *table_list,
       return(0);
     table= table->find_underlying_table(table->table);
     /*
-      as far as we have table->table we have to find real TABLE_LIST of
+      as far as we have table->table we have to find real TableList of
       it in underlying tables
     */
     assert(table);
@@ -1422,17 +1407,17 @@ TABLE_LIST* unique_table(THD *thd, TABLE_LIST *table, TABLE_LIST *table_list,
     here we hide view underlying tables if we have them
 */
 
-void update_non_unique_table_error(TABLE_LIST *update,
+void update_non_unique_table_error(TableList *update,
                                    const char *operation __attribute__((unused)),
-                                   TABLE_LIST *duplicate __attribute__((unused)))
+                                   TableList *duplicate __attribute__((unused)))
 {
   my_error(ER_UPDATE_TABLE_USED, MYF(0), update->alias);
 }
 
 
-TABLE *find_temporary_table(THD *thd, const char *db, const char *table_name)
+Table *find_temporary_table(THD *thd, const char *db, const char *table_name)
 {
-  TABLE_LIST table_list;
+  TableList table_list;
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
@@ -1440,11 +1425,11 @@ TABLE *find_temporary_table(THD *thd, const char *db, const char *table_name)
 }
 
 
-TABLE *find_temporary_table(THD *thd, TABLE_LIST *table_list)
+Table *find_temporary_table(THD *thd, TableList *table_list)
 {
   char	key[MAX_DBKEY_LENGTH];
   uint	key_length;
-  TABLE *table;
+  Table *table;
 
   key_length= create_table_def_key(thd, key, table_list, 1);
   for (table=thd->temporary_tables ; table ; table= table->next)
@@ -1471,7 +1456,7 @@ TABLE *find_temporary_table(THD *thd, TABLE_LIST *table_list)
 
   This function is used to drop user temporary tables, as well as
   internal tables created in CREATE TEMPORARY TABLE ... SELECT
-  or ALTER TABLE. Even though part of the work done by this function
+  or ALTER Table. Even though part of the work done by this function
   is redundant when the table is internal, as long as we
   link both internal and user temporary tables into the same
   thd->temporary_tables list, it's impossible to tell here whether
@@ -1483,9 +1468,9 @@ TABLE *find_temporary_table(THD *thd, TABLE_LIST *table_list)
   @retval -1  the table is in use by a outer query
 */
 
-int drop_temporary_table(THD *thd, TABLE_LIST *table_list)
+int drop_temporary_table(THD *thd, TableList *table_list)
 {
-  TABLE *table;
+  Table *table;
 
   if (!(table= find_temporary_table(thd, table_list)))
     return(1);
@@ -1510,7 +1495,7 @@ int drop_temporary_table(THD *thd, TABLE_LIST *table_list)
   unlink from thd->temporary tables and close temporary table
 */
 
-void close_temporary_table(THD *thd, TABLE *table,
+void close_temporary_table(THD *thd, Table *table,
                            bool free_share, bool delete_table)
 {
   if (table->prev)
@@ -1551,7 +1536,7 @@ void close_temporary_table(THD *thd, TABLE *table,
     If this is needed, use close_temporary_table()
 */
 
-void close_temporary(TABLE *table, bool free_share, bool delete_table)
+void close_temporary(Table *table, bool free_share, bool delete_table)
 {
   handlerton *table_type= table->s->db_type();
 
@@ -1574,20 +1559,20 @@ void close_temporary(TABLE *table, bool free_share, bool delete_table)
 
 
 /*
-  Used by ALTER TABLE when the table is a temporary one. It changes something
+  Used by ALTER Table when the table is a temporary one. It changes something
   only if the ALTER contained a RENAME clause (otherwise, table_name is the old
   name).
   Prepares a table cache key, which is the concatenation of db, table_name and
   thd->slave_proxy_id, separated by '\0'.
 */
 
-bool rename_temporary_table(THD* thd, TABLE *table, const char *db,
+bool rename_temporary_table(THD* thd, Table *table, const char *db,
 			    const char *table_name)
 {
   char *key;
   uint key_length;
   TABLE_SHARE *share= table->s;
-  TABLE_LIST table_list;
+  TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return(1);				/* purecov: inspected */
@@ -1602,7 +1587,7 @@ bool rename_temporary_table(THD* thd, TABLE *table, const char *db,
 
 	/* move table first in unused links */
 
-static void relink_unused(TABLE *table)
+static void relink_unused(Table *table)
 {
   if (table != unused_tables)
   {
@@ -1632,11 +1617,11 @@ static void relink_unused(TABLE *table)
           not locked (for example already unlocked).
 */
 
-void unlink_open_table(THD *thd, TABLE *find, bool unlock)
+void unlink_open_table(THD *thd, Table *find, bool unlock)
 {
   char key[MAX_DBKEY_LENGTH];
   uint key_length= find->s->table_cache_key.length;
-  TABLE *list, **prev;
+  Table *list, **prev;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -1680,7 +1665,7 @@ void unlink_open_table(THD *thd, TABLE *find, bool unlock)
     Auxiliary routine which closes and drops open table.
 
     @param  thd         Thread handle
-    @param  table       TABLE object for table to be dropped
+    @param  table       Table object for table to be dropped
     @param  db_name     Name of database for this table
     @param  table_name  Name of this table
 
@@ -1695,7 +1680,7 @@ void unlink_open_table(THD *thd, TABLE *find, bool unlock)
           table that was locked with LOCK TABLES.
 */
 
-void drop_open_table(THD *thd, TABLE *table, const char *db_name,
+void drop_open_table(THD *thd, Table *table, const char *db_name,
                      const char *table_name)
 {
   if (table->s->tmp_table)
@@ -1732,7 +1717,7 @@ void wait_for_condition(THD *thd, pthread_mutex_t *mutex, pthread_cond_t *cond)
   const char *proc_info;
   thd->mysys_var->current_mutex= mutex;
   thd->mysys_var->current_cond= cond;
-  proc_info=thd->proc_info;
+  proc_info=thd->get_proc_info();
   thd_proc_info(thd, "Waiting for table");
   if (!thd->killed)
     (void) pthread_cond_wait(cond, mutex);
@@ -1768,7 +1753,7 @@ void wait_for_condition(THD *thd, pthread_mutex_t *mutex, pthread_cond_t *cond)
   @return false on success, true otherwise.
 */
 
-bool name_lock_locked_table(THD *thd, TABLE_LIST *tables)
+bool name_lock_locked_table(THD *thd, TableList *tables)
 {
   /* Under LOCK TABLES we must only accept write locked tables. */
   tables->table= find_locked_table(thd, tables->db, tables->table_name);
@@ -1797,13 +1782,13 @@ bool name_lock_locked_table(THD *thd, TABLE_LIST *tables)
   SYNOPSIS
     reopen_name_locked_table()
       thd         Thread handle
-      table_list  TABLE_LIST object for table to be open, TABLE_LIST::table
-                  member should point to TABLE object which was used for
+      table_list  TableList object for table to be open, TableList::table
+                  member should point to Table object which was used for
                   name-locking.
-      link_in     true  - if TABLE object for table to be opened should be
+      link_in     true  - if Table object for table to be opened should be
                           linked into THD::open_tables list.
                   false - placeholder used for name-locking is already in
-                          this list so we only need to preserve TABLE::next
+                          this list so we only need to preserve Table::next
                           pointer.
 
   NOTE
@@ -1814,12 +1799,12 @@ bool name_lock_locked_table(THD *thd, TABLE_LIST *tables)
     true  - Error
 */
 
-bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
+bool reopen_name_locked_table(THD* thd, TableList* table_list, bool link_in)
 {
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   TABLE_SHARE *share;
   char *table_name= table_list->table_name;
-  TABLE orig_table;
+  Table orig_table;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -1830,7 +1815,7 @@ bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
 
   if (open_unireg_entry(thd, table, table_list, table_name,
                         table->s->table_cache_key.str,
-                        table->s->table_cache_key.length, thd->mem_root, 0))
+                        table->s->table_cache_key.length))
   {
     intern_close_table(table);
     /*
@@ -1863,8 +1848,8 @@ bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
   else
   {
     /*
-      TABLE object should be already in THD::open_tables list so we just
-      need to set TABLE::next correctly.
+      Table object should be already in THD::open_tables list so we just
+      need to set Table::next correctly.
     */
     table->next= orig_table.next;
   }
@@ -1872,9 +1857,11 @@ bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
   table->tablenr=thd->current_tablenr++;
   table->used_fields=0;
   table->const_table=0;
-  table->null_row= table->maybe_null= table->force_index= 0;
+  table->null_row= false;
+  table->maybe_null= false;
+  table->force_index= false;
   table->status=STATUS_NO_RECORD;
-  return(false);
+  return false;
 }
 
 
@@ -1887,14 +1874,14 @@ bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
     @param key         Table cache key for name to be locked
     @param key_length  Table cache key length
 
-    @return Pointer to TABLE object used for name locking or 0 in
+    @return Pointer to Table object used for name locking or 0 in
             case of failure.
 */
 
-TABLE *table_cache_insert_placeholder(THD *thd, const char *key,
+Table *table_cache_insert_placeholder(THD *thd, const char *key,
                                       uint key_length)
 {
-  TABLE *table;
+  Table *table;
   TABLE_SHARE *share;
   char *key_buff;
 
@@ -1938,7 +1925,7 @@ TABLE *table_cache_insert_placeholder(THD *thd, const char *key,
     @param[out] table       Out parameter which is either:
                             - set to NULL if table cache contains record for
                               the table or
-                            - set to point to the TABLE instance used for
+                            - set to point to the Table instance used for
                               name-locking.
 
     @note This function takes into account all records for table in table
@@ -1951,12 +1938,12 @@ TABLE *table_cache_insert_placeholder(THD *thd, const char *key,
 */
 
 bool lock_table_name_if_not_cached(THD *thd, const char *db,
-                                   const char *table_name, TABLE **table)
+                                   const char *table_name, Table **table)
 {
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  key_length= (uint)(strmov(strmov(key, db) + 1, table_name) - key) + 1;
+  key_length= (uint)(stpcpy(stpcpy(key, db) + 1, table_name) - key) + 1;
   VOID(pthread_mutex_lock(&LOCK_open));
 
   if (hash_search(&open_cache, (uchar *)key, key_length))
@@ -1999,7 +1986,7 @@ bool lock_table_name_if_not_cached(THD *thd, const char *db,
     @retval  false  No error. 'exists' out parameter set accordingly.
 */
 
-bool check_if_table_exists(THD *thd, TABLE_LIST *table, bool *exists)
+bool check_if_table_exists(THD *thd, TableList *table, bool *exists)
 {
   char path[FN_REFLEN];
   int rc;
@@ -2053,10 +2040,10 @@ bool check_if_table_exists(THD *thd, TABLE_LIST *table, bool *exists)
                         If this is a NULL pointer, then the table is not
                         put in the thread-open-list.
     flags               Bitmap of flags to modify how open works:
-                          MYSQL_LOCK_IGNORE_FLUSH - Open table even if
+                          DRIZZLE_LOCK_IGNORE_FLUSH - Open table even if
                           someone has done a flush or namelock on it.
                           No version number checking is done.
-                          MYSQL_OPEN_TEMPORARY_ONLY - Open only temporary
+                          DRIZZLE_OPEN_TEMPORARY_ONLY - Open only temporary
                           table not the base table or view.
 
   IMPLEMENTATION
@@ -2065,19 +2052,18 @@ bool check_if_table_exists(THD *thd, TABLE_LIST *table, bool *exists)
     If table list element for the table to be opened has "create" flag
     set and table does not exist, this function will automatically insert
     a placeholder for exclusive name lock into the open tables cache and
-    will return the TABLE instance that corresponds to this placeholder.
+    will return the Table instance that corresponds to this placeholder.
 
   RETURN
     NULL  Open failed.  If refresh is set then one should close
           all other tables and retry the open.
-    #     Success. Pointer to TABLE object for open table.
+    #     Success. Pointer to Table object for open table.
 */
 
 
-TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
-		  bool *refresh, uint flags)
+Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
 {
-  register TABLE *table;
+  register Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
   char *alias= table_list->alias;
@@ -2118,7 +2104,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
         /*
           We're trying to use the same temporary table twice in a query.
           Right now we don't support this because a temporary table
-          is always represented by only one TABLE object in THD, and
+          is always represented by only one Table object in THD, and
           it can not be cloned. Emit an error for an unsupported behaviour.
         */
 	if (table->query_id)
@@ -2133,7 +2119,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     }
   }
 
-  if (flags & MYSQL_OPEN_TEMPORARY_ONLY)
+  if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
     return(0);
@@ -2148,7 +2134,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   */
   if (thd->locked_tables)
   {						// Using table locks
-    TABLE *best_table= 0;
+    Table *best_table= 0;
     int best_distance= INT_MIN;
     bool check_if_used= false;
     for (table=thd->open_tables; table ; table=table->next)
@@ -2170,7 +2156,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
           return(0);
         }
         /*
-          When looking for a usable TABLE, ignore MERGE children, as they
+          When looking for a usable Table, ignore MERGE children, as they
           belong to their parent and cannot be used explicitly.
         */
         if (!my_strcasecmp(system_charset_info, table->alias, alias) &&
@@ -2230,11 +2216,11 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     this is the normal use case.
     Now we should:
     - try to find the table in the table cache.
-    - if one of the discovered TABLE instances is name-locked
+    - if one of the discovered Table instances is name-locked
       (table->s->version == 0) or some thread has started FLUSH TABLES
       (refresh_version > table->s->version), back off -- we have to wait
       until no one holds a name lock on the table.
-    - if there is no such TABLE in the name cache, read the table definition
+    - if there is no such Table in the name cache, read the table definition
     and insert it into the cache.
     We perform all of the above under LOCK_open which currently protects
     the open cache (also known as table cache) and table definitions stored
@@ -2254,7 +2240,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   if (!thd->open_tables)
     thd->version=refresh_version;
   else if ((thd->version != refresh_version) &&
-           ! (flags & MYSQL_LOCK_IGNORE_FLUSH))
+           ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
   {
     /* Someone did a refresh while thread was opening tables */
     if (refresh)
@@ -2275,7 +2261,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
 
   /*
     Actually try to find the table in the open_cache.
-    The cache may contain several "TABLE" instances for the same
+    The cache may contain several "Table" instances for the same
     physical table. The instances that are currently "in use" by
     some thread have their "in_use" member != NULL.
     There is no good reason for having more than one entry in the
@@ -2283,10 +2269,10 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     an implicit "pending locks queue" - see
     wait_for_locked_table_names for details.
   */
-  for (table= (TABLE*) hash_first(&open_cache, (uchar*) key, key_length,
+  for (table= (Table*) hash_first(&open_cache, (uchar*) key, key_length,
                                   &state);
        table && table->in_use ;
-       table= (TABLE*) hash_next(&open_cache, (uchar*) key, key_length,
+       table= (Table*) hash_next(&open_cache, (uchar*) key, key_length,
                                  &state))
   {
     /*
@@ -2296,7 +2282,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
       (re-)opened and added to the cache.
       If since then we did (or just started) FLUSH TABLES
       statement, refresh_version has been increased.
-      For "name-locked" TABLE instances, table->s->version is set
+      For "name-locked" Table instances, table->s->version is set
       to 0 (see lock_table_name for details).
       In case there is a pending FLUSH TABLES or a name lock, we
       need to back off and re-start opening tables.
@@ -2309,7 +2295,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     */
     if (table->needs_reopen_or_name_lock())
     {
-      if (flags & MYSQL_LOCK_IGNORE_FLUSH)
+      if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
       {
         /* Force close at once after usage */
         thd->version= table->s->version;
@@ -2386,7 +2372,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   }
   else
   {
-    /* Insert a new TABLE instance into the open cache */
+    /* Insert a new Table instance into the open cache */
     int error;
     /* Free cache if too big */
     while (open_cache.records > table_cache_size && unused_tables)
@@ -2427,14 +2413,13 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     }
 
     /* make a new table */
-    if (!(table=(TABLE*) my_malloc(sizeof(*table),MYF(MY_WME))))
+    if (!(table=(Table*) my_malloc(sizeof(*table),MYF(MY_WME))))
     {
       VOID(pthread_mutex_unlock(&LOCK_open));
       return(NULL);
     }
 
-    error= open_unireg_entry(thd, table, table_list, alias, key, key_length,
-                             mem_root, (flags & OPEN_VIEW_NO_PARSE));
+    error= open_unireg_entry(thd, table, table_list, alias, key, key_length);
     /* Combine the follow two */
     if (error > 0)
     {
@@ -2471,13 +2456,15 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     uint length=(uint) strlen(alias)+1;
     table->alias= (char*) my_realloc((char*) table->alias, length,
                                      MYF(MY_WME));
-    memcpy((char*) table->alias, alias, length);
+    memcpy((void*) table->alias, alias, length);
   }
   /* These variables are also set in reopen_table() */
   table->tablenr=thd->current_tablenr++;
   table->used_fields=0;
   table->const_table=0;
-  table->null_row= table->maybe_null= table->force_index= 0;
+  table->null_row= false;
+  table->maybe_null= false;
+  table->force_index= false;
   table->status=STATUS_NO_RECORD;
   table->insert_values= 0;
   /* Catch wrong handling of the auto_increment_field_not_null. */
@@ -2492,12 +2479,12 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
 }
 
 
-TABLE *find_locked_table(THD *thd, const char *db,const char *table_name)
+Table *find_locked_table(THD *thd, const char *db,const char *table_name)
 {
   char	key[MAX_DBKEY_LENGTH];
-  uint key_length=(uint) (strmov(strmov(key,db)+1,table_name)-key)+1;
+  uint key_length=(uint) (stpcpy(stpcpy(key,db)+1,table_name)-key)+1;
 
-  for (TABLE *table=thd->open_tables; table ; table=table->next)
+  for (Table *table=thd->open_tables; table ; table=table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
 	!memcmp(table->s->table_cache_key.str, key, key_length))
@@ -2523,13 +2510,13 @@ TABLE *find_locked_table(THD *thd, const char *db,const char *table_name)
    1  error. The old table object is not changed.
 */
 
-bool reopen_table(TABLE *table)
+bool reopen_table(Table *table)
 {
-  TABLE tmp;
+  Table tmp;
   bool error= 1;
   Field **field;
   uint key,part;
-  TABLE_LIST table_list;
+  TableList table_list;
   THD *thd= table->in_use;
 
   assert(table->s->ref_count == 0);
@@ -2537,10 +2524,10 @@ bool reopen_table(TABLE *table)
 
 #ifdef EXTRA_DEBUG
   if (table->db_stat)
-    sql_print_error("Table %s had a open data handler in reopen_table",
+    sql_print_error(_("Table %s had a open data handler in reopen_table"),
 		    table->alias);
 #endif
-  memset(&table_list, 0, sizeof(TABLE_LIST));
+  memset(&table_list, 0, sizeof(TableList));
   table_list.db=         table->s->db.str;
   table_list.table_name= table->s->table_name.str;
   table_list.table=      table;
@@ -2551,8 +2538,7 @@ bool reopen_table(TABLE *table)
   if (open_unireg_entry(thd, &tmp, &table_list,
 			table->alias,
                         table->s->table_cache_key.str,
-                        table->s->table_cache_key.length,
-                        thd->mem_root, 0))
+                        table->s->table_cache_key.length))
     goto end;
 
   /* This list copies variables set by open_table */
@@ -2616,7 +2602,7 @@ bool reopen_table(TABLE *table)
     @note This function assumes that if we are not under LOCK TABLES,
           then there is only one table open and locked. This means that
           the function probably has to be adjusted before it can be used
-          anywhere outside ALTER TABLE.
+          anywhere outside ALTER Table.
 
     @note Must not use TABLE_SHARE::table_name/db of the table being closed,
           the strings are used in a loop even after the share may be freed.
@@ -2625,7 +2611,7 @@ bool reopen_table(TABLE *table)
 void close_data_files_and_morph_locks(THD *thd, const char *db,
                                       const char *table_name)
 {
-  TABLE *table;
+  Table *table;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -2641,7 +2627,7 @@ void close_data_files_and_morph_locks(THD *thd, const char *db,
 
   /*
     Note that open table list may contain a name-lock placeholder
-    for target table name if we process ALTER TABLE ... RENAME.
+    for target table name if we process ALTER Table ... RENAME.
     So loop below makes sense even if we are not under LOCK TABLES.
   */
   for (table=thd->open_tables; table ; table=table->next)
@@ -2671,7 +2657,7 @@ void close_data_files_and_morph_locks(THD *thd, const char *db,
 
     @note Since this function can't properly handle prelocking and
           create placeholders it should be used in very special
-          situations like FLUSH TABLES or ALTER TABLE. In general
+          situations like FLUSH TABLES or ALTER Table. In general
           case one should just repeat open_tables()/lock_tables()
           combination when one needs tables to be reopened (for
           example see open_and_lock_tables()).
@@ -2683,12 +2669,12 @@ void close_data_files_and_morph_locks(THD *thd, const char *db,
 
 bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
 {
-  TABLE *table,*next,**prev;
-  TABLE **tables,**tables_ptr;			// For locks
+  Table *table,*next,**prev;
+  Table **tables,**tables_ptr;			// For locks
   bool error=0, not_used;
-  const uint flags= MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN |
-                    MYSQL_LOCK_IGNORE_GLOBAL_READ_LOCK |
-                    MYSQL_LOCK_IGNORE_FLUSH;
+  const uint flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
+                    DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
+                    DRIZZLE_LOCK_IGNORE_FLUSH;
 
   if (!thd->open_tables)
     return(0);
@@ -2703,7 +2689,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
     uint opens=0;
     for (table= thd->open_tables; table ; table=table->next)
       opens++;
-    tables= (TABLE**) my_alloca(sizeof(TABLE*)*opens);
+    tables= (Table**) my_alloca(sizeof(Table*)*opens);
   }
   else
     tables= &thd->open_tables;
@@ -2737,7 +2723,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
   *prev=0;
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    MYSQL_LOCK *lock;
+    DRIZZLE_LOCK *lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire LOCK_open, which is
@@ -2770,11 +2756,11 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
 
 
 /**
-    Close handlers for tables in list, but leave the TABLE structure
+    Close handlers for tables in list, but leave the Table structure
     intact so that we can re-open these quickly.
 
     @param thd           Thread context
-    @param table         Head of the list of TABLE objects
+    @param table         Head of the list of Table objects
     @param morph_locks   true  - remove locks which we have on tables being closed
                                  but ensure that no DML or DDL will sneak in before
                                  we will re-open the table (i.e. temporarily morph
@@ -2783,7 +2769,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
     @param send_refresh  Should we awake waiters even if we didn't close any tables?
 */
 
-static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
+static void close_old_data_files(THD *thd, Table *table, bool morph_locks,
                                  bool send_refresh)
 {
   bool found= send_refresh;
@@ -2800,7 +2786,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
       {
 	if (morph_locks)
 	{
-          TABLE *ulcktbl= table;
+          Table *ulcktbl= table;
           if (ulcktbl->lock_count)
           {
             /*
@@ -2826,7 +2812,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
           }
           /*
             We want to protect the table from concurrent DDL operations
-            (like RENAME TABLE) until we will re-open and re-lock it.
+            (like RENAME Table) until we will re-open and re-lock it.
           */
 	  table->open_placeholder= 1;
 	}
@@ -2838,7 +2824,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
           We come here only in close-for-back-off scenario. So we have to
           "close" create placeholder here to avoid deadlocks (for example,
           in case of concurrent execution of CREATE TABLE t1 SELECT * FROM t2
-          and RENAME TABLE t2 TO t1). In close-for-re-open scenario we will
+          and RENAME Table t2 TO t1). In close-for-re-open scenario we will
           probably want to let it stay.
 
           Note "***": We must not enter this branch if the placeholder
@@ -2861,7 +2847,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
   if the table is closed
 */
 
-bool table_is_used(TABLE *table, bool wait_for_name_lock)
+bool table_is_used(Table *table, bool wait_for_name_lock)
 {
   do
   {
@@ -2869,10 +2855,10 @@ bool table_is_used(TABLE *table, bool wait_for_name_lock)
     uint key_length= table->s->table_cache_key.length;
 
     HASH_SEARCH_STATE state;
-    for (TABLE *search= (TABLE*) hash_first(&open_cache, (uchar*) key,
+    for (Table *search= (Table*) hash_first(&open_cache, (uchar*) key,
                                              key_length, &state);
 	 search ;
-         search= (TABLE*) hash_next(&open_cache, (uchar*) key,
+         search= (Table*) hash_next(&open_cache, (uchar*) key,
                                     key_length, &state))
     {
       if (search->in_use == table->in_use)
@@ -2937,7 +2923,7 @@ bool wait_for_tables(THD *thd)
   INFORMATION
     This is only called on drop tables
 
-    The TABLE object for the dropped table is unlocked but still kept around
+    The Table object for the dropped table is unlocked but still kept around
     as a name lock, which means that the table will be available for other
     thread as soon as we call unlock_table_names().
     If there is multiple copies of the table locked, all copies except
@@ -2949,9 +2935,9 @@ bool wait_for_tables(THD *thd)
 */
 
 
-TABLE *drop_locked_tables(THD *thd,const char *db, const char *table_name)
+Table *drop_locked_tables(THD *thd,const char *db, const char *table_name)
 {
-  TABLE *table,*next,**prev, *found= 0;
+  Table *table,*next,**prev, *found= 0;
   prev= &thd->open_tables;
 
   /*
@@ -3004,14 +2990,14 @@ TABLE *drop_locked_tables(THD *thd,const char *db, const char *table_name)
 
 
 /*
-  If we have the table open, which only happens when a LOCK TABLE has been
+  If we have the table open, which only happens when a LOCK Table has been
   done on the table, change the lock type to a lock that will abort all
   other threads trying to get the lock.
 */
 
 void abort_locked_tables(THD *thd,const char *db, const char *table_name)
 {
-  TABLE *table;
+  Table *table;
   for (table= thd->open_tables; table ; table= table->next)
   {
     if (!strcmp(table->s->table_name.str, table_name) &&
@@ -3052,11 +3038,11 @@ void abort_locked_tables(THD *thd,const char *db, const char *table_name)
     share opens have been executed while one table was open all the
     time).
 
-    share->table_map_id is not ~0UL.
+    share->table_map_id is not UINT32_MAX.
  */
 void assign_new_table_id(TABLE_SHARE *share)
 {
-  static ulong last_table_id= ~0UL;
+  static uint32_t last_table_id= UINT32_MAX;
 
   /* Preconditions */
   assert(share != NULL);
@@ -3067,12 +3053,12 @@ void assign_new_table_id(TABLE_SHARE *share)
     There is one reserved number that cannot be used.  Remember to
     change this when 6-byte global table id's are introduced.
   */
-  if (unlikely(tid == ~0UL))
+  if (unlikely(tid == UINT32_MAX))
     tid= ++last_table_id;
   share->table_map_id= tid;
 
   /* Post conditions */
-  assert(share->table_map_id != ~0UL);
+  assert(share->table_map_id != UINT32_MAX);
 
   return;
 }
@@ -3084,13 +3070,10 @@ void assign_new_table_id(TABLE_SHARE *share)
     open_unireg_entry()
     thd			Thread handle
     entry		Store open table definition here
-    table_list		TABLE_LIST with db, table_name & belong_to_view
+    table_list		TableList with db, table_name
     alias		Alias name
     cache_key		Key for share_cache
     cache_key_length	length of cache_key
-    mem_root		temporary mem_root for parsing
-    flags               the OPEN_VIEW_NO_PARSE flag to be passed to
-                        openfrm()/open_new_frm()
 
   NOTES
    Extra argument for open is taken from thd->open_options
@@ -3101,11 +3084,9 @@ void assign_new_table_id(TABLE_SHARE *share)
     #	Error
 */
 
-static int open_unireg_entry(THD *thd, TABLE *entry, TABLE_LIST *table_list,
+static int open_unireg_entry(THD *thd, Table *entry, TableList *table_list,
                              const char *alias,
-                             char *cache_key, uint cache_key_length,
-                             MEM_ROOT *mem_root __attribute__((unused)),
-                             uint flags __attribute__((unused)))
+                             char *cache_key, uint cache_key_length)
 {
   int error;
   TABLE_SHARE *share;
@@ -3115,7 +3096,6 @@ static int open_unireg_entry(THD *thd, TABLE *entry, TABLE_LIST *table_list,
 retry:
   if (!(share= get_table_share_with_create(thd, table_list, cache_key,
                                            cache_key_length, 
-                                           OPEN_VIEW |
                                            table_list->i_s_requested_object,
                                            &error)))
     return(1);
@@ -3125,8 +3105,7 @@ retry:
                                                HA_OPEN_RNDFILE |
                                                HA_GET_INDEX |
                                                HA_TRY_READ_ONLY),
-                                       (READ_KEYINFO | COMPUTE_TYPES |
-                                        EXTRA_RECORD),
+                                       (EXTRA_RECORD),
                                        thd->open_options, entry, OTM_OPEN)))
   {
     if (error == 7)                             // Table def changed
@@ -3162,7 +3141,7 @@ retry:
       release_table_share(share, RELEASE_WAIT_FOR_DROP);
       if (!thd->killed)
       {
-        mysql_reset_errors(thd, 1);         // Clear warnings
+        drizzle_reset_errors(thd, 1);         // Clear warnings
         thd->clear_error();                 // Clear error message
         goto retry;
       }
@@ -3188,7 +3167,7 @@ retry:
                                (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                        HA_GET_INDEX |
                                        HA_TRY_READ_ONLY),
-                               READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD,
+                               EXTRA_RECORD,
                                ha_open_options | HA_OPEN_FOR_REPAIR,
                                entry, OTM_OPEN) || ! entry->file ||
         (entry->file->is_crashed() && entry->file->ha_check_and_repair(thd)))
@@ -3196,7 +3175,7 @@ retry:
        /* Give right error message */
        thd->clear_error();
        my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
-       sql_print_error("Couldn't repair table: %s.%s", share->db.str,
+       sql_print_error(_("Couldn't repair table: %s.%s"), share->db.str,
                        share->table_name.str);
        if (entry->file)
  	closefrm(entry, 0);
@@ -3226,7 +3205,7 @@ retry:
       if ((query= (char*) my_malloc(query_buf_size,MYF(MY_WME))))
       {
         /* this DELETE FROM is needed even with row-based binlogging */
-        end = strxmov(strmov(query, "DELETE FROM `"),
+        end = strxmov(stpcpy(query, "DELETE FROM `"),
                       share->db.str,"`.`",share->table_name.str,"`", NullS);
         thd->binlog_query(THD::STMT_QUERY_TYPE,
                           query, (ulong)(end-query), false, false);
@@ -3239,8 +3218,8 @@ retry:
           DBA on top of warning the client (which will automatically be done
           because of MYF(MY_WME) in my_malloc() above).
         */
-        sql_print_error("When opening HEAP table, could not allocate memory "
-                        "to write 'DELETE FROM `%s`.`%s`' to the binary log",
+        sql_print_error(_("When opening HEAP table, could not allocate memory "
+                          "to write 'DELETE FROM `%s`.`%s`' to the binary log"),
                         table_list->db, table_list->table_name);
         closefrm(entry, 0);
         goto err;
@@ -3264,7 +3243,7 @@ err:
     start - list of tables in/out
     counter - number of opened tables will be return using this parameter
     flags   - bitmap of flags to modify how the tables will be open:
-              MYSQL_LOCK_IGNORE_FLUSH - open table even if someone has
+              DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
               done a flush or namelock on it.
 
   NOTE
@@ -3283,9 +3262,9 @@ err:
     -1 - error
 */
 
-int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
+int open_tables(THD *thd, TableList **start, uint *counter, uint flags)
 {
-  TABLE_LIST *tables= NULL;
+  TableList *tables= NULL;
   bool refresh;
   int result=0;
   MEM_ROOT new_frm_mem;
@@ -3322,7 +3301,7 @@ int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
       continue;
     }
     /*
-      If this TABLE_LIST object is a placeholder for an information_schema
+      If this TableList object is a placeholder for an information_schema
       table, create a temporary table to represent the information_schema
       table in the query. Do not fill it yet - will be filled during
       execution.
@@ -3340,7 +3319,7 @@ int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
       not opened yet. Try to open the table.
     */
     if (!tables->table)
-      tables->table= open_table(thd, tables, &new_frm_mem, &refresh, flags);
+      tables->table= open_table(thd, tables, &refresh, flags);
 
     if (!tables->table)
     {
@@ -3388,11 +3367,8 @@ int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
   {
     /*
       Some functions determine success as (tables->table != NULL).
-      tables->table is in thd->open_tables. It won't go lost. If the
-      error happens on a MERGE child, clear the parents TABLE reference.
+      tables->table is in thd->open_tables.
     */
-    if (tables->parent_l)
-      tables->parent_l->table= NULL;
     tables->table= NULL;
   }
   return(result);
@@ -3413,7 +3389,7 @@ int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
   1	error
 */
 
-static bool check_lock_and_start_stmt(THD *thd, TABLE *table,
+static bool check_lock_and_start_stmt(THD *thd, Table *table,
 				      thr_lock_type lock_type)
 {
   int error;
@@ -3463,10 +3439,10 @@ static bool check_lock_and_start_stmt(THD *thd, TABLE *table,
     and locking issues because it does not call lock_tables().
 */
 
-TABLE *open_n_lock_single_table(THD *thd, TABLE_LIST *table_l,
+Table *open_n_lock_single_table(THD *thd, TableList *table_l,
                                 thr_lock_type lock_type)
 {
-  TABLE_LIST *save_next_global;
+  TableList *save_next_global;
 
   /* Remember old 'next' pointer. */
   save_next_global= table_l->next_global;
@@ -3475,8 +3451,6 @@ TABLE *open_n_lock_single_table(THD *thd, TABLE_LIST *table_l,
 
   /* Set requested lock type. */
   table_l->lock_type= lock_type;
-  /* Allow to open real tables only. */
-  table_l->required_type= FRMTYPE_TABLE;
 
   /* Open the table. */
   if (simple_open_n_lock_tables(thd, table_l))
@@ -3513,17 +3487,15 @@ TABLE *open_n_lock_single_table(THD *thd, TABLE_LIST *table_l,
       table_list->table		table
 */
 
-TABLE *open_ltable(THD *thd, TABLE_LIST *table_list, thr_lock_type lock_type,
+Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type lock_type,
                    uint lock_flags)
 {
-  TABLE *table;
+  Table *table;
   bool refresh;
 
   thd_proc_info(thd, "Opening table");
   thd->current_tablenr= 0;
-  /* open_ltable can be used only for BASIC TABLEs */
-  table_list->required_type= FRMTYPE_TABLE;
-  while (!(table= open_table(thd, table_list, thd->mem_root, &refresh, 0)) &&
+  while (!(table= open_table(thd, table_list, &refresh, 0)) &&
          refresh)
     ;
 
@@ -3575,7 +3547,7 @@ TABLE *open_ltable(THD *thd, TABLE_LIST *table_list, thr_lock_type lock_type,
     the third argument set appropriately.
 */
 
-int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived)
+int open_and_lock_tables_derived(THD *thd, TableList *tables, bool derived)
 {
   uint counter;
   bool need_reopen;
@@ -3608,7 +3580,7 @@ int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived)
     thd		- thread handler
     tables	- list of tables for open
     flags       - bitmap of flags to modify how the tables will be open:
-                  MYSQL_LOCK_IGNORE_FLUSH - open table even if someone has
+                  DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
                   done a flush or namelock on it.
 
   RETURN
@@ -3620,7 +3592,7 @@ int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived)
     data from the tables.
 */
 
-bool open_normal_and_derived_tables(THD *thd, TABLE_LIST *tables, uint flags)
+bool open_normal_and_derived_tables(THD *thd, TableList *tables, uint flags)
 {
   uint counter;
   assert(!thd->fill_derived_tables());
@@ -3668,7 +3640,7 @@ bool open_normal_and_derived_tables(THD *thd, TABLE_LIST *tables, uint flags)
    @param tables Tables involved in the query
  */
 
-int decide_logging_format(THD *thd, TABLE_LIST *tables)
+int decide_logging_format(THD *thd, TableList *tables)
 {
   if (mysql_bin_log.is_open() && (thd->options & OPTION_BIN_LOG))
   {
@@ -3676,7 +3648,7 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
     handler::Table_flags flags_all_set= ~handler::Table_flags();
     bool multi_engine= false;
     void* prev_ht= NULL;
-    for (TABLE_LIST *table= tables; table; table= table->next_global)
+    for (TableList *table= tables; table; table= table->next_global)
     {
       if (!table->placeholder() && table->lock_type >= TL_WRITE_ALLOW_WRITE)
       {
@@ -3781,9 +3753,9 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
    -1	Error
 */
 
-int lock_tables(THD *thd, TABLE_LIST *tables, uint count, bool *need_reopen)
+int lock_tables(THD *thd, TableList *tables, uint count, bool *need_reopen)
 {
-  TABLE_LIST *table;
+  TableList *table;
 
   /*
     We can't meet statement requiring prelocking if we already
@@ -3797,10 +3769,10 @@ int lock_tables(THD *thd, TABLE_LIST *tables, uint count, bool *need_reopen)
   if (!thd->locked_tables)
   {
     assert(thd->lock == 0);	// You must lock everything at once
-    TABLE **start,**ptr;
-    uint lock_flag= MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN;
+    Table **start,**ptr;
+    uint lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
-    if (!(ptr=start=(TABLE**) thd->alloc(sizeof(TABLE*)*count)))
+    if (!(ptr=start=(Table**) thd->alloc(sizeof(Table*)*count)))
       return(-1);
     for (table= tables; table; table= table->next_global)
     {
@@ -3816,7 +3788,7 @@ int lock_tables(THD *thd, TABLE_LIST *tables, uint count, bool *need_reopen)
   }
   else
   {
-    TABLE_LIST *first_not_own= thd->lex->first_not_own_table();
+    TableList *first_not_own= thd->lex->first_not_own_table();
     /*
       When open_and_lock_tables() is called for a single table out of
       a table list, the 'next_global' chain is temporarily broken. We
@@ -3852,7 +3824,7 @@ int lock_tables(THD *thd, TABLE_LIST *tables, uint count, bool *need_reopen)
 
 */
 
-void close_tables_for_reopen(THD *thd, TABLE_LIST **tables)
+void close_tables_for_reopen(THD *thd, TableList **tables)
 {
   /*
     If table list consists only from tables from prelocking set, table list
@@ -3861,7 +3833,7 @@ void close_tables_for_reopen(THD *thd, TABLE_LIST **tables)
   if (thd->lex->first_not_own_table() == *tables)
     *tables= 0;
   thd->lex->chop_off_not_own_tables();
-  for (TABLE_LIST *tmp= *tables; tmp; tmp= tmp->next_global)
+  for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
     tmp->table= 0;
   close_thread_tables(thd);
 }
@@ -3884,36 +3856,36 @@ void close_tables_for_reopen(THD *thd, TABLE_LIST **tables)
 
  RETURN
    0  Error
-   #  TABLE object
+   #  Table object
 */
 
-TABLE *open_temporary_table(THD *thd, const char *path, const char *db,
+Table *open_temporary_table(THD *thd, const char *path, const char *db,
 			    const char *table_name, bool link_in_list,
                             open_table_mode open_mode)
 {
-  TABLE *tmp_table;
+  Table *tmp_table;
   TABLE_SHARE *share;
   char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
   uint key_length;
-  TABLE_LIST table_list;
+  TableList table_list;
 
   table_list.db=         (char*) db;
   table_list.table_name= (char*) table_name;
   /* Create the cache_key for temporary tables */
   key_length= create_table_def_key(thd, cache_key, &table_list, 1);
 
-  if (!(tmp_table= (TABLE*) my_malloc(sizeof(*tmp_table) + sizeof(*share) +
+  if (!(tmp_table= (Table*) my_malloc(sizeof(*tmp_table) + sizeof(*share) +
                                       strlen(path)+1 + key_length,
                                       MYF(MY_WME))))
     return(0);				/* purecov: inspected */
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);
-  saved_cache_key= strmov(tmp_path, path)+1;
+  saved_cache_key= stpcpy(tmp_path, path)+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
   init_tmp_table_share(thd, share, saved_cache_key, key_length,
-                       strend(saved_cache_key)+1, tmp_path);
+                       strchr(saved_cache_key, '\0')+1, tmp_path);
 
   if (open_table_def(thd, share, 0) ||
       open_table_from_share(thd, share, table_name,
@@ -3921,9 +3893,8 @@ TABLE *open_temporary_table(THD *thd, const char *path, const char *db,
                             (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                     HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
-                              (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD |
-                               OPEN_FRM_FILE_ONLY)
-                            : (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD),
+                              (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
+                            : (EXTRA_RECORD),
                             ha_open_options,
                             tmp_table, open_mode))
   {
@@ -3968,7 +3939,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   handler *file;
   char *ext;
 
-  strmov(ext= strend(path), reg_ext);
+  stpcpy(ext= strchr(path, '\0'), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension
@@ -3976,7 +3947,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   if (!frm_only && file && file->ha_delete_table(path))
   {
     error=1;
-    sql_print_warning("Could not remove temporary table: '%s', error: %d",
+    sql_print_warning(_("Could not remove temporary table: '%s', error: %d"),
                       path, my_errno);
   }
   delete file;
@@ -3999,7 +3970,7 @@ Field *view_ref_found= (Field*) 0x2;
 
 #define WRONG_GRANT (Field*) -1
 
-static void update_field_dependencies(THD *thd, Field *field, TABLE *table)
+static void update_field_dependencies(THD *thd, Field *field, Table *table)
 {
   if (thd->mark_used_columns != MARK_COLUMNS_NONE)
   {
@@ -4041,75 +4012,6 @@ static void update_field_dependencies(THD *thd, Field *field, TABLE *table)
 
 
 /*
-  Find a field by name in a view that uses merge algorithm.
-
-  SYNOPSIS
-    find_field_in_view()
-    thd				thread handler
-    table_list			view to search for 'name'
-    name			name of field
-    length			length of name
-    item_name                   name of item if it will be created (VIEW)
-    ref				expression substituted in VIEW should be passed
-                                using this reference (return view_ref_found)
-    register_tree_change        true if ref is not stack variable and we
-                                need register changes in item tree
-
-  RETURN
-    0			field is not found
-    view_ref_found	found value in VIEW (real result is in *ref)
-    #			pointer to field - only for schema table fields
-*/
-
-static Field *
-find_field_in_view(THD *thd, TABLE_LIST *table_list,
-                   const char *name, uint length __attribute__((unused)),
-                   const char *item_name __attribute__((unused)),
-                   Item **ref,
-                   bool register_tree_change __attribute__((unused)))
-{
-  Field_iterator_view field_it;
-  field_it.set(table_list);
-  
-  assert(table_list->schema_table_reformed ||
-              (ref != 0 && (0) != 0));
-  for (; !field_it.end_of_fields(); field_it.next())
-  {
-    if (!my_strcasecmp(system_charset_info, field_it.name(), name))
-    {
-      /*
-        create_item() may, or may not create a new Item, depending on
-        the column reference. See create_view_field() for details.
-      */
-      Item *item= field_it.create_item(thd);
-      
-      if (!item)
-        return(0);
-      /*
-       *ref != NULL means that *ref contains the item that we need to
-       replace. If the item was aliased by the user, set the alias to
-       the replacing item.
-       We need to set alias on both ref itself and on ref real item.
-      */
-      if (*ref && !(*ref)->is_autogenerated_name)
-      {
-        item->set_name((*ref)->name, (*ref)->name_length,
-                       system_charset_info);
-        item->real_item()->set_name((*ref)->name, (*ref)->name_length,
-                       system_charset_info);
-      }
-      if (register_tree_change)
-        thd->change_item_tree(ref, item);
-      else
-        *ref= item;
-      return((Field*) view_ref_found);
-    }
-  }
-  return(0);
-}
-
-
-/*
   Find field by name in a NATURAL/USING join table reference.
 
   SYNOPSIS
@@ -4139,10 +4041,10 @@ find_field_in_view(THD *thd, TABLE_LIST *table_list,
 */
 
 static Field *
-find_field_in_natural_join(THD *thd, TABLE_LIST *table_ref, const char *name,
+find_field_in_natural_join(THD *thd, TableList *table_ref, const char *name,
                            uint length __attribute__((unused)),
-                           Item **ref, bool register_tree_change,
-                           TABLE_LIST **actual_table)
+                           Item **ref __attribute__((unused)), bool register_tree_change __attribute__((unused)),
+                           TableList **actual_table)
 {
   List_iterator_fast<Natural_join_column>
     field_it(*(table_ref->join_columns));
@@ -4167,51 +4069,8 @@ find_field_in_natural_join(THD *thd, TABLE_LIST *table_ref, const char *name,
   }
   if (!nj_col)
     return(NULL);
-
-  if (nj_col->view_field)
-  {
-    Item *item;
-    /*
-      create_item() may, or may not create a new Item, depending on the
-      column reference. See create_view_field() for details.
-    */
-    item= nj_col->create_item(thd);
-    /*
-     *ref != NULL means that *ref contains the item that we need to
-     replace. If the item was aliased by the user, set the alias to
-     the replacing item.
-     We need to set alias on both ref itself and on ref real item.
-     */
-    if (*ref && !(*ref)->is_autogenerated_name)
-    {
-      item->set_name((*ref)->name, (*ref)->name_length,
-                     system_charset_info);
-      item->real_item()->set_name((*ref)->name, (*ref)->name_length,
-                                  system_charset_info);
-    }
-
-    if (!item)
-      return(NULL);
-    assert(nj_col->table_field == NULL);
-    if (nj_col->table_ref->schema_table_reformed)
-    {
-      /*
-        Translation table items are always Item_fields and fixed
-        already('mysql_schema_table' function). So we can return
-        ->field. It is used only for 'show & where' commands.
-      */
-      return(((Item_field*) (nj_col->view_field->item))->field);
-    }
-    if (register_tree_change)
-      thd->change_item_tree(ref, item);
-    else
-      *ref= item;
-    found_field= (Field*) view_ref_found;
-  }
-  else
   {
     /* This is a base table. */
-    assert(nj_col->view_field == NULL);
     assert(nj_col->table_ref->table == nj_col->table_field->table);
     found_field= nj_col->table_field;
     update_field_dependencies(thd, found_field, nj_col->table_ref->table);
@@ -4242,7 +4101,7 @@ find_field_in_natural_join(THD *thd, TABLE_LIST *table_ref, const char *name,
 */
 
 Field *
-find_field_in_table(THD *thd, TABLE *table, const char *name, uint length,
+find_field_in_table(THD *thd, Table *table, const char *name, uint length,
                     bool allow_rowid, uint *cached_field_index_ptr)
 {
   Field **field_ptr, *field;
@@ -4338,15 +4197,15 @@ find_field_in_table(THD *thd, TABLE *table, const char *name, uint length,
 */
 
 Field *
-find_field_in_table_ref(THD *thd, TABLE_LIST *table_list,
+find_field_in_table_ref(THD *thd, TableList *table_list,
                         const char *name, uint length,
                         const char *item_name, const char *db_name,
                         const char *table_name, Item **ref,
                         bool check_privileges, bool allow_rowid,
                         uint *cached_field_index_ptr,
-                        bool register_tree_change, TABLE_LIST **actual_table)
+                        bool register_tree_change, TableList **actual_table)
 {
-  Field *fld;
+  Field *fld= NULL;
 
   assert(table_list->alias);
   assert(name);
@@ -4387,10 +4246,6 @@ find_field_in_table_ref(THD *thd, TABLE_LIST *table_list,
 
   if (table_list->field_translation)
   {
-    /* 'table_list' is a view or an information schema table. */
-    if ((fld= find_field_in_view(thd, table_list, name, length, item_name, ref,
-                                 register_tree_change)))
-      *actual_table= table_list;
   }
   else if (!table_list->nested_join)
   {
@@ -4412,8 +4267,8 @@ find_field_in_table_ref(THD *thd, TABLE_LIST *table_list,
     */
     if (table_name && table_name[0])
     {
-      List_iterator<TABLE_LIST> it(table_list->nested_join->join_list);
-      TABLE_LIST *table;
+      List_iterator<TableList> it(table_list->nested_join->join_list);
+      TableList *table;
       while ((table= it++))
       {
         if ((fld= find_field_in_table_ref(thd, table, name, length, item_name,
@@ -4460,7 +4315,7 @@ find_field_in_table_ref(THD *thd, TABLE_LIST *table_list,
           field_to_set= fld;
         if (field_to_set)
         {
-          TABLE *table= field_to_set->table;
+          Table *table= field_to_set->table;
           if (thd->mark_used_columns == MARK_COLUMNS_READ)
             bitmap_set_bit(table->read_set, field_to_set->field_index);
           else
@@ -4487,7 +4342,7 @@ find_field_in_table_ref(THD *thd, TABLE_LIST *table_list,
     #                   pointer to field
 */
 
-Field *find_field_in_table_sef(TABLE *table, const char *name)
+Field *find_field_in_table_sef(Table *table, const char *name)
 {
   Field **field_ptr;
   if (table->s->name_hash.records)
@@ -4554,7 +4409,7 @@ Field *find_field_in_table_sef(TABLE *table, const char *name)
 
 Field *
 find_field_in_tables(THD *thd, Item_ident *item,
-                     TABLE_LIST *first_table, TABLE_LIST *last_table,
+                     TableList *first_table, TableList *last_table,
 		     Item **ref, find_item_error_report_type report_error,
                      bool check_privileges, bool register_tree_change)
 {
@@ -4564,8 +4419,8 @@ find_field_in_tables(THD *thd, Item_ident *item,
   const char *name= item->field_name;
   uint length=(uint) strlen(name);
   char name_buff[NAME_LEN+1];
-  TABLE_LIST *cur_table= first_table;
-  TABLE_LIST *actual_table;
+  TableList *cur_table= first_table;
+  TableList *actual_table;
   bool allow_rowid;
 
   if (!table_name || !table_name[0])
@@ -4580,14 +4435,14 @@ find_field_in_tables(THD *thd, Item_ident *item,
   {
     /*
       This shortcut is used by prepared statements. We assume that
-      TABLE_LIST *first_table is not changed during query execution (which
+      TableList *first_table is not changed during query execution (which
       is true for all queries except RENAME but luckily RENAME doesn't
       use fields...) so we can rely on reusing pointer to its member.
       With this optimization we also miss case when addition of one more
       field makes some prepared query ambiguous and so erroneous, but we
       accept this trade off.
     */
-    TABLE_LIST *table_ref= item->cached_table;
+    TableList *table_ref= item->cached_table;
     /*
       The condition (table_ref->view == NULL) ensures that we will call
       find_field_in_table even in the case of information schema tables
@@ -4611,7 +4466,6 @@ find_field_in_tables(THD *thd, Item_ident *item,
         Only views fields should be marked as dependent, not an underlying
         fields.
       */
-      if (!table_ref->belong_to_view)
       {
         SELECT_LEX *current_sel= thd->lex->current_select;
         SELECT_LEX *last_select= table_ref->select_lex;
@@ -5048,7 +4902,7 @@ test_if_string_in_list(const char *find, List<String> *str_list)
 */
 
 static bool
-set_new_item_local_context(THD *thd, Item_ident *item, TABLE_LIST *table_ref)
+set_new_item_local_context(THD *thd, Item_ident *item, TableList *table_ref)
 {
   Name_resolution_context *context;
   if (!(context= new (thd->mem_root) Name_resolution_context))
@@ -5093,7 +4947,7 @@ set_new_item_local_context(THD *thd, Item_ident *item, TABLE_LIST *table_ref)
 */
 
 static bool
-mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
+mark_common_columns(THD *thd, TableList *table_ref_1, TableList *table_ref_2,
                     List<String> *using_fields, uint *found_using_fields)
 {
   Field_iterator_table_ref it_1, it_2;
@@ -5104,10 +4958,10 @@ mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
     Leaf table references to which new natural join columns are added
     if the leaves are != NULL.
   */
-  TABLE_LIST *leaf_1= (table_ref_1->nested_join &&
+  TableList *leaf_1= (table_ref_1->nested_join &&
                        !table_ref_1->is_natural_join) ?
                       NULL : table_ref_1;
-  TABLE_LIST *leaf_2= (table_ref_2->nested_join &&
+  TableList *leaf_2= (table_ref_2->nested_join &&
                        !table_ref_2->is_natural_join) ?
                       NULL : table_ref_2;
 
@@ -5234,7 +5088,7 @@ mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
 
       if (field_1)
       {
-        TABLE *table_1= nj_col_1->table_ref->table;
+        Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
         bitmap_set_bit(table_1->read_set, field_1->field_index);
         table_1->covering_keys.intersect(field_1->part_of_key);
@@ -5242,7 +5096,7 @@ mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
       }
       if (field_2)
       {
-        TABLE *table_2= nj_col_2->table_ref->table;
+        Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
         bitmap_set_bit(table_2->read_set, field_2->field_index);
         table_2->covering_keys.intersect(field_2->part_of_key);
@@ -5308,9 +5162,9 @@ err:
 
 static bool
 store_natural_using_join_columns(THD *thd __attribute__((unused)),
-                                 TABLE_LIST *natural_using_join,
-                                 TABLE_LIST *table_ref_1,
-                                 TABLE_LIST *table_ref_2,
+                                 TableList *natural_using_join,
+                                 TableList *table_ref_1,
+                                 TableList *table_ref_2,
                                  List<String> *using_fields,
                                  uint found_using_fields)
 {
@@ -5410,7 +5264,7 @@ err:
   DESCRIPTION
     The procedure performs a post-order traversal of a nested join tree
     and materializes the row types of NATURAL/USING joins in a
-    bottom-up manner until it reaches the TABLE_LIST elements that
+    bottom-up manner until it reaches the TableList elements that
     represent the top-most NATURAL/USING joins. The procedure should be
     applied to each element of SELECT_LEX::top_join_list (i.e. to each
     top-level element of the FROM clause).
@@ -5426,24 +5280,24 @@ err:
 */
 
 static bool
-store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
-                             TABLE_LIST *left_neighbor,
-                             TABLE_LIST *right_neighbor)
+store_top_level_join_columns(THD *thd, TableList *table_ref,
+                             TableList *left_neighbor,
+                             TableList *right_neighbor)
 {
   bool result= true;
 
   /* Call the procedure recursively for each nested table reference. */
   if (table_ref->nested_join)
   {
-    List_iterator_fast<TABLE_LIST> nested_it(table_ref->nested_join->join_list);
-    TABLE_LIST *same_level_left_neighbor= nested_it++;
-    TABLE_LIST *same_level_right_neighbor= NULL;
+    List_iterator_fast<TableList> nested_it(table_ref->nested_join->join_list);
+    TableList *same_level_left_neighbor= nested_it++;
+    TableList *same_level_right_neighbor= NULL;
     /* Left/right-most neighbors, possibly at higher levels in the join tree. */
-    TABLE_LIST *real_left_neighbor, *real_right_neighbor;
+    TableList *real_left_neighbor, *real_right_neighbor;
 
     while (same_level_left_neighbor)
     {
-      TABLE_LIST *cur_table_ref= same_level_left_neighbor;
+      TableList *cur_table_ref= same_level_left_neighbor;
       same_level_left_neighbor= nested_it++;
       /*
         The order of RIGHT JOIN operands is reversed in 'join list' to
@@ -5461,7 +5315,7 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
       {
         /* This can happen only for JOIN ... ON. */
         assert(table_ref->nested_join->join_list.elements == 2);
-        swap_variables(TABLE_LIST*, same_level_left_neighbor, cur_table_ref);
+        std::swap(same_level_left_neighbor, cur_table_ref);
       }
 
       /*
@@ -5489,14 +5343,14 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
   {
     assert(table_ref->nested_join &&
                 table_ref->nested_join->join_list.elements == 2);
-    List_iterator_fast<TABLE_LIST> operand_it(table_ref->nested_join->join_list);
+    List_iterator_fast<TableList> operand_it(table_ref->nested_join->join_list);
     /*
       Notice that the order of join operands depends on whether table_ref
       represents a LEFT or a RIGHT join. In a RIGHT join, the operands are
       in inverted order.
      */
-    TABLE_LIST *table_ref_2= operand_it++; /* Second NATURAL join operand.*/
-    TABLE_LIST *table_ref_1= operand_it++; /* First NATURAL join operand. */
+    TableList *table_ref_2= operand_it++; /* Second NATURAL join operand.*/
+    TableList *table_ref_1= operand_it++; /* First NATURAL join operand. */
     List<String> *using_fields= table_ref->join_using_fields;
     uint found_using_fields;
 
@@ -5505,7 +5359,7 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
       back for 'mark_common_columns'.
     */
     if (table_ref_2->outer_join & JOIN_TYPE_RIGHT)
-      swap_variables(TABLE_LIST*, table_ref_1, table_ref_2);
+      std::swap(table_ref_1, table_ref_2);
     if (mark_common_columns(thd, table_ref_1, table_ref_2,
                             using_fields, &found_using_fields))
       goto err;
@@ -5516,7 +5370,7 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
       same as of an equivalent LEFT JOIN.
     */
     if (table_ref_1->outer_join & JOIN_TYPE_RIGHT)
-      swap_variables(TABLE_LIST*, table_ref_1, table_ref_2);
+      std::swap(table_ref_1, table_ref_2);
     if (store_natural_using_join_columns(thd, table_ref, table_ref_1,
                                          table_ref_2, using_fields,
                                          found_using_fields))
@@ -5538,13 +5392,13 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
     /* Change this table reference to become a leaf for name resolution. */
     if (left_neighbor)
     {
-      TABLE_LIST *last_leaf_on_the_left;
+      TableList *last_leaf_on_the_left;
       last_leaf_on_the_left= left_neighbor->last_leaf_for_name_resolution();
       last_leaf_on_the_left->next_name_resolution_table= table_ref;
     }
     if (right_neighbor)
     {
-      TABLE_LIST *first_leaf_on_the_right;
+      TableList *first_leaf_on_the_right;
       first_leaf_on_the_right= right_neighbor->first_leaf_for_name_resolution();
       table_ref->next_name_resolution_table= first_leaf_on_the_right;
     }
@@ -5583,19 +5437,19 @@ err:
     false  OK
 */
 static bool setup_natural_join_row_types(THD *thd,
-                                         List<TABLE_LIST> *from_clause,
+                                         List<TableList> *from_clause,
                                          Name_resolution_context *context)
 {
   thd->where= "from clause";
   if (from_clause->elements == 0)
     return false; /* We come here in the case of UNIONs. */
 
-  List_iterator_fast<TABLE_LIST> table_ref_it(*from_clause);
-  TABLE_LIST *table_ref; /* Current table reference. */
+  List_iterator_fast<TableList> table_ref_it(*from_clause);
+  TableList *table_ref; /* Current table reference. */
   /* Table reference to the left of the current. */
-  TABLE_LIST *left_neighbor;
+  TableList *left_neighbor;
   /* Table reference to the right of the current. */
-  TABLE_LIST *right_neighbor= NULL;
+  TableList *right_neighbor= NULL;
 
   /* Note that tables in the list are in reversed order */
   for (left_neighbor= table_ref_it++; left_neighbor ; )
@@ -5610,7 +5464,7 @@ static bool setup_natural_join_row_types(THD *thd,
         return true;
       if (left_neighbor)
       {
-        TABLE_LIST *first_leaf_on_the_right;
+        TableList *first_leaf_on_the_right;
         first_leaf_on_the_right= table_ref->first_leaf_for_name_resolution();
         left_neighbor->next_name_resolution_table= first_leaf_on_the_right;
       }
@@ -5637,7 +5491,7 @@ static bool setup_natural_join_row_types(THD *thd,
 ****************************************************************************/
 
 int setup_wild(THD *thd,
-               TABLE_LIST *tables __attribute__((unused)),
+               TableList *tables __attribute__((unused)),
                List<Item> &fields,
                List<Item> *sum_func_list,
                uint wild_num)
@@ -5769,9 +5623,9 @@ bool setup_fields(THD *thd, Item **ref_pointer_array,
   RETURN pointer on pointer to next_leaf of last element
 */
 
-TABLE_LIST **make_leaves_list(TABLE_LIST **list, TABLE_LIST *tables)
+TableList **make_leaves_list(TableList **list, TableList *tables)
 {
-  for (TABLE_LIST *table= tables; table; table= table->next_local)
+  for (TableList *table= tables; table; table= table->next_local)
   {
     {
       *list= table;
@@ -5810,8 +5664,8 @@ TABLE_LIST **make_leaves_list(TABLE_LIST **list, TABLE_LIST *tables)
 */
 
 bool setup_tables(THD *thd, Name_resolution_context *context,
-                  List<TABLE_LIST> *from_clause, TABLE_LIST *tables,
-                  TABLE_LIST **leaves, bool select_insert)
+                  List<TableList> *from_clause, TableList *tables,
+                  TableList **leaves, bool select_insert)
 {
   uint tablenr= 0;
 
@@ -5821,18 +5675,18 @@ bool setup_tables(THD *thd, Name_resolution_context *context,
     this is used for INSERT ... SELECT.
     For select we setup tables except first (and its underlying tables)
   */
-  TABLE_LIST *first_select_table= (select_insert ?
+  TableList *first_select_table= (select_insert ?
                                    tables->next_local:
                                    0);
   if (!(*leaves))
     make_leaves_list(leaves, tables);
 
-  TABLE_LIST *table_list;
+  TableList *table_list;
   for (table_list= *leaves;
        table_list;
        table_list= table_list->next_leaf, tablenr++)
   {
-    TABLE *table= table_list->table;
+    Table *table= table_list->table;
     table->pos_in_table_list= table_list;
     if (first_select_table &&
         table_list->top_table() == first_select_table)
@@ -5884,12 +5738,12 @@ bool setup_tables(THD *thd, Name_resolution_context *context,
 */
 bool setup_tables_and_check_access(THD *thd, 
                                    Name_resolution_context *context,
-                                   List<TABLE_LIST> *from_clause,
-                                   TABLE_LIST *tables,
-                                   TABLE_LIST **leaves,
+                                   List<TableList> *from_clause,
+                                   TableList *tables,
+                                   TableList **leaves,
                                    bool select_insert)
 {
-  TABLE_LIST *leaves_tmp= NULL;
+  TableList *leaves_tmp= NULL;
   bool first_table= true;
 
   if (setup_tables(thd, context, from_clause, tables,
@@ -5901,10 +5755,6 @@ bool setup_tables_and_check_access(THD *thd,
 
   for (; leaves_tmp; leaves_tmp= leaves_tmp->next_leaf)
   {
-    if (leaves_tmp->belong_to_view)
-    {
-      return true;
-    }
     first_table= 0;
   }
   return false;
@@ -5925,7 +5775,7 @@ bool setup_tables_and_check_access(THD *thd,
      1	error
 */
 
-bool get_key_map_from_key_list(key_map *map, TABLE *table,
+bool get_key_map_from_key_list(key_map *map, Table *table,
                                List<String> *index_list)
 {
   List_iterator_fast<String> it(*index_list);
@@ -5997,7 +5847,7 @@ insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
     else treat natural joins as leaves and do not iterate over their underlying
     tables.
   */
-  for (TABLE_LIST *tables= (table_name ? context->table_list :
+  for (TableList *tables= (table_name ? context->table_list :
                             context->first_name_resolution_table);
        tables;
        tables= (table_name ? tables->next_local :
@@ -6005,7 +5855,7 @@ insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
        )
   {
     Field *field;
-    TABLE *table= tables->table;
+    Table *table= tables->table;
 
     assert(tables->is_leaf_for_name_resolution());
 
@@ -6054,7 +5904,7 @@ insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
         }
         if (tables->is_natural_join)
         {
-          TABLE *field_table;
+          Table *field_table;
           /*
             In this case we are sure that the column ref will not be created
             because it was already created and stored with the natural join.
@@ -6121,12 +5971,12 @@ insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
     false if all is OK
 */
 
-int setup_conds(THD *thd, TABLE_LIST *tables __attribute__((unused)),
-                TABLE_LIST *leaves,
+int setup_conds(THD *thd, TableList *tables __attribute__((unused)),
+                TableList *leaves,
                 COND **conds)
 {
   SELECT_LEX *select_lex= thd->lex->current_select;
-  TABLE_LIST *table= NULL;	// For HP compilers
+  TableList *table= NULL;	// For HP compilers
   void *save_thd_marker= thd->thd_marker;
   /*
     it_is_update set to true when tables of primary SELECT_LEX (SELECT_LEX
@@ -6160,8 +6010,8 @@ int setup_conds(THD *thd, TABLE_LIST *tables __attribute__((unused)),
   */
   for (table= leaves; table; table= table->next_leaf)
   {
-    TABLE_LIST *embedded; /* The table at the current level of nesting. */
-    TABLE_LIST *embedding= table; /* The parent nested table reference. */
+    TableList *embedded; /* The table at the current level of nesting. */
+    TableList *embedding= table; /* The parent nested table reference. */
     do
     {
       embedded= embedding;
@@ -6224,7 +6074,7 @@ fill_record(THD * thd, List<Item> &fields, List<Item> &values, bool ignore_error
   List_iterator_fast<Item> f(fields),v(values);
   Item *value, *fld;
   Item_field *field;
-  TABLE *table= 0;
+  Table *table= 0;
 
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
@@ -6298,7 +6148,7 @@ fill_record(THD *thd, Field **ptr, List<Item> &values,
 {
   List_iterator_fast<Item> v(values);
   Item *value;
-  TABLE *table= 0;
+  Table *table= 0;
 
   Field *field;
   /*
@@ -6364,15 +6214,14 @@ bool mysql_rm_tmp_tables(void)
                                    (file->name[1] == '.' &&  !file->name[2])))
         continue;
 
-      if (!memcmp((uchar*) file->name, (uchar*) tmp_file_prefix,
-                  tmp_file_prefix_length))
+      if (!memcmp(file->name, tmp_file_prefix, tmp_file_prefix_length))
       {
         char *ext= fn_ext(file->name);
         uint ext_len= strlen(ext);
         uint filePath_len= snprintf(filePath, sizeof(filePath),
                                     "%s%c%s", tmpdir, FN_LIBCHAR,
                                     file->name);
-        if (!memcmp((uchar*) reg_ext, (uchar*) ext, ext_len))
+        if (!memcmp(reg_ext, ext, ext_len))
         {
           handler *handler_file= 0;
           /* We should cut file extention before deleting of table */
@@ -6426,7 +6275,7 @@ void remove_db_from_cache(const char *db)
 {
   for (uint idx=0 ; idx < open_cache.records ; idx++)
   {
-    TABLE *table=(TABLE*) hash_element(&open_cache,idx);
+    Table *table=(Table*) hash_element(&open_cache,idx);
     if (!strcmp(table->s->db.str, db))
     {
       table->s->version= 0L;			/* Free when thread is ready */
@@ -6476,20 +6325,20 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
 {
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
-  TABLE *table;
+  Table *table;
   TABLE_SHARE *share;
   bool result= 0, signalled= 0;
 
-  key_length=(uint) (strmov(strmov(key,db)+1,table_name)-key)+1;
+  key_length=(uint) (stpcpy(stpcpy(key,db)+1,table_name)-key)+1;
   for (;;)
   {
     HASH_SEARCH_STATE state;
     result= signalled= 0;
 
-    for (table= (TABLE*) hash_first(&open_cache, (uchar*) key, key_length,
+    for (table= (Table*) hash_first(&open_cache, (uchar*) key, key_length,
                                     &state);
          table;
-         table= (TABLE*) hash_next(&open_cache, (uchar*) key, key_length,
+         table= (Table*) hash_next(&open_cache, (uchar*) key, key_length,
                                    &state))
     {
       THD *in_use;
@@ -6520,7 +6369,7 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
           open_tables list. Aborting the MERGE lock after a child was
           closed and before the parent is closed would be fatal.
         */
-        for (TABLE *thd_table= in_use->open_tables;
+        for (Table *thd_table= in_use->open_tables;
 	     thd_table ;
 	     thd_table= thd_table->next)
         {
@@ -6566,7 +6415,7 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
             It can happen that another thread has opened the
             table but has not yet locked any table at all. Since
             it can be locked waiting for a table that our thread
-            has done LOCK TABLE x WRITE on previously, we need to
+            has done LOCK Table x WRITE on previously, we need to
             ensure that the thread actually hears our signal
             before we go to sleep. Thus we wait for a short time
             and then we retry another loop in the
@@ -6589,122 +6438,6 @@ bool is_equal(const LEX_STRING *a, const LEX_STRING *b)
 {
   return a->length == b->length && !strncmp(a->str, b->str, a->length);
 }
-
-
-/*
-  Open and lock system tables for read.
-
-  SYNOPSIS
-    open_system_tables_for_read()
-      thd         Thread context.
-      table_list  List of tables to open.
-      backup      Pointer to Open_tables_state instance where
-                  information about currently open tables will be
-                  saved, and from which will be restored when we will
-                  end work with system tables.
-
-  NOTES
-    Thanks to restrictions which we put on opening and locking of
-    system tables for writing, we can open and lock them for reading
-    even when we already have some other tables open and locked.  One
-    must call close_system_tables() to close systems tables opened
-    with this call.
-
-  RETURN
-    false   Success
-    true    Error
-*/
-
-bool
-open_system_tables_for_read(THD *thd, TABLE_LIST *table_list,
-                            Open_tables_state *backup)
-{
-  thd->reset_n_backup_open_tables_state(backup);
-
-  uint count= 0;
-  bool not_used;
-  for (TABLE_LIST *tables= table_list; tables; tables= tables->next_global)
-  {
-    TABLE *table= open_table(thd, tables, thd->mem_root, &not_used,
-                             MYSQL_LOCK_IGNORE_FLUSH);
-    if (!table)
-      goto error;
-
-    assert(table->s->table_category == TABLE_CATEGORY_SYSTEM);
-
-    table->use_all_columns();
-    table->reginfo.lock_type= tables->lock_type;
-    tables->table= table;
-    count++;
-  }
-
-  {
-    TABLE **list= (TABLE**) thd->alloc(sizeof(TABLE*) * count);
-    TABLE **ptr= list;
-    for (TABLE_LIST *tables= table_list; tables; tables= tables->next_global)
-      *(ptr++)= tables->table;
-
-    thd->lock= mysql_lock_tables(thd, list, count,
-                                 MYSQL_LOCK_IGNORE_FLUSH, &not_used);
-  }
-  if (thd->lock)
-    return(false);
-
-error:
-  close_system_tables(thd, backup);
-
-  return(true);
-}
-
-
-/*
-  Close system tables, opened with open_system_tables_for_read().
-
-  SYNOPSIS
-    close_system_tables()
-      thd     Thread context
-      backup  Pointer to Open_tables_state instance which holds
-              information about tables which were open before we
-              decided to access system tables.
-*/
-
-void
-close_system_tables(THD *thd, Open_tables_state *backup)
-{
-  close_thread_tables(thd);
-  thd->restore_backup_open_tables_state(backup);
-}
-
-
-/*
-  Open and lock one system table for update.
-
-  SYNOPSIS
-    open_system_table_for_update()
-      thd        Thread context.
-      one_table  Table to open.
-
-  NOTES
-    Table opened with this call should closed using close_thread_tables().
-
-  RETURN
-    0	Error
-    #	Pointer to TABLE object of system table
-*/
-
-TABLE *
-open_system_table_for_update(THD *thd, TABLE_LIST *one_table)
-{
-  TABLE *table= open_ltable(thd, one_table, one_table->lock_type, 0);
-  if (table)
-  {
-    assert(table->s->table_category == TABLE_CATEGORY_SYSTEM);
-    table->use_all_columns();
-  }
-
-  return(table);
-}
-
 /**
   @} (end of group Data_Dictionary)
 */

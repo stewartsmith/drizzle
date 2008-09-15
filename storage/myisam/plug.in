@@ -1,6 +1,6 @@
-MYSQL_STORAGE_ENGINE(myisam,no, [MyISAM Storage Engine],
+DRIZZLE_STORAGE_ENGINE(myisam,no, [MyISAM Storage Engine],
         [Traditional non-transactional MySQL tables])
-MYSQL_PLUGIN_DIRECTORY(myisam,  [storage/myisam])
-MYSQL_PLUGIN_STATIC(myisam,     [libmyisam.la])
-MYSQL_PLUGIN_MANDATORY(myisam)  dnl Default
-MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS(myisam, [ha_myisam.cc])
+DRIZZLE_PLUGIN_DIRECTORY(myisam,  [storage/myisam])
+DRIZZLE_PLUGIN_STATIC(myisam,     [libmyisam.la])
+DRIZZLE_PLUGIN_MANDATORY(myisam)  dnl Default
+DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS(myisam, [ha_myisam.cc])

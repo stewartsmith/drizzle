@@ -27,7 +27,7 @@
 int heap_scan_init(register HP_INFO *info)
 {
   info->lastinx= -1;
-  info->current_record= (ulong) ~0L;		/* No current record */
+  info->current_record= UINT32_MAX;		/* No current record */
   info->update=0;
   info->next_block=0;
   return(0);
@@ -36,19 +36,19 @@ int heap_scan_init(register HP_INFO *info)
 int heap_scan(register HP_INFO *info, uchar *record)
 {
   HP_SHARE *share=info->s;
-  ulong pos;
+  uint32_t pos;
 
   pos= ++info->current_record;
   if (pos < info->next_block)
   {
-    info->current_ptr+=share->block.recbuffer;
+    info->current_ptr+=share->recordspace.block.recbuffer;
   }
   else
   {
-    info->next_block+=share->block.records_in_block;
-    if (info->next_block >= share->records+share->deleted)
+    info->next_block+=share->recordspace.block.records_in_block;
+    if (info->next_block >= share->recordspace.chunk_count)
     {
-      info->next_block= share->records+share->deleted;
+      info->next_block= share->recordspace.chunk_count;
       if (pos >= info->next_block)
       {
 	info->update= 0;
@@ -57,13 +57,13 @@ int heap_scan(register HP_INFO *info, uchar *record)
     }
     hp_find_record(info, pos);
   }
-  if (!info->current_ptr[share->reclength])
+  if (get_chunk_status(&share->recordspace, info->current_ptr) != CHUNK_STATUS_ACTIVE)
   {
     info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND;
     return(my_errno=HA_ERR_RECORD_DELETED);
   }
   info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND | HA_STATE_AKTIV;
-  memcpy(record,info->current_ptr,(size_t) share->reclength);
+  hp_extract_record(share, record, info->current_ptr);
   info->current_hash_ptr=0;			/* Can't use read_next */
   return(0);
 } /* heap_scan */

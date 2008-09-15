@@ -198,7 +198,7 @@ public:
 
 
 class Item_cache;
-#define UNKNOWN ((my_bool)-1)
+#define UNKNOWN ((bool)-1)
 
 
 /*
@@ -227,7 +227,7 @@ protected:
       FALSE   - result is FALSE
       TRUE    - result is NULL
   */
-  my_bool result_for_null_param;
+  bool result_for_null_param;
 public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
     Item_bool_func(a, my_reinterpret_cast(Item *)(b)), cache(0),
@@ -347,7 +347,7 @@ public:
 
   bool is_null() { return test(args[0]->is_null() || args[1]->is_null()); }
   bool is_bool_func() { return 1; }
-  CHARSET_INFO *compare_collation() { return cmp.cmp_collation.collation; }
+  const CHARSET_INFO *compare_collation() { return cmp.cmp_collation.collation; }
   uint decimal_precision() const { return 1; }
   void top_level_item() { abort_on_null= true; }
 
@@ -606,7 +606,7 @@ public:
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
   bool is_bool_func() { return 1; }
-  CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
   uint decimal_precision() const { return 1; }
 };
 
@@ -636,7 +636,7 @@ struct interval_range
 class Item_func_interval :public Item_int_func
 {
   Item_row *row;
-  my_bool use_decimal_comparison;
+  bool use_decimal_comparison;
   interval_range *intervals;
 public:
   Item_func_interval(Item_row *a)
@@ -684,7 +684,7 @@ public:
   enum_field_types field_type() const;
   void fix_length_and_dec();
   const char *func_name() const { return "ifnull"; }
-  Field *tmp_table_field(TABLE *table);
+  Field *tmp_table_field(Table *table);
   uint decimal_precision() const;
 };
 
@@ -747,12 +747,12 @@ public:
   char *base;
   uint size;
   qsort2_cmp compare;
-  CHARSET_INFO *collation;
+  const CHARSET_INFO *collation;
   uint count;
   uint used_count;
   in_vector() {}
   in_vector(uint elements,uint element_length,qsort2_cmp cmp_func, 
-  	    CHARSET_INFO *cmp_coll)
+  	    const CHARSET_INFO * const cmp_coll)
     :base((char*) sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
@@ -761,7 +761,7 @@ public:
   virtual uchar *get_value(Item *item)=0;
   void sort()
   {
-    my_qsort2(base,used_count,size,compare,collation);
+    my_qsort2(base,used_count,size,compare, (void *) collation);
   }
   int find(Item *item);
   
@@ -799,7 +799,7 @@ class in_string :public in_vector
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmp;
 public:
-  in_string(uint elements,qsort2_cmp cmp_func, CHARSET_INFO *cs);
+  in_string(uint elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs);
   ~in_string();
   void set(uint pos,Item *item);
   uchar *get_value(Item *item);
@@ -845,7 +845,7 @@ public:
   void value_to_item(uint pos, Item *item)
   {
     ((Item_int*) item)->value= ((packed_int64_t*) base)[pos].val;
-    ((Item_int*) item)->unsigned_flag= (my_bool)
+    ((Item_int*) item)->unsigned_flag= (bool)
       ((packed_int64_t*) base)[pos].unsigned_flag;
   }
   Item_result result_type() { return INT_RESULT; }
@@ -926,14 +926,14 @@ public:
 class cmp_item :public Sql_alloc
 {
 public:
-  CHARSET_INFO *cmp_charset;
+  const CHARSET_INFO *cmp_charset;
   cmp_item() { cmp_charset= &my_charset_bin; }
   virtual ~cmp_item() {}
   virtual void store_value(Item *item)= 0;
   virtual int cmp(Item *item)= 0;
   // for optimized IN with row
   virtual int compare(cmp_item *item)= 0;
-  static cmp_item* get_comparator(Item_result type, CHARSET_INFO *cs);
+  static cmp_item* get_comparator(Item_result type, const CHARSET_INFO * const cs);
   virtual cmp_item *make_same()= 0;
   virtual void store_value_by_template(cmp_item *tmpl  __attribute__((unused)),
                                        Item *item)
@@ -948,8 +948,8 @@ protected:
   String *value_res;
 public:
   cmp_item_string () {}
-  cmp_item_string (CHARSET_INFO *cs) { cmp_charset= cs; }
-  void set_charset(CHARSET_INFO *cs) { cmp_charset= cs; }
+  cmp_item_string (const CHARSET_INFO * const cs) { cmp_charset= cs; }
+  void set_charset(const CHARSET_INFO * const cs) { cmp_charset= cs; }
   friend class cmp_item_sort_string;
   friend class cmp_item_sort_string_in_static;
 };
@@ -962,7 +962,7 @@ protected:
 public:
   cmp_item_sort_string():
     cmp_item_string() {}
-  cmp_item_sort_string(CHARSET_INFO *cs):
+  cmp_item_sort_string(const CHARSET_INFO * const cs):
     cmp_item_string(cs),
     value(value_buff, sizeof(value_buff), cs) {}
   void store_value(Item *item)
@@ -983,7 +983,7 @@ public:
     return sortcmp(value_res, l_cmp->value_res, cmp_charset);
   } 
   cmp_item *make_same();
-  void set_charset(CHARSET_INFO *cs)
+  void set_charset(const CHARSET_INFO * const cs)
   {
     cmp_charset= cs;
     value.set_quick(value_buff, sizeof(value_buff), cs);
@@ -1079,7 +1079,7 @@ class cmp_item_sort_string_in_static :public cmp_item_string
  protected:
   String value;
 public:
-  cmp_item_sort_string_in_static(CHARSET_INFO *cs):
+  cmp_item_sort_string_in_static(const CHARSET_INFO * const cs):
     cmp_item_string(cs) {}
   void store_value(Item *item)
   {
@@ -1164,7 +1164,7 @@ public:
   const char *func_name() const { return "case"; }
   virtual void print(String *str, enum_query_type query_type);
   Item *find_item(String *str);
-  CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
   void cleanup();
   void agg_str_lengths(Item *arg);
   void agg_num_lengths(Item *arg);
@@ -1233,7 +1233,7 @@ public:
   const char *func_name() const { return " IN "; }
   bool nulls_in_row();
   bool is_bool_func() { return 1; }
-  CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
 };
 
 class cmp_item_row :public cmp_item
@@ -1304,7 +1304,7 @@ public:
   table_map not_null_tables() const { return 0; }
   optimize_type select_optimize() const { return OPTIMIZE_NULL; }
   Item *neg_transformer(THD *thd);
-  CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
+  const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
 };
 
 /* Functions used by HAVING for rewriting IN subquery */
@@ -1351,7 +1351,7 @@ public:
   { return abort_on_null ? not_null_tables_cache : 0; }
   Item *neg_transformer(THD *thd);
   virtual void print(String *str, enum_query_type query_type);
-  CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
+  const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
   void top_level_item() { abort_on_null=1; }
 };
 
@@ -1428,7 +1428,7 @@ public:
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
   void split_sum_func(THD *thd, Item **ref_pointer_array, List<Item> &fields);
-  friend int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
+  friend int setup_conds(THD *thd, TableList *tables, TableList *leaves,
                          COND **conds);
   void top_level_item() { abort_on_null=1; }
   void copy_andor_arguments(THD *thd, Item_cond *item);
@@ -1552,7 +1552,7 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
   Item *transform(Item_transformer transformer, uchar *arg);
   virtual void print(String *str, enum_query_type query_type);
-  CHARSET_INFO *compare_collation() 
+  const CHARSET_INFO *compare_collation() 
   { return fields.head()->collation.collation; }
 }; 
 

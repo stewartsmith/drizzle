@@ -152,15 +152,12 @@ libinnobase_a_SOURCES =	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c		\
 			handler/ha_innodb.cc
 
-libinnobase_a_CXXFLAGS=	$(AM_CFLAGS)
-libinnobase_a_CFLAGS  =	$(AM_CFLAGS)
-
 EXTRA_LTLIBRARIES =	ha_innodb.la
 pkglib_LTLIBRARIES =	@plugin_innobase_shared_target@
 
 ha_innodb_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-ha_innodb_la_CXXFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_innodb_la_CFLAGS  =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+ha_innodb_la_CFLAGS  =	$(AM_CFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 ha_innodb_la_SOURCES =	$(libinnobase_a_SOURCES)
 
 EXTRA_DIST =		plug.in \

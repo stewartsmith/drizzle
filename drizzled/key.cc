@@ -16,7 +16,7 @@
 
 /* Functions to handle keys and fields in forms */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /*
   Search after a key that starts with 'field'
@@ -106,7 +106,7 @@ int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
 */
 
 void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
-              uint key_length)
+              unsigned int key_length)
 {
   uint length;
   KEY_PART_INFO *key_part;
@@ -125,15 +125,15 @@ void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
         key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       key_length-= HA_KEY_BLOB_LENGTH;
-      length= min(key_length, key_part->length);
+      length= min((uint16_t)key_length, key_part->length);
       key_part->field->get_key_image(to_key, length, Field::itRAW);
       to_key+= HA_KEY_BLOB_LENGTH;
     }
     else
     {
-      length= min(key_length, key_part->length);
+      length= min((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
-      CHARSET_INFO *cs= field->charset();
+      const CHARSET_INFO * const cs= field->charset();
       uint bytes= field->get_key_image(to_key, length, Field::itRAW);
       if (bytes < length)
         cs->cset->fill(cs, (char*) to_key + bytes, length - bytes, ' ');
@@ -174,7 +174,7 @@ void key_zero_nulls(uchar *tuple, KEY *key_info)
 */
 
 void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
-                 uint key_length)
+                 uint16_t key_length)
 {
   uint length;
   KEY_PART_INFO *key_part;
@@ -214,14 +214,11 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      my_bitmap_map *old_map;
       my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
       field->move_field_offset(ptrdiff);
       key_length-= HA_KEY_BLOB_LENGTH;
       length= min(key_length, key_part->length);
-      old_map= dbug_tmp_use_all_columns(field->table, field->table->write_set);
       field->set_key_image(from_key, length);
-      dbug_tmp_restore_column_map(field->table->write_set, old_map);
       from_key+= HA_KEY_BLOB_LENGTH;
       field->move_field_offset(-ptrdiff);
     }
@@ -241,7 +238,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
 /**
   Compare if a key has changed.
 
-  @param table		TABLE
+  @param table		Table
   @param key		key to compare to row
   @param idx		Index used
   @param key_length	Length of key
@@ -258,7 +255,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     1	Key has changed
 */
 
-bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
+bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
 {
   uint store_length;
   KEY_PART_INFO *key_part;
@@ -292,7 +289,7 @@ bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
     if (!(key_part->key_type & (FIELDFLAG_NUMBER+FIELDFLAG_BINARY+
                                 FIELDFLAG_PACK)))
     {
-      CHARSET_INFO *cs= key_part->field->charset();
+      const CHARSET_INFO * const cs= key_part->field->charset();
       uint char_length= key_part->length / cs->mbmaxlen;
       const uchar *pos= table->record[0] + key_part->offset;
       if (length > char_length)
@@ -326,12 +323,11 @@ bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
      idx	Key number
 */
 
-void key_unpack(String *to,TABLE *table,uint idx)
+void key_unpack(String *to,Table *table,uint idx)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
   String tmp;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
 
   to->length(0);
   for (key_part=table->key_info[idx].key_part,key_part_end=key_part+
@@ -351,7 +347,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
     }
     if ((field=key_part->field))
     {
-      CHARSET_INFO *cs= field->charset();
+      const CHARSET_INFO * const cs= field->charset();
       field->val_str(&tmp);
       if (cs->mbmaxlen > 1 &&
           table->field[key_part->fieldnr - 1]->field_length !=
@@ -372,13 +368,13 @@ void key_unpack(String *to,TABLE *table,uint idx)
       }
       
       if (key_part->length < field->pack_length())
-	tmp.length(min(tmp.length(),key_part->length));
+	tmp.length(min(tmp.length(),(uint32_t)key_part->length));
       to->append(tmp);
     }
     else
       to->append(STRING_WITH_LEN("???"));
   }
-  dbug_tmp_restore_column_map(table->read_set, old_map);
+
   return;
 }
 
@@ -388,12 +384,12 @@ void key_unpack(String *to,TABLE *table,uint idx)
 
   SYNOPSIS
     is_key_used()
-      table   TABLE object with which keys and fields are associated.
+      table   Table object with which keys and fields are associated.
       idx     Key to be checked.
       fields  Bitmap of fields to be checked.
 
   NOTE
-    This function uses TABLE::tmp_set bitmap so the caller should care
+    This function uses Table::tmp_set bitmap so the caller should care
     about saving/restoring its state if it also uses this bitmap.
 
   RETURN VALUE
@@ -401,7 +397,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(TABLE *table, uint idx, const MY_BITMAP *fields)
+bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
 {
   bitmap_clear_all(&table->tmp_set);
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
