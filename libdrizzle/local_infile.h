@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,27 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_sql_common_h
-#define _libdrizzle_sql_common_h
+#ifndef _libdrizzle_local_infile_h
+#define _libdrizzle_local_infile_h
 
-extern const char	*unknown_sqlstate;
-extern const char	*cant_connect_sqlstate;
-extern const char	*not_error_sqlstate;
-
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
 
-DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, uint fields,
-                             bool default_value);
-void free_rows(DRIZZLE_DATA *cur);
-void free_old_query(DRIZZLE *drizzle);
-void end_server(DRIZZLE *drizzle);
-bool drizzle_reconnect(DRIZZLE *drizzle);
-void net_clear_error(NET *net);
-void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
-#ifdef	__cplusplus
+#include <libdrizzle/drizzle.h>
+
+bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
+
+#ifdef  __cplusplus
 }
 #endif
 
-#endif
+#endif /* _libdrizzle_local_infile_h */

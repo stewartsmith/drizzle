@@ -2,7 +2,7 @@
   Just a test application for threads.
   */
 #include "azio.h"
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <mysys/my_getopt.h>
 #include <stdio.h>
 #include <stdlib.h>

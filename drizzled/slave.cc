@@ -1906,9 +1906,6 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
 {
   mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
   thd->set_proc_info(_(messages[SLAVE_RECON_MSG_WAIT]));
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->clear_active_vio();
-#endif
   end_server(drizzle);
   if ((*retry_count)++)
   {
@@ -2195,9 +2192,6 @@ err:
       can be called in the middle of closing the VIO associated with
       the 'mysql' object, causing a crash.
     */
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->clear_active_vio();
-#endif
     drizzle_close(drizzle);
     mi->drizzle=0;
   }
@@ -3214,9 +3208,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
       general_log_print(thd, COM_CONNECT_OUT, "%s@%s:%d",
                         mi->user, mi->host, mi->port);
     }
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->set_active_vio(drizzle->net.vio);
-#endif
   }
   drizzle->reconnect= 1;
   return(slave_was_killed);

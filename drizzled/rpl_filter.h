@@ -16,7 +16,7 @@
 #ifndef RPL_FILTER_H
 #define RPL_FILTER_H
 
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 
 typedef struct st_table_rule_ent
 {

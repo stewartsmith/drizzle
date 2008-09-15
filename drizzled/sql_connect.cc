@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <vio/violite.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -237,15 +236,11 @@ static int check_connection(THD *thd)
   uint32_t pkt_len= 0;
   char *end;
 
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->set_active_vio(net->vio);
-#endif
-
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];
 
-    if (vio_peer_addr(net->vio, ip, &thd->peer_port, NI_MAXHOST))
+    if (net_peer_addr(net, ip, &thd->peer_port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.ip);
       return 1;
@@ -253,7 +248,7 @@ static int check_connection(THD *thd)
     if (!(thd->main_security_ctx.ip= my_strdup(ip,MYF(MY_WME))))
       return 1; /* The error is set by my_strdup(). */
   }
-  vio_keepalive(net->vio, true);
+  net_keepalive(net, true);
   
   uint32_t server_capabilites;
   {

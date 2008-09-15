@@ -25,19 +25,31 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 libdrizzleincludedir = ${includedir}/libdrizzle
-dist_libdrizzleinclude_HEADERS =	drizzle.h \
+dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
 					drizzle_com.h \
 					errmsg.h \
-					sql_common.h
+					sql_common.h \
+					drizzle.h \
+					drizzle_res.h \
+					drizzle_field.h \
+					drizzle_rows.h \
+					drizzle_methods.h \
+					drizzle_data.h \
+					drizzle_options.h \
+					drizzle_parameters.h
 
 lib_LTLIBRARIES = libdrizzle.la
-libdrizzle_la_SOURCES = libdrizzle.c client.c local_infile.c net_serv.c get_password.c
-libdrizzle_la_LIBADD =	libsqlcommon.la \
-			${top_builddir}/vio/libviolt.la 
-libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
+libdrizzle_la_SOURCES = libdrizzle.c \
+			client.c \
+			local_infile.c \
+			net_serv.c \
+			get_password.c \
+			pack.c \
+			errmsg.c \
+			password.c
 
-noinst_LTLIBRARIES = libsqlcommon.la
-libsqlcommon_la_SOURCES = pack.c errmsg.c password.c
+libdrizzle_la_LIBADD =	${top_builddir}/vio/libviolt.la 
+libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
@@ -47,8 +59,8 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
-noinst_HEADERS = 	client_settings.h \
-			gettext.h
+noinst_HEADERS =	gettext.h \
+			local_infile.h
 
 EXTRA_DIST =		libdrizzle.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \

@@ -416,30 +416,37 @@ enum enum_drizzle_set_option
 extern "C" {
 #endif
 
-bool	my_net_init(NET *net, Vio* vio);
-void	my_net_local_init(NET *net);
-void	net_end(NET *net);
-void	net_clear(NET *net, bool clear_buffer);
-bool    net_realloc(NET *net, size_t length);
-bool	net_flush(NET *net);
-bool	my_net_write(NET *net,const unsigned char *packet, size_t len);
-bool	net_write_command(NET *net,unsigned char command,
-			  const unsigned char *header, size_t head_len,
-			  const unsigned char *packet, size_t len);
-int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
-uint32_t my_net_read(NET *net);
+  bool my_net_init(NET *net, Vio* vio);
+  void my_net_local_init(NET *net);
+  void net_end(NET *net);
+  void net_clear(NET *net, bool clear_buffer);
+  bool net_realloc(NET *net, size_t length);
+  bool net_flush(NET *net);
+  bool my_net_write(NET *net,const unsigned char *packet, size_t len);
+  bool net_write_command(NET *net,unsigned char command,
+                         const unsigned char *header, size_t head_len,
+                         const unsigned char *packet, size_t len);
+  int32_t net_real_write(NET *net,const unsigned char *packet, size_t len);
+  uint32_t my_net_read(NET *net);
+  void net_close(NET *net);
+  bool net_init_sock(NET * net, int sock, int flags);
+  bool net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
+  void net_keepalive(NET *net, bool flag);
+  int net_get_sd(NET *net);
+  bool net_should_close(NET *net);
+  bool net_more_data(NET *net);
 
 
 /** @TODO global.h is actually not needed here... only stdint and protocol.h */
 #ifdef DRIZZLE_SERVER_GLOBAL_H
-void my_net_set_write_timeout(NET *net, uint timeout);
-void my_net_set_read_timeout(NET *net, uint timeout);
+  void my_net_set_write_timeout(NET *net, uint timeout);
+  void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
 
-struct rand_struct {
-  unsigned long seed1,seed2,max_value;
-  double max_value_dbl;
-};
+  struct rand_struct {
+    unsigned long seed1,seed2,max_value;
+    double max_value_dbl;
+  };
 
 #ifdef __cplusplus
 }
@@ -493,30 +500,31 @@ extern "C" {
   implemented in sql/password.c
 */
 
-void randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
-double my_rnd(struct rand_struct *);
-void create_random_string(char *to, unsigned int length, struct rand_struct *rand_st);
+  void randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
+  double my_rnd(struct rand_struct *);
+  void create_random_string(char *to, unsigned int length,
+                            struct rand_struct *rand_st);
 
-void hash_password(uint32_t *to, const char *password, uint32_t password_len);
+  void hash_password(uint32_t *to, const char *password, uint32_t password_len);
 
-void make_scrambled_password(char *to, const char *password);
-void scramble(char *to, const char *message, const char *password);
-bool check_scramble(const char *reply, const char *message,
-                       const unsigned char *hash_stage2);
-void get_salt_from_password(unsigned char *res, const char *password);
-void make_password_from_salt(char *to, const unsigned char *hash_stage2);
-char *octet2hex(char *to, const char *str, unsigned int len);
+  void make_scrambled_password(char *to, const char *password);
+  void scramble(char *to, const char *message, const char *password);
+  bool check_scramble(const char *reply, const char *message,
+                      const unsigned char *hash_stage2);
+  void get_salt_from_password(unsigned char *res, const char *password);
+  void make_password_from_salt(char *to, const unsigned char *hash_stage2);
+  char *octet2hex(char *to, const char *str, unsigned int len);
 
 /* end of password.c */
 
-char *get_tty_password(const char *opt_message);
-const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
+  char *get_tty_password(const char *opt_message);
+  const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
 /** @TODO Is it necessary to include all of drizzled/global.h here? */
 #ifdef DRIZZLE_SERVER_GLOBAL_H
-uint32_t net_field_length(uchar **packet);
-uint64_t net_field_length_ll(uchar **packet);
-uchar *net_store_length(uchar *pkg, uint64_t length);
+  uint32_t net_field_length(uchar **packet);
+  uint64_t net_field_length_ll(uchar **packet);
+  uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
 
 #ifdef __cplusplus

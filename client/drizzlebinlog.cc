@@ -37,7 +37,7 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
@@ -1973,5 +1973,6 @@ int main(int argc, char** argv)
   the server
 */
 
+#define max_allowed_packet 1024L*1024L*1024L
 #include <drizzled/log_event.cc>
 

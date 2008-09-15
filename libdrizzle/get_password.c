@@ -23,7 +23,7 @@
 ** This is an own file to avoid conflicts with curses
 */
 #include <drizzled/global.h>
-#include "drizzle.h"
+#include "libdrizzle.h"
 
 #if defined(HAVE_BROKEN_GETPASS) && !defined(HAVE_GETPASSPHRASE)
 #undef HAVE_GETPASS

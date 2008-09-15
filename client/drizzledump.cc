@@ -115,8 +115,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file=0;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-
 /*
   Constant for detection of default value of default_charset.
   If default_charset is equal to drizzle_universal_client_charset, then
@@ -1063,8 +1061,6 @@ static int connect_to_db(char *host, char *user,char *passwd)
   drizzle_create(&drizzle_connection);
   if (opt_compress)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NullS);
-  if (opt_protocol)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(drizzle= drizzle_connect(&drizzle_connection,host,user,passwd,
                                   NULL,opt_drizzle_port, NULL,
                                   0)))
@@ -2256,7 +2252,7 @@ static void dump_table(char *table, char *db)
           {
             if (length)
             {
-              if (!IS_NUM_FIELD(field))
+              if (!(field->type & NUM_FLAG))
               {
                 /*
                   "length * 2 + 2" is OK for both HEX and non-HEX modes:
@@ -2312,7 +2308,7 @@ static void dump_table(char *table, char *db)
           }
           if (row[i])
           {
-            if (!IS_NUM_FIELD(field))
+            if (!(field->type & NUM_FLAG))
             {
               if (opt_xml)
               {

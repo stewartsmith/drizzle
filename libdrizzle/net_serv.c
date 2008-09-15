@@ -19,7 +19,7 @@
  */
 
 #include <drizzled/global.h>
-#include <drizzle.h>
+#include "libdrizzle.h"
 #include <libdrizzle/errmsg.h>
 #include <vio/violite.h>
 #include <signal.h>
@@ -74,6 +74,29 @@ bool my_net_init(NET *net, Vio* vio)
   return(0);
 }
 
+bool net_init_sock(NET * net, int sock, int flags)
+{
+
+  Vio *vio_tmp= vio_new(sock, VIO_TYPE_TCPIP, flags);
+  if (vio_tmp == NULL)
+    return true;
+  else
+    if (my_net_init(net, vio_tmp))
+    {
+      /* Only delete the temporary vio if we didn't already attach it to the
+       * NET object.
+       */
+      if (vio_tmp && (net->vio != vio_tmp))
+        vio_delete(vio_tmp);
+      else
+      {
+        (void) shutdown(sock, SHUT_RDWR);
+        (void) close(sock);
+      }
+      return true;
+    }
+  return false;
+}
 
 void net_end(NET *net)
 {
@@ -83,6 +106,39 @@ void net_end(NET *net)
   return;
 }
 
+void net_close(NET *net)
+{
+  if (net->vio != NULL)
+  {
+    vio_delete(net->vio);
+    net->vio= 0;
+  }
+}
+
+bool net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+{
+  return vio_peer_addr(net->vio, buf, port, buflen);
+}
+
+void net_keepalive(NET *net, bool flag)
+{
+  vio_keepalive(net->vio, flag);
+}
+
+int net_get_sd(NET *net)
+{
+  return net->vio->sd;
+}
+
+bool net_should_close(NET *net)
+{
+  return net->error || (net->vio == 0);
+}
+
+bool net_more_data(NET *net)
+{
+  return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
+}
 
 /** Realloc the packet buffer. */
 
