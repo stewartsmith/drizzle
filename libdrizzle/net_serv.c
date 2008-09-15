@@ -115,6 +115,31 @@ void net_close(NET *net)
   }
 }
 
+bool net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+{
+  return vio_peer_addr(net->vio, buf, port, buflen);
+}
+
+void net_keepalive(NET *net, bool flag)
+{
+  vio_keepalive(net->vio, flag);
+}
+
+int net_get_sd(NET *net)
+{
+  return net->vio->sd;
+}
+
+bool net_should_close(NET *net)
+{
+  return net->error || (net->vio == 0);
+}
+
+bool net_more_data(NET *net)
+{
+  return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
+}
+
 /** Realloc the packet buffer. */
 
 bool net_realloc(NET *net, size_t length)
