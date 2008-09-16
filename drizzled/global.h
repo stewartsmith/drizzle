@@ -370,7 +370,7 @@
 #endif
 
 /* Declare madvise where it is not declared for C++, like Solaris */
-#if HAVE_MADVISE && !defined(HAVE_DECL_MADVISE) && defined(__cplusplus)
+#if defined(HAVE_MADVISE) && !defined(HAVE_DECL_MADVISE) && defined(__cplusplus)
 extern "C" int madvise(void *addr, size_t len, int behav);
 #endif
 
