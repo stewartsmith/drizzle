@@ -23,7 +23,6 @@
 #define DRIZZLE_SERVER_GLOBAL_H
 
 #define HAVE_REPLICATION
-#define HAVE_EXTERNAL_CLIENT
 
 /*
   InnoDB depends on some MySQL internals which other plugins should not
