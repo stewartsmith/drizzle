@@ -5,8 +5,7 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,12 +20,10 @@
 #ifndef _libdrizzle_drizzle_data_h
 #define _libdrizzle_drizzle_data_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
+#include <stdbool.h>
 #include <libdrizzle/drizzle_rows.h>
+#include <libdrizzle/drizzle_field.h>
 
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;
@@ -35,6 +32,13 @@ typedef struct st_drizzle_data {
   unsigned int fields;
 } DRIZZLE_DATA;
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+  DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
+                               bool default_value);
+  void free_rows(DRIZZLE_DATA *cur);
 
 #ifdef  __cplusplus
 }

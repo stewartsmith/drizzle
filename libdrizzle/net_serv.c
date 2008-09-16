@@ -18,12 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
 #include <libdrizzle/errmsg.h>
 #include <vio/violite.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/socket.h>
 #include <sys/poll.h>
 #include <zlib.h>
 
@@ -53,7 +58,7 @@ bool my_net_init(NET *net, Vio* vio)
 {
   net->vio = vio;
   my_net_local_init(net);            /* Set some limits */
-  if (!(net->buff=(uchar*) malloc((size_t) net->max_packet+
+  if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
                                   NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
   net->buff_end=net->buff+net->max_packet;
@@ -144,7 +149,7 @@ bool net_more_data(NET *net)
 
 bool net_realloc(NET *net, size_t length)
 {
-  uchar *buff;
+  unsigned char *buff;
   size_t pkt_length;
 
   if (length >= net->max_packet_size)
@@ -159,7 +164,7 @@ bool net_realloc(NET *net, size_t length)
     We must allocate some extra bytes for the end 0 and to be able to
     read big compressed blocks
   */
-  if (!(buff= (uchar*) realloc((char*) net->buff, pkt_length +
+  if (!(buff= (unsigned char*) realloc((char*) net->buff, pkt_length +
                                NET_HEADER_SIZE + COMP_HEADER_SIZE)))
   {
     /* @todo: 1 and 2 codes are identical. */
@@ -247,8 +252,8 @@ bool net_flush(NET *net)
   bool error= 0;
   if (net->buff != net->write_pos)
   {
-    error=test(net_real_write(net, net->buff,
-                              (size_t) (net->write_pos - net->buff)));
+    error=net_real_write(net, net->buff,
+                         (size_t) (net->write_pos - net->buff)) ? 1 : 0;
     net->write_pos=net->buff;
   }
   /* Sync packet number if using compression */
@@ -273,9 +278,9 @@ bool net_flush(NET *net)
 */
 
 bool
-my_net_write(NET *net,const uchar *packet,size_t len)
+my_net_write(NET *net,const unsigned char *packet,size_t len)
 {
-  uchar buff[NET_HEADER_SIZE];
+  unsigned char buff[NET_HEADER_SIZE];
   if (unlikely(!net->vio)) /* nowhere to write */
     return 0;
   /*
@@ -287,7 +292,7 @@ my_net_write(NET *net,const uchar *packet,size_t len)
   {
     const uint32_t z_size = MAX_PACKET_LENGTH;
     int3store(buff, z_size);
-    buff[3]= (uchar) net->pkt_nr++;
+    buff[3]= (unsigned char) net->pkt_nr++;
     if (net_write_buff(net, buff, NET_HEADER_SIZE) ||
         net_write_buff(net, packet, z_size))
       return 1;
@@ -296,10 +301,10 @@ my_net_write(NET *net,const uchar *packet,size_t len)
   }
   /* Write last packet */
   int3store(buff,len);
-  buff[3]= (uchar) net->pkt_nr++;
+  buff[3]= (unsigned char) net->pkt_nr++;
   if (net_write_buff(net, buff, NET_HEADER_SIZE))
     return 1;
-  return test(net_write_buff(net,packet,len));
+  return net_write_buff(net,packet,len) ? 1 : 0;
 }
 
 /**
@@ -330,12 +335,12 @@ my_net_write(NET *net,const uchar *packet,size_t len)
 */
 
 bool
-net_write_command(NET *net,uchar command,
-                  const uchar *header, size_t head_len,
-                  const uchar *packet, size_t len)
+net_write_command(NET *net,unsigned char command,
+                  const unsigned char *header, size_t head_len,
+                  const unsigned char *packet, size_t len)
 {
   uint32_t length=len+1+head_len;            /* 1 extra byte for command */
-  uchar buff[NET_HEADER_SIZE+1];
+  unsigned char buff[NET_HEADER_SIZE+1];
   uint header_size=NET_HEADER_SIZE+1;
 
   buff[4]=command;                /* For first packet */
@@ -347,7 +352,7 @@ net_write_command(NET *net,uchar command,
     do
     {
       int3store(buff, MAX_PACKET_LENGTH);
-      buff[3]= (uchar) net->pkt_nr++;
+      buff[3]= (unsigned char) net->pkt_nr++;
       if (net_write_buff(net, buff, header_size) ||
           net_write_buff(net, header, head_len) ||
           net_write_buff(net, packet, len))
@@ -361,10 +366,10 @@ net_write_command(NET *net,uchar command,
     len=length;                    /* Data left to be written */
   }
   int3store(buff,length);
-  buff[3]= (uchar) net->pkt_nr++;
-  return(test(net_write_buff(net, buff, header_size) ||
-              (head_len && net_write_buff(net, header, head_len)) ||
-              net_write_buff(net, packet, len) || net_flush(net)));
+  buff[3]= (unsigned char) net->pkt_nr++;
+  return((net_write_buff(net, buff, header_size) ||
+          (head_len && net_write_buff(net, header, head_len)) ||
+          net_write_buff(net, packet, len) || net_flush(net)) ? 1 : 0 );
 }
 
 /**
@@ -453,10 +458,10 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   in the server, yield to another process and come back later.
 */
 int
-net_real_write(NET *net,const uchar *packet, size_t len)
+net_real_write(NET *net,const unsigned char *packet, size_t len)
 {
   size_t length;
-  const uchar *pos,*end;
+  const unsigned char *pos,*end;
   uint retry_count= 0;
 
   /* Backup of the original SO_RCVTIMEO timeout */
@@ -470,9 +475,9 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   if (net->compress)
   {
     size_t complen;
-    uchar *b;
+    unsigned char *b;
     const uint header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
-    if (!(b= (uchar*) malloc(len + NET_HEADER_SIZE +
+    if (!(b= (unsigned char*) malloc(len + NET_HEADER_SIZE +
                              COMP_HEADER_SIZE)))
     {
       net->error= 2;
@@ -510,7 +515,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     }
     int3store(&b[NET_HEADER_SIZE],complen);
     int3store(b,len);
-    b[3]=(uchar) (net->compress_pkt_nr++);
+    b[3]=(unsigned char) (net->compress_pkt_nr++);
     len+= header_length;
     packet= b;
   }
@@ -571,7 +576,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
           continue;
       }
 
-      if (vio_errno(net->vio) == SOCKET_EINTR)
+      if (vio_errno(net->vio) == EINTR)
       {
         continue;
       }
@@ -608,7 +613,7 @@ end:
 static uint32_t
 my_real_read(NET *net, size_t *complen)
 {
-  uchar *pos;
+  unsigned char *pos;
   size_t length;
   uint i,retry_count=0;
   uint32_t len=packet_error;
@@ -663,7 +668,7 @@ my_real_read(NET *net, size_t *complen)
           if (retry_count++ < net->retry_count)
             continue;
         }
-        if (vio_errno(net->vio) == SOCKET_EINTR)
+        if (vio_errno(net->vio) == EINTR)
         {
           continue;
         }
@@ -683,7 +688,7 @@ my_real_read(NET *net, size_t *complen)
     {                    /* First parts is packet length */
       uint32_t helping;
 
-      if (net->buff[net->where_b + 3] != (uchar) net->pkt_nr)
+      if (net->buff[net->where_b + 3] != (unsigned char) net->pkt_nr)
       {
         len= packet_error;
         /* Not a NET error on the client. XXX: why? */
@@ -911,3 +916,16 @@ void my_net_set_write_timeout(NET *net, uint timeout)
     vio_timeout(net->vio, 1, timeout);
   return;
 }
+/**
+  Clear possible error state of struct NET
+
+  @param net  clear the state of the argument
+*/
+
+void net_clear_error(NET *net)
+{
+  net->last_errno= 0;
+  net->last_error[0]= '\0';
+  strcpy(net->sqlstate, sqlstate_get_not_error());
+}
+

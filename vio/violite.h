@@ -21,6 +21,9 @@
 #ifndef vio_violite_h_
 #define	vio_violite_h_
 
+#include <sys/socket.h>
+#include <errno.h>
+
 /* Simple vio interface in C;  The functions are implemented in violite.c */
 
 #ifdef	__cplusplus
@@ -43,9 +46,9 @@ Vio*	vio_new(int sd, enum enum_vio_type type, uint flags);
 void	vio_delete(Vio* vio);
 int	vio_close(Vio* vio);
 void    vio_reset(Vio* vio, enum enum_vio_type type, int sd, uint32_t flags);
-size_t	vio_read(Vio *vio, uchar *	buf, size_t size);
-size_t  vio_read_buff(Vio *vio, uchar * buf, size_t size);
-size_t	vio_write(Vio *vio, const uchar * buf, size_t size);
+size_t	vio_read(Vio *vio, unsigned char *	buf, size_t size);
+size_t  vio_read_buff(Vio *vio, unsigned char * buf, size_t size);
+size_t	vio_write(Vio *vio, const unsigned char * buf, size_t size);
 int	vio_blocking(Vio *vio, bool onoff, bool *old_mode);
 bool	vio_is_blocking(Vio *vio);
 /* setsockopt TCP_NODELAY at IPPROTO_TCP level, when possible */
@@ -121,8 +124,8 @@ struct st_vio
   /* function pointers. They are similar for socket/SSL/whatever */
   void    (*viodelete)(Vio*);
   int32_t     (*vioerrno)(Vio*);
-  size_t  (*read)(Vio*, uchar *, size_t);
-  size_t  (*write)(Vio*, const uchar *, size_t);
+  size_t  (*read)(Vio*, unsigned char *, size_t);
+  size_t  (*write)(Vio*, const unsigned char *, size_t);
   int32_t     (*vioblocking)(Vio*, bool, bool *);
   bool (*is_blocking)(Vio*);
   int32_t     (*viokeepalive)(Vio*, bool);

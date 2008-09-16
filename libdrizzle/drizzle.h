@@ -5,8 +5,7 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,16 +20,18 @@
 #ifndef _libdrizzle_drizzle_h
 #define _libdrizzle_drizzle_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <libdrizzle/drizzle_com.h>
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_options.h>
 #include <libdrizzle/drizzle_res.h>
+#include <libdrizzle/net_serv.h>
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 struct st_drizzle_methods;
 
@@ -80,6 +81,23 @@ typedef struct st_drizzle
   void *extension;
 } DRIZZLE;
 
+DRIZZLE * drizzle_create(DRIZZLE *drizzle);
+DRIZZLE * drizzle_connect(DRIZZLE *drizzle, const char *host,
+             const char *user,
+             const char *passwd,
+             const char *db,
+             uint32_t port,
+             const char *unix_socket,
+             uint32_t clientflag);
+
+int32_t    drizzle_select_db(DRIZZLE *drizzle, const char *db);
+int32_t    drizzle_query(DRIZZLE *drizzle, const char *q);
+int32_t    drizzle_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+int32_t    drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+
+DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle);
+DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle);
+
 uint32_t drizzle_field_count(const DRIZZLE *drizzle);
 uint64_t drizzle_affected_rows(const DRIZZLE *drizzle);
 uint64_t drizzle_insert_id(const DRIZZLE *drizzle);
@@ -90,24 +108,9 @@ uint32_t drizzle_warning_count(const DRIZZLE *drizzle);
 const char * drizzle_info(const DRIZZLE *drizzle);
 uint32_t drizzle_thread_id(const DRIZZLE *drizzle);
 const char * drizzle_character_set_name(const DRIZZLE *drizzle);
-int32_t          drizzle_set_character_set(DRIZZLE *drizzle, const char *csname);
 
-DRIZZLE * drizzle_create(DRIZZLE *drizzle);
 bool   drizzle_change_user(DRIZZLE *drizzle, const char *user,
-            const char *passwd, const char *db);
-DRIZZLE * drizzle_connect(DRIZZLE *drizzle, const char *host,
-             const char *user,
-             const char *passwd,
-             const char *db,
-             uint32_t port,
-             const char *unix_socket,
-             uint32_t clientflag);
-int32_t    drizzle_select_db(DRIZZLE *drizzle, const char *db);
-int32_t    drizzle_query(DRIZZLE *drizzle, const char *q);
-int32_t    drizzle_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
-int32_t    drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
-DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle);
-DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle);
+                           const char *passwd, const char *db);
 
 /* local infile support */
 
@@ -123,11 +126,13 @@ drizzle_set_local_infile_handler(DRIZZLE *drizzle,
 void
 drizzle_set_local_infile_default(DRIZZLE *drizzle);
 
-int32_t    drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level);
+int32_t    drizzle_shutdown(DRIZZLE *drizzle,
+                            enum drizzle_enum_shutdown_level shutdown_level);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzle_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
 int32_t    drizzle_kill(DRIZZLE *drizzle, uint32_t pid);
-int32_t    drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option);
+int32_t    drizzle_set_server_option(DRIZZLE *drizzle,
+                                     enum enum_drizzle_set_option option);
 int32_t    drizzle_ping(DRIZZLE *drizzle);
 const char *  drizzle_stat(DRIZZLE *drizzle);
 const char *  drizzle_get_server_info(const DRIZZLE *drizzle);
@@ -137,8 +142,10 @@ uint32_t  drizzle_get_server_version(const DRIZZLE *drizzle);
 uint32_t  drizzle_get_proto_info(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  drizzle_list_processes(DRIZZLE *drizzle);
-int32_t    drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);
-DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
+int32_t    drizzle_options(DRIZZLE *drizzle, enum drizzle_option option,
+                           const void *arg);
+DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table,
+                                      const char *wild);
 bool         drizzle_read_query_result(DRIZZLE *drizzle);
 
 bool drizzle_commit(DRIZZLE *drizzle);
@@ -146,17 +153,19 @@ bool drizzle_rollback(DRIZZLE *drizzle);
 bool drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode);
 bool drizzle_more_results(const DRIZZLE *drizzle);
 int drizzle_next_result(DRIZZLE *drizzle);
-void drizzle_close(DRIZZLE *sock);
-
+void drizzle_close(DRIZZLE *drizzle);
+bool drizzle_reconnect(DRIZZLE *drizzle);
+void drizzle_disconnect(DRIZZLE *drizzle);
 
 bool
 cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
-		     const unsigned char *header, uint32_t header_length,
-		     const unsigned char *arg, uint32_t arg_length, bool skip_check);
+                     const unsigned char *header, uint32_t header_length,
+                     const unsigned char *arg, uint32_t arg_length,
+                     bool skip_check);
 uint32_t cli_safe_read(DRIZZLE *drizzle);
 DRIZZLE_FIELD * cli_list_fields(DRIZZLE *drizzle);
 DRIZZLE_DATA * cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *drizzle_fields,
-				   uint fields);
+                             unsigned int fields);
 int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * cli_read_statistics(DRIZZLE *drizzle);
 int cli_read_change_user_result(DRIZZLE *drizzle);

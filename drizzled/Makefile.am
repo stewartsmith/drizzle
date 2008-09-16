@@ -93,7 +93,6 @@ noinst_HEADERS = item.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \
-		 mysqld_suffix.h \
 		 rpl_constants.h \
 		 opt_range.h \
 		 protocol.h \

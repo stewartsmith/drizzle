@@ -21,7 +21,6 @@
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
 #include "stacktrace.h"
-#include "mysqld_suffix.h"
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
@@ -4954,6 +4953,12 @@ static void get_options(int *argc,char **argv)
   name to make the version more descriptive.
   (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
 */
+
+#ifdef DRIZZLE_SERVER_SUFFIX
+#define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
+#else
+#define DRIZZLE_SERVER_SUFFIX_STR DRIZZLE_SERVER_SUFFIX_DEF
+#endif
 
 static void set_server_version(void)
 {

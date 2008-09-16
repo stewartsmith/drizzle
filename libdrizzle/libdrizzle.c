@@ -1,24 +1,24 @@
-/* Copyright (C) 2000-2004 DRIZZLE AB
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation.
-
-   There are special exceptions to the terms and conditions of the GPL as it
-   is applied to this software. View the full text of the exception in file
-   EXCEPTIONS-CLIENT in the directory of this software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-#include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>
@@ -48,6 +48,9 @@
 #define INADDR_NONE  -1
 #endif
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <sql_common.h>
 #include <drizzled/version.h>
 
@@ -72,6 +75,8 @@
 uint32_t     net_buffer_length= 8192;
 uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 
+unsigned int drizzle_port=0;
+
 #include <errno.h>
 #define SOCKET_ERROR -1
 
@@ -89,6 +94,16 @@ static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
+}
+
+unsigned int drizzle_get_default_port(void)
+{
+  return drizzle_port;
+}
+
+void drizzle_set_default_port(unsigned int port)
+{
+  drizzle_port= port;
 }
 
 /*
@@ -171,7 +186,7 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   }
 
   /* Write authentication package */
-  (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (uint32_t) (end-buff), 1);
+  (void)simple_command(drizzle,COM_CHANGE_USER, (unsigned char*) buff, (uint32_t) (end-buff), 1);
 
   rc= (*drizzle->methods->read_change_user_result)(drizzle);
 
@@ -312,7 +327,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
   end= strncpy(end+1, wild ? wild : "", 128) + 128;
 
   free_old_query(drizzle);
-  if (simple_command(drizzle, COM_FIELD_LIST, (uchar*) buff,
+  if (simple_command(drizzle, COM_FIELD_LIST, (unsigned char*) buff,
                      (uint32_t) (end-buff), 1) ||
       !(fields= (*drizzle->methods->list_fields)(drizzle)))
     return(NULL);
@@ -337,12 +352,12 @@ drizzle_list_processes(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *fields;
   uint field_count;
-  uchar *pos;
+  unsigned char *pos;
 
   if (simple_command(drizzle,COM_PROCESS_INFO,0,0,0))
     return(0);
   free_old_query(drizzle);
-  pos=(uchar*) drizzle->net.read_pos;
+  pos=(unsigned char*) drizzle->net.read_pos;
   field_count=(uint) net_field_length(&pos);
   if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
@@ -357,8 +372,8 @@ drizzle_list_processes(DRIZZLE *drizzle)
 int
 drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level)
 {
-  uchar level[1];
-  level[0]= (uchar) shutdown_level;
+  unsigned char level[1];
+  level[0]= (unsigned char) shutdown_level;
   return(simple_command(drizzle, COM_SHUTDOWN, level, 1, 0));
 }
 
@@ -366,8 +381,8 @@ drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_lev
 int
 drizzle_refresh(DRIZZLE *drizzle,uint options)
 {
-  uchar bits[1];
-  bits[0]= (uchar) options;
+  unsigned char bits[1];
+  bits[0]= (unsigned char) options;
   return(simple_command(drizzle, COM_REFRESH, bits, 1, 0));
 }
 
@@ -375,7 +390,7 @@ drizzle_refresh(DRIZZLE *drizzle,uint options)
 int32_t
 drizzle_kill(DRIZZLE *drizzle, uint32_t pid)
 {
-  uchar buff[4];
+  unsigned char buff[4];
   int4store(buff,pid);
   return(simple_command(drizzle,COM_PROCESS_KILL,buff,sizeof(buff),0));
 }
@@ -384,7 +399,7 @@ drizzle_kill(DRIZZLE *drizzle, uint32_t pid)
 int
 drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 {
-  uchar buff[2];
+  unsigned char buff[2];
   int2store(buff, (uint) option);
   return(simple_command(drizzle, COM_SET_OPTION, buff, sizeof(buff), 0));
 }
@@ -395,7 +410,7 @@ const char *cli_read_statistics(DRIZZLE *drizzle)
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */
   if (!drizzle->net.read_pos[0])
   {
-    set_drizzle_error(drizzle, CR_WRONG_HOST_INFO, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_WRONG_HOST_INFO, sqlstate_get_unknown());
     return drizzle->net.last_error;
   }
   return (char*) drizzle->net.read_pos;
@@ -488,7 +503,7 @@ uint64_t drizzle_insert_id(const DRIZZLE *drizzle)
 
 const char * drizzle_sqlstate(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.sqlstate : cant_connect_sqlstate;
+  return drizzle ? drizzle->net.sqlstate : sqlstate_get_cant_connect();
 }
 
 uint32_t drizzle_warning_count(const DRIZZLE *drizzle)
@@ -520,7 +535,8 @@ void my_net_local_init(NET *net)
   my_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
   my_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
   net->retry_count=  1;
-  net->max_packet_size= max(net_buffer_length, max_allowed_packet);
+  net->max_packet_size= (net_buffer_length > max_allowed_packet) ?
+    net_buffer_length : max_allowed_packet;
 }
 
 /*
@@ -699,7 +715,7 @@ int drizzle_next_result(DRIZZLE *drizzle)
 {
   if (drizzle->status != DRIZZLE_STATUS_READY)
   {
-    set_drizzle_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, sqlstate_get_unknown());
     return(1);
   }
 

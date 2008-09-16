@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /* password checking routines */
 /*****************************************************************************
@@ -58,8 +62,10 @@
 
 *****************************************************************************/
 
-#include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
+#include <stdlib.h>
+#include <string.h>
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/
 
@@ -118,7 +124,7 @@ void hash_password(uint32_t *result, const char *password, uint32_t password_len
   {
     if (*password == ' ' || *password == '\t')
       continue;                                 /* skip space in password */
-    tmp= (uint32_t) (uchar) *password;
+    tmp= (uint32_t) (unsigned char) *password;
     nr^= (((nr & 63)+add)*tmp)+ (nr << 8);
     nr2+=(nr2 << 8) ^ nr;
     add+=tmp;
@@ -180,8 +186,8 @@ char *octet2hex(char *to, const char *str, uint len)
   const char *str_end= str + len; 
   for (; str != str_end; ++str)
   {
-    *to++= _dig_vec_upper[((uchar) *str) >> 4];
-    *to++= _dig_vec_upper[((uchar) *str) & 0x0F];
+    *to++= _dig_vec_upper[((unsigned char) *str) >> 4];
+    *to++= _dig_vec_upper[((unsigned char) *str) & 0x0F];
   }
   *to= '\0';
   return to;

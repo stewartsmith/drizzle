@@ -855,10 +855,6 @@ static void free_used_memory(void)
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
 
-  /* Only call drizzle_server_end if drizzle_server_init has been called */
-  if (server_initialized)
-    drizzle_server_end();
-
   return;
 }
 

@@ -1,13 +1,28 @@
-/* Copyright Abandoned 1996, 1999, 2001 MySQL AB
-   This file is public domain and comes with NO WARRANTY of any kind */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-/* Version numbers for protocol & mysqld */
+/* Version numbers for protocol && drizzled */
 
-#ifndef _mysql_version_h
-#define _mysql_version_h
-#ifdef _CUSTOMCONFIG_
-#include <custom_conf.h>
-#else
+#ifndef _drizzled_version_h
+#define _drizzled_version_h
+
 #define PROTOCOL_VERSION		@PROTOCOL_VERSION@
 #define DRIZZLE_SERVER_VERSION		"@VERSION@"
 #define DRIZZLE_BASE_VERSION		"drizzle-@DRIZZLE_BASE_VERSION@"
@@ -19,11 +34,9 @@
 #define DRIZZLE_CONFIG_NAME		"drizzled"
 #define DRIZZLE_COMPILATION_COMMENT	"@COMPILATION_COMMENT@"
 
-/* mysqld compile time options */
-#endif /* _CUSTOMCONFIG_ */
 
 #ifndef LICENSE
 #define LICENSE				GPL
 #endif /* LICENSE */
 
-#endif /* _mysql_version_h */
+#endif /* _drizzled_version_h */
