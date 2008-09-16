@@ -376,10 +376,7 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 
 /* We can not live without the following defines */
 
-#define USE_MYFUNC 1		/* Must use syscall indirection */
 #define MASTER 1		/* Compile without unireg */
-#define ENGLISH 1		/* Messages in English */
-#define POSIX_MISTAKE 1		/* regexp: Fix stupid spec error */
 
 #define QUOTE_ARG(x)		#x	/* Quote argument (before cpp) */
 #define STRINGIFY_ARG(x) QUOTE_ARG(x)	/* Quote argument, after cpp */
