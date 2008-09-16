@@ -108,7 +108,7 @@ unsigned char *net_store_length(unsigned char *packet, uint64_t length)
   if (length < (uint64_t) 65536LL)
   {
     *packet++=252;
-    int2store(packet,(uint) length);
+    int2store(packet,(uint32_t) length);
     return packet+2;
   }
   if (length < (uint64_t) 16777216LL)

@@ -41,7 +41,7 @@ enum enum_vio_type
 #define VIO_BUFFERED_READ 2                     /* use buffered read */
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
-Vio*	vio_new(int sd, enum enum_vio_type type, uint flags);
+Vio*	vio_new(int sd, enum enum_vio_type type, unsigned int flags);
 
 void	vio_delete(Vio* vio);
 int	vio_close(Vio* vio);
@@ -70,7 +70,7 @@ int vio_fd(Vio*vio);
 /* Remote peer's address and name in text form */
 bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen);
 bool vio_poll_read(Vio *vio, int timeout);
-bool vio_peek_read(Vio *vio, uint *bytes);
+bool vio_peek_read(Vio *vio, unsigned int *bytes);
 
 void vio_end(void);
 

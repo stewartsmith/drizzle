@@ -513,7 +513,7 @@ extern "C" {
 #define sint8korr(A)	(*((int64_t *) (A)))
 #define int2store(T,A)	*((uint16_t*) (T))= (uint16_t) (A)
 #define int3store(T,A)  do { *(T)=  (unsigned char) ((A));\
-                            *(T+1)=(unsigned char) (((uint) (A) >> 8));\
+                            *(T+1)=(unsigned char) (((uint32_t) (A) >> 8));\
                             *(T+2)=(unsigned char) (((A) >> 16)); } while (0)
 #define int4store(T,A)	*((long *) (T))= (long) (A)
 #define int5store(T,A)  do { *(T)= (unsigned char)((A));\
@@ -597,7 +597,7 @@ do { doubleget_union _tmp; \
 				    (((uint32_t) ((unsigned char) (A)[6])) << 16) +\
 				    (((uint32_t) ((unsigned char) (A)[7])) << 24))) <<\
 				    32))
-#define int2store(T,A)       do { uint def_temp= (uint) (A) ;\
+#define int2store(T,A)       do { uint32_t def_temp= (uint32_t) (A) ;\
                                   *((unsigned char*) (T))=  (unsigned char)(def_temp); \
                                    *((unsigned char*) (T)+1)=(unsigned char)((def_temp >> 8)); \
                              } while(0)
@@ -623,7 +623,7 @@ do { doubleget_union _tmp; \
                                   *(((char *)(T))+4)= (char)(((A) >> 32)); \
                                   *(((char *)(T))+5)= (char)(((A) >> 40)); \
                                 } while(0)
-#define int8store(T,A)       do { uint def_temp= (uint) (A), def_temp2= (uint) ((A) >> 32); \
+#define int8store(T,A)       do { uint32_t def_temp= (uint32_t) (A), def_temp2= (uint32_t) ((A) >> 32); \
                                   int4store((T),def_temp); \
                                   int4store((T+4),def_temp2); } while(0)
 #ifdef WORDS_BIGENDIAN
@@ -721,7 +721,7 @@ do { doubleget_union _tmp; \
                             ((unsigned char*) &def_temp)[2]=(M)[2];\
                             ((unsigned char*) &def_temp)[3]=(M)[3];\
                             (V)=def_temp; } while(0)
-#define shortstore(T,A) do { uint def_temp=(uint) (A) ;\
+#define shortstore(T,A) do { uint32_t def_temp=(uint32_t) (A) ;\
                              *(((char*)T)+1)=(char)(def_temp); \
                              *(((char*)T)+0)=(char)(def_temp >> 8); } while(0)
 #define longstore(T,A)  do { *(((char*)T)+3)=((A));\

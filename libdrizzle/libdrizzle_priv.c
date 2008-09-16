@@ -56,7 +56,7 @@ const char * sqlstate_get_cant_connect(void)
   Base version coded by Steve Bernacki, Jr. <steve@navinet.net>
 *****************************************************************************/
 
-int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout)
+int connect_with_timeout(int fd, const struct sockaddr *name, uint32_t namelen, int32_t timeout)
 {
   int flags, res, s_err;
 

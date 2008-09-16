@@ -86,8 +86,8 @@ typedef struct st_net {
   bool net_should_close(NET *net);
   bool net_more_data(NET *net);
 
-  void my_net_set_write_timeout(NET *net, uint timeout);
-  void my_net_set_read_timeout(NET *net, uint timeout);
+  void my_net_set_write_timeout(NET *net, uint32_t timeout);
+  void my_net_set_read_timeout(NET *net, uint32_t timeout);
   void net_clear_error(NET *net);
 
 #ifdef __cplusplus

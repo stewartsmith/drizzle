@@ -107,10 +107,10 @@ drizzle_create(DRIZZLE *ptr)
 
 #if DRIZZLE_PORT_DEFAULT == 0
         if ((serv_ptr = getservbyname("drizzle", "tcp")))
-          drizzle_set_default_port((uint) ntohs((ushort) serv_ptr->s_port));
+          drizzle_set_default_port((uint32_t) ntohs((uint16_t) serv_ptr->s_port));
 #endif
         if ((env = getenv("DRIZZLE_TCP_PORT")))
-          drizzle_set_default_port((uint) atoi(env));
+          drizzle_set_default_port((uint32_t) atoi(env));
       }
     }
 #if defined(SIGPIPE)
@@ -363,16 +363,16 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
   strncpy(drizzle->scramble, end, SCRAMBLE_LENGTH_323);
   end+= SCRAMBLE_LENGTH_323+1;
 
-  if (pkt_length >= (uint) (end+1 - (char*) net->read_pos))
+  if (pkt_length >= (uint32_t) (end+1 - (char*) net->read_pos))
     drizzle->server_capabilities=uint2korr(end);
-  if (pkt_length >= (uint) (end+18 - (char*) net->read_pos))
+  if (pkt_length >= (uint32_t) (end+18 - (char*) net->read_pos))
   {
     /* New protocol with 16 bytes to describe server characteristics */
     drizzle->server_language=end[2];
     drizzle->server_status=uint2korr(end+3);
   }
   end+= 18;
-  if (pkt_length >= (uint) (end + SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1 -
+  if (pkt_length >= (uint32_t) (end + SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1 -
                             (char *) net->read_pos))
     strncpy(drizzle->scramble+SCRAMBLE_LENGTH_323, end,
             SCRAMBLE_LENGTH-SCRAMBLE_LENGTH_323);
@@ -695,10 +695,10 @@ get_info:
 
   if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, 7)))
     return(1);
-  if (!(drizzle->fields= unpack_fields(fields, (uint) field_count, 0)))
+  if (!(drizzle->fields= unpack_fields(fields, (uint32_t) field_count, 0)))
     return(1);
   drizzle->status= DRIZZLE_STATUS_GET_RESULT;
-  drizzle->field_count= (uint) field_count;
+  drizzle->field_count= (uint32_t) field_count;
   return(0);
 }
 
@@ -742,7 +742,7 @@ DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle)
     return(0);
   }
   drizzle->status=DRIZZLE_STATUS_READY;    /* server is ready */
-  if (!(result=(DRIZZLE_RES*) malloc((uint) (sizeof(DRIZZLE_RES)+
+  if (!(result=(DRIZZLE_RES*) malloc((uint32_t) (sizeof(DRIZZLE_RES)+
                 sizeof(uint32_t) *
                 drizzle->field_count))))
   {

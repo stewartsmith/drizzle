@@ -181,7 +181,7 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   /* Add character set number. */
   if (drizzle->server_capabilities & CLIENT_SECURE_CONNECTION)
   {
-    int2store(end, (ushort) 45); // utf8mb4 number from mystrings/ctype-utf8.c
+    int2store(end, (uint16_t) 45); // utf8mb4 number from mystrings/ctype-utf8.c
     end+= 2;
   }
 
@@ -222,7 +222,7 @@ char* getlogin(void);
 int
 drizzle_query(DRIZZLE *drizzle, const char *query)
 {
-  return drizzle_real_query(drizzle,query, (uint) strlen(query));
+  return drizzle_real_query(drizzle,query, (uint32_t) strlen(query));
 }
 
 
@@ -304,7 +304,7 @@ DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
   if (!(query= cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 8)))
     return NULL;
 
-  drizzle->field_count= (uint) query->rows;
+  drizzle->field_count= (uint32_t) query->rows;
   return unpack_fields(query, drizzle->field_count, 1);
 }
 
@@ -351,14 +351,14 @@ DRIZZLE_RES *
 drizzle_list_processes(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *fields;
-  uint field_count;
+  uint32_t field_count;
   unsigned char *pos;
 
   if (simple_command(drizzle,COM_PROCESS_INFO,0,0,0))
     return(0);
   free_old_query(drizzle);
   pos=(unsigned char*) drizzle->net.read_pos;
-  field_count=(uint) net_field_length(&pos);
+  field_count=(uint32_t) net_field_length(&pos);
   if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
   if (!(drizzle->fields=unpack_fields(fields, field_count, 0)))
@@ -379,7 +379,7 @@ drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_lev
 
 
 int
-drizzle_refresh(DRIZZLE *drizzle,uint options)
+drizzle_refresh(DRIZZLE *drizzle,uint32_t options)
 {
   unsigned char bits[1];
   bits[0]= (unsigned char) options;
@@ -400,7 +400,7 @@ int
 drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 {
   unsigned char buff[2];
-  int2store(buff, (uint) option);
+  int2store(buff, (uint32_t) option);
   return(simple_command(drizzle, COM_SET_OPTION, buff, sizeof(buff), 0));
 }
 
@@ -442,7 +442,7 @@ drizzle_get_host_info(const DRIZZLE *drizzle)
 }
 
 
-uint
+uint32_t
 drizzle_get_proto_info(const DRIZZLE *drizzle)
 {
   return (drizzle->protocol_version);
@@ -531,7 +531,7 @@ uint32_t drizzle_thread_id(const DRIZZLE *drizzle)
 
 void my_net_local_init(NET *net)
 {
-  net->max_packet=   (uint) net_buffer_length;
+  net->max_packet=   (uint32_t) net_buffer_length;
   my_net_set_read_timeout(net, CLIENT_NET_READ_TIMEOUT);
   my_net_set_write_timeout(net, CLIENT_NET_WRITE_TIMEOUT);
   net->retry_count=  1;

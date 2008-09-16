@@ -146,7 +146,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
         strcpy(net->sqlstate, sqlstate_get_unknown());
       }
 
-      strncpy(net->last_error,(char*) pos, min((uint) len,
+      strncpy(net->last_error,(char*) pos, min((uint32_t) len,
               (uint32_t) sizeof(net->last_error)-1));
     }
     else
@@ -380,7 +380,7 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uin
 static int32_t
 read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengths)
 {
-  uint field;
+  uint32_t field;
   uint32_t pkt_len,len;
   unsigned char *pos, *prev_pos, *end_pos;
   NET *net= &drizzle->net;
@@ -502,20 +502,20 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 {
   switch (option) {
   case DRIZZLE_OPT_CONNECT_TIMEOUT:
-    drizzle->options.connect_timeout= *(uint*) arg;
+    drizzle->options.connect_timeout= *(uint32_t*) arg;
     break;
   case DRIZZLE_OPT_READ_TIMEOUT:
-    drizzle->options.read_timeout= *(uint*) arg;
+    drizzle->options.read_timeout= *(uint32_t*) arg;
     break;
   case DRIZZLE_OPT_WRITE_TIMEOUT:
-    drizzle->options.write_timeout= *(uint*) arg;
+    drizzle->options.write_timeout= *(uint32_t*) arg;
     break;
   case DRIZZLE_OPT_COMPRESS:
     drizzle->options.compress= 1;      /* Remember for connect */
     drizzle->options.client_flag|= CLIENT_COMPRESS;
     break;
   case DRIZZLE_OPT_LOCAL_INFILE:      /* Allow LOAD DATA LOCAL ?*/
-    if (!arg || (*(uint*) arg) ? 1 : 0)
+    if (!arg || (*(uint32_t*) arg) ? 1 : 0)
       drizzle->options.client_flag|= CLIENT_LOCAL_FILES;
     else
       drizzle->options.client_flag&= ~CLIENT_LOCAL_FILES;
@@ -598,11 +598,11 @@ unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 uint32_t
 drizzle_get_server_version(const DRIZZLE *drizzle)
 {
-  uint major, minor, version;
+  uint32_t major, minor, version;
   char *pos= drizzle->server_version, *end_pos;
-  major=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
-  minor=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
-  version= (uint) strtoul(pos, &end_pos, 10);
+  major=   (uint32_t) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
+  minor=   (uint32_t) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
+  version= (uint32_t) strtoul(pos, &end_pos, 10);
   return (uint32_t) major*10000L+(uint32_t) (minor*100+version);
 }
 

@@ -135,7 +135,7 @@ void hash_password(uint32_t *result, const char *password, uint32_t password_len
 
 static inline uint8_t char_val(uint8_t X)
 {
-  return (uint) (X >= '0' && X <= '9' ? X-'0' :
+  return (uint32_t) (X >= '0' && X <= '9' ? X-'0' :
       X >= 'A' && X <= 'Z' ? X-'A'+10 : X-'a'+10);
 }
 
@@ -154,7 +154,7 @@ static inline uint8_t char_val(uint8_t X)
     rand_st  INOUT structure used for number generation
 */
 
-void create_random_string(char *to, uint length, struct rand_struct *rand_st)
+void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st)
 {
   char *end= to + length;
   /* Use pointer arithmetics as it is faster way to do so. */
@@ -181,7 +181,7 @@ void create_random_string(char *to, uint length, struct rand_struct *rand_st)
     buf+len*2
 */
 
-char *octet2hex(char *to, const char *str, uint len)
+char *octet2hex(char *to, const char *str, uint32_t len)
 {
   const char *str_end= str + len; 
   for (; str != str_end; ++str)

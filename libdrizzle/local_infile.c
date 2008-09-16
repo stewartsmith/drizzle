@@ -62,7 +62,7 @@
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
   bool result= true;
-  uint packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
+  uint32_t packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
   NET *net= &drizzle->net;
   int readcount;
   void *li_ptr;          /* pass state to local_infile functions */
@@ -209,7 +209,7 @@ static int default_local_infile_init(void **ptr, const char *filename,
     < 0    Error
 */
 
-static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
+static int default_local_infile_read(void *ptr, char *buf, uint32_t buf_len)
 {
   int count;
   default_local_infile_data*data = (default_local_infile_data *) ptr;
@@ -263,7 +263,7 @@ static void default_local_infile_end(void *ptr)
 */
 
 static int
-default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
+default_local_infile_error(void *ptr, char *error_msg, uint32_t error_msg_len)
 {
   default_local_infile_data *data = (default_local_infile_data *) ptr;
   if (data)          /* If not error on open */
@@ -281,9 +281,9 @@ void
 drizzle_set_local_infile_handler(DRIZZLE *drizzle,
                                int (*local_infile_init)(void **, const char *,
                                void *),
-                               int (*local_infile_read)(void *, char *, uint),
+                               int (*local_infile_read)(void *, char *, uint32_t),
                                void (*local_infile_end)(void *),
-                               int (*local_infile_error)(void *, char *, uint),
+                               int (*local_infile_error)(void *, char *, uint32_t),
                                void *userdata)
 {
   drizzle->options.local_infile_init=  local_infile_init;
