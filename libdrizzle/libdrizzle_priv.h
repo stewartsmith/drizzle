@@ -17,19 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_sql_common_h
-#define _libdrizzle_sql_common_h
+#ifndef _libdrizzle_libdrizzle_priv_h_
+#define _libdrizzle_libdrizzle_priv_h_
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+extern unsigned int drizzle_port;
 
-DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, uint fields,
-                             bool default_value);
-void free_rows(DRIZZLE_DATA *cur);
-void net_clear_error(NET *net);
-#ifdef	__cplusplus
-}
-#endif
+extern const char  *unknown_sqlstate;
+extern const char  *cant_connect_sqlstate;
+extern const char  *not_error_sqlstate;
+
+
+void drizzle_set_default_port(unsigned int port);
+void drizzle_set_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
+void drizzle_set_extended_error(DRIZZLE *drizzle, int errcode,
+                                const char *sqlstate,
+                                const char *format, ...);
+void free_old_query(DRIZZLE *drizzle);
 
 #endif

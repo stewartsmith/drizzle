@@ -24,6 +24,10 @@
 #ifndef _libdrizzle_drizzle_com_h
 #define _libdrizzle_drizzle_com_h
 
+#include <unistd.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 /*
    This is included in the server and in the client.
    Options for select set by the yacc parser (stored in lex->options).

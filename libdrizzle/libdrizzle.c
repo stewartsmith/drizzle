@@ -19,6 +19,7 @@
 
 #include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>
@@ -72,6 +73,8 @@
 uint32_t     net_buffer_length= 8192;
 uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 
+unsigned int drizzle_port=0;
+
 #include <errno.h>
 #define SOCKET_ERROR -1
 
@@ -89,6 +92,16 @@ static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
+}
+
+unsigned int drizzle_get_default_port(void)
+{
+  return drizzle_port;
+}
+
+void drizzle_set_default_port(unsigned int port)
+{
+  drizzle_port= port;
 }
 
 /*
@@ -395,7 +408,7 @@ const char *cli_read_statistics(DRIZZLE *drizzle)
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */
   if (!drizzle->net.read_pos[0])
   {
-    set_drizzle_error(drizzle, CR_WRONG_HOST_INFO, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_WRONG_HOST_INFO, unknown_sqlstate);
     return drizzle->net.last_error;
   }
   return (char*) drizzle->net.read_pos;
@@ -699,7 +712,7 @@ int drizzle_next_result(DRIZZLE *drizzle)
 {
   if (drizzle->status != DRIZZLE_STATUS_READY)
   {
-    set_drizzle_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
     return(1);
   }
 

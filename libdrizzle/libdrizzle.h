@@ -19,7 +19,7 @@
 
 /*
   This file defines the client API to DRIZZLE and also the ABI of the
-  dynamically linked libdrizzleclient.
+  dynamically linked libdrizzle.
 
   In case the file is changed so the ABI is broken, you must also
   update the SHARED_LIB_MAJOR_VERSION in configure.ac.
@@ -29,13 +29,7 @@
 #ifndef _libdrizzle_libdrizzle_h
 #define _libdrizzle_libdrizzle_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <libdrizzle/drizzle_com.h>
-
-extern unsigned int drizzle_port;
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
@@ -50,20 +44,17 @@ extern unsigned int drizzle_port;
 #include <libdrizzle/drizzle_parameters.h>
 #include <libdrizzle/drizzle_methods.h>
 
-const char * drizzle_get_client_info(void);
-uint32_t drizzle_get_client_version(void);
-uint32_t drizzle_escape_string(char *to,const char *from,
-                               uint32_t from_length);
-uint32_t drizzle_hex_string(char *to,const char *from,
-                            uint32_t from_length);
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-/*
-  Set up and bring down the server; to ensure that applications will
-  work when linked against either the standard client library or the
-  embedded server library, these functions should be called.
-*/
-void drizzle_server_end(void);
-
+  const char * drizzle_get_client_info(void);
+  uint32_t drizzle_get_client_version(void);
+  unsigned int drizzle_get_default_port(void);
+  uint32_t drizzle_escape_string(char *to,const char *from,
+                                 uint32_t from_length);
+  uint32_t drizzle_hex_string(char *to,const char *from,
+                              uint32_t from_length);
 
 #ifdef  __cplusplus
 }

@@ -38,13 +38,14 @@ dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
 					drizzle_parameters.h
 
 lib_LTLIBRARIES = libdrizzle.la
-libdrizzle_la_SOURCES = libdrizzle.c \
-			client.c \
+libdrizzle_la_SOURCES = client.c \
+			drizzle.c \
+			errmsg.c \
+			get_password.c \
+			libdrizzle.c \
 			local_infile.c \
 			net_serv.c \
-			get_password.c \
 			pack.c \
-			errmsg.c \
 			password.c
 
 libdrizzle_la_LIBADD =	${top_builddir}/vio/libviolt.la 
@@ -59,6 +60,7 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 noinst_HEADERS =	gettext.h \
+			libdrizzle_priv.h \
 			local_infile.h
 
 EXTRA_DIST =		libdrizzle.ver

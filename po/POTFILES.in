@@ -2,6 +2,7 @@
 client/drizzle.cc
 client/drizzleadmin.cc
 libdrizzle/client.c
+libdrizzle/drizzle.c
 libdrizzle/errmsg.c
 libdrizzle/local_infile.c
 mysys/errors.c

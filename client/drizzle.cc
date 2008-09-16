@@ -1207,7 +1207,6 @@ sig_handler drizzle_end(int sig)
   my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
   my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  drizzle_server_end();
   free_defaults(defaults_argv);
   my_end(my_end_arg);
   exit(status.exit_status);

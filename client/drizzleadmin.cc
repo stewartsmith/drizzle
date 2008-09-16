@@ -261,9 +261,9 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
         {
           fprintf(stderr,_("Check that drizzled is running on %s"),host);
           fprintf(stderr,_(" and that the port is %d.\n"),
-          tcp_port ? tcp_port: drizzle_port);
+          tcp_port ? tcp_port: drizzle_get_default_port());
           fprintf(stderr,_("You can check this by doing 'telnet %s %d'\n"),
-                  host, tcp_port ? tcp_port: drizzle_port);
+                  host, tcp_port ? tcp_port: drizzle_get_default_port());
         }
       }
       return 1;

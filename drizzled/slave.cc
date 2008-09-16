@@ -1901,12 +1901,12 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
 */
 
 static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
-                            uint32_t *retry_count, bool suppress_warnings,
-                            const char *messages[SLAVE_RECON_MSG_MAX])
+                                uint32_t *retry_count, bool suppress_warnings,
+                                const char *messages[SLAVE_RECON_MSG_MAX])
 {
   mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
   thd->set_proc_info(_(messages[SLAVE_RECON_MSG_WAIT]));
-  end_server(drizzle);
+  drizzle_disconnect(drizzle);
   if ((*retry_count)++)
   {
     if (*retry_count > master_retry_count)
@@ -3141,7 +3141,7 @@ static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
 */
 
 static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
-                             bool reconnect, bool suppress_warnings)
+                                 bool reconnect, bool suppress_warnings)
 {
   int32_t slave_was_killed;
   int32_t last_errno= -2;                           // impossible error

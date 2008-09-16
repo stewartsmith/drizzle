@@ -20,6 +20,7 @@
 
 #include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>
@@ -51,6 +52,7 @@
 
 #include <sql_common.h>
 #include "local_infile.h"
+#include <libdrizzle/gettext.h>
 
 
 
@@ -77,7 +79,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     return(1);
   }
 
@@ -109,7 +111,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   /* Send empty packet to mark end of file */
   if (my_net_write(net, (const uchar*) "", 0) || net_flush(net))
   {
-    set_drizzle_error(drizzle, CR_SERVER_LOST, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_SERVER_LOST, unknown_sqlstate);
     goto err;
   }
 
