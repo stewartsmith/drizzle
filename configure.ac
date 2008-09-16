@@ -598,7 +598,7 @@ then
   FIND_PROC="$PS \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
 else
   case $SYSTEM_TYPE in
-    *freebsd*|*dragonfly*)
+    *freebsd*|*dragonfly*|*cygwin*)
       FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
       ;;
     *darwin*)
