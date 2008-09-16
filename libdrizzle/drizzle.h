@@ -20,9 +20,6 @@
 #ifndef _libdrizzle_drizzle_h
 #define _libdrizzle_drizzle_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -30,7 +27,11 @@ extern "C" {
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_options.h>
 #include <libdrizzle/drizzle_res.h>
+#include <libdrizzle/net_serv.h>
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 struct st_drizzle_methods;
 

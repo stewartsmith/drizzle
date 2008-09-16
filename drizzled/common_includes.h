@@ -35,6 +35,7 @@
 #ifndef DRIZZLE_SERVER_COMMON_INCLUDES_H
 #define DRIZZLE_SERVER_COMMON_INCLUDES_H
 
+
 /* Cross-platform portability code and standard includes */
 #include <drizzled/global.h>                    
 /* Server versioning information and defines */
@@ -332,5 +333,6 @@ uint strconvert(const CHARSET_INFO *from_cs, const char *from,
 uint filename_to_tablename(const char *from, char *to, uint to_length);
 uint tablename_to_filename(const char *from, char *to, uint to_length);
 #endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
+
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

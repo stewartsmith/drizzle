@@ -20,12 +20,10 @@
 #ifndef _libdrizzle_drizzle_data_h
 #define _libdrizzle_drizzle_data_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
+#include <stdbool.h>
 #include <libdrizzle/drizzle_rows.h>
+#include <libdrizzle/drizzle_field.h>
 
 typedef struct st_drizzle_data {
   DRIZZLE_ROWS *data;
@@ -34,6 +32,13 @@ typedef struct st_drizzle_data {
   unsigned int fields;
 } DRIZZLE_DATA;
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+  DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
+                               bool default_value);
+  void free_rows(DRIZZLE_DATA *cur);
 
 #ifdef  __cplusplus
 }

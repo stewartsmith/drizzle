@@ -25,8 +25,10 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <libdrizzle/drizzle_com.h>
 
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
+
 
 typedef struct st_drizzle_field {
   char *name;                 /* Name of column */

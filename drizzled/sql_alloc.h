@@ -20,6 +20,8 @@
 #ifndef DRIZZLE_SERVER_SQL_ALLOC_H
 #define DRIZZLE_SERVER_SQL_ALLOC_H
 
+#include <libdrizzle/net_serv.h>
+
 void init_sql_alloc(MEM_ROOT *root, uint block_size, uint pre_alloc_size);
 void *sql_alloc(size_t);
 void *sql_calloc(size_t);
@@ -28,14 +30,15 @@ char *sql_strmake(const char *str, size_t len);
 void *sql_memdup(const void * ptr, size_t size);
 void sql_element_free(void *ptr);
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       const CHARSET_INFO * const from_cs,
-			       size_t max_res_length,
-			       const CHARSET_INFO * const to_cs, size_t *result_length);
+                               const CHARSET_INFO * const from_cs,
+                               size_t max_res_length,
+                               const CHARSET_INFO * const to_cs,
+                               size_t *result_length);
 void sql_kill(THD *thd, ulong id, bool only_kill_query);
 bool net_request_file(NET* net, const char* fname);
 char* query_table_status(THD *thd,const char *db,const char *table_name);
 
-#define x_free(A)	{ my_free((uchar*) (A),MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR)); }
-#define safeFree(x)	{ if(x) { my_free((uchar*) x,MYF(0)); x = NULL; } }
+#define x_free(A)  { my_free((uchar*) (A),MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR)); }
+#define safeFree(x)  { if(x) { my_free((uchar*) x,MYF(0)); x = NULL; } }
 
 #endif /* DRIZZLE_SERVER_SQL_ALLOC_H */

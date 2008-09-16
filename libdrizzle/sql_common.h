@@ -24,10 +24,6 @@
 extern "C" {
 #endif
 
-DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, uint fields,
-                             bool default_value);
-void free_rows(DRIZZLE_DATA *cur);
-void net_clear_error(NET *net);
 #ifdef	__cplusplus
 }
 #endif

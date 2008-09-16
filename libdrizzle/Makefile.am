@@ -27,6 +27,7 @@ libdrizzleincludedir = ${includedir}/libdrizzle
 dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
 					drizzle_com.h \
 					errmsg.h \
+					net_serv.h \
 					sql_common.h \
 					drizzle.h \
 					drizzle_res.h \
@@ -40,9 +41,11 @@ dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
 lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = client.c \
 			drizzle.c \
+			drizzle_data.c \
 			errmsg.c \
 			get_password.c \
 			libdrizzle.c \
+			libdrizzle_priv.c \
 			local_infile.c \
 			net_serv.c \
 			pack.c \

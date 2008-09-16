@@ -78,6 +78,20 @@ AC_SUBST(SHARED_LIB_MAJOR_VERSION)
 AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
+# General Constants
+AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and 
+  a multiple of 512. May be
+  smaller what the disk page size. This influences the speed of the
+  isam btree library. eg to big to slow.])
+AC_DEFINE([SC_MAXWIDTH],[256], [Max width of screen (for error messages)])
+AC_DEFINE([FN_LEN],[256	], [Max file name len ])
+AC_DEFINE([FN_HEADLEN],[253], [Max length of filepart of file name ])
+AC_DEFINE([FN_EXTLEN],[20], [Max length of extension (part of FN_LEN) ])
+AC_DEFINE([FN_REFLEN],[512], [Max length of full path-name ])
+AC_DEFINE([FN_EXTCHAR],['.'], [File extension character])
+AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
+AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
+AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
 # Canonicalize the configuration name.
 

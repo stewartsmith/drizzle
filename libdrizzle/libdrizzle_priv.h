@@ -20,12 +20,34 @@
 #ifndef _libdrizzle_libdrizzle_priv_h_
 #define _libdrizzle_libdrizzle_priv_h_
 
+#include <sys/socket.h>
+#include <libdrizzle/drizzle.h>
+
+#define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |  \
+                             CLIENT_TRANSACTIONS |                      \
+                             CLIENT_SECURE_CONNECTION)
+
+
 extern unsigned int drizzle_port;
 
-extern const char  *unknown_sqlstate;
-extern const char  *cant_connect_sqlstate;
-extern const char  *not_error_sqlstate;
+#if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
+#define __builtin_expect(x, expected_value) (x)
+#endif
 
+#define likely(x)	__builtin_expect((x),1)
+#define unlikely(x)	__builtin_expect((x),0)
+
+#ifndef __cplusplus
+#define max(a, b)       ((a) > (b) ? (a) : (b))
+#define min(a, b)       ((a) < (b) ? (a) : (b))
+#endif
+
+extern const char _dig_vec_upper[];
+extern const char _dig_vec_lower[];
+
+const char * sqlstate_get_unknown(void);
+const char * sqlstate_get_not_error(void);
+const char * sqlstate_get_cant_connect(void);
 
 void drizzle_set_default_port(unsigned int port);
 void drizzle_set_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
@@ -33,5 +55,19 @@ void drizzle_set_extended_error(DRIZZLE *drizzle, int errcode,
                                 const char *sqlstate,
                                 const char *format, ...);
 void free_old_query(DRIZZLE *drizzle);
+
+int connect_with_timeout(int fd, const struct sockaddr *name,
+                         unsigned int namelen, int32_t timeout);
+int wait_for_data(int fd, int32_t timeout);
+
+void drizzle_close_free_options(DRIZZLE *drizzle);
+void drizzle_close_free(DRIZZLE *drizzle);
+
+/* Hook Methods */
+bool cli_read_query_result(DRIZZLE *drizzle);
+DRIZZLE_RES *cli_use_result(DRIZZLE *drizzle);
+void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column,
+                       uint32_t field_count);
+void cli_flush_use_result(DRIZZLE *drizzle);
 
 #endif

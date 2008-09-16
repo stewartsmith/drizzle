@@ -62,8 +62,10 @@
 
 *****************************************************************************/
 
-#include <drizzled/global.h>
 #include "libdrizzle.h"
+#include "libdrizzle_priv.h"
+#include <stdlib.h>
+#include <string.h>
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/
 
@@ -122,7 +124,7 @@ void hash_password(uint32_t *result, const char *password, uint32_t password_len
   {
     if (*password == ' ' || *password == '\t')
       continue;                                 /* skip space in password */
-    tmp= (uint32_t) (uchar) *password;
+    tmp= (uint32_t) (unsigned char) *password;
     nr^= (((nr & 63)+add)*tmp)+ (nr << 8);
     nr2+=(nr2 << 8) ^ nr;
     add+=tmp;
@@ -184,8 +186,8 @@ char *octet2hex(char *to, const char *str, uint len)
   const char *str_end= str + len; 
   for (; str != str_end; ++str)
   {
-    *to++= _dig_vec_upper[((uchar) *str) >> 4];
-    *to++= _dig_vec_upper[((uchar) *str) & 0x0F];
+    *to++= _dig_vec_upper[((unsigned char) *str) >> 4];
+    *to++= _dig_vec_upper[((unsigned char) *str) & 0x0F];
   }
   *to= '\0';
   return to;

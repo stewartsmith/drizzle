@@ -736,7 +736,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                                     &err_ptr, &error_len);
       if (error_len)
       {
-        strmake(buff, err_ptr, min(sizeof(buff), error_len));
+        strmake(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -3087,7 +3087,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint32_t) (pos - start);
-      strmake(buff, start, min(sizeof(buff), var_len));
+      strmake(buff, start, min((uint32_t)sizeof(buff), var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {

@@ -30,6 +30,8 @@
 #define NOT_FIXED_DEC			31
 #endif
 
+#include <libdrizzle/drizzle_com.h>
+
 class String;
 int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);

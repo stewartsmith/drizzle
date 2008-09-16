@@ -21,8 +21,10 @@
 ** Ask for a password from tty
 ** This is an own file to avoid conflicts with curses
 */
-#include <drizzled/global.h>
 #include "libdrizzle.h"
+
+#include <string.h>
+#include <stdlib.h>
 
 #if defined(HAVE_BROKEN_GETPASS) && !defined(HAVE_GETPASSPHRASE)
 #undef HAVE_GETPASS
