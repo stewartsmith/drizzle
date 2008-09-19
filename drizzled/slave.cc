@@ -1901,15 +1901,12 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
 */
 
 static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
-                            uint32_t *retry_count, bool suppress_warnings,
-                            const char *messages[SLAVE_RECON_MSG_MAX])
+                                uint32_t *retry_count, bool suppress_warnings,
+                                const char *messages[SLAVE_RECON_MSG_MAX])
 {
   mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
   thd->set_proc_info(_(messages[SLAVE_RECON_MSG_WAIT]));
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->clear_active_vio();
-#endif
-  end_server(drizzle);
+  drizzle_disconnect(drizzle);
   if ((*retry_count)++)
   {
     if (*retry_count > master_retry_count)
@@ -2195,9 +2192,6 @@ err:
       can be called in the middle of closing the VIO associated with
       the 'mysql' object, causing a crash.
     */
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->clear_active_vio();
-#endif
     drizzle_close(drizzle);
     mi->drizzle=0;
   }
@@ -3147,7 +3141,7 @@ static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
 */
 
 static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
-                             bool reconnect, bool suppress_warnings)
+                                 bool reconnect, bool suppress_warnings)
 {
   int32_t slave_was_killed;
   int32_t last_errno= -2;                           // impossible error
@@ -3161,10 +3155,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
 
   drizzle_options(drizzle, DRIZZLE_OPT_CONNECT_TIMEOUT, (char *) &slave_net_timeout);
   drizzle_options(drizzle, DRIZZLE_OPT_READ_TIMEOUT, (char *) &slave_net_timeout);
-
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset_info->csname);
-  /* This one is not strictly needed but we have it here for completeness */
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_DIR, (char *) charsets_dir);
 
   while (!(slave_was_killed = io_slave_killed(thd,mi)) &&
          (reconnect ? drizzle_reconnect(drizzle) != 0 :
@@ -3218,9 +3208,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
       general_log_print(thd, COM_CONNECT_OUT, "%s@%s:%d",
                         mi->user, mi->host, mi->port);
     }
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->set_active_vio(drizzle->net.vio);
-#endif
   }
   drizzle->reconnect= 1;
   return(slave_was_killed);

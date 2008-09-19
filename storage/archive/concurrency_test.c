@@ -2,7 +2,7 @@
   Just a test application for threads.
   */
 #include "azio.h"
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <mysys/my_getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,9 +86,6 @@ int main(int argc, char *argv[])
 
   if (argc > 1)
     exit(1);
-
-  if (!(drizzle_thread_safe()))
-      fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
 
   srandom(time(NULL));
 
@@ -215,13 +212,6 @@ void *timer_thread(void *p)
   time_t *timer_length= (time_t *)p;
   struct timespec abstime;
 
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
-
   /* 
     We lock around the initial call in case were we in a loop. This 
     also keeps the value properly syncronized across call threads.
@@ -243,8 +233,6 @@ void *timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  drizzle_thread_end();
-
   return 0;
 }
 
@@ -255,12 +243,6 @@ void *run_task(void *p)
   int ret;
   int error;
   azio_stream reader_handle;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n", my_progname);
-    exit(1);
-  }
 
   if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
                     context->use_aio)))
@@ -299,8 +281,6 @@ void *run_task(void *p)
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
   azclose(&reader_handle);
-
-  drizzle_thread_end();
 
   return NULL;
 }

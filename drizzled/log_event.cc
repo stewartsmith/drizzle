@@ -31,6 +31,7 @@
 #include <mysys/my_bitmap.h>
 
 #include <libdrizzle/gettext.h>
+#include <libdrizzle/libdrizzle.h>
 
 #define log_cs	&my_charset_utf8_general_ci
 
@@ -459,8 +460,7 @@ append_query_string(const CHARSET_INFO * const csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= escape_string_for_drizzle(csinfo, ptr, 0,
-                                    from->ptr(), from->length());
+    ptr+= drizzle_escape_string(ptr, from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);

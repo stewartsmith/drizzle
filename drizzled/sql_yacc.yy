@@ -360,10 +360,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 94 shift/reduce conflicts.
+  Currently there are 93 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 94
+%expect 93
 
 /*
    Comments for TOKENS.
@@ -822,8 +822,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
-%token  UNICODE_SYM
-%token  UNINSTALL_SYM
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
@@ -858,7 +856,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  WITH_CUBE_SYM                 /* INTERNAL */
 %token  WITH_ROLLUP_SYM               /* INTERNAL */
 %token  WORK_SYM                      /* SQL-2003-N */
-%token  WRAPPER_SYM
 %token  WRITE_SYM                     /* SQL-2003-N */
 %token  XOR
 %token  YEAR_MONTH_SYM
@@ -903,7 +900,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <num>
         type int_type real_type order_dir
         if_exists opt_local opt_table_options table_options
-        table_option opt_if_not_exists opt_no_write_to_binlog
+        table_option opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -995,14 +992,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <symbol> keyword keyword_sp
 
 %type <charset>
-        opt_collate
-        charset_name
-        charset_name_or_default
-        old_or_new_charset_name
-        old_or_new_charset_name_or_default
         collation_name
         collation_name_or_default
-        opt_load_data_charset
         UNDERSCORE_CHARSET
 
 %type <variable> internal_variable_name
@@ -1975,46 +1966,6 @@ charset:
         | CHARSET {}
         ;
 
-charset_name:
-          ident_or_text
-          {
-            if (!($$=get_charset_by_csname($1.str,MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        | BINARY { $$= &my_charset_bin; }
-        ;
-
-charset_name_or_default:
-          charset_name { $$=$1;   }
-        | DEFAULT    { $$=NULL; }
-        ;
-
-opt_load_data_charset:
-          /* Empty */ { $$= NULL; }
-        | charset charset_name_or_default { $$= $2; }
-        ;
-
-old_or_new_charset_name:
-          ident_or_text
-          {
-            if (!($$=get_charset_by_csname($1.str,MY_CS_PRIMARY,MYF(0))) &&
-                !($$=get_old_charset_by_name($1.str)))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        | BINARY { $$= &my_charset_bin; }
-        ;
-
-old_or_new_charset_name_or_default:
-          old_or_new_charset_name { $$=$1;   }
-        | DEFAULT    { $$=NULL; }
-        ;
-
 collation_name:
           ident_or_text
           {
@@ -2024,11 +1975,6 @@ collation_name:
               DRIZZLE_YYABORT;
             }
           }
-        ;
-
-opt_collate:
-          /* empty */ { $$=NULL; }
-        | COLLATE_SYM collation_name_or_default { $$=$2; }
         ;
 
 collation_name_or_default:
@@ -2043,39 +1989,8 @@ opt_default:
 
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
-        | ASCII_SYM opt_bin_mod { Lex->charset=&my_charset_utf8_general_ci; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | UNICODE_SYM opt_bin_mod
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
-        | charset charset_name opt_bin_mod { Lex->charset=$2; }
-        | BINARY opt_bin_charset { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_mod:
-          /* empty */ { }
         | BINARY { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_charset:
-          /* empty */ { Lex->charset= NULL; }
-        | ASCII_SYM { Lex->charset=&my_charset_utf8_general_ci; }
-        | UNICODE_SYM
-          {
-            if (!(Lex->charset=get_charset_by_csname("ucs2",
-                                                     MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), "ucs2");
-              DRIZZLE_YYABORT;
-            }
-          }
-        | charset charset_name { Lex->charset=$2; }
         ;
 
 ws_nweights:
@@ -2366,7 +2281,6 @@ alter:
             lex->create_info.default_table_charset= NULL;
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
-            lex->no_write_to_binlog= 0;
             lex->alter_info.build_method= $2;
           }
           alter_commands
@@ -2536,23 +2450,16 @@ alter_list_item:
             lex->name= $3->table;
             lex->alter_info.flags|= ALTER_RENAME;
           }
-        | CONVERT_SYM TO_SYM charset charset_name_or_default opt_collate
+        | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$4)
+            if (!$3)
             {
               THD *thd= YYTHD;
-              $4= thd->variables.collation_database;
-            }
-            $5= $5 ? $5 : $4;
-            if (!my_charset_same($4,$5))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $5->name, $4->csname);
-              DRIZZLE_YYABORT;
+              $3= thd->variables.collation_database;
             }
             LEX *lex= Lex;
             lex->create_info.table_charset=
-            lex->create_info.default_table_charset= $5;
+            lex->create_info.default_table_charset= $3;
             lex->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
             lex->alter_info.flags|= ALTER_CONVERT;
@@ -2717,11 +2624,10 @@ opt_checksum_type:
         ;
 
 repair:
-          REPAIR opt_no_write_to_binlog table_or_tables
+          REPAIR table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_REPAIR;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list opt_mi_repair_type
@@ -2745,11 +2651,10 @@ mi_repair_type:
         ;
 
 analyze:
-          ANALYZE_SYM opt_no_write_to_binlog table_or_tables
+          ANALYZE_SYM table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
@@ -2796,21 +2701,14 @@ mi_check_type:
         ;
 
 optimize:
-          OPTIMIZE opt_no_write_to_binlog table_or_tables
+          OPTIMIZE table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
           {}
-        ;
-
-opt_no_write_to_binlog:
-          /* empty */ { $$= 0; }
-        | NO_WRITE_TO_BINLOG { $$= 1; }
-        | LOCAL_SYM { $$= 1; }
         ;
 
 rename:
@@ -3390,8 +3288,6 @@ simple_expr:
             if (!$$)
               DRIZZLE_YYABORT;
           }
-        | CONVERT_SYM '(' expr USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_conv_charset($3,$5); }
         | DEFAULT '(' simple_ident ')'
           {
             $$= new (YYTHD->mem_root) Item_default_value(Lex->current_context(),
@@ -3416,8 +3312,6 @@ simple_expr:
 function_call_keyword:
           CHAR_SYM '(' expr_list ')'
           { $$= new (YYTHD->mem_root) Item_func_char(*$3); }
-        | CHAR_SYM '(' expr_list USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_char(*$3, $5); }
         | CURRENT_USER optional_braces
           {
             $$= new (YYTHD->mem_root) Item_func_current_user(Lex->current_context());
@@ -5518,12 +5412,11 @@ opt_describe_column:
 /* flush things */
 
 flush:
-          FLUSH_SYM opt_no_write_to_binlog
+          FLUSH_SYM
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_FLUSH;
             lex->type= 0;
-            lex->no_write_to_binlog= $2;
           }
           flush_options
           {}
@@ -5679,8 +5572,6 @@ load:
             lex->update_list.empty();
             lex->value_list.empty();
           }
-          opt_load_data_charset
-          { Lex->exchange->cs= $15; }
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
           {}
@@ -6262,9 +6153,6 @@ keyword:
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UNICODE_SYM           {}
-        | UNINSTALL_SYM         {}
-        | WRAPPER_SYM           {}
         | UPGRADE_SYM           {}
         ;
 
@@ -6589,24 +6477,10 @@ option_value:
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
           }
-        | charset old_or_new_charset_name_or_default
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            $2= $2 ? $2: global_system_variables.character_set_client;
-            lex->var_list.push_back(new set_var_collation_client($2,thd->variables.collation_database,$2));
-          }
-        | NAMES_SYM charset_name_or_default opt_collate
+        | NAMES_SYM COLLATE_SYM collation_name_or_default
           {
             LEX *lex= Lex;
-            $2= $2 ? $2 : global_system_variables.character_set_client;
-            $3= $3 ? $3 : $2;
-            if (!my_charset_same($2,$3))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $3->name, $2->csname);
-              DRIZZLE_YYABORT;
-            }
+            $3= $3 ? $3 : global_system_variables.character_set_client;
             lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;

@@ -23,6 +23,7 @@
 #include <mysys/my_tree.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
+#include <libdrizzle/drizzle_com.h>
 
 #if defined(my_write) && !defined(MAP_TO_USE_RAID)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */

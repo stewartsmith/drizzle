@@ -37,7 +37,7 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
@@ -1211,8 +1211,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     remote_opt= 1;
     break;
   case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   case OPT_START_DATETIME:
     start_datetime= convert_str_to_timestamp(start_datetime_str);
@@ -1975,5 +1973,6 @@ int main(int argc, char** argv)
   the server
 */
 
+#define max_allowed_packet 1024L*1024L*1024L
 #include <drizzled/log_event.cc>
 

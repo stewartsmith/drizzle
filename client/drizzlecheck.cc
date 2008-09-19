@@ -282,8 +282,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 'V': print_version(); exit(0);
   case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   }
   return 0;

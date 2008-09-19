@@ -201,8 +201,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       tty_password= 1;
     break;
   case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   case 'V': print_version(); exit(0);
   case 'I':
@@ -482,9 +480,6 @@ static void * worker_thread(void *arg)
   char *raw_table_name= (char *)arg;
   DRIZZLE *drizzle= 0;
 
-  if (drizzle_thread_init())
-    goto error;
- 
   if (!(drizzle= db_connect(current_host,current_db,current_user,opt_password)))
   {
     goto error;

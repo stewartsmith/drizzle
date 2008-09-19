@@ -108,7 +108,6 @@ typedef struct my_aio_result {
 	/* Some constants */
 #define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
 #define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
-#define MIN_COMPRESS_LENGTH		50	/* Don't compress small bl. */
 #define DFLT_INIT_HITS  3
 
 	/* root_alloc flags */
@@ -127,13 +126,9 @@ typedef struct my_aio_result {
 #define GETDATE_FIXEDLENGTH	16
 
 	/* defines when allocating data */
-#ifdef SAFEMALLOC
-#else
 #define my_checkmalloc()
 #undef TERMINATE
 #define TERMINATE(A,B) {}
-#define QUICK_SAFEMALLOC
-#define NORMAL_SAFEMALLOC
 extern void *my_malloc(size_t Size,myf MyFlags);
 #define my_malloc_ci(SZ,FLAG) my_malloc( SZ, FLAG )
 extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);
@@ -148,7 +143,6 @@ extern char *my_strndup(const char *from, size_t length,
 #define CALLER_INFO         /* nothing */
 #define ORIG_CALLER_INFO    /* nothing */
 #define TRASH(A,B) /* nothing */
-#endif
 
 #ifdef HAVE_ALLOCA
 #if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
@@ -730,10 +724,6 @@ extern int my_search_option_files(const char *conf_file, int *argc,
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
-extern bool my_compress(uchar *, size_t *, size_t *);
-extern bool my_uncompress(uchar *, size_t , size_t *);
-extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
-                                size_t *complen);
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);

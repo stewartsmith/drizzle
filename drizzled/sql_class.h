@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* Classes in mysql */
@@ -1190,9 +1194,6 @@ public:
   } transaction;
   Field      *dup_field;
   sigset_t signals;
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  Vio* active_vio;
-#endif
   /*
     This is to track items changed during execution of a prepared
     statement/stored procedure. It's created by
@@ -1559,21 +1560,6 @@ public:
   void cleanup(void);
   void cleanup_after_query();
   bool store_globals();
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  inline void set_active_vio(Vio* vio)
-  {
-    pthread_mutex_lock(&LOCK_delete);
-    active_vio = vio;
-    pthread_mutex_unlock(&LOCK_delete);
-  }
-  inline void clear_active_vio()
-  {
-    pthread_mutex_lock(&LOCK_delete);
-    active_vio = 0;
-    pthread_mutex_unlock(&LOCK_delete);
-  }
-  void close_active_vio();
-#endif
   void awake(THD::killed_state state_to_set);
 
 #ifndef DRIZZLE_CLIENT
@@ -1697,8 +1683,7 @@ public:
     return;
   }
   inline bool vio_ok() const { return net.vio != 0; }
-  /** Return false if connection to client is broken. */
-  bool vio_is_connected();
+
   /**
     Mark the current error as fatal. Warning: this does not
     set any error, it sets a property of the error, so must be

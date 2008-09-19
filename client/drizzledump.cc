@@ -115,8 +115,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file=0;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-
 /*
   Constant for detection of default value of default_charset.
   If default_charset is equal to drizzle_universal_client_charset, then
@@ -738,7 +736,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                                     &err_ptr, &error_len);
       if (error_len)
       {
-        strmake(buff, err_ptr, min(sizeof(buff), error_len));
+        strmake(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -1063,9 +1061,6 @@ static int connect_to_db(char *host, char *user,char *passwd)
   drizzle_create(&drizzle_connection);
   if (opt_compress)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NullS);
-  if (opt_protocol)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(&drizzle_connection, DRIZZLE_SET_CHARSET_NAME, default_charset);
   if (!(drizzle= drizzle_connect(&drizzle_connection,host,user,passwd,
                                   NULL,opt_drizzle_port, NULL,
                                   0)))
@@ -1112,7 +1107,7 @@ static void unescape(FILE *file,char *pos,uint length)
   if (!(tmp=(char*) my_malloc(length*2+1, MYF(MY_WME))))
     die(EX_DRIZZLEERR, "Couldn't allocate memory");
 
-  drizzle_real_escape_string(&drizzle_connection, tmp, pos, length);
+  drizzle_escape_string(tmp, pos, length);
   fputc('\'', file);
   fputs(tmp, file);
   fputc('\'', file);
@@ -2257,7 +2252,7 @@ static void dump_table(char *table, char *db)
           {
             if (length)
             {
-              if (!IS_NUM_FIELD(field))
+              if (!(field->type & NUM_FLAG))
               {
                 /*
                   "length * 2 + 2" is OK for both HEX and non-HEX modes:
@@ -2278,9 +2273,8 @@ static void dump_table(char *table, char *db)
                 else
                 {
                   extended_row.append("'");
-                  drizzle_real_escape_string(&drizzle_connection,
-                                             tmp_str,
-                                             row[i],length);
+                  drizzle_escape_string(tmp_str,
+                                        row[i],length);
                   extended_row.append(tmp_str);
                   extended_row.append("'");
                 }
@@ -2314,7 +2308,7 @@ static void dump_table(char *table, char *db)
           }
           if (row[i])
           {
-            if (!IS_NUM_FIELD(field))
+            if (!(field->type & NUM_FLAG))
             {
               if (opt_xml)
               {
@@ -3093,7 +3087,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint32_t) (pos - start);
-      strmake(buff, start, min(sizeof(buff), var_len));
+      strmake(buff, start, min((uint32_t)sizeof(buff), var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {

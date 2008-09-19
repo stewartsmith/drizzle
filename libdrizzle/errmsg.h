@@ -1,12 +1,11 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -96,8 +95,15 @@ enum CR_CLIENT_ERRORS {
   CR_SERVER_LOST_SETTING_DB    =2059,
 
   CR_STMT_CLOSED  =2060,
+
+  CR_NET_UNCOMPRESS_ERROR= 2061,
+  CR_NET_READ_ERROR= 2062,
+  CR_NET_READ_INTERRUPTED= 2063,
+  CR_NET_ERROR_ON_WRITE= 2064,
+  CR_NET_WRITE_INTERRUPTED= 2065,
+
   /* Add error numbers before CR_ERROR_LAST and change it accordingly. */
-  CR_ERROR_LAST    =2060 /*Copy last error nr:*/
+  CR_ERROR_LAST    =2065 /*Copy last error nr:*/
 };
 
 #endif

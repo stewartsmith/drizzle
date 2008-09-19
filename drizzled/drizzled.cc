@@ -21,7 +21,6 @@
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
 #include "stacktrace.h"
-#include "mysqld_suffix.h"
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
@@ -870,7 +869,6 @@ void clean_up(bool print_message)
   end_slave_list();
   delete binlog_filter;
   delete rpl_filter;
-  vio_end();
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
@@ -1245,7 +1243,7 @@ void close_connection(THD *thd, uint errcode, bool lock)
   {
     if (errcode)
       net_send_error(thd, errcode, ER(errcode)); /* purecov: inspected */
-    vio_close(vio);			/* vio is freed in delete thd */
+    net_close(&(thd->net));		/* vio is freed in delete thd */
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -2847,7 +2845,6 @@ void handle_connections_sockets()
   uint error_count=0;
   THD *thd;
   struct sockaddr_storage cAddr;
-  st_vio *vio_tmp;
 
   MAYBE_BROKEN_SYSCALL;
   while (!abort_loop)
@@ -2941,21 +2938,8 @@ void handle_connections_sockets()
       VOID(close(new_sock));
       continue;
     }
-    if (!(vio_tmp=vio_new(new_sock, VIO_TYPE_TCPIP, sock == 0)) ||
-	my_net_init(&thd->net,vio_tmp))
+    if (net_init_sock(&thd->net, new_sock, sock == 0))
     {
-      /*
-        Only delete the temporary vio if we didn't already attach it to the
-        NET object. The destructor in THD will delete any initialized net
-        structure.
-      */
-      if (vio_tmp && thd->net.vio != vio_tmp)
-        vio_delete(vio_tmp);
-      else
-      {
-	(void) shutdown(new_sock, SHUT_RDWR);
-	(void) close(new_sock);
-      }
       delete thd;
       continue;
     }
@@ -4969,6 +4953,12 @@ static void get_options(int *argc,char **argv)
   name to make the version more descriptive.
   (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
 */
+
+#ifdef DRIZZLE_SERVER_SUFFIX
+#define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
+#else
+#define DRIZZLE_SERVER_SUFFIX_STR DRIZZLE_SERVER_SUFFIX_DEF
+#endif
 
 static void set_server_version(void)
 {

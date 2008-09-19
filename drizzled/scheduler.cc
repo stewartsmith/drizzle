@@ -18,6 +18,7 @@
 */
 
 #include <drizzled/server_includes.h>
+#include <libdrizzle/libdrizzle.h>
 #include "event.h"
 
 
@@ -122,7 +123,7 @@ bool thd_scheduler::init(THD *parent_thd)
     return true;
   }
   
-  event_set(io_event, parent_thd->net.vio->sd, EV_READ, 
+  event_set(io_event, net_get_sd(&(parent_thd->net)), EV_READ, 
             libevent_io_callback, (void*)parent_thd);
     
   list.data= parent_thd;
@@ -429,7 +430,7 @@ static void libevent_connection_close(THD *thd)
 {
   thd->killed= THD::KILL_CONNECTION;          // Avoid error messages
 
-  if (thd->net.vio->sd >= 0)                  // not already closed
+  if (net_get_sd(&(thd->net)) >= 0)                  // not already closed
   {
     end_connection(thd);
     close_connection(thd, 0, 1);
@@ -448,8 +449,7 @@ static void libevent_connection_close(THD *thd)
 
 static bool libevent_should_close_connection(THD* thd)
 {
-  return thd->net.error ||
-         thd->net.vio == 0 ||
+  return net_should_close(&(thd->net)) ||
          thd->killed == THD::KILL_CONNECTION;
 }
 
@@ -572,7 +572,7 @@ static bool libevent_needs_immediate_processing(THD *thd)
     Note: we cannot add for event processing because the whole request might
     already be buffered and we wouldn't receive an event.
   */
-  if (thd->net.vio == 0 || thd->net.vio->read_pos < thd->net.vio->read_end)
+  if (net_more_data(&(thd->net)))
     return true;
   
   thd->scheduler.thread_detach();

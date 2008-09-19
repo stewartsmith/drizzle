@@ -56,8 +56,7 @@ dist_drizzledinclude_HEADERS =	error.h \
 
 noinst_LTLIBRARIES = libhandler.la
 
-LDADD = $(top_builddir)/vio/libviolt.la \
-	$(top_builddir)/libdrizzle/libsqlcommon.la \
+LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(ZLIB_LIBS) $(LIBINTL)
@@ -94,7 +93,6 @@ noinst_HEADERS = item.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \
-		 mysqld_suffix.h \
 		 rpl_constants.h \
 		 opt_range.h \
 		 protocol.h \

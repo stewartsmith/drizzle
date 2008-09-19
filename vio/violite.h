@@ -21,6 +21,9 @@
 #ifndef vio_violite_h_
 #define	vio_violite_h_
 
+#include <sys/socket.h>
+#include <errno.h>
+
 /* Simple vio interface in C;  The functions are implemented in violite.c */
 
 #ifdef	__cplusplus
@@ -38,14 +41,14 @@ enum enum_vio_type
 #define VIO_BUFFERED_READ 2                     /* use buffered read */
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
-Vio*	vio_new(int sd, enum enum_vio_type type, uint flags);
+Vio*	vio_new(int sd, enum enum_vio_type type, unsigned int flags);
 
 void	vio_delete(Vio* vio);
 int	vio_close(Vio* vio);
 void    vio_reset(Vio* vio, enum enum_vio_type type, int sd, uint32_t flags);
-size_t	vio_read(Vio *vio, uchar *	buf, size_t size);
-size_t  vio_read_buff(Vio *vio, uchar * buf, size_t size);
-size_t	vio_write(Vio *vio, const uchar * buf, size_t size);
+size_t	vio_read(Vio *vio, unsigned char *	buf, size_t size);
+size_t  vio_read_buff(Vio *vio, unsigned char * buf, size_t size);
+size_t	vio_write(Vio *vio, const unsigned char * buf, size_t size);
 int	vio_blocking(Vio *vio, bool onoff, bool *old_mode);
 bool	vio_is_blocking(Vio *vio);
 /* setsockopt TCP_NODELAY at IPPROTO_TCP level, when possible */
@@ -67,7 +70,7 @@ int vio_fd(Vio*vio);
 /* Remote peer's address and name in text form */
 bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen);
 bool vio_poll_read(Vio *vio, int timeout);
-bool vio_peek_read(Vio *vio, uint *bytes);
+bool vio_peek_read(Vio *vio, unsigned int *bytes);
 
 void vio_end(void);
 
@@ -121,8 +124,8 @@ struct st_vio
   /* function pointers. They are similar for socket/SSL/whatever */
   void    (*viodelete)(Vio*);
   int32_t     (*vioerrno)(Vio*);
-  size_t  (*read)(Vio*, uchar *, size_t);
-  size_t  (*write)(Vio*, const uchar *, size_t);
+  size_t  (*read)(Vio*, unsigned char *, size_t);
+  size_t  (*write)(Vio*, const unsigned char *, size_t);
   int32_t     (*vioblocking)(Vio*, bool, bool *);
   bool (*is_blocking)(Vio*);
   int32_t     (*viokeepalive)(Vio*, bool);

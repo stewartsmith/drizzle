@@ -16,7 +16,7 @@
 /* Functions to map mysqld errno to sql_state */
 #include <drizzled/global.h>
 #include <drizzled/error.h>
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include "sql_state.h"
 
 const char *drizzle_errno_to_sqlstate(uint mysql_errno)

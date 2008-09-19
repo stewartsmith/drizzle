@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
  * @file
@@ -30,6 +34,7 @@
  */
 #ifndef DRIZZLE_SERVER_COMMON_INCLUDES_H
 #define DRIZZLE_SERVER_COMMON_INCLUDES_H
+
 
 /* Cross-platform portability code and standard includes */
 #include <drizzled/global.h>                    
@@ -75,8 +80,6 @@
 #include <drizzled/error.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
-/* Virtual I/O wrapper library */
-#include <vio/violite.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
 
@@ -330,5 +333,6 @@ uint strconvert(const CHARSET_INFO *from_cs, const char *from,
 uint filename_to_tablename(const char *from, char *to, uint to_length);
 uint tablename_to_filename(const char *from, char *to, uint to_length);
 #endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
+
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

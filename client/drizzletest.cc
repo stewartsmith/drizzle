@@ -47,7 +47,6 @@
 #include "client_priv.h"
 #include <mysys/hash.h>
 #include <stdarg.h>
-#include <vio/violite.h>
 
 #include "errname.h"
 
@@ -63,7 +62,6 @@ using namespace std;
 #define QUERY_REAP_FLAG  2
 
 enum {
-  OPT_SKIP_SAFEMALLOC=OPT_MAX_CLIENT_OPTION,
   OPT_PS_PROTOCOL, OPT_SP_PROTOCOL, OPT_CURSOR_PROTOCOL, OPT_VIEW_PROTOCOL,
   OPT_MAX_CONNECT_RETRIES, OPT_MARK_PROGRESS, OPT_LOG_DIR, OPT_TAIL_LINES
 };
@@ -856,10 +854,6 @@ static void free_used_memory(void)
   free_all_replace();
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
-
-  /* Only call drizzle_server_end if drizzle_server_init has been called */
-  if (server_initialized)
-    drizzle_server_end();
 
   return;
 }
@@ -3512,8 +3506,7 @@ static void do_close_connection(struct st_command *command)
   {
     if (con->drizzle.net.vio)
     {
-      vio_delete(con->drizzle.net.vio);
-      con->drizzle.net.vio = 0;
+      net_close(&(con->drizzle.net));
     }
   }
 
@@ -3795,13 +3788,6 @@ static void do_connect(struct st_command *command)
   if (opt_compress || con_compress)
     drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4855,7 +4841,7 @@ static void append_metadata(string *ds,
     ds->append("\t", 1);
     replace_append_uint(ds, field->max_length);
     ds->append("\t", 1);
-    ds->append((char*) (IS_NOT_NULL(field->flags) ?
+    ds->append((char*) ((field->flags & NOT_NULL_FLAG) ?
                         "N" : "Y"), 1);
     ds->append("\t", 1);
     replace_append_uint(ds, field->flags);
@@ -5503,13 +5489,6 @@ int main(int argc, char **argv)
   if (opt_compress)
     drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");

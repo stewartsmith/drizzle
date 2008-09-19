@@ -1,25 +1,29 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-#include <drizzled/global.h>
-#include <drizzle.h>
+#include "libdrizzle.h"
+#include <stdint.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */
-uint32_t net_field_length(uchar **packet)
+uint32_t net_field_length(unsigned char **packet)
 {
-  register uchar *pos= (uchar *)*packet;
+  register unsigned char *pos= (unsigned char *)*packet;
   if (*pos < 251)
   {
     (*packet)++;
@@ -45,9 +49,9 @@ uint32_t net_field_length(uchar **packet)
 }
 
 /* The same as above but returns int64_t */
-uint64_t net_field_length_ll(uchar **packet)
+uint64_t net_field_length_ll(unsigned char **packet)
 {
-  register uchar *pos= *packet;
+  register unsigned char *pos= *packet;
   if (*pos < 251)
   {
     (*packet)++;
@@ -93,18 +97,18 @@ uint64_t net_field_length_ll(uchar **packet)
    Position in 'pkg' after the packed length
 */
 
-uchar *net_store_length(uchar *packet, uint64_t length)
+unsigned char *net_store_length(unsigned char *packet, uint64_t length)
 {
   if (length < (uint64_t) 251LL)
   {
-    *packet=(uchar) length;
+    *packet=(unsigned char) length;
     return packet+1;
   }
   /* 251 is reserved for NULL */
   if (length < (uint64_t) 65536LL)
   {
     *packet++=252;
-    int2store(packet,(uint) length);
+    int2store(packet,(uint32_t) length);
     return packet+2;
   }
   if (length < (uint64_t) 16777216LL)

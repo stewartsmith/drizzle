@@ -157,7 +157,6 @@ static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
-static char *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -172,8 +171,6 @@ uint *concurrency;
 const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
-
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
@@ -318,9 +315,6 @@ int main(int argc, char **argv)
   my_init();
 
   MY_INIT(argv[0]);
-
-  if (!(drizzle_thread_safe()))
-    fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
 
   load_defaults("my",load_default_groups,&argc,&argv);
   defaults_argv=argv;
@@ -1963,14 +1957,6 @@ pthread_handler_t timer_thread(void *p)
   struct timespec abstime;
 
 
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
-
   /*
     We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
@@ -1992,7 +1978,6 @@ pthread_handler_t timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  drizzle_thread_end();
   return(0);
 }
 
@@ -2006,13 +1991,6 @@ pthread_handler_t run_task(void *p)
   DRIZZLE_ROW row;
   statement *ptr;
   thread_context *con= (thread_context *)p;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2139,7 +2117,6 @@ end:
 
   my_free(con, MYF(0));
 
-  drizzle_thread_end();
   return(0);
 }
 
@@ -2488,9 +2465,6 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
 
   if (opt_compress)
     drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
-  /* We always do opt_protocol to TCP/IP */
-  drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
 
   for (x= 0; x < 10; x++)
   {

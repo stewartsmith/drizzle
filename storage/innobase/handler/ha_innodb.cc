@@ -2581,10 +2581,6 @@ get_innobase_type_from_mysql_type(
 	case DRIZZLE_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
 		if (field->binary()) {
 			return(DATA_BINARY);
-		} else if (strcmp(
-				   field->charset()->name,
-				   "latin1_swedish_ci") == 0) {
-			return(DATA_VARCHAR);
 		} else {
 			return(DATA_VARMYSQL);
 		}

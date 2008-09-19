@@ -473,9 +473,6 @@ THD::THD()
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.m_pending_rows_event= 0;
   transaction.on= 1;
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  active_vio = 0;
-#endif
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -703,7 +700,7 @@ THD::~THD()
   /* Close connection */
   if (net.vio)
   {
-    vio_delete(net.vio);
+    net_close(&net);
     net_end(&net);
   }
   if (!cleanup_done)
@@ -792,22 +789,6 @@ void THD::awake(THD::killed_state state_to_set)
     thr_alarm_kill(thread_id);
     if (!slave_thread)
       thread_scheduler.post_kill_notification(this);
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    if (this != current_thd)
-    {
-      /*
-        In addition to a signal, let's close the socket of the thread that
-        is being killed. This is to make sure it does not block if the
-        signal is lost. This needs to be done only on platforms where
-        signals are not a reliable interruption mechanism.
-
-        If we're killing ourselves, we know that we're not blocked, so this
-        hack is not used.
-      */
-
-      close_active_vio();
-    }
-#endif    
   }
   if (mysys_var)
   {
@@ -1158,19 +1139,6 @@ int THD::send_explain_fields(select_result *result)
                               Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
 }
 
-#ifdef SIGNAL_WITH_VIO_CLOSE
-void THD::close_active_vio()
-{
-  safe_mutex_assert_owner(&LOCK_delete); 
-  if (active_vio)
-  {
-    vio_close(active_vio);
-    active_vio = 0;
-  }
-  return;
-}
-#endif
-
 
 struct Item_change_record: public ilink
 {
@@ -1230,26 +1198,6 @@ void THD::rollback_item_tree_changes()
   /* We can forget about changes memory: it's allocated in runtime memroot */
   change_list.empty();
   return;
-}
-
-
-/**
-  Check that the endpoint is still available.
-*/
-
-bool THD::vio_is_connected()
-{
-  uint bytes= 0;
-
-  /* End of input is signaled by poll if the socket is aborted. */
-  if (vio_poll_read(net.vio, 0))
-    return true;
-
-  /* Socket is aborted if signaled but no data is available. */
-  if (vio_peek_read(net.vio, &bytes))
-    return true;
-
-  return bytes ? true : false;
 }
 
 

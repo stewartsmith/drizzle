@@ -760,12 +760,12 @@ DROP TABLE t1,t2;
 # 
 
 CREATE TABLE t1 (
-  f1 varchar(16) collate latin1_swedish_ci PRIMARY KEY,
-  f2 varchar(16) collate latin1_swedish_ci
+  f1 varchar(16) collate utf8_swedish_ci PRIMARY KEY,
+  f2 varchar(16) collate utf8_swedish_ci
 );
 CREATE TABLE t2 (
-  f1 varchar(16) collate latin1_swedish_ci PRIMARY KEY,
-  f3 varchar(16) collate latin1_swedish_ci
+  f1 varchar(16) collate utf8_swedish_ci PRIMARY KEY,
+  f3 varchar(16) collate utf8_swedish_ci
 );
 
 INSERT INTO t1 VALUES ('bla','blah');
