@@ -192,6 +192,8 @@ typedef struct st_table_share
   uint32_t   version, mysql_version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
+  uint32_t   stored_rec_length;         /* Stored record length 
+                                           (no generated-only virtual fields) */
 
   plugin_ref db_plugin;			/* storage engine plugin */
   inline handlerton *db_type() const	/* table_type for handler */
@@ -210,6 +212,8 @@ typedef struct st_table_share
   uint key_block_size;			/* create key_block_size, if used */
   uint null_bytes, last_null_bit_pos;
   uint fields;				/* Number of fields */
+  uint stored_fields;                   /* Number of stored fields 
+                                           (i.e. without generated-only ones) */
   uint rec_buff_length;                 /* Size of table->record[] buffer */
   uint keys, key_parts;
   uint max_key_length, max_unique_length, total_key_length;
@@ -230,6 +234,7 @@ typedef struct st_table_share
   uint error, open_errno, errarg;       /* error from open_table_def() */
   uint column_bitmap_size;
   uchar frm_version;
+  uint vfields;                         /* Number of virtual fields */
   bool null_field_first;
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
@@ -416,6 +421,7 @@ public:
   Field *next_number_field;		/* Set if next_number is activated */
   Field *found_next_number_field;	/* Set on open */
   Field_timestamp *timestamp_field;
+  Field **vfield;                       /* Pointer to virtual fields*/
 
   TableList *pos_in_table_list;/* Element referring to this table */
   order_st *group;
@@ -557,6 +563,7 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
+  void mark_virtual_columns(void);
   inline void column_bitmaps_set(MY_BITMAP *read_set_arg,
                                  MY_BITMAP *write_set_arg)
   {

@@ -220,6 +220,8 @@ public:
     call
   */
   virtual const char *fully_qualified_func_name() const = 0;
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -484,6 +486,8 @@ public:
     maybe_null=1;
     max_length=MAX_BLOB_WIDTH;
   }
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -614,6 +618,12 @@ public:
   const char *func_name() const { return "weight_string"; }
   String *val_str(String *);
   void fix_length_and_dec();
+  /*
+    TODO: Currently this Item is not allowed for virtual columns
+    only due to a bug in generating virtual column value.
+  */
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 class Item_func_uncompressed_length : public Item_int_func
@@ -668,5 +678,7 @@ public:
   }
   const char *func_name() const{ return "uuid"; }
   String *val_str(String *);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 

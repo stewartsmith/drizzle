@@ -331,6 +331,7 @@ void lex_start(THD *thd)
   lex->reset_query_tables_list(false);
   lex->expr_allows_subselect= true;
   lex->use_only_table_context= false;
+  lex->parse_vcol_expr= false;
 
   lex->name.str= 0;
   lex->name.length= 0;

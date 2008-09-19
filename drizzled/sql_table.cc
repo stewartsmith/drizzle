@@ -840,7 +840,8 @@ int prepare_create_field(Create_field *sql_field,
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   }
-  if (!(sql_field->flags & NOT_NULL_FLAG))
+  if (!(sql_field->flags & NOT_NULL_FLAG) ||
+      (sql_field->vcol_info)) /* Make virtual columns always allow NULL values */
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
     sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
@@ -1094,6 +1095,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             null_fields--;
 	  sql_field->flags=		dup_field->flags;
           sql_field->interval=          dup_field->interval;
+          sql_field->vcol_info=         dup_field->vcol_info;
+          sql_field->is_stored=      dup_field->is_stored;
 	  it2.remove();			// Remove first (create) definition
 	  select_field_pos--;
 	  break;
@@ -1125,7 +1128,23 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
-    record_offset+= sql_field->pack_length;
+    /*
+          For now skip fields that are not physically stored in the database
+          (virtual fields) and update their offset later 
+          (see the next loop).
+        */
+    if (sql_field->is_stored)
+      record_offset+= sql_field->pack_length;
+  }
+  /* Update virtual fields' offset */
+  it.rewind();
+  while ((sql_field=it++))
+  {
+    if (not sql_field->is_stored)
+    {
+      sql_field->offset= record_offset;
+      record_offset+= sql_field->pack_length;
+    }
   }
   if (timestamps_with_niladic > 1)
   {
@@ -1172,6 +1191,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key->type == Key::FOREIGN_KEY)
     {
       fk_key_count++;
+      if (((Foreign_key *)key)->validate(alter_info->create_list))
+        return true;
       Foreign_key *fk_key= (Foreign_key*) key;
       if (fk_key->ref_columns.elements &&
 	  fk_key->ref_columns.elements != fk_key->columns.elements)
@@ -1361,6 +1382,17 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	    return(true);
 	  }
 	}
+        if (not sql_field->is_stored)
+        {
+          /* Key fields must always be physically stored. */
+          my_error(ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN, MYF(0));
+          return(true);
+        }
+        if (key->type == Key::PRIMARY && sql_field->vcol_info)
+        {
+          my_error(ER_PRIMARY_KEY_BASED_ON_VIRTUAL_COLUMN, MYF(0));
+          return(true);
+        }
 	if (!(sql_field->flags & NOT_NULL_FLAG))
 	{
 	  if (key->type == Key::PRIMARY)
@@ -3407,6 +3439,14 @@ compare_tables(THD *thd,
       if (!(table_changes_local= field->is_equal(new_field)))
         *alter_flags|= HA_ALTER_COLUMN_TYPE;
 
+      /*
+        Check if the altered column is a stored virtual field.
+        TODO: Mark such a column with an alter flag only if
+        the expression functions are not equal. 
+      */
+      if (field->is_stored && field->vcol_info)
+        *alter_flags|= HA_ALTER_STORED_VCOL;
+
       /* Check if field was renamed */
       field->flags&= ~FIELD_IS_RENAMED;
       if (my_strcasecmp(system_charset_info,
@@ -4046,6 +4086,13 @@ mysql_prepare_alter_table(THD *thd, Table *table,
     if (def)
     {						// Field is changed
       def->field=field;
+      if (field->is_stored != def->is_stored)
+      {
+        my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
+                 MYF(0),
+                 "Changing the STORED status");
+        goto err;
+      }
       if (!def->after)
 	{
 	new_create_list.push_back(def);
@@ -4263,6 +4310,9 @@ mysql_prepare_alter_table(THD *thd, Table *table,
     Key *key;
     while ((key=key_it++))			// Add new keys
     {
+      if (key->type == Key::FOREIGN_KEY &&
+          ((Foreign_key *)key)->validate(new_create_list))
+        goto err;
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
       if (key->name.str &&
@@ -5219,6 +5269,7 @@ copy_data_between_tables(Table *from,Table *to,
       copy_ptr->do_copy(copy_ptr);
     }
     prev_insert_id= to->file->next_insert_id;
+    update_virtual_fields_marked_for_write(to, false);
     error=to->file->ha_write_row(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)

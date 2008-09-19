@@ -118,6 +118,12 @@
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
+/* The length of the header part for each virtual column in the .frm file. */
+#define FRM_VCOL_HEADER_SIZE 3
+/*
+  Maximum length of the expression statement defined for virtual columns.
+*/
+#define VIRTUAL_COLUMN_EXPRESSION_MAXLEN 255 - FRM_VCOL_HEADER_SIZE
 
 /*
   USER_HOST_BUFF_SIZE -- length of string buffer, that is enough to contain
@@ -357,6 +363,7 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 			DRIZZLE_TYPE_DATE,   DRIZZLE_TYPE_TIME,
 			DRIZZLE_TYPE_DATETIME,
 			DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
+			DRIZZLE_TYPE_VIRTUAL=252,
       DRIZZLE_TYPE_NEWDECIMAL=253,
 			DRIZZLE_TYPE_ENUM=254,
 			DRIZZLE_TYPE_BLOB=255

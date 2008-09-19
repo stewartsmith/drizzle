@@ -132,6 +132,9 @@ static int check_insert_fields(THD *thd, TableList *table_list,
                        table->timestamp_field->field_index);
       }
     }
+    /* Mark all virtual columns for write*/
+    if (table->vfield)
+      table->mark_virtual_columns();
   }
 
   return 0;

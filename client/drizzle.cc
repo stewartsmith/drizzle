@@ -2897,6 +2897,7 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
+    case DRIZZLE_TYPE_VIRTUAL:     return "VIRTUAL";
     default:                     return "?-unknown-?";
   }
 }

@@ -883,12 +883,30 @@ public:
   { return 0; }
   virtual bool register_field_in_read_map(uchar *arg __attribute__((unused)))
   { return 0; }
+  /*
+    The next function differs from the previous one that a bitmap to be updated
+    is passed as uchar *arg.
+  */
+  virtual bool register_field_in_bitmap(uchar *arg __attribute__((unused)))
+  { return 0; }
   virtual bool subst_argument_checker(uchar **arg)
   {
     if (*arg)
       *arg= NULL;
     return true;
   }
+
+  /*
+    Check if an expression/function is allowed for a virtual column
+    SYNOPSIS
+      check_vcol_func_processor()
+      arg is just ignored
+    RETURN VALUE
+      TRUE                           Function not accepted
+      FALSE                          Function accepted
+  */
+  virtual bool check_vcol_func_processor(uchar *arg __attribute__((unused))) 
+  { return true; }
 
   virtual Item *equal_fields_propagator(uchar * arg __attribute__((unused))) { return this; }
   virtual bool set_no_const_sub(uchar *arg __attribute__((unused))) { return false; }
@@ -1150,6 +1168,9 @@ public:
   bool collect_item_field_processor(uchar * arg);
   bool find_item_in_field_list_processor(uchar *arg);
   bool register_field_in_read_map(uchar *arg);
+  bool register_field_in_bitmap(uchar *arg);
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
   void cleanup();
   bool result_as_int64_t()
   {
@@ -1205,6 +1226,8 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 class Item_null_result :public Item_null
@@ -1217,6 +1240,8 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return true; }
 };  
 
 /* Item represents one placeholder ('?') of prepared statement */
@@ -1391,6 +1416,8 @@ public:
   uint decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1408,6 +1435,8 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
   uint decimal_precision() const { return max_length; }
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1449,6 +1478,8 @@ public:
   uint decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1516,6 +1547,8 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1645,6 +1678,8 @@ public:
   {
     m_cs_specified= cs_specified;
   }
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 
 private:
   bool m_cs_specified;
@@ -1667,6 +1702,8 @@ public:
   {
     str->append(func_name);
   }
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -1746,6 +1783,8 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1777,6 +1816,8 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -2264,6 +2305,8 @@ public:
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);
   }
+  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  { return true; }
 };
 
 

@@ -337,6 +337,8 @@ public:
   void fix_length_and_dec();
   bool fix_fields(THD *thd, Item **ref);
   int64_t val_int() { assert(fixed == 1); return value; }
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -392,6 +394,8 @@ class Item_func_additive_op :public Item_num_op
 public:
   Item_func_additive_op(Item *a,Item *b) :Item_num_op(a,b) {}
   void result_precision();
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -426,6 +430,8 @@ public:
   double real_op();
   my_decimal *decimal_op(my_decimal *);
   void result_precision();
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -456,7 +462,8 @@ public:
   {
     print_op(str, query_type);
   }
-
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -470,6 +477,8 @@ public:
   const char *func_name() const { return "%"; }
   void result_precision();
   void fix_length_and_dec();
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -485,6 +494,8 @@ public:
   void fix_length_and_dec();
   void fix_num_length_and_dec();
   uint decimal_precision() const { return args[0]->decimal_precision(); }
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -497,6 +508,8 @@ public:
   my_decimal *decimal_op(my_decimal *);
   const char *func_name() const { return "abs"; }
   void fix_length_and_dec();
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 // A class to handle logarithmic and trigonometric functions
@@ -651,6 +664,8 @@ public:
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -662,6 +677,8 @@ public:
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 /* This handles round and truncate */
@@ -691,6 +708,8 @@ public:
   bool const_item() const { return 0; }
   void update_used_tables();
   bool fix_fields(THD *thd, Item **ref);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 private:
   void seed_random (Item * val);  
 };
@@ -973,6 +992,8 @@ public:
       max_length= args[0]->max_length;
   }
   bool fix_fields(THD *thd, Item **ref);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -986,6 +1007,8 @@ public:
   const char *func_name() const { return "benchmark"; }
   void fix_length_and_dec() { max_length=1; maybe_null=0; }
   virtual void print(String *str, enum_query_type query_type);
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -1176,6 +1199,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "master_pos_wait"; }
   void fix_length_and_dec() { max_length=21; maybe_null=1;}
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -1233,6 +1258,7 @@ public:
   }
   void save_org_in_field(Field *field) { (void)save_in_field(field, 1, 0); }
   bool register_field_in_read_map(uchar *arg);
+  bool register_field_in_bitmap(uchar *arg);
 };
 
 
@@ -1344,6 +1370,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "is_free_lock"; }
   void fix_length_and_dec() { decimals=0; max_length=1; maybe_null=1;}
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 class Item_func_is_used_lock :public Item_int_func
@@ -1354,6 +1382,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "is_used_lock"; }
   void fix_length_and_dec() { decimals=0; max_length=10; maybe_null=1;}
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 /* For type casts */
@@ -1373,6 +1403,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "row_count"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -1391,6 +1423,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "found_rows"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
+  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 #endif /* DRIZZLE_SERVER_ITEM_FUNC_H */
