@@ -110,7 +110,7 @@ COUNT(*)
 create table t1
 ( x_bigint BIGINT,
 x_integer INTEGER,
-x_smallint SMALLINT,
+x_int int,
 x_decimal DECIMAL(5,3),
 x_numeric NUMERIC(5,3),
 x_real REAL,
@@ -122,7 +122,7 @@ WHERE TABLE_NAME= 't1';
 COLUMN_NAME	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
 x_bigint	NULL	NULL
 x_integer	NULL	NULL
-x_smallint	NULL	NULL
+x_int	NULL	NULL
 x_decimal	NULL	NULL
 x_numeric	NULL	NULL
 x_real	NULL	NULL
@@ -145,19 +145,19 @@ column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
 f1	blob	4294967295	4294967295
 f2	text	4294967295	4294967295
 drop table t1;
-create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
-f5 BIGINT, f6 TINYINT, f7 SMALLINT);
+create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
+f5 BIGINT, f6 int, f7 int);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';
 column_name	NUMERIC_PRECISION	NUMERIC_SCALE
-f1	3	0
-f2	5	0
+f1	10	0
+f2	10	0
 f3	19	0
 f4	10	0
 f5	19	0
-f6	3	0
-f7	5	0
+f6	10	0
+f7	10	0
 drop table t1;
 create table t1 (a int not null, b int);
 use information_schema;

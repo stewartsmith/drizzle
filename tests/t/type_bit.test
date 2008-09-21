@@ -145,19 +145,19 @@ drop table t1, t2;
 # Bug #10179: problem with NULLs and default values
 #
 
-create table t1 (a int, b time, c tinyint, d bool, e char(10), f bit(1), 
+create table t1 (a int, b time, c int, d bool, e char(10), f bit(1), 
   g bit(1) NOT NULL default 1, h char(1) default 'a');
 insert into t1 set a=1;
 select hex(g), h from t1;
 drop table t1;
 
-create table t1 (a int, b time, c tinyint, d bool, e char(10), f bit(1),
+create table t1 (a int, b time, c int, d bool, e char(10), f bit(1),
   g bit(1) NOT NULL default 1);
 insert into t1 set a=1;
 select hex(g) from t1;
 drop table t1;
 
-create table t1 (a int, b time, c tinyint, d bool, e char(10), f bit(1), 
+create table t1 (a int, b time, c int, d bool, e char(10), f bit(1), 
   h char(1) default 'a') engine=myisam;
 insert into t1 set a=1;
 select h from t1;
@@ -256,7 +256,7 @@ drop table bug15583;
 # Bug #22271: data casting may affect data stored in the next column(s?)
 #
 
-create table t1(a bit(1), b smallint unsigned);
+create table t1(a bit(1), b int unsigned);
 insert into t1 (b, a) values ('2', '1');
 select hex(a), b from t1;
 drop table t1;

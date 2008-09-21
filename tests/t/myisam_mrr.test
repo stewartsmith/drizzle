@@ -26,9 +26,9 @@ CREATE TABLE t1 (
   key2 int(10) unsigned DEFAULT NULL,
   text1 text,
   text2 text,
-  col2 smallint(6) DEFAULT '100',
+  col2 int(6) DEFAULT '100',
   col3 enum('headers','bodyandsubject') NOT NULL DEFAULT 'bodyandsubject',
-  col4 tinyint(3) unsigned NOT NULL DEFAULT '0',
+  col4 int(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (ID),
   KEY (key1),
   KEY (key2)

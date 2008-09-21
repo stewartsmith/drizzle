@@ -24,7 +24,7 @@ select * from t1;
 drop table t1;
 
 create table t1 (
-  skey tinyint unsigned NOT NULL auto_increment PRIMARY KEY,
+  skey int unsigned NOT NULL auto_increment PRIMARY KEY,
   sval char(20)
 );
 insert into t1 values (NULL, "hello");
@@ -96,7 +96,7 @@ drop table t1;
 #
 # last_insert_id() madness
 #
-create table t1 (i tinyint unsigned not null auto_increment primary key);
+create table t1 (i int unsigned not null auto_increment primary key);
 insert into t1 set i = 254;
 insert into t1 set i = null;
 select last_insert_id();
@@ -109,7 +109,7 @@ insert into t1 set i = null;
 select last_insert_id();
 drop table t1;
 
-create table t1 (i tinyint unsigned not null auto_increment, key (i));
+create table t1 (i int unsigned not null auto_increment, key (i));
 insert into t1 set i = 254;
 insert into t1 set i = null;
 select last_insert_id();
@@ -117,7 +117,7 @@ insert into t1 set i = null;
 select last_insert_id();
 drop table t1;
 
-create table t1 (i tinyint unsigned not null auto_increment primary key, b int, unique (b));
+create table t1 (i int unsigned not null auto_increment primary key, b int, unique (b));
 insert into t1 values (NULL, 10);
 select last_insert_id();
 insert into t1 values (NULL, 15);

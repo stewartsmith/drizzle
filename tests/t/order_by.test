@@ -279,7 +279,7 @@ drop table t1;
 
 CREATE TABLE t1 (
   gid int(10) unsigned NOT NULL auto_increment,
-  cid smallint(5) unsigned NOT NULL default '0',
+  cid int(5) unsigned NOT NULL default '0',
   PRIMARY KEY  (gid),
   KEY component_id (cid)
 ) ENGINE=MyISAM;
@@ -288,8 +288,8 @@ ALTER TABLE t1 add skr int(10) not null;
 
 CREATE TABLE t2 (
   gid int(10) unsigned NOT NULL default '0',
-  uid smallint(5) unsigned NOT NULL default '1',
-  sid tinyint(3) unsigned NOT NULL default '1',
+  uid int(5) unsigned NOT NULL default '1',
+  sid int(3) unsigned NOT NULL default '1',
   PRIMARY KEY  (gid),
   KEY uid (uid),
   KEY status_id (sid)
@@ -297,7 +297,7 @@ CREATE TABLE t2 (
 INSERT INTO t2 VALUES (103853,250,5),(103867,27,5),(103962,27,5),(104505,117,5),(104619,75,5),(104620,15,5);
 
 CREATE TABLE t3 (
-  uid smallint(6) NOT NULL auto_increment,
+  uid int(6) NOT NULL auto_increment,
   PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(15),(27),(75),(117),(250);
@@ -325,14 +325,14 @@ CREATE TABLE t1 (
   `numeropost` mediumint(8) unsigned NOT NULL auto_increment,
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
   `auteur` char(35) NOT NULL default '',
-  `icone` tinyint(2) unsigned NOT NULL default '0',
+  `icone` int(2) unsigned NOT NULL default '0',
   `lastauteur` char(35) NOT NULL default '',
-  `nbrep` smallint(6) unsigned NOT NULL default '0',
+  `nbrep` int(6) unsigned NOT NULL default '0',
   `dest` char(35) NOT NULL default '',
-  `lu` tinyint(1) unsigned NOT NULL default '0',
+  `lu` int(1) unsigned NOT NULL default '0',
   `vue` mediumint(8) unsigned NOT NULL default '0',
-  `ludest` tinyint(1) unsigned NOT NULL default '0',
-  `ouvert` tinyint(1) unsigned NOT NULL default '1',
+  `ludest` int(1) unsigned NOT NULL default '0',
+  `ouvert` int(1) unsigned NOT NULL default '1',
   PRIMARY KEY  (`numeropost`),
   KEY `date` (`date`),
   KEY `dest` (`dest`,`ludest`),
@@ -417,7 +417,7 @@ DROP TABLE t1;
 # Bug when doing an order by on a 1 byte string (Bug #2147)
 #
 
-CREATE TABLE t1 (  id smallint(6) unsigned NOT NULL default '0',  menu tinyint(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
+CREATE TABLE t1 (  id int(6) unsigned NOT NULL default '0',  menu int(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (11384, 2),(11392, 2);
 SELECT id FROM t1 WHERE id <11984 AND menu =2 ORDER BY id DESC LIMIT 1 ;
 drop table t1;

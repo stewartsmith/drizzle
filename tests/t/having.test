@@ -33,7 +33,7 @@ CREATE TABLE t2 (
   contig_id int(10) unsigned NOT NULL default '0',
   seq_start int(10) NOT NULL default '0',
   seq_end int(10) NOT NULL default '0',
-  strand tinyint(2) NOT NULL default '0',
+  strand int(2) NOT NULL default '0',
   KEY id (id)
 );
 INSERT INTO t2 VALUES (133195,469713,61327,61384,1),(133196,469713,64113,64387,1),(133197,1,1,1,0),(133197,1,1,1,-2);

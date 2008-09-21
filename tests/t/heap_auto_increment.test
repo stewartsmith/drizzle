@@ -23,7 +23,7 @@ select * from t1;
 drop table t1;
 
 create table t1 (
-  skey tinyint unsigned NOT NULL auto_increment PRIMARY KEY,
+  skey int unsigned NOT NULL auto_increment PRIMARY KEY,
   sval char(20)
 ) engine=heap;
 insert into t1 values (NULL, "hello");

@@ -114,7 +114,7 @@ a
 18446744073709551615
 9223372036854775808
 drop table t1;
-create table t1 (a tinyint);
+create table t1 (a int);
 insert into t1 values (18446744073709551615.0);
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values (9223372036854775808.0);

@@ -7,7 +7,7 @@
 # space small, and this test verifies that the reservation is not too small.
 
 CREATE TABLE `t_bug21476` (
-  `ID_BOARD` smallint(5) unsigned NOT NULL default '0',
+  `ID_BOARD` int(5) unsigned NOT NULL default '0',
   `ID_MEMBER` mediumint(8) unsigned NOT NULL default '0',
   `logTime` int(10) unsigned NOT NULL default '0',
   `ID_MSG` mediumint(8) unsigned NOT NULL default '0',

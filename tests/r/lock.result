@@ -20,12 +20,12 @@ insert into t2 SELECT * from t1;
 update t1 set id=1 where id=-1;
 drop table t1,t2;
 CREATE TABLE t1 (
-index1 smallint default NULL,
-nr smallint default NULL,
+index1 int default NULL,
+nr int default NULL,
 KEY index1(index1)
 ) ENGINE=MyISAM;
 CREATE TABLE t2 (
-nr smallint default NULL,
+nr int default NULL,
 name varchar(20) default NULL
 ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,'item1');

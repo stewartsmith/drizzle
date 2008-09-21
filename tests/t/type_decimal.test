@@ -401,7 +401,7 @@ drop table t1;
 
 CREATE TABLE t1 (
   qty decimal(16,6) default NULL, 
-  dps tinyint(3) unsigned default NULL 
+  dps int(3) unsigned default NULL 
 );
 INSERT INTO t1 VALUES (1.1325,3);
 

@@ -346,7 +346,7 @@ drop table t1;
 #
 # Bug #31249: problem with convert(..., datetime)
 #
-create table t1 (a tinyint);
+create table t1 (a int);
 insert into t1 values (), (), ();
 select sum(a) from t1 group by convert(a, datetime);
 drop table t1;
