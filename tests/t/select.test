@@ -2738,17 +2738,17 @@ SELECT a, c, d, f FROM t1,t2 WHERE a=c AND b BETWEEN 4 AND 6 AND a > 0;
 DROP TABLE t1, t2;
 
 #
-# Bug #18895: BIT values cause joins to fail
+# Bug #18895: Now tests for int
 #
 create table t1 (
     a int unsigned    not null auto_increment primary key,
-    b bit             not null,
-    c bit             not null
+    b int             not null,
+    c int             not null
 );
 
 create table t2 (
     a int unsigned    not null auto_increment primary key,
-    b bit             not null,
+    b int             not null,
     c int unsigned    not null,
     d varchar(50)
 );

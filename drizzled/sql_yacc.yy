@@ -756,7 +756,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SIGNED_SYM
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SLAVE
-%token  SMALLINT                      /* SQL-2003-R */
 %token  SNAPSHOT_SYM
 %token  SOCKET_SYM
 %token  SONAME_SYM
@@ -806,7 +805,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
 %token  TIME_SYM                      /* SQL-2003-R */
-%token  TINYINT
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
@@ -1741,21 +1739,6 @@ type:
           Lex->length=(char*) 0; /* use default length */
         }
         | real_type opt_precision field_options { $$=$1; }
-        | BIT_SYM
-          {
-            Lex->length= (char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
-        | BOOL_SYM
-          {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
-        | BOOLEAN_SYM
-          {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
         | char '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
@@ -1829,8 +1812,6 @@ varchar:
 
 int_type:
           INT_SYM   { $$=DRIZZLE_TYPE_LONG; }
-        | TINYINT   { $$=DRIZZLE_TYPE_TINY; }
-        | SMALLINT  { $$=DRIZZLE_TYPE_SHORT; }
         | BIGINT    { $$=DRIZZLE_TYPE_LONGLONG; }
         ;
 
