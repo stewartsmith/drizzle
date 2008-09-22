@@ -341,7 +341,7 @@ bool setup_select_in_parentheses(LEX *lex)
   thr_lock_type lock_type;
   struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
-  timestamp_type date_time_type;
+  enum enum_drizzle_timestamp_type date_time_type;
   st_select_lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
   struct sp_cond_type *spcondtype;
