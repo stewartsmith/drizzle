@@ -133,15 +133,6 @@ typedef struct st_read_record {			/* Parameter to read_record */
 } READ_RECORD;
 
 
-/*
-  Originally MySQL used DRIZZLE_TIME structure inside server only, but since
-  4.1 it's exported to user in the new client API. Define aliases for
-  new names to keep existing code simple.
-*/
-
-typedef enum enum_drizzle_timestamp_type timestamp_type;
-
-
 typedef struct {
   ulong year,month,day,hour;
   uint64_t minute,second,second_part;

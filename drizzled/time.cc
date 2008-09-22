@@ -216,13 +216,13 @@ ulong convert_month_to_period(ulong month)
     See description of str_to_datetime() for more information.
 */
 
-timestamp_type
+enum enum_drizzle_timestamp_type
 str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
                           uint flags)
 {
   int was_cut;
   THD *thd= current_thd;
-  timestamp_type ts_type;
+  enum enum_drizzle_timestamp_type ts_type;
   
   ts_type= str_to_datetime(str, length, l_time,
                            (flags | (thd->variables.sql_mode &
@@ -348,7 +348,7 @@ void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
     1	error
 */
 
-bool parse_date_time_format(timestamp_type format_type, 
+bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type, 
 			    const char *format, uint format_length,
 			    DATE_TIME_FORMAT *date_time_format)
 {
@@ -580,7 +580,7 @@ bool parse_date_time_format(timestamp_type format_type,
 */
 
 DATE_TIME_FORMAT
-*date_time_format_make(timestamp_type format_type,
+*date_time_format_make(enum enum_drizzle_timestamp_type format_type,
 		       const char *format_str, uint format_length)
 {
   DATE_TIME_FORMAT tmp;
@@ -656,7 +656,7 @@ KNOWN_DATE_TIME_FORMAT known_date_time_formats[6]=
 */
 
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				     timestamp_type type)
+				     enum enum_drizzle_timestamp_type type)
 {
   switch (type) {
   case DRIZZLE_TIMESTAMP_DATE:
@@ -715,7 +715,8 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 
 void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
-				  uint str_length, timestamp_type time_type,
+				  uint str_length,
+                                  enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name)
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];

@@ -2233,7 +2233,8 @@ void Item_param::set_decimal(char *str, ulong length)
     the fact that even wrong value sent over binary protocol fits into
     MAX_DATE_STRING_REP_LENGTH buffer.
 */
-void Item_param::set_time(DRIZZLE_TIME *tm, timestamp_type time_type,
+void Item_param::set_time(DRIZZLE_TIME *tm,
+                          enum enum_drizzle_timestamp_type time_type,
                           uint32_t max_length_arg)
 { 
   value.time= *tm;

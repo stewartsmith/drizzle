@@ -40,7 +40,7 @@ public:
   int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(DRIZZLE_TIME *ltime, timestamp_type type);
+  int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);

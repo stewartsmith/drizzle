@@ -36,7 +36,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_INT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int store_time(DRIZZLE_TIME *ltime, timestamp_type type);
+  int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
   int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);

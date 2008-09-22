@@ -122,7 +122,8 @@ int Field_datetime::store(int64_t nr,
 }
 
 
-int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
+int Field_datetime::store_time(DRIZZLE_TIME *ltime,
+                               enum enum_drizzle_timestamp_type time_type)
 {
   int64_t tmp;
   int error= 0;

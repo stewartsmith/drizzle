@@ -1200,7 +1200,7 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
 */
 
 int Field::store_time(DRIZZLE_TIME *ltime,
-                      timestamp_type type_arg __attribute__((unused)))
+                      enum enum_drizzle_timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   uint length= (uint) my_TIME_to_str(ltime, buff);
@@ -2556,7 +2556,7 @@ void
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                             unsigned int code, 
                             const char *str, uint str_length, 
-                            timestamp_type ts_type, int cuted_increment)
+                            enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
   if ((thd->really_abort_on_warning() &&
@@ -2584,7 +2584,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 
 void 
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
-                            int64_t nr, timestamp_type ts_type,
+                            int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
@@ -2615,7 +2615,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
 
 void 
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
-                            double nr, timestamp_type ts_type)
+                            double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   THD *thd= table ? table->in_use : current_thd;
   if (thd->really_abort_on_warning() ||

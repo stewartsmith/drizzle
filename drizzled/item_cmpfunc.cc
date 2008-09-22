@@ -628,13 +628,13 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 */
 
 static uint64_t
-get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
+get_date_from_str(THD *thd, String *str, enum enum_drizzle_timestamp_type warn_type,
                   char *warn_name, bool *error_arg)
 {
   uint64_t value= 0;
   int error;
   DRIZZLE_TIME l_time;
-  enum_drizzle_timestamp_type ret;
+  enum enum_drizzle_timestamp_type ret;
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
@@ -738,7 +738,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       uint64_t value;
       bool error;
       String tmp, *str_val= 0;
-      timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_NEWDATE ?
+      enum enum_drizzle_timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_NEWDATE ?
                               DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
@@ -963,7 +963,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
   {
     bool error;
     enum_field_types f_type= warn_item->field_type();
-    timestamp_type t_type= f_type ==
+    enum enum_drizzle_timestamp_type t_type= f_type ==
       DRIZZLE_TYPE_NEWDATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(thd, str, t_type, warn_item->name, &error);
     /*

@@ -858,14 +858,14 @@ void get_date_from_daynr(long daynr,uint *year, uint *month,
 			 uint *day);
 my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint length,DRIZZLE_TIME *l_time);
-timestamp_type str_to_datetime_with_warn(const char *str, uint length,
+enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint length,
                                          DRIZZLE_TIME *l_time, uint flags);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
 void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
-				  uint str_length, timestamp_type time_type,
+				  uint str_length, enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name);
 
 bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL interval);
@@ -874,15 +874,15 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
 
 extern LEX_STRING interval_type_to_name[];
 
-extern DATE_TIME_FORMAT *date_time_format_make(timestamp_type format_type,
+extern DATE_TIME_FORMAT *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
 					       const char *format_str,
 					       uint format_length);
 extern DATE_TIME_FORMAT *date_time_format_copy(THD *thd,
 					       DATE_TIME_FORMAT *format);
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				     timestamp_type type);
+				                             enum enum_drizzle_timestamp_type type);
 extern bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-			   timestamp_type type, String *str);
+			                     enum enum_drizzle_timestamp_type type, String *str);
 void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
                    String *str);
 void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,

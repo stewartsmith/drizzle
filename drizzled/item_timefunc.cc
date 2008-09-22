@@ -263,7 +263,7 @@ static DATE_TIME_FORMAT time_24hrs_format= {{0}, '\0', 0,
 
 static bool extract_date_time(DATE_TIME_FORMAT *format,
 			      const char *val, uint length, DRIZZLE_TIME *l_time,
-                              timestamp_type cached_timestamp_type,
+                              enum enum_drizzle_timestamp_type cached_timestamp_type,
                               const char **sub_pattern_end,
                               const char *date_time_type)
 {
@@ -603,7 +603,7 @@ err:
 */
 
 bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-		    timestamp_type type, String *str)
+		    enum enum_drizzle_timestamp_type type, String *str)
 {
   char intbuff[15];
   uint hours_i;

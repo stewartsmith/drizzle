@@ -1931,7 +1931,7 @@ static const char *load_default_groups[]= {
     1 error
 */
 
-static bool init_global_datetime_format(timestamp_type format_type,
+static bool init_global_datetime_format(enum enum_drizzle_timestamp_type format_type,
                                         DATE_TIME_FORMAT **var_ptr)
 {
   /* Get command line option */
