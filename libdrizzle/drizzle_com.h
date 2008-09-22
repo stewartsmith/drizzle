@@ -327,7 +327,7 @@ typedef struct st_vio Vio;
 
 /* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
 enum enum_field_types { DRIZZLE_TYPE_TINY=1,
-                        DRIZZLE_TYPE_SHORT,  DRIZZLE_TYPE_LONG,
+                        DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,   DRIZZLE_TYPE_TIMESTAMP,
                         DRIZZLE_TYPE_LONGLONG,

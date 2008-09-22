@@ -25,7 +25,6 @@ libfield_la_SOURCES = 	blob.cc \
 			int64_t.cc \
 			long.cc \
 			null.cc \
-			short.cc \
 			fstring.cc \
 			timestamp.cc \
 			timetype.cc \
@@ -39,7 +38,6 @@ noinst_HEADERS = blob.h \
 		 int64_t.h \
 		 long.h \
 		 null.h \
-		 short.h \
 		 fstring.h \
 		 timestamp.h \
 		 timetype.h \

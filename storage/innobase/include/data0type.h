@@ -105,7 +105,7 @@ columns, and for them the precise type is usually not used at all.
 
 #define DATA_DRIZZLE_TYPE_MASK 255 /* AND with this mask to extract the MySQL
 				 type from the precise type */
-#define DATA_DRIZZLE_TRUE_VARCHAR 12 /* MySQL type code for the >= 5.0.3 format true VARCHAR */
+#define DATA_DRIZZLE_TRUE_VARCHAR 11 /* MySQL type code for the >= 5.0.3 format true VARCHAR */
 
 /* Precise data types for system columns and the length of those columns;
 NOTE: the values must run from 0 up in the order given! All codes must

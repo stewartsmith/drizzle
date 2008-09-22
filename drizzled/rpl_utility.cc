@@ -51,9 +51,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
   case DRIZZLE_TYPE_TINY:
     length= 1;
     break;
-  case DRIZZLE_TYPE_SHORT:
-    length= 2;
-    break;
   case DRIZZLE_TYPE_LONG:
     length= 4;
     break;

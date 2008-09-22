@@ -874,7 +874,6 @@ check_string_copy_error(Field_str *field,
 #include <drizzled/field/date.h>
 #include <drizzled/field/fdecimal.h>
 #include <drizzled/field/double.h>
-#include <drizzled/field/short.h>
 #include <drizzled/field/long.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/field/timetype.h>
