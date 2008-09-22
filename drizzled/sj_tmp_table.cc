@@ -247,7 +247,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
-                                 min(thd->variables.tmp_table_size,
+                                 cmin(thd->variables.tmp_table_size,
                                      thd->variables.max_heap_table_size) :
                                  thd->variables.tmp_table_size) /
 			         share->reclength);

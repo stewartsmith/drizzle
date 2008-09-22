@@ -351,7 +351,7 @@ void bitmap_intersect(MY_BITMAP *map, const MY_BITMAP *map2)
 
   assert(map->bitmap && map2->bitmap);
 
-  end= to+min(len,len2);
+  end= to+cmin(len,len2);
   *map2->last_word_ptr&= ~map2->last_word_mask; /*Clear last bits in map2*/
   while (to < end)
     *to++ &= *from++;

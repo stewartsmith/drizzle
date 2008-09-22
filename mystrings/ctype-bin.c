@@ -79,7 +79,7 @@ static int my_strnncoll_binary(const CHARSET_INFO * const  cs __attribute__((unu
                                const uchar *t, size_t tlen,
                                bool t_is_prefix)
 {
-  size_t len=min(slen,tlen);
+  size_t len=cmin(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
 }
@@ -130,7 +130,7 @@ static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((u
                                  const uchar *t, size_t tlen,
                                  bool t_is_prefix)
 {
-  size_t len=min(slen,tlen);
+  size_t len=cmin(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
 }
@@ -174,7 +174,7 @@ static int my_strnncollsp_8bit_bin(const CHARSET_INFO * const  cs __attribute__(
   diff_if_only_endspace_difference= 0;
 #endif
 
-  end= a + (length= min(a_length, b_length));
+  end= a + (length= cmin(a_length, b_length));
   while (a < end)
   {
     if (*a++ != *b++)

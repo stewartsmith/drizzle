@@ -130,7 +130,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
     if (len <= decpt)
       *dst++= '.';
     
-    for (i= precision - max(0, (len - decpt)); i > 0; i--)
+    for (i= precision - cmax(0, (len - decpt)); i > 0; i--)
       *dst++= '0';
   }
   
@@ -219,7 +219,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   if (x < 0.)
     width--;
 
-  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : min(width, FLT_DIG),
+  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : cmin(width, FLT_DIG),
             &decpt, &sign, &end, buf, sizeof(buf));
   if (decpt == DTOA_OVERFLOW)
   {
@@ -2136,7 +2136,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
           1 ==> like 0, but with Steele & White stopping rule;
                 e.g. with IEEE P754 arithmetic , mode 0 gives
                 1e23 whereas mode 1 gives 9.999999999999999e22.
-          2 ==> max(1,ndigits) significant digits.  This gives a
+          2 ==> cmax(1,ndigits) significant digits.  This gives a
                 return value similar to that of ecvt, except
                 that trailing zeros are suppressed.
           3 ==> through ndigits past the decimal point.  This

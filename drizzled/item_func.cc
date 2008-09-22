@@ -542,7 +542,7 @@ void Item_func::count_decimal_length()
     set_if_bigger(max_int_part, args[i]->decimal_int_part());
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
-  int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  int precision= cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -1120,10 +1120,10 @@ my_decimal *Item_func_plus::decimal_op(my_decimal *decimal_value)
 */
 void Item_func_additive_op::result_precision()
 {
-  decimals= max(args[0]->decimals, args[1]->decimals);
-  int max_int_part= max(args[0]->decimal_precision() - args[0]->decimals,
+  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  int max_int_part= cmax(args[0]->decimal_precision() - args[0]->decimals,
                         args[1]->decimal_precision() - args[1]->decimals);
-  int precision= min(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
+  int precision= cmin(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
@@ -1232,8 +1232,8 @@ void Item_func_mul::result_precision()
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= min(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
-  int precision= min(args[0]->decimal_precision() + args[1]->decimal_precision(),
+  decimals= cmin(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
+  int precision= cmin(args[0]->decimal_precision() + args[1]->decimal_precision(),
                      (unsigned int)DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,unsigned_flag);
 }
@@ -1281,14 +1281,14 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 
 void Item_func_div::result_precision()
 {
-  uint precision=min(args[0]->decimal_precision() + prec_increment,
+  uint precision=cmin(args[0]->decimal_precision() + prec_increment,
                      (unsigned int)DECIMAL_MAX_PRECISION);
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= min(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
+  decimals= cmin(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -1301,7 +1301,7 @@ void Item_func_div::fix_length_and_dec()
   switch(hybrid_type) {
   case REAL_RESULT:
   {
-    decimals=max(args[0]->decimals,args[1]->decimals)+prec_increment;
+    decimals=cmax(args[0]->decimals,args[1]->decimals)+prec_increment;
     set_if_smaller(decimals, NOT_FIXED_DEC);
     max_length=args[0]->max_length - args[0]->decimals + decimals;
     uint tmp=float_length(decimals);
@@ -1422,8 +1422,8 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
 
 void Item_func_mod::result_precision()
 {
-  decimals= max(args[0]->decimals, args[1]->decimals);
-  max_length= max(args[0]->max_length, args[1]->max_length);
+  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  max_length= cmax(args[0]->max_length, args[1]->max_length);
 }
 
 
@@ -1932,7 +1932,7 @@ void Item_func_round::fix_length_and_dec()
   if (args[0]->decimals == NOT_FIXED_DEC)
   {
     max_length= args[0]->max_length;
-    decimals= min(decimals_to_set, NOT_FIXED_DEC);
+    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
     hybrid_type= REAL_RESULT;
     return;
   }
@@ -1941,7 +1941,7 @@ void Item_func_round::fix_length_and_dec()
   case REAL_RESULT:
   case STRING_RESULT:
     hybrid_type= REAL_RESULT;
-    decimals= min(decimals_to_set, NOT_FIXED_DEC);
+    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
     max_length= float_length(decimals);
     break;
   case INT_RESULT:
@@ -1958,13 +1958,13 @@ void Item_func_round::fix_length_and_dec()
   case DECIMAL_RESULT:
   {
     hybrid_type= DECIMAL_RESULT;
-    decimals_to_set= min(DECIMAL_MAX_SCALE, decimals_to_set);
+    decimals_to_set= cmin(DECIMAL_MAX_SCALE, decimals_to_set);
     int decimals_delta= args[0]->decimals - decimals_to_set;
     int precision= args[0]->decimal_precision();
     int length_increase= ((decimals_delta <= 0) || truncate) ? 0:1;
 
     precision-= decimals_delta - length_increase;
-    decimals= min(decimals_to_set, DECIMAL_MAX_SCALE);
+    decimals= cmin(decimals_to_set, DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     break;
@@ -2064,7 +2064,7 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   my_decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= min(dec, (int64_t) decimals);
+    dec= cmin(dec, (int64_t) decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
     
@@ -2889,7 +2889,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
                u_d->name.str, init_msg_buff);
       return(true);
     }
-    func->max_length=min(initid.max_length,(unsigned long)MAX_BLOB_WIDTH);
+    func->max_length=cmin(initid.max_length,(unsigned long)MAX_BLOB_WIDTH);
     func->maybe_null=initid.maybe_null;
     const_item_cache=initid.const_item;
     /* 
@@ -2898,7 +2898,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
     */  
     if (!const_item_cache && !used_tables_cache)
       used_tables_cache= RAND_TABLE_BIT;
-    func->decimals=min(initid.decimals,(unsigned int)NOT_FIXED_DEC);
+    func->decimals=cmin(initid.decimals,(unsigned int)NOT_FIXED_DEC);
   }
   initialized=1;
   if (error)

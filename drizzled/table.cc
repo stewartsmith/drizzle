@@ -3321,7 +3321,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
     {
       signed int overflow;
 
-      dec= min(dec, (uint8_t)DECIMAL_MAX_SCALE);
+      dec= cmin(dec, (uint8_t)DECIMAL_MAX_SCALE);
 
       /*
         If the value still overflows the field with the corrected dec,
@@ -3334,7 +3334,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
                                                item->unsigned_flag) - len;
 
       if (overflow > 0)
-        dec= max(0, dec - overflow);            // too long, discard fract
+        dec= cmax(0, dec - overflow);            // too long, discard fract
       else
         len -= item->decimals - dec;            // corrected value fits
     }
@@ -4032,7 +4032,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
-                                 min(thd->variables.tmp_table_size,
+                                 cmin(thd->variables.tmp_table_size,
                                      thd->variables.max_heap_table_size) :
                                  thd->variables.tmp_table_size) /
 			         share->reclength);

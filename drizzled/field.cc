@@ -1386,7 +1386,7 @@ String *Field_tiny::val_str(String *val_buffer,
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
-  uint mlength=max(field_length+1,5*cs->mbmaxlen);
+  uint mlength=cmax(field_length+1,5*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
 
@@ -2166,7 +2166,7 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
         and 19 as length of 4.1 compatible representation.
       */
       length= ((length+1)/2)*2; /* purecov: inspected */
-      length= min(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
+      length= cmin(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
     }
     flags|= UNSIGNED_FLAG;
     if (fld_default_value)

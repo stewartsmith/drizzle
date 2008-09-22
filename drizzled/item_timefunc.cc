@@ -302,14 +302,14 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       switch (*++ptr) {
 	/* Year */
       case 'Y':
-	tmp= (char*) val + min(4, val_len);
+	tmp= (char*) val + cmin(4, val_len);
 	l_time->year= (int) my_strtoll10(val, &tmp, &error);
         if ((int) (tmp-val) <= 2)
           l_time->year= year_2000_handling(l_time->year);
 	val= tmp;
 	break;
       case 'y':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->year= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
         l_time->year= year_2000_handling(l_time->year);
@@ -318,7 +318,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Month */
       case 'm':
       case 'c':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->month= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -335,15 +335,15 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Day */
       case 'd':
       case 'e':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->day= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
       case 'D':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->day= (int) my_strtoll10(val, &tmp, &error);
 	/* Skip 'st, 'nd, 'th .. */
-	val= tmp + min((int) (val_end-tmp), 2);
+	val= tmp + cmin((int) (val_end-tmp), 2);
 	break;
 
 	/* Hour */
@@ -354,14 +354,14 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* fall through */
       case 'k':
       case 'H':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->hour= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
 
 	/* Minute */
       case 'i':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->minute= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -369,7 +369,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Second */
       case 's':
       case 'S':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->second= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -421,7 +421,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	val= tmp;
 	break;
       case 'j':
-	tmp= (char*) val + min(val_len, 3);
+	tmp= (char*) val + cmin(val_len, 3);
 	yearday= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -433,7 +433,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       case 'u':
         sunday_first_n_first_week_non_iso= (*ptr=='U' || *ptr== 'V');
         strict_week_number= (*ptr=='V' || *ptr=='v');
-	tmp= (char*) val + min(val_len, 2);
+	tmp= (char*) val + cmin(val_len, 2);
 	if ((week_number= (int) my_strtoll10(val, &tmp, &error)) < 0 ||
             (strict_week_number && !week_number) ||
             week_number > 53)
@@ -445,7 +445,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       case 'X':
       case 'x':
         strict_week_number_year_type= (*ptr=='X');
-        tmp= (char*) val + min(4, val_len);
+        tmp= (char*) val + cmin(4, val_len);
         strict_week_number_year= (int) my_strtoll10(val, &tmp, &error);
         val= tmp;
         break;
@@ -589,7 +589,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 err:
   {
     char buff[128];
-    strmake(buff, val_begin, min(length, (uint)sizeof(buff)-1));
+    strmake(buff, val_begin, cmin(length, (uint)sizeof(buff)-1));
     push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
@@ -1774,7 +1774,7 @@ void Item_func_date_format::fix_length_and_dec()
   else
   {
     fixed_length=0;
-    max_length=min(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
+    max_length=cmin(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
                    collation.collation->mbmaxlen;
     set_if_smaller(max_length,MAX_BLOB_WIDTH);
   }

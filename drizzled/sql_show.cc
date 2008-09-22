@@ -334,7 +334,7 @@ mysqld_show_create(THD *thd, TableList *table_list)
     field_list.push_back(new Item_empty_string("Table",NAME_CHAR_LEN));
     // 1024 is for not to confuse old clients
     field_list.push_back(new Item_empty_string("Create Table",
-                                               max(buffer.length(),(uint32_t)1024)));
+                                               cmax(buffer.length(),(uint32_t)1024)));
   }
 
   if (protocol->send_fields(&field_list,
@@ -1162,7 +1162,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
 	    the comment in sql_class.h why this prevents crashes in possible
             races with query_length
           */
-          uint length= min((uint32_t)max_query_length, tmp->query_length);
+          uint length= cmin((uint32_t)max_query_length, tmp->query_length);
           thd_info->query=(char*) thd->strmake(tmp->query,length);
         }
         thread_infos.append(thd_info);
@@ -1273,7 +1273,7 @@ int fill_schema_processlist(THD* thd, TableList* tables,
       if (tmp->query)
       {
         table->field[7]->store(tmp->query,
-                               min((uint32_t)PROCESS_LIST_INFO_WIDTH,
+                               cmin((uint32_t)PROCESS_LIST_INFO_WIDTH,
                                    tmp->query_length), cs);
         table->field[7]->set_notnull();
       }

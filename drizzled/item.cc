@@ -67,7 +67,7 @@ void
 Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 {
   item->decimals= arg->decimals;
-  item->max_length= min(arg->max_length + DECIMAL_LONGLONG_DIGITS,
+  item->max_length= cmin(arg->max_length + DECIMAL_LONGLONG_DIGITS,
                         (unsigned int)DECIMAL_MAX_STR_LENGTH);
 }
 
@@ -434,9 +434,9 @@ uint Item::decimal_precision() const
   Item_result restype= result_type();
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
-    return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
+    return cmin(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
                (unsigned int)DECIMAL_MAX_PRECISION);
-  return min(max_length, (uint32_t)DECIMAL_MAX_PRECISION);
+  return cmin(max_length, (uint32_t)DECIMAL_MAX_PRECISION);
 }
 
 
@@ -722,7 +722,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
 				   &res_length);
   }
   else
-    name= sql_strmake(str, (name_length= min(length,(unsigned int)MAX_ALIAS_NAME)));
+    name= sql_strmake(str, (name_length= cmin(length,(unsigned int)MAX_ALIAS_NAME)));
 }
 
 
@@ -4506,7 +4506,7 @@ int64_t Item_hex_string::val_int()
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end=(char*) str_value.ptr()+str_value.length(),
-       *ptr=end-min(str_value.length(),(uint32_t)sizeof(int64_t));
+       *ptr=end-cmin(str_value.length(),(uint32_t)sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
@@ -4560,7 +4560,7 @@ void Item_hex_string::print(String *str,
                             enum_query_type query_type __attribute__((unused)))
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
+       *ptr= end - cmin(str_value.length(), (uint32_t)sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
@@ -6252,12 +6252,12 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     /* fix variable decimals which always is NOT_FIXED_DEC */
     if (Field::result_merge_type(fld_type) == INT_RESULT)
       item_decimals= 0;
-    decimals= max((int)decimals, item_decimals);
+    decimals= cmax((int)decimals, item_decimals);
   }
   if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
   {
-    decimals= min((int)max(decimals, item->decimals), DECIMAL_MAX_SCALE);
-    int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
+    decimals= cmin((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
+    int precision= cmin(cmax(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
     max_length= my_decimal_precision_to_length(precision, decimals,
@@ -6288,7 +6288,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
      */
     if (collation.collation != &my_charset_bin)
     {
-      max_length= max(old_max_chars * collation.collation->mbmaxlen,
+      max_length= cmax(old_max_chars * collation.collation->mbmaxlen,
                       display_length(item) /
                       item->collation.collation->mbmaxlen *
                       collation.collation->mbmaxlen);
@@ -6303,7 +6303,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     {
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
-      max_length= max(delta1, delta2) + decimals;
+      max_length= cmax(delta1, delta2) + decimals;
       if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
       {
         max_length= DBL_DIG + 7;
@@ -6315,7 +6315,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     break;
   }
   default:
-    max_length= max(max_length, display_length(item));
+    max_length= cmax(max_length, display_length(item));
   };
   maybe_null|= item->maybe_null;
   get_full_info(item);

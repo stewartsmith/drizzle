@@ -193,7 +193,7 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
 
   if (!stack_bottom || (uchar*) stack_bottom > (uchar*) &fp)
   {
-    ulong tmp= min(0x10000,thread_stack);
+    ulong tmp= cmin(0x10000,thread_stack);
     /* Assume that the stack starts at the previous even 65K */
     stack_bottom= (uchar*) (((ulong) &fp + tmp) &
 			  ~(ulong) 0xFFFF);

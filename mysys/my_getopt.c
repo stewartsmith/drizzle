@@ -952,7 +952,7 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
   }
   if (optp->max_value && num > (double) optp->max_value)
     num= (double) optp->max_value;
-  return max(num, (double) optp->min_value);
+  return cmax(num, (double) optp->min_value);
 }
 
 /*

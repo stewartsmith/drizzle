@@ -1297,13 +1297,13 @@ bool show_master_info(THD* thd, Master_info* mi)
         slave is 2. At SHOW SLAVE STATUS time, assume that the difference
         between timestamp of slave and rli->last_master_timestamp is 0
         (i.e. they are in the same second), then we get 0-(2-1)=-1 as a result.
-        This confuses users, so we don't go below 0: hence the max().
+        This confuses users, so we don't go below 0: hence the cmax().
 
         last_master_timestamp == 0 (an "impossible" timestamp 1970) is a
         special marker to say "consider we have caught up".
       */
       protocol->store((int64_t)(mi->rli.last_master_timestamp ?
-                                 max((long)0, time_diff) : 0));
+                                 cmax((long)0, time_diff) : 0));
     }
     else
     {
@@ -1829,7 +1829,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
             exec_res= 0;
             end_trans(thd, ROLLBACK);
             /* chance for concurrent connection to get more locks */
-            safe_sleep(thd, min(rli->trans_retries, (uint32_t)MAX_SLAVE_RETRY_PAUSE),
+            safe_sleep(thd, cmin(rli->trans_retries, (uint32_t)MAX_SLAVE_RETRY_PAUSE),
                        (CHECK_KILLED_FUNC)sql_slave_killed, (void*)rli);
             pthread_mutex_lock(&rli->data_lock); // because of SHOW STATUS
             rli->trans_retries++;
@@ -3305,7 +3305,7 @@ static IO_CACHE *reopen_relay_log(Relay_log_info *rli, const char **errmsg)
     relay_log_pos       Current log pos
     pending             Number of bytes already processed from the event
   */
-  rli->event_relay_log_pos= max(rli->event_relay_log_pos, (uint64_t)BIN_LOG_HEADER_SIZE);
+  rli->event_relay_log_pos= cmax(rli->event_relay_log_pos, (uint64_t)BIN_LOG_HEADER_SIZE);
   my_b_seek(cur_log,rli->event_relay_log_pos);
   return(cur_log);
 }

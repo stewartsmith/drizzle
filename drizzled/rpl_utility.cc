@@ -102,7 +102,7 @@ table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
   /*
     We only check the initial columns for the tables.
   */
-  uint const cols_to_check= min(table->s->fields, size());
+  uint const cols_to_check= cmin(table->s->fields, size());
   int error= 0;
   Relay_log_info const *rli= const_cast<Relay_log_info*>(rli_arg);
 

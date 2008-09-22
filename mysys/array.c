@@ -46,7 +46,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
 {
   if (!alloc_increment)
   {
-    alloc_increment=max((8192-MALLOC_OVERHEAD)/element_size,16);
+    alloc_increment=cmax((8192-MALLOC_OVERHEAD)/element_size,16);
     if (init_alloc > 8 && alloc_increment > init_alloc * 2)
       alloc_increment=init_alloc*2;
   }
@@ -338,7 +338,7 @@ void delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
 
 void freeze_size(DYNAMIC_ARRAY *array)
 {
-  uint elements=max(array->elements,1);
+  uint elements=cmax(array->elements,1);
 
   /*
     Do nothing if we are using a static buffer

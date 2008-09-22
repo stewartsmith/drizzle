@@ -1669,7 +1669,7 @@ const char *DRIZZLE_LOG::generate_name(const char *log_name,
   {
     char *p= fn_ext(log_name);
     uint length= (uint) (p - log_name);
-    strmake(buff, log_name, min(length, (uint)FN_REFLEN));
+    strmake(buff, log_name, cmin(length, (uint)FN_REFLEN));
     return (const char*)buff;
   }
   return log_name;

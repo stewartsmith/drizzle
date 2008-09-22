@@ -860,7 +860,7 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const 
 
 
   /* Set of a stack for unget if long terminators */
-  uint length=max(field_term_length,line_term_length)+1;
+  uint length=cmax(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
   stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
 

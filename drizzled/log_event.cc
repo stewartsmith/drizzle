@@ -931,7 +931,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
     of 13 bytes, whereas LOG_EVENT_MINIMAL_HEADER_LEN is 19 bytes (it's
     "minimal" over the set {MySQL >=4.0}).
   */
-  uint header_size= min(description_event->common_header_len,
+  uint header_size= cmin(description_event->common_header_len,
                         LOG_EVENT_MINIMAL_HEADER_LEN);
 
   LOCK_MUTEX;
@@ -1803,7 +1803,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       be even bigger, but this will suffice to catch most corruption
       errors that can lead to a crash.
     */
-    if (status_vars_len > min(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
+    if (status_vars_len > cmin(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
     {
       query= 0;
       return;

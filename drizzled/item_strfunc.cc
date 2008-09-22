@@ -197,7 +197,7 @@ String *Item_func_concat::val_str(String *str)
           }
           else
           {
-            uint new_len = max(tmp_value.alloced_length() * 2, concat_len);
+            uint new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
 
             if (tmp_value.realloc(new_len))
               goto null;
@@ -367,7 +367,7 @@ String *Item_func_concat_ws::val_str(String *str)
         }
         else
         {
-          uint new_len = max(tmp_value.alloced_length() * 2, concat_len);
+          uint new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
 
           if (tmp_value.realloc(new_len))
             goto null;
@@ -849,7 +849,7 @@ String *Item_func_substr::val_str(String *str)
 
   length= res->charpos((int) length, (uint32_t) start);
   tmp_length= res->length() - start;
-  length= min(length, tmp_length);
+  length= cmin(length, tmp_length);
 
   if (!start && (int64_t) res->length() == length)
     return res;
@@ -869,7 +869,7 @@ void Item_func_substr::fix_length_and_dec()
     if (start < 0)
       max_length= ((uint)(-start) > max_length) ? 0 : (uint)(-start);
     else
-      max_length-= min((uint)(start - 1), max_length);
+      max_length-= cmin((uint)(start - 1), max_length);
   }
   if (arg_count == 3 && args[2]->const_item())
   {
@@ -2124,7 +2124,7 @@ void Item_func_weight_string::fix_length_and_dec()
   const CHARSET_INFO * const cs= args[0]->collation.collation;
   collation.set(&my_charset_bin, args[0]->collation.derivation);
   flags= my_strxfrm_flag_normalize(flags, cs->levels_for_order);
-  max_length= cs->mbmaxlen * max(args[0]->max_length, nweights);
+  max_length= cs->mbmaxlen * cmax(args[0]->max_length, nweights);
   maybe_null= 1;
 }
 
@@ -2142,7 +2142,7 @@ String *Item_func_weight_string::val_str(String *str)
     goto nl;
   
   tmp_length= cs->coll->strnxfrmlen(cs, cs->mbmaxlen *
-                                        max(res->length(), nweights));
+                                        cmax(res->length(), nweights));
 
   if (tmp_value.alloc(tmp_length))
     goto nl;
@@ -2381,11 +2381,11 @@ String* Item_func_export_set::val_str(String* str)
 
 void Item_func_export_set::fix_length_and_dec()
 {
-  uint length=max(args[1]->max_length,args[2]->max_length);
+  uint length=cmax(args[1]->max_length,args[2]->max_length);
   uint sep_length=(arg_count > 3 ? args[3]->max_length : 1);
   max_length=length*64+sep_length*63;
 
-  if (agg_arg_charsets(collation, args+1, min((uint)4,arg_count)-1,
+  if (agg_arg_charsets(collation, args+1, cmin((uint)4,arg_count)-1,
                        MY_COLL_ALLOW_CONV, 1))
     return;
 }

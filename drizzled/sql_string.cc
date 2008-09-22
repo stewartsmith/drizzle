@@ -561,7 +561,7 @@ int String::reserve(uint32_t space_needed, uint32_t grow_by)
 {
   if (Alloced_length < str_length + space_needed)
   {
-    if (realloc(Alloced_length + max(space_needed, grow_by) - 1))
+    if (realloc(Alloced_length + cmax(space_needed, grow_by) - 1))
       return true;
   }
   return false;
@@ -647,7 +647,7 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 
 int stringcmp(const String *s,const String *t)
 {
-  uint32_t s_len=s->length(),t_len=t->length(),len=min(s_len,t_len);
+  uint32_t s_len=s->length(),t_len=t->length(),len=cmin(s_len,t_len);
   int cmp= memcmp(s->ptr(), t->ptr(), len);
   return (cmp) ? cmp : (int) (s_len - t_len);
 }
@@ -664,7 +664,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
   }
   if (to->realloc(from_length))
     return from;				// Actually an error
-  if ((to->str_length=min(from->str_length,from_length)))
+  if ((to->str_length=cmin(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;
   return to;
@@ -767,7 +767,7 @@ copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
     return copy_and_convert_extended(to, to_length, to_cs,
                                      from, from_length, from_cs, errors);
 
-  uint32_t length= min(to_length, from_length), length2= length;
+  uint32_t length= cmin(to_length, from_length), length2= length;
 
 #if defined(__i386__)
   /*
@@ -926,7 +926,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 
     if (to_cs == &my_charset_bin)
     {
-      res= min(min(nchars, to_length), from_length);
+      res= cmin(cmin(nchars, to_length), from_length);
       memmove(to, from, res);
       *from_end_pos= from + res;
       *well_formed_error_pos= NULL;

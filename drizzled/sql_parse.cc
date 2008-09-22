@@ -3879,7 +3879,7 @@ bool check_simple_select()
     char command[80];
     Lex_input_stream *lip= thd->m_lip;
     strmake(command, lip->yylval->symbol.str,
-	    min((ulong)lip->yylval->symbol.length, sizeof(command)-1));
+	    cmin((ulong)lip->yylval->symbol.length, sizeof(command)-1));
     my_error(ER_CANT_USE_OPTION_HERE, MYF(0), command);
     return 1;
   }

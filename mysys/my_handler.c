@@ -50,7 +50,7 @@ int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_le
 static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
                        bool part_key, bool skip_end_space)
 {
-  uint length= min(a_length,b_length);
+  uint length= cmin(a_length,b_length);
   uchar *end= a+ length;
   int flag;
 
@@ -178,7 +178,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
         continue;                               /* To next key part */
       }
     }
-    end= a+ min(keyseg->length,key_length);
+    end= a+ cmin(keyseg->length,key_length);
     next_key_length=key_length-keyseg->length;
 
     switch ((enum ha_base_keytype) keyseg->type) {
