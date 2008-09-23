@@ -15,7 +15,6 @@
 
 #ifndef _my_sys_h
 #define _my_sys_h
-C_MODE_START
 
 #ifdef HAVE_AIOWAIT
 #include <sys/asynch.h>			/* Used by record-cache */
@@ -129,6 +128,11 @@ typedef struct my_aio_result {
 #define my_checkmalloc()
 #undef TERMINATE
 #define TERMINATE(A,B) {}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void *my_malloc(size_t Size,myf MyFlags);
 #define my_malloc_ci(SZ,FLAG) my_malloc( SZ, FLAG )
 extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);
@@ -519,8 +523,8 @@ extern void *_mymalloc(size_t uSize,const char *sFile,
                        uint uLine, myf MyFlag);
 extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
 		       uint uLine, myf MyFlag);
-extern void * my_multi_malloc _VARARGS((myf MyFlags, ...));
-extern void _myfree(void *pPtr,const char *sFile,uint uLine, myf MyFlag);
+extern void * my_multi_malloc (myf MyFlags, ...);
+extern void _myfree(void *pPtr, const char *sFile, uint uLine, myf MyFlag);
 extern int _sanity(const char *sFile, uint uLine);
 extern void *_my_memdup(const void *from, size_t length,
                         const char *sFile, uint uLine,myf MyFlag);
@@ -545,10 +549,10 @@ extern int my_fclose(FILE *fd,myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
-extern void my_error _VARARGS((int nr,myf MyFlags, ...));
-extern void my_printf_error _VARARGS((uint my_err, const char *format,
-                                      myf MyFlags, ...))
-				      __attribute__((format(printf, 2, 4)));
+extern void my_error(int nr,myf MyFlags, ...);
+extern void my_printf_error(uint my_err, const char *format,
+                            myf MyFlags, ...)
+  __attribute__((format(printf, 2, 4)));
 extern int my_error_register(const char **errmsgs, int first, int last);
 extern const char **my_error_unregister(int first, int last);
 extern void my_message(uint my_err, const char *str,myf MyFlags);
@@ -619,10 +623,10 @@ extern sig_handler my_set_alarm_variable(int signo);
 extern void my_string_ptr_sort(uchar *base,uint items,size_t size);
 extern void radixsort_for_str_ptr(uchar* base[], uint number_of_elements,
 				  size_t size_of_element,uchar *buffer[]);
-extern qsort_t my_qsort(void *base_ptr, size_t total_elems, size_t size,
-                        qsort_cmp cmp);
-extern qsort_t my_qsort2(void *base_ptr, size_t total_elems, size_t size,
-                         qsort2_cmp cmp, void *cmp_argument);
+extern RETQSORTTYPE my_qsort(void *base_ptr, size_t total_elems, size_t size,
+                             qsort_cmp cmp);
+extern RETQSORTTYPE my_qsort2(void *base_ptr, size_t total_elems, size_t size,
+                              qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(uchar *ptr, size_t pack_length);
@@ -802,5 +806,8 @@ extern void thd_increment_bytes_sent(uint32_t length);
 extern void thd_increment_bytes_received(uint32_t length);
 extern void thd_increment_net_big_packet_count(uint32_t length);
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _my_sys_h */

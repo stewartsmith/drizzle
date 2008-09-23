@@ -75,3 +75,10 @@ BUILT_SOURCES = schema.pb.h \
 		schema.pb.cc \
 		table.pb.cc \
 		binary_log.pb.cc
+
+CLEANFILES =  binary_log.pb.h \
+              binary_log.pb.cc \
+              schema.pb.h \
+              schema.pb.cc \
+              table.pb.h \
+              table.pb.cc

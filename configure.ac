@@ -869,7 +869,7 @@ then
   CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
 else
   # Optimized version. No debug
-  CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
   CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
 fi
 
@@ -1015,7 +1015,7 @@ MAKE_SHELL=/bin/sh
 AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
-AC_CHECK_HEADERS(varargs.h stdarg.h dirent.h locale.h ndir.h sys/dir.h \
+AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
  sys/file.h sys/ndir.h sys/ptem.h sys/pte.h sys/select.h sys/stream.h \
  sys/mman.h curses.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
 paths.h semaphore.h)

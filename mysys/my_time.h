@@ -29,7 +29,9 @@
 #include <drizzled/global.h>
 #include "drizzle_time.h"
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern uint64_t log_10_int[20];
 extern uchar days_in_month[];
@@ -173,6 +175,8 @@ enum interval_type
   INTERVAL_MINUTE_MICROSECOND, INTERVAL_SECOND_MICROSECOND, INTERVAL_LAST
 };
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _libdrizzle_my_time_h_ */

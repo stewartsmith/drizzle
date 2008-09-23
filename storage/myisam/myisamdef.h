@@ -729,9 +729,9 @@ int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
 
     /* Functions needed by mi_check */
 volatile int *killed_ptr(MI_CHECK *param);
-void mi_check_print_error _VARARGS((MI_CHECK *param, const char *fmt,...));
-void mi_check_print_warning _VARARGS((MI_CHECK *param, const char *fmt,...));
-void mi_check_print_info _VARARGS((MI_CHECK *param, const char *fmt,...));
+void mi_check_print_error(MI_CHECK *param, const char *fmt,...);
+void mi_check_print_warning(MI_CHECK *param, const char *fmt,...);
+void mi_check_print_info(MI_CHECK *param, const char *fmt,...);
 int flush_pending_blocks(MI_SORT_PARAM *param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
 pthread_handler_t thr_find_all_keys(void *arg);

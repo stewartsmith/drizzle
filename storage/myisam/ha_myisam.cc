@@ -1291,7 +1291,9 @@ int ha_myisam::delete_row(const uchar *buf)
   return mi_delete(file,buf);
 }
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bool index_cond_func_myisam(void *arg)
 {
@@ -1305,7 +1307,9 @@ bool index_cond_func_myisam(void *arg)
   return (bool)h->pushed_idx_cond->val_int();
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 
 int ha_myisam::index_init(uint idx, bool sorted __attribute__((unused)))

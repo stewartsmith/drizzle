@@ -39,7 +39,7 @@
  Pointers of functions for store and read keys from temp file
 */
 
-extern void print_error _VARARGS((const char *fmt,...));
+extern void print_error(const char *fmt,...);
 
 /* Functions defined in this file */
 

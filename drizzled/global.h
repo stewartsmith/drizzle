@@ -44,15 +44,6 @@
 #define __i386__
 #endif
 
-/* Macros to make switching between C and C++ mode easier */
-#ifdef __cplusplus
-#define C_MODE_START    extern "C" {
-#define C_MODE_END	}
-#else
-#define C_MODE_START
-#define C_MODE_END
-#endif
-
 #include "config.h"
 
 /*
@@ -407,8 +398,6 @@ typedef unsigned short ushort;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
-#define CMP_NUM(a,b)    (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
-#define sgn(a)		(((a) < 0) ? -1 : ((a) > 0) ? 1 : 0)
 #define test(a)		((a) ? 1 : 0)
 #define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
@@ -431,31 +420,25 @@ extern char _dig_vec_lower[];
 #define my_const_cast(A) (A)
 #endif
 
-/* From old s-system.h */
-
-/*
-  Support macros for non ansi & other old compilers. Since such
-  things are no longer supported we do nothing. We keep then since
-  some of our code may still be needed to upgrade old customers.
-*/
-#define _VARARGS(X) X
-#define _STATIC_VARARGS(X) X
-#define _PC(X)	X
-
-#define MIN_ARRAY_SIZE	0	/* Zero or One. Gcc allows zero*/
-#define ASCII_BITS_USED 8	/* Bit char used */
-
 /* Some types that is different between systems */
 
 typedef int	File;		/* File descriptor */
 /* Type for fuctions that handles signals */
+/* RETSIGTYPE is defined by autoconf */
 #define sig_handler RETSIGTYPE
-C_MODE_START
-typedef void	(*sig_return)(void);/* Returns type from signal */
-typedef int	(*qsort_cmp)(const void *,const void *);
-typedef int	(*qsort_cmp2)(void*, const void *,const void *);
-C_MODE_END
-#define qsort_t RETQSORTTYPE	/* Broken GCC cant handle typedef !!!! */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  typedef void (*sig_return)(void);/* Returns type from signal */
+  typedef int  (*qsort_cmp)(const void *,const void *);
+  typedef int  (*qsort_cmp2)(void*, const void *,const void *);
+
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -685,10 +668,6 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define MY_HOW_OFTEN_TO_ALARM	2	/* How often we want info on screen */
 #define MY_HOW_OFTEN_TO_WRITE	1000	/* How often we want info on screen */
 
-
-
-
-/* my_sprintf  was here. RIP */
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
 #define DRIZZLE_UNIVERSAL_CLIENT_CHARSET "utf8"

@@ -57,10 +57,14 @@ typedef struct SHA1_CONTEXT
   Function Prototypes
 */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int mysql_sha1_reset(SHA1_CONTEXT*);
-int mysql_sha1_input(SHA1_CONTEXT*, const uint8_t *, unsigned int);
-int mysql_sha1_result(SHA1_CONTEXT* , uint8_t Message_Digest[SHA1_HASH_SIZE]);
+  int mysql_sha1_reset(SHA1_CONTEXT*);
+  int mysql_sha1_input(SHA1_CONTEXT*, const uint8_t *, unsigned int);
+  int mysql_sha1_result(SHA1_CONTEXT* , uint8_t Message_Digest[SHA1_HASH_SIZE]);
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif

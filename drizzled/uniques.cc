@@ -368,7 +368,9 @@ Unique::reset()
   BUFFPEK.
 */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static int buffpek_compare(void *arg, uchar *key_ptr1, uchar *key_ptr2)
 {
@@ -377,7 +379,10 @@ static int buffpek_compare(void *arg, uchar *key_ptr1, uchar *key_ptr2)
                           *((uchar **) key_ptr1), *((uchar **)key_ptr2));
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 
 
 /*

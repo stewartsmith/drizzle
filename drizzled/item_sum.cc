@@ -846,7 +846,9 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Declarations for auxilary C-callbacks */
 
@@ -863,7 +865,9 @@ static int item_sum_distinct_walk(void *element,
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 /* Item_sum_distinct */
 
@@ -2457,8 +2461,9 @@ int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
   return 0;
 }
 
-
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static int count_distinct_walk(void *elem __attribute__((unused)),
                                element_count count __attribute__((unused)),
@@ -2468,7 +2473,10 @@ static int count_distinct_walk(void *elem __attribute__((unused)),
   return 0;
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 
 
 void Item_sum_count_distinct::cleanup()

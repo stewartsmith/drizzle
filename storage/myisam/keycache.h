@@ -20,7 +20,9 @@
 
 #include <drizzled/global.h>
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum flush_type
 {
@@ -154,5 +156,9 @@ extern void multi_key_cache_change(KEY_CACHE *old_data,
 				   KEY_CACHE *new_data);
 extern int reset_key_cache_counters(const char *name,
                                     KEY_CACHE *key_cache);
-C_MODE_END
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _keycache_h */
