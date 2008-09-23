@@ -1933,7 +1933,7 @@ JOIN::reinit()
 {
   unit->offset_limit_cnt= (ha_rows)(select_lex->offset_limit ?
                                     select_lex->offset_limit->val_uint() :
-                                    0ULL);
+                                    0UL);
 
   first_record= 0;
 
@@ -4886,7 +4886,7 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest,
     */
     if (!(item->used_tables() & remaining_tables))
     {
-      res |= 1ULL < i;
+      res |= 1UL < i;
     }
   }
   return res;
@@ -5027,10 +5027,10 @@ best_access_path(JOIN      *join,
           if (try_sj_inside_out && keyuse->sj_pred_no != UINT_MAX)
           {
             if (!(remaining_tables & keyuse->used_tables))
-              bound_sj_equalities |= 1ULL << keyuse->sj_pred_no;
+              bound_sj_equalities |= 1UL << keyuse->sj_pred_no;
             else
             {
-              handled_sj_equalities |= 1ULL << keyuse->sj_pred_no;
+              handled_sj_equalities |= 1UL << keyuse->sj_pred_no;
               sj_insideout_map |= ((key_part_map)1) << keyuse->keypart;
             }
           }

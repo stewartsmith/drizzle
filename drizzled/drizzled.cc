@@ -2646,8 +2646,8 @@ int main(int argc, char **argv)
       if (global_system_variables.log_warnings)
       {
         /* %zu is not yet in C++ */
-        unsigned long long size_tmp= (uint64_t)stack_size;
-        sql_print_warning(_("Asked for %u thread stack, but got %llu"),
+        uint64_t size_tmp= (uint64_t)stack_size;
+        sql_print_warning(_("Asked for %u thread stack, but got %"PRIu64),
                           my_thread_stack_size, size_tmp);
       }
       my_thread_stack_size= stack_size;

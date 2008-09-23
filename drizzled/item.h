@@ -2116,15 +2116,15 @@ public:
     int err_not_used;
     char *end_not_used;
     return (null_value ? 0.0 :
-	    my_strntod(str_value.charset(), (char*) str_value.ptr(),
-		       str_value.length(), &end_not_used, &err_not_used));
+            my_strntod(str_value.charset(), (char*) str_value.ptr(),
+                       str_value.length(), &end_not_used, &err_not_used));
   }
   int64_t val_int()
   {
     int err;
-    return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
-                                            str_value.length(),10, (char**) 0,
-                                            &err); 
+    return null_value ? 0 : my_strntoll(str_value.charset(),str_value.ptr(),
+                                        str_value.length(),10, (char**) 0,
+                                        &err);
   }
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);

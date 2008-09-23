@@ -2691,7 +2691,7 @@ int64_t Item_sum_count_distinct::val_int()
   int error;
   assert(fixed == 1);
   if (!table)					// Empty query
-    return 0LL;
+    return 0L;
   if (tree)
   {
     if (is_evaluated)

@@ -13,6 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#include <stdint.h>
 #include <drizzled/common_includes.h>
 #include <zlib.h>
 
@@ -36,7 +37,7 @@ bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
   return 0;
 }
 
-long long udf_doit_crc32(UDF_INIT *initid, UDF_ARGS *args, char *result,
+int64_t udf_doit_crc32(UDF_INIT *initid, UDF_ARGS *args, char *result,
                          unsigned long *length, char *is_null, char *error)
 {
   (void)initid;
@@ -44,7 +45,7 @@ long long udf_doit_crc32(UDF_INIT *initid, UDF_ARGS *args, char *result,
   (void)length;
   (void)is_null;
   (void)error;
-  return (long long) crc32(0L, (uchar*)args->args[0], args->lengths[0]);
+  return (int64_t) crc32(0L, (uchar*)args->args[0], args->lengths[0]);
 }
 
 void udf_deinit_crc32udf(UDF_INIT *initid)

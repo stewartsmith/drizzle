@@ -1519,7 +1519,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
   {
     if (value->val_int(value, (int64_t *)&result))
       goto err;
-    if (unlikely((result >= (1ULL << typelib->count)) &&
+    if (unlikely((result >= (1UL << typelib->count)) &&
                  (typelib->count < sizeof(long)*8)))
     {
       llstr(result, buff);
@@ -2277,7 +2277,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->typelib= ((sysvar_set_t*) opt)->typelib;
     options->def_value= ((sysvar_set_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
-    options->max_value= (1ULL << options->typelib->count) - 1;
+    options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL:
     options->var_type= GET_BOOL;
@@ -2319,7 +2319,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->typelib= ((thdvar_set_t*) opt)->typelib;
     options->def_value= ((thdvar_set_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
-    options->max_value= (1ULL << options->typelib->count) - 1;
+    options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL | PLUGIN_VAR_THDLOCAL:
     options->var_type= GET_BOOL;

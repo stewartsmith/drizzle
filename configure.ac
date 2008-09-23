@@ -1347,7 +1347,7 @@ AC_ARG_ENABLE([longlong-warnings],
     [AS_HELP_STRING([--enable-longlong-warnings],
        [Enable warnings about longlong in C++ @<:@default=off@:>@])],
     [ac_warn_longlong="$enableval"],
-    [ac_warn_longlong="no"])
+    [ac_warn_longlong="yes"])
 
 AC_ARG_ENABLE([strict-aliasing],
     [AS_HELP_STRING([--enable-strict-aliasing],

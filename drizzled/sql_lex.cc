@@ -2023,7 +2023,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
                     ((Item_in_subselect*)item)->exec_method ==
                     Item_in_subselect::MATERIALIZATION) ?
                    true :
-                   (select_limit->val_int() == 1LL) &&
+                   (select_limit->val_int() == 1L) &&
                    offset_limit == 0));
       return;
     }
@@ -2366,7 +2366,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
     select_limit_val= HA_POS_ERROR;
 #endif
   offset_limit_cnt= (ha_rows)(sl->offset_limit ? sl->offset_limit->val_uint() :
-                                                 0ULL);
+                                                 0UL);
   select_limit_cnt= select_limit_val + offset_limit_cnt;
   if (select_limit_cnt < select_limit_val)
     select_limit_cnt= HA_POS_ERROR;		// no limit

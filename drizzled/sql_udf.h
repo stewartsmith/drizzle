@@ -100,14 +100,14 @@ class udf_handler :public Sql_alloc
     if (get_arguments())
     {
       *null_value=1;
-      return 0LL;
+      return 0;
     }
     Udf_func_int64_t func= (Udf_func_int64_t) u_d->func;
     int64_t tmp=func(&initid, &f_args, &is_null, &error);
     if (is_null || error)
     {
       *null_value=1;
-      return 0LL;
+      return 0;
     }
     *null_value=0;
     return tmp;

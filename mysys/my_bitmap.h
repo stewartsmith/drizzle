@@ -135,11 +135,11 @@ static inline bool bitmap_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
 */
 
 #define bit_is_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?                 \
-                           (((I) & (1ULL << (B))) == 0 ? 0 : 1) : -1)
+                           (((I) & (1UL << (B))) == 0 ? 0 : 1) : -1)
 #define bit_do_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) |= (1ULL << (B)), 1) : -1)
+                           ((I) |= (1UL << (B)), 1) : -1)
 #define bit_do_clear(I,B) (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) &= ~(1ULL << (B)), 0) : -1)
+                           ((I) &= ~(1UL << (B)), 0) : -1)
 
 #ifdef	__cplusplus
 }

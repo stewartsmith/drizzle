@@ -923,7 +923,7 @@ public:
 class Item_sum_or :public Item_sum_bit
 {
 public:
-  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0LL) {}
+  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0) {}
   Item_sum_or(THD *thd, Item_sum_or *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_or("; }
@@ -944,7 +944,7 @@ class Item_sum_and :public Item_sum_bit
 class Item_sum_xor :public Item_sum_bit
 {
   public:
-  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0LL) {}
+  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0) {}
   Item_sum_xor(THD *thd, Item_sum_xor *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_xor("; }

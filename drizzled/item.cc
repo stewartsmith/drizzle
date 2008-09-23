@@ -900,7 +900,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
   {
     int64_t value= val_int();
     int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1LL)
+    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
       end= int64_t10_to_str(value, buff, -10);

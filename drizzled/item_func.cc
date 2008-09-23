@@ -1724,7 +1724,7 @@ int64_t Item_func_shift_left::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0L);
 }
 
 int64_t Item_func_shift_right::val_int()
@@ -1739,7 +1739,7 @@ int64_t Item_func_shift_right::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0);
 }
 
 
@@ -2700,7 +2700,7 @@ int64_t Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (int64_t) ++position;
       else
-        return 0LL;
+        return 0L;
     }
   }
   return 0;
@@ -3634,7 +3634,7 @@ double user_var_entry::val_real(bool *null_value)
 int64_t user_var_entry::val_int(bool *null_value) const
 {
   if ((*null_value= (value == 0)))
-    return 0LL;
+    return 0L;
 
   switch (type) {
   case REAL_RESULT:
@@ -3656,7 +3656,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
     assert(1);				// Impossible
     break;
   }
-  return 0LL;					// Impossible
+  return 0L;					// Impossible
 }
 
 
@@ -4087,7 +4087,7 @@ int64_t Item_func_get_user_var::val_int()
 {
   assert(fixed == 1);
   if (!var_entry)
-    return 0LL;				// No such variable
+    return 0L;				// No such variable
   return (var_entry->val_int(&null_value));
 }
 
