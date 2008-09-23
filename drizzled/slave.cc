@@ -2178,10 +2178,10 @@ err:
   sql_print_information(_("Slave I/O thread exiting, read up to log '%s', "
                           "position %s"),
                         IO_RPL_LOG_NAME, llstr(mi->master_log_pos,llbuff));
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   thd->query = thd->db = 0; // extra safety
   thd->query_length= thd->db_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   if (drizzle)
   {
     /*
@@ -2447,7 +2447,7 @@ pthread_handler_t handle_slave_sql(void *arg)
     must "proactively" clear playgrounds:
   */
   rli->cleanup_context(thd, 1);
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   /*
     Some extra safety, which should not been needed (normally, event deletion
     should already have done these assignments (each event which sets these
@@ -2455,7 +2455,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   */
   thd->query= thd->db= thd->catalog= 0;
   thd->query_length= thd->db_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   thd_proc_info(thd, "Waiting for slave mutex on exit");
   pthread_mutex_lock(&rli->run_lock);
   /* We need data_lock, at least to wake up any waiting master_pos_wait() */
