@@ -59,8 +59,8 @@
 #define __builtin_expect(x, expected_value) (x)
 #endif
 
-#define likely(x)	__builtin_expect((x),1)
-#define unlikely(x)	__builtin_expect((x),0)
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
 
 /*
  *   Disable __attribute__ for non GNU compilers, since we're using them
@@ -88,7 +88,7 @@
 #include <sys/types.h>
 #endif
 
-#define __EXTENSIONS__ 1	/* We want some extension */
+#define __EXTENSIONS__ 1  /* We want some extension */
 
 #if defined(HAVE_STDINT_H)
 /* Need to include this _before_ stdlib, so that all defines are right */
@@ -97,8 +97,8 @@
 #undef _STDINT_H
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-/* 
-  We include the following because currently Google #$@#$ Protocol Buffers possibly break stdint defines. 
+/*
+  We include the following because currently Google #$@#$ Protocol Buffers possibly break stdint defines.
   Or I am wrong, very possible, and hope someone finds the solution.
 
   Taken from /usr/include/stdint.h
@@ -120,12 +120,12 @@
 #define INT8_MIN          -128
 #define INT16_MIN         -32768
 
-   /*
-      Note:  the literal "most negative int" cannot be written in C --
-      the rules in the standard (section 6.4.4.1 in C99) will give it
-      an unsigned type, so INT32_MIN (and the most negative member of
-      any larger signed type) must be written via a constant expression.
-   */
+/*
+  Note:  the literal "most negative int" cannot be written in C --
+  the rules in the standard (section 6.4.4.1 in C99) will give it
+  an unsigned type, so INT32_MIN (and the most negative member of
+  any larger signed type) must be written via a constant expression.
+*/
 #define INT32_MIN        (-INT32_MAX-1)
 #define INT64_MIN        (-INT64_MAX-1)
 
@@ -169,15 +169,15 @@
 /* 7.18.2.4 Limits of integer types capable of holding object pointers */
 
 #if __WORDSIZE == 64
-#define INTPTR_MIN	  INT64_MIN
-#define INTPTR_MAX	  INT64_MAX
+#define INTPTR_MIN    INT64_MIN
+#define INTPTR_MAX    INT64_MAX
 #else
 #define INTPTR_MIN        INT32_MIN
 #define INTPTR_MAX        INT32_MAX
 #endif
 
 #if __WORDSIZE == 64
-#define UINTPTR_MAX	  UINT64_MAX
+#define UINTPTR_MAX    UINT64_MAX
 #else
 #define UINTPTR_MAX       UINT32_MAX
 #endif
@@ -190,8 +190,8 @@
 
 /* 7.18.3 "Other" */
 #if __WORDSIZE == 64
-#define PTRDIFF_MIN	  INT64_MIN
-#define PTRDIFF_MAX	  INT64_MAX
+#define PTRDIFF_MIN    INT64_MIN
+#define PTRDIFF_MAX    INT64_MAX
 #else
 #define PTRDIFF_MIN       INT32_MIN
 #define PTRDIFF_MAX       INT32_MAX
@@ -202,7 +202,7 @@
    My bet would be on one of {U}INT32_{MIN,MAX}. */
 
 #if __WORDSIZE == 64
-#define SIZE_MAX	  UINT64_MAX
+#define SIZE_MAX    UINT64_MAX
 #else
 #define SIZE_MAX          UINT32_MAX
 #endif
@@ -227,11 +227,11 @@
 #  endif
 #endif
 
-#define WINT_MIN	  INT32_MIN
-#define WINT_MAX	  INT32_MAX
+#define WINT_MIN    INT32_MIN
+#define WINT_MAX    INT32_MAX
 
-#define SIG_ATOMIC_MIN	  INT32_MIN
-#define SIG_ATOMIC_MAX	  INT32_MAX
+#define SIG_ATOMIC_MIN    INT32_MIN
+#define SIG_ATOMIC_MAX    INT32_MAX
 #endif
 
 #else
@@ -242,7 +242,7 @@
 /*
   Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
 
-    System Interfaces and Headers, Issue 5
+  System Interfaces and Headers, Issue 5
 
   saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
   but apparently other systems (namely FreeBSD) don't agree.
@@ -275,11 +275,11 @@
 #define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
 #endif
 
-#define _REENTRANT	1	/* Some thread libraries require this */
+#define _REENTRANT  1  /* Some thread libraries require this */
 
-#include <pthread.h>		/* AIX must have this included first */
+#include <pthread.h>    /* AIX must have this included first */
 
-#define _REENTRANT	1	/* Threads requires reentrant code */
+#define _REENTRANT  1  /* Threads requires reentrant code */
 
 
 /* gcc/egcs issues */
@@ -310,7 +310,7 @@
 #include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_TIMEB_H
-#include <sys/timeb.h>				/* Avoid warnings on SCO */
+#include <sys/timeb.h>        /* Avoid warnings on SCO */
 #endif
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -333,7 +333,7 @@
 #include <alloca.h>
 #endif
 
-#include <errno.h>				/* Recommended by debian */
+#include <errno.h>        /* Recommended by debian */
 
 #if defined(HAVE_STDBOOL_H)
 #include <stdbool.h>
@@ -356,7 +356,7 @@
   do                                                            \
   {                                                             \
     char compile_time_assert[(X) ? 1 : -1]                      \
-                             __attribute__ ((unused));          \
+      __attribute__ ((unused));                                 \
   } while(0)
 #endif
 
@@ -367,25 +367,14 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 
 /* We can not live without the following defines */
 
-#define MASTER 1		/* Compile without unireg */
+#define MASTER 1    /* Compile without unireg */
 
-#define QUOTE_ARG(x)		#x	/* Quote argument (before cpp) */
-#define STRINGIFY_ARG(x) QUOTE_ARG(x)	/* Quote argument, after cpp */
+#define QUOTE_ARG(x)    #x  /* Quote argument (before cpp) */
+#define STRINGIFY_ARG(x) QUOTE_ARG(x)  /* Quote argument, after cpp */
 /* Does the system remember a signal handler after a signal ? */
 #ifndef HAVE_BSD_SIGNALS
 #define DONT_REMEMBER_SIGNAL
 #endif
-
-/* Define void to stop lint from generating "null effekt" comments */
-#ifndef DONT_DEFINE_VOID
-#ifdef _lint
-int	__void__;
-#define VOID(X)		(__void__ = (int) (X))
-#else
-#undef VOID
-#define VOID(X)		(X)
-#endif
-#endif /* DONT_DEFINE_VOID */
 
 #if !defined(HAVE_UINT)
 #undef HAVE_UINT
@@ -398,7 +387,7 @@ typedef unsigned short ushort;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
-#define test(a)		((a) ? 1 : 0)
+#define test(a)    ((a) ? 1 : 0)
 #define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
 #define test_all_bits(a,b) (((a) & (b)) == (b))
@@ -409,7 +398,7 @@ extern char _dig_vec_lower[];
 #endif
 
 #if defined(__GNUC__)
-#define function_volatile	volatile
+#define function_volatile  volatile
 #define my_reinterpret_cast(A) reinterpret_cast<A>
 #define my_const_cast(A) const_cast<A>
 # ifndef GCC_VERSION
@@ -422,7 +411,7 @@ extern char _dig_vec_lower[];
 
 /* Some types that is different between systems */
 
-typedef int	File;		/* File descriptor */
+typedef int  File;    /* File descriptor */
 /* Type for fuctions that handles signals */
 /* RETSIGTYPE is defined by autoconf */
 #define sig_handler RETSIGTYPE
@@ -450,25 +439,25 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 /* file create flags */
 
-#ifndef O_SHARE			/* Probably not windows */
-#define O_SHARE		0	/* Flag to my_open for shared files */
+#ifndef O_SHARE      /* Probably not windows */
+#define O_SHARE    0  /* Flag to my_open for shared files */
 #endif /* O_SHARE */
 
 #ifndef O_BINARY
-#define O_BINARY	0	/* Flag to my_open for binary files */
+#define O_BINARY  0  /* Flag to my_open for binary files */
 #endif
 
 #ifndef FILE_BINARY
-#define FILE_BINARY	O_BINARY /* Flag to my_fopen for binary streams */
+#define FILE_BINARY  O_BINARY /* Flag to my_fopen for binary streams */
 #endif
 
-#define F_TO_EOF	0L	/* Param to lockf() to lock rest of file */
+#define F_TO_EOF  0L  /* Param to lockf() to lock rest of file */
 
 #ifndef O_TEMPORARY
-#define O_TEMPORARY	0
+#define O_TEMPORARY  0
 #endif
 #ifndef O_SHORT_LIVED
-#define O_SHORT_LIVED	0
+#define O_SHORT_LIVED  0
 #endif
 #ifndef O_NOFOLLOW
 #define O_NOFOLLOW      0
@@ -477,12 +466,12 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 
 #ifndef FN_LIBCHAR
-#define FN_LIBCHAR	'/'
-#define FN_ROOTDIR	"/"
+#define FN_LIBCHAR  '/'
+#define FN_ROOTDIR  "/"
 #endif
-#define MY_NFILE	64	/* This is only used to save filenames */
+#define MY_NFILE  64  /* This is only used to save filenames */
 #ifndef OS_FILE_LIMIT
-#define OS_FILE_LIMIT	65535
+#define OS_FILE_LIMIT  65535
 #endif
 
 /* #define EXT_IN_LIBNAME     */
@@ -495,21 +484,21 @@ typedef SOCKET_SIZE_TYPE size_socket;
 */
 #define MALLOC_OVERHEAD 8
 
-	/* get memory in huncs */
-#define ONCE_ALLOC_INIT		(uint) (4096-MALLOC_OVERHEAD)
-	/* Typical record cash */
-#define RECORD_CACHE_SIZE	(uint) (64*1024-MALLOC_OVERHEAD)
-	/* Typical key cash */
-#define KEY_CACHE_SIZE		(uint) (8*1024*1024-MALLOC_OVERHEAD)
-	/* Default size of a key cache block  */
-#define KEY_CACHE_BLOCK_SIZE	(uint) 1024
+/* get memory in huncs */
+#define ONCE_ALLOC_INIT    (uint) (4096-MALLOC_OVERHEAD)
+/* Typical record cash */
+#define RECORD_CACHE_SIZE  (uint) (64*1024-MALLOC_OVERHEAD)
+/* Typical key cash */
+#define KEY_CACHE_SIZE    (uint) (8*1024*1024-MALLOC_OVERHEAD)
+/* Default size of a key cache block  */
+#define KEY_CACHE_BLOCK_SIZE  (uint) 1024
 
 
-	/* Some things that this system doesn't have */
+/* Some things that this system doesn't have */
 
 /* Some defines of functions for portability */
 
-#undef remove		/* Crashes MySQL on SCO 5.0.0 */
+#undef remove    /* Crashes MySQL on SCO 5.0.0 */
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #define my_off_t2double(A)  ((double) (my_off_t) (A))
@@ -519,7 +508,7 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 #define ulong_to_double(X) ((double) (ulong) (X))
-#define SET_STACK_SIZE(X)	/* Not needed on real machines */
+#define SET_STACK_SIZE(X)  /* Not needed on real machines */
 
 #ifndef STACK_DIRECTION
 #error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
@@ -542,10 +531,10 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 /* From limits.h instead */
 #ifndef DBL_MIN
-#define DBL_MIN		4.94065645841246544e-324
+#define DBL_MIN    4.94065645841246544e-324
 #endif
 #ifndef DBL_MAX
-#define DBL_MAX		1.79769313486231470e+308
+#define DBL_MAX    1.79769313486231470e+308
 #endif
 #ifndef SIZE_T_MAX
 #define SIZE_T_MAX ~((size_t) 0)
@@ -586,17 +575,17 @@ typedef SOCKET_SIZE_TYPE size_socket;
   adressable obj.
 */
 #if SIZEOF_CHARP == 4
-typedef int32_t		my_ptrdiff_t;
+typedef int32_t    my_ptrdiff_t;
 #else
-typedef int64_t 	my_ptrdiff_t;
+typedef int64_t   my_ptrdiff_t;
 #endif
 
-#define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
-#define ALIGN_SIZE(A)	MY_ALIGN((A),sizeof(double))
+#define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
+#define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
 /* Size to make adressable obj. */
 #define ALIGN_PTR(A, t) ((t*) MY_ALIGN((A),sizeof(t)))
-			 /* Offset of field f in structure t */
-#define OFFSET(t, f)	((size_t)(char *)&((t *)0)->f)
+/* Offset of field f in structure t */
+#define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
 #define ADD_TO_PTR(ptr,size,type) (type) ((uchar*) (ptr)+size)
 #define PTR_BYTE_DIFF(A,B) (my_ptrdiff_t) ((uchar*) (A) - (uchar*) (B))
 
@@ -615,58 +604,58 @@ typedef int64_t 	my_ptrdiff_t;
   and related routines are refactored.
 */
 
-#define my_offsetof(TYPE, MEMBER) \
-        ((size_t)((char *)&(((TYPE *)0x10)->MEMBER) - (char*)0x10))
+#define my_offsetof(TYPE, MEMBER)                                       \
+  ((size_t)((char *)&(((TYPE *)0x10)->MEMBER) - (char*)0x10))
 
-#define NullS		(char *) 0
+#define NullS    (char *) 0
 
 /* Typdefs for easyier portability */
 
 #ifndef HAVE_UCHAR
-typedef unsigned char	uchar;	/* Short for unsigned char */
+typedef unsigned char  uchar;  /* Short for unsigned char */
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef unsigned long ulong;		  /* Short for unsigned long */
+typedef unsigned long ulong;      /* Short for unsigned long */
 #endif
 
 #define MY_ERRPTR ((void*)(intptr)1)
 
-#if SIZEOF_OFF_T > 4 
+#if SIZEOF_OFF_T > 4
 typedef uint64_t my_off_t;
 #else
 typedef unsigned long my_off_t;
-#endif 
-#define MY_FILEPOS_ERROR	(~(my_off_t) 0)
+#endif
+#define MY_FILEPOS_ERROR  (~(my_off_t) 0)
 
 typedef off_t os_off_t;
 
-#define socket_errno	errno
-#define SOCKET_EINTR	EINTR
-#define SOCKET_EAGAIN	EAGAIN
+#define socket_errno  errno
+#define SOCKET_EINTR  EINTR
+#define SOCKET_EAGAIN  EAGAIN
 #define SOCKET_ETIMEDOUT SOCKET_EINTR
 #define SOCKET_EWOULDBLOCK EWOULDBLOCK
 #define SOCKET_EADDRINUSE EADDRINUSE
-#define SOCKET_ENFILE	ENFILE
-#define SOCKET_EMFILE	EMFILE
+#define SOCKET_ENFILE  ENFILE
+#define SOCKET_EMFILE  EMFILE
 
-typedef uint8_t		int7;	/* Most effective integer 0 <= x <= 127 */
-typedef short		int15;	/* Most effective integer 0 <= x <= 32767 */
-typedef int		myf;	/* Type of MyFlags in my_funcs */
+typedef uint8_t    int7;  /* Most effective integer 0 <= x <= 127 */
+typedef short    int15;  /* Most effective integer 0 <= x <= 32767 */
+typedef int    myf;  /* Type of MyFlags in my_funcs */
 #if !defined(bool) && (!defined(HAVE_BOOL) || !defined(__cplusplus))
-typedef char		bool;	/* Ordinary boolean values 0 1 */
+typedef char    bool;  /* Ordinary boolean values 0 1 */
 #endif
-	/* Macros for converting *constants* to the right type */
-#define INT8(v)		(int8_t) (v)
-#define INT16(v)	(int16_t) (v)
-#define INT32(v)	(int32_t) (v)
-#define MYF(v)		(myf) (v)
+/* Macros for converting *constants* to the right type */
+#define INT8(v)    (int8_t) (v)
+#define INT16(v)  (int16_t) (v)
+#define INT32(v)  (int32_t) (v)
+#define MYF(v)    (myf) (v)
 
 /* Defines for time function */
-#define SCALE_SEC	100
-#define SCALE_USEC	10000
-#define MY_HOW_OFTEN_TO_ALARM	2	/* How often we want info on screen */
-#define MY_HOW_OFTEN_TO_WRITE	1000	/* How often we want info on screen */
+#define SCALE_SEC  100
+#define SCALE_USEC  10000
+#define MY_HOW_OFTEN_TO_ALARM  2  /* How often we want info on screen */
+#define MY_HOW_OFTEN_TO_WRITE  1000  /* How often we want info on screen */
 
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)

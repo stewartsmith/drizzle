@@ -1667,7 +1667,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
-        VOID(pthread_mutex_lock(&LOCK_open));
+        pthread_mutex_lock(&LOCK_open);
         if (reopen_name_locked_table(thd, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
@@ -1676,7 +1676,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
         }
         else
           table= create_table->table;
-        VOID(pthread_mutex_unlock(&LOCK_open));
+        pthread_mutex_unlock(&LOCK_open);
       }
       else
       {

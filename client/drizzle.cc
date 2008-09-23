@@ -79,7 +79,6 @@ void sql_element_free(void *ptr);
 #elif defined(HAVE_ASM_TERMBITS_H) && (!defined __GLIBC__ || !(__GLIBC__ > 2 || __GLIBC__ == 2 && __GLIBC_MINOR__ > 0))
 #include <asm/termbits.h>    // Standard linux
 #endif
-#undef VOID
 #if defined(HAVE_TERMCAP_H)
 #include <termcap.h>
 #else

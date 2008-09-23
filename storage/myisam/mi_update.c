@@ -153,7 +153,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     mi_update() must always pass !0 value as operation, since even if
     there is no index change there could be data change.
   */
-  VOID(_mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE);
   if (info->invalidator != 0)
   {
     (*info->invalidator)(info->filename);
@@ -193,7 +193,7 @@ err:
 		 key_changed);
 
  err_end:
-  VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   if (save_errno == HA_ERR_KEY_NOT_FOUND)
   {
     mi_print_error(info->s, HA_ERR_CRASHED);

@@ -1125,7 +1125,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       records++;
       if (param->testflag & T_WRITE_LOOP && records % WRITE_COUNT == 0)
       {
-	printf("%s\r", llstr(records,llbuff)); VOID(fflush(stdout));
+	printf("%s\r", llstr(records,llbuff)); fflush(stdout);
       }
 
       /* Check if keys match the record */
@@ -1172,7 +1172,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   }
   if (param->testflag & T_WRITE_LOOP)
   {
-    VOID(fputs("          \r",stdout)); VOID(fflush(stdout));
+    fputs("          \r",stdout); fflush(stdout);
   }
   if (records != info->state->records)
   {
@@ -1435,8 +1435,8 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
     param->testflag|=T_CALC_CHECKSUM;
 
   if (!param->using_global_keycache)
-    VOID(init_key_cache(dflt_key_cache, param->key_cache_block_size,
-                        param->use_buffers, 0, 0));
+    init_key_cache(dflt_key_cache, param->key_cache_block_size,
+                   param->use_buffers, 0, 0);
 
   if (init_io_cache(&param->read_cache,info->dfile,
 		    (uint) param->read_buffer_length,
@@ -1528,8 +1528,8 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
 			  llstr(info->dupp_key_pos,llbuff2));
       if (param->testflag & T_VERBOSE)
       {
-	VOID(_mi_make_key(info,(uint) info->errkey,info->lastkey,
-			  sort_param.record,0L));
+	_mi_make_key(info,(uint) info->errkey,info->lastkey,
+                     sort_param.record,0L);
       }
       sort_info.dupp++;
       if ((param->testflag & (T_FORCE_UNIQUENESS|T_QUICK)) == T_QUICK)
@@ -1549,7 +1549,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
 
   if (param->testflag & T_WRITE_LOOP)
   {
-    VOID(fputs("          \r",stdout)); VOID(fflush(stdout));
+    fputs("          \r",stdout); fflush(stdout);
   }
   if (ftruncate(share->kfile, info->state->key_file_length))
   {
@@ -1631,9 +1631,9 @@ err:
 		  llstr(sort_param.start_recpos,llbuff));
     if (new_file >= 0)
     {
-      VOID(my_close(new_file,MYF(0)));
-      VOID(my_raid_delete(param->temp_filename,info->s->base.raid_chunks,
-			  MYF(MY_WME)));
+      my_close(new_file,MYF(0));
+      my_raid_delete(param->temp_filename,info->s->base.raid_chunks,
+                     MYF(MY_WME));
       info->rec_cache.file=-1; /* don't flush data to new_file, it's closed */
     }
     mi_mark_crashed_on_repair(info);
@@ -1643,9 +1643,9 @@ err:
   my_free(mi_get_rec_buff_ptr(info, sort_param.record),
           MYF(MY_ALLOW_ZERO_PTR));
   my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
-  VOID(end_io_cache(&param->read_cache));
+  end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
-  VOID(end_io_cache(&info->rec_cache));
+  end_io_cache(&info->rec_cache);
   got_error|=flush_blocks(param, share->key_cache, share->kfile);
   if (!got_error && param->testflag & T_UNPACK)
   {
@@ -1846,9 +1846,9 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
 	/* Put same locks as old file */
   share->r_locks= share->w_locks= share->tot_locks= 0;
   (void) _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
-  VOID(my_close(share->kfile,MYF(MY_WME)));
+  my_close(share->kfile,MYF(MY_WME));
   share->kfile = -1;
-  VOID(my_close(new_file,MYF(MY_WME)));
+  my_close(new_file,MYF(MY_WME));
   if (change_to_newfile(share->index_file_name,MI_NAME_IEXT,INDEX_TMP_EXT,0,
 			MYF(0)) ||
       mi_open_keyfile(share))
@@ -1872,9 +1872,9 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
   return(0);
 
 err:
-  VOID(my_close(new_file,MYF(MY_WME)));
+  my_close(new_file,MYF(MY_WME));
 err2:
-  VOID(my_delete(param->temp_filename,MYF(MY_WME)));
+  my_delete(param->temp_filename,MYF(MY_WME));
   return(-1);
 } /* mi_sort_index */
 
@@ -1982,7 +1982,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
     buff=tmp_buff; buff_length=IO_SIZE;
   }
 
-  VOID(my_seek(from,start,MY_SEEK_SET,MYF(0)));
+  my_seek(from,start,MY_SEEK_SET,MYF(0));
   while (length > buff_length)
   {
     if (my_read(from,(uchar*) buff,buff_length,MYF(MY_NABP)) ||
@@ -2252,7 +2252,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
 
   if (param->testflag & T_WRITE_LOOP)
   {
-    VOID(fputs("          \r",stdout)); VOID(fflush(stdout));
+    fputs("          \r",stdout); fflush(stdout);
   }
 
   if (rep_quick && del+sort_info.dupp != info->state->del)
@@ -2305,7 +2305,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
 
 err:
   got_error|= flush_blocks(param, share->key_cache, share->kfile);
-  VOID(end_io_cache(&info->rec_cache));
+  end_io_cache(&info->rec_cache);
   if (!got_error)
   {
     /* Replace the actual file with the temporary file */
@@ -2327,9 +2327,9 @@ err:
       mi_check_print_error(param,"%d when fixing table",my_errno);
     if (new_file >= 0)
     {
-      VOID(my_close(new_file,MYF(0)));
-      VOID(my_raid_delete(param->temp_filename,share->base.raid_chunks,
-			  MYF(MY_WME)));
+      my_close(new_file,MYF(0));
+      my_raid_delete(param->temp_filename,share->base.raid_chunks,
+                     MYF(MY_WME));
       if (info->dfile == new_file)
 	info->dfile= -1;
     }
@@ -2345,7 +2345,7 @@ err:
           MYF(MY_ALLOW_ZERO_PTR));
   my_free((uchar*) sort_info.key_block,MYF(MY_ALLOW_ZERO_PTR));
   my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
-  VOID(end_io_cache(&param->read_cache));
+  end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   if (!got_error && (param->testflag & T_UNPACK))
   {
@@ -2806,7 +2806,7 @@ err:
     the share by remove_io_thread() or it was not yet started (if the
     error happend before creating the thread).
   */
-  VOID(end_io_cache(&info->rec_cache));
+  end_io_cache(&info->rec_cache);
   /*
     Destroy the new data cache in case of non-quick repair. All slave
     threads did either detach from the share by remove_io_thread()
@@ -2814,7 +2814,7 @@ err:
     creating the threads).
   */
   if (!rep_quick)
-    VOID(end_io_cache(&new_data_cache));
+    end_io_cache(&new_data_cache);
   if (!got_error)
   {
     /* Replace the actual file with the temporary file */
@@ -2836,9 +2836,9 @@ err:
       mi_check_print_error(param,"%d when fixing table",my_errno);
     if (new_file >= 0)
     {
-      VOID(my_close(new_file,MYF(0)));
-      VOID(my_raid_delete(param->temp_filename,share->base.raid_chunks,
-			  MYF(MY_WME)));
+      my_close(new_file,MYF(0));
+      my_raid_delete(param->temp_filename,share->base.raid_chunks,
+                     MYF(MY_WME));
       if (info->dfile == new_file)
 	info->dfile= -1;
     }
@@ -2854,7 +2854,7 @@ err:
   my_free((uchar*) sort_info.key_block,MYF(MY_ALLOW_ZERO_PTR));
   my_free((uchar*) sort_param,MYF(MY_ALLOW_ZERO_PTR));
   my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
-  VOID(end_io_cache(&param->read_cache));
+  end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   if (!got_error && (param->testflag & T_UNPACK))
   {
@@ -3374,7 +3374,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
     {
       char llbuff[22];
       printf("%s\r", llstr(info->state->records,llbuff));
-      VOID(fflush(stdout));
+      fflush(stdout);
     }
   }
   return(0);
@@ -3505,7 +3505,7 @@ static int sort_insert_key(MI_SORT_PARAM *sort_param,
   key_block->end_pos+=t_length;
   if (a_length <= keyinfo->block_length)
   {
-    VOID(_mi_move_key(keyinfo,key_block->lastkey,key));
+    _mi_move_key(keyinfo,key_block->lastkey,key);
     key_block->last_length=a_length-t_length;
     return(0);
   }
@@ -3776,7 +3776,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   set_if_bigger(file_length,tmp_length);
   set_if_bigger(file_length,(uint64_t) share.base.max_data_file_length);
 
-  VOID(mi_close(*org_info));
+  mi_close(*org_info);
   memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows=cmax(max_records,share.base.records);
   create_info.reloc_rows=share.base.reloc;
@@ -3817,7 +3817,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   }
   /* We are modifing */
   (*org_info)->s->options&= ~HA_OPTION_READ_ONLY_DATA;
-  VOID(_mi_readinfo(*org_info,F_WRLCK,0));
+  _mi_readinfo(*org_info,F_WRLCK,0);
   (*org_info)->state->records=info.state->records;
   if (share.state.create_time)
     (*org_info)->s->state.create_time=share.state.create_time;

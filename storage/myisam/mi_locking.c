@@ -160,7 +160,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  break;
 	}
       }
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
       share->r_locks++;
       share->tot_locks++;
       info->lock_type=lock_type;
@@ -194,7 +194,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  }
 	}
       }
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
         
       info->lock_type=lock_type;
       info->invalidator=info->s->invalidator;
@@ -356,7 +356,7 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
       }
     }
     if (check_keybuffer)
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
     info->invalidator=info->s->invalidator;
   }
   else if (lock_type == F_WRLCK && info->lock_type == F_RDLCK)
@@ -416,7 +416,7 @@ int _mi_test_if_changed(register MI_INFO *info)
       share->state.update_count != info->last_loop)
   {						/* Keyfile has changed */
     if (share->state.process != share->this_process)
-      VOID(flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE));
+      flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE);
     share->last_process=share->state.process;
     info->last_unique=	share->state.unique;
     info->last_loop=	share->state.update_count;

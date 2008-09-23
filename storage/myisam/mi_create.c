@@ -692,7 +692,7 @@ err:
   save_errno=my_errno;
   switch (errpos) {
   case 3:
-    VOID(my_close(dfile,MYF(0)));
+    my_close(dfile,MYF(0));
     /* fall through */
   case 2:
     /* QQ: Tõnu should add a call to my_raid_delete() here */
@@ -702,7 +702,7 @@ err:
 			   MYF(0));
     /* fall through */
   case 1:
-    VOID(my_close(file,MYF(0)));
+    my_close(file,MYF(0));
     if (! (flags & HA_DONT_TOUCH_DATA))
       my_delete_with_symlink(fn_format(filename,name,"",MI_NAME_IEXT,
                                        MY_UNPACK_FILENAME | MY_APPEND_EXT),

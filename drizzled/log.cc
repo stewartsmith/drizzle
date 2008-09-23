@@ -2146,7 +2146,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     thread. If the transaction involved MyISAM tables, it should go
     into binlog even on rollback.
   */
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
 
   /* Save variables so that we can reopen the log */
   save_name=name;
@@ -2226,7 +2226,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
   my_free((uchar*) save_name, MYF(0));
 
 err:
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_index);
   pthread_mutex_unlock(&LOCK_log);
   return(error);
@@ -3150,7 +3150,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
     if ((thd && !(thd->options & OPTION_BIN_LOG)) ||
 	(!binlog_filter->db_ok(local_db)))
     {
-      VOID(pthread_mutex_unlock(&LOCK_log));
+      pthread_mutex_unlock(&LOCK_log);
       return(0);
     }
 
@@ -3541,7 +3541,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
 
 bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
 {
-  VOID(pthread_mutex_lock(&LOCK_log));
+  pthread_mutex_lock(&LOCK_log);
 
   /* NULL would represent nothing to replicate after ROLLBACK */
   assert(commit_event != NULL);
@@ -3617,7 +3617,7 @@ bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
     else
       rotate_and_purge(RP_LOCK_LOG_IS_ALREADY_LOCKED);
   }
-  VOID(pthread_mutex_unlock(&LOCK_log));
+  pthread_mutex_unlock(&LOCK_log);
 
   return(0);
 
@@ -3627,7 +3627,7 @@ err:
     write_error= 1;
     sql_print_error(ER(ER_ERROR_ON_WRITE), name, errno);
   }
-  VOID(pthread_mutex_unlock(&LOCK_log));
+  pthread_mutex_unlock(&LOCK_log);
   return(1);
 }
 
@@ -3832,7 +3832,7 @@ bool flush_error_log()
     char err_renamed[FN_REFLEN], *end;
     end= strmake(err_renamed,log_error_file,FN_REFLEN-4);
     stpcpy(end, "-old");
-    VOID(pthread_mutex_lock(&LOCK_error_log));
+    pthread_mutex_lock(&LOCK_error_log);
     char err_temp[FN_REFLEN+4];
     /*
      On Windows is necessary a temporary file for to rename
@@ -3863,7 +3863,7 @@ bool flush_error_log()
     }
     else
      result= 1;
-    VOID(pthread_mutex_unlock(&LOCK_error_log));
+    pthread_mutex_unlock(&LOCK_error_log);
   }
    return result;
 }
@@ -3899,7 +3899,7 @@ static void print_buffer_to_file(enum loglevel level,
   struct tm tm_tmp;
   struct tm *start;
 
-  VOID(pthread_mutex_lock(&LOCK_error_log));
+  pthread_mutex_lock(&LOCK_error_log);
 
   skr= my_time(0);
   localtime_r(&skr, &tm_tmp);
@@ -3918,7 +3918,7 @@ static void print_buffer_to_file(enum loglevel level,
 
   fflush(stderr);
 
-  VOID(pthread_mutex_unlock(&LOCK_error_log));
+  pthread_mutex_unlock(&LOCK_error_log);
   return;
 }
 

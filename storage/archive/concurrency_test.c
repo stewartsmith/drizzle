@@ -93,9 +93,9 @@ int main(int argc, char *argv[])
   pthread_cond_init(&count_threshhold, NULL);
   pthread_mutex_init(&sleeper_mutex, NULL);
   pthread_cond_init(&sleep_threshhold, NULL);
-  VOID(pthread_mutex_init(&timer_alarm_mutex, NULL));
-  VOID(pthread_cond_init(&timer_alarm_threshold, NULL));
-  VOID(pthread_mutex_init(&row_lock, NULL));
+  pthread_mutex_init(&timer_alarm_mutex, NULL);
+  pthread_cond_init(&timer_alarm_threshold, NULL);
+  pthread_mutex_init(&row_lock, NULL);
 
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
     scheduler(method);
@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
   (void)pthread_cond_destroy(&count_threshhold);
   (void)pthread_mutex_destroy(&sleeper_mutex);
   (void)pthread_cond_destroy(&sleep_threshhold);
-  VOID(pthread_mutex_destroy(&timer_alarm_mutex));
-  VOID(pthread_cond_destroy(&timer_alarm_threshold));
-  VOID(pthread_mutex_destroy(&row_lock));
+  pthread_mutex_destroy(&timer_alarm_mutex);
+  pthread_cond_destroy(&timer_alarm_threshold);
+  pthread_mutex_destroy(&row_lock);
 
   return 0;
 }

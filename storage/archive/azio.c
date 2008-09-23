@@ -704,8 +704,8 @@ int do_flush (azio_stream *s, int flush)
 
 static unsigned int azio_enable_aio(azio_stream *s)
 {
-  VOID(pthread_cond_init(&s->container.threshhold, NULL));
-  VOID(pthread_mutex_init(&s->container.thresh_mutex, NULL));
+  pthread_cond_init(&s->container.threshhold, NULL);
+  pthread_mutex_init(&s->container.thresh_mutex, NULL);
   azio_start(s);
 
   return 0;
@@ -715,8 +715,8 @@ static void azio_disable_aio(azio_stream *s)
 {
   azio_kill(s);
 
-  VOID(pthread_mutex_destroy(&s->container.thresh_mutex));
-  VOID(pthread_cond_destroy(&s->container.threshhold));
+  pthread_mutex_destroy(&s->container.thresh_mutex);
+  pthread_cond_destroy(&s->container.threshhold);
 
   s->method= AZ_METHOD_BLOCK;
 }

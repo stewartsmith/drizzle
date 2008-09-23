@@ -698,7 +698,7 @@ void
 innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
-	VOID(pthread_mutex_lock(&LOCK_thread_count));
+	pthread_mutex_lock(&LOCK_thread_count);
 }
 
 /*****************************************************************
@@ -710,7 +710,7 @@ void
 innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
-	VOID(pthread_mutex_unlock(&LOCK_thread_count));
+	pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 /*****************************************************************

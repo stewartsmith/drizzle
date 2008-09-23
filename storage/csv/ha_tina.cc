@@ -103,7 +103,7 @@ static int tina_init_func(void *p)
   handlerton *tina_hton;
 
   tina_hton= (handlerton *)p;
-  VOID(pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST));
+  pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
                    (hash_get_key) tina_get_key,0,0);
   tina_hton->state= SHOW_OPTION_YES;
@@ -232,7 +232,7 @@ static int read_meta_file(File meta_file, ha_rows *rows)
   uchar meta_buffer[META_BUFFER_SIZE];
   uchar *ptr= meta_buffer;
 
-  VOID(my_seek(meta_file, 0, MY_SEEK_SET, MYF(0)));
+  my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
   if (my_read(meta_file, (uchar*)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -299,7 +299,7 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
   ptr+= 3*sizeof(uint64_t);
   *ptr= (uchar)dirty;
 
-  VOID(my_seek(meta_file, 0, MY_SEEK_SET, MYF(0)));
+  my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
   if (my_write(meta_file, (uchar *)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(-1);

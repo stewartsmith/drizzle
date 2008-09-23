@@ -348,12 +348,12 @@ int main(int argc, char **argv)
 
   slap_connect(&drizzle, false);
 
-  VOID(pthread_mutex_init(&counter_mutex, NULL));
-  VOID(pthread_cond_init(&count_threshhold, NULL));
-  VOID(pthread_mutex_init(&sleeper_mutex, NULL));
-  VOID(pthread_cond_init(&sleep_threshhold, NULL));
-  VOID(pthread_mutex_init(&timer_alarm_mutex, NULL));
-  VOID(pthread_cond_init(&timer_alarm_threshold, NULL));
+  pthread_mutex_init(&counter_mutex, NULL);
+  pthread_cond_init(&count_threshhold, NULL);
+  pthread_mutex_init(&sleeper_mutex, NULL);
+  pthread_cond_init(&sleep_threshhold, NULL);
+  pthread_mutex_init(&timer_alarm_mutex, NULL);
+  pthread_cond_init(&timer_alarm_threshold, NULL);
 
 
   /* Main iterations loop */
@@ -389,12 +389,12 @@ burnin:
   if (opt_burnin)
     goto burnin;
 
-  VOID(pthread_mutex_destroy(&counter_mutex));
-  VOID(pthread_cond_destroy(&count_threshhold));
-  VOID(pthread_mutex_destroy(&sleeper_mutex));
-  VOID(pthread_cond_destroy(&sleep_threshhold));
-  VOID(pthread_mutex_destroy(&timer_alarm_mutex));
-  VOID(pthread_cond_destroy(&timer_alarm_threshold));
+  pthread_mutex_destroy(&counter_mutex);
+  pthread_cond_destroy(&count_threshhold);
+  pthread_mutex_destroy(&sleeper_mutex);
+  pthread_cond_destroy(&sleep_threshhold);
+  pthread_mutex_destroy(&timer_alarm_mutex);
+  pthread_cond_destroy(&timer_alarm_threshold);
 
   slap_close(&drizzle);
 

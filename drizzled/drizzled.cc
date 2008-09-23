@@ -2935,7 +2935,7 @@ void handle_connections_sockets()
     if (!(thd= new THD))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
-      VOID(close(new_sock));
+      close(new_sock);
       continue;
     }
     if (net_init_sock(&thd->net, new_sock, sock == 0))

@@ -907,10 +907,10 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
   // crashes, replacement works.  *(path + path_length - reg_ext_length)=
   // '\0';
   path[path_length - reg_ext_length] = 0;
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   error= ha_create_table(thd, path, table_list->db, table_list->table_name,
                          &create_info, 1);
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
 end:
   if (!dont_send_ok)
@@ -924,15 +924,15 @@ end:
       write_bin_log(thd, true, thd->query, thd->query_length);
       my_ok(thd);		// This should return record count
     }
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     unlock_table_name(thd, table_list);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
   }
   else if (error)
   {
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     unlock_table_name(thd, table_list);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
   }
   return(error);
 

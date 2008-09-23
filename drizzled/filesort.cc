@@ -1238,7 +1238,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
         if (!(error= (int) read_to_buffer(from_file,buffpek,
                                           rec_length)))
         {
-          VOID(queue_remove(&queue,0));
+          queue_remove(&queue,0);
           reuse_freed_buff(&queue, buffpek, rec_length);
           break;                        /* One buffer have been removed */
         }

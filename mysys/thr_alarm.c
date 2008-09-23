@@ -94,8 +94,8 @@ void init_thr_alarm(uint max_alarms)
     pthread_attr_setstacksize(&thr_attr,8196);
 
     my_pthread_attr_setprio(&thr_attr,100);	/* Very high priority */
-    VOID(pthread_create(&alarm_thread,&thr_attr,alarm_handler,NULL));
-    VOID(pthread_attr_destroy(&thr_attr));
+    pthread_create(&alarm_thread,&thr_attr,alarm_handler,NULL);
+    pthread_attr_destroy(&thr_attr);
   }
 #elif defined(USE_ONE_SIGNAL_HAND)
   pthread_sigmask(SIG_BLOCK, &s, NULL);		/* used with sigwait() */
@@ -654,7 +654,7 @@ static void *test_thread(void *arg)
 		break;
 	      continue;
 	    }
-	    VOID(getchar());			/* Somebody was playing */
+	    getchar();			/* Somebody was playing */
 	  }
 	}
       }
@@ -666,7 +666,7 @@ static void *test_thread(void *arg)
   }
   pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
-  VOID(pthread_cond_signal(&COND_thread_count)); /* Tell main we are ready */
+  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
   free((uchar*) arg);
   return 0;
@@ -695,7 +695,7 @@ static void *signal_hand(void *arg __attribute__((unused)))
   pthread_detach_this_thread();
   init_thr_alarm(10);				/* Setup alarm handler */
   pthread_mutex_lock(&LOCK_thread_count);	/* Required by bsdi */
-  VOID(pthread_cond_signal(&COND_thread_count)); /* Tell main we are ready */
+  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
 
   sigemptyset(&set);				/* Catch all signals */
@@ -781,7 +781,7 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
 #ifdef NOT_USED
   sigemptyset(&set);
   sigaddset(&set, thr_client_alarm);
-  VOID(pthread_sigmask(SIG_UNBLOCK, &set, (sigset_t*) 0));
+  pthread_sigmask(SIG_UNBLOCK, &set, (sigset_t*) 0);
 #endif
 
   pthread_attr_init(&thr_attr);
@@ -790,10 +790,10 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   pthread_attr_setstacksize(&thr_attr,65536L);
 
   /* Start signal thread and wait for it to start */
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   pthread_create(&tid,&thr_attr,signal_hand,NULL);
-  VOID(pthread_cond_wait(&COND_thread_count,&LOCK_thread_count));
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+  pthread_mutex_unlock(&LOCK_thread_count);
 
   thr_setconcurrency(3);
   pthread_attr_setscope(&thr_attr,PTHREAD_SCOPE_PROCESS);
@@ -820,7 +820,7 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
 	 alarm_info.next_alarm_time);
   while (thread_count)
   {
-    VOID(pthread_cond_wait(&COND_thread_count,&LOCK_thread_count));
+    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
     if (thread_count == 1)
     {
       printf("Calling end_thr_alarm. This should cancel the last thread\n");

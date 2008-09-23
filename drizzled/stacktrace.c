@@ -17,9 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Workaround for Bug#32082: VOID redefinition on Win results in compile errors*/
-#define DONT_DEFINE_VOID 1
-
 #include "stacktrace.h"
 
 #include <signal.h>
