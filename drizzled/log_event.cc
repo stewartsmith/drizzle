@@ -25,6 +25,8 @@
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
 
+#include <algorithm>
+
 #endif /* !DRIZZLE_CLIENT */
 
 #include <mysys/base64.h>

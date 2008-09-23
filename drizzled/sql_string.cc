@@ -19,6 +19,8 @@
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
 /*
   The following extern declarations are ok as these are interface functions
   required by the string function
