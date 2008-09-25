@@ -1329,14 +1329,8 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
   }
 
   THD *thd= current_thd;
-  Query_arena *arena, backup;
   bool res= false;
   uint i;
-  /*
-    In case we're in statement prepare, create conversion item
-    in its memory: it will be reused on each execute.
-  */
-  arena= NULL;
 
   for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
   {
@@ -1382,8 +1376,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
     */
     conv->fix_fields(thd, arg);
   }
-  if (arena)
-    thd->restore_active_arena(arena, &backup);
+
   return res;
 }
 
