@@ -4149,8 +4149,7 @@ int mysql_schema_table(THD *thd, LEX *lex, TableList *table_list)
     }
     List_iterator_fast<Item> it(sel->item_list);
     if (!(transl=
-          (Field_translator*)(thd->stmt_arena->
-                              alloc(sel->item_list.elements *
+          (Field_translator*)(thd->alloc(sel->item_list.elements *
                                     sizeof(Field_translator)))))
     {
       return(1);

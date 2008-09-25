@@ -3293,8 +3293,8 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
     char *buf;
     String *new_separator;
 
-    if (!(buf= (char*) thd->stmt_arena->alloc(buflen)) ||
-        !(new_separator= new(thd->stmt_arena->mem_root)
+    if (!(buf= (char*) thd->alloc(buflen)) ||
+        !(new_separator= new(thd->mem_root)
                            String(buf, buflen, collation.collation)))
       return true;
     

@@ -1160,7 +1160,7 @@ struct Item_change_record: public ilink
 /*
   Register an item tree tree transformation, performed by the query
   optimizer. We need a pointer to runtime_memroot because it may be !=
-  thd->mem_root (due to possible set_n_backup_active_arena called for thd).
+  thd->mem_root (this may no longer be a true statement)
 */
 
 void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
@@ -2047,27 +2047,6 @@ void THD::end_statement()
     Don't free mem_root, as mem_root is freed in the end of dispatch_command
     (once for any command).
   */
-}
-
-
-void THD::set_n_backup_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena == false);
-
-  backup->set_query_arena(this);
-  set_query_arena(set);
-  backup->is_backup_arena= true;
-  return;
-}
-
-
-void THD::restore_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena);
-  set->set_query_arena(this);
-  set_query_arena(backup);
-  backup->is_backup_arena= false;
-  return;
 }
 
 

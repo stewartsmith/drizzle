@@ -372,12 +372,11 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     }
     else
     {
-      assert(thd->stmt_arena->is_conventional() == false);
       /*
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      table->reset_item_list(&item_list);
+      assert(1);
     }
   }
 

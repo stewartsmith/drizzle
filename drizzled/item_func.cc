@@ -2099,15 +2099,11 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
   if (arg_count)
   {					// Only use argument once in query
     /*
-      Allocate rand structure once: we must use thd->stmt_arena
-      to create rand in proper mem_root if it's a prepared statement or
-      stored procedure.
-
       No need to send a Rand log event if seed was given eg: RAND(seed),
       as it will be replicated in the query as such.
     */
     if (!rand && !(rand= (struct rand_struct*)
-                   thd->stmt_arena->alloc(sizeof(*rand))))
+                   thd->alloc(sizeof(*rand))))
       return true;
 
     if (args[0]->const_item())

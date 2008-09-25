@@ -1742,8 +1742,6 @@ public:
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
   void restore_sub_statement_state(Sub_statement_state *backup);
-  void set_n_backup_active_arena(Query_arena *set, Query_arena *backup);
-  void restore_active_arena(Query_arena *set, Query_arena *backup);
 
   inline void set_current_stmt_binlog_row_based_if_mixed()
   {
