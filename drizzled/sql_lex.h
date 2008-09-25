@@ -580,19 +580,6 @@ public:
   bool subquery_in_having;
   /* true <=> this SELECT is correlated w.r.t. some ancestor select */
   bool is_correlated;
-  /*
-    This variable is required to ensure proper work of subqueries and
-    stored procedures. Generally, one should use the states of
-    Query_arena to determine if it's a statement prepare or first
-    execution of a stored procedure. However, in case when there was an
-    error during the first execution of a stored procedure, the SP body
-    is not expelled from the SP cache. Therefore, a deeply nested
-    subquery might be left unoptimized. So we need this per-subquery
-    variable to inidicate the optimization/execution state of every
-    subquery. Prepared statements work OK in that regard, as in
-    case of an error during prepare the PS is not created.
-  */
-  bool first_cond_optimization;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;
   /* List of fields that aren't under an aggregate function */
