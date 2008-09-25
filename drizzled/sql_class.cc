@@ -1989,7 +1989,6 @@ Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
   db(NULL),
   db_length(0)
 {
-  name.str= NULL;
 }
 
 
