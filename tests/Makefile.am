@@ -160,6 +160,7 @@ test-drizzle:
         func_isnull \
         func_like \
 				func_math \
+	func_compress \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \

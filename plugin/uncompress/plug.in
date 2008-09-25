@@ -1,0 +1,5 @@
+DRIZZLE_PLUGIN(uncompress,[uncompress UDF],
+        [UDF Plugin for uncompress])
+DRIZZLE_PLUGIN_STATIC(uncompress,   [libuncompressudf.a])
+DRIZZLE_PLUGIN_MANDATORY(uncompress)  dnl Default
+DRIZZLE_PLUGIN_DYNAMIC(uncompress,   [libuncompressudf.la])
