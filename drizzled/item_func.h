@@ -55,7 +55,7 @@ public:
                   NOT_FUNC, NOT_ALL_FUNC,
                   NOW_FUNC, TRIG_COND_FUNC,
                   SUSERVAR_FUNC, GUSERVAR_FUNC, COLLATE_FUNC,
-                  EXTRACT_FUNC, CHAR_TYPECAST_FUNC, FUNC_SP, UDF_FUNC,
+                  EXTRACT_FUNC, CHAR_TYPECAST_FUNC, FUNC_SP,
                   NEG_FUNC };
   enum optimize_type { OPTIMIZE_NONE,OPTIMIZE_KEY,OPTIMIZE_OP, OPTIMIZE_NULL,
                        OPTIMIZE_EQUAL };
@@ -136,7 +136,7 @@ public:
     {Sum}Functype and Item_func::functype()/Item_sum::sum_func()
     instead.
   */
-  virtual const char *func_name() const= 0;
+  virtual const char *func_name() const { return NULL; };
   virtual bool const_item() const { return const_item_cache; }
   inline Item **arguments() const { return args; }
   void set_arguments(List<Item> &list);
@@ -163,7 +163,7 @@ public:
     return null_value; 
   }
   void signal_divide_by_null();
-  friend class udf_handler;
+
   Field *tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *t_arg);
   Item *get_tmp_table_item(THD *thd);
@@ -991,183 +991,6 @@ public:
   void fix_length_and_dec() { max_length=1; maybe_null=0; }
   virtual void print(String *str, enum_query_type query_type);
 };
-
-
-class Item_udf_func :public Item_func
-{
-protected:
-  udf_handler udf;
-  bool is_expensive_processor(uchar *arg __attribute__((unused)))
-  { return true; }
-
-public:
-  Item_udf_func(udf_func *udf_arg)
-    :Item_func(), udf(udf_arg) {}
-  Item_udf_func(udf_func *udf_arg, List<Item> &list)
-    :Item_func(list), udf(udf_arg) {}
-  const char *func_name() const { return udf.name(); }
-  enum Functype functype() const   { return UDF_FUNC; }
-  bool fix_fields(THD *thd, Item **ref __attribute__((unused)))
-  {
-    assert(fixed == 0);
-    bool res= udf.fix_fields(thd, this, arg_count, args);
-    used_tables_cache= udf.used_tables_cache;
-    const_item_cache= udf.const_item_cache;
-    fixed= 1;
-    return res;
-  }
-  void update_used_tables() 
-  {
-    /*
-      TODO: Make a member in UDF_INIT and return if a UDF is deterministic or
-      not.
-      Currently UDF_INIT has a member (const_item) that is an in/out 
-      parameter to the init() call.
-      The code in udf_handler::fix_fields also duplicates the arguments 
-      handling code in Item_func::fix_fields().
-      
-      The lack of information if a UDF is deterministic makes writing
-      a correct update_used_tables() for UDFs impossible.
-      One solution to this would be :
-       - Add a is_deterministic member of UDF_INIT
-       - (optionally) deprecate the const_item member of UDF_INIT
-       - Take away the duplicate code from udf_handler::fix_fields() and
-         make Item_udf_func call Item_func::fix_fields() to process its 
-         arguments as for any other function.
-       - Store the deterministic flag returned by <udf>_init into the 
-       udf_handler. 
-       - Don't implement Item_udf_func::fix_fields, implement
-       Item_udf_func::fix_length_and_dec() instead (similar to non-UDF
-       functions).
-       - Override Item_func::update_used_tables to call 
-       Item_func::update_used_tables() and add a RAND_TABLE_BIT to the 
-       result of Item_func::update_used_tables() if the UDF is 
-       non-deterministic.
-       - (optionally) rename RAND_TABLE_BIT to NONDETERMINISTIC_BIT to
-       better describe its usage.
-       
-      The above would require a change of the UDF API.
-      Until that change is done here's how the current code works:
-      We call Item_func::update_used_tables() only when we know that
-      the function depends on real non-const tables and is deterministic.
-      This can be done only because we know that the optimizer will
-      call update_used_tables() only when there's possibly a new const
-      table. So update_used_tables() can only make a Item_func more
-      constant than it is currently.
-      That's why we don't need to do anything if a function is guaranteed
-      to return non-constant (it's non-deterministic) or is already a
-      const.
-    */  
-    if ((used_tables_cache & ~PSEUDO_TABLE_BITS) && 
-        !(used_tables_cache & RAND_TABLE_BIT))
-    {
-      Item_func::update_used_tables();
-      if (!const_item_cache && !used_tables_cache)
-        used_tables_cache= RAND_TABLE_BIT;
-    }
-  }
-  void cleanup();
-  Item_result result_type () const { return udf.result_type(); }
-  table_map not_null_tables() const { return 0; }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-class Item_func_udf_float :public Item_udf_func
-{
- public:
-  Item_func_udf_float(udf_func *udf_arg)
-    :Item_udf_func(udf_arg) {}
-  Item_func_udf_float(udf_func *udf_arg,
-                      List<Item> &list)
-    :Item_udf_func(udf_arg, list) {}
-  int64_t val_int()
-  {
-    assert(fixed == 1);
-    return (int64_t) rint(Item_func_udf_float::val_real());
-  }
-  my_decimal *val_decimal(my_decimal *dec_buf)
-  {
-    double res=val_real();
-    if (null_value)
-      return NULL;
-    double2my_decimal(E_DEC_FATAL_ERROR, res, dec_buf);
-    return dec_buf;
-  }
-  double val_real();
-  String *val_str(String *str);
-  void fix_length_and_dec() { fix_num_length_and_dec(); }
-};
-
-
-class Item_func_udf_int :public Item_udf_func
-{
-public:
-  Item_func_udf_int(udf_func *udf_arg)
-    :Item_udf_func(udf_arg) {}
-  Item_func_udf_int(udf_func *udf_arg,
-                    List<Item> &list)
-    :Item_udf_func(udf_arg, list) {}
-  int64_t val_int();
-  double val_real() { return (double) Item_func_udf_int::val_int(); }
-  String *val_str(String *str);
-  enum Item_result result_type () const { return INT_RESULT; }
-  void fix_length_and_dec() { decimals= 0; max_length= 21; }
-};
-
-
-class Item_func_udf_decimal :public Item_udf_func
-{
-public:
-  Item_func_udf_decimal(udf_func *udf_arg)
-    :Item_udf_func(udf_arg) {}
-  Item_func_udf_decimal(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_func(udf_arg, list) {}
-  int64_t val_int();
-  double val_real();
-  my_decimal *val_decimal(my_decimal *);
-  String *val_str(String *str);
-  enum Item_result result_type () const { return DECIMAL_RESULT; }
-  void fix_length_and_dec();
-};
-
-
-class Item_func_udf_str :public Item_udf_func
-{
-public:
-  Item_func_udf_str(udf_func *udf_arg)
-    :Item_udf_func(udf_arg) {}
-  Item_func_udf_str(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_func(udf_arg, list) {}
-  String *val_str(String *);
-  double val_real()
-  {
-    int err_not_used;
-    char *end_not_used;
-    String *res;
-    res= val_str(&str_value);
-    return res ? my_strntod(res->charset(),(char*) res->ptr(), 
-                            res->length(), &end_not_used, &err_not_used) : 0.0;
-  }
-  int64_t val_int()
-  {
-    int err_not_used;
-    String *res;  res=val_str(&str_value);
-    return res ? my_strntoll(res->charset(),res->ptr(),res->length(),10,
-                             (char**) 0, &err_not_used) : (int64_t) 0;
-  }
-  my_decimal *val_decimal(my_decimal *dec_buf)
-  {
-    String *res=val_str(&str_value);
-    if (!res)
-      return NULL;
-    string2my_decimal(E_DEC_FATAL_ERROR, res, dec_buf);
-    return dec_buf;
-  }
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec();
-};
-
 
 /* replication functions */
 

@@ -1461,7 +1461,7 @@ Create_udf_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 Item*
 Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
 {
-  Item *func= NULL;
+  Item_func *func= NULL;
   int arg_count= 0;
 
   if (item_list != NULL)
@@ -1469,87 +1469,10 @@ Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
 
   thd->lex->set_stmt_unsafe();
 
-  assert(   (udf->type == UDFTYPE_FUNCTION)
-              || (udf->type == UDFTYPE_AGGREGATE));
+  func= udf->create_func(thd->mem_root);
 
-  switch(udf->returns) {
-  case STRING_RESULT:
-  {
-    if (udf->type == UDFTYPE_FUNCTION)
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_func_udf_str(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_func_udf_str(udf);
-    }
-    else
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_sum_udf_str(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_sum_udf_str(udf);
-    }
-    break;
-  }
-  case REAL_RESULT:
-  {
-    if (udf->type == UDFTYPE_FUNCTION)
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_func_udf_float(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_func_udf_float(udf);
-    }
-    else
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_sum_udf_float(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_sum_udf_float(udf);
-    }
-    break;
-  }
-  case INT_RESULT:
-  {
-    if (udf->type == UDFTYPE_FUNCTION)
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_func_udf_int(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_func_udf_int(udf);
-    }
-    else
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_sum_udf_int(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_sum_udf_int(udf);
-    }
-    break;
-  }
-  case DECIMAL_RESULT:
-  {
-    if (udf->type == UDFTYPE_FUNCTION)
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_func_udf_decimal(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_func_udf_decimal(udf);
-    }
-    else
-    {
-      if (arg_count)
-        func= new (thd->mem_root) Item_sum_udf_decimal(udf, *item_list);
-      else
-        func= new (thd->mem_root) Item_sum_udf_decimal(udf);
-    }
-    break;
-  }
-  default:
-  {
-    my_error(ER_NOT_SUPPORTED_YET, MYF(0), "UDF return type");
-  }
-  }
+  func->set_arguments(*item_list);
+
   return func;
 }
 

@@ -232,8 +232,6 @@ public:
   LEX_COLUMN (const String& x,const  uint& y ): column (x),rights (y) {}
 };
 
-#include "sql_lex.h"				/* Must be here */
-
 class select_result;
 class Time_zone;
 
@@ -359,6 +357,7 @@ struct system_variables
 
 };
 
+#include "sql_lex.h"  /* only for SQLCOM_END */
 
 /* per thread status variables */
 

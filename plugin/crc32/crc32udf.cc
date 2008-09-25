@@ -14,61 +14,47 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/common_includes.h>
+#include <drizzled/item_func.h>
 #include <zlib.h>
 
-bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
+class Item_func_crc32 :public Item_int_func
 {
-  /* initid->ptr keeps state for between udf_init_foo and udf_deinit_foo */
-  initid->ptr= NULL;
+  String value;
+public:
+  Item_func_crc32() :Item_int_func() { unsigned_flag= 1; }
+  const char *func_name() const { return "crc32"; }
+  void fix_length_and_dec() { max_length=10; }
+  int64_t val_int();
+};
 
-  if (args->arg_count != 1)
-   {
-      strcpy(message,"CRC32() requires one arguments");
-      return 1;
-   }
-
-   if (args->arg_type[0] != STRING_RESULT)
-   {
-      strcpy(message,"CRC32() requires a string");
-      return 1;
-   }
-
-  return 0;
+int64_t Item_func_crc32::val_int()
+{
+  assert(fixed == 1);
+  String *res=args[0]->val_str(&value);
+  if (!res)
+  {
+    null_value=1;
+    return 0; /* purecov: inspected */
+  }
+  null_value=0;
+  return (int64_t) crc32(0L, (uchar*)res->ptr(), res->length());
 }
 
-long long udf_doit_crc32(UDF_INIT *initid, UDF_ARGS *args, char *result,
-                         unsigned long *length, char *is_null, char *error)
+Item_func* create_crc32udf_item(MEM_ROOT* m)
 {
-  (void)initid;
-  (void)result;
-  (void)length;
-  (void)is_null;
-  (void)error;
-  return (long long) crc32(0L, (uchar*)args->args[0], args->lengths[0]);
+  return  new (m) Item_func_crc32();
 }
 
-void udf_deinit_crc32udf(UDF_INIT *initid)
-{
-  (void)initid;
-  /* if we allocated initid->ptr, free it here */
-  return;
-}
-
+static struct udf_func crc32udf = {
+  { C_STRING_WITH_LEN("crc32") },
+  create_crc32udf_item
+};
 
 static int crc32udf_plugin_init(void *p)
 {
-  udf_func *udff= (udf_func *) p;
-  static char crc32str[6];
+  udf_func **f = (udf_func**) p;
 
-  strcpy(crc32str,"crc32");
-
-  udff->name.str= crc32str;
-  udff->name.length= strlen("crc32");
-  udff->type= UDFTYPE_FUNCTION;
-  udff->returns= INT_RESULT;
-  udff->func_init= udf_init_crc32udf;
-  udff->func_deinit= udf_deinit_crc32udf;
-  udff->func= (Udf_func_any) udf_doit_crc32;
+  *f= &crc32udf;
 
   return 0;
 }
