@@ -399,7 +399,7 @@ Diagnostics_area::disable_status()
 
 
 THD::THD()
-   :Statement(&main_lex, &main_mem_root, CONVENTIONAL_EXECUTION,
+   :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
    Open_tables_state(refresh_version), rli_fake(0),
    lock_id(&main_lock_id),
@@ -1979,9 +1979,8 @@ void Query_arena::free_items()
   Statement functions
 */
 
-Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
-                     enum enum_state state_arg, ulong id_arg)
-  :Query_arena(mem_root_arg, state_arg),
+Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
+  :Query_arena(mem_root_arg),
   id(id_arg),
   mark_used_columns(MARK_COLUMNS_READ),
   lex(lex_arg),
@@ -1994,28 +1993,14 @@ Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
 }
 
 
-void Statement::set_statement(Statement *stmt)
-{
-  id=             stmt->id;
-  mark_used_columns=   stmt->mark_used_columns;
-  lex=            stmt->lex;
-  query=          stmt->query;
-  query_length=   stmt->query_length;
-}
-
-
+/*
+  Don't free mem_root, as mem_root is freed in the end of dispatch_command
+  (once for any command).
+*/
 void THD::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
-  delete lex->result;
-  lex->result= 0;
-  /* Note that free_list is freed in cleanup_after_query() */
-
-  /*
-    Don't free mem_root, as mem_root is freed in the end of dispatch_command
-    (once for any command).
-  */
 }
 
 

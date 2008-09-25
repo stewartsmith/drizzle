@@ -445,8 +445,6 @@ void mark_transaction_to_rollback(THD *thd, bool all);
 
 #ifdef DRIZZLE_SERVER
 
-#define INIT_ARENA_DBUG_INFO is_backup_arena= 0
-
 class Query_arena
 {
 public:
@@ -456,36 +454,17 @@ public:
   */
   Item *free_list;
   MEM_ROOT *mem_root;                   // Pointer to current memroot
-  bool is_backup_arena; /* True if this arena is used for backup. */
 
-  /*
-    The states relfects three diffrent life cycles for three
-    different types of statements:
-    Prepared statement: INITIALIZED -> PREPARED -> EXECUTED.
-    Stored procedure:   INITIALIZED_FOR_SP -> EXECUTED.
-    Other statements:   CONVENTIONAL_EXECUTION never changes.
-  */
-  enum enum_state
-  {
-    INITIALIZED= 0,
-    CONVENTIONAL_EXECUTION= 3, EXECUTED= 4, ERROR= -1
-  };
-
-  enum_state state;
-
-  Query_arena(MEM_ROOT *mem_root_arg, enum enum_state state_arg) :
-    free_list(0), mem_root(mem_root_arg), state(state_arg)
-  { INIT_ARENA_DBUG_INFO; }
+  Query_arena(MEM_ROOT *mem_root_arg) :
+    free_list(0), mem_root(mem_root_arg)
+  { }
   /*
     This constructor is used only when Query_arena is created as
     backup storage for another instance of Query_arena.
   */
-  Query_arena() { INIT_ARENA_DBUG_INFO; }
+  Query_arena() { }
 
   virtual ~Query_arena() {};
-
-  inline bool is_conventional() const
-  { assert(state == CONVENTIONAL_EXECUTION); return state == CONVENTIONAL_EXECUTION; }
 
   inline void* alloc(size_t size) { return alloc_root(mem_root,size); }
   inline void* calloc(size_t size)
@@ -598,12 +577,8 @@ public:
   /* This constructor is called for backup statements */
   Statement() {}
 
-  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
-            enum enum_state state_arg, ulong id_arg);
+  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg);
   ~Statement() {}
-
-  /* Assign execution context (note: not all members) of given stmt to self */
-  void set_statement(Statement *stmt);
 };
 
 struct st_savepoint {

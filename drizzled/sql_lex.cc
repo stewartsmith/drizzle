@@ -371,6 +371,9 @@ void lex_end(LEX *lex)
                      lex->plugins.elements);
   reset_dynamic(&lex->plugins);
 
+  delete lex->result;
+  lex->result= 0;
+
   return;
 }
 
