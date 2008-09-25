@@ -1930,13 +1930,8 @@ bool st_select_lex::setup_ref_array(THD *thd, uint order_group_num)
   if (ref_pointer_array)
     return 0;
 
-  /*
-    We have to create array in prepared statement memory if it is
-    prepared statement
-  */
-  Query_arena *arena= thd->stmt_arena;
   return (ref_pointer_array=
-          (Item **)arena->alloc(sizeof(Item*) * (n_child_sum_items +
+          (Item **)thd->alloc(sizeof(Item*) * (n_child_sum_items +
                                                  item_list.elements +
                                                  select_n_having_items +
                                                  select_n_where_fields +

@@ -429,7 +429,6 @@ THD::THD()
     will be re-initialized in init_for_queries().
   */
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-  stmt_arena= this;
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
   main_security_ctx.init();

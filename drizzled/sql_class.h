@@ -1203,19 +1203,6 @@ public:
   */
   Item_change_list change_list;
 
-  /*
-    A permanent memory area of the statement. For conventional
-    execution, the parsed tree and execution runtime reside in the same
-    memory root. In this case stmt_arena points to THD. In case of
-    a prepared statement or a stored procedure statement, thd->mem_root
-    conventionally points to runtime memory, and thd->stmt_arena
-    points to the memory of the PS/SP, where the parsed tree of the
-    statement resides. Whenever you need to perform a permanent
-    transformation of a parsed tree, you should allocate new memory in
-    stmt_arena, to allow correct re-execution of PS/SP.
-    Note: in the parser, stmt_arena == thd, even for PS/SP.
-  */
-  Query_arena *stmt_arena;
   /* Tells if LAST_INSERT_ID(#) was called for the current statement */
   bool arg_of_last_insert_id_function;
   /*
@@ -1713,9 +1700,6 @@ public:
 
   void change_item_tree(Item **place, Item *new_value)
   {
-    /* TODO: check for OOM condition here */
-    if (!stmt_arena->is_conventional())
-      nocheck_register_item_tree_change(place, *place, mem_root);
     *place= new_value;
   }
   void nocheck_register_item_tree_change(Item **place, Item *old_value,
