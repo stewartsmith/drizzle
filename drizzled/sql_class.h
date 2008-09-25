@@ -509,11 +509,7 @@ public:
     return ptr;
   }
 
-  void set_query_arena(Query_arena *set);
-
   void free_items();
-  /* Close the active state associated with execution of this statement */
-  virtual void cleanup_stmt();
 };
 
 
@@ -608,8 +604,6 @@ public:
 
   /* Assign execution context (note: not all members) of given stmt to self */
   void set_statement(Statement *stmt);
-  void set_n_backup_statement(Statement *stmt, Statement *backup);
-  void restore_backup_statement(Statement *stmt, Statement *backup);
 };
 
 struct st_savepoint {

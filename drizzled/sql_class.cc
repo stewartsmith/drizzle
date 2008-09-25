@@ -1975,19 +1975,6 @@ void Query_arena::free_items()
 }
 
 
-void Query_arena::set_query_arena(Query_arena *set)
-{
-  mem_root= set->mem_root;
-  free_list= set->free_list;
-  state= set->state;
-}
-
-
-void Query_arena::cleanup_stmt()
-{
-  assert("not implemented");
-}
-
 /*
   Statement functions
 */
@@ -2014,23 +2001,6 @@ void Statement::set_statement(Statement *stmt)
   lex=            stmt->lex;
   query=          stmt->query;
   query_length=   stmt->query_length;
-}
-
-
-void
-Statement::set_n_backup_statement(Statement *stmt, Statement *backup)
-{
-  backup->set_statement(this);
-  set_statement(stmt);
-  return;
-}
-
-
-void Statement::restore_backup_statement(Statement *stmt, Statement *backup)
-{
-  stmt->set_statement(this);
-  set_statement(backup);
-  return;
 }
 
 
