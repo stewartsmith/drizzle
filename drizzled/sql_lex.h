@@ -592,7 +592,6 @@ public:
     subquery. Prepared statements work OK in that regard, as in
     case of an error during prepare the PS is not created.
   */
-  bool first_execution;
   bool first_cond_optimization;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;

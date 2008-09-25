@@ -742,7 +742,6 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
       update_non_unique_table_error(table_list, "INSERT", duplicate);
       return(true);
     }
-    select_lex->first_execution= 0;
   }
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();

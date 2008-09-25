@@ -1564,7 +1564,6 @@ void st_select_lex::init_query()
   select_n_having_items= 0;
   subquery_in_having= explicit_limit= 0;
   is_item_list_lookup= 0;
-  first_execution= 1;
   first_cond_optimization= 1;
   parsing_place= NO_MATTER;
   exclude_from_table_unique_test= false;
