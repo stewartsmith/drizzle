@@ -496,7 +496,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (db_create_options & HA_OPTION_LONG_BLOB_PTR)
     share->blob_ptr_size= portable_sizeof_char_ptr;
   /* Set temporarily a good value for db_low_byte_first */
-  share->db_low_byte_first= test(legacy_db_type != DB_TYPE_ISAM);
+  share->db_low_byte_first= true;
   error=4;
   share->max_rows= uint4korr(head+18);
   share->min_rows= uint4korr(head+22);

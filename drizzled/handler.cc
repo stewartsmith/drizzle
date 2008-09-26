@@ -196,13 +196,6 @@ handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
     return NULL;
   }
 
-  switch (database_type) {
-  case DB_TYPE_HASH:
-    return ha_resolve_by_legacy_type(thd, DB_TYPE_HASH);
-  default:
-    break;
-  }
-
   return ha_default_handlerton(thd);
 } /* ha_checktype */
 
@@ -416,16 +409,11 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     "memory" hton which will be configurable longterm. We should be able to 
     remove partition and myisammrg.
   */
-  switch (hton->db_type) {
-  case DB_TYPE_HEAP:
+  if (strcmp(plugin->plugin->name, "MEMORY") == 0)
     heap_hton= hton;
-    break;
-  case DB_TYPE_MYISAM:
+
+  if (strcmp(plugin->plugin->name, "MyISAM") == 0)
     myisam_hton= hton;
-    break;
-  default:
-    break;
-  };
 
   return(0);
 err:

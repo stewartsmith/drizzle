@@ -35,7 +35,6 @@ int heap_init(void *p)
 
   heap_hton= (handlerton *)p;
   heap_hton->state=      SHOW_OPTION_YES;
-  heap_hton->db_type=    DB_TYPE_HEAP;
   heap_hton->create=     heap_create_handler;
   heap_hton->flags=      HTON_CAN_RECREATE;
 

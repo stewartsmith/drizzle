@@ -1776,7 +1776,6 @@ static int myisam_init(void *p)
 
   myisam_hton= (handlerton *)p;
   myisam_hton->state= SHOW_OPTION_YES;
-  myisam_hton->db_type= DB_TYPE_MYISAM;
   myisam_hton->create= myisam_create_handler;
   myisam_hton->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
   return 0;

@@ -276,7 +276,6 @@ static int blackhole_init(void *p)
   handlerton *blackhole_hton;
   blackhole_hton= (handlerton *)p;
   blackhole_hton->state= SHOW_OPTION_YES;
-  blackhole_hton->db_type= DB_TYPE_BLACKHOLE_DB;
   blackhole_hton->create= blackhole_create_handler;
   blackhole_hton->flags= HTON_CAN_RECREATE;
   
