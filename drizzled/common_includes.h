@@ -85,6 +85,8 @@
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
+#else
+#undef _DTRACE_VERSION
 #endif
 #include "probes.h"
 
