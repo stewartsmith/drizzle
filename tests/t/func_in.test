@@ -237,7 +237,7 @@ drop table t1;
 #   "unsigned_keypart NOT IN(negative_number,...)" 
 #   (introduced in fix BUG#15872) 
 create table t1 (
-  some_id smallint(5) unsigned,
+  some_id int(5) unsigned,
   key (some_id)
 );
 insert into t1 values (1),(2);

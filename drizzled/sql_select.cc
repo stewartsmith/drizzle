@@ -1253,19 +1253,10 @@ JOIN::optimize()
     }
   }
 #endif
-  SELECT_LEX *sel= thd->lex->current_select;
-  if (sel->first_cond_optimization)
-  {
-    /*
-      The following code will allocate the new items in a permanent
-      MEMROOT for prepared statements and stored procedures.
-    */
-    sel->first_cond_optimization= 0;
 
-    /* Convert all outer joins to inner joins if possible */
-    conds= simplify_joins(this, join_list, conds, true, false);
-    build_bitmap_for_nested_joins(join_list, 0);
-  }
+  /* Convert all outer joins to inner joins if possible */
+  conds= simplify_joins(this, join_list, conds, true, false);
+  build_bitmap_for_nested_joins(join_list, 0);
 
   conds= optimize_cond(this, conds, join_list, &cond_value);   
   if (thd->is_error())

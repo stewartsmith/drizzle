@@ -40,14 +40,14 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-`id` smallint(5) unsigned NOT NULL auto_increment,
-`kid` smallint(5) unsigned NOT NULL default '0',
+`id` int(5) unsigned NOT NULL auto_increment,
+`kid` int(5) unsigned NOT NULL default '0',
 PRIMARY KEY (`id`),
 KEY `kid` (`kid`)
 );
 
 CREATE TABLE t2 (
-  id smallint(5) unsigned NOT NULL auto_increment,
+  id int(5) unsigned NOT NULL auto_increment,
   name varchar(50) NOT NULL default '',
   email varchar(50) NOT NULL default '',
   PRIMARY KEY  (id),

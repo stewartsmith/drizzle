@@ -399,7 +399,7 @@ Diagnostics_area::disable_status()
 
 
 THD::THD()
-   :Statement(&main_lex, &main_mem_root, CONVENTIONAL_EXECUTION,
+   :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
    Open_tables_state(refresh_version), rli_fake(0),
    lock_id(&main_lock_id),
@@ -429,7 +429,6 @@ THD::THD()
     will be re-initialized in init_for_queries().
   */
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-  stmt_arena= this;
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
   main_security_ctx.init();
@@ -1160,7 +1159,7 @@ struct Item_change_record: public ilink
 /*
   Register an item tree tree transformation, performed by the query
   optimizer. We need a pointer to runtime_memroot because it may be !=
-  thd->mem_root (due to possible set_n_backup_active_arena called for thd).
+  thd->mem_root (this may no longer be a true statement)
 */
 
 void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
@@ -1976,26 +1975,12 @@ void Query_arena::free_items()
 }
 
 
-void Query_arena::set_query_arena(Query_arena *set)
-{
-  mem_root= set->mem_root;
-  free_list= set->free_list;
-  state= set->state;
-}
-
-
-void Query_arena::cleanup_stmt()
-{
-  assert("not implemented");
-}
-
 /*
   Statement functions
 */
 
-Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
-                     enum enum_state state_arg, ulong id_arg)
-  :Query_arena(mem_root_arg, state_arg),
+Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
+  :Query_arena(mem_root_arg),
   id(id_arg),
   mark_used_columns(MARK_COLUMNS_READ),
   lex(lex_arg),
@@ -2004,70 +1989,17 @@ Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
   db(NULL),
   db_length(0)
 {
-  name.str= NULL;
 }
 
 
-void Statement::set_statement(Statement *stmt)
-{
-  id=             stmt->id;
-  mark_used_columns=   stmt->mark_used_columns;
-  lex=            stmt->lex;
-  query=          stmt->query;
-  query_length=   stmt->query_length;
-}
-
-
-void
-Statement::set_n_backup_statement(Statement *stmt, Statement *backup)
-{
-  backup->set_statement(this);
-  set_statement(stmt);
-  return;
-}
-
-
-void Statement::restore_backup_statement(Statement *stmt, Statement *backup)
-{
-  stmt->set_statement(this);
-  set_statement(backup);
-  return;
-}
-
-
+/*
+  Don't free mem_root, as mem_root is freed in the end of dispatch_command
+  (once for any command).
+*/
 void THD::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
-  delete lex->result;
-  lex->result= 0;
-  /* Note that free_list is freed in cleanup_after_query() */
-
-  /*
-    Don't free mem_root, as mem_root is freed in the end of dispatch_command
-    (once for any command).
-  */
-}
-
-
-void THD::set_n_backup_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena == false);
-
-  backup->set_query_arena(this);
-  set_query_arena(set);
-  backup->is_backup_arena= true;
-  return;
-}
-
-
-void THD::restore_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena);
-  set->set_query_arena(this);
-  set_query_arena(backup);
-  backup->is_backup_arena= false;
-  return;
 }
 
 

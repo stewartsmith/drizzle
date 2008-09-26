@@ -622,7 +622,7 @@ DROP TABLE t1;
 #
 CREATE TABLE t1 (
     id       int unsigned NOT NULL auto_increment,
-    list_id  smallint unsigned NOT NULL,
+    list_id  int unsigned NOT NULL,
     term     TEXT NOT NULL,
     PRIMARY KEY(id),
     INDEX(list_id, term(4))
@@ -644,7 +644,7 @@ DROP TABLE t1;
 SET NAMES latin1;
 CREATE TABLE t1 (
     id int unsigned NOT NULL auto_increment,
-    list_id smallint unsigned NOT NULL,
+    list_id int unsigned NOT NULL,
     term text NOT NULL,
     PRIMARY KEY(id),
     INDEX(list_id, term(19))

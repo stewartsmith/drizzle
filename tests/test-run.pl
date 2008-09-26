@@ -2487,7 +2487,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--log-bin-trust-function-creators", $prefix);
   }
 
-  mtr_add_arg($args, "%s--default-character-set=utf8", $prefix);
   mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent

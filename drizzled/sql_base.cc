@@ -5456,18 +5456,14 @@ static bool setup_natural_join_row_types(THD *thd,
   {
     table_ref= left_neighbor;
     left_neighbor= table_ref_it++;
-    /* For stored procedures do not redo work if already done. */
-    if (context->select_lex->first_execution)
+    if (store_top_level_join_columns(thd, table_ref,
+                                     left_neighbor, right_neighbor))
+      return true;
+    if (left_neighbor)
     {
-      if (store_top_level_join_columns(thd, table_ref,
-                                       left_neighbor, right_neighbor))
-        return true;
-      if (left_neighbor)
-      {
-        TableList *first_leaf_on_the_right;
-        first_leaf_on_the_right= table_ref->first_leaf_for_name_resolution();
-        left_neighbor->next_name_resolution_table= first_leaf_on_the_right;
-      }
+      TableList *first_leaf_on_the_right;
+      first_leaf_on_the_right= table_ref->first_leaf_for_name_resolution();
+      left_neighbor->next_name_resolution_table= first_leaf_on_the_right;
     }
     right_neighbor= table_ref;
   }

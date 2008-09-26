@@ -421,8 +421,8 @@ select * from information_schema.global_variables where variable_name like 'log_
 #
 # What default width have numeric types?
 create table t1 (
-  c1 tinyint,
-  c2 smallint,
+  c1 int,
+  c2 int,
   c3 mediumint,
   c4 int,
   c5 bigint);

@@ -3191,16 +3191,6 @@ struct my_option my_long_options[] =
    N_("Path to the database root."),
    (char**) &mysql_data_home,
    (char**) &mysql_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", 'C',
-   N_("Set the default character set (deprecated option, use "
-      "--character-set-server instead)."),
-   (char**) &default_character_set_name, (char**) &default_character_set_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"default-collation", OPT_DEFAULT_COLLATION,
-   N_("Set the default collation (deprecated option, use --collation-server "
-      "instead)."),
-   (char**) &default_collation_name, (char**) &default_collation_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -3212,10 +3202,6 @@ struct my_option my_long_options[] =
   {"delay-key-write", OPT_DELAY_KEY_WRITE,
    N_("Type of DELAY_KEY_WRITE."),
    0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"delay-key-write-for-all-tables", OPT_DELAY_KEY_WRITE_ALL,
-   N_("Don't flush key buffers between writes for any MyISAM table "
-      "(Deprecated option, use --delay-key-write=all instead)."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disconnect-slave-event-count", OPT_DISCONNECT_SLAVE_EVENT_COUNT,
    N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &disconnect_slave_event_count,
@@ -3312,17 +3298,6 @@ struct my_option my_long_options[] =
    N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-long-format", '0',
-   N_("Log some extra information to update log. Please note that this option "
-      "is deprecated; see --log-queries-not-using-indexes option."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef WITH_CSV_STORAGE_ENGINE
-  {"log-output", OPT_LOG_OUTPUT,
-   N_("Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-      "FILE or NONE."),
-   (char**) &log_output_str, (char**) &log_output_str, 0,
-   GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"log-queries-not-using-indexes", OPT_LOG_QUERIES_NOT_USING_INDEXES,
    N_("Log queries that are executed without benefit of any index to the "
       "slow log if it is open."),
@@ -3532,10 +3507,6 @@ struct my_option my_long_options[] =
       "replication partners."),
    (char**) &server_id, (char**) &server_id, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
-  {"set-variable", 'O',
-   N_("Change the value of a variable. Please note that this option is "
-      "deprecated;you can set variables directly with --variable-name=value."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-new", OPT_SKIP_NEW,
    N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -3547,10 +3518,6 @@ struct my_option my_long_options[] =
    N_("Don't print a stack trace on failure."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-symlink", OPT_SKIP_SYMLINKS,
-   N_("Don't allow symlinking of tables. Deprecated option.  Use "
-      "--skip-symbolic-links instead."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-thread-priority", OPT_SKIP_PRIOR,
    N_("Don't give threads different priorities."),
    0, 0, 0, GET_NO_ARG, NO_ARG,
@@ -3618,11 +3585,6 @@ struct my_option my_long_options[] =
    N_("Default transaction isolation level."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0,
    0, 0, 0, 0, 0},
-  {"use-symbolic-links", 's',
-   N_("Enable symbolic link support. Deprecated option; use --symbolic-links "
-      "instead."),
-   (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
-   IF_PURIFY(0,1), 0, 0, 0, 0, 0},
   {"user", 'u',
    N_("Run mysqld daemon as user."),
    0, 0, 0, GET_STR, REQUIRED_ARG,
@@ -3631,11 +3593,6 @@ struct my_option my_long_options[] =
    N_("Output version information and exit."),
    0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"warnings", 'W',
-   N_("Deprecated; use --log-warnings instead."),
-   (char**) &global_system_variables.log_warnings,
-   (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG,
-   1, 0, ULONG_MAX, 0, 0, 0},
   {"back_log", OPT_BACK_LOG,
    N_("The number of outstanding connection requests MySQL can have. This "
       "comes into play when the main MySQL thread gets very many connection "
@@ -3839,12 +3796,6 @@ struct my_option my_long_options[] =
    (char**) &myisam_data_pointer_size,
    (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
    6, 2, 7, 0, 1, 0},
-  {"myisam_max_extra_sort_file_size", OPT_MYISAM_MAX_EXTRA_SORT_FILE_SIZE,
-   N_("(Deprecated option)"),
-   (char**) &global_system_variables.myisam_max_extra_sort_file_size,
-   (char**) &max_system_variables.myisam_max_extra_sort_file_size,
-   0, GET_ULL, REQUIRED_ARG, (uint64_t) MI_MAX_TEMP_LENGTH,
-   0, (uint64_t) MAX_FILE_SIZE, 0, 1, 0},
   {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
    N_("Don't use the fast sort index method to created index if the "
       "temporary file would get bigger than this."),
@@ -4033,10 +3984,6 @@ struct my_option my_long_options[] =
       "Use 0 (default) to disable synchronous flushing."),
    (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
-  {"table_cache", OPT_TABLE_OPEN_CACHE,
-   N_("Deprecated; use --table_open_cache instead."),
-   (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
-   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,

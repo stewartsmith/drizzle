@@ -17,7 +17,7 @@ SELECT 1 FROM (SELECT 1) as a  GROUP BY SUM(1);
 CREATE TABLE t1 (
   spID int(10) unsigned,
   userID int(10) unsigned,
-  score smallint(5) unsigned,
+  score int(5) unsigned,
   lsg char(40),
   date date
 );
@@ -246,7 +246,7 @@ drop table t1;
 CREATE TABLE t1 (
   spID int(10) unsigned,
   userID int(10) unsigned,
-  score smallint(5) unsigned,
+  score int(5) unsigned,
   key (spid),
   key (score)
 );
@@ -440,7 +440,7 @@ drop table t1;
 #
 CREATE TABLE t1 (
   userid int(10) unsigned,
-  score smallint(5) unsigned,
+  score int(5) unsigned,
   key (score)
 );
 INSERT INTO t1 VALUES (1,1),(2,2),(1,1),(3,3),(3,3),(3,3),(3,3),(3,3);

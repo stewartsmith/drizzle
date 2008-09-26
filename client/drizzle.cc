@@ -2858,7 +2858,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_LONG:        return "LONG";
     case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_TYPE_NULL:        return "NULL";
-    case DRIZZLE_TYPE_SHORT:       return "SHORT";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";

@@ -241,7 +241,7 @@ CREATE TABLE t1 (
   Continent enum('Asia','Europe','North America','Africa','Oceania','Antarctica','South America') NOT NULL DEFAULT 'Asia',
   Region char(26) NOT NULL DEFAULT '',
   SurfaceArea float(10,2) NOT NULL DEFAULT '0.00',
-  IndepYear smallint(6) DEFAULT NULL,
+  IndepYear int(6) DEFAULT NULL,
   Population int(11) NOT NULL DEFAULT '0',
   LifeExpectancy float(3,1) DEFAULT NULL,
   GNP float(10,2) DEFAULT NULL,

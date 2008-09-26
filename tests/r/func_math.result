@@ -106,14 +106,12 @@ Warnings:
 Note	1003	select rand(999999) AS `rand(999999)`,rand() AS `rand()`
 select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 pi()	format(sin(pi()/2),6)	format(cos(pi()/2),6)	format(abs(tan(pi())),6)	format(cot(1),6)	format(asin(1),6)	format(acos(0),6)	format(atan(1),6)
-3.141593	NULL	0.000000	0.000000	0.642093	1.570796	1.570796	0.785398
-Warnings:
-Warning	1292	Incorrect datetime value: '2'
+3.141593	1.000000	0.000000	0.000000	0.642093	1.570796	1.570796	0.785398
 explain extended select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select pi() AS `pi()`,format(month((pi() / 2)),6) AS `format(sin(pi()/2),6)`,format(cos((pi() / 2)),6) AS `format(cos(pi()/2),6)`,format(abs(tan(pi())),6) AS `format(abs(tan(pi())),6)`,format((1 / tan(1)),6) AS `format(cot(1),6)`,format(asin(1),6) AS `format(asin(1),6)`,format(acos(0),6) AS `format(acos(0),6)`,format(atan(1),6) AS `format(atan(1),6)`
+Note	1003	select pi() AS `pi()`,format(sin((pi() / 2)),6) AS `format(sin(pi()/2),6)`,format(cos((pi() / 2)),6) AS `format(cos(pi()/2),6)`,format(abs(tan(pi())),6) AS `format(abs(tan(pi())),6)`,format((1 / tan(1)),6) AS `format(cot(1),6)`,format(asin(1),6) AS `format(asin(1),6)`,format(acos(0),6) AS `format(acos(0),6)`,format(atan(1),6) AS `format(atan(1),6)`
 select degrees(pi()),radians(360);
 degrees(pi())	radians(360)
 180	6.283185307179586
@@ -243,14 +241,14 @@ truncate(15000111000111000155,-1)
 15000111000111000150
 create table t1
 (f1 varchar(32) not null,
-f2 smallint unsigned not null,
+f2 int unsigned not null,
 f3 int unsigned not null default '0')
 engine=myisam;
 insert into t1 values ('zombie',0,0),('gold',1,10000),('silver',2,10000);
 create table t2
 (f1 int unsigned not null,
 f2 int unsigned not null,
-f3 smallint unsigned not null)
+f3 int unsigned not null)
 engine=myisam;
 insert into t2 values (16777216,16787215,1),(33554432,33564431,2);
 select format(t2.f2-t2.f1+1,0) from t1,t2
@@ -346,7 +344,7 @@ mod(5, cast(-2 as unsigned))	mod(5, 18446744073709551614)	mod(5, -2)
 select pow(cast(-2 as unsigned), 5), pow(18446744073709551614, 5), pow(-2, 5);
 pow(cast(-2 as unsigned), 5)	pow(18446744073709551614, 5)	pow(-2, 5)
 2.13598703592091e96	2.13598703592091e96	-32
-CREATE TABLE t1 (a timestamp, b varchar(20), c bit);
+CREATE TABLE t1 (a timestamp, b varchar(20), c int);
 INSERT INTO t1 VALUES('1998-09-23', 'str1', 1), ('2003-03-25', 'str2', 0);
 SELECT a DIV 900 y FROM t1 GROUP BY y;
 y

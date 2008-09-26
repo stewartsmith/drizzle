@@ -444,8 +444,6 @@ void mark_transaction_to_rollback(THD *thd, bool all);
 
 #ifdef DRIZZLE_SERVER
 
-#define INIT_ARENA_DBUG_INFO is_backup_arena= 0
-
 class Query_arena
 {
 public:
@@ -455,36 +453,17 @@ public:
   */
   Item *free_list;
   MEM_ROOT *mem_root;                   // Pointer to current memroot
-  bool is_backup_arena; /* True if this arena is used for backup. */
 
-  /*
-    The states relfects three diffrent life cycles for three
-    different types of statements:
-    Prepared statement: INITIALIZED -> PREPARED -> EXECUTED.
-    Stored procedure:   INITIALIZED_FOR_SP -> EXECUTED.
-    Other statements:   CONVENTIONAL_EXECUTION never changes.
-  */
-  enum enum_state
-  {
-    INITIALIZED= 0,
-    CONVENTIONAL_EXECUTION= 3, EXECUTED= 4, ERROR= -1
-  };
-
-  enum_state state;
-
-  Query_arena(MEM_ROOT *mem_root_arg, enum enum_state state_arg) :
-    free_list(0), mem_root(mem_root_arg), state(state_arg)
-  { INIT_ARENA_DBUG_INFO; }
+  Query_arena(MEM_ROOT *mem_root_arg) :
+    free_list(0), mem_root(mem_root_arg)
+  { }
   /*
     This constructor is used only when Query_arena is created as
     backup storage for another instance of Query_arena.
   */
-  Query_arena() { INIT_ARENA_DBUG_INFO; }
+  Query_arena() { }
 
   virtual ~Query_arena() {};
-
-  inline bool is_conventional() const
-  { assert(state == CONVENTIONAL_EXECUTION); return state == CONVENTIONAL_EXECUTION; }
 
   inline void* alloc(size_t size) { return alloc_root(mem_root,size); }
   inline void* calloc(size_t size)
@@ -508,11 +487,7 @@ public:
     return ptr;
   }
 
-  void set_query_arena(Query_arena *set);
-
   void free_items();
-  /* Close the active state associated with execution of this statement */
-  virtual void cleanup_stmt();
 };
 
 
@@ -553,7 +528,6 @@ public:
   */
   enum enum_mark_columns mark_used_columns;
 
-  LEX_STRING name; /* name for named prepared statements */
   LEX *lex;                                     // parse tree descriptor
   /*
     Points to the query associated with this statement. It's const, but
@@ -601,14 +575,8 @@ public:
   /* This constructor is called for backup statements */
   Statement() {}
 
-  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
-            enum enum_state state_arg, ulong id_arg);
+  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg);
   ~Statement() {}
-
-  /* Assign execution context (note: not all members) of given stmt to self */
-  void set_statement(Statement *stmt);
-  void set_n_backup_statement(Statement *stmt, Statement *backup);
-  void restore_backup_statement(Statement *stmt, Statement *backup);
 };
 
 struct st_savepoint {
@@ -1202,19 +1170,6 @@ public:
   */
   Item_change_list change_list;
 
-  /*
-    A permanent memory area of the statement. For conventional
-    execution, the parsed tree and execution runtime reside in the same
-    memory root. In this case stmt_arena points to THD. In case of
-    a prepared statement or a stored procedure statement, thd->mem_root
-    conventionally points to runtime memory, and thd->stmt_arena
-    points to the memory of the PS/SP, where the parsed tree of the
-    statement resides. Whenever you need to perform a permanent
-    transformation of a parsed tree, you should allocate new memory in
-    stmt_arena, to allow correct re-execution of PS/SP.
-    Note: in the parser, stmt_arena == thd, even for PS/SP.
-  */
-  Query_arena *stmt_arena;
   /* Tells if LAST_INSERT_ID(#) was called for the current statement */
   bool arg_of_last_insert_id_function;
   /*
@@ -1712,9 +1667,6 @@ public:
 
   void change_item_tree(Item **place, Item *new_value)
   {
-    /* TODO: check for OOM condition here */
-    if (!stmt_arena->is_conventional())
-      nocheck_register_item_tree_change(place, *place, mem_root);
     *place= new_value;
   }
   void nocheck_register_item_tree_change(Item **place, Item *old_value,
@@ -1741,8 +1693,6 @@ public:
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
   void restore_sub_statement_state(Sub_statement_state *backup);
-  void set_n_backup_active_arena(Query_arena *set, Query_arena *backup);
-  void restore_active_arena(Query_arena *set, Query_arena *backup);
 
   inline void set_current_stmt_binlog_row_based_if_mixed()
   {

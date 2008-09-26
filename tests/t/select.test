@@ -13,8 +13,8 @@ drop table if exists t1_1,t1_2,t9_1,t9_2,t1aa,t2aa;
 --enable_warnings
 
 CREATE TABLE t1 (
-  Period smallint unsigned DEFAULT '0' NOT NULL,
-  Varor_period smallint unsigned DEFAULT '0' NOT NULL
+  Period int unsigned DEFAULT '0' NOT NULL,
+  Varor_period int unsigned DEFAULT '0' NOT NULL
 );
 
 INSERT INTO t1 VALUES (9410,9412);
@@ -30,7 +30,7 @@ select t1.* from t1;
 CREATE TABLE t2 (
   auto int not null auto_increment,
   fld1 int unsigned DEFAULT '0' NOT NULL,
-  companynr tinyint unsigned DEFAULT '0' NOT NULL,
+  companynr int unsigned DEFAULT '0' NOT NULL,
   fld3 char(30) DEFAULT '' NOT NULL,
   fld4 char(35) DEFAULT '' NOT NULL,
   fld5 char(35) DEFAULT '' NOT NULL,
@@ -1496,7 +1496,7 @@ select t2.fld1,fld3,period,price,price2 from t2,t3 where t2.fld1>= 18201 and t2.
 #
 
 create table t4 (
-  companynr tinyint unsigned NOT NULL default '0',
+  companynr int unsigned NOT NULL default '0',
   companyname char(30) NOT NULL default '',
   PRIMARY KEY (companynr),
   UNIQUE KEY companyname(companyname)
@@ -1785,9 +1785,9 @@ DROP TABLE t1;
 # Test of bug with SUM(CASE...)
 #
 
-CREATE TABLE t1 (gvid int unsigned default NULL,  hmid int unsigned default NULL,  volid int unsigned default NULL,  mmid int unsigned default NULL,  hdid int unsigned default NULL,  fsid int unsigned default NULL,  ctid int unsigned default NULL,  dtid int unsigned default NULL,  cost int unsigned default NULL,  performance int unsigned default NULL,  serialnumber bigint unsigned default NULL,  monitored tinyint unsigned default '1',  removed tinyint unsigned default '0',  target tinyint unsigned default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
+CREATE TABLE t1 (gvid int unsigned default NULL,  hmid int unsigned default NULL,  volid int unsigned default NULL,  mmid int unsigned default NULL,  hdid int unsigned default NULL,  fsid int unsigned default NULL,  ctid int unsigned default NULL,  dtid int unsigned default NULL,  cost int unsigned default NULL,  performance int unsigned default NULL,  serialnumber bigint unsigned default NULL,  monitored int unsigned default '1',  removed int unsigned default '0',  target int unsigned default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (200001,2,1,1,100,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\E$',''),(200002,2,2,1,101,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\C$',''),(200003,1,3,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,1,20020425060427,'c:',NULL);
-CREATE TABLE t2 (  hmid int unsigned default NULL,  volid int unsigned default NULL,  sampletid smallint unsigned default NULL,  sampletime datetime default NULL,  samplevalue bigint unsigned default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
+CREATE TABLE t2 (  hmid int unsigned default NULL,  volid int unsigned default NULL,  sampletid int unsigned default NULL,  sampletime datetime default NULL,  samplevalue bigint unsigned default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,3,10,'2002-06-01 08:00:00',35),(1,3,1010,'2002-06-01 12:00:01',35);
 # Disable PS becasue we get more warnings from PS than from normal execution
 --disable_ps_protocol
@@ -2079,14 +2079,14 @@ drop table t1,t2,t3;
 # Test for BUG#11700
 CREATE TABLE t1 (
   acct_id int NOT NULL default '0',
-  profile_id smallint default NULL,
+  profile_id int default NULL,
   UNIQUE KEY t1$acct_id (acct_id),
   KEY t1$profile_id (profile_id)
 );
 INSERT INTO t1 VALUES (132,17),(133,18);
 
 CREATE TABLE t2 (
-  profile_id smallint default NULL,
+  profile_id int default NULL,
   queue_id int default NULL,
   seq int default NULL,
   KEY t2$queue_id (queue_id)
@@ -2099,9 +2099,9 @@ CREATE TABLE t3 (
   seq int default NULL,
   warn_lvl int default NULL,
   crit_lvl int default NULL,
-  rr1 tinyint NOT NULL default '0',
+  rr1 int NOT NULL default '0',
   rr2 int default NULL,
-  default_queue tinyint NOT NULL default '0',
+  default_queue int NOT NULL default '0',
   KEY t3$qtype (qtype),
   KEY t3$id (id)
 );
@@ -2132,7 +2132,7 @@ drop table t1,t2;
 # Bug #11521 Negative integer keys incorrectly substituted for 0 during
 #            range analysis.
 
-create table t2 (a tinyint unsigned);
+create table t2 (a int unsigned);
 create index t2i on t2(a);
 insert into t2 values (0), (254), (255);
 #explain select * from t2 where a > -1;
@@ -2475,9 +2475,9 @@ drop table t1, t2;
 # for base tables, search all nested join operands of natural joins.
 #
 
-CREATE TABLE t1 (`id` TINYINT);
-CREATE TABLE t2 (`id` TINYINT);
-CREATE TABLE t3 (`id` TINYINT);
+CREATE TABLE t1 (`id` int);
+CREATE TABLE t2 (`id` int);
+CREATE TABLE t3 (`id` int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t2 VALUES (2);
 INSERT INTO t3 VALUES (3);
@@ -2738,17 +2738,17 @@ SELECT a, c, d, f FROM t1,t2 WHERE a=c AND b BETWEEN 4 AND 6 AND a > 0;
 DROP TABLE t1, t2;
 
 #
-# Bug #18895: BIT values cause joins to fail
+# Bug #18895: Now tests for int
 #
 create table t1 (
     a int unsigned    not null auto_increment primary key,
-    b bit             not null,
-    c bit             not null
+    b int             not null,
+    c int             not null
 );
 
 create table t2 (
     a int unsigned    not null auto_increment primary key,
-    b bit             not null,
+    b int             not null,
     c int unsigned    not null,
     d varchar(50)
 );

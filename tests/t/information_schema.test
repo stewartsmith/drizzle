@@ -123,7 +123,7 @@ WHERE NOT EXISTS
 create table t1
 ( x_bigint BIGINT,
   x_integer INTEGER,
-  x_smallint SMALLINT,
+  x_int int,
   x_decimal DECIMAL(5,3),
   x_numeric NUMERIC(5,3),
   x_real REAL,
@@ -156,8 +156,8 @@ select column_name,data_type,CHARACTER_OCTET_LENGTH,
 from information_schema.columns
 where table_name='t1';
 drop table t1;
-create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
-                f5 BIGINT, f6 TINYINT, f7 SMALLINT);
+create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
+                f5 BIGINT, f6 int, f7 int);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';

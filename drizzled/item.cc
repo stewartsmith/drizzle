@@ -1329,14 +1329,8 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
   }
 
   THD *thd= current_thd;
-  Query_arena *arena, backup;
   bool res= false;
   uint i;
-  /*
-    In case we're in statement prepare, create conversion item
-    in its memory: it will be reused on each execute.
-  */
-  arena= NULL;
 
   for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
   {
@@ -1382,8 +1376,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
     */
     conv->fix_fields(thd, arg);
   }
-  if (arena)
-    thd->restore_active_arena(arena, &backup);
+
   return res;
 }
 
@@ -4098,10 +4091,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
     field= new Field_tiny((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
-  case DRIZZLE_TYPE_SHORT:
-    field= new Field_short((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			   name, 0, unsigned_flag);
-    break;
   case DRIZZLE_TYPE_LONG:
     field= new Field_long((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
@@ -4673,14 +4662,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     nr= val_int();
     if (!null_value)
       result= protocol->store_tiny(nr);
-    break;
-  }
-  case DRIZZLE_TYPE_SHORT:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= protocol->store_short(nr);
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -6362,8 +6343,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_TINY:
     return 4;
-  case DRIZZLE_TYPE_SHORT:
-    return 6;
   case DRIZZLE_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
   case DRIZZLE_TYPE_DOUBLE:

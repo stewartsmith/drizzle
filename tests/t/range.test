@@ -38,10 +38,10 @@ select event_date,type,event_id from t1 WHERE event_date >= "1999-07-01" AND eve
 drop table t1;
 
 CREATE TABLE t1 (
-  PAPER_ID smallint(6) DEFAULT '0' NOT NULL,
-  YEAR smallint(6) DEFAULT '0' NOT NULL,
-  ISSUE smallint(6) DEFAULT '0' NOT NULL,
-  CLOSED tinyint(4) DEFAULT '0' NOT NULL,
+  PAPER_ID int(6) DEFAULT '0' NOT NULL,
+  YEAR int(6) DEFAULT '0' NOT NULL,
+  ISSUE int(6) DEFAULT '0' NOT NULL,
+  CLOSED int(4) DEFAULT '0' NOT NULL,
   ISS_DATE date DEFAULT '0000-00-00' NOT NULL,
   PRIMARY KEY (PAPER_ID,YEAR,ISSUE)
 );
@@ -68,7 +68,7 @@ drop table t1;
 CREATE TABLE t1 (
   id int(11) NOT NULL auto_increment,
   parent_id int(11) DEFAULT '0' NOT NULL,
-  level tinyint(4) DEFAULT '0' NOT NULL,
+  level int(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (id),
   KEY parent_id (parent_id),
   KEY level (level)
@@ -267,7 +267,7 @@ line int( 5 ) unsigned NOT NULL default '0',
 columnid int( 3 ) unsigned NOT NULL default '0',
 owner int( 3 ) unsigned NOT NULL default '0',
 ordinal int( 3 ) unsigned NOT NULL default '0',
-showid smallint( 6 ) unsigned NOT NULL default '1',
+showid int( 6 ) unsigned NOT NULL default '1',
 tableid int( 1 ) unsigned NOT NULL default '1',
 content int( 5 ) unsigned NOT NULL default '188',
 PRIMARY KEY ( owner, id ) ,
@@ -977,7 +977,7 @@ DROP TABLE t1;
 #
 
 # test UNSIGNED. only occurs when indexed.
-CREATE TABLE t1 (f1 TINYINT(11) UNSIGNED NOT NULL, PRIMARY KEY (f1));
+CREATE TABLE t1 (f1 int(11) UNSIGNED NOT NULL, PRIMARY KEY (f1));
 
 INSERT INTO t1 VALUES (127),(254),(0),(1),(255);
 
@@ -998,7 +998,7 @@ DROP TABLE t1;
 
 
 # test signed. only occurs when index.
-CREATE TABLE t1 ( f1 TINYINT(11) NOT NULL, PRIMARY KEY (f1));
+CREATE TABLE t1 ( f1 int(11) NOT NULL, PRIMARY KEY (f1));
 
 INSERT INTO t1 VALUES (127),(126),(0),(-128),(-127);
 

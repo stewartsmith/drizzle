@@ -98,7 +98,7 @@ SELECT @a:=1 UNION SELECT @a:=@a+1;
 CREATE TABLE t1 (
   `pseudo` char(35) NOT NULL default '',
   `pseudo1` char(35) NOT NULL default '',
-  `same` tinyint(1) unsigned NOT NULL default '1',
+  `same` int(1) unsigned NOT NULL default '1',
   PRIMARY KEY  (`pseudo1`),
   KEY `pseudo` (`pseudo`)
 ) ENGINE=MyISAM;
@@ -128,7 +128,7 @@ drop table t1,t2;
 #
 
 CREATE TABLE t1 (
-  cid smallint(5) unsigned NOT NULL default '0',
+  cid int(5) unsigned NOT NULL default '0',
   cv varchar(250) NOT NULL default '',
   PRIMARY KEY  (cid),
   UNIQUE KEY cv (cv)
@@ -143,7 +143,7 @@ CREATE TABLE t2 (
 CREATE TABLE t3 (
   gid bigint(20) unsigned NOT NULL auto_increment,
   gn varchar(255) NOT NULL default '',
-  must tinyint(4) default NULL,
+  must int(4) default NULL,
   PRIMARY KEY  (gid),
   KEY gn (gn)
 ) ;
@@ -169,7 +169,7 @@ CREATE TABLE t5 (
 CREATE TABLE t6 (
   uid bigint(20) unsigned NOT NULL auto_increment,
   un varchar(250) NOT NULL default '',
-  uc smallint(5) unsigned NOT NULL default '0',
+  uc int(5) unsigned NOT NULL default '0',
   PRIMARY KEY  (uid),
   UNIQUE KEY nc (un,uc),
   KEY un (un)
@@ -343,7 +343,7 @@ select * from t1;
 show create table t1;
 drop table t1;
 
-create table t2 (it1 tinyint, it2 tinyint not null, i int not null, ib bigint, f float, d double, y year, da date, dt datetime, sc char(10), sv varchar(10), b blob, tx text);
+create table t2 (it1 int, it2 int not null, i int not null, ib bigint, f float, d double, y year, da date, dt datetime, sc char(10), sv varchar(10), b blob, tx text);
 insert into t2 values (NULL, 1, 3, 4, 1.5, 2.5, 1972, '1972-10-22', '1972-10-22 11:50', 'testc', 'testv', 'tetetetetest', 'teeeeeeeeeeeest');
 
 create table t1 SELECT it2 from t2 UNION select it1 from t2;
@@ -488,7 +488,7 @@ drop  table t1;
 # Bug #2809 (UNION fails on MyIsam tables when index on second column from
 # same table)
 #
-create table t1 (col1 tinyint unsigned, col2 tinyint unsigned);
+create table t1 (col1 int unsigned, col2 int unsigned);
 insert into t1 values (1,2),(3,4),(5,6),(7,8),(9,10);
 select col1 n from t1 union select col2 n from t1 order by n;
 alter table t1 add index myindex (col2);

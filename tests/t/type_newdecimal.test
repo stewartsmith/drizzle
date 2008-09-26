@@ -86,7 +86,7 @@ insert into t1 values (9999999999999999999999999.000);
 insert into t1 values (-1.0);
 select * from t1;
 drop table t1;
-create table t1 (a tinyint);
+create table t1 (a int);
 --error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (18446744073709551615.0);
 --error ER_WARN_DATA_OUT_OF_RANGE
