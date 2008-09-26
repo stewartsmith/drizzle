@@ -6,7 +6,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
+#ifndef __sun
 #include <security/pam_misc.h>
+#endif
 
 typedef struct {
     const char *name;
@@ -14,7 +16,11 @@ typedef struct {
 } auth_pam_userinfo;
 
 static int auth_pam_talker(int num_msg,
+#ifdef __sun
+                           struct pam_message **msg,
+#else
                            const struct pam_message **msg,
+#endif
                            struct pam_response **resp,
                            void *appdata_ptr)
 {
