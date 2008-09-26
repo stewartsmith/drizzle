@@ -72,7 +72,7 @@ drizzled_LDADD = libhandler.la \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
-drizzled_LDFLAGS = -Wl,--export-dynamic
+drizzled_LDFLAGS =
 
 noinst_HEADERS = item.h \
 		 authentication.h \
