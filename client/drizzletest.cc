@@ -38,6 +38,8 @@
 
 #define MTEST_VERSION "3.3"
 
+#include "config.h"
+
 #include <queue>
 #include <map>
 #include <string>

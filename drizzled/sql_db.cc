@@ -15,6 +15,7 @@
 
 
 /* create and drop of databases */
+#include "config.h"
 #include <string>
 #include <fstream>
 #include <drizzled/serialize/serialize.h>
