@@ -15,67 +15,75 @@
 
 #include <drizzled/common_includes.h>
 #include <drizzled/item_func.h>
-#include <zlib.h>
 
-class Item_func_crc32 :public Item_int_func
+class Item_func_uncompressed_length : public Item_int_func
 {
   String value;
 public:
-  Item_func_crc32() :Item_int_func() { unsigned_flag= 1; }
-  const char *func_name() const { return "crc32"; }
+  Item_func_uncompressed_length():Item_int_func(){}
+  const char *func_name() const{return "uncompressed_length";}
   void fix_length_and_dec() { max_length=10; }
   int64_t val_int();
 };
 
-int64_t Item_func_crc32::val_int()
+int64_t Item_func_uncompressed_length::val_int()
 {
   assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
+  String *res= args[0]->val_str(&value);
   if (!res)
   {
     null_value=1;
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (int64_t) crc32(0L, (uchar*)res->ptr(), res->length());
+  if (res->is_empty()) return 0;
+
+  /*
+    res->ptr() using is safe because we have tested that string is not empty,
+    res->c_ptr() is not used because:
+      - we do not need \0 terminated string to get first 4 bytes
+      - c_ptr() tests simbol after string end (uninitialiozed memory) which
+        confuse valgrind
+  */
+  return uint4korr(res->ptr()) & 0x3FFFFFFF;
 }
 
-Item_func* create_crc32udf_item(MEM_ROOT* m)
+Item_func* create_uncompressed_lengthudf_item(MEM_ROOT* m)
 {
-  return  new (m) Item_func_crc32();
+  return  new (m) Item_func_uncompressed_length();
 }
 
-static struct udf_func crc32udf = {
-  { C_STRING_WITH_LEN("crc32") },
-  create_crc32udf_item
+static struct udf_func uncompressed_lengthudf = {
+  { C_STRING_WITH_LEN("uncompressed_length") },
+  create_uncompressed_lengthudf_item
 };
 
-static int crc32udf_plugin_init(void *p)
+static int uncompressed_lengthudf_plugin_init(void *p)
 {
   udf_func **f = (udf_func**) p;
 
-  *f= &crc32udf;
+  *f= &uncompressed_lengthudf;
 
   return 0;
 }
 
-static int crc32udf_plugin_deinit(void *p)
+static int uncompressed_lengthudf_plugin_deinit(void *p)
 {
   udf_func *udff = (udf_func *) p;
   (void)udff;
   return 0;
 }
 
-mysql_declare_plugin(crc32)
+mysql_declare_plugin(uncompressed_length)
 {
   DRIZZLE_UDF_PLUGIN,
-  "crc32",
+  "uncompressed_length",
   "1.0",
   "Stewart Smith",
-  "UDF for computing CRC32",
+  "UDF for compress()",
   PLUGIN_LICENSE_GPL,
-  crc32udf_plugin_init, /* Plugin Init */
-  crc32udf_plugin_deinit, /* Plugin Deinit */
+  uncompressed_lengthudf_plugin_init, /* Plugin Init */
+  uncompressed_lengthudf_plugin_deinit, /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

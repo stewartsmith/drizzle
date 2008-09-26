@@ -4000,8 +4000,6 @@ mysql_prepare_alter_table(THD *thd, Table *table,
   }
   if (!(used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
     create_info->key_block_size= table->s->key_block_size;
-  if (!(used_fields & HA_CREATE_USED_TRANSACTIONAL))
-    create_info->transactional= table->s->transactional;
 
   restore_record(table, s->default_values);     // Empty record for DEFAULT
   Create_field *def;

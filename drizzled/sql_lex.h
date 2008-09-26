@@ -24,6 +24,8 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 
+#include "sql_udf.h"
+
 /* YACC and LEX Definitions */
 
 /* These may not be declared yet */

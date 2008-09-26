@@ -342,7 +342,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     dlpath;
   plugin_dl.ref_count= 1;
   /* Open new dll handle */
-  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_NOW)))
+  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_LAZY|RTLD_GLOBAL)))
   {
     const char *errmsg=dlerror();
     if (!strncmp(dlpath, errmsg, dlpathlen))

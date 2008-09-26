@@ -1,0 +1,5 @@
+DRIZZLE_PLUGIN(uncompressed_length,[uncompressed_length UDF],
+        [UDF Plugin for uncompressed_length])
+DRIZZLE_PLUGIN_STATIC(uncompressed_length,   [libuncompressed_lengthudf.a])
+DRIZZLE_PLUGIN_MANDATORY(uncompressed_length)  dnl Default
+DRIZZLE_PLUGIN_DYNAMIC(uncompressed_length,   [libuncompressed_lengthudf.la])

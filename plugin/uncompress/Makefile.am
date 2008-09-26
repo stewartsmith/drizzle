@@ -19,16 +19,14 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes)
+AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
+EXTRA_LTLIBRARIES =	libuncompressudf.la
+pkgplugin_LTLIBRARIES =	@plugin_uncompress_shared_target@
+libuncompressudf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lz
+libuncompressudf_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+libuncompressudf_la_SOURCES =	uncompressudf.cc
 
-if BUILD_MD5_UDF
-EXTRA_LTLIBRARIES =	libmd5udf.la
-pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
-libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lssl
-libmd5udf_la_CXXFLAGS=	-DDRIZZLE_DYNAMIC_PLUGIN
-libmd5udf_la_SOURCES =	md5udf.cc
 
-EXTRA_LIBRARIES =	libmd5udf.a
-noinst_LIBRARIES =	@plugin_md5_static_target@
-libmd5udf_a_SOURCES=	$(libmd5udf_la_SOURCES)
-endif
+EXTRA_LIBRARIES =	libuncompressudf.a
+noinst_LIBRARIES =	@plugin_uncompress_static_target@
+libuncompressudf_a_SOURCES=	$(libuncompressudf_la_SOURCES)

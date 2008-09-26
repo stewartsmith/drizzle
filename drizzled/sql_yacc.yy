@@ -1553,11 +1553,6 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
             Lex->create_info.key_block_size= $3;
           }
-        | TRANSACTIONAL_SYM opt_equal choice
-          {
-	    Lex->create_info.used_fields|= HA_CREATE_USED_TRANSACTIONAL;
-            Lex->create_info.transactional= $3;
-          }
         ;
 
 default_collation:
@@ -3532,17 +3527,8 @@ function_call_generic:
           IDENT_sys '('
           {
             udf_func *udf= 0;
-            LEX *lex= Lex;
-            if (using_udf_functions &&
-                (udf= find_udf($1.str, $1.length)) &&
-                udf->type == UDFTYPE_AGGREGATE)
-            {
-              if (lex->current_select->inc_in_sum_expr())
-              {
-                my_parse_error(ER(ER_SYNTAX_ERROR));
-                DRIZZLE_YYABORT;
-              }
-            }
+	    udf= find_udf($1.str, $1.length);
+
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
           }
@@ -3572,11 +3558,6 @@ function_call_generic:
               udf_func *udf= $<udf>3;
               if (udf)
               {
-                if (udf->type == UDFTYPE_AGGREGATE)
-                {
-                  Select->in_sum_expr--;
-                }
-
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
 	      } else {
                 /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */

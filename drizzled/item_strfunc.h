@@ -620,42 +620,6 @@ public:
   void fix_length_and_dec();
 };
 
-class Item_func_uncompressed_length : public Item_int_func
-{
-  String value;
-public:
-  Item_func_uncompressed_length(Item *a):Item_int_func(a){}
-  const char *func_name() const{return "uncompressed_length";}
-  void fix_length_and_dec() { max_length=10; }
-  int64_t val_int();
-};
-
-#ifdef HAVE_COMPRESS
-#define ZLIB_DEPENDED_FUNCTION ;
-#else
-#define ZLIB_DEPENDED_FUNCTION { null_value=1; return 0; }
-#endif
-
-class Item_func_compress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_compress(Item *a):Item_str_func(a){}
-  void fix_length_and_dec(){max_length= (args[0]->max_length*120)/100+12;}
-  const char *func_name() const{return "compress";}
-  String *val_str(String *) ZLIB_DEPENDED_FUNCTION
-};
-
-class Item_func_uncompress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_uncompress(Item *a): Item_str_func(a){}
-  void fix_length_and_dec(){ maybe_null= 1; max_length= MAX_BLOB_WIDTH; }
-  const char *func_name() const{return "uncompress";}
-  String *val_str(String *) ZLIB_DEPENDED_FUNCTION
-};
-
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
 class Item_func_uuid: public Item_str_func
 {

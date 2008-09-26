@@ -291,7 +291,7 @@ if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions"
 fi
 
 DRIZZLE_PROG_AR

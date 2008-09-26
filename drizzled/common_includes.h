@@ -288,7 +288,6 @@ extern ulong server_id;
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
 #include "protocol.h"
-#include "sql_udf.h"
 #include "item.h"
 
 extern my_decimal decimal_zero;

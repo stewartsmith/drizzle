@@ -367,7 +367,6 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
-#define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)
 #define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
@@ -770,15 +769,11 @@ typedef struct st_ha_create_information
   uint32_t used_fields;
   uint32_t key_block_size;
   uint32_t block_size;
-  SQL_LIST merge_list;
   handlerton *db_type;
   enum row_type row_type;
   uint null_bits;                       /* NULL bits at start of record */
   uint options;				/* OR of HA_CREATE_ options */
-  uint merge_insert_method;
   uint extra_size;                      /* length of extra data segment */
-  /* 0 not used, 1 if not transactional, 2 if transactional */
-  enum ha_choice transactional;
   bool table_existed;			/* 1 in create if table existed */
   bool frm_only;                        /* 1 if no ha_create_table() */
   bool varchar;                         /* 1 if table has a VARCHAR */
