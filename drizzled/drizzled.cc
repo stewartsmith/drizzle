@@ -762,7 +762,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 extern "C" sig_handler print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning(_("Got signal %d from thread %ld"), sig,my_thread_id());
+    sql_print_warning(_("Got signal %d from thread %lud"), sig,my_thread_id());
 #ifdef DONT_REMEMBER_SIGNAL
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -2594,7 +2594,6 @@ static int init_server_components()
 
 int main(int argc, char **argv)
 {
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");

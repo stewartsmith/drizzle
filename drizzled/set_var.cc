@@ -3214,8 +3214,7 @@ bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
         !(engine_name.str= (char *)res->ptr()) ||
         !(engine_name.length= res->length()) ||
 	!(var->save_result.plugin= ha_resolve_by_name(thd, &engine_name)) ||
-        !(hton= plugin_data(var->save_result.plugin, handlerton *)) ||
-        ha_checktype(thd, ha_legacy_type(hton), 1, 0) != hton)
+        !(hton= plugin_data(var->save_result.plugin, handlerton *)))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
