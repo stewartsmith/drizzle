@@ -885,23 +885,7 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
                                     table_list->table_name, reg_ext, 0);
 
   if (!dont_send_ok)
-  {
-    enum legacy_db_type table_type;
-    mysql_frm_type(thd, path, &table_type);
-    if (table_type == DB_TYPE_UNKNOWN)
-    {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               table_list->db, table_list->table_name);
-      return(true);
-    }
-
-    if (!ha_check_storage_engine_flag(ha_resolve_by_legacy_type(thd, table_type),
-                                      HTON_CAN_RECREATE))
-      goto trunc_by_del;
-
-    if (lock_and_wait_for_table_name(thd, table_list))
-      return(true);
-  }
+    goto trunc_by_del;
 
   // Remove the .frm extension AIX 5.2 64-bit compiler bug (BUG#16155): this
   // crashes, replacement works.  *(path + path_length - reg_ext_length)=
