@@ -35,7 +35,7 @@
 int my_readlink(char *to, const char *filename, myf MyFlags)
 {
 #ifndef HAVE_READLINK
-  stpcpy(to,filename);
+  my_stpcpy(to,filename);
   return 1;
 #else
   int result=0;
@@ -47,7 +47,7 @@ int my_readlink(char *to, const char *filename, myf MyFlags)
     if ((my_errno=errno) == EINVAL)
     {
       result= 1;
-      stpcpy(to,filename);
+      my_stpcpy(to,filename);
     }
     else
     {

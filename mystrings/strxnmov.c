@@ -23,14 +23,14 @@
     strxnmov(dst, len, src1, ..., srcn, NullS)
     moves the first len characters of the concatenation of src1,...,srcn
     to dst and add a closing NUL character.
-    It is just like stpncpy except that it concatenates multiple sources.
+    It is just like my_stpncpy except that it concatenates multiple sources.
     Beware: the last argument should be the null character pointer.
     Take VERY great care not to omit it!  Also be careful to use NullS
     and NOT to use 0, as on some machines 0 is not the same size as a
     character pointer, or not the same bit pattern as NullS.
 
     NOTE
-      strxnmov is like stpncpy in that it moves up to len
+      strxnmov is like my_stpncpy in that it moves up to len
       characters; dst will be padded on the right with one '\0' character.
       if total-string-length >= length then dst[length] will be set to \0
 */

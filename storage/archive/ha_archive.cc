@@ -309,7 +309,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     share->archive_write_open= false;
     fn_format(share->data_file_name, table_name, "",
               ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    stpcpy(share->table_name, table_name);
+    my_stpcpy(share->table_name, table_name);
     /*
       We will use this lock for rows.
     */

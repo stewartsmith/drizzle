@@ -3269,11 +3269,11 @@ bool flush_relay_log_info(Relay_log_info* rli)
   char buff[FN_REFLEN*2+22*2+4], *pos;
 
   my_b_seek(file, 0L);
-  pos=stpcpy(buff, rli->group_relay_log_name);
+  pos=my_stpcpy(buff, rli->group_relay_log_name);
   *pos++='\n';
   pos=int64_t2str(rli->group_relay_log_pos, pos, 10);
   *pos++='\n';
-  pos=stpcpy(pos, rli->group_master_log_name);
+  pos=my_stpcpy(pos, rli->group_master_log_name);
   *pos++='\n';
   pos=int64_t2str(rli->group_master_log_pos, pos, 10);
   *pos='\n';

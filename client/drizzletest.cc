@@ -3079,7 +3079,7 @@ static int do_save_master_pos(void)
     die("drizzle_store_result() retuned NULL for '%s'", query);
   if (!(row = drizzle_fetch_row(res)))
     die("empty result in show master status");
-  stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
+  my_stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
   drizzle_free_result(res);
   return(0);
@@ -4605,7 +4605,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       tty_password= 1;
     break;
   case 't':
-    stpncpy(TMPDIR, argument, sizeof(TMPDIR));
+    my_stpncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
   case 'A':
     if (!embedded_server_arg_count)
@@ -6731,7 +6731,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=0 ; i < count ; i++)
     {
       to_array[i]=to_pos;
-      to_pos=stpcpy(to_pos,to[i])+1;
+      to_pos=my_stpcpy(to_pos,to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
@@ -7017,7 +7017,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
   pa->typelib.type_names[pa->typelib.count]= NullS;  /* Put end-mark */
-  VOID(stpcpy((char*) pa->str+pa->length,name));
+  VOID(my_stpcpy((char*) pa->str+pa->length,name));
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */

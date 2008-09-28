@@ -25,7 +25,6 @@ noinst_HEADERS =	my_uctype.h \
 			t_ctype.h
 
 
-# LTLIBOBJS contains stpcpy stpncpy
 # IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
 libmystrings_la_LIBADD = $(LTLIBOBJS)
@@ -35,6 +34,8 @@ libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
 				my_strtoll10.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
                                 llstr.c \
+				stpcpy.c \
+				stpncpy.c \
                                 ctype.c ctype-simple.c ctype-mb.c \
                                 ctype-utf8.c \
                                 ctype-uca.c ctype-bin.c \

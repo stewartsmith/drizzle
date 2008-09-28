@@ -98,7 +98,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);
   }
-  stpcpy(tmpname,path);
+  my_stpcpy(tmpname,path);
   
 
   /* STEP 4: Create Table description */

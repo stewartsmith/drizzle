@@ -1146,7 +1146,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    stpcpy(end,".1");				// use name+1
+    my_stpcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -1214,7 +1214,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    stpcpy(log_file_name, new_name);
+    my_stpcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 
@@ -1241,7 +1241,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
                      my_progname, server_version, DRIZZLE_COMPILATION_COMMENT,
                      mysqld_port, ""
                      );
-    end= stpncpy(buff + len, "Time                 Id Command    Argument\n",
+    end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
     if (my_b_write(&log_file, (uchar*) buff, (uint) (end-buff)) ||
 	flush_io_cache(&log_file))
@@ -1587,11 +1587,11 @@ bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
     {						// Database changed
       if (my_b_printf(&log_file,"use %s;\n",thd->db) == (uint) -1)
         tmp_errno= errno;
-      stpcpy(db,thd->db);
+      my_stpcpy(db,thd->db);
     }
     if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
     {
-      end=stpcpy(end, ",last_insert_id=");
+      end=my_stpcpy(end, ",last_insert_id=");
       end=int64_t10_to_str((int64_t)
                             thd->first_successful_insert_id_in_prev_stmt_for_binlog,
                             end, -10);
@@ -1600,7 +1600,7 @@ bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
     if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
     {
       {
-        end=stpcpy(end,",insert_id=");
+        end=my_stpcpy(end,",insert_id=");
         end=int64_t10_to_str((int64_t)
                               thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
                               end, -10);
@@ -1612,7 +1612,7 @@ bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
       checked the query start time or not. now we always write current
       timestamp to the slow log
     */
-    end= stpcpy(end, ",timestamp=");
+    end= my_stpcpy(end, ",timestamp=");
     end= int10_to_str((long) current_time, end, 10);
 
     if (end != buff)
@@ -2626,7 +2626,7 @@ void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
   uint dir_len = dirname_length(log_file_name); 
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
-  stpncpy(buf, log_file_name, dir_len);
+  my_stpncpy(buf, log_file_name, dir_len);
   strmake(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
 }
 
@@ -3830,7 +3830,7 @@ bool flush_error_log()
   {
     char err_renamed[FN_REFLEN], *end;
     end= strmake(err_renamed,log_error_file,FN_REFLEN-4);
-    stpcpy(end, "-old");
+    my_stpcpy(end, "-old");
     VOID(pthread_mutex_lock(&LOCK_error_log));
     char err_temp[FN_REFLEN+4];
     /*
