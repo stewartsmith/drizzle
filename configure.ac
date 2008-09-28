@@ -1082,7 +1082,6 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([stpcpy stpncpy])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \

@@ -1524,13 +1524,13 @@ void Item_ident::print(String *str,
   {
     if (table_name && table_name[0])
     {
-      stpcpy(t_name_buff, table_name);
+      my_stpcpy(t_name_buff, table_name);
       my_casedn_str(files_charset_info, t_name_buff);
       t_name= t_name_buff;
     }
     if (db_name && db_name[0])
     {
-      stpcpy(d_name_buff, db_name);
+      my_stpcpy(d_name_buff, db_name);
       my_casedn_str(files_charset_info, d_name_buff);
       d_name= d_name_buff;
     }

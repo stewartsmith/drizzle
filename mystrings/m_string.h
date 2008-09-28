@@ -25,7 +25,7 @@
 #include <drizzled/global.h>
 
 #ifndef __USE_GNU
-#define __USE_GNU				/* We want to use stpcpy */
+#define __USE_GNU				/* We want to use my_stpcpy */
 #endif
 #if defined(HAVE_STRINGS_H)
 #include <strings.h>
@@ -56,7 +56,10 @@ extern "C" {
 extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
-#define strmov_overlapp(A,B) stpcpy(A,B)
+char *my_stpncpy(register char *dst, register const char *src, size_t n);
+char *my_stpcpy(register char *dst, register const char *src);
+
+#define strmov_overlapp(A,B) my_stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
@@ -87,10 +90,6 @@ extern char *strcat(char *, const char *);
 extern char *strchr(const char *, char);
 extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
-#endif
-
-#ifndef HAVE_STPNCPY
-char *stpncpy(register char *dst, register const char *src, size_t n);
 #endif
 
 #if !defined(__cplusplus)

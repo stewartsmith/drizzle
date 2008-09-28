@@ -6758,7 +6758,7 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 
 		share->table_name_length=length;
 		share->table_name=(char*) (share+1);
-		stpcpy(share->table_name,table_name);
+		my_stpcpy(share->table_name,table_name);
 
 		if (my_hash_insert(&innobase_open_tables,
 				(uchar*) share)) {

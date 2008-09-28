@@ -1629,7 +1629,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 
   /* Ensure that table handler get path in lower case */
   if (tmp_path != path)
-    stpcpy(tmp_path, path);
+    my_stpcpy(tmp_path, path);
 
   /*
     we only should turn into lowercase database/table part

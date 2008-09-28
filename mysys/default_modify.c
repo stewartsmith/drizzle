@@ -154,11 +154,11 @@ int modify_defaults_file(const char *file_location, const char *option,
       }
 
       for (; nr_newlines; nr_newlines--)
-        dst_ptr= stpcpy(dst_ptr, NEWLINE);
+        dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
 
       /* Skip the section if MY_REMOVE_SECTION was given */
       if (!in_section || remove_option != MY_REMOVE_SECTION)
-        dst_ptr= stpcpy(dst_ptr, linebuff);
+        dst_ptr= my_stpcpy(dst_ptr, linebuff);
     }
     /* Look for a section */
     if (*src_ptr == '[')
@@ -197,12 +197,12 @@ int modify_defaults_file(const char *file_location, const char *option,
   {
     /* New option still remains to apply at the end */
     if (!remove_option && *(dst_ptr - 1) != '\n')
-      dst_ptr= stpcpy(dst_ptr, NEWLINE);
+      dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
     dst_ptr= add_option(dst_ptr, option_value, option, remove_option);
     opt_applied= 1;
   }
   for (; nr_newlines; nr_newlines--)
-    dst_ptr= stpcpy(dst_ptr, NEWLINE);
+    dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
 
   if (opt_applied)
   {
@@ -232,14 +232,14 @@ static char *add_option(char *dst, const char *option_value,
 {
   if (!remove_option)
   {
-    dst= stpcpy(dst, option);
+    dst= my_stpcpy(dst, option);
     if (*option_value)
     {
       *dst++= '=';
-      dst= stpcpy(dst, option_value);
+      dst= my_stpcpy(dst, option_value);
     }
     /* add a newline */
-    dst= stpcpy(dst, NEWLINE);
+    dst= my_stpcpy(dst, NEWLINE);
   }
   return dst;
 }

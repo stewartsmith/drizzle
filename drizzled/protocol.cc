@@ -270,7 +270,7 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   /* The first # is to make the protocol backward compatible */
   buff[2]= '#';
-  pos= (uchar*) stpcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
+  pos= (uchar*) my_stpcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
 
   length= (uint) (strmake((char*) pos, err, DRIZZLE_ERRMSG_SIZE-1) -
                   (char*) buff);

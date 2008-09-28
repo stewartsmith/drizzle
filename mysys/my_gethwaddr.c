@@ -89,7 +89,7 @@ bool my_gethwaddr(uchar *to)
     goto err;
 
   memset(&ifr, 0, sizeof(ifr));
-  stpncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name) - 1);
+  my_stpncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name) - 1);
 
   do {
     if (ioctl(fd, SIOCGIFHWADDR, &ifr) >= 0)

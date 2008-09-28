@@ -130,7 +130,7 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     return(my_rename(from, to, MyFlags));
 
   /* Change filename that symlink pointed to */
-  stpcpy(tmp_name, to);
+  my_stpcpy(tmp_name, to);
   fn_same(tmp_name,link_name,1);		/* Copy dir */
   name_is_different= strcmp(link_name, tmp_name);
   if (name_is_different && !access(tmp_name, F_OK))

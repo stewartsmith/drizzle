@@ -14,21 +14,21 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  stpcpy(dst, src) moves all the  characters  of  src  (including  the
+  my_stpcpy(dst, src) moves all the  characters  of  src  (including  the
   closing NUL) to dst, and returns a pointer to the new closing NUL in
   dst.	 The similar UNIX routine strcpy returns the old value of dst,
-  which I have never found useful.  stpcpy(stpcpy(dst,a),b) moves a//b
+  which I have never found useful.  my_stpcpy(my_stpcpy(dst,a),b) moves a//b
   into dst, which seems useful.
 */
 
 #include "m_string.h"
 
-#ifndef stpcpy
+#ifndef my_stpcpy
 
-char *stpcpy(register char *dst, register const char *src)
+char *my_stpcpy(register char *dst, register const char *src)
 {
   while ((*dst++ = *src++)) ;
   return dst-1;
 }
 
-#endif /* stpcpy */
+#endif /* my_stpcpy */
