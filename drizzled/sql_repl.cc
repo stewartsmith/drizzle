@@ -1032,8 +1032,6 @@ int reset_slave(THD *thd, Master_info* mi)
     goto err;
   }
 
-  ha_reset_slave(thd);
-
   // delete relay logs, clear relay log coordinates
   if ((error= purge_relay_logs(&mi->rli, thd,
 			       1 /* just reset */,
@@ -1381,13 +1379,6 @@ bool mysql_show_binlog_events(THD* thd)
 
   Format_description_log_event *description_event= new
     Format_description_log_event(3); /* MySQL 4.0 by default */
-
-  /*
-    Wait for handlers to insert any pending information
-    into the binlog.  For e.g. ndb which updates the binlog asynchronously
-    this is needed so that the uses sees all its own commands in the binlog
-  */
-  ha_binlog_wait(thd);
 
   if (mysql_bin_log.is_open())
   {
