@@ -1,4 +1,4 @@
-# English (Australia) translation for drizzle
+# Simplified Chinese translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,23 +8,23 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 17:43+0000\n"
-"Last-Translator: Morgan Tocker <tocker@gmail.com>\n"
-"Language-Team: English (Australia) <en_AU@li.org>\n"
+"PO-Revision-Date: 2008-09-26 03:49+0000\n"
+"Last-Translator: friendzhen <pengzhenyou@gmail.com>\n"
+"Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:44+0000\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Launchpad-Export-Date: 2008-10-01 18:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "‘帮助’的同义词。"
 
 #: client/drizzle.cc:254
 msgid "Clear command."
-msgstr ""
+msgstr "清除指令。"
 
 #: client/drizzle.cc:256
 msgid "Reconnect to the server. Optional arguments are db and host."
@@ -37,27 +37,27 @@ msgstr ""
 
 #: client/drizzle.cc:260
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "发送指令到drizzle服务器，直排显示结果。"
 
 #: client/drizzle.cc:261
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "结束drizzle。和退出相同。"
 
 #: client/drizzle.cc:262
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "发送指令到drizzle服务器。"
 
 #: client/drizzle.cc:263
 msgid "Display this help."
-msgstr ""
+msgstr "显示相关帮助。"
 
 #: client/drizzle.cc:264
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "禁用翻页，打印到标准输出。"
 
 #: client/drizzle.cc:265
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "不写入输出文件。"
 
 #: client/drizzle.cc:267
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -65,47 +65,47 @@ msgstr ""
 
 #: client/drizzle.cc:268
 msgid "Print current command."
-msgstr ""
+msgstr "输出当前命令。"
 
 #: client/drizzle.cc:269
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "更改drizzle提示符。"
 
 #: client/drizzle.cc:270
 msgid "Quit drizzle."
-msgstr ""
+msgstr "退出drizzle。"
 
 #: client/drizzle.cc:271
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "重建整个hash值。"
 
 #: client/drizzle.cc:273
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr ""
+msgstr "执行SQL脚本文件。参数为文件名。"
 
 #: client/drizzle.cc:274
 msgid "Get status information from the server."
-msgstr ""
+msgstr "从服务器获取状态信息。"
 
 #: client/drizzle.cc:276
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr ""
+msgstr "设置输出文件 [to_outfile]。将所有内容追加到给定的输出文件。"
 
 #: client/drizzle.cc:278
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "使用其他数据库。参数为数据库名称。"
 
 #: client/drizzle.cc:280 client/drizzle.cc:1431
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "每条语句后显示警告。"
 
 #: client/drizzle.cc:282
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "每个指令句后不要显示警告。"
 
 #: client/drizzle.cc:1115
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
+msgstr "欢迎来到Drizzle客户端。:或\\g表示当前命令完成。"
 
 #: client/drizzle.cc:1125
 #, c-format
@@ -113,45 +113,47 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"你的Drizzle链接id为 %u\n"
+"服务器版本:%s\n"
 
 #: client/drizzle.cc:1155
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "读取历史文件%s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "无法为临时histfile分配内存！\n"
 
 #: client/drizzle.cc:1167
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr ""
+msgstr "帮助请输入‘help;’或‘\\h’。输入’\\c‘清除缓冲。\n"
 
 #: client/drizzle.cc:1185
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "写入历史文件%s当中\n"
 
 #: client/drizzle.cc:1194
 msgid "Aborted"
-msgstr ""
+msgstr "失败的"
 
 #: client/drizzle.cc:1194
 msgid "Bye"
-msgstr "Bye"
+msgstr "再见"
 
 #: client/drizzle.cc:1242
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "放弃查询(Ctrl+C)\n"
 
 #: client/drizzle.cc:1265 client/drizzleadmin.cc:73 drizzled/drizzled.cc:3096
 msgid "Display this help and exit."
-msgstr ""
+msgstr "显示相关帮助并退出。"
 
 #: client/drizzle.cc:1267
 msgid "Synonym for -?"
-msgstr ""
+msgstr "-?的同义词。"
 
 #: client/drizzle.cc:1270
 msgid ""
@@ -171,20 +173,20 @@ msgstr ""
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
-msgstr ""
+msgstr "如果结果比终端宽度更宽，则自动转到直排输出模式。"
 
 #: client/drizzle.cc:1280
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
+msgstr "不使用历史文件。禁止互动行为。（允许 --silent)"
 
 #: client/drizzle.cc:1282 drizzled/drizzled.cc:3166
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "设置字符集的目录。"
 
 #: client/drizzle.cc:1284
 msgid "Display column type information."
-msgstr ""
+msgstr "显示列类型信息。"
 
 #: client/drizzle.cc:1287
 msgid ""
@@ -194,7 +196,7 @@ msgstr ""
 
 #: client/drizzle.cc:1290
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "在服务器/客户端协议中使用压缩。"
 
 #: client/drizzle.cc:1293
 msgid "Check memory and open file usage at exit ."
@@ -202,11 +204,11 @@ msgstr ""
 
 #: client/drizzle.cc:1296
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "退出时打印部份调试信息。"
 
 #: client/drizzle.cc:1298
 msgid "Database to use."
-msgstr ""
+msgstr "要使用的数据库。"
 
 #: client/drizzle.cc:1301
 msgid "(not used)"
@@ -214,11 +216,11 @@ msgstr ""
 
 #: client/drizzle.cc:1303
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "要使用的定义符号。"
 
 #: client/drizzle.cc:1305
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
+msgstr "执行命令并退出。(禁用 --force 和历史文件)"
 
 #: client/drizzle.cc:1307
 msgid "Print the output of a query (rows) vertically."
@@ -247,7 +249,7 @@ msgstr ""
 
 #: client/drizzle.cc:1320
 msgid "Ignore space after function names."
-msgstr ""
+msgstr "忽略函数名字后的空格。"
 
 #: client/drizzle.cc:1322
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
@@ -259,7 +261,7 @@ msgstr ""
 
 #: client/drizzle.cc:1327 client/drizzleadmin.cc:75
 msgid "Connect to host."
-msgstr ""
+msgstr "链接到主机。"
 
 #: client/drizzle.cc:1329
 msgid "Write line numbers for errors."
@@ -1787,7 +1789,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:3162
 msgid "Set the default character set."
-msgstr ""
+msgstr "设置默认字符集。"
 
 #: drizzled/drizzled.cc:3169
 msgid "Chroot mysqld daemon during startup."
@@ -6927,3 +6929,8 @@ msgstr ""
 #: drizzled/definitions.h:52
 msgid "Invalid error code"
 msgstr ""
+
+#~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr "更改字符集。在用到多字节字符(multi-byte charsets)处理binlog时用到。"
