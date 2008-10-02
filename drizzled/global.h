@@ -336,10 +336,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define OS_FILE_LIMIT  65535
 #endif
 
-/* #define EXT_IN_LIBNAME     */
-/* #define FN_NO_CASE_SENCE   */
-/* #define FN_UPPER_CASE TRUE */
-
 /*
   How much overhead does malloc have. The code often allocates
   something like 1024-MALLOC_OVERHEAD bytes
@@ -370,7 +366,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 #define ulong_to_double(X) ((double) (ulong) (X))
-#define SET_STACK_SIZE(X)  /* Not needed on real machines */
 
 #ifndef STACK_DIRECTION
 #error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"

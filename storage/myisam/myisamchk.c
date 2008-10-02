@@ -29,7 +29,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-SET_STACK_SIZE(9000)			/* Minimum stack size for program */
 
 #define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
 #define my_raid_delete(A,B,C) my_delete(A,B)
