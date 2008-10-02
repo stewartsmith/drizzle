@@ -51,7 +51,8 @@ int logging_finalizer(st_plugin_int *plugin)
   return 0;
 }
 
-static bool logging_pre_iterate (THD *thd, plugin_ref plugin)
+static bool logging_pre_iterate (THD *thd, plugin_ref plugin,
+				 void *stuff __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
 
@@ -65,14 +66,15 @@ static bool logging_pre_iterate (THD *thd, plugin_ref plugin)
 
 void logging_pre_do (THD *thd)
 {
-  if (plugin_foreach(thd, logging_pre_iterate, DRIZZLE_LOGGER_PLUGIN))
+  if (plugin_foreach(thd, logging_pre_iterate, DRIZZLE_LOGGER_PLUGIN, NULL))
   {
     sql_print_error("Logging plugin pre had an error.");
   }
   return;
 }
 
-static bool logging_post_iterate (THD *thd, plugin_ref plugin)
+static bool logging_post_iterate (THD *thd, plugin_ref plugin, 
+				  void *stuff __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
 
@@ -86,7 +88,7 @@ static bool logging_post_iterate (THD *thd, plugin_ref plugin)
 
 void logging_post_do (THD *thd)
 {
-  if (plugin_foreach(thd, logging_post_iterate, DRIZZLE_LOGGER_PLUGIN))
+  if (plugin_foreach(thd, logging_post_iterate, DRIZZLE_LOGGER_PLUGIN, NULL))
   {
     sql_print_error("Logging plugin post had an error.");
   }
