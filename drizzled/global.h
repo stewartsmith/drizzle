@@ -80,7 +80,6 @@
 #endif
 
 
-#define __EXTENSIONS__ 1
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined
