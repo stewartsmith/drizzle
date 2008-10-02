@@ -31,6 +31,7 @@ extern "C" {
   char *my_demangle(const char *mangled_name, int *status);
 #endif
 
+#ifdef TARGET_OS_LINUX
 #if defined(HAVE_STACKTRACE) || (defined (__x86_64__) || defined (__i386__) )
 #undef HAVE_STACKTRACE
 #define HAVE_STACKTRACE
@@ -43,6 +44,7 @@ extern "C" {
   } while(0);
   void check_thread_lib(void);
 #endif /* defined (__i386__) */
+#endif /* defined HAVE_OS_LINUX */
 
 #ifdef HAVE_STACKTRACE
   void print_stacktrace(uchar* stack_bottom, ulong thread_stack);
