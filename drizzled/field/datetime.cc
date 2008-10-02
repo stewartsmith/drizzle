@@ -98,7 +98,7 @@ int Field_datetime::store(int64_t nr,
                                           (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
-  if (nr == -1)
+  if (nr == INT64_C(-1))
   {
     nr= 0;
     error= 2;
@@ -134,7 +134,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,
   if (time_type == DRIZZLE_TIMESTAMP_DATE ||
       time_type == DRIZZLE_TIMESTAMP_DATETIME)
   {
-    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*1000000L+
+    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*INT64_C(1000000)+
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
@@ -212,8 +212,8 @@ String *Field_datetime::val_str(String *val_buffer,
     Avoid problem with slow int64_t arithmetic and sprintf
   */
 
-  part1=(long) (tmp/1000000L);
-  part2=(long) (tmp - (uint64_t) part1*1000000L);
+  part1=(long) (tmp/INT64_C(1000000));
+  part2=(long) (tmp - (uint64_t) part1*INT64_C(1000000));
 
   pos=(char*) val_buffer->ptr() + MAX_DATETIME_WIDTH;
   *pos--=0;
@@ -243,8 +243,8 @@ bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
-  part1=(uint32_t) (tmp/1000000L);
-  part2=(uint32_t) (tmp - (uint64_t) part1*1000000L);
+  part1=(uint32_t) (tmp/INT64_C(1000000));
+  part2=(uint32_t) (tmp - (uint64_t) part1*INT64_C(1000000));
 
   ltime->time_type=	DRIZZLE_TIMESTAMP_DATETIME;
   ltime->neg=		0;

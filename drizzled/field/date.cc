@@ -111,7 +111,7 @@ int Field_newdate::store(int64_t nr,
                          (TIME_FUZZY_DATE |
                           (thd->variables.sql_mode &
                            (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
-                         &error) == -1)
+                         &error) == INT64_C(-1))
   {
     tmp= 0L;
     error= 2;

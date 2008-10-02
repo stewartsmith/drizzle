@@ -214,7 +214,7 @@ int Field_timestamp::store(int64_t nr,
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE), &error);
-  if (tmp == -1)
+  if (tmp == INT64_C(-1))
   {
     error= 2;
   }
@@ -268,8 +268,9 @@ int64_t Field_timestamp::val_int(void)
   
   thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
   
-  return time_tmp.year * 10000000000L + time_tmp.month * 100000000L +
-         time_tmp.day * 1000000L + time_tmp.hour * 10000L +
+  return time_tmp.year * INT64_C(10000000000) +
+         time_tmp.month * INT64_C(100000000) +
+         time_tmp.day * 1000000 + time_tmp.hour * 10000 +
          time_tmp.minute * 100 + time_tmp.second;
 }
 
