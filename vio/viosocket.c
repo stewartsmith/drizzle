@@ -167,7 +167,7 @@ int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
 bool
 vio_should_retry(Vio * vio __attribute__((unused)))
 {
-  int en = socket_errno;
+  int en = errno;
   return (en == EAGAIN || en == EINTR ||
 	  en == EWOULDBLOCK);
 }
@@ -176,7 +176,7 @@ vio_should_retry(Vio * vio __attribute__((unused)))
 bool
 vio_was_interrupted(Vio *vio __attribute__((unused)))
 {
-  int en= socket_errno;
+  int en= errno;
   return (en == EAGAIN || en == EINTR ||
 	  en == EWOULDBLOCK || en == ETIMEDOUT);
 }
