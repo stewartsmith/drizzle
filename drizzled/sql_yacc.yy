@@ -849,7 +849,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  WHEN_SYM                      /* SQL-2003-R */
 %token  WHERE                         /* SQL-2003-R */
 %token  WITH                          /* SQL-2003-R */
-%token  WITH_CUBE_SYM                 /* INTERNAL */
 %token  WITH_ROLLUP_SYM               /* INTERNAL */
 %token  WORK_SYM                      /* SQL-2003-N */
 %token  WRITE_SYM                     /* SQL-2003-N */
@@ -4419,26 +4418,6 @@ group_list:
 
 olap_opt:
           /* empty */ {}
-        | WITH_CUBE_SYM
-          {
-            /*
-              'WITH CUBE' is reserved in the MySQL syntax, but not implemented,
-              and cause LALR(2) conflicts.
-              This syntax is not standard.
-              MySQL syntax: GROUP BY col1, col2, col3 WITH CUBE
-              SQL-2003: GROUP BY ... CUBE(col1, col2, col3)
-            */
-            LEX *lex=Lex;
-            if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
-            {
-              my_error(ER_WRONG_USAGE, MYF(0), "WITH CUBE",
-                       "global union parameters");
-              DRIZZLE_YYABORT;
-            }
-            lex->current_select->olap= CUBE_TYPE;
-            my_error(ER_NOT_SUPPORTED_YET, MYF(0), "CUBE");
-            DRIZZLE_YYABORT;
-          }
         | WITH_ROLLUP_SYM
           {
             /*

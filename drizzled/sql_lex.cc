@@ -725,19 +725,19 @@ int MYSQLlex(void *arg, void *yythd)
   switch(token) {
   case WITH:
     /*
-      Parsing 'WITH' 'ROLLUP' or 'WITH' 'CUBE' requires 2 look ups,
+      Parsing 'WITH' 'ROLLUP' requires 2 look ups,
       which makes the grammar LALR(2).
       Replace by a single 'WITH_ROLLUP' or 'WITH_CUBE' token,
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
     token= lex_one_token(arg, yythd);
-    switch(token) {
-    case CUBE_SYM:
-      return WITH_CUBE_SYM;
-    case ROLLUP_SYM:
+    if (token == ROLLUP_SYM)
+    {
       return WITH_ROLLUP_SYM;
-    default:
+    }
+    else
+    {
       /*
         Save the token following 'WITH'
       */
