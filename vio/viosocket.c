@@ -25,7 +25,7 @@
 
 int vio_errno(Vio *vio __attribute__((unused)))
 {
-  return socket_errno;		/* On Win32 this mapped to WSAGetLastError() */
+  return errno;
 }
 
 
@@ -168,8 +168,8 @@ bool
 vio_should_retry(Vio * vio __attribute__((unused)))
 {
   int en = socket_errno;
-  return (en == SOCKET_EAGAIN || en == SOCKET_EINTR ||
-	  en == SOCKET_EWOULDBLOCK);
+  return (en == EAGAIN || en == EINTR ||
+	  en == EWOULDBLOCK);
 }
 
 
@@ -177,8 +177,8 @@ bool
 vio_was_interrupted(Vio *vio __attribute__((unused)))
 {
   int en= socket_errno;
-  return (en == SOCKET_EAGAIN || en == SOCKET_EINTR ||
-	  en == SOCKET_EWOULDBLOCK || en == SOCKET_ETIMEDOUT);
+  return (en == EAGAIN || en == EINTR ||
+	  en == EWOULDBLOCK || en == ETIMEDOUT);
 }
 
 

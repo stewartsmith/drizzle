@@ -490,15 +490,6 @@ typedef unsigned long my_off_t;
 
 typedef off_t os_off_t;
 
-#define socket_errno  errno
-#define SOCKET_EINTR  EINTR
-#define SOCKET_EAGAIN  EAGAIN
-#define SOCKET_ETIMEDOUT SOCKET_EINTR
-#define SOCKET_EWOULDBLOCK EWOULDBLOCK
-#define SOCKET_EADDRINUSE EADDRINUSE
-#define SOCKET_ENFILE  ENFILE
-#define SOCKET_EMFILE  EMFILE
-
 typedef int    myf;  /* Type of MyFlags in my_funcs */
 #define MYF(v)		(myf) (v)
 

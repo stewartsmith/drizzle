@@ -1196,7 +1196,7 @@ static void network_init(void)
     for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
     {
       if (((ret= bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
-          (socket_errno != SOCKET_EADDRINUSE) ||
+          (errno != EADDRINUSE) ||
           (waited >= mysqld_port_timeout))
         break;
       sql_print_information(_("Retrying bind on TCP/IP port %u"), mysqld_port);
@@ -1214,7 +1214,7 @@ static void network_init(void)
     {
       sql_perror(_("Can't start server: listen() on TCP/IP port"));
       sql_print_error(_("listen() on TCP/IP failed with error %d"),
-                      socket_errno);
+                      errno);
       unireg_abort(1);
     }
   }
@@ -2852,11 +2852,11 @@ void handle_connections_sockets()
 
     if ((number_of= poll(fds, pollfd_count, -1)) == -1)
     {
-      if (socket_errno != SOCKET_EINTR)
+      if (errno != EINTR)
       {
         if (!select_errors++ && !abort_loop)	/* purecov: inspected */
           sql_print_error(_("drizzled: Got error %d from select"),
-                          socket_errno); /* purecov: inspected */
+                          errno); /* purecov: inspected */
       }
       MAYBE_BROKEN_SYSCALL
       continue;
@@ -2889,7 +2889,7 @@ void handle_connections_sockets()
       size_socket length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
-      if (new_sock != -1 || (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
+      if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
 	break;
     }
 
@@ -2899,7 +2899,7 @@ void handle_connections_sockets()
       if ((error_count++ & 255) == 0)		// This can happen often
 	sql_perror("Error in accept");
       MAYBE_BROKEN_SYSCALL;
-      if (socket_errno == SOCKET_ENFILE || socket_errno == SOCKET_EMFILE)
+      if (errno == ENFILE || errno == EMFILE)
 	sleep(1);				// Give other threads some time
       continue;
     }
