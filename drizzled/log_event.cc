@@ -25,6 +25,8 @@
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
 
+#include <algorithm>
+
 #endif /* !DRIZZLE_CLIENT */
 
 #include <mysys/base64.h>
@@ -931,7 +933,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
     of 13 bytes, whereas LOG_EVENT_MINIMAL_HEADER_LEN is 19 bytes (it's
     "minimal" over the set {MySQL >=4.0}).
   */
-  uint header_size= min(description_event->common_header_len,
+  uint header_size= cmin(description_event->common_header_len,
                         LOG_EVENT_MINIMAL_HEADER_LEN);
 
   LOCK_MUTEX;
@@ -1803,7 +1805,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       be even bigger, but this will suffice to catch most corruption
       errors that can lead to a crash.
     */
-    if (status_vars_len > min(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
+    if (status_vars_len > cmin(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
     {
       query= 0;
       return;
@@ -2177,9 +2179,9 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
     thd->set_time((time_t)when);
     thd->query_length= q_len_arg;
     thd->query= (char*)query_arg;
-    VOID(pthread_mutex_lock(&LOCK_thread_count));
+    pthread_mutex_lock(&LOCK_thread_count);
     thd->query_id = next_query_id();
-    VOID(pthread_mutex_unlock(&LOCK_thread_count));
+    pthread_mutex_unlock(&LOCK_thread_count);
     thd->variables.pseudo_thread_id= thread_id;		// for temp tables
 
     if (ignored_error_code((expected_error= error_code)) ||
@@ -2362,7 +2364,7 @@ Default database: '%s'. Query: '%s'",
   } /* End of if (db_ok(... */
 
 end:
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   /*
     Probably we have set thd->query, thd->db, thd->catalog to point to places
     in the data_buf of this event. Now the event is going to be deleted
@@ -2377,7 +2379,7 @@ end:
   thd->set_db(NULL, 0);                 /* will free the current database */
   thd->query= 0;			// just to be sure
   thd->query_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(thd);      
   /*
     As a disk space optimization, future masters will not log an event for
@@ -3560,9 +3562,9 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
   if (rpl_filter->db_ok(thd->db))
   {
     thd->set_time((time_t)when);
-    VOID(pthread_mutex_lock(&LOCK_thread_count));
+    pthread_mutex_lock(&LOCK_thread_count);
     thd->query_id = next_query_id();
-    VOID(pthread_mutex_unlock(&LOCK_thread_count));
+    pthread_mutex_unlock(&LOCK_thread_count);
     /*
       Initing thd->row_count is not necessary in theory as this variable has no
       influence in the case of the slave SQL thread (it is used to generate a
@@ -3716,12 +3718,12 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 error:
   thd->net.vio = 0; 
   const char *remember_db= thd->db;
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   thd->catalog= 0;
   thd->set_db(NULL, 0);                   /* will free the current database */
   thd->query= 0;
   thd->query_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(thd);
 
   if (thd->is_slave_error)

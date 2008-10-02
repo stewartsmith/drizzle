@@ -124,7 +124,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   sort_keys= (uchar **) NULL; error= 1;
   maxbuffer=1;
 
-  memavl=max(sortbuff_size,MIN_SORT_MEMORY);
+  memavl=cmax(sortbuff_size,MIN_SORT_MEMORY);
   records=	info->sort_info->max_records;
   sort_length=	info->key_length;
 
@@ -333,7 +333,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
     memset(&sort_param->unique, 0,  sizeof(sort_param->unique));
     sort_keys= (uchar **) NULL;
 
-    memavl=       max(sort_param->sortbuff_size, MIN_SORT_MEMORY);
+    memavl=       cmax(sort_param->sortbuff_size, MIN_SORT_MEMORY);
     idx=          (uint)sort_param->sort_info->max_records;
     sort_length=  sort_param->key_length;
     maxbuffer=    1;
@@ -782,7 +782,7 @@ static uint  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
   register uint count;
   uint length;
 
-  if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     if (my_pread(fromfile->file,(uchar*) buffpek->base,
                  (length= sort_length*count),buffpek->file_pos,MYF_RW))
@@ -803,7 +803,7 @@ static uint  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
   uint idx;
   uchar *buffp;
 
-  if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     buffp = buffpek->base;
 

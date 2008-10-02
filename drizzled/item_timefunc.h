@@ -982,8 +982,8 @@ enum date_time_format
 class Item_func_get_format :public Item_str_func
 {
 public:
-  const timestamp_type type; // keep it public
-  Item_func_get_format(timestamp_type type_arg, Item *a)
+  const enum enum_drizzle_timestamp_type type; // keep it public
+  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
     :Item_str_func(a), type(type_arg)
   {}
   String *val_str(String *str);
@@ -1002,7 +1002,7 @@ class Item_func_str_to_date :public Item_str_func
 {
   enum_field_types cached_field_type;
   date_time_format_types cached_format_type;
-  timestamp_type cached_timestamp_type;
+  enum enum_drizzle_timestamp_type cached_timestamp_type;
   bool const_item;
 public:
   Item_func_str_to_date(Item *a, Item *b)

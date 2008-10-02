@@ -65,7 +65,7 @@ void init_master_log_pos(Master_info* mi)
     if CHANGE MASTER did not specify it.  (no data loss in conversion
     as hb period has a max)
   */
-  mi->heartbeat_period= (float) min((double)SLAVE_MAX_HEARTBEAT_PERIOD,
+  mi->heartbeat_period= (float) cmin((double)SLAVE_MAX_HEARTBEAT_PERIOD,
                                     (slave_net_timeout/2.0));
   assert(mi->heartbeat_period > (float) 0.001
               || mi->heartbeat_period == 0);

@@ -334,7 +334,7 @@ mysqld_show_create(THD *thd, TableList *table_list)
     field_list.push_back(new Item_empty_string("Table",NAME_CHAR_LEN));
     // 1024 is for not to confuse old clients
     field_list.push_back(new Item_empty_string("Create Table",
-                                               max(buffer.length(),(uint32_t)1024)));
+                                               cmax(buffer.length(),(uint32_t)1024)));
   }
 
   if (protocol->send_fields(&field_list,
@@ -494,7 +494,7 @@ append_identifier(THD *thd, String *packet, const char *name, uint length)
    it's a keyword
   */
 
-  VOID(packet->reserve(length*2 + 2));
+  packet->reserve(length*2 + 2);
   quote_char= (char) q;
   packet->append(&quote_char, 1, system_charset_info);
 
@@ -1117,7 +1117,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return;
 
-  VOID(pthread_mutex_lock(&LOCK_thread_count)); // For unlink from list
+  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   if (!thd->killed)
   {
     I_List_iterator<THD> it(threads);
@@ -1162,14 +1162,14 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
 	    the comment in sql_class.h why this prevents crashes in possible
             races with query_length
           */
-          uint length= min((uint32_t)max_query_length, tmp->query_length);
+          uint length= cmin((uint32_t)max_query_length, tmp->query_length);
           thd_info->query=(char*) thd->strmake(tmp->query,length);
         }
         thread_infos.append(thd_info);
       }
     }
   }
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
 
   thread_info *thd_info;
   time_t now= my_time(0);
@@ -1207,7 +1207,7 @@ int fill_schema_processlist(THD* thd, TableList* tables,
 
   user= NullS;
 
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
 
   if (!thd->killed)
   {
@@ -1273,20 +1273,20 @@ int fill_schema_processlist(THD* thd, TableList* tables,
       if (tmp->query)
       {
         table->field[7]->store(tmp->query,
-                               min((uint32_t)PROCESS_LIST_INFO_WIDTH,
+                               cmin((uint32_t)PROCESS_LIST_INFO_WIDTH,
                                    tmp->query_length), cs);
         table->field[7]->set_notnull();
       }
 
       if (schema_table_store_record(thd, table))
       {
-        VOID(pthread_mutex_unlock(&LOCK_thread_count));
+        pthread_mutex_unlock(&LOCK_thread_count);
         return(1);
       }
     }
   }
 
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   return(0);
 }
 
@@ -1628,7 +1628,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 {
 
   /* Ensure that thread id not killed during loop */
-  VOID(pthread_mutex_lock(&LOCK_thread_count)); // For unlink from list
+  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
   I_List_iterator<THD> it(threads);
   THD *tmp;
@@ -1640,7 +1640,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   while ((tmp= it++))
     add_to_status(to, &tmp->status_var);
   
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   return;
 }
 

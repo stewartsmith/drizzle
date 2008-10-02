@@ -215,7 +215,7 @@ uchar *Field_string::pack(uchar *to, const uchar *from,
                           uint max_length,
                           bool low_byte_first __attribute__((unused)))
 {
-  uint length=      min(field_length,max_length);
+  uint length=      cmin(field_length,max_length);
   uint local_char_length= max_length/field_charset->mbmaxlen;
   if (length > local_char_length)
     local_char_length= my_charpos(field_charset, from, from+length,
@@ -258,7 +258,7 @@ Field_string::unpack(uchar *to,
                      bool low_byte_first __attribute__((unused)))
 {
   uint from_length=
-    param_data ? min(param_data & 0x00ff, field_length) : field_length;
+    param_data ? cmin(param_data & 0x00ff, field_length) : field_length;
   uint length;
 
   if (from_length > 255)

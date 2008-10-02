@@ -176,7 +176,7 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
 #ifdef CAN_TRUST_RANGE
   if (select && select->quick && select->quick->records > 0L)
   {
-    records=min((ha_rows) (select->quick->records*2+EXTRA_RECORDS*2),
+    records=cmin((ha_rows) (select->quick->records*2+EXTRA_RECORDS*2),
 		table->file->stats.records)+EXTRA_RECORDS;
     selected_records_file=0;
   }
@@ -198,12 +198,12 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
     goto err;
 
   memavl= thd->variables.sortbuff_size;
-  min_sort_memory= max((uint)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
+  min_sort_memory= cmax((uint)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
     uint32_t old_memavl;
     uint32_t keys= memavl/(param.rec_length+sizeof(char*));
-    param.keys=(uint) min(records+1, keys);
+    param.keys=(uint) cmin(records+1, keys);
     if ((table_sort.sort_keys=
 	 (uchar **) make_char_array((char **) table_sort.sort_keys,
                                     param.keys, param.rec_length, MYF(0))))
@@ -1039,7 +1039,7 @@ uint read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
   register uint count;
   uint length;
 
-  if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     if (pread(fromfile->file,(uchar*) buffpek->base, (length= rec_length*count),buffpek->file_pos) == 0)
       return((uint) -1);			/* purecov: inspected */
@@ -1300,7 +1300,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
          != -1 && error != 0);
 
 end:
-  lastbuff->count= min(org_max_rows-max_rows, param->max_rows);
+  lastbuff->count= cmin(org_max_rows-max_rows, param->max_rows);
   lastbuff->file_pos= to_start_filepos;
 err:
   delete_queue(&queue);

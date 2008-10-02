@@ -4111,7 +4111,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
   else
   {
     cost->zero();
-    *buffer_size= max((ulong)*buffer_size, 
+    *buffer_size= cmax((ulong)*buffer_size, 
                       (size_t)(1.2*rows_in_last_step) * elem_size + 
                       h->ref_length + table->key_info[keynr].key_length);
   }

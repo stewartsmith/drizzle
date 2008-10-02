@@ -1180,7 +1180,7 @@ int ha_myisam::indexes_are_disabled(void)
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
   THD *thd= current_thd;
-  ulong size= min(thd->variables.read_buff_size,
+  ulong size= cmin(thd->variables.read_buff_size,
                   (ulong) (table->s->avg_row_length*rows));
 
   /* don't enable row cache if too few rows */

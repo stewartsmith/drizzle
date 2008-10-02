@@ -1115,8 +1115,8 @@ bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
   if (closest_hole == chain_ptr) /* no more chains */
     *end_pos= file_buff->end();
   else
-    *end_pos= min(file_buff->end(),
-                  closest_hole->begin);
+    *end_pos= std::min(file_buff->end(),
+                       closest_hole->begin);
   return (closest_hole != chain_ptr) && (*end_pos == closest_hole->begin);
 }
 
@@ -1348,7 +1348,7 @@ int ha_tina::repair(THD* thd,
   /* write repaired file */
   while (1)
   {
-    write_end= min(file_buff->end(), current_position);
+    write_end= std::min(file_buff->end(), current_position);
     if ((write_end - write_begin) &&
         (my_write(repair_file, (uchar*)file_buff->ptr(),
                   write_end - write_begin, MYF_RW)))

@@ -255,7 +255,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     my_stpcpy(share->index_file_name,  index_name);
     my_stpcpy(share->data_file_name,   data_name);
 
-    share->blocksize=min(IO_SIZE,myisam_block_size);
+    share->blocksize=cmin(IO_SIZE,myisam_block_size);
     {
       HA_KEYSEG *pos=share->keyparts;
       for (i=0 ; i < keys ; i++)
@@ -374,7 +374,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     share->base.margin_key_file_length=(share->base.max_key_file_length -
 					(keys ? MI_INDEX_BLOCK_MARGIN *
 					 share->blocksize * keys : 0));
-    share->blocksize=min(IO_SIZE,myisam_block_size);
+    share->blocksize=cmin(IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
     if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
@@ -558,10 +558,10 @@ uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
     if (length == (ulong) -1)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
-        length= max(info->s->base.pack_reclength, info->s->max_pack_length);
+        length= cmax(info->s->base.pack_reclength, info->s->max_pack_length);
       else
         length= info->s->base.pack_reclength;
-      length= max(length, info->s->base.max_key_length);
+      length= cmax(length, info->s->base.max_key_length);
       /* Avoid unnecessary realloc */
       if (newptr && length == old_length)
 	return newptr;

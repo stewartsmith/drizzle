@@ -1931,7 +1931,7 @@ static const char *load_default_groups[]= {
     1 error
 */
 
-static bool init_global_datetime_format(timestamp_type format_type,
+static bool init_global_datetime_format(enum enum_drizzle_timestamp_type format_type,
                                         DATE_TIME_FORMAT **var_ptr)
 {
   /* Get command line option */
@@ -2118,8 +2118,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
       can't get max_connections*5 but still got no less than was
       requested (value of wanted_files).
     */
-    max_open_files= max(max((uint32_t)wanted_files, max_connections*5),
-                        open_files_limit);
+    max_open_files= cmax(cmax((uint32_t)wanted_files, max_connections*5),
+                         open_files_limit);
     files= my_set_max_open_files(max_open_files);
 
     if (files < wanted_files)
@@ -2130,15 +2130,15 @@ static int init_common_variables(const char *conf_file_name, int argc,
           If we have requested too much file handles than we bring
           max_connections in supported bounds.
         */
-        max_connections= (uint32_t) min((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
+        max_connections= (uint32_t) cmin((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
                                      max_connections);
         /*
           Decrease table_cache_size according to max_connections, but
-          not below TABLE_OPEN_CACHE_MIN.  Outer min() ensures that we
+          not below TABLE_OPEN_CACHE_MIN.  Outer cmin() ensures that we
           never increase table_cache_size automatically (that could
           happen if max_connections is decreased above).
         */
-        table_cache_size= (uint32_t) min(max((files-10-max_connections)/2,
+        table_cache_size= (uint32_t) cmin(cmax((files-10-max_connections)/2,
                                           (uint32_t)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
         if (global_system_variables.log_warnings)

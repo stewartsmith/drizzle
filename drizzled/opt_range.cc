@@ -2285,7 +2285,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     group_trp= get_best_group_min_max(&param, tree);
     if (group_trp)
     {
-      param.table->quick_condition_rows= min(group_trp->records,
+      param.table->quick_condition_rows= cmin(group_trp->records,
                                              head->file->stats.records);
       if (group_trp->read_cost < best_read_time)
       {
@@ -2576,7 +2576,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
     {
       imerge_trp->read_cost= imerge_cost;
       imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
-      imerge_trp->records= min(imerge_trp->records,
+      imerge_trp->records= cmin(imerge_trp->records,
                                param->table->file->stats.records);
       imerge_trp->range_scans= range_scans;
       imerge_trp->range_scans_end= range_scans + n_child_scans;
@@ -5241,7 +5241,7 @@ key_or(RANGE_OPT_PARAM *param, SEL_ARG *key1,SEL_ARG *key2)
       }
     }
 
-    // tmp.max >= key2.min && tmp.min <= key.max  (overlapping ranges)
+    // tmp.max >= key2.min && tmp.min <= key.cmax(overlapping ranges)
     if (eq_tree(tmp->next_key_part,key2->next_key_part))
     {
       if (tmp->is_same(key2))
@@ -6127,7 +6127,7 @@ walk_up_n_right:
     }
   }
   seq->param->range_count++;
-  seq->param->max_key_part=max(seq->param->max_key_part,(uint)key_tree->part);
+  seq->param->max_key_part=cmax(seq->param->max_key_part,(uint)key_tree->part);
   return 0;
 }
 
@@ -6214,7 +6214,7 @@ ha_rows check_quick_select(PARAM *param, uint idx, bool index_only,
       param->table->quick_key_parts[keynr]=param->max_key_part+1;
       param->table->quick_n_ranges[keynr]= param->range_count;
       param->table->quick_condition_rows=
-        min(param->table->quick_condition_rows, rows);
+        cmin(param->table->quick_condition_rows, rows);
     }
   }
   /* Figure out if the key scan is ROR (returns rows in ROWID order) or not */
@@ -7249,13 +7249,13 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint prefix_length,
     last_range= *(cur_range++);
 
     start_key.key=    (const uchar*) last_range->min_key;
-    start_key.length= min(last_range->min_length, (uint16_t)prefix_length);
+    start_key.length= cmin(last_range->min_length, (uint16_t)prefix_length);
     start_key.keypart_map= last_range->min_keypart_map & keypart_map;
     start_key.flag=   ((last_range->flag & NEAR_MIN) ? HA_READ_AFTER_KEY :
 		       (last_range->flag & EQ_RANGE) ?
 		       HA_READ_KEY_EXACT : HA_READ_KEY_OR_NEXT);
     end_key.key=      (const uchar*) last_range->max_key;
-    end_key.length=   min(last_range->max_length, (uint16_t)prefix_length);
+    end_key.length=   cmin(last_range->max_length, (uint16_t)prefix_length);
     end_key.keypart_map= last_range->max_keypart_map & keypart_map;
     /*
       We use READ_AFTER_KEY here because if we are reading on a key
@@ -8033,7 +8033,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         cur_group_prefix_len+= cur_part->store_length;
         cur_used_key_parts.set_bit(key_part_nr);
         ++cur_group_key_parts;
-        max_key_part= max(max_key_part,key_part_nr);
+        max_key_part= cmax(max_key_part,key_part_nr);
       }
       /*
         Check that used key parts forms a prefix of the index.
@@ -8638,9 +8638,9 @@ void cost_group_min_max(Table* table, KEY *index_info, uint used_key_parts,
     {
       double blocks_per_group= (double) num_blocks / (double) num_groups;
       p_overlap= (blocks_per_group * (keys_per_subgroup - 1)) / keys_per_group;
-      p_overlap= min(p_overlap, 1.0);
+      p_overlap= cmin(p_overlap, 1.0);
     }
-    io_cost= (double) min(num_groups * (1 + p_overlap), (double)num_blocks);
+    io_cost= (double) cmin(num_groups * (1 + p_overlap), (double)num_blocks);
   }
   else
     io_cost= (keys_per_group > keys_per_block) ?

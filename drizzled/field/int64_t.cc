@@ -178,7 +178,7 @@ String *Field_int64_t::val_str(String *val_buffer,
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
-  uint mlength=max(field_length+1,22*cs->mbmaxlen);
+  uint mlength=cmax(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int64_t j;

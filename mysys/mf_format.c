@@ -79,7 +79,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     if (flag & MY_SAFE_PATH)
       return NullS;
     tmp_length= strlength(startpos);
-    (void) strmake(to,startpos,min(tmp_length,FN_REFLEN-1));
+    (void) strmake(to,startpos,cmin(tmp_length,FN_REFLEN-1));
   }
   else
   {

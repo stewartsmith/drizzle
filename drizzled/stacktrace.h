@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -19,7 +19,7 @@
 
 #include "global.h"
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -28,31 +28,25 @@ extern "C" {
 #endif
 
 #if BACKTRACE_DEMANGLE
-char *my_demangle(const char *mangled_name, int *status);
+  char *my_demangle(const char *mangled_name, int *status);
 #endif
 
-#ifdef TARGET_OS_LINUX
-#if defined(HAVE_STACKTRACE) || (defined (__x86_64__) || defined (__i386__) || (defined(__alpha__) && defined(__GNUC__)))
+#if defined(HAVE_STACKTRACE) || (defined (__x86_64__) || defined (__i386__) )
 #undef HAVE_STACKTRACE
 #define HAVE_STACKTRACE
 
-extern char* __bss_start;
-extern char* heap_start;
+  extern char* __bss_start;
+  extern char* heap_start;
 
 #define init_stacktrace() do {                                 \
-                            heap_start = (char*) &__bss_start; \
-                          } while(0);
-void check_thread_lib(void);
-#endif /* defined (__i386__) || (defined(__alpha__) && defined(__GNUC__))) */
-#elif defined (__WIN__)
-#define HAVE_STACKTRACE
-extern void set_exception_pointers(EXCEPTION_POINTERS *ep);
-#define init_stacktrace() {}
-#endif
+    heap_start = (char*) &__bss_start; \
+  } while(0);
+  void check_thread_lib(void);
+#endif /* defined (__i386__) */
 
 #ifdef HAVE_STACKTRACE
-void print_stacktrace(uchar* stack_bottom, ulong thread_stack);
-void safe_print_str(const char* name, const char* val, int max_len);
+  void print_stacktrace(uchar* stack_bottom, ulong thread_stack);
+  void safe_print_str(const char* name, const char* val, int max_len);
 #else
 /* Define empty prototypes for functions that are not implemented */
 #define init_stacktrace() {}
@@ -61,8 +55,8 @@ void safe_print_str(const char* name, const char* val, int max_len);
 #endif /* HAVE_STACKTRACE */
 
 
-void write_core(int sig);
+  void write_core(int sig);
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 }
 #endif

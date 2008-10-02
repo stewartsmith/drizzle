@@ -376,7 +376,7 @@ static void init_block(HP_BLOCK *block, uint chunk_length, uint32_t min_records,
 {
   uint i,recbuffer,records_in_block;
 
-  max_records= max(min_records,max_records);
+  max_records= cmax(min_records,max_records);
   if (!max_records)
     max_records= 1000;			/* As good as quess as anything */
   

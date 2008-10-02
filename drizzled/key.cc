@@ -125,13 +125,13 @@ void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
         key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       key_length-= HA_KEY_BLOB_LENGTH;
-      length= min((uint16_t)key_length, key_part->length);
+      length= cmin((uint16_t)key_length, key_part->length);
       key_part->field->get_key_image(to_key, length, Field::itRAW);
       to_key+= HA_KEY_BLOB_LENGTH;
     }
     else
     {
-      length= min((uint16_t)key_length, key_part->length);
+      length= cmin((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
       const CHARSET_INFO * const cs= field->charset();
       uint bytes= field->get_key_image(to_key, length, Field::itRAW);
@@ -217,14 +217,14 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
       my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
       field->move_field_offset(ptrdiff);
       key_length-= HA_KEY_BLOB_LENGTH;
-      length= min(key_length, key_part->length);
+      length= cmin(key_length, key_part->length);
       field->set_key_image(from_key, length);
       from_key+= HA_KEY_BLOB_LENGTH;
       field->move_field_offset(-ptrdiff);
     }
     else
     {
-      length= min(key_length, key_part->length);
+      length= cmin(key_length, key_part->length);
       /* skip the byte with 'uneven' bits, if used */
       memcpy(to_record + key_part->offset, from_key + used_uneven_bits
              , (size_t) length - used_uneven_bits);
@@ -285,7 +285,7 @@ bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
 	return 1;
       continue;
     }
-    length= min((uint) (key_end-key), store_length);
+    length= cmin((uint) (key_end-key), store_length);
     if (!(key_part->key_type & (FIELDFLAG_NUMBER+FIELDFLAG_BINARY+
                                 FIELDFLAG_PACK)))
     {
@@ -368,7 +368,7 @@ void key_unpack(String *to,Table *table,uint idx)
       }
       
       if (key_part->length < field->pack_length())
-	tmp.length(min(tmp.length(),(uint32_t)key_part->length));
+	tmp.length(cmin(tmp.length(),(uint32_t)key_part->length));
       to->append(tmp);
     }
     else

@@ -823,11 +823,11 @@ public:
 class sys_var_thd_date_time_format :public sys_var_thd
 {
   DATE_TIME_FORMAT *SV::*offset;
-  timestamp_type date_time_type;
+  enum enum_drizzle_timestamp_type date_time_type;
 public:
   sys_var_thd_date_time_format(sys_var_chain *chain, const char *name_arg,
 			       DATE_TIME_FORMAT *SV::*offset_arg,
-			       timestamp_type date_time_type_arg)
+			       enum enum_drizzle_timestamp_type date_time_type_arg)
     :sys_var_thd(name_arg), offset(offset_arg),
     date_time_type(date_time_type_arg)
   { chain_sys_var(chain); }

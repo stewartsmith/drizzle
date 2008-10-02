@@ -341,7 +341,7 @@ bool setup_select_in_parentheses(LEX *lex)
   thr_lock_type lock_type;
   struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
-  timestamp_type date_time_type;
+  enum enum_drizzle_timestamp_type date_time_type;
   st_select_lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
   struct sp_cond_type *spcondtype;
@@ -1233,7 +1233,7 @@ master_file_def:
                from 0" (4 in fact), unspecified means "don't change the position
                (keep the preceding value)").
             */
-            Lex->mi.pos = max((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
+            Lex->mi.pos = cmax((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
           }
         | RELAY_LOG_FILE_SYM EQ TEXT_STRING_sys
           {
@@ -1243,7 +1243,7 @@ master_file_def:
           {
             Lex->mi.relay_log_pos = $3;
             /* Adjust if < BIN_LOG_HEADER_SIZE (same comment as Lex->mi.pos) */
-            Lex->mi.relay_log_pos = max((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
+            Lex->mi.relay_log_pos = cmax((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
           }
         ;
 

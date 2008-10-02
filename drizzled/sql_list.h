@@ -26,6 +26,7 @@
 #endif
 
 #include <utility>
+#include <algorithm>
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {

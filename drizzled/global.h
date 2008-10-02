@@ -697,17 +697,8 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define RTLD_NOW 1
 #endif
 
-/*
- *  Include standard definitions of operator new and delete.
- */
-#ifdef __cplusplus
-#include <new>
-#include <string>
-#include <algorithm>
-using namespace std;
-#endif
-#define max(a, b)       ((a) > (b) ? (a) : (b))
-#define min(a, b)       ((a) < (b) ? (a) : (b))
+#define cmax(a, b)       ((a) > (b) ? (a) : (b))
+#define cmin(a, b)       ((a) < (b) ? (a) : (b))
 
 /* Length of decimal number represented by INT32. */
 #define MY_INT32_NUM_DECIMAL_DIGITS 11

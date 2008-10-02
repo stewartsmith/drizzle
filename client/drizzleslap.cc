@@ -84,6 +84,8 @@
 #include <ctype.h>
 #include <string>
 
+using namespace std;
+
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
 #endif

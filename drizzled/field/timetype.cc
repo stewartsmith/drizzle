@@ -78,7 +78,7 @@ int Field_time::store(const char *from,
 
 
 int Field_time::store_time(DRIZZLE_TIME *ltime,
-                           timestamp_type time_type __attribute__((unused)))
+                           enum enum_drizzle_timestamp_type time_type __attribute__((unused)))
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);

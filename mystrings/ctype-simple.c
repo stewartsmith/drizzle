@@ -76,7 +76,7 @@ size_t my_strnxfrm_simple(const CHARSET_INFO * const  cs,
   uchar *map= cs->sort_order;
   uchar *d0= dst;
   uint frmlen;
-  if ((frmlen= min(dstlen, nweights)) > srclen)
+  if ((frmlen= cmin(dstlen, nweights)) > srclen)
     frmlen= srclen;
   if (dst != src)
   {
@@ -158,7 +158,7 @@ int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const uchar *a, size_t
   diff_if_only_endspace_difference= 0;
 #endif
 
-  end= a + (length= min(a_length, b_length));
+  end= a + (length= cmin(a_length, b_length));
   while (a < end)
   {
     if (map[*a++] != map[*b++])
@@ -871,7 +871,7 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unused
     val= new_val;
   }
   
-  len= min(len, (size_t) (e-p));
+  len= cmin(len, (size_t) (e-p));
   memcpy(dst, p, len);
   return len+sign;
 }
@@ -925,7 +925,7 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unu
     long_val= quo;
   }
   
-  len= min(len, (size_t) (e-p));
+  len= cmin(len, (size_t) (e-p));
 cnv:
   memcpy(dst, p, len);
   return len+sign;
@@ -1157,7 +1157,7 @@ size_t my_well_formed_len_8bit(const CHARSET_INFO * const cs __attribute__((unus
 {
   size_t nbytes= (size_t) (end-start);
   *error= 0;
-  return min(nbytes, nchars);
+  return cmin(nbytes, nchars);
 }
 
 
@@ -1812,7 +1812,7 @@ uint my_strxfrm_flag_normalize(uint flags, uint maximum)
     for (maximum--, flags= 0, i= 0; i < MY_STRXFRM_NLEVELS; i++)
     {
       uint src_bit= 1 << i;
-      uint dst_bit= 1 << min(i, maximum);
+      uint dst_bit= 1 << cmin(i, maximum);
       if (flag_lev & src_bit)
       {
         flags|= dst_bit;
@@ -1894,7 +1894,7 @@ my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
 {
   if (nweights && frmend < strend && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint fill_length= min((uint) (strend - frmend), nweights * cs->mbminlen);
+    uint fill_length= cmin((uint) (strend - frmend), nweights * cs->mbminlen);
     cs->cset->fill(cs, (char*) frmend, fill_length, cs->pad_char);
     frmend+= fill_length;
   }

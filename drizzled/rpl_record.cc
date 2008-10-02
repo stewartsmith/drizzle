@@ -252,7 +252,7 @@ unpack_row(Relay_log_info const *rli,
     (tabledef not NULL). If tabledef is NULL then it is assumed that
     there are no extra columns.
   */
-  uint max_cols= tabledef ? min(tabledef->size(), cols->n_bits) : 0;
+  uint max_cols= tabledef ? cmin(tabledef->size(), cols->n_bits) : 0;
   for (; i < max_cols; i++)
   {
     if (bitmap_is_set(cols, i))

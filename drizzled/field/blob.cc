@@ -28,7 +28,7 @@
 uint32_t
 blob_pack_length_to_max_length(uint arg)
 {
-  return (1LL << min(arg, 4U) * 8) - 1LL;
+  return (1LL << cmin(arg, 4U) * 8) - 1LL;
 }
 
 
@@ -183,7 +183,7 @@ int Field_blob::store(const char *from,uint length, const CHARSET_INFO * const c
     from= tmpstr.ptr();
   }
 
-  new_length= min(max_data_length(), field_charset->mbmaxlen * length);
+  new_length= cmin(max_data_length(), field_charset->mbmaxlen * length);
   if (value.alloc(new_length))
     goto oom_error;
 
@@ -339,7 +339,7 @@ int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
   b_length=get_length(b_ptr);
   if (b_length > max_length)
     b_length=max_length;
-  diff=memcmp(a,b,min(a_length,b_length));
+  diff=memcmp(a,b,cmin(a_length,b_length));
   return diff ? diff : (int) (a_length - b_length);
 }
 
@@ -491,7 +491,7 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
     length given is smaller than the actual length of the blob, we
     just store the initial bytes of the blob.
   */
-  store_length(to, packlength, min(length, max_length), low_byte_first);
+  store_length(to, packlength, cmin(length, max_length), low_byte_first);
 
   /*
     Store the actual blob data, which will occupy 'length' bytes.

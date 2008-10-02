@@ -110,7 +110,7 @@ public:
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
-  virtual int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
+  virtual int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
   int store(const char *to, uint length, const CHARSET_INFO * const cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
@@ -461,12 +461,12 @@ public:
                    int cuted_increment);
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             const char *str, uint str_len,
-                            timestamp_type ts_type, int cuted_increment);
+                            enum enum_drizzle_timestamp_type ts_type, int cuted_increment);
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
-                            int64_t nr, timestamp_type ts_type,
+                            int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
   void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint code, 
-                            double nr, timestamp_type ts_type);
+                            double nr, enum enum_drizzle_timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
     return (op_result == E_DEC_OVERFLOW);
