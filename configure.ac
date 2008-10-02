@@ -855,7 +855,7 @@ ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
 AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
+CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
@@ -1346,7 +1346,7 @@ AC_ARG_ENABLE([longlong-warnings],
     [AS_HELP_STRING([--enable-longlong-warnings],
        [Enable warnings about longlong in C++ @<:@default=off@:>@])],
     [ac_warn_longlong="$enableval"],
-    [ac_warn_longlong="yes"])
+    [ac_warn_longlong="no"])
 
 AC_ARG_ENABLE([strict-aliasing],
     [AS_HELP_STRING([--enable-strict-aliasing],
