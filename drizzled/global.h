@@ -499,12 +499,7 @@ typedef off_t os_off_t;
 #define SOCKET_ENFILE  ENFILE
 #define SOCKET_EMFILE  EMFILE
 
-typedef uint8_t    int7;  /* Most effective integer 0 <= x <= 127 */
-typedef short    int15;  /* Most effective integer 0 <= x <= 32767 */
 typedef int    myf;  /* Type of MyFlags in my_funcs */
-#if !defined(bool) && (!defined(HAVE_BOOL) || !defined(__cplusplus))
-typedef char    bool;  /* Ordinary boolean values 0 1 */
-#endif
 #define MYF(v)		(myf) (v)
 
 /* Defines for time function */
