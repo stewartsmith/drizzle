@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 18:14+0000\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-09-11 16:06+0000\n"
 "Last-Translator: tamgo <enmanuelr@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:45+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -93,8 +93,11 @@ msgid "Get status information from the server."
 msgstr "Recibir información de estado desde el servidor."
 
 #: client/drizzle.cc:276
+#, fuzzy
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Ajustar el fichero de salida [to_outfile]. Escribir todo en modo adición en "
+"el fichero de salida especificado."
 
 #: client/drizzle.cc:278
 msgid "Use another database. Takes database name as argument."
@@ -800,13 +803,14 @@ msgstr ""
 " shutdown Cierra el servidor\n"
 
 #: libdrizzle/errmsg.c:27
+#, fuzzy
 msgid "Unknown Drizzle error"
-msgstr ""
+msgstr "Error desconocido %d"
 
 #: libdrizzle/errmsg.c:28
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create UNIX socket (%d)"
-msgstr ""
+msgstr "No puede crear directorio '%s' (Codigo de error: %d)"
 
 #: libdrizzle/errmsg.c:29
 #, c-format
@@ -816,9 +820,9 @@ msgstr ""
 "'%-.100s' (%d)"
 
 #: libdrizzle/errmsg.c:30
-#, c-format
+#, fuzzy, c-format
 msgid "Can't connect to Drizzle server on '%-.100s' (%d)"
-msgstr ""
+msgstr "Imposible conectar al servidor"
 
 #: libdrizzle/errmsg.c:31
 #, c-format
@@ -835,9 +839,10 @@ msgid "Drizzle server has gone away"
 msgstr "El servidor Drizzle se ha ido"
 
 #: libdrizzle/errmsg.c:34
-#, c-format
+#, fuzzy, c-format
 msgid "Protocol mismatch; server version = %d, client version = %d"
 msgstr ""
+"Desajuste en el protocolo; versión del servidor = %d, versión cliente = %d"
 
 #: libdrizzle/errmsg.c:35
 msgid "Drizzle client ran out of memory"
@@ -848,17 +853,19 @@ msgid "Wrong host info"
 msgstr "Informacion de huesped equivocado"
 
 #: libdrizzle/errmsg.c:37
+#, fuzzy
 msgid "Localhost via UNIX socket"
-msgstr ""
+msgstr "Localhost vía socket de UNIX"
 
 #: libdrizzle/errmsg.c:38
-#, c-format
+#, fuzzy, c-format
 msgid "%-.100s via TCP/IP"
-msgstr ""
+msgstr "%-.100s vía TCP/IP"
 
 #: libdrizzle/errmsg.c:39
+#, fuzzy
 msgid "Error in server handshake"
-msgstr ""
+msgstr "Error de servidor en la transmisión de infomación de control"
 
 #: libdrizzle/errmsg.c:40
 msgid "Lost connection to Drizzle server during query"
@@ -880,35 +887,40 @@ msgstr ""
 "No puede esperar para tubo nombrado a huesped: %-.64s tubo: %-.32s (%lu)"
 
 #: libdrizzle/errmsg.c:44
-#, c-format
+#, fuzzy, c-format
 msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
-msgstr ""
+msgstr "No se puede abrir el named pipe al servidor: %-.64s pipe: %-.32s (%lu)"
 
 #: libdrizzle/errmsg.c:45
-#, c-format
+#, fuzzy, c-format
 msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 msgstr ""
+"No es posible establecer el estado del named pipe al servidor: %-.64s pipe: "
+"%-.32s (%lu)"
 
 #: libdrizzle/errmsg.c:46
-#, c-format
+#, fuzzy, c-format
 msgid "Can't initialize character set %-.32s (path: %-.100s)"
-msgstr ""
+msgstr "No se puede inicializar el character set %-.32s (ruta: %-.100s)"
 
 #: libdrizzle/errmsg.c:47
+#, fuzzy
 msgid "Got packet bigger than 'max_allowed_packet' bytes"
-msgstr ""
+msgstr "Paquete mayor que 'max_allowed_packet' bytes recibido"
 
 #: libdrizzle/errmsg.c:48
 msgid "Embedded server"
 msgstr "Servidor anidado"
 
 #: libdrizzle/errmsg.c:49
+#, fuzzy
 msgid "Error on SHOW SLAVE STATUS:"
-msgstr ""
+msgstr "Error en SHOW SLAVE STATUS:"
 
 #: libdrizzle/errmsg.c:50
+#, fuzzy
 msgid "Error on SHOW SLAVE HOSTS:"
-msgstr ""
+msgstr "Error en SHOW SLAVE HOSTS:"
 
 #: libdrizzle/errmsg.c:51
 msgid "Error connecting to slave:"
@@ -958,15 +970,17 @@ msgid "Invalid parameter number"
 msgstr "Numero de parametro invalido"
 
 #: libdrizzle/errmsg.c:62
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Can't send long data for non-string/non-binary data types (parameter: %d)"
 msgstr ""
+"No se puede enviar datos largos para non-string/non-binary tipos de datos "
+"(parámetro: %d)"
 
 #: libdrizzle/errmsg.c:64
-#, c-format
+#, fuzzy, c-format
 msgid "Using unsupported buffer type: %d  (parameter: %d)"
-msgstr ""
+msgstr "Utilizando tipo de buffer sin soporte: %d (parámetro: %d)"
 
 #: libdrizzle/errmsg.c:65
 #, c-format
@@ -978,76 +992,97 @@ msgid "Wrong or unknown protocol"
 msgstr "Protocolo desconocido o equivocado"
 
 #: libdrizzle/errmsg.c:76
+#, fuzzy
 msgid "Invalid connection handle"
-msgstr ""
+msgstr "Código de error inválido"
 
 #: libdrizzle/errmsg.c:77
+#, fuzzy
 msgid ""
 "Connection using old (pre-4.1.1) authentication protocol refused (client "
 "option 'secure_auth' enabled)"
 msgstr ""
+"Conexión con antigua (anteriores a 4.1.1) protocolo de autenticación "
+"prohibido (opción de cliente 'secure_auth' habilitado)"
 
 #: libdrizzle/errmsg.c:79
+#, fuzzy
 msgid "Row retrieval was canceled by drizzle_stmt_close() call"
-msgstr ""
+msgstr "Recuperación de fila fue cancelado por llamada a drizzle_stmt_close()"
 
 #: libdrizzle/errmsg.c:80
+#, fuzzy
 msgid "Attempt to read column without prior row fetch"
-msgstr ""
+msgstr "Intento de leer la columna sin haber obtenido una fila"
 
 #: libdrizzle/errmsg.c:81
+#, fuzzy
 msgid "Prepared statement contains no metadata"
-msgstr ""
+msgstr "El statement preparado no contiene metadata"
 
 #: libdrizzle/errmsg.c:82
+#, fuzzy
 msgid ""
 "Attempt to read a row while there is no result set associated with the "
 "statement"
 msgstr ""
+"Intento de leer una fila mientras que no existía un conjunto de resultados "
+"asociados a la sentencia"
 
 #: libdrizzle/errmsg.c:84
+#, fuzzy
 msgid "This feature is not implemented yet"
-msgstr ""
+msgstr "Esta funcionalidad no esta implementada todavia"
 
 #: libdrizzle/errmsg.c:85
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Lost connection to Drizzle server while waiting for initial communication "
 "packet, system error: %d"
 msgstr ""
+"conexion al servidor en '%s'  fallido\n"
+"error: '%s'"
 
 #: libdrizzle/errmsg.c:87
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Lost connection to Drizzle server while reading initial communication "
 "packet, system error: %d"
 msgstr ""
+"conexion al servidor en '%s'  fallido\n"
+"error: '%s'"
 
 #: libdrizzle/errmsg.c:89
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Lost connection to Drizzle server while sending authentication information, "
 "system error: %d"
 msgstr ""
+"conexion al servidor en '%s'  fallido\n"
+"error: '%s'"
 
 #: libdrizzle/errmsg.c:91
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Lost connection to Drizzle server while reading authorization information, "
 "system error: %d"
 msgstr ""
+"conexion al servidor en '%s'  fallido\n"
+"error: '%s'"
 
 #: libdrizzle/errmsg.c:93
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Lost connection to Drizzle server while setting initial database, system "
 "error: %d"
 msgstr ""
+"conexion al servidor en '%s'  fallido\n"
+"error: '%s'"
 
 #: libdrizzle/errmsg.c:95
-#, c-format
+#, fuzzy, c-format
 msgid "Statement closed indirectly because of a preceeding %s() call"
-msgstr ""
+msgstr "Statement cerrado indirectamente a causa de la llamada a %s() anterior"
 
 #: libdrizzle/errmsg.c:97 drizzled/drizzled_error_messages.h:345
 msgid "Couldn't uncompress communication packet"
@@ -1090,9 +1125,9 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "Error escribiendo el archivo '%s' (Codigo de error: %d)"
 
 #: mysys/errors.c:28
-#, c-format
+#, fuzzy, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
+msgstr "Error tratando de cerrar '%s' (Codigo de error: %d)"
 
 #: mysys/errors.c:29
 #, c-format
@@ -1268,9 +1303,9 @@ msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
 msgstr "%s: ERROR: Valor decimal invalido para opcion '%s'\n"
 
 #: mysys/my_getopt.c:1170
-#, c-format
+#, fuzzy, c-format
 msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
-msgstr ""
+msgstr "%*s(Activado por defecto --skip-%s para desactivar.)\n"
 
 #: mysys/my_getopt.c:1190
 #, c-format
@@ -1330,12 +1365,14 @@ msgid "Undefined handler error 125"
 msgstr "Manejador indefinido error 125"
 
 #: mysys/my_handler_errors.h:22
+#, fuzzy
 msgid "Index file is crashed"
-msgstr ""
+msgstr "Archivo indice ha estrallado"
 
 #: mysys/my_handler_errors.h:24
+#, fuzzy
 msgid "Record file is crashed"
-msgstr ""
+msgstr "Archivo record ha estrallado"
 
 #: mysys/my_handler_errors.h:26
 msgid "Out of memory in engine"
@@ -1362,8 +1399,9 @@ msgid "No record read before update"
 msgstr "Ningun registro leido antes de la actualizacion"
 
 #: mysys/my_handler_errors.h:38
+#, fuzzy
 msgid "Record was already deleted (or record file crashed)"
-msgstr ""
+msgstr "Registro ya fue eliminado (o el archivo de registro estrallo)"
 
 #: mysys/my_handler_errors.h:40
 msgid "No more room in record file"
@@ -1404,8 +1442,9 @@ msgstr ""
 "MERGE"
 
 #: mysys/my_handler_errors.h:58
+#, fuzzy
 msgid "Table is crashed and last repair failed"
-msgstr ""
+msgstr "Tabla se estrallo y la reparacion fallo"
 
 #: mysys/my_handler_errors.h:60
 msgid "Table was marked as crashed and should be repaired"
@@ -1416,8 +1455,9 @@ msgid "Lock timed out; Retry transaction"
 msgstr "Bloqueo alcanzo su limite de tiempo; Trate la transaccion de nuevo"
 
 #: mysys/my_handler_errors.h:64
+#, fuzzy
 msgid "Lock table is full;  Restart program with a larger locktable"
-msgstr ""
+msgstr "Lock table esta leno; Reinicie el programa con un locktable mas grande"
 
 #: mysys/my_handler_errors.h:66
 msgid "Updates are not allowed under a read only transactions"
@@ -1472,8 +1512,9 @@ msgid "There's no partition in table for the given value"
 msgstr "No hay particion en la tabla para el valor dado"
 
 #: mysys/my_handler_errors.h:92
+#, fuzzy
 msgid "Row-based binlogging of row failed"
-msgstr ""
+msgstr "El binlog para replicación basada en filas falla"
 
 #: mysys/my_handler_errors.h:94
 msgid "Index needed in foreign key constraint"
@@ -1518,8 +1559,9 @@ msgid "Tablespace exists"
 msgstr "El espacio de tabla existe"
 
 #: mysys/my_handler_errors.h:114
+#, fuzzy
 msgid "The event was corrupt, leading to illegal data being read"
-msgstr ""
+msgstr "Corrupción de evento, datos ilegales han sido leidos"
 
 #: mysys/my_handler_errors.h:116
 msgid "The table is of a new format not supported by this version"
@@ -1546,8 +1588,9 @@ msgid "Lock or active transaction"
 msgstr "Cerrar o activar transacción"
 
 #: mysys/my_handler_errors.h:128
+#, fuzzy
 msgid "No such table space"
-msgstr ""
+msgstr "Table space no existe"
 
 #: mysys/my_handler_errors.h:130
 msgid "Tablespace not empty"
@@ -1555,9 +1598,9 @@ msgstr "Espacio de tabla no vacio"
 
 #: drizzled/authentication.cc:66 drizzled/handler.cc:355
 #: drizzled/sql_plugin.cc:790 drizzled/sql_show.cc:4652
-#, c-format
+#, fuzzy, c-format
 msgid "Plugin '%s' init function returned error."
-msgstr ""
+msgstr "Plugin '%s' init función ha devuelto un error."
 
 #: drizzled/drizzled.cc:558
 #, c-format
@@ -1599,13 +1642,14 @@ msgstr ""
 "revise si el usuario ha existe!\n"
 
 #: drizzled/drizzled.cc:1202
-#, c-format
+#, fuzzy, c-format
 msgid "Retrying bind on TCP/IP port %u"
-msgstr ""
+msgstr "Volviendo a enlazar a puerto TCP/IP %u"
 
 #: drizzled/drizzled.cc:1208
+#, fuzzy
 msgid "Can't start server: Bind on TCP/IP port"
-msgstr ""
+msgstr "No se puede iniciar el servidor: Enlazar puerto TCP/IP"
 
 #: drizzled/drizzled.cc:1209
 #, c-format
@@ -1613,8 +1657,9 @@ msgid "Do you already have another drizzled server running on port: %d ?"
 msgstr "Ya tiene otro servidor drizzled ejecutando en el puerto: %d ?"
 
 #: drizzled/drizzled.cc:1215
+#, fuzzy
 msgid "Can't start server: listen() on TCP/IP port"
-msgstr ""
+msgstr "No puede iniciar servidor: listen() en TCP/IP puerto"
 
 #: drizzled/drizzled.cc:1216
 #, c-format
@@ -1627,7 +1672,7 @@ msgid "Fatal "
 msgstr "Fatal "
 
 #: drizzled/drizzled.cc:1452
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "We will try our best to scrape up some info that will hopefully help "
 "diagnose\n"
@@ -1636,9 +1681,14 @@ msgid ""
 "and this may fail.\n"
 "\n"
 msgstr ""
+"Haremos nuestro mejor esfuerzo para sacar algo de información que se espera "
+"ayudar a diagnosticar\n"
+"el problema, pero como ya hemos colgado, esta todo muy malo\n"
+"y incluso esto puede fallar.\n"
+"\n"
 
 #: drizzled/drizzled.cc:1463
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "It is possible that mysqld could use up to \n"
 "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %lu K\n"
@@ -1646,14 +1696,24 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
+"Es posible que mysqld podrá utilizar hasta\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size) * max_threads = %lu "
+"K\n"
+"bytes de memoria\n"
+"Espero que esta bien; si no, disminuir algunas variables en la ecuación.\n"
+"\n"
 
 #: drizzled/drizzled.cc:1481
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
 "where mysqld died. If you see no messages after this, something went\n"
 "terribly wrong...\n"
 msgstr ""
+"Intentando backtrace. Puede utilizar la siguiente información para "
+"averiguar\n"
+"donde murió mysqld. Si no aparece un mensaje después de esto, algo pasó\n"
+"terriblemente mal...\n"
 
 #: drizzled/drizzled.cc:1509
 #, c-format
@@ -1665,7 +1725,7 @@ msgstr ""
 "Algunos punteros podrian ser invalidos y causar el abortar...\n"
 
 #: drizzled/drizzled.cc:1521
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
 "This crash occured while the server was calling initgroups(). This is\n"
@@ -1675,9 +1735,18 @@ msgid ""
 "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
 "drizzled that is not statically linked.\n"
 msgstr ""
+"\n"
+"Se ha colgado mientras que el servidor estaba llamando initgroups (). Esto "
+"es\n"
+"a menudo debido al uso de un drizzled enlazado estaticamente contra glibc\n"
+"y configurado para utilizar LDAP en /etc/nsswitch.conf. Tendrá que\n"
+"actualizar a una versión de glibc que no tiene este problema (2.3.4 o\n"
+"más tarde cuando se utiliza con nscd), desactive LDAP en su nsswitch.conf, o "
+"usar un\n"
+"drizzled que no esta enlazado estaticamente.\n"
 
 #: drizzled/drizzled.cc:1536
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
 "You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
@@ -1686,9 +1755,18 @@ msgid ""
 "to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
 "the documentation for your distribution on how to do that.\n"
 msgstr ""
+"\n"
+"Está ejecutando un estáticamente enlazado al binario de LinuxThreads en un "
+"sistema de NPTL.\n"
+"Esto puede dar lugar a problemas en algunas distribuciones debido a "
+"conflictos de LT/NPTL.\n"
+"Debería crear un binario enlazado estaticamente, o forzar la utilización de "
+"LinuxThreads\n"
+"con la variable de entorno LD_ASSUME_KERNEL. Por favor, consulte\n"
+"la documentación de su distribución sobre la forma de hacerlo.\n"
 
 #: drizzled/drizzled.cc:1549
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
 "The '--memlock' argument, which was enabled, uses system calls that are\n"
@@ -1698,17 +1776,31 @@ msgid ""
 "'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
 " bugs.\n"
 msgstr ""
+"\n"
+"El argumento '--memlock', que fue activado, usa llamadas al sistema que son\n"
+"inestables y poco fiables en algunos sistemas operativos y en versiones de "
+"sistemas operativos\n"
+"(en particular, algunas versiones de Linux). El hecho que se ha colgado "
+"podría deberse a la utilización\n"
+"de llamadas de sistema problematicas. Debe considerar si realmente necesita "
+"el\n"
+"parámetro '--memlock'  y / o consultar al distribuidor del OS acerca "
+"problemas de\n"
+"'mlockall'.\n"
 
 #: drizzled/drizzled.cc:1564
-#, c-format
+#, fuzzy, c-format
 msgid "Writing a core file\n"
-msgstr ""
+msgstr "Escribiendo fichero histórico %s\n"
 
 #: drizzled/drizzled.cc:1611
+#, fuzzy
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
+"strlimit no pudo cambiar el tamaño de los archivos nucelos a 'infinito'; "
+"Nosotros quiza no podremos generar los archivos nucleos al recibir señales."
 
 #: drizzled/drizzled.cc:1679
 #, c-format
@@ -1737,7 +1829,7 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname fallo, usando '%s' como hostname"
 
 #: drizzled/drizzled.cc:2145
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
 msgstr ""
@@ -1765,10 +1857,14 @@ msgstr ""
 "usadas. Para habilitar logueo a archivos use la opcion --log-output."
 
 #: drizzled/drizzled.cc:2258
+#, fuzzy
 msgid ""
 "Although a path was specified for the --log-slow-queries option, log tables "
 "are used. To enable logging to files use the --log-output=file option."
 msgstr ""
+"Aunque el camino se ha especificado para la opción --log-slow-queries, están "
+"activadas las tablas de registro. Para activar la utilización archivos para "
+"registros, utiliza la opción -log-output=file."
 
 #: drizzled/drizzled.cc:2326
 msgid "Can't create thread-keys"
@@ -1808,11 +1904,13 @@ msgid "Failed to initialize plugins."
 msgstr "Fallo al tratar de inicializar plugins."
 
 #: drizzled/drizzled.cc:2487
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
 msgstr ""
+"%s: Demasiados argumentos (El primero que sobra es'%s').\n"
+"Utiliza --verbose --help para ver la lista de opciones disponibles\n"
 
 #: drizzled/drizzled.cc:2497
 msgid "Can't init databases"
@@ -1843,11 +1941,16 @@ msgid "Asked for %u thread stack, but got %llu"
 msgstr "Se pidio la pila de hilos de ejecucion %u , pero se obtuvo %llu"
 
 #: drizzled/drizzled.cc:2685
+#, fuzzy
 msgid ""
 "You have enabled the binary log, but you haven't set server-id to a non-zero "
 "value: we force server id to 1; updates will be logged to the binary log, "
 "but connections from slaves will not be accepted."
 msgstr ""
+"Has habilitado el registro binario (binlog), pero no se han fijado server-id "
+"a un valor no-cero: Por defecto el servidor id es 1; actualizaciones se "
+"registrarán en el log binario, pero las conexiones de los esclavos no serán "
+"aceptadas."
 
 #: drizzled/drizzled.cc:2743
 msgid "Before Lock_thread_count"
@@ -1864,18 +1967,22 @@ msgstr "drizzled: Obtuvo error %d de select"
 
 #: drizzled/drizzled.cc:3100 drizzled/drizzled.cc:3205
 #: drizzled/drizzled.cc:3364
+#, fuzzy
 msgid "Option used by mysql-test for debugging and testing of replication."
-msgstr ""
+msgstr "Opcion usada por mysql-test para debuggear y probar la replicacion."
 
 #: drizzled/drizzled.cc:3104
 msgid "Auto-increment columns are incremented by this"
 msgstr "Columnas de auto increment son incrementado por esto"
 
 #: drizzled/drizzled.cc:3109
+#, fuzzy
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
 msgstr ""
+"Offset añadido a columnas Auto-increment. Se utiliza cuando el incremento de "
+"auto-incremento ! = 1"
 
 #: drizzled/drizzled.cc:3115
 msgid ""
@@ -1886,10 +1993,12 @@ msgstr ""
 "esto."
 
 #: drizzled/drizzled.cc:3119
+#, fuzzy
 msgid "IP address to bind to."
-msgstr ""
+msgstr "Dirección IP a enlazar."
 
 #: drizzled/drizzled.cc:3123
+#, fuzzy
 msgid ""
 "Does not have any effect without '--log-bin'. Tell the master the form of "
 "binary logging to use: either 'row' for row-based binary logging, or "
@@ -1899,18 +2008,31 @@ msgid ""
 "the UUID() function; for those, row-based binary logging is automatically "
 "used. "
 msgstr ""
+"No tiene ningún efecto sin '--log-bin'. Configurar en el maestro la forma de "
+"registro binario de emplear: ya sea 'row' para registros basados en filas, o "
+"'statement' para registros basados en sentencias, o 'mixed'. 'mixed' es "
+"registros basadas en sentencias menos por aquellos sentencias en que sólo a "
+"base de fila es correcta: aquellos que impliquen funciones definidas por el "
+"usuario (es decir, UDFs) o el UUID (); para ellos, registros basados en fila "
+"esta utilizado automáticamente. "
 
 #: drizzled/drizzled.cc:3133
+#, fuzzy
 msgid ""
 "Tells the master it should log updates for the specified database, and "
 "exclude all others not explicitly mentioned."
 msgstr ""
+"Le dice al maestro que debe loguear actualizaciones para la base de datos "
+"especificada, y excluir todas las otras no mencionadas."
 
 #: drizzled/drizzled.cc:3137
+#, fuzzy
 msgid ""
 "Tells the master that updates to the given database should not be logged "
 "tothe binary log."
 msgstr ""
+"Le dice al maestro que las actualizaciones de para base de datos "
+"especificada no deben ser loggeadas al log binario."
 
 #: drizzled/drizzled.cc:3141
 msgid ""
@@ -1923,8 +2045,10 @@ msgstr ""
 "valor tiene que ser un multiplo de 256."
 
 #: drizzled/drizzled.cc:3152
+#, fuzzy
 msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
+"No ignora el valor de conjunto de caracteres enviado durante el handshake."
 
 #: drizzled/drizzled.cc:3157
 msgid "Set the filesystem character set."
@@ -1943,8 +2067,9 @@ msgid "Set the default collation."
 msgstr "Establece la coalicion por defecto."
 
 #: drizzled/drizzled.cc:3177
+#, fuzzy
 msgid "Default completion type."
-msgstr ""
+msgstr "Tipo de terminación por defecto."
 
 #: drizzled/drizzled.cc:3182
 msgid "Write error output on screen."
@@ -1977,24 +2102,30 @@ msgid "Print a symbolic stack trace on failure."
 msgstr "Imprime stack trace simbolico en fallo."
 
 #: drizzled/drizzled.cc:3217
+#, fuzzy
 msgid "Push supported query conditions to the storage engine."
 msgstr ""
+"Pasar las condiciones soportados de la consulta al motor de almacenamiento."
 
 #: drizzled/drizzled.cc:3223
+#, fuzzy
 msgid "Used for debugging;  Use at your own risk!"
-msgstr ""
+msgstr "Se utiliza para depurar; Utiliza bajo su propio riesgo!"
 
 #: drizzled/drizzled.cc:3226
+#, fuzzy
 msgid "Flush tables to disk between SQL commands."
-msgstr ""
+msgstr "Sincronizar las tablas en disco entre comandos SQL."
 
 #: drizzled/drizzled.cc:3231
+#, fuzzy
 msgid "Set up signals usable for debugging"
-msgstr ""
+msgstr "Establecer señales utilizables para la depuración"
 
 #: drizzled/drizzled.cc:3235
+#, fuzzy
 msgid "Enable general query log"
-msgstr ""
+msgstr "Habilitar el registro general de consultas"
 
 #: drizzled/drizzled.cc:3239
 msgid "Command(s) that are executed for each new connection"
@@ -2027,17 +2158,24 @@ msgid "Log connections and queries to file."
 msgstr "Loguear conexiones y consultas a archivo."
 
 #: drizzled/drizzled.cc:3269
+#, fuzzy
 msgid ""
 "Log update queries in binary format. Optional argument is the location for "
 "the binary log files.(Strongly recommended to avoid replication problems if "
 "server's hostname changes)"
 msgstr ""
+"Loguea consultas de actualizacion en formato binario. Argumento opcional es "
+"la locazacion de los archivos de log binario. (Recomendado que se evite la "
+"replicacion de problemas si el hostname del serivdor cambia)"
 
 #: drizzled/drizzled.cc:3276
+#, fuzzy
 msgid "File that holds the names for last binary log files."
 msgstr ""
+"Archivo que contiene los nombres de los últimos archivos de registro binario."
 
 #: drizzled/drizzled.cc:3284
+#, fuzzy
 msgid ""
 "If equal to 0 (the default), then when --log-bin is used, creation of a "
 "stored function (or trigger) is allowed only to users having the SUPER "
@@ -2046,20 +2184,32 @@ msgid ""
 "binary logging, the security issues do not exist and the binary logging "
 "cannot break, so you can safely set this to 1."
 msgstr ""
+"Si es 0 (valor por defecto), entonces cuando se utiliza --log-bin, la "
+"creación de una función almacenada (o gatillo) sólo se permite a los "
+"usuarios que tengan el privilegio SUPER y sólo si esta función almacenada "
+"(gatillo) no podrá romper registrio binario. Tenga en cuenta que si TODAS "
+"las conexiones a este servidor SIEMPRE usan un registro binario basado "
+"filas, las cuestiones de seguridad no existen y el registro binario no puede "
+"romper, por lo cual se puede establecer con el valor de 1."
 
 #: drizzled/drizzled.cc:3293
+#, fuzzy
 msgid "Error log file."
-msgstr ""
+msgstr "Error en el archivo de registro"
 
 #: drizzled/drizzled.cc:3297
+#, fuzzy
 msgid "Log all MyISAM changes to file."
-msgstr ""
+msgstr "Registre todos los cambios a tablas MyISAM en un archivo."
 
 #: drizzled/drizzled.cc:3301
+#, fuzzy
 msgid ""
 "Log queries that are executed without benefit of any index to the slow log "
 "if it is open."
 msgstr ""
+"Registrar en el registro de consultas lentas, las consultas ejecutadas sin "
+"el benificio de un indice."
 
 #: drizzled/drizzled.cc:3307
 msgid ""
@@ -2146,14 +2296,18 @@ msgid "Pid file used by safe_mysqld."
 msgstr "Archivo Pid usado por safe_mysqld."
 
 #: drizzled/drizzled.cc:3402
+#, fuzzy
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
+"Tiempo maximo en segudos para que el puerto sea liberado (Predeterminado : "
+"sin espera)"
 
 #: drizzled/drizzled.cc:3407
+#, fuzzy
 msgid "The location and name to use for relay logs."
-msgstr ""
+msgstr "Hubcacion y nombre usado por los logs de relevo."
 
 #: drizzled/drizzled.cc:3411
 msgid ""
@@ -2164,10 +2318,13 @@ msgstr ""
 "ultimos logs de relevo."
 
 #: drizzled/drizzled.cc:3416
+#, fuzzy
 msgid ""
 "The location and name of the file that remembers where the SQL replication "
 "thread is in the relay logs."
 msgstr ""
+"Ubicacion y nombre de el archivo que recuerda donde el hilo de ejecucion de "
+"replicacion SQL esta en los logs de relevo."
 
 #: drizzled/drizzled.cc:3421
 msgid ""
@@ -2315,7 +2472,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:3517
 msgid "Don't print a stack trace on failure."
-msgstr "No imprima un stack trace en caso de fallo."
+msgstr ""
 
 #: drizzled/drizzled.cc:3521
 msgid "Don't give threads different priorities."
@@ -2596,8 +2753,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3825
+#, fuzzy
 msgid "Buffer length for TCP/IP and socket communication."
-msgstr ""
+msgstr "Buffer para comunicación socket y TCP/IP"
 
 #: drizzled/drizzled.cc:3830
 msgid ""
@@ -2706,8 +2864,9 @@ msgid "Maximum space to use for all relay logs."
 msgstr ""
 
 #: drizzled/drizzled.cc:3951
+#, fuzzy
 msgid "Use compression on master/slave protocol."
-msgstr ""
+msgstr "Utilizar compresión en protocolo cliente/servidor."
 
 #: drizzled/drizzled.cc:3956
 msgid ""
@@ -2789,10 +2948,13 @@ msgid "Persistent buffer for transactions to be stored in binary log"
 msgstr ""
 
 #: drizzled/drizzled.cc:4036
+#, fuzzy
 msgid ""
 "The number of seconds the server waits for activity on a connection before "
 "closing it."
 msgstr ""
+"Cantidad de intentos que el esclavo intetara conectarse el maestro antes de "
+"rendirse."
 
 #: drizzled/drizzled.cc:4284
 msgid ""
@@ -3012,8 +3174,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:87
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Abortado"
 
 #: drizzled/drizzled_error_messages.h:89
 #, c-format
@@ -3365,9 +3528,11 @@ msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:229
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' was locked with a READ lock and can't be updated"
 msgstr ""
+"La tabla '%-.64s' fue creada con una versión diferente de MySQL y no puede "
+"ser leída."
 
 #: drizzled/drizzled_error_messages.h:231
 #, c-format
@@ -5650,8 +5815,9 @@ msgid "Not allowed to use NULL value in VALUES LESS THAN"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1165
+#, fuzzy
 msgid "Incorrect partition name"
-msgstr ""
+msgstr "Ignorar espacio tras los nombres de función."
 
 #: drizzled/drizzled_error_messages.h:1167
 msgid ""
@@ -6165,8 +6331,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/handler.cc:383
+#, fuzzy
 msgid "Too many storage engines!"
-msgstr ""
+msgstr "No se pudo conectar al motor de almacenamiento"
 
 #: drizzled/handler.cc:387
 #, c-format
@@ -6211,13 +6378,14 @@ msgid ""
 msgstr ""
 
 #: drizzled/log.cc:1093
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open log (file '%s', errno %d)"
-msgstr ""
+msgstr "Fallo al tratar de bloquear memoria. Errno: %d"
 
 #: drizzled/log.cc:1095 drizzled/log.cc:1103
+#, fuzzy
 msgid "Could not open log file"
-msgstr ""
+msgstr "No se pudo conectar al motor de almacenamiento"
 
 #: drizzled/log.cc:1101
 #, c-format
@@ -6314,21 +6482,164 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+#, fuzzy
+msgid "no error"
+msgstr "Error desconocido %d"
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
+#, fuzzy
 msgid "Out of memory while recording slave event"
+msgstr "Sin memoria en el motor"
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+#, fuzzy
+msgid "Not enough memory"
+msgstr "Memoria agotada"
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6367,21 +6678,25 @@ msgid "Slave %s: %s%s Error_code: %d"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:134
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Neither --relay-log nor --relay-log-index were used; so replication may "
 "break when this MySQL server acts as a slave and has his hostname changed!! "
 "Please use '--relay-log=%s' to avoid this problem."
 msgstr ""
+"Ningun argument proveido a --log-bin, y --login-bin-index no fue usado; asi "
+"que la replicacion puede romper cuando este servidor Drizzle actua  como un "
+"servidor maestro y tiene y su hostname cambia! Porfavor use '--log-bin='%s' "
+"para evitar este problema."
 
 #: drizzled/rpl_rli.cc:151
 msgid "Failed in open_log() called from init_relay_log_info()"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:168
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
-msgstr ""
+msgstr "Fallo al tratar de bloquear memoria. Errno: %d"
 
 #: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
 #, c-format
@@ -6393,22 +6708,23 @@ msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:202
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the existing relay log info file '%s' (errno %d)"
-msgstr ""
+msgstr "Fallo al tratar de bloquear memoria. Errno: %d"
 
 #: drizzled/rpl_rli.cc:253
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
-msgstr ""
+msgstr "Fallo al tratar de bloquear memoria. Errno: %d"
 
 #: drizzled/rpl_rli.cc:268
 msgid "Failed to flush relay log info file"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:271
+#, fuzzy
 msgid "Error counting relay log space"
-msgstr ""
+msgstr "Error al conectarse a esclavo:"
 
 #: drizzled/rpl_rli.cc:295
 #, c-format
@@ -6452,9 +6768,10 @@ msgid "thd_add_event event_add error in libevent_init\n"
 msgstr ""
 
 #: drizzled/scheduler.cc:247
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create completion port thread (error %d)"
 msgstr ""
+"No se pudo crear hilo de ejecucion de interrupcion (error %d, errno: %d)"
 
 #: drizzled/scheduler.cc:360
 msgid "event_add error in libevent_add_thd_callback\n"
@@ -6981,9 +7298,9 @@ msgid "Thread local variable '%s' not allocated in plugin '%s'."
 msgstr ""
 
 #: drizzled/sql_plugin.cc:2643
-#, c-format
+#, fuzzy, c-format
 msgid "Out of memory for plugin '%s'."
-msgstr ""
+msgstr "Sin memoria en el motor"
 
 #: drizzled/sql_plugin.cc:2650
 #, c-format
@@ -7044,8 +7361,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/sql_udf.cc:39
+#, fuzzy
 msgid "Can't allocate memory for udf structures"
-msgstr ""
+msgstr "¡Imposible reservar memoria para histfile temporal!"
 
 #: drizzled/table.cc:488
 #, c-format
@@ -7130,6 +7448,59 @@ msgid "Invalid error code"
 msgstr "Código de error inválido"
 
 #~ msgid ""
+#~ "Set the default character set (deprecated option, use --character-set-"
+#~ "server instead)."
+#~ msgstr ""
+#~ "Establece el conjunto de caracteres por defecto (opcion deprecada, use --"
+#~ "character-set-server en sustitucion)."
+
+#~ msgid ""
+#~ "Set the default collation (deprecated option, use --collation-server "
+#~ "instead)."
+#~ msgstr ""
+#~ "Establece la coalicion por defecto (opcion deprecada, use --collation-"
+#~ "server en sustitucion)."
+
+#, fuzzy
+#~ msgid ""
+#~ "Don't flush key buffers between writes for any MyISAM table (Deprecated "
+#~ "option, use --delay-key-write=all instead)."
+#~ msgstr ""
+#~ "No vaciar los key buffers entre escrituras para las tablas MyISAM (Opción "
+#~ "desaprobado, utilizar --delay-key-write=all)"
+
+#, fuzzy
+#~ msgid ""
+#~ "Log some extra information to update log. Please note that this option is "
+#~ "deprecated; see --log-queries-not-using-indexes option."
+#~ msgstr ""
+#~ "Registrar información adicional en el registro de cambios. Tenga en "
+#~ "cuenta que esta opción está obsoleta; ver la opción --log-queries-not-"
+#~ "using-indexes."
+
+#~ msgid ""
+#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
+#~ "FILE or NONE."
+#~ msgstr ""
+#~ "Sintaxis: log-output[=valor[,valor...]], donde \"valor\" puede ser TABLE, "
+#~ "FILE o NONE."
+
+#~ msgid ""
+#~ "Change the value of a variable. Please note that this option is "
+#~ "deprecated;you can set variables directly with --variable-name=value."
+#~ msgstr ""
+#~ "Cambia el valor de una variable. Notese que esta opción esta desaprobada; "
+#~ "tu puedes establecer variables directamente con --variable-name=valor."
+
+#, fuzzy
+#~ msgid "(Deprecated option)"
+#~ msgstr "Opciones de crear equivocados"
+
+#, fuzzy
+#~ msgid "Deprecated; use --table_open_cache instead."
+#~ msgstr "ADVERTENCIA: opción desfasada; utilizar mejor --disable-pager."
+
+#~ msgid ""
 #~ "Switch to another charset. Might be needed for processing binlog with "
 #~ "multi-byte charsets."
 #~ msgstr ""
@@ -7145,30 +7516,16 @@ msgstr "Código de error inválido"
 #~ msgid "Charset is not found"
 #~ msgstr "Charset no encontrado"
 
-#~ msgid ""
-#~ "Set the default character set (deprecated option, use --character-set-"
-#~ "server instead)."
-#~ msgstr ""
-#~ "Establece el conjunto de caracteres por defecto (opcion deprecada, use --"
-#~ "character-set-server en sustitucion)."
+#, fuzzy
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Opción de protocolo desconocido: %s\n"
 
-#~ msgid ""
-#~ "Set the default collation (deprecated option, use --collation-server "
-#~ "instead)."
-#~ msgstr ""
-#~ "Establece la coalicion por defecto (opcion deprecada, use --collation-"
-#~ "server en sustitucion)."
+#, fuzzy
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "COLLATION %s no es válido para CHARACTER SET %s"
 
-#~ msgid ""
-#~ "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-#~ "FILE or NONE."
+#, fuzzy
+#~ msgid "Don't log extra information to update and slow-query logs."
 #~ msgstr ""
-#~ "Sintaxis: log-output[=valor[,valor...]], donde \"valor\" puede ser TABLE, "
-#~ "FILE o NONE."
-
-#~ msgid ""
-#~ "Change the value of a variable. Please note that this option is "
-#~ "deprecated;you can set variables directly with --variable-name=value."
-#~ msgstr ""
-#~ "Cambia el valor de una variable. Notese que esta opción esta desaprobada; "
-#~ "tu puedes establecer variables directamente con --variable-name=valor."
+#~ "No registrar información adicional en el registro cambios ni en el de "
+#~ "consultas lentas."

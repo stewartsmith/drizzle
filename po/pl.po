@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
 "PO-Revision-Date: 2008-09-06 09:16+0000\n"
 "Last-Translator: nickers <2nickers@gmail.com>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:44+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -24,12 +24,14 @@ msgid "Synonym for `help'."
 msgstr "Synonim dla \"help\""
 
 #: client/drizzle.cc:254
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Komenda czyszczenia."
 
 #: client/drizzle.cc:256
+#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Połącz z serwerem. Opcjonalnymi argumentami są baza i host."
 
 #: client/drizzle.cc:258
 msgid ""
@@ -41,8 +43,9 @@ msgid "Send command to drizzle server, display result vertically."
 msgstr "Wysyła polecenie do serwera drizzle, wyświetla wyniki pionowo."
 
 #: client/drizzle.cc:261
+#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Wyjście z drizzle. To samo co \"quit\"."
 
 #: client/drizzle.cc:262
 msgid "Send command to drizzle server."
@@ -57,8 +60,9 @@ msgid "Disable pager, print to stdout."
 msgstr ""
 
 #: client/drizzle.cc:265
+#, fuzzy
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Nie zapisuje wyjścia do pliku."
 
 #: client/drizzle.cc:267
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -69,16 +73,18 @@ msgid "Print current command."
 msgstr ""
 
 #: client/drizzle.cc:269
+#, fuzzy
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "Zmienia znak zachęty."
 
 #: client/drizzle.cc:270
 msgid "Quit drizzle."
 msgstr "Wyjdz z drizzle."
 
 #: client/drizzle.cc:271
+#, fuzzy
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Przebuduj tablicę podpowiedzi."
 
 #: client/drizzle.cc:273
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -93,8 +99,9 @@ msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 
 #: client/drizzle.cc:278
+#, fuzzy
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "Wybiera aktualną bazę. Pobiera jej nazwę jako argument."
 
 #: client/drizzle.cc:280 client/drizzle.cc:1431
 msgid "Show warnings after every statement."
@@ -135,20 +142,24 @@ msgid "Writing history-file %s\n"
 msgstr ""
 
 #: client/drizzle.cc:1194
+#, fuzzy
 msgid "Aborted"
-msgstr ""
+msgstr "Przerwane"
 
 #: client/drizzle.cc:1194
+#, fuzzy
 msgid "Bye"
-msgstr ""
+msgstr "Do zobaczenia"
 
 #: client/drizzle.cc:1242
+#, fuzzy
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Zapytanie przerwane przy użyciu Ctrl+C\n"
 
 #: client/drizzle.cc:1265 client/drizzleadmin.cc:73 drizzled/drizzled.cc:3096
+#, fuzzy
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Wyświetl ten ekran pomocy i zakończ."
 
 #: client/drizzle.cc:1267
 msgid "Synonym for -?"
@@ -169,10 +180,13 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1277
+#, fuzzy
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"Automatycznie przełącz do trybu pionowego wyświetlania wyników, jeśli "
+"rezultat jest szerszy niż terminal."
 
 #: client/drizzle.cc:1280
 msgid ""
@@ -184,8 +198,9 @@ msgid "Directory where character sets are."
 msgstr ""
 
 #: client/drizzle.cc:1284
+#, fuzzy
 msgid "Display column type information."
-msgstr ""
+msgstr "Wyświetlaj informację o typie kolumny."
 
 #: client/drizzle.cc:1287
 msgid ""
@@ -6128,21 +6143,161 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+msgid "no error"
+msgstr ""
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
 msgid "Out of memory while recording slave event"
+msgstr ""
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+msgid "Not enough memory"
+msgstr ""
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148

@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 17:03+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-09-07 12:10+0000\n"
+"Last-Translator: z19 <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:44+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -24,17 +24,21 @@ msgid "Synonym for `help'."
 msgstr "Синоним для `help'."
 
 #: client/drizzle.cc:254
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Очистить командную строку."
 
 #: client/drizzle.cc:256
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Переподключиться к серверу. Опциональные аргументы: БД и хост."
 
 #: client/drizzle.cc:258
+#, fuzzy
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Установить разделитель выражений. Примечание: остаток строки и будет "
+"являться разделителем."
 
 #: client/drizzle.cc:260
 msgid "Send command to drizzle server, display result vertically."
@@ -67,12 +71,14 @@ msgstr ""
 "запросов, используя PAGER для разбивки на страницы."
 
 #: client/drizzle.cc:268
+#, fuzzy
 msgid "Print current command."
-msgstr ""
+msgstr "Напечатать текущую команду."
 
 #: client/drizzle.cc:269
+#, fuzzy
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "Изменить вашу коммандную строку в drizzle."
 
 #: client/drizzle.cc:270
 msgid "Quit drizzle."
@@ -176,11 +182,18 @@ msgstr ""
 "disable-auto-rehash."
 
 #: client/drizzle.cc:1274
+#, fuzzy
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of DRIZZLE and disables rehashing on "
 "reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
+"Отключение автоматического обновления информации авто-дополнения. При "
+"использовании этой опции вам не нужно будет использовать команду 'rehash' "
+"для перечитывания списка таблиц и баз для дополнений, зато запуск Drizzle "
+"становится быстрее и перечитывыние информации при переподключении будет "
+"отключено. ВНИМАНИЕ: опция является устаревшей; в качестве замены "
+"используйте --disable-auto-rehash."
 
 #: client/drizzle.cc:1277
 msgid ""
@@ -198,18 +211,22 @@ msgstr ""
 "клиента. (Включает --silent)."
 
 #: client/drizzle.cc:1282 drizzled/drizzled.cc:3166
+#, fuzzy
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "Каталог, в котором находятся файлы кодировок символов."
 
 #: client/drizzle.cc:1284
 msgid "Display column type information."
 msgstr "Отображать информацию о типах колонок."
 
 #: client/drizzle.cc:1287
+#, fuzzy
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Сохранить коментарии и передать их на сервер. По-умолчанию используется --"
+"skip-comments (пропускать коментарии), включается при помощи --comments"
 
 #: client/drizzle.cc:1290
 msgid "Use compression in server/client protocol."
@@ -319,10 +336,13 @@ msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Игнорирование SIGINT (CTRL+C)"
 
 #: client/drizzle.cc:1349
+#, fuzzy
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"Обновлять только базу данных по-умолчанию. Эта опция может использоваться с "
+"целью пропустить обновления для других БД в update log'ах."
 
 #: client/drizzle.cc:1352
 msgid ""
@@ -432,8 +452,9 @@ msgid "Wait and retry if connection is down."
 msgstr "Ожидать и повторять запрос если соединение с сервером разорвано."
 
 #: client/drizzle.cc:1406
+#, fuzzy
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "Количество секунд перед закрытием соединения по timeout-у."
 
 #: client/drizzle.cc:1411
 msgid "Max packet length to send to, or receive from server"
@@ -905,8 +926,9 @@ msgid "Wrong or unknown protocol"
 msgstr ""
 
 #: libdrizzle/errmsg.c:76
+#, fuzzy
 msgid "Invalid connection handle"
-msgstr ""
+msgstr "Неверный код ошибки."
 
 #: libdrizzle/errmsg.c:77
 msgid ""
@@ -1604,9 +1626,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:1564
-#, c-format
+#, fuzzy, c-format
 msgid "Writing a core file\n"
-msgstr ""
+msgstr "Запись файла истории %s\n"
 
 #: drizzled/drizzled.cc:1611
 msgid ""
@@ -2550,8 +2572,9 @@ msgid "Maximum space to use for all relay logs."
 msgstr ""
 
 #: drizzled/drizzled.cc:3951
+#, fuzzy
 msgid "Use compression on master/slave protocol."
-msgstr ""
+msgstr "Использовать сжатие в клиент-серверном протоколе."
 
 #: drizzled/drizzled.cc:3956
 msgid ""
@@ -2856,8 +2879,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:87
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Отменено"
 
 #: drizzled/drizzled_error_messages.h:89
 #, c-format
@@ -5494,8 +5518,9 @@ msgid "Not allowed to use NULL value in VALUES LESS THAN"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1165
+#, fuzzy
 msgid "Incorrect partition name"
-msgstr ""
+msgstr "Игнорирование пробелов после имен функций."
 
 #: drizzled/drizzled_error_messages.h:1167
 msgid ""
@@ -6158,21 +6183,161 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+msgid "no error"
+msgstr ""
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
 msgid "Out of memory while recording slave event"
+msgstr ""
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+msgid "Not enough memory"
+msgstr ""
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6888,8 +7053,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/sql_udf.cc:39
+#, fuzzy
 msgid "Can't allocate memory for udf structures"
-msgstr ""
+msgstr "Невозможно выделить мамять под временный файл истории!"
 
 #: drizzled/table.cc:488
 #, c-format

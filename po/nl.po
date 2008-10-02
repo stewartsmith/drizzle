@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 17:57+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-09-11 14:32+0000\n"
+"Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:45+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -496,13 +496,17 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
 
 #: client/drizzle.cc:1449
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Copyright (C) 2000-2008 MySQL AB\n"
 "                                      This software comes with ABSOLUTELY NO "
 "WARRANTY. This is free software,\n"
 " and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Copyright (C) 2000-2008 MySQL AB\n"
+"                                      Deze software komt ABSOLUUT ZONDER "
+"GARANTIE. Dit is gratis software,\n"
+" en het is toegestaan ze te wijzigen en te verdelen onder de GPL licentie\n"
 
 #: client/drizzle.cc:1453
 #, c-format
@@ -763,10 +767,13 @@ msgid "Copyright (C) 2000-2008 MySQL AB"
 msgstr "Copyright (C) 2000-2008 MySQL AB"
 
 #: client/drizzleadmin.cc:375
+#, fuzzy
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Deze software komt ABSOLUUT ZONDER GARANTIE. Dit is gratis software,\n"
+"en het is toegestaan ze te wijzigen en te verdelen onder de GPL licentie\n"
 
 #: client/drizzleadmin.cc:376
 msgid "Administration program for the drizzled daemon."
@@ -1785,7 +1792,7 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname mislukt, gebruikt '%s' ass hostnaam"
 
 #: drizzled/drizzled.cc:2145
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
 msgstr ""
@@ -2992,6 +2999,7 @@ msgstr ""
 "voordat ze afgesloten wordt."
 
 #: drizzled/drizzled.cc:4284
+#, fuzzy
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2999,6 +3007,11 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
+"Copyright (C) 2000 MySQL AB, by Monty and others\n"
+"Deze software komt ABSOLUUT ZONDER GARANTIE. Dit is gratis software,\n"
+"en het is toegestaan ze te wijzigen en te verdelen onder de GPL licentie\n"
+"\n"
+"Start de Drizzle databank server\n"
 
 #: drizzled/drizzled.cc:4291
 #, c-format
@@ -6622,21 +6635,164 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, fuzzy, c-format
+msgid " %s, Error_code: %d;"
+msgstr "Slave %s: %s%s Foutcode: %d"
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+#, fuzzy
+msgid "no error"
+msgstr "Onbekende fout"
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
+#, fuzzy
 msgid "Out of memory while recording slave event"
+msgstr "Geheugen tekort in engine"
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, fuzzy, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr "Uitvoeren van stat() op bestand '%s' mislukt"
+
+#: drizzled/log_event.cc:5760
+#, fuzzy
+msgid "Not enough memory"
+msgstr "Te weinig geheugen"
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6679,48 +6835,58 @@ msgid "Slave %s: %s%s Error_code: %d"
 msgstr "Slave %s: %s%s Foutcode: %d"
 
 #: drizzled/rpl_rli.cc:134
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Neither --relay-log nor --relay-log-index were used; so replication may "
 "break when this MySQL server acts as a slave and has his hostname changed!! "
 "Please use '--relay-log=%s' to avoid this problem."
 msgstr ""
+"Er werd geen argument voorzien bij --log-bin, en --log-bin-index werd niet "
+"gebruikt; replicatie zou dus kunnen mislukken wanneer deze Drizzle server "
+"dienst doet als master en zijn hostname wijzigt!! Gebruik '--log-bin=%s' om "
+"dit probleem te vermijden."
 
 #: drizzled/rpl_rli.cc:151
 msgid "Failed in open_log() called from init_relay_log_info()"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:168
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
 msgstr ""
+"Creatie van een nieuwe master in bestand is mislukt (bestand '%s', "
+"foutnummer %d)"
 
 #: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to create a cache on relay log info file '%s'"
-msgstr ""
+msgstr "Creatie van een  cache op de log mislukt (bestand '%s')"
 
 #: drizzled/rpl_rli.cc:186
 msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:202
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the existing relay log info file '%s' (errno %d)"
 msgstr ""
+"Openen van een  bestaand master info bestand mislukt (bestand '%s', "
+"foutnummer %d')"
 
 #: drizzled/rpl_rli.cc:253
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
-msgstr ""
+msgstr "Openen van log mislukt (bestand '%s', foutnummer %d)"
 
 #: drizzled/rpl_rli.cc:268
+#, fuzzy
 msgid "Failed to flush relay log info file"
-msgstr ""
+msgstr "Leegmaken van het master info bestand is mislukt"
 
 #: drizzled/rpl_rli.cc:271
+#, fuzzy
 msgid "Error counting relay log space"
-msgstr ""
+msgstr "Fout bij verbinden met slave:"
 
 #: drizzled/rpl_rli.cc:295
 #, c-format
@@ -7430,35 +7596,6 @@ msgstr ""
 msgid "Invalid error code"
 msgstr ""
 
-#~ msgid "Don't log extra information to update and slow-query logs."
-#~ msgstr "Geen extra informatie loggen in update en slow-query logs."
-
-#~ msgid "Sync .frm to disk on create. Enabled by default."
-#~ msgstr ""
-#~ "Synchroniseer .frm naar de disk bij het aanmaken. Standaard ingeschakeld."
-
-#~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr ""
-#~ "Schakel naar een andere karakterset. Kan nodig zijn voor het verwerken "
-#~ "van een binlog met multi-byte karaktersets."
-
-#~ msgid "Usage: \\C char_setname | charset charset_name"
-#~ msgstr "Gebruik: \\C char_setnaam | charset char_setnaam"
-
-#~ msgid "Charset changed"
-#~ msgstr "Karakterset aangepast"
-
-#~ msgid "Charset is not found"
-#~ msgstr "Karakterset werd niet gevonden"
-
-#~ msgid "Unknown option to protocol: %s\n"
-#~ msgstr "Onbekende optie voor protocol: %s\n"
-
-#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
-#~ msgstr "COLLATION %s is niet geldig voor CHARACTER SET %s"
-
 #~ msgid ""
 #~ "Set the default character set (deprecated option, use --character-set-"
 #~ "server instead)."
@@ -7523,3 +7660,32 @@ msgstr ""
 
 #~ msgid "Deprecated; use --table_open_cache instead."
 #~ msgstr "Afgeraden; gebruik --table_open_cache."
+
+#~ msgid ""
+#~ "Switch to another charset. Might be needed for processing binlog with "
+#~ "multi-byte charsets."
+#~ msgstr ""
+#~ "Schakel naar een andere karakterset. Kan nodig zijn voor het verwerken "
+#~ "van een binlog met multi-byte karaktersets."
+
+#~ msgid "Usage: \\C char_setname | charset charset_name"
+#~ msgstr "Gebruik: \\C char_setnaam | charset char_setnaam"
+
+#~ msgid "Charset changed"
+#~ msgstr "Karakterset aangepast"
+
+#~ msgid "Charset is not found"
+#~ msgstr "Karakterset werd niet gevonden"
+
+#~ msgid "Unknown option to protocol: %s\n"
+#~ msgstr "Onbekende optie voor protocol: %s\n"
+
+#~ msgid "COLLATION %s is not valid for CHARACTER SET %s"
+#~ msgstr "COLLATION %s is niet geldig voor CHARACTER SET %s"
+
+#~ msgid "Sync .frm to disk on create. Enabled by default."
+#~ msgstr ""
+#~ "Synchroniseer .frm naar de disk bij het aanmaken. Standaard ingeschakeld."
+
+#~ msgid "Don't log extra information to update and slow-query logs."
+#~ msgstr "Geen extra informatie loggen in update en slow-query logs."

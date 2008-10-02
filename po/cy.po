@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 17:59+0000\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-08-17 02:49+0000\n"
 "Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
 "Language-Team: Welsh <cy@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,20 +16,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
 "2 : 3;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:45+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
+#, fuzzy
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "Cyfystyr am 'help'"
 
 #: client/drizzle.cc:254
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Carthu'r rheolaeth"
 
 #: client/drizzle.cc:256
+#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Ail cysylltu i'r gweinydd. Ymresymiad at ddewis yw 'db' a 'host'"
 
 #: client/drizzle.cc:258
 msgid ""
@@ -41,24 +44,27 @@ msgid "Send command to drizzle server, display result vertically."
 msgstr ""
 
 #: client/drizzle.cc:261
+#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Gadael drizzle.  Yr un fath a 'quit'."
 
 #: client/drizzle.cc:262
 msgid "Send command to drizzle server."
 msgstr ""
 
 #: client/drizzle.cc:263
+#, fuzzy
 msgid "Display this help."
-msgstr ""
+msgstr "Dangos cymorth hyn"
 
 #: client/drizzle.cc:264
 msgid "Disable pager, print to stdout."
 msgstr ""
 
 #: client/drizzle.cc:265
+#, fuzzy
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Peidiwch ag ysgrifennu yn 'outfile'"
 
 #: client/drizzle.cc:267
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -73,8 +79,9 @@ msgid "Change your drizzle prompt."
 msgstr ""
 
 #: client/drizzle.cc:270
+#, fuzzy
 msgid "Quit drizzle."
-msgstr ""
+msgstr "Gadael drizzle."
 
 #: client/drizzle.cc:271
 msgid "Rebuild completion hash."
@@ -97,12 +104,14 @@ msgid "Use another database. Takes database name as argument."
 msgstr ""
 
 #: client/drizzle.cc:280 client/drizzle.cc:1431
+#, fuzzy
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Dangos rhybudd ar ol bob datganiad"
 
 #: client/drizzle.cc:282
+#, fuzzy
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Peidiwch a dangos rhybydd ar ol bob datganiad"
 
 #: client/drizzle.cc:1115
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -147,8 +156,9 @@ msgid "Query aborted by Ctrl+C\n"
 msgstr ""
 
 #: client/drizzle.cc:1265 client/drizzleadmin.cc:73 drizzled/drizzled.cc:3096
+#, fuzzy
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Dangos cymorth yma a gadael"
 
 #: client/drizzle.cc:1267
 msgid "Synonym for -?"
@@ -184,8 +194,9 @@ msgid "Directory where character sets are."
 msgstr ""
 
 #: client/drizzle.cc:1284
+#, fuzzy
 msgid "Display column type information."
-msgstr ""
+msgstr "Dangos ymwybodaeth colofn math"
 
 #: client/drizzle.cc:1287
 msgid ""
@@ -226,8 +237,9 @@ msgid "Print the output of a query (rows) vertically."
 msgstr ""
 
 #: client/drizzle.cc:1310
+#, fuzzy
 msgid "Continue even if we get an sql error."
-msgstr ""
+msgstr "Dal ymlaen hyd yn oed mae na camgymeriad sql"
 
 #: client/drizzle.cc:1314
 msgid ""
@@ -318,10 +330,13 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1358 client/drizzleadmin.cc:78
+#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"Trwyddedair i defnyddio pan cysylltu i'r gweinydd.  Os nad ydych yn rhoi "
+"trwyddedair fydd y  'tty' yn gofyn am un"
 
 #: client/drizzle.cc:1360
 msgid ""
@@ -394,8 +409,9 @@ msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
 
 #: client/drizzle.cc:1396
+#, fuzzy
 msgid "Synonym for option --safe-updates, -U."
-msgstr ""
+msgstr "cyfystir am dewisiad --safe-updates, -U."
 
 #: client/drizzle.cc:1399
 msgid "Write more. (-v -v -v gives the table output format)."
@@ -472,9 +488,9 @@ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
 #: client/drizzle.cc:1902
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown command '\\%c'."
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: client/drizzle.cc:2329
 msgid ""
@@ -2828,8 +2844,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:87
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Terfynwyd"
 
 #: drizzled/drizzled_error_messages.h:89
 #, c-format
@@ -2919,8 +2936,9 @@ msgid "No database selected"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:125
+#, fuzzy
 msgid "Unknown command"
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: drizzled/drizzled_error_messages.h:127
 #, c-format
@@ -4013,9 +4031,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:577
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown collation: '%-.64s'"
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: drizzled/drizzled_error_messages.h:579
 msgid ""
@@ -6130,21 +6148,161 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+msgid "no error"
+msgstr ""
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
 msgid "Out of memory while recording slave event"
+msgstr ""
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+msgid "Not enough memory"
+msgstr ""
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148

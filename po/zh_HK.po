@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 16:22+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-08-17 02:46+0000\n"
+"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
 "Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:44+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -702,13 +702,14 @@ msgid ""
 msgstr ""
 
 #: libdrizzle/errmsg.c:27
+#, fuzzy
 msgid "Unknown Drizzle error"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: libdrizzle/errmsg.c:28
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create UNIX socket (%d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: libdrizzle/errmsg.c:29
 #, c-format
@@ -716,9 +717,9 @@ msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
 msgstr ""
 
 #: libdrizzle/errmsg.c:30
-#, c-format
+#, fuzzy, c-format
 msgid "Can't connect to Drizzle server on '%-.100s' (%d)"
-msgstr ""
+msgstr "不能連接伺服器"
 
 #: libdrizzle/errmsg.c:31
 #, c-format
@@ -726,9 +727,9 @@ msgid "Can't create TCP/IP socket (%d)"
 msgstr ""
 
 #: libdrizzle/errmsg.c:32
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown Drizzle server host '%-.100s' (%d)"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: libdrizzle/errmsg.c:33
 msgid "Drizzle server has gone away"
@@ -818,8 +819,9 @@ msgid "Error connecting to master:"
 msgstr ""
 
 #: libdrizzle/errmsg.c:53
+#, fuzzy
 msgid "SSL connection error"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: libdrizzle/errmsg.c:54
 msgid "Malformed packet"
@@ -877,8 +879,9 @@ msgid "Wrong or unknown protocol"
 msgstr ""
 
 #: libdrizzle/errmsg.c:76
+#, fuzzy
 msgid "Invalid connection handle"
-msgstr ""
+msgstr "無效的錯誤碼"
 
 #: libdrizzle/errmsg.c:77
 msgid ""
@@ -989,9 +992,9 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:28
-#, c-format
+#, fuzzy, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:29
 #, c-format
@@ -2522,8 +2525,9 @@ msgid "Maximum space to use for all relay logs."
 msgstr ""
 
 #: drizzled/drizzled.cc:3951
+#, fuzzy
 msgid "Use compression on master/slave protocol."
-msgstr ""
+msgstr "在伺服器及客戶端之間的協定使用壓縮"
 
 #: drizzled/drizzled.cc:3956
 msgid ""
@@ -2709,19 +2713,19 @@ msgid "YES"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:39
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:41
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create table '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:43
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create database '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:45
 #, c-format
@@ -2734,9 +2738,9 @@ msgid "Can't drop database '%-.192s'; database doesn't exist"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:49
-#, c-format
+#, fuzzy, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:51
 #, c-format
@@ -2744,48 +2748,48 @@ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:53
-#, c-format
+#, fuzzy, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:55
 msgid "Can't read record in system table"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:57
-#, c-format
+#, fuzzy, c-format
 msgid "Can't get status of '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:59
-#, c-format
+#, fuzzy, c-format
 msgid "Can't get working directory (errno: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:61
-#, c-format
+#, fuzzy, c-format
 msgid "Can't lock file (errno: %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:63
-#, c-format
+#, fuzzy, c-format
 msgid "Can't open file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:65
-#, c-format
+#, fuzzy, c-format
 msgid "Can't find file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:67
-#, c-format
+#, fuzzy, c-format
 msgid "Can't read dir of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:69
-#, c-format
+#, fuzzy, c-format
 msgid "Can't change dir to '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:71
 #, c-format
@@ -2803,24 +2807,24 @@ msgid "Can't write; duplicate key in table '%-.192s'"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:77
-#, c-format
+#, fuzzy, c-format
 msgid "Error on close of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:79
-#, c-format
+#, fuzzy, c-format
 msgid "Error reading file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:81
-#, c-format
+#, fuzzy, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:83
-#, c-format
+#, fuzzy, c-format
 msgid "Error writing file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:85
 #, c-format
@@ -2828,8 +2832,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:87
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "已中止"
 
 #: drizzled/drizzled_error_messages.h:89
 #, c-format
@@ -2867,9 +2872,9 @@ msgid "Old key file for table '%-.192s'; repair it!"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:103
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' is read only"
-msgstr ""
+msgstr "表格是唯讀"
 
 #: drizzled/drizzled_error_messages.h:105
 #, c-format
@@ -2881,13 +2886,14 @@ msgid "Out of sort memory; increase server sort buffer size"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:109
-#, c-format
+#, fuzzy, c-format
 msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:111
+#, fuzzy
 msgid "Too many connections"
-msgstr ""
+msgstr "連接中"
 
 #: drizzled/drizzled_error_messages.h:113
 msgid ""
@@ -2915,12 +2921,14 @@ msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:123
+#, fuzzy
 msgid "No database selected"
-msgstr ""
+msgstr "舊的資料庫檔案"
 
 #: drizzled/drizzled_error_messages.h:125
+#, fuzzy
 msgid "Unknown command"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:127
 #, c-format
@@ -2928,9 +2936,9 @@ msgid "Column '%-.192s' cannot be null"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:129
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown database '%-.192s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:131
 #, c-format
@@ -2938,9 +2946,9 @@ msgid "Table '%-.192s' already exists"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:133
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown table '%-.100s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:135
 #, c-format
@@ -2952,9 +2960,9 @@ msgid "Server shutdown in progress"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:139
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:141
 #, c-format
@@ -3181,9 +3189,9 @@ msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:229
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' was locked with a READ lock and can't be updated"
-msgstr ""
+msgstr "不能讀取由不同版本的MySQL所建立的表格 '%-.64s'"
 
 #: drizzled/drizzled_error_messages.h:231
 #, c-format
@@ -3212,13 +3220,14 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:241
+#, fuzzy
 msgid "Unknown error"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: drizzled/drizzled_error_messages.h:243
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown procedure '%-.192s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:245
 #, c-format
@@ -3260,9 +3269,9 @@ msgid "The table '%-.192s' is full"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:261
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown character set: '%-.64s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:263
 #, c-format
@@ -3318,9 +3327,9 @@ msgid "Function '%-.192s' already exists"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:283
-#, c-format
+#, fuzzy, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:285
 #, c-format
@@ -3628,9 +3637,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:417
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown system variable '%-.64s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:419
 #, c-format
@@ -4013,9 +4022,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:577
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown collation: '%-.64s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:579
 msgid ""
@@ -4074,9 +4083,9 @@ msgid "Column '%-.192s' cannot be part of FULLTEXT index"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:599
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown key cache '%-.100s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:601
 msgid ""
@@ -4085,9 +4094,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:603
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown table engine '%s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:605
 #, c-format
@@ -4149,9 +4158,9 @@ msgid "Got temporary error %d '%-.100s' from %s"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:627
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown or incorrect time zone: '%-.64s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:629
 #, c-format
@@ -4531,8 +4540,9 @@ msgid "A purgeable log is in use, will not purge"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:789
+#, fuzzy
 msgid "Unknown error during log purge"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: drizzled/drizzled_error_messages.h:791
 #, c-format
@@ -4571,9 +4581,9 @@ msgid "Binary logging and replication forbid changing the global server %s"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:807
-#, c-format
+#, fuzzy, c-format
 msgid "Can't map file: %-.200s, errno: %d"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/drizzled_error_messages.h:809
 #, c-format
@@ -5336,9 +5346,9 @@ msgid "Failed to store event %s. Error code %d from storage engine."
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1109
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown event '%-.192s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:1111
 #, c-format
@@ -5586,8 +5596,9 @@ msgid "Table has no partition for some existing values"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1215
+#, fuzzy
 msgid "Statement is not safe to log in statement format."
-msgstr ""
+msgstr "不可能記錄這句指示"
 
 #: drizzled/drizzled_error_messages.h:1217
 #, c-format
@@ -5981,8 +5992,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/handler.cc:383
+#, fuzzy
 msgid "Too many storage engines!"
-msgstr ""
+msgstr "連接中"
 
 #: drizzled/handler.cc:387
 #, c-format
@@ -6027,9 +6039,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/log.cc:1093
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open log (file '%s', errno %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/log.cc:1095 drizzled/log.cc:1103
 msgid "Could not open log file"
@@ -6119,9 +6131,9 @@ msgid "Please restart mysqld without --tc-heuristic-recover"
 msgstr ""
 
 #: drizzled/log.cc:4509 drizzled/log.cc:4533
-#, c-format
+#, fuzzy, c-format
 msgid "find_log_pos() failed (error: %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/log.cc:4646
 msgid ""
@@ -6130,21 +6142,162 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+#, fuzzy
+msgid "no error"
+msgstr "不明的錯誤 %d"
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
 msgid "Out of memory while recording slave event"
+msgstr ""
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+msgid "Not enough memory"
+msgstr ""
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6195,9 +6348,9 @@ msgid "Failed in open_log() called from init_relay_log_info()"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:168
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
 #, c-format
@@ -6209,14 +6362,14 @@ msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:202
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the existing relay log info file '%s' (errno %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/rpl_rli.cc:253
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: drizzled/rpl_rli.cc:268
 msgid "Failed to flush relay log info file"
@@ -6268,9 +6421,9 @@ msgid "thd_add_event event_add error in libevent_init\n"
 msgstr ""
 
 #: drizzled/scheduler.cc:247
-#, c-format
+#, fuzzy, c-format
 msgid "Can't create completion port thread (error %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/scheduler.cc:360
 msgid "event_add error in libevent_add_thd_callback\n"
@@ -6726,9 +6879,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/sql_base.cc:3950
-#, c-format
+#, fuzzy, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: drizzled/sql_db.cc:396 drizzled/sql_db.cc:404
 #, c-format
@@ -6775,9 +6928,9 @@ msgid "Plugin '%s' has ref_count=%d after shutdown."
 msgstr ""
 
 #: drizzled/sql_plugin.cc:2433 drizzled/sql_plugin.cc:2496
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: drizzled/sql_plugin.cc:2476
 #, c-format
@@ -6843,9 +6996,9 @@ msgid "Invalid (old?) table or database name '%s'"
 msgstr ""
 
 #: drizzled/sql_table.cc:2716
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown - internal error %d during operation"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: drizzled/sql_table.cc:4990
 #, c-format

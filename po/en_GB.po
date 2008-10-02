@@ -7,57 +7,68 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-10-01 16:57+0000\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-09-06 09:12+0000\n"
 "Last-Translator: tesserhex <jxl@gmx.com>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:44+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
+#, fuzzy
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "Synonym for `help'."
 
 #: client/drizzle.cc:254
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Clear command."
 
 #: client/drizzle.cc:256
+#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Reconnect to the server. Optional arguments are db and host."
 
 #: client/drizzle.cc:258
+#, fuzzy
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 
 #: client/drizzle.cc:260
+#, fuzzy
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "Send command to drizzle server, display result vertically."
 
 #: client/drizzle.cc:261
+#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Exit drizzle. Same as quit."
 
 #: client/drizzle.cc:262
+#, fuzzy
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "Send command to drizzle server."
 
 #: client/drizzle.cc:263
+#, fuzzy
 msgid "Display this help."
-msgstr ""
+msgstr "Display this help."
 
 #: client/drizzle.cc:264
+#, fuzzy
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "Disable pager, print to stdout."
 
 #: client/drizzle.cc:265
+#, fuzzy
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Don't write into outfile."
 
 #: client/drizzle.cc:267
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -1755,7 +1766,7 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname failed, using '%s' as hostname"
 
 #: drizzled/drizzled.cc:2145
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
 msgstr ""
@@ -1830,22 +1841,20 @@ msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
 msgstr ""
-"%s: Too many arguments (first extra is '%s').\n"
-"Use --verbose --help to get a list of available options\n"
 
 #: drizzled/drizzled.cc:2497
 msgid "Can't init databases"
-msgstr "Can't init databases"
+msgstr ""
 
 #: drizzled/drizzled.cc:2520
 #, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr "Unknown/unsupported table type: %s"
+msgstr ""
 
 #: drizzled/drizzled.cc:2526
 #, c-format
 msgid "Default storage engine (%s) is not available"
-msgstr "Default storage engine (%s) is not available"
+msgstr ""
 
 #: drizzled/drizzled.cc:2549
 msgid "Can't initialize tc_log"
@@ -1859,7 +1868,7 @@ msgstr "Failed to lock memory. Error: %d\n"
 #: drizzled/drizzled.cc:2649
 #, c-format
 msgid "Asked for %u thread stack, but got %llu"
-msgstr "Asked for %u thread stack, but got %llu"
+msgstr ""
 
 #: drizzled/drizzled.cc:2685
 msgid ""
@@ -1867,27 +1876,24 @@ msgid ""
 "value: we force server id to 1; updates will be logged to the binary log, "
 "but connections from slaves will not be accepted."
 msgstr ""
-"You have enabled the binary log, but you haven't set server-id to a non-zero "
-"value: we force server id to 1; updates will be logged to the binary log, "
-"but connections from slaves will not be accepted."
 
 #: drizzled/drizzled.cc:2743
 msgid "Before Lock_thread_count"
-msgstr "Before Lock_thread_count"
+msgstr ""
 
 #: drizzled/drizzled.cc:2750
 msgid "After lock_thread_count"
-msgstr "After lock_thread_count"
+msgstr ""
 
 #: drizzled/drizzled.cc:2858
 #, c-format
 msgid "drizzled: Got error %d from select"
-msgstr "drizzled: Got error %d from select"
+msgstr ""
 
 #: drizzled/drizzled.cc:3100 drizzled/drizzled.cc:3205
 #: drizzled/drizzled.cc:3364
 msgid "Option used by mysql-test for debugging and testing of replication."
-msgstr "Option used by mysql-test for debugging and testing of replication."
+msgstr ""
 
 #: drizzled/drizzled.cc:3104
 msgid "Auto-increment columns are incremented by this"
@@ -2083,10 +2089,13 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3314
+#, fuzzy
 msgid ""
 "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to the "
 "slow log if it is open."
 msgstr ""
+"Log slow OPTIMISE, ANALYSE, ALTER and other administrative statements to the "
+"slow log if it is open."
 
 #: drizzled/drizzled.cc:3320
 msgid ""
@@ -2327,8 +2336,9 @@ msgid "Enable|disable slow query log"
 msgstr ""
 
 #: drizzled/drizzled.cc:3546
+#, fuzzy
 msgid "(INGORED)"
-msgstr ""
+msgstr "(IGNORED)"
 
 #: drizzled/drizzled.cc:3549
 msgid "Enable symbolic link support."
@@ -2621,14 +2631,20 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3860
+#, fuzzy
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: 0 - do not "
 "apply any heuristic, thus perform exhaustive search; 1 - prune plans based "
 "on number of retrieved rows."
 msgstr ""
+"Controls the heuristic(s) applied during query optimisation to prune less-"
+"promising partial plans from the optimiser search space. Meaning: 0 - do not "
+"apply any heuristic, thus perform exhaustive search; 1 - prune plans based "
+"on number of retrieved rows."
 
 #: drizzled/drizzled.cc:3868
+#, fuzzy
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -2638,6 +2654,13 @@ msgid ""
 "if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
 "(used for testing/comparison)."
 msgstr ""
+"Maximum depth of search performed by the query optimiser. Values larger than "
+"the number of relations in a query result in better query plans, but take "
+"longer to compile a query. Smaller values than the number of tables in a "
+"relation result in faster optimisation, but may produce very bad query "
+"plans. If set to 0, the system will automatically pick a reasonable value; "
+"if set to MAX_TABLES+2, the optimiser will switch to the original find_best "
+"(used for testing/comparison)."
 
 #: drizzled/drizzled.cc:3880
 msgid "Directory for plugins."
@@ -3003,8 +3026,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:87
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Aborted"
 
 #: drizzled/drizzled_error_messages.h:89
 #, c-format
@@ -4391,9 +4415,9 @@ msgid "End-label %s without match"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:653
-#, c-format
+#, fuzzy, c-format
 msgid "Referring to uninitialized variable %s"
-msgstr ""
+msgstr "Referring to uninitialised variable %s"
 
 #: drizzled/drizzled_error_messages.h:655
 #, c-format
@@ -4630,9 +4654,9 @@ msgid "Trigger's '%-.192s' is view or temporary table"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:755
-#, c-format
+#, fuzzy, c-format
 msgid "Updating of %s row is not allowed in %strigger"
-msgstr ""
+msgstr "Updating of %s row is not allowed in %s trigger"
 
 #: drizzled/drizzled_error_messages.h:757
 #, c-format
@@ -6310,21 +6334,164 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+#, fuzzy
+msgid "no error"
+msgstr "Unknown error %d"
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
+#, fuzzy
 msgid "Out of memory while recording slave event"
+msgstr "Out of memory in engine"
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+#, fuzzy
+msgid "Not enough memory"
+msgstr "Out of memory"
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6363,12 +6530,15 @@ msgid "Slave %s: %s%s Error_code: %d"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:134
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Neither --relay-log nor --relay-log-index were used; so replication may "
 "break when this MySQL server acts as a slave and has his hostname changed!! "
 "Please use '--relay-log=%s' to avoid this problem."
 msgstr ""
+"No argument was provided to --log-bin, and --log-bin-index was not used; so "
+"replication may break when this Drizzle server acts as a master and has his "
+"hostname changed!! Please use '--log-bin=%s' to avoid this problem."
 
 #: drizzled/rpl_rli.cc:151
 msgid "Failed in open_log() called from init_relay_log_info()"
@@ -6389,9 +6559,9 @@ msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:202
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to open the existing relay log info file '%s' (errno %d)"
-msgstr ""
+msgstr "Unexpected eof found when reading file '%s' (Errcode: %d)"
 
 #: drizzled/rpl_rli.cc:253
 #, c-format
@@ -6403,8 +6573,9 @@ msgid "Failed to flush relay log info file"
 msgstr ""
 
 #: drizzled/rpl_rli.cc:271
+#, fuzzy
 msgid "Error counting relay log space"
-msgstr ""
+msgstr "Error connecting to slave:"
 
 #: drizzled/rpl_rli.cc:295
 #, c-format

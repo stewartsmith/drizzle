@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-10-01 16:29-0700\n"
-"PO-Revision-Date: 2008-09-17 02:09+0000\n"
-"Last-Translator: Zuboran <Unknown>\n"
+"POT-Creation-Date: 2008-10-01 19:16-0700\n"
+"PO-Revision-Date: 2008-09-02 05:12+0000\n"
+"Last-Translator: Toshiya Tsuru <turutosiya@gmail.com>\n"
 "Language-Team: Japanese <ja@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2008-10-01 18:45+0000\n"
+"X-Launchpad-Export-Date: 2008-09-13 00:28+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:253
@@ -238,8 +238,9 @@ msgid "Delimiter to be used."
 msgstr "区切りに使用する文字。"
 
 #: client/drizzle.cc:1305
+#, fuzzy
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
+msgstr "コマンドを実行して終了する。（--forceと履歴ファイルを無効化）"
 
 #: client/drizzle.cc:1307
 msgid "Print the output of a query (rows) vertically."
@@ -306,8 +307,9 @@ msgstr ""
 "を代わりに使用して下さい。"
 
 #: client/drizzle.cc:1334
+#, fuzzy
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "クエリの後にバッファを毎回フラッシュする。"
 
 #: client/drizzle.cc:1336
 msgid "Write column names in results."
@@ -365,16 +367,22 @@ msgstr ""
 "下さい。"
 
 #: client/drizzle.cc:1358 client/drizzleadmin.cc:78
+#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
+"要求されます。"
 
 #: client/drizzle.cc:1360
+#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
+"接続に使用するポート番号。既定値は0。my.cnf, $DRIZZLE_TCP_PORT の順で設定され"
+"る。 "
 
 #: client/drizzle.cc:1361
 msgid "built-in default"
@@ -476,8 +484,9 @@ msgid "Buffer for TCP/IP and socket communication"
 msgstr "TCP/IPとソケット通信のためのバッファ"
 
 #: client/drizzle.cc:1420
+#, fuzzy
 msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
+msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定される上限"
 
 #: client/drizzle.cc:1425
 msgid "Automatic limit for rows in a join when using --safe-updates"
@@ -641,11 +650,10 @@ msgid "Empty set"
 msgstr "空の結果"
 
 #: client/drizzle.cc:2733
-#, c-format
+#, fuzzy, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%ld 行の結果"
 
 #: client/drizzle.cc:2742
 msgid "Query OK"
@@ -728,9 +736,9 @@ msgid "connection was down, but drizzled is now alive"
 msgstr "drizzledは動作していますが、接続が切断されました。"
 
 #: client/drizzleadmin.cc:349
-#, c-format
+#, fuzzy, c-format
 msgid "drizzled doesn't answer to ping, error: '%s'"
-msgstr ""
+msgstr "drizzledはpingに応答していません; エラー: '%s'"
 
 #: client/drizzleadmin.cc:358
 #, c-format
@@ -6196,21 +6204,162 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
-#: drizzled/log_event.cc:990
+#: drizzled/log_event.cc:140
+#, c-format
+msgid " %s, Error_code: %d;"
+msgstr ""
+
+#: drizzled/log_event.cc:144
+#, c-format
+msgid ""
+"Could not execute %s event on table %s.%s;%s handler error %s; the event's "
+"master log %s, end_log_pos %lu"
+msgstr ""
+
+#: drizzled/log_event.cc:150
+msgid "<unknown>"
+msgstr ""
+
+#: drizzled/log_event.cc:992
 #, c-format
 msgid ""
 "Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
 msgstr ""
 
-#: drizzled/log_event.cc:3693
+#: drizzled/log_event.cc:2282
+#, c-format
+msgid ""
+"Query partially completed on the master (error on master: %d) and was "
+"aborted. There is a chance that your master is inconsistent at this point. "
+"If you are sure that your master is ok, run this query manually on the slave "
+"and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START "
+"SLAVE; . Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2312
+#, c-format
+msgid ""
+"Query caused differenxt errors on master and slave.\n"
+"Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+"Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2317
+#, fuzzy
+msgid "no error"
+msgstr "エラーが発生しました: %s\n"
+
+#: drizzled/log_event.cc:2337
+#, c-format
+msgid "Error '%s' on query. Default database: '%s'. Query: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:2339 drizzled/log_event.cc:6208
+#: drizzled/log_event.cc:6253 drizzled/log_event.cc:7061
+msgid "unexpected success or fatal error"
+msgstr ""
+
+#: drizzled/log_event.cc:2917
+msgid ""
+"Rolling back unfinished transaction (no COMMIT or ROLLBACK in relay log). A "
+"probable cause is that the master died while writing the transaction to its "
+"binary log, thus rolled back too."
+msgstr ""
+
+#: drizzled/log_event.cc:3696
 #, c-format
 msgid ""
 "Slave: load data infile on table '%s' at log position %s in log '%s' "
 "produced %ld warning(s). Default database: '%s'"
 msgstr ""
 
-#: drizzled/log_event.cc:4731
+#: drizzled/log_event.cc:3746
+#, c-format
+msgid ""
+"Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:3758
+#, c-format
+msgid "Running LOAD DATA INFILE on table '%-.64s'. Default database: '%-.64s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4735
 msgid "Out of memory while recording slave event"
+msgstr ""
+
+#: drizzled/log_event.cc:5093 drizzled/log_event.cc:5119
+#, c-format
+msgid "Error in Create_file event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5105
+#, c-format
+msgid "Error in Create_file event: could not write to file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5126
+#, c-format
+msgid "Error in Create_file event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5265
+#, c-format
+msgid "Error in %s event: could not create file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5274
+#, c-format
+msgid "Error in %s event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5281
+#, c-format
+msgid "Error in %s event: write to '%s' failed"
+msgstr ""
+
+#: drizzled/log_event.cc:5492
+#, c-format
+msgid "Error in Exec_load event: could not open file '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5502
+#, c-format
+msgid "Error in Exec_load event: file '%s' appears corrupted"
+msgstr ""
+
+#: drizzled/log_event.cc:5532
+#, c-format
+msgid "%s. Failed executing load from '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:5760
+msgid "Not enough memory"
+msgstr ""
+
+#: drizzled/log_event.cc:6205
+#, c-format
+msgid "Error '%s' in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6215
+#, c-format
+msgid "Error in %s event: when locking tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6250
+#, c-format
+msgid "Error '%s' on reopening tables"
+msgstr ""
+
+#: drizzled/log_event.cc:6606
+#, c-format
+msgid "Error in %s event: commit of row events failed, table `%s`.`%s`"
+msgstr ""
+
+#: drizzled/log_event.cc:7058
+#, c-format
+msgid "Error '%s' on opening table `%s`.`%s`"
 msgstr ""
 
 #: drizzled/rpl_mi.cc:148
@@ -6947,8 +7096,6 @@ msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
 "read"
 msgstr ""
-"テーブル「%-.64s」は異なるバージョンのMySQLで作成されている為、読むことができ"
-"ません。"
 
 #: drizzled/table.cc:2310
 #, c-format
