@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#define __need_timeval 1
+
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
 #include <libdrizzle/errmsg.h>
@@ -341,7 +343,7 @@ net_write_command(NET *net,unsigned char command,
 {
   uint32_t length=len+1+head_len;            /* 1 extra byte for command */
   unsigned char buff[NET_HEADER_SIZE+1];
-  uint header_size=NET_HEADER_SIZE+1;
+  uint32_t header_size=NET_HEADER_SIZE+1;
 
   buff[4]=command;                /* For first packet */
 
@@ -462,11 +464,11 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
 {
   size_t length;
   const unsigned char *pos,*end;
-  uint retry_count= 0;
+  uint32_t retry_count= 0;
 
   /* Backup of the original SO_RCVTIMEO timeout */
 #ifndef __sun
-  struct timeval backtime;
+  struct timespec backtime;
   int error;
 #endif
 
@@ -478,7 +480,7 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
   {
     size_t complen;
     unsigned char *b;
-    const uint header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
+    const uint32_t header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
     if (!(b= (unsigned char*) malloc(len + NET_HEADER_SIZE +
                              COMP_HEADER_SIZE)))
     {
@@ -526,14 +528,14 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
   /* Check for error, currently assert */
   if (net->write_timeout)
   {
-    struct timeval waittime;
+    struct timespec waittime;
     socklen_t length;
 
     waittime.tv_sec= net->write_timeout;
-    waittime.tv_usec= 0;
+    waittime.tv_nsec= 0;
 
-    memset(&backtime, 0, sizeof(struct timeval));
-    length= sizeof(struct timeval);
+    memset(&backtime, 0, sizeof(struct timespec));
+    length= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
                       &backtime, &length);
     if (error != 0)
@@ -542,7 +544,7 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
       assert(error == 0);
     }
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &waittime, (socklen_t)sizeof(struct timeval));
+                      &waittime, (socklen_t)sizeof(struct timespec));
     assert(error == 0);
   }
 #endif
@@ -601,7 +603,7 @@ end:
 #ifndef __sun
   if (net->write_timeout)
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, (socklen_t)sizeof(struct timeval));
+                      &backtime, (socklen_t)sizeof(struct timespec));
 #endif
 
   return(((int) (pos != end)));
@@ -622,14 +624,14 @@ my_real_read(NET *net, size_t *complen)
 {
   unsigned char *pos;
   size_t length;
-  uint i,retry_count=0;
+  uint32_t i,retry_count=0;
   uint32_t len=packet_error;
   uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
                     NET_HEADER_SIZE);
 
 #ifndef __sun
   /* Backup of the original SO_RCVTIMEO timeout */
-  struct timeval backtime;
+  struct timespec backtime;
   int error= 0;
 #endif
 
@@ -645,14 +647,14 @@ my_real_read(NET *net, size_t *complen)
   /* Check for error, currently assert */
   if (net->read_timeout)
   {
-    struct timeval waittime;
+    struct timespec waittime;
     socklen_t length;
 
     waittime.tv_sec= net->read_timeout;
-    waittime.tv_usec= 0;
+    waittime.tv_nsec= 0;
 
-    memset(&backtime, 0, sizeof(struct timeval));
-    length= sizeof(struct timeval);
+    memset(&backtime, 0, sizeof(struct timespec));
+    length= sizeof(struct timespec);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
                       &backtime, &length);
     if (error != 0)
@@ -661,7 +663,7 @@ my_real_read(NET *net, size_t *complen)
       assert(error == 0);
     }
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &waittime, (socklen_t)sizeof(struct timeval));
+                      &waittime, (socklen_t)sizeof(struct timespec));
     assert(error == 0);
   }
 #endif
@@ -738,7 +740,7 @@ end:
 #ifndef __sun
   if  (net->read_timeout)
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO,
-                      &backtime, (socklen_t)sizeof(struct timeval));
+                      &backtime, (socklen_t)sizeof(struct timespec));
   assert(error == 0);
 #endif
   net->reading_or_writing= 0;
@@ -798,7 +800,7 @@ my_net_read(NET *net)
     uint32_t buf_length;
     uint32_t start_of_packet;
     uint32_t first_packet_offset;
-    uint read_length, multi_byte_packet=0;
+    uint32_t read_length, multi_byte_packet=0;
 
     if (net->remain_in_buf)
     {
@@ -914,7 +916,7 @@ my_net_read(NET *net)
   }
 
 
-void my_net_set_read_timeout(NET *net, uint timeout)
+void my_net_set_read_timeout(NET *net, uint32_t timeout)
 {
   net->read_timeout= timeout;
 #ifndef __sun
@@ -925,7 +927,7 @@ void my_net_set_read_timeout(NET *net, uint timeout)
 }
 
 
-void my_net_set_write_timeout(NET *net, uint timeout)
+void my_net_set_write_timeout(NET *net, uint32_t timeout)
 {
   net->write_timeout= timeout;
 #ifndef __sun
