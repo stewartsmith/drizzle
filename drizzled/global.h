@@ -126,7 +126,7 @@
 
   Cleaner solutions are welcome.
 */
-#ifdef __sun
+#if defined(__sun) && !defined(__cplusplus)
 #if __STDC_VERSION__ - 0 >= 199901L
 #define _XOPEN_SOURCE 600
 #else

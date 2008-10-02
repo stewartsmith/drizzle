@@ -26,6 +26,7 @@
 
 #define DUMP_VERSION "10.13"
 
+#include "config.h"
 #include <string>
 #include "client_priv.h"
 

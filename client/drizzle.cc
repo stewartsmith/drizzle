@@ -33,6 +33,8 @@
  *
  **/
 
+#include "config.h"
+
 #include <string>
 
 #include "client_priv.h"
@@ -67,8 +69,13 @@ const char *VER= "14.14";
 void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
 
+
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
+#ifdef __sun
+#undef clear
+#undef erase
+#endif
 #include <term.h>
 #else
 #if defined(HAVE_TERMIOS_H)

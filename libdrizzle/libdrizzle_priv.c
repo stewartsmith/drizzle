@@ -19,9 +19,10 @@
 
 /* Various helper functions not intended to be part of a public API */
 
+#include "config.h"
 #include "libdrizzle_priv.h"
-#include <sys/fcntl.h>
-#include <sys/poll.h>
+#include <poll.h>
+#include <fcntl.h>
 
 const char _dig_vec_upper[] =
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
