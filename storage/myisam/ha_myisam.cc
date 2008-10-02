@@ -544,11 +544,11 @@ int ha_myisam::open(const char *name, int mode, uint test_if_locked)
   }
   
   if (test_if_locked & (HA_OPEN_IGNORE_IF_LOCKED | HA_OPEN_TMP_TABLE))
-    VOID(mi_extra(file, HA_EXTRA_NO_WAIT_LOCK, 0));
+    mi_extra(file, HA_EXTRA_NO_WAIT_LOCK, 0);
 
   info(HA_STATUS_NO_LOCK | HA_STATUS_VARIABLE | HA_STATUS_CONST);
   if (!(test_if_locked & HA_OPEN_WAIT_IF_LOCKED))
-    VOID(mi_extra(file, HA_EXTRA_WAIT_LOCK, 0));
+    mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
   if (!table->s->db_record_offset)
     int_table_flags|=HA_REC_NOT_IN_SEQ;
   if (file->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
@@ -1291,7 +1291,9 @@ int ha_myisam::delete_row(const uchar *buf)
   return mi_delete(file,buf);
 }
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bool index_cond_func_myisam(void *arg)
 {
@@ -1305,7 +1307,9 @@ bool index_cond_func_myisam(void *arg)
   return (bool)h->pushed_idx_cond->val_int();
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 
 int ha_myisam::index_init(uint idx, bool sorted __attribute__((unused)))

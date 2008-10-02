@@ -459,7 +459,7 @@ struct sql_ex_info
 
 /* Shouldn't be defined before */
 #define EXPECTED_OPTIONS \
-  ((1ULL << 14) | (1ULL << 26) | (1ULL << 27) | (1ULL << 19))
+  ((1U << 14) | (1U << 26) | (1U << 27) | (1U << 19))
 
 #if OPTIONS_WRITTEN_TO_BIN_LOG != EXPECTED_OPTIONS
 #error OPTIONS_WRITTEN_TO_BIN_LOG must NOT change their values!

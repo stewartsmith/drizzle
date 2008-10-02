@@ -55,10 +55,15 @@ static bool innodb_inited = 0;
 */
 static handlerton *innodb_hton_ptr;
 
-C_MODE_START
-static int64_t index_cond_func_innodb(void *arg);
-C_MODE_END
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+static int64_t index_cond_func_innodb(void *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #define INSIDE_HA_INNOBASE_CC
@@ -693,7 +698,7 @@ void
 innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
-	VOID(pthread_mutex_lock(&LOCK_thread_count));
+	pthread_mutex_lock(&LOCK_thread_count);
 }
 
 /*****************************************************************
@@ -705,7 +710,7 @@ void
 innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
-	VOID(pthread_mutex_unlock(&LOCK_thread_count));
+	pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 /*****************************************************************
@@ -8026,7 +8031,9 @@ int ha_innobase::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
  * Index Condition Pushdown interface implementation
  */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Index condition check function to be called from within Innobase */
 
@@ -8041,7 +8048,10 @@ static int64_t index_cond_func_innodb(void *arg)
   return h->pushed_idx_cond->val_int();
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 
 
 Item *ha_innobase::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)

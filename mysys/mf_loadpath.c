@@ -31,7 +31,7 @@ char * my_load_path(char * to, const char *path,
 
   if ((path[0] == FN_HOMELIB && path[1] == FN_LIBCHAR) ||
       test_if_hard_path(path))
-    VOID(my_stpcpy(buff,path));
+    my_stpcpy(buff,path);
   else if ((is_cur=(path[0] == FN_CURLIB && path[1] == FN_LIBCHAR)) ||
 	   (is_prefix(path,FN_PARENTDIR)) ||
 	   ! own_path_prefix)
@@ -39,12 +39,12 @@ char * my_load_path(char * to, const char *path,
     if (is_cur)
       is_cur=2;					/* Remove current dir */
     if (! my_getwd(buff,(uint) (FN_REFLEN-strlen(path)+is_cur),MYF(0)))
-      VOID(strcat(buff,path+is_cur));
+      strcat(buff,path+is_cur);
     else
-      VOID(my_stpcpy(buff,path));			/* Return org file name */
+      my_stpcpy(buff,path);			/* Return org file name */
   }
   else
-    VOID(strxmov(buff,own_path_prefix,path,NullS));
+    strxmov(buff,own_path_prefix,path,NullS);
   my_stpcpy(to,buff);
   return(to);
 } /* my_load_path */

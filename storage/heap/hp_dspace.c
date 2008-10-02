@@ -166,8 +166,8 @@ void hp_clear_dataspace(HP_DATASPACE *info)
 {
   if (info->block.levels)
   {
-    VOID(hp_free_level(&info->block,info->block.levels,info->block.root,
-			(uchar*) 0));
+    hp_free_level(&info->block,info->block.levels,info->block.root,
+                  (uchar*) 0);
   }
   info->block.levels=0;
   info->del_chunk_count= info->chunk_count= 0;

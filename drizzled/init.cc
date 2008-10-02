@@ -34,7 +34,7 @@ void unireg_init(ulong options __attribute__((unused)))
   init_time();				/* Init time-functions (read zone) */
   my_abort_hook=unireg_abort;		/* Abort with close of databases */
 
-  VOID(my_stpcpy(reg_ext,".frm"));
+  my_stpcpy(reg_ext,".frm");
   reg_ext_length= 4;
 
   return;

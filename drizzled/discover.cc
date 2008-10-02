@@ -76,7 +76,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   
  err:
   if (file > 0)
-    VOID(my_close(file,MYF(MY_WME)));
+    my_close(file,MYF(MY_WME));
   
  err_end:		      /* Here when no file */
   return(error);
@@ -109,7 +109,7 @@ int writefrm(const char *name, const uchar *frmdata, size_t len)
   {
     if (my_write(file, frmdata, len,MYF(MY_WME | MY_NABP)))
       error= 2;
-    VOID(my_close(file,MYF(0)));
+    my_close(file,MYF(0));
   }
   return(error);
 } /* writefrm */

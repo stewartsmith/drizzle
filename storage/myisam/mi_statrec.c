@@ -261,7 +261,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
 		    info->s->base.pack_reclength - info->s->base.reclength);
   }
   if (locked)
-    VOID(_mi_writeinfo(info,0));		/* Unlock keyfile */
+    _mi_writeinfo(info,0);		/* Unlock keyfile */
   if (!error)
   {
     if (!buf[0])

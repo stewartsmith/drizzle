@@ -39,7 +39,7 @@
  Pointers of functions for store and read keys from temp file
 */
 
-extern void print_error _VARARGS((const char *fmt,...));
+extern void print_error(const char *fmt,...);
 
 /* Functions defined in this file */
 
@@ -928,7 +928,7 @@ merge_buffers(MI_SORT_PARAM *info, uint keys, IO_CACHE *from_file,
           uchar *base=buffpek->base;
           uint max_keys=buffpek->max_keys;
 
-          VOID(queue_remove(&queue,0));
+          queue_remove(&queue,0);
 
           /* Put room used by buffer to use in other buffer */
           for (refpek= (BUFFPEK**) &queue_top(&queue);

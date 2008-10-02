@@ -2,7 +2,9 @@
   Some useful bit functions
 */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern const char _my_bits_nbits[256];
 extern const uchar _my_bits_reverse_table[256];
@@ -97,4 +99,7 @@ static inline uint32_t my_reverse_bits(uint32_t key)
      _my_bits_reverse_table[(key>>24)      ];
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+

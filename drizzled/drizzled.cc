@@ -2645,8 +2645,8 @@ int main(int argc, char **argv)
       if (global_system_variables.log_warnings)
       {
         /* %zu is not yet in C++ */
-        unsigned long long size_tmp= (uint64_t)stack_size;
-        sql_print_warning(_("Asked for %u thread stack, but got %llu"),
+        uint64_t size_tmp= (uint64_t)stack_size;
+        sql_print_warning(_("Asked for %u thread stack, but got %"PRIu64),
                           my_thread_stack_size, size_tmp);
       }
       my_thread_stack_size= stack_size;
@@ -2934,7 +2934,7 @@ void handle_connections_sockets()
     if (!(thd= new THD))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
-      VOID(close(new_sock));
+      close(new_sock);
       continue;
     }
     if (net_init_sock(&thd->net, new_sock, sock == 0))

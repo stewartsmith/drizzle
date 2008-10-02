@@ -18,13 +18,16 @@
   a shared library
 */
 
-C_MODE_START
 #include <signal.h>
 
 #define MAX_SIGNALS	10		/* Max signals under a dont-allow */
 #define MIN_KEYBLOCK	(min(IO_SIZE,1024))
 #define MAX_KEYBLOCK	8192		/* Max keyblocklength == 8*IO_SIZE */
 #define MAX_BLOCK_TYPES MAX_KEYBLOCK/MIN_KEYBLOCK
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct st_remember {
   int number;
@@ -69,4 +72,8 @@ extern struct st_my_file_info my_file_info_default[MY_NFILE];
 extern uint64_t query_performance_frequency, query_performance_offset;
 
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
-C_MODE_END
+
+#ifdef __cplusplus
+}
+#endif
+

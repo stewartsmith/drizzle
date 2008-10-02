@@ -32,9 +32,16 @@
 #ifndef my_decimal_h
 #define my_decimal_h
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mystrings/decimal.h>
-C_MODE_END
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #define DECIMAL_LONGLONG_DIGITS 22
 #define DECIMAL_LONG_DIGITS 10

@@ -150,7 +150,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     end_pos=disk_cache+info_length;
     errpos=2;
 
-    VOID(my_seek(kfile,0L,MY_SEEK_SET,MYF(0)));
+    my_seek(kfile,0L,MY_SEEK_SET,MYF(0));
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
@@ -382,10 +382,10 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     mi_setup_functions(share);
     share->is_log_table= false;
     thr_lock_init(&share->lock);
-    VOID(pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST));
+    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     for (i=0; i<keys; i++)
-      VOID(my_rwlock_init(&share->key_root_lock[i], NULL));
-    VOID(my_rwlock_init(&share->mmap_lock, NULL));
+      my_rwlock_init(&share->key_root_lock[i], NULL);
+    my_rwlock_init(&share->mmap_lock, NULL);
     if (!thr_lock_inited)
     {
       /* Probably a single threaded program; Don't use concurrent inserts */
@@ -520,7 +520,7 @@ err:
     my_free((uchar*) m_info,MYF(0));
     /* fall through */
   case 5:
-    VOID(my_close(info.dfile,MYF(0)));
+    my_close(info.dfile,MYF(0));
     if (old_info)
       break;					/* Don't remove open table */
     /* fall through */
@@ -533,7 +533,7 @@ err:
     my_afree(disk_cache);
     /* fall through */
   case 1:
-    VOID(my_close(kfile,MYF(0)));
+    my_close(kfile,MYF(0));
     /* fall through */
   case 0:
   default:

@@ -794,19 +794,19 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
     sec=((ltime->day-1)*3600*24L+ltime->hour*3600+ltime->minute*60+
 	 ltime->second +
 	 sign* (int64_t) (interval.day*3600*24L +
-                           interval.hour*3600LL+interval.minute*60LL+
+                           interval.hour*3600L+interval.minute*60L+
                            interval.second))+ extra_sec;
     if (microseconds < 0)
     {
-      microseconds+= 1000000LL;
+      microseconds+= 1000000L;
       sec--;
     }
-    days= sec/(3600*24LL);
-    sec-= days*3600*24LL;
+    days= sec/(3600*24L);
+    sec-= days*3600*24L;
     if (sec < 0)
     {
       days--;
-      sec+= 3600*24LL;
+      sec+= 3600*24L;
     }
     ltime->second_part= (uint) microseconds;
     ltime->second= (uint) (sec % 60);
@@ -924,13 +924,13 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
 			       (uint) l_time2->day);
   }
 
-  microseconds= ((int64_t)days*86400LL +
+  microseconds= ((int64_t)days*86400L +
                  (int64_t)(l_time1->hour*3600L +
                             l_time1->minute*60L +
                             l_time1->second) -
                  l_sign*(int64_t)(l_time2->hour*3600L +
                                    l_time2->minute*60L +
-                                   l_time2->second)) * 1000000LL +
+                                   l_time2->second)) * 1000000L +
                 (int64_t)l_time1->second_part -
                 l_sign*(int64_t)l_time2->second_part;
 

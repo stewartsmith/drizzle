@@ -162,9 +162,9 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
   if (flags & FN_IS_TMP) // FN_FROM_IS_TMP | FN_TO_IS_TMP
     my_stpncpy(tbbuff, table_name, sizeof(tbbuff));
   else
-    VOID(tablename_to_filename(table_name, tbbuff, sizeof(tbbuff)));
+    tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
 
-  VOID(tablename_to_filename(db, dbbuff, sizeof(dbbuff)));
+  tablename_to_filename(db, dbbuff, sizeof(dbbuff));
 
   char *end = buff + bufflen;
   /* Don't add FN_ROOTDIR if mysql_data_home already includes it */
@@ -1788,7 +1788,7 @@ bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1904,7 +1904,7 @@ bool mysql_create_table_no_lock(THD *thd,
     write_bin_log(thd, true, thd->query, thd->query_length);
   error= false;
 unlock_and_end:
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
 err:
   thd_proc_info(thd, "After create");
@@ -2146,7 +2146,7 @@ void wait_while_table_is_used(THD *thd, Table *table,
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  VOID(table->file->extra(function));
+  table->file->extra(function);
   /* Mark all tables that are in use as 'old' */
   mysql_lock_abort(thd, table, true);	/* end threads waiting on lock */
 
@@ -2972,12 +2972,12 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
     during the call to ha_create_table(). See bug #28614 for more info.
   */
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   if (src_table->schema_table)
   {
     if (mysql_create_like_schema_frm(thd, src_table, dst_path, create_info))
     {
-      VOID(pthread_mutex_unlock(&LOCK_open));
+      pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
   }
@@ -2987,7 +2987,7 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
       my_error(ER_BAD_DB_ERROR,MYF(0),db);
     else
       my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
 
@@ -3000,7 +3000,7 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
   if (thd->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(thd, dst_path, db, table_name, create_info, 1);
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
@@ -3055,13 +3055,13 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
           of this function.
         */
         table->table= name_lock;
-        VOID(pthread_mutex_lock(&LOCK_open));
+        pthread_mutex_lock(&LOCK_open);
         if (reopen_name_locked_table(thd, table, false))
         {
-          VOID(pthread_mutex_unlock(&LOCK_open));
+          pthread_mutex_unlock(&LOCK_open);
           goto err;
         }
-        VOID(pthread_mutex_unlock(&LOCK_open));
+        pthread_mutex_unlock(&LOCK_open);
 
         int result= store_create_info(thd, table, &query,
                                                create_info);
@@ -3845,7 +3845,7 @@ int mysql_fast_or_online_alter_table(THD *thd,
     The final .frm file is already created as a temporary file
     and will be renamed to the original table name.
   */
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
   alter_table_manage_keys(table, table->file->indexes_are_disabled(),
                           keys_onoff);
@@ -3859,11 +3859,11 @@ int mysql_fast_or_online_alter_table(THD *thd,
                          table->s->table_name.str, FN_FROM_IS_TMP))
   {
     error= 1;
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
   broadcast_refresh();
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
   /*
     The ALTER Table is always in its own transaction.
@@ -3879,13 +3879,13 @@ int mysql_fast_or_online_alter_table(THD *thd,
     goto err;
   if (online)
   {
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     if (reopen_table(table))
     {
       error= -1;
       goto err;
     }
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
     t_table= table;
 
    /*
@@ -3904,9 +3904,9 @@ int mysql_fast_or_online_alter_table(THD *thd,
     */
     assert(t_table == table);
     table->open_placeholder= 1;
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     close_handle_and_leave_table_as_lock(table);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
   }
 
  err:
@@ -4526,16 +4526,16 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
         while the fact that the table is still open gives us protection
         from concurrent DDL statements.
       */
-      VOID(pthread_mutex_lock(&LOCK_open));
+      pthread_mutex_lock(&LOCK_open);
       wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
-      VOID(pthread_mutex_unlock(&LOCK_open));
+      pthread_mutex_unlock(&LOCK_open);
       error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     case DISABLE:
-      VOID(pthread_mutex_lock(&LOCK_open));
+      pthread_mutex_lock(&LOCK_open);
       wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
-      VOID(pthread_mutex_unlock(&LOCK_open));
+      pthread_mutex_unlock(&LOCK_open);
       error=table->file->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
@@ -4552,7 +4552,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
 			  table->alias);
     }
 
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     /*
       Unlike to the above case close_cached_table() below will remove ALL
       instances of Table from table cache (it will also remove table lock
@@ -4590,8 +4590,8 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
 	  error= -1;
         else if (0)
       {
-          VOID(mysql_rename_table(old_db_type, new_db, new_alias, db,
-                                  table_name, 0));
+          mysql_rename_table(old_db_type, new_db, new_alias, db,
+                             table_name, 0);
           error= -1;
       }
     }
@@ -4617,7 +4617,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     }
     if (name_lock)
       unlink_open_table(thd, name_lock, false);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
     table_list->table= NULL;                    // For query cache
     return(error);
   }
@@ -4832,9 +4832,9 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   }
   else
   {
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
     alter_table_manage_keys(table, table->file->indexes_are_disabled(),
                             alter_info->keys_onoff);
     error= ha_autocommit_or_rollback(thd, 0);
@@ -4874,11 +4874,11 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     intern_close_table(new_table);
     my_free(new_table,MYF(0));
   }
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   if (error)
   {
-    VOID(quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP));
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
 
@@ -4927,17 +4927,17 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
                          FN_TO_IS_TMP))
   {
     error=1;
-    VOID(quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP));
+    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
   }
   else if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db,
                               new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
   {
     /* Try to get everything back. */
     error=1;
-    VOID(quick_rm_table(new_db_type,new_db,new_alias, 0));
-    VOID(quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP));
-    VOID(mysql_rename_table(old_db_type, db, old_name, db, alias,
-                            FN_FROM_IS_TMP));
+    quick_rm_table(new_db_type,new_db,new_alias, 0);
+    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    mysql_rename_table(old_db_type, db, old_name, db, alias,
+                       FN_FROM_IS_TMP);
   }
 
   if (error)
@@ -4946,7 +4946,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     goto err_with_placeholders;
   }
 
-  VOID(quick_rm_table(old_db_type, db, old_name, FN_IS_TMP));
+  quick_rm_table(old_db_type, db, old_name, FN_IS_TMP);
 
 end_online:
   if (thd->locked_tables && new_name == table_name && new_db == db)
@@ -4957,7 +4957,7 @@ end_online:
     if (error)
       goto err_with_placeholders;
   }
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
   thd_proc_info(thd, "end");
 
@@ -5022,7 +5022,7 @@ err1:
     close_temporary_table(thd, new_table, 1, 1);
   }
   else
-    VOID(quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP));
+    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
 
 err:
   /*
@@ -5073,7 +5073,7 @@ err_with_placeholders:
   unlink_open_table(thd, table, false);
   if (name_lock)
     unlink_open_table(thd, name_lock, false);
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
   return(true);
 }
 /* mysql_alter_table */

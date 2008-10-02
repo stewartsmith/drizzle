@@ -85,7 +85,7 @@ int mi_delete(MI_INFO *info,const uchar *record)
   info->state->records--;
 
   mi_sizestore(lastpos,info->lastpos);
-  VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   if (info->invalidator != 0)
   {
     (*info->invalidator)(info->filename);
@@ -101,7 +101,7 @@ err:
     mi_print_error(info->s, HA_ERR_CRASHED);
     mi_mark_crashed(info);		/* mark table crashed */
   }
-  VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
   my_errno=save_errno;
   if (save_errno == HA_ERR_KEY_NOT_FOUND)

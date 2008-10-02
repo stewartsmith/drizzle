@@ -44,7 +44,7 @@ int my_getwd(char * buf, size_t size, myf MyFlags)
   char * pos;
 
   if (curr_dir[0])				/* Current pos is saved here */
-    VOID(strmake(buf,&curr_dir[0],size-1));
+    strmake(buf,&curr_dir[0],size-1);
   else
   {
 #if defined(HAVE_GETCWD)

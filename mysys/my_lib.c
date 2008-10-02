@@ -134,8 +134,8 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
         goto error;
       
       memset(finfo.mystat, 0, sizeof(struct stat));
-      VOID(my_stpcpy(tmp_file,dp->d_name));
-      VOID(stat(tmp_path, finfo.mystat));
+      my_stpcpy(tmp_file,dp->d_name);
+      stat(tmp_path, finfo.mystat);
       if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
     }

@@ -24,7 +24,7 @@ int mi_is_changed(MI_INFO *info)
   int result;
   if (fast_mi_readinfo(info))
     return(-1);
-  VOID(_mi_writeinfo(info,0));
+  _mi_writeinfo(info,0);
   result=(int) info->data_changed;
   info->data_changed=0;
   return(result);

@@ -26,6 +26,10 @@ typedef struct st_typelib {	/* Different types saved here */
   unsigned int *type_lengths;
 } TYPELIB;
 
+#ifdef __cplusplus
+  extern "C" {
+#endif 
+
 extern uint64_t find_typeset(char *x, TYPELIB *typelib,int *error_position);
 extern int find_type_or_exit(char *x, TYPELIB *typelib,
                              const char *option);
@@ -33,5 +37,9 @@ extern int find_type(char *x, const TYPELIB *typelib, unsigned int full_name);
 extern void make_type(char *to,unsigned int nr,TYPELIB *typelib);
 extern const char *get_type(TYPELIB *typelib,unsigned int nr);
 extern TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from);
+
+#ifdef __cplusplus
+  }
+#endif
 
 #endif /* _typelib_h */

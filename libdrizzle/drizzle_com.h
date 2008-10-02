@@ -47,57 +47,57 @@
    TODO: separate three contexts above, move them to separate bitfields.
 */
 
-#define SELECT_DISTINCT         (1ULL << 0)     // SELECT, user
-#define SELECT_STRAIGHT_JOIN    (1ULL << 1)     // SELECT, user
-#define SELECT_DESCRIBE         (1ULL << 2)     // SELECT, user
-#define SELECT_SMALL_RESULT     (1ULL << 3)     // SELECT, user
-#define SELECT_BIG_RESULT       (1ULL << 4)     // SELECT, user
-#define OPTION_FOUND_ROWS       (1ULL << 5)     // SELECT, user
-#define SELECT_NO_JOIN_CACHE    (1ULL << 7)     // intern
-#define OPTION_BIG_TABLES       (1ULL << 8)     // THD, user
-#define OPTION_BIG_SELECTS      (1ULL << 9)     // THD, user
-#define OPTION_LOG_OFF          (1ULL << 10)    // THD, user
-#define OPTION_QUOTE_SHOW_CREATE (1ULL << 11)   // THD, user, unused
-#define TMP_TABLE_ALL_COLUMNS   (1ULL << 12)    // SELECT, intern
-#define OPTION_WARNINGS         (1ULL << 13)    // THD, user
-#define OPTION_AUTO_IS_NULL     (1ULL << 14)    // THD, user, binlog
-#define OPTION_FOUND_COMMENT    (1ULL << 15)    // SELECT, intern, parser
-#define OPTION_SAFE_UPDATES     (1ULL << 16)    // THD, user
-#define OPTION_BUFFER_RESULT    (1ULL << 17)    // SELECT, user
-#define OPTION_BIN_LOG          (1ULL << 18)    // THD, user
-#define OPTION_NOT_AUTOCOMMIT   (1ULL << 19)    // THD, user
-#define OPTION_BEGIN            (1ULL << 20)    // THD, intern
-#define OPTION_TABLE_LOCK       (1ULL << 21)    // THD, intern
-#define OPTION_QUICK            (1ULL << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (1ULL << 23)    // THD, user
+#define SELECT_DISTINCT         (1U << 0)     // SELECT, user
+#define SELECT_STRAIGHT_JOIN    (1U << 1)     // SELECT, user
+#define SELECT_DESCRIBE         (1U << 2)     // SELECT, user
+#define SELECT_SMALL_RESULT     (1U << 3)     // SELECT, user
+#define SELECT_BIG_RESULT       (1U << 4)     // SELECT, user
+#define OPTION_FOUND_ROWS       (1U << 5)     // SELECT, user
+#define SELECT_NO_JOIN_CACHE    (1U << 7)     // intern
+#define OPTION_BIG_TABLES       (1U << 8)     // THD, user
+#define OPTION_BIG_SELECTS      (1U << 9)     // THD, user
+#define OPTION_LOG_OFF          (1U << 10)    // THD, user
+#define OPTION_QUOTE_SHOW_CREATE (1U << 11)   // THD, user, unused
+#define TMP_TABLE_ALL_COLUMNS   (1U << 12)    // SELECT, intern
+#define OPTION_WARNINGS         (1U << 13)    // THD, user
+#define OPTION_AUTO_IS_NULL     (1U << 14)    // THD, user, binlog
+#define OPTION_FOUND_COMMENT    (1U << 15)    // SELECT, intern, parser
+#define OPTION_SAFE_UPDATES     (1U << 16)    // THD, user
+#define OPTION_BUFFER_RESULT    (1U << 17)    // SELECT, user
+#define OPTION_BIN_LOG          (1U << 18)    // THD, user
+#define OPTION_NOT_AUTOCOMMIT   (1U << 19)    // THD, user
+#define OPTION_BEGIN            (1U << 20)    // THD, intern
+#define OPTION_TABLE_LOCK       (1U << 21)    // THD, intern
+#define OPTION_QUICK            (1U << 22)    // SELECT (for DELETE)
+#define OPTION_KEEP_LOG         (1U << 23)    // THD, user
 
 /* The following is used to detect a conflict with DISTINCT */
-#define SELECT_ALL              (1ULL << 24)    // SELECT, user, parser
+#define SELECT_ALL              (1U << 24)    // SELECT, user, parser
 
 /** The following can be set when importing tables in a 'wrong order'
    to suppress foreign key checks */
-#define OPTION_NO_FOREIGN_KEY_CHECKS    (1ULL << 26) // THD, user, binlog
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (1U << 26) // THD, user, binlog
 /** The following speeds up inserts to InnoDB tables by suppressing unique
    key checks in some cases */
-#define OPTION_RELAXED_UNIQUE_CHECKS    (1ULL << 27) // THD, user, binlog
-#define SELECT_NO_UNLOCK                (1ULL << 28) // SELECT, intern
-#define OPTION_SCHEMA_TABLE             (1ULL << 29) // SELECT, intern
+#define OPTION_RELAXED_UNIQUE_CHECKS    (1U << 27) // THD, user, binlog
+#define SELECT_NO_UNLOCK                (1U << 28) // SELECT, intern
+#define OPTION_SCHEMA_TABLE             (1U << 29) // SELECT, intern
 /** Flag set if setup_tables already done */
-#define OPTION_SETUP_TABLES_DONE        (1ULL << 30) // intern
+#define OPTION_SETUP_TABLES_DONE        (1U << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
-#define OPTION_SQL_NOTES                (1ULL << 31) // THD, user
+#define OPTION_SQL_NOTES                (1U << 31) // THD, user
 /**
   Force the used temporary table to be a MyISAM table (because we will use
   fulltext functions when reading from it.
 */
-#define TMP_TABLE_FORCE_MYISAM          (1ULL << 32)
-#define OPTION_PROFILING                (1ULL << 33)
+#define TMP_TABLE_FORCE_MYISAM          (1UL << 32)
+#define OPTION_PROFILING                (1UL << 33)
 
 /*
   Dont report errors for individual rows,
   But just report error on commit (or read ofcourse)
 */
-#define OPTION_ALLOW_BATCH              (1ULL << 33) // THD, intern (slave)
+#define OPTION_ALLOW_BATCH              (1UL << 33) // THD, intern (slave)
 
 /**
   Maximum length of time zone name that we support

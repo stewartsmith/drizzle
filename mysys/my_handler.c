@@ -35,6 +35,9 @@
     b= dummy;                      \
   } while (0)
 
+#define CMP_NUM(a,b) (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
+
+
 int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_length,
 		    uchar *b, uint b_length, bool part_key,
 		    bool skip_end_space)

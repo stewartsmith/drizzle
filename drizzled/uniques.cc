@@ -70,8 +70,8 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   */
   max_elements= (ulong) (max_in_memory_size /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+size));
-  VOID(open_cached_file(&file, mysql_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
-		   MYF(MY_WME)));
+  open_cached_file(&file, mysql_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
+                   MYF(MY_WME));
 }
 
 
@@ -368,7 +368,9 @@ Unique::reset()
   BUFFPEK.
 */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static int buffpek_compare(void *arg, uchar *key_ptr1, uchar *key_ptr2)
 {
@@ -377,7 +379,10 @@ static int buffpek_compare(void *arg, uchar *key_ptr1, uchar *key_ptr2)
                           *((uchar **) key_ptr1), *((uchar **)key_ptr2));
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 
 
 /*

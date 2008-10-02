@@ -1924,7 +1924,7 @@ JOIN::reinit()
 {
   unit->offset_limit_cnt= (ha_rows)(select_lex->offset_limit ?
                                     select_lex->offset_limit->val_uint() :
-                                    0ULL);
+                                    0UL);
 
   first_record= 0;
 
@@ -4444,7 +4444,7 @@ add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
           keyuse.null_rejecting= key_field->null_rejecting;
           keyuse.cond_guard= key_field->cond_guard;
           keyuse.sj_pred_no= key_field->sj_pred_no;
-	  VOID(insert_dynamic(keyuse_array,(uchar*) &keyuse));
+	  insert_dynamic(keyuse_array,(uchar*) &keyuse);
 	}
       }
     }
@@ -4673,7 +4673,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
 	  (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    VOID(insert_dynamic(keyuse,(uchar*) &key_end));
+    insert_dynamic(keyuse,(uchar*) &key_end);
 
     use=save_pos=dynamic_element(keyuse,0,KEYUSE*);
     prev= &key_end;
@@ -4706,7 +4706,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
       save_pos++;
     }
     i=(uint) (save_pos-(KEYUSE*) keyuse->buffer);
-    VOID(set_dynamic(keyuse,(uchar*) &key_end,i));
+    set_dynamic(keyuse,(uchar*) &key_end,i);
     keyuse->elements=i;
   }
   return false;
@@ -4877,7 +4877,7 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest,
     */
     if (!(item->used_tables() & remaining_tables))
     {
-      res |= 1ULL < i;
+      res |= 1UL < i;
     }
   }
   return res;
@@ -5018,10 +5018,10 @@ best_access_path(JOIN      *join,
           if (try_sj_inside_out && keyuse->sj_pred_no != UINT_MAX)
           {
             if (!(remaining_tables & keyuse->used_tables))
-              bound_sj_equalities |= 1ULL << keyuse->sj_pred_no;
+              bound_sj_equalities |= 1UL << keyuse->sj_pred_no;
             else
             {
-              handled_sj_equalities |= 1ULL << keyuse->sj_pred_no;
+              handled_sj_equalities |= 1UL << keyuse->sj_pred_no;
               sj_insideout_map |= ((key_part_map)1) << keyuse->keypart;
             }
           }
@@ -10268,7 +10268,7 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
 	li.remove();
       else if (item != new_item)
       {
-	VOID(li.replace(new_item));
+	li.replace(new_item);
 	should_fix_fields=1;
       }
       if (*cond_value == Item::COND_UNDEF)
@@ -10593,7 +10593,7 @@ do_select(JOIN *join,List<Item> *fields,Table *table)
 
   if (table)
   {
-    VOID(table->file->extra(HA_EXTRA_WRITE_CACHE));
+    table->file->extra(HA_EXTRA_WRITE_CACHE);
     empty_record(table);
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->s->keys && !table->file->inited)
@@ -12006,7 +12006,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
       if (end_of_records)
 	return(NESTED_LOOP_OK);
       join->first_record=1;
-      VOID(test_if_item_cache_changed(join->group_fields));
+      test_if_item_cache_changed(join->group_fields);
     }
     if (idx < (int) join->send_group_parts)
     {
@@ -12264,7 +12264,7 @@ end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
       if (end_of_records)
 	return(NESTED_LOOP_OK);
       join->first_record=1;
-      VOID(test_if_item_cache_changed(join->group_fields));
+      test_if_item_cache_changed(join->group_fields);
     }
     if (idx < (int) join->send_group_parts)
     {

@@ -106,7 +106,7 @@ pthread_cond_t timer_alarm_threshold;
 static char **defaults_argv;
 
 char **primary_keys;
-unsigned long long primary_keys_number_of;
+uint64_t primary_keys_number_of;
 
 static char *host= NULL, *opt_password= NULL, *user= NULL,
   *user_supplied_query= NULL,
@@ -217,9 +217,9 @@ struct stats {
   long int timing;
   uint users;
   uint real_users;
-  unsigned long long rows;
+  uint64_t rows;
   long int create_timing;
-  unsigned long long create_count;
+  uint64_t create_count;
 };
 
 typedef struct thread_context thread_context;
@@ -238,17 +238,17 @@ struct conclusions {
   long int min_timing;
   uint users;
   uint real_users;
-  unsigned long long avg_rows;
+  uint64_t avg_rows;
   long int sum_of_time;
   long int std_dev;
   /* These are just for create time stats */
   long int create_avg_timing;
   long int create_max_timing;
   long int create_min_timing;
-  unsigned long long create_count;
+  uint64_t create_count;
   /* The following are not used yet */
-  unsigned long long max_rows;
-  unsigned long long min_rows;
+  uint64_t max_rows;
+  uint64_t min_rows;
 };
 
 static option_string *engine_options= NULL;
@@ -348,12 +348,12 @@ int main(int argc, char **argv)
 
   slap_connect(&drizzle, false);
 
-  VOID(pthread_mutex_init(&counter_mutex, NULL));
-  VOID(pthread_cond_init(&count_threshhold, NULL));
-  VOID(pthread_mutex_init(&sleeper_mutex, NULL));
-  VOID(pthread_cond_init(&sleep_threshhold, NULL));
-  VOID(pthread_mutex_init(&timer_alarm_mutex, NULL));
-  VOID(pthread_cond_init(&timer_alarm_threshold, NULL));
+  pthread_mutex_init(&counter_mutex, NULL);
+  pthread_cond_init(&count_threshhold, NULL);
+  pthread_mutex_init(&sleeper_mutex, NULL);
+  pthread_cond_init(&sleep_threshhold, NULL);
+  pthread_mutex_init(&timer_alarm_mutex, NULL);
+  pthread_cond_init(&timer_alarm_threshold, NULL);
 
 
   /* Main iterations loop */
@@ -389,12 +389,12 @@ burnin:
   if (opt_burnin)
     goto burnin;
 
-  VOID(pthread_mutex_destroy(&counter_mutex));
-  VOID(pthread_cond_destroy(&count_threshhold));
-  VOID(pthread_mutex_destroy(&sleeper_mutex));
-  VOID(pthread_cond_destroy(&sleep_threshhold));
-  VOID(pthread_mutex_destroy(&timer_alarm_mutex));
-  VOID(pthread_cond_destroy(&timer_alarm_threshold));
+  pthread_mutex_destroy(&counter_mutex);
+  pthread_cond_destroy(&count_threshhold);
+  pthread_mutex_destroy(&sleeper_mutex);
+  pthread_cond_destroy(&sleep_threshhold);
+  pthread_mutex_destroy(&timer_alarm_mutex);
+  pthread_cond_destroy(&timer_alarm_threshold);
 
   slap_close(&drizzle);
 
@@ -429,7 +429,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   stats *head_sptr;
   stats *sptr;
   conclusions conclusion;
-  unsigned long long client_limit;
+  uint64_t client_limit;
 
   head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
@@ -1321,7 +1321,7 @@ get_options(int *argc,char ***argv)
 
   if (auto_generate_sql)
   {
-    unsigned long long x= 0;
+    uint64_t x= 0;
     statement *ptr_statement;
 
     if (verbose >= 2)
@@ -1616,7 +1616,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
 {
   DRIZZLE_RES *result;
   DRIZZLE_ROW row;
-  unsigned long long counter;
+  uint64_t counter;
 
 
   /*
@@ -1669,7 +1669,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
 static int
 drop_primary_key_list(void)
 {
-  unsigned long long counter;
+  uint64_t counter;
 
   if (primary_keys_number_of)
   {
@@ -2289,11 +2289,11 @@ print_conclusions(conclusions *con)
   printf("\tTotal time for tests: %ld.%03ld seconds\n",
          con->sum_of_time / 1000, con->sum_of_time % 1000);
   printf("\tStandard Deviation: %ld.%03ld\n", con->std_dev / 1000, con->std_dev % 1000);
-  printf("\tNumber of queries in create queries: %llu\n", con->create_count);
+  printf("\tNumber of queries in create queries: %"PRIu64"\n", con->create_count);
   printf("\tNumber of clients running queries: %u/%u\n",
          con->users, con->real_users);
   printf("\tNumber of times test was run: %u\n", iterations);
-  printf("\tAverage number of queries per client: %llu\n", con->avg_rows);
+  printf("\tAverage number of queries per client: %"PRIu64"\n", con->avg_rows);
   printf("\n");
 }
 
@@ -2335,7 +2335,8 @@ print_conclusions_csv(conclusions *con)
     snprintf(label_buffer, HUGE_STRING_LENGTH, "query");
 
   snprintf(buffer, HUGE_STRING_LENGTH,
-           "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%u,%u,%u,%llu\n",
+           "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
+           "%u,%u,%u,%"PRIu64"\n",
            con->engine ? con->engine : "", /* Storage engine we ran against */
            label_buffer, /* Load type */
            con->avg_timing / 1000, con->avg_timing % 1000, /* Time to load */

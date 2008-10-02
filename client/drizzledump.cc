@@ -2668,7 +2668,7 @@ static int dump_all_tables_in_db(char *database)
     check_io(md_result_file);
   }
   if (lock_tables)
-    VOID(drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES"));
+    drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
   if (flush_privileges && using_mysql_db == 0)
   {
     fprintf(md_result_file,"\n--\n-- Flush Grant Tables \n--\n");
@@ -2806,7 +2806,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     check_io(md_result_file);
   }
   if (lock_tables)
-    VOID(drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES"));
+    drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
   return(0);
 } /* dump_selected_tables */
 

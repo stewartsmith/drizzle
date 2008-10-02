@@ -183,8 +183,8 @@ net_send_ok(THD *thd,
 
   if (message && message[0])
     pos= net_store_data(pos, (uchar*) message, strlen(message));
-  VOID(my_net_write(net, buff, (size_t) (pos-buff)));
-  VOID(net_flush(net));
+  my_net_write(net, buff, (size_t) (pos-buff));
+  net_flush(net);
 
   thd->main_da.can_overwrite_status= false;
 }
@@ -217,7 +217,7 @@ net_send_eof(THD *thd, uint server_status, uint total_warn_count)
   {
     thd->main_da.can_overwrite_status= true;
     write_eof_packet(thd, net, server_status, total_warn_count);
-    VOID(net_flush(net));
+    net_flush(net);
     thd->main_da.can_overwrite_status= false;
   }
 }
@@ -248,7 +248,7 @@ static void write_eof_packet(THD *thd, NET *net,
   if (thd->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
-  VOID(my_net_write(net, buff, 5));
+  my_net_write(net, buff, 5);
 }
 
 void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
@@ -276,8 +276,7 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
                   (char*) buff);
   err= (char*) buff;
 
-  VOID(net_write_command(net,(uchar) 255, (uchar*) "", 0, (uchar*) err,
-                         length));
+  net_write_command(net,(uchar) 255, (uchar*) "", 0, (uchar*) err, length);
   return;
 }
 

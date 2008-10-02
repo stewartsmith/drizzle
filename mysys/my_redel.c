@@ -83,14 +83,14 @@ int my_copystat(const char *from, const char *to, int MyFlags)
   }
   if ((statbuf.st_mode & S_IFMT) != S_IFREG)
     return 1;
-  VOID(chmod(to, statbuf.st_mode & 07777));		/* Copy modes */
+  chmod(to, statbuf.st_mode & 07777);		/* Copy modes */
 
   if (statbuf.st_nlink > 1 && MyFlags & MY_LINK_WARNING)
   {
     if (MyFlags & MY_LINK_WARNING)
       my_error(EE_LINK_WARNING,MYF(ME_BELL+ME_WAITTANG),from,statbuf.st_nlink);
   }
-  VOID(chown(to, statbuf.st_uid, statbuf.st_gid));	/* Copy ownership */
+  chown(to, statbuf.st_uid, statbuf.st_gid);	/* Copy ownership */
 
 #ifndef __ZTC__
   if (MyFlags & MY_COPYTIME)
@@ -98,7 +98,7 @@ int my_copystat(const char *from, const char *to, int MyFlags)
     struct utimbuf timep;
     timep.actime  = statbuf.st_atime;
     timep.modtime = statbuf.st_mtime;
-    VOID(utime((char*) to, &timep));/* Update last accessed and modified times */
+    utime((char*) to, &timep);/* Update last accessed and modified times */
   }
 #else
   if (MyFlags & MY_COPYTIME)
@@ -106,7 +106,7 @@ int my_copystat(const char *from, const char *to, int MyFlags)
     time_t time[2];
     time[0]= statbuf.st_atime;
     time[1]= statbuf.st_mtime;
-    VOID(utime((char*) to, time));/* Update last accessed and modified times */
+    utime((char*) to, time);/* Update last accessed and modified times */
   }
 #endif
   return 0;

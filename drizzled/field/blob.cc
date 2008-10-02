@@ -28,7 +28,7 @@
 uint32_t
 blob_pack_length_to_max_length(uint arg)
 {
-  return (1LL << cmin(arg, 4U) * 8) - 1LL;
+  return (1 << cmin(arg, 4U) * 8) - 1;
 }
 
 

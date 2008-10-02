@@ -651,7 +651,7 @@ int mysql_update(THD *thd,
   end_read_record(&info);
   delete select;
   thd_proc_info(thd, "end");
-  VOID(table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY));
+  table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
   /*
     error < 0 means really no error at all: we processed all rows until the
@@ -1484,7 +1484,7 @@ void multi_update::abort()
          todo/fixme: do_update() is never called with the arg 1.
          should it change the signature to become argless?
       */
-      VOID(do_updates());
+      do_updates();
     }
   }
   if (thd->transaction.stmt.modified_non_trans_table)

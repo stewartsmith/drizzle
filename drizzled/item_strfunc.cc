@@ -28,9 +28,17 @@
 #include <drizzled/server_includes.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
-C_MODE_START
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mysys/my_static.h>			// For soundex_map
-C_MODE_END
+
+#ifdef __cplusplus
+}
+#endif
+
 #include <drizzled/drizzled_error_messages.h>
 
 String my_empty_string("",default_charset_info);

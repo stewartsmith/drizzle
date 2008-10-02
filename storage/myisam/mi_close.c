@@ -83,13 +83,13 @@ int mi_close(register MI_INFO *info)
       my_free((uchar*) share->decode_tables,MYF(0));
     }
     thr_lock_delete(&share->lock);
-    VOID(pthread_mutex_destroy(&share->intern_lock));
+    pthread_mutex_destroy(&share->intern_lock);
     {
       int i,keys;
       keys = share->state.header.keys;
-      VOID(rwlock_destroy(&share->mmap_lock));
+      rwlock_destroy(&share->mmap_lock);
       for(i=0; i<keys; i++) {
-	VOID(rwlock_destroy(&share->key_root_lock[i]));
+	rwlock_destroy(&share->key_root_lock[i]);
       }
     }
     my_free((uchar*) info->s,MYF(0));

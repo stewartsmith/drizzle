@@ -32,9 +32,15 @@ extern ulong myisam_sort_buffer_size;
 extern TYPELIB myisam_recover_typelib;
 extern ulong myisam_recover_options;
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool index_cond_func_myisam(void *arg);
-C_MODE_END
+
+#ifdef __cplusplus
+}
+#endif
 
 class ha_myisam: public handler
 {

@@ -6523,7 +6523,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     free_sets(&sets);
     return(0);
   }
-  VOID(make_new_set(&sets));      /* Set starting set */
+  make_new_set(&sets);      /* Set starting set */
   make_sets_invisible(&sets);      /* Hide previus sets */
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
@@ -7017,7 +7017,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
   pa->typelib.type_names[pa->typelib.count]= NullS;  /* Put end-mark */
-  VOID(my_stpcpy((char*) pa->str+pa->length,name));
+  my_stpcpy((char*) pa->str+pa->length,name);
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */
