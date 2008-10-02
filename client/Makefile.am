@@ -43,11 +43,7 @@ drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} -fexceptions
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
-drizzlebinlog_SOURCES =     drizzlebinlog.cc \
-                $(top_srcdir)/mysys/mf_tempdir.c \
-                $(top_srcdir)/mysys/my_bit.c \
-                $(top_srcdir)/mysys/my_bitmap.c \
-                $(top_srcdir)/mysys/base64.c
+drizzlebinlog_SOURCES =     drizzlebinlog.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
 drizzledump_SOURCES=            drizzledump.cc 
