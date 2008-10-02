@@ -11,7 +11,7 @@ drop table if exists t1, t2;
 select 0,256,00000000000000065536,2147483647,-2147483648,2147483648,+4294967296;
 select 9223372036854775807,-009223372036854775808;
 select +9999999999999999999,-9999999999999999999;
-select cast(9223372036854775808 as unsigned)+1;
+select cast(9223372036854775808 as)+1;
 select 9223372036854775808+1;
 select -(0-3),round(-(0-3)), round(9999999999999999999);
 select 1,11,101,1001,10001,100001,1000001,10000001,100000001,1000000001,10000000001,100000000001,1000000000001,10000000000001,100000000000001,1000000000000001,10000000000000001,100000000000000001,1000000000000000001,10000000000000000001;
@@ -24,7 +24,7 @@ select conv(1,10,16),conv((1<<2)-1,10,16),conv((1<<10)-2,10,16),conv((1<<16)-3,1
 # This will work on 4.0 as we then have internal handling of bigint variables.
 #
 
-create table t1 (a bigint unsigned not null, primary key(a));
+create table t1 (a bigint not null, primary key(a));
 insert into t1 values (18446744073709551615), (0xFFFFFFFFFFFFFFFE), (18446744073709551613), (18446744073709551612);
 select * from t1;
 select * from t1 where a=18446744073709551615;
@@ -38,7 +38,7 @@ insert into t1 (big) values (-1),(12345678901234567),(9223372036854775807),(1844
 select * from t1;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
-alter table t1 modify big bigint unsigned not null;
+alter table t1 modify big bigint not null;
 select min(big),max(big),max(big)-1 from t1;
 select min(big),max(big),max(big)-1 from t1 group by a;
 insert into t1 (big) values (18446744073709551615);
@@ -80,15 +80,15 @@ drop table t1;
 # atof() behaviour is different of different systems. to be fixed in 4.1
 SELECT '0x8000000000000001'+0;
 
-# Test for BUG#8562: joins over BIGINT UNSIGNED value + constant propagation
+# Test for BUG#8562: joins over BIGINT value + constant propagation
 create table t1 (
- value64  bigint unsigned  not null,
+ value64  bigint  not null,
  value32  integer          not null,
  primary key(value64, value32)
 );
 
 create table t2 (
- value64  bigint unsigned  not null,
+ value64  bigint  not null,
  value32  integer          not null,
  primary key(value64, value32)
 );
@@ -125,7 +125,7 @@ drop table t1;
 # End of 4.1 tests
 
 #
-# Test of CREATE ... SELECT and unsigned integers
+# Test of CREATE ... SELECT and integers
 #
 
 create table t1 select 1 as 'a';
@@ -139,7 +139,7 @@ DROP DATABASE IF EXISTS `scott`;
 
 
 #
-# Check various conversions from/to unsigned bigint.
+# Check various conversions from/to bigint.
 #
 
 create table t1 (a char(100), b varchar(100), c text, d blob);
@@ -152,7 +152,7 @@ insert into t1 values (-1 | 0,-1 | 0,-1 | 0 ,-1 | 0);
 select * from t1;
 drop table t1;
 
-create table t1 ( quantity decimal(2) unsigned);
+create table t1 ( quantity decimal(2));
 insert into t1 values (500), (-500), (~0), (-1);
 select * from t1;
 drop table t1;
@@ -281,7 +281,7 @@ SELECT * FROM t1;
 DROP TABLE t1;
 
 #bug #9088 BIGINT WHERE CLAUSE
-create table t1 (bigint_col bigint unsigned);
+create table t1 (bigint_col bigint);
 insert into t1 values (17666000000000000000);
 select * from t1 where bigint_col=17666000000000000000;
 select * from t1 where bigint_col='17666000000000000000';
@@ -290,15 +290,15 @@ drop table t1;
 --echo
 --echo bug 19955 -- mod is signed with bigint
 
-select cast(10000002383263201056 as unsigned) mod 50 as result;
+select cast(10000002383263201056 as) mod 50 as result;
 
-create table t1 (c1 bigint unsigned);
+create table t1 (c1 bigint);
 insert into t1 values (10000002383263201056);
 select c1 mod 50 as result from t1;
 drop table t1;
 
 #
-# Bug #8663 cant use bgint unsigned as input to cast
+# Bug #8663 cant use bgint as input to cast
 #
 
 select cast(19999999999999999999 as signed);

@@ -309,12 +309,12 @@ drop table t1;
 # Test of REPAIR that once failed
 #
 CREATE TABLE `t1` (
-  `post_id` mediumint(8) unsigned NOT NULL auto_increment,
-  `topic_id` mediumint(8) unsigned NOT NULL default '0',
+  `post_id` mediumint(8) NOT NULL auto_increment,
+  `topic_id` mediumint(8) NOT NULL default '0',
   `post_time` datetime NOT NULL default '0000-00-00 00:00:00',
   `post_text` text NOT NULL,
   `icon_url` varchar(10) NOT NULL default '',
-  `sign` int(1) unsigned NOT NULL default '0',
+  `sign` int(1) NOT NULL default '0',
   `post_edit` varchar(150) NOT NULL default '',
   `poster_login` varchar(35) NOT NULL default '',
   `ip` varchar(15) NOT NULL default '',

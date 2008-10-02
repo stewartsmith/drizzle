@@ -614,7 +614,7 @@ drop table t1;
 
 create table `t1` (
     t1_name varchar(255) default null,
-    t1_id int(10) unsigned not null auto_increment,
+    t1_id int(10) not null auto_increment,
     key (t1_name),
     primary key (t1_id)
 ) auto_increment = 1000 default charset=latin1;

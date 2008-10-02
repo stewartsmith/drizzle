@@ -3684,22 +3684,6 @@ int decide_logging_format(THD *thd, TableList *tables)
                 " but not allowed by this combination of engines");
     }
 
-    /*
-      If more than one engine is involved in the statement and at
-      least one is doing it's own logging (is *self-logging*), the
-      statement cannot be logged atomically, so we generate an error
-      rather than allowing the binlog to become corrupt.
-     */
-    if (multi_engine &&
-        (flags_some_set & HA_HAS_OWN_BINLOGGING))
-    {
-      error= ER_BINLOG_LOGGING_IMPOSSIBLE;
-      my_error(error, MYF(0),
-               "Statement cannot be written atomically since more"
-               " than one engine involved and at least one engine"
-               " is self-logging");
-    }
-
     if (error)
       return -1;
 

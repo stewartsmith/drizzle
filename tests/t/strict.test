@@ -994,8 +994,8 @@ insert into t1 (col2) values (cast('abc' as signed integer));
 --error 1292
 insert into t1 (col2) values (10E+0 + 'a');
 --error 1292
-insert into t1 (col2) values (cast('10a' as unsigned integer));
-insert into t1 (col2) values (cast('10' as unsigned integer));
+insert into t1 (col2) values (cast('10a' as integer));
+insert into t1 (col2) values (cast('10' as integer));
 insert into t1 (col2) values (cast('10' as signed integer));
 insert into t1 (col2) values (10E+0 + '0 ');
 select * from t1;
@@ -1105,7 +1105,7 @@ create table t1(a varbinary(65537));
 
 set @@sql_mode='traditional';
 create table t1(a int, b date not null);                                       
-alter table t1 modify a bigint unsigned not null;
+alter table t1 modify a bigint not null;
 show create table t1;
 drop table t1;
 
@@ -1169,11 +1169,11 @@ drop table t1;
 # Bug #26359: Strings becoming truncated and converted to numbers under STRICT mode
 #
 set sql_mode= 'traditional';
-create table t1(col1 int, col2 int unsigned, 
-  col3 int, col4 int unsigned,
-  col5 mediumint, col6 mediumint unsigned,
-  col7 int, col8 int unsigned,
-  col9 bigint, col10 bigint unsigned);
+create table t1(col1 int, col2 int, 
+  col3 int, col4 int,
+  col5 mediumint, col6 mediumint,
+  col7 int, col8 int,
+  col9 bigint, col10 bigint);
 --error 1366
 insert into t1(col1) values('-');
 --error 1366

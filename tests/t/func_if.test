@@ -102,7 +102,7 @@ drop table t1;
 # Bug#24532 (The return data type of IS TRUE is different from similar
 # operations)
 #
-# IF(x, unsigned, unsigned) should be unsigned.
+# IF(x,,) should be.
 #
 
 select if(0, 18446744073709551610, 18446744073709551610);

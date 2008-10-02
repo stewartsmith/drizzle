@@ -73,7 +73,7 @@ select * from t1 where b=1;
 explain select * from t1 where b=1;
 drop table t1;
 
-create table t1 (id int unsigned not null, primary key  using BTREE (id)) engine=HEAP;
+create table t1 (id int not null, primary key  using BTREE (id)) engine=HEAP;
 insert into t1 values(1);
 select max(id) from t1; 
 insert into t1 values(2);

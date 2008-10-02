@@ -753,7 +753,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHARE_SYM
 %token  SHOW
 %token  SHUTDOWN
-%token  SIGNED_SYM
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SLAVE
 %token  SNAPSHOT_SYM
@@ -824,7 +823,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
 %token  UNLOCK_SYM
-%token  UNSIGNED
 %token  UNTIL_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  UPGRADE_SYM
@@ -1016,8 +1014,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
-        set lock unlock string_list field_options field_option
-        field_opt_list opt_binary table_lock_list table_lock
+        set lock unlock string_list
+        opt_binary table_lock_list table_lock
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
         opt_outer table_list table_name table_alias_ref_list table_alias_ref
@@ -1728,12 +1726,12 @@ field_spec:
         ;
 
 type:
-        int_type field_options 
+        int_type
         { 
           $$=$1; 
           Lex->length=(char*) 0; /* use default length */
         }
-        | real_type opt_precision field_options { $$=$1; }
+        | real_type opt_precision { $$=$1; }
         | char '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
@@ -1778,11 +1776,11 @@ type:
             $$=DRIZZLE_TYPE_BLOB; 
             Lex->length=(char*) 0; /* use default length */
           }
-        | DECIMAL_SYM float_options field_options
+        | DECIMAL_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | NUMERIC_SYM float_options field_options
+        | NUMERIC_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | FIXED_SYM float_options field_options
+        | FIXED_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | ENUM
           {Lex->interval_list.empty();}
@@ -1791,8 +1789,7 @@ type:
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
-            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNSIGNED_FLAG |
-              UNIQUE_FLAG);
+            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG);
           }
         ;
 
@@ -1837,21 +1834,6 @@ precision:
             lex->length=$2.str;
             lex->dec=$4.str;
           }
-        ;
-
-field_options:
-          /* empty */ {}
-        | field_opt_list {}
-        ;
-
-field_opt_list:
-          field_opt_list field_option {}
-        | field_option {}
-        ;
-
-field_option:
-          SIGNED_SYM {}
-        | UNSIGNED { Lex->type|= UNSIGNED_FLAG;}
         ;
 
 opt_len:
@@ -3753,14 +3735,6 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | CHAR_SYM opt_len opt_binary
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
-        | SIGNED_SYM
-          { $$=ITEM_CAST_SIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | SIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_SIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | UNSIGNED
-          { $$=ITEM_CAST_UNSIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | UNSIGNED INT_SYM
-          { $$=ITEM_CAST_UNSIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | TIME_SYM
@@ -6108,7 +6082,6 @@ keyword:
         | SAVEPOINT_SYM         {}
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
-        | SIGNED_SYM            {}
         | SOCKET_SYM            {}
         | SLAVE                 {}
         | SONAME_SYM            {}

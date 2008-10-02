@@ -237,7 +237,7 @@ drop table t1;
 #   "unsigned_keypart NOT IN(negative_number,...)" 
 #   (introduced in fix BUG#15872) 
 create table t1 (
-  some_id int(5) unsigned,
+  some_id int(5),
   key (some_id)
 );
 insert into t1 values (1),(2);
@@ -246,7 +246,7 @@ select some_id from t1 where some_id not in(-4,-1,-4);
 select some_id from t1 where some_id not in(-4,-1,3423534,2342342);
 
 #
-# BUG#24261: crash when WHERE contains NOT IN ('<negative value>') for unsigned column type
+# BUG#24261: crash when WHERE contains NOT IN ('<negative value>') for column type
 #
 
 select some_id from t1 where some_id not in('-1', '0');
@@ -292,7 +292,7 @@ SELECT STRAIGHT_JOIN
 DROP TABLE t1,t2,t3,t4;  
 
 #
-# BUG#19342: IN works incorrectly for BIGINT UNSIGNED values
+# BUG#19342: IN works incorrectly for BIGINT values
 #
 CREATE TABLE t1(a BIGINT UNSIGNED);
 INSERT INTO t1 VALUES (0xFFFFFFFFFFFFFFFF);

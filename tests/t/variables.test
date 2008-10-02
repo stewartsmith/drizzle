@@ -362,7 +362,7 @@ set init_connect = NULL;
 set global init_connect = NULL;
 
 # Bug#3754 SET GLOBAL myisam_max_sort_file_size doesn't work as
-# expected: check that there is no overflow when 64-bit unsigned
+# expected: check that there is no overflow when 64-bit
 # variables are set
 
 set global myisam_max_sort_file_size=4294967296;

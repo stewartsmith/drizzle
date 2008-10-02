@@ -66,7 +66,7 @@ drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 --enable_warnings
 
-eval create table t1 (id int unsigned not null auto_increment, code tinyint unsigned not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create table t1 (id int not null auto_increment, code tinyint not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 insert into t1 (code, name) values (1, 'Tim'), (1, 'Monty'), (2, 'David'), (2, 'Erik'), (3, 'Sasha'), (3, 'Jeremy'), (4, 'Matt');
 select id, code, name from t1 order by id;
@@ -534,8 +534,8 @@ drop table t1;
 #
 
 eval CREATE TABLE t1 (
-  a int3 unsigned NOT NULL,
-  b int1 unsigned NOT NULL,
+  a int3 NOT NULL,
+  b int1 NOT NULL,
   UNIQUE (a, b)
 ) ENGINE = $engine_type;
 
@@ -547,7 +547,7 @@ drop table t1;
 # Test INSERT DELAYED
 #
 
-eval CREATE TABLE t1 (a int unsigned NOT NULL) engine=$engine_type;
+eval CREATE TABLE t1 (a int NOT NULL) engine=$engine_type;
 # Can't test this in 3.23
 # INSERT DELAYED INTO t1 VALUES (1);
 INSERT INTO t1 VALUES (1);
@@ -772,7 +772,7 @@ drop table t1,t2;
 # this works.
 #
 
-eval create table t1 (id int unsigned not null auto_increment, code tinyint unsigned not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create table t1 (id int not null auto_increment, code tinyint not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 BEGIN;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -1099,9 +1099,9 @@ drop table t1,t2;
 #
 
 eval CREATE TABLE t1 (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `id_object` int(10) unsigned default '0',
-  `id_version` int(10) unsigned NOT NULL default '1',
+  `id` int(10) NOT NULL auto_increment,
+  `id_object` int(10) default '0',
+  `id_version` int(10) NOT NULL default '1',
   `label` varchar(100) NOT NULL default '',
   `description` text,
   PRIMARY KEY  (`id`),
@@ -1112,8 +1112,8 @@ eval CREATE TABLE t1 (
 INSERT INTO t1 VALUES("6", "3382", "9", "Test", NULL), ("7", "102", "5", "Le Pekin (Test)", NULL),("584", "1794", "4", "Test de resto", NULL),("837", "1822", "6", "Test 3", NULL),("1119", "3524", "1", "Societe Test", NULL),("1122", "3525", "1", "Fournisseur Test", NULL);
 
 eval CREATE TABLE t2 (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `id_version` int(10) unsigned NOT NULL default '1',
+  `id` int(10) NOT NULL auto_increment,
+  `id_version` int(10) NOT NULL default '1',
   PRIMARY KEY  (`id`),
   KEY `id_version` (`id_version`)
 ) ENGINE=$engine_type;
@@ -1379,7 +1379,7 @@ drop table t1;
 # range optimizer problem
 #
 
-eval create table t1 (x bigint unsigned not null primary key) engine=$engine_type;
+eval create table t1 (x bigint not null primary key) engine=$engine_type;
 insert into t1(x) values (0xfffffffffffffff0),(0xfffffffffffffff1);
 select * from t1;
 select count(*) from t1 where x>0;

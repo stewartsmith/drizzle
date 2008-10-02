@@ -61,7 +61,7 @@ drop table t1;
 # Warnings from basic INSERT, UPDATE and ALTER commands
 #
 
-create table t1(a int NOT NULL, b int unsigned, c char(5));
+create table t1(a int NOT NULL, b int, c char(5));
 insert into t1 values(NULL,100,'mysql'),(10,-1,'mysql ab'),(500,256,'open source'),(20,NULL,'test');
 alter table t1 modify c char(4);
 alter table t1 add d char(2);
@@ -176,7 +176,7 @@ DROP PROCEDURE IF EXISTS sp1;
 delimiter //;
 CREATE PROCEDURE sp1()
 BEGIN
-declare x numeric unsigned zerofill;
+declare x numeric zerofill;
 SELECT f1 into x from t2 limit 1;
 END//
 delimiter ;//

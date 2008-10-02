@@ -1,8 +1,8 @@
 drop table if exists t1,t2,t3,t4,t11;
 drop table if exists t1_1,t1_2,t9_1,t9_2,t1aa,t2aa;
 CREATE TABLE t1 (
-Period int unsigned DEFAULT '0' NOT NULL,
-Varor_period int unsigned DEFAULT '0' NOT NULL
+Period int DEFAULT '0' NOT NULL,
+Varor_period int DEFAULT '0' NOT NULL
 );
 INSERT INTO t1 VALUES (9410,9412);
 select period from t1;
@@ -16,8 +16,8 @@ Period	Varor_period
 9410	9412
 CREATE TABLE t2 (
 auto int not null auto_increment,
-fld1 int unsigned DEFAULT '0' NOT NULL,
-companynr int unsigned DEFAULT '0' NOT NULL,
+fld1 int DEFAULT '0' NOT NULL,
+companynr int DEFAULT '0' NOT NULL,
 fld3 char(30) DEFAULT '' NOT NULL,
 fld4 char(35) DEFAULT '' NOT NULL,
 fld5 char(35) DEFAULT '' NOT NULL,
@@ -1237,7 +1237,7 @@ fld1	fld3	period	price	price2
 18801	inch	1001	5987435	234724
 18811	repetitions	1001	5987435	234724
 create table t4 (
-companynr int unsigned NOT NULL default '0',
+companynr int NOT NULL default '0',
 companyname char(30) NOT NULL default '',
 PRIMARY KEY (companynr),
 UNIQUE KEY companyname(companyname)
@@ -1941,15 +1941,15 @@ Tables_in_test (t?)
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int unsigned	NULL	NO	UNI	NULL		#	
-companynr	int unsigned	NULL	NO		NULL		#	
+fld1	int	NULL	NO	UNI	NULL		#	
+companynr	int	NULL	NO		NULL		#	
 fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
 fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
 fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
 fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
 show full columns from t2 from test like 'f%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int unsigned	NULL	NO	UNI	NULL		#	
+fld1	int	NULL	NO	UNI	NULL		#	
 fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
 fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
 fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
@@ -1958,7 +1958,7 @@ show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
-id bigint unsigned NOT NULL auto_increment,
+id bigint NOT NULL auto_increment,
 pseudo varchar(35) NOT NULL default '',
 PRIMARY KEY  (id),
 UNIQUE KEY pseudo (pseudo)
@@ -1968,9 +1968,9 @@ INSERT INTO t1 (pseudo) VALUES ('test1');
 SELECT 1 as rnd1 from t1 where rand() > 2;
 rnd1
 DROP TABLE t1;
-CREATE TABLE t1 (gvid int unsigned default NULL,  hmid int unsigned default NULL,  volid int unsigned default NULL,  mmid int unsigned default NULL,  hdid int unsigned default NULL,  fsid int unsigned default NULL,  ctid int unsigned default NULL,  dtid int unsigned default NULL,  cost int unsigned default NULL,  performance int unsigned default NULL,  serialnumber bigint unsigned default NULL,  monitored int unsigned default '1',  removed int unsigned default '0',  target int unsigned default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
+CREATE TABLE t1 (gvid int default NULL,  hmid int default NULL,  volid int default NULL,  mmid int default NULL,  hdid int default NULL,  fsid int default NULL,  ctid int default NULL,  dtid int default NULL,  cost int default NULL,  performance int default NULL,  serialnumber bigint default NULL,  monitored int default '1',  removed int default '0',  target int default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (200001,2,1,1,100,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\E$',''),(200002,2,2,1,101,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\C$',''),(200003,1,3,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,1,20020425060427,'c:',NULL);
-CREATE TABLE t2 (  hmid int unsigned default NULL,  volid int unsigned default NULL,  sampletid int unsigned default NULL,  sampletime datetime default NULL,  samplevalue bigint unsigned default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
+CREATE TABLE t2 (  hmid int default NULL,  volid int default NULL,  sampletid int default NULL,  sampletime datetime default NULL,  samplevalue bigint default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,3,10,'2002-06-01 08:00:00',35),(1,3,1010,'2002-06-01 12:00:01',35);
 SELECT a.gvid, (SUM(CASE b.sampletid WHEN 140 THEN b.samplevalue ELSE 0 END)) as the_success,(SUM(CASE b.sampletid WHEN 141 THEN b.samplevalue ELSE 0 END)) as the_fail,(SUM(CASE b.sampletid WHEN 142 THEN b.samplevalue ELSE 0 END)) as the_size,(SUM(CASE b.sampletid WHEN 143 THEN b.samplevalue ELSE 0 END)) as the_time FROM t1 a, t2 b WHERE a.hmid = b.hmid AND a.volid = b.volid AND b.sampletime >= 'wrong-date-value' AND b.sampletime < 'wrong-date-value' AND b.sampletid IN (140, 141, 142, 143) GROUP BY a.gvid;
 gvid	the_success	the_fail	the_size	the_time
@@ -2270,7 +2270,7 @@ SELECT * FROM t1 WHERE city LIKE '%london%' AND city='London';
 city
 London
 DROP TABLE t1;
-create table t1 (a int unsigned, b int unsigned);
+create table t1 (a int, b int);
 insert into t1 values (1,0), (1,1), (1,2);
 select a-b  from t1 order by 1;
 a-b  
@@ -2286,11 +2286,11 @@ select a-b as d, (a-b >= 0), b from t1 group by b having d >= 0;
 d	(a-b >= 0)	b
 1	1	0
 0	1	1
-select cast((a - b) as unsigned) from t1 order by 1;
-cast((a - b) as unsigned)
+select a - b from t1 order by 1;
+a - b 
+-1
 0
 1
-18446744073709551615
 drop table t1;
 create table t1 (a int);
 select all all * from t1;
@@ -2303,9 +2303,9 @@ select distinct all * from t1;
 ERROR HY000: Incorrect usage of ALL and DISTINCT
 drop table t1;
 CREATE TABLE t1 (
-kunde_intern_id int unsigned NOT NULL default '0',
-kunde_id int unsigned NOT NULL default '0',
-FK_firma_id int unsigned NOT NULL default '0',
+kunde_intern_id int NOT NULL default '0',
+kunde_id int NOT NULL default '0',
+FK_firma_id int NOT NULL default '0',
 aktuell enum('Ja','Nein') NOT NULL default 'Ja',
 vorname varchar(128) NOT NULL default '',
 nachname varchar(128) NOT NULL default '',
@@ -2356,11 +2356,11 @@ AND FK_firma_id = 2;
 COUNT(*)
 0
 drop table t1;
-CREATE TABLE t1 (b BIGINT UNSIGNED NOT NULL, PRIMARY KEY (b));
-INSERT INTO t1 VALUES (0x8000000000000000);
-SELECT b FROM t1 WHERE b=0x8000000000000000;
+CREATE TABLE t1 (b BIGINT NOT NULL, PRIMARY KEY (b));
+INSERT INTO t1 VALUES (0x4000000000000000);
+SELECT b FROM t1 WHERE b=0x4000000000000000;
 b
-9223372036854775808
+4611686018427387904
 DROP TABLE t1;
 CREATE TABLE `t1` ( `gid` int default NULL, `uid` int default NULL);
 CREATE TABLE `t2` ( `ident` int default NULL, `level` char(16) default NULL);
@@ -2417,7 +2417,7 @@ f2
 1
 NULL
 drop table t1,t2;
-create table t2 (a int unsigned);
+create table t2 (a int);
 create index t2i on t2(a);
 insert into t2 values (0), (254), (255);
 select * from t2 where a > -1;
@@ -2584,7 +2584,7 @@ select min(key1) from t1 where key1 >= 0.3762 and rand() + 0.5 >= 0.5;
 min(key1)
 0.3762
 DROP TABLE t1,t2;
-CREATE TABLE t1 (i BIGINT UNSIGNED NOT NULL);
+CREATE TABLE t1 (i BIGINT NOT NULL);
 INSERT INTO t1 VALUES (10);
 SELECT i='1e+01',i=1e+01, i in (1e+01,1e+01), i in ('1e+01','1e+01') FROM t1;
 i='1e+01'	i=1e+01	i in (1e+01,1e+01)	i in ('1e+01','1e+01')
@@ -2987,14 +2987,14 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ref	c	c	5	test.t1.a	1	
 DROP TABLE t1, t2;
 create table t1 (
-a int unsigned    not null auto_increment primary key,
+a int    not null auto_increment primary key,
 b int             not null,
 c int             not null
 );
 create table t2 (
-a int unsigned    not null auto_increment primary key,
+a int    not null auto_increment primary key,
 b int             not null,
-c int unsigned    not null,
+c int    not null,
 d varchar(50)
 );
 insert into t1 (b,c) values (0,1), (0,1);
@@ -3263,16 +3263,16 @@ a	ts	a	dt1	dt2
 Warnings:
 Warning	1292	Incorrect datetime value: '2999-12-31 00:00:00' for column 'ts' at row 1
 DROP TABLE t1,t2;
-create table t1 (a bigint unsigned);
+create table t1 (a bigint);
 insert into t1 values
-(if(1, 9223372036854775808, 1)),
-(case when 1 then 9223372036854775808 else 1 end),
-(coalesce(9223372036854775808, 1));
+(if(1, 92233720368547758, 1)),
+(case when 1 then 92233720368547758 else 1 end),
+(coalesce(92233720368547758, 1));
 select * from t1;
 a
-9223372036854775808
-9223372036854775808
-9223372036854775808
+92233720368547758
+92233720368547758
+92233720368547758
 drop table t1;
 create table t1 select
 if(1, 9223372036854775808, 1) i,
@@ -3287,9 +3287,9 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 drop table t1;
 select 
-if(1, cast(1111111111111111111 as unsigned), 1) i,
-case when 1 then cast(1111111111111111111 as unsigned) else 1 end c,
-coalesce(cast(1111111111111111111 as unsigned), 1) co;
+if(1, 1111111111111111111, 1) i,
+case when 1 then 1111111111111111111 else 1 end c,
+coalesce(1111111111111111111, 1) co;
 i	c	co
 1111111111111111111	1111111111111111111	1111111111111111111
 CREATE TABLE t1 (name varchar(255));
@@ -3576,14 +3576,14 @@ x
 1
 Warnings:
 Warning	1466	Leading spaces are removed from name ' x'
-CREATE TABLE t1 (c11 INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY);
-CREATE TABLE t2 (c21 INT UNSIGNED NOT NULL, 
+CREATE TABLE t1 (c11 INT NOT NULL AUTO_INCREMENT PRIMARY KEY);
+CREATE TABLE t2 (c21 INT NOT NULL, 
 c22 INT DEFAULT NULL, 
 KEY(c21, c22));
-CREATE TABLE t3 (c31 INT UNSIGNED NOT NULL DEFAULT 0, 
+CREATE TABLE t3 (c31 INT NOT NULL DEFAULT 0, 
 c32 INT DEFAULT NULL, 
 c33 INT NOT NULL, 
-c34 INT UNSIGNED DEFAULT 0,
+c34 INT DEFAULT 0,
 KEY (c33, c34, c32));
 INSERT INTO t1 values (),(),(),(),();
 INSERT INTO t2 SELECT a.c11, b.c11 FROM t1 a, t1 b;

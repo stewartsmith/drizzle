@@ -90,11 +90,11 @@ public:
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
-    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_CAN_BIT_FIELD |
+    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE |
             HA_STATS_RECORDS_IS_EXACT |
             HA_HAS_RECORDS |
-            HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
+            HA_FILE_BASED);
   }
   uint32_t index_flags(uint idx __attribute__((unused)),
                        uint part __attribute__((unused)),

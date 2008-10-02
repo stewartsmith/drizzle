@@ -84,7 +84,7 @@ ERROR 22003: Out of range value for column 'a' at row 1
 select a from t1;
 a
 drop table t1;
-create table t1 (a decimal(4,2) unsigned);
+create table t1 (a decimal(4,2));
 insert into t1 value (10000), (1.1e10), ("11111"), (100000.1);
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 value (-10000), (-1.1e10), ("-11111"), (-100000.1);
@@ -102,17 +102,15 @@ ERROR 22003: Out of range value for column 'a' at row 1
 select * from t1;
 a
 drop table t1;
-create table t1 (a bigint unsigned);
-insert into t1 values (18446744073709551615.0);
-insert into t1 values (9223372036854775808.0);
+create table t1 (a bigint);
+insert into t1 values (9223372036854775807.0);
 insert into t1 values (9999999999999999999999999.000);
 ERROR 22003: Out of range value for column 'a' at row 1
 insert into t1 values (-1.0);
-ERROR 22003: Out of range value for column 'a' at row 1
 select * from t1;
 a
-18446744073709551615
-9223372036854775808
+9223372036854775807
+-1
 drop table t1;
 create table t1 (a int);
 insert into t1 values (18446744073709551615.0);
@@ -816,9 +814,8 @@ Error	1365	Division by 0
 select abs(NULL);
 abs(NULL)
 NULL
-create table t1( d1 decimal(18) unsigned, d2 decimal(20) unsigned, d3 decimal (22) unsigned);
+create table t1( d1 decimal(18), d2 decimal(20), d3 decimal (22));
 insert into t1 values(1,-1,-1);
-ERROR 22003: Out of range value for column 'd2' at row 1
 drop table t1;
 create table t1 (col1 decimal(5,2), col2 numeric(5,2));
 insert into t1 values (999.999,999.999);
@@ -890,14 +887,14 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (
-f1 decimal unsigned not null default 17.49, 
-f2 decimal unsigned not null default 17.68, 
-f3 decimal unsigned not null default 99.2, 
-f4 decimal unsigned not null default 99.7, 
-f5 decimal unsigned not null default 104.49, 
-f6 decimal unsigned not null default 199.91, 
-f7 decimal unsigned not null default 999.9, 
-f8 decimal unsigned not null default 9999.99);
+f1 decimal not null default 17.49, 
+f2 decimal not null default 17.68, 
+f3 decimal not null default 99.2, 
+f4 decimal not null default 99.7, 
+f5 decimal not null default 104.49, 
+f6 decimal not null default 199.91, 
+f7 decimal not null default 999.9, 
+f8 decimal not null default 9999.99);
 Warnings:
 Note	1265	Data truncated for column 'f1' at row 1
 Note	1265	Data truncated for column 'f2' at row 1
@@ -1330,11 +1327,6 @@ f1
 20101112000000.000014
 101112.000000
 drop table t1;
-select cast(19999999999999999999 as unsigned);
-cast(19999999999999999999 as unsigned)
-18446744073709551615
-Warnings:
-Error	1292	Truncated incorrect DECIMAL value: ''
 create table t1(a decimal(18));
 insert into t1 values(123456789012345678);
 alter table t1 modify column a decimal(19);
