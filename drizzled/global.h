@@ -647,8 +647,6 @@ typedef unsigned char	uchar;	/* Short for unsigned char */
 typedef unsigned long ulong;		  /* Short for unsigned long */
 #endif
 
-#define MY_ERRPTR ((void*)(intptr)1)
-
 #if SIZEOF_OFF_T > 4 
 typedef uint64_t my_off_t;
 #else
@@ -673,10 +671,6 @@ typedef int		myf;	/* Type of MyFlags in my_funcs */
 #if !defined(bool) && (!defined(HAVE_BOOL) || !defined(__cplusplus))
 typedef char		bool;	/* Ordinary boolean values 0 1 */
 #endif
-	/* Macros for converting *constants* to the right type */
-#define INT8(v)		(int8_t) (v)
-#define INT16(v)	(int16_t) (v)
-#define INT32(v)	(int32_t) (v)
 #define MYF(v)		(myf) (v)
 
 /* Defines for time function */
