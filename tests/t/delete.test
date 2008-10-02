@@ -177,7 +177,7 @@ drop table t1;
 CREATE TABLE t1 (
   `date` date ,
   `time` time ,
-  `seq` int unsigned NOT NULL auto_increment,
+  `seq` int NOT NULL auto_increment,
   PRIMARY KEY  (`seq`),
   KEY `seq` (`seq`),
   KEY `time` (`time`),

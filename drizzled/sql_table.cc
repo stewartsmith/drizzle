@@ -4961,10 +4961,6 @@ end_online:
 
   thd_proc_info(thd, "end");
 
-  ha_binlog_log_query(thd, create_info->db_type, LOGCOM_ALTER_TABLE,
-                      thd->query, thd->query_length,
-                      db, table_name);
-
   assert(!(mysql_bin_log.is_open() &&
                 thd->current_stmt_binlog_row_based &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));

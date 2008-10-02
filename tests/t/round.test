@@ -16,7 +16,7 @@ INSERT INTO t1 VALUES ('-128.5');
 SELECT * FROM t1;
 DROP TABLE t1;
 
-CREATE TABLE t1 (uint8 int unsigned not null);
+CREATE TABLE t1 (uint8 int not null);
 INSERT INTO t1 VALUES ('0.1');
 INSERT INTO t1 VALUES ('0.5');
 INSERT INTO t1 VALUES ('127.4');
@@ -44,7 +44,7 @@ SELECT * FROM t1;
 DROP TABLE t1;
 
 
-CREATE TABLE t1 (uint16 int unsigned not null);
+CREATE TABLE t1 (uint16 int not null);
 INSERT INTO t1 VALUES ('0.1');
 INSERT INTO t1 VALUES ('0.5');
 INSERT INTO t1 VALUES ('32767.4');
@@ -70,7 +70,7 @@ INSERT INTO t1 VALUES ('-8388608.5');
 SELECT * FROM t1;
 DROP TABLE t1;
 
-CREATE TABLE t1 (uint24 mediumint unsigned not null);
+CREATE TABLE t1 (uint24 mediumint not null);
 INSERT INTO t1 VALUES ('0.1');
 INSERT INTO t1 VALUES ('0.5');
 INSERT INTO t1 VALUES ('8388607.4');
@@ -96,7 +96,7 @@ INSERT INTO t1 VALUES ('-9223372036854775808.5');
 SELECT * FROM t1;
 DROP TABLE t1;
 
-CREATE TABLE t1 (uint64 bigint unsigned not null);
+CREATE TABLE t1 (uint64 bigint not null);
 INSERT INTO t1 VALUES ('0.1');
 INSERT INTO t1 VALUES ('0.5');
 INSERT INTO t1 VALUES ('9223372036854775807.4');

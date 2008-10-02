@@ -949,11 +949,10 @@ ha_innobase::ha_innobase(handlerton *hton, TABLE_SHARE *table_arg)
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
 		  HA_CAN_INDEX_BLOBS |
-		  HA_CAN_SQL_HANDLER |
 		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
 		  HA_PRIMARY_KEY_IN_READ_INDEX |
 		  HA_BINLOG_ROW_CAPABLE |
-		  HA_CAN_GEOMETRY | HA_PARTIAL_COLUMN_READ |
+		  HA_PARTIAL_COLUMN_READ |
 		  HA_TABLE_SCAN_ON_INDEX | HA_NEED_READ_RANGE_BUFFER |
                   HA_MRR_CANT_SORT),
   primary_key(0), /* needs initialization because index_flags() may be called 

@@ -20,15 +20,15 @@ drop table t1, t2, t3, t4;
 # BUG#30622: Incorrect query results for MRR + filesort
 # 
 CREATE TABLE t1 (
-  ID int(10) unsigned NOT NULL AUTO_INCREMENT,
-  col1 int(10) unsigned DEFAULT NULL,
-  key1 int(10) unsigned NOT NULL DEFAULT '0',
-  key2 int(10) unsigned DEFAULT NULL,
+  ID int(10) NOT NULL AUTO_INCREMENT,
+  col1 int(10) DEFAULT NULL,
+  key1 int(10) NOT NULL DEFAULT '0',
+  key2 int(10) DEFAULT NULL,
   text1 text,
   text2 text,
   col2 int(6) DEFAULT '100',
   col3 enum('headers','bodyandsubject') NOT NULL DEFAULT 'bodyandsubject',
-  col4 int(3) unsigned NOT NULL DEFAULT '0',
+  col4 int(3) NOT NULL DEFAULT '0',
   PRIMARY KEY (ID),
   KEY (key1),
   KEY (key2)

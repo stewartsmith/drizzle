@@ -5,7 +5,7 @@
 drop table if exists t1, t2;
 --enable_warnings
 
-create table t1 (grp int, a bigint unsigned, c char(10) not null, d char(10) not null);
+create table t1 (grp int, a bigint, c char(10) not null, d char(10) not null);
 insert into t1 values (1,1,"a","a");
 insert into t1 values (2,2,"b","a");
 insert into t1 values (2,3,"c","b");
@@ -333,9 +333,9 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  aID int(5) unsigned NOT NULL auto_increment,
+  aID int(5) NOT NULL auto_increment,
   sometitle varchar(255) NOT NULL default '',
-  bID int(5) unsigned NOT NULL,
+  bID int(5) NOT NULL,
   PRIMARY KEY  (aID),
   UNIQUE KEY sometitle (sometitle)
 );
@@ -343,7 +343,7 @@ INSERT INTO t1 SET sometitle = 'title1', bID = 1;
 INSERT INTO t1 SET sometitle = 'title2', bID = 1;
 
 CREATE TABLE t2 (
-  bID int(5) unsigned NOT NULL auto_increment,
+  bID int(5) NOT NULL auto_increment,
   somename varchar(255) NOT NULL default '',
   PRIMARY KEY  (bID),
   UNIQUE KEY somename (somename)
@@ -397,7 +397,7 @@ drop table t1;
 #
 # Bug#14169 type of group_concat() result changed to blob if tmp_table was used
 #
-create table t1 (f1 int unsigned, f2 varchar(255));
+create table t1 (f1 int, f2 varchar(255));
 insert into t1 values (1,repeat('a',255)),(2,repeat('b',255));
 --enable_metadata
 select f2,group_concat(f1) from t1 group by f2;
@@ -485,7 +485,7 @@ set names latin1;
 #
 # Bug#14169 type of group_concat() result changed to blob if tmp_table was used
 #
-create table t1 (f1 int unsigned, f2 varchar(255));
+create table t1 (f1 int, f2 varchar(255));
 insert into t1 values (1,repeat('a',255)),(2,repeat('b',255));
 --enable_metadata
 select f2,group_concat(f1) from t1 group by f2;

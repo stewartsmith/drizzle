@@ -818,12 +818,6 @@ void clean_up(bool print_message)
   if (cleanup_done++)
     return; /* purecov: inspected */
 
-  /*
-    make sure that handlers finish up
-    what they have that is dependent on the binlog
-  */
-  ha_binlog_end(current_thd);
-
   logger.cleanup_base();
 
   mysql_bin_log.cleanup();

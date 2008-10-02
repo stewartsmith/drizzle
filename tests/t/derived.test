@@ -79,8 +79,8 @@ drop table t1;
 #
 # test->used_keys test for derived tables
 #
-create table t1 (mat_id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, matintnum CHAR(6) NOT NULL, test MEDIUMINT UNSIGNED NULL);
-create table t2 (mat_id MEDIUMINT UNSIGNED NOT NULL, pla_id MEDIUMINT UNSIGNED NOT NULL);
+create table t1 (mat_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, matintnum CHAR(6) NOT NULL, test MEDIUMINT NULL);
+create table t2 (mat_id MEDIUMINT NOT NULL, pla_id MEDIUMINT NOT NULL);
 insert into t1 values (NULL, 'a', 1), (NULL, 'b', 2), (NULL, 'c', 3), (NULL, 'd', 4), (NULL, 'e', 5), (NULL, 'f', 6), (NULL, 'g', 7), (NULL, 'h', 8), (NULL, 'i', 9);
 insert into t2 values (1, 100), (1, 101), (1, 102), (2, 100), (2, 103), (2, 104), (3, 101), (3, 102), (3, 105);
 
@@ -112,7 +112,7 @@ drop table t1;
 #
 # deived tables with subquery inside all by one table
 #
-create table t1 (E1 INTEGER UNSIGNED NOT NULL, E2 INTEGER UNSIGNED NOT NULL, E3 INTEGER UNSIGNED NOT NULL, PRIMARY KEY(E1)
+create table t1 (E1 INTEGER NOT NULL, E2 INTEGER NOT NULL, E3 INTEGER NOT NULL, PRIMARY KEY(E1)
 );
 insert into t1 VALUES(1,1,1), (2,2,1);
 select count(*) from t1 INNER JOIN (SELECT A.E1, A.E2, A.E3 FROM t1 AS A WHERE A.E3 = (SELECT MAX(B.E3) FROM t1 AS B WHERE A.E2 = B.E2)) AS THEMAX ON t1.E1 = THEMAX.E2 AND t1.E1 = t1.E2;
@@ -129,7 +129,7 @@ drop table t1;
 # multi-update & multi-delete with derived tables
 #
 CREATE TABLE `t1` (
-  `N` int(11) unsigned NOT NULL default '0',
+  `N` int(11) NOT NULL default '0',
   `M` int(1) default '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 INSERT INTO `t1` (N, M) VALUES (1, 0),(1, 0),(1, 0),(2, 0),(2, 0),(3, 0);
@@ -247,10 +247,10 @@ drop table t1,t2;
 #
 # Bug#10586 - query works with 4.1.8, but not with 4.1.11
 #
-create table t1 (ID int unsigned not null auto_increment,
+create table t1 (ID int not null auto_increment,
                  DATA varchar(5) not null, primary key (ID));
-create table t2 (ID int unsigned not null auto_increment,
-                 DATA varchar(5) not null, FID int unsigned not null,
+create table t2 (ID int not null auto_increment,
+                 DATA varchar(5) not null, FID int not null,
                  primary key (ID));
 select A.* from (t1 inner join (select * from t2) as A on t1.ID = A.FID);
 select t2.* from ((select * from t1) as A inner join t2 on A.ID = t2.FID);

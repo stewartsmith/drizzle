@@ -117,7 +117,7 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  t1ID int(10) unsigned NOT NULL auto_increment,
+  t1ID int(10) NOT NULL auto_increment,
   art binary(1) NOT NULL default '',
   KNR char(5) NOT NULL default '',
   RECHNR char(6) NOT NULL default '',
@@ -262,14 +262,14 @@ DROP TABLE t1;
 #
 
 CREATE TABLE t1 (
-id int( 11 ) unsigned NOT NULL AUTO_INCREMENT ,
-line int( 5 ) unsigned NOT NULL default '0',
-columnid int( 3 ) unsigned NOT NULL default '0',
-owner int( 3 ) unsigned NOT NULL default '0',
-ordinal int( 3 ) unsigned NOT NULL default '0',
-showid int( 6 ) unsigned NOT NULL default '1',
-tableid int( 1 ) unsigned NOT NULL default '1',
-content int( 5 ) unsigned NOT NULL default '188',
+id int( 11 ) NOT NULL AUTO_INCREMENT ,
+line int( 5 ) NOT NULL default '0',
+columnid int( 3 ) NOT NULL default '0',
+owner int( 3 ) NOT NULL default '0',
+ordinal int( 3 ) NOT NULL default '0',
+showid int( 6 ) NOT NULL default '1',
+tableid int( 1 ) NOT NULL default '1',
+content int( 5 ) NOT NULL default '188',
 PRIMARY KEY ( owner, id ) ,
 KEY menu( owner, showid, columnid ) ,
 KEY `COLUMN` ( owner, columnid, line ) ,
@@ -392,7 +392,7 @@ drop table t1,t2;
 
 # Fix for bug#4488 
 #
-create table t1 (x bigint unsigned not null);
+create table t1 (x bigint not null);
 insert into t1(x) values (0xfffffffffffffff0);
 insert into t1(x) values (0xfffffffffffffff1);
 select * from t1;
@@ -419,7 +419,7 @@ select count(*) from t2 where x = 18446744073709551601;
 drop table t1,t2;
 
 --disable_warnings
-create table t1 (x bigint unsigned not null primary key) engine=innodb;
+create table t1 (x bigint not null primary key) engine=innodb;
 --enable_warnings
 insert into t1(x) values (0xfffffffffffffff0);
 insert into t1(x) values (0xfffffffffffffff1);
@@ -435,9 +435,9 @@ select count(*) from t1 where x = 18446744073709551601;
 drop table t1;
 
 #
-# Bug #11185 incorrect comparison of unsigned int to signed constant
+# Bug #11185 incorrect comparison of int to signed constant
 #
-create table t1 (a bigint unsigned);
+create table t1 (a bigint);
 create index t1i on t1(a);
 insert into t1 select 18446744073709551615;
 insert into t1 select 18446744073709551614;
@@ -977,7 +977,7 @@ DROP TABLE t1;
 #
 
 # test UNSIGNED. only occurs when indexed.
-CREATE TABLE t1 (f1 int(11) UNSIGNED NOT NULL, PRIMARY KEY (f1));
+CREATE TABLE t1 (f1 int(11) NOT NULL, PRIMARY KEY (f1));
 
 INSERT INTO t1 VALUES (127),(254),(0),(1),(255);
 

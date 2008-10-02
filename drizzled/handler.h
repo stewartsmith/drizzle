@@ -111,8 +111,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
   row to be able to find the row later.
 */
 #define HA_REC_NOT_IN_SEQ      (1 << 3)
-/* This is now a dead option, just left for compatibility */
-#define HA_CAN_GEOMETRY        (1 << 4)
+
 /*
   Reading keys in random order is as fast as reading keys in sort order
   (Used in records.cc to decide if we should use a record cache and by
@@ -132,11 +131,6 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_REQUIRE_PRIMARY_KEY (1 << 12) /* .. and can't create a hidden one */
 #define HA_STATS_RECORDS_IS_EXACT (1 << 13) /* stats.records is exact */
 /*
-  INSERT_DELAYED only works with handlers that uses MySQL internal table
-  level locks
-*/
-#define HA_CAN_INSERT_DELAYED  (1 << 14)
-/*
   If we get the primary key columns for free when we do an index read
   It also implies that we have to retrive the primary key when using
   position() and rnd_pos().
@@ -147,7 +141,6 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
   uses a primary key. Without primary key, we can't call position().
 */ 
 #define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16) 
-#define HA_CAN_RTREEKEYS       (1 << 17) /* Historical, no longer supported */
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
 /*
   The following is we need to a primary key to delete (and update) a row.
@@ -155,20 +148,14 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 */
 #define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
-#define HA_CAN_FULLTEXT        (1 << 21) /* Historical, no longer supported */
-#define HA_CAN_SQL_HANDLER     (1 << 22) /* Historical, no longer supported */
 #define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
 /* Table data are stored in separate files (for lower_case_table_names) */
 #define HA_FILE_BASED	       (1 << 26)
-#define HA_NO_VARCHAR	       (1 << 27) /* Historical, no longer supported */
-#define HA_CAN_BIT_FIELD       (1 << 28) /* Historical, no longer supported */
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 #define HA_NO_COPY_ON_ALTER    (INT64_C(1) << 31)
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
-/* Has it's own method of binlog logging */
-#define HA_HAS_OWN_BINLOGGING  (INT64_C(1) << 33) /* Historical, no longer supported */
 #define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
 /*
@@ -2281,22 +2268,3 @@ void trans_register_ha(THD *thd, bool all, handlerton *ht);
 */
 #define trans_need_2pc(thd, all)                   ((total_ha_2pc > 1) && \
         !((all ? &thd->transaction.all : &thd->transaction.stmt)->no_2pc))
-
-#ifdef HAVE_NDB_BINLOG
-int ha_reset_logs(THD *thd);
-int ha_binlog_index_purge_file(THD *thd, const char *file);
-void ha_reset_slave(THD *thd);
-void ha_binlog_log_query(THD *thd, handlerton *db_type,
-                         enum_binlog_command binlog_command,
-                         const char *query, uint query_length,
-                         const char *db, const char *table_name);
-void ha_binlog_wait(THD *thd);
-int ha_binlog_end(THD *thd);
-#else
-#define ha_reset_logs(a) do {} while (0)
-#define ha_binlog_index_purge_file(a,b) do {} while (0)
-#define ha_reset_slave(a) do {} while (0)
-#define ha_binlog_log_query(a,b,c,d,e,f,g) do {} while (0)
-#define ha_binlog_wait(a) do {} while (0)
-#define ha_binlog_end(a)  do {} while (0)
-#endif

@@ -13,7 +13,7 @@ drop table if exists t1,t2;
 # first, we need a table to record something from an event
 
 eval CREATE TABLE `t1` (
-  `id` INT(10) UNSIGNED NOT NULL,
+  `id` INT(10) NOT NULL,
   `c` VARCHAR(50) NOT NULL,
   `ts` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

@@ -621,8 +621,8 @@ DROP TABLE t1;
 # Bug #5832 SELECT doesn't return records in some cases
 #
 CREATE TABLE t1 (
-    id       int unsigned NOT NULL auto_increment,
-    list_id  int unsigned NOT NULL,
+    id       int NOT NULL auto_increment,
+    list_id  int NOT NULL,
     term     TEXT NOT NULL,
     PRIMARY KEY(id),
     INDEX(list_id, term(4))
@@ -643,8 +643,8 @@ DROP TABLE t1;
 #
 SET NAMES latin1;
 CREATE TABLE t1 (
-    id int unsigned NOT NULL auto_increment,
-    list_id int unsigned NOT NULL,
+    id int NOT NULL auto_increment,
+    list_id int NOT NULL,
     term text NOT NULL,
     PRIMARY KEY(id),
     INDEX(list_id, term(19))

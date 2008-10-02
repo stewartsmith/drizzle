@@ -13,8 +13,8 @@ drop table if exists t1,t2,t3,t4;
 --enable_warnings
 
 CREATE TABLE t1 (
-  Period int(4) unsigned zerofill DEFAULT '0000' NOT NULL,
-  Varor_period int(4) unsigned DEFAULT '0' NOT NULL
+  Period int(4) zerofill DEFAULT '0000' NOT NULL,
+  Varor_period int(4) DEFAULT '0' NOT NULL
 ) ENGINE = CSV;
 
 INSERT INTO t1 VALUES (9410,9412);
@@ -29,8 +29,8 @@ select t1.* from t1;
 
 CREATE TABLE t2 (
   auto int not null,
-  fld1 int(6) unsigned zerofill DEFAULT '000000' NOT NULL,
-  companynr int(2) unsigned zerofill DEFAULT '00' NOT NULL,
+  fld1 int(6) zerofill DEFAULT '000000' NOT NULL,
+  companynr int(2) zerofill DEFAULT '00' NOT NULL,
   fld3 char(30) DEFAULT '' NOT NULL,
   fld4 char(35) DEFAULT '' NOT NULL,
   fld5 char(35) DEFAULT '' NOT NULL,
@@ -1304,8 +1304,8 @@ ALTER TABLE t2 RENAME t1;
 
 DROP TABLE t1;
 CREATE TABLE t1 (
-  Period int(4) unsigned zerofill DEFAULT '0000' NOT NULL,
-  Varor_period int(4) unsigned DEFAULT '0' NOT NULL
+  Period int(4) zerofill DEFAULT '0000' NOT NULL,
+  Varor_period int(4) DEFAULT '0' NOT NULL
 ) ENGINE = CSV;
 
 INSERT INTO t1 VALUES (9410,9412);
@@ -1439,7 +1439,7 @@ DROP TABLE test_repair_table3;
 
 CREATE TABLE test_repair_table4 (
   num int not null,
-  magic_no int(4) unsigned zerofill DEFAULT '0000' NOT NULL,
+  magic_no int(4) zerofill DEFAULT '0000' NOT NULL,
   company_name char(30) DEFAULT '' NOT NULL,
   founded char(4) DEFAULT '' NOT NULL
 ) ENGINE = CSV;
@@ -1471,7 +1471,7 @@ DROP TABLE test_repair_table4;
 
 CREATE TABLE test_repair_table5 (
   num int not null,
-  magic_no int(4) unsigned zerofill DEFAULT '0000' NOT NULL,
+  magic_no int(4) zerofill DEFAULT '0000' NOT NULL,
   company_name char(30) DEFAULT '' NOT NULL,
   founded char(4) DEFAULT '' NOT NULL
 ) ENGINE = CSV;

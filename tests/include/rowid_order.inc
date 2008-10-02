@@ -42,7 +42,7 @@ drop table t1;
 
 # Unsigned numbers as rowids
 create table t1 (
-  pk1 int unsigned not NULL,
+  pk1 int not NULL,
   key1 int(11),
   key2 int(11),
   PRIMARY KEY  (pk1),

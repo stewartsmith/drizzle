@@ -1,5 +1,5 @@
 #
-# test of unsigned int
+# test of int
 #
 
 --disable_warnings
@@ -7,7 +7,7 @@ drop table if exists t1;
 --enable_warnings
 SET SQL_WARNINGS=1;
 
-create table t1 (this int unsigned);
+create table t1 (this int);
 insert into t1 values (1);
 insert into t1 values (-1);
 insert into t1 values ('5000000000');

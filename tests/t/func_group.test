@@ -9,7 +9,7 @@ drop table if exists t1,t2;
 set @sav_dpi= @@div_precision_increment;
 set div_precision_increment= 5;
 show variables like 'div_precision_increment';
-create table t1 (grp int, a bigint unsigned, c char(10) not null);
+create table t1 (grp int, a bigint, c char(10) not null);
 insert into t1 values (1,1,"a");
 insert into t1 values (2,2,"b");
 insert into t1 values (2,3,"c");
@@ -33,7 +33,7 @@ select grp, sum(a),count(a),avg(a),std(a),variance(a),bit_or(a),bit_and(a),min(a
 select grp, sum(a)+count(a)+avg(a)+std(a)+variance(a)+bit_or(a)+bit_and(a)+min(a)+max(a)+min(c)+max(c) as sum from t1 group by grp;
 --enable_warnings
 
-create table t2 (grp int, a bigint unsigned, c char(10));
+create table t2 (grp int, a bigint, c char(10));
 insert into t2 select grp,max(a)+max(grp),max(c) from t1 group by grp;
 
 # REPLACE ... SELECT doesn't yet work with PS
@@ -463,7 +463,7 @@ DROP TABLE t1;
 #
  
 CREATE TABLE t1 (
-  id int(10) unsigned NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   val enum('one','two','three') NOT NULL default 'one',
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -475,7 +475,7 @@ select val, count(*) from t1 group by val;
 drop table t1;
 
 CREATE TABLE t1 (
-  id int(10) unsigned NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   val set('one','two','three') NOT NULL default 'one',
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
