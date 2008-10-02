@@ -1086,7 +1086,7 @@ AC_CONFIG_LIBOBJ_DIR([mystrings])
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
-  getcwd getpass getpassphrase getpwnam \
+  getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \

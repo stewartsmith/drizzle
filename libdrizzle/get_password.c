@@ -24,97 +24,38 @@
 #include "libdrizzle.h"
 
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
-#if defined(HAVE_BROKEN_GETPASS) && !defined(HAVE_GETPASSPHRASE)
-#undef HAVE_GETPASS
-#endif
-
-#ifdef HAVE_GETPASS
-# ifdef HAVE_PWD_H
-#   include <pwd.h>
-# endif /* HAVE_PWD_H */
-#else /* ! HAVE_GETPASS */
-# if !defined(__WIN__) && !defined(__NETWARE__)
-#   include <sys/ioctl.h>
-#   ifdef HAVE_TERMIOS_H				/* For tty-password */
-#     include	<termios.h>
-#     define TERMIO	struct termios
-#   else
-#     ifdef HAVE_TERMIO_H				/* For tty-password */
-#       include	<termio.h>
-#       define TERMIO	struct termio
-#     else
-#       include	<sgtty.h>
-#       define TERMIO	struct sgttyb
-#     endif
-#   endif
-#   ifdef alpha_linux_port
-#     include <asm/ioctls.h>				/* QQ; Fix this in configure */
-#     include <asm/termiobits.h>
-#   endif
-# else
-#   ifndef __NETWARE__
-#     include <conio.h>
-#   endif /* ! __NETWARE__ */
-# endif /* ! __WIN__ AND ! __NETWARE__ */
-#endif /* HAVE_GETPASS */
-
-#ifdef HAVE_GETPASSPHRASE			/* For Solaris */
-#define getpass(A) getpassphrase(A)
-#endif
-
-#if defined( __WIN__)
-char *get_tty_password(const char *opt_message)
-{
-  char to[80];
-  char *pos=to,*end=to+sizeof(to)-1;
-  int i=0;
-  _cputs(opt_message ? opt_message : "Enter password: ");
-  for (;;)
-  {
-    char tmp;
-    tmp=_getch();
-    if (tmp == '\b' || (int) tmp == 127)
-    {
-      if (pos != to)
-      {
-	_cputs("\b \b");
-	pos--;
-	continue;
-      }
-    }
-    if (tmp == '\n' || tmp == '\r' || tmp == 3)
-      break;
-    if (iscntrl(tmp) || pos == end)
-      continue;
-    _cputs("*");
-    *(pos++) = tmp;
-  }
-  while (pos != to && isspace(pos[-1]) == ' ')
-    pos--;					/* Allow dummy space at end */
-  *pos=0;
-  _cputs("\n");
-  return(my_strdup(to,MYF(MY_FAE)));
-}
-
+#include <sys/ioctl.h>
+#ifdef HAVE_TERMIOS_H				/* For tty-password */
+# include	<termios.h>
+#  define TERMIO	struct termios
 #else
+#  ifdef HAVE_TERMIO_H				/* For tty-password */
+#    include	<termio.h>
+#    define TERMIO	struct termio
+#  else
+#    include	<sgtty.h>
+#    define TERMIO	struct sgttyb
+#  endif
+#endif
 
-# ifndef HAVE_GETPASS
 /*
   Can't use fgets, because readline will get confused
   length is max number of chars in to, not counting \0
   to will not include the eol characters.
 */
 
-static void get_password(char *to,uint length,int fd, bool echo)
+static void get_password(char *to, uint32_t length,int fd, bool echo)
 {
   char *pos=to,*end=to+length;
 
   for (;;)
   {
     char tmp;
-    if (my_read(fd,&tmp,1,MYF(0)) != 1)
+    if (read(fd,&tmp,1) != 1)
       break;
     if (tmp == '\b' || (int) tmp == 127)
     {
@@ -145,34 +86,19 @@ static void get_password(char *to,uint length,int fd, bool echo)
   *pos=0;
   return;
 }
-# endif /* ! HAVE_GETPASS */
 
 
 char *get_tty_password(const char *opt_message)
 {
-# ifdef HAVE_GETPASS
-  char *passbuff;
-# else /* ! HAVE_GETPASS */
   TERMIO org,tmp;
-# endif /* HAVE_GETPASS */
   char buff[80];
 
-# ifdef HAVE_GETPASS
-  passbuff = getpass(opt_message ? opt_message : "Enter password: ");
-
-  memset(buff, 0, 80);
-  /* copy the password to buff and clear original (static) buffer */
-  strncpy(buff, passbuff, sizeof(buff) - 1);
-#   ifdef _PASSWORD_LEN
-  memset(passbuff, 0, _PASSWORD_LEN);
-#   endif
-# else /* ! HAVE_GETPASS */
   if (isatty(fileno(stdout)))
   {
     fputs(opt_message ? opt_message : "Enter password: ",stdout);
     fflush(stdout);
   }
-#   if defined(HAVE_TERMIOS_H)
+#  if defined(HAVE_TERMIOS_H)
   tcgetattr(fileno(stdin), &org);
   tmp = org;
   tmp.c_lflag &= ~(ECHO | ISIG | ICANON);
@@ -181,7 +107,7 @@ char *get_tty_password(const char *opt_message)
   tcsetattr(fileno(stdin), TCSADRAIN, &tmp);
   get_password(buff, sizeof(buff)-1, fileno(stdin), isatty(fileno(stdout)));
   tcsetattr(fileno(stdin), TCSADRAIN, &org);
-#   elif defined(HAVE_TERMIO_H)
+#  elif defined(HAVE_TERMIO_H)
   ioctl(fileno(stdin), (int) TCGETA, &org);
   tmp=org;
   tmp.c_lflag &= ~(ECHO | ISIG | ICANON);
@@ -190,7 +116,7 @@ char *get_tty_password(const char *opt_message)
   ioctl(fileno(stdin),(int) TCSETA, &tmp);
   get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
   ioctl(fileno(stdin),(int) TCSETA, &org);
-#   else
+#  else
   gtty(fileno(stdin), &org);
   tmp=org;
   tmp.sg_flags &= ~ECHO;
@@ -198,11 +124,9 @@ char *get_tty_password(const char *opt_message)
   stty(fileno(stdin), &tmp);
   get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
   stty(fileno(stdin), &org);
-#   endif
+#  endif
   if (isatty(fileno(stdout)))
     fputc('\n',stdout);
-# endif /* HAVE_GETPASS */
 
   return strdup(buff);
 }
-#endif /*__WIN__*/
