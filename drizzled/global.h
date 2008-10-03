@@ -158,9 +158,6 @@ extern char _dig_vec_lower[];
 #define function_volatile  volatile
 #define my_reinterpret_cast(A) reinterpret_cast<A>
 #define my_const_cast(A) const_cast<A>
-# ifndef GCC_VERSION
-#  define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
-# endif
 #elif !defined(my_reinterpret_cast)
 #define my_reinterpret_cast(A) (A)
 #define my_const_cast(A) (A)
