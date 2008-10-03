@@ -304,15 +304,15 @@ dnl  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
 dnl  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
 dnl  C++ compiler does not!
 
+dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
+dnl       Need for all of this? 
 if test "${build_vendor}" = "sun"
 then
-  AH_VERBATIM([sun_compiler],[
-#ifdef __cplusplus
-#define __C99FEATURES__
-#else
-#define _XOPEN_SOURCE 600
-#endif
-])
+  dnl Do we need both of these? 
+  dnl This is for C++
+  AC_DEFINE([__C99FEATURES__],[1],[C99 Features])
+  dnl This is for C
+  AC_DEFINE([_XOPEN_SOURCE],[600],[X/Open Level])
 fi
 
 # We use libtool
