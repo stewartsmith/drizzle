@@ -157,9 +157,6 @@ extern char _dig_vec_lower[];
 /* Some types that is different between systems */
 
 typedef int  File;    /* File descriptor */
-/* Type for fuctions that handles signals */
-/* RETSIGTYPE is defined by autoconf */
-#define sig_handler RETSIGTYPE
 
 #ifdef __cplusplus
 extern "C" {

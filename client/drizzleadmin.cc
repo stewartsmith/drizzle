@@ -43,7 +43,7 @@ static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 */
 static void usage(void);
 static void print_version(void);
-extern "C" sig_handler endprog(int signal_number);
+extern "C" RETSIGTYPE endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
@@ -224,7 +224,7 @@ int main(int argc,char *argv[])
   exit(error ? 1 : 0);
 }
 
-sig_handler endprog(int signal_number __attribute__((unused)))
+RETSIGTYPE endprog(int signal_number __attribute__((unused)))
 {
   interrupted=1;
 }

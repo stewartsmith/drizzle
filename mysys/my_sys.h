@@ -573,7 +573,7 @@ extern bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist);
 extern char *my_tmpdir(MY_TMPDIR *tmpdir);
 extern void free_tmpdir(MY_TMPDIR *tmpdir);
 
-extern void my_remember_signal(int signal_number,sig_handler (*func)(int));
+extern void my_remember_signal(int signal_number,RETSIGTYPE (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
@@ -616,10 +616,10 @@ extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const uchar *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
-extern sig_handler sigtstp_handler(int signal_number);
+extern RETSIGTYPE sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
-extern sig_handler my_set_alarm_variable(int signo);
+extern RETSIGTYPE my_set_alarm_variable(int signo);
 extern void my_string_ptr_sort(uchar *base,uint items,size_t size);
 extern void radixsort_for_str_ptr(uchar* base[], uint number_of_elements,
 				  size_t size_of_element,uchar *buffer[]);

@@ -153,7 +153,7 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" sig_handler handle_segfault(int sig);
+extern "C" RETSIGTYPE handle_segfault(int sig);
 
 /* Constants */
 
@@ -759,7 +759,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 #endif
 
 
-extern "C" sig_handler print_signal_warning(int sig)
+extern "C" RETSIGTYPE print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     sql_print_warning(_("Got signal %d from thread %lud"), sig,my_thread_id());
@@ -1247,7 +1247,7 @@ void close_connection(THD *thd, uint errcode, bool lock)
 
 /** Called when a thread is aborted. */
 /* ARGSUSED */
-extern "C" sig_handler end_thread_signal(int sig __attribute__((unused)))
+extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
   if (thd && ! thd->bootstrap)
@@ -1394,7 +1394,7 @@ void flush_thread_cache()
   @todo
     One should have to fix that thr_alarm know about this thread too.
 */
-extern "C" sig_handler abort_thread(int sig __attribute__((unused)))
+extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
   if (thd)
@@ -1412,7 +1412,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 #endif
 
 
-extern "C" sig_handler handle_segfault(int sig)
+extern "C" RETSIGTYPE handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;

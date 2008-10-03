@@ -31,7 +31,7 @@ extern "C" {
 
 struct st_remember {
   int number;
-  sig_handler (*func)(int number);
+  RETSIGTYPE (*func)(int number);
 };
 
 /*
