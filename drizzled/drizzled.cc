@@ -763,7 +763,7 @@ extern "C" sig_handler print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     sql_print_warning(_("Got signal %d from thread %lud"), sig,my_thread_id());
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
   if (sig == SIGALRM)

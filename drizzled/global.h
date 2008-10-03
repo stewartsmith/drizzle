@@ -142,10 +142,6 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 
 #define QUOTE_ARG(x)    #x  /* Quote argument (before cpp) */
 #define STRINGIFY_ARG(x) QUOTE_ARG(x)  /* Quote argument, after cpp */
-/* Does the system remember a signal handler after a signal ? */
-#ifndef HAVE_BSD_SIGNALS
-#define DONT_REMEMBER_SIGNAL
-#endif
 
 #if !defined(HAVE_UINT)
 #undef HAVE_UINT
