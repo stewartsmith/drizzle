@@ -156,9 +156,6 @@ extern char _dig_vec_lower[];
 
 #if defined(__GNUC__)
 #define function_volatile  volatile
-#define my_const_cast(A) const_cast<A>
-#elif !defined(my_const_cast)
-#define my_const_cast(A) (A)
 #endif
 
 /* Some types that is different between systems */
