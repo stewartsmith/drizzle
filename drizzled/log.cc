@@ -213,88 +213,6 @@ int check_if_log_table(uint db_len __attribute__((unused)),
   return 0;
 }
 
-/* log event handlers */
-
-bool Log_to_file_event_handler::
-  log_error(enum loglevel level, const char *format,
-            va_list args)
-{
-  return vprint_msg_to_log(level, format, args);
-}
-
-void Log_to_file_event_handler::init_pthread_objects()
-{
-  mysql_log.init_pthread_objects();
-  mysql_slow_log.init_pthread_objects();
-}
-
-
-/** Wrapper around DRIZZLE_LOG::write() for slow log. */
-
-bool Log_to_file_event_handler::
-  log_slow(THD *thd, time_t current_time, time_t query_start_arg,
-           const char *user_host, uint user_host_len,
-           uint64_t query_utime, uint64_t lock_utime, bool is_command,
-           const char *sql_text, uint sql_text_len)
-{
-  return mysql_slow_log.write(thd, current_time, query_start_arg,
-                              user_host, user_host_len,
-                              query_utime, lock_utime, is_command,
-                              sql_text, sql_text_len);
-}
-
-
-/**
-   Wrapper around DRIZZLE_LOG::write() for general log. We need it since we
-   want all log event handlers to have the same signature.
-*/
-
-bool Log_to_file_event_handler::
-  log_general(THD *thd __attribute__((unused)),
-              time_t event_time, const char *user_host,
-              uint user_host_len, int thread_id,
-              const char *command_type, uint command_type_len,
-              const char *sql_text, uint sql_text_len,
-              const CHARSET_INFO * const client_cs __attribute__((unused)))
-{
-  return mysql_log.write(event_time, user_host, user_host_len,
-                         thread_id, command_type, command_type_len,
-                         sql_text, sql_text_len);
-}
-
-
-bool Log_to_file_event_handler::init()
-{
-  if (!is_initialized)
-  {
-    if (opt_slow_log)
-      mysql_slow_log.open_slow_log(sys_var_slow_log_path.value);
-
-    if (opt_log)
-      mysql_log.open_query_log(sys_var_general_log_path.value);
-
-    is_initialized= true;
-  }
-
-  return false;
-}
-
-
-void Log_to_file_event_handler::cleanup()
-{
-  mysql_log.cleanup();
-  mysql_slow_log.cleanup();
-}
-
-void Log_to_file_event_handler::flush()
-{
-  /* reopen log files */
-  if (opt_log)
-    mysql_log.reopen_file();
-  if (opt_slow_log)
-    mysql_slow_log.reopen_file();
-}
-
 /*
   Log error with all enabled log event handlers
 
@@ -329,16 +247,12 @@ void LOGGER::cleanup_base()
 {
   assert(inited == 1);
   rwlock_destroy(&LOCK_logger);
-  if (file_log_handler)
-    file_log_handler->cleanup();
 }
 
 
 void LOGGER::cleanup_end()
 {
   assert(inited == 1);
-  if (file_log_handler)
-    delete file_log_handler;
 }
 
 
@@ -351,18 +265,9 @@ void LOGGER::init_base()
   assert(inited == 0);
   inited= 1;
 
-  /*
-    Here we create file log handler. We don't do it for the table log handler
-    here as it cannot be created so early. The reason is THD initialization,
-    which depends on the system variables (parsed later).
-  */
-  if (!file_log_handler)
-    file_log_handler= new Log_to_file_event_handler;
-
   /* by default we use traditional error log */
   init_error_log(LOG_FILE);
 
-  file_log_handler->init_pthread_objects();
   my_rwlock_init(&LOCK_logger, NULL);
 }
 
@@ -376,9 +281,6 @@ bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
     log tables are closed
   */
   logger.lock_exclusive();
-
-  /* reopen log files */
-  file_log_handler->flush();
 
   /* end of log flush */
   logger.unlock();
@@ -427,11 +329,6 @@ bool LOGGER::slow_log_print(THD *thd, const char *query, uint query_length,
       return 0;
 
     lock_shared();
-    if (!opt_slow_log)
-    {
-      unlock();
-      return 0;
-    }
 
     /* fill in user_host value: the format is "%s[%s] @ %s [%s]" */
     user_host_len= (strxnmov(user_host_buff, MAX_USER_HOST_SIZE,
@@ -486,11 +383,6 @@ bool LOGGER::general_log_write(THD *thd, enum enum_server_command command,
     id= 0;                              /* Log from connect handler */
 
   lock_shared();
-  if (!opt_log)
-  {
-    unlock();
-    return 0;
-  }
   user_host_len= strxnmov(user_host_buff, MAX_USER_HOST_SIZE,
                           sctx->user, "[",
                           sctx->user, "] @ ",
@@ -537,113 +429,26 @@ void LOGGER::init_error_log(uint error_log_printer)
     return;
   }
 
-  switch (error_log_printer) {
-  case LOG_FILE:
-    error_log_handler_list[0]= file_log_handler;
-    error_log_handler_list[1]= 0;
-    break;
-  }
 }
-
-void LOGGER::init_slow_log(uint slow_log_printer)
-{
-  if (slow_log_printer & LOG_NONE)
-  {
-    slow_log_handler_list[0]= 0;
-    return;
-  }
-
-  slow_log_handler_list[0]= file_log_handler;
-  slow_log_handler_list[1]= 0;
-}
-
-void LOGGER::init_general_log(uint general_log_printer)
-{
-  if (general_log_printer & LOG_NONE)
-  {
-    general_log_handler_list[0]= 0;
-    return;
-  }
-
-  general_log_handler_list[0]= file_log_handler;
-  general_log_handler_list[1]= 0;
-}
-
 
 bool LOGGER::activate_log_handler(THD* thd __attribute__((unused)),
-                                  uint log_type)
+                                  uint log_type __attribute__((unused)))
 {
-  DRIZZLE_QUERY_LOG *file_log;
-  bool res= false;
-  lock_exclusive();
-  switch (log_type) {
-  case QUERY_LOG_SLOW:
-    if (!opt_slow_log)
-    {
-      file_log= file_log_handler->get_mysql_slow_log();
-
-      file_log->open_slow_log(sys_var_slow_log_path.value);
-      init_slow_log(log_output_options);
-      opt_slow_log= true;
-    }
-    break;
-  case QUERY_LOG_GENERAL:
-    if (!opt_log)
-    {
-      file_log= file_log_handler->get_mysql_log();
-
-      file_log->open_query_log(sys_var_general_log_path.value);
-      init_general_log(log_output_options);
-      opt_log= true;
-    }
-    break;
-  default:
-    assert(0);
-  }
-  unlock();
-  return res;
+  return true;
 }
 
 
 void LOGGER::deactivate_log_handler(THD *thd __attribute__((unused)),
-                                    uint log_type)
+                                    uint log_type __attribute__((unused)))
 {
-  bool *tmp_opt= 0;
-  DRIZZLE_LOG *file_log;
-
-  switch (log_type) {
-  case QUERY_LOG_SLOW:
-    tmp_opt= &opt_slow_log;
-    file_log= file_log_handler->get_mysql_slow_log();
-    break;
-  case QUERY_LOG_GENERAL:
-    tmp_opt= &opt_log;
-    file_log= file_log_handler->get_mysql_log();
-    break;
-  default:
-    assert(0);                                  // Impossible
-  }
-
-  if (!(*tmp_opt))
-    return;
-
-  lock_exclusive();
-  file_log->close(0);
-  *tmp_opt= false;
-  unlock();
 }
 
-int LOGGER::set_handlers(uint error_log_printer,
-                         uint slow_log_printer,
-                         uint general_log_printer)
+int LOGGER::set_handlers(uint error_log_printer)
 {
   /* error log table is not supported yet */
   lock_exclusive();
 
   init_error_log(error_log_printer);
-  init_slow_log(slow_log_printer);
-  init_general_log(general_log_printer);
-
   unlock();
 
   return 0;
@@ -1353,298 +1158,6 @@ int DRIZZLE_LOG::generate_new_name(char *new_name, const char *log_name)
     }
   }
   return 0;
-}
-
-
-/*
-  Reopen the log file
-
-  SYNOPSIS
-    reopen_file()
-
-  DESCRIPTION
-    Reopen the log file. The method is used during FLUSH LOGS
-    and locks LOCK_log mutex
-*/
-
-
-void DRIZZLE_QUERY_LOG::reopen_file()
-{
-  char *save_name;
-
-  if (!is_open())
-  {
-    return;
-  }
-
-  pthread_mutex_lock(&LOCK_log);
-
-  save_name= name;
-  name= 0;				// Don't free name
-  close(LOG_CLOSE_TO_BE_OPENED);
-
-  /*
-     Note that at this point, log_state != LOG_CLOSED (important for is_open()).
-  */
-
-  open(save_name, log_type, 0, io_cache_type);
-  my_free(save_name, MYF(0));
-
-  pthread_mutex_unlock(&LOCK_log);
-
-  return;
-}
-
-
-/*
-  Write a command to traditional general log file
-
-  SYNOPSIS
-    write()
-
-    event_time        command start timestamp
-    user_host         the pointer to the string with user@host info
-    user_host_len     length of the user_host string. this is computed once
-                      and passed to all general log  event handlers
-    thread_id         Id of the thread, issued a query
-    command_type      the type of the command being logged
-    command_type_len  the length of the string above
-    sql_text          the very text of the query being executed
-    sql_text_len      the length of sql_text string
-
-  DESCRIPTION
-
-   Log given command to to normal (not rotable) log file
-
-  RETURN
-    FASE - OK
-    TRUE - error occured
-*/
-
-bool DRIZZLE_QUERY_LOG::write(time_t event_time,
-                            const char *user_host __attribute__((unused)),
-                            uint user_host_len __attribute__((unused)),
-                            int thread_id,
-                            const char *command_type, uint command_type_len,
-                            const char *sql_text, uint sql_text_len)
-{
-  char buff[32];
-  uint length= 0;
-  char local_time_buff[MAX_TIME_SIZE];
-  struct tm start;
-  uint time_buff_len= 0;
-
-  (void) pthread_mutex_lock(&LOCK_log);
-
-  /* Test if someone closed between the is_open test and lock */
-  if (is_open())
-  {
-    /* Note that my_b_write() assumes it knows the length for this */
-      if (event_time != last_time)
-      {
-        last_time= event_time;
-
-        localtime_r(&event_time, &start);
-
-        time_buff_len= snprintf(local_time_buff, MAX_TIME_SIZE,
-                                "%02d%02d%02d %2d:%02d:%02d",
-                                start.tm_year % 100, start.tm_mon + 1,
-                                start.tm_mday, start.tm_hour,
-                                start.tm_min, start.tm_sec);
-
-        if (my_b_write(&log_file, (uchar*) local_time_buff, time_buff_len))
-          goto err;
-      }
-      else
-        if (my_b_write(&log_file, (uchar*) "\t\t" ,2) < 0)
-          goto err;
-
-      /* command_type, thread_id */
-      length= snprintf(buff, 32, "%5ld ", (long) thread_id);
-
-    if (my_b_write(&log_file, (uchar*) buff, length))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) command_type, command_type_len))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) "\t", 1))
-      goto err;
-
-    /* sql_text */
-    if (my_b_write(&log_file, (uchar*) sql_text, sql_text_len))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) "\n", 1) ||
-        flush_io_cache(&log_file))
-      goto err;
-  }
-
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return false;
-err:
-
-  if (!write_error)
-  {
-    write_error= 1;
-    sql_print_error(ER(ER_ERROR_ON_WRITE), name, errno);
-  }
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return true;
-}
-
-
-/*
-  Log a query to the traditional slow log file
-
-  SYNOPSIS
-    write()
-
-    thd               THD of the query
-    current_time      current timestamp
-    query_start_arg   command start timestamp
-    user_host         the pointer to the string with user@host info
-    user_host_len     length of the user_host string. this is computed once
-                      and passed to all general log event handlers
-    query_utime       Amount of time the query took to execute (in microseconds)
-    lock_utime        Amount of time the query was locked (in microseconds)
-    is_command        The flag, which determines, whether the sql_text is a
-                      query or an administrator command.
-    sql_text          the very text of the query or administrator command
-                      processed
-    sql_text_len      the length of sql_text string
-
-  DESCRIPTION
-
-   Log a query to the slow log file.
-
-  RETURN
-    FALSE - OK
-    TRUE - error occured
-*/
-
-bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
-                            time_t query_start_arg __attribute__((unused)),
-                            const char *user_host,
-                            uint user_host_len, uint64_t query_utime,
-                            uint64_t lock_utime, bool is_command,
-                            const char *sql_text, uint sql_text_len)
-{
-  bool error= 0;
-
-  (void) pthread_mutex_lock(&LOCK_log);
-
-  if (!is_open())
-  {
-    (void) pthread_mutex_unlock(&LOCK_log);
-    return(0);
-  }
-
-  if (is_open())
-  {						// Safety agains reopen
-    int tmp_errno= 0;
-    char buff[80], *end;
-    char query_time_buff[22+7], lock_time_buff[22+7];
-    uint buff_len;
-    end= buff;
-
-    {
-      if (current_time != last_time)
-      {
-        last_time= current_time;
-        struct tm start;
-        localtime_r(&current_time, &start);
-
-        buff_len= snprintf(buff, sizeof buff,
-                           "# Time: %02d%02d%02d %2d:%02d:%02d\n",
-                           start.tm_year % 100, start.tm_mon + 1,
-                           start.tm_mday, start.tm_hour,
-                           start.tm_min, start.tm_sec);
-
-        /* Note that my_b_write() assumes it knows the length for this */
-        if (my_b_write(&log_file, (uchar*) buff, buff_len))
-          tmp_errno= errno;
-      }
-      const uchar uh[]= "# User@Host: ";
-      if (my_b_write(&log_file, uh, sizeof(uh) - 1))
-        tmp_errno= errno;
-      if (my_b_write(&log_file, (uchar*) user_host, user_host_len))
-        tmp_errno= errno;
-      if (my_b_write(&log_file, (uchar*) "\n", 1))
-        tmp_errno= errno;
-    }
-    /* For slow query log */
-    sprintf(query_time_buff, "%.6f", uint64_t2double(query_utime)/1000000.0);
-    sprintf(lock_time_buff,  "%.6f", uint64_t2double(lock_utime)/1000000.0);
-    if (my_b_printf(&log_file,
-                    "# Query_time: %s  Lock_time: %s"
-                    " Rows_sent: %lu  Rows_examined: %lu\n",
-                    query_time_buff, lock_time_buff,
-                    (ulong) thd->sent_row_count,
-                    (ulong) thd->examined_row_count) == (uint) -1)
-      tmp_errno= errno;
-    if (thd->db && strcmp(thd->db, db))
-    {						// Database changed
-      if (my_b_printf(&log_file,"use %s;\n",thd->db) == (uint) -1)
-        tmp_errno= errno;
-      my_stpcpy(db,thd->db);
-    }
-    if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
-    {
-      end=my_stpcpy(end, ",last_insert_id=");
-      end=int64_t10_to_str((int64_t)
-                            thd->first_successful_insert_id_in_prev_stmt_for_binlog,
-                            end, -10);
-    }
-    // Save value if we do an insert.
-    if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
-    {
-      {
-        end=my_stpcpy(end,",insert_id=");
-        end=int64_t10_to_str((int64_t)
-                              thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
-                              end, -10);
-      }
-    }
-
-    /*
-      This info used to show up randomly, depending on whether the query
-      checked the query start time or not. now we always write current
-      timestamp to the slow log
-    */
-    end= my_stpcpy(end, ",timestamp=");
-    end= int10_to_str((long) current_time, end, 10);
-
-    if (end != buff)
-    {
-      *end++=';';
-      *end='\n';
-      if (my_b_write(&log_file, (uchar*) "SET ", 4) ||
-          my_b_write(&log_file, (uchar*) buff + 1, (uint) (end-buff)))
-        tmp_errno= errno;
-    }
-    if (is_command)
-    {
-      end= strxmov(buff, "# administrator command: ", NullS);
-      buff_len= (ulong) (end - buff);
-      my_b_write(&log_file, (uchar*) buff, buff_len);
-    }
-    if (my_b_write(&log_file, (uchar*) sql_text, sql_text_len) ||
-        my_b_write(&log_file, (uchar*) ";\n",2) ||
-        flush_io_cache(&log_file))
-      tmp_errno= errno;
-    if (tmp_errno)
-    {
-      error= 1;
-      if (! write_error)
-      {
-        write_error= 1;
-        sql_print_error(ER(ER_ERROR_ON_WRITE), name, error);
-      }
-    }
-  }
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return(error);
 }
 
 

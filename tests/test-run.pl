@@ -2482,11 +2482,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
   }
 
-  if ( $mysql_version_id >= 50000 )
-  {
-    mtr_add_arg($args, "%s--log-bin-trust-function-creators", $prefix);
-  }
-
   mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent
@@ -2513,8 +2508,6 @@ sub mysqld_arguments ($$$$) {
 
   my $log_base_path= "$opt_vardir/log/$mysqld->{'type'}$sidx";
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
-  mtr_add_arg($args,
-	      "%s--log-slow-queries=%s-slow.log", $prefix, $log_base_path);
 
   # Check if "extra_opt" contains --skip-log-bin
   my $skip_binlog= grep(/^--skip-log-bin/, @$extra_opt, @opt_extra_mysqld_opt);
