@@ -248,6 +248,24 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
+dnl  The macros below are borrowed from include/linux/compiler.h in the
+dnl  Linux kernel. Use them to indicate the likelyhood of the truthfulness
+dnl  of a condition. This serves two purposes - newer versions of gcc will be
+dnl  able to optimize for branch predication, which could yield siginficant
+dnl  performance gains in frequently executed sections of the code, and the
+dnl  other reason to use them is for documentation
+if test "$ac_cv_c_compiler_gnu" != "yes"
+then
+  AC_DEFINE([__builtin_expect(x, expected_value)],[(x)],
+            [Provide a no-op version of a GCC compiler hint])
+  dnl Disable __attribute__ for non GNU compilers, since we're using them
+  dnl only to either generate or suppress warnings.
+  AC_DEFINE([__attribute__(A)])
+fi
+
+AC_DEFINE([likely(x)],[__builtin_expect((x),1)],[Branch is likely])
+AC_DEFINE([unlikely(x)],[__builtin_expect((x),0)],[Branch is unlikely])
+
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
