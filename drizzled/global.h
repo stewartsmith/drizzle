@@ -22,19 +22,6 @@
 #ifndef DRIZZLE_SERVER_GLOBAL_H
 #define DRIZZLE_SERVER_GLOBAL_H
 
-#define HAVE_REPLICATION
-
-/*
-  InnoDB depends on some MySQL internals which other plugins should not
-  need.  This is because of InnoDB's foreign key support, "safe" binlog
-  truncation, and other similar legacy features.
-
-  We define accessors for these internals unconditionally, but do not
-  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
-  InnoDB's use.
-*/
-#define INNODB_COMPATIBILITY_HOOKS
-
 #if defined(i386) && !defined(__i386__)
 #define __i386__
 #endif

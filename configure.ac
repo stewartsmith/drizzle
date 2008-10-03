@@ -124,6 +124,19 @@ AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
 AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
 AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
+AC_DEFINE([HAVE_REPLICATION])
+
+dnl  InnoDB depends on some Drizzle's internals which other plugins should not
+dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
+dnl  truncation, and other similar legacy features.
+
+dnl  We define accessors for these internals unconditionally, but do not
+dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
+dnl  InnoDB's use.
+
+AC_DEFINE([INNODB_COMPATIBILITY_HOOKS])
+
+
 # Canonicalize the configuration name.
 
 # Check whether --with-system-type or --without-system-type was given.
