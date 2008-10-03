@@ -910,7 +910,13 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
 #error USE_PRAGMA_IMPLEMENTATION
 #endif
-]])],[AC_MSG_RESULT(no) ],[AC_MSG_RESULT(yes) ; CXXFLAGS="$CXXFLAGS -DUSE_PRAGMA_IMPLEMENTATION"])
+]])],[
+  AC_MSG_RESULT(no)
+],[
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION)
+  AC_DEFINE(USE_PRAGMA_INTERFACE)
+])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN

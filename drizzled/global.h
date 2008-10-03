@@ -35,11 +35,6 @@
 */
 #define INNODB_COMPATIBILITY_HOOKS
 
-/* to make command line shorter we'll define USE_PRAGMA_INTERFACE here */
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#define USE_PRAGMA_INTERFACE
-#endif
-
 #if defined(i386) && !defined(__i386__)
 #define __i386__
 #endif
