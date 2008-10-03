@@ -1130,7 +1130,7 @@ AC_CHECK_FUNCS(bsearch \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
   pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
-  realpath rename rint rwlock_init setupterm \
+  realpath rename rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
   snprintf socket strcasecmp strerror strsignal strpbrk \
