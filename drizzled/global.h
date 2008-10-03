@@ -154,10 +154,6 @@ extern char _dig_vec_lower[];
 #define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
 #define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
 
-#if defined(__GNUC__)
-#define function_volatile  volatile
-#endif
-
 /* Some types that is different between systems */
 
 typedef int  File;    /* File descriptor */
