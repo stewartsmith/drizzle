@@ -156,10 +156,8 @@ extern char _dig_vec_lower[];
 
 #if defined(__GNUC__)
 #define function_volatile  volatile
-#define my_reinterpret_cast(A) reinterpret_cast<A>
 #define my_const_cast(A) const_cast<A>
-#elif !defined(my_reinterpret_cast)
-#define my_reinterpret_cast(A) (A)
+#elif !defined(my_const_cast)
 #define my_const_cast(A) (A)
 #endif
 
