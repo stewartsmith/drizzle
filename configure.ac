@@ -275,6 +275,12 @@ fi
 AC_DEFINE_UNQUOTED([likely(x)],[__builtin_expect((x),1)],[Branch is likely])
 AC_DEFINE_UNQUOTED([unlikely(x)],[__builtin_expect((x),0)],[Branch is unlikely])
 
+dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
+if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
+then
+  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
+fi
+
 dnl  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
 
 dnl  System Interfaces and Headers, Issue 5

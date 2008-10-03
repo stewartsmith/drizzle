@@ -28,14 +28,6 @@
 
 #include "config.h"
 
-
-/* Fix problem with S_ISLNK() on Linux */
-#if defined(TARGET_OS_LINUX) || defined(__GLIBC__)
-#undef  _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif
-
-
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined
