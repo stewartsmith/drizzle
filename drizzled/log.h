@@ -369,18 +369,8 @@ public:
   virtual bool init()= 0;
   virtual void cleanup()= 0;
 
-  virtual bool log_slow(THD *thd, time_t current_time,
-                        time_t query_start_arg, const char *user_host,
-                        uint user_host_len, uint64_t query_utime,
-                        uint64_t lock_utime, bool is_command,
-                        const char *sql_text, uint sql_text_len)= 0;
   virtual bool log_error(enum loglevel level, const char *format,
                          va_list args)= 0;
-  virtual bool log_general(THD *thd, time_t event_time, const char *user_host,
-                           uint user_host_len, int thread_id,
-                           const char *command_type, uint command_type_len,
-                           const char *sql_text, uint sql_text_len,
-                           const CHARSET_INFO * const client_cs)= 0;
   virtual ~Log_event_handler() {}
 };
 
@@ -394,8 +384,6 @@ class LOGGER
 
   /* NULL-terminated arrays of log handlers */
   Log_event_handler *error_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
-  Log_event_handler *slow_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
-  Log_event_handler *general_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
 
 public:
 
@@ -420,18 +408,9 @@ public:
   void cleanup_end();
   bool error_log_print(enum loglevel level, const char *format,
                       va_list args);
-  bool slow_log_print(THD *thd, const char *query, uint query_length,
-                      uint64_t current_utime);
-  bool general_log_print(THD *thd,enum enum_server_command command,
-                         const char *format, va_list args);
-  bool general_log_write(THD *thd, enum enum_server_command command,
-                         const char *query, uint query_length);
-
   /* we use this function to setup all enabled log event handlers */
   int set_handlers(uint error_log_printer);
   void init_error_log(uint error_log_printer);
-  void deactivate_log_handler(THD* thd, uint log_type);
-  bool activate_log_handler(THD* thd, uint log_type);
 };
 
 enum enum_binlog_format {
@@ -462,14 +441,5 @@ extern sql_print_message_func sql_print_message_handlers[];
 
 int error_log_print(enum loglevel level, const char *format,
                     va_list args);
-
-bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    uint64_t current_utime);
-
-bool general_log_print(THD *thd, enum enum_server_command command,
-                       const char *format,...);
-
-bool general_log_write(THD *thd, enum enum_server_command command,
-                       const char *query, uint query_length);
 
 #endif /* DRIZZLE_SERVER_LOG_H */

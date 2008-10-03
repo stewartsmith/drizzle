@@ -551,8 +551,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                         packet, packet_length, thd->charset());
     if (!mysql_change_db(thd, &tmp, false))
     {
-      /* TODO remove general_log_write after pluggable logging works */
-      general_log_write(thd, command, thd->db, thd->db_length);
       my_ok(thd);
     }
     break;
@@ -646,7 +644,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
     /* Clear variables that are allocated */
     thd->user_connect= 0;
-    res= check_user(thd, COM_CHANGE_USER, passwd, passwd_len, db, false);
+    res= check_user(thd, passwd, passwd_len, db, false);
 
     if (res)
     {
@@ -675,9 +673,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       break;					// fatal error is set
     char *packet_end= thd->query + thd->query_length;
     const char* end_of_stmt= NULL;
-
-    /* TODO remove general_log_write after pluggable logging works */
-    general_log_write(thd, command, thd->query, thd->query_length);
 
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
 
@@ -751,7 +746,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     thd->query_length= (uint) (packet_end - packet); // Don't count end \0
     if (!(thd->query=fields= (char*) thd->memdup(packet,thd->query_length+1)))
       break;
-    general_log_print(thd, command, "%s %s", table_list.table_name, fields);
     if (lower_case_table_names)
       my_casedn_str(files_charset_info, table_list.table_name);
 
@@ -775,7 +769,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    general_log_print(thd, command, NullS);
     net->error=0;				// Don't give 'abort' message
     thd->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
@@ -796,8 +789,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 	kill_zombie_dump_threads(slave_server_id);
       thd->server_id = slave_server_id;
 
-      general_log_print(thd, command, "Log: '%s'  Pos: %ld", packet+10,
-                      (long) pos);
       mysql_binlog_send(thd, thd->strdup(packet + 10), (my_off_t) pos, flags);
       unregister_slave(thd,1,1);
       /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
@@ -822,7 +813,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       my_error(ER_NOT_SUPPORTED_YET, MYF(0), "this shutdown level");
       break;
     }
-    general_log_print(thd, command, NullS);
     my_eof(thd);
     close_thread_tables(thd);			// Free before kill
     kill_mysql();
@@ -835,7 +825,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     break;
   case COM_PROCESS_INFO:
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
-    general_log_print(thd, command, NullS);
     mysqld_list_processes(thd, NullS, 0);
     break;
   case COM_PROCESS_KILL:
@@ -928,29 +917,6 @@ void log_slow_statement(THD *thd)
 
   logging_post_do(thd);
 
-  /*
-    Do not log administrative statements unless the appropriate option is
-    set; do not log into slow log if reading from backup.
-  */
-  if (thd->enable_slow_log && !thd->user_time)
-  {
-    thd_proc_info(thd, "logging slow query");
-    uint64_t end_utime_of_query= thd->current_utime();
-
-    if (((end_utime_of_query - thd->utime_after_lock) >
-         thd->variables.long_query_time ||
-         ((thd->server_status &
-           (SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED)) &&
-          opt_log_queries_not_using_indexes &&
-           !(sql_command_flags[thd->lex->sql_command] & CF_STATUS_COMMAND))) &&
-        thd->examined_row_count >= thd->variables.min_examined_row_limit)
-    {
-      thd_proc_info(thd, "logging slow query");
-      thd->status_var.long_query_count++;
-      slow_log_print(thd, thd->query, thd->query_length, end_utime_of_query);
-      /* TODO remove slow_log_print after pluggable logging works*/
-    }
-  }
   return;
 }
 

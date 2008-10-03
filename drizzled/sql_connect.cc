@@ -76,8 +76,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 */
 
 int
-check_user(THD *thd, enum enum_server_command command,
-           const char *passwd,
+check_user(THD *thd, const char *passwd,
            uint passwd_len, const char *db,
            bool check_count)
 {
@@ -127,17 +126,6 @@ check_user(THD *thd, enum enum_server_command command,
       return(1);
     }
   }
-
-  /*
-    Log the command before authentication checks, so that the user can
-    check the log for the tried login tried and also to detect
-    break-in attempts.
-  */
-  general_log_print(thd, command,
-                    ((char*) "%s@%s on %s"),
-                    thd->main_security_ctx.user,
-                    thd->main_security_ctx.ip,
-                    db ? db : (char*) "");
 
   /* Change database if necessary */
   if (db && db[0])
@@ -388,7 +376,7 @@ static int check_connection(THD *thd)
     x_free(thd->main_security_ctx.user);
   if (!(thd->main_security_ctx.user= my_strdup(user, MYF(MY_WME))))
     return 1; /* The error is set by my_strdup(). */
-  return check_user(thd, COM_CONNECT, passwd, passwd_len, db, true);
+  return check_user(thd, passwd, passwd_len, db, true);
 }
 
 

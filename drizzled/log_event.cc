@@ -2292,10 +2292,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
       goto end;
     }
 
-    /* If the query was not ignored, it is printed to the general log */
-    if (!thd->is_error() || thd->main_da.sql_errno() != ER_SLAVE_IGNORED_TABLE)
-      general_log_write(thd, COM_QUERY, thd->query, thd->query_length);
-
 compare_errors:
 
      /*
@@ -4268,9 +4264,6 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 #if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
-  /* For a slave Xid_log_event is COMMIT */
-  general_log_print(thd, COM_QUERY,
-                    "COMMIT /* implicit, from Xid_log_event */");
   return end_trans(thd, COMMIT);
 }
 

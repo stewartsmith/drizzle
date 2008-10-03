@@ -2022,27 +2022,21 @@ end:
 }
 
 
-bool sys_var_log_state::update(THD *thd, set_var *var)
+bool sys_var_log_state::update(THD *thd __attribute__((unused)), set_var *var)
 {
   bool res;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (!var->save_result.ulong_value)
-  {
-    logger.deactivate_log_handler(thd, log_type);
     res= false;
-  }
   else
-    res= logger.activate_log_handler(thd, log_type);
+    res= true;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return res;
 }
 
-void sys_var_log_state::set_default(THD *thd,
+void sys_var_log_state::set_default(THD *thd __attribute__((unused)),
                                     enum_var_type type __attribute__((unused)))
 {
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.deactivate_log_handler(thd, log_type);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
 }
 
 
