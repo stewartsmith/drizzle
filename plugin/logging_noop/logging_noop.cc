@@ -1,4 +1,4 @@
-/* drizzle/plugin/logging_noop/logging_noop.cc */
+/* drizzle/plugin/logging_query/logging_query.cc */
 
 /* need to define DRIZZLE_SERVER to get inside the THD */
 #define DRIZZLE_SERVER 1
@@ -36,7 +36,7 @@ const LEX_STRING command_name[]={
 };
 
 
-bool logging_noop_func_pre (THD *thd)
+bool logging_query_func_pre (THD *thd)
 {
   char msgbuf[MAX_MSG_LEN];
   int msgbuf_len = 0;
@@ -60,7 +60,7 @@ bool logging_noop_func_pre (THD *thd)
   return false;
 }
 
-bool logging_noop_func_post (THD *thd)
+bool logging_query_func_post (THD *thd)
 {
   char msgbuf[MAX_MSG_LEN];
   int msgbuf_len = 0;
@@ -88,12 +88,12 @@ bool logging_noop_func_post (THD *thd)
   return false;
 }
 
-static int logging_noop_plugin_init(void *p)
+static int logging_query_plugin_init(void *p)
 {
   logging_t *l= (logging_t *) p;
 
-  l->logging_pre= logging_noop_func_pre;
-  l->logging_post= logging_noop_func_post;
+  l->logging_pre= logging_query_func_pre;
+  l->logging_post= logging_query_func_post;
 
   fd= open("/tmp/drizzle.log", O_WRONLY | O_APPEND);
   if (fd < 0) {
@@ -108,7 +108,7 @@ static int logging_noop_plugin_init(void *p)
   return 0;
 }
 
-static int logging_noop_plugin_deinit(void *p)
+static int logging_query_plugin_deinit(void *p)
 {
   logging_st *l= (logging_st *) p;
 
@@ -120,16 +120,16 @@ static int logging_noop_plugin_deinit(void *p)
   return 0;
 }
 
-mysql_declare_plugin(logging_noop)
+mysql_declare_plugin(logging_query)
 {
   DRIZZLE_LOGGER_PLUGIN,
-  "logging_noop",
+  "logging_query",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",
-  "Logging Plugin Example",
+  "Log queries",
   PLUGIN_LICENSE_GPL,
-  logging_noop_plugin_init,
-  logging_noop_plugin_deinit,
+  logging_query_plugin_init,
+  logging_query_plugin_deinit,
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
