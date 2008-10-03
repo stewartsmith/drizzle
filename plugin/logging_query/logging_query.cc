@@ -7,6 +7,8 @@
 
 #define MAX_MSG_LEN (32*1024)
 
+static char* logging_query_filename= NULL;
+
 static int fd= -1;
 
 // copied from drizzled/sql_parse.cc
@@ -39,7 +41,7 @@ const LEX_STRING command_name[]={
 bool logging_query_func_pre (THD *thd)
 {
   char msgbuf[MAX_MSG_LEN];
-  int msgbuf_len = 0;
+  int msgbuf_len= 0;
   int wrv;
 
   if (fd < 0) return false;
@@ -67,7 +69,7 @@ bool logging_query_func_pre (THD *thd)
 bool logging_query_func_post (THD *thd)
 {
   char msgbuf[MAX_MSG_LEN];
-  int msgbuf_len = 0;
+  int msgbuf_len= 0;
   int wrv;
 
   if (fd < 0) return false;
@@ -98,10 +100,19 @@ static int logging_query_plugin_init(void *p)
 {
   logging_t *l= (logging_t *) p;
 
-  fd= open("/tmp/drizzle.log", O_WRONLY | O_APPEND | O_CREAT);
+  if (logging_query_filename == NULL)
+  {
+    /* no destination filename was specified via system variables
+       return now, dont set the callback pointers 
+    */
+    return 0;
+  }
+
+  fd= open(logging_query_filename, O_WRONLY | O_APPEND | O_CREAT);
   if (fd < 0) {
     fprintf(stderr,
-	    "fail open /tmp/drizzle.log er=%s\n",
+	    "fail open fn=%s er=%s\n",
+	    logging_query_filename,
 	    strerror(errno));
 
     /* we should return an error here, so the plugin doesnt load
@@ -134,6 +145,16 @@ static int logging_query_plugin_deinit(void *p)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_STR(filename, logging_query_filename,
+  PLUGIN_VAR_READONLY,
+  "File to log queries to.",
+  NULL, NULL, NULL);
+
+static struct st_mysql_sys_var* logging_query_system_variables[]= {
+  DRIZZLE_SYSVAR(filename),
+  NULL
+};
+
 mysql_declare_plugin(logging_query)
 {
   DRIZZLE_LOGGER_PLUGIN,
@@ -145,7 +166,7 @@ mysql_declare_plugin(logging_query)
   logging_query_plugin_init,
   logging_query_plugin_deinit,
   NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
+  logging_query_system_variables,
+  NULL
 }
 mysql_declare_plugin_end;
