@@ -7,6 +7,26 @@ AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
+
+# Save some variables and the command line options for mysqlbug
+SAVE_CC="$CC"
+SAVE_CXX="$CXX"
+SAVE_ASFLAGS="$ASFLAGS"
+SAVE_CFLAGS="$CFLAGS"
+SAVE_CXXFLAGS="$CXXFLAGS"
+SAVE_LDFLAGS="$LDFLAGS"
+SAVE_CXXLDFLAGS="$CXXLDFLAGS"
+CONF_COMMAND="$0 $ac_configure_args"
+AC_SUBST(CONF_COMMAND)
+AC_SUBST(SAVE_CC)
+AC_SUBST(SAVE_CXX)
+AC_SUBST(SAVE_ASFLAGS)
+AC_SUBST(SAVE_CFLAGS)
+AC_SUBST(SAVE_CXXFLAGS)
+AC_SUBST(SAVE_LDFLAGS)
+AC_SUBST(SAVE_CXXLDFLAGS)
+AC_SUBST(CXXLDFLAGS)
+
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(-Wall -Werror)
 
@@ -16,6 +36,17 @@ DOT_FRM_VERSION=6
 SHARED_LIB_MAJOR_VERSION=1
 SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
 
+
+dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
+dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
+if test "x${CFLAGS}" = "x-g -O2"
+then
+  CFLAGS=
+fi
+if test "x${CXXFLAGS}" = "x-g -O2"
+then
+  CXXFLAGS=
+fi
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -119,25 +150,6 @@ case $MACHINE_TYPE in
   i?86) BASE_MACHINE_TYPE=i386 ;;
 esac
 
-# Save some variables and the command line options for mysqlbug
-SAVE_CC="$CC"
-SAVE_CXX="$CXX"
-SAVE_ASFLAGS="$ASFLAGS"
-SAVE_CFLAGS="$CFLAGS"
-SAVE_CXXFLAGS="$CXXFLAGS"
-SAVE_LDFLAGS="$LDFLAGS"
-SAVE_CXXLDFLAGS="$CXXLDFLAGS"
-CONF_COMMAND="$0 $ac_configure_args"
-AC_SUBST(CONF_COMMAND)
-AC_SUBST(SAVE_CC)
-AC_SUBST(SAVE_CXX)
-AC_SUBST(SAVE_ASFLAGS)
-AC_SUBST(SAVE_CFLAGS)
-AC_SUBST(SAVE_CXXFLAGS)
-AC_SUBST(SAVE_LDFLAGS)
-AC_SUBST(SAVE_CXXLDFLAGS)
-AC_SUBST(CXXLDFLAGS)
-
 AM_SANITY_CHECK
 # This is needed is SUBDIRS is set
 AC_PROG_MAKE_SET
@@ -166,16 +178,10 @@ fi
 
 ################ End of section to be done before AC_PROG_CC #################
 
-# The following hack should ensure that configure doesn't add optimizing
-# or debugging flags to CFLAGS or CXXFLAGS
-# C_EXTRA_FLAGS are flags that are automaticly added to both
-# CFLAGS and CXXFLAGS
-CFLAGS="$CFLAGS $C_EXTRA_FLAGS "
-CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
-
 dnl Checks for programs.
 AC_PROG_CC
 ifdef([AC_PROG_CC_C99],[
+  dnl TODO: Need to fix this to use c99 instead of gnu99
   AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
@@ -205,6 +211,18 @@ else
 CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
+
+dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
+dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
+if test "x${CFLAGS}" = "x-g -O2"
+then
+  CFLAGS=
+fi
+if test "x${CXXFLAGS}" = "x-g -O2"
+then
+  CXXFLAGS=
+fi
+
 DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
@@ -802,76 +820,6 @@ AC_SUBST(LIBDL_LIBS)
 
 AC_CHECK_FUNCS(strtok_r)
 
-# Build optimized or debug version ?
-# First check for gcc and g++
-if test "$ac_cv_c_compiler_gnu" = "yes"
-then
-  SYMBOLS_CFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
-  OPTIMIZE_CFLAGS="-O3"
-else
-  SYMBOLS_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-O"
-fi
-if test "$ac_cv_prog_cxx_g" = "yes"
-then
-  SYMBOLS_CXXFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CXX="-O0"
-  OPTIMIZE_CXXFLAGS="-O3"
-else
-  SYMBOLS_CXXFLAGS="-g"
-  DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-O"
-fi
-
-# If the user specified CFLAGS, we won't add any optimizations
-if test -n "$SAVE_CFLAGS"
-then
-  OPTIMIZE_CFLAGS=""
-  DEBUG_OPTIMIZE_CC=""
-fi
-# Ditto for CXXFLAGS
-if test -n "$SAVE_CXXFLAGS"
-then
-  OPTIMIZE_CXXFLAGS=""
-  DEBUG_OPTIMIZE_CXX=""
-fi
-
-dnl TODO: Remove this define once we are using 2.61 across the board.
-# AC_HEADER_ASSERT
-# ----------------
-# Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
-[
-  AC_MSG_CHECKING([whether to enable assertions])
-  AC_ARG_ENABLE([assert],
-    [  --disable-assert        turn off assertions],
-    [AC_MSG_RESULT([no])
-     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
-    [AC_MSG_RESULT(yes)])
-])])
-
-AC_HEADER_ASSERT
-
-CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
-
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
-else
-  # Optimized version. No debug
-  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
-fi
 
 
 AC_ARG_WITH([fast-mutexes],
@@ -1311,6 +1259,64 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+
+# Build optimized or debug version ?
+# First check for gcc and g++
+if test "$ac_cv_c_compiler_gnu" = "yes"
+then
+  SYMBOLS_CFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O3"
+else
+  SYMBOLS_CFLAGS="-g"
+  DEBUG_OPTIMIZE_CC=""
+  OPTIMIZE_CFLAGS="-O"
+fi
+if test "$ac_cv_prog_cxx_g" = "yes"
+then
+  SYMBOLS_CXXFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O3"
+else
+  SYMBOLS_CXXFLAGS="-g"
+  DEBUG_OPTIMIZE_CXX=""
+  OPTIMIZE_CXXFLAGS="-O"
+fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AC_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [  --disable-assert        turn off assertions],
+    [AC_MSG_RESULT([no])
+     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
+    [AC_MSG_RESULT(yes)])
+])])
+
+AC_HEADER_ASSERT
+
+CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
+    [with_debug=$withval],
+    [with_debug=no])
+if test "$with_debug" = "yes"
+then
+  # Medium debug.
+  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS ${SAVE_CFLAGS}"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS ${SAVE_CXXFLAGS}"
+else
+  # Optimized version. No debug
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
+  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
+fi
 
 AC_ARG_ENABLE([profiling],
     [AS_HELP_STRING([--enable-profiling],
