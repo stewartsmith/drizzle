@@ -287,7 +287,6 @@ RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 #if defined(MAIN) && !defined(__bsdi__)
     printf("thread_alarm in process_alarm\n"); fflush(stdout);
 #endif
-/* BS
 #ifndef HAVE_BSD_SIGNALS
     my_sigset(thr_client_alarm, process_alarm);	/* int. thread system calls */
 #endif
