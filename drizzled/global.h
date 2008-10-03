@@ -89,8 +89,6 @@
 #endif
 #endif
 
-#define _REENTRANT  1  /* Some thread libraries require this */
-
 #include <pthread.h>    /* AIX must have this included first */
 
 #define _REENTRANT  1  /* Threads requires reentrant code */

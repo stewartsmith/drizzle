@@ -135,6 +135,8 @@ dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
 dnl  InnoDB's use.
 
 AC_DEFINE([INNODB_COMPATIBILITY_HOOKS],[1],[TODO: Remove the need for this])
+dnl TODO: Make a test for when this needs to be set.
+AC_DEFINE([_REENTRANT],[1],[Some thread libraries require this])
 
 AH_VERBATIM([posix_pthread],[
 /* We want posix threads */
