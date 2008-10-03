@@ -124,7 +124,7 @@ AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
 AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
 AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
-AC_DEFINE([HAVE_REPLICATION])
+AC_DEFINE([HAVE_REPLICATION],[1],[We always have replication])
 
 dnl  InnoDB depends on some Drizzle's internals which other plugins should not
 dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
@@ -134,7 +134,14 @@ dnl  We define accessors for these internals unconditionally, but do not
 dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
 dnl  InnoDB's use.
 
-AC_DEFINE([INNODB_COMPATIBILITY_HOOKS])
+AC_DEFINE([INNODB_COMPATIBILITY_HOOKS],[1],[TODO: Remove the need for this])
+
+AH_VERBATIM([posix_pthread],[
+/* We want posix threads */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
+])
 
 
 # Canonicalize the configuration name.
@@ -256,15 +263,15 @@ dnl  performance gains in frequently executed sections of the code, and the
 dnl  other reason to use them is for documentation
 if test "$ac_cv_c_compiler_gnu" != "yes"
 then
-  AC_DEFINE([__builtin_expect(x, expected_value)],[(x)],
-            [Provide a no-op version of a GCC compiler hint])
+  AC_DEFINE_UNQUOTED([__builtin_expect(x, expected_value)],[(x)],
+                     [Provide a no-op version of a GCC compiler hint])
   dnl Disable __attribute__ for non GNU compilers, since we're using them
   dnl only to either generate or suppress warnings.
-  AC_DEFINE([__attribute__(A)])
+  AC_DEFINE_UNQUOTED([__attribute__(A)],[],[Disable __attribute__])
 fi
 
-AC_DEFINE([likely(x)],[__builtin_expect((x),1)],[Branch is likely])
-AC_DEFINE([unlikely(x)],[__builtin_expect((x),0)],[Branch is unlikely])
+AC_DEFINE_UNQUOTED([likely(x)],[__builtin_expect((x),1)],[Branch is likely])
+AC_DEFINE_UNQUOTED([unlikely(x)],[__builtin_expect((x),0)],[Branch is unlikely])
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
@@ -945,8 +952,8 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
   AC_MSG_RESULT(no)
 ],[
   AC_MSG_RESULT(yes)
-  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION)
-  AC_DEFINE(USE_PRAGMA_INTERFACE)
+  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION,[1],[pragma implementation is a good idea])
+  AC_DEFINE(USE_PRAGMA_INTERFACE,[1],[pragma interface is a good idea])
 ])
 
 # This always gives a warning. Ignore it unless you are cross compiling

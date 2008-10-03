@@ -89,12 +89,6 @@
 #endif
 #endif
 
-
-
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
-#endif
-
 #define _REENTRANT  1  /* Some thread libraries require this */
 
 #include <pthread.h>    /* AIX must have this included first */
