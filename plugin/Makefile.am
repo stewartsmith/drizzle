@@ -21,4 +21,4 @@ AUTOMAKE_OPTIONS =	foreign
 # keep its Makefile.am cleaner as a template
 
 SUBDIRS =	@mysql_pg_dirs@
-DIST_SUBDIRS =	auth_pam hello_world md5 crc32 logging_noop
+DIST_SUBDIRS =	auth_pam hello_world md5 crc32 logging_query
