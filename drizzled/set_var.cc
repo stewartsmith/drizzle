@@ -438,10 +438,6 @@ static sys_var_thd_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
 static sys_var_thd_bit	sys_sql_notes(&vars, "sql_notes", 0,
 					 set_option_bit,
 					 OPTION_SQL_NOTES);
-static sys_var_thd_bit	sys_auto_is_null(&vars, "sql_auto_is_null", 0,
-					 set_option_bit,
-                                         OPTION_AUTO_IS_NULL, 0,
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_thd_bit	sys_safe_updates(&vars, "sql_safe_updates", 0,
 					 set_option_bit,
 					 OPTION_SAFE_UPDATES);

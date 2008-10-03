@@ -2005,8 +2005,6 @@ void Query_log_event::print_query_header(IO_CACHE* file,
       my_b_printf(file, "SET ");
       print_set_option(file, tmp, OPTION_NO_FOREIGN_KEY_CHECKS, ~flags2,
                    "@@session.foreign_key_checks", &need_comma);
-      print_set_option(file, tmp, OPTION_AUTO_IS_NULL, flags2,
-                   "@@session.sql_auto_is_null", &need_comma);
       print_set_option(file, tmp, OPTION_RELAXED_UNIQUE_CHECKS, ~flags2,
                    "@@session.unique_checks", &need_comma);
       my_b_printf(file,"%s\n", print_event_info->delimiter);
