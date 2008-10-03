@@ -18,6 +18,7 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
+#include "logging.h"
 #include <drizzled/drizzled_error_messages.h>
 
 /**
@@ -537,6 +538,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   /* TODO: set thd->lex->sql_command to SQLCOM_END here */
   pthread_mutex_unlock(&LOCK_thread_count);
 
+  logging_pre_do(thd);
+
   thd->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
   switch (command) {
@@ -548,6 +551,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                         packet, packet_length, thd->charset());
     if (!mysql_change_db(thd, &tmp, false))
     {
+      /* TODO remove general_log_write after pluggable logging works */
       general_log_write(thd, command, thd->db, thd->db_length);
       my_ok(thd);
     }
@@ -672,6 +676,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     char *packet_end= thd->query + thd->query_length;
     const char* end_of_stmt= NULL;
 
+    /* TODO remove general_log_write after pluggable logging works */
     general_log_write(thd, command, thd->query, thd->query_length);
 
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
@@ -921,6 +926,8 @@ void log_slow_statement(THD *thd)
   if (unlikely(thd->in_sub_stmt))
     return;                           // Don't set time for sub stmt
 
+  logging_post_do(thd);
+
   /*
     Do not log administrative statements unless the appropriate option is
     set; do not log into slow log if reading from backup.
@@ -941,6 +948,7 @@ void log_slow_statement(THD *thd)
       thd_proc_info(thd, "logging slow query");
       thd->status_var.long_query_count++;
       slow_log_print(thd, thd->query, thd->query_length, end_utime_of_query);
+      /* TODO remove slow_log_print after pluggable logging works*/
     }
   }
   return;

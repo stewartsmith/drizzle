@@ -52,6 +52,7 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
+				plugin_logging.h \
 				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la
@@ -76,6 +77,7 @@ drizzled_LDFLAGS =
 
 noinst_HEADERS = item.h \
 		 authentication.h \
+		 logging.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -149,6 +151,7 @@ drizzled_SOURCES = \
 		   sql_db.cc \
 		   sql_lex.cc \
 		   authentication.cc \
+		   logging.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
 		   field_iterator.cc \
