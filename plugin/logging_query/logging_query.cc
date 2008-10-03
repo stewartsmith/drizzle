@@ -51,7 +51,7 @@ bool logging_query_func_pre (THD *thd)
 	     " db=\"%.*s\" query=\"%.*s\"\n",
 	     (unsigned long) thd->thread_id,
 	     (unsigned long) thd->query_id,
-	     command_name[thd->command].length, command_name[thd->command].str,
+	     (uint32_t)command_name[thd->command].length, command_name[thd->command].str,
 	     thd->db_length, thd->db,
 	     thd->query_length, thd->query);
   wrv= write(fd, msgbuf, msgbuf_len);
@@ -72,13 +72,13 @@ bool logging_query_func_post (THD *thd)
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
 	     "log end thread_id=%ld query_id=%ld command=%.*s"
-	     " utime=%lld rows.sent=%ld rows.exam=%ld\n",
+	     " utime=%u rows.sent=%ld rows.exam=%u\n",
 	     (unsigned long) thd->thread_id, 
 	     (unsigned long) thd->query_id,
-	     command_name[thd->command].length, command_name[thd->command].str,
-	     (thd->current_utime() - thd->start_utime),
+	     (uint32_t)command_name[thd->command].length, command_name[thd->command].str,
+	     (uint32_t)(thd->current_utime() - thd->start_utime),
 	     (unsigned long) thd->sent_row_count,
-	     (unsigned long) thd->examined_row_count);
+	     (uint32_t) thd->examined_row_count);
   wrv= write(fd, msgbuf, msgbuf_len);
   assert(wrv == msgbuf_len);
 
