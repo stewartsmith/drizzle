@@ -42,8 +42,9 @@ bool logging_query_func_pre (THD *thd)
   int msgbuf_len = 0;
   int wrv;
 
+  if (fd < 0) return false;
+
   assert(thd != NULL);
-  assert(fd > 0);
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -54,6 +55,9 @@ bool logging_query_func_pre (THD *thd)
 	     (uint32_t)command_name[thd->command].length, command_name[thd->command].str,
 	     thd->db_length, thd->db,
 	     thd->query_length, thd->query);
+  /* a single write has a OS level thread lock
+     so there is no need to have mutexes guarding this write,
+  */
   wrv= write(fd, msgbuf, msgbuf_len);
   assert(wrv == msgbuf_len);
 
@@ -66,8 +70,9 @@ bool logging_query_func_post (THD *thd)
   int msgbuf_len = 0;
   int wrv;
 
+  if (fd < 0) return false;
+
   assert(thd != NULL);
-  assert(fd > 0);
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -79,11 +84,12 @@ bool logging_query_func_post (THD *thd)
 	     (uint32_t)(thd->current_utime() - thd->start_utime),
 	     (unsigned long) thd->sent_row_count,
 	     (uint32_t) thd->examined_row_count);
+  /* a single write has a OS level thread lock
+     so there is no need to have mutexes guarding this write,
+  */
   wrv= write(fd, msgbuf, msgbuf_len);
   assert(wrv == msgbuf_len);
 
-  // some other interesting things in the THD
-  // thd->enable_slow_log
 
   return false;
 }
@@ -92,18 +98,23 @@ static int logging_query_plugin_init(void *p)
 {
   logging_t *l= (logging_t *) p;
 
-  l->logging_pre= logging_query_func_pre;
-  l->logging_post= logging_query_func_post;
-
-  fd= open("/tmp/drizzle.log", O_WRONLY | O_APPEND);
+  fd= open("/tmp/drizzle.log", O_WRONLY | O_APPEND | O_CREAT);
   if (fd < 0) {
     fprintf(stderr,
-	    "MRA fail open /tmp/drizzle.log fd=%d er=%s\n",
-	    fd, strerror(errno));
-    return fd;
+	    "fail open /tmp/drizzle.log er=%s\n",
+	    strerror(errno));
+
+    /* we should return an error here, so the plugin doesnt load
+       but this causes Drizzle to crash
+       so until that is fixed,
+       just return a success,
+       but leave the function pointers as NULL and the fd as -1
+    */
+    return 0;
   }
 
-  /* need to do something better with the fd */
+  l->logging_pre= logging_query_func_pre;
+  l->logging_post= logging_query_func_post;
 
   return 0;
 }
@@ -112,7 +123,10 @@ static int logging_query_plugin_deinit(void *p)
 {
   logging_st *l= (logging_st *) p;
 
-  close(fd);
+  if (fd >= 0) {
+    close(fd);
+    fd= -1;
+  }
 
   l->logging_pre= NULL;
   l->logging_post= NULL;
