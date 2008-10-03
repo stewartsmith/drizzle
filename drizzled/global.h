@@ -125,13 +125,15 @@
 
   Cleaner solutions are welcome.
 */
-#if defined(__sun) && !defined(__cplusplus)
-#if __STDC_VERSION__ - 0 >= 199901L
-#define _XOPEN_SOURCE 600
+#ifdef __sun
+#ifdef __cplusplus
+#define __C99FEATURES__
 #else
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
 #endif
 #endif
+
+
 
 #ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
