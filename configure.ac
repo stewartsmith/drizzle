@@ -124,6 +124,12 @@ AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
 AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
 AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
+AC_DEFINE([MASTER],[1],[Compile without unireg])
+
+AC_DEFINE_UNQUOTED([QUOTE_ARG(x)],[#x],[Quote argument (before cpp)])
+AC_DEFINE([STRINGIFY_ARG(x)],[QUOTE_ARG(x)],[Quote argument, after cpp])
+
+
 AC_DEFINE([HAVE_REPLICATION],[1],[We always have replication])
 
 dnl  InnoDB depends on some Drizzle's internals which other plugins should not

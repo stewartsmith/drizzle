@@ -136,13 +136,6 @@
 extern "C" int madvise(void *addr, size_t len, int behav);
 #endif
 
-/* We can not live without the following defines */
-
-#define MASTER 1    /* Compile without unireg */
-
-#define QUOTE_ARG(x)    #x  /* Quote argument (before cpp) */
-#define STRINGIFY_ARG(x) QUOTE_ARG(x)  /* Quote argument, after cpp */
-
 #if !defined(HAVE_UINT)
 #undef HAVE_UINT
 #define HAVE_UINT
