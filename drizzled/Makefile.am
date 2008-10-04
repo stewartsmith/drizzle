@@ -172,7 +172,7 @@ drizzled_SOURCES = \
 		   sql_class.cc \
 		   sql_list.cc \
 		   protocol.cc \
-		   sql_state.c \
+		   sql_state.cc \
 		   lock.cc \
 		   sql_string.cc \
 		   drizzled.cc \
@@ -220,7 +220,7 @@ drizzled_SOURCES = \
 		   sql_union.cc \
 		   sql_derived.cc \
 		   sql_client.cc \
-		   stacktrace.c \
+		   stacktrace.cc \
 		   repl_failsafe.h \
 		   repl_failsafe.cc \
 		   sql_olap.cc \
