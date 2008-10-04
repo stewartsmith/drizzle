@@ -2005,8 +2005,6 @@ void Query_log_event::print_query_header(IO_CACHE* file,
       my_b_printf(file, "SET ");
       print_set_option(file, tmp, OPTION_NO_FOREIGN_KEY_CHECKS, ~flags2,
                    "@@session.foreign_key_checks", &need_comma);
-      print_set_option(file, tmp, OPTION_AUTO_IS_NULL, flags2,
-                   "@@session.sql_auto_is_null", &need_comma);
       print_set_option(file, tmp, OPTION_RELAXED_UNIQUE_CHECKS, ~flags2,
                    "@@session.unique_checks", &need_comma);
       my_b_printf(file,"%s\n", print_event_info->delimiter);
@@ -2291,10 +2289,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
       }
       goto end;
     }
-
-    /* If the query was not ignored, it is printed to the general log */
-    if (!thd->is_error() || thd->main_da.sql_errno() != ER_SLAVE_IGNORED_TABLE)
-      general_log_write(thd, COM_QUERY, thd->query, thd->query_length);
 
 compare_errors:
 
@@ -4268,9 +4262,6 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 #if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
-  /* For a slave Xid_log_event is COMMIT */
-  general_log_print(thd, COM_QUERY,
-                    "COMMIT /* implicit, from Xid_log_event */");
   return end_trans(thd, COMMIT);
 }
 

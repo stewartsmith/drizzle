@@ -26,9 +26,7 @@
 #ifndef DRIZZLE_SERVER_CONNECT_H
 #define DRIZZLE_SERVER_CONNECT_H
 
-int check_user(THD *thd, enum enum_server_command command, 
-	       const char *passwd, uint passwd_len, const char *db,
-	       bool check_count);
+int check_user(THD *thd, const char *passwd, uint passwd_len, const char *db, bool check_count);
 pthread_handler_t handle_one_connection(void *arg);
 bool init_new_connection_handler_thread();
 void time_out_user_resource_limits(THD *thd, USER_CONN *uc);

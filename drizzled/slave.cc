@@ -3205,8 +3205,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
     else
     {
       change_rpl_status(RPL_IDLE_SLAVE,RPL_ACTIVE_SLAVE);
-      general_log_print(thd, COM_CONNECT_OUT, "%s@%s:%d",
-                        mi->user, mi->host, mi->port);
     }
   }
   drizzle->reconnect= 1;

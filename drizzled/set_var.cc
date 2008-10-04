@@ -90,7 +90,6 @@ static void sys_default_init_slave(THD*, enum_var_type type);
 static bool set_option_bit(THD *thd, set_var *var);
 static bool set_option_autocommit(THD *thd, set_var *var);
 static int  check_log_update(THD *thd, set_var *var);
-static bool set_log_update(THD *thd, set_var *var);
 static int  check_pseudo_thread_id(THD *thd, set_var *var);
 static void fix_low_priority_updates(THD *thd, enum_var_type type);
 static int check_tx_isolation(THD *thd, set_var *var);
@@ -116,11 +115,6 @@ static KEY_CACHE *create_key_cache(const char *name, uint length);
 static uchar *get_error_count(THD *thd);
 static uchar *get_warning_count(THD *thd);
 static uchar *get_tmpdir(THD *thd);
-static int  sys_check_log_path(THD *thd,  set_var *var);
-static bool sys_update_general_log_path(THD *thd, set_var * var);
-static void sys_default_general_log_path(THD *thd, enum_var_type type);
-static bool sys_update_slow_log_path(THD *thd, set_var * var);
-static void sys_default_slow_log_path(THD *thd, enum_var_type type);
 
 /*
   Variable definition list
@@ -224,12 +218,6 @@ static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age
 							      param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
 					 &opt_local_infile);
-static sys_var_bool_ptr
-  sys_log_queries_not_using_indexes(&vars, "log_queries_not_using_indexes",
-                                    &opt_log_queries_not_using_indexes);
-static sys_var_thd_ulong	sys_log_warnings(&vars, "log_warnings", &SV::log_warnings);
-static sys_var_microseconds	sys_var_long_query_time(&vars, "long_query_time",
-                                                        &SV::long_query_time);
 static sys_var_thd_bool	sys_low_priority_updates(&vars, "low_priority_updates",
 						 &SV::low_priority_updates,
 						 fix_low_priority_updates);
@@ -440,14 +428,6 @@ static sys_var_thd_bit	sys_sql_big_tables(&vars, "sql_big_tables", 0,
 static sys_var_thd_bit	sys_big_selects(&vars, "sql_big_selects", 0,
 					set_option_bit,
 					OPTION_BIG_SELECTS);
-static sys_var_thd_bit	sys_log_off(&vars, "sql_log_off",
-				    check_log_update,
-				    set_option_bit,
-				    OPTION_LOG_OFF);
-static sys_var_thd_bit	sys_log_update(&vars, "sql_log_update",
-                                       check_log_update,
-				       set_log_update,
-				       OPTION_BIN_LOG);
 static sys_var_thd_bit	sys_log_binlog(&vars, "sql_log_bin",
                                        check_log_update,
 				       set_option_bit,
@@ -458,10 +438,6 @@ static sys_var_thd_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
 static sys_var_thd_bit	sys_sql_notes(&vars, "sql_notes", 0,
 					 set_option_bit,
 					 OPTION_SQL_NOTES);
-static sys_var_thd_bit	sys_auto_is_null(&vars, "sql_auto_is_null", 0,
-					 set_option_bit,
-                                         OPTION_AUTO_IS_NULL, 0,
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_thd_bit	sys_safe_updates(&vars, "sql_safe_updates", 0,
 					 set_option_bit,
 					 OPTION_SAFE_UPDATES);
@@ -563,28 +539,6 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
-/* Global variables which enable|disable logging */
-static sys_var_log_state sys_var_general_log(&vars, "general_log", &opt_log,
-                                      QUERY_LOG_GENERAL);
-/* Synonym of "general_log" for consistency with SHOW VARIABLES output */
-static sys_var_log_state sys_var_log(&vars, "log", &opt_log, QUERY_LOG_GENERAL);
-static sys_var_log_state sys_var_slow_query_log(&vars, "slow_query_log", &opt_slow_log,
-                                         QUERY_LOG_SLOW);
-/* Synonym of "slow_query_log" for consistency with SHOW VARIABLES output */
-static sys_var_log_state sys_var_log_slow(&vars, "log_slow_queries",
-                                          &opt_slow_log, QUERY_LOG_SLOW);
-sys_var_str sys_var_general_log_path(&vars, "general_log_file", sys_check_log_path,
-				     sys_update_general_log_path,
-				     sys_default_general_log_path,
-				     opt_logname);
-sys_var_str sys_var_slow_log_path(&vars, "slow_query_log_file", sys_check_log_path,
-				  sys_update_slow_log_path, 
-				  sys_default_slow_log_path,
-				  opt_slow_logname);
-static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_output_options,
-					    &log_output_typelib, 0);
-
-
 /*
   Additional variables (not derived from sys_var class, not accessible as
   @@varname in SELECT or SET). Sorted in alphabetical order to facilitate
@@ -2064,88 +2018,21 @@ end:
 }
 
 
-bool sys_var_log_state::update(THD *thd, set_var *var)
+bool sys_var_log_state::update(THD *thd __attribute__((unused)), set_var *var)
 {
   bool res;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (!var->save_result.ulong_value)
-  {
-    logger.deactivate_log_handler(thd, log_type);
     res= false;
-  }
   else
-    res= logger.activate_log_handler(thd, log_type);
+    res= true;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return res;
 }
 
-void sys_var_log_state::set_default(THD *thd,
+void sys_var_log_state::set_default(THD *thd __attribute__((unused)),
                                     enum_var_type type __attribute__((unused)))
 {
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.deactivate_log_handler(thd, log_type);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-static int  sys_check_log_path(THD *thd __attribute__((unused)),
-                               set_var *var)
-{
-  char path[FN_REFLEN], buff[FN_REFLEN];
-  struct stat f_stat;
-  String str(buff, sizeof(buff), system_charset_info), *res;
-  const char *log_file_str;
-  size_t path_length;
-
-  if (!(res= var->value->val_str(&str)))
-    goto err;
-
-  log_file_str= res->c_ptr();
-  memset(&f_stat, 0, sizeof(struct stat));
-
-  path_length= unpack_filename(path, log_file_str);
-
-  if (!path_length)
-  {
-    /* File name is empty. */
-
-    goto err;
-  }
-
-  if (!stat(path, &f_stat))
-  {
-    /*
-      A file system object exists. Check if argument is a file and we have
-      'write' permission.
-    */
-
-    if (!S_ISREG(f_stat.st_mode) ||
-        !(f_stat.st_mode & S_IWRITE))
-      goto err;
-
-    return 0;
-  }
-
-  /* Get dirname of the file path. */
-  (void) dirname_part(path, log_file_str, &path_length);
-
-  /* Dirname is empty if file path is relative. */
-  if (!path_length)
-    return 0;
-
-  /*
-    Check if directory exists and we have permission to create file and
-    write to file.
-  */
-  if (my_access(path, (F_OK|W_OK)))
-    goto err;
-
-  return 0;
-
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->name, 
-           res ? log_file_str : "NULL");
-  return 1;
 }
 
 
@@ -2154,19 +2041,12 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
                              set_var *var, const char *log_ext,
                              bool log_state, uint log_type)
 {
-  DRIZZLE_QUERY_LOG *file_log;
   char buff[FN_REFLEN];
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   bool result= 0;
   uint str_length= (var ? var->value->str_value.length() : 0);
 
   switch (log_type) {
-  case QUERY_LOG_SLOW:
-    file_log= logger.get_slow_log_file_handler();
-    break;
-  case QUERY_LOG_GENERAL:
-    file_log= logger.get_log_file_handler();
-    break;
   default:
     assert(0);                                  // Impossible
   }
@@ -2185,21 +2065,13 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
 
-  if (file_log && log_state)
-    file_log->close(0);
   old_value= var_str->value;
   var_str->value= res;
   var_str->value_length= str_length;
   my_free(old_value, MYF(MY_ALLOW_ZERO_PTR));
-  if (file_log && log_state)
+  if (log_state)
   {
     switch (log_type) {
-    case QUERY_LOG_SLOW:
-      file_log->open_slow_log(sys_var_slow_log_path.value);
-      break;
-    case QUERY_LOG_GENERAL:
-      file_log->open_query_log(sys_var_general_log_path.value);
-      break;
     default:
       assert(0);
     }
@@ -2213,45 +2085,11 @@ err:
 }
 
 
-static bool sys_update_general_log_path(THD *thd, set_var * var)
-{
-  return update_sys_var_str_path(thd, &sys_var_general_log_path,
-                                 var, ".log", opt_log, QUERY_LOG_GENERAL);
-}
-
-
-static void sys_default_general_log_path(THD *thd,
-                                         enum_var_type type __attribute__((unused)))
-{
-  (void) update_sys_var_str_path(thd, &sys_var_general_log_path,
-                                 0, ".log", opt_log, QUERY_LOG_GENERAL);
-}
-
-
-static bool sys_update_slow_log_path(THD *thd, set_var * var)
-{
-  return update_sys_var_str_path(thd, &sys_var_slow_log_path,
-                                 var, "-slow.log", opt_slow_log,
-                                 QUERY_LOG_SLOW);
-}
-
-
-static void sys_default_slow_log_path(THD *thd,
-                                      enum_var_type type __attribute__((unused)))
-{
-  (void) update_sys_var_str_path(thd, &sys_var_slow_log_path,
-                                 0, "-slow.log", opt_slow_log,
-                                 QUERY_LOG_SLOW);
-}
-
-
 bool sys_var_log_output::update(THD *thd __attribute__((unused)),
                                 set_var *var)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
-  logger.init_slow_log(var->save_result.ulong_value);
-  logger.init_general_log(var->save_result.ulong_value);
   *value= var->save_result.ulong_value;
   logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2264,8 +2102,6 @@ void sys_var_log_output::set_default(THD *thd __attribute__((unused)),
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
-  logger.init_slow_log(LOG_FILE);
-  logger.init_general_log(LOG_FILE);
   *value= LOG_FILE;
   logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2694,29 +2530,6 @@ static bool set_option_autocommit(THD *thd, set_var *var)
 static int check_log_update(THD *thd __attribute__((unused)),
                             set_var *var __attribute__((unused)))
 {
-  return 0;
-}
-
-static bool set_log_update(THD *thd __attribute__((unused)),
-                           set_var *var __attribute__((unused)))
-{
-  /*
-    The update log is not supported anymore since 5.0.
-    See sql/mysqld.cc/, comments in function init_server_components() for an
-    explaination of the different warnings we send below
-  */
-
-  if (opt_sql_bin_update)
-  {
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                 ER_UPDATE_LOG_DEPRECATED_TRANSLATED,
-                 ER(ER_UPDATE_LOG_DEPRECATED_TRANSLATED));
-  }
-  else
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                 ER_UPDATE_LOG_DEPRECATED_IGNORED,
-                 ER(ER_UPDATE_LOG_DEPRECATED_IGNORED));
-  set_option_bit(thd, var);
   return 0;
 }
 
