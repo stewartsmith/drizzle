@@ -460,7 +460,6 @@ extern "C" {
 /* end of password.c */
 
   char *get_tty_password(const char *opt_message);
-  const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
   uint32_t net_field_length(unsigned char **packet);
   uint64_t net_field_length_ll(unsigned char **packet);
