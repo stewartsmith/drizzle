@@ -246,7 +246,7 @@ static int get_options(int *argc, char ***argv)
   current_db= *((*argv)++);
   (*argc)--;
   if (tty_password)
-    opt_password=get_tty_password(NullS);
+    opt_password=get_tty_password(NULL);
   return(0);
 }
 
@@ -362,7 +362,7 @@ static DRIZZLE *db_connect(char *host, char *database,
   if (!(drizzle= drizzle_create(NULL)))
     return 0;
   if (opt_compress)
-    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_local_file)
     drizzle_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
       (char*) &opt_local_file);
@@ -431,11 +431,11 @@ static char *add_load_option(char *ptr, const char *object,
   {
     /* Don't escape hex constants */
     if (object[0] == '0' && (object[1] == 'x' || object[1] == 'X'))
-      ptr= strxmov(ptr," ",statement," ",object,NullS);
+      ptr= strxmov(ptr," ",statement," ",object,NULL);
     else
     {
       /* char constant; escape */
-      ptr= strxmov(ptr," ",statement," '",NullS);
+      ptr= strxmov(ptr," ",statement," '",NULL);
       ptr= field_escape(ptr,object,(uint) strlen(object));
       *ptr++= '\'';
     }

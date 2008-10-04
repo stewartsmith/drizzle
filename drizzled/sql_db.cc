@@ -30,7 +30,7 @@ using namespace std;
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
-const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NullS};
+const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NULL};
 static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
@@ -280,7 +280,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
     char *tmp_name;
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                          &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
-                         NullS))
+                         NULL))
     {
       error= true;
       goto end;
@@ -623,7 +623,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
     {
       query= 	     tmp_query;
       query_length= (uint) (strxmov(tmp_query,"create database `",
-                                    db, "`", NullS) - tmp_query);
+                                    db, "`", NULL) - tmp_query);
     }
     else
     {
@@ -842,7 +842,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       /* The client used the old obsolete mysql_drop_db() call */
       query= path;
       query_length= (uint) (strxmov(path, "drop database `", db, "`",
-                                     NullS) - path);
+                                     NULL) - path);
     }
     else
     {
@@ -987,7 +987,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
     }
     else
     {
-      strxmov(filePath, org_path, "/", file->name, NullS);
+      strxmov(filePath, org_path, "/", file->name, NULL);
       if (my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
 	goto err;

@@ -37,13 +37,13 @@ char * fn_format(char * to, const char *name, const char *dir,
   if (length == 0 || (flag & MY_REPLACE_DIR))
   {
     /* Use given directory */
-    convert_dirname(dev,dir,NullS);		/* Fix to this OS */
+    convert_dirname(dev,dir,NULL);		/* Fix to this OS */
   }
   else if ((flag & MY_RELATIVE_PATH) && !test_if_hard_path(dev))
   {
     /* Put 'dir' before the given path */
     strmake(buff,dev,sizeof(buff)-1);
-    pos=convert_dirname(dev,dir,NullS);
+    pos=convert_dirname(dev,dir,NULL);
     strmake(pos,buff,sizeof(buff)-1- (int) (pos-dev));
   }
 
@@ -53,7 +53,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     (void) unpack_dirname(dev,dev);		/* Replace ~/.. with dir */
 
   if (!(flag & MY_APPEND_EXT) &&
-      (pos= (char*) strchr(name,FN_EXTCHAR)) != NullS)
+      (pos= (char*) strchr(name,FN_EXTCHAR)) != NULL)
   {
     if ((flag & MY_REPLACE_EXT) == 0)		/* If we should keep old ext */
     {
@@ -77,7 +77,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     /* To long path, return original or NULL */
     size_t tmp_length;
     if (flag & MY_SAFE_PATH)
-      return NullS;
+      return NULL;
     tmp_length= strlength(startpos);
     (void) strmake(to,startpos,cmin(tmp_length,FN_REFLEN-1));
   }

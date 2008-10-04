@@ -133,7 +133,7 @@ const char *compatible_mode_names[]=
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
   "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
   "ANSI",
-  NullS
+  NULL
 };
 #define MASK_ANSI_QUOTES \
 (\
@@ -861,7 +861,7 @@ static int get_options(int *argc, char ***argv)
     return EX_USAGE;
   }
   if (tty_password)
-    opt_password=get_tty_password(NullS);
+    opt_password=get_tty_password(NULL);
   return(0);
 } /* get_options */
 
@@ -1016,7 +1016,7 @@ static FILE* open_sql_file_for_table(const char* table)
 {
   FILE* res;
   char filename[FN_REFLEN], tmp_path[FN_REFLEN];
-  convert_dirname(tmp_path,path,NullS);
+  convert_dirname(tmp_path,path,NULL);
   res= my_fopen(fn_format(filename, table, tmp_path, ".sql", 4),
                 O_WRONLY, MYF(MY_WME));
   return res;
@@ -1061,7 +1061,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
   verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
   drizzle_create(&drizzle_connection);
   if (opt_compress)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NULL);
   if (!(drizzle= drizzle_connect(&drizzle_connection,host,user,passwd,
                                   NULL,opt_drizzle_port, NULL,
                                   0)))
@@ -1254,7 +1254,7 @@ static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
 
   SYNOPSIS
     print_xml_tag(xml_file, sbeg, send, tag_name, first_attribute_name, 
-                    ..., attribute_name_n, attribute_value_n, NullS)
+                    ..., attribute_name_n, attribute_value_n, NULL)
     xml_file              - output file
     sbeg                  - line beginning
     line_end              - line ending
@@ -1291,10 +1291,10 @@ static void print_xml_tag(FILE * xml_file, const char* sbeg,
 
   va_start(arg_list, first_attribute_name);
   attribute_name= first_attribute_name;
-  while (attribute_name != NullS)
+  while (attribute_name != NULL)
   {
     attribute_value= va_arg(arg_list, char *);
-    assert(attribute_value != NullS);
+    assert(attribute_value != NULL);
 
     fputc(' ', xml_file);
     fputs(attribute_name, xml_file);    
@@ -1701,7 +1701,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         fprintf(sql_file, "CREATE TABLE %s (\n", result_table);
       else
         print_xml_tag(sql_file, "\t", "\n", "table_structure", "name=", table, 
-                NullS);
+                NULL);
       check_io(sql_file);
     }
 
@@ -2071,7 +2071,7 @@ static void dump_table(char *table, char *db)
       Convert the path to native os format
       and resolve to the full filepath.
     */
-    convert_dirname(tmp_path,path,NullS);    
+    convert_dirname(tmp_path,path,NULL);    
     my_load_path(tmp_path, tmp_path, NULL);
     fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
 
@@ -2199,7 +2199,7 @@ static void dump_table(char *table, char *db)
     init_length=(uint) insert_pat.length()+4;
     if (opt_xml)
       print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
-              NullS);
+              NULL);
     if (opt_autocommit)
     {
       fprintf(md_result_file, "set autocommit=0;\n");
@@ -2317,13 +2317,13 @@ static void dump_table(char *table, char *db)
                 {
                   /* Define xsi:type="xs:hexBinary" for hex encoded data */
                   print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                                field->name, "xsi:type=", "xs:hexBinary", NullS);
+                                field->name, "xsi:type=", "xs:hexBinary", NULL);
                   print_blob_as_hex(md_result_file, row[i], length);
                 }
                 else
                 {
                   print_xml_tag(md_result_file, "\t\t", "", "field", "name=", 
-                                field->name, NullS);
+                                field->name, NULL);
                   print_quoted_xml(md_result_file, row[i], length);
                 }
                 fputs("</field>\n", md_result_file);
@@ -2343,7 +2343,7 @@ static void dump_table(char *table, char *db)
               if (opt_xml)
               {
                 print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                        field->name, NullS);
+                        field->name, NULL);
                 fputs(!my_isalpha(charset_info, *ptr) ? ptr: "NULL",
                       md_result_file);
                 fputs("</field>\n", md_result_file);
@@ -2459,7 +2459,7 @@ static char *getTableName(int reset)
 
   if (!res)
   {
-    if (!(res= drizzle_list_tables(drizzle,NullS)))
+    if (!(res= drizzle_list_tables(drizzle,NULL)))
       return(NULL);
   }
   if ((row= drizzle_fetch_row(res)))
@@ -2627,7 +2627,7 @@ static int dump_all_tables_in_db(char *database)
   if (init_dumping(database, init_dumping_tables))
     return(1);
   if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NullS);
+    print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NULL);
   if (lock_tables)
   {
     string query;
@@ -2705,7 +2705,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
            quote_for_like(old_table_name, show_name_buff));
 
   if (drizzle_query_with_error_report(drizzle, 0, query))
-    return NullS;
+    return NULL;
 
   if ((table_res= drizzle_store_result(drizzle)))
   {
@@ -2792,7 +2792,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
      /* We shall countinue here, if --force was given */
   }
   if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", db, NullS);
+    print_xml_tag(md_result_file, "", "\n", "database", "name=", db, NULL);
 
   /* Dump each selected table */
   for (pos= dump_tables; pos < end; pos++)
@@ -3297,7 +3297,7 @@ static char *primary_key_fields(const char *table_name)
     while ((row= drizzle_fetch_row(res)) && atoi(row[3]) > 1)
     {
       quoted_field= quote_name(row[4], buff, 0);
-      end= strxmov(end, ",", quoted_field, NullS);
+      end= strxmov(end, ",", quoted_field, NULL);
     }
   }
 

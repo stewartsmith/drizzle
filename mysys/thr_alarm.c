@@ -68,7 +68,7 @@ void init_thr_alarm(uint max_alarms)
   alarm_aborted=0;
   next_alarm_expire_time= ~ (time_t) 0;
   init_queue(&alarm_queue,max_alarms+1,offsetof(ALARM,expire_time),0,
-	     compare_uint32_t,NullS);
+	     compare_uint32_t,NULL);
   sigfillset(&full_signal_set);			/* Neaded to block signals */
   pthread_mutex_init(&LOCK_alarm,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&COND_alarm,NULL);

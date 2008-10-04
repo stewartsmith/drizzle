@@ -1592,7 +1592,7 @@ get_options(int *argc,char ***argv)
     parse_option(default_engine, &engine_options, ',');
 
   if (tty_password)
-    opt_password= get_tty_password(NullS);
+    opt_password= get_tty_password(NULL);
   return(0);
 }
 
@@ -2467,7 +2467,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
   drizzle_create(drizzle);
 
   if (opt_compress)
-    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
 
   for (x= 0; x < 10; x++)
   {

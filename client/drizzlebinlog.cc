@@ -79,12 +79,12 @@ static void warning(const char *format, ...) __attribute__((format(printf, 1, 2)
 
 static bool one_database=0, to_last_remote_log= 0, disable_log_bin= 0;
 static bool opt_hexdump= 0;
-const char *base64_output_mode_names[]= {"NEVER", "AUTO", "ALWAYS", NullS};
+const char *base64_output_mode_names[]= {"NEVER", "AUTO", "ALWAYS", NULL};
 TYPELIB base64_output_mode_typelib=
   { array_elements(base64_output_mode_names) - 1, "",
     base64_output_mode_names, NULL };
 static enum_base64_output_mode opt_base64_output_mode= BASE64_OUTPUT_UNSPEC;
-static const char *opt_base64_output_mode_str= NullS;
+static const char *opt_base64_output_mode_str= NULL;
 static const char* database= 0;
 static bool force_opt= 0, short_form= 0, remote_opt= 0;
 static bool debug_info_flag, debug_check_flag;
@@ -195,7 +195,7 @@ public:
 
   void init_by_dir_name(const char *dir)
     {
-      target_dir_name_len= (convert_dirname(target_dir_name, dir, NullS) -
+      target_dir_name_len= (convert_dirname(target_dir_name, dir, NULL) -
           target_dir_name);
     }
   void init_by_cur_dir()
@@ -1235,7 +1235,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     exit(0);
   }
   if (tty_password)
-    pass= get_tty_password(NullS);
+    pass= get_tty_password(NULL);
 
   return 0;
 }

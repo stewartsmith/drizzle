@@ -121,7 +121,7 @@ static bool make_datetime_with_warn(date_time_format_types format, DRIZZLE_TIME 
 
   make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                str->ptr(), str->length(),
-                               DRIZZLE_TIMESTAMP_TIME, NullS);
+                               DRIZZLE_TIMESTAMP_TIME, NULL);
   return make_datetime(format, ltime, str);
 }
 
@@ -148,7 +148,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
   {
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
-                                 DRIZZLE_TIMESTAMP_TIME, NullS);
+                                 DRIZZLE_TIMESTAMP_TIME, NULL);
     make_time(format, l_time, str);
   }
 
@@ -211,7 +211,7 @@ overflow:
                  - buf);
   make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                buf, len, DRIZZLE_TIMESTAMP_TIME,
-                               NullS);
+                               NULL);
   
   return 1;
 }
@@ -579,7 +579,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       {
 	make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                      val_begin, length,
-				     cached_timestamp_type, NullS);
+				     cached_timestamp_type, NULL);
 	break;
       }
     } while (++val != val_end);
@@ -2844,7 +2844,7 @@ String *Item_func_maketime::val_str(String *str)
       sprintf(ptr, ":%02u:%02u", (uint)minute, (uint)second);
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  buf, len, DRIZZLE_TIMESTAMP_TIME,
-                                 NullS);
+                                 NULL);
   }
   
   if (make_time_with_warn((DATE_TIME_FORMAT *) 0, &ltime, str))

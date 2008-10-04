@@ -47,7 +47,7 @@ inline bool check_and_unset_keyword(const char *dbug_str)
   char total_str[200];
   if (_db_strict_keyword_ (dbug_str))
   {
-    strxmov(total_str, extra_str, dbug_str, NullS);
+    strxmov(total_str, extra_str, dbug_str, NULL);
     return 1;
   }
   return 0;

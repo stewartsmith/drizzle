@@ -906,7 +906,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
       end= int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NullS);
+                                   NULL);
       goto err;
     }
   }
@@ -1397,7 +1397,7 @@ void Item_ident_for_show::make_field(Send_field *tmp_field)
 /**********************************************/
 
 Item_field::Item_field(Field *f)
-  :Item_ident(0, NullS, *f->table_name, f->field_name),
+  :Item_ident(0, NULL, *f->table_name, f->field_name),
    item_equal(0), no_const_subst(0),
    have_privileges(0), any_privileges(0)
 {
@@ -1497,7 +1497,7 @@ const char *Item_ident::full_name() const
   {
     tmp=(char*) sql_alloc((uint) strlen(db_name)+(uint) strlen(table_name)+
 			  (uint) strlen(field_name)+3);
-    strxmov(tmp,db_name,".",table_name,".",field_name,NullS);
+    strxmov(tmp,db_name,".",table_name,".",field_name,NULL);
   }
   else
   {
@@ -1505,7 +1505,7 @@ const char *Item_ident::full_name() const
     {
       tmp= (char*) sql_alloc((uint) strlen(table_name) +
 			     (uint) strlen(field_name) + 2);
-      strxmov(tmp, table_name, ".", field_name, NullS);
+      strxmov(tmp, table_name, ".", field_name, NULL);
     }
     else
       tmp= (char*) field_name;
@@ -4804,7 +4804,7 @@ Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
                    const char *field_name_arg,
                    bool alias_name_used_arg)
-  :Item_ident(context_arg, NullS, table_name_arg, field_name_arg),
+  :Item_ident(context_arg, NULL, table_name_arg, field_name_arg),
    result_field(0), ref(item)
 {
   alias_name_used= alias_name_used_arg;

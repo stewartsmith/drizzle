@@ -141,7 +141,7 @@ int my_setwd(const char *dir, myf MyFlags)
 int test_if_hard_path(register const char *dir_name)
 {
   if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
-    return (home_dir != NullS && test_if_hard_path(home_dir));
+    return (home_dir != NULL && test_if_hard_path(home_dir));
   if (dir_name[0] == FN_LIBCHAR)
     return (true);
 #ifdef FN_DEVCHAR

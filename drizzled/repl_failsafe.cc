@@ -41,14 +41,14 @@ pthread_mutex_t LOCK_rpl_status;
 pthread_cond_t COND_rpl_status;
 HASH slave_list;
 
-const char *rpl_role_type[] = {"MASTER","SLAVE",NullS};
+const char *rpl_role_type[] = {"MASTER","SLAVE",NULL};
 TYPELIB rpl_role_typelib = {array_elements(rpl_role_type)-1,"",
 			    rpl_role_type, NULL};
 
 const char* rpl_status_type[]=
 {
   "AUTH_MASTER","ACTIVE_SLAVE","IDLE_SLAVE", "LOST_SOLDIER","TROOP_SOLDIER",
-  "RECOVERY_CAPTAIN","NULL",NullS
+  "RECOVERY_CAPTAIN","NULL",NULL
 };
 TYPELIB rpl_status_typelib= {array_elements(rpl_status_type)-1,"",
 			     rpl_status_type, NULL};

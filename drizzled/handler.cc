@@ -38,7 +38,7 @@ static handlerton *installed_htons[128];
 
 #define BITMAP_STACKBUF_SIZE (128/8)
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NullS,0}, {NullS,0} };
+KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
 /* number of entries in handlertons[] */
 uint32_t total_ha= 0;
@@ -51,7 +51,7 @@ static const LEX_STRING sys_table_aliases[]=
 {
   { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
   { C_STRING_WITH_LEN("HEAP") },      { C_STRING_WITH_LEN("MEMORY") },
-  {NullS, 0}
+  {NULL, 0}
 };
 
 const char *ha_row_type[] = {
@@ -60,7 +60,7 @@ const char *ha_row_type[] = {
 
 const char *tx_isolation_names[] =
 { "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NullS};
+  NULL};
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 			       tx_isolation_names, NULL};
 
@@ -2557,7 +2557,7 @@ static bool update_frm_version(Table *table)
   if (table->s->mysql_version == DRIZZLE_VERSION_ID)
     return(0);
 
-  strxmov(path, table->s->normalized_path.str, reg_ext, NullS);
+  strxmov(path, table->s->normalized_path.str, reg_ext, NULL);
 
   if ((file= my_open(path, O_RDWR|O_BINARY, MYF(MY_WME))) >= 0)
   {
@@ -3094,7 +3094,7 @@ int ha_create_table(THD *thd, const char *path,
   closefrm(&table, 0);
   if (error)
   {
-    strxmov(name_buff, db, ".", table_name, NullS);
+    strxmov(name_buff, db, ".", table_name, NULL);
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:

@@ -1511,7 +1511,7 @@ class Item_static_float_func :public Item_float
 public:
   Item_static_float_func(const char *str, double val_arg, uint decimal_par,
                         uint length)
-    :Item_float(NullS, val_arg, decimal_par, length), func_name(str)
+    :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
   virtual inline void print(String *str,
@@ -1663,7 +1663,7 @@ public:
   Item_static_string_func(const char *name_par, const char *str, uint length,
                           const CHARSET_INFO * const cs,
                           Derivation dv= DERIVATION_COERCIBLE)
-    :Item_string(NullS, str, length, cs, dv), func_name(name_par)
+    :Item_string(NULL, str, length, cs, dv), func_name(name_par)
   {}
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 

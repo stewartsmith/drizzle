@@ -130,13 +130,13 @@ int my_realpath(char *to, const char *filename,
       my_errno=errno;
       if (MyFlags & MY_WME)
 	my_error(EE_REALPATH, MYF(0), filename, my_errno);
-      my_load_path(to, filename, NullS);
+      my_load_path(to, filename, NULL);
       result= -1;
     }
   }
   return(result);
 #else
-  my_load_path(to, filename, NullS);
+  my_load_path(to, filename, NULL);
   return 0;
 #endif
 }

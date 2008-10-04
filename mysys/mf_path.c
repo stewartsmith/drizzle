@@ -71,7 +71,7 @@ char * my_path(char * to, const char *progname,
 
 
 	/* test if file without filename is found in path */
-	/* Returns to if found and to has dirpart if found, else NullS */
+	/* Returns to if found and to has dirpart if found, else NULL */
 
 #define PATH_SEP ':'
 
@@ -81,7 +81,7 @@ static char *find_file_in_path(char *to, const char *name)
   const char *ext="";
 
   if (!(path=getenv("PATH")))
-    return NullS;
+    return NULL;
   dir[0]=FN_LIBCHAR; dir[1]=0;
 #ifdef PROGRAM_EXTENSION
   if (!fn_ext(name)[0])
@@ -92,7 +92,7 @@ static char *find_file_in_path(char *to, const char *name)
   {
     if (path != pos)
     {
-      strxmov(my_stpncpy(to,path,(uint) (pos-path)),dir,name,ext,NullS);
+      strxmov(my_stpncpy(to,path,(uint) (pos-path)),dir,name,ext,NULL);
       if (!access(to,F_OK))
       {
 	to[(uint) (pos-path)+1]=0;	/* Return path only */
@@ -100,5 +100,5 @@ static char *find_file_in_path(char *to, const char *name)
       }
     }
   }
-  return NullS;				/* File not found */
+  return NULL;				/* File not found */
 }

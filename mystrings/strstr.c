@@ -23,7 +23,7 @@
     strstr(src, pat) looks for an instance of pat in src.  pat is not a
     regex(3) pattern, it is a literal string which must be matched exactly.
     The result is a pointer to the first character of the located instance,
-    or NullS if pat does not occur in src.
+    or NULL if pat does not occur in src.
 
 */
 

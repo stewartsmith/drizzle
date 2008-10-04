@@ -166,7 +166,7 @@ const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
 static const char *optimizer_switch_names[]=
 {
   "no_materialization", "no_semijoin",
-  NullS
+  NULL
 };
 
 /* Corresponding defines are named OPTIMIZER_SWITCH_XXX */
@@ -182,7 +182,7 @@ TYPELIB optimizer_switch_typelib= { array_elements(optimizer_switch_names)-1,"",
 
 static const char *tc_heuristic_recover_names[]=
 {
-  "COMMIT", "ROLLBACK", NullS
+  "COMMIT", "ROLLBACK", NULL
 };
 static TYPELIB tc_heuristic_recover_typelib=
 {
@@ -210,7 +210,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_row,        &Arg_comparator::compare_e_row},
  {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
 
-const char *log_output_names[] = { "NONE", "FILE", NullS};
+const char *log_output_names[] = { "NONE", "FILE", NULL};
 static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
                              log_output_names,
@@ -288,7 +288,7 @@ bool trust_function_creators= 0;
 bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
-const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NullS};
+const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NULL};
 TYPELIB binlog_format_typelib=
   { array_elements(binlog_format_names) - 1, "",
     binlog_format_names, NULL };
@@ -2004,7 +2004,7 @@ SHOW_VAR com_status_vars[]= {
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
   {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 static int init_common_variables(const char *conf_file_name, int argc,
@@ -4159,7 +4159,7 @@ SHOW_VAR status_vars[]= {
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 static void print_version(void)
@@ -4252,7 +4252,7 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  opt_mysql_tmpdir= my_bind_addr_str= NullS;
+  opt_mysql_tmpdir= my_bind_addr_str= NULL;
   memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
@@ -4778,7 +4778,7 @@ static void get_options(int *argc,char **argv)
 static void set_server_version(void)
 {
   char *end= strxmov(server_version, DRIZZLE_SERVER_VERSION,
-                     DRIZZLE_SERVER_SUFFIX_STR, NullS);
+                     DRIZZLE_SERVER_SUFFIX_STR, NULL);
   if (opt_bin_log)
     my_stpcpy(end, "-log");                        // This may slow down system
 }
@@ -4813,7 +4813,7 @@ fn_format_relative_to_data_home(char * to, const char *name,
   if (!test_if_hard_path(dir))
   {
     strxnmov(tmp_path,sizeof(tmp_path)-1, mysql_real_data_home,
-	     dir, NullS);
+	     dir, NULL);
     dir=tmp_path;
   }
   return !fn_format(to, name, dir, extension,
@@ -4824,7 +4824,7 @@ fn_format_relative_to_data_home(char * to, const char *name,
 static void fix_paths(void)
 {
   char buff[FN_REFLEN],*pos;
-  convert_dirname(mysql_home,mysql_home,NullS);
+  convert_dirname(mysql_home,mysql_home,NULL);
   /* Resolve symlinks to allow 'mysql_home' to be a relative symlink */
   my_realpath(mysql_home,mysql_home,MYF(0));
   /* Ensure that mysql_home ends in FN_LIBCHAR */
@@ -4834,11 +4834,11 @@ static void fix_paths(void)
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  convert_dirname(mysql_real_data_home,mysql_real_data_home,NullS);
+  convert_dirname(mysql_real_data_home,mysql_real_data_home,NULL);
   (void) fn_format(buff, mysql_real_data_home, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
   (void) unpack_dirname(mysql_unpacked_real_data_home, buff);
-  convert_dirname(language,language,NullS);
+  convert_dirname(language,language,NULL);
   (void) my_load_path(mysql_home,mysql_home,""); // Resolve current dir
   (void) my_load_path(mysql_real_data_home,mysql_real_data_home,mysql_home);
   (void) my_load_path(pidfile_name,pidfile_name,mysql_real_data_home);
@@ -4850,18 +4850,18 @@ static void fix_paths(void)
   if (test_if_hard_path(sharedir))
     strmake(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
-    strxnmov(buff,sizeof(buff)-1,mysql_home,sharedir,NullS);
-  convert_dirname(buff,buff,NullS);
+    strxnmov(buff,sizeof(buff)-1,mysql_home,sharedir,NULL);
+  convert_dirname(buff,buff,NULL);
   (void) my_load_path(language,language,buff);
 
   /* If --character-sets-dir isn't given, use shared library dir */
   if (charsets_dir != mysql_charsets_dir)
   {
     strxnmov(mysql_charsets_dir, sizeof(mysql_charsets_dir)-1, buff,
-	     CHARSET_DIR, NullS);
+	     CHARSET_DIR, NULL);
   }
   (void) my_load_path(mysql_charsets_dir, mysql_charsets_dir, buff);
-  convert_dirname(mysql_charsets_dir, mysql_charsets_dir, NullS);
+  convert_dirname(mysql_charsets_dir, mysql_charsets_dir, NULL);
   charsets_dir=mysql_charsets_dir;
 
   if (init_tmpdir(&mysql_tmpdir_list, opt_mysql_tmpdir))
@@ -4877,7 +4877,7 @@ static void fix_paths(void)
    */
   if (opt_secure_file_priv)
   {
-    convert_dirname(buff, opt_secure_file_priv, NullS);
+    convert_dirname(buff, opt_secure_file_priv, NULL);
     my_free(opt_secure_file_priv, MYF(0));
     opt_secure_file_priv= my_strdup(buff, MYF(MY_FAE));
   }

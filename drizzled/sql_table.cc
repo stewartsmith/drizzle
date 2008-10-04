@@ -76,7 +76,7 @@ uint filename_to_tablename(const char *from, char *to, uint to_length)
                     system_charset_info,  to, to_length, &errors);
     if (errors) // Old 5.0 name
     {
-      res= (strxnmov(to, to_length, MYSQL50_TABLE_NAME_PREFIX,  from, NullS) -
+      res= (strxnmov(to, to_length, MYSQL50_TABLE_NAME_PREFIX,  from, NULL) -
             to);
       sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
     }
@@ -173,12 +173,12 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
   if (pos - rootdir_len >= buff &&
       memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
     pos= my_stpncpy(pos, FN_ROOTDIR, end - pos);
-  pos= strxnmov(pos, end - pos, dbbuff, FN_ROOTDIR, NullS);
+  pos= strxnmov(pos, end - pos, dbbuff, FN_ROOTDIR, NULL);
 #ifdef USE_SYMDIR
   unpack_dirname(buff, buff);
   pos= strend(buff);
 #endif
-  pos= strxnmov(pos, end - pos, tbbuff, ext, NullS);
+  pos= strxnmov(pos, end - pos, tbbuff, ext, NULL);
 
   return(pos - buff);
 }
@@ -2277,7 +2277,7 @@ static int prepare_for_repair(THD *thd, TableList *table_list,
     goto end;					// No data file
 
   // Name of data file
-  strxmov(from, table->s->normalized_path.str, ext[1], NullS);
+  strxmov(from, table->s->normalized_path.str, ext[1], NULL);
   if (stat(from, &stat_info))
     goto end;				// Can't use USE_FRM flag
 
@@ -2402,7 +2402,7 @@ static bool mysql_admin_table(THD* thd, TableList* tables,
     char* db = table->db;
     bool fatal_error=0;
 
-    strxmov(table_name, db, ".", table->table_name, NullS);
+    strxmov(table_name, db, ".", table->table_name, NULL);
     thd->open_options|= extra_open_options;
     table->lock_type= lock_type;
     /* open only one table from local list of command */
@@ -2886,7 +2886,7 @@ bool mysql_create_like_schema_frm(THD* thd, TableList* schema_table,
                                  &schema_table->table->s->key_info, &keys, 0))
     return(1);
   local_create_info.max_rows= 0;
-  if (mysql_create_frm(thd, dst_path, NullS, NullS,
+  if (mysql_create_frm(thd, dst_path, NULL, NULL,
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
                        schema_table->table->file))
@@ -2934,7 +2934,7 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
   if (open_tables(thd, &src_table, &not_used, 0))
     return(true);
 
-  strxmov(src_path, src_table->table->s->path.str, reg_ext, NullS);
+  strxmov(src_path, src_table->table->s->path.str, reg_ext, NULL);
 
   /* 
     Check that destination tables does not exist. Note that its name
@@ -4400,7 +4400,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     return(mysql_discard_or_import_tablespace(thd,table_list,
                                               alter_info->tablespace_op));
   strxnmov(new_name_buff, sizeof (new_name_buff) - 1, mysql_data_home, "/", db, 
-           "/", table_name, reg_ext, NullS);
+           "/", table_name, reg_ext, NULL);
   (void) unpack_filename(new_name_buff, new_name_buff);
   /*
     If this is just a rename of a view, short cut to the
@@ -5311,7 +5311,7 @@ bool mysql_recreate_table(THD *thd, TableList *table_list)
   create_info.default_table_charset=default_charset_info;
   /* Force alter table to recreate table */
   alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
-  return(mysql_alter_table(thd, NullS, NullS, &create_info,
+  return(mysql_alter_table(thd, NULL, NULL, &create_info,
                                 table_list, &alter_info, 0,
                                 (order_st *) 0, 0));
 }
@@ -5340,7 +5340,7 @@ bool mysql_checksum_table(THD *thd, TableList *tables,
     char table_name[NAME_LEN*2+2];
     Table *t;
 
-    strxmov(table_name, table->db ,".", table->table_name, NullS);
+    strxmov(table_name, table->db ,".", table->table_name, NULL);
 
     t= table->table= open_n_lock_single_table(thd, table, TL_READ);
     thd->clear_error();			// these errors shouldn't get client

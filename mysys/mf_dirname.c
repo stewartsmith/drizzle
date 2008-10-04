@@ -91,7 +91,7 @@ size_t dirname_part(char *to, const char *name, size_t *to_res_length)
     Adds a FN_LIBCHAR to end if the result string if there isn't one
     and the last isn't dev_char.
     Copies data from 'from' until ASCII(0) for until from == from_end
-    If you want to use the whole 'from' string, just send NullS as the
+    If you want to use the whole 'from' string, just send NULL as the
     last argument.
 
     If the result string is larger than FN_REFLEN -1, then it's cut.

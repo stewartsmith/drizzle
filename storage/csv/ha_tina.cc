@@ -148,7 +148,7 @@ static TINA_SHARE *get_share(const char *table_name,
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                          &share, sizeof(*share),
                          &tmp_name, length+1,
-                         NullS))
+                         NULL))
     {
       pthread_mutex_unlock(&tina_mutex);
       return NULL;
@@ -697,7 +697,7 @@ err:
 static const char *ha_tina_exts[] = {
   CSV_EXT,
   CSM_EXT,
-  NullS
+  NULL
 };
 
 const char **ha_tina::bas_ext() const

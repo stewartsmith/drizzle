@@ -44,7 +44,7 @@ char * my_load_path(char * to, const char *path,
       my_stpcpy(buff,path);			/* Return org file name */
   }
   else
-    strxmov(buff,own_path_prefix,path,NullS);
+    strxmov(buff,own_path_prefix,path,NULL);
   my_stpcpy(to,buff);
   return(to);
 } /* my_load_path */

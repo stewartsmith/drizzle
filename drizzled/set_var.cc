@@ -60,13 +60,13 @@ extern const CHARSET_INFO *character_set_filesystem;
 static DYNAMIC_ARRAY fixed_show_vars;
 static HASH system_variable_hash;
 
-const char *bool_type_names[]= { "OFF", "ON", NullS };
+const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
 {
   array_elements(bool_type_names)-1, "", bool_type_names, NULL
 };
 
-const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NullS };
+const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NULL };
 TYPELIB delay_key_write_typelib=
 {
   array_elements(delay_key_write_type_names)-1, "",
@@ -74,7 +74,7 @@ TYPELIB delay_key_write_typelib=
 };
 
 const char *slave_exec_mode_names[]=
-{ "STRICT", "IDEMPOTENT", NullS };
+{ "STRICT", "IDEMPOTENT", NULL };
 static const unsigned int slave_exec_mode_names_len[]=
 { sizeof("STRICT") - 1, sizeof("IDEMPOTENT") - 1, 0 };
 TYPELIB slave_exec_mode_typelib=
@@ -295,7 +295,7 @@ static sys_var_thd_ulong        sys_optimizer_prune_level(&vars, "optimizer_prun
 static sys_var_thd_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",
                                                    &SV::optimizer_search_depth);
 
-const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NullS};
+const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
 TYPELIB optimizer_use_mrr_typelib= {
   array_elements(optimizer_use_mrr_names) - 1, "",
   optimizer_use_mrr_names, NULL

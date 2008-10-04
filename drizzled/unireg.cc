@@ -380,7 +380,7 @@ int rea_create_table(THD *thd, const char *path,
   
 
   char frm_name[FN_REFLEN];
-  strxmov(frm_name, path, reg_ext, NullS);
+  strxmov(frm_name, path, reg_ext, NULL);
   if (mysql_create_frm(thd, frm_name, db, table_name, create_info,
                        create_fields, keys, key_info, file))
 

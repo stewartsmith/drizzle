@@ -60,7 +60,7 @@ ha_heap::ha_heap(handlerton *hton, TABLE_SHARE *table_arg)
 
 
 static const char *ha_heap_exts[] = {
-  NullS
+  NULL
 };
 
 const char **ha_heap::bas_ext() const

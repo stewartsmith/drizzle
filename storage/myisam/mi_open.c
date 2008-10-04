@@ -240,7 +240,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
 			 &share->key_root_lock,sizeof(rw_lock_t)*keys,
 			 &share->mmap_lock,sizeof(rw_lock_t),
-			 NullS))
+			 NULL))
       goto err;
     errpos=4;
     *share=share_buff;
@@ -440,7 +440,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 		       &info.first_mbr_key, share->base.max_key_length,
 		       &info.filename,strlen(name)+1,
 		       &info.rtree_recursion_state,have_rtree ? 1024 : 0,
-		       NullS))
+		       NULL))
     goto err;
   errpos=6;
 

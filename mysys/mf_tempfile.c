@@ -86,7 +86,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
       errno=my_errno= ENAMETOOLONG;
       return(file);
     }
-    my_stpcpy(convert_dirname(to,dir,NullS),prefix_buff);
+    my_stpcpy(convert_dirname(to,dir,NULL),prefix_buff);
     org_file=mkstemp(to);
     if (mode & O_TEMPORARY)
       (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));

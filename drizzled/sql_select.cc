@@ -212,7 +212,7 @@ static bool setup_sum_funcs(THD *thd, Item_sum **func_ptr);
 static bool init_sum_functions(Item_sum **func, Item_sum **end);
 static bool update_sum_func(Item_sum **func);
 void select_describe(JOIN *join, bool need_tmp_table,bool need_order,
-			    bool distinct, const char *message=NullS);
+			    bool distinct, const char *message=NULL);
 static Item *remove_additional_cond(Item* conds);
 static void add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab);
 static bool test_if_ref(Item_field *left_item,Item *right_item);
@@ -2109,7 +2109,7 @@ JOIN::exec()
     select_describe(this, need_tmp,
 		    order != 0 && !skip_sort_order,
 		    select_distinct,
-                    !tables ? "No tables used" : NullS);
+                    !tables ? "No tables used" : NULL);
     return;
   }
 
@@ -13594,7 +13594,7 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
 			       (long) file->stats.records),
 		       &field_lengths,
 		       (uint) (field_count*sizeof(*field_lengths)),
-		       NullS))
+		       NULL))
     return(1);
 
   {

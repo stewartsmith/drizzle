@@ -326,8 +326,6 @@ typedef int64_t   my_ptrdiff_t;
 #define my_offsetof(TYPE, MEMBER)                                       \
   ((size_t)((char *)&(((TYPE *)0x10)->MEMBER) - (char*)0x10))
 
-#define NullS    (char *) 0
-
 /* Typdefs for easyier portability */
 
 #ifndef HAVE_UCHAR

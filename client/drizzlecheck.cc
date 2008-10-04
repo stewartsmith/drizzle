@@ -340,7 +340,7 @@ static int get_options(int *argc, char ***argv)
     return 1;
   }
   if (tty_password)
-    opt_password = get_tty_password(NullS);
+    opt_password = get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -639,7 +639,7 @@ static int handle_request_for_tables(const char *tables, uint length)
 
     ptr= my_stpcpy(my_stpcpy(query, op), " TABLE ");
     ptr= fix_table_name(ptr, tables);
-    ptr= strxmov(ptr, " ", options, NullS);
+    ptr= strxmov(ptr, " ", options, NULL);
     query_length= (uint) (ptr - query);
   }
   if (drizzle_real_query(sock, query, query_length))
@@ -713,7 +713,7 @@ static int dbConnect(char *host, char *user, char *passwd)
   }
   drizzle_create(&drizzle_connection);
   if (opt_compress)
-    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NullS);
+    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NULL);
   if (opt_protocol)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,

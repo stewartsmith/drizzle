@@ -1520,7 +1520,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
 
   /* First delete all old log files */
 
-  if (find_log_pos(&linfo, NullS, 0))
+  if (find_log_pos(&linfo, NULL, 0))
   {
     error=1;
     goto err;
@@ -1666,7 +1666,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
     If included is true, we want the first relay log;
     otherwise we want the one after event_relay_log_name.
   */
-  if ((included && (error=find_log_pos(&rli->linfo, NullS, 0))) ||
+  if ((included && (error=find_log_pos(&rli->linfo, NULL, 0))) ||
       (!included &&
        ((error=find_log_pos(&rli->linfo, rli->event_relay_log_name, 0)) ||
         (error=find_next_log(&rli->linfo, 0)))))
@@ -1767,7 +1767,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     File name exists in index file; delete until we find this file
     or a file that is used.
   */
-  if ((error=find_log_pos(&log_info, NullS, 0 /*no mutex*/)))
+  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
     goto err;
   while ((strcmp(to_log,log_info.log_file_name) || (exit_loop=included)) &&
          !log_in_use(log_info.log_file_name))
@@ -1892,7 +1892,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
     or a file that is used or a file
     that is older than purge_time.
   */
-  if ((error=find_log_pos(&log_info, NullS, 0 /*no mutex*/)))
+  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
     goto err;
 
   while (strcmp(log_file_name, log_info.log_file_name) &&
@@ -3144,7 +3144,7 @@ bool flush_error_log()
      On Windows is necessary a temporary file for to rename
      the current error file.
     */
-    strxmov(err_temp, err_renamed,"-tmp",NullS);
+    strxmov(err_temp, err_renamed,"-tmp",NULL);
     (void) my_delete(err_temp, MYF(0)); 
     if (freopen(err_temp,"a+",stdout))
     {
@@ -3810,7 +3810,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
     return 1;
   }
 
-  if ((error= find_log_pos(&log_info, NullS, 1)))
+  if ((error= find_log_pos(&log_info, NULL, 1)))
   {
     if (error != LOG_INFO_EOF)
       sql_print_error(_("find_log_pos() failed (error: %d)"), error);

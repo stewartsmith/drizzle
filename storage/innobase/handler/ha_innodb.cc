@@ -409,7 +409,7 @@ static SHOW_VAR innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_read,		  SHOW_LONG},
   {"rows_updated",
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 /* General functions */
@@ -2141,7 +2141,7 @@ ha_innobase::table_flags() const
 Gives the file extension of an InnoDB single-table tablespace. */
 static const char* ha_innobase_exts[] = {
   ".ibd",
-  NullS
+  NULL
 };
 
 const char**
@@ -2239,7 +2239,7 @@ ha_innobase::open(
 	if (!(uchar*) my_multi_malloc(MYF(MY_WME),
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
-			NullS)) {
+			NULL)) {
 		free_share(share);
 
 		return(1);
@@ -7729,7 +7729,7 @@ show_innodb_vars_cont = { &show_innodb_vars };
 
 static SHOW_VAR innodb_status_variables_export[]= {
   {"Innodb",                  (char *) &show_innodb_vars_cont, SHOW_FUNC},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 /**/

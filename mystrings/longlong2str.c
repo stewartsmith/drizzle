@@ -20,7 +20,7 @@
   converts the (int64_t) integer "val" to character form and moves it to
   the destination string "dst" followed by a terminating NUL.  The
   result is normally a pointer to this NUL character, but if the radix
-  is dud the result will be NullS and nothing will be changed.
+  is dud the result will be NULL and nothing will be changed.
 
   If radix is -2..-36, val is taken to be SIGNED.
   If radix is  2.. 36, val is taken to be UNSIGNED.

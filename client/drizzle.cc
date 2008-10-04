@@ -1657,7 +1657,7 @@ static int get_options(int argc, char **argv)
     current_db= strdup(*argv);
   }
   if (tty_password)
-    opt_password= get_tty_password(NullS);
+    opt_password= get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -1866,7 +1866,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
         *out++= (char) inchar;
         continue;
       }
-      if ((com=find_command(NullS,(char) inchar)))
+      if ((com=find_command(NULL,(char) inchar)))
       {
         // Flush previously accepted characters
         if (out != line)
@@ -2214,7 +2214,7 @@ static char *new_command_generator(const char *text,int state)
 
       b = find_all_matches(&ht,text,(uint) strlen(text),&len);
       if (!b)
-        return NullS;
+        return NULL;
       e = b->pData;
     }
 
@@ -2241,7 +2241,7 @@ static char *new_command_generator(const char *text,int state)
         }
       }
     }
-    ptr= NullS;
+    ptr= NULL;
     while (e && !ptr)
     {          /* find valid entry in bucket */
       if ((uint) strlen(e->str) == b->nKeyLength)
@@ -2270,7 +2270,7 @@ static char *new_command_generator(const char *text,int state)
     if (ptr)
       return ptr;
   }
-  return NullS;
+  return NULL;
 }
 
 
@@ -2361,7 +2361,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   i=0;
   while ((table_row=drizzle_fetch_row(tables)))
   {
-    if ((fields=drizzle_list_fields(&drizzle,(const char*) table_row[0],NullS)))
+    if ((fields=drizzle_list_fields(&drizzle,(const char*) table_row[0],NULL)))
     {
       num_fields=drizzle_num_fields(fields);
       if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
@@ -2408,7 +2408,7 @@ extern "C" {
     for (;;)
     {
       if (*s == (char) c) return (char*) s;
-      if (!*s++) return NullS;
+      if (!*s++) return NULL;
     }
   }
 
@@ -2416,7 +2416,7 @@ extern "C" {
   {
     register char *t;
 
-    t = NullS;
+    t = NULL;
     do if (*s == (char) c) t = (char*) s; while (*s++);
     return (char*) t;
   }
@@ -2518,7 +2518,7 @@ static int com_server_help(string *buffer,
         end_arg--;
       *++end_arg= '\0';
     }
-    (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NullS);
+    (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NULL);
     server_cmd= cmd_buf;
   }
 
@@ -3696,7 +3696,7 @@ char *get_arg(char *line, bool get_next_arg)
         ptr++;
   }
   if (!*ptr)
-    return NullS;
+    return NULL;
   while (my_isspace(charset_info, *ptr))
     ptr++;
   if (*ptr == '\'' || *ptr == '\"' || *ptr == '`')
@@ -3719,7 +3719,7 @@ char *get_arg(char *line, bool get_next_arg)
     }
   }
   valid_arg= ptr != start;
-  return valid_arg ? start : NullS;
+  return valid_arg ? start : NULL;
 }
 
 
@@ -3740,7 +3740,7 @@ sql_connect(char *host,char *database,char *user,char *password,
                   (char*) &timeout);
   }
   if (opt_compress)
-    drizzle_options(&drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(&drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_secure_auth)
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
@@ -3885,7 +3885,7 @@ server_version_string(DRIZZLE *con)
       DRIZZLE_ROW cur = drizzle_fetch_row(result);
       if (cur && cur[0])
       {
-        bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NullS);
+        bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NULL);
       }
       drizzle_free_result(result);
     }
@@ -4317,7 +4317,7 @@ static int com_prompt(string *buffer __attribute__((unused)),
 
 /*
     strcont(str, set) if str contanies any character in the string set.
-    The result is the position of the first found character in str, or NullS
+    The result is the position of the first found character in str, or NULL
     if there isn't anything found.
 */
 

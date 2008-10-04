@@ -507,7 +507,7 @@ void do_eval(string *query_eval, const char *query,
   @param append string to be appended.
   @param ... Optional. Additional string(s) to be appended.
 
-  @note The final argument in the list must be NullS even if no additional
+  @note The final argument in the list must be NULL even if no additional
   options are passed.
 */
 
@@ -520,7 +520,7 @@ void append_os_quoted(string *str, const char *append, ...)
 
   str->append(quote_str, quote_len); /* Leading quote */
   va_start(dirty_text, append);
-  while (append != NullS)
+  while (append != NULL)
   {
     const char  *cur_pos= append;
     const char *next_pos= cur_pos;
@@ -1165,7 +1165,7 @@ static int run_tool(const char *tool_path, string * result, ...)
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
-      append_os_quoted(&ds_cmdline, arg, NullS);
+      append_os_quoted(&ds_cmdline, arg, NULL);
     else
       ds_cmdline.append(arg);
     ds_cmdline.append(" ");
@@ -2033,7 +2033,7 @@ static int open_file(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NullS);
+    strxmov(buff, opt_basedir, name, NULL);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -2416,7 +2416,7 @@ static void do_chmod_file(struct st_command *command)
 
   /* Parse what mode to set */
   if (ds_mode.length() != 4 ||
-      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NullS)
+      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NULL)
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
@@ -3788,7 +3788,7 @@ static void do_connect(struct st_command *command)
   if (!drizzle_create(&con_slot->drizzle))
     die("Failed on drizzle_create()");
   if (opt_compress || con_compress)
-    drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
+    drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NULL);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
   /* Use default db name */
@@ -4368,7 +4368,7 @@ static int read_command(struct st_command** command_ptr)
   if (!(*command_ptr= command=
         (struct st_command*) my_malloc(sizeof(*command),
                                        MYF(MY_WME|MY_ZEROFILL))))
-    die(NullS);
+    die(NULL);
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -4523,7 +4523,7 @@ static void read_embedded_server_arguments(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NullS);
+    strxmov(buff, opt_basedir, name, NULL);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -4570,7 +4570,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NullS);
+      strxmov(buff, opt_basedir, argument, NULL);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4587,7 +4587,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     static char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NullS);
+      strxmov(buff, opt_basedir, argument, NULL);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4652,7 +4652,7 @@ static int parse_args(int argc, char **argv)
   if (argc == 1)
     opt_db= *argv;
   if (tty_password)
-    opt_pass= get_tty_password(NullS);          /* purify tested */
+    opt_pass= get_tty_password(NULL);          /* purify tested */
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -4679,7 +4679,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!test_if_hard_path(fname))
   {
-    strxmov(buff, opt_basedir, fname, NullS);
+    strxmov(buff, opt_basedir, fname, NULL);
     fname= buff;
   }
   fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
@@ -5489,7 +5489,7 @@ int main(int argc, char **argv)
   if (!( drizzle_create(&cur_con->drizzle)))
     die("Failed in drizzle_create()");
   if (opt_compress)
-    drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
@@ -7018,7 +7018,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   }
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
-  pa->typelib.type_names[pa->typelib.count]= NullS;  /* Put end-mark */
+  pa->typelib.type_names[pa->typelib.count]= NULL;  /* Put end-mark */
   my_stpcpy((char*) pa->str+pa->length,name);
   pa->length+=length;
   return(0);

@@ -134,12 +134,12 @@ char *get_charsets_dir(char *buf)
   {
     if (test_if_hard_path(sharedir) ||
 	is_prefix(sharedir, DEFAULT_CHARSET_HOME))
-      strxmov(buf, sharedir, "/", CHARSET_DIR, NullS);
+      strxmov(buf, sharedir, "/", CHARSET_DIR, NULL);
     else
       strxmov(buf, DEFAULT_CHARSET_HOME, "/", sharedir, "/", CHARSET_DIR,
-	      NullS);
+	      NULL);
   }
-  res= convert_dirname(buf,buf,NullS);
+  res= convert_dirname(buf,buf,NULL);
   return(res);
 }
 

@@ -6998,7 +6998,7 @@ int QUICK_RANGE_SELECT::reset()
     while (buf_size && !my_multi_malloc(MYF(MY_WME),
                                         &mrr_buf_desc, sizeof(*mrr_buf_desc),
                                         &mrange_buff, buf_size,
-                                        NullS))
+                                        NULL))
     {
       /* Try to shrink the buffers until both are 0. */
       buf_size/= 2;

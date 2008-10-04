@@ -1759,8 +1759,8 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
                                  const Format_description_log_event
                                  *description_event,
                                  Log_event_type event_type)
-  :Log_event(buf, description_event), data_buf(0), query(NullS),
-   db(NullS), catalog_len(0), status_vars_len(0),
+  :Log_event(buf, description_event), data_buf(0), query(NULL),
+   db(NULL), catalog_len(0), status_vars_len(0),
    flags2_inited(0), sql_mode_inited(0), charset_inited(0),
    auto_increment_increment(1), auto_increment_offset(1),
    time_zone_len(0), lc_time_names_number(0), charset_database_number(0)
@@ -4339,9 +4339,9 @@ void User_var_log_event::pack_info(Protocol* protocol)
       }
       else
       {
-        char *p= strxmov(buf + val_offset, "_", cs->csname, " ", NullS);
+        char *p= strxmov(buf + val_offset, "_", cs->csname, " ", NULL);
         p= str_to_hex(p, val, val_len);
-        p= strxmov(p, " COLLATE ", cs->name, NullS);
+        p= strxmov(p, " COLLATE ", cs->name, NULL);
         event_len= p-buf;
       }
       break;
@@ -6910,7 +6910,7 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
                                      &m_dbnam, (uint) m_dblen + 1,
                                      &m_tblnam, (uint) m_tbllen + 1,
                                      &m_coltype, (uint) m_colcnt,
-                                     NullS);
+                                     NULL);
 
   if (m_memory)
   {
@@ -6975,7 +6975,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
                                 &table_list, (uint) sizeof(RPL_TableList),
                                 &db_mem, (uint) NAME_LEN + 1,
                                 &tname_mem, (uint) NAME_LEN + 1,
-                                NullS)))
+                                NULL)))
     return(HA_ERR_OUT_OF_MEM);
 
   memset(table_list, 0, sizeof(*table_list));

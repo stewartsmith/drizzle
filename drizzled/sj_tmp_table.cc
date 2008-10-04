@@ -111,7 +111,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
                         &group_buff, (!using_unique_constraint ?
                                       uniq_tuple_length_arg : 0),
                         &bitmaps, bitmap_buffer_size(1)*2,
-                        NullS))
+                        NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);

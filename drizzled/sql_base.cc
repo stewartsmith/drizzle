@@ -3206,7 +3206,7 @@ retry:
       {
         /* this DELETE FROM is needed even with row-based binlogging */
         end = strxmov(my_stpcpy(query, "DELETE FROM `"),
-                      share->db.str,"`.`",share->table_name.str,"`", NullS);
+                      share->db.str,"`.`",share->table_name.str,"`", NULL);
         thd->binlog_query(THD::STMT_QUERY_TYPE,
                           query, (ulong)(end-query), false, false);
         my_free(query, MYF(0));
@@ -4561,7 +4561,7 @@ find_field_in_tables(THD *thd, Item_ident *item,
     char buff[NAME_LEN*2+1];
     if (db && db[0])
     {
-      strxnmov(buff,sizeof(buff)-1,db,".",table_name,NullS);
+      strxnmov(buff,sizeof(buff)-1,db,".",table_name,NULL);
       table_name=buff;
     }
     my_error(ER_UNKNOWN_TABLE, MYF(0), table_name, thd->where);

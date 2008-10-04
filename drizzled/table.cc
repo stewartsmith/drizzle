@@ -304,7 +304,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags  __attribute__((u
   error_given= 0;
   disk_buff= NULL;
 
-  strxmov(path, share->normalized_path.str, reg_ext, NullS);
+  strxmov(path, share->normalized_path.str, reg_ext, NULL);
   if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
   {
     /*
@@ -329,7 +329,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags  __attribute__((u
     uint length;
     strxnmov(path, sizeof(path)-1,
              mysql_data_home, "/", share->db.str, "/",
-             share->table_name.str, reg_ext, NullS);
+             share->table_name.str, reg_ext, NULL);
     length= unpack_filename(path, path) - reg_ext_length;
     /*
       The following is a safety test and should never fail
@@ -1498,7 +1498,7 @@ void free_blobs(register Table *table)
 
 
 	/* Find where a form starts */
-	/* if formname is NullS then only formnames is read */
+	/* if formname is NULL then only formnames is read */
 
 ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
 {
@@ -1623,10 +1623,10 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
   if (n_length == 1 )
   {						/* First name */
     length++;
-    strxmov((char*) buff,"/",newname,"/",NullS);
+    strxmov((char*) buff,"/",newname,"/",NULL);
   }
   else
-    strxmov((char*) buff,newname,"/",NullS); /* purecov: inspected */
+    strxmov((char*) buff,newname,"/",NULL); /* purecov: inspected */
   my_seek(file,63L+(ulong) n_length,MY_SEEK_SET,MYF(0));
   if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
       (names && my_write(file,(uchar*) (*formnames->type_names+n_length-1),
@@ -1656,7 +1656,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
     else
     {
-      strxmov(buff, share->normalized_path.str, reg_ext, NullS);
+      strxmov(buff, share->normalized_path.str, reg_ext, NULL);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -1677,7 +1677,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    strxmov(buff, share->normalized_path.str, datext, NullS);
+    strxmov(buff, share->normalized_path.str, datext, NULL);
     my_error(err_no,errortype, buff, db_errno);
     delete file;
     break;
@@ -1697,7 +1697,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   }
   case 6:
-    strxmov(buff, share->normalized_path.str, reg_ext, NullS);
+    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of MySQL and cannot be read"), 
@@ -1707,7 +1707,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    strxmov(buff, share->normalized_path.str, reg_ext, NullS);
+    strxmov(buff, share->normalized_path.str, reg_ext, NULL);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -1736,7 +1736,7 @@ fix_type_pointers(const char ***array, TYPELIB *point_to_type, uint types,
 
     if ((chr= *ptr))			/* Test if empty type */
     {
-      while ((type_name=strchr(ptr+1,chr)) != NullS)
+      while ((type_name=strchr(ptr+1,chr)) != NULL)
       {
 	*((*array)++) = ptr+1;
 	*type_name= '\0';		/* End string */
@@ -1748,7 +1748,7 @@ fix_type_pointers(const char ***array, TYPELIB *point_to_type, uint types,
       ptr++;
     point_to_type->count= (uint) (*array - point_to_type->type_names);
     point_to_type++;
-    *((*array)++)= NullS;		/* End of type */
+    *((*array)++)= NULL;		/* End of type */
   }
   *names=ptr;				/* Update end */
   return;
@@ -2056,8 +2056,8 @@ int
 rename_file_ext(const char * from,const char * to,const char * ext)
 {
   char from_b[FN_REFLEN],to_b[FN_REFLEN];
-  strxmov(from_b,from,ext,NullS);
-  strxmov(to_b,to,ext,NullS);
+  strxmov(from_b,from,ext,NULL);
+  strxmov(to_b,to,ext,NULL);
   return (my_rename(from_b,to_b,MYF(MY_WME)));
 }
 
@@ -2104,7 +2104,7 @@ bool get_field(MEM_ROOT *mem, Field *field, String *res)
     field 	Field for retrieving of string
 
   RETURN VALUES
-    NullS  string is empty
+    NULL  string is empty
     #      pointer to NULL-terminated string value of field
 */
 
@@ -2117,7 +2117,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
   field->val_str(&str);
   length= str.length();
   if (!length || !(to= (char*) alloc_root(mem,length+1)))
-    return NullS;
+    return NULL;
   memcpy(to,str.ptr(),(uint) length);
   to[length]=0;
   return to;
@@ -3662,7 +3662,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
                         &group_buff, (group && ! using_unique_constraint ?
                                       param->group_length : 0),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
-                        NullS))
+                        NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
@@ -4160,7 +4160,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
                                                 (uchar*) 0,
                                                 (uint) 0,
                                                 Field::NONE,
-                                                NullS, 
+                                                NULL, 
                                                 table->s,
                                                 &my_charset_bin);
       if (!key_part_info->field)
@@ -4269,7 +4269,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
                         &field, (field_count + 1) * sizeof(Field*),
                         &blob_field, (field_count+1) *sizeof(uint),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
-                        NullS))
+                        NULL))
     return 0;
 
   memset(table, 0, sizeof(*table));

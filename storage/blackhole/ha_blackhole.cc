@@ -45,7 +45,7 @@ ha_blackhole::ha_blackhole(handlerton *hton,
 
 
 static const char *ha_blackhole_exts[] = {
-  NullS
+  NULL
 };
 
 const char **ha_blackhole::bas_ext() const

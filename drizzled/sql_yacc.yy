@@ -1258,7 +1258,7 @@ create:
               DRIZZLE_YYABORT;
             lex->alter_info.reset();
             lex->col_list.empty();
-            lex->change=NullS;
+            lex->change=NULL;
             memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.options=$2 | $4;
             lex->create_info.db_type= ha_default_handlerton(thd);
@@ -1293,7 +1293,7 @@ create:
             lex->alter_info.flags= ALTER_ADD_INDEX;
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
-            lex->change=NullS;
+            lex->change=NULL;
           }
           '(' key_list ')' key_options
           {
@@ -5812,14 +5812,14 @@ table_wild:
           ident '.' '*'
           {
             SELECT_LEX *sel= Select;
-            $$ = new Item_field(Lex->current_context(), NullS, $1.str, "*");
+            $$ = new Item_field(Lex->current_context(), NULL, $1.str, "*");
             sel->with_wild++;
           }
         | ident '.' ident '.' '*'
           {
             SELECT_LEX *sel= Select;
             $$ = new Item_field(Lex->current_context(), (YYTHD->client_capabilities &
-                                CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                CLIENT_NO_SCHEMA ? NULL : $1.str),
                                 $3.str,"*");
             sel->with_wild++;
           }
@@ -5836,8 +5836,10 @@ simple_ident:
               SELECT_LEX *sel=Select;
               $$= (sel->parsing_place != IN_HAVING ||
                   sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(), NullS, NullS, $1.str) :
-                  (Item*) new Item_ref(Lex->current_context(), NullS, NullS, $1.str);
+                  (Item*) new Item_field(Lex->current_context(),
+                                         (const char *)NULL, NULL, $1.str) :
+                  (Item*) new Item_ref(Lex->current_context(),
+                                       (const char *)NULL, NULL, $1.str);
             }
           }
         | simple_ident_q { $$= $1; }
@@ -5849,8 +5851,10 @@ simple_ident_nospvar:
             SELECT_LEX *sel=Select;
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NullS, NullS, $1.str) :
-                (Item*) new Item_ref(Lex->current_context(), NullS, NullS, $1.str);
+                (Item*) new Item_field(Lex->current_context(),
+                                       (const char *)NULL, NULL, $1.str) :
+                (Item*) new Item_ref(Lex->current_context(),
+                                     (const char *)NULL, NULL, $1.str);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5870,8 +5874,10 @@ simple_ident_q:
               }
               $$= (sel->parsing_place != IN_HAVING ||
                   sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(), NullS, $1.str, $3.str) :
-                  (Item*) new Item_ref(Lex->current_context(), NullS, $1.str, $3.str);
+                  (Item*) new Item_field(Lex->current_context(),
+                                         (const char *)NULL, $1.str, $3.str) :
+                  (Item*) new Item_ref(Lex->current_context(),
+                                       (const char *)NULL, $1.str, $3.str);
             }
           }
         | '.' ident '.' ident
@@ -5886,8 +5892,9 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NullS, $2.str, $4.str) :
-                (Item*) new Item_ref(Lex->current_context(), NullS, $2.str, $4.str);
+                (Item*) new Item_field(Lex->current_context(), NULL, $2.str, $4.str) :
+                (Item*) new Item_ref(Lex->current_context(),
+                                     (const char *)NULL, $2.str, $4.str);
           }
         | ident '.' ident '.' ident
           {
@@ -5903,11 +5910,11 @@ simple_ident_q:
                 sel->get_in_sum_expr() > 0) ?
                 (Item*) new Item_field(Lex->current_context(),
                                        (YYTHD->client_capabilities &
-                                       CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                       CLIENT_NO_SCHEMA ? NULL : $1.str),
                                        $3.str, $5.str) :
                 (Item*) new Item_ref(Lex->current_context(),
                                      (YYTHD->client_capabilities &
-                                     CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                     CLIENT_NO_SCHEMA ? NULL : $1.str),
                                      $3.str, $5.str);
           }
         ;

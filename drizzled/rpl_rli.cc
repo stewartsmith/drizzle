@@ -180,7 +180,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
     }
 
     /* Init relay log with first entry in the relay index file */
-    if (init_relay_log_pos(rli,NullS,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
+    if (init_relay_log_pos(rli,NULL,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
                            &msg, 0))
     {
       sql_print_error(_("Failed to open the relay log 'FIRST' (relay_log_pos 4)"));
@@ -305,7 +305,7 @@ static int32_t count_relay_log_space(Relay_log_info* rli)
 {
   LOG_INFO linfo;
   rli->log_space_total= 0;
-  if (rli->relay_log.find_log_pos(&linfo, NullS, 1))
+  if (rli->relay_log.find_log_pos(&linfo, NULL, 1))
   {
     sql_print_error(_("Could not find first log while counting relay "
                       "log space"));
@@ -420,7 +420,7 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,
     Test to see if the previous run was with the skip of purging
     If yes, we do not purge when we restart
   */
-  if (rli->relay_log.find_log_pos(&rli->linfo, NullS, 1))
+  if (rli->relay_log.find_log_pos(&rli->linfo, NULL, 1))
   {
     *errmsg="Could not find first log during relay log initialization";
     goto err;

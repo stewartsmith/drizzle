@@ -1144,12 +1144,12 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
         thd_info->state_info= (char*) (tmp->net.reading_or_writing ?
                                        (tmp->net.reading_or_writing == 2 ?
                                         "Writing to net" :
-                                        thd_info->command == COM_SLEEP ? NullS :
+                                        thd_info->command == COM_SLEEP ? NULL :
                                         "Reading from net") :
                                        tmp->get_proc_info() ? tmp->get_proc_info() :
                                        tmp->mysys_var &&
                                        tmp->mysys_var->current_cond ?
-                                       "Waiting on cond" : NullS);
+                                       "Waiting on cond" : NULL);
         if (mysys_var)
           pthread_mutex_unlock(&mysys_var->mutex);
 
@@ -1205,7 +1205,7 @@ int fill_schema_processlist(THD* thd, TableList* tables,
   char *user;
   time_t now= my_time(0);
 
-  user= NullS;
+  user= NULL;
 
   pthread_mutex_lock(&LOCK_thread_count);
 
@@ -1254,12 +1254,12 @@ int fill_schema_processlist(THD* thd, TableList* tables,
       val= (char*) (tmp->net.reading_or_writing ?
                     (tmp->net.reading_or_writing == 2 ?
                      "Writing to net" :
-                     tmp->command == COM_SLEEP ? NullS :
+                     tmp->command == COM_SLEEP ? NULL :
                      "Reading from net") :
                     tmp->get_proc_info() ? tmp->get_proc_info() :
                     tmp->mysys_var &&
                     tmp->mysys_var->current_cond ?
-                    "Waiting on cond" : NullS);
+                    "Waiting on cond" : NULL);
       if (val)
       {
         table->field[6]->store(val, strlen(val), cs);
@@ -1950,7 +1950,7 @@ bool get_lookup_field_values(THD *thd, COND *cond, TableList *tables,
                              LOOKUP_FIELD_VALUES *lookup_field_values)
 {
   LEX *lex= thd->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NullS;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   memset(lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
   case SQLCOM_SHOW_DATABASES:
@@ -2031,7 +2031,7 @@ int make_db_list(THD *thd, List<LEX_STRING> *files,
       if (files->push_back(i_s_name_copy))
         return 1;
     }
-    return (find_files(thd, files, NullS, mysql_data_home,
+    return (find_files(thd, files, NULL, mysql_data_home,
                        lookup_field_vals->db_value.str, 1) != FIND_FILES_OK);
   }
 
@@ -2062,8 +2062,8 @@ int make_db_list(THD *thd, List<LEX_STRING> *files,
   if (files->push_back(i_s_name_copy))
     return 1;
   *with_i_schema= 1;
-  return (find_files(thd, files, NullS,
-                     mysql_data_home, NullS, 1) != FIND_FILES_OK);
+  return (find_files(thd, files, NULL,
+                     mysql_data_home, NULL, 1) != FIND_FILES_OK);
 }
 
 
@@ -2848,13 +2848,13 @@ static int get_schema_tables_record(THD *thd, TableList *tables,
       ptr=my_stpcpy(ptr," checksum=1");
     if (share->page_checksum != HA_CHOICE_UNDEF)
       ptr= strxmov(ptr, " page_checksum=",
-                   ha_choice_values[(uint) share->page_checksum], NullS);
+                   ha_choice_values[(uint) share->page_checksum], NULL);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
       ptr=my_stpcpy(ptr," delay_key_write=1");
     if (share->row_type != ROW_TYPE_DEFAULT)
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
-                  NullS);
+                  NULL);
     if (share->block_size)
     {
       ptr= my_stpcpy(ptr, " block_size=");
@@ -2865,11 +2865,11 @@ static int get_schema_tables_record(THD *thd, TableList *tables,
     {
       ptr= strxmov(ptr, " TRANSACTIONAL=",
                    (share->transactional == HA_CHOICE_YES ? "1" : "0"),
-                   NullS);
+                   NULL);
     }
     if (share->transactional != HA_CHOICE_UNDEF)
       ptr= strxmov(ptr, " transactional=",
-                   ha_choice_values[(uint) share->transactional], NullS);
+                   ha_choice_values[(uint) share->transactional], NULL);
     table->field[19]->store(option_buff+1,
                             (ptr == option_buff ? 0 : 
                              (uint) (ptr-option_buff)-1), cs);
@@ -3071,7 +3071,7 @@ static int get_schema_column_record(THD *thd, TableList *tables,
 				    LEX_STRING *table_name)
 {
   LEX *lex= thd->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NullS;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   const CHARSET_INFO * const cs= system_charset_info;
   Table *show_table;
   TABLE_SHARE *show_table_share;
@@ -3201,7 +3201,7 @@ static int get_schema_column_record(THD *thd, TableList *tables,
 int fill_schema_charsets(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
-  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
+  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NULL;
   Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
 
@@ -3232,7 +3232,7 @@ int fill_schema_charsets(THD *thd, TableList *tables, COND *cond __attribute__((
 int fill_schema_collation(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
-  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
+  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NULL;
   Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
@@ -3577,7 +3577,7 @@ static int get_schema_key_column_usage_record(THD *thd,
 
 int fill_open_tables(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
-  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
+  const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NULL;
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   OPEN_TableList *open_list;
@@ -3603,7 +3603,7 @@ int fill_variables(THD *thd, TableList *tables, COND *cond __attribute__((unused
 {
   int res= 0;
   LEX *lex= thd->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NullS;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   enum enum_schema_tables schema_table_idx=
     get_schema_table_idx(tables->schema_table);
   enum enum_var_type option_type= OPT_SESSION;
@@ -3625,7 +3625,7 @@ int fill_variables(THD *thd, TableList *tables, COND *cond __attribute__((unused
 int fill_status(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   LEX *lex= thd->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NullS;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   int res= 0;
   STATUS_VAR *tmp1, tmp;
   enum enum_schema_tables schema_table_idx=
@@ -3958,7 +3958,7 @@ int make_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
     if (field_info->old_name)
     {
       Item_field *field= new Item_field(context,
-                                        NullS, NullS, field_info->field_name);
+                                        NULL, NULL, field_info->field_name);
       if (field)
       {
         field->set_name(field_info->old_name,
@@ -3985,7 +3985,7 @@ int make_schemata_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
     ST_FIELD_INFO *field_info= &schema_table->fields_info[1];
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
-                                      NullS, NullS, field_info->field_name);
+                                      NULL, NULL, field_info->field_name);
     if (!field || add_item_to_list(thd, field))
       return 1;
     buffer.length(0);
@@ -4020,7 +4020,7 @@ int make_table_names_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
     buffer.append(')');
   }
   Item_field *field= new Item_field(context,
-                                    NullS, NullS, field_info->field_name);
+                                    NULL, NULL, field_info->field_name);
   if (add_item_to_list(thd, field))
     return 1;
   field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
@@ -4028,7 +4028,7 @@ int make_table_names_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
     field_info= &schema_table->fields_info[3];
-    field= new Item_field(context, NullS, NullS, field_info->field_name);
+    field= new Item_field(context, NULL, NULL, field_info->field_name);
     if (add_item_to_list(thd, field))
       return 1;
     field->set_name(field_info->old_name, strlen(field_info->old_name),
@@ -4053,7 +4053,7 @@ int make_columns_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
                                *field_num == 18))
       continue;
     Item_field *field= new Item_field(context,
-                                      NullS, NullS, field_info->field_name);
+                                      NULL, NULL, field_info->field_name);
     if (field)
     {
       field->set_name(field_info->old_name,
@@ -4078,7 +4078,7 @@ int make_character_sets_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
   {
     field_info= &schema_table->fields_info[*field_num];
     Item_field *field= new Item_field(context,
-                                      NullS, NullS, field_info->field_name);
+                                      NULL, NULL, field_info->field_name);
     if (field)
     {
       field->set_name(field_info->old_name,

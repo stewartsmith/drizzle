@@ -62,7 +62,7 @@ enum commands {
 static const char *command_names[]= {
   "shutdown",
   "ping",
-  NullS
+  NULL
 };
 
 static TYPELIB command_typelib=
@@ -181,7 +181,7 @@ int main(int argc,char *argv[])
 
   commands = argv;
   if (tty_password)
-    opt_password = get_tty_password(NullS);
+    opt_password = get_tty_password(NULL);
 
   signal(SIGINT,endprog);			/* Here if abort */
   signal(SIGTERM,endprog);		/* Here if abort */
@@ -235,7 +235,7 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
 
   for (;;)
   {
-    if (drizzle_connect(drizzle,host,user,opt_password,NullS,tcp_port,NULL,0))
+    if (drizzle_connect(drizzle,host,user,opt_password,NULL,tcp_port,NULL,0))
     {
       drizzle->reconnect= 1;
       if (info)

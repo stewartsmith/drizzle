@@ -295,7 +295,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                           &share, sizeof(*share),
                           &tmp_name, length+1,
-                          NullS)) 
+                          NULL)) 
     {
       pthread_mutex_unlock(&archive_mutex);
       *rc= HA_ERR_OUT_OF_MEM;
@@ -447,7 +447,7 @@ int ha_archive::init_archive_reader()
 */
 static const char *ha_archive_exts[] = {
   ARZ,
-  NullS
+  NULL
 };
 
 const char **ha_archive::bas_ext() const

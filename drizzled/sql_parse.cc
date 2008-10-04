@@ -828,7 +828,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     break;
   case COM_PROCESS_INFO:
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_PROCESSLIST]);
-    mysqld_list_processes(thd, NullS, 0);
+    mysqld_list_processes(thd, NULL, 0);
     break;
   case COM_PROCESS_KILL:
   {
@@ -2003,7 +2003,7 @@ end_with_restore_list:
   }
   break;
   case SQLCOM_SHOW_PROCESSLIST:
-    mysqld_list_processes(thd, NullS, lex->verbose);
+    mysqld_list_processes(thd, NULL, lex->verbose);
     break;
   case SQLCOM_SHOW_ENGINE_LOGS:
     {
@@ -2784,7 +2784,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(thd, OPT_SESSION, tmp, null_lex_string)))
   {
-    end= strxmov(buff, "@@session.", var_name, NullS);
+    end= strxmov(buff, "@@session.", var_name, NULL);
     var->set_name(buff, end-buff, system_charset_info);
     add_item_to_list(thd, var);
   }
@@ -3829,11 +3829,11 @@ bool append_file_to_dir(THD *thd, const char **filename_ptr,
   }
   /* Fix is using unix filename format on dos */
   my_stpcpy(buff,*filename_ptr);
-  end=convert_dirname(buff, *filename_ptr, NullS);
+  end=convert_dirname(buff, *filename_ptr, NULL);
   if (!(ptr= (char*) thd->alloc((size_t) (end-buff) + strlen(table_name)+1)))
     return 1;					// End of memory
   *filename_ptr=ptr;
-  strxmov(ptr,buff,table_name,NullS);
+  strxmov(ptr,buff,table_name,NULL);
   return 0;
 }
 

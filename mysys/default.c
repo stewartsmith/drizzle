@@ -202,7 +202,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
   }
   else if (dirname_length(conf_file))
   {
-    if ((error= search_default_file(func, func_ctx, NullS, conf_file)) < 0)
+    if ((error= search_default_file(func, func_ctx, NULL, conf_file)) < 0)
       goto err;
   }
   else
@@ -596,10 +596,10 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     return 0;					/* Ignore wrong paths */
   if (dir)
   {
-    end=convert_dirname(name, dir, NullS);
+    end=convert_dirname(name, dir, NULL);
     if (dir[0] == FN_HOMELIB)		/* Add . to filenames in home */
       *end++='.';
-    strxmov(end,config_file,ext,NullS);
+    strxmov(end,config_file,ext,NULL);
   }
   else
   {
@@ -877,10 +877,10 @@ void my_print_default_files(const char *conf_file)
 	  pos= my_defaults_extra_file;
 	else
 	  continue;
-	end= convert_dirname(name, pos, NullS);
+	end= convert_dirname(name, pos, NULL);
 	if (name[0] == FN_HOMELIB)	/* Add . to filenames in home */
 	  *end++='.';
-	strxmov(end, conf_file, *ext, " ", NullS);
+	strxmov(end, conf_file, *ext, " ", NULL);
 	fputs(name,stdout);
       }
     }

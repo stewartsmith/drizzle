@@ -231,7 +231,7 @@ str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, ts_type,  NullS);
+                                 str, length, ts_type,  NULL);
   return ts_type;
 }
 
@@ -285,7 +285,7 @@ str_to_time_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time)
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, DRIZZLE_TIMESTAMP_TIME, NullS);
+                                 str, length, DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
 

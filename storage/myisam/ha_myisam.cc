@@ -31,12 +31,12 @@ ulong myisam_recover_options= HA_RECOVER_NONE;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
-{ "DEFAULT", "BACKUP", "FORCE", "QUICK", NullS};
+{ "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
 TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
 				 myisam_recover_names, NULL};
 
 const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
-                                           "nulls_ignored", NullS};
+                                           "nulls_ignored", NULL};
 TYPELIB myisam_stats_method_typelib= {
   array_elements(myisam_stats_method_names) - 1, "",
   myisam_stats_method_names, NULL};
@@ -79,7 +79,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     my_message(ER_NOT_KEYFILE,msgbuf,MYF(MY_WME));
     return;
   }
-  length=(uint) (strxmov(name, param->db_name,".",param->table_name,NullS) -
+  length=(uint) (strxmov(name, param->db_name,".",param->table_name,NULL) -
 		 name);
   /*
     TODO: switch from protocol to push_warning here. The main reason we didn't
@@ -142,7 +142,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
           keydef_out, share->keys * sizeof(MI_KEYDEF),
           &keyseg,
           (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
-          NullS)))
+          NULL)))
     return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
   keydef= *keydef_out;
   recinfo= *recinfo_out;
@@ -490,7 +490,7 @@ handler *ha_myisam::clone(MEM_ROOT *mem_root)
 static const char *ha_myisam_exts[] = {
   ".MYI",
   ".MYD",
-  NullS
+  NULL
 };
 
 const char **ha_myisam::bas_ext() const

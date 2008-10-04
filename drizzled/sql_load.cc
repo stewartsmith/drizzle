@@ -259,7 +259,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
 #endif
     if (!dirname_length(ex->file_name))
     {
-      strxnmov(name, FN_REFLEN-1, mysql_real_data_home, tdb, NullS);
+      strxnmov(name, FN_REFLEN-1, mysql_real_data_home, tdb, NULL);
       (void) fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }
