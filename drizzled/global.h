@@ -147,12 +147,27 @@ typedef unsigned short ushort;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
+#if defined(__cplusplus)
+template <class T>
+inline bool test(const T a)
+{
+  return a ? true : false;
+}
+template <class T, class U>
+inline bool test_all_bits(const T a, const U b)
+{
+  return ((a & b) == b);
+}
+#else
 #define test(a)    ((a) ? 1 : 0)
-#define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
-#define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
 #define test_all_bits(a,b) (((a) & (b)) == (b))
+#endif
+
+#define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
+
+#define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
 #define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
-#define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
+#define array_elements(A) ((size_t) (sizeof(A)/sizeof(A[0])))
 
 /* Some types that is different between systems */
 

@@ -5226,7 +5226,7 @@ best_access_path(JOIN      *join,
             */
             if (table->quick_keys.is_set(key) && !found_ref &&          //(C1)
                 table->quick_key_parts[key] == max_key_part &&          //(C2)
-                table->quick_n_ranges[key] == 1+test(ref_or_null_part)) //(C3)
+                table->quick_n_ranges[key] == 1+((ref_or_null_part)?1:0)) //(C3)
             {
               tmp= records= (double) table->quick_rows[key];
             }
@@ -5319,8 +5319,8 @@ best_access_path(JOIN      *join,
               if (table->quick_keys.is_set(key) &&
                   table->quick_key_parts[key] <= max_key_part &&
                   const_part & (1 << table->quick_key_parts[key]) &&
-                  table->quick_n_ranges[key] == 1 + test(ref_or_null_part &
-                                                         const_part) &&
+                  table->quick_n_ranges[key] == 1 + ((ref_or_null_part &
+                                                     const_part) ? 1 : 0) &&
                   records > (double) table->quick_rows[key])
               {
                 tmp= records= (double) table->quick_rows[key];

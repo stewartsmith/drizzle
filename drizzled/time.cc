@@ -358,7 +358,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   uchar *dt_pos= date_time_format->positions;
   /* need_p is set if we are using AM/PM format */
   bool need_p= 0, allow_separator= 0;
-  ulong part_map= 0, separator_map= 0;
+  uint32_t part_map= 0, separator_map= 0;
   const char *parts[16];
 
   date_time_format->time_separator= 0;
@@ -428,7 +428,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
       */
       if (part_map && position <= 2 && !(part_map & (1 | 2 | 4)))
 	offset=5;
-      part_map|= (ulong) 1 << position;
+      part_map|= UINT32_C(1) << position;
       dt_pos[position]= offset++;
       allow_separator= 1;
     }
@@ -467,10 +467,10 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     it's needed.
   */
   if ((format_type == DRIZZLE_TIMESTAMP_DATETIME &&
-       !test_all_bits(part_map, (1 | 2 | 4 | 8 | 16 | 32))) ||
+       !test_all_bits(part_map, (uint32_t) (1 | 2 | 4 | 8 | 16 | 32))) ||
       (format_type == DRIZZLE_TIMESTAMP_DATE && part_map != (1 | 2 | 4)) ||
       (format_type == DRIZZLE_TIMESTAMP_TIME &&
-       !test_all_bits(part_map, 8 | 16 | 32)) ||
+       !test_all_bits(part_map, (uint32_t) (8 | 16 | 32))) ||
       !allow_separator ||			// %option should be last
       (need_p && dt_pos[6] +1 != dt_pos[7]) ||
       (need_p ^ (dt_pos[7] != 255)))
