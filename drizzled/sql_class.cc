@@ -709,7 +709,11 @@ THD::~THD()
   plugin_thdvar_cleanup(this);
 
   main_security_ctx.destroy();
-  safeFree(db);
+  if (db)
+  {
+    free(db);
+    db= NULL;
+  }
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
@@ -2119,8 +2123,16 @@ void Security_context::init()
 void Security_context::destroy()
 {
   // If not pointer to constant
-  safeFree(user);
-  safeFree(ip);
+  if (user)
+  {
+    free(user);
+    user= NULL;
+  }
+  if (ip)
+  {
+    free(ip);
+    ip= NULL;
+  }
 }
 
 

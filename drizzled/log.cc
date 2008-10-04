@@ -920,7 +920,11 @@ err:
   if (file >= 0)
     my_close(file, MYF(0));
   end_io_cache(&log_file);
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   log_state= LOG_CLOSED;
   return(1);
 }
@@ -979,7 +983,11 @@ void DRIZZLE_LOG::close(uint exiting)
   }
 
   log_state= (exiting & LOG_CLOSE_TO_BE_OPENED) ? LOG_TO_BE_OPENED : LOG_CLOSED;
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   return;
 }
 
@@ -1277,7 +1285,11 @@ err:
     my_close(file,MYF(0));
   end_io_cache(&log_file);
   end_io_cache(&index_file);
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   log_state= LOG_CLOSED;
   return(1);
 }
@@ -3049,7 +3061,11 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
     }
   }
   log_state= (exiting & LOG_CLOSE_TO_BE_OPENED) ? LOG_TO_BE_OPENED : LOG_CLOSED;
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   return;
 }
 
