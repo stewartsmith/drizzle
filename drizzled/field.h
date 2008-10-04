@@ -690,57 +690,6 @@ public:
   }
 };
 
-
-class Field_enum :public Field_str {
-protected:
-  uint packlength;
-public:
-  TYPELIB *typelib;
-  Field_enum(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-             uchar null_bit_arg,
-             enum utype unireg_check_arg, const char *field_name_arg,
-             uint packlength_arg,
-             TYPELIB *typelib_arg,
-             const CHARSET_INFO * const charset_arg)
-    :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, charset_arg),
-    packlength(packlength_arg),typelib(typelib_arg)
-  {
-      flags|=ENUM_FLAG;
-  }
-  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
-  enum_field_types type() const { return DRIZZLE_TYPE_ENUM; }
-  enum Item_result cmp_type () const { return INT_RESULT; }
-  enum Item_result cast_to_int_type () const { return INT_RESULT; }
-  enum ha_base_keytype key_type() const;
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32_t pack_length() const { return (uint32_t) packlength; }
-  void store_type(uint64_t value);
-  void sql_type(String &str) const;
-  uint size_of() const { return sizeof(*this); }
-  enum_field_types real_type() const { return DRIZZLE_TYPE_ENUM; }
-  uint pack_length_from_metadata(uint field_metadata)
-  { return (field_metadata & 0x00ff); }
-  uint row_pack_length() { return pack_length(); }
-  virtual bool zero_pack() const { return 0; }
-  bool optimize_range(uint idx __attribute__((unused)),
-                      uint part __attribute__((unused)))
-  { return 0; }
-  bool eq_def(Field *field);
-  bool has_charset(void) const { return true; }
-  /* enum and set are sorted as integers */
-  const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
-private:
-  int do_save_field_metadata(uchar *first_byte);
-};
-
 /*
   Create field class for CREATE TABLE
 */
@@ -870,6 +819,7 @@ check_string_copy_error(Field_str *field,
   Field subclasses
  */
 #include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
 #include <drizzled/field/null.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/fdecimal.h>

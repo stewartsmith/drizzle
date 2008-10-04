@@ -86,7 +86,7 @@ bool thr_alarm(thr_alarm_t *alarmed, uint sec, ALARM *buff);
 void thr_alarm_kill(my_thread_id thread_id);
 void thr_end_alarm(thr_alarm_t *alarmed);
 void end_thr_alarm(bool free_structures);
-sig_handler process_alarm(int);
+RETSIGTYPE process_alarm(int);
 #ifndef thr_got_alarm
 bool thr_got_alarm(thr_alarm_t *alrm);
 #endif

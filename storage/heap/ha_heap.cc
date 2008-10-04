@@ -649,7 +649,7 @@ int ha_heap::create(const char *name, Table *table_arg,
     return my_errno;
   }
 
-  seg= my_reinterpret_cast(HA_KEYSEG*) (keydef + keys);
+  seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
     KEY *pos= table_arg->key_info+key;

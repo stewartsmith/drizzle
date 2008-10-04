@@ -22,63 +22,11 @@
 #ifndef DRIZZLE_SERVER_GLOBAL_H
 #define DRIZZLE_SERVER_GLOBAL_H
 
-#define HAVE_REPLICATION
-
-/*
-  InnoDB depends on some MySQL internals which other plugins should not
-  need.  This is because of InnoDB's foreign key support, "safe" binlog
-  truncation, and other similar legacy features.
-
-  We define accessors for these internals unconditionally, but do not
-  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
-  InnoDB's use.
-*/
-#define INNODB_COMPATIBILITY_HOOKS
-
-/* to make command line shorter we'll define USE_PRAGMA_INTERFACE here */
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#define USE_PRAGMA_INTERFACE
-#endif
-
 #if defined(i386) && !defined(__i386__)
 #define __i386__
 #endif
 
 #include "config.h"
-
-/*
-  The macros below are borrowed from include/linux/compiler.h in the
-  Linux kernel. Use them to indicate the likelyhood of the truthfulness
-  of a condition. This serves two purposes - newer versions of gcc will be
-  able to optimize for branch predication, which could yield siginficant
-  performance gains in frequently executed sections of the code, and the
-  other reason to use them is for documentation
-*/
-
-#if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
-#define __builtin_expect(x, expected_value) (x)
-#endif
-
-#define likely(x)  __builtin_expect((x),1)
-#define unlikely(x)  __builtin_expect((x),0)
-
-/*
- *   Disable __attribute__ for non GNU compilers, since we're using them
- *     only to either generate or suppress warnings.
- *     */
-#ifndef __attribute__
-# if !defined(__GNUC__)
-#  define __attribute__(A)
-# endif
-#endif
-
-
-/* Fix problem with S_ISLNK() on Linux */
-#if defined(TARGET_OS_LINUX) || defined(__GLIBC__)
-#undef  _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif
-
 
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
@@ -99,45 +47,6 @@
 #else
 #error "You must have inttypes!"
 #endif
-
-
-/*
-  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
-
-  System Interfaces and Headers, Issue 5
-
-  saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
-  but apparently other systems (namely FreeBSD) don't agree.
-
-  On a newer Solaris 10, the above file recognizes also _XOPEN_SOURCE=600.
-  Furthermore, it tests that if a program requires older standard
-  (_XOPEN_SOURCE<600 or _POSIX_C_SOURCE<200112L) it cannot be
-  run on a new compiler (that defines _STDC_C99) and issues an #error.
-  It's also an #error if a program requires new standard (_XOPEN_SOURCE=600
-  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
-
-  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
-  C++ compiler does not!
-
-  So, in a desperate attempt to get correct prototypes for both
-  C and C++ code, we define either _XOPEN_SOURCE=600 or _XOPEN_SOURCE=500
-  depending on the compiler's announced C standard support.
-
-  Cleaner solutions are welcome.
-*/
-#if defined(__sun) && !defined(__cplusplus)
-#if __STDC_VERSION__ - 0 >= 199901L
-#define _XOPEN_SOURCE 600
-#else
-#define _XOPEN_SOURCE 500
-#endif
-#endif
-
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
-#endif
-
-#define _REENTRANT  1  /* Some thread libraries require this */
 
 #include <pthread.h>    /* AIX must have this included first */
 
@@ -227,17 +136,6 @@
 extern "C" int madvise(void *addr, size_t len, int behav);
 #endif
 
-/* We can not live without the following defines */
-
-#define MASTER 1    /* Compile without unireg */
-
-#define QUOTE_ARG(x)    #x  /* Quote argument (before cpp) */
-#define STRINGIFY_ARG(x) QUOTE_ARG(x)  /* Quote argument, after cpp */
-/* Does the system remember a signal handler after a signal ? */
-#ifndef HAVE_BSD_SIGNALS
-#define DONT_REMEMBER_SIGNAL
-#endif
-
 #if !defined(HAVE_UINT)
 #undef HAVE_UINT
 #define HAVE_UINT
@@ -255,28 +153,10 @@ extern char _dig_vec_lower[];
 #define test_all_bits(a,b) (((a) & (b)) == (b))
 #define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
 #define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
-#ifndef HAVE_RINT
-#define rint(A) floor((A)+(((A) < 0)? -0.5 : 0.5))
-#endif
-
-#if defined(__GNUC__)
-#define function_volatile  volatile
-#define my_reinterpret_cast(A) reinterpret_cast<A>
-#define my_const_cast(A) const_cast<A>
-# ifndef GCC_VERSION
-#  define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
-# endif
-#elif !defined(my_reinterpret_cast)
-#define my_reinterpret_cast(A) (A)
-#define my_const_cast(A) (A)
-#endif
 
 /* Some types that is different between systems */
 
 typedef int  File;    /* File descriptor */
-/* Type for fuctions that handles signals */
-/* RETSIGTYPE is defined by autoconf */
-#define sig_handler RETSIGTYPE
 
 #ifdef __cplusplus
 extern "C" {

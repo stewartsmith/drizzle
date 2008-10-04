@@ -124,6 +124,58 @@ AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
 AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
 AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
+AC_DEFINE([MASTER],[1],[Compile without unireg])
+
+AH_VERBATIM([QUOTE_ARG],[
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+])
+
+AH_VERBATIM([builtin_expect],[
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+])
+
+AC_DEFINE([HAVE_REPLICATION],[1],[We always have replication])
+
+dnl  InnoDB depends on some Drizzle's internals which other plugins should not
+dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
+dnl  truncation, and other similar legacy features.
+
+dnl  We define accessors for these internals unconditionally, but do not
+dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
+dnl  InnoDB's use.
+
+AC_DEFINE([INNODB_COMPATIBILITY_HOOKS],[1],[TODO: Remove the need for this])
+dnl TODO: Make a test for when this needs to be set.
+AC_DEFINE([_REENTRANT],[1],[Some thread libraries require this])
+
+AH_VERBATIM([posix_pthread],[
+/* We want posix threads */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
+])
+
+
 # Canonicalize the configuration name.
 
 # Check whether --with-system-type or --without-system-type was given.
@@ -233,6 +285,40 @@ then
   AC_SUBST(AS)
 else
   AC_PATH_PROG(AS, as, as)
+fi
+
+dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
+if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
+then
+  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
+fi
+
+dnl  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
+
+dnl  System Interfaces and Headers, Issue 5
+
+dnl  saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
+dnl  but apparently other systems (namely FreeBSD) don't agree.
+
+dnl  On a newer Solaris 10, the above file recognizes also _XOPEN_SOURCE=600.
+dnl  Furthermore, it tests that if a program requires older standard
+dnl  (_XOPEN_SOURCE<600 or _POSIX_C_SOURCE<200112L) it cannot be
+dnl  run on a new compiler (that defines _STDC_C99) and issues an #error.
+dnl  It's also an #error if a program requires new standard (_XOPEN_SOURCE=600
+dnl  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
+
+dnl  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
+dnl  C++ compiler does not!
+
+dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
+dnl       Need for all of this? 
+if test "${build_vendor}" = "sun"
+then
+  dnl Do we need both of these? 
+  dnl This is for C++
+  AC_DEFINE([__C99FEATURES__],[1],[C99 Features])
+  dnl This is for C
+  AC_DEFINE([_XOPEN_SOURCE],[600],[X/Open Level])
 fi
 
 # We use libtool
@@ -910,7 +996,13 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
 #error USE_PRAGMA_IMPLEMENTATION
 #endif
-]])],[AC_MSG_RESULT(no) ],[AC_MSG_RESULT(yes) ; CXXFLAGS="$CXXFLAGS -DUSE_PRAGMA_IMPLEMENTATION"])
+]])],[
+  AC_MSG_RESULT(no)
+],[
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION,[1],[pragma implementation is a good idea])
+  AC_DEFINE(USE_PRAGMA_INTERFACE,[1],[pragma interface is a good idea])
+])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
@@ -1044,7 +1136,7 @@ AC_CHECK_FUNCS(bsearch \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
   pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
-  realpath rename rint rwlock_init setupterm \
+  realpath rename rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
   snprintf socket strcasecmp strerror strsignal strpbrk \

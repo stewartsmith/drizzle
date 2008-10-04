@@ -37,7 +37,7 @@ static int alarm_aborted=1;			/* No alarm thread */
 bool thr_alarm_inited= 0;
 volatile bool alarm_thread_running= 0;
 time_t next_alarm_expire_time= ~ (time_t) 0;
-static sig_handler process_alarm_part2(int sig);
+static RETSIGTYPE process_alarm_part2(int sig);
 
 static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
@@ -53,7 +53,7 @@ static void *alarm_handler(void *arg);
 #define reschedule_alarms() pthread_kill(alarm_thread,THR_SERVER_ALARM)
 #endif
 
-static sig_handler thread_alarm(int sig __attribute__((unused)));
+static RETSIGTYPE thread_alarm(int sig __attribute__((unused)));
 
 static int compare_uint32_t(void *not_used __attribute__((unused)),
 			 uchar *a_ptr,uchar* b_ptr)
@@ -277,7 +277,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   every second.
 */
 
-sig_handler process_alarm(int sig __attribute__((unused)))
+RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 {
   sigset_t old_mask;
 
@@ -287,7 +287,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 #if defined(MAIN) && !defined(__bsdi__)
     printf("thread_alarm in process_alarm\n"); fflush(stdout);
 #endif
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
     my_sigset(thr_client_alarm, process_alarm);	/* int. thread system calls */
 #endif
     return;
@@ -299,7 +299,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 #endif
   process_alarm_part2(sig);
 #ifndef USE_ALARM_THREAD
-#if defined(DONT_REMEMBER_SIGNAL) && !defined(USE_ONE_SIGNAL_HAND)
+#if !defined(HAVE_BSD_SIGNALS) && !defined(USE_ONE_SIGNAL_HAND)
   my_sigset(THR_SERVER_ALARM,process_alarm);
 #endif
   pthread_mutex_unlock(&LOCK_alarm);
@@ -309,7 +309,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 }
 
 
-static sig_handler process_alarm_part2(int sig __attribute__((unused)))
+static RETSIGTYPE process_alarm_part2(int sig __attribute__((unused)))
 {
   ALARM *alarm_data;
 
@@ -489,12 +489,12 @@ void thr_alarm_info(ALARM_INFO *info)
 */
 
 
-static sig_handler thread_alarm(int sig)
+static RETSIGTYPE thread_alarm(int sig)
 {
 #ifdef MAIN
   printf("thread_alarm\n"); fflush(stdout);
 #endif
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,thread_alarm);		/* int. thread system calls */
 #endif
 }
@@ -673,11 +673,11 @@ static void *test_thread(void *arg)
 }
 
 #ifdef USE_ONE_SIGNAL_HAND
-static sig_handler print_signal_warning(int sig)
+static RETSIGTYPE print_signal_warning(int sig)
 {
   printf("Warning: Got signal %d from thread %s\n",sig,my_thread_name());
   fflush(stdout);
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
   if (sig == SIGALRM)

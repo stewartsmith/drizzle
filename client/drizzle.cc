@@ -1015,10 +1015,10 @@ static uint32_t start_timer(void);
 static void end_timer(uint32_t start_time,char *buff);
 static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern sig_handler drizzle_end(int sig);
-extern sig_handler handle_sigint(int sig);
+extern RETSIGTYPE drizzle_end(int sig);
+extern RETSIGTYPE handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-static sig_handler window_resize(int sig);
+static RETSIGTYPE window_resize(int sig);
 #endif
 
 int main(int argc,char *argv[])
@@ -1181,7 +1181,7 @@ int main(int argc,char *argv[])
   return(0);        // Keep compiler happy
 }
 
-sig_handler drizzle_end(int sig)
+RETSIGTYPE drizzle_end(int sig)
 {
   drizzle_close(&drizzle);
   if (!status.batch && !quick && histfile)
@@ -1224,7 +1224,7 @@ sig_handler drizzle_end(int sig)
   If query is in process, kill query
   no query in process, terminate like previous behavior
 */
-sig_handler handle_sigint(int sig)
+RETSIGTYPE handle_sigint(int sig)
 {
   char kill_buffer[40];
   DRIZZLE *kill_drizzle= NULL;
@@ -1257,7 +1257,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig __attribute__((unused)))
+RETSIGTYPE window_resize(int sig __attribute__((unused)))
 {
   struct winsize window_size;
 
