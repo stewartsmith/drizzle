@@ -126,10 +126,6 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
 #endif
   uchar** fp;
   uint frame_count = 0, sigreturn_frame_count;
-#if defined(__alpha__) && defined(__GNUC__)
-  uint32* pc;
-#endif
-
 
 #ifdef __i386__
   __asm __volatile__ ("movl %%ebp,%0"
@@ -140,11 +136,6 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
   __asm __volatile__ ("movq %%rbp,%0"
                       :"=r"(fp)
                       :"r"(fp));
-#endif
-#if defined(__alpha__) && defined(__GNUC__) 
-  __asm __volatile__ ("mov $30,%0"
-		      :"=r"(fp)
-		      :"r"(fp));
 #endif
   if (!fp)
   {
