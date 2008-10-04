@@ -1097,8 +1097,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   }
   else
     share->primary_key= MAX_KEY;
-  x_free((uchar*) disk_buff);
-  disk_buff=0;
+  if (disk_buff)
+    free(disk_buff);
+  disk_buff= NULL;
   if (new_field_pack_flag <= 1)
   {
     /* Old file format with default as not null */
@@ -1169,7 +1170,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   share->error= error;
   share->open_errno= my_errno;
   share->errarg= errarg;
-  x_free((uchar*) disk_buff);
+  if (disk_buff)
+    free(disk_buff);
   delete handler_file;
   hash_free(&share->name_hash);
 
@@ -1521,7 +1523,8 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
 	my_read(file, buf+a_length, (size_t) (length+names*4),
 		MYF(MY_NABP)))
     {						/* purecov: inspected */
-      x_free((uchar*) buf);			/* purecov: inspected */
+      if (buf)
+        free(buf);
       return(0L);				/* purecov: inspected */
     }
     pos= buf+a_length+length;
@@ -1554,12 +1557,14 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
 int read_string(File file, uchar**to, size_t length)
 {
 
-  x_free(*to);
+  if (*to)
+    free(*to);
   if (!(*to= (uchar*) my_malloc(length+1,MYF(MY_WME))) ||
       my_read(file, *to, length,MYF(MY_NABP)))
   {
-    x_free(*to);                              /* purecov: inspected */
-    *to= 0;                                   /* purecov: inspected */
+    if (*to)
+      free(*to);
+    *to= NULL;
     return(1);                           /* purecov: inspected */
   }
   *((char*) *to+length)= '\0';

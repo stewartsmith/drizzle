@@ -1122,7 +1122,8 @@ static void mysql_change_db_impl(THD *thd,
       the previous database name, we should do it explicitly.
     */
 
-    x_free(thd->db);
+    if (thd->db)
+      free(thd->db);
 
     thd->reset_db(new_db_name->str, new_db_name->length);
   }

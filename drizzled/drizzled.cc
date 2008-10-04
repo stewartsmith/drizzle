@@ -852,9 +852,12 @@ void clean_up(bool print_message)
   my_free(sys_init_slave.value, MYF(MY_ALLOW_ZERO_PTR));
   free_tmpdir(&mysql_tmpdir_list);
   my_free(slave_load_tmpdir,MYF(MY_ALLOW_ZERO_PTR));
-  x_free(opt_bin_logname);
-  x_free(opt_relay_logname);
-  x_free(opt_secure_file_priv);
+  if (opt_bin_logname)
+    free(opt_bin_logname);
+  if (opt_relay_logname)
+    free(opt_relay_logname);
+  if (opt_secure_file_priv)
+    free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
   end_slave_list();
   delete binlog_filter;

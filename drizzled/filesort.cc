@@ -240,7 +240,8 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
   {
     if (table_sort.buffpek && table_sort.buffpek_len < maxbuffer)
     {
-      x_free(table_sort.buffpek);
+      if (table_sort.buffpek)
+        free(table_sort.buffpek);
       table_sort.buffpek= 0;
     }
     if (!(table_sort.buffpek=
@@ -281,12 +282,15 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
 
  err:
   if (param.tmp_buffer)
-    x_free(param.tmp_buffer);
+    if (param.tmp_buffer)
+      free(param.tmp_buffer);
   if (!subselect || !subselect->is_uncacheable())
   {
-    x_free((uchar*) sort_keys);
+    if ((uchar*) sort_keys)
+      free((uchar*) sort_keys);
     table_sort.sort_keys= 0;
-    x_free((uchar*) buffpek);
+    if ((uchar*) buffpek)
+      free((uchar*) buffpek);
     table_sort.buffpek= 0;
     table_sort.buffpek_len= 0;
   }
@@ -328,12 +332,14 @@ void filesort_free_buffers(Table *table, bool full)
   {
     if (table->sort.sort_keys )
     {
-      x_free((uchar*) table->sort.sort_keys);
+      if ((uchar*) table->sort.sort_keys)
+        free((uchar*) table->sort.sort_keys);
       table->sort.sort_keys= 0;
     }
     if (table->sort.buffpek)
     {
-      x_free((uchar*) table->sort.buffpek);
+      if ((uchar*) table->sort.buffpek)
+        free((uchar*) table->sort.buffpek);
       table->sort.buffpek= 0;
       table->sort.buffpek_len= 0;
     }

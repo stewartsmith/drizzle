@@ -644,7 +644,8 @@ bool Unique::get(Table *table)
     goto err;
   error=0;
 err:
-  x_free(sort_buffer);
+  if (sort_buffer)
+    free(sort_buffer);
   if (flush_io_cache(outfile))
     error=1;
 

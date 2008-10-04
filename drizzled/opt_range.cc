@@ -1147,7 +1147,8 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
     my_free((char*) column_bitmap.bitmap, MYF(MY_ALLOW_ZERO_PTR));
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
-  x_free(mrr_buf_desc);
+  if (mrr_buf_desc)
+    free(mrr_buf_desc);
   return;
 }
 

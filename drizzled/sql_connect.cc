@@ -373,7 +373,8 @@ static int check_connection(THD *thd)
   }
 
   if (thd->main_security_ctx.user)
-    x_free(thd->main_security_ctx.user);
+    if (thd->main_security_ctx.user)
+      free(thd->main_security_ctx.user);
   if (!(thd->main_security_ctx.user= my_strdup(user, MYF(MY_WME))))
     return 1; /* The error is set by my_strdup(). */
   return check_user(thd, passwd, passwd_len, db, true);

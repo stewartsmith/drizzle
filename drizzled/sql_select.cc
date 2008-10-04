@@ -7882,7 +7882,8 @@ void JOIN_TAB::cleanup()
   select= 0;
   delete quick;
   quick= 0;
-  x_free(cache.buff);
+  if (cache.buff)
+    free(cache.buff);
   cache.buff= 0;
   limit= 0;
   if (table)

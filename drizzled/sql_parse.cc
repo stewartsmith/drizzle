@@ -648,7 +648,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
     if (res)
     {
-      x_free(thd->security_ctx->user);
+      if (thd->security_ctx->user)
+        free(thd->security_ctx->user);
       *thd->security_ctx= save_security_ctx;
       thd->user_connect= save_user_connect;
       thd->db= save_db;
@@ -656,8 +657,10 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
     else
     {
-      x_free(save_db);
-      x_free(save_security_ctx.user);
+      if (save_db)
+        free(save_db);
+      if (save_security_ctx.user)
+        free(save_security_ctx.user);
 
       if (cs_number)
       {

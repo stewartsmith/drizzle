@@ -38,7 +38,6 @@ void sql_kill(THD *thd, ulong id, bool only_kill_query);
 bool net_request_file(NET* net, const char* fname);
 char* query_table_status(THD *thd,const char *db,const char *table_name);
 
-#define x_free(A)  { my_free((uchar*) (A),MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR)); }
 #define safeFree(x)  { if(x) { my_free((uchar*) x,MYF(0)); x = NULL; } }
 
 #endif /* DRIZZLE_SERVER_SQL_ALLOC_H */
