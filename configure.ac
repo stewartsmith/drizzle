@@ -126,9 +126,33 @@ AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
 
 AC_DEFINE([MASTER],[1],[Compile without unireg])
 
-AC_DEFINE_UNQUOTED([QUOTE_ARG(x)],[#x],[Quote argument (before cpp)])
-AC_DEFINE([STRINGIFY_ARG(x)],[QUOTE_ARG(x)],[Quote argument, after cpp])
+AH_VERBATIM([QUOTE_ARG],[
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+])
 
+AH_VERBATIM([builtin_expect],[
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+])
 
 AC_DEFINE([HAVE_REPLICATION],[1],[We always have replication])
 
@@ -262,24 +286,6 @@ then
 else
   AC_PATH_PROG(AS, as, as)
 fi
-
-dnl  The macros below are borrowed from include/linux/compiler.h in the
-dnl  Linux kernel. Use them to indicate the likelyhood of the truthfulness
-dnl  of a condition. This serves two purposes - newer versions of gcc will be
-dnl  able to optimize for branch predication, which could yield siginficant
-dnl  performance gains in frequently executed sections of the code, and the
-dnl  other reason to use them is for documentation
-if test "$ac_cv_c_compiler_gnu" != "yes"
-then
-  AC_DEFINE_UNQUOTED([__builtin_expect(x, expected_value)],[(x)],
-                     [Provide a no-op version of a GCC compiler hint])
-  dnl Disable __attribute__ for non GNU compilers, since we're using them
-  dnl only to either generate or suppress warnings.
-  AC_DEFINE_UNQUOTED([__attribute__(A)],[],[Disable __attribute__])
-fi
-
-AC_DEFINE_UNQUOTED([likely(x)],[__builtin_expect((x),1)],[Branch is likely])
-AC_DEFINE_UNQUOTED([unlikely(x)],[__builtin_expect((x),0)],[Branch is unlikely])
 
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
 if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
