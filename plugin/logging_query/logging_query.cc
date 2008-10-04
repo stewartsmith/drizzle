@@ -80,11 +80,10 @@ bool logging_query_func_post (THD *thd)
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
 	     "log end thread_id=%ld query_id=%ld command=%.*s"
-	     " utime=%u rows.sent=%ld rows.exam=%u\n",
+	     " rows.sent=%ld rows.exam=%u\n",
 	     (unsigned long) thd->thread_id, 
 	     (unsigned long) thd->query_id,
 	     (uint32_t)command_name[thd->command].length, command_name[thd->command].str,
-	     (uint32_t)(thd->current_utime() - thd->start_utime),
 	     (unsigned long) thd->sent_row_count,
 	     (uint32_t) thd->examined_row_count);
   /* a single write has a OS level thread lock
