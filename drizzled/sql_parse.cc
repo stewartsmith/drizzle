@@ -798,21 +798,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   case COM_SHUTDOWN:
   {
     status_var_increment(thd->status_var.com_other);
-    /*
-      If the client is < 4.1.3, it is going to send us no argument; then
-      packet_length is 0, packet[0] is the end 0 of the packet. Note that
-      SHUTDOWN_DEFAULT is 0. If client is >= 4.1.3, the shutdown level is in
-      packet[0].
-    */
-    enum drizzle_enum_shutdown_level level=
-      (enum drizzle_enum_shutdown_level) (uchar) packet[0];
-    if (level == SHUTDOWN_DEFAULT)
-      level= SHUTDOWN_WAIT_ALL_BUFFERS; // soon default will be configurable
-    else if (level != SHUTDOWN_WAIT_ALL_BUFFERS)
-    {
-      my_error(ER_NOT_SUPPORTED_YET, MYF(0), "this shutdown level");
-      break;
-    }
     my_eof(thd);
     close_thread_tables(thd);			// Free before kill
     kill_mysql();

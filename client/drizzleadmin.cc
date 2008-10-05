@@ -315,7 +315,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (opt_verbose)
         printf(_("shutting down drizzled...\n"));
 
-      if (drizzle_shutdown(drizzle, SHUTDOWN_DEFAULT))
+      if (drizzle_shutdown(drizzle))
       {
         my_printf_error(0, _("shutdown failed; error: '%s'"), error_flags,
                         drizzle_error(drizzle));
