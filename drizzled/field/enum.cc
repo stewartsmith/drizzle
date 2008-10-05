@@ -290,11 +290,3 @@ Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
     res->typelib= copy_typelib(root, typelib);
   return res;
 }
-
-
-/**
-  @retval
-    1  if the fields are equally defined
-  @retval
-    0  if the fields are unequally defined
-*/
