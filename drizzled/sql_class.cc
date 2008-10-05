@@ -463,7 +463,6 @@ THD::THD()
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var=0;
   binlog_evt_union.do_union= false;
-  enable_slow_log= 0;
   dbug_sentry=THD_SENTRY_MAGIC;
   net.vio=0;
   client_capabilities= 0;                       // minimalistic client

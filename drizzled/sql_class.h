@@ -757,7 +757,6 @@ public:
   ha_rows    cuted_fields, sent_row_count, examined_row_count;
   ulong client_capabilities;
   uint in_sub_stmt;
-  bool enable_slow_log;
   bool last_insert_id_used;
   SAVEPOINT *savepoints;
 };
