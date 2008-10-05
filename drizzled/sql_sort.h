@@ -17,6 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifdef _DRIZZLED_SQL_SORT_H
+#define _DRIZZLED_SQL_SORT_H
+
+
 /* Defines used by filesort and uniques */
 
 #define MERGEBUFF		7
@@ -91,3 +95,5 @@ int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
 void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint key_length);
+
+#endif
