@@ -119,18 +119,6 @@
 */
 #include <assert.h>
 
-/* an assert that works at compile-time. only for constant expression */
-#ifndef __GNUC__
-#define compile_time_assert(X)  do { } while(0)
-#else
-#define compile_time_assert(X)                                  \
-  do                                                            \
-  {                                                             \
-    char compile_time_assert[(X) ? 1 : -1]                      \
-      __attribute__ ((unused));                                 \
-  } while(0)
-#endif
-
 /* Declare madvise where it is not declared for C++, like Solaris */
 #if defined(HAVE_MADVISE) && !defined(HAVE_DECL_MADVISE) && defined(__cplusplus)
 extern "C" int madvise(void *addr, size_t len, int behav);

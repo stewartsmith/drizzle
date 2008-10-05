@@ -595,9 +595,16 @@ void my_handler_error_register(void)
     that every HA_ERR_xxx constant has a corresponding error message in
     handler_error_messages[] list (check mysys/ma_handler_errors.h and
     include/my_base.h).
+
+    TODO: Remove fix the handler_error_messages so that this hack isn't 
+          necessary.
   */
-  compile_time_assert(HA_ERR_FIRST + array_elements(handler_error_messages) ==
-                      HA_ERR_LAST + 1);
+#ifdef __GNUC__
+  char compile_time_assert[(HA_ERR_FIRST +
+                            array_elements(handler_error_messages) ==
+                            HA_ERR_LAST + 1) ? 1 : -1]
+      __attribute__ ((__unused__));
+#endif
   my_error_register(handler_error_messages, HA_ERR_FIRST,
                     HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
 }
