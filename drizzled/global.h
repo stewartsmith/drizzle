@@ -156,18 +156,6 @@ inline bool test_all_bits(const T a, const U b)
 
 typedef int  File;    /* File descriptor */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-  typedef void (*sig_return)(void);/* Returns type from signal */
-  typedef int  (*qsort_cmp)(const void *,const void *);
-  typedef int  (*qsort_cmp2)(void*, const void *,const void *);
-
-#ifdef __cplusplus
-}
-#endif
-
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif

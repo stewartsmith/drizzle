@@ -133,6 +133,9 @@ typedef struct my_aio_result {
 extern "C" {
 #endif
 
+typedef int  (*qsort_cmp)(const void *,const void *);
+typedef int  (*qsort_cmp2)(void*, const void *,const void *);
+
 extern void *my_malloc(size_t Size,myf MyFlags);
 #define my_malloc_ci(SZ,FLAG) my_malloc( SZ, FLAG )
 extern void *my_realloc(void *oldpoint, size_t Size, myf MyFlags);

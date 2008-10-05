@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef _DRIZZLED_SQL_SORT_H
+#ifndef _DRIZZLED_SQL_SORT_H
 #define _DRIZZLED_SQL_SORT_H
 
 
