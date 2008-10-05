@@ -159,11 +159,6 @@ typedef int  File;    /* File descriptor */
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-typedef SOCKET_SIZE_TYPE size_socket;
-
-#ifndef SOCKOPT_OPTLEN_TYPE
-#define SOCKOPT_OPTLEN_TYPE size_socket
-#endif
 
 /* file create flags */
 
