@@ -25,6 +25,13 @@
 
 #include "myisamdef.h"
 
+#ifdef HAVE_SYS_TYPES
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 /* Enough for comparing if number is zero */
 static char zero_string[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
