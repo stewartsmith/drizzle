@@ -28,6 +28,22 @@
 
 #include "config.h"
 
+#if defined(__cplusplus)
+# include CSTDINT_H
+# include CINTTYPES_H
+#else
+# if defined(HAVE_STDINT_H)
+#  include <stdint.h>
+# else
+#  error "You must have stdint!"
+# endif
+# if defined(HAVE_INTTYPES_H)
+#  include <inttypes.h>
+# else
+#  error "You must have inttypes!"
+# endif
+#endif 
+
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined
@@ -36,17 +52,6 @@
 #include <sys/types.h>
 #endif
 
-#if defined(HAVE_STDINT_H)
-#include <stdint.h>
-#else
-#error "You must have stdint!"
-#endif
-
-#if defined(HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-#error "You must have inttypes!"
-#endif
 
 #include <pthread.h>    /* AIX must have this included first */
 

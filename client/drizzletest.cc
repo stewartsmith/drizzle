@@ -39,6 +39,7 @@
 #define MTEST_VERSION "3.3"
 
 #include "config.h"
+#include "client_priv.h"
 
 #include <queue>
 #include <map>
@@ -46,7 +47,6 @@
 
 #include <pcrecpp.h>
 
-#include "client_priv.h"
 #include <mysys/hash.h>
 #include <stdarg.h>
 

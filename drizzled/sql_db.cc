@@ -16,6 +16,8 @@
 
 /* create and drop of databases */
 #include "config.h"
+#include CSTDINT_H
+#include CINTTYPES_H
 #include <string>
 #include <fstream>
 #include <drizzled/serialize/serialize.h>

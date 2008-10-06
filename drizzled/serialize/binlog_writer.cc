@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "binlog_encoding.h"
 #include "binary_log.h"
 
