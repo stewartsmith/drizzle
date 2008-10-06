@@ -1579,14 +1579,6 @@ Query_log_event::Query_log_event(const char* buf, uint32_t event_len,
       auto_increment_offset=    uint2korr(pos+2);
       pos+= 4;
       break;
-    case Q_CHARSET_CODE:
-    {
-      CHECK_SPACE(pos, end, 6);
-      charset_inited= 1;
-      memcpy(charset, pos, 6);
-      pos+= 6;
-      break;
-    }
     case Q_TIME_ZONE_CODE:
     {
       if (get_str_len_and_pointer(&pos, &time_zone_str, &time_zone_len, end))
@@ -1750,35 +1742,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
           must take their value from flags2.
         */
         thd->options= flags2|(thd->options & ~OPTIONS_WRITTEN_TO_BIN_LOG);
-      /*
-        else, we are in a 3.23/4.0 binlog; we previously received a
-        Rotate_log_event which reset thd->options and sql_mode etc, so
-        nothing to do.
-      */
-      if (charset_inited)
-      {
-        if (rli->cached_charset_compare(charset))
-        {
-          /* Verify that we support the charsets found in the event. */
-          if (!(thd->variables.character_set_client=
-                get_charset(uint2korr(charset), MYF(MY_WME))) ||
-              !(thd->variables.collation_connection=
-                get_charset(uint2korr(charset+2), MYF(MY_WME))) ||
-              !(thd->variables.collation_server=
-                get_charset(uint2korr(charset+4), MYF(MY_WME))))
-          {
-            /*
-              We updated the thd->variables with nonsensical values (0). Let's
-              set them to something safe (i.e. which avoids crash), and we'll
-              stop with EE_UNKNOWN_CHARSET in compare_errors (unless set to
-              ignore this error).
-            */
-            set_slave_thread_default_charset(thd, rli);
-            goto compare_errors;
-          }
-          thd->update_charset(); // for the charset change to take effect
-        }
-      }
       if (time_zone_len)
       {
         String tmp(time_zone_str, time_zone_len, &my_charset_bin);
@@ -3271,7 +3234,6 @@ int Rotate_log_event::do_update_pos(Relay_log_info *rli)
       master is 4.0 then the events are in the slave's format (conversion).
     */
     set_slave_thread_options(thd);
-    set_slave_thread_default_charset(thd, rli);
     thd->variables.auto_increment_increment=
       thd->variables.auto_increment_offset= 1;
   }

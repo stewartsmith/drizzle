@@ -237,7 +237,6 @@ public:
     UNTIL_LOG_NAMES_CMP_EQUAL= 0, UNTIL_LOG_NAMES_CMP_GREATER= 1
   } until_log_names_cmp_result;
 
-  char cached_charset[6];
   /*
     trans_retries varies between 0 to slave_transaction_retries and counts how
     many times the slave has retried the present transaction; gets reset to 0
@@ -313,15 +312,6 @@ public:
         td= &((RPL_TableList *)ptr)->m_tabledef;
     return (td);
   }
-
-  /*
-    Last charset (6 bytes) seen by slave SQL thread is cached here; it helps
-    the thread save 3 get_charset() per Query_log_event if the charset is not
-    changing from event to event (common situation).
-    When the 6 bytes are equal to 0 is used to mean "cache is invalidated".
-  */
-  void cached_charset_invalidate();
-  bool cached_charset_compare(char *charset) const;
 
   void cleanup_context(THD *, bool);
   void clear_tables_to_lock();

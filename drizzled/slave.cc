@@ -1329,26 +1329,6 @@ void set_slave_thread_options(THD* thd)
   return;
 }
 
-void set_slave_thread_default_charset(THD* thd, Relay_log_info const *rli)
-{
-  thd->variables.character_set_client=
-    global_system_variables.character_set_client;
-  thd->variables.collation_connection=
-    global_system_variables.collation_connection;
-  thd->variables.collation_server=
-    global_system_variables.collation_server;
-  thd->update_charset();
-
-  /*
-    We use a const cast here since the conceptual (and externally
-    visible) behavior of the function is to set the default charset of
-    the thread.  That the cache has to be invalidated is a secondary
-    effect.
-   */
-  const_cast<Relay_log_info*>(rli)->cached_charset_invalidate();
-  return;
-}
-
 /*
   init_slave_thread()
 */
@@ -2447,8 +2427,6 @@ pthread_handler_t handle_slave_sql(void *arg)
   pthread_mutex_unlock(&rli->data_lock);
   pthread_cond_broadcast(&rli->data_cond);
   rli->ignore_log_space_limit= 0; /* don't need any lock */
-  /* we die so won't remember charset - re-update them on next thread start */
-  rli->cached_charset_invalidate();
   rli->save_temporary_tables = thd->temporary_tables;
 
   /*
