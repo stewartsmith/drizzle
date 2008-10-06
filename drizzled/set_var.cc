@@ -866,14 +866,7 @@ bool sys_var_thd_binlog_format::is_readonly() const
     my_error(ER_TEMP_TABLE_PREVENTS_SWITCH_OUT_OF_RBR, MYF(0));
     return 1;
   }
-  /*
-    if in a stored function/trigger, it's too late to change mode
-  */
-  if (thd->in_sub_stmt)
-  {
-    my_error(ER_STORED_FUNCTION_PREVENTS_SWITCH_BINLOG_FORMAT, MYF(0));
-    return 1;    
-  }
+  
   return sys_var_thd_enum::is_readonly();
 }
 

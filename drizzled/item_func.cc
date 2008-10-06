@@ -3672,8 +3672,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
     calling statement. We must log all such variables even if they are 
     not involved in table-updating statements.
   */
-  if (!(opt_bin_log && 
-       (is_update_query(sql_command) || thd->in_sub_stmt)))
+  if (!(opt_bin_log && is_update_query(sql_command)))
   {
     *out_entry= var_entry;
     return 0;

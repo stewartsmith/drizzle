@@ -954,26 +954,6 @@ int ha_commit_trans(THD *thd, bool all)
   assert(thd->transaction.stmt.ha_list == NULL ||
               trans == &thd->transaction.stmt);
 
-  if (thd->in_sub_stmt)
-  {
-    /*
-      Since we don't support nested statement transactions in 5.0,
-      we can't commit or rollback stmt transactions while we are inside
-      stored functions or triggers. So we simply do nothing now.
-      TODO: This should be fixed in later ( >= 5.1) releases.
-    */
-    if (!all)
-      return(0);
-    /*
-      We assume that all statements which commit or rollback main transaction
-      are prohibited inside of stored functions or triggers. So they should
-      bail out with error even before ha_commit_trans() call. To be 100% safe
-      let us throw error in non-debug builds.
-    */
-    assert(0);
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(2);
-  }
   if (ha_info)
   {
     bool must_2pc;
@@ -1092,19 +1072,6 @@ int ha_rollback_trans(THD *thd, bool all)
   assert(thd->transaction.stmt.ha_list == NULL ||
               trans == &thd->transaction.stmt);
 
-  if (thd->in_sub_stmt)
-  {
-    /*
-      If we are inside stored function or trigger we should not commit or
-      rollback current statement transaction. See comment in ha_commit_trans()
-      call for more information.
-    */
-    if (!all)
-      return(0);
-    assert(0);
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
   if (ha_info)
   {
     for (; ha_info; ha_info= ha_info_next)
@@ -1173,7 +1140,7 @@ int ha_autocommit_or_rollback(THD *thd, int error)
     else 
     {
       (void) ha_rollback_trans(thd, 0);
-      if (thd->transaction_rollback_request && !thd->in_sub_stmt)
+      if (thd->transaction_rollback_request)
         (void) ha_rollback(thd);
     }
 
@@ -1454,8 +1421,7 @@ int ha_release_temporary_latches(THD *thd)
 int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= (thd->in_sub_stmt ? &thd->transaction.stmt :
-                                        &thd->transaction.all);
+  THD_TRANS *trans= &thd->transaction.all;
   Ha_trx_info *ha_info, *ha_info_next;
 
   trans->no_2pc=0;
@@ -1487,7 +1453,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
   {
     int err;
     handlerton *ht= ha_info->ht();
-    if ((err= ht->rollback(ht, thd, !thd->in_sub_stmt)))
+    if ((err= ht->rollback(ht, thd, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1509,8 +1475,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
 int ha_savepoint(THD *thd, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= (thd->in_sub_stmt ? &thd->transaction.stmt :
-                                        &thd->transaction.all);
+  THD_TRANS *trans= &thd->transaction.all;
   Ha_trx_info *ha_info= trans->ha_list;
   for (; ha_info; ha_info= ha_info->next())
   {

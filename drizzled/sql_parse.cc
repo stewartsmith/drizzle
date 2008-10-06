@@ -70,12 +70,8 @@ static void unlock_locked_tables(THD *thd)
 
 bool end_active_trans(THD *thd)
 {
-  int error=0;
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
+  int error= 0;
+
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
@@ -100,12 +96,7 @@ bool end_active_trans(THD *thd)
 
 bool begin_trans(THD *thd)
 {
-  int error=0;
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return 1;
-  }
+  int error= 0;
   if (thd->locked_tables)
   {
     thd->lock=thd->locked_tables;
@@ -271,11 +262,6 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
   bool do_release= 0;
   int res= 0;
 
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
@@ -895,14 +881,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
 void log_slow_statement(THD *thd)
 {
-  /*
-    The following should never be true with our current code base,
-    but better to keep this here so we don't accidently try to log a
-    statement in a trigger or stored function
-  */
-  if (unlikely(thd->in_sub_stmt))
-    return;                           // Don't set time for sub stmt
-
   logging_post_do(thd);
 
   return;
@@ -2380,8 +2358,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_SAVEPOINT:
-    if (!(thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN) ||
-          thd->in_sub_stmt) || !opt_using_transactions)
+    if (!(thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) || !opt_using_transactions)
       my_ok(thd);
     else
     {
@@ -2608,7 +2585,6 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 void mysql_reset_thd_for_next_command(THD *thd)
 {
-  assert(! thd->in_sub_stmt);
   thd->free_list= 0;
   thd->select_number= 1;
   /*
@@ -3628,8 +3604,6 @@ bool reload_cache(THD *thd, ulong options, TableList *tables,
   bool result=0;
   select_errors=0;				/* Write if more errors */
   bool tmp_write_to_binlog= 1;
-
-  assert(!thd || !thd->in_sub_stmt);
 
   if (options & REFRESH_LOG)
   {

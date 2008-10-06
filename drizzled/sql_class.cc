@@ -403,7 +403,7 @@ THD::THD()
               /* statement id */ 0),
    Open_tables_state(refresh_version), rli_fake(0),
    lock_id(&main_lock_id),
-   user_time(0), in_sub_stmt(0),
+   user_time(0),
    binlog_table_maps(0), binlog_flags(0UL),
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
@@ -881,14 +881,7 @@ void THD::cleanup_after_query()
   /*
     Reset rand_used so that detection of calls to rand() will save random 
     seeds if needed by the slave.
-
-    Do not reset rand_used if inside a stored function or trigger because 
-    only the call to these operations is logged. Thus only the calling 
-    statement needs to detect rand() calls made by its substatements. These
-    substatements must not set rand_used to 0 because it would remove the
-    detection of rand() by the calling statement. 
   */
-  if (!in_sub_stmt) /* stored functions and triggers are a special case */
   {
     /* Forget those values, for next binlogger: */
     stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
