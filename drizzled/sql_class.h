@@ -1049,7 +1049,6 @@ public:
 
   /* Place to store various things */
   void *thd_marker;
-#ifndef DRIZZLE_CLIENT
   int binlog_setup_trx_data();
 
   /*
@@ -1099,7 +1098,6 @@ public:
   void clear_binlog_table_maps() {
     binlog_table_maps= 0;
   }
-#endif /* DRIZZLE_CLIENT */
 
 public:
 
@@ -1488,7 +1486,6 @@ public:
   bool store_globals();
   void awake(THD::killed_state state_to_set);
 
-#ifndef DRIZZLE_CLIENT
   enum enum_binlog_query_type {
     /*
       The query can be logged row-based or statement-based
@@ -1512,7 +1509,6 @@ public:
                    char const *query, ulong query_len,
                    bool is_trans, bool suppress_use,
                    THD::killed_state killed_err_arg= THD::KILLED_NO_VALUE);
-#endif
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

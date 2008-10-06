@@ -2322,7 +2322,6 @@ void xid_cache_delete(XID_STATE *xid_state)
   inserted/updated/deleted.
 */
 
-#ifndef DRIZZLE_CLIENT
 
 /*
   Template member function for ensuring that there is an rows log
@@ -2788,5 +2787,3 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   elements++;
   return(0);
 }
-
-#endif /* !defined(DRIZZLE_CLIENT) */

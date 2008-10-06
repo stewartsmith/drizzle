@@ -15,7 +15,6 @@
 
 #include <drizzled/server_includes.h>
 
-#ifdef HAVE_REPLICATION
 #include "rpl_mi.h"
 #include "sql_repl.h"
 #include "log_event.h"
@@ -1700,7 +1699,6 @@ public:
 static void fix_slave_net_timeout(THD *thd,
                                   enum_var_type type __attribute__((unused)))
 {
-#ifdef HAVE_REPLICATION
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
     push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -1710,7 +1708,6 @@ static void fix_slave_net_timeout(THD *thd,
                         " A sensible value for the period should be"
                         " less than the timeout.");
   pthread_mutex_unlock(&LOCK_active_mi);
-#endif
   return;
 }
 
@@ -1840,5 +1837,3 @@ int init_replication_sys_vars()
   }
   return 0;
 }
-
-#endif /* HAVE_REPLICATION */

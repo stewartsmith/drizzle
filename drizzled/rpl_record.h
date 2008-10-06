@@ -17,17 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef RPL_RECORD_H
-#define RPL_RECORD_H
+#ifndef DRIZZLED_RPL_RECORD_H
+#define DRIZZLED_RPL_RECORD_H
 
 #include <drizzled/rpl_reporting.h>
 
-#if !defined(DRIZZLE_CLIENT)
 size_t pack_row(Table* table, MY_BITMAP const* cols,
                 uchar *row_data, const uchar *data);
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int unpack_row(Relay_log_info const *rli,
                Table *table, uint const colcnt,
                uchar const *const row_data, MY_BITMAP const *cols,
@@ -35,6 +32,5 @@ int unpack_row(Relay_log_info const *rli,
 
 // Fill table's record[0] with default values.
 int prepare_record(Table *const, const MY_BITMAP *cols, uint width, const bool);
-#endif
 
-#endif
+#endif /* DRIZZLED_RPL_RECORD_H */

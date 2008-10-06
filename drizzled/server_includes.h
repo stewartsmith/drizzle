@@ -27,8 +27,6 @@
   except the part which must be in the server and in the client.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
-
-  @TODO Get rid of the DRIZZLE_CLIENT and DRIZZLE_SERVER conditionals
 */
 
 #ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
