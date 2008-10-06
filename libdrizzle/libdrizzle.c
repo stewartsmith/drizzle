@@ -372,7 +372,7 @@ drizzle_list_processes(DRIZZLE *drizzle)
 int
 drizzle_shutdown(DRIZZLE *drizzle)
 {
-  return(simple_command(drizzle, COM_SHUTDOWN, 0, 1, 0));
+  return(simple_command(drizzle, COM_SHUTDOWN, 0, 0, 0));
 }
 
 
