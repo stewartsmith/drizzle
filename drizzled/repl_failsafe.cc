@@ -24,8 +24,6 @@
 */
 #include <drizzled/server_includes.h>
 
-#ifdef HAVE_REPLICATION
-
 #include "repl_failsafe.h"
 #include "sql_repl.h"
 #include "rpl_mi.h"
@@ -230,6 +228,3 @@ bool show_slave_hosts(THD* thd)
   my_eof(thd);
   return(false);
 }
-
-#endif /* HAVE_REPLICATION */
-

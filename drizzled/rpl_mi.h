@@ -17,10 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef RPL_MI_H
-#define RPL_MI_H
-
-#ifdef HAVE_REPLICATION
+#ifndef DRIZZLED_RPL_MI_H
+#define DRIZZLED_RPL_MI_H
 
 #include "rpl_rli.h"
 #include "rpl_reporting.h"
@@ -85,8 +83,8 @@ class Master_info : public Slave_reporting_capability
   DRIZZLE *drizzle;
   uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
-  uint port;
-  uint connect_retry;
+  uint32_t port;
+  uint32_t connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
   uint64_t received_heartbeats;  // counter of received heartbeat events
   int events_till_disconnect;
@@ -114,5 +112,4 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
 void end_master_info(Master_info* mi);
 int flush_master_info(Master_info* mi, bool flush_relay_log_cache);
 
-#endif /* HAVE_REPLICATION */
-#endif /* RPL_MI_H */
+#endif /* DRIZZLED_RPL_MI_H */

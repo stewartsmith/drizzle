@@ -273,7 +273,6 @@ public:
   int log_xid(THD *thd, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
-#if !defined(DRIZZLE_CLIENT)
   bool is_table_mapped(Table *table) const
   {
     return table->s->table_map_version == table_map_version();
@@ -284,7 +283,6 @@ public:
 
   int flush_and_set_pending_rows_event(THD *thd, Rows_log_event* event);
 
-#endif /* !defined(DRIZZLE_CLIENT) */
   void reset_bytes_written()
   {
     bytes_written = 0;

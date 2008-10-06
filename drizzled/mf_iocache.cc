@@ -32,7 +32,6 @@
   flush_io_cache().  
 */
 #include <drizzled/server_includes.h>
-#ifdef HAVE_REPLICATION
 
 extern "C" {
 
@@ -81,4 +80,3 @@ int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
 }
 
 } /* extern "C" */
-#endif /* HAVE_REPLICATION */

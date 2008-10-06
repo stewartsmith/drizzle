@@ -1046,7 +1046,6 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
   }
 }
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 void Relay_log_info::cleanup_context(THD *thd, bool error)
 {
   assert(sql_thd == thd);
@@ -1097,5 +1096,3 @@ void Relay_log_info::clear_tables_to_lock()
   }
   assert(tables_to_lock == NULL && tables_to_lock_count == 0);
 }
-
-#endif

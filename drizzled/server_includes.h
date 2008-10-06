@@ -27,8 +27,6 @@
   except the part which must be in the server and in the client.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
-
-  @TODO Get rid of the DRIZZLE_CLIENT and DRIZZLE_SERVER conditionals
 */
 
 #ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
@@ -68,7 +66,7 @@ bool mysql_opt_change_db(THD *thd,
 /* sql_repl.cc */
 void write_bin_log(THD *thd, bool clear_error,
                    char const *query, ulong query_length);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
+void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, uint16_t flags);
 void mysql_client_binlog_statement(THD *thd);
 
 /* sql_rename.cc */

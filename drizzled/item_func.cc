@@ -2815,7 +2815,6 @@ int64_t Item_master_pos_wait::val_int()
     null_value = 1;
     return 0;
   }
-#ifdef HAVE_REPLICATION
   int64_t pos = (ulong)args[1]->val_int();
   int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
   if ((event_count = active_mi->rli.wait_for_pos(thd, log_name, pos, timeout)) == -2)
@@ -2823,7 +2822,6 @@ int64_t Item_master_pos_wait::val_int()
     null_value = 1;
     event_count=0;
   }
-#endif
   return event_count;
 }
 

@@ -348,13 +348,11 @@ bool mysql_insert(THD *thd,TableList *table_list,
   thd->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
-#ifdef HAVE_REPLICATION
   if (thd->slave_thread &&
       (info.handle_duplicates == DUP_UPDATE) &&
       (table->next_number_field != NULL) &&
       rpl_master_has_bug(&active_mi->rli, 24432))
     goto abort;
-#endif
 
   error=0;
   thd_proc_info(thd, "update");
@@ -1260,13 +1258,11 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   restore_record(table,s->default_values);		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
-#ifdef HAVE_REPLICATION
   if (thd->slave_thread &&
       (info.handle_duplicates == DUP_UPDATE) &&
       (table->next_number_field != NULL) &&
       rpl_master_has_bug(&active_mi->rli, 24432))
     return(1);
-#endif
 
   thd->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)

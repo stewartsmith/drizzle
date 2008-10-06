@@ -339,28 +339,6 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
                         DRIZZLE_TYPE_BLOB=255
 };
 
-enum drizzle_enum_shutdown_level {
-  /*
-    We want levels to be in growing order of hardness (because we use number
-    comparisons). Note that DEFAULT does not respect the growing property, but
-    it's ok.
-  */
-  SHUTDOWN_DEFAULT = 0,
-  /* wait for existing connections to finish */
-  SHUTDOWN_WAIT_CONNECTIONS= DRIZZLE_SHUTDOWN_KILLABLE_CONNECT,
-  /* wait for existing trans to finish */
-  SHUTDOWN_WAIT_TRANSACTIONS= DRIZZLE_SHUTDOWN_KILLABLE_TRANS,
-  /* wait for existing updates to finish (=> no partial MyISAM update) */
-  SHUTDOWN_WAIT_UPDATES= DRIZZLE_SHUTDOWN_KILLABLE_UPDATE,
-  /* flush InnoDB buffers and other storage engines' buffers*/
-  SHUTDOWN_WAIT_ALL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1),
-  /* don't flush InnoDB buffers, flush other storage engines' buffers*/
-  SHUTDOWN_WAIT_CRITICAL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
-  /* Now the 2 levels of the KILL command */
-  KILL_QUERY= 254,
-  KILL_CONNECTION= 255
-};
-
 
 enum enum_cursor_type
 {

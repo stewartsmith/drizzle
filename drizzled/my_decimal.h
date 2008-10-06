@@ -127,14 +127,7 @@ public:
   uint precision() const { return intg + frac; }
 };
 
-#ifndef DRIZZLE_CLIENT
 int decimal_operation_results(int result);
-#else
-inline int decimal_operation_results(int result)
-{
-  return result;
-}
-#endif /*DRIZZLE_CLIENT*/
 
 inline
 void max_my_decimal(my_decimal *to, int precision, int frac)
@@ -261,10 +254,8 @@ int my_decimal_ceiling(uint mask, const my_decimal *from, my_decimal *to)
 }
 
 
-#ifndef DRIZZLE_CLIENT
 int my_decimal2string(uint mask, const my_decimal *d, uint fixed_prec,
 		      uint fixed_dec, char filler, String *str);
-#endif
 
 inline
 int my_decimal2int(uint mask, const my_decimal *d, bool unsigned_flag,

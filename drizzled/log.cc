@@ -1327,8 +1327,6 @@ int DRIZZLE_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
     0	ok
 */
 
-#ifdef HAVE_REPLICATION
-
 static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
 {
   int bytes_read;
@@ -1359,8 +1357,6 @@ static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
 err:
   return(1);
 }
-
-#endif /* HAVE_REPLICATION */
 
 /**
   Find the position in the log-index-file for the given log name.
@@ -1647,7 +1643,6 @@ err:
     LOG_INFO_IO		Got IO error while reading file
 */
 
-#ifdef HAVE_REPLICATION
 
 int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
 {
@@ -1984,7 +1979,6 @@ err:
   pthread_mutex_unlock(&LOCK_index);
   return(error);
 }
-#endif /* HAVE_REPLICATION */
 
 
 /**
@@ -2672,14 +2666,12 @@ void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
       (my_b_tell(&log_file) >= (my_off_t) max_size))
   {
     new_file_without_locking();
-#ifdef HAVE_REPLICATION
     if (expire_logs_days)
     {
       time_t purge_time= my_time(0) - expire_logs_days*24*60*60;
       if (purge_time >= 0)
         purge_logs_before_date(purge_time);
     }
-#endif
   }
   if (!(flags & RP_LOCK_LOG_IS_ALREADY_LOCKED))
     pthread_mutex_unlock(&LOCK_log);
@@ -3023,7 +3015,6 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
-#ifdef HAVE_REPLICATION
     if (log_type == LOG_BIN && !no_auto_events &&
 	(exiting & LOG_CLOSE_STOP_EVENT))
     {
@@ -3032,7 +3023,6 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
       bytes_written+= s.data_written;
       signal_update();
     }
-#endif /* HAVE_REPLICATION */
 
     /* don't pwrite in a file opened with O_APPEND - it doesn't work */
     if (log_file.type == WRITE_CACHE && log_type == LOG_BIN)
@@ -3138,11 +3128,7 @@ static bool test_if_number(register const char *str,
 
 void sql_perror(const char *message)
 {
-#ifdef HAVE_STRERROR
   sql_print_error("%s: %s",message, strerror(errno));
-#else
-  perror(message);
-#endif
 }
 
 

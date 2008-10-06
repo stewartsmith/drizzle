@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef DRIZZLE_CLIENT
-
 #include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include "rpl_mi.h"
@@ -26,8 +24,6 @@
 #include <drizzled/drizzled_error_messages.h>
 
 #include <algorithm>
-
-#endif /* !DRIZZLE_CLIENT */
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
@@ -49,7 +45,6 @@
 #define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
 
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 static const char *HA_ERR(int i)
 {
   switch (i) {
@@ -150,7 +145,7 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
               handler_error == NULL? _("<unknown>") : handler_error,
               log_name, pos);
 }
-#endif
+
 
 /*
   Cache that will automatically be written to a dedicated file on
@@ -236,33 +231,6 @@ uint debug_not_change_ts_if_art_event= 1; // bug#29309 simulation
   pretty_print_str()
 */
 
-#ifdef DRIZZLE_CLIENT
-static void pretty_print_str(IO_CACHE* cache, const char* str, int len)
-{
-  const char* end = str + len;
-  my_b_printf(cache, "\'");
-  while (str < end)
-  {
-    char c;
-    switch ((c=*str++)) {
-    case '\n': my_b_printf(cache, "\\n"); break;
-    case '\r': my_b_printf(cache, "\\r"); break;
-    case '\\': my_b_printf(cache, "\\\\"); break;
-    case '\b': my_b_printf(cache, "\\b"); break;
-    case '\t': my_b_printf(cache, "\\t"); break;
-    case '\'': my_b_printf(cache, "\\'"); break;
-    case 0   : my_b_printf(cache, "\\0"); break;
-    default:
-      my_b_printf(cache, "%c", c);
-      break;
-    }
-  }
-  my_b_printf(cache, "\'");
-}
-#endif /* DRIZZLE_CLIENT */
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
-
 static void clear_all_errors(THD *thd, Relay_log_info *rli)
 {
   thd->is_slave_error = 0;
@@ -280,14 +248,12 @@ inline int ignored_error_code(int err_code)
   return ((err_code == ER_SLAVE_IGNORED_TABLE) ||
           (use_slave_mask && bitmap_is_set(&slave_error_mask, err_code)));
 }
-#endif
 
 
 /*
   pretty_print_str()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 static char *pretty_print_str(char *packet, const char *str, int len)
 {
   const char *end= str + len;
@@ -312,10 +278,7 @@ static char *pretty_print_str(char *packet, const char *str, int len)
   *pos++= '\'';
   return pos;
 }
-#endif /* !DRIZZLE_CLIENT */
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Creates a temporary name for load data infile:.
@@ -345,10 +308,7 @@ static char *slave_load_file_stem(char *buf, uint file_id,
   my_stpcpy(res, ext);                             // Add extension last
   return res;                                   // Pointer to extension
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Delete all temporary files used for SQL_LOAD.
@@ -389,7 +349,6 @@ static void cleanup_load_tmpdir()
 
   my_dirend(dirp);
 }
-#endif
 
 
 /*
@@ -438,7 +397,6 @@ char *str_to_hex(char *to, const char *from, uint len)
   return to;                               // pointer to end 0 of 'to'
 }
 
-#ifndef DRIZZLE_CLIENT
 
 /**
   Append a version of the 'from' string suitable for use in a query to
@@ -468,29 +426,7 @@ append_query_string(const CHARSET_INFO * const csinfo,
   to->length(orig_len + ptr - beg);
   return 0;
 }
-#endif
 
-
-/**
-  Prints a "session_var=value" string. Used by mysqlbinlog to print some SET
-  commands just before it prints a query.
-*/
-
-#ifdef DRIZZLE_CLIENT
-
-static void print_set_option(IO_CACHE* file, uint32_t bits_changed,
-                             uint32_t option, uint32_t flags, const char* name,
-                             bool* need_comma)
-{
-  if (bits_changed & option)
-  {
-    if (*need_comma)
-      my_b_printf(file,", ");
-    my_b_printf(file,"%s=%d", name, test(flags & option));
-    *need_comma= 1;
-  }
-}
-#endif
 
 /**************************************************************************
 	Log_event methods (= the parent class of all events)
@@ -544,7 +480,6 @@ const char* Log_event::get_type_str()
   Log_event::Log_event()
 */
 
-#ifndef DRIZZLE_CLIENT
 Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
@@ -573,7 +508,6 @@ Log_event::Log_event()
   when=		0;
   log_pos=	0;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /*
@@ -584,11 +518,9 @@ Log_event::Log_event(const char* buf,
                      const Format_description_log_event* description_event)
   :temp_buf(0), cache_stmt(0)
 {
-#ifndef DRIZZLE_CLIENT
-  thd = 0;
-#endif
-  when = uint4korr(buf);
-  server_id = uint4korr(buf + SERVER_ID_OFFSET);
+  thd= 0;
+  when= uint4korr(buf);
+  server_id= uint4korr(buf + SERVER_ID_OFFSET);
   data_written= uint4korr(buf + EVENT_LEN_OFFSET);
   if (description_event->binlog_version==1)
   {
@@ -647,8 +579,6 @@ Log_event::Log_event(const char* buf,
   /* otherwise, go on with reading the header from buf (nothing now) */
 }
 
-#ifndef DRIZZLE_CLIENT
-#ifdef HAVE_REPLICATION
 
 int Log_event::do_update_pos(Relay_log_info *rli)
 {
@@ -727,7 +657,6 @@ int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
   pack_info(protocol);
   return protocol->write();
 }
-#endif /* HAVE_REPLICATION */
 
 
 /**
@@ -899,17 +828,10 @@ end:
     pthread_mutex_unlock(log_lock);
   return(result);
 }
-#endif /* !DRIZZLE_CLIENT */
 
-#ifndef DRIZZLE_CLIENT
 #define UNLOCK_MUTEX if (log_lock) pthread_mutex_unlock(log_lock);
 #define LOCK_MUTEX if (log_lock) pthread_mutex_lock(log_lock);
-#else
-#define UNLOCK_MUTEX
-#define LOCK_MUTEX
-#endif
 
-#ifndef DRIZZLE_CLIENT
 /**
   @note
     Allocates memory;  The caller is responsible for clean-up.
@@ -918,11 +840,6 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
 				     pthread_mutex_t* log_lock,
                                      const Format_description_log_event
                                      *description_event)
-#else
-Log_event* Log_event::read_log_event(IO_CACHE* file,
-                                     const Format_description_log_event
-                                     *description_event)
-#endif
 {
   assert(description_event != 0);
   char head[LOG_EVENT_MINIMAL_HEADER_LEN];
@@ -1102,7 +1019,6 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case FORMAT_DESCRIPTION_EVENT:
       ev = new Format_description_log_event(buf, event_len, description_event);
       break;
-#if defined(HAVE_REPLICATION) 
     case WRITE_ROWS_EVENT:
       ev = new Write_rows_log_event(buf, event_len, description_event);
       break;
@@ -1115,7 +1031,6 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case TABLE_MAP_EVENT:
       ev = new Table_map_log_event(buf, event_len, description_event);
       break;
-#endif
     case BEGIN_LOAD_QUERY_EVENT:
       ev = new Begin_load_query_log_event(buf, event_len, description_event);
       break;
@@ -1143,195 +1058,12 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
   if (!ev || !ev->is_valid())
   {
     delete ev;
-#ifdef DRIZZLE_CLIENT
-    if (!force_opt) /* then mysqlbinlog dies */
-    {
-      *error= "Found invalid event in binary log";
-      return(0);
-    }
-    ev= new Unknown_log_event(buf, description_event);
-#else
     *error= "Found invalid event in binary log";
     return(0);
-#endif
   }
   return(ev);  
 }
 
-#ifdef DRIZZLE_CLIENT
-
-/*
-  Log_event::print_header()
-*/
-
-void Log_event::print_header(IO_CACHE* file,
-                             PRINT_EVENT_INFO* print_event_info,
-                             bool is_more __attribute__((unused)))
-{
-  char llbuff[22];
-  my_off_t hexdump_from= print_event_info->hexdump_from;
-
-  my_b_printf(file, "#");
-  print_timestamp(file);
-  my_b_printf(file, " server id %d  end_log_pos %s ", server_id,
-              llstr(log_pos,llbuff));
-
-  /* mysqlbinlog --hexdump */
-  if (print_event_info->hexdump_from)
-  {
-    my_b_printf(file, "\n");
-    uchar *ptr= (uchar*)temp_buf;
-    my_off_t size=
-      uint4korr(ptr + EVENT_LEN_OFFSET) - LOG_EVENT_MINIMAL_HEADER_LEN;
-    my_off_t i;
-
-    /* Header len * 4 >= header len * (2 chars + space + extra space) */
-    char *h, hex_string[LOG_EVENT_MINIMAL_HEADER_LEN*4]= {0};
-    char *c, char_string[16+1]= {0};
-
-    /* Pretty-print event common header if header is exactly 19 bytes */
-    if (print_event_info->common_header_len == LOG_EVENT_MINIMAL_HEADER_LEN)
-    {
-      char emit_buf[256];               // Enough for storing one line
-      my_b_printf(file, "# Position  Timestamp   Type   Master ID        "
-                  "Size      Master Pos    Flags \n");
-      int const bytes_written=
-        snprintf(emit_buf, sizeof(emit_buf),
-                 "# %8.8lx %02x %02x %02x %02x   %02x   "
-                 "%02x %02x %02x %02x   %02x %02x %02x %02x   "
-                 "%02x %02x %02x %02x   %02x %02x\n",
-                 (unsigned long) hexdump_from,
-                 ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6],
-                 ptr[7], ptr[8], ptr[9], ptr[10], ptr[11], ptr[12], ptr[13],
-                 ptr[14], ptr[15], ptr[16], ptr[17], ptr[18]);
-      assert(bytes_written >= 0);
-      assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-      my_b_write(file, (uchar*) emit_buf, bytes_written);
-      ptr += LOG_EVENT_MINIMAL_HEADER_LEN;
-      hexdump_from += LOG_EVENT_MINIMAL_HEADER_LEN;
-    }
-
-    /* Rest of event (without common header) */
-    for (i= 0, c= char_string, h=hex_string;
-	 i < size;
-	 i++, ptr++)
-    {
-      snprintf(h, 4, "%02x ", *ptr);
-      h += 3;
-
-      *c++= my_isalnum(&my_charset_bin, *ptr) ? *ptr : '.';
-
-      if (i % 16 == 15)
-      {
-        /*
-          my_b_printf() does not support full printf() formats, so we
-          have to do it this way.
-
-          TODO: Rewrite my_b_printf() to support full printf() syntax.
-         */
-        char emit_buf[256];
-        int const bytes_written=
-          snprintf(emit_buf, sizeof(emit_buf),
-                   "# %8.8lx %-48.48s |%16s|\n",
-                   (unsigned long) (hexdump_from + (i & 0xfffffff0)),
-                   hex_string, char_string);
-        assert(bytes_written >= 0);
-        assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-	my_b_write(file, (uchar*) emit_buf, bytes_written);
-	hex_string[0]= 0;
-	char_string[0]= 0;
-	c= char_string;
-	h= hex_string;
-      }
-      else if (i % 8 == 7) *h++ = ' ';
-    }
-    *c= '\0';
-
-    if (hex_string[0])
-    {
-      char emit_buf[256];
-      int const bytes_written=
-        snprintf(emit_buf, sizeof(emit_buf),
-                    "# %8.8lx %-48.48s |%s|\n",
-                    (unsigned long) (hexdump_from + (i & 0xfffffff0)),
-                    hex_string, char_string);
-      assert(bytes_written >= 0);
-      assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-      my_b_write(file, (uchar*) emit_buf, bytes_written);
-    }
-    /*
-      need a # to prefix the rest of printouts for example those of
-      Rows_log_event::print_helper().
-    */
-    my_b_write(file, reinterpret_cast<const uchar*>("# "), 2);
-  }
-  return;
-}
-
-
-void Log_event::print_base64(IO_CACHE* file,
-                             PRINT_EVENT_INFO* print_event_info,
-                             bool more)
-{
-  const uchar *ptr= (const uchar *)temp_buf;
-  uint32_t size= uint4korr(ptr + EVENT_LEN_OFFSET);
-
-  size_t const tmp_str_sz= base64_needed_encoded_length((int) size);
-  char *const tmp_str= (char *) my_malloc(tmp_str_sz, MYF(MY_WME));
-  if (!tmp_str) {
-    fprintf(stderr, "\nError: Out of memory. "
-            "Could not print correct binlog event.\n");
-    return;
-  }
-
-  if (base64_encode(ptr, (size_t) size, tmp_str))
-  {
-    assert(0);
-  }
-
-  if (my_b_tell(file) == 0)
-    my_b_printf(file, "\nBINLOG '\n");
-
-  my_b_printf(file, "%s\n", tmp_str);
-
-  if (!more)
-    my_b_printf(file, "'%s\n", print_event_info->delimiter);
-
-  free(tmp_str);
-  return;
-}
-
-
-/*
-  Log_event::print_timestamp()
-*/
-
-void Log_event::print_timestamp(IO_CACHE* file, time_t* ts)
-{
-  struct tm *res;
-  if (!ts)
-    ts = &when;
-#ifdef DRIZZLE_SERVER				// This is always false
-  struct tm tm_tmp;
-  localtime_r(ts,(res= &tm_tmp));
-#else
-  res=localtime(ts);
-#endif
-
-  my_b_printf(file,"%02d%02d%02d %2d:%02d:%02d",
-              res->tm_year % 100,
-              res->tm_mon+1,
-              res->tm_mday,
-              res->tm_hour,
-              res->tm_min,
-              res->tm_sec);
-  return;
-}
-
-#endif /* DRIZZLE_CLIENT */
-
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 inline Log_event::enum_skip_reason
 Log_event::continue_group(Relay_log_info *rli)
 {
@@ -1339,13 +1071,10 @@ Log_event::continue_group(Relay_log_info *rli)
     return Log_event::EVENT_SKIP_IGNORE;
   return Log_event::do_shall_skip(rli);
 }
-#endif
 
 /**************************************************************************
 	Query_log_event methods
 **************************************************************************/
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   This (which is used only for SHOW BINLOG EVENTS) could be updated to
@@ -1378,9 +1107,7 @@ void Query_log_event::pack_info(Protocol *protocol)
   protocol->store(buf, pos-buf, &my_charset_bin);
   free(buf);
 }
-#endif
 
-#ifndef DRIZZLE_CLIENT
 
 /**
   Utility function for the next method (Query_log_event::write()) .
@@ -1675,7 +1402,6 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
   else
     time_zone_len= 0;
 }
-#endif /* DRIZZLE_CLIENT */
 
 
 /* 2 utility functions for the next method */
@@ -1935,176 +1661,9 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
 }
 
 
-#ifdef DRIZZLE_CLIENT
-/**
-  Query_log_event::print().
-
-  @todo
-    print the catalog ??
-*/
-void Query_log_event::print_query_header(IO_CACHE* file,
-					 PRINT_EVENT_INFO* print_event_info)
-{
-  // TODO: print the catalog ??
-  char buff[40],*end;				// Enough for SET TIMESTAMP
-  bool different_db= 1;
-  uint32_t tmp;
-
-  if (!print_event_info->short_form)
-  {
-    print_header(file, print_event_info, false);
-    my_b_printf(file, "\t%s\tthread_id=%lu\texec_time=%lu\terror_code=%d\n",
-                get_type_str(), (ulong) thread_id, (ulong) exec_time,
-                error_code);
-  }
-
-  if (!(flags & LOG_EVENT_SUPPRESS_USE_F) && db)
-  {
-    if ((different_db= memcmp(print_event_info->db, db, db_len + 1)))
-      memcpy(print_event_info->db, db, db_len + 1);
-    if (db[0] && different_db) 
-      my_b_printf(file, "use %s%s\n", db, print_event_info->delimiter);
-  }
-
-  end=int10_to_str((long) when, my_stpcpy(buff,"SET TIMESTAMP="),10);
-  end= my_stpcpy(end, print_event_info->delimiter);
-  *end++='\n';
-  my_b_write(file, (uchar*) buff, (uint) (end-buff));
-  if ((!print_event_info->thread_id_printed ||
-       ((flags & LOG_EVENT_THREAD_SPECIFIC_F) &&
-        thread_id != print_event_info->thread_id)))
-  {
-    // If --short-form, print deterministic value instead of pseudo_thread_id.
-    my_b_printf(file,"SET @@session.pseudo_thread_id=%lu%s\n",
-                short_form ? 999999999 : (ulong)thread_id,
-                print_event_info->delimiter);
-    print_event_info->thread_id= thread_id;
-    print_event_info->thread_id_printed= 1;
-  }
-
-  /*
-    If flags2_inited==0, this is an event from 3.23 or 4.0; nothing to
-    print (remember we don't produce mixed relay logs so there cannot be
-    5.0 events before that one so there is nothing to reset).
-  */
-  if (likely(flags2_inited)) /* likely as this will mainly read 5.0 logs */
-  {
-    /* tmp is a bitmask of bits which have changed. */
-    if (likely(print_event_info->flags2_inited)) 
-      /* All bits which have changed */
-      tmp= (print_event_info->flags2) ^ flags2;
-    else /* that's the first Query event we read */
-    {
-      print_event_info->flags2_inited= 1;
-      tmp= ~((uint32_t)0); /* all bits have changed */
-    }
-
-    if (unlikely(tmp)) /* some bits have changed */
-    {
-      bool need_comma= 0;
-      my_b_printf(file, "SET ");
-      print_set_option(file, tmp, OPTION_NO_FOREIGN_KEY_CHECKS, ~flags2,
-                   "@@session.foreign_key_checks", &need_comma);
-      print_set_option(file, tmp, OPTION_RELAXED_UNIQUE_CHECKS, ~flags2,
-                   "@@session.unique_checks", &need_comma);
-      my_b_printf(file,"%s\n", print_event_info->delimiter);
-      print_event_info->flags2= flags2;
-    }
-  }
-
-  /*
-    Now the session variables;
-    it's more efficient to pass SQL_MODE as a number instead of a
-    comma-separated list.
-    FOREIGN_KEY_CHECKS, SQL_AUTO_IS_NULL, UNIQUE_CHECKS are session-only
-    variables (they have no global version; they're not listed in
-    sql_class.h), The tests below work for pure binlogs or pure relay
-    logs. Won't work for mixed relay logs but we don't create mixed
-    relay logs (that is, there is no relay log with a format change
-    except within the 3 first events, which mysqlbinlog handles
-    gracefully). So this code should always be good.
-  */
-
-  if (print_event_info->auto_increment_increment != auto_increment_increment ||
-      print_event_info->auto_increment_offset != auto_increment_offset)
-  {
-    my_b_printf(file,"SET @@session.auto_increment_increment=%lu, @@session.auto_increment_offset=%lu%s\n",
-                auto_increment_increment,auto_increment_offset,
-                print_event_info->delimiter);
-    print_event_info->auto_increment_increment= auto_increment_increment;
-    print_event_info->auto_increment_offset=    auto_increment_offset;
-  }
-
-  /* TODO: print the catalog when we feature SET CATALOG */
-
-  if (likely(charset_inited) &&
-      (unlikely(!print_event_info->charset_inited ||
-                memcmp(print_event_info->charset, charset, 6))))
-  {
-    const CHARSET_INFO * const cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
-    if (cs_info)
-    {
-      /* for mysql client */
-      my_b_printf(file, "/*!\\C %s */%s\n",
-                  cs_info->csname, print_event_info->delimiter);
-    }
-    my_b_printf(file,"SET "
-                "@@session.character_set_client=%d,"
-                "@@session.collation_connection=%d,"
-                "@@session.collation_server=%d"
-                "%s\n",
-                uint2korr(charset),
-                uint2korr(charset+2),
-                uint2korr(charset+4),
-                print_event_info->delimiter);
-    memcpy(print_event_info->charset, charset, 6);
-    print_event_info->charset_inited= 1;
-  }
-  if (time_zone_len)
-  {
-    if (memcmp(print_event_info->time_zone_str, time_zone_str, time_zone_len+1))
-    {
-      my_b_printf(file,"SET @@session.time_zone='%s'%s\n",
-                  time_zone_str, print_event_info->delimiter);
-      memcpy(print_event_info->time_zone_str, time_zone_str, time_zone_len+1);
-    }
-  }
-  if (lc_time_names_number != print_event_info->lc_time_names_number)
-  {
-    my_b_printf(file, "SET @@session.lc_time_names=%d%s\n",
-                lc_time_names_number, print_event_info->delimiter);
-    print_event_info->lc_time_names_number= lc_time_names_number;
-  }
-  if (charset_database_number != print_event_info->charset_database_number)
-  {
-    if (charset_database_number)
-      my_b_printf(file, "SET @@session.collation_database=%d%s\n",
-                  charset_database_number, print_event_info->delimiter);
-    else
-      my_b_printf(file, "SET @@session.collation_database=DEFAULT%s\n",
-                  print_event_info->delimiter);
-    print_event_info->charset_database_number= charset_database_number;
-  }
-}
-
-
-void Query_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  print_query_header(&cache, print_event_info);
-  my_b_write(&cache, (uchar*) query, q_len);
-  my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
 /*
   Query_log_event::do_apply_event()
 */
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
-
 int Query_log_event::do_apply_event(Relay_log_info const *rli)
 {
   return do_apply_event(rli, query, q_len);
@@ -2429,27 +1988,22 @@ Query_log_event::do_shall_skip(Relay_log_info *rli)
   return(Log_event::do_shall_skip(rli));
 }
 
-#endif
-
 
 /**************************************************************************
 	Start_log_event_v3 methods
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Start_log_event_v3::Start_log_event_v3()
   :Log_event(), created(0), binlog_version(BINLOG_VERSION),
    artificial_event(0), dont_set_created(0)
 {
   memcpy(server_version, ::server_version, ST_SERVER_VER_LEN);
 }
-#endif
 
 /*
   Start_log_event_v3::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Start_log_event_v3::pack_info(Protocol *protocol)
 {
   char buf[12 + ST_SERVER_VER_LEN + 14 + 22], *pos;
@@ -2459,57 +2013,7 @@ void Start_log_event_v3::pack_info(Protocol *protocol)
   pos= int10_to_str(binlog_version, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
-
-/*
-  Start_log_event_v3::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Start_log_event_v3::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tStart: binlog v %d, server v %s created ",
-                binlog_version, server_version);
-    print_timestamp(&cache);
-    if (created)
-      my_b_printf(&cache," at startup");
-    my_b_printf(&cache, "\n");
-    if (flags & LOG_EVENT_BINLOG_IN_USE_F)
-      my_b_printf(&cache, "# Warning: this binlog was not closed properly. "
-                  "Most probably mysqld crashed writing it.\n");
-  }
-  if (!artificial_event && created)
-  {
-#ifdef WHEN_WE_HAVE_THE_RESET_CONNECTION_SQL_COMMAND
-    /*
-      This is for mysqlbinlog: like in replication, we want to delete the stale
-      tmp files left by an unclean shutdown of mysqld (temporary tables)
-      and rollback unfinished transaction.
-      Probably this can be done with RESET CONNECTION (syntax to be defined).
-    */
-    my_b_printf(&cache,"RESET CONNECTION%s\n", print_event_info->delimiter);
-#else
-    my_b_printf(&cache,"ROLLBACK%s\n", print_event_info->delimiter);
-#endif
-  }
-  if (temp_buf &&
-      print_event_info->base64_output_mode != BASE64_OUTPUT_NEVER &&
-      !print_event_info->short_form)
-  {
-    my_b_printf(&cache, "BINLOG '\n");
-    print_base64(&cache, print_event_info, false);
-    print_event_info->printed_fd_event= true;
-  }
-  return;
-}
-#endif /* DRIZZLE_CLIENT */
 
 /*
   Start_log_event_v3::Start_log_event_v3()
@@ -2537,7 +2041,6 @@ Start_log_event_v3::Start_log_event_v3(const char* buf,
   Start_log_event_v3::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Start_log_event_v3::write(IO_CACHE* file)
 {
   char buff[START_V3_HEADER_LEN];
@@ -2549,10 +2052,7 @@ bool Start_log_event_v3::write(IO_CACHE* file)
   return (write_header(file, sizeof(buff)) ||
           my_b_safe_write(file, (uchar*) buff, sizeof(buff)));
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Start_log_event_v3::do_apply_event() .
@@ -2617,7 +2117,6 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
   }
   return(0);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 /***************************************************************************
        Format_description_log_event methods
@@ -2869,7 +2368,6 @@ Format_description_log_event(const char* buf,
   return;
 }
 
-#ifndef DRIZZLE_CLIENT
 bool Format_description_log_event::write(IO_CACHE* file)
 {
   /*
@@ -2888,9 +2386,8 @@ bool Format_description_log_event::write(IO_CACHE* file)
   return (write_header(file, sizeof(buff)) ||
           my_b_safe_write(file, buff, sizeof(buff)));
 }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
+
 int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -2971,8 +2468,6 @@ Format_description_log_event::do_shall_skip(Relay_log_info *rli __attribute__((u
   return Log_event::EVENT_SKIP_NOT;
 }
 
-#endif
-
 
 /**
    Splits the event's 'server_version' string into three numeric pieces stored
@@ -3021,7 +2516,6 @@ void Format_description_log_event::calc_server_version_split()
   Load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 uint Load_log_event::get_query_buffer_length()
 {
   return
@@ -3136,10 +2630,7 @@ void Load_log_event::pack_info(Protocol *protocol)
   protocol->store(buf, end-buf, &my_charset_bin);
   free(buf);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
-
-#ifndef DRIZZLE_CLIENT
 
 /*
   Load_log_event::write_data_header()
@@ -3264,7 +2755,6 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   field_lens = (const uchar*)field_lens_buf.ptr();
   fields = fields_buf.ptr();
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**
@@ -3341,110 +2831,6 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
 }
 
 
-/*
-  Load_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Load_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-
-
-void Load_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info,
-			   bool commented)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file_arg);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tQuery\tthread_id=%ld\texec_time=%ld\n",
-                thread_id, exec_time);
-  }
-
-  bool different_db= 1;
-  if (db)
-  {
-    /*
-      If the database is different from the one of the previous statement, we
-      need to print the "use" command, and we update the last_db.
-      But if commented, the "use" is going to be commented so we should not
-      update the last_db.
-    */
-    if ((different_db= memcmp(print_event_info->db, db, db_len + 1)) &&
-        !commented)
-      memcpy(print_event_info->db, db, db_len + 1);
-  }
-  
-  if (db && db[0] && different_db)
-    my_b_printf(&cache, "%suse %s%s\n", 
-            commented ? "# " : "",
-            db, print_event_info->delimiter);
-
-  if (flags & LOG_EVENT_THREAD_SPECIFIC_F)
-    my_b_printf(&cache,"%sSET @@session.pseudo_thread_id=%lu%s\n",
-            commented ? "# " : "", (ulong)thread_id,
-            print_event_info->delimiter);
-  my_b_printf(&cache, "%sLOAD DATA ",
-              commented ? "# " : "");
-  if (check_fname_outside_temp_buf())
-    my_b_printf(&cache, "LOCAL ");
-  my_b_printf(&cache, "INFILE '%-*s' ", fname_len, fname);
-
-  if (sql_ex.opt_flags & REPLACE_FLAG)
-    my_b_printf(&cache," REPLACE ");
-  else if (sql_ex.opt_flags & IGNORE_FLAG)
-    my_b_printf(&cache," IGNORE ");
-  
-  my_b_printf(&cache, "INTO Table `%s`", table_name);
-  my_b_printf(&cache, " FIELDS TERMINATED BY ");
-  pretty_print_str(&cache, sql_ex.field_term, sql_ex.field_term_len);
-
-  if (sql_ex.opt_flags & OPT_ENCLOSED_FLAG)
-    my_b_printf(&cache," OPTIONALLY ");
-  my_b_printf(&cache, " ENCLOSED BY ");
-  pretty_print_str(&cache, sql_ex.enclosed, sql_ex.enclosed_len);
-     
-  my_b_printf(&cache, " ESCAPED BY ");
-  pretty_print_str(&cache, sql_ex.escaped, sql_ex.escaped_len);
-     
-  my_b_printf(&cache," LINES TERMINATED BY ");
-  pretty_print_str(&cache, sql_ex.line_term, sql_ex.line_term_len);
-
-
-  if (sql_ex.line_start)
-  {
-    my_b_printf(&cache," STARTING BY ");
-    pretty_print_str(&cache, sql_ex.line_start, sql_ex.line_start_len);
-  }
-  if ((long) skip_lines > 0)
-    my_b_printf(&cache, " IGNORE %ld LINES", (long) skip_lines);
-
-  if (num_fields)
-  {
-    uint i;
-    const char* field = fields;
-    my_b_printf(&cache, " (");
-    for (i = 0; i < num_fields; i++)
-    {
-      if (i)
-	my_b_printf(&cache, ",");
-      my_b_printf(&cache, field);
-	  
-      field += field_lens[i]  + 1;
-    }
-    my_b_printf(&cache, ")");
-  }
-
-  my_b_printf(&cache, "%s\n", print_event_info->delimiter);
-  return;
-}
-#endif /* DRIZZLE_CLIENT */
-
-#ifndef DRIZZLE_CLIENT
-
 /**
   Load_log_event::set_fields()
 
@@ -3468,10 +2854,8 @@ void Load_log_event::set_fields(const char* affected_db,
     field+= field_lens[i]  + 1;
   }
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 /**
   Does the data loading job when executing a LOAD DATA on the slave.
 
@@ -3761,7 +3145,6 @@ error:
 
   return ( use_rli_only_for_errors ? 0 : Log_event::do_apply_event(rli) );
 }
-#endif
 
 
 /**************************************************************************
@@ -3772,7 +3155,6 @@ error:
   Rotate_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rotate_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], buf[22];
@@ -3783,30 +3165,6 @@ void Rotate_log_event::pack_info(Protocol *protocol)
   tmp.append(llstr(pos,buf));
   protocol->store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
-#endif
-
-
-/*
-  Rotate_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  char buf[22];
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\tRotate to ");
-  if (new_log_ident)
-    my_b_write(&cache, (uchar*) new_log_ident, (uint)ident_len);
-  my_b_printf(&cache, "  pos: %s\n", llstr(pos, buf));
-}
-#endif /* DRIZZLE_CLIENT */
-
 
 
 /*
@@ -3814,7 +3172,6 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 */
 
 
-#ifndef DRIZZLE_CLIENT
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                                    uint ident_len_arg, uint64_t pos_arg,
                                    uint flags_arg)
@@ -3826,7 +3183,6 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
     new_log_ident= my_strndup(new_log_ident_arg, ident_len, MYF(MY_WME));
   return;
 }
-#endif
 
 
 Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
@@ -3854,7 +3210,6 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
   Rotate_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Rotate_log_event::write(IO_CACHE* file)
 {
   char buf[ROTATE_HEADER_LEN];
@@ -3863,10 +3218,7 @@ bool Rotate_log_event::write(IO_CACHE* file)
           my_b_safe_write(file, (uchar*)buf, ROTATE_HEADER_LEN) ||
           my_b_safe_write(file, (uchar*)new_log_ident, (uint) ident_len));
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Got a rotate log event from the master.
@@ -3948,8 +3300,6 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
   return Log_event::EVENT_SKIP_NOT;             // To keep compiler happy
 }
 
-#endif
-
 
 /**************************************************************************
 	Intvar_log_event methods
@@ -3959,7 +3309,6 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
   Intvar_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Intvar_log_event::pack_info(Protocol *protocol)
 {
   char buf[256], *pos;
@@ -3968,7 +3317,6 @@ void Intvar_log_event::pack_info(Protocol *protocol)
   pos= int64_t10_to_str(val, pos, -10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
 
 /*
@@ -4003,7 +3351,6 @@ const char* Intvar_log_event::get_var_type_name()
   Intvar_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Intvar_log_event::write(IO_CACHE* file)
 {
   uchar buf[9];
@@ -4012,51 +3359,16 @@ bool Intvar_log_event::write(IO_CACHE* file)
   return (write_header(file, sizeof(buf)) ||
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
 
 /*
   Intvar_log_event::print()
 */
 
-#ifdef DRIZZLE_CLIENT
-void Intvar_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  char llbuff[22];
-  const char *msg;
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tIntvar\n");
-  }
-
-  my_b_printf(&cache, "SET ");
-  switch (type) {
-  case LAST_INSERT_ID_EVENT:
-    msg="LAST_INSERT_ID";
-    break;
-  case INSERT_ID_EVENT:
-    msg="INSERT_ID";
-    break;
-  case INVALID_INT_EVENT:
-  default: // cannot happen
-    msg="INVALID_INT";
-    break;
-  }
-  my_b_printf(&cache, "%s=%s%s\n",
-              msg, llstr(val,llbuff), print_event_info->delimiter);
-}
-#endif
-
-
 /*
   Intvar_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION)&& !defined(DRIZZLE_CLIENT)
 int Intvar_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4098,14 +3410,11 @@ Intvar_log_event::do_shall_skip(Relay_log_info *rli)
   return continue_group(rli);
 }
 
-#endif
-
 
 /**************************************************************************
   Rand_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rand_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], *pos;
@@ -4115,7 +3424,6 @@ void Rand_log_event::pack_info(Protocol *protocol)
   pos= int10_to_str((long) seed2, pos, 10);
   protocol->store(buf1, (uint) (pos-buf1), &my_charset_bin);
 }
-#endif
 
 
 Rand_log_event::Rand_log_event(const char* buf,
@@ -4128,7 +3436,6 @@ Rand_log_event::Rand_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Rand_log_event::write(IO_CACHE* file)
 {
   uchar buf[16];
@@ -4137,29 +3444,8 @@ bool Rand_log_event::write(IO_CACHE* file)
   return (write_header(file, sizeof(buf)) ||
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Rand_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  char llbuff[22],llbuff2[22];
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tRand\n");
-  }
-  my_b_printf(&cache, "SET @@RAND_SEED1=%s, @@RAND_SEED2=%s%s\n",
-              llstr(seed1, llbuff),llstr(seed2, llbuff2),
-              print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Rand_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4194,14 +3480,11 @@ Rand_log_event::do_shall_skip(Relay_log_info *rli)
   return continue_group(rli);
 }
 
-#endif /* !DRIZZLE_CLIENT */
-
 
 /**************************************************************************
   Xid_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
@@ -4210,7 +3493,6 @@ void Xid_log_event::pack_info(Protocol *protocol)
   pos= my_stpcpy(pos, " */");
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
 /**
   @note
@@ -4231,35 +3513,13 @@ Xid_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Xid_log_event::write(IO_CACHE* file)
 {
   return write_header(file, sizeof(xid)) ||
          my_b_safe_write(file, (uchar*) &xid, sizeof(xid));
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    char buf[64];
-    int64_t10_to_str(xid, buf, 10);
-
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tXid = %s\n", buf);
-  }
-  my_b_printf(&cache, "COMMIT%s\n", print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   return end_trans(thd, COMMIT);
@@ -4274,14 +3534,12 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
   }
   return(Log_event::do_shall_skip(rli));
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   User_var_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void User_var_log_event::pack_info(Protocol* protocol)
 {
   char *buf= 0;
@@ -4359,7 +3617,6 @@ void User_var_log_event::pack_info(Protocol* protocol)
   protocol->store(buf, event_len, &my_charset_bin);
   free(buf);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 User_var_log_event::
@@ -4391,7 +3648,6 @@ User_var_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool User_var_log_event::write(IO_CACHE* file)
 {
   char buf[UV_NAME_LEN_SIZE];
@@ -4451,121 +3707,13 @@ bool User_var_log_event::write(IO_CACHE* file)
 	  my_b_safe_write(file, (uchar*) buf1, buf1_length) ||
 	  my_b_safe_write(file, pos, val_len));
 }
-#endif
 
-
-/*
-  User_var_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tUser_var\n");
-  }
-
-  my_b_printf(&cache, "SET @`");
-  my_b_write(&cache, (uchar*) name, (uint) (name_len));
-  my_b_printf(&cache, "`");
-
-  if (is_null)
-  {
-    my_b_printf(&cache, ":=NULL%s\n", print_event_info->delimiter);
-  }
-  else
-  {
-    switch (type) {
-    case REAL_RESULT:
-      double real_val;
-      char real_buf[FMT_G_BUFSIZE(14)];
-      float8get(real_val, val);
-      sprintf(real_buf, "%.14g", real_val);
-      my_b_printf(&cache, ":=%s%s\n", real_buf, print_event_info->delimiter);
-      break;
-    case INT_RESULT:
-      char int_buf[22];
-      int64_t10_to_str(uint8korr(val), int_buf, -10);
-      my_b_printf(&cache, ":=%s%s\n", int_buf, print_event_info->delimiter);
-      break;
-    case DECIMAL_RESULT:
-    {
-      char str_buf[200];
-      int str_len= sizeof(str_buf) - 1;
-      int precision= (int)val[0];
-      int scale= (int)val[1];
-      decimal_digit_t dec_buf[10];
-      decimal_t dec;
-      dec.len= 10;
-      dec.buf= dec_buf;
-
-      bin2decimal((uchar*) val+2, &dec, precision, scale);
-      decimal2string(&dec, str_buf, &str_len, 0, 0, 0);
-      str_buf[str_len]= 0;
-      my_b_printf(&cache, ":=%s%s\n", str_buf, print_event_info->delimiter);
-      break;
-    }
-    case STRING_RESULT:
-    {
-      /*
-        Let's express the string in hex. That's the most robust way. If we
-        print it in character form instead, we need to escape it with
-        character_set_client which we don't know (we will know it in 5.0, but
-        in 4.1 we don't know it easily when we are printing
-        User_var_log_event). Explanation why we would need to bother with
-        character_set_client (quoting Bar):
-        > Note, the parser doesn't switch to another unescaping mode after
-        > it has met a character set introducer.
-        > For example, if an SJIS client says something like:
-        > SET @a= _ucs2 \0a\0b'
-        > the string constant is still unescaped according to SJIS, not
-        > according to UCS2.
-      */
-      char *hex_str;
-      const CHARSET_INFO *cs;
-
-      if (!(hex_str= (char *)my_alloca(2*val_len+1+2))) // 2 hex digits / byte
-        break; // no error, as we are 'void'
-      str_to_hex(hex_str, val, val_len);
-      /*
-        For proper behaviour when mysqlbinlog|mysql, we need to explicitely
-        specify the variable's collation. It will however cause problems when
-        people want to mysqlbinlog|mysql into another server not supporting the
-        character set. But there's not much to do about this and it's unlikely.
-      */
-      if (!(cs= get_charset(charset_number, MYF(0))))
-        /*
-          Generate an unusable command (=> syntax error) is probably the best
-          thing we can do here.
-        */
-        my_b_printf(&cache, ":=???%s\n", print_event_info->delimiter);
-      else
-        my_b_printf(&cache, ":=_%s %s COLLATE `%s`%s\n",
-                    cs->csname, hex_str, cs->name,
-                    print_event_info->delimiter);
-      my_afree(hex_str);
-    }
-      break;
-    case ROW_RESULT:
-    default:
-      assert(1);
-      return;
-    }
-  }
-}
-#endif
 
 
 /*
   User_var_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int User_var_log_event::do_apply_event(Relay_log_info const *rli)
 {
   Item *it= 0;
@@ -4656,27 +3804,12 @@ User_var_log_event::do_shall_skip(Relay_log_info *rli)
   */
   return continue_group(rli);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   Slave_log_event methods
 **************************************************************************/
 
-#ifdef HAVE_REPLICATION
-#ifdef DRIZZLE_CLIENT
-void Unknown_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file_arg);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n# %s", "Unknown event\n");
-}
-#endif  
-
-#ifndef DRIZZLE_CLIENT
 void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
@@ -4690,10 +3823,8 @@ void Slave_log_event::pack_info(Protocol *protocol)
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
-#ifndef DRIZZLE_CLIENT
 /**
   @todo
   re-write this better without holding both locks at the same time
@@ -4728,7 +3859,6 @@ Slave_log_event::Slave_log_event(THD* thd_arg,
   pthread_mutex_unlock(&mi->data_lock);
   return;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 Slave_log_event::~Slave_log_event()
@@ -4737,29 +3867,12 @@ Slave_log_event::~Slave_log_event()
 }
 
 
-#ifdef DRIZZLE_CLIENT
-void Slave_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  char llbuff[22];
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n\
-Slave: master_host: '%s'  master_port: %d  master_log: '%s'  master_pos: %s\n",
-	  master_host, master_port, master_log, llstr(master_pos, llbuff));
-}
-#endif /* DRIZZLE_CLIENT */
-
-
 int Slave_log_event::get_data_size()
 {
   return master_host_len + master_log_len + 1 + SL_MASTER_HOST_OFFSET;
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Slave_log_event::write(IO_CACHE* file)
 {
   ulong event_length= get_data_size();
@@ -4770,7 +3883,6 @@ bool Slave_log_event::write(IO_CACHE* file)
   return (write_header(file, event_length) ||
           my_b_safe_write(file, (uchar*) mem_pool, event_length));
 }
-#endif
 
 
 void Slave_log_event::init_from_mem_pool(int data_size)
@@ -4805,40 +3917,18 @@ Slave_log_event::Slave_log_event(const char* buf, uint event_len)
 }
 
 
-#ifndef DRIZZLE_CLIENT
 int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   if (mysql_bin_log.is_open())
     mysql_bin_log.write(this);
   return 0;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
 	Stop_log_event methods
 **************************************************************************/
 
-/*
-  Stop_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Stop_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (print_event_info->short_form)
-    return;
-
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\tStop\n");
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#ifndef DRIZZLE_CLIENT
 /*
   The master stopped.  We used to clean up all temporary tables but
   this is useless as, as the master has shut down properly, it has
@@ -4869,9 +3959,6 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !DRIZZLE_CLIENT */
-#endif /* HAVE_REPLICATION */
-
 
 /**************************************************************************
 	Create_file_log_event methods
@@ -4881,7 +3968,6 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   Create_file_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT
 Create_file_log_event::
 Create_file_log_event(THD* thd_arg, sql_exchange* ex,
 		      const char* db_arg, const char* table_name_arg,
@@ -4940,8 +4026,6 @@ bool Create_file_log_event::write_base(IO_CACHE* file)
   return res;
 }
 
-#endif /* !DRIZZLE_CLIENT */
-
 /*
   Create_file_log_event ctor
 */
@@ -4997,49 +4081,9 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
 
 
 /*
-  Create_file_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info,
-				  bool enable_local)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-  {
-    if (enable_local && check_fname_outside_temp_buf())
-      Load_log_event::print(file, print_event_info);
-    return;
-  }
-
-  if (enable_local)
-  {
-    Load_log_event::print(file, print_event_info,
-			  !check_fname_outside_temp_buf());
-    /* 
-       That one is for "file_id: etc" below: in mysqlbinlog we want the #, in
-       SHOW BINLOG EVENTS we don't.
-    */
-    my_b_printf(&cache, "#"); 
-  }
-
-  my_b_printf(&cache, " file_id: %d  block_len: %d\n", file_id, block_len);
-}
-
-
-void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-/*
   Create_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Create_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[NAME_LEN*2 + 30 + 21*2], *pos;
@@ -5053,14 +4097,12 @@ void Create_file_log_event::pack_info(Protocol *protocol)
   pos= int10_to_str((long) block_len, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /*
   Create_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
 {
   char proc_info[17+FN_REFLEN+10], *fname_buf;
@@ -5128,7 +4170,6 @@ err:
   thd_proc_info(thd, 0);
   return error == 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5139,7 +4180,6 @@ err:
   Append_block_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT  
 Append_block_log_event::Append_block_log_event(THD *thd_arg,
                                                const char *db_arg,
 					       uchar *block_arg,
@@ -5149,7 +4189,6 @@ Append_block_log_event::Append_block_log_event(THD *thd_arg,
    block_len(block_len_arg), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
 
 
 /*
@@ -5177,7 +4216,6 @@ Append_block_log_event::Append_block_log_event(const char* buf, uint len,
   Append_block_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Append_block_log_event::write(IO_CACHE* file)
 {
   uchar buf[APPEND_BLOCK_HEADER_LEN];
@@ -5186,33 +4224,12 @@ bool Append_block_log_event::write(IO_CACHE* file)
           my_b_safe_write(file, buf, APPEND_BLOCK_HEADER_LEN) ||
 	  my_b_safe_write(file, (uchar*) block, block_len));
 }
-#endif
-
-
-/*
-  Append_block_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Append_block_log_event::print(FILE* file,
-				   PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#%s: file_id: %d  block_len: %d\n",
-              get_type_str(), file_id, block_len);
-}
-#endif /* DRIZZLE_CLIENT */
 
 
 /*
   Append_block_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Append_block_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -5281,7 +4298,6 @@ err:
   thd_proc_info(thd, 0);
   return(error);
 }
-#endif
 
 
 /**************************************************************************
@@ -5292,13 +4308,11 @@ err:
   Delete_file_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT
 Delete_file_log_event::Delete_file_log_event(THD *thd_arg, const char* db_arg,
 					     bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
 
 /*
   Delete_file_log_event ctor
@@ -5320,7 +4334,6 @@ Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
   Delete_file_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Delete_file_log_event::write(IO_CACHE* file)
 {
  uchar buf[DELETE_FILE_HEADER_LEN];
@@ -5328,31 +4341,12 @@ bool Delete_file_log_event::write(IO_CACHE* file)
  return (write_header(file, sizeof(buf)) ||
          my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
-
-/*
-  Delete_file_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Delete_file_log_event::print(FILE* file,
-				  PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#Delete_file: file_id=%u\n", file_id);
-}
-#endif /* DRIZZLE_CLIENT */
 
 /*
   Delete_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Delete_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
@@ -5360,13 +4354,11 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
   length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
   protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
-#endif
 
 /*
   Delete_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   char fname[FN_REFLEN+10];
@@ -5376,7 +4368,6 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5387,14 +4378,12 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   Execute_load_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT  
 Execute_load_log_event::Execute_load_log_event(THD *thd_arg,
                                                const char* db_arg,
 					       bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
   
 
 /*
@@ -5417,7 +4406,6 @@ Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
   Execute_load_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Execute_load_log_event::write(IO_CACHE* file)
 {
   uchar buf[EXEC_LOAD_HEADER_LEN];
@@ -5425,32 +4413,12 @@ bool Execute_load_log_event::write(IO_CACHE* file)
   return (write_header(file, sizeof(buf)) || 
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
-
-/*
-  Execute_load_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Execute_load_log_event::print(FILE* file,
-				   PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#Exec_load: file_id=%d\n",
-              file_id);
-}
-#endif
 
 /*
   Execute_load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
@@ -5551,14 +4519,11 @@ err:
   return error;
 }
 
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
-
 
 /**************************************************************************
 	Begin_load_query_log_event methods
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Begin_load_query_log_event::
 Begin_load_query_log_event(THD* thd_arg, const char* db_arg, uchar* block_arg,
                            uint block_len_arg, bool using_trans)
@@ -5567,7 +4532,6 @@ Begin_load_query_log_event(THD* thd_arg, const char* db_arg, uchar* block_arg,
 {
    file_id= thd_arg->file_id= mysql_bin_log.next_file_id();
 }
-#endif
 
 
 Begin_load_query_log_event::
@@ -5578,15 +4542,12 @@ Begin_load_query_log_event(const char* buf, uint len,
 }
 
 
-#if defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Begin_load_query_log_event::get_create_or_append() const
 {
   return 1; /* create the file */
 }
-#endif /* defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 Log_event::enum_skip_reason
 Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 {
@@ -5596,7 +4557,6 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
   */
   return continue_group(rli);
 }
-#endif
 
 
 /**************************************************************************
@@ -5604,7 +4564,6 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 **************************************************************************/
 
 
-#ifndef DRIZZLE_CLIENT
 Execute_load_query_log_event::
 Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
                              ulong query_length_arg, uint fn_pos_start_arg,
@@ -5618,7 +4577,6 @@ Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
   fn_pos_end(fn_pos_end_arg), dup_handling(dup_handling_arg)
 {
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 Execute_load_query_log_event::
@@ -5650,7 +4608,6 @@ ulong Execute_load_query_log_event::get_post_header_size_for_derived()
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool
 Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
 {
@@ -5661,52 +4618,8 @@ Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
   *(buf + 4 + 4 + 4)= (uchar) dup_handling;
   return my_b_safe_write(file, buf, EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN);
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Execute_load_query_log_event::print(FILE* file,
-                                         PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-
-/**
-  Prints the query as LOAD DATA LOCAL and with rewritten filename.
-*/
-void Execute_load_query_log_event::print(FILE* file,
-                                         PRINT_EVENT_INFO* print_event_info,
-                                         const char *local_fname)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  print_query_header(&cache, print_event_info);
-
-  if (local_fname)
-  {
-    my_b_write(&cache, (uchar*) query, fn_pos_start);
-    my_b_printf(&cache, " LOCAL INFILE \'");
-    my_b_printf(&cache, local_fname);
-    my_b_printf(&cache, "\'");
-    if (dup_handling == LOAD_DUP_REPLACE)
-      my_b_printf(&cache, " REPLACE");
-    my_b_printf(&cache, " INTO");
-    my_b_write(&cache, (uchar*) query + fn_pos_end, q_len-fn_pos_end);
-    my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-  }
-  else
-  {
-    my_b_write(&cache, (uchar*) query, q_len);
-    my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-  }
-
-  if (!print_event_info->short_form)
-    my_b_printf(&cache, "# file_id: %d \n", file_id);
-}
-#endif
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_query_log_event::pack_info(Protocol *protocol)
 {
   char *buf, *pos;
@@ -5788,7 +4701,6 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   free(buf);
   return error;
 }
-#endif
 
 
 /**************************************************************************
@@ -5884,7 +4796,6 @@ const char *sql_ex_info::init(const char *buf, const char *buf_end,
 	Rows_log_event member functions
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
                                MY_BITMAP const *cols, bool is_transactional)
   : Log_event(thd_arg, 0, is_transactional),
@@ -5893,9 +4804,7 @@ Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
     m_table_id(tid),
     m_width(tbl_arg ? tbl_arg->s->fields : 1),
     m_rows_buf(0), m_rows_cur(0), m_rows_end(0), m_flags(0) 
-#ifdef HAVE_REPLICATION
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
-#endif
 {
   /*
     We allow a special form of dummy event when the table, and cols
@@ -5928,7 +4837,7 @@ Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
     m_cols.bitmap= 0;
   }
 }
-#endif
+
 
 Rows_log_event::Rows_log_event(const char *buf, uint event_len,
                                Log_event_type event_type,
@@ -5936,13 +4845,9 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
                                *description_event)
   : Log_event(buf, description_event),
     m_row_count(0),
-#ifndef DRIZZLE_CLIENT
     m_table(NULL),
-#endif
     m_table_id(0), m_rows_buf(0), m_rows_cur(0), m_rows_end(0)
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
-#endif
 {
   uint8_t const common_header_len= description_event->common_header_len;
   uint8_t const post_header_len= description_event->post_header_len[event_type-1];
@@ -6014,9 +4919,7 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
   m_rows_buf= (uchar*) my_malloc(data_size, MYF(MY_WME));
   if (likely((bool)m_rows_buf))
   {
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     m_curr_row= m_rows_buf;
-#endif
     m_rows_end= m_rows_buf + data_size;
     m_rows_cur= m_rows_end;
     memcpy(m_rows_buf, ptr_rows_data, data_size);
@@ -6054,7 +4957,6 @@ int Rows_log_event::get_data_size()
 }
 
 
-#ifndef DRIZZLE_CLIENT
 int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
 {
   /*
@@ -6111,9 +5013,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
   m_row_count++;
   return(0);
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Rows_log_event::do_apply_event(Relay_log_info const *rli)
 {
   int error= 0;
@@ -6607,9 +5507,6 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
   return(error);
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifndef DRIZZLE_CLIENT
 bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
@@ -6648,9 +5545,8 @@ bool Rows_log_event::write_data_body(IO_CACHE*file)
   return res;
 
 }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
+
 void Rows_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -6660,32 +5556,7 @@ void Rows_log_event::pack_info(Protocol *protocol)
                          "table_id: %lu%s", m_table_id, flagstr);
   protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
-#ifdef DRIZZLE_CLIENT
-void Rows_log_event::print_helper(FILE *file,
-                                  PRINT_EVENT_INFO *print_event_info,
-                                  char const *const name)
-{
-  IO_CACHE *const head= &print_event_info->head_cache;
-  IO_CACHE *const body= &print_event_info->body_cache;
-  if (!print_event_info->short_form)
-  {
-    bool const last_stmt_event= get_flags(STMT_END_F);
-    print_header(head, print_event_info, !last_stmt_event);
-    my_b_printf(head, "\t%s: table id %lu%s\n",
-                name, m_table_id,
-                last_stmt_event ? " flags: STMT_END_F" : "");
-    print_base64(body, print_event_info, !last_stmt_event);
-  }
-
-  if (get_flags(STMT_END_F))
-  {
-    copy_event_cache_to_file_and_reinit(head, file);
-    copy_event_cache_to_file_and_reinit(body, file);
-  }
-}
-#endif
 
 /**************************************************************************
 	Table_map_log_event member functions and support functions
@@ -6723,7 +5594,6 @@ void Rows_log_event::print_helper(FILE *file,
   type used is uint32_t. 
 */
 
-#if !defined(DRIZZLE_CLIENT)
 /**
   Save the field metadata based on the real_type of the field.
   The metadata saved depends on the type of the field. Some fields
@@ -6755,14 +5625,12 @@ int Table_map_log_event::save_field_metadata()
     index+= m_table->s->field[i]->save_field_metadata(&m_field_metadata[index]);
   return(index);
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used to build an event for writing to the binary log.
   Mats says tbl->s lives longer than this event so it's ok to copy pointers
   (tbl->s->db etc) and not pointer content.
  */
-#if !defined(DRIZZLE_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
                                          bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
@@ -6843,20 +5711,17 @@ Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
       m_null_bits[(i / 8)]+= 1 << (i % 8);
 
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
+
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#if defined(HAVE_REPLICATION)
 Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
                                          const Format_description_log_event
                                          *description_event)
 
   : Log_event(buf, description_event),
-#ifndef DRIZZLE_CLIENT
     m_table(NULL),
-#endif
     m_dbnam(NULL), m_dblen(0), m_tblnam(NULL), m_tbllen(0),
     m_colcnt(0), m_coltype(0),
     m_memory(NULL), m_table_id(ULONG_MAX), m_flags(0),
@@ -6938,7 +5803,6 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
 
   return;
 }
-#endif
 
 Table_map_log_event::~Table_map_log_event()
 {
@@ -6957,7 +5821,6 @@ Table_map_log_event::~Table_map_log_event()
        4     Daisy-chaining RBR with SBR not possible
  */
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
 {
   RPL_TableList *table_list;
@@ -7110,9 +5973,7 @@ int Table_map_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifndef DRIZZLE_CLIENT
 bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
   assert(m_table_id != UINT32_MAX);
@@ -7153,16 +6014,13 @@ bool Table_map_log_event::write_data_body(IO_CACHE *file)
           my_b_safe_write(file, m_field_metadata, m_field_metadata_size),
           my_b_safe_write(file, m_null_bits, (m_colcnt + 7) / 8));
  }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Print some useful information for the SHOW BINARY LOG information
   field.
  */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Table_map_log_event::pack_info(Protocol *protocol)
 {
     char buf[256];
@@ -7171,26 +6029,7 @@ void Table_map_log_event::pack_info(Protocol *protocol)
                            m_table_id, m_dbnam, m_tblnam);
     protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
-
-#endif
-
-
-#ifdef DRIZZLE_CLIENT
-void Table_map_log_event::print(FILE * /* unused */,
-                                PRINT_EVENT_INFO *print_event_info)
-{
-  if (!print_event_info->short_form)
-  {
-    print_header(&print_event_info->head_cache, print_event_info, true);
-    my_b_printf(&print_event_info->head_cache,
-                "\tTable_map: `%s`.`%s` mapped to number %lu\n",
-                m_dbnam, m_tblnam, m_table_id);
-    print_base64(&print_event_info->body_cache, print_event_info, true);
-  }
-}
-#endif
 
 /**************************************************************************
 	Write_rows_log_event member functions
@@ -7199,28 +6038,23 @@ void Table_map_log_event::print(FILE * /* unused */,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(DRIZZLE_CLIENT)
 Write_rows_log_event::Write_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                            ulong tid_arg,
                                            bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid_arg, tbl_arg->write_set, is_transactional)
 {
 }
-#endif
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
 Write_rows_log_event::Write_rows_log_event(const char *buf, uint event_len,
                                            const Format_description_log_event
                                            *description_event)
 : Rows_log_event(buf, event_len, WRITE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int 
 Write_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
 {
@@ -7298,7 +6132,6 @@ Write_rows_log_event::do_after_row_operations(const Slave_reporting_capability *
   return error? error : local_error;
 }
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 /*
   Check if there are more UNIQUE keys after the given key.
@@ -7547,7 +6380,6 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
   return(error);
 }
 
-#endif
 
 int 
 Write_rows_log_event::do_exec_row(const Relay_log_info *const rli)
@@ -7566,20 +6398,11 @@ Write_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error; 
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifdef DRIZZLE_CLIENT
-void Write_rows_log_event::print(FILE *file, PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Write_rows");
-}
-#endif
 
 /**************************************************************************
 	Delete_rows_log_event member functions
 **************************************************************************/
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 /*
   Compares table->record[0] and table->record[1]
 
@@ -7876,34 +6699,28 @@ err:
   return(error);
 }
 
-#endif
 
 /*
   Constructor used to build an event for writing to the binary log.
  */
 
-#ifndef DRIZZLE_CLIENT
 Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
 {
 }
-#endif /* #if !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
 Delete_rows_log_event::Delete_rows_log_event(const char *buf, uint event_len,
                                              const Format_description_log_event
                                              *description_event)
   : Rows_log_event(buf, event_len, DELETE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Delete_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -7955,16 +6772,6 @@ int Delete_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifdef DRIZZLE_CLIENT
-void Delete_rows_log_event::print(FILE *file,
-                                  PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Delete_rows");
-}
-#endif
-
 
 /**************************************************************************
 	Update_rows_log_event member functions
@@ -7973,7 +6780,6 @@ void Delete_rows_log_event::print(FILE *file,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(DRIZZLE_CLIENT)
 Update_rows_log_event::Update_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
@@ -7998,7 +6804,6 @@ void Update_rows_log_event::init(MY_BITMAP const *cols)
     }
   }
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
 
 
 Update_rows_log_event::~Update_rows_log_event()
@@ -8012,7 +6817,6 @@ Update_rows_log_event::~Update_rows_log_event()
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
 Update_rows_log_event::Update_rows_log_event(const char *buf, uint event_len,
                                              const
                                              Format_description_log_event
@@ -8020,9 +6824,7 @@ Update_rows_log_event::Update_rows_log_event(const char *buf, uint event_len,
   : Rows_log_event(buf, event_len, UPDATE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Update_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -8101,16 +6903,6 @@ Update_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifdef DRIZZLE_CLIENT
-void Update_rows_log_event::print(FILE *file,
-				  PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Update_rows");
-}
-#endif
-
 
 Incident_log_event::Incident_log_event(const char *buf, uint event_len,
                                        const Format_description_log_event *descr_event)
@@ -8153,7 +6945,6 @@ Incident_log_event::description() const
 }
 
 
-#ifndef DRIZZLE_CLIENT
 void Incident_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -8166,24 +6957,8 @@ void Incident_log_event::pack_info(Protocol *protocol)
                     m_incident, description(), m_message.str);
   protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void
-Incident_log_event::print(FILE *file,
-                          PRINT_EVENT_INFO *print_event_info)
-{
-  if (print_event_info->short_form)
-    return;
-
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n# Incident: %s", description());
-}
-#endif
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int
 Incident_log_event::do_apply_event(Relay_log_info const *rli)
 {
@@ -8193,7 +6968,7 @@ Incident_log_event::do_apply_event(Relay_log_info const *rli)
               m_message.length > 0 ? m_message.str : "<none>");
   return(1);
 }
-#endif
+
 
 bool
 Incident_log_event::write_data_header(IO_CACHE *file)
@@ -8209,7 +6984,6 @@ Incident_log_event::write_data_body(IO_CACHE *file)
   return(write_str(file, m_message.str, m_message.length));
 }
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
                     const Format_description_log_event* description_event)
   :Log_event(buf, description_event)
@@ -8219,35 +6993,3 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
   set_if_smaller(ident_len,FN_REFLEN-1);
   log_ident= buf + header_size;
 }
-#endif
-
-
-#ifdef DRIZZLE_CLIENT
-/**
-  The default values for these variables should be values that are
-  *incorrect*, i.e., values that cannot occur in an event.  This way,
-  they will always be printed for the first event.
-*/
-st_print_event_info::st_print_event_info()
-  :flags2_inited(0), sql_mode_inited(0),
-   auto_increment_increment(0),auto_increment_offset(0), charset_inited(0),
-   lc_time_names_number(UINT32_MAX),
-   charset_database_number(ILLEGAL_CHARSET_INFO_NUMBER),
-   thread_id(0), thread_id_printed(false),
-   base64_output_mode(BASE64_OUTPUT_UNSPEC), printed_fd_event(false)
-{
-  /*
-    Currently we only use static PRINT_EVENT_INFO objects, so zeroed at
-    program's startup, but these explicit memset() is for the day someone
-    creates dynamic instances.
-  */
-  memset(db, 0, sizeof(db));
-  memset(charset, 0, sizeof(charset));
-  memset(time_zone_str, 0, sizeof(time_zone_str));
-  delimiter[0]= ';';
-  delimiter[1]= 0;
-  myf const flags = MYF(MY_WME | MY_NABP);
-  open_cached_file(&head_cache, NULL, NULL, 0, flags);
-  open_cached_file(&body_cache, NULL, NULL, 0, flags);
-}
-#endif

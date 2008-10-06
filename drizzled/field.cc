@@ -587,7 +587,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
     1   error
 */
 
-bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint len,
+bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
                         int64_t *rnd, uint64_t unsigned_max, 
                         int64_t signed_min, int64_t signed_max)
 {
@@ -721,12 +721,12 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
 String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
+  uint32_t length;
   int64_t value= val_int();
 
   if (val_buffer->alloc(MY_INT64_NUM_DECIMAL_DIGITS))
     return 0;
-  length= (uint) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
+  length= (uint32_t) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
                                                 MY_INT64_NUM_DECIMAL_DIGITS,
                                                 unsigned_val ? 10 : -10,
                                                 value);
@@ -762,7 +762,7 @@ void Field::hash(uint32_t *nr, uint32_t *nr2)
   }
   else
   {
-    uint len= pack_length();
+    uint32_t len= pack_length();
     const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
@@ -783,7 +783,7 @@ void Field::copy_from_tmp(int row_offset)
   memcpy(ptr,ptr+row_offset,pack_length());
   if (null_ptr)
   {
-    *null_ptr= (uchar) ((null_ptr[0] & (uchar) ~(uint) null_bit) | (null_ptr[row_offset] & (uchar) null_bit));
+    *null_ptr= (uchar) ((null_ptr[0] & (uchar) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (uchar) null_bit));
   }
 }
 
@@ -810,15 +810,15 @@ bool Field::send_binary(Protocol *protocol)
    @retval 0 if this field's size is < the source field's size
    @retval 1 if this field's size is >= the source field's size
 */
-int Field::compatible_field_size(uint field_metadata)
+int Field::compatible_field_size(uint32_t field_metadata)
 {
-  uint const source_size= pack_length_from_metadata(field_metadata);
-  uint const destination_size= row_pack_length();
+  uint32_t const source_size= pack_length_from_metadata(field_metadata);
+  uint32_t const destination_size= row_pack_length();
   return (source_size <= destination_size);
 }
 
 
-int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
+int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -868,7 +868,7 @@ int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
    little-endian.
 */
 uchar *
-Field::pack(uchar *to, const uchar *from, uint max_length,
+Field::pack(uchar *to, const uchar *from, uint32_t max_length,
             bool low_byte_first __attribute__((unused)))
 {
   uint32_t length= pack_length();
@@ -908,10 +908,10 @@ Field::pack(uchar *to, const uchar *from, uint max_length,
    @return  New pointer into memory based on from + length of the data
 */
 const uchar *
-Field::unpack(uchar* to, const uchar *from, uint param_data,
+Field::unpack(uchar* to, const uchar *from, uint32_t param_data,
               bool low_byte_first __attribute__((unused)))
 {
-  uint length=pack_length();
+  uint32_t length=pack_length();
   int from_type= 0;
   /*
     If from length is > 255, it has encoded data in the upper bits. Need
@@ -931,7 +931,7 @@ Field::unpack(uchar* to, const uchar *from, uint param_data,
     return from+length;
   }
 
-  uint len= (param_data && (param_data < length)) ?
+  uint32_t len= (param_data && (param_data < length)) ?
             param_data : length;
 
   memcpy(to, from, param_data > length ? length : len);
@@ -1126,9 +1126,9 @@ my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
 }
 
 
-uint Field::fill_cache_field(CACHE_FIELD *copy)
+uint32_t Field::fill_cache_field(CACHE_FIELD *copy)
 {
-  uint store_length;
+  uint32_t store_length;
   copy->str=ptr;
   copy->length=pack_length();
   copy->blob_field=0;
@@ -1148,7 +1148,7 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
 }
 
 
-bool Field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1180,12 +1180,12 @@ int Field::store_time(DRIZZLE_TIME *ltime,
                       enum enum_drizzle_timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint length= (uint) my_TIME_to_str(ltime, buff);
+  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
   return store(buff, length, &my_charset_bin);
 }
 
 
-bool Field::optimize_range(uint idx, uint part)
+bool Field::optimize_range(uint32_t idx, uint32_t part)
 {
   return test(table->file->index_flags(idx, part, 1) & HA_READ_RANGE);
 }
@@ -1213,7 +1213,7 @@ Field *Field::new_field(MEM_ROOT *root, Table *new_table,
 
 Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
                             uchar *new_ptr, uchar *new_null_ptr,
-                            uint new_null_bit)
+                            uint32_t new_null_bit)
 {
   Field *tmp;
   if ((tmp= new_field(root, new_table, table == new_table)))
@@ -1245,7 +1245,7 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
 ** tiny int
 ****************************************************************************/
 
-int Field_tiny::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_tiny::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error;
   int64_t rnd;
@@ -1362,16 +1362,16 @@ String *Field_tiny::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
-  uint mlength=cmax(field_length+1,5*cs->mbmaxlen);
+  uint32_t length;
+  uint32_t mlength=cmax(field_length+1,5*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
 
   if (unsigned_flag)
-    length= (uint) cs->cset->long10_to_str(cs,to,mlength, 10,
+    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength, 10,
 					   (long) *ptr);
   else
-    length= (uint) cs->cset->long10_to_str(cs,to,mlength,-10,
+    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength,-10,
 					   (long) *((signed char*) ptr));
   
   val_buffer->length(length);
@@ -1393,7 +1393,7 @@ int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_tiny::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_tiny::sort_string(uchar *to,uint32_t length __attribute__((unused)))
 {
   if (unsigned_flag)
     *to= *ptr;
@@ -1546,7 +1546,7 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
 int Field_str::store(double nr)
 {
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-  uint local_char_length= field_length / charset()->mbmaxlen;
+  uint32_t local_char_length= field_length / charset()->mbmaxlen;
   size_t length;
   bool error;
 
@@ -1562,7 +1562,7 @@ int Field_str::store(double nr)
 }
 
 
-uint Field::is_equal(Create_field *new_field)
+uint32_t Field::is_equal(Create_field *new_field)
 {
   return (new_field->sql_type == real_type());
 }
@@ -1579,7 +1579,7 @@ bool Field_str::compare_str_field_flags(Create_field *new_field, uint32_t flag_a
 }
 
 
-uint Field_str::is_equal(Create_field *new_field)
+uint32_t Field_str::is_equal(Create_field *new_field)
 {
   if (compare_str_field_flags(new_field, flags))
     return 0;
@@ -1631,7 +1631,7 @@ bool Field_enum::eq_def(Field *field)
 
   if (typelib->count < from_lib->count)
     return 0;
-  for (uint i=0 ; i < from_lib->count ; i++)
+  for (uint32_t i=0 ; i < from_lib->count ; i++)
     if (my_strnncoll(field_charset,
                      (const uchar*)typelib->type_names[i],
                      strlen(typelib->type_names[i]),
@@ -1658,13 +1658,13 @@ bool Field_num::eq_def(Field *field)
 }
 
 
-uint Field_num::is_equal(Create_field *new_field)
+uint32_t Field_num::is_equal(Create_field *new_field)
 {
   return ((new_field->sql_type == real_type()) &&
-	  ((new_field->flags & UNSIGNED_FLAG) == (uint) (flags &
+	  ((new_field->flags & UNSIGNED_FLAG) == (uint32_t) (flags &
 							 UNSIGNED_FLAG)) &&
 	  ((new_field->flags & AUTO_INCREMENT_FLAG) ==
-	   (uint) (flags & AUTO_INCREMENT_FLAG)) &&
+	   (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
 	  (new_field->length <= max_display_length()));
 }
 
@@ -1750,24 +1750,24 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
 
 bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
-                        uint fld_type_modifier, Item *fld_default_value,
+                        uint32_t fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
-                        uint fld_geom_type __attribute__((unused)),
+                        uint32_t fld_geom_type __attribute__((unused)),
                         enum column_format_type column_format)
 {
-  uint sign_len, allowed_type_modifier= 0;
+  uint32_t sign_len, allowed_type_modifier= 0;
   uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
 
   field= 0;
   field_name= fld_name;
   def= fld_default_value;
   flags= fld_type_modifier;
-  flags|= (((uint)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
+  flags|= (((uint32_t)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
   unireg_check= (fld_type_modifier & AUTO_INCREMENT_FLAG ?
                  Field::NEXT_NUMBER : Field::NONE);
-  decimals= fld_decimals ? (uint)atoi(fld_decimals) : 0;
+  decimals= fld_decimals ? (uint32_t)atoi(fld_decimals) : 0;
   if (decimals >= NOT_FIXED_DEC)
   {
     my_error(ER_TOO_BIG_SCALE, MYF(0), decimals, fld_name,
@@ -1792,7 +1792,7 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
       (fld_type_modifier & NOT_NULL_FLAG) && fld_type != DRIZZLE_TYPE_TIMESTAMP)
     flags|= NO_DEFAULT_VALUE_FLAG;
 
-  if (fld_length && !(length= (uint) atoi(fld_length)))
+  if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0; /* purecov: inspected */
   sign_len= fld_type_modifier & UNSIGNED_FLAG ? 0 : 1;
 
@@ -2001,14 +2001,14 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 }
 
 
-uint pack_length_to_packflag(uint type)
+uint32_t pack_length_to_packflag(uint32_t type)
 {
   switch (type) {
-    case 1: return f_settype((uint) DRIZZLE_TYPE_TINY);
+    case 1: return f_settype((uint32_t) DRIZZLE_TYPE_TINY);
     case 2: assert(1);
     case 3: assert(1);
-    case 4: return f_settype((uint) DRIZZLE_TYPE_LONG);
-    case 8: return f_settype((uint) DRIZZLE_TYPE_LONGLONG);
+    case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
+    case 8: return f_settype((uint32_t) DRIZZLE_TYPE_LONGLONG);
   }
   return 0;					// This shouldn't happen
 }
@@ -2016,7 +2016,7 @@ uint pack_length_to_packflag(uint type)
 
 Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
-		  uint pack_flag,
+		  uint32_t pack_flag,
 		  enum_field_types field_type,
 		  const CHARSET_INFO * field_charset,
 		  Field::utype unireg_check,
@@ -2056,7 +2056,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
       return 0;                                 // Error
     }
 
-    uint pack_length=calc_pack_length((enum_field_types)
+    uint32_t pack_length=calc_pack_length((enum_field_types)
 				      f_packtype(pack_flag),
 				      field_length);
 
@@ -2220,7 +2220,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 */
 
 bool 
-Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
+Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
                    int cuted_increment)
 {
   /*
@@ -2258,7 +2258,7 @@ Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
 void 
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                             unsigned int code, 
-                            const char *str, uint str_length, 
+                            const char *str, uint32_t str_length, 
                             enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
@@ -2286,7 +2286,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 */
 
 void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
                             int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
@@ -2296,7 +2296,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
   {
     char str_nr[22];
     char *str_end= int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(thd, level, str_nr, (uint) (str_end - str_nr), 
+    make_truncated_value_warning(thd, level, str_nr, (uint32_t) (str_end - str_nr), 
                                  ts_type, field_name);
   }
 }
@@ -2317,7 +2317,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
                             double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   THD *thd= table ? table->in_use : current_thd;
@@ -2326,7 +2326,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */
     char str_nr[DBL_DIG + 8];
-    uint str_len= sprintf(str_nr, "%g", nr);
+    uint32_t str_len= sprintf(str_nr, "%g", nr);
     make_truncated_value_warning(thd, level, str_nr, str_len, ts_type,
                                  field_name);
   }

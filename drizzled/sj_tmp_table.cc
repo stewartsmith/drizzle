@@ -53,24 +53,24 @@
 */
 
 Table *create_duplicate_weedout_tmp_table(THD *thd,
-                                          uint uniq_tuple_length_arg,
+                                          uint32_t uniq_tuple_length_arg,
                                           SJ_TMP_TABLE *sjtbl)
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
   TABLE_SHARE *share;
-  uint  temp_pool_slot=MY_BIT_NONE;
+  uint32_t  temp_pool_slot=MY_BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;
   KEY_PART_INFO *key_part_info;
   KEY *keyinfo;
   uchar *group_buff;
   uchar *bitmaps;
-  uint *blob_field;
+  uint32_t *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
   Field *field, *key_field;
-  uint blob_count, null_pack_length, null_count;
+  uint32_t blob_count, null_pack_length, null_count;
   uchar *null_flags;
   uchar *pos;
   
@@ -102,12 +102,12 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
                         &table, sizeof(*table),
                         &share, sizeof(*share),
                         &reg_field, sizeof(Field*) * (1+1),
-                        &blob_field, sizeof(uint)*2,
+                        &blob_field, sizeof(uint32_t)*2,
                         &keyinfo, sizeof(*keyinfo),
                         &key_part_info, sizeof(*key_part_info) * 2,
                         &start_recinfo,
                         sizeof(*recinfo)*(1*2+4),
-                        &tmpname, (uint) strlen(path)+1,
+                        &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (!using_unique_constraint ?
                                       uniq_tuple_length_arg : 0),
                         &bitmaps, bitmap_buffer_size(1)*2,
@@ -180,7 +180,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
     share->blob_fields= 0;
   }
 
-  uint reclength= field->pack_length();
+  uint32_t reclength= field->pack_length();
   if (using_unique_constraint)
   {
     share->db_plugin= ha_lock_engine(0, myisam_hton);
@@ -204,7 +204,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
 
   share->reclength= reclength;
   {
-    uint alloc_length=ALIGN_SIZE(share->reclength + MI_UNIQUE_HASH_LENGTH+1);
+    uint32_t alloc_length=ALIGN_SIZE(share->reclength + MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
     if (!(table->record[0]= (uchar*)
           alloc_root(&table->mem_root, alloc_length*3)))
@@ -233,7 +233,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
 
   {
     //Field *field= *reg_field;
-    uint length;
+    uint32_t length;
     memset(recinfo, 0, sizeof(*recinfo));
     field->move_field(pos,(uchar*) 0,0);
 

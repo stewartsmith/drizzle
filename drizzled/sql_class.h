@@ -734,34 +734,6 @@ public:
   }
 };
 
-/**
-  @class Sub_statement_state
-  @brief Used to save context when executing a function or trigger
-*/
-
-/* Defines used for Sub_statement_state::in_sub_stmt */
-
-#define SUB_STMT_TRIGGER 1
-#define SUB_STMT_FUNCTION 2
-
-
-class Sub_statement_state
-{
-public:
-  uint64_t options;
-  uint64_t first_successful_insert_id_in_prev_stmt;
-  uint64_t first_successful_insert_id_in_cur_stmt, insert_id_for_cur_row;
-  Discrete_interval auto_inc_interval_for_cur_row;
-  Discrete_intervals_list auto_inc_intervals_forced;
-  uint64_t limit_found_rows;
-  ha_rows    cuted_fields, sent_row_count, examined_row_count;
-  ulong client_capabilities;
-  uint in_sub_stmt;
-  bool enable_slow_log;
-  bool last_insert_id_used;
-  SAVEPOINT *savepoints;
-};
-
 
 /* Flags for the THD::system_thread variable */
 enum enum_thread_type
@@ -1077,7 +1049,6 @@ public:
 
   /* Place to store various things */
   void *thd_marker;
-#ifndef DRIZZLE_CLIENT
   int binlog_setup_trx_data();
 
   /*
@@ -1127,7 +1098,6 @@ public:
   void clear_binlog_table_maps() {
     binlog_table_maps= 0;
   }
-#endif /* DRIZZLE_CLIENT */
 
 public:
 
@@ -1516,7 +1486,6 @@ public:
   bool store_globals();
   void awake(THD::killed_state state_to_set);
 
-#ifndef DRIZZLE_CLIENT
   enum enum_binlog_query_type {
     /*
       The query can be logged row-based or statement-based
@@ -1540,7 +1509,6 @@ public:
                    char const *query, ulong query_len,
                    bool is_trans, bool suppress_use,
                    THD::killed_state killed_err_arg= THD::KILLED_NO_VALUE);
-#endif
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1692,7 +1660,6 @@ public:
   void set_status_var_init();
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
-  void restore_sub_statement_state(Sub_statement_state *backup);
 
   inline void set_current_stmt_binlog_row_based_if_mixed()
   {

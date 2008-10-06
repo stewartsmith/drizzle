@@ -19,7 +19,6 @@
 
 #include "rpl_filter.h"
 
-#ifdef HAVE_REPLICATION
 #include "slave.h"
 
 typedef struct st_slave_info
@@ -65,6 +64,3 @@ typedef struct st_load_file_info
 
 int log_loaded_block(IO_CACHE* file);
 int init_replication_sys_vars();
-
-#endif /* HAVE_REPLICATION */
-

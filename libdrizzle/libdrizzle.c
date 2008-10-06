@@ -370,16 +370,14 @@ drizzle_list_processes(DRIZZLE *drizzle)
 
 
 int
-drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level)
+drizzle_shutdown(DRIZZLE *drizzle)
 {
-  unsigned char level[1];
-  level[0]= (unsigned char) shutdown_level;
-  return(simple_command(drizzle, COM_SHUTDOWN, level, 1, 0));
+  return(simple_command(drizzle, COM_SHUTDOWN, 0, 1, 0));
 }
 
 
 int
-drizzle_refresh(DRIZZLE *drizzle,uint32_t options)
+drizzle_refresh(DRIZZLE *drizzle, uint32_t options)
 {
   unsigned char bits[1];
   bits[0]= (unsigned char) options;

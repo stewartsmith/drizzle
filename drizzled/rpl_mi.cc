@@ -16,8 +16,6 @@
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 
-#ifdef HAVE_REPLICATION
-
 #define DEFAULT_CONNECT_RETRY 60
 
 // Defined in slave.cc
@@ -390,6 +388,3 @@ void end_master_info(Master_info* mi)
 
   return;
 }
-
-
-#endif /* HAVE_REPLICATION */

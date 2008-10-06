@@ -126,8 +126,7 @@ drizzle_set_local_infile_handler(DRIZZLE *drizzle,
 void
 drizzle_set_local_infile_default(DRIZZLE *drizzle);
 
-int32_t    drizzle_shutdown(DRIZZLE *drizzle,
-                            enum drizzle_enum_shutdown_level shutdown_level);
+int32_t    drizzle_shutdown(DRIZZLE *drizzle);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzle_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
 int32_t    drizzle_kill(DRIZZLE *drizzle, uint32_t pid);

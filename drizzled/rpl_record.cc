@@ -162,7 +162,6 @@ pack_row(Table *table, MY_BITMAP const* cols,
    master does not have a default value (and isn't nullable)
 
  */
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int
 unpack_row(Relay_log_info const *rli,
            Table *table, uint const colcnt,
@@ -355,5 +354,3 @@ int prepare_record(Table *const table,
 
   return(error);
 }
-
-#endif // HAVE_REPLICATION

@@ -37,8 +37,6 @@
 #include <mysys/mysys_err.h>
 #include <drizzled/drizzled_error_messages.h>
 
-#ifdef HAVE_REPLICATION
-
 #include "rpl_tblmap.h"
 
 #define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
@@ -3795,5 +3793,3 @@ template class I_List_iterator<i_string_pair>;
 /**
   @} (end of group Replication)
 */
-
-#endif /* HAVE_REPLICATION */

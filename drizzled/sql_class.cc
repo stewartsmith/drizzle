@@ -463,7 +463,6 @@ THD::THD()
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var=0;
   binlog_evt_union.do_union= false;
-  enable_slow_log= 0;
   dbug_sentry=THD_SENTRY_MAGIC;
   net.vio=0;
   client_capabilities= 0;                       // minimalistic client
@@ -2335,7 +2334,6 @@ void xid_cache_delete(XID_STATE *xid_state)
   inserted/updated/deleted.
 */
 
-#ifndef DRIZZLE_CLIENT
 
 /*
   Template member function for ensuring that there is an rows log
@@ -2801,5 +2799,3 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   elements++;
   return(0);
 }
-
-#endif /* !defined(DRIZZLE_CLIENT) */

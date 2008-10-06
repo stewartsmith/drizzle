@@ -44,16 +44,16 @@ public:
   {
   public:
     struct st_join_table *join_tab;
-    uint rowid_offset;
-    ushort null_byte;
-    uchar null_bit;
+    uint32_t rowid_offset;
+    uint16_t null_byte;
+    unsigned char null_bit;
   };
   TAB *tabs;
   TAB *tabs_end;
 
-  uint null_bits;
-  uint null_bytes;
-  uint rowid_len;
+  uint32_t null_bits;
+  uint32_t null_bytes;
+  uint32_t rowid_len;
 
   Table *tmp_table;
 
@@ -65,7 +65,7 @@ public:
 };
 
 Table *create_duplicate_weedout_tmp_table(THD *thd, 
-					  uint uniq_tuple_length_arg,
+					  uint32_t uniq_tuple_length_arg,
 					  SJ_TMP_TABLE *sjtbl);
 
 #endif /* DRIZZLED_SJ_TMP_TABLE_H */

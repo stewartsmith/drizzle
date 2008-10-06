@@ -30,7 +30,6 @@ CLEANFILES =		$(BUILT_SOURCES)
 
 bin_PROGRAMS =	drizzle \
 				drizzleadmin \
-				drizzlebinlog \
 				drizzlecheck \
 				drizzledump \
 				drizzleimport \
@@ -42,8 +41,6 @@ drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} -fexceptions
 drizzleadmin_SOURCES =		drizzleadmin.cc
-
-drizzlebinlog_SOURCES =     drizzlebinlog.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
 drizzledump_SOURCES=            drizzledump.cc 
