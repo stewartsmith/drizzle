@@ -1686,9 +1686,9 @@ static int read_and_execute(bool interactive)
         you save the file using "Unicode UTF-8" format.
       */
       if (!line_number &&
-          (uchar) line[0] == 0xEF &&
-          (uchar) line[1] == 0xBB &&
-          (uchar) line[2] == 0xBF)
+          (unsigned char) line[0] == 0xEF &&
+          (unsigned char) line[1] == 0xBB &&
+          (unsigned char) line[2] == 0xBF)
         line+= 3;
       line_number++;
       if (!glob_buffer->empty())
@@ -1782,8 +1782,8 @@ static COMMANDS *find_command(const char *name,char cmd_char)
     if (strstr(name, "\\g") || (strstr(name, delimiter) &&
                                 !(strlen(name) >= 9 &&
                                   !my_strnncoll(charset_info,
-                                                (uchar*) name, 9,
-                                                (const uchar*) "delimiter",
+                                                (unsigned char*) name, 9,
+                                                (const unsigned char*) "delimiter",
                                                 9))))
       return((COMMANDS *) 0);
     if ((end=strcont(name," \t")))
@@ -1801,7 +1801,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
   for (uint i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
-        ((name && !my_strnncoll(charset_info,(const uchar*)name,len, (const uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
+        ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
       return(&commands[i]);
     }
@@ -1813,7 +1813,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
 static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
-  uchar inchar;
+  unsigned char inchar;
   char buff[80], *pos, *out;
   COMMANDS *com;
   bool need_space= 0;
@@ -1826,7 +1826,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     add_history(line);
   char *end_of_line=line+(uint) strlen(line);
 
-  for (pos=out=line ; (inchar= (uchar) *pos) ; pos++)
+  for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
     if (!preserve_comments)
     {
@@ -1858,7 +1858,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     {
       // Found possbile one character command like \c
 
-      if (!(inchar = (uchar) *++pos))
+      if (!(inchar = (unsigned char) *++pos))
         break;        // readline adds one '\'
       if (*in_string || inchar == 'N')  // \N is short for NULL
       {          // Don't allow commands in string
@@ -1915,8 +1915,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
     else if (!*ml_comment && !*in_string &&
              (end_of_line - pos) >= 10 &&
-             !my_strnncoll(charset_info, (uchar*) pos, 10,
-                           (const uchar*) "delimiter ", 10))
+             !my_strnncoll(charset_info, (unsigned char*) pos, 10,
+                           (const unsigned char*) "delimiter ", 10))
     {
       // Flush previously accepted characters
       if (out != line)

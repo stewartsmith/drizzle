@@ -17,12 +17,12 @@
 
 #include "myisamdef.h"
 
-int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
+int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {
   int flag,key_changed,save_errno;
   register my_off_t pos;
   uint i;
-  uchar old_key[MI_MAX_KEY_BUFF],*new_key;
+  unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
   uint64_t changed;
   MYISAM_SHARE *share= info->s;

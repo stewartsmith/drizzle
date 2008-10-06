@@ -27,7 +27,7 @@
 	** HA_ERR_END_OF_FILE   = End of file
 	*/
 
-int mi_rsame_with_pos(MI_INFO *info, uchar *record, int inx, my_off_t filepos)
+int mi_rsame_with_pos(MI_INFO *info, unsigned char *record, int inx, my_off_t filepos)
 {
   if (inx < -1 ||
       (inx >= 0 && ! mi_is_key_active(info->s->state.key_map, inx)))

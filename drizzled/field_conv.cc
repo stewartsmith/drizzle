@@ -370,7 +370,7 @@ static void do_cut_string_complex(Copy_field *copy)
 {						// Shorter string field
   int well_formed_error;
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  const uchar *from_end= copy->from_ptr + copy->from_length;
+  const unsigned char *from_end= copy->from_ptr + copy->from_length;
   uint copy_length= cs->cset->well_formed_len(cs,
                                               (char*) copy->from_ptr,
                                               (char*) from_end, 
@@ -419,7 +419,7 @@ static void do_expand_string(Copy_field *copy)
 
 static void do_varstring1(Copy_field *copy)
 {
-  uint length= (uint) *(uchar*) copy->from_ptr;
+  uint length= (uint) *(unsigned char*) copy->from_ptr;
   if (length > copy->to_length- 1)
   {
     length=copy->to_length - 1;
@@ -427,7 +427,7 @@ static void do_varstring1(Copy_field *copy)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
-  *(uchar*) copy->to_ptr= (uchar) length;
+  *(unsigned char*) copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr+1, copy->from_ptr + 1, length);
 }
 
@@ -436,8 +436,8 @@ static void do_varstring1_mb(Copy_field *copy)
 {
   int well_formed_error;
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  uint from_length= (uint) *(uchar*) copy->from_ptr;
-  const uchar *from_ptr= copy->from_ptr + 1;
+  uint from_length= (uint) *(unsigned char*) copy->from_ptr;
+  const unsigned char *from_ptr= copy->from_ptr + 1;
   uint to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
   uint length= cs->cset->well_formed_len(cs, (char*) from_ptr,
                                          (char*) from_ptr + from_length,
@@ -448,7 +448,7 @@ static void do_varstring1_mb(Copy_field *copy)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
-  *copy->to_ptr= (uchar) length;
+  *copy->to_ptr= (unsigned char) length;
   memcpy(copy->to_ptr + 1, from_ptr, length);
 }
 
@@ -475,7 +475,7 @@ static void do_varstring2_mb(Copy_field *copy)
   const CHARSET_INFO * const cs= copy->from_field->charset();
   uint char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
   uint from_length= uint2korr(copy->from_ptr);
-  const uchar *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
+  const unsigned char *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
   uint length= cs->cset->well_formed_len(cs, (char*) from_beg,
                                          (char*) from_beg + from_length,
                                          char_length, &well_formed_error);
@@ -502,7 +502,7 @@ static void do_varstring2_mb(Copy_field *copy)
   The 'to' buffer should have a size of field->pack_length()+1
 */
 
-void Copy_field::set(uchar *to,Field *from)
+void Copy_field::set(unsigned char *to,Field *from)
 {
   from_ptr=from->ptr;
   to_ptr=to;
@@ -512,7 +512,7 @@ void Copy_field::set(uchar *to,Field *from)
     from_null_ptr=from->null_ptr;
     from_bit=	  from->null_bit;
     to_ptr[0]=	  1;				// Null as default value
-    to_null_ptr=  (uchar*) to_ptr++;
+    to_null_ptr=  (unsigned char*) to_ptr++;
     to_bit=	  1;
     if (from->table->maybe_null)
     {

@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 extern uint64_t log_10_int[20];
-extern uchar days_in_month[];
+extern unsigned char days_in_month[];
 
 /*
   Portable time_t replacement.

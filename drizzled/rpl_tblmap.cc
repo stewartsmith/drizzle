@@ -92,11 +92,11 @@ int table_mapping::set_table(ulong table_id, Table* table)
     m_free= m_free->next;
   }
   else
-    hash_delete(&m_table_ids,(uchar *)e);
+    hash_delete(&m_table_ids,(unsigned char *)e);
 
   e->table_id= table_id;
   e->table= table;
-  my_hash_insert(&m_table_ids,(uchar *)e);
+  my_hash_insert(&m_table_ids,(unsigned char *)e);
 
   return(0);		// All OK
 }
@@ -106,7 +106,7 @@ int table_mapping::remove_table(ulong table_id)
   entry *e= find_entry(table_id);
   if (e)
   {
-    hash_delete(&m_table_ids,(uchar *)e);
+    hash_delete(&m_table_ids,(unsigned char *)e);
     /* we add this entry to the chain of free (free for use) entries */
     e->next= m_free;
     m_free= e;

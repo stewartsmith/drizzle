@@ -469,7 +469,7 @@ void Item::cleanup()
   @param arg   a dummy parameter, is not used here
 */
 
-bool Item::cleanup_processor(uchar *arg __attribute__((unused)))
+bool Item::cleanup_processor(unsigned char *arg __attribute__((unused)))
 {
   if (fixed)
     cleanup();
@@ -524,7 +524,7 @@ void Item::rename(char *new_name)
     pointer to newly allocated item is returned.
 */
 
-Item* Item::transform(Item_transformer transformer, uchar *arg)
+Item* Item::transform(Item_transformer transformer, unsigned char *arg)
 {
   return (this->*transformer)(arg);
 }
@@ -581,7 +581,7 @@ void Item_ident::cleanup()
   return;
 }
 
-bool Item_ident::remove_dependence_processor(uchar * arg)
+bool Item_ident::remove_dependence_processor(unsigned char * arg)
 {
   if (depended_from == (st_select_lex *) arg)
     depended_from= 0;
@@ -607,7 +607,7 @@ bool Item_ident::remove_dependence_processor(uchar * arg)
     for the subsequent items.
 */
 
-bool Item_field::collect_item_field_processor(uchar *arg)
+bool Item_field::collect_item_field_processor(unsigned char *arg)
 {
   List<Item_field> *item_list= (List<Item_field>*) arg;
   List_iterator<Item_field> item_list_it(*item_list);
@@ -638,7 +638,7 @@ bool Item_field::collect_item_field_processor(uchar *arg)
     false otherwise
 */
 
-bool Item_field::find_item_in_field_list_processor(uchar *arg)
+bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
   KEY_PART_INFO *first_non_group_part= *((KEY_PART_INFO **) arg);
   KEY_PART_INFO *last_part= *(((KEY_PART_INFO **) arg) + 1);
@@ -661,7 +661,7 @@ bool Item_field::find_item_in_field_list_processor(uchar *arg)
     column read set or to register used fields in a view
 */
 
-bool Item_field::register_field_in_read_map(uchar *arg)
+bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->table == table || !table)
@@ -1885,7 +1885,7 @@ Item_decimal::Item_decimal(my_decimal *value_par)
 }
 
 
-Item_decimal::Item_decimal(const uchar *bin, int precision, int scale)
+Item_decimal::Item_decimal(const unsigned char *bin, int precision, int scale)
 {
   binary2my_decimal(E_DEC_FATAL_ERROR, bin,
                     &decimal_value, precision, scale);
@@ -2120,7 +2120,7 @@ Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 
 static void
 default_set_param_func(Item_param *param,
-                       uchar **pos __attribute__((unused)),
+                       unsigned char **pos __attribute__((unused)),
                        ulong len __attribute__((unused)))
 {
   param->set_null();
@@ -3771,7 +3771,7 @@ Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
     false  otherwise
 */
 
-bool Item_field::subst_argument_checker(uchar **arg)
+bool Item_field::subst_argument_checker(unsigned char **arg)
 {
   return (result_type() != STRING_RESULT) || (*arg);
 }
@@ -3801,7 +3801,7 @@ bool Item_field::subst_argument_checker(uchar **arg)
     - pointer to the field item, otherwise.
 */
 
-Item *Item_field::equal_fields_propagator(uchar *arg)
+Item *Item_field::equal_fields_propagator(unsigned char *arg)
 {
   if (no_const_subst)
     return this;
@@ -3834,7 +3834,7 @@ Item *Item_field::equal_fields_propagator(uchar *arg)
   See comments in Arg_comparator::set_compare_func() for details.
 */
 
-bool Item_field::set_no_const_sub(uchar *arg __attribute__((unused)))
+bool Item_field::set_no_const_sub(unsigned char *arg __attribute__((unused)))
 {
   if (field->charset() != &my_charset_bin)
     no_const_subst=1;
@@ -3867,7 +3867,7 @@ bool Item_field::set_no_const_sub(uchar *arg __attribute__((unused)))
     - this - otherwise.
 */
 
-Item *Item_field::replace_equal_field(uchar *arg __attribute__((unused)))
+Item *Item_field::replace_equal_field(unsigned char *arg __attribute__((unused)))
 {
   if (item_equal)
   {
@@ -4079,33 +4079,33 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
   /*
     The field functions defines a field to be not null if null_ptr is not 0
   */
-  uchar *null_ptr= maybe_null ? (uchar*) "" : 0;
+  unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
   Field *field;
 
   switch (field_type()) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((uchar*) 0, max_length, null_ptr, 0,
+    field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
                                  Field::NONE, name, decimals, 0,
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_TINY:
-    field= new Field_tiny((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_tiny((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
-    field= new Field_long((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONGLONG:
-    field= new Field_int64_t((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_int64_t((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			      name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_DOUBLE:
-    field= new Field_double((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_double((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			    name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((uchar*) 0, max_length, Field::NONE,
+    field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_NEWDATE:
@@ -4503,7 +4503,7 @@ int64_t Item_hex_string::val_int()
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
-    value=(value << 8)+ (uint64_t) (uchar) *ptr;
+    value=(value << 8)+ (uint64_t) (unsigned char) *ptr;
   return (int64_t) value;
 }
 
@@ -4557,8 +4557,8 @@ void Item_hex_string::print(String *str,
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
-    str->append(_dig_vec_lower[((uchar) *ptr) >> 4]);
-    str->append(_dig_vec_lower[((uchar) *ptr) & 0x0F]);
+    str->append(_dig_vec_lower[((unsigned char) *ptr) >> 4]);
+    str->append(_dig_vec_lower[((unsigned char) *ptr) & 0x0F]);
   }
 }
 
@@ -4597,7 +4597,7 @@ Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 Item_bin_string::Item_bin_string(const char *str, uint str_length)
 {
   const char *end= str + str_length - 1;
-  uchar bits= 0;
+  unsigned char bits= 0;
   uint power= 1;
 
   max_length= (str_length + 7) >> 3;
@@ -4762,7 +4762,7 @@ void Item_field::update_null_value()
     this field    otherwise
 */
 
-Item *Item_field::update_value_transformer(uchar *select_arg)
+Item *Item_field::update_value_transformer(unsigned char *select_arg)
 {
   SELECT_LEX *select= (SELECT_LEX*)select_arg;
   assert(fixed);
@@ -5605,7 +5605,7 @@ int Item_default_value::save_in_field(Field *field_arg, bool no_conversions)
   same time it can replace some nodes in the tree.
 */ 
 
-Item *Item_default_value::transform(Item_transformer transformer, uchar *args)
+Item *Item_default_value::transform(Item_transformer transformer, unsigned char *args)
 {
   Item *new_item= arg->transform(transformer, args);
   if (!new_item)
@@ -6374,13 +6374,13 @@ Field *Item_type_holder::make_field_by_type(Table *table)
   /*
     The field functions defines a field to be not null if null_ptr is not 0
   */
-  uchar *null_ptr= maybe_null ? (uchar*) "" : 0;
+  unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
   Field *field;
 
   switch (fld_type) {
   case DRIZZLE_TYPE_ENUM:
     assert(enum_set_typelib);
-    field= new Field_enum((uchar *) 0, max_length, null_ptr, 0,
+    field= new Field_enum((unsigned char *) 0, max_length, null_ptr, 0,
                           Field::NONE, name,
                           get_enum_pack_length(enum_set_typelib->count),
                           enum_set_typelib, collation.collation);

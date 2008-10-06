@@ -372,7 +372,7 @@ public:
   Item *get_tmp_table_item(THD *thd);
   virtual Field *create_tmp_field(bool group, Table *table,
                                   uint convert_blob_length);
-  bool walk(Item_processor processor, bool walk_subquery, uchar *argument);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *argument);
   bool init_sum_func_check(THD *thd);
   bool check_sum_func(THD *thd, Item **ref);
   bool register_sum_func(THD *thd, Item **ref);
@@ -598,8 +598,8 @@ class Item_sum_count_distinct :public Item_sum_int
   bool always_null;		// Set to 1 if the result is always NULL
 
 
-  friend int composite_key_cmp(void* arg, uchar* key1, uchar* key2);
-  friend int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2);
+  friend int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2);
+  friend int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2);
 
 public:
   Item_sum_count_distinct(List<Item> &list)
@@ -995,7 +995,7 @@ class Item_func_group_concat : public Item_sum
                                                 const void* key2);
   friend int group_concat_key_cmp_with_order(void* arg, const void* key1,
 					     const void* key2);
-  friend int dump_leaf_key(uchar* key,
+  friend int dump_leaf_key(unsigned char* key,
                            element_count count __attribute__((unused)),
 			   Item_func_group_concat *group_concat_item);
 
@@ -1048,6 +1048,6 @@ public:
   Item *copy_or_same(THD* thd);
   void no_rows_in_result() {}
   virtual void print(String *str, enum_query_type query_type);
-  virtual bool change_context_processor(uchar *cntx)
+  virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };

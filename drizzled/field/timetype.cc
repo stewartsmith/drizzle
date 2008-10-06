@@ -266,7 +266,7 @@ bool Field_time::send_binary(Protocol *protocol)
 }
 
 
-int Field_time::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
   a=(int32_t) sint3korr(a_ptr);
@@ -274,9 +274,9 @@ int Field_time::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_time::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_time::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
-  to[0] = (uchar) (ptr[2] ^ 128);
+  to[0] = (unsigned char) (ptr[2] ^ 128);
   to[1] = ptr[1];
   to[2] = ptr[0];
 }

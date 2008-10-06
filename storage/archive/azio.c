@@ -20,7 +20,7 @@
 
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
-/* gzip flag uchar */
+/* gzip flag unsigned char */
 #define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
 #define HEAD_CRC     0x02 /* bit 1 set: header CRC present */
 #define EXTRA_FIELD  0x04 /* bit 2 set: extra field present */
@@ -258,7 +258,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   }
   else if (s->mode == 'w') 
   {
-    uchar buffer[AZHEADER_SIZE + AZMETA_BUFFER_SIZE];
+    unsigned char buffer[AZHEADER_SIZE + AZMETA_BUFFER_SIZE];
     pread(s->file, buffer, AZHEADER_SIZE + AZMETA_BUFFER_SIZE, 0);
     read_header(s, buffer);
     s->pos= (size_t)my_seek(s->file, 0, MY_SEEK_END, MYF(0));
@@ -318,7 +318,7 @@ void write_header(azio_stream *s)
   *(ptr + AZ_DIRTY_POS)= (unsigned char)s->dirty; /* Start of Data Block Index Block */
 
   /* Always begin at the begining, and end there as well */
-  pwrite(s->file, (uchar*) buffer, AZHEADER_SIZE + AZMETA_BUFFER_SIZE, 0);
+  pwrite(s->file, (unsigned char*) buffer, AZHEADER_SIZE + AZMETA_BUFFER_SIZE, 0);
 }
 
 /* ===========================================================================
@@ -367,7 +367,7 @@ void check_header(azio_stream *s)
   if (len < 2) {
     if (len) s->inbuf[0] = s->stream.next_in[0];
     errno = 0;
-    len = (uInt)pread(s->file, (uchar *)s->inbuf + len, AZ_BUFSIZE_READ >> len, s->pos);
+    len = (uInt)pread(s->file, (unsigned char *)s->inbuf + len, AZ_BUFSIZE_READ >> len, s->pos);
     s->pos+= len;
     if (len == (uInt)-1) s->z_err = Z_ERRNO;
     s->stream.avail_in += len;
@@ -623,7 +623,7 @@ static unsigned int azwrite(azio_stream *s, void *buf, unsigned int len)
     {
 
       s->stream.next_out = s->outbuf;
-      if (pwrite(s->file, (uchar *)s->outbuf, AZ_BUFSIZE_WRITE, s->pos) != AZ_BUFSIZE_WRITE) 
+      if (pwrite(s->file, (unsigned char *)s->outbuf, AZ_BUFSIZE_WRITE, s->pos) != AZ_BUFSIZE_WRITE) 
       {
         s->z_err = Z_ERRNO;
         break;
@@ -664,7 +664,7 @@ int do_flush (azio_stream *s, int flush)
 
     if (len != 0) 
     {
-      if ((uInt)pwrite(s->file, (uchar *)s->outbuf, len, s->pos) != len) 
+      if ((uInt)pwrite(s->file, (unsigned char *)s->outbuf, len, s->pos) != len) 
       {
         s->z_err = Z_ERRNO;
         assert(0);
@@ -730,7 +730,7 @@ int ZEXPORT azflush (s, flush)
   if (s->mode == 'r') 
   {
     unsigned char buffer[AZHEADER_SIZE + AZMETA_BUFFER_SIZE];
-    pread(s->file, (uchar*) buffer, AZHEADER_SIZE + AZMETA_BUFFER_SIZE, 0);
+    pread(s->file, (unsigned char*) buffer, AZHEADER_SIZE + AZMETA_BUFFER_SIZE, 0);
     read_header(s, buffer); /* skip the .az header */
     azrewind(s);
 
@@ -888,7 +888,7 @@ size_t ZEXPORT aztell (file)
 void putLong (azio_stream *s, uLong x)
 {
   int n;
-  uchar buffer[1];
+  unsigned char buffer[1];
 
   for (n = 0; n < 4; n++) 
   {
@@ -974,7 +974,7 @@ int azwrite_frm(azio_stream *s, char *blob, unsigned int length)
   s->frm_length= length;
   s->start+= length;
 
-  pwrite(s->file, (uchar*) blob, s->frm_length, s->frm_start_pos);
+  pwrite(s->file, (unsigned char*) blob, s->frm_length, s->frm_start_pos);
 
   write_header(s);
   s->pos= (size_t)my_seek(s->file, 0, MY_SEEK_END, MYF(0));
@@ -984,7 +984,7 @@ int azwrite_frm(azio_stream *s, char *blob, unsigned int length)
 
 int azread_frm(azio_stream *s, char *blob)
 {
-  pread(s->file, (uchar*) blob, s->frm_length, s->frm_start_pos);
+  pread(s->file, (unsigned char*) blob, s->frm_length, s->frm_start_pos);
 
   return 0;
 }
@@ -1005,7 +1005,7 @@ int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
   s->comment_length= length;
   s->start+= length;
 
-  pwrite(s->file, (uchar*) blob, s->comment_length, s->comment_start_pos);
+  pwrite(s->file, (unsigned char*) blob, s->comment_length, s->comment_start_pos);
 
   write_header(s);
   s->pos= (size_t)my_seek(s->file, 0, MY_SEEK_END, MYF(0));
@@ -1015,7 +1015,7 @@ int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
 
 int azread_comment(azio_stream *s, char *blob)
 {
-  pread(s->file, (uchar*) blob, s->comment_length, s->comment_start_pos);
+  pread(s->file, (unsigned char*) blob, s->comment_length, s->comment_start_pos);
 
   return 0;
 }
@@ -1069,7 +1069,7 @@ static void get_block(azio_stream *s)
 #ifdef AZIO_AIO
 use_pread:
 #endif
-    s->stream.avail_in = (uInt)pread(s->file, (uchar *)s->inbuf,
+    s->stream.avail_in = (uInt)pread(s->file, (unsigned char *)s->inbuf,
                                      AZ_BUFSIZE_READ, s->pos);
     s->pos+= s->stream.avail_in;
   }

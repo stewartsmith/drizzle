@@ -26,8 +26,8 @@ protected:
   uint packlength;
 public:
   TYPELIB *typelib;
-  Field_enum(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-             uchar null_bit_arg,
+  Field_enum(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+             unsigned char null_bit_arg,
              enum utype unireg_check_arg, const char *field_name_arg,
              uint packlength_arg,
              TYPELIB *typelib_arg,
@@ -49,8 +49,8 @@ public:
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint length);
   uint32_t pack_length() const { return (uint32_t) packlength; }
   void store_type(uint64_t value);
   void sql_type(String &str) const;
@@ -68,7 +68,7 @@ public:
   /* enum and set are sorted as integers */
   const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 private:
-  int do_save_field_metadata(uchar *first_byte);
+  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif

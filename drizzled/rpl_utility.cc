@@ -26,7 +26,7 @@
   This function returns the field size in raw bytes based on the type
   and the encoded field data from the master's raw data.
 */
-uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
+uint32_t table_def::calc_field_size(uint col, unsigned char *master_data) const
 {
   uint32_t length= 0;
 

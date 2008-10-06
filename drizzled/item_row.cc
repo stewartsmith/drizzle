@@ -156,7 +156,7 @@ void Item_row::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_row::walk(Item_processor processor, bool walk_subquery, uchar *arg)
+bool Item_row::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
   for (uint i= 0; i < arg_count; i++)
   {
@@ -167,7 +167,7 @@ bool Item_row::walk(Item_processor processor, bool walk_subquery, uchar *arg)
 }
 
 
-Item *Item_row::transform(Item_transformer transformer, uchar *arg)
+Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
 {
   for (uint i= 0; i < arg_count; i++)
   {

@@ -26,7 +26,7 @@
   {p_0, p_1, ...} serve as indexes to descend the blocks tree.
 */
 
-uchar *hp_find_block(HP_BLOCK *block, uint32_t pos)
+unsigned char *hp_find_block(HP_BLOCK *block, uint32_t pos)
 {
   register int i;
   register HP_PTRS *ptr; /* block base ptr */
@@ -36,7 +36,7 @@ uchar *hp_find_block(HP_BLOCK *block, uint32_t pos)
     ptr=(HP_PTRS*)ptr->blocks[pos/block->level_info[i].records_under_level];
     pos%=block->level_info[i].records_under_level;
   }
-  return (uchar*) ptr+ pos*block->recbuffer;
+  return (unsigned char*) ptr+ pos*block->recbuffer;
 }
 
 
@@ -101,13 +101,13 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
     /* Occupy the free slot we've found at level i */
     block->level_info[i].last_blocks->
       blocks[HP_PTRS_IN_NOD - block->level_info[i].free_ptrs_in_block--]=
-	(uchar*) root;
+	(unsigned char*) root;
     
     /* Add a block subtree with each node having one left-most child */
     for (j=i-1 ; j >0 ; j--)
     {
       block->level_info[j].last_blocks= root++;
-      block->level_info[j].last_blocks->blocks[0]=(uchar*) root;
+      block->level_info[j].last_blocks->blocks[0]=(unsigned char*) root;
       block->level_info[j].free_ptrs_in_block=HP_PTRS_IN_NOD-1;
     }
     
@@ -123,27 +123,27 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 
 	/* free all blocks under level */
 
-uchar *hp_free_level(HP_BLOCK *block, uint level, HP_PTRS *pos, uchar *last_pos)
+unsigned char *hp_free_level(HP_BLOCK *block, uint level, HP_PTRS *pos, unsigned char *last_pos)
 {
   int i,max_pos;
-  uchar *next_ptr;
+  unsigned char *next_ptr;
 
   if (level == 1)
-    next_ptr=(uchar*) pos+block->recbuffer;
+    next_ptr=(unsigned char*) pos+block->recbuffer;
   else
   {
     max_pos= (block->level_info[level-1].last_blocks == pos) ?
       HP_PTRS_IN_NOD - block->level_info[level-1].free_ptrs_in_block :
     HP_PTRS_IN_NOD;
 
-    next_ptr=(uchar*) (pos+1);
+    next_ptr=(unsigned char*) (pos+1);
     for (i=0 ; i < max_pos ; i++)
       next_ptr=hp_free_level(block,level-1,
 			      (HP_PTRS*) pos->blocks[i],next_ptr);
   }
-  if ((uchar*) pos != last_pos)
+  if ((unsigned char*) pos != last_pos)
   {
-    free((uchar*) pos);
+    free((unsigned char*) pos);
     return last_pos;
   }
   return next_ptr;			/* next memory position */

@@ -74,21 +74,21 @@ public:
   uint max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
   int open(const char *name, int mode, uint test_if_locked);
   int close(void);
-  int write_row(uchar * buf);
+  int write_row(unsigned char * buf);
   int rnd_init(bool scan);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
-  int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map,
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
+  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
-  int index_read_idx_map(uchar * buf, uint idx, const uchar * key,
+  int index_read_idx_map(unsigned char * buf, uint idx, const unsigned char * key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
-  int index_read_last_map(uchar * buf, const uchar * key, key_part_map keypart_map);
-  int index_next(uchar * buf);
-  int index_prev(uchar * buf);
-  int index_first(uchar * buf);
-  int index_last(uchar * buf);
-  void position(const uchar *record);
+  int index_read_last_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map);
+  int index_next(unsigned char * buf);
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
+  void position(const unsigned char *record);
   int info(uint flag);
   int external_lock(THD *thd, int lock_type);
   int create(const char *name, Table *table_arg,

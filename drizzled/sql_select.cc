@@ -79,7 +79,7 @@ static double prev_record_reads(JOIN *join, uint idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
 static store_key *get_store_key(THD *thd,
 				KEYUSE *keyuse, table_map used_tables,
-				KEY_PART_INFO *key_part, uchar *key_buff,
+				KEY_PART_INFO *key_part, unsigned char *key_buff,
 				uint maybe_null);
 static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
@@ -1989,7 +1989,7 @@ JOIN::save_join_tab()
 {
   if (!join_tab_save && select_lex->master_unit()->uncacheable)
   {
-    if (!(join_tab_save= (JOIN_TAB*)thd->memdup((uchar*) join_tab,
+    if (!(join_tab_save= (JOIN_TAB*)thd->memdup((unsigned char*) join_tab,
 						sizeof(JOIN_TAB) * tables)))
       return 1;
   }
@@ -2719,7 +2719,7 @@ static TableList *alloc_join_nest(THD *thd)
   if (!(tbl= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
     return NULL;
-  tbl->nested_join= (nested_join_st*) ((uchar*)tbl + 
+  tbl->nested_join= (nested_join_st*) ((unsigned char*)tbl + 
                                     ALIGN_SIZE(sizeof(TableList)));
   return tbl;
 }
@@ -4444,7 +4444,7 @@ add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
           keyuse.null_rejecting= key_field->null_rejecting;
           keyuse.cond_guard= key_field->cond_guard;
           keyuse.sj_pred_no= key_field->sj_pred_no;
-	  insert_dynamic(keyuse_array,(uchar*) &keyuse);
+	  insert_dynamic(keyuse_array,(unsigned char*) &keyuse);
 	}
       }
     }
@@ -4673,7 +4673,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
 	  (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
-    insert_dynamic(keyuse,(uchar*) &key_end);
+    insert_dynamic(keyuse,(unsigned char*) &key_end);
 
     use=save_pos=dynamic_element(keyuse,0,KEYUSE*);
     prev= &key_end;
@@ -4706,7 +4706,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
       save_pos++;
     }
     i=(uint) (save_pos-(KEYUSE*) keyuse->buffer);
-    set_dynamic(keyuse,(uchar*) &key_end,i);
+    set_dynamic(keyuse,(unsigned char*) &key_end,i);
     keyuse->elements=i;
   }
   return false;
@@ -4785,7 +4785,7 @@ add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
   { /* Collect all query fields referenced in the GROUP clause. */
     for (cur_group= join->group_list; cur_group; cur_group= cur_group->next)
       (*cur_group->item)->walk(&Item::collect_item_field_processor, 0,
-                               (uchar*) &indexed_fields);
+                               (unsigned char*) &indexed_fields);
   }
   else if (join->select_distinct)
   { /* Collect all query fields referenced in the SELECT clause. */
@@ -4794,7 +4794,7 @@ add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
     Item *item;
     while ((item= select_items_it++))
       item->walk(&Item::collect_item_field_processor, 0,
-                 (uchar*) &indexed_fields);
+                 (unsigned char*) &indexed_fields);
   }
   else
     return;
@@ -6464,7 +6464,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   j->ref.key_parts=keyparts;
   j->ref.key_length=length;
   j->ref.key=(int) key;
-  if (!(j->ref.key_buff= (uchar*) thd->calloc(ALIGN_SIZE(length)*2)) ||
+  if (!(j->ref.key_buff= (unsigned char*) thd->calloc(ALIGN_SIZE(length)*2)) ||
       !(j->ref.key_copy= (store_key**) thd->alloc((sizeof(store_key*) *
 						   (keyparts+1)))) ||
       !(j->ref.items=    (Item**) thd->alloc(sizeof(Item*)*keyparts)) ||
@@ -6479,7 +6479,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   keyuse=org_keyuse;
 
   store_key **ref_key= j->ref.key_copy;
-  uchar *key_buff=j->ref.key_buff, *null_ref_key= 0;
+  unsigned char *key_buff=j->ref.key_buff, *null_ref_key= 0;
   bool keyuse_uses_no_tables= true;
   {
     uint i;
@@ -6551,7 +6551,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
 
 static store_key *
 get_store_key(THD *thd, KEYUSE *keyuse, table_map used_tables,
-	      KEY_PART_INFO *key_part, uchar *key_buff, uint maybe_null)
+	      KEY_PART_INFO *key_part, unsigned char *key_buff, uint maybe_null)
 {
   if (!((~used_tables) & keyuse->used_tables))		// if const item
   {
@@ -7039,7 +7039,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           tab->type == JT_EQ_REF)
       {
 	SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
-                                       thd->memdup((uchar*) select,
+                                       thd->memdup((unsigned char*) select,
                                                    sizeof(*select)));
 	if (!sel)
 	  return(1);			// End of memory
@@ -7186,7 +7186,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 					 current_map, 0)))
 	    {
 	      tab->cache.select=(SQL_SELECT*)
-		thd->memdup((uchar*) sel, sizeof(SQL_SELECT));
+		thd->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
 	      tab->cache.select->cond=tmp;
 	      tab->cache.select->read_tables=join->const_table_map;
 	    }
@@ -7666,7 +7666,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after)
     sorted= 0;                                  // only first must be sorted
     if (tab->insideout_match_tab)
     {
-      if (!(tab->insideout_buf= (uchar*)join->thd->alloc(tab->table->key_info
+      if (!(tab->insideout_buf= (unsigned char*)join->thd->alloc(tab->table->key_info
                                                          [tab->index].
                                                          key_length)))
         return true;
@@ -8997,11 +8997,11 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
       as soon the field is not of a string type or the field reference is
       an argument of a comparison predicate. 
     */ 
-    uchar *is_subst_valid= (uchar *) 1;
+    unsigned char *is_subst_valid= (unsigned char *) 1;
     cond= cond->compile(&Item::subst_argument_checker,
                         &is_subst_valid, 
                         &Item::equal_fields_propagator,
-                        (uchar *) inherited);
+                        (unsigned char *) inherited);
     cond->update_used_tables();
   }
   return cond;
@@ -10922,15 +10922,15 @@ int do_sj_dups_weedout(THD *thd, SJ_TMP_TABLE *sjtbl)
   int error;
   SJ_TMP_TABLE::TAB *tab= sjtbl->tabs;
   SJ_TMP_TABLE::TAB *tab_end= sjtbl->tabs_end;
-  uchar *ptr= sjtbl->tmp_table->record[0] + 1;
-  uchar *nulls_ptr= ptr;
+  unsigned char *ptr= sjtbl->tmp_table->record[0] + 1;
+  unsigned char *nulls_ptr= ptr;
   
   /* Put the the rowids tuple into table->record[0]: */
 
   // 1. Store the length 
   if (((Field_varstring*)(sjtbl->tmp_table->field[0]))->length_bytes == 1)
   {
-    *ptr= (uchar)(sjtbl->rowid_len + sjtbl->null_bytes);
+    *ptr= (unsigned char)(sjtbl->rowid_len + sjtbl->null_bytes);
     ptr++;
   }
   else
@@ -11426,7 +11426,7 @@ join_read_const(JOIN_TAB *tab)
     else
     {
       error=table->file->index_read_idx_map(table->record[0],tab->ref.key,
-                                            (uchar*) tab->ref.key_buff,
+                                            (unsigned char*) tab->ref.key_buff,
                                             make_prev_keypart_map(tab->ref.key_parts),
                                             HA_READ_KEY_EXACT);
     }
@@ -12054,7 +12054,7 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	if (item->maybe_null)
 	{
 	  Field *field=item->get_tmp_table_field();
-	  field->ptr[-1]= (uchar) (field->is_null() ? 1 : 0);
+	  field->ptr[-1]= (unsigned char) (field->is_null() ? 1 : 0);
 	}
       }
     }
@@ -13489,7 +13489,7 @@ static int remove_dup_with_compare(THD *thd, Table *table, Field **first_field,
 {
   handler *file=table->file;
   char *org_record,*new_record;
-  uchar *record;
+  unsigned char *record;
   int error;
   ulong reclength= table->s->reclength-offset;
 
@@ -13581,7 +13581,7 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
 				      ulong key_length,
 				      Item *having)
 {
-  uchar *key_buffer, *key_pos, *record=table->record[0];
+  unsigned char *key_buffer, *key_pos, *record=table->record[0];
   int error;
   handler *file= table->file;
   ulong extra_length= ALIGN_SIZE(key_length)-key_length;
@@ -13622,7 +13622,7 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
   key_pos=key_buffer;
   for (;;)
   {
-    uchar *org_key_pos;
+    unsigned char *org_key_pos;
     if (thd->killed)
     {
       thd->send_kill_message();
@@ -13758,7 +13758,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
 
 		  sizeof(CACHE_FIELD*))))
   {
-    free((uchar*) cache->buff);		/* purecov: inspected */
+    free((unsigned char*) cache->buff);		/* purecov: inspected */
     cache->buff=0;				/* purecov: inspected */
     return(1);				/* purecov: inspected */
   }
@@ -13804,7 +13804,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
     /* If outer join table, copy null_row flag */
     if (tables[i].table->maybe_null)
     {
-      copy->str= (uchar*) &tables[i].table->null_row;
+      copy->str= (unsigned char*) &tables[i].table->null_row;
       copy->length=sizeof(tables[i].table->null_row);
       copy->strip=0;
       copy->blob_field=0;
@@ -13836,7 +13836,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
   cache->blobs=blobs;
   *blob_ptr=0;					/* End sequentel */
   size=cmax(thd->variables.join_buff_size, (ulong)cache->length);
-  if (!(cache->buff=(uchar*) my_malloc(size,MYF(0))))
+  if (!(cache->buff=(unsigned char*) my_malloc(size,MYF(0))))
     return(1);				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
   reset_cache_write(cache);
@@ -13862,7 +13862,7 @@ static bool
 store_record_in_cache(JOIN_CACHE *cache)
 {
   uint length;
-  uchar *pos;
+  unsigned char *pos;
   CACHE_FIELD *copy,*end_field;
   bool last_record;
 
@@ -13904,7 +13904,7 @@ store_record_in_cache(JOIN_CACHE *cache)
 
       if (copy->strip)
       {
-	uchar *str,*end;
+	unsigned char *str,*end;
 	for (str=copy->str,end= str+copy->length;
 	     end > str && end[-1] == ' ' ;
 	     end--) ;
@@ -13944,7 +13944,7 @@ static void reset_cache_write(JOIN_CACHE *cache)
 static void
 read_cached_record(JOIN_TAB *tab)
 {
-  uchar *pos;
+  unsigned char *pos;
   uint length;
   bool last_record;
   CACHE_FIELD *copy,*end_field;
@@ -14746,7 +14746,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
   for (i= 0; (pos= li++); i++)
   {
     Field *field;
-    uchar *tmp;
+    unsigned char *tmp;
     Item *real_pos= pos->real_item();
     if (real_pos->type() == Item::FIELD_ITEM)
     {
@@ -14791,7 +14791,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
           another extra byte to not get warnings from purify in
           Field_varstring::val_int
         */
-	if (!(tmp= (uchar*) sql_alloc(field->pack_length()+2)))
+	if (!(tmp= (unsigned char*) sql_alloc(field->pack_length()+2)))
 	  goto err;
         if (copy)
         {
@@ -16337,8 +16337,8 @@ Index_hint::print(THD *thd, String *str)
   if (key_name.length)
   {
     if (thd && !my_strnncoll(system_charset_info,
-                             (const uchar *)key_name.str, key_name.length, 
-                             (const uchar *)primary_key_name, 
+                             (const unsigned char *)key_name.str, key_name.length, 
+                             (const unsigned char *)primary_key_name, 
                              strlen(primary_key_name)))
       str->append(primary_key_name);
     else

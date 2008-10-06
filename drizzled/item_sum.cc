@@ -462,7 +462,7 @@ Item *Item_sum::get_tmp_table_item(THD *thd)
 
 
 bool Item_sum::walk (Item_processor processor, bool walk_subquery,
-                     uchar *argument)
+                     unsigned char *argument)
 {
   if (arg_count)
   {
@@ -1499,7 +1499,7 @@ my_decimal *Item_sum_variance::val_decimal(my_decimal *dec_buf)
 void Item_sum_variance::reset_field()
 {
   double nr;
-  uchar *res= result_field->ptr;
+  unsigned char *res= result_field->ptr;
 
   nr= args[0]->val_real();              /* sets null_value as side-effect */
 
@@ -1522,7 +1522,7 @@ void Item_sum_variance::reset_field()
 void Item_sum_variance::update_field()
 {
   uint64_t field_count;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   double nr= args[0]->val_real();       /* sets null_value as side-effect */
 
@@ -1885,7 +1885,7 @@ bool Item_sum_and::add()
 void Item_sum_num::reset_field()
 {
   double nr= args[0]->val_real();
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   if (maybe_null)
   {
@@ -2007,7 +2007,7 @@ void Item_sum_sum::reset_field()
 
 void Item_sum_count::reset_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   int64_t nr=0;
 
   if (!args[0]->maybe_null || !args[0]->is_null())
@@ -2018,7 +2018,7 @@ void Item_sum_count::reset_field()
 
 void Item_sum_avg::reset_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t tmp;
@@ -2059,7 +2059,7 @@ void Item_sum_bit::reset_field()
 
 void Item_sum_bit::update_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   bits= uint8korr(res);
   add();
   int8store(res, bits);
@@ -2094,7 +2094,7 @@ void Item_sum_sum::update_field()
   else
   {
     double old_nr,nr;
-    uchar *res=result_field->ptr;
+    unsigned char *res=result_field->ptr;
 
     float8get(old_nr,res);
     nr= args[0]->val_real();
@@ -2111,7 +2111,7 @@ void Item_sum_sum::update_field()
 void Item_sum_count::update_field()
 {
   int64_t nr;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   nr=sint8korr(res);
   if (!args[0]->maybe_null || !args[0]->is_null())
@@ -2123,7 +2123,7 @@ void Item_sum_count::update_field()
 void Item_sum_avg::update_field()
 {
   int64_t field_count;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
     my_decimal value, *arg_val= args[0]->val_decimal(&value);
@@ -2296,7 +2296,7 @@ double Item_avg_field::val_real()
   // fix_fields() never calls for this Item
   double nr;
   int64_t count;
-  uchar *res;
+  unsigned char *res;
 
   if (hybrid_type == DECIMAL_RESULT)
     return val_real_from_decimal();
@@ -2429,7 +2429,7 @@ double Item_variance_field::val_real()
 ** COUNT(DISTINCT ...)
 ****************************************************************************/
 
-int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2)
+int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Field *f= (Field*) arg;
   return f->cmp(key1, key2);
@@ -2442,7 +2442,7 @@ int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2)
   static
 */
 
-int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
+int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
   Field **field    = item->table->field;
@@ -2775,7 +2775,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     Field *field= item->get_tmp_table_field();
     int res;
     uint offset= field->offset(field->table->record[0])-table->s->null_bytes;
-    if((res= field->cmp((uchar*)key1 + offset, (uchar*)key2 + offset)))
+    if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
   return 0;
@@ -2813,7 +2813,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
       int res;
       uint offset= (field->offset(field->table->record[0]) -
                     table->s->null_bytes);
-      if ((res= field->cmp((uchar*)key1 + offset, (uchar*)key2 + offset)))
+      if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
     }
   }
@@ -2830,7 +2830,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
   Append data from current leaf to item->result.
 */
 
-int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
+int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)),
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
@@ -3070,7 +3070,7 @@ bool Item_func_group_concat::add()
     if (!show_item->const_item())
     {
       Field *f= show_item->get_tmp_table_field();
-      if (f->is_null_in_record((const uchar*) table->record[0]))
+      if (f->is_null_in_record((const unsigned char*) table->record[0]))
         return 0;                               // Skip row if it contains null
     }
   }

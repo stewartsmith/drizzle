@@ -27,13 +27,13 @@ extern "C" {
 #endif
 
 typedef struct st_queue {
-  uchar **root;
+  unsigned char **root;
   void *first_cmp_arg;
   uint elements;
   uint max_elements;
   uint offset_to_key;	/* compare is done on element+offset */
   int max_at_top;	/* Normally 1, set to -1 if queue_top gives max */
-  int  (*compare)(void *, uchar *,uchar *);
+  int  (*compare)(void *, unsigned char *,unsigned char *);
   uint auto_extent;
 } QUEUE;
 
@@ -44,7 +44,7 @@ typedef struct st_queue {
 #define queue_set_cmp_arg(queue, set_arg) (queue)->first_cmp_arg= set_arg
 #define queue_set_max_at_top(queue, set_arg) \
   (queue)->max_at_top= set_arg ? -1 : 1
-typedef int (*queue_compare)(void *,uchar *, uchar *);
+typedef int (*queue_compare)(void *,unsigned char *, unsigned char *);
 
 int init_queue(QUEUE *queue,uint max_elements,uint offset_to_key,
                bool max_at_top, queue_compare compare,
@@ -57,9 +57,9 @@ int reinit_queue(QUEUE *queue,uint max_elements,uint offset_to_key,
                  void *first_cmp_arg);
 int resize_queue(QUEUE *queue, uint max_elements);
 void delete_queue(QUEUE *queue);
-void queue_insert(QUEUE *queue,uchar *element);
-int queue_insert_safe(QUEUE *queue, uchar *element);
-uchar *queue_remove(QUEUE *queue,uint idx);
+void queue_insert(QUEUE *queue,unsigned char *element);
+int queue_insert_safe(QUEUE *queue, unsigned char *element);
+unsigned char *queue_remove(QUEUE *queue,uint idx);
 #define queue_remove_all(queue) { (queue)->elements= 0; }
 #define queue_is_full(queue) (queue->elements == queue->max_elements)
 void _downheap(QUEUE *queue,uint idx);

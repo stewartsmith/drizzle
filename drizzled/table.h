@@ -162,7 +162,7 @@ typedef struct st_table_share
   KEY  *key_info;			/* data of keys in database */
   uint	*blob_field;			/* Index to blobs in Field arrray*/
 
-  uchar	*default_values;		/* row with default values */
+  unsigned char	*default_values;		/* row with default values */
   LEX_STRING comment;			/* Comment about table */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
@@ -233,7 +233,7 @@ typedef struct st_table_share
   uint next_number_keypart;             /* autoinc keypart number in a key */
   uint error, open_errno, errarg;       /* error from open_table_def() */
   uint column_bitmap_size;
-  uchar frm_version;
+  unsigned char frm_version;
   bool null_field_first;
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
@@ -364,14 +364,14 @@ public:
 
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(HA_CREATE_INFO *create_info);
-  void setup_tmp_table_column_bitmaps(uchar *bitmaps);
+  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo, 
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo, 
                                uint64_t options);
   void free_tmp_table(THD *thd);
   bool open_tmp_table();
-  size_t max_row_length(const uchar *data);
+  size_t max_row_length(const unsigned char *data);
   uint find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
   bool compare_record();
@@ -389,10 +389,10 @@ public:
   THD	*in_use;                        /* Which thread uses this */
   Field **field;			/* Pointer to fields */
 
-  uchar *record[2];			/* Pointer to records */
-  uchar *write_row_record;		/* Used as optimisation in
+  unsigned char *record[2];			/* Pointer to records */
+  unsigned char *write_row_record;		/* Used as optimisation in
 					   THD::write_row */
-  uchar *insert_values;                  /* used by INSERT ... UPDATE */
+  unsigned char *insert_values;                  /* used by INSERT ... UPDATE */
   /* 
     Map of keys that can be used to retrieve all data from this table 
     needed by the query without reading the row.
@@ -424,7 +424,7 @@ public:
   TableList *pos_in_table_list;/* Element referring to this table */
   order_st *group;
   const char	*alias;            	  /* alias or table name */
-  uchar		*null_flags;
+  unsigned char		*null_flags;
   my_bitmap_map	*bitmap_init_value;
   MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
   MY_BITMAP     *read_set, *write_set;          /* Active column sets */

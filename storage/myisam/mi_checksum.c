@@ -17,7 +17,7 @@
 
 #include "myisamdef.h"
 
-ha_checksum mi_checksum(MI_INFO *info, const uchar *buf)
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 {
   uint i;
   ha_checksum crc=0;
@@ -25,7 +25,7 @@ ha_checksum mi_checksum(MI_INFO *info, const uchar *buf)
 
   for (i=info->s->base.fields ; i-- ; buf+=(rec++)->length)
   {
-    const uchar *pos;
+    const unsigned char *pos;
     ulong length;
     switch (rec->type) {
     case FIELD_BLOB:
@@ -40,7 +40,7 @@ ha_checksum mi_checksum(MI_INFO *info, const uchar *buf)
     {
       uint pack_length= HA_VARCHAR_PACKLENGTH(rec->length-1);
       if (pack_length == 1)
-        length= (ulong) *(uchar*) buf;
+        length= (ulong) *(unsigned char*) buf;
       else
         length= uint2korr(buf);
       pos= buf+pack_length;
@@ -51,13 +51,13 @@ ha_checksum mi_checksum(MI_INFO *info, const uchar *buf)
       pos=buf;
       break;
     }
-    crc=my_checksum(crc, pos ? pos : (uchar*) "", length);
+    crc=my_checksum(crc, pos ? pos : (unsigned char*) "", length);
   }
   return crc;
 }
 
 
-ha_checksum mi_static_checksum(MI_INFO *info, const uchar *pos)
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
 {
   return my_checksum(0, pos, info->s->base.reclength);
 }

@@ -56,7 +56,7 @@ static void *alarm_handler(void *arg);
 static RETSIGTYPE thread_alarm(int sig __attribute__((unused)));
 
 static int compare_uint32_t(void *not_used __attribute__((unused)),
-			 uchar *a_ptr,uchar* b_ptr)
+			 unsigned char *a_ptr,unsigned char* b_ptr)
 {
   uint32_t a=*((uint32_t*) a_ptr),b= *((uint32_t*) b_ptr);
   return (a < b) ? -1  : (a == b) ? 0 : 1;
@@ -204,7 +204,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
   alarm_data->alarmed=0;
   alarm_data->thread=    current_my_thread_var->pthread_self;
   alarm_data->thread_id= current_my_thread_var->id;
-  queue_insert(&alarm_queue,(uchar*) alarm_data);
+  queue_insert(&alarm_queue,(unsigned char*) alarm_data);
 
   /* Reschedule alarm if the current one has more than sec left */
   if (reschedule)
@@ -243,14 +243,14 @@ void thr_end_alarm(thr_alarm_t *alarmed)
 #endif
   pthread_mutex_lock(&LOCK_alarm);
 
-  alarm_data= (ALARM*) ((uchar*) *alarmed - offsetof(ALARM,alarmed));
+  alarm_data= (ALARM*) ((unsigned char*) *alarmed - offsetof(ALARM,alarmed));
   for (i=0 ; i < alarm_queue.elements ; i++)
   {
     if ((ALARM*) queue_element(&alarm_queue,i) == alarm_data)
     {
       queue_remove(&alarm_queue,i),MYF(0);
       if (alarm_data->malloced)
-	free((uchar*) alarm_data);
+	free((unsigned char*) alarm_data);
       found++;
       break;
     }
@@ -458,7 +458,7 @@ void thr_alarm_kill(my_thread_id thread_id)
     {
       ALARM *tmp=(ALARM*) queue_remove(&alarm_queue,i);
       tmp->expire_time=0;
-      queue_insert(&alarm_queue,(uchar*) tmp);
+      queue_insert(&alarm_queue,(unsigned char*) tmp);
       reschedule_alarms();
       break;
     }
@@ -668,7 +668,7 @@ static void *test_thread(void *arg)
   thread_count--;
   pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
-  free((uchar*) arg);
+  free((unsigned char*) arg);
   return 0;
 }
 

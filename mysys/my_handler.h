@@ -61,22 +61,22 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 } HA_KEYSEG;
 
 #define get_key_length(length,key) \
-{ if (*(uchar*) (key) != 255) \
-    length= (uint) *(uchar*) ((key)++); \
+{ if (*(unsigned char*) (key) != 255) \
+    length= (uint) *(unsigned char*) ((key)++); \
   else \
   { length= mi_uint2korr((key)+1); (key)+=3; } \
 }
 
 #define get_key_length_rdonly(length,key) \
-{ if (*(uchar*) (key) != 255) \
-    length= ((uint) *(uchar*) ((key))); \
+{ if (*(unsigned char*) (key) != 255) \
+    length= ((uint) *(unsigned char*) ((key))); \
   else \
   { length= mi_uint2korr((key)+1); } \
 }
 
 #define get_key_pack_length(length,length_pack,key) \
-{ if (*(uchar*) (key) != 255) \
-  { length= (uint) *(uchar*) ((key)++); length_pack= 1; }\
+{ if (*(unsigned char*) (key) != 255) \
+  { length= (uint) *(unsigned char*) ((key)++); length_pack= 1; }\
   else \
   { length=mi_uint2korr((key)+1); (key)+= 3; length_pack= 3; } \
 }
@@ -106,12 +106,12 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(const CHARSET_INFO * const, uchar *, uint, uchar *, uint, bool, bool);
+extern int ha_compare_text(const CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
 
-extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a);
+extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
 extern void my_handler_error_register(void);
 extern void my_handler_error_unregister(void);
-extern int ha_key_cmp(HA_KEYSEG *keyseg, uchar *a,uchar *b,
+extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
                       uint key_length,uint nextflag,uint *diff_length);
 
 /*

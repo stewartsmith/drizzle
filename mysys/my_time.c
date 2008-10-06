@@ -30,13 +30,13 @@ uint64_t log_10_int[20]=
 
 /* Position for YYYY-DD-MM HH-MM-DD.FFFFFF AM in default format */
 
-static uchar internal_format_positions[]=
-{0, 1, 2, 3, 4, 5, 6, (uchar) 255};
+static unsigned char internal_format_positions[]=
+{0, 1, 2, 3, 4, 5, 6, (unsigned char) 255};
 
 static char time_separator=':';
 
 static uint32_t const days_at_timestart=719528;	/* daynr at 1970.01.01 */
-uchar days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+unsigned char days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 /*
   Offset of system time zone from UTC in seconds used to speed up 
@@ -166,7 +166,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
   bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
-  const uchar *format_position;
+  const unsigned char *format_position;
   bool found_delimitier= 0, found_space= 0;
   uint frac_pos, frac_len;
 
@@ -256,11 +256,11 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
        i++)
   {
     const char *start= str;
-    uint32_t tmp_value= (uint) (uchar) (*str++ - '0');
+    uint32_t tmp_value= (uint) (unsigned char) (*str++ - '0');
     while (str != end && my_isdigit(&my_charset_utf8_general_ci,str[0]) &&
            (!is_internal_format || --field_length))
     {
-      tmp_value=tmp_value*10 + (uint32_t) (uchar) (*str - '0');
+      tmp_value=tmp_value*10 + (uint32_t) (unsigned char) (*str - '0');
       str++;
     }
     date_len[i]= (uint) (str - start);
@@ -369,7 +369,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
       date[frac_pos]*= (uint) log_10_int[6 - frac_len];
     l_time->second_part= date[frac_pos];
 
-    if (format_position[7] != (uchar) 255)
+    if (format_position[7] != (unsigned char) 255)
     {
       if (l_time->hour > 12)
       {
@@ -558,7 +558,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
     /* Fix the date to assume that seconds was given */
     if (!found_hours && !found_days)
     {
-      bmove_upp((uchar*) (date+4), (uchar*) (date+state),
+      bmove_upp((unsigned char*) (date+4), (unsigned char*) (date+state),
                 sizeof(long)*(state-1));
       memset(date, 0, sizeof(long)*(4-state));
     }
@@ -571,11 +571,11 @@ fractional:
   if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_utf8_general_ci,str[1]))
   {
     int field_length= 5;
-    str++; value=(uint) (uchar) (*str - '0');
+    str++; value=(uint) (unsigned char) (*str - '0');
     while (++str != end && my_isdigit(&my_charset_utf8_general_ci, *str))
     {
       if (field_length-- > 0)
-        value= value*10 + (uint) (uchar) (*str - '0');
+        value= value*10 + (uint) (unsigned char) (*str - '0');
     }
     if (field_length > 0)
       value*= (long) log_10_int[field_length];

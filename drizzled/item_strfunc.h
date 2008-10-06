@@ -329,12 +329,12 @@ public:
   void update_used_tables();
   const char *func_name() const { return "make_set"; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
   {
     return item->walk(processor, walk_subquery, arg) ||
       Item_str_func::walk(processor, walk_subquery, arg);
   }
-  Item *transform(Item_transformer transformer, uchar *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
 };
 

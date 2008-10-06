@@ -144,7 +144,7 @@ void insert_into_hash(hash_lex_struct *root, const char *name,
     int index2= root->iresult;
     const char *name2= (index2 < 0 ? sql_functions[-index2-1] :
 			symbols[index2]).name + len_from_begin;
-    root->first_char= (int) (uchar) name2[0];
+    root->first_char= (int) (unsigned char) name2[0];
     root->last_char= (char) root->first_char;
     tails= (hash_lex_struct*)malloc(sizeof(hash_lex_struct));
     root->char_tails= tails;
@@ -166,7 +166,7 @@ void insert_into_hash(hash_lex_struct *root, const char *name,
     end= tails + new_size - real_size;
     for (cur= tails; cur<end; cur++)
       cur->first_char= 0;
-    root->first_char= (int) (uchar) *name;
+    root->first_char= (int) (unsigned char) *name;
   }
 
   if (root->last_char<(*name))
@@ -221,10 +221,10 @@ void calc_length()
 {
   SYMBOL *cur, *end= symbols + array_elements(symbols);
   for (cur= symbols; cur < end; cur++)
-    cur->length=(uchar) strlen(cur->name);
+    cur->length=(unsigned char) strlen(cur->name);
   end= sql_functions + array_elements(sql_functions);
   for (cur= sql_functions; cur<end; cur++)
-    cur->length=(uchar) strlen(cur->name);
+    cur->length=(unsigned char) strlen(cur->name);
 }
 
 void generate_find_structs()
@@ -309,7 +309,7 @@ void print_hash_map(const char *name)
   char *cur;
   int i;
 
-  printf("static uchar %s[%d]= {\n",name,size_hash_map);
+  printf("static unsigned char %s[%d]= {\n",name,size_hash_map);
   for (i=0, cur= hash_map; i<size_hash_map; i++, cur++)
   {
     switch(i%4){
@@ -319,8 +319,8 @@ void print_hash_map(const char *name)
       else
 	printf("\'%c\', ",*cur);
       break;
-    case 2: printf("%u, ",(uint)(uchar)*cur); break;
-    case 3: printf("%u,\n",(uint)(uchar)*cur); break;
+    case 2: printf("%u, ",(uint)(unsigned char)*cur); break;
+    case 3: printf("%u,\n",(uint)(unsigned char)*cur); break;
     }
   }
   printf("};\n");
@@ -489,7 +489,7 @@ int main(int argc,char **argv)
 static SYMBOL *get_hash_symbol(const char *s,\n\
                                unsigned int len,bool function)\n\
 {\n\
-  register uchar *hash_map;\n\
+  register unsigned char *hash_map;\n\
   register const char *cur_str= s;\n\
 \n\
   if (len == 0) {\n\
@@ -504,7 +504,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
     register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
-      register uchar first_char= (uchar)cur_struct;\n\
+      register unsigned char first_char= (unsigned char)cur_struct;\n\
 \n\
       if (first_char == 0)\n\
       {\n\
@@ -519,10 +519,10 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
         return lex_casecmp(cur_str,res->name+count,len-count) ? 0 : res;\n\
       }\n\
 \n\
-      register uchar cur_char= (uchar)to_upper_lex[(uchar)*cur_str];\n\
+      register unsigned char cur_char= (unsigned char)to_upper_lex[(unsigned char)*cur_str];\n\
       if (cur_char<first_char) return 0;\n\
       cur_struct>>=8;\n\
-      if (cur_char>(uchar)cur_struct) return 0;\n\
+      if (cur_char>(unsigned char)cur_struct) return 0;\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\
@@ -538,7 +538,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
     register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
-      register uchar first_char= (uchar)cur_struct;\n\
+      register unsigned char first_char= (unsigned char)cur_struct;\n\
 \n\
       if (first_char==0){\n\
         register int16_t ires= (int16_t)(cur_struct>>16);\n\
@@ -548,10 +548,10 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
         return lex_casecmp(cur_str,res->name+count,len-count)!=0 ? 0 : res;\n\
       }\n\
 \n\
-      register uchar cur_char= (uchar)to_upper_lex[(uchar)*cur_str];\n\
+      register unsigned char cur_char= (unsigned char)to_upper_lex[(unsigned char)*cur_str];\n\
       if (cur_char<first_char) return 0;\n\
       cur_struct>>=8;\n\
-      if (cur_char>(uchar)cur_struct) return 0;\n\
+      if (cur_char>(unsigned char)cur_struct) return 0;\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\

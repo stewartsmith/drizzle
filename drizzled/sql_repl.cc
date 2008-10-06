@@ -65,7 +65,7 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
   int8store(buf+R_POS_OFFSET,position);
   packet->append(buf, ROTATE_HEADER_LEN);
   packet->append(p,ident_len);
-  if (my_net_write(net, (uchar*) packet->ptr(), packet->length()))
+  if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()))
   {
     *errmsg = "failed on my_net_write()";
     return(-1);
@@ -82,7 +82,7 @@ static int send_file(THD *thd)
   const char *errmsg = 0;
   int old_timeout;
   unsigned long packet_len;
-  uchar buf[IO_SIZE];				// It's safe to alloc this
+  unsigned char buf[IO_SIZE];				// It's safe to alloc this
 
   /*
     The client might be slow loading the data, give him wait_timeout to do
@@ -124,7 +124,7 @@ static int send_file(THD *thd)
   }
 
  end:
-  if (my_net_write(net, (uchar*) "", 0) || net_flush(net) ||
+  if (my_net_write(net, (unsigned char*) "", 0) || net_flush(net) ||
       (my_net_read(net) == packet_error))
   {
     errmsg = _("Failed in send_file() while negotiating file transfer close");
@@ -318,7 +318,7 @@ static uint64_t get_heartbeat_period(THD * thd)
   bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
   user_var_entry *entry= 
-    (user_var_entry*) hash_search(&thd->user_vars, (uchar*) name.str,
+    (user_var_entry*) hash_search(&thd->user_vars, (unsigned char*) name.str,
                                   name.length);
   return entry? entry->val_int(&null_value) : 0;
 }
@@ -362,7 +362,7 @@ static int send_heartbeat_event(NET* net, String* packet,
   packet->append(header, sizeof(header));
   packet->append(p, ident_len);             // log_file_name
 
-  if (my_net_write(net, (uchar*) packet->ptr(), packet->length()) ||
+  if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()) ||
       net_flush(net))
   {
     return(-1);
@@ -541,7 +541,7 @@ impossible position";
          int4store((char*) packet->ptr()+LOG_EVENT_MINIMAL_HEADER_LEN+
                    ST_CREATED_OFFSET+1, (uint32_t) 0);
          /* send it */
-         if (my_net_write(net, (uchar*) packet->ptr(), packet->length()))
+         if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()))
          {
            errmsg = "Failed on my_net_write()";
            my_errno= ER_UNKNOWN_ERROR;
@@ -595,7 +595,7 @@ impossible position";
       else if ((*packet)[EVENT_TYPE_OFFSET+1] == STOP_EVENT)
         binlog_can_be_corrupted= false;
 
-      if (my_net_write(net, (uchar*) packet->ptr(), packet->length()))
+      if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()))
       {
 	errmsg = "Failed on my_net_write()";
 	my_errno= ER_UNKNOWN_ERROR;
@@ -719,7 +719,7 @@ impossible position";
 	if (read_packet)
 	{
 	  thd_proc_info(thd, "Sending binlog event to slave");
-	  if (my_net_write(net, (uchar*) packet->ptr(), packet->length()) )
+	  if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()) )
 	  {
 	    errmsg = "Failed on my_net_write()";
 	    my_errno= ER_UNKNOWN_ERROR;
@@ -1634,7 +1634,7 @@ int log_loaded_block(IO_CACHE* file)
   LOAD_FILE_INFO *lf_info;
   uint32_t block_len;
   /* buffer contains position where we started last read */
-  uchar* buffer= (uchar*) my_b_get_buffer_start(file);
+  unsigned char* buffer= (unsigned char*) my_b_get_buffer_start(file);
   uint32_t max_event_size= current_thd->variables.max_allowed_packet;
   lf_info= (LOAD_FILE_INFO*) file->arg;
   if (lf_info->thd->current_stmt_binlog_row_based)

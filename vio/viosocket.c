@@ -29,7 +29,7 @@ int vio_errno(Vio *vio __attribute__((unused)))
 }
 
 
-size_t vio_read(Vio * vio, uchar* buf, size_t size)
+size_t vio_read(Vio * vio, unsigned char* buf, size_t size)
 {
   size_t r;
 
@@ -46,7 +46,7 @@ size_t vio_read(Vio * vio, uchar* buf, size_t size)
   reduce number of syscalls.
 */
 
-size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
+size_t vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
 {
   size_t rc;
 #define VIO_UNBUFFERED_READ_MIN_SIZE 2048
@@ -64,7 +64,7 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
   }
   else if (size < VIO_UNBUFFERED_READ_MIN_SIZE)
   {
-    rc= vio_read(vio, (uchar*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
+    rc= vio_read(vio, (unsigned char*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
     if (rc != 0 && rc != (size_t) -1)
     {
       if (rc > size)
@@ -84,7 +84,7 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
 }
 
 
-size_t vio_write(Vio * vio, const uchar* buf, size_t size)
+size_t vio_write(Vio * vio, const unsigned char* buf, size_t size)
 {
   size_t r;
 

@@ -118,13 +118,13 @@ static void backtrace_current_thread(void)
 #endif
 
 
-void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
+void  print_stacktrace(unsigned char* stack_bottom, ulong thread_stack)
 {
 #if HAVE_BACKTRACE
   backtrace_current_thread();
   return;
 #endif
-  uchar** fp;
+  unsigned char** fp;
   uint frame_count = 0, sigreturn_frame_count;
 
 #ifdef __i386__
@@ -144,16 +144,16 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
     return;
   }
 
-  if (!stack_bottom || (uchar*) stack_bottom > (uchar*) &fp)
+  if (!stack_bottom || (unsigned char*) stack_bottom > (unsigned char*) &fp)
   {
     ulong tmp= cmin(0x10000,thread_stack);
     /* Assume that the stack starts at the previous even 65K */
-    stack_bottom= (uchar*) (((ulong) &fp + tmp) &
+    stack_bottom= (unsigned char*) (((ulong) &fp + tmp) &
 			  ~(ulong) 0xFFFF);
     fprintf(stderr, "Cannot determine thread, fp=%p, backtrace may not be correct.\n", (void *)fp);
   }
-  if (fp > (uchar**) stack_bottom ||
-      fp < (uchar**) stack_bottom - thread_stack)
+  if (fp > (unsigned char**) stack_bottom ||
+      fp < (unsigned char**) stack_bottom - thread_stack)
   {
     fprintf(stderr, "Bogus stack limit or frame pointer,\
  fp=%p, stack_bottom=%p, thread_stack=%ld, aborting backtrace.\n",
@@ -166,10 +166,10 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
   /* We are 1 frame above signal frame with NPTL and 2 frames above with LT */
   sigreturn_frame_count = thd_lib_detected == THD_LIB_LT ? 2 : 1;
 
-  while (fp < (uchar**) stack_bottom)
+  while (fp < (unsigned char**) stack_bottom)
   {
 #if defined(__i386__) || defined(__x86_64__)
-    uchar** new_fp = (uchar**)*fp;
+    unsigned char** new_fp = (unsigned char**)*fp;
     fprintf(stderr, "%p\n", frame_count == sigreturn_frame_count ?
             *(fp + SIGRETURN_FRAME_OFFSET) : *(fp + 1));
 #endif /* defined(__386__)  || defined(__x86_64__) */

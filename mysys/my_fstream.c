@@ -42,7 +42,7 @@
     #		Number of bytes written
 */
 
-size_t my_fwrite(FILE *stream, const uchar *Buffer, size_t Count, myf MyFlags)
+size_t my_fwrite(FILE *stream, const unsigned char *Buffer, size_t Count, myf MyFlags)
 {
   size_t writtenbytes =0;
   my_off_t seekptr;

@@ -38,7 +38,7 @@ blob_pack_length_to_max_length(uint arg)
 ** packlength slot and may be from 1-4.
 ****************************************************************************/
 
-Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
+Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 		       enum utype unireg_check_arg, const char *field_name_arg,
                        TABLE_SHARE *share, uint blob_pack_length,
 		       const CHARSET_INFO * const cs)
@@ -53,14 +53,14 @@ Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 }
 
 
-void Field_blob::store_length(uchar *i_ptr,
+void Field_blob::store_length(unsigned char *i_ptr,
                               uint i_packlength,
                               uint32_t i_number,
                               bool low_byte_first __attribute__((unused)))
 {
   switch (i_packlength) {
   case 1:
-    i_ptr[0]= (uchar) i_number;
+    i_ptr[0]= (unsigned char) i_number;
     break;
   case 2:
 #ifdef WORDS_BIGENDIAN
@@ -88,7 +88,7 @@ void Field_blob::store_length(uchar *i_ptr,
 }
 
 
-uint32_t Field_blob::get_length(const uchar *pos,
+uint32_t Field_blob::get_length(const unsigned char *pos,
                               uint packlength_arg,
                               bool low_byte_first __attribute__((unused)))
 {
@@ -135,7 +135,7 @@ uint32_t Field_blob::get_length(const uchar *pos,
   @param length              The length value to put.
 */
 
-void Field_blob::put_length(uchar *pos, uint32_t length)
+void Field_blob::put_length(unsigned char *pos, uint32_t length)
 {
   switch (packlength) {
   case 1:
@@ -288,7 +288,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 {
   const char *blob;
   size_t length;
-  memcpy(&blob, ptr+packlength, sizeof(const uchar*));
+  memcpy(&blob, ptr+packlength, sizeof(const unsigned char*));
   if (!blob)
   {
     blob= "";
@@ -303,7 +303,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 }
 
 
-int Field_blob::cmp(const uchar *a,uint32_t a_length, const uchar *b,
+int Field_blob::cmp(const unsigned char *a,uint32_t a_length, const unsigned char *b,
 		    uint32_t b_length)
 {
   return field_charset->coll->strnncollsp(field_charset, 
@@ -312,10 +312,10 @@ int Field_blob::cmp(const uchar *a,uint32_t a_length, const uchar *b,
 }
 
 
-int Field_blob::cmp_max(const uchar *a_ptr, const uchar *b_ptr,
+int Field_blob::cmp_max(const unsigned char *a_ptr, const unsigned char *b_ptr,
                         uint max_length)
 {
-  uchar *blob1,*blob2;
+  unsigned char *blob1,*blob2;
   memcpy(&blob1,a_ptr+packlength,sizeof(char*));
   memcpy(&blob2,b_ptr+packlength,sizeof(char*));
   uint a_len= get_length(a_ptr), b_len= get_length(b_ptr);
@@ -325,7 +325,7 @@ int Field_blob::cmp_max(const uchar *a_ptr, const uchar *b_ptr,
 }
 
 
-int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
+int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_ptr,
 			   uint32_t max_length)
 {
   char *a,*b;
@@ -346,12 +346,12 @@ int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 
 /* The following is used only when comparing a key */
 
-uint Field_blob::get_key_image(uchar *buff,
+uint Field_blob::get_key_image(unsigned char *buff,
                                uint length,
                                imagetype type_arg __attribute__((unused)))
 {
   uint32_t blob_length= get_length(ptr);
-  uchar *blob;
+  unsigned char *blob;
 
   get_ptr(&blob);
   uint local_char_length= length / field_charset->mbmaxlen;
@@ -374,7 +374,7 @@ uint Field_blob::get_key_image(uchar *buff,
 }
 
 
-void Field_blob::set_key_image(const uchar *buff,uint length)
+void Field_blob::set_key_image(const unsigned char *buff,uint length)
 {
   length= uint2korr(buff);
   (void) Field_blob::store((const char*) buff+HA_KEY_BLOB_LENGTH, length,
@@ -382,9 +382,9 @@ void Field_blob::set_key_image(const uchar *buff,uint length)
 }
 
 
-int Field_blob::key_cmp(const uchar *key_ptr, uint max_key_length)
+int Field_blob::key_cmp(const unsigned char *key_ptr, uint max_key_length)
 {
-  uchar *blob1;
+  unsigned char *blob1;
   uint blob_length=get_length(ptr);
   memcpy(&blob1,ptr+packlength,sizeof(char*));
   const CHARSET_INFO * const cs= charset();
@@ -397,7 +397,7 @@ int Field_blob::key_cmp(const uchar *key_ptr, uint max_key_length)
 			 uint2korr(key_ptr));
 }
 
-int Field_blob::key_cmp(const uchar *a,const uchar *b)
+int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 {
   return Field_blob::cmp(a+HA_KEY_BLOB_LENGTH, uint2korr(a),
 			 b+HA_KEY_BLOB_LENGTH, uint2korr(b));
@@ -414,7 +414,7 @@ int Field_blob::key_cmp(const uchar *a,const uchar *b)
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_blob::do_save_field_metadata(uchar *metadata_ptr)
+int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= pack_length_no_ptr();
   return 1;
@@ -428,9 +428,9 @@ uint32_t Field_blob::sort_length() const
 }
 
 
-void Field_blob::sort_string(uchar *to,uint length)
+void Field_blob::sort_string(unsigned char *to,uint length)
 {
-  uchar *blob;
+  unsigned char *blob;
   uint blob_length=get_length();
 
   if (!blob_length)
@@ -439,7 +439,7 @@ void Field_blob::sort_string(uchar *to,uint length)
   {
     if (field_charset == &my_charset_bin)
     {
-      uchar *pos;
+      unsigned char *pos;
 
       /*
         Store length of blob last in blob to shorter blobs before longer blobs
@@ -479,11 +479,11 @@ void Field_blob::sql_type(String &res) const
     res.set_ascii(STRING_WITH_LEN("text"));
 }
 
-uchar *Field_blob::pack(uchar *to, const uchar *from,
+unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
                         uint max_length, bool low_byte_first)
 {
-  uchar *save= ptr;
-  ptr= (uchar*) from;
+  unsigned char *save= ptr;
+  ptr= (unsigned char*) from;
   uint32_t length=get_length();			// Length of from string
 
   /*
@@ -498,7 +498,7 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
    */
   if (length > 0)
   {
-    get_ptr((uchar**) &from);
+    get_ptr((unsigned char**) &from);
     memcpy(to+packlength, from,length);
   }
   ptr=save;					// Restore org row pointer
@@ -523,8 +523,8 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *Field_blob::unpack(uchar *to __attribute__((unused)),
-                                const uchar *from,
+const unsigned char *Field_blob::unpack(unsigned char *to __attribute__((unused)),
+                                const unsigned char *from,
                                 uint param_data,
                                 bool low_byte_first)
 {
@@ -539,7 +539,7 @@ const uchar *Field_blob::unpack(uchar *to __attribute__((unused)),
 
 /* Keys for blobs are like keys on varchars */
 
-int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
+int Field_blob::pack_cmp(const unsigned char *a, const unsigned char *b, uint key_length_arg,
                          bool insert_or_update)
 {
   uint a_length, b_length;
@@ -560,10 +560,10 @@ int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
 }
 
 
-int Field_blob::pack_cmp(const uchar *b, uint key_length_arg,
+int Field_blob::pack_cmp(const unsigned char *b, uint key_length_arg,
                          bool insert_or_update)
 {
-  uchar *a;
+  unsigned char *a;
   uint a_length, b_length;
   memcpy(&a,ptr+packlength,sizeof(char*));
   if (!a)
@@ -584,24 +584,24 @@ int Field_blob::pack_cmp(const uchar *b, uint key_length_arg,
 
 /** Create a packed key that will be used for storage from a MySQL row. */
 
-uchar *
-Field_blob::pack_key(uchar *to, const uchar *from, uint max_length,
+unsigned char *
+Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint max_length,
                      bool low_byte_first __attribute__((unused)))
 {
-  uchar *save= ptr;
-  ptr= (uchar*) from;
+  unsigned char *save= ptr;
+  ptr= (unsigned char*) from;
   uint32_t length=get_length();        // Length of from string
   uint local_char_length= ((field_charset->mbmaxlen > 1) ?
                            max_length/field_charset->mbmaxlen : max_length);
   if (length)
-    get_ptr((uchar**) &from);
+    get_ptr((unsigned char**) &from);
   if (length > local_char_length)
     local_char_length= my_charpos(field_charset, from, from+length,
                                   local_char_length);
   set_if_smaller(length, local_char_length);
-  *to++= (uchar) length;
+  *to++= (unsigned char) length;
   if (max_length > 255)				// 2 byte length
-    *to++= (uchar) (length >> 8);
+    *to++= (unsigned char) (length >> 8);
   memcpy(to, from, length);
   ptr=save;					// Restore org row pointer
   return to+length;
@@ -629,8 +629,8 @@ Field_blob::pack_key(uchar *to, const uchar *from, uint max_length,
     Pointer into 'from' past the last byte copied from packed key.
 */
 
-const uchar *
-Field_blob::unpack_key(uchar *to, const uchar *from, uint max_length,
+const unsigned char *
+Field_blob::unpack_key(unsigned char *to, const unsigned char *from, uint max_length,
                        bool low_byte_first __attribute__((unused)))
 {
   /* get length of the blob key */
@@ -654,8 +654,8 @@ Field_blob::unpack_key(uchar *to, const uchar *from, uint max_length,
 
 /** Create a packed key that will be used for storage from a MySQL key. */
 
-uchar *
-Field_blob::pack_key_from_key_image(uchar *to, const uchar *from, uint max_length,
+unsigned char *
+Field_blob::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint max_length,
                                     bool low_byte_first __attribute__((unused)))
 {
   uint length=uint2korr(from);
@@ -670,7 +670,7 @@ Field_blob::pack_key_from_key_image(uchar *to, const uchar *from, uint max_lengt
 }
 
 
-uint Field_blob::packed_col_length(const uchar *data_ptr, uint length)
+uint Field_blob::packed_col_length(const unsigned char *data_ptr, uint length)
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;

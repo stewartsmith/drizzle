@@ -29,13 +29,13 @@
 #define INC_SYM_TABLE  4096
 #define MAX_SYM_SIZE   128
 #define DUMP_VERSION "1.4"
-#define HEX_INVALID  (uchar)255
+#define HEX_INVALID  (unsigned char)255
 
 
 typedef struct sym_entry
 {
   char symbol[MAX_SYM_SIZE];
-  uchar* addr;
+  unsigned char* addr;
 } SYM_ENTRY;
 
 
@@ -166,20 +166,20 @@ trace dump and specify the path to it with -s or --symbols-file");
 
 }
 
-static uchar hex_val(char c)
+static unsigned char hex_val(char c)
 {
-  uchar l;
+  unsigned char l;
   if (my_isdigit(&my_charset_utf8_general_ci,c))
     return c - '0';
   l = my_tolower(&my_charset_utf8_general_ci,c);
   if (l < 'a' || l > 'f')
     return HEX_INVALID; 
-  return (uchar)10 + ((uchar)c - (uchar)'a');
+  return (unsigned char)10 + ((unsigned char)c - (unsigned char)'a');
 }
 
 static unsigned long read_addr(char** buf)
 {
-  uchar c;
+  unsigned char c;
   char* p = *buf;
   unsigned long addr = 0;
 
@@ -193,7 +193,7 @@ static unsigned long read_addr(char** buf)
 static int init_sym_entry(SYM_ENTRY* se, char* buf)
 {
   char* p, *p_end;
-  se->addr = (uchar*)read_addr(&buf);
+  se->addr = (unsigned char*)read_addr(&buf);
 
   if (!se->addr)
     return -1;
@@ -225,7 +225,7 @@ static void init_sym_table(void)
     SYM_ENTRY se;
     if (init_sym_entry(&se, buf))
       continue;
-    if (insert_dynamic(&sym_table, (uchar*)&se))
+    if (insert_dynamic(&sym_table, (unsigned char*)&se))
       die("insert_dynamic() failed - looks like we are out of memory");
   }
 
@@ -240,12 +240,12 @@ static void clean_up(void)
 static void verify_sort()
 {
   uint i;
-  uchar* last = 0;
+  unsigned char* last = 0;
 
   for (i = 0; i < sym_table.elements; i++)
   {
     SYM_ENTRY se;
-    get_dynamic(&sym_table, (uchar*)&se, i);
+    get_dynamic(&sym_table, (unsigned char*)&se, i);
     if (se.addr < last)
       die("sym table does not appear to be sorted, did you forget \
 --numeric-sort arg to nm? trouble addr = %p, last = %p", se.addr, last);
@@ -254,19 +254,19 @@ static void verify_sort()
 }
 
 
-static SYM_ENTRY* resolve_addr(uchar* addr, SYM_ENTRY* se)
+static SYM_ENTRY* resolve_addr(unsigned char* addr, SYM_ENTRY* se)
 {
   uint i;
-  get_dynamic(&sym_table, (uchar*)se, 0);
+  get_dynamic(&sym_table, (unsigned char*)se, 0);
   if (addr < se->addr)
     return 0;
 
   for (i = 1; i < sym_table.elements; i++)
   {
-    get_dynamic(&sym_table, (uchar*)se, i);
+    get_dynamic(&sym_table, (unsigned char*)se, i);
     if (addr < se->addr)
     {
-      get_dynamic(&sym_table, (uchar*)se, i - 1);
+      get_dynamic(&sym_table, (unsigned char*)se, i - 1);
       return se;
     }
   }
@@ -288,7 +288,7 @@ static void do_resolve(void)
     if (*p++ == '0' && *p++ == 'x')
     {
       SYM_ENTRY se ;
-      uchar* addr = (uchar*)read_addr(&p);
+      unsigned char* addr = (unsigned char*)read_addr(&p);
       if (resolve_addr(addr, &se))
 	fprintf(fp_out, "%p %s + %d\n", addr, se.symbol,
 		(int) (addr - se.addr));

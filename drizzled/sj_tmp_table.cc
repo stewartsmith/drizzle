@@ -64,15 +64,15 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   Field **reg_field;
   KEY_PART_INFO *key_part_info;
   KEY *keyinfo;
-  uchar *group_buff;
-  uchar *bitmaps;
+  unsigned char *group_buff;
+  unsigned char *bitmaps;
   uint32_t *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
   Field *field, *key_field;
   uint32_t blob_count, null_pack_length, null_count;
-  uchar *null_flags;
-  uchar *pos;
+  unsigned char *null_flags;
+  unsigned char *pos;
   
   /*
     STEP 1: Get temporary table name
@@ -206,7 +206,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   {
     uint32_t alloc_length=ALIGN_SIZE(share->reclength + MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
-    if (!(table->record[0]= (uchar*)
+    if (!(table->record[0]= (unsigned char*)
           alloc_root(&table->mem_root, alloc_length*3)))
       goto err;
     table->record[1]= table->record[0]+alloc_length;
@@ -215,7 +215,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
   recinfo= start_recinfo;
-  null_flags=(uchar*) table->record[0];
+  null_flags=(unsigned char*) table->record[0];
   pos=table->record[0]+ null_pack_length;
   if (null_pack_length)
   {
@@ -225,7 +225,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
     recinfo++;
     memset(null_flags, 255, null_pack_length);  // Set null fields
 
-    table->null_flags= (uchar*) table->record[0];
+    table->null_flags= (unsigned char*) table->record[0];
     share->null_fields= null_count;
     share->null_bytes= null_pack_length;
   }
@@ -235,7 +235,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
     //Field *field= *reg_field;
     uint32_t length;
     memset(recinfo, 0, sizeof(*recinfo));
-    field->move_field(pos,(uchar*) 0,0);
+    field->move_field(pos,(unsigned char*) 0,0);
 
     field->reset();
     /*

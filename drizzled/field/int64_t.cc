@@ -203,7 +203,7 @@ bool Field_int64_t::send_binary(Protocol *protocol)
 }
 
 
-int Field_int64_t::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -224,7 +224,7 @@ int Field_int64_t::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_int64_t::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_int64_t::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -271,15 +271,15 @@ void Field_int64_t::sql_type(String &res) const
   Floating-point numbers
  */
 
-uchar *
-Field_real::pack(uchar *to, const uchar *from,
+unsigned char *
+Field_real::pack(unsigned char *to, const unsigned char *from,
                  uint max_length, bool low_byte_first)
 {
   assert(max_length >= pack_length());
 #ifdef WORDS_BIGENDIAN
   if (low_byte_first != table->s->db_low_byte_first)
   {
-    const uchar *dptr= from + pack_length();
+    const unsigned char *dptr= from + pack_length();
     while (dptr-- > from)
       *to++ = *dptr;
     return(to);
@@ -289,14 +289,14 @@ Field_real::pack(uchar *to, const uchar *from,
     return(Field::pack(to, from, max_length, low_byte_first));
 }
 
-const uchar *
-Field_real::unpack(uchar *to, const uchar *from,
+const unsigned char *
+Field_real::unpack(unsigned char *to, const unsigned char *from,
                    uint param_data, bool low_byte_first)
 {
 #ifdef WORDS_BIGENDIAN
   if (low_byte_first != table->s->db_low_byte_first)
   {
-    const uchar *dptr= from + pack_length();
+    const unsigned char *dptr= from + pack_length();
     while (dptr-- > from)
       *to++ = *dptr;
     return(from + pack_length());

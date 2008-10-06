@@ -39,8 +39,8 @@ int int64_t2decimal(int64_t from, decimal_t *to);
 int decimal2double(decimal_t *from, double *to);
 int double2decimal(double from, decimal_t *to);
 int decimal_actual_fraction(decimal_t *from);
-int decimal2bin(decimal_t *from, uchar *to, int precision, int scale);
-int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale);
+int decimal2bin(decimal_t *from, unsigned char *to, int precision, int scale);
+int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int scale);
 
 int decimal_size(int precision, int scale);
 int decimal_bin_size(int precision, int scale);

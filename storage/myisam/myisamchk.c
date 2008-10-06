@@ -75,7 +75,7 @@ static int mi_sort_records(MI_CHECK *param, register MI_INFO *info,
 			   bool write_info, bool update_index);
 static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page,uchar *buff,uint sortkey,
+			     my_off_t page,unsigned char *buff,uint sortkey,
 			     File new_file, bool update_index);
 
 MI_CHECK check_param;
@@ -1403,7 +1403,7 @@ static int mi_sort_records(MI_CHECK *param,
   uint key;
   MI_KEYDEF *keyinfo;
   File new_file;
-  uchar *temp_buff;
+  unsigned char *temp_buff;
   ha_rows old_record_count;
   MYISAM_SHARE *share=info->s;
   char llbuff[22],llbuff2[22];
@@ -1452,7 +1452,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   info->opt_flag|=WRITE_CACHE_USED;
 
-  if (!(temp_buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+  if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for key block");
     goto err;
@@ -1488,7 +1488,7 @@ static int mi_sort_records(MI_CHECK *param,
   for (key=0 ; key < share->base.keys ; key++)
     share->keyinfo[key].flag|= HA_SORT_ALLOWS_SAME;
 
-  if (my_pread(share->kfile,(uchar*) temp_buff,
+  if (my_pread(share->kfile,(unsigned char*) temp_buff,
 	       (uint) keyinfo->block_length,
 	       share->state.key_root[sort_key],
 	       MYF(MY_NABP+MY_WME)))
@@ -1551,7 +1551,7 @@ err:
   }
   if (temp_buff)
   {
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   }
   void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
   if (rec_buff_ptr != NULL)
@@ -1571,13 +1571,13 @@ err:
 
 static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page, uchar *buff, uint sort_key,
+			     my_off_t page, unsigned char *buff, uint sort_key,
 			     File new_file,bool update_index)
 {
   uint	nod_flag,used_length,key_length;
-  uchar *temp_buff,*keypos,*endpos;
+  unsigned char *temp_buff,*keypos,*endpos;
   my_off_t next_page,rec_pos;
-  uchar lastkey[MI_MAX_KEY_BUFF];
+  unsigned char lastkey[MI_MAX_KEY_BUFF];
   char llbuff[22];
   SORT_INFO *sort_info= sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
@@ -1587,7 +1587,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
 
   if (nod_flag)
   {
-    if (!(temp_buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+    if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
     {
       mi_check_print_error(param,"Not Enough memory");
       return(-1);
@@ -1601,7 +1601,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
     if (nod_flag)
     {
       next_page=_mi_kpos(nod_flag,keypos);
-      if (my_pread(info->s->kfile,(uchar*) temp_buff,
+      if (my_pread(info->s->kfile,(unsigned char*) temp_buff,
 		  (uint) keyinfo->block_length, next_page,
 		   MYF(MY_NABP+MY_WME)))
       {
@@ -1640,18 +1640,18 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
   }
   /* Clear end of block to get better compression if the table is backuped */
   memset(buff+used_length, 0, keyinfo->block_length-used_length);
-  if (my_pwrite(info->s->kfile,(uchar*) buff,(uint) keyinfo->block_length,
+  if (my_pwrite(info->s->kfile,(unsigned char*) buff,(uint) keyinfo->block_length,
 		page,param->myf_rw))
   {
     mi_check_print_error(param,"%d when updating keyblock",my_errno);
     goto err;
   }
   if (temp_buff)
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   return(0);
 err:
   if (temp_buff)
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   return(1);
 } /* sort_record_index */
 

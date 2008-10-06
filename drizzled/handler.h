@@ -422,9 +422,9 @@ struct xid_t {
     return sizeof(formatID)+sizeof(gtrid_length)+sizeof(bqual_length)+
            gtrid_length+bqual_length;
   }
-  uchar *key()
+  unsigned char *key()
   {
-    return (uchar *)&gtrid_length;
+    return (unsigned char *)&gtrid_length;
   }
   uint key_length()
   {
@@ -543,7 +543,7 @@ struct handlerton
 
    int (*discover)(handlerton *hton, THD* thd, const char *db, 
                    const char *name,
-                   uchar **frmblob, 
+                   unsigned char **frmblob, 
                    size_t *frmlen);
    int (*table_exists_in_engine)(handlerton *hton, THD* thd, const char *db,
                                  const char *name);
@@ -698,7 +698,7 @@ private:
     Not-null only if this instance is a part of transaction.
     May assume a combination of enum values above.
   */
-  uchar       m_flags;
+  unsigned char       m_flags;
 };
 
 
@@ -852,9 +852,9 @@ typedef struct st_ha_check_opt
 
 typedef struct st_handler_buffer
 {
-  uchar *buffer;         /* Buffer one can start using */
-  uchar *buffer_end;     /* End of buffer */
-  uchar *end_of_used_area;     /* End of area that was used by handler */
+  unsigned char *buffer;         /* Buffer one can start using */
+  unsigned char *buffer_end;     /* End of buffer */
+  unsigned char *end_of_used_area;     /* End of area that was used by handler */
 } HANDLER_BUFFER;
 
 typedef struct system_status_var SSV;
@@ -1031,7 +1031,7 @@ public:
   {}
 };
 
-uint calculate_key_len(Table *, uint, const uchar *, key_part_map);
+uint calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
@@ -1103,8 +1103,8 @@ protected:
   ha_rows estimation_rows_to_insert;
 public:
   handlerton *ht;                 /* storage engine of this handler */
-  uchar *ref;				/* Pointer to current row */
-  uchar *dup_ref;			/* Pointer to duplicate row */
+  unsigned char *ref;				/* Pointer to current row */
+  unsigned char *dup_ref;			/* Pointer to duplicate row */
 
   ha_statistics stats;
   /** MultiRangeRead-related members: */
@@ -1235,9 +1235,9 @@ public:
     and delete_row() below.
   */
   int ha_external_lock(THD *thd, int lock_type);
-  int ha_write_row(uchar * buf);
-  int ha_update_row(const uchar * old_data, uchar * new_data);
-  int ha_delete_row(const uchar * buf);
+  int ha_write_row(unsigned char * buf);
+  int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
+  int ha_delete_row(const unsigned char * buf);
   void ha_release_auto_increment();
 
   int ha_check_for_upgrade(HA_CHECK_OPT *check_opt);
@@ -1254,7 +1254,7 @@ public:
     estimation_rows_to_insert= 0;
     return end_bulk_insert();
   }
-  int ha_bulk_update_row(const uchar *old_data, uchar *new_data,
+  int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
                          uint *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
@@ -1414,7 +1414,7 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_map(uchar * buf, const uchar * key,
+  virtual int index_read_map(unsigned char * buf, const unsigned char * key,
                              key_part_map keypart_map,
                              enum ha_rkey_function find_flag)
   {
@@ -1427,26 +1427,26 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_idx_map(uchar * buf, uint index, const uchar * key,
+  virtual int index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
-  virtual int index_next(uchar * buf __attribute__((unused)))
+  virtual int index_next(unsigned char * buf __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_prev(uchar * buf __attribute__((unused)))
+  virtual int index_prev(unsigned char * buf __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_first(uchar * buf __attribute__((unused)))
+  virtual int index_first(unsigned char * buf __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_last(uchar * buf __attribute__((unused)))
+  virtual int index_last(unsigned char * buf __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_next_same(uchar *buf __attribute__((unused)),
-                              const uchar *key __attribute__((unused)),
+  virtual int index_next_same(unsigned char *buf __attribute__((unused)),
+                              const unsigned char *key __attribute__((unused)),
                               uint keylen __attribute__((unused)));
   /**
      @brief
      The following functions works like index_read, but it find the last
      row with the current key value or prefix.
   */
-  virtual int index_read_last_map(uchar * buf, const uchar * key,
+  virtual int index_read_last_map(unsigned char * buf, const unsigned char * key,
                                   key_part_map keypart_map)
   {
     uint key_len= calculate_key_len(table, active_index, key, keypart_map);
@@ -1458,32 +1458,32 @@ public:
   virtual int read_range_next();
   int compare_key(key_range *range);
   int compare_key2(key_range *range);
-  virtual int rnd_next(uchar *buf __attribute__((unused)))=0;
-  virtual int rnd_pos(uchar * buf __attribute__((unused)),
-                      uchar *pos __attribute__((unused)))=0;
+  virtual int rnd_next(unsigned char *buf __attribute__((unused)))=0;
+  virtual int rnd_pos(unsigned char * buf __attribute__((unused)),
+                      unsigned char *pos __attribute__((unused)))=0;
   /**
     One has to use this method when to find
     random position by record as the plain
     position() call doesn't work for some
     handlers for random position.
   */
-  virtual int rnd_pos_by_record(uchar *record);
-  virtual int read_first_row(uchar *buf, uint primary_key);
+  virtual int rnd_pos_by_record(unsigned char *record);
+  virtual int read_first_row(unsigned char *buf, uint primary_key);
   /**
     The following function is only needed for tables that may be temporary
     tables during joins.
   */
-  virtual int restart_rnd_next(uchar *buf __attribute__((unused)),
-                               uchar *pos __attribute__((unused)))
+  virtual int restart_rnd_next(unsigned char *buf __attribute__((unused)),
+                               unsigned char *pos __attribute__((unused)))
     { return HA_ERR_WRONG_COMMAND; }
-  virtual int rnd_same(uchar *buf __attribute__((unused)),
+  virtual int rnd_same(unsigned char *buf __attribute__((unused)),
                        uint inx __attribute__((unused)))
     { return HA_ERR_WRONG_COMMAND; }
   virtual ha_rows records_in_range(uint inx __attribute__((unused)),
                                    key_range *min_key __attribute__((unused)),
                                    key_range *max_key __attribute__((unused)))
     { return (ha_rows) 10; }
-  virtual void position(const uchar *record)=0;
+  virtual void position(const unsigned char *record)=0;
   virtual int info(uint)=0; // see my_base.h for full description
   virtual uint32_t calculate_key_hash_value(Field **field_array __attribute__((unused)))
   { assert(0); return 0; }
@@ -1717,7 +1717,7 @@ public:
    @retval false  otherwise
  */
  virtual bool primary_key_is_clustered() { return false; }
- virtual int cmp_ref(const uchar *ref1, const uchar *ref2)
+ virtual int cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
  {
    return memcmp(ref1, ref2, ref_length);
  }
@@ -1949,18 +1949,18 @@ private:
   */
   virtual int rnd_init(bool scan)= 0;
   virtual int rnd_end() { return 0; }
-  virtual int write_row(uchar *buf __attribute__((unused)))
+  virtual int write_row(unsigned char *buf __attribute__((unused)))
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const uchar *old_data __attribute__((unused)),
-                         uchar *new_data __attribute__((unused)))
+  virtual int update_row(const unsigned char *old_data __attribute__((unused)),
+                         unsigned char *new_data __attribute__((unused)))
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const uchar *buf __attribute__((unused)))
+  virtual int delete_row(const unsigned char *buf __attribute__((unused)))
   {
     return HA_ERR_WRONG_COMMAND;
   }
@@ -2018,13 +2018,13 @@ private:
   virtual void start_bulk_insert(ha_rows rows __attribute__((unused)))
   {}
   virtual int end_bulk_insert(void) { return 0; }
-  virtual int index_read(uchar * buf __attribute__((unused)),
-                         const uchar * key __attribute__((unused)),
+  virtual int index_read(unsigned char * buf __attribute__((unused)),
+                         const unsigned char * key __attribute__((unused)),
                          uint key_len __attribute__((unused)),
                          enum ha_rkey_function find_flag __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
-  virtual int index_read_last(uchar * buf __attribute__((unused)),
-                              const uchar * key __attribute__((unused)),
+  virtual int index_read_last(unsigned char * buf __attribute__((unused)),
+                              const unsigned char * key __attribute__((unused)),
                               uint key_len __attribute__((unused)))
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
   /**
@@ -2040,8 +2040,8 @@ private:
     @retval  0   Bulk delete used by handler
     @retval  1   Bulk delete not used, normal operation used
   */
-  virtual int bulk_update_row(const uchar *old_data __attribute__((unused)),
-                              uchar *new_data __attribute__((unused)),
+  virtual int bulk_update_row(const unsigned char *old_data __attribute__((unused)),
+                              unsigned char *new_data __attribute__((unused)),
                               uint *dup_key_found __attribute__((unused)))
   {
     assert(false);
@@ -2120,10 +2120,10 @@ private:
   handler *h2;
 
   /* Buffer to store rowids, or (rowid, range_id) pairs */
-  uchar *rowids_buf;
-  uchar *rowids_buf_cur;   /* Current position when reading/writing */
-  uchar *rowids_buf_last;  /* When reading: end of used buffer space */
-  uchar *rowids_buf_end;   /* End of the buffer */
+  unsigned char *rowids_buf;
+  unsigned char *rowids_buf_cur;   /* Current position when reading/writing */
+  unsigned char *rowids_buf_last;  /* When reading: end of used buffer space */
+  unsigned char *rowids_buf_end;   /* End of the buffer */
 
   bool dsmrr_eof; /* true <=> We have reached EOF when reading index tuples */
 
@@ -2225,7 +2225,7 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat);
 /* discovery */
 int ha_create_table_from_engine(THD* thd, const char *db, const char *name);
 int ha_discover(THD* thd, const char* dbname, const char* name,
-                uchar** frmblob, size_t* frmlen);
+                unsigned char** frmblob, size_t* frmlen);
 int ha_find_files(THD *thd,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
 int ha_table_exists_in_engine(THD* thd, const char* db, const char* name);

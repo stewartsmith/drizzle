@@ -22,12 +22,12 @@
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
 { 
-  buff= (uchar *) my_malloc(buff_size*sizeof(uchar),  MYF(MY_WME)); 
+  buff= (unsigned char *) my_malloc(buff_size*sizeof(unsigned char),  MYF(MY_WME)); 
 }
 
 Transparent_file::~Transparent_file()
 { 
-  free((uchar*)buff); 
+  free((unsigned char*)buff); 
 }
 
 void Transparent_file::init_buff(File filedes_arg)
@@ -40,7 +40,7 @@ void Transparent_file::init_buff(File filedes_arg)
     upper_bound= my_read(filedes, buff, buff_size, MYF(0));
 }
 
-uchar *Transparent_file::ptr()
+unsigned char *Transparent_file::ptr()
 { 
   return buff; 
 }

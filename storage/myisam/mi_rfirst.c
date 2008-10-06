@@ -17,7 +17,7 @@
 
 	/*  Read first row through  a specfic key */
 
-int mi_rfirst(MI_INFO *info, uchar *buf, int inx)
+int mi_rfirst(MI_INFO *info, unsigned char *buf, int inx)
 {
   info->lastpos= HA_OFFSET_ERROR;
   info->update|= HA_STATE_PREV_FOUND;

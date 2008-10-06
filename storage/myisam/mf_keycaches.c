@@ -46,9 +46,9 @@
 
 typedef struct st_safe_hash_entry
 {
-  uchar *key;
+  unsigned char *key;
   uint length;
-  uchar *data;
+  unsigned char *data;
   struct st_safe_hash_entry *next, **prev;
 } SAFE_HASH_ENTRY;
 
@@ -57,7 +57,7 @@ typedef struct st_safe_hash_with_default
 {
   rw_lock_t mutex;
   HASH hash;
-  uchar *default_value;
+  unsigned char *default_value;
   SAFE_HASH_ENTRY *root;
 } SAFE_HASH;
 
@@ -70,18 +70,18 @@ typedef struct st_safe_hash_with_default
 
 static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 {
-  free((uchar*) entry);
+  free((unsigned char*) entry);
   return;
 }
 
 
 /* Get key and length for a SAFE_HASH_ENTRY */
 
-static uchar *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
+static unsigned char *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
                                   bool not_used __attribute__((unused)))
 {
   *length=entry->length;
-  return (uchar*) entry->key;
+  return (unsigned char*) entry->key;
 }
 
 
@@ -104,7 +104,7 @@ static uchar *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
 */
 
 static bool safe_hash_init(SAFE_HASH *hash, uint elements,
-			      uchar *default_value)
+			      unsigned char *default_value)
 {
   if (hash_init(&hash->hash, &my_charset_bin, elements,
 		0, 0, (hash_get_key) safe_hash_entry_get,
@@ -145,9 +145,9 @@ static void safe_hash_free(SAFE_HASH *hash)
   Return the value stored for a key or default value if no key
 */
 
-static uchar *safe_hash_search(SAFE_HASH *hash, const uchar *key, uint length)
+static unsigned char *safe_hash_search(SAFE_HASH *hash, const unsigned char *key, uint length)
 {
-  uchar *result;
+  unsigned char *result;
   rw_rdlock(&hash->mutex);
   result= hash_search(&hash->hash, key, length);
   rw_unlock(&hash->mutex);
@@ -179,8 +179,8 @@ static uchar *safe_hash_search(SAFE_HASH *hash, const uchar *key, uint length)
     1  error (Can only be EOM). In this case my_message() is called.
 */
 
-static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
-			     uchar *data)
+static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint length,
+			     unsigned char *data)
 {
   SAFE_HASH_ENTRY *entry;
   bool error= 0;
@@ -200,7 +200,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
     /* unlink entry from list */
     if ((*entry->prev= entry->next))
       entry->next->prev= entry->prev;
-    hash_delete(&hash->hash, (uchar*) entry);
+    hash_delete(&hash->hash, (unsigned char*) entry);
     goto end;
   }
   if (entry)
@@ -216,7 +216,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
       error= 1;
       goto end;
     }
-    entry->key= (uchar*) (entry +1);
+    entry->key= (unsigned char*) (entry +1);
     memcpy(entry->key, key, length);
     entry->length= length;
     entry->data= data;
@@ -225,7 +225,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
       entry->next->prev= &entry->next;
     entry->prev= &hash->root;
     hash->root= entry;
-    if (my_hash_insert(&hash->hash, (uchar*) entry))
+    if (my_hash_insert(&hash->hash, (unsigned char*) entry))
     {
       /* This can only happen if hash got out of memory */
       free((char*) entry);
@@ -255,7 +255,7 @@ end:
     default value.
 */
 
-static void safe_hash_change(SAFE_HASH *hash, uchar *old_data, uchar *new_data)
+static void safe_hash_change(SAFE_HASH *hash, unsigned char *old_data, unsigned char *new_data)
 {
   SAFE_HASH_ENTRY *entry, *next;
 
@@ -270,7 +270,7 @@ static void safe_hash_change(SAFE_HASH *hash, uchar *old_data, uchar *new_data)
       {
         if ((*entry->prev= entry->next))
           entry->next->prev= entry->prev;
-	hash_delete(&hash->hash, (uchar*) entry);
+	hash_delete(&hash->hash, (unsigned char*) entry);
       }
       else
 	entry->data= new_data;
@@ -292,7 +292,7 @@ static SAFE_HASH key_cache_hash;
 
 bool multi_keycache_init(void)
 {
-  return safe_hash_init(&key_cache_hash, 16, (uchar*) dflt_key_cache);
+  return safe_hash_init(&key_cache_hash, 16, (unsigned char*) dflt_key_cache);
 }
 
 
@@ -318,7 +318,7 @@ void multi_keycache_free(void)
     key cache to use
 */
 
-KEY_CACHE *multi_key_cache_search(uchar *key, uint length)
+KEY_CACHE *multi_key_cache_search(unsigned char *key, uint length)
 {
   if (!key_cache_hash.hash.records)
     return dflt_key_cache;
@@ -342,15 +342,15 @@ KEY_CACHE *multi_key_cache_search(uchar *key, uint length)
 */
 
 
-bool multi_key_cache_set(const uchar *key, uint length,
+bool multi_key_cache_set(const unsigned char *key, uint length,
 			    KEY_CACHE *key_cache)
 {
-  return safe_hash_set(&key_cache_hash, key, length, (uchar*) key_cache);
+  return safe_hash_set(&key_cache_hash, key, length, (unsigned char*) key_cache);
 }
 
 
 void multi_key_cache_change(KEY_CACHE *old_data,
 			    KEY_CACHE *new_data)
 {
-  safe_hash_change(&key_cache_hash, (uchar*) old_data, (uchar*) new_data);
+  safe_hash_change(&key_cache_hash, (unsigned char*) old_data, (unsigned char*) new_data);
 }

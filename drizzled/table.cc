@@ -30,20 +30,20 @@ LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
 void open_table_error(TABLE_SHARE *share, int error, int db_errno,
                       myf errortype, int errarg);
 static int open_binary_frm(THD *thd, TABLE_SHARE *share,
-                           uchar *head, File file);
+                           unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
-static uint find_field(Field **fields, uchar *record, uint start, uint length);
+static uint find_field(Field **fields, unsigned char *record, uint start, uint length);
 
 /*************************************************************************/
 
 /* Get column name from column hash */
 
-static uchar *get_field_name(Field **buff, size_t *length,
+static unsigned char *get_field_name(Field **buff, size_t *length,
                              bool not_used __attribute__((unused)))
 {
   *length= (uint) strlen((*buff)->field_name);
-  return (uchar*) (*buff)->field_name;
+  return (unsigned char*) (*buff)->field_name;
 }
 
 
@@ -296,7 +296,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags  __attribute__((u
   int error, table_type;
   bool error_given;
   File file;
-  uchar head[64], *disk_buff;
+  unsigned char head[64], *disk_buff;
   char	path[FN_REFLEN];
   MEM_ROOT **root_ptr, *old_root;
 
@@ -355,7 +355,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags  __attribute__((u
   if (my_read(file, head, 64, MYF(MY_NABP)))
     goto err;
 
-  if (head[0] == (uchar) 254 && head[1] == 1)
+  if (head[0] == (unsigned char) 254 && head[1] == 1)
   {
     if (head[2] == FRM_VER || head[2] == FRM_VER+1 ||
         (head[2] >= FRM_VER+3 && head[2] <= FRM_VER+4))
@@ -407,7 +407,7 @@ err_not_open:
   Read data from a binary .frm file from MySQL 3.23 - 5.0 into TABLE_SHARE
 */
 
-static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
+static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
                            File file)
 {
   int error, errarg= 0;
@@ -418,10 +418,10 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   uint extra_rec_buf_length;
   uint i,j;
   bool use_hash;
-  uchar forminfo[288];
+  unsigned char forminfo[288];
   char *keynames, *names, *comment_pos;
-  uchar *record;
-  uchar *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
+  unsigned char *record;
+  unsigned char *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
   ulong pos, record_offset, *rec_per_key, rec_buff_length;
   handler *handler_file= 0;
   KEY	*keyinfo;
@@ -430,8 +430,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   const char **interval_array;
   enum legacy_db_type legacy_db_type;
   my_bitmap_map *bitmaps;
-  uchar *buff= 0;
-  uchar *field_extra_info= 0;
+  unsigned char *buff= 0;
+  unsigned char *field_extra_info= 0;
 
   new_field_pack_flag= head[27];
   new_frm_ver= (head[2] - FRM_VER);
@@ -504,7 +504,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   /* Read keyinformation */
   key_info_length= (uint) uint2korr(head+28);
   my_seek(file,(ulong) uint2korr(head+6),MY_SEEK_SET,MYF(0));
-  if (read_string(file,(uchar**) &disk_buff,key_info_length))
+  if (read_string(file,(unsigned char**) &disk_buff,key_info_length))
     goto err;                                   /* purecov: inspected */
   if (disk_buff[0] & 0x80)
   {
@@ -600,8 +600,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if ((n_length= uint4korr(head+55)))
   {
     /* Read extra data segment */
-    uchar *next_chunk, *buff_end;
-    if (!(next_chunk= buff= (uchar*) my_malloc(n_length, MYF(MY_WME))))
+    unsigned char *next_chunk, *buff_end;
+    if (!(next_chunk= buff= (unsigned char*) my_malloc(n_length, MYF(MY_WME))))
       goto err;
     if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
     {
@@ -660,7 +660,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       /* New auto_partitioned indicator introduced in 5.1.11 */
       next_chunk++;
     }
-    if (forminfo[46] == (uchar)255)
+    if (forminfo[46] == (unsigned char)255)
     {
       //reading long table comment
       if (next_chunk + 2 > buff_end)
@@ -715,7 +715,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   extra_rec_buf_length= uint2korr(head+59);
   rec_buff_length= ALIGN_SIZE(share->reclength + 1 + extra_rec_buf_length);
   share->rec_buff_length= rec_buff_length;
-  if (!(record= (uchar *) alloc_root(&share->mem_root,
+  if (!(record= (unsigned char *) alloc_root(&share->mem_root,
                                      rec_buff_length)))
     goto err;                                   /* purecov: inspected */
   share->default_values= record;
@@ -732,7 +732,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   int_length= uint2korr(forminfo+274);
   share->null_fields= uint2korr(forminfo+282);
   com_length= uint2korr(forminfo+284);
-  if (forminfo[46] != (uchar)255)
+  if (forminfo[46] != (unsigned char)255)
   {
     share->comment.length=  (int) (forminfo[46]);
     share->comment.str= strmake_root(&share->mem_root, (char*) forminfo+47,
@@ -752,7 +752,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   share->field= field_ptr;
   read_length=(uint) (share->fields * field_pack_length +
 		      pos+ (uint) (n_length+int_length+com_length));
-  if (read_string(file,(uchar**) &disk_buff,read_length))
+  if (read_string(file,(unsigned char**) &disk_buff,read_length))
     goto err;                                   /* purecov: inspected */
   strpos= disk_buff+pos;
 
@@ -803,7 +803,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   record= share->default_values-1;              /* Fieldstart = 1 */
   if (share->null_field_first)
   {
-    null_flags= null_pos= (uchar*) record+1;
+    null_flags= null_pos= (unsigned char*) record+1;
     null_bit_pos= (db_create_options & HA_OPTION_PACK_RECORD) ? 0 : 1;
     /*
       null_bytes below is only correct under the condition that
@@ -944,7 +944,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
     if (use_hash)
       (void) my_hash_insert(&share->name_hash,
-                            (uchar*) field_ptr); // never fail
+                            (unsigned char*) field_ptr); // never fail
   }
   *field_ptr=0;					// End marker
 
@@ -1000,7 +1000,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         key_part->type= field->key_type();
         if (field->null_ptr)
         {
-          key_part->null_offset=(uint) ((uchar*) field->null_ptr -
+          key_part->null_offset=(uint) ((unsigned char*) field->null_ptr -
                                         share->default_values);
           key_part->null_bit= field->null_bit;
           key_part->store_length+=HA_KEY_NULL_LENGTH;
@@ -1104,7 +1104,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     /* Old file format with default as not null */
     uint null_length= (share->null_fields+7)/8;
-    memset(share->default_values + (null_flags - (uchar*) record), 
+    memset(share->default_values + (null_flags - (unsigned char*) record), 
           null_length, 255);
   }
 
@@ -1146,7 +1146,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     the correct null_bytes can now be set, since bitfields have been taken
     into account
   */
-  share->null_bytes= (null_pos - (uchar*) null_flags +
+  share->null_bytes= (null_pos - (unsigned char*) null_flags +
                       (null_bit_pos + 7) / 8);
   share->last_null_bit_pos= null_bit_pos;
 
@@ -1215,7 +1215,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   int error;
   uint records, i, bitmap_size;
   bool error_reported= false;
-  uchar *record, *bitmaps;
+  unsigned char *record, *bitmaps;
   Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs thd->lex set up. */
@@ -1258,7 +1258,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   if (prgflag & (READ_ALL+EXTRA_RECORD))
     records++;
 
-  if (!(record= (uchar*) alloc_root(&outparam->mem_root,
+  if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
                                    share->rec_buff_length * records)))
     goto err;                                   /* purecov: inspected */
 
@@ -1298,11 +1298,11 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
 
   outparam->field= field_ptr;
 
-  record= (uchar*) outparam->record[0]-1;	/* Fieldstart = 1 */
+  record= (unsigned char*) outparam->record[0]-1;	/* Fieldstart = 1 */
   if (share->null_field_first)
-    outparam->null_flags= (uchar*) record+1;
+    outparam->null_flags= (unsigned char*) record+1;
   else
-    outparam->null_flags= (uchar*) (record+ 1+ share->reclength -
+    outparam->null_flags= (unsigned char*) (record+ 1+ share->reclength -
                                     share->null_bytes);
 
   /* Setup copy of fields from share, but use the right alias and record */
@@ -1369,7 +1369,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   /* Allocate bitmaps */
 
   bitmap_size= share->column_bitmap_size;
-  if (!(bitmaps= (uchar*) alloc_root(&outparam->mem_root, bitmap_size*3)))
+  if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
   bitmap_init(&outparam->def_read_set,
               (my_bitmap_map*) bitmaps, share->fields, false);
@@ -1500,10 +1500,10 @@ void free_blobs(register Table *table)
 	/* Find where a form starts */
 	/* if formname is NULL then only formnames is read */
 
-ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
+ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names)
 {
   uint a_length,names,length;
-  uchar *pos,*buf;
+  unsigned char *pos,*buf;
   ulong ret_value=0;
 
   names=uint2korr(head+8);
@@ -1518,7 +1518,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
   {
     length=uint2korr(head+4);
     my_seek(file,64L,MY_SEEK_SET,MYF(0));
-    if (!(buf= (uchar*) my_malloc((size_t) length+a_length+names*4,
+    if (!(buf= (unsigned char*) my_malloc((size_t) length+a_length+names*4,
 				  MYF(MY_WME))) ||
 	my_read(file, buf+a_length, (size_t) (length+names*4),
 		MYF(MY_NABP)))
@@ -1533,7 +1533,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
   if (! save_names)
   {
     if (names)
-      free((uchar*) buf);
+      free((unsigned char*) buf);
   }
   else if (!names)
     memset(save_names, 0, sizeof(save_names));
@@ -1554,12 +1554,12 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
     We add an \0 at end of the read string to make reading of C strings easier
 */
 
-int read_string(File file, uchar**to, size_t length)
+int read_string(File file, unsigned char**to, size_t length)
 {
 
   if (*to)
     free(*to);
-  if (!(*to= (uchar*) my_malloc(length+1,MYF(MY_WME))) ||
+  if (!(*to= (unsigned char*) my_malloc(length+1,MYF(MY_WME))) ||
       my_read(file, *to, length,MYF(MY_NABP)))
   {
     if (*to)
@@ -1574,13 +1574,13 @@ int read_string(File file, uchar**to, size_t length)
 
 	/* Add a new form to a form file */
 
-ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
+ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 		     const char *newname)
 {
   uint i,bufflength,maxlength,n_length,length,names;
   ulong endpos,newpos;
-  uchar buff[IO_SIZE];
-  uchar *pos;
+  unsigned char buff[IO_SIZE];
+  unsigned char *pos;
 
   length=(uint) strlen(newname)+1;
   n_length=uint2korr(fileinfo+4);
@@ -1612,7 +1612,7 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
 	return(0L);
     maxlength+=IO_SIZE;				/* Fix old ref */
     int2store(fileinfo+6,maxlength);
-    for (i=names, pos= (uchar*) *formnames->type_names+n_length-1; i-- ;
+    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i-- ;
 	 pos+=4)
     {
       endpos=uint4korr(pos)+IO_SIZE;
@@ -1629,7 +1629,7 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
     strxmov((char*) buff,newname,"/",NULL); /* purecov: inspected */
   my_seek(file,63L+(ulong) n_length,MY_SEEK_SET,MYF(0));
   if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
-      (names && my_write(file,(uchar*) (*formnames->type_names+n_length-1),
+      (names && my_write(file,(unsigned char*) (*formnames->type_names+n_length-1),
 			 names*4, MYF(MY_NABP+MY_WME))) ||
       my_write(file, fileinfo+10, 4,MYF(MY_NABP+MY_WME)))
     return(0L); /* purecov: inspected */
@@ -1792,7 +1792,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
    #  field number +1
 */
 
-static uint find_field(Field **fields, uchar *record, uint start, uint length)
+static uint find_field(Field **fields, unsigned char *record, uint start, uint length)
 {
   Field **field;
   uint i, pos;
@@ -1900,12 +1900,12 @@ void append_unescaped(String *res, const char *pos, uint length)
 	/* Create a .frm file */
 
 File create_frm(THD *thd, const char *name, const char *db,
-                const char *table, uint reclength, uchar *fileinfo,
+                const char *table, uint reclength, unsigned char *fileinfo,
   		HA_CREATE_INFO *create_info, uint keys, KEY *key_info)
 {
   register File file;
   ulong length;
-  uchar fill[IO_SIZE];
+  unsigned char fill[IO_SIZE];
   int create_flags= O_RDWR | O_TRUNC;
   ulong key_comment_total_bytes= 0;
   uint i;
@@ -1925,11 +1925,11 @@ File create_frm(THD *thd, const char *name, const char *db,
     uint tmp;
     memset(fileinfo, 0, 64);
     /* header */
-    fileinfo[0]=(uchar) 254;
+    fileinfo[0]=(unsigned char) 254;
     fileinfo[1]= 1;
     fileinfo[2]= FRM_VER+3+ test(create_info->varchar);
 
-    fileinfo[3]= (uchar) ha_legacy_type(
+    fileinfo[3]= (unsigned char) ha_legacy_type(
           ha_checktype(thd,ha_legacy_type(create_info->db_type),0,0));
     fileinfo[4]=1;
     int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
@@ -1973,8 +1973,8 @@ File create_frm(THD *thd, const char *name, const char *db,
     int4store(fileinfo+34,create_info->avg_row_length);
     fileinfo[38]= (create_info->default_table_charset ?
 		   create_info->default_table_charset->number : 0);
-    fileinfo[39]= (uchar) create_info->page_checksum;
-    fileinfo[40]= (uchar) create_info->row_type;
+    fileinfo[39]= (unsigned char) create_info->page_checksum;
+    fileinfo[40]= (unsigned char) create_info->row_type;
     /* Next few bytes where for RAID support */
     fileinfo[41]= 0;
     fileinfo[42]= 0;
@@ -2021,7 +2021,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     a tmp_set bitmap to be used by things like filesort.
 */
 
-void Table::setup_tmp_table_column_bitmaps(uchar *bitmaps)
+void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
   uint field_count= s->fields;
 
@@ -2129,7 +2129,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
     that are present in this value, returns the length of the value
 */
 uint calculate_key_len(Table *table, uint key,
-                       const uchar *buf __attribute__((unused)),
+                       const unsigned char *buf __attribute__((unused)),
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
@@ -2501,7 +2501,7 @@ bool TableList::set_insert_values(MEM_ROOT *mem_root)
   if (table)
   {
     if (!table->insert_values &&
-        !(table->insert_values= (uchar *)alloc_root(mem_root,
+        !(table->insert_values= (unsigned char *)alloc_root(mem_root,
                                                    table->s->rec_buff_length)))
       return true;
   }
@@ -3103,7 +3103,7 @@ bool TableList::process_index_hints(Table *tbl)
 }
 
 
-size_t Table::max_row_length(const uchar *data)
+size_t Table::max_row_length(const unsigned char *data)
 {
   size_t length= getRecordLength() + 2 * sizeFields();
   uint *const beg= getBlobField();
@@ -3112,7 +3112,7 @@ size_t Table::max_row_length(const uchar *data)
   for (uint *ptr= beg ; ptr != end ; ++ptr)
   {
     Field_blob* const blob= (Field_blob*) field[*ptr];
-    length+= blob->get_length((const uchar*)
+    length+= blob->get_length((const unsigned char*)
                               (data + blob->offset(record[0]))) +
       HA_KEY_BLOB_LENGTH;
   }
@@ -3135,14 +3135,14 @@ bool mysql_frm_type(THD *thd __attribute__((unused)),
                     char *path, enum legacy_db_type *dbt)
 {
   File file;
-  uchar header[10];     /* This should be optimized */
+  unsigned char header[10];     /* This should be optimized */
   int error;
 
   *dbt= DB_TYPE_UNKNOWN;
 
   if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
     return false;
-  error= my_read(file, (uchar*) header, sizeof(header), MYF(MY_NABP));
+  error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
   my_close(file, MYF(MY_WME));
 
   if (error)
@@ -3153,7 +3153,7 @@ bool mysql_frm_type(THD *thd __attribute__((unused)),
     if the following test is true (arg #3). This should not have effect
     on return value from this function (default FRMTYPE_TABLE)
    */  
-  if (header[0] != (uchar) 254 || header[1] != 1 ||
+  if (header[0] != (unsigned char) 254 || header[1] != 1 ||
       (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
        (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
     return true;
@@ -3574,8 +3574,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   bool  use_packed_rows= 0;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   char  *tmpname,path[FN_REFLEN];
-  uchar	*pos, *group_buff, *bitmaps;
-  uchar *null_flags;
+  unsigned char	*pos, *group_buff, *bitmaps;
+  unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint *blob_field;
   Copy_field *copy=0;
@@ -3917,7 +3917,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   {
     uint alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
-    if (!(table->record[0]= (uchar*)
+    if (!(table->record[0]= (unsigned char*)
                             alloc_root(&table->mem_root, alloc_length*3)))
       goto err;
     table->record[1]= table->record[0]+alloc_length;
@@ -3929,7 +3929,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
   recinfo=param->start_recinfo;
-  null_flags=(uchar*) table->record[0];
+  null_flags=(unsigned char*) table->record[0];
   pos=table->record[0]+ null_pack_length;
   if (null_pack_length)
   {
@@ -3939,7 +3939,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     recinfo++;
     memset(null_flags, 255, null_pack_length);	// Set null fields
 
-    table->null_flags= (uchar*) table->record[0];
+    table->null_flags= (unsigned char*) table->record[0];
     share->null_fields= null_count+ hidden_null_count;
     share->null_bytes= null_pack_length;
   }
@@ -3975,7 +3975,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       null_count++;
     }
     else
-      field->move_field(pos,(uchar*) 0,0);
+      field->move_field(pos,(unsigned char*) 0,0);
     field->reset();
 
     /*
@@ -4097,7 +4097,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	  keyinfo->flags|= HA_NULL_ARE_EQUAL;	// def. that NULL == NULL
 	  key_part_info->null_bit=field->null_bit;
 	  key_part_info->null_offset= (uint) (field->null_ptr -
-					      (uchar*) table->record[0]);
+					      (unsigned char*) table->record[0]);
           cur_group->buff++;                        // Pointer to field data
 	  group_buff++;                         // Skipp null flag
 	}
@@ -4157,7 +4157,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->field= new Field_varstring(table->record[0],
                                                 (uint32_t) key_part_info->length,
                                                 0,
-                                                (uchar*) 0,
+                                                (unsigned char*) 0,
                                                 (uint) 0,
                                                 Field::NONE,
                                                 NULL, 
@@ -4259,7 +4259,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   uint null_count= 0;                 /* number of columns which may be null */
   uint null_pack_length;              /* NULL representation array length */
   uint *blob_field;
-  uchar *bitmaps;
+  unsigned char *bitmaps;
   Table *table;
   TABLE_SHARE *share;
 
@@ -4286,7 +4286,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   while ((cdef= it++))
   {
     *field= make_field(share, 0, cdef->length,
-                       (uchar*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
+                       (unsigned char*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
                        f_maybe_null(cdef->pack_flag) ? 1 : 0,
                        cdef->pack_flag, cdef->sql_type, cdef->charset,
                        cdef->unireg_check,
@@ -4310,13 +4310,13 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   null_pack_length= (null_count + 7)/8;
   share->reclength= record_length + null_pack_length;
   share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  table->record[0]= (uchar*) thd->alloc(share->rec_buff_length);
+  table->record[0]= (unsigned char*) thd->alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
 
   if (null_pack_length)
   {
-    table->null_flags= (uchar*) table->record[0];
+    table->null_flags= (unsigned char*) table->record[0];
     share->null_fields= null_count;
     share->null_bytes= null_pack_length;
   }
@@ -4324,8 +4324,8 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   table->in_use= thd;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
-    uchar *null_pos= table->record[0];
-    uchar *field_pos= null_pos + share->null_bytes;
+    unsigned char *null_pos= table->record[0];
+    unsigned char *field_pos= null_pos + share->null_bytes;
     uint null_bit= 1;
 
     for (field= table->field; *field; ++field)
@@ -4335,7 +4335,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
         cur_field->move_field(field_pos);
       else
       {
-        cur_field->move_field(field_pos, (uchar*) null_pos, null_bit);
+        cur_field->move_field(field_pos, (unsigned char*) null_pos, null_bit);
         null_bit<<= 1;
         if (null_bit == (1 << 8))
         {
@@ -4470,7 +4470,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       if (!(field->flags & NOT_NULL_FLAG))
       {
 	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (uchar*) record[0]);
+	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) record[0]);
 	/*
 	  We are using a GROUP BY on something that contains NULL
 	  In this case we have to tell MyISAM that two NULL should

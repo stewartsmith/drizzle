@@ -50,8 +50,8 @@ class ha_innobase: public handler
 	THR_LOCK_DATA	lock;
 	INNOBASE_SHARE	*share;
 
-	uchar*		upd_buff;	/* buffer used in updates */
-	uchar*		key_val_buff;	/* buffer used in converting
+	unsigned char*		upd_buff;	/* buffer used in updates */
+	unsigned char*		key_val_buff;	/* buffer used in converting
 					search key values from MySQL format
 					to Innodb format */
 	ulong		upd_and_key_val_buff_len;
@@ -68,10 +68,10 @@ class ha_innobase: public handler
 	uint		num_write_row;	/* number of write_row() calls */
 
 	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
-                                   const uchar* record);
+                                   const unsigned char* record);
 	int update_thd(THD* thd);
 	int change_active_index(uint keynr);
-	int general_fetch(uchar* buf, uint direction, uint match_mode);
+	int general_fetch(unsigned char* buf, uint direction, uint match_mode);
 	int innobase_read_and_init_auto_inc(int64_t* ret);
 	ulong innobase_autoinc_lock();
 	ulong innobase_set_max_autoinc(uint64_t auto_inc);
@@ -122,32 +122,32 @@ class ha_innobase: public handler
 	double scan_time();
 	double read_time(uint index, uint ranges, ha_rows rows);
 
-	int write_row(uchar * buf);
-	int update_row(const uchar * old_data, uchar * new_data);
-	int delete_row(const uchar * buf);
+	int write_row(unsigned char * buf);
+	int update_row(const unsigned char * old_data, unsigned char * new_data);
+	int delete_row(const unsigned char * buf);
 	bool was_semi_consistent_read();
 	void try_semi_consistent_read(bool yes);
 	void unlock_row();
 
 	int index_init(uint index, bool sorted);
 	int index_end();
-	int index_read(uchar * buf, const uchar * key,
+	int index_read(unsigned char * buf, const unsigned char * key,
 		uint key_len, enum ha_rkey_function find_flag);
-	int index_read_idx(uchar * buf, uint index, const uchar * key,
+	int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
 			   uint key_len, enum ha_rkey_function find_flag);
-	int index_read_last(uchar * buf, const uchar * key, uint key_len);
-	int index_next(uchar * buf);
-	int index_next_same(uchar * buf, const uchar *key, uint keylen);
-	int index_prev(uchar * buf);
-	int index_first(uchar * buf);
-	int index_last(uchar * buf);
+	int index_read_last(unsigned char * buf, const unsigned char * key, uint key_len);
+	int index_next(unsigned char * buf);
+	int index_next_same(unsigned char * buf, const unsigned char *key, uint keylen);
+	int index_prev(unsigned char * buf);
+	int index_first(unsigned char * buf);
+	int index_last(unsigned char * buf);
 
 	int rnd_init(bool scan);
 	int rnd_end();
-	int rnd_next(uchar *buf);
-	int rnd_pos(uchar * buf, uchar *pos);
+	int rnd_next(unsigned char *buf);
+	int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-	void position(const uchar *record);
+	void position(const unsigned char *record);
 	int info(uint);
 	int analyze(THD* thd,HA_CHECK_OPT* check_opt);
 	int optimize(THD* thd,HA_CHECK_OPT* check_opt);
@@ -173,7 +173,7 @@ class ha_innobase: public handler
 	int external_lock(THD *thd, int lock_type);
 	int transactional_table_lock(THD *thd, int lock_type);
 	int start_stmt(THD *thd, thr_lock_type lock_type);
-	void position(uchar *record);
+	void position(unsigned char *record);
 	ha_rows records_in_range(uint inx, key_range *min_key, key_range
 								*max_key);
 	ha_rows estimate_rows_upper_bound();
@@ -213,7 +213,7 @@ class ha_innobase: public handler
 	static char *get_mysql_bin_log_name();
 	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered() { return true; }
-	int cmp_ref(const uchar *ref1, const uchar *ref2);
+	int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	bool check_if_incompatible_data(HA_CREATE_INFO *info,
 					uint table_changes);
 public:

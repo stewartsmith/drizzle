@@ -41,7 +41,7 @@ typedef int (*sys_check_func)(THD *,  set_var *);
 typedef bool (*sys_update_func)(THD *, set_var *);
 typedef void (*sys_after_update_func)(THD *,enum_var_type);
 typedef void (*sys_set_default_func)(THD *, enum_var_type);
-typedef uchar *(*sys_value_ptr_func)(THD *thd);
+typedef unsigned char *(*sys_value_ptr_func)(THD *thd);
 
 struct sys_var_chain
 {
@@ -103,7 +103,7 @@ public:
                            enum_var_type type __attribute__((unused)))
   {}
   virtual SHOW_TYPE show_type() { return SHOW_UNDEF; }
-  virtual uchar *value_ptr(THD *thd __attribute__((unused)),
+  virtual unsigned char *value_ptr(THD *thd __attribute__((unused)),
                            enum_var_type type __attribute__((unused)),
                            LEX_STRING *base __attribute__((unused)))
   { return 0; }
@@ -167,10 +167,10 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONG; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
-  { return (uchar*) value; }
+  { return (unsigned char*) value; }
 };
 
 
@@ -200,10 +200,10 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
-  { return (uchar*) value; }
+  { return (unsigned char*) value; }
 };
 
 
@@ -221,10 +221,10 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
-  { return (uchar*) value; }
+  { return (unsigned char*) value; }
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 0; }
 };
@@ -266,10 +266,10 @@ public:
     (*set_default_func)(thd, type);
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
-  { return (uchar*) value; }
+  { return (unsigned char*) value; }
   bool check_update_type(Item_result type)
   {
     return type != STRING_RESULT;		/* Only accept strings */
@@ -302,11 +302,11 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
   {
-    return (uchar*) value;
+    return (unsigned char*) value;
   }
   bool check_update_type(Item_result type __attribute__((unused)))
   {
@@ -336,11 +336,11 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
   {
-    return (uchar*) *value;
+    return (unsigned char*) *value;
   }
   bool check_update_type(Item_result type __attribute__((unused)))
   {
@@ -367,7 +367,7 @@ public:
   }
   bool update(THD *thd, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 0; }
 };
@@ -392,7 +392,7 @@ public:
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 1; }
   bool is_readonly() const { return 1; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -430,7 +430,7 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -450,7 +450,7 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_HA_ROWS; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -472,7 +472,7 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check(THD *thd, set_var *var);
   bool check_default(enum_var_type type)
   {
@@ -499,7 +499,7 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check(THD *thd, set_var *var)
   {
     return check_enum(thd, var, &bool_typelib);
@@ -533,7 +533,7 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 0; }
 };
@@ -552,7 +552,7 @@ public:
     return check_set(thd, var, enum_names);
   }
   void set_default(THD *thd, enum_var_type type);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   static bool symbolic_mode_representation(THD *thd, uint64_t sql_mode,
                                            LEX_STRING *rep);
 };
@@ -575,7 +575,7 @@ public:
   }
   void set_default(THD *thd, enum_var_type type);
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 class sys_var_thd_bit :public sys_var_thd
@@ -598,7 +598,7 @@ public:
   { return 0; }
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 /* some variables that require special handling */
@@ -616,7 +616,7 @@ public:
   bool check_default(enum_var_type type __attribute__((unused)))
   { return 0; }
   SHOW_TYPE show_type(void) { return SHOW_LONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -630,7 +630,7 @@ public:
   bool update(THD *thd, set_var *var);
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -643,7 +643,7 @@ public:
   bool update(THD *thd, set_var *var);
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -712,7 +712,7 @@ public:
   bool check_default(enum_var_type type __attribute__((unused)))
   { return 0; }
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type)= 0;
   virtual const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type)= 0;
 };
@@ -777,7 +777,7 @@ public:
   }
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -790,7 +790,7 @@ public:
                           size_t offset_arg)
     :sys_var(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check_default(enum_var_type type __attribute__((unused)))
   { return 1; }
   bool is_struct() { return 1; }
@@ -841,7 +841,7 @@ public:
   bool check(THD *thd, set_var *var);
   bool update(THD *thd, set_var *var);
   void update2(THD *thd, enum_var_type type, DATE_TIME_FORMAT *new_value);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   void set_default(THD *thd, enum_var_type type);
 };
 
@@ -878,7 +878,7 @@ public:
     *value= 0;
   }
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 0; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
@@ -913,7 +913,7 @@ public:
     return check_set(thd, var, enum_names);
   }
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 0; }
   void set_default(THD *thd, enum_var_type type);
@@ -943,7 +943,7 @@ public:
   bool check_type(enum_var_type type) { return type != var_type; }
   bool check_update_type(Item_result type __attribute__((unused)))
   { return 1; }
-  uchar *value_ptr(THD *thd, enum_var_type type __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd, enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
   {
     return (*value_ptr_func)(thd);
@@ -961,11 +961,11 @@ public:
   sys_var_have_option(sys_var_chain *chain, const char *variable_name):
     sys_var(variable_name)
   { chain_sys_var(chain); }
-  uchar *value_ptr(THD *thd __attribute__((unused)),
+  unsigned char *value_ptr(THD *thd __attribute__((unused)),
                    enum_var_type type __attribute__((unused)),
                    LEX_STRING *base __attribute__((unused)))
   {
-    return (uchar*) show_comp_option_name[get_option()];
+    return (unsigned char*) show_comp_option_name[get_option()];
   }
   bool update(THD *thd __attribute__((unused)),
               set_var *var __attribute__((unused))) { return 1; }
@@ -1031,7 +1031,7 @@ public:
   bool check_default(enum_var_type type __attribute__((unused)))
   { return 0; }
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type);
 };
 
@@ -1050,7 +1050,7 @@ public:
   }
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_INT; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 
@@ -1071,7 +1071,7 @@ public:
   {
     return (type != INT_RESULT && type != REAL_RESULT && type != DECIMAL_RESULT);
   }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
 /**
@@ -1110,7 +1110,7 @@ public:
   bool check_default(enum_var_type type __attribute__((unused)))
   { return 0; }
   bool update(THD *thd, set_var *var);
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type);
 };
 
@@ -1235,10 +1235,10 @@ class NAMED_LIST :public ilink
   const char *name;
   uint name_length;
 public:
-  uchar* data;
+  unsigned char* data;
 
   NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
-	     uint name_length_arg, uchar* data_arg)
+	     uint name_length_arg, unsigned char* data_arg)
     :name_length(name_length_arg), data(data_arg)
   {
     name= my_strndup(name_arg, name_length, MYF(MY_WME));
@@ -1250,11 +1250,11 @@ public:
   }
   ~NAMED_LIST()
   {
-    free((uchar*) name);
+    free((unsigned char*) name);
   }
   friend bool process_key_caches(process_key_cache_t func);
   friend void delete_elements(I_List<NAMED_LIST> *list,
-			      void (*free_element)(const char*, uchar*));
+			      void (*free_element)(const char*, unsigned char*));
 };
 
 /* updated in sql_acl.cc */
@@ -1290,7 +1290,7 @@ extern sys_var_str sys_init_slave;
 extern sys_var_thd_time_zone sys_time_zone;
 extern sys_var_thd_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
-uchar* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
+unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
 		NAMED_LIST **found);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
@@ -1301,4 +1301,4 @@ KEY_CACHE *get_or_create_key_cache(const char *name, uint length);
 void free_key_cache(const char *name, KEY_CACHE *key_cache);
 bool process_key_caches(process_key_cache_t func);
 void delete_elements(I_List<NAMED_LIST> *list,
-		     void (*free_element)(const char*, uchar*));
+		     void (*free_element)(const char*, unsigned char*));

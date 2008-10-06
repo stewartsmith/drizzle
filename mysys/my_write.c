@@ -20,7 +20,7 @@
 
 	/* Write a chunk of bytes to a file */
 
-size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
+size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFlags)
 {
   size_t writenbytes, written;
   uint errors;

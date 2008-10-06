@@ -231,7 +231,7 @@ bool Field_double::send_binary(Protocol *protocol)
 }
 
 
-int Field_double::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   double a,b;
 #ifdef WORDS_BIGENDIAN
@@ -254,7 +254,7 @@ int Field_double::cmp(const uchar *a_ptr, const uchar *b_ptr)
 
 /* The following should work for IEEE */
 
-void Field_double::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_double::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
   double nr;
 #ifdef WORDS_BIGENDIAN
@@ -279,7 +279,7 @@ void Field_double::sort_string(uchar *to,uint length __attribute__((unused)))
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_double::do_save_field_metadata(uchar *metadata_ptr)
+int Field_double::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= pack_length();
   return 1;

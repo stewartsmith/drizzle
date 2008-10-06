@@ -42,11 +42,11 @@ String *Item_func_md5::val_str(String *str)
   if (sptr)
   {
     MD5_CTX context;
-    uchar digest[16];
+    unsigned char digest[16];
 
     null_value=0;
     MD5_Init (&context);
-    MD5_Update (&context,(uchar *) sptr->ptr(), sptr->length());
+    MD5_Update (&context,(unsigned char *) sptr->ptr(), sptr->length());
     MD5_Final (digest, &context);
     if (str->alloc(32))				// Ensure that memory is free
     {

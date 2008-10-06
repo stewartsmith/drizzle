@@ -1596,7 +1596,7 @@ String *Item_func_make_set::val_str(String *str)
 }
 
 
-Item *Item_func_make_set::transform(Item_transformer transformer, uchar *arg)
+Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char *arg)
 {
   Item *new_item= item->transform(transformer, arg);
   if (!new_item)
@@ -2156,9 +2156,9 @@ String *Item_func_weight_string::val_str(String *str)
     goto nl;
 
   frm_length= cs->coll->strnxfrm(cs,
-                                 (uchar*) tmp_value.ptr(), tmp_length,
+                                 (unsigned char*) tmp_value.ptr(), tmp_length,
                                  nweights ? nweights : tmp_length,
-                                 (const uchar*) res->ptr(), res->length(),
+                                 (const unsigned char*) res->ptr(), res->length(),
                                  flags);
   tmp_value.length(frm_length);
   null_value= 0;
@@ -2303,7 +2303,7 @@ String *Item_load_file::val_str(String *str)
     goto err;
   if ((file = my_open(file_name->c_ptr(), O_RDONLY, MYF(0))) < 0)
     goto err;
-  if (my_read(file, (uchar*) tmp_value.ptr(), stat_info.st_size, MYF(MY_NABP)))
+  if (my_read(file, (unsigned char*) tmp_value.ptr(), stat_info.st_size, MYF(MY_NABP)))
   {
     my_close(file, MYF(0));
     goto err;
@@ -2428,7 +2428,7 @@ String *Item_func_quote::val_str(String *str)
     0, \, ' and ^Z
   */
 
-  static uchar escmask[32]=
+  static unsigned char escmask[32]=
   {
     0x01, 0x00, 0x00, 0x04, 0x80, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00,
@@ -2451,7 +2451,7 @@ String *Item_func_quote::val_str(String *str)
   new_length= arg_length+2; /* for beginning and ending ' signs */
 
   for (from= (char*) arg->ptr(), end= from + arg_length; from < end; from++)
-    new_length+= get_esc_bit(escmask, (uchar) *from);
+    new_length+= get_esc_bit(escmask, (unsigned char) *from);
 
   if (tmp_value.alloc(new_length))
     goto null;
@@ -2546,7 +2546,7 @@ String *Item_func_uuid::val_str(String *str)
   if (! uuid_time) /* first UUID() call. initializing data */
   {
     ulong tmp= sql_rnd();
-    uchar mac[6];
+    unsigned char mac[6];
     int i;
     if (my_gethwaddr(mac))
     {
@@ -2559,7 +2559,7 @@ String *Item_func_uuid::val_str(String *str)
       */
       randominit(&uuid_rand, tmp + (ulong) thd, tmp + (ulong)global_query_id);
       for (i=0; i < (int)sizeof(mac); i++)
-        mac[i]=(uchar)(my_rnd(&uuid_rand)*255);
+        mac[i]=(unsigned char)(my_rnd(&uuid_rand)*255);
       /* purecov: end */    
     }
     s=clock_seq_and_node_str+sizeof(clock_seq_and_node_str)-1;

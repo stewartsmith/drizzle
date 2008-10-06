@@ -45,7 +45,7 @@ enum ha_base_keytype Field_enum::key_type() const
 void Field_enum::store_type(uint64_t value)
 {
   switch (packlength) {
-  case 1: ptr[0]= (uchar) value;  break;
+  case 1: ptr[0]= (unsigned char) value;  break;
   case 2:
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -214,7 +214,7 @@ int64_t Field_enum::val_int(void)
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_enum::do_save_field_metadata(uchar *metadata_ptr)
+int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= real_type();
   *(metadata_ptr + 1)= pack_length();
@@ -235,24 +235,24 @@ String *Field_enum::val_str(String *val_buffer __attribute__((unused)),
   return val_ptr;
 }
 
-int Field_enum::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  uchar *old= ptr;
-  ptr= (uchar*) a_ptr;
+  unsigned char *old= ptr;
+  ptr= (unsigned char*) a_ptr;
   uint64_t a=Field_enum::val_int();
-  ptr= (uchar*) b_ptr;
+  ptr= (unsigned char*) b_ptr;
   uint64_t b=Field_enum::val_int();
   ptr= old;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_enum::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_enum::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
   uint64_t value=Field_enum::val_int();
   to+=packlength-1;
   for (uint i=0 ; i < packlength ; i++)
   {
-    *to-- = (uchar) (value & 255);
+    *to-- = (unsigned char) (value & 255);
     value>>=8;
   }
 }

@@ -148,11 +148,11 @@ check_user(THD *thd, const char *passwd,
   started with corresponding variable that is greater then 0.
 */
 
-extern "C" uchar *get_key_conn(user_conn *buff, size_t *length,
+extern "C" unsigned char *get_key_conn(user_conn *buff, size_t *length,
                                bool not_used __attribute__((unused)))
 {
   *length= buff->len;
-  return (uchar*) buff->user;
+  return (unsigned char*) buff->user;
 }
 
 
@@ -251,7 +251,7 @@ static int check_connection(THD *thd)
 #endif /* HAVE_COMPRESS */
 
     end= my_stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
-    int4store((uchar*) end, thd->thread_id);
+    int4store((unsigned char*) end, thd->thread_id);
     end+= 4;
     /*
       So as check_connection is the only entry point to authorization
@@ -277,8 +277,8 @@ static int check_connection(THD *thd)
                  SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323) + 1;
 
     /* At this point we write connection message and read reply */
-    if (net_write_command(net, (uchar) protocol_version, (uchar*) "", 0,
-                          (uchar*) buff, (size_t) (end-buff)) ||
+    if (net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,
+                          (unsigned char*) buff, (size_t) (end-buff)) ||
 	(pkt_len= my_net_read(net)) == packet_error ||
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
@@ -337,7 +337,7 @@ static int check_connection(THD *thd)
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
   uint passwd_len= thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
-    (uchar)(*passwd++) : strlen(passwd);
+    (unsigned char)(*passwd++) : strlen(passwd);
   db= thd->client_capabilities & CLIENT_CONNECT_WITH_DB ?
     db + passwd_len + 1 : 0;
   /* strlen() can't be easily deleted without changing protocol */

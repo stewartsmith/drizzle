@@ -1069,7 +1069,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
 						sizeof(*tl));
       if (!tl)
 	return(1);
-      update.link_in_list((uchar*) tl, (uchar**) &tl->next_local);
+      update.link_in_list((unsigned char*) tl, (unsigned char**) &tl->next_local);
       tl->shared= table_count++;
       table->no_keyread=1;
       table->covering_keys.clear_all();
@@ -1586,7 +1586,7 @@ int multi_update::do_updates()
       {
         if((local_error=
               tbl->file->rnd_pos(tbl->record[0],
-                                (uchar *) tmp_table->field[field_num]->ptr)))
+                                (unsigned char *) tmp_table->field[field_num]->ptr)))
           goto err;
         field_num++;
       } while((tbl= check_opt_it++));

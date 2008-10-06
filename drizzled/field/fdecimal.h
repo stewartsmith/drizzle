@@ -24,7 +24,7 @@
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_new_decimal :public Field_num {
 private:
-  int do_save_field_metadata(uchar *first_byte);
+  int do_save_field_metadata(unsigned char *first_byte);
 public:
   /* The maximum number of decimal digits can be stored */
   uint precision;
@@ -35,8 +35,8 @@ public:
     So for example we need to count length from precision handling
     CREATE TABLE ( DECIMAL(x,y)) 
   */
-  Field_new_decimal(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-                    uchar null_bit_arg,
+  Field_new_decimal(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+                    unsigned char null_bit_arg,
                     enum utype unireg_check_arg, const char *field_name_arg,
                     uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Field_new_decimal(uint32_t len_arg, bool maybe_null_arg,
@@ -57,8 +57,8 @@ public:
   int64_t val_int(void);
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*, String *);
-  int cmp(const uchar *, const uchar *);
-  void sort_string(uchar *buff, uint length);
+  int cmp(const unsigned char *, const unsigned char *);
+  void sort_string(unsigned char *buff, uint length);
   bool zero_pack() const { return 0; }
   void sql_type(String &str) const;
   uint32_t max_display_length() { return field_length; }
@@ -68,7 +68,7 @@ public:
   uint row_pack_length() { return pack_length(); }
   int compatible_field_size(uint field_metadata);
   uint is_equal(Create_field *new_field);
-  virtual const uchar *unpack(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint param_data, bool low_byte_first);
 };
 

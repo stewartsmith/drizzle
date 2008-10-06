@@ -18,8 +18,8 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 
-static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
-                                uchar *key, uchar *keypos,
+static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
+                                unsigned char *key, unsigned char *keypos,
                                 uint *return_key_length);
 
         /* Check index */
@@ -54,13 +54,13 @@ int _mi_check_index(MI_INFO *info, int inx)
         */
 
 int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-               uchar *key, uint key_len, uint nextflag, register my_off_t pos)
+               unsigned char *key, uint key_len, uint nextflag, register my_off_t pos)
 {
   bool last_key;
   int error,flag;
   uint nod_flag;
-  uchar *keypos,*maxpos;
-  uchar lastkey[MI_MAX_KEY_BUFF],*buff;
+  unsigned char *keypos,*maxpos;
+  unsigned char lastkey[MI_MAX_KEY_BUFF],*buff;
 
   if (pos == HA_OFFSET_ERROR)
   {
@@ -112,7 +112,7 @@ int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   if (pos != info->last_keypage)
   {
-    uchar *old_buff=buff;
+    unsigned char *old_buff=buff;
     if (!(buff=_mi_fetch_keypage(info,keyinfo,pos,DFLT_INIT_HITS,info->buff,
                                  test(!(nextflag & SEARCH_SAVE_BUFF)))))
       goto err;
@@ -165,9 +165,9 @@ err:
         /* ret_pos point to where find or bigger key starts */
         /* ARGSUSED */
 
-int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
-                   uchar *key, uint key_len, uint comp_flag, uchar **ret_pos,
-                   uchar *buff __attribute__((unused)), bool *last_key)
+int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
+                   unsigned char *key, uint key_len, uint comp_flag, unsigned char **ret_pos,
+                   unsigned char *buff __attribute__((unused)), bool *last_key)
 {
   register int start,mid,end,save_end;
   int flag;
@@ -225,13 +225,13 @@ int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
     < 0         Not found.
 */
 
-int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
-                   uchar *key, uint key_len, uint comp_flag, uchar **ret_pos,
-                   uchar *buff, bool *last_key)
+int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
+                   unsigned char *key, uint key_len, uint comp_flag, unsigned char **ret_pos,
+                   unsigned char *buff, bool *last_key)
 {
   int flag=0;
   uint nod_flag,length=0,not_used[2];
-  uchar t_buff[MI_MAX_KEY_BUFF],*end;
+  unsigned char t_buff[MI_MAX_KEY_BUFF],*end;
 
   end= page+mi_getint(page);
   nod_flag=mi_test_if_nod(page);
@@ -260,9 +260,9 @@ int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
 } /* _mi_seq_search */
 
 
-int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
-                      uchar *key, uint key_len, uint nextflag, uchar **ret_pos,
-                      uchar *buff, bool *last_key)
+int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
+                      unsigned char *key, uint key_len, uint nextflag, unsigned char **ret_pos,
+                      unsigned char *buff, bool *last_key)
 {
   /*
     my_flag is raw comparison result to be changed according to
@@ -273,10 +273,10 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
   uint nod_flag, length=0, len, matched, cmplen, kseg_len;
   uint prefix_len=0,suffix_len;
   int key_len_skip, seg_len_pack=0, key_len_left;
-  uchar *end, *kseg, *vseg;
-  uchar *sort_order=keyinfo->seg->charset->sort_order;
-  uchar tt_buff[MI_MAX_KEY_BUFF+2], *t_buff=tt_buff+2;
-  uchar *saved_from=NULL, *saved_to=NULL, *saved_vseg=NULL;
+  unsigned char *end, *kseg, *vseg;
+  unsigned char *sort_order=keyinfo->seg->charset->sort_order;
+  unsigned char tt_buff[MI_MAX_KEY_BUFF+2], *t_buff=tt_buff+2;
+  unsigned char *saved_from=NULL, *saved_to=NULL, *saved_vseg=NULL;
   uint  saved_length=0, saved_prefix_len=0;
   uint  length_pack;
 
@@ -355,7 +355,7 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
     saved_prefix_len=prefix_len;
 
     {
-      uchar *from=vseg+suffix_len;
+      unsigned char *from=vseg+suffix_len;
       HA_KEYSEG *keyseg;
       uint l;
 
@@ -392,7 +392,7 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
     {
       /* We have to compare. But we can still skip part of the key */
       uint  left;
-      uchar *k=kseg+prefix_len;
+      unsigned char *k=kseg+prefix_len;
 
       /*
         If prefix_len > cmplen then we are in the end-space comparison
@@ -438,11 +438,11 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
 	  else
 	  {
 	    /* We have to compare k and vseg as if they were space extended */
-	    uchar *k_end= k+ (cmplen - len);
+	    unsigned char *k_end= k+ (cmplen - len);
 	    for ( ; k < k_end && *k == ' '; k++) ;
 	    if (k == k_end)
 	      goto cmp_rest;		/* should never happen */
-	    if (*k < (uchar) ' ')
+	    if (*k < (unsigned char) ' ')
 	    {
 	      my_flag= 1;		/* Compared string is smaller */
 	      break;
@@ -452,17 +452,17 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
         }
         else if (len > cmplen)
         {
-	  uchar *vseg_end;
+	  unsigned char *vseg_end;
 	  if ((nextflag & SEARCH_PREFIX) && key_len_left == 0)
 	    goto fix_flag;
 
 	  /* We have to compare k and vseg as if they were space extended */
 	  for (vseg_end= vseg + (len-cmplen) ;
-	       vseg < vseg_end && *vseg == (uchar) ' ';
+	       vseg < vseg_end && *vseg == (unsigned char) ' ';
 	       vseg++, matched++) ;
 	  assert(vseg < vseg_end);
 
-	  if (*vseg > (uchar) ' ')
+	  if (*vseg > (unsigned char) ' ')
 	  {
 	    my_flag= 1;			/* Compared string is smaller */
 	    break;
@@ -524,7 +524,7 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
 
         /* Get pos to a key_block */
 
-my_off_t _mi_kpos(uint nod_flag, uchar *after_key)
+my_off_t _mi_kpos(uint nod_flag, unsigned char *after_key)
 {
   after_key-=nod_flag;
   switch (nod_flag) {
@@ -560,7 +560,7 @@ my_off_t _mi_kpos(uint nod_flag, uchar *after_key)
 
         /* Save pos to a key_block */
 
-void _mi_kpointer(register MI_INFO *info, register uchar *buff, my_off_t pos)
+void _mi_kpointer(register MI_INFO *info, register unsigned char *buff, my_off_t pos)
 {
   pos/=MI_MIN_KEY_BLOCK_LENGTH;
   switch (info->s->base.key_reflength) {
@@ -579,7 +579,7 @@ void _mi_kpointer(register MI_INFO *info, register uchar *buff, my_off_t pos)
   case 4: mi_int4store(buff,pos); break;
   case 3: mi_int3store(buff,pos); break;
   case 2: mi_int2store(buff,(uint) pos); break;
-  case 1: buff[0]= (uchar) pos; break;
+  case 1: buff[0]= (unsigned char) pos; break;
   default: abort();                             /* impossible */
   }
 } /* _mi_kpointer */
@@ -588,7 +588,7 @@ void _mi_kpointer(register MI_INFO *info, register uchar *buff, my_off_t pos)
         /* Calc pos to a data-record from a key */
 
 
-my_off_t _mi_dpos(MI_INFO *info, uint nod_flag, uchar *after_key)
+my_off_t _mi_dpos(MI_INFO *info, uint nod_flag, unsigned char *after_key)
 {
   my_off_t pos;
   after_key-=(nod_flag + info->s->rec_reflength);
@@ -618,7 +618,7 @@ my_off_t _mi_dpos(MI_INFO *info, uint nod_flag, uchar *after_key)
 
 /* Calc position from a record pointer ( in delete link chain ) */
 
-my_off_t _mi_rec_pos(MYISAM_SHARE *s, uchar *ptr)
+my_off_t _mi_rec_pos(MYISAM_SHARE *s, unsigned char *ptr)
 {
   my_off_t pos;
   switch (s->rec_reflength) {
@@ -676,7 +676,7 @@ my_off_t _mi_rec_pos(MYISAM_SHARE *s, uchar *ptr)
 
         /* save position to record */
 
-void _mi_dpointer(MI_INFO *info, uchar *buff, my_off_t pos)
+void _mi_dpointer(MI_INFO *info, unsigned char *buff, my_off_t pos)
 {
   if (!(info->s->options &
         (HA_OPTION_PACK_RECORD | HA_OPTION_COMPRESS_RECORD)) &&
@@ -716,7 +716,7 @@ void _mi_dpointer(MI_INFO *info, uchar *buff, my_off_t pos)
         /* same as _mi_get_key but used with fixed length keys */
 
 uint _mi_get_static_key(register MI_KEYDEF *keyinfo, uint nod_flag,
-                       register uchar **page, register uchar *key)
+                       register unsigned char **page, register unsigned char *key)
 {
   memcpy(key, *page, keyinfo->keylength+nod_flag);
   *page+=keyinfo->keylength+nod_flag;
@@ -739,10 +739,10 @@ uint _mi_get_static_key(register MI_KEYDEF *keyinfo, uint nod_flag,
 */
 
 uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
-                      register uchar **page_pos, register uchar *key)
+                      register unsigned char **page_pos, register unsigned char *key)
 {
   register HA_KEYSEG *keyseg;
-  uchar *start_key,*page=*page_pos;
+  unsigned char *start_key,*page=*page_pos;
   uint length;
 
   start_key=key;
@@ -751,7 +751,7 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
     if (keyseg->flag & HA_PACK_KEY)
     {
       /* key with length, packed to previous key */
-      uchar *start=key;
+      unsigned char *start=key;
       uint packed= *page & 128,tot_length,rest_length;
       if (keyseg->length >= 127)
       {
@@ -847,7 +847,7 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
       if (keyseg->flag &
           (HA_VAR_LENGTH_PART | HA_BLOB_PART | HA_SPACE_PACK))
       {
-        uchar *tmp=page;
+        unsigned char *tmp=page;
         get_key_length(length,tmp);
         length+=(uint) (tmp-page);
       }
@@ -869,10 +869,10 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
 /* key that is packed relatively to previous */
 
 uint _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
-                             register uchar **page_pos, register uchar *key)
+                             register unsigned char **page_pos, register unsigned char *key)
 {
   register HA_KEYSEG *keyseg;
-  uchar *start_key,*page,*page_end,*from,*from_end;
+  unsigned char *start_key,*page,*page_end,*from,*from_end;
   uint length,tmp;
 
   page= *page_pos;
@@ -994,8 +994,8 @@ uint _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
         /* Get key at position without knowledge of previous key */
         /* Returns pointer to next key */
 
-uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
-                   uchar *key, uchar *keypos, uint *return_key_length)
+unsigned char *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
+                   unsigned char *key, unsigned char *keypos, uint *return_key_length)
 {
   uint nod_flag;
 
@@ -1027,8 +1027,8 @@ uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
         /* Get key at position without knowledge of previous key */
         /* Returns 0 if ok */
 
-static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
-                                uchar *key, uchar *keypos,
+static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
+                                unsigned char *key, unsigned char *keypos,
                                 uint *return_key_length)
 {
   uint nod_flag;
@@ -1063,11 +1063,11 @@ static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
         /* Get last key from key-page */
         /* Return pointer to where key starts */
 
-uchar *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
-                        uchar *lastkey, uchar *endpos, uint *return_key_length)
+unsigned char *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
+                        unsigned char *lastkey, unsigned char *endpos, uint *return_key_length)
 {
   uint nod_flag;
-  uchar *lastpos;
+  unsigned char *lastpos;
 
   nod_flag=mi_test_if_nod(page);
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
@@ -1099,10 +1099,10 @@ uchar *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
 
         /* Calculate length of key */
 
-uint _mi_keylength(MI_KEYDEF *keyinfo, register uchar *key)
+uint _mi_keylength(MI_KEYDEF *keyinfo, register unsigned char *key)
 {
   register HA_KEYSEG *keyseg;
-  uchar *start;
+  unsigned char *start;
 
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
     return (keyinfo->keylength);
@@ -1134,11 +1134,11 @@ uint _mi_keylength(MI_KEYDEF *keyinfo, register uchar *key)
   after '0xDF' but find 'ss'
 */
 
-uint _mi_keylength_part(MI_KEYDEF *keyinfo, register uchar *key,
+uint _mi_keylength_part(MI_KEYDEF *keyinfo, register unsigned char *key,
 			HA_KEYSEG *end)
 {
   register HA_KEYSEG *keyseg;
-  uchar *start= key;
+  unsigned char *start= key;
 
   for (keyseg=keyinfo->seg ; keyseg != end ; keyseg++)
   {
@@ -1159,7 +1159,7 @@ uint _mi_keylength_part(MI_KEYDEF *keyinfo, register uchar *key,
 
         /* Move a key */
 
-uchar *_mi_move_key(MI_KEYDEF *keyinfo, uchar *to, uchar *from)
+unsigned char *_mi_move_key(MI_KEYDEF *keyinfo, unsigned char *to, unsigned char *from)
 {
   register uint length;
   length= _mi_keylength(keyinfo, from);
@@ -1171,11 +1171,11 @@ uchar *_mi_move_key(MI_KEYDEF *keyinfo, uchar *to, uchar *from)
         /* This can't be used when database is touched after last read */
 
 int _mi_search_next(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-                    uchar *key, uint key_length, uint nextflag, my_off_t pos)
+                    unsigned char *key, uint key_length, uint nextflag, my_off_t pos)
 {
   int error;
   uint nod_flag;
-  uchar lastkey[MI_MAX_KEY_BUFF];
+  unsigned char lastkey[MI_MAX_KEY_BUFF];
 
   /* Force full read if we are at last key or if we are not on a leaf
      and the key tree has changed since we used it last time
@@ -1250,7 +1250,7 @@ int _mi_search_first(register MI_INFO *info, register MI_KEYDEF *keyinfo,
                      register my_off_t pos)
 {
   uint nod_flag;
-  uchar *page;
+  unsigned char *page;
 
   if (pos == HA_OFFSET_ERROR)
   {
@@ -1292,7 +1292,7 @@ int _mi_search_last(register MI_INFO *info, register MI_KEYDEF *keyinfo,
                     register my_off_t pos)
 {
   uint nod_flag;
-  uchar *buff,*page;
+  unsigned char *buff,*page;
 
   if (pos == HA_OFFSET_ERROR)
   {
@@ -1345,10 +1345,10 @@ int _mi_search_last(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
 int
 _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-                           uchar *next_pos  __attribute__((unused)),
-                           uchar *org_key  __attribute__((unused)),
-                           uchar *prev_key __attribute__((unused)),
-                           uchar *key, MI_KEY_PARAM *s_temp)
+                           unsigned char *next_pos  __attribute__((unused)),
+                           unsigned char *org_key  __attribute__((unused)),
+                           unsigned char *prev_key __attribute__((unused)),
+                           unsigned char *key, MI_KEY_PARAM *s_temp)
 {
   s_temp->key=key;
   return (int) (s_temp->totlength=keyinfo->keylength+nod_flag);
@@ -1358,10 +1358,10 @@ _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
 
 int
 _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-                        uchar *next_pos  __attribute__((unused)),
-                        uchar *org_key  __attribute__((unused)),
-                        uchar *prev_key __attribute__((unused)),
-                        uchar *key, MI_KEY_PARAM *s_temp)
+                        unsigned char *next_pos  __attribute__((unused)),
+                        unsigned char *org_key  __attribute__((unused)),
+                        unsigned char *prev_key __attribute__((unused)),
+                        unsigned char *key, MI_KEY_PARAM *s_temp)
 {
   s_temp->key=key;
   return (int) (s_temp->totlength=_mi_keylength(keyinfo,key)+nod_flag);
@@ -1387,15 +1387,15 @@ _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
 */
 
 int
-_mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
-                             uchar *org_key, uchar *prev_key, uchar *key,
+_mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,unsigned char *next_key,
+                             unsigned char *org_key, unsigned char *prev_key, unsigned char *key,
                              MI_KEY_PARAM *s_temp)
 {
   register HA_KEYSEG *keyseg;
   int length;
   uint key_length,ref_length,org_key_length=0,
        length_pack,new_key_length,diff_flag,pack_marker;
-  uchar *start,*end,*key_end,*sort_order;
+  unsigned char *start,*end,*key_end,*sort_order;
   bool same_length;
 
   length_pack=s_temp->ref_length=s_temp->n_ref_length=s_temp->n_length=0;
@@ -1659,8 +1659,8 @@ _mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
 /* Length of key which is prefix compressed */
 
 int
-_mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
-                             uchar *org_key, uchar *prev_key, uchar *key,
+_mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,unsigned char *next_key,
+                             unsigned char *org_key, unsigned char *prev_key, unsigned char *key,
                              MI_KEY_PARAM *s_temp)
 {
   uint length,key_length,ref_length;
@@ -1678,7 +1678,7 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
       As keys may be identical when running a sort in myisamchk, we
       have to guard against the case where keys may be identical
     */
-    uchar *end;
+    unsigned char *end;
     end=key+key_length;
     for ( ; *key == *prev_key && key < end; key++,prev_key++) ;
     s_temp->ref_length= ref_length=(uint) (key-s_temp->key);
@@ -1699,7 +1699,7 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
     /* If first key and next key is packed (only on delete) */
     if (!prev_key && org_key && next_length)
     {
-      uchar *end;
+      unsigned char *end;
       for (key= s_temp->key, end=key+next_length ;
            *key == *org_key && key < end;
            key++,org_key++) ;
@@ -1741,7 +1741,7 @@ _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
 /* store key without compression */
 
 void _mi_store_static_key(MI_KEYDEF *keyinfo __attribute__((unused)),
-                          register uchar *key_pos,
+                          register unsigned char *key_pos,
                           register MI_KEY_PARAM *s_temp)
 {
   memcpy(key_pos, s_temp->key, s_temp->totlength);
@@ -1751,16 +1751,16 @@ void _mi_store_static_key(MI_KEYDEF *keyinfo __attribute__((unused)),
 /* store variable length key with prefix compression */
 
 #define store_pack_length(test,pos,length) { \
-  if (test) { *((pos)++) = (uchar) (length); } else \
-  { *((pos)++) = (uchar) ((length) >> 8); *((pos)++) = (uchar) (length);  } }
+  if (test) { *((pos)++) = (unsigned char) (length); } else \
+  { *((pos)++) = (unsigned char) ((length) >> 8); *((pos)++) = (unsigned char) (length);  } }
 
 
 void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
-                            register uchar *key_pos,
+                            register unsigned char *key_pos,
                             register MI_KEY_PARAM *s_temp)
 {
   uint length;
-  uchar *start;
+  unsigned char *start;
 
   start=key_pos;
 
@@ -1820,7 +1820,7 @@ void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
 /* variable length key with prefix compression */
 
 void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
-                            register uchar *key_pos,
+                            register unsigned char *key_pos,
                             register MI_KEY_PARAM *s_temp)
 {
   assert(s_temp->totlength >= s_temp->ref_length);

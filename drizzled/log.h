@@ -80,7 +80,7 @@ class TC_LOG_MMAP: public TC_LOG
   File fd;
   my_off_t file_length;
   uint npages, inited;
-  uchar *data;
+  unsigned char *data;
   struct st_page *pages, *syncing, *active, *pool, *pool_last;
   /*
     note that, e.g. LOCK_active is only used to protect

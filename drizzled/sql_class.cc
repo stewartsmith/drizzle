@@ -59,11 +59,11 @@ template class List_iterator<Alter_column>;
 ** User variables
 ****************************************************************************/
 
-extern "C" uchar *get_var_key(user_var_entry *entry, size_t *length,
+extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
                               bool not_used __attribute__((unused)))
 {
   *length= entry->name.length;
-  return (uchar*) entry->name.str;
+  return (unsigned char*) entry->name.str;
 }
 
 extern "C" void free_user_var(user_var_entry *entry)
@@ -745,7 +745,7 @@ THD::~THD()
 
 void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 {
-  ulong *end= (ulong*) ((uchar*) to_var +
+  ulong *end= (ulong*) ((unsigned char*) to_var +
                         offsetof(STATUS_VAR, last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
@@ -770,7 +770,7 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var)
 {
-  ulong *end= (ulong*) ((uchar*) to_var + offsetof(STATUS_VAR,
+  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(STATUS_VAR,
 						  last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
@@ -1502,17 +1502,17 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   }
   field_term_length=exchange->field_term->length();
   field_term_char= field_term_length ?
-                   (int) (uchar) (*exchange->field_term)[0] : INT_MAX;
+                   (int) (unsigned char) (*exchange->field_term)[0] : INT_MAX;
   if (!exchange->line_term->length())
     exchange->line_term=exchange->field_term;	// Use this if it exists
   field_sep_char= (exchange->enclosed->length() ?
-                  (int) (uchar) (*exchange->enclosed)[0] : field_term_char);
+                  (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char);
   escape_char=	(exchange->escaped->length() ?
-                (int) (uchar) (*exchange->escaped)[0] : -1);
+                (int) (unsigned char) (*exchange->escaped)[0] : -1);
   is_ambiguous_field_sep= test(strchr(ESCAPE_CHARS, field_sep_char));
   is_unsafe_field_sep= test(strchr(NUMERIC_CHARS, field_sep_char));
   line_sep_char= (exchange->line_term->length() ?
-                 (int) (uchar) (*exchange->line_term)[0] : INT_MAX);
+                 (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX);
   if (!field_term_length)
     exchange->opt_enclosed=0;
   if (!exchange->enclosed->length())
@@ -1535,10 +1535,10 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
 }
 
 
-#define NEED_ESCAPING(x) ((int) (uchar) (x) == escape_char    || \
-                          (enclosed ? (int) (uchar) (x) == field_sep_char      \
-                                    : (int) (uchar) (x) == field_term_char) || \
-                          (int) (uchar) (x) == line_sep_char  || \
+#define NEED_ESCAPING(x) ((int) (unsigned char) (x) == escape_char    || \
+                          (enclosed ? (int) (unsigned char) (x) == field_sep_char      \
+                                    : (int) (unsigned char) (x) == field_term_char) || \
+                          (int) (unsigned char) (x) == line_sep_char  || \
                           !(x))
 
 bool select_export::send_data(List<Item> &items)
@@ -1558,7 +1558,7 @@ bool select_export::send_data(List<Item> &items)
   uint used_length=0,items_left=items.elements;
   List_iterator_fast<Item> li(items);
 
-  if (my_b_write(&cache,(uchar*) exchange->line_start->ptr(),
+  if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
 		 exchange->line_start->length()))
     goto err;
   while ((item=li++))
@@ -1569,7 +1569,7 @@ bool select_export::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (res && enclosed)
     {
-      if (my_b_write(&cache,(uchar*) exchange->enclosed->ptr(),
+      if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
 		     exchange->enclosed->length()))
 	goto err;
     }
@@ -1581,10 +1581,10 @@ bool select_export::send_data(List<Item> &items)
 	{
 	  null_buff[0]=escape_char;
 	  null_buff[1]='N';
-	  if (my_b_write(&cache,(uchar*) null_buff,2))
+	  if (my_b_write(&cache,(unsigned char*) null_buff,2))
 	    goto err;
 	}
-	else if (my_b_write(&cache,(uchar*) "NULL",4))
+	else if (my_b_write(&cache,(unsigned char*) "NULL",4))
 	  goto err;
       }
       else
@@ -1660,7 +1660,7 @@ bool select_export::send_data(List<Item> &items)
 
           if ((NEED_ESCAPING(*pos) ||
                (check_second_byte &&
-                my_mbcharlen(character_set_client, (uchar) *pos) == 2 &&
+                my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
                 pos + 1 < end &&
                 NEED_ESCAPING(pos[1]))) &&
               /*
@@ -1668,23 +1668,23 @@ bool select_export::send_data(List<Item> &items)
                valid for ENCLOSED BY characters:
               */
               (enclosed || !is_ambiguous_field_term ||
-               (int) (uchar) *pos != field_term_char))
+               (int) (unsigned char) *pos != field_term_char))
           {
 	    char tmp_buff[2];
-            tmp_buff[0]= ((int) (uchar) *pos == field_sep_char &&
+            tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
                           is_ambiguous_field_sep) ?
                           field_sep_char : escape_char;
 	    tmp_buff[1]= *pos ? *pos : '0';
-	    if (my_b_write(&cache,(uchar*) start,(uint) (pos-start)) ||
-		my_b_write(&cache,(uchar*) tmp_buff,2))
+	    if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)) ||
+		my_b_write(&cache,(unsigned char*) tmp_buff,2))
 	      goto err;
 	    start=pos+1;
 	  }
 	}
-	if (my_b_write(&cache,(uchar*) start,(uint) (pos-start)))
+	if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)))
 	  goto err;
       }
-      else if (my_b_write(&cache,(uchar*) res->ptr(),used_length))
+      else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
 	goto err;
     }
     if (fixed_row_size)
@@ -1700,27 +1700,27 @@ bool select_export::send_data(List<Item> &items)
 	uint length=item->max_length-used_length;
 	for (; length > sizeof(space) ; length-=sizeof(space))
 	{
-	  if (my_b_write(&cache,(uchar*) space,sizeof(space)))
+	  if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
 	    goto err;
 	}
-	if (my_b_write(&cache,(uchar*) space,length))
+	if (my_b_write(&cache,(unsigned char*) space,length))
 	  goto err;
       }
     }
     if (res && enclosed)
     {
-      if (my_b_write(&cache, (uchar*) exchange->enclosed->ptr(),
+      if (my_b_write(&cache, (unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
     if (--items_left)
     {
-      if (my_b_write(&cache, (uchar*) exchange->field_term->ptr(),
+      if (my_b_write(&cache, (unsigned char*) exchange->field_term->ptr(),
                      field_term_length))
         goto err;
     }
   }
-  if (my_b_write(&cache,(uchar*) exchange->line_term->ptr(),
+  if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
 		 exchange->line_term->length()))
     goto err;
   return(0);
@@ -1766,10 +1766,10 @@ bool select_dump::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (!res)					// If NULL
     {
-      if (my_b_write(&cache,(uchar*) "",1))
+      if (my_b_write(&cache,(unsigned char*) "",1))
 	goto err;
     }
-    else if (my_b_write(&cache,(uchar*) res->ptr(),res->length()))
+    else if (my_b_write(&cache,(unsigned char*) res->ptr(),res->length()))
     {
       my_error(ER_ERROR_ON_WRITE, MYF(0), path, my_errno);
       goto err;
@@ -2248,10 +2248,10 @@ void mark_transaction_to_rollback(THD *thd, bool all)
 pthread_mutex_t LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, bool);
+extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
 extern "C" void xid_free_hash(void *);
 
-uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
+unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
                         bool not_used __attribute__((unused)))
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
@@ -2261,7 +2261,7 @@ uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
 void xid_free_hash(void *ptr)
 {
   if (!((XID_STATE*)ptr)->in_thd)
-    free((uchar*)ptr);
+    free((unsigned char*)ptr);
 }
 
 bool xid_cache_init()
@@ -2303,7 +2303,7 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
     xs->xa_state=xa_state;
     xs->xid.set(xid);
     xs->in_thd=0;
-    res=my_hash_insert(&xid_cache, (uchar*)xs);
+    res=my_hash_insert(&xid_cache, (unsigned char*)xs);
   }
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
@@ -2315,7 +2315,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
   pthread_mutex_lock(&LOCK_xid_cache);
   assert(hash_search(&xid_cache, xid_state->xid.key(),
                           xid_state->xid.key_length())==0);
-  bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
+  bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
 }
@@ -2324,7 +2324,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
 void xid_cache_delete(XID_STATE *xid_state)
 {
   pthread_mutex_lock(&LOCK_xid_cache);
-  hash_delete(&xid_cache, (uchar *)xid_state);
+  hash_delete(&xid_cache, (unsigned char *)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
 }
 
@@ -2494,7 +2494,7 @@ namespace {
     ~Row_data_memory()
     {
       if (m_memory != 0 && m_release_memory_on_destruction)
-        free((uchar*) m_memory);
+        free((unsigned char*) m_memory);
     }
 
     /**
@@ -2508,7 +2508,7 @@ namespace {
       return m_memory != 0;
     }
 
-    uchar *slot(uint s)
+    unsigned char *slot(uint s)
     {
       assert(s < sizeof(m_ptr)/sizeof(*m_ptr));
       assert(m_ptr[s] != 0);
@@ -2540,27 +2540,27 @@ namespace {
         */
         if (table->write_row_record == 0)
           table->write_row_record=
-            (uchar *) alloc_root(&table->mem_root, 2 * maxlen);
+            (unsigned char *) alloc_root(&table->mem_root, 2 * maxlen);
         m_memory= table->write_row_record;
         m_release_memory_on_destruction= false;
       }
       else
       {
-        m_memory= (uchar *) my_malloc(total_length, MYF(MY_WME));
+        m_memory= (unsigned char *) my_malloc(total_length, MYF(MY_WME));
         m_release_memory_on_destruction= true;
       }
     }
 
     mutable bool m_alloc_checked;
     bool m_release_memory_on_destruction;
-    uchar *m_memory;
-    uchar *m_ptr[2];
+    unsigned char *m_memory;
+    unsigned char *m_ptr[2];
   };
 }
 
 
 int THD::binlog_write_row(Table* table, bool is_trans, 
-                          uchar const *record) 
+                          unsigned char const *record) 
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2572,7 +2572,7 @@ int THD::binlog_write_row(Table* table, bool is_trans,
   if (!memory.has_memory())
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *row_data= memory.slot(0);
+  unsigned char *row_data= memory.slot(0);
 
   size_t const len= pack_row(table, table->write_set, row_data, record);
 
@@ -2587,8 +2587,8 @@ int THD::binlog_write_row(Table* table, bool is_trans,
 }
 
 int THD::binlog_update_row(Table* table, bool is_trans,
-                           const uchar *before_record,
-                           const uchar *after_record)
+                           const unsigned char *before_record,
+                           const unsigned char *after_record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2599,8 +2599,8 @@ int THD::binlog_update_row(Table* table, bool is_trans,
   if (!row_data.has_memory())
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *before_row= row_data.slot(0);
-  uchar *after_row= row_data.slot(1);
+  unsigned char *before_row= row_data.slot(0);
+  unsigned char *after_row= row_data.slot(1);
 
   size_t const before_size= pack_row(table, table->read_set, before_row,
                                         before_record);
@@ -2621,7 +2621,7 @@ int THD::binlog_update_row(Table* table, bool is_trans,
 }
 
 int THD::binlog_delete_row(Table* table, bool is_trans, 
-                           uchar const *record)
+                           unsigned char const *record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2633,7 +2633,7 @@ int THD::binlog_delete_row(Table* table, bool is_trans,
   if (unlikely(!memory.has_memory()))
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *row_data= memory.slot(0);
+  unsigned char *row_data= memory.slot(0);
 
   size_t const len= pack_row(table, table->read_set, row_data, record);
 

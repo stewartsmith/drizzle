@@ -55,12 +55,12 @@
 #if !defined(DRIZZLE_CLIENT)
 size_t
 pack_row(Table *table, MY_BITMAP const* cols,
-         uchar *row_data, const uchar *record)
+         unsigned char *row_data, const unsigned char *record)
 {
   Field **p_field= table->field, *field;
   int const null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
-  uchar *pack_ptr = row_data + null_byte_count;
-  uchar *null_ptr = row_data;
+  unsigned char *pack_ptr = row_data + null_byte_count;
+  unsigned char *null_ptr = row_data;
   my_ptrdiff_t const rec_offset= record - table->record[0];
   my_ptrdiff_t const def_offset= table->s->default_values - table->record[0];
 
@@ -165,15 +165,15 @@ pack_row(Table *table, MY_BITMAP const* cols,
 int
 unpack_row(Relay_log_info const *rli,
            Table *table, uint const colcnt,
-           uchar const *const row_data, MY_BITMAP const *cols,
-           uchar const **const row_end, ulong *const master_reclength)
+           unsigned char const *const row_data, MY_BITMAP const *cols,
+           unsigned char const **const row_end, ulong *const master_reclength)
 {
   assert(row_data);
   size_t const master_null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
   int error= 0;
 
-  uchar const *null_ptr= row_data;
-  uchar const *pack_ptr= row_data + master_null_byte_count;
+  unsigned char const *null_ptr= row_data;
+  unsigned char const *pack_ptr= row_data + master_null_byte_count;
 
   Field **const begin_ptr = table->field;
   Field **field_ptr;
@@ -265,7 +265,7 @@ unpack_row(Relay_log_info const *rli,
       assert(null_mask & 0xFF); // One of the 8 LSB should be set
 
       if (!((null_bits & null_mask) && tabledef->maybe_null(i)))
-        pack_ptr+= tabledef->calc_field_size(i, (uchar *) pack_ptr);
+        pack_ptr+= tabledef->calc_field_size(i, (unsigned char *) pack_ptr);
       null_mask <<= 1;
     }
   }

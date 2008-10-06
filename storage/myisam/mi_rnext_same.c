@@ -23,7 +23,7 @@
 	   based on the position of the last used key!
 	*/
 
-int mi_rnext_same(MI_INFO *info, uchar *buf)
+int mi_rnext_same(MI_INFO *info, unsigned char *buf)
 {
   int error;
   uint inx,not_used[2];

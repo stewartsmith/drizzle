@@ -72,8 +72,8 @@ public:
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
 
   uint cols() { return arg_count; }
   Item* element_index(uint i) { return items[i]; }

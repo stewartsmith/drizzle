@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  Handling of uchar arrays as large bitmaps.
+  Handling of unsigned char arrays as large bitmaps.
 
   API limitations (or, rather asserted safety assumptions,
   to encourage correct programming)
@@ -158,9 +158,9 @@ void bitmap_free(MY_BITMAP *map)
 
 bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit)
 {
-  uchar *value= ((uchar*) map->bitmap) + (bitmap_bit / 8);
-  uchar bit= 1 << ((bitmap_bit) & 7);
-  uchar res= (*value) & bit;
+  unsigned char *value= ((unsigned char*) map->bitmap) + (bitmap_bit / 8);
+  unsigned char bit= 1 << ((bitmap_bit) & 7);
+  unsigned char res= (*value) & bit;
   *value|= bit;
   return res;
 }
@@ -204,9 +204,9 @@ bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit)
 
 bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
 {
-  uchar *byte= (uchar*) map->bitmap + (bitmap_bit / 8);
-  uchar bit= 1 << ((bitmap_bit) & 7);
-  uchar res= (*byte) & bit;
+  unsigned char *byte= (unsigned char*) map->bitmap + (bitmap_bit / 8);
+  unsigned char bit= 1 << ((bitmap_bit) & 7);
+  unsigned char res= (*byte) & bit;
   *byte&= ~bit;
   return res;
 }
@@ -236,7 +236,7 @@ uint bitmap_set_next(MY_BITMAP *map)
 void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size)
 {
   uint prefix_bytes, prefix_bits, d;
-  uchar *m= (uchar *)map->bitmap;
+  unsigned char *m= (unsigned char *)map->bitmap;
 
   assert(map->bitmap &&
 	      (prefix_size <= map->n_bits || prefix_size == UINT32_MAX));
@@ -254,9 +254,9 @@ void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size)
 bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size)
 {
   uint prefix_bits= prefix_size & 0x7, res;
-  uchar *m= (uchar*)map->bitmap;
-  uchar *end_prefix= m+prefix_size/8;
-  uchar *end;
+  unsigned char *m= (unsigned char*)map->bitmap;
+  unsigned char *end_prefix= m+prefix_size/8;
+  unsigned char *end;
   assert(m && prefix_size <= map->n_bits);
   end= m+no_bytes_in_map(map);
 
@@ -387,9 +387,9 @@ void bitmap_intersect(MY_BITMAP *map, const MY_BITMAP *map2)
 
 void bitmap_set_above(MY_BITMAP *map, uint from_byte, uint use_bit)
 {
-  uchar use_byte= use_bit ? 0xff : 0;
-  uchar *to= (uchar *)map->bitmap + from_byte;
-  uchar *end= (uchar *)map->bitmap + (map->n_bits+7)/8;
+  unsigned char use_byte= use_bit ? 0xff : 0;
+  unsigned char *to= (unsigned char *)map->bitmap + from_byte;
+  unsigned char *end= (unsigned char *)map->bitmap + (map->n_bits+7)/8;
 
   while (to < end)
     *to++= use_byte;
@@ -446,8 +446,8 @@ void bitmap_invert(MY_BITMAP *map)
 
 uint bitmap_bits_set(const MY_BITMAP *map)
 {  
-  uchar *m= (uchar*)map->bitmap;
-  uchar *end= m + no_bytes_in_map(map);
+  unsigned char *m= (unsigned char*)map->bitmap;
+  unsigned char *end= m + no_bytes_in_map(map);
   uint res= 0;
 
   assert(map->bitmap);
@@ -472,7 +472,7 @@ void bitmap_copy(MY_BITMAP *map, const MY_BITMAP *map2)
 
 uint bitmap_get_first_set(const MY_BITMAP *map)
 {
-  uchar *byte_ptr;
+  unsigned char *byte_ptr;
   uint i,j,k;
   my_bitmap_map *data_ptr, *end= map->last_word_ptr;
 
@@ -484,7 +484,7 @@ uint bitmap_get_first_set(const MY_BITMAP *map)
   {
     if (*data_ptr)
     {
-      byte_ptr= (uchar*)data_ptr;
+      byte_ptr= (unsigned char*)data_ptr;
       for (j=0; ; j++, byte_ptr++)
       {
         if (*byte_ptr)
@@ -506,7 +506,7 @@ uint bitmap_get_first_set(const MY_BITMAP *map)
 
 uint bitmap_get_first(const MY_BITMAP *map)
 {
-  uchar *byte_ptr;
+  unsigned char *byte_ptr;
   uint i,j,k;
   my_bitmap_map *data_ptr, *end= map->last_word_ptr;
 
@@ -518,7 +518,7 @@ uint bitmap_get_first(const MY_BITMAP *map)
   {
     if (*data_ptr != 0xFFFFFFFF)
     {
-      byte_ptr= (uchar*)data_ptr;
+      byte_ptr= (unsigned char*)data_ptr;
       for (j=0; ; j++, byte_ptr++)
       { 
         if (*byte_ptr != 0xFF)

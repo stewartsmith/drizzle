@@ -49,10 +49,10 @@
 */
 
 int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
 	       void *first_cmp_arg)
 {
-  if ((queue->root= (uchar **) my_malloc((max_elements+1)*sizeof(void*),
+  if ((queue->root= (unsigned char **) my_malloc((max_elements+1)*sizeof(void*),
 					 MYF(MY_WME))) == 0)
     return(1);
   queue->elements=0;
@@ -91,7 +91,7 @@ int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
 	       void *first_cmp_arg, uint auto_extent)
 {
   int ret;
@@ -127,7 +127,7 @@ int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-		 bool max_at_top, int (*compare) (void *, uchar *, uchar *),
+		 bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
 		 void *first_cmp_arg)
 {
   queue->elements=0;
@@ -159,10 +159,10 @@ int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 
 int resize_queue(QUEUE *queue, uint max_elements)
 {
-  uchar **new_root;
+  unsigned char **new_root;
   if (queue->max_elements == max_elements)
     return(0);
-  if ((new_root= (uchar **) my_realloc((void *)queue->root,
+  if ((new_root= (unsigned char **) my_realloc((void *)queue->root,
 				      (max_elements+1)*sizeof(void*),
 				      MYF(MY_WME))) == 0)
     return(1);
@@ -191,7 +191,7 @@ void delete_queue(QUEUE *queue)
 {
   if (queue->root)
   {
-    free((uchar*) queue->root);
+    free((unsigned char*) queue->root);
     queue->root=0;
   }
   return;
@@ -200,7 +200,7 @@ void delete_queue(QUEUE *queue)
 
 	/* Code for insert, search and delete of elements */
 
-void queue_insert(register QUEUE *queue, uchar *element)
+void queue_insert(register QUEUE *queue, unsigned char *element)
 {
   register uint idx, next;
   assert(queue->elements < queue->max_elements);
@@ -227,7 +227,7 @@ void queue_insert(register QUEUE *queue, uchar *element)
   
 */
 
-int queue_insert_safe(register QUEUE *queue, uchar *element)
+int queue_insert_safe(register QUEUE *queue, unsigned char *element)
 {
 
   if (queue->elements == queue->max_elements)
@@ -246,9 +246,9 @@ int queue_insert_safe(register QUEUE *queue, uchar *element)
 	/* Remove item from queue */
 	/* Returns pointer to removed element */
 
-uchar *queue_remove(register QUEUE *queue, uint idx)
+unsigned char *queue_remove(register QUEUE *queue, uint idx)
 {
-  uchar *element;
+  unsigned char *element;
   assert(idx < queue->max_elements);
   element= queue->root[++idx];  /* Intern index starts from 1 */
   queue->root[idx]= queue->root[queue->elements--];
@@ -269,7 +269,7 @@ void queue_replaced(QUEUE *queue)
 
 void _downheap(register QUEUE *queue, uint idx)
 {
-  uchar *element;
+  unsigned char *element;
   uint elements,half_queue,offset_to_key, next_index;
   bool first= true;
   uint start_idx= idx;
@@ -323,7 +323,7 @@ void _downheap(register QUEUE *queue, uint idx)
 	/* Fix heap when index have changed */
 void _downheap(register QUEUE *queue, uint idx)
 {
-  uchar *element;
+  unsigned char *element;
   uint elements,half_queue,next_index,offset_to_key;
 
   offset_to_key=queue->offset_to_key;
@@ -472,7 +472,7 @@ void calculate_end_next(uint part)
   }
   return;
 }
-static int test_compare(void *null_arg, uchar *a, uchar *b)
+static int test_compare(void *null_arg, unsigned char *a, unsigned char *b)
 {
   uint a_num= (*(uint*)a) & 0x3FFFFF;
   uint b_num= (*(uint*)b) & 0x3FFFFF;
@@ -530,9 +530,9 @@ void perform_insert(QUEUE *queue)
     }
     num_array[i]= num + (i << 22);
     if (fix_used)
-      queue_element(queue, i-1)= (uchar*)&num_array[i];
+      queue_element(queue, i-1)= (unsigned char*)&num_array[i];
     else
-      queue_insert(queue, (uchar*)&num_array[i]);
+      queue_insert(queue, (unsigned char*)&num_array[i]);
   } while (++i <= no_parts);
   if (fix_used)
   {
@@ -562,7 +562,7 @@ bool perform_ins_del(QUEUE *queue, bool max_ind)
         num_array[part]-= part;
       else
         num_array[part]+= part;
-      queue_top(queue)= (uchar*)&num_array[part];
+      queue_top(queue)= (unsigned char*)&num_array[part];
       queue_replaced(queue);
     }
   } while (++i < no_loops);
@@ -654,7 +654,7 @@ static void benchmark_test()
     num+= 16;
     part= num >> 22;
     num_array[part]= num;
-    queue_top(queue)= (uchar*)&num_array[part];
+    queue_top(queue)= (unsigned char*)&num_array[part];
     queue_replaced(queue);
   }
   for (i= 0; i < 16; i++)

@@ -284,7 +284,7 @@ typedef struct st_join_table {
      NULL - Not an insideout scan.
   */
   struct st_join_table *insideout_match_tab;
-  uchar *insideout_buf; // Buffer to save index tuple to be able to skip dups
+  unsigned char *insideout_buf; // Buffer to save index tuple to be able to skip dups
 
   /* Used by InsideOut scan. Just set to true when have found a row. */
   bool found_match;
@@ -682,7 +682,7 @@ class store_key :public Sql_alloc
 public:
   bool null_key; /* true <=> the value of the key has a null part */
   enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
-  store_key(THD *thd, Field *field_arg, uchar *ptr, uchar *null, uint length)
+  store_key(THD *thd, Field *field_arg, unsigned char *ptr, unsigned char *null, uint length)
     :null_key(0), null_ptr(null), err(0)
   {
     if (field_arg->type() == DRIZZLE_TYPE_BLOB)
@@ -726,8 +726,8 @@ public:
 
  protected:
   Field *to_field;				// Store data here
-  uchar *null_ptr;
-  uchar err;
+  unsigned char *null_ptr;
+  unsigned char err;
 
   virtual enum store_key_result copy_inner()=0;
 };
@@ -738,12 +738,12 @@ class store_key_field: public store_key
   Copy_field copy_field;
   const char *field_name;
  public:
-  store_key_field(THD *thd, Field *to_field_arg, uchar *ptr,
-                  uchar *null_ptr_arg,
+  store_key_field(THD *thd, Field *to_field_arg, unsigned char *ptr,
+                  unsigned char *null_ptr_arg,
 		  uint length, Field *from_field, const char *name_arg)
     :store_key(thd, to_field_arg,ptr,
 	       null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
-	       : (uchar*) 0, length), field_name(name_arg)
+	       : (unsigned char*) 0, length), field_name(name_arg)
   {
     if (to_field)
     {
@@ -767,11 +767,11 @@ class store_key_item :public store_key
  protected:
   Item *item;
 public:
-  store_key_item(THD *thd, Field *to_field_arg, uchar *ptr,
-                 uchar *null_ptr_arg, uint length, Item *item_arg)
+  store_key_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+                 unsigned char *null_ptr_arg, uint length, Item *item_arg)
     :store_key(thd, to_field_arg, ptr,
 	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-	       &err : (uchar*) 0, length), item(item_arg)
+	       &err : (unsigned char*) 0, length), item(item_arg)
   {}
   const char *name() const { return "func"; }
 
@@ -789,12 +789,12 @@ class store_key_const_item :public store_key_item
 {
   bool inited;
 public:
-  store_key_const_item(THD *thd, Field *to_field_arg, uchar *ptr,
-		       uchar *null_ptr_arg, uint length,
+  store_key_const_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+		       unsigned char *null_ptr_arg, uint length,
 		       Item *item_arg)
     :store_key_item(thd, to_field_arg,ptr,
 		    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-		    &err : (uchar*) 0, length, item_arg), inited(0)
+		    &err : (unsigned char*) 0, length, item_arg), inited(0)
   {
   }
   const char *name() const { return "const"; }

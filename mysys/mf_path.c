@@ -46,7 +46,7 @@ char * my_path(char * to, const char *progname,
     if (!test_if_hard_path(to))
     {
       if (!my_getwd(curr_dir,FN_REFLEN,MYF(0)))
-	bchange((uchar*) to, 0, (uchar*) curr_dir, strlen(curr_dir), strlen(to)+1);
+	bchange((unsigned char*) to, 0, (unsigned char*) curr_dir, strlen(curr_dir), strlen(to)+1);
     }
   }
   else

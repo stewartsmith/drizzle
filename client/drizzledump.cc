@@ -625,11 +625,11 @@ static void free_table_ent(char *key)
 }
 
 
-static uchar* get_table_key(const char *entry, size_t *length,
+static unsigned char* get_table_key(const char *entry, size_t *length,
                             bool not_used __attribute__((unused)))
 {
   *length= strlen(entry);
-  return (uchar*) entry;
+  return (unsigned char*) entry;
 }
 
 
@@ -717,7 +717,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       fprintf(stderr, "Illegal use of option --ignore-table=<database>.<table>\n");
       exit(1);
     }
-    if (my_hash_insert(&ignore_table, (uchar*)my_strdup(argument, MYF(0))))
+    if (my_hash_insert(&ignore_table, (unsigned char*)my_strdup(argument, MYF(0))))
       exit(EX_EOM);
     break;
   }
@@ -782,17 +782,17 @@ static int get_options(int *argc, char ***argv)
     return(EX_EOM);
   /* Don't copy internal log tables */
   if (my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.apply_status", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.apply_status", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.schema", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.schema", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.general_log", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.general_log", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.slow_log", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.slow_log", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.online_backup", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.online_backup", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.online_backup_progress", MYF(MY_WME))))
+                     (unsigned char*) my_strdup("mysql.online_backup_progress", MYF(MY_WME))))
     return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
@@ -1409,7 +1409,7 @@ static void print_blob_as_hex(FILE *output_file, const char *str, uint32_t len)
     /* sakaik got the idea to to provide blob's in hex notation. */
     const char *ptr= str, *end= ptr + len;
     for (; ptr < end ; ptr++)
-      fprintf(output_file, "%02X", *((uchar *)ptr));
+      fprintf(output_file, "%02X", *((unsigned char *)ptr));
     check_io(output_file);
 }
 
@@ -2605,7 +2605,7 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-static bool include_table(const uchar *hash_key, size_t len)
+static bool include_table(const unsigned char *hash_key, size_t len)
 {
   return !hash_search(&ignore_table, hash_key, len);
 }
@@ -2635,7 +2635,7 @@ static int dump_all_tables_in_db(char *database)
     for (numrows= 0 ; (table= getTableName(1)) ; )
     {
       char *end= my_stpcpy(afterdot, table);
-      if (include_table((uchar*) hash_key,end - hash_key))
+      if (include_table((unsigned char*) hash_key,end - hash_key))
       {
         numrows++;
         query.append( quote_name(table, table_buff, 1));
@@ -2656,7 +2656,7 @@ static int dump_all_tables_in_db(char *database)
   while ((table= getTableName(0)))
   {
     char *end= my_stpcpy(afterdot, table);
-    if (include_table((uchar*) hash_key, end - hash_key))
+    if (include_table((unsigned char*) hash_key, end - hash_key))
     {
       dump_table(table,database);
       free(order_by);

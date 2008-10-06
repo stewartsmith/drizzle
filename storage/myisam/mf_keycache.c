@@ -194,7 +194,7 @@ struct st_block_link
   struct st_hash_link *hash_link; /* backward ptr to referring hash_link     */
   KEYCACHE_WQUEUE wqueue[2]; /* queues on waiting requests for new/old pages */
   uint requests;          /* number of requests for the block                */
-  uchar *buffer;           /* buffer for the block page                       */
+  unsigned char *buffer;           /* buffer for the block page                       */
   uint offset;            /* beginning of modified data in the buffer        */
   uint length;            /* end of data in the buffer                       */
   uint status;            /* state of the block                              */
@@ -408,7 +408,7 @@ err:
   }
   if (keycache->block_root)
   {
-    free((uchar*) keycache->block_root);
+    free((unsigned char*) keycache->block_root);
     keycache->block_root= NULL;
   }
   my_errno= error;
@@ -618,7 +618,7 @@ void end_key_cache(KEY_CACHE *keycache, bool cleanup)
     {
       free(keycache->block_mem);
       keycache->block_mem= NULL;
-      free((uchar*) keycache->block_root);
+      free((unsigned char*) keycache->block_root);
       keycache->block_root= NULL;
     }
     keycache->disk_blocks= -1;
@@ -1779,7 +1779,7 @@ restart:
           block->buffer= ADD_TO_PTR(keycache->block_mem,
                                     ((uint32_t) keycache->blocks_used*
                                      keycache->key_cache_block_size),
-                                    uchar*);
+                                    unsigned char*);
           keycache->blocks_used++;
           assert(!block->next_used);
         }
@@ -2197,15 +2197,15 @@ static void read_block(KEY_CACHE *keycache,
     have to be a multiple of key_cache_block_size;
 */
 
-uchar *key_cache_read(KEY_CACHE *keycache,
+unsigned char *key_cache_read(KEY_CACHE *keycache,
                       File file, my_off_t filepos, int level,
-                      uchar *buff, uint length,
+                      unsigned char *buff, uint length,
                       uint block_length __attribute__((unused)),
                       int return_buffer __attribute__((unused)))
 {
   bool locked_and_incremented= false;
   int error=0;
-  uchar *start= buff;
+  unsigned char *start= buff;
 
   if (keycache->key_cache_inited)
   {
@@ -2270,7 +2270,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
         */
         keycache->global_cache_read++;
         keycache_pthread_mutex_unlock(&keycache->cache_lock);
-        error= (pread(file, (uchar*) buff, read_length, filepos + offset) == 0);
+        error= (pread(file, (unsigned char*) buff, read_length, filepos + offset) == 0);
         keycache_pthread_mutex_lock(&keycache->cache_lock);
         goto next_block;
       }
@@ -2354,7 +2354,7 @@ no_key_cache:
 
   if (locked_and_incremented)
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  if (pread(file, (uchar*) buff, length, filepos))
+  if (pread(file, (unsigned char*) buff, length, filepos))
     error= 1;
   if (locked_and_incremented)
     keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2365,7 +2365,7 @@ end:
     dec_counter_for_resize_op(keycache);
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
   }
-  return(error ? (uchar*) 0 : start);
+  return(error ? (unsigned char*) 0 : start);
 }
 
 
@@ -2391,7 +2391,7 @@ end:
 
 int key_cache_insert(KEY_CACHE *keycache,
                      File file, my_off_t filepos, int level,
-                     uchar *buff, uint length)
+                     unsigned char *buff, uint length)
 {
   int error= 0;
 
@@ -2625,7 +2625,7 @@ int key_cache_insert(KEY_CACHE *keycache,
 
 int key_cache_write(KEY_CACHE *keycache,
                     File file, my_off_t filepos, int level,
-                    uchar *buff, uint length,
+                    unsigned char *buff, uint length,
                     uint block_length  __attribute__((unused)),
                     int dont_write)
 {
@@ -2709,7 +2709,7 @@ int key_cache_write(KEY_CACHE *keycache,
           /* Used in the server. */
           keycache->global_cache_write++;
           keycache_pthread_mutex_unlock(&keycache->cache_lock);
-          if (pwrite(file, (uchar*) buff, read_length, filepos + offset) == 0)
+          if (pwrite(file, (unsigned char*) buff, read_length, filepos + offset) == 0)
             error=1;
           keycache_pthread_mutex_lock(&keycache->cache_lock);
         }
@@ -2873,7 +2873,7 @@ no_key_cache:
     keycache->global_cache_write++;
     if (locked_and_incremented)
       keycache_pthread_mutex_unlock(&keycache->cache_lock);
-    if (pwrite(file, (uchar*) buff, length, filepos) == 0)
+    if (pwrite(file, (unsigned char*) buff, length, filepos) == 0)
       error=1;
     if (locked_and_incremented)
       keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -3060,7 +3060,7 @@ static int flush_cached_blocks(KEY_CACHE *keycache,
      As all blocks referred in 'cache' are marked by BLOCK_IN_FLUSH
      we are guarunteed no thread will change them
   */
-  my_qsort((uchar*) cache, count, sizeof(*cache), (qsort_cmp) cmp_sec_link);
+  my_qsort((unsigned char*) cache, count, sizeof(*cache), (qsort_cmp) cmp_sec_link);
 
   keycache_pthread_mutex_lock(&keycache->cache_lock);
   /*
@@ -3573,7 +3573,7 @@ restart:
 
 err:
   if (cache != cache_buff)
-    free((uchar*) cache);
+    free((unsigned char*) cache);
   if (last_errno)
     errno=last_errno;                /* Return first error */
   return(last_errno != 0);

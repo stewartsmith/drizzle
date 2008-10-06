@@ -135,11 +135,11 @@ bool mysql_ha_close(THD *thd, TableList *tables)
   TableList    *hash_tables;
 
   if ((hash_tables= (TableList*) hash_search(&thd->handler_tables_hash,
-                                              (uchar*) tables->alias,
+                                              (unsigned char*) tables->alias,
                                               strlen(tables->alias) + 1)))
   {
     mysql_ha_close_table(thd, hash_tables, false);
-    hash_delete(&thd->handler_tables_hash, (uchar*) hash_tables);
+    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
   }
   else
   {
@@ -213,7 +213,7 @@ void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked)
     next= hash_tables->next_local;
     if (hash_tables->table)
       mysql_ha_close_table(thd, hash_tables, is_locked);
-    hash_delete(&thd->handler_tables_hash, (uchar*) hash_tables);
+    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
     hash_tables= next;
   }
 

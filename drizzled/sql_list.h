@@ -31,8 +31,8 @@
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
   uint elements;
-  uchar *first;
-  uchar **next;
+  unsigned char *first;
+  unsigned char **next;
 
   st_sql_list() {}                              /* Remove gcc warning */
   inline void empty()
@@ -41,7 +41,7 @@ typedef struct st_sql_list {
     first=0;
     next= &first;
   }
-  inline void link_in_list(uchar *element,uchar **next_ptr)
+  inline void link_in_list(unsigned char *element,unsigned char **next_ptr)
   {
     elements++;
     (*next)=element;
@@ -507,7 +507,7 @@ struct ilink
   static void operator delete(void* ptr_arg,
                               size_t size __attribute__((unused)))
   {
-     free((uchar*)ptr_arg);
+     free((unsigned char*)ptr_arg);
   }
 
   inline ilink()

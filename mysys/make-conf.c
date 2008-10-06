@@ -40,7 +40,7 @@
 
 #define ROW_LEN   16
 
-void print_array(const char *name, const uchar *array, uint size);
+void print_array(const char *name, const unsigned char *array, uint size);
 
 int main(void)
 {
@@ -56,7 +56,7 @@ int main(void)
   exit(EXIT_SUCCESS);
 }
 
-void print_array(const char *name, const uchar *array, uint size)
+void print_array(const char *name, const unsigned char *array, uint size)
 {
   uint i;
 

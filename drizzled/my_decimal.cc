@@ -135,7 +135,7 @@ int my_decimal2string(uint mask, const my_decimal *d,
     E_DEC_OVERFLOW
 */
 
-int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
+int my_decimal2binary(uint mask, const my_decimal *d, unsigned char *bin, int prec,
 		      int scale)
 {
   int err1= E_DEC_OK, err2;

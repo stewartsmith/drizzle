@@ -24,7 +24,7 @@ class Table;
 class Field;
 
 typedef struct st_date_time_format {
-  uchar positions[8];
+  unsigned char positions[8];
   char  time_separator;			/* Separator between hour and minute */
   uint flag;				/* For future */
   LEX_STRING format;
@@ -32,8 +32,8 @@ typedef struct st_date_time_format {
 
 
 typedef struct st_keyfile_info {	/* used with ha_info() */
-  uchar ref[MAX_REFLENGTH];		/* Pointer to current row */
-  uchar dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
+  unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
+  unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
   uint ref_length;			/* Length of ref (1-8) */
   uint block_size;			/* index block size */
   File filenr;				/* (uniq) filenr for table */
@@ -123,10 +123,10 @@ typedef struct st_read_record {			/* Parameter to read_record */
   uint cache_records;
   uint ref_length,struct_length,reclength,rec_cache_size,error_offset;
   uint index;
-  uchar *ref_pos;				/* pointer to form->refpos */
-  uchar *record;
-  uchar *rec_buf;                /* to read field values  after filesort */
-  uchar	*cache,*cache_pos,*cache_end,*read_positions;
+  unsigned char *ref_pos;				/* pointer to form->refpos */
+  unsigned char *record;
+  unsigned char *rec_buf;                /* to read field values  after filesort */
+  unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
   IO_CACHE *io_cache;
   bool print_error, ignore_not_found_rows;
   struct st_join_table *do_insideout_scan;

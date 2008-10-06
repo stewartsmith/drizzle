@@ -160,7 +160,7 @@ enum tablespace_op_type
   Keep in sync with index_hint_type.
 */
 extern const char * index_hint_type_name[];
-typedef uchar index_clause_map;
+typedef unsigned char index_clause_map;
 
 /*
   Bits in index_clause_map : one for each possible FOR clause in
@@ -664,7 +664,7 @@ public:
   {
     order_list.elements= 0;
     order_list.first= 0;
-    order_list.next= (uchar**) &order_list.first;
+    order_list.next= (unsigned char**) &order_list.first;
   }
   /*
     This method created for reiniting LEX in mysql_admin_table() and can be
@@ -856,7 +856,7 @@ public:
     in which it was right after query parsing.
   */
   SQL_LIST sroutines_list;
-  uchar    **sroutines_list_own_last;
+  unsigned char    **sroutines_list_own_last;
   uint32_t     sroutines_list_own_elements;
 
   /*
@@ -1328,7 +1328,7 @@ public:
   const char *found_semicolon;
 
   /** Token character bitmaps, to detect 7bit strings. */
-  uchar tok_bitmap;
+  unsigned char tok_bitmap;
 
   /** SQL_MODE = IGNORE_SPACE. */
   bool ignore_space;
@@ -1383,7 +1383,7 @@ typedef struct st_lex : public Query_tables_list
   Item *default_value, *on_update_value;
   LEX_STRING comment, ident;
   XID *xid;
-  uchar* yacc_yyss, *yacc_yyvs;
+  unsigned char* yacc_yyss, *yacc_yyvs;
   THD *thd;
 
   /* maintain a list of used plugins for this LEX */

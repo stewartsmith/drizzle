@@ -62,7 +62,7 @@
 
 static int check_k_link(MI_CHECK *param, MI_INFO *info,uint nr);
 static int chk_index(MI_CHECK *param, MI_INFO *info,MI_KEYDEF *keyinfo,
-		     my_off_t page, uchar *buff, ha_rows *keys,
+		     my_off_t page, unsigned char *buff, ha_rows *keys,
 		     ha_checksum *key_checksum, uint level);
 static uint isam_key_length(MI_INFO *info,MI_KEYDEF *keyinfo);
 static ha_checksum calc_checksum(ha_rows count);
@@ -74,15 +74,15 @@ static int sort_get_next_record(MI_SORT_PARAM *sort_param);
 static int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,const void *b);
 static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a);
 static my_off_t get_record_for_key(MI_INFO *info,MI_KEYDEF *keyinfo,
-				uchar *key);
+				unsigned char *key);
 static int sort_insert_key(MI_SORT_PARAM  *sort_param,
                            register SORT_KEY_BLOCKS *key_block,
-			   uchar *key, my_off_t prev_block);
+			   unsigned char *key, my_off_t prev_block);
 static int sort_delete_record(MI_SORT_PARAM *sort_param);
 /*static int flush_pending_blocks(MI_CHECK *param);*/
 static SORT_KEY_BLOCKS	*alloc_key_blocks(MI_CHECK *param, uint blocks,
 					  uint buffer_length);
-static ha_checksum mi_byte_checksum(const uchar *buf, uint length);
+static ha_checksum mi_byte_checksum(const unsigned char *buf, uint length);
 static void set_data_file_type(SORT_INFO *sort_info, MYISAM_SHARE *share);
 
 void myisamchk_init(MI_CHECK *param)
@@ -170,7 +170,7 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint test_flag)
 	printf(" %9s",llstr(next_link,buff));
       if (next_link >= info->state->data_file_length)
 	goto wrong;
-      if (my_pread(info->dfile, (uchar*) buff,delete_link_length,
+      if (my_pread(info->dfile, (unsigned char*) buff,delete_link_length,
 		   next_link,MYF(MY_NABP)))
       {
 	if (test_flag & T_VERBOSE) puts("");
@@ -201,7 +201,7 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint test_flag)
       else
       {
 	param->record_checksum+=(ha_checksum) next_link;
-	next_link=_mi_rec_pos(info->s,(uchar*) buff+1);
+	next_link=_mi_rec_pos(info->s,(unsigned char*) buff+1);
 	empty+=info->s->base.pack_reclength;
       }
     }
@@ -248,7 +248,7 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint nr)
   uint block_size=(nr+1)*MI_MIN_KEY_BLOCK_LENGTH;
   ha_rows records;
   char llbuff[21], llbuff2[21];
-  uchar *buff;
+  unsigned char *buff;
 
   if (param->testflag & T_VERBOSE)
     printf("block_size %4u:", block_size); /* purecov: tested */
@@ -292,7 +292,7 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint nr)
     */
     if (!(buff=key_cache_read(info->s->key_cache,
                               info->s->kfile, next_link, DFLT_INIT_HITS,
-                              (uchar*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
+                              (unsigned char*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
                               MI_MIN_KEY_BLOCK_LENGTH, 1)))
     {
       /* purecov: begin tested */
@@ -523,7 +523,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
       /* Check that there isn't a row with auto_increment = 0 in the table */
       mi_extra(info,HA_EXTRA_KEYREAD,0);
       memset(info->lastkey, 0, keyinfo->seg->length);
-      if (!mi_rkey(info, info->rec_buff, key, (const uchar*) info->lastkey,
+      if (!mi_rkey(info, info->rec_buff, key, (const unsigned char*) info->lastkey,
 		   (key_part_map)1, HA_READ_KEY_EXACT))
       {
 	/* Don't count this as a real warning, as myisamchk can't correct it */
@@ -576,7 +576,7 @@ do_stat:
 
 
 static int chk_index_down(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
-                     my_off_t page, uchar *buff, ha_rows *keys,
+                     my_off_t page, unsigned char *buff, ha_rows *keys,
                      ha_checksum *key_checksum, uint level)
 {
   char llbuff[22],llbuff2[22];
@@ -647,7 +647,7 @@ err:
 
 static
 void mi_collect_stats_nonulls_first(HA_KEYSEG *keyseg, uint64_t *notnull,
-                                    uchar *key)
+                                    unsigned char *key)
 {
   uint first_null, kp;
   first_null= ha_find_null(keyseg, key) - keyseg;
@@ -687,7 +687,7 @@ void mi_collect_stats_nonulls_first(HA_KEYSEG *keyseg, uint64_t *notnull,
 
 static
 int mi_collect_stats_nonulls_next(HA_KEYSEG *keyseg, uint64_t *notnull,
-                                  uchar *prev_key, uchar *last_key)
+                                  unsigned char *prev_key, unsigned char *last_key)
 {
   uint diffs[2];
   uint first_null_seg, kp;
@@ -722,17 +722,17 @@ int mi_collect_stats_nonulls_next(HA_KEYSEG *keyseg, uint64_t *notnull,
 	/* Check if index is ok */
 
 static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
-		     my_off_t page, uchar *buff, ha_rows *keys,
+		     my_off_t page, unsigned char *buff, ha_rows *keys,
 		     ha_checksum *key_checksum, uint level)
 {
   int flag;
   uint used_length,comp_flag,nod_flag,key_length=0;
-  uchar key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*old_keypos,*endpos;
+  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*old_keypos,*endpos;
   my_off_t next_page,record;
   char llbuff[22];
   uint diff_pos[2];
 
-  if (!(temp_buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+  if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for keyblock");
     return(-1);
@@ -814,7 +814,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
                                          key);
       }
     }
-    (*key_checksum)+= mi_byte_checksum((uchar*) key,
+    (*key_checksum)+= mi_byte_checksum((unsigned char*) key,
 				       key_length- info->s->rec_reflength);
     record= _mi_dpos(info,0,key+key_length);
     if (record >= info->state->data_file_length)
@@ -830,10 +830,10 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
                 llstr(page,llbuff), used_length, (keypos - buff));
     goto err;
   }
-  my_afree((uchar*) temp_buff);
+  my_afree((unsigned char*) temp_buff);
   return(0);
  err:
-  my_afree((uchar*) temp_buff);
+  my_afree((unsigned char*) temp_buff);
   return(1);
 } /* chk_index */
 
@@ -884,7 +884,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   ha_rows records, del_blocks;
   my_off_t used, empty, pos, splits, start_recpos= 0,
            del_length, link_used, start_block;
-  uchar	*record= NULL, *to= NULL;
+  unsigned char	*record= NULL, *to= NULL;
   char llbuff[22],llbuff2[22],llbuff3[22];
   ha_checksum intern_record_checksum;
   ha_checksum key_checksum[HA_MAX_POSSIBLE_KEY];
@@ -934,7 +934,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       goto err2;
     switch (info->s->data_file_type) {
     case STATIC_RECORD:
-      if (my_b_read(&param->read_cache,(uchar*) record,
+      if (my_b_read(&param->read_cache,(unsigned char*) record,
 		    info->s->base.pack_reclength))
 	goto err;
       start_recpos=pos;
@@ -954,7 +954,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       block_info.next_filepos=pos;
       do
       {
-	if (_mi_read_cache(&param->read_cache,(uchar*) block_info.header,
+	if (_mi_read_cache(&param->read_cache,(unsigned char*) block_info.header,
 			   (start_block=block_info.next_filepos),
 			   sizeof(block_info.header),
 			   (flag ? 0 : READING_NEXT) | READING_HEADER))
@@ -1058,7 +1058,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 	  got_error=1;
 	  break;
 	}
-	if (_mi_read_cache(&param->read_cache,(uchar*) to,block_info.filepos,
+	if (_mi_read_cache(&param->read_cache,(unsigned char*) to,block_info.filepos,
 			   (uint) block_info.data_len,
 			   flag == 1 ? READING_NEXT : 0))
 	  goto err;
@@ -1159,7 +1159,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
               }
 	    }
 	    else
-	      key_checksum[key]+=mi_byte_checksum((uchar*) info->lastkey,
+	      key_checksum[key]+=mi_byte_checksum((unsigned char*) info->lastkey,
 						  key_length);
 	  }
 	}
@@ -1658,7 +1658,7 @@ err:
   got_error|=flush_blocks(param, share->key_cache, share->kfile);
   if (!got_error && param->testflag & T_UNPACK)
   {
-    share->state.header.options[0]&= (uchar) ~HA_OPTION_COMPRESS_RECORD;
+    share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
     share->pack.header_length=0;
     share->data_file_type=sort_info.new_data_file_type;
   }
@@ -1673,9 +1673,9 @@ err:
 static int writekeys(MI_SORT_PARAM *sort_param)
 {
   register uint i;
-  uchar    *key;
+  unsigned char    *key;
   MI_INFO  *info=   sort_param->sort_info->info;
-  uchar    *buff=   sort_param->record;
+  unsigned char    *buff=   sort_param->record;
   my_off_t filepos= sort_param->filepos;
 
   key=info->lastkey+info->s->base.max_key_length;
@@ -1717,11 +1717,11 @@ static int writekeys(MI_SORT_PARAM *sort_param)
 
 	/* Change all key-pointers that points to a records */
 
-int movepoint(register MI_INFO *info, uchar *record, my_off_t oldpos,
+int movepoint(register MI_INFO *info, unsigned char *record, my_off_t oldpos,
 	      my_off_t newpos, uint prot_key)
 {
   register uint i;
-  uchar *key;
+  unsigned char *key;
   uint key_length;
 
   key=info->lastkey+info->s->base.max_key_length;
@@ -1894,15 +1894,15 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 			  my_off_t pagepos, File new_file)
 {
   uint length,nod_flag,used_length, key_length;
-  uchar *buff,*keypos,*endpos;
-  uchar key[HA_MAX_POSSIBLE_KEY_BUFF];
+  unsigned char *buff,*keypos,*endpos;
+  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF];
   my_off_t new_page_pos,next_page;
   char llbuff[22];
 
   new_page_pos=param->new_file_pos;
   param->new_file_pos+=keyinfo->block_length;
 
-  if (!(buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+  if (!(buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for key block");
     return(-1);
@@ -1939,16 +1939,16 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   /* Fill block with zero and write it to the new index file */
   length=mi_getint(buff);
   memset(buff+length, 0, keyinfo->block_length-length);
-  if (my_pwrite(new_file,(uchar*) buff,(uint) keyinfo->block_length,
+  if (my_pwrite(new_file,(unsigned char*) buff,(uint) keyinfo->block_length,
 		new_page_pos,MYF(MY_NABP | MY_WAIT_IF_FULL)))
   {
     mi_check_print_error(param,"Can't write indexblock, error: %d",my_errno);
     goto err;
   }
-  my_afree((uchar*) buff);
+  my_afree((unsigned char*) buff);
   return(0);
 err:
-  my_afree((uchar*) buff);
+  my_afree((unsigned char*) buff);
   return(1);
 } /* sort_one_index */
 
@@ -1994,13 +1994,13 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   my_seek(from,start,MY_SEEK_SET,MYF(0));
   while (length > buff_length)
   {
-    if (my_read(from,(uchar*) buff,buff_length,MYF(MY_NABP)) ||
-	my_write(to,(uchar*) buff,buff_length,param->myf_rw))
+    if (my_read(from,(unsigned char*) buff,buff_length,MYF(MY_NABP)) ||
+	my_write(to,(unsigned char*) buff,buff_length,param->myf_rw))
       goto err;
     length-= buff_length;
   }
-  if (my_read(from,(uchar*) buff,(uint) length,MYF(MY_NABP)) ||
-      my_write(to,(uchar*) buff,(uint) length,param->myf_rw))
+  if (my_read(from,(unsigned char*) buff,(uint) length,MYF(MY_NABP)) ||
+      my_write(to,(unsigned char*) buff,(uint) length,param->myf_rw))
     goto err;
   if (buff != tmp_buff)
     free(buff);
@@ -2357,13 +2357,13 @@ err:
     free(rec_buff_ptr);
   rec_buff_ptr= NULL;
 
-  free((uchar*) sort_info.key_block);
+  free((unsigned char*) sort_info.key_block);
   free(sort_info.buff);
   end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   if (!got_error && (param->testflag & T_UNPACK))
   {
-    share->state.header.options[0]&= (uchar) ~HA_OPTION_COMPRESS_RECORD;
+    share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
     share->pack.header_length=0;
   }
   return(got_error);
@@ -2630,7 +2630,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
     sort_param[i].filepos=new_header_length;
     sort_param[i].max_pos=sort_param[i].pos=share->pack.header_length;
 
-    sort_param[i].record= (((uchar *)(sort_param+share->base.keys))+
+    sort_param[i].record= (((unsigned char *)(sort_param+share->base.keys))+
 			   (max_pack_reclength * i));
     if (!mi_alloc_rec_buff(info, -1, &sort_param[i].rec_buff))
     {
@@ -2865,14 +2865,14 @@ err:
   pthread_cond_destroy (&sort_info.cond);
   pthread_mutex_destroy(&sort_info.mutex);
 
-  free((uchar*) sort_info.key_block);
-  free((uchar*) sort_param);
+  free((unsigned char*) sort_info.key_block);
+  free((unsigned char*) sort_param);
   free(sort_info.buff);
   end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   if (!got_error && (param->testflag & T_UNPACK))
   {
-    share->state.header.options[0]&= (uchar) ~HA_OPTION_COMPRESS_RECORD;
+    share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
     share->pack.header_length=0;
   }
   return(got_error);
@@ -2897,7 +2897,7 @@ static int sort_key_read(MI_SORT_PARAM *sort_param, void *key)
   }
   sort_param->real_key_length=
     (info->s->rec_reflength+
-     _mi_make_key(info, sort_param->key, (uchar*) key,
+     _mi_make_key(info, sort_param->key, (unsigned char*) key,
 		  sort_param->record, sort_param->filepos));
 #ifdef HAVE_purify
   memset(key+sort_param->real_key_length, 0,
@@ -2944,7 +2944,7 @@ static int sort_get_next_record(MI_SORT_PARAM *sort_param)
   int parallel_flag;
   uint found_record,b_type,left_length;
   my_off_t pos;
-  uchar *to= NULL;
+  unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
   SORT_INFO *sort_info=sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
@@ -3020,7 +3020,7 @@ static int sort_get_next_record(MI_SORT_PARAM *sort_param)
 		     llstr(param->search_after_block,llbuff),
 		     llstr(sort_param->start_recpos,llbuff2));
 	if (_mi_read_cache(&sort_param->read_cache,
-                           (uchar*) block_info.header,pos,
+                           (unsigned char*) block_info.header,pos,
 			   MI_BLOCK_INFO_HEADER_LENGTH,
 			   (! found_record ? READING_NEXT : 0) |
                            parallel_flag | READING_HEADER))
@@ -3308,7 +3308,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 {
   int flag;
   ulong block_length,reclength;
-  uchar *from;
+  unsigned char *from;
   SORT_INFO *sort_info=sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
   MI_INFO *info=sort_info->info;
@@ -3401,7 +3401,7 @@ static int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,
 			const void *b)
 {
   uint not_used[2];
-  return (ha_key_cmp(sort_param->seg, *((uchar* const *) a), *((uchar* const *) b),
+  return (ha_key_cmp(sort_param->seg, *((unsigned char* const *) a), *((unsigned char* const *) b),
 		     USE_WHOLE_KEY, SEARCH_SAME, not_used));
 } /* sort_key_cmp */
 
@@ -3417,18 +3417,18 @@ static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
   if (sort_info->key_block->inited)
   {
     cmp=ha_key_cmp(sort_param->seg,sort_info->key_block->lastkey,
-		   (uchar*) a, USE_WHOLE_KEY,SEARCH_FIND | SEARCH_UPDATE,
+		   (unsigned char*) a, USE_WHOLE_KEY,SEARCH_FIND | SEARCH_UPDATE,
 		   diff_pos);
     if (param->stats_method == MI_STATS_METHOD_NULLS_NOT_EQUAL)
       ha_key_cmp(sort_param->seg,sort_info->key_block->lastkey,
-                 (uchar*) a, USE_WHOLE_KEY, 
+                 (unsigned char*) a, USE_WHOLE_KEY, 
                  SEARCH_FIND | SEARCH_NULL_ARE_NOT_EQUAL, diff_pos);
     else if (param->stats_method == MI_STATS_METHOD_IGNORE_NULLS)
     {
       diff_pos[0]= mi_collect_stats_nonulls_next(sort_param->seg,
                                                  sort_param->notnull,
                                                  sort_info->key_block->lastkey,
-                                                 (uchar*)a);
+                                                 (unsigned char*)a);
     }
     sort_param->unique[diff_pos[0]-1]++;
   }
@@ -3437,14 +3437,14 @@ static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
     cmp= -1;
     if (param->stats_method == MI_STATS_METHOD_IGNORE_NULLS)
       mi_collect_stats_nonulls_first(sort_param->seg, sort_param->notnull,
-                                     (uchar*)a);
+                                     (unsigned char*)a);
   }
   if ((sort_param->keyinfo->flag & HA_NOSAME) && cmp == 0)
   {
     sort_info->dupp++;
     sort_info->info->lastpos=get_record_for_key(sort_info->info,
 						sort_param->keyinfo,
-						(uchar*) a);
+						(unsigned char*) a);
     mi_check_print_warning(param,
 			   "Duplicate key for record at %10s against record at %10s",
 			   llstr(sort_info->info->lastpos,llbuff),
@@ -3457,14 +3457,14 @@ static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
     return (sort_delete_record(sort_param));
   }
   return (sort_insert_key(sort_param,sort_info->key_block,
-			  (uchar*) a, HA_OFFSET_ERROR));
+			  (unsigned char*) a, HA_OFFSET_ERROR));
 } /* sort_key_write */
 
 
 	/* get pointer to record from a key */
 
 static my_off_t get_record_for_key(MI_INFO *info, MI_KEYDEF *keyinfo,
-				   uchar *key)
+				   unsigned char *key)
 {
   return _mi_dpos(info,0,key+_mi_keylength(keyinfo,key));
 } /* get_record_for_key */
@@ -3473,12 +3473,12 @@ static my_off_t get_record_for_key(MI_INFO *info, MI_KEYDEF *keyinfo,
 	/* Insert a key in sort-key-blocks */
 
 static int sort_insert_key(MI_SORT_PARAM *sort_param,
-			   register SORT_KEY_BLOCKS *key_block, uchar *key,
+			   register SORT_KEY_BLOCKS *key_block, unsigned char *key,
 			   my_off_t prev_block)
 {
   uint a_length,t_length,nod_flag;
   my_off_t filepos,key_file_length;
-  uchar *anc_buff,*lastkey;
+  unsigned char *anc_buff,*lastkey;
   MI_KEY_PARAM s_temp;
   MI_INFO *info;
   MI_KEYDEF *keyinfo=sort_param->keyinfo;
@@ -3511,7 +3511,7 @@ static int sort_insert_key(MI_SORT_PARAM *sort_param,
     _mi_kpointer(info,key_block->end_pos,prev_block);
 
   t_length=(*keyinfo->pack_key)(keyinfo,nod_flag,
-				(uchar*) 0,lastkey,lastkey,key,
+				(unsigned char*) 0,lastkey,lastkey,key,
 				 &s_temp);
   (*keyinfo->store_key)(keyinfo, key_block->end_pos+nod_flag,&s_temp);
   a_length+=t_length;
@@ -3538,7 +3538,7 @@ static int sort_insert_key(MI_SORT_PARAM *sort_param,
     if (_mi_write_keypage(info, keyinfo, filepos, DFLT_INIT_HITS, anc_buff))
       return(1);
   }
-  else if (my_pwrite(info->s->kfile,(uchar*) anc_buff,
+  else if (my_pwrite(info->s->kfile,(unsigned char*) anc_buff,
 		     (uint) keyinfo->block_length,filepos, param->myf_rw))
     return(1);
 
@@ -3558,7 +3558,7 @@ static int sort_delete_record(MI_SORT_PARAM *sort_param)
 {
   uint i;
   int old_file,error;
-  uchar *key;
+  unsigned char *key;
   SORT_INFO *sort_info=sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
   MI_INFO *info=sort_info->info;
@@ -3640,7 +3640,7 @@ int flush_pending_blocks(MI_SORT_PARAM *sort_param)
                             DFLT_INIT_HITS, key_block->buff))
 	return(1);
     }
-    else if (my_pwrite(info->s->kfile,(uchar*) key_block->buff,
+    else if (my_pwrite(info->s->kfile,(unsigned char*) key_block->buff,
 		       (uint) keyinfo->block_length,filepos, myf_rw))
       return(1);
     nod_flag=1;
@@ -3667,7 +3667,7 @@ static SORT_KEY_BLOCKS *alloc_key_blocks(MI_CHECK *param, uint blocks,
   for (i=0 ; i < blocks ; i++)
   {
     block[i].inited=0;
-    block[i].buff=(uchar*) (block+blocks)+(buffer_length+IO_SIZE)*i;
+    block[i].buff=(unsigned char*) (block+blocks)+(buffer_length+IO_SIZE)*i;
   }
   return(block);
 } /* alloc_key_blocks */
@@ -3717,22 +3717,22 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   if (!(keysegs=(HA_KEYSEG*) my_alloca(sizeof(HA_KEYSEG)*
 				       (key_parts+share.base.keys))))
   {
-    my_afree((uchar*) keyinfo);
+    my_afree((unsigned char*) keyinfo);
     return(1);
   }
   if (!(recdef=(MI_COLUMNDEF*)
 	my_alloca(sizeof(MI_COLUMNDEF)*(share.base.fields+1))))
   {
-    my_afree((uchar*) keyinfo);
-    my_afree((uchar*) keysegs);
+    my_afree((unsigned char*) keyinfo);
+    my_afree((unsigned char*) keysegs);
     return(1);
   }
   if (!(uniquedef=(MI_UNIQUEDEF*)
 	my_alloca(sizeof(MI_UNIQUEDEF)*(share.state.header.uniques+1))))
   {
-    my_afree((uchar*) recdef);
-    my_afree((uchar*) keyinfo);
-    my_afree((uchar*) keysegs);
+    my_afree((unsigned char*) recdef);
+    my_afree((unsigned char*) keyinfo);
+    my_afree((unsigned char*) keysegs);
     return(1);
   }
 
@@ -3847,10 +3847,10 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
     goto end;
   error=0;
 end:
-  my_afree((uchar*) uniquedef);
-  my_afree((uchar*) keyinfo);
-  my_afree((uchar*) recdef);
-  my_afree((uchar*) keysegs);
+  my_afree((unsigned char*) uniquedef);
+  my_afree((unsigned char*) keyinfo);
+  my_afree((unsigned char*) recdef);
+  my_afree((unsigned char*) keysegs);
   return(error);
 }
 
@@ -3863,7 +3863,7 @@ int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile)
 
   if (info->s->options & HA_OPTION_COMPRESS_RECORD && fix_datafile)
   {
-    uchar buff[MEMMAP_EXTRA_MARGIN];
+    unsigned char buff[MEMMAP_EXTRA_MARGIN];
     memset(buff, 0, sizeof(buff));
     if (my_b_write(&info->rec_cache,buff,sizeof(buff)))
     {
@@ -3953,7 +3953,7 @@ err:
 void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
 			       bool repair_only)
 {
-  uchar *record= 0;
+  unsigned char *record= 0;
 
   if (!info->s->base.auto_key ||
       ! mi_is_key_active(info->s->state.key_map, info->s->base.auto_key - 1))
@@ -4098,12 +4098,12 @@ void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
 }
 
 
-static ha_checksum mi_byte_checksum(const uchar *buf, uint length)
+static ha_checksum mi_byte_checksum(const unsigned char *buf, uint length)
 {
   ha_checksum crc;
-  const uchar *end=buf+length;
+  const unsigned char *end=buf+length;
   for (crc=0; buf != end; buf++)
-    crc=((crc << 1) + *((uchar*) buf)) +
+    crc=((crc << 1) + *((unsigned char*) buf)) +
       test(crc & (((ha_checksum) 1) << (8*sizeof(ha_checksum)-1)));
   return crc;
 }

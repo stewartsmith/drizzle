@@ -86,22 +86,22 @@
 
   The allocation and contents of the actual chunks varies between
   fixed and variable-size modes. Total chunk length is always
-  aligned to the next sizeof(uchar*). Here is the format of
+  aligned to the next sizeof(unsigned char*). Here is the format of
   fixed-size chunk:
-      uchar[] - sizeof=chunk_dataspace_length, but at least
-               sizeof(uchar*) bytes. Keeps actual data or pointer
+      unsigned char[] - sizeof=chunk_dataspace_length, but at least
+               sizeof(unsigned char*) bytes. Keeps actual data or pointer
                to the next deleted chunk.
                chunk_dataspace_length equals to full record length
-      uchar   - status field (1 means "in use", 0 means "deleted")
+      unsigned char   - status field (1 means "in use", 0 means "deleted")
   Variable-size uses different format:
-      uchar[] - sizeof=chunk_dataspace_length, but at least
-               sizeof(uchar*) bytes. Keeps actual data or pointer
+      unsigned char[] - sizeof=chunk_dataspace_length, but at least
+               sizeof(unsigned char*) bytes. Keeps actual data or pointer
                to the next deleted chunk.
                chunk_dataspace_length is set according to table
                setup (block_size)
-      uchar*  - pointer to the next chunk in this chunkset,
+      unsigned char*  - pointer to the next chunk in this chunkset,
                or NULL for the last chunk
-      uchar  -  status field (1 means "first", 0 means "deleted",
+      unsigned char  -  status field (1 means "first", 0 means "deleted",
                2 means "linked")
 
   When allocating a new chunkset of N chunks, Heap Engine will try
@@ -112,7 +112,7 @@
   Freeing chunks will place them at the front of free list
   referenced by del_link in HP_DATASPACE. The newly freed chunk
   will contain reference to the previously freed chunk in its first
-  sizeof(uchar*) of the payload space.
+  sizeof(unsigned char*) of the payload space.
 
   Here is open issues:
     1. It is not very nice to require people to keep key columns
@@ -143,7 +143,7 @@
        in indexes
     5. In variable-size format status should be moved to lower
        bits of the "next" pointer. Pointer is always aligned
-       to sizeof(uchar*), which is at least 4, leaving 2 lower
+       to sizeof(unsigned char*), which is at least 4, leaving 2 lower
        bits free. This will save 8 bytes per chunk
        on 64-bit platform.
     6. As we do not want to modify FRM format, BLOCK_SIZE option
@@ -151,7 +151,7 @@
        Heap Engine tables.
 */
 
-static uchar *hp_allocate_one_chunk(HP_DATASPACE *info);
+static unsigned char *hp_allocate_one_chunk(HP_DATASPACE *info);
 
 
 /**
@@ -167,7 +167,7 @@ void hp_clear_dataspace(HP_DATASPACE *info)
   if (info->block.levels)
   {
     hp_free_level(&info->block,info->block.levels,info->block.root,
-                  (uchar*) 0);
+                  (unsigned char*) 0);
   }
   info->block.levels=0;
   info->del_chunk_count= info->chunk_count= 0;
@@ -189,11 +189,11 @@ void hp_clear_dataspace(HP_DATASPACE *info)
   @return  Pointer to the first chunk in the new or updated chunkset, or NULL if unsuccessful
 */
 
-static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
-                                           uint chunk_count, uchar* existing_set)
+static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
+                                           uint chunk_count, unsigned char* existing_set)
 {
   int alloc_count= chunk_count, i;
-  uchar *first_chunk= 0, *curr_chunk= 0, *prev_chunk= 0, *last_existing_chunk= 0;
+  unsigned char *first_chunk= 0, *curr_chunk= 0, *prev_chunk= 0, *last_existing_chunk= 0;
 
   assert(alloc_count);
 
@@ -205,7 +205,7 @@ static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
     while (curr_chunk && alloc_count)
     {
       prev_chunk= curr_chunk;
-      curr_chunk= *((uchar**)(curr_chunk + info->offset_link));
+      curr_chunk= *((unsigned char**)(curr_chunk + info->offset_link));
       alloc_count--;
     }
 
@@ -214,7 +214,7 @@ static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
       if (curr_chunk)
       {
         /* We came through all chunks and there is more left, let's truncate the list */
-        *((uchar**)(prev_chunk + info->offset_link)) = NULL;
+        *((unsigned char**)(prev_chunk + info->offset_link)) = NULL;
         hp_free_chunks(info, curr_chunk);
       }
 
@@ -237,8 +237,8 @@ static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
         {
           /* Truncate whatever was added at the end of the existing chunkset */
           prev_chunk= last_existing_chunk;
-          curr_chunk= *((uchar**)(prev_chunk + info->offset_link));
-          *((uchar**)(prev_chunk + info->offset_link)) = NULL;
+          curr_chunk= *((unsigned char**)(prev_chunk + info->offset_link));
+          *((unsigned char**)(prev_chunk + info->offset_link)) = NULL;
           hp_free_chunks(info, curr_chunk);
         }
         else if (first_chunk)
@@ -251,12 +251,12 @@ static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
       }
 
       /* mark as if this chunk is last in the chunkset */
-      *((uchar**) (curr_chunk + info->offset_link))= 0;
+      *((unsigned char**) (curr_chunk + info->offset_link))= 0;
 
       if (prev_chunk)
       {
         /* tie them into a linked list */
-        *((uchar**) (prev_chunk + info->offset_link))= curr_chunk;
+        *((unsigned char**) (prev_chunk + info->offset_link))= curr_chunk;
         curr_chunk[info->offset_status]= CHUNK_STATUS_LINKED;			/* Record linked from active */
       }
       else
@@ -287,9 +287,9 @@ static uchar *hp_allocate_variable_chunkset(HP_DATASPACE *info,
   @return  Pointer to the first chunk in the new or updated chunkset, or NULL if unsuccessful
 */
 
-uchar *hp_allocate_chunkset(HP_DATASPACE *info, uint chunk_count)
+unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint chunk_count)
 {
-  uchar* result;
+  unsigned char* result;
 
 
   if (info->is_variable_size)
@@ -323,7 +323,7 @@ uchar *hp_allocate_chunkset(HP_DATASPACE *info, uint chunk_count)
   @return  Error code or zero if successful
 */
 
-int hp_reallocate_chunkset(HP_DATASPACE *info, uint chunk_count, uchar* pos)
+int hp_reallocate_chunkset(HP_DATASPACE *info, uint chunk_count, unsigned char* pos)
 {
 
   if (!info->is_variable_size)
@@ -351,15 +351,15 @@ int hp_reallocate_chunkset(HP_DATASPACE *info, uint chunk_count, uchar* pos)
   @return  Pointer to the chunk, or NULL if unsuccessful
 */
 
-static uchar *hp_allocate_one_chunk(HP_DATASPACE *info)
+static unsigned char *hp_allocate_one_chunk(HP_DATASPACE *info)
 {
-  uchar* curr_chunk;
+  unsigned char* curr_chunk;
   size_t length, block_pos;
 
   if (info->del_link)
   {
     curr_chunk=info->del_link;
-    info->del_link= *((uchar**) curr_chunk);
+    info->del_link= *((unsigned char**) curr_chunk);
     info->del_chunk_count--;
 
     return curr_chunk;
@@ -378,7 +378,7 @@ static uchar *hp_allocate_one_chunk(HP_DATASPACE *info)
   }
 
   info->chunk_count++;
-  curr_chunk= ((uchar*) info->block.level_info[0].last_blocks +
+  curr_chunk= ((unsigned char*) info->block.level_info[0].last_blocks +
     block_pos * info->block.recbuffer);
 
 
@@ -396,13 +396,13 @@ static uchar *hp_allocate_one_chunk(HP_DATASPACE *info)
   @param  pos             pointer to the head of the chunkset
 */
 
-void hp_free_chunks(HP_DATASPACE *info, uchar *pos)
+void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos)
 {
-  uchar* curr_chunk= pos;
+  unsigned char* curr_chunk= pos;
 
   while (curr_chunk) {
     info->del_chunk_count++;
-    *((uchar**) curr_chunk)= info->del_link;
+    *((unsigned char**) curr_chunk)= info->del_link;
     info->del_link= curr_chunk;
 
     curr_chunk[info->offset_status]= CHUNK_STATUS_DELETED;
@@ -414,6 +414,6 @@ void hp_free_chunks(HP_DATASPACE *info, uchar *pos)
     }
 
     /* Delete next chunk in this chunkset */
-    curr_chunk= *((uchar**)(curr_chunk + info->offset_link));
+    curr_chunk= *((unsigned char**)(curr_chunk + info->offset_link));
   }
 }

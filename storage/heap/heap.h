@@ -54,7 +54,7 @@ typedef struct st_heapinfo		/* Struct from heap_info */
 
 typedef struct st_heap_ptrs
 {
-  uchar *blocks[HP_PTRS_IN_NOD];		/* pointers to HP_PTRS or records */
+  unsigned char *blocks[HP_PTRS_IN_NOD];		/* pointers to HP_PTRS or records */
 } HP_PTRS;
 
 struct st_level_info
@@ -120,10 +120,10 @@ typedef struct st_hp_keydef		/* Key definition with open */
   ha_rows hash_buckets; 
   TREE rb_tree;
   int (*write_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const uchar *record, uchar *recpos);
+		   const unsigned char *record, unsigned char *recpos);
   int (*delete_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const uchar *record, uchar *recpos, int flag);
-  uint (*get_key_length)(struct st_hp_keydef *keydef, const uchar *key);
+		   const unsigned char *record, unsigned char *recpos, int flag);
+  uint (*get_key_length)(struct st_hp_keydef *keydef, const unsigned char *key);
 } HP_KEYDEF;
 
 typedef struct st_heap_columndef              /* column information */
@@ -141,7 +141,7 @@ typedef struct st_heap_dataspace   /* control data for data space */
   HP_BLOCK block;
   uint chunk_count;             /* Total chunks ever allocated in this dataspace */
   uint del_chunk_count;         /* Deleted chunks count */
-  uchar *del_link;               /* Link to last deleted chunk */
+  unsigned char *del_link;               /* Link to last deleted chunk */
   uint chunk_length;            /* Total length of one chunk */
   uint chunk_dataspace_length;  /* Length of payload that will be placed into one chunk */
   uint offset_status;           /* Offset of the status flag relative to the chunk start */
@@ -186,14 +186,14 @@ struct st_hp_hash_info;
 typedef struct st_heap_info
 {
   HP_SHARE *s;
-  uchar *current_ptr;
+  unsigned char *current_ptr;
   struct st_hp_hash_info *current_hash_ptr;
   uint32_t current_record,next_block;
   int lastinx,errkey;
   int  mode;				/* Mode of file (READONLY..) */
   uint opt_flag,update;
-  uchar *lastkey;			/* Last used key with rkey */
-  uchar *recbuf;                         /* Record buffer for rb-tree keys */
+  unsigned char *lastkey;			/* Last used key with rkey */
+  unsigned char *recbuf;                         /* Record buffer for rb-tree keys */
   enum ha_rkey_function last_find_flag;
   TREE_ELEMENT *parents[MAX_TREE_HEIGHT+1];
   TREE_ELEMENT **last_pos;
@@ -222,12 +222,12 @@ extern HP_INFO *heap_open(const char *name, int mode);
 extern HP_INFO *heap_open_from_share(HP_SHARE *share, int mode);
 extern HP_INFO *heap_open_from_share_and_register(HP_SHARE *share, int mode);
 extern int heap_close(HP_INFO *info);
-extern int heap_write(HP_INFO *info,const uchar *record);
-extern int heap_update(HP_INFO *info,const uchar *old_record,const uchar *new_record);
-extern int heap_rrnd(HP_INFO *info,uchar *buf,uchar *pos);
+extern int heap_write(HP_INFO *info,const unsigned char *record);
+extern int heap_update(HP_INFO *info,const unsigned char *old_record,const unsigned char *new_record);
+extern int heap_rrnd(HP_INFO *info,unsigned char *buf,unsigned char *pos);
 extern int heap_scan_init(HP_INFO *info);
-extern int heap_scan(register HP_INFO *info, uchar *record);
-extern int heap_delete(HP_INFO *info,const uchar *buff);
+extern int heap_scan(register HP_INFO *info, unsigned char *record);
+extern int heap_delete(HP_INFO *info,const unsigned char *buff);
 extern int heap_info(HP_INFO *info,HEAPINFO *x,int flag);
 extern int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
            uint columns, HP_COLUMNDEF *columndef,
@@ -242,32 +242,32 @@ extern int heap_extra(HP_INFO *info,enum ha_extra_function function);
 extern int heap_reset(HP_INFO *info);
 extern int heap_rename(const char *old_name,const char *new_name);
 extern int heap_panic(enum ha_panic_function flag);
-extern int heap_rsame(HP_INFO *info,uchar *record,int inx);
-extern int heap_rnext(HP_INFO *info,uchar *record);
-extern int heap_rprev(HP_INFO *info,uchar *record);
-extern int heap_rfirst(HP_INFO *info,uchar *record,int inx);
-extern int heap_rlast(HP_INFO *info,uchar *record,int inx);
+extern int heap_rsame(HP_INFO *info,unsigned char *record,int inx);
+extern int heap_rnext(HP_INFO *info,unsigned char *record);
+extern int heap_rprev(HP_INFO *info,unsigned char *record);
+extern int heap_rfirst(HP_INFO *info,unsigned char *record,int inx);
+extern int heap_rlast(HP_INFO *info,unsigned char *record,int inx);
 extern void heap_clear(HP_INFO *info);
 extern void heap_clear_keys(HP_INFO *info);
 extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
-extern void heap_update_auto_increment(HP_INFO *info, const uchar *record);
+extern void heap_update_auto_increment(HP_INFO *info, const unsigned char *record);
 ha_rows hp_rb_records_in_range(HP_INFO *info, int inx, key_range *min_key,
                                key_range *max_key);
 int hp_panic(enum ha_panic_function flag);
-int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
+int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
               key_part_map keypart_map, enum ha_rkey_function find_flag);
-extern uchar * heap_find(HP_INFO *info,int inx,const uchar *key);
+extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
 extern int heap_check_heap(HP_INFO *info, bool print_status);
-extern uchar *heap_position(HP_INFO *info);
+extern unsigned char *heap_position(HP_INFO *info);
 
 /* The following is for programs that uses the old HEAP interface where
-   pointer to rows where a long instead of a (uchar*).
+   pointer to rows where a long instead of a (unsigned char*).
 */
 
 #if defined(WANT_OLD_HEAP_VERSION) || defined(OLD_HEAP_VERSION)
-extern int heap_rrnd_old(HP_INFO *info,uchar *buf,uint32_t pos);
+extern int heap_rrnd_old(HP_INFO *info,unsigned char *buf,uint32_t pos);
 extern uint32_t heap_position_old(HP_INFO *info);
 #endif
 #ifdef OLD_HEAP_VERSION
@@ -275,7 +275,7 @@ typedef uint32_t HEAP_PTR;
 #define heap_position(A) heap_position_old(A)
 #define heap_rrnd(A,B,C) heap_rrnd_old(A,B,C)
 #else
-typedef uchar *HEAP_PTR;
+typedef unsigned char *HEAP_PTR;
 #endif
 
 #ifdef	__cplusplus

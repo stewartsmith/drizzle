@@ -109,9 +109,9 @@ static char reserved_map[256]=
 
 int check_if_legal_tablename(const char *name)
 {
-  return((reserved_map[(uchar) name[0]] & 1) &&
-              (reserved_map[(uchar) name[1]] & 2) &&
-              (reserved_map[(uchar) name[2]] & 4) &&
+  return((reserved_map[(unsigned char) name[0]] & 1) &&
+              (reserved_map[(unsigned char) name[1]] & 2) &&
+              (reserved_map[(unsigned char) name[2]] & 4) &&
               str_list_find(&reserved_names[1], name));
 }
 

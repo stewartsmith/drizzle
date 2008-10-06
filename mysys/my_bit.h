@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 extern const char _my_bits_nbits[256];
-extern const uchar _my_bits_reverse_table[256];
+extern const unsigned char _my_bits_reverse_table[256];
 
 /*
   Find smallest X in 2^X >= value
@@ -27,19 +27,19 @@ static inline uint my_count_bits(uint64_t v)
   /* The following code is a bit faster on 16 bit machines than if we would
      only shift v */
   uint32_t v2=(uint32_t) (v >> 32);
-  return (uint) (uchar) (_my_bits_nbits[(uchar)  v] +
-                         _my_bits_nbits[(uchar) (v >> 8)] +
-                         _my_bits_nbits[(uchar) (v >> 16)] +
-                         _my_bits_nbits[(uchar) (v >> 24)] +
-                         _my_bits_nbits[(uchar) (v2)] +
-                         _my_bits_nbits[(uchar) (v2 >> 8)] +
-                         _my_bits_nbits[(uchar) (v2 >> 16)] +
-                         _my_bits_nbits[(uchar) (v2 >> 24)]);
+  return (uint) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
+                         _my_bits_nbits[(unsigned char) (v >> 8)] +
+                         _my_bits_nbits[(unsigned char) (v >> 16)] +
+                         _my_bits_nbits[(unsigned char) (v >> 24)] +
+                         _my_bits_nbits[(unsigned char) (v2)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 8)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 16)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 24)]);
 #else
-  return (uint) (uchar) (_my_bits_nbits[(uchar)  v] +
-                         _my_bits_nbits[(uchar) (v >> 8)] +
-                         _my_bits_nbits[(uchar) (v >> 16)] +
-                         _my_bits_nbits[(uchar) (v >> 24)]);
+  return (uint) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
+                         _my_bits_nbits[(unsigned char) (v >> 8)] +
+                         _my_bits_nbits[(unsigned char) (v >> 16)] +
+                         _my_bits_nbits[(unsigned char) (v >> 24)]);
 #endif
 }
 

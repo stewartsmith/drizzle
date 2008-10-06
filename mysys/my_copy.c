@@ -54,7 +54,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
   bool new_file_stat= 0; /* 1 if we could stat "to" */
   int create_flag;
   File from_file,to_file;
-  uchar buff[IO_SIZE];
+  unsigned char buff[IO_SIZE];
   struct stat stat_buff,new_stat_buff;
 
   from_file=to_file= -1;

@@ -91,9 +91,9 @@ void unregister_slave(THD* thd, bool only_mine, bool need_mutex)
 
     SLAVE_INFO* old_si;
     if ((old_si = (SLAVE_INFO*)hash_search(&slave_list,
-					   (uchar*)&thd->server_id, 4)) &&
+					   (unsigned char*)&thd->server_id, 4)) &&
 	(!only_mine || old_si->thd == thd))
-    hash_delete(&slave_list, (uchar*)old_si);
+    hash_delete(&slave_list, (unsigned char*)old_si);
 
     if (need_mutex)
       pthread_mutex_unlock(&LOCK_slave_list);
@@ -110,11 +110,11 @@ void unregister_slave(THD* thd, bool only_mine, bool need_mutex)
     1	Error.   Error message sent to client
 */
 
-int register_slave(THD* thd, uchar* packet, uint packet_length)
+int register_slave(THD* thd, unsigned char* packet, uint packet_length)
 {
   int res;
   SLAVE_INFO *si;
-  uchar *p= packet, *p_end= packet + packet_length;
+  unsigned char *p= packet, *p_end= packet + packet_length;
   const char *errmsg= "Wrong parameters to function register_slave";
 
   if (!(si = (SLAVE_INFO*)my_malloc(sizeof(SLAVE_INFO), MYF(MY_WME))))
@@ -137,7 +137,7 @@ int register_slave(THD* thd, uchar* packet, uint packet_length)
 
   pthread_mutex_lock(&LOCK_slave_list);
   unregister_slave(thd,0,0);
-  res= my_hash_insert(&slave_list, (uchar*) si);
+  res= my_hash_insert(&slave_list, (unsigned char*) si);
   pthread_mutex_unlock(&LOCK_slave_list);
   return res;
 

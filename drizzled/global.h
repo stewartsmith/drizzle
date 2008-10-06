@@ -286,17 +286,13 @@ typedef int64_t   my_ptrdiff_t;
 #define ALIGN_PTR(A, t) ((t*) MY_ALIGN((A),sizeof(t)))
 /* Offset of field f in structure t */
 #define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
-#define ADD_TO_PTR(ptr,size,type) (type) ((uchar*) (ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (my_ptrdiff_t) ((uchar*) (A) - (uchar*) (B))
+#define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
+#define PTR_BYTE_DIFF(A,B) (my_ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
 #define MY_ALIGNED_BYTE_ARRAY(N, S, T) T N[MY_DIV_UP(S, sizeof(T))]
 
 /* Typdefs for easyier portability */
-
-#ifndef HAVE_UCHAR
-typedef unsigned char  uchar;  /* Short for unsigned char */
-#endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
 typedef unsigned long ulong;      /* Short for unsigned long */

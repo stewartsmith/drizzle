@@ -162,7 +162,7 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
 }
 
 
-int Field_string::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_string::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint a_len, b_len;
 
@@ -185,7 +185,7 @@ int Field_string::cmp(const uchar *a_ptr, const uchar *b_ptr)
 }
 
 
-void Field_string::sort_string(uchar *to,uint length)
+void Field_string::sort_string(unsigned char *to,uint length)
 {
   uint tmp= my_strnxfrm(field_charset,
                                  to, length,
@@ -211,7 +211,7 @@ void Field_string::sql_type(String &res) const
 }
 
 
-uchar *Field_string::pack(uchar *to, const uchar *from,
+unsigned char *Field_string::pack(unsigned char *to, const unsigned char *from,
                           uint max_length,
                           bool low_byte_first __attribute__((unused)))
 {
@@ -225,9 +225,9 @@ uchar *Field_string::pack(uchar *to, const uchar *from,
     length--;
 
   // Length always stored little-endian
-  *to++= (uchar) length;
+  *to++= (unsigned char) length;
   if (field_length > 255)
-    *to++= (uchar) (length >> 8);
+    *to++= (unsigned char) (length >> 8);
 
   // Store the actual bytes of the string
   memcpy(to, from, length);
@@ -251,9 +251,9 @@ uchar *Field_string::pack(uchar *to, const uchar *from,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *
-Field_string::unpack(uchar *to,
-                     const uchar *from,
+const unsigned char *
+Field_string::unpack(unsigned char *to,
+                     const unsigned char *from,
                      uint param_data,
                      bool low_byte_first __attribute__((unused)))
 {
@@ -287,7 +287,7 @@ Field_string::unpack(uchar *to,
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_string::do_save_field_metadata(uchar *metadata_ptr)
+int Field_string::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= real_type();
   *(metadata_ptr + 1)= field_length;
@@ -311,7 +311,7 @@ int Field_string::do_save_field_metadata(uchar *metadata_ptr)
     > 0   a > b
 */
 
-int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
+int Field_string::pack_cmp(const unsigned char *a, const unsigned char *b, uint length,
                            bool insert_or_update)
 {
   uint a_length, b_length;
@@ -349,11 +349,11 @@ int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
     > 0   row > key
 */
 
-int Field_string::pack_cmp(const uchar *key, uint length,
+int Field_string::pack_cmp(const unsigned char *key, uint length,
                            bool insert_or_update)
 {
   uint row_length, local_key_length;
-  uchar *end;
+  unsigned char *end;
   if (length > 255)
   {
     local_key_length= uint2korr(key);
@@ -375,7 +375,7 @@ int Field_string::pack_cmp(const uchar *key, uint length,
 }
 
 
-uint Field_string::packed_col_length(const uchar *data_ptr, uint length)
+uint Field_string::packed_col_length(const unsigned char *data_ptr, uint length)
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;
@@ -389,7 +389,7 @@ uint Field_string::max_packed_col_length(uint max_length)
 }
 
 
-uint Field_string::get_key_image(uchar *buff,
+uint Field_string::get_key_image(unsigned char *buff,
                                  uint length,
                                  imagetype type_arg __attribute__((unused)))
 {

@@ -23,8 +23,8 @@
 
 class Field_timestamp :public Field_str {
 public:
-  Field_timestamp(uchar *ptr_arg, uint32_t len_arg,
-                  uchar *null_ptr_arg, uchar null_bit_arg,
+  Field_timestamp(unsigned char *ptr_arg, uint32_t len_arg,
+                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
 		  TABLE_SHARE *share, const CHARSET_INFO * const cs);
   Field_timestamp(bool maybe_null_arg, const char *field_name_arg,
@@ -40,8 +40,8 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint length);
   uint32_t pack_length() const { return 4; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }

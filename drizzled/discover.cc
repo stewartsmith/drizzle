@@ -39,13 +39,13 @@
   @retval
     3    Could not allocate data for read.  Could not read file
 */
-int readfrm(const char *name, uchar **frmdata, size_t *len)
+int readfrm(const char *name, unsigned char **frmdata, size_t *len)
 {
   int    error;
   char	 index_file[FN_REFLEN];
   File	 file;
   size_t read_len;
-  uchar *read_data;
+  unsigned char *read_data;
   struct stat state;  
   
   *frmdata= NULL;      // In case of errors
@@ -70,7 +70,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
     goto err;
 
   // Setup return data
-  *frmdata= (uchar*) read_data;
+  *frmdata= (unsigned char*) read_data;
   *len= read_len;
   error= 0;
   
@@ -96,7 +96,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   @retval
     2    Could not write file
 */
-int writefrm(const char *name, const uchar *frmdata, size_t len)
+int writefrm(const char *name, const unsigned char *frmdata, size_t len)
 {
   File file;
   char	 index_file[FN_REFLEN];

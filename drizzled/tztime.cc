@@ -70,7 +70,7 @@ typedef struct st_time_zone_info
   uint revcnt;   // Number of transition descr. for TIME->my_time_t conversion
   /* The following are dynamical arrays are allocated in MEM_ROOT */
   my_time_t *ats;       // Times of transitions between time types
-  uchar	*types; // Local time types for transitions
+  unsigned char	*types; // Local time types for transitions
   TRAN_TYPE_INFO *ttis; // Local time types descriptions
   /* Storage for local time types abbreviations. They are stored as ASCIIZ */
   char *chars;

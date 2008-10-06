@@ -17,9 +17,9 @@
 
 #include "myisamdef.h"
 
-int _mi_write_static_record(MI_INFO *info, const uchar *record)
+int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
 {
-  uchar temp[8];				/* max pointer length */
+  unsigned char temp[8];				/* max pointer length */
   if (info->s->state.dellink != HA_OFFSET_ERROR &&
       !info->append_insert_at_end)
   {
@@ -84,7 +84,7 @@ int _mi_write_static_record(MI_INFO *info, const uchar *record)
   return 1;
 }
 
-int _mi_update_static_record(MI_INFO *info, my_off_t pos, const uchar *record)
+int _mi_update_static_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   return (info->s->file_write(info,
@@ -96,7 +96,7 @@ int _mi_update_static_record(MI_INFO *info, my_off_t pos, const uchar *record)
 
 int _mi_delete_static_record(MI_INFO *info)
 {
-  uchar temp[9];				/* 1+sizeof(uint32) */
+  unsigned char temp[9];				/* 1+sizeof(uint32) */
 
   info->state->del++;
   info->state->empty+=info->s->base.pack_reclength;
@@ -104,12 +104,12 @@ int _mi_delete_static_record(MI_INFO *info)
   _mi_dpointer(info,temp+1,info->s->state.dellink);
   info->s->state.dellink = info->lastpos;
   info->rec_cache.seek_not_done=1;
-  return (info->s->file_write(info,(uchar*) temp, 1+info->s->rec_reflength,
+  return (info->s->file_write(info,(unsigned char*) temp, 1+info->s->rec_reflength,
 		    info->lastpos, MYF(MY_NABP)) != 0);
 }
 
 
-int _mi_cmp_static_record(register MI_INFO *info, register const uchar *old)
+int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *old)
 {
   if (info->opt_flag & WRITE_CACHE_USED)
   {
@@ -139,7 +139,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const uchar *old)
 
 
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			  const uchar *record, my_off_t pos)
+			  const unsigned char *record, my_off_t pos)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   if (info->s->file_read(info, info->rec_buff, info->s->base.reclength,
@@ -156,7 +156,7 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 	/*	  MY_FILE_ERROR on read-error or locking-error */
 
 int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
-			   register uchar *record)
+			   register unsigned char *record)
 {
   int error;
 
@@ -189,7 +189,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
 
 
 
-int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
+int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
 			       register my_off_t filepos,
 			       bool skip_deleted_blocks)
 {
@@ -253,11 +253,11 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
   }
 
 	/* Read record with cacheing */
-  error=my_b_read(&info->rec_cache,(uchar*) buf,share->base.reclength);
+  error=my_b_read(&info->rec_cache,(unsigned char*) buf,share->base.reclength);
   if (info->s->base.pack_reclength != info->s->base.reclength && !error)
   {
     char tmp[8];				/* Skill fill bytes */
-    error=my_b_read(&info->rec_cache,(uchar*) tmp,
+    error=my_b_read(&info->rec_cache,(unsigned char*) tmp,
 		    info->s->base.pack_reclength - info->s->base.reclength);
   }
   if (locked)

@@ -40,7 +40,7 @@ int64_t Item_func_crc32::val_int()
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (int64_t) crc32(0L, (uchar*)res->ptr(), res->length());
+  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
 Item_func* create_crc32udf_item(MEM_ROOT* m)

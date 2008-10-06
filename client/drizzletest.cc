@@ -818,7 +818,7 @@ static void close_files(void)
     {
       my_fclose(cur_file->file, MYF(0));
     }
-    free((uchar*) cur_file->file_name);
+    free((unsigned char*) cur_file->file_name);
     cur_file->file_name= 0;
   }
   return;
@@ -1079,7 +1079,7 @@ static void cat_file(string* ds, const char* filename)
 
   if ((fd= my_open(filename, O_RDONLY, MYF(0))) < 0)
     die("Failed to open file '%s'", filename);
-  while((len= my_read(fd, (uchar*)&buff,
+  while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
@@ -1290,10 +1290,10 @@ static int compare_files2(File fd, const char* filename2)
     my_close(fd, MYF(0));
     die("Failed to open second file: '%s'", filename2);
   }
-  while((len= my_read(fd, (uchar*)&buff,
+  while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
-    if ((len2= my_read(fd2, (uchar*)&buff2,
+    if ((len2= my_read(fd2, (unsigned char*)&buff2,
                        sizeof(buff2), MYF(0))) < len)
     {
       /* File 2 was smaller */
@@ -1313,7 +1313,7 @@ static int compare_files2(File fd, const char* filename2)
       break;
     }
   }
-  if (!error && my_read(fd2, (uchar*)&buff2,
+  if (!error && my_read(fd2, (unsigned char*)&buff2,
                         sizeof(buff2), MYF(0)) > 0)
   {
     /* File 1 was smaller */
@@ -1379,7 +1379,7 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (my_write(fd, (uchar *) ds->c_str(), ds->length(),
+  if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
       my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
   {
@@ -1538,13 +1538,13 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-static uchar *get_var_key(const uchar* var, size_t *len,
+static unsigned char *get_var_key(const unsigned char* var, size_t *len,
                           bool __attribute__((unused)) t)
 {
   register char* key;
   key = ((VAR*)var)->name;
   *len = ((VAR*)var)->name_len;
-  return (uchar*)key;
+  return (unsigned char*)key;
 }
 
 
@@ -1601,7 +1601,7 @@ VAR* var_from_env(const char *name, const char *def_val)
     tmp = def_val;
 
   v = var_init(0, name, strlen(name), tmp, strlen(tmp));
-  my_hash_insert(&var_hash, (uchar*)v);
+  my_hash_insert(&var_hash, (unsigned char*)v);
   return v;
 }
 
@@ -1632,7 +1632,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     if (length >= MAX_VAR_NAME_LENGTH)
       die("Too long variable name: %s", save_var_name);
 
-    if (!(v = (VAR*) hash_search(&var_hash, (const uchar*) save_var_name,
+    if (!(v = (VAR*) hash_search(&var_hash, (const unsigned char*) save_var_name,
                                  length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
@@ -1664,10 +1664,10 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   VAR* v;
-  if ((v = (VAR*)hash_search(&var_hash, (const uchar *) name, len)))
+  if ((v = (VAR*)hash_search(&var_hash, (const unsigned char *) name, len)))
     return v;
   v = var_init(0, name, len, "", 0);
-  my_hash_insert(&var_hash, (uchar*)v);
+  my_hash_insert(&var_hash, (unsigned char*)v);
   return v;
 }
 
@@ -4029,7 +4029,7 @@ static int read_line(char *buf, int size)
         my_fclose(cur_file->file, MYF(0));
         cur_file->file= 0;
       }
-      free((uchar*) cur_file->file_name);
+      free((unsigned char*) cur_file->file_name);
       cur_file->file_name= 0;
       if (cur_file == file_stack)
       {
@@ -4065,10 +4065,10 @@ static int read_line(char *buf, int size)
         return(0);
       }
       else if ((c == '{' &&
-                (!my_strnncoll_simple(charset_info, (const uchar*) "while", 5,
-                                      (uchar*) buf, cmin((long)5, p - buf), 0) ||
-                 !my_strnncoll_simple(charset_info, (const uchar*) "if", 2,
-                                      (uchar*) buf, cmin((long)2, p - buf), 0))))
+                (!my_strnncoll_simple(charset_info, (const unsigned char*) "while", 5,
+                                      (unsigned char*) buf, cmin((long)5, p - buf), 0) ||
+                 !my_strnncoll_simple(charset_info, (const unsigned char*) "if", 2,
+                                      (unsigned char*) buf, cmin((long)2, p - buf), 0))))
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;
@@ -4691,7 +4691,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && my_seek(fd, 0, SEEK_END, MYF(0)) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
-  if (my_write(fd, (uchar*)str, size, MYF(MY_WME|MY_FNABP)))
+  if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
   my_close(fd, MYF(0));
 }
@@ -5972,7 +5972,7 @@ void free_replace_column()
 
 typedef struct st_pointer_array {    /* when using array-strings */
   TYPELIB typelib;        /* Pointer to strings */
-  uchar  *str;          /* Strings is here */
+  unsigned char  *str;          /* Strings is here */
   uint8_t *flag;          /* Flag about each var. */
   uint  array_allocs,max_count,length,max_length;
 } POINTER_ARRAY;
@@ -6078,7 +6078,7 @@ void replace_strings_append(REPLACE *rep, string* ds,
   {
     /* Loop through states */
     while (!rep_pos->found)
-      rep_pos= rep_pos->next[(uchar) *from++];
+      rep_pos= rep_pos->next[(unsigned char) *from++];
 
     /* Does this state contain a string to be replaced */
     if (!(rep_str = ((REPLACE_STRING*) rep_pos))->replace_string)
@@ -6244,7 +6244,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       reg.icase= 1;
 
     /* done parsing the statement, now place it in regex_arr */
-    if (insert_dynamic(&res->regex_arr,(uchar*) &reg))
+    if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
       die("Out of memory");
   }
   res->odd_buf_len= res->even_buf_len= 8192;
@@ -6296,7 +6296,7 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
     struct st_regex re;
     char* save_out_buf= out_buf;
 
-    get_dynamic(&r->regex_arr,(uchar*)&re,i);
+    get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
 
     if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
                      in_buf, re.icase))
@@ -6514,7 +6514,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   }
   memset(is_word_end, 0, sizeof(is_word_end));
   for (i=0 ; word_end_chars[i] ; i++)
-    is_word_end[(uchar) word_end_chars[i]]=1;
+    is_word_end[(unsigned char) word_end_chars[i]]=1;
 
   if (init_sets(&sets,states))
     return(0);
@@ -6592,12 +6592,12 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
           follow_ptr->chr = '\v';
           break;
         default:
-          follow_ptr->chr = (uchar) *pos;
+          follow_ptr->chr = (unsigned char) *pos;
           break;
         }
       }
       else
-        follow_ptr->chr= (uchar) *pos;
+        follow_ptr->chr= (unsigned char) *pos;
       follow_ptr->table_offset=i;
       follow_ptr->len= ++len;
       follow_ptr++;
@@ -6643,7 +6643,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
       for (pos= word_end_chars ; *pos ; pos++)
-        used_chars[(int) (uchar) *pos] = 1;
+        used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
     for (chr= 0 ; chr < 256 ; chr++)
@@ -6804,13 +6804,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     return set;
   }
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) my_realloc((uchar*) sets->set_buffer,
+  if (!(set=(REP_SET*) my_realloc((unsigned char*) sets->set_buffer,
                                   sizeof(REP_SET)*count,
                                   MYF(MY_WME))))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) my_realloc((uchar*) sets->bit_buffer,
+  if (!(bit_buffer=(uint*) my_realloc((unsigned char*) sets->bit_buffer,
                                       (sizeof(uint)*sets->size_of_bits)*count,
                                       MYF(MY_WME))))
     return 0;
@@ -6957,7 +6957,7 @@ uint end_of_word(char * pos)
 int insert_pointer_name(POINTER_ARRAY *pa,char * name)
 {
   uint i,length,old_count;
-  uchar *new_pos;
+  unsigned char *new_pos;
   const char **new_array;
 
 
@@ -6968,13 +6968,13 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
                      (sizeof(char *)+sizeof(*pa->flag))*
                      (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
       return(-1);
-    if (!(pa->str= (uchar*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
+    if (!(pa->str= (unsigned char*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
                                       MYF(MY_WME))))
     {
       free((char*) pa->typelib.type_names);
       return (-1);
     }
-    pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(uchar*)+
+    pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(unsigned char*)+
                                                sizeof(*pa->flag));
     pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);
     pa->length=0;
@@ -6984,7 +6984,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   length=(uint) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (uchar*) my_realloc((uchar*) pa->str,
+    if (!(new_pos= (unsigned char*) my_realloc((unsigned char*) pa->str,
                                        (uint) (pa->max_length+PS_MALLOC),
                                        MYF(MY_WME))))
       return(1);
@@ -7003,15 +7003,15 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     int len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=(const char **) my_realloc((uchar*) pa->typelib.type_names,
+    if (!(new_array=(const char **) my_realloc((unsigned char*) pa->typelib.type_names,
                                                (uint) len/
-                                               (sizeof(uchar*)+sizeof(*pa->flag))*
-                                               (sizeof(uchar*)+sizeof(*pa->flag)),
+                                               (sizeof(unsigned char*)+sizeof(*pa->flag))*
+                                               (sizeof(unsigned char*)+sizeof(*pa->flag)),
                                                MYF(MY_WME))))
       return(1);
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;
-    pa->max_count=len/(sizeof(uchar*) + sizeof(*pa->flag));
+    pa->max_count=len/(sizeof(unsigned char*) + sizeof(*pa->flag));
     pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);
     memcpy(pa->flag, pa->typelib.type_names+old_count,
            old_count*sizeof(*pa->flag));

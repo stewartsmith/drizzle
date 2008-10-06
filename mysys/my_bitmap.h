@@ -95,13 +95,13 @@ extern void bitmap_lock_invert(MY_BITMAP *map);
 #define no_bytes_in_map(map) (((map)->n_bits + 7)/8)
 #define no_words_in_map(map) (((map)->n_bits + 31)/32)
 #define bytes_word_aligned(bytes) (4*((bytes + 3)/4))
-#define _bitmap_set_bit(MAP, BIT) (((uchar*)(MAP)->bitmap)[(BIT) / 8] \
+#define _bitmap_set_bit(MAP, BIT) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                   |= (1 << ((BIT) & 7)))
-#define _bitmap_flip_bit(MAP, BIT) (((uchar*)(MAP)->bitmap)[(BIT) / 8] \
+#define _bitmap_flip_bit(MAP, BIT) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                   ^= (1 << ((BIT) & 7)))
-#define _bitmap_clear_bit(MAP, BIT) (((uchar*)(MAP)->bitmap)[(BIT) / 8] \
+#define _bitmap_clear_bit(MAP, BIT) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                   &= ~ (1 << ((BIT) & 7)))
-#define _bitmap_is_set(MAP, BIT) (uint) (((uchar*)(MAP)->bitmap)[(BIT) / 8] \
+#define _bitmap_is_set(MAP, BIT) (uint) (((unsigned char*)(MAP)->bitmap)[(BIT) / 8] \
                                          & (1 << ((BIT) & 7)))
 /*
   NEVER use an increment/decrement operator with the 'bit' argument.

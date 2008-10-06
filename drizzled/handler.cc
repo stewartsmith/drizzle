@@ -113,8 +113,8 @@ plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name)
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
   if (thd && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
-                           (const uchar *)name->str, name->length,
-                           (const uchar *)STRING_WITH_LEN("DEFAULT"), 0))
+                           (const unsigned char *)name->str, name->length,
+                           (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(thd);
 
   if ((plugin= my_plugin_lock_by_name(thd, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
@@ -135,8 +135,8 @@ redo:
   for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
   {
     if (!my_strnncoll(&my_charset_utf8_general_ci,
-                      (const uchar *)name->str, name->length,
-                      (const uchar *)table_alias->str, table_alias->length))
+                      (const unsigned char *)name->str, name->length,
+                      (const unsigned char *)table_alias->str, table_alias->length))
     {
       name= table_alias + 1;
       goto redo;
@@ -303,7 +303,7 @@ static int ha_finish_errors(void)
   /* Allocate a pointer array for the error message strings. */
   if (! (errmsgs= my_error_unregister(HA_ERR_FIRST, HA_ERR_LAST)))
     return 1;
-  free((uchar*) errmsgs);
+  free((unsigned char*) errmsgs);
   return 0;
 }
 
@@ -326,7 +326,7 @@ int ha_finalize_handlerton(st_plugin_int *plugin)
   if (hton && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(hton);
 
-  free((uchar*)hton);
+  free((unsigned char*)hton);
 
   return(0);
 }
@@ -1281,7 +1281,7 @@ static bool xarecover_handlerton(THD *unused __attribute__((unused)),
         }
         // recovery mode
         if (info->commit_list ?
-            hash_search(info->commit_list, (uchar *)&x, sizeof(x)) != 0 :
+            hash_search(info->commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
             tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
         {
           hton->commit_by_xid(hton, info->list+i);
@@ -1345,7 +1345,7 @@ int ha_recover(HASH *commit_list)
   plugin_foreach(NULL, xarecover_handlerton, 
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
-  free((uchar*)info.list);
+  free((unsigned char*)info.list);
   if (info.found_foreign_xids)
     sql_print_warning(_("Found %d prepared XA transactions"), 
                       info.found_foreign_xids);
@@ -1470,7 +1470,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
     assert(ht);
     assert(ht->savepoint_set != 0);
     if ((err= ht->savepoint_rollback(ht, thd,
-                                     (uchar *)(sv+1)+ht->savepoint_offset)))
+                                     (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1523,7 +1523,7 @@ int ha_savepoint(THD *thd, SAVEPOINT *sv)
       error=1;
       break;
     }
-    if ((err= ht->savepoint_set(ht, thd, (uchar *)(sv+1)+ht->savepoint_offset)))
+    if ((err= ht->savepoint_set(ht, thd, (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1552,7 +1552,7 @@ int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
     if (!ht->savepoint_release)
       continue;
     if ((err= ht->savepoint_release(ht, thd,
-                                    (uchar *)(sv+1) + ht->savepoint_offset)))
+                                    (unsigned char *)(sv+1) + ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1741,7 +1741,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
     on this->table->mem_root and we will not be able to reclaim that memory 
     when the clone handler object is destroyed.
   */
-  if (!(new_handler->ref= (uchar*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
+  if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
                                            table->s->normalized_path.str,
@@ -1804,7 +1804,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from handler::clone() */
-    if (!ref && !(ref= (uchar*) alloc_root(&table->mem_root, 
+    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root, 
                                           ALIGN_SIZE(ref_length)*2)))
     {
       close();
@@ -1824,7 +1824,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
   handlers for random position
 */
 
-int handler::rnd_pos_by_record(uchar *record)
+int handler::rnd_pos_by_record(unsigned char *record)
 {
   register int error;
 
@@ -1843,7 +1843,7 @@ int handler::rnd_pos_by_record(uchar *record)
   This is never called for InnoDB tables, as these table types
   has the HA_STATS_RECORDS_IS_EXACT set.
 */
-int handler::read_first_row(uchar * buf, uint primary_key)
+int handler::read_first_row(unsigned char * buf, uint primary_key)
 {
   register int error;
 
@@ -2222,7 +2222,7 @@ void handler::get_auto_increment(uint64_t offset __attribute__((unused)),
   }
   else
   {
-    uchar key[MAX_KEY_LENGTH];
+    unsigned char key[MAX_KEY_LENGTH];
     key_copy(key, table->record[0],
              table->key_info + table->s->next_number_index,
              table->s->next_number_key_offset);
@@ -2561,7 +2561,7 @@ static bool update_frm_version(Table *table)
 
   if ((file= my_open(path, O_RDWR|O_BINARY, MYF(MY_WME))) >= 0)
   {
-    uchar version[4];
+    unsigned char version[4];
     char *key= table->s->table_cache_key.str;
     uint key_length= table->s->table_cache_key.length;
     Table *entry;
@@ -2569,15 +2569,15 @@ static bool update_frm_version(Table *table)
 
     int4store(version, DRIZZLE_VERSION_ID);
 
-    if (pwrite(file, (uchar*)version, 4, 51L) == 0)
+    if (pwrite(file, (unsigned char*)version, 4, 51L) == 0)
     {
       result= false;
       goto err;
     }
 
-    for (entry=(Table*) hash_first(&open_cache,(uchar*) key,key_length, &state);
+    for (entry=(Table*) hash_first(&open_cache,(unsigned char*) key,key_length, &state);
          entry;
-         entry= (Table*) hash_next(&open_cache,(uchar*) key,key_length, &state))
+         entry= (Table*) hash_next(&open_cache,(unsigned char*) key,key_length, &state))
       entry->s->mysql_version= DRIZZLE_VERSION_ID;
   }
 err:
@@ -2757,7 +2757,7 @@ int handler::ha_repair(THD* thd, HA_CHECK_OPT* check_opt)
 */
 
 int
-handler::ha_bulk_update_row(const uchar *old_data, uchar *new_data,
+handler::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
                             uint *dup_key_found)
 {
   mark_trx_read_write();
@@ -3005,13 +3005,13 @@ int ha_enable_transaction(THD *thd, bool on)
   return(error);
 }
 
-int handler::index_next_same(uchar *buf, const uchar *key, uint keylen)
+int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint keylen)
 {
   int error;
   if (!(error=index_next(buf)))
   {
     my_ptrdiff_t ptrdiff= buf - table->record[0];
-    uchar *save_record_0= NULL;
+    unsigned char *save_record_0= NULL;
     KEY *key_info= NULL;
     KEY_PART_INFO *key_part;
     KEY_PART_INFO *key_part_end= NULL;
@@ -3118,7 +3118,7 @@ err:
 int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
 {
   int error;
-  uchar *frmblob;
+  unsigned char *frmblob;
   size_t frmlen;
   char path[FN_REFLEN];
   HA_CREATE_INFO create_info;
@@ -3276,7 +3276,7 @@ struct st_discover_args
 {
   const char *db;
   const char *name;
-  uchar **frmblob; 
+  unsigned char **frmblob; 
   size_t *frmlen;
 };
 
@@ -3295,7 +3295,7 @@ static bool discover_handlerton(THD *thd, plugin_ref plugin,
 }
 
 int ha_discover(THD *thd, const char *db, const char *name,
-		uchar **frmblob, size_t *frmlen)
+		unsigned char **frmblob, size_t *frmlen)
 {
   int error= -1; // Table does not exist in any handler
   st_discover_args args= {db, name, frmblob, frmlen};
@@ -3785,7 +3785,7 @@ void DsMrr_impl::dsmrr_close()
 }
 
 
-static int rowid_cmp(void *h, uchar *a, uchar *b)
+static int rowid_cmp(void *h, unsigned char *a, unsigned char *b)
 {
   return ((handler*)h)->cmp_ref(a, b);
 }
@@ -4368,7 +4368,7 @@ int handler::compare_key2(key_range *range)
   return cmp;
 }
 
-int handler::index_read_idx_map(uchar * buf, uint index, const uchar * key,
+int handler::index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
@@ -4578,11 +4578,11 @@ static int write_locked_table_maps(THD *thd)
 }
 
 
-typedef bool Log_func(THD*, Table*, bool, const uchar*, const uchar*);
+typedef bool Log_func(THD*, Table*, bool, const unsigned char*, const unsigned char*);
 
 static int binlog_log_row(Table* table,
-                          const uchar *before_record,
-                          const uchar *after_record,
+                          const unsigned char *before_record,
+                          const unsigned char *after_record,
                           Log_func *log_func)
 {
   if (table->no_replicate)
@@ -4634,9 +4634,9 @@ int handler::ha_external_lock(THD *thd, int lock_type)
 int handler::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert((uchar*) table->def_read_set.bitmap +
+  assert((unsigned char*) table->def_read_set.bitmap +
               table->s->column_bitmap_size ==
-              (uchar*) table->def_write_set.bitmap);
+              (unsigned char*) table->def_write_set.bitmap);
   assert(bitmap_is_set_all(&table->s->all_set));
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
@@ -4649,7 +4649,7 @@ int handler::ha_reset()
 }
 
 
-int handler::ha_write_row(uchar *buf)
+int handler::ha_write_row(unsigned char *buf)
 {
   int error;
   Log_func *log_func= Write_rows_log_event::binlog_row_logging_function;
@@ -4666,7 +4666,7 @@ int handler::ha_write_row(uchar *buf)
 }
 
 
-int handler::ha_update_row(const uchar *old_data, uchar *new_data)
+int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
   Log_func *log_func= Update_rows_log_event::binlog_row_logging_function;
@@ -4686,7 +4686,7 @@ int handler::ha_update_row(const uchar *old_data, uchar *new_data)
   return 0;
 }
 
-int handler::ha_delete_row(const uchar *buf)
+int handler::ha_delete_row(const unsigned char *buf)
 {
   int error;
   Log_func *log_func= Delete_rows_log_event::binlog_row_logging_function;

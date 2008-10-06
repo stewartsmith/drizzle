@@ -133,7 +133,7 @@ public:
   */
   virtual void reset_value_registration() {}
   enum_parsing_place place() { return parsing_place; }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
 
   /**
     Get the SELECT_LEX structure associated with this Item.
@@ -357,7 +357,7 @@ public:
   bool fix_fields(THD *thd, Item **ref);
   bool setup_engine();
   bool init_left_expr_cache();
-  bool is_expensive_processor(uchar *arg);
+  bool is_expensive_processor(unsigned char *arg);
 
   friend class Item_ref_null_helper;
   friend class Item_is_not_null_test;

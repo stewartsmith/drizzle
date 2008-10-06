@@ -35,8 +35,8 @@ protected:
   String *convert;
   uint field_pos;
   uint field_count;
-  bool net_store_data(const uchar *from, size_t length);
-  bool net_store_data(const uchar *from, size_t length,
+  bool net_store_data(const unsigned char *from, size_t length);
+  bool net_store_data(const unsigned char *from, size_t length,
                       const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
   bool store_string_aux(const char *from, size_t length,
                         const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
@@ -131,7 +131,7 @@ public:
 void send_warning(THD *thd, uint sql_errno, const char *err=0);
 void net_send_error(THD *thd, uint sql_errno=0, const char *err=0);
 void net_end_statement(THD *thd);
-uchar *net_store_data(uchar *to,const uchar *from, size_t length);
-uchar *net_store_data(uchar *to,int32_t from);
-uchar *net_store_data(uchar *to,int64_t from);
+unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
+unsigned char *net_store_data(unsigned char *to,int32_t from);
+unsigned char *net_store_data(unsigned char *to,int64_t from);
 

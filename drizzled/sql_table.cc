@@ -983,8 +983,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         List_iterator<String> int_it(sql_field->interval_list);
         String conv, *tmp;
         char comma_buf[4];
-        int comma_length= cs->cset->wc_mb(cs, ',', (uchar*) comma_buf,
-                                          (uchar*) comma_buf + 
+        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
+                                          (unsigned char*) comma_buf + 
                                           sizeof(comma_buf));
         assert(comma_length > 0);
         for (uint i= 0; (tmp= int_it++); i++)
@@ -1004,7 +1004,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
           lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
                                        interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
-          ((uchar *)interval->type_names[i])[lengthsp]= '\0';
+          ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
         sql_field->interval_list.empty(); // Don't need interval_list anymore
       }
@@ -1528,7 +1528,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     return(true);
   }
   /* Sort keys in optimized order */
-  my_qsort((uchar*) *key_info_buffer, *key_count, sizeof(KEY),
+  my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
 	   (qsort_cmp) sort_keys);
   create_info->null_bits= null_fields;
 
@@ -1937,7 +1937,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
   /* Wait for any database locks */
   pthread_mutex_lock(&LOCK_lock_db);
   while (!thd->killed &&
-         hash_search(&lock_db_cache,(uchar*) db, strlen(db)))
+         hash_search(&lock_db_cache,(unsigned char*) db, strlen(db)))
   {
     wait_for_condition(thd, &LOCK_lock_db, &COND_refresh);
     pthread_mutex_lock(&LOCK_lock_db);
@@ -2412,7 +2412,7 @@ static bool mysql_admin_table(THD* thd, TableList* tables,
       table->next_global= 0;
       save_next_local= table->next_local;
       table->next_local= 0;
-      select->table_list.first= (uchar*)table;
+      select->table_list.first= (unsigned char*)table;
       /*
         Time zone tables and SP tables can be add to lex->query_tables list,
         so it have to be prepared.
@@ -5366,7 +5366,7 @@ bool mysql_checksum_table(THD *thd, TableList *tables,
       {
 	/* calculating table's checksum */
 	ha_checksum crc= 0;
-        uchar null_mask=256 -  (1 << t->s->last_null_bit_pos);
+        unsigned char null_mask=256 -  (1 << t->s->last_null_bit_pos);
 
         t->use_all_columns();
 
@@ -5402,7 +5402,7 @@ bool mysql_checksum_table(THD *thd, TableList *tables,
 	      {
 		String tmp;
 		f->val_str(&tmp);
-		row_crc= my_checksum(row_crc, (uchar*) tmp.ptr(), tmp.length());
+		row_crc= my_checksum(row_crc, (unsigned char*) tmp.ptr(), tmp.length());
 	      }
 	      else
 		row_crc= my_checksum(row_crc, f->ptr,

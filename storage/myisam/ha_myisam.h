@@ -75,25 +75,25 @@ class ha_myisam: public handler
 
   int open(const char *name, int mode, uint test_if_locked);
   int close(void);
-  int write_row(uchar * buf);
-  int update_row(const uchar * old_data, uchar * new_data);
-  int delete_row(const uchar * buf);
-  int index_read_map(uchar *buf, const uchar *key, key_part_map keypart_map,
+  int write_row(unsigned char * buf);
+  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int delete_row(const unsigned char * buf);
+  int index_read_map(unsigned char *buf, const unsigned char *key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
-  int index_read_idx_map(uchar *buf, uint index, const uchar *key,
+  int index_read_idx_map(unsigned char *buf, uint index, const unsigned char *key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
-  int index_read_last_map(uchar *buf, const uchar *key, key_part_map keypart_map);
-  int index_next(uchar * buf);
-  int index_prev(uchar * buf);
-  int index_first(uchar * buf);
-  int index_last(uchar * buf);
-  int index_next_same(uchar *buf, const uchar *key, uint keylen);
+  int index_read_last_map(unsigned char *buf, const unsigned char *key, key_part_map keypart_map);
+  int index_next(unsigned char * buf);
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
+  int index_next_same(unsigned char *buf, const unsigned char *key, uint keylen);
   int rnd_init(bool scan);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
-  int restart_rnd_next(uchar *buf, uchar *pos);
-  void position(const uchar *record);
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
+  int restart_rnd_next(unsigned char *buf, unsigned char *pos);
+  void position(const unsigned char *record);
   int info(uint);
   int extra(enum ha_extra_function operation);
   int extra_opt(enum ha_extra_function operation, uint32_t cache_size);

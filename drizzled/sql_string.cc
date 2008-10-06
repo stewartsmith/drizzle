@@ -26,7 +26,7 @@
   required by the string function
 */
 
-extern uchar* sql_alloc(unsigned size);
+extern unsigned char* sql_alloc(unsigned size);
 extern void sql_element_free(void *ptr);
 
 #include "sql_string.h"
@@ -421,7 +421,7 @@ bool String::append(IO_CACHE* file, uint32_t arg_length)
 {
   if (realloc(str_length+arg_length))
     return true;
-  if (my_b_read(file, (uchar*) Ptr + str_length, arg_length))
+  if (my_b_read(file, (unsigned char*) Ptr + str_length, arg_length))
   {
     shrink(str_length);
     return true;
@@ -546,7 +546,7 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
       {
 	if (realloc(str_length+(uint32_t) diff))
 	  return true;
-	bmove_upp((uchar*) Ptr+str_length+diff, (uchar*) Ptr+str_length,
+	bmove_upp((unsigned char*) Ptr+str_length+diff, (unsigned char*) Ptr+str_length,
 		  str_length-offset-arg_length);
       }
       if (to_length)
@@ -624,8 +624,8 @@ void String::qs_append(uint i)
 int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 {
  return cs->coll->strnncollsp(cs,
-                              (uchar *) s->ptr(),s->length(),
-                              (uchar *) t->ptr(),t->length(), 0);
+                              (unsigned char *) s->ptr(),s->length(),
+                              (unsigned char *) t->ptr(),t->length(), 0);
 }
 
 
@@ -638,7 +638,7 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
     t		Second string
 
   NOTE:
-    Strings are compared as a stream of uchars
+    Strings are compared as a stream of unsigned chars
 
   RETURN
   < 0	s < t
@@ -705,16 +705,16 @@ copy_and_convert_extended(char *to, uint32_t to_length,
 {
   int         cnvres;
   my_wc_t     wc;
-  const uchar *from_end= (const uchar*) from+from_length;
+  const unsigned char *from_end= (const unsigned char*) from+from_length;
   char *to_start= to;
-  uchar *to_end= (uchar*) to+to_length;
+  unsigned char *to_end= (unsigned char*) to+to_length;
   my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
   my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
   uint error_count= 0;
 
   while (1)
   {
-    if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from,
+    if ((cnvres= (*mb_wc)(from_cs, &wc, (unsigned char*) from,
 				      from_end)) > 0)
       from+= cnvres;
     else if (cnvres == MY_CS_ILSEQ)
@@ -737,7 +737,7 @@ copy_and_convert_extended(char *to, uint32_t to_length,
       break;  // Not enough characters
 
 outp:
-    if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+    if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
       to+= cnvres;
     else if (cnvres == MY_CS_ILUNI && wc != '?')
     {
@@ -974,8 +974,8 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     my_wc_t wc;
     my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
     my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-    const uchar *from_end= (const uchar*) from + from_length;
-    uchar *to_end= (uchar*) to + to_length;
+    const unsigned char *from_end= (const unsigned char*) from + from_length;
+    unsigned char *to_end= (unsigned char*) to + to_length;
     char *to_start= to;
     *well_formed_error_pos= NULL;
     *cannot_convert_error_pos= NULL;
@@ -983,7 +983,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     for ( ; nchars; nchars--)
     {
       const char *from_prev= from;
-      if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
+      if ((cnvres= (*mb_wc)(from_cs, &wc, (unsigned char*) from, from_end)) > 0)
         from+= cnvres;
       else if (cnvres == MY_CS_ILSEQ)
       {
@@ -1007,7 +1007,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
         break;  // Not enough characters
 
 outp:
-      if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+      if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
         to+= cnvres;
       else if (cnvres == MY_CS_ILUNI && wc != '?')
       {
@@ -1036,7 +1036,7 @@ void String::print(String *str)
   char *st= (char*)Ptr, *end= st+str_length;
   for (; st < end; st++)
   {
-    uchar c= *st;
+    unsigned char c= *st;
     switch (c)
     {
     case '\\':

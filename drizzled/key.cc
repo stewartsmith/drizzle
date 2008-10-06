@@ -45,7 +45,7 @@
        key_length is set to length of key before (not including) field
 */
 
-int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
+int find_ref_key(KEY *key, uint key_count, unsigned char *record, Field *field,
                  uint *key_length, uint *keypart)
 {
   register int i;
@@ -105,7 +105,7 @@ int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
   @param key_length  specifies length of all keyparts that will be copied
 */
 
-void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
+void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
               unsigned int key_length)
 {
   uint length;
@@ -148,7 +148,7 @@ void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
   Zero the null components of key tuple.
 */
 
-void key_zero_nulls(uchar *tuple, KEY *key_info)
+void key_zero_nulls(unsigned char *tuple, KEY *key_info)
 {
   KEY_PART_INFO *key_part= key_info->key_part;
   KEY_PART_INFO *key_part_end= key_part + key_info->key_parts;
@@ -173,7 +173,7 @@ void key_zero_nulls(uchar *tuple, KEY *key_info)
   @param key_length  specifies length of all keyparts that will be restored
 */
 
-void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
+void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
                  uint16_t key_length)
 {
   uint length;
@@ -185,7 +185,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
   }
   for (key_part= key_info->key_part ; (int) key_length > 0 ; key_part++)
   {
-    uchar used_uneven_bits= 0;
+    unsigned char used_uneven_bits= 0;
     if (key_part->null_bit)
     {
       if (*from_key++)
@@ -255,11 +255,11 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     1	Key has changed
 */
 
-bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
+bool key_cmp_if_same(Table *table,const unsigned char *key,uint idx,uint key_length)
 {
   uint store_length;
   KEY_PART_INFO *key_part;
-  const uchar *key_end= key + key_length;;
+  const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
        key < key_end ; 
@@ -291,15 +291,15 @@ bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
     {
       const CHARSET_INFO * const cs= key_part->field->charset();
       uint char_length= key_part->length / cs->mbmaxlen;
-      const uchar *pos= table->record[0] + key_part->offset;
+      const unsigned char *pos= table->record[0] + key_part->offset;
       if (length > char_length)
       {
         char_length= my_charpos(cs, pos, pos + length, char_length);
         set_if_smaller(char_length, length);
       }
       if (cs->coll->strnncollsp(cs,
-                                (const uchar*) key, length,
-                                (const uchar*) pos, char_length, 0))
+                                (const unsigned char*) key, length,
+                                (const unsigned char*) pos, char_length, 0))
         return 1;
       continue;
     }
@@ -429,11 +429,11 @@ bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
     -   1		Key is larger than range
 */
 
-int key_cmp(KEY_PART_INFO *key_part, const uchar *key, uint key_length)
+int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint key_length)
 {
   uint store_length;
 
-  for (const uchar *end=key + key_length;
+  for (const unsigned char *end=key + key_length;
        key < end;
        key+= store_length, key_part++)
   {
@@ -490,12 +490,12 @@ int key_cmp(KEY_PART_INFO *key_part, const uchar *key, uint key_length)
     and return the result of the comparison.
 */
 
-int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
+int key_rec_cmp(void *key, unsigned char *first_rec, unsigned char *second_rec)
 {
   KEY *key_info= (KEY*)key;
   uint key_parts= key_info->key_parts, i= 0;
   KEY_PART_INFO *key_part= key_info->key_part;
-  uchar *rec0= key_part->field->ptr - key_part->offset;
+  unsigned char *rec0= key_part->field->ptr - key_part->offset;
   my_ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
   int result= 0;
 

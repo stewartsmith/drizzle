@@ -153,15 +153,15 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
   {
     if (mem_root->error_handler)
       (*mem_root->error_handler)();
-    return((uchar*) 0);			/* purecov: inspected */
+    return((unsigned char*) 0);			/* purecov: inspected */
   }
   next->next= mem_root->used;
   next->size= length;
   mem_root->used= next;
-  return((uchar*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
+  return((unsigned char*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
 #else
   size_t get_size, block_size;
-  uchar* point;
+  unsigned char* point;
   register USED_MEM *next= 0;
   register USED_MEM **prev;
   assert(alloc_root_inited(mem_root));
@@ -201,7 +201,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     *prev=next;
   }
 
-  point= (uchar*) ((char*) next+ (next->size-next->left));
+  point= (unsigned char*) ((char*) next+ (next->size-next->left));
   /*TODO: next part may be unneded due to mem_root->first_block_usage counter*/
   if ((next->left-= length) < mem_root->min_malloc)
   {						/* Full block */

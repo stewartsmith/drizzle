@@ -33,7 +33,7 @@
   @return The size of the required storage in bytes
 */
 
-uint hp_get_encoded_data_length(HP_SHARE *info, const uchar *record, uint *chunk_count)
+uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint *chunk_count)
 {
   uint i, dst_offset;
 
@@ -70,7 +70,7 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const uchar *record, uint *chunk
 
       pack_length= column->length_bytes;
       length= pack_length + (pack_length == 1 ?
-        (uint) *(uchar*) (record + src_offset) : uint2korr(record + src_offset));
+        (uint) *(unsigned char*) (record + src_offset) : uint2korr(record + src_offset));
     }
     else
     {
@@ -86,13 +86,13 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const uchar *record, uint *chunk
 }
 
 
-/*static void dump_chunk(HP_SHARE *info, const uchar* curr_chunk)
+/*static void dump_chunk(HP_SHARE *info, const unsigned char* curr_chunk)
 {
   uint i;
   fprintf(stdout, "Chunk dump at 0x%lx: ", (long)curr_chunk);
   for (i= 0; i < info->chunk_dataspace_length; i++)
   {
-    uint b= *((uchar*)(curr_chunk + i));
+    uint b= *((unsigned char*)(curr_chunk + i));
     if (b < 0x10)
     {
       fprintf(stdout, "0");
@@ -100,8 +100,8 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const uchar *record, uint *chunk
     fprintf(stdout, "%lx ", (long)b);
   }
   fprintf(stdout, ". Next = 0x%lx, Status = %d\n",
-    (long)(*((uchar**) (curr_chunk + info->offset_link))),
-    (uint)(*((uchar*) (curr_chunk + info->offset_status))));
+    (long)(*((unsigned char**) (curr_chunk + info->offset_link))),
+    (uint)(*((unsigned char*) (curr_chunk + info->offset_status))));
 }*/
 
 
@@ -121,11 +121,11 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const uchar *record, uint *chunk
     @retval  zero      otherwise
 */
 
-uint hp_process_record_data_to_chunkset(HP_SHARE *info, const uchar *record,
-                                      uchar *pos, uint is_compare)
+uint hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record,
+                                      unsigned char *pos, uint is_compare)
 {
   uint i, dst_offset;
-  uchar* curr_chunk= pos;
+  unsigned char* curr_chunk= pos;
 
   if (is_compare)
   {
@@ -172,7 +172,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const uchar *record,
       /* Make sure to copy length indicator and actuals string bytes */
       pack_length= column->length_bytes;
       length= pack_length + (pack_length == 1 ?
-        (uint) *(uchar*) (record + src_offset) : uint2korr(record + src_offset));
+        (uint) *(unsigned char*) (record + src_offset) : uint2korr(record + src_offset));
     }
     else
     {
@@ -188,7 +188,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const uchar *record,
       {
         /* Jump to the next chunk */
         /*dump_chunk(info, curr_chunk);*/
-        curr_chunk= *((uchar**) (curr_chunk + info->recordspace.offset_link));
+        curr_chunk= *((unsigned char**) (curr_chunk + info->recordspace.offset_link));
         dst_offset= 0;
         continue;
       }
@@ -228,7 +228,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const uchar *record,
   @param  pos          the target chunkset
 */
 
-void hp_copy_record_data_to_chunkset(HP_SHARE *info, const uchar *record, uchar *pos)
+void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos)
 {
 
   hp_process_record_data_to_chunkset(info, record, pos, 0);
@@ -242,7 +242,7 @@ void hp_copy_record_data_to_chunkset(HP_SHARE *info, const uchar *record, uchar 
 */
 #define SWITCH_TO_NEXT_CHUNK_FOR_READ(info, curr_chunk, src_offset) \
       { \
-        curr_chunk= *((uchar**) (curr_chunk + info->recordspace.offset_link)); \
+        curr_chunk= *((unsigned char**) (curr_chunk + info->recordspace.offset_link)); \
         src_offset= 0; \
         /*dump_chunk(info, curr_chunk);*/ \
       }
@@ -258,10 +258,10 @@ void hp_copy_record_data_to_chunkset(HP_SHARE *info, const uchar *record, uchar 
   @param       pos          the source chunkset
 */
 
-void hp_extract_record(HP_SHARE *info, uchar *record, const uchar *pos)
+void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos)
 {
   uint i, src_offset;
-  const uchar* curr_chunk= pos;
+  const unsigned char* curr_chunk= pos;
 
 
   /*if (info->is_variable_size)
@@ -313,7 +313,7 @@ void hp_extract_record(HP_SHARE *info, uchar *record, const uchar *pos)
       {
         SWITCH_TO_NEXT_CHUNK_FOR_READ(info, curr_chunk, src_offset);
       }
-      byte1= *(uchar*) (curr_chunk + src_offset++);
+      byte1= *(unsigned char*) (curr_chunk + src_offset++);
       *(record + dst_offset++)= byte1;
 
       if (pack_length == 1)
@@ -326,7 +326,7 @@ void hp_extract_record(HP_SHARE *info, uchar *record, const uchar *pos)
         {
           SWITCH_TO_NEXT_CHUNK_FOR_READ(info, curr_chunk, src_offset);
         }
-        byte2= *(uchar*) (curr_chunk + src_offset++);
+        byte2= *(unsigned char*) (curr_chunk + src_offset++);
         *(record + dst_offset++)= byte2;
 
         /* We copy byte-by-byte and then use uint2korr to combine bytes in the right order */

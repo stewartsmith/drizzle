@@ -22,11 +22,11 @@
 #include "mysys_priv.h"
 #include <storage/myisam/myisampack.h>
 
-static int ptr_compare(size_t *compare_length, uchar **a, uchar **b);
-static int ptr_compare_0(size_t *compare_length, uchar **a, uchar **b);
-static int ptr_compare_1(size_t *compare_length, uchar **a, uchar **b);
-static int ptr_compare_2(size_t *compare_length, uchar **a, uchar **b);
-static int ptr_compare_3(size_t *compare_length, uchar **a, uchar **b);
+static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);
+static int ptr_compare_0(size_t *compare_length, unsigned char **a, unsigned char **b);
+static int ptr_compare_1(size_t *compare_length, unsigned char **a, unsigned char **b);
+static int ptr_compare_2(size_t *compare_length, unsigned char **a, unsigned char **b);
+static int ptr_compare_3(size_t *compare_length, unsigned char **a, unsigned char **b);
 
 	/* Get a pointer to a optimal byte-compare function for a given size */
 
@@ -51,10 +51,10 @@ qsort2_cmp get_ptr_compare (size_t size)
 
 #define cmp(N) if (first[N] != last[N]) return (int) first[N] - (int) last[N]
 
-static int ptr_compare(size_t *compare_length, uchar **a, uchar **b)
+static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b)
 {
   register int length= *compare_length;
-  register uchar *first,*last;
+  register unsigned char *first,*last;
 
   first= *a; last= *b;
   while (--length)
@@ -66,10 +66,10 @@ static int ptr_compare(size_t *compare_length, uchar **a, uchar **b)
 }
 
 
-static int ptr_compare_0(size_t *compare_length,uchar **a, uchar **b)
+static int ptr_compare_0(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
   register int length= *compare_length;
-  register uchar *first,*last;
+  register unsigned char *first,*last;
 
   first= *a; last= *b;
  loop:
@@ -87,10 +87,10 @@ static int ptr_compare_0(size_t *compare_length,uchar **a, uchar **b)
 }
 
 
-static int ptr_compare_1(size_t *compare_length,uchar **a, uchar **b)
+static int ptr_compare_1(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
   register int length= *compare_length-1;
-  register uchar *first,*last;
+  register unsigned char *first,*last;
 
   first= *a+1; last= *b+1;
   cmp(-1);
@@ -108,10 +108,10 @@ static int ptr_compare_1(size_t *compare_length,uchar **a, uchar **b)
   return (0);
 }
 
-static int ptr_compare_2(size_t *compare_length,uchar **a, uchar **b)
+static int ptr_compare_2(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
   register int length= *compare_length-2;
-  register uchar *first,*last;
+  register unsigned char *first,*last;
 
   first= *a +2 ; last= *b +2;
   cmp(-2);
@@ -130,10 +130,10 @@ static int ptr_compare_2(size_t *compare_length,uchar **a, uchar **b)
   return (0);
 }
 
-static int ptr_compare_3(size_t *compare_length,uchar **a, uchar **b)
+static int ptr_compare_3(size_t *compare_length,unsigned char **a, unsigned char **b)
 {
   register int length= *compare_length-3;
-  register uchar *first,*last;
+  register unsigned char *first,*last;
 
   first= *a +3 ; last= *b +3;
   cmp(-3);
@@ -153,7 +153,7 @@ static int ptr_compare_3(size_t *compare_length,uchar **a, uchar **b)
   return (0);
 }
 
-void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos)
+void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos)
 {
   switch (pack_length) {
 #if SIZEOF_OFF_T > 4
@@ -165,13 +165,13 @@ void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos)
   case 4: mi_int4store(buff,pos); break;
   case 3: mi_int3store(buff,pos); break;
   case 2: mi_int2store(buff,pos); break;
-  case 1: buff[0]= (uchar) pos; break;
+  case 1: buff[0]= (unsigned char) pos; break;
   default: assert(0);
   }
   return;
 }
 
-my_off_t my_get_ptr(uchar *ptr, size_t pack_length)
+my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length)
 {
   my_off_t pos;
   switch (pack_length) {
@@ -184,7 +184,7 @@ my_off_t my_get_ptr(uchar *ptr, size_t pack_length)
   case 4: pos= (my_off_t) mi_uint4korr(ptr); break;
   case 3: pos= (my_off_t) mi_uint3korr(ptr); break;
   case 2: pos= (my_off_t) mi_uint2korr(ptr); break;
-  case 1: pos= (my_off_t) *(uchar*) ptr; break;
+  case 1: pos= (my_off_t) *(unsigned char*) ptr; break;
   default: assert(0); return 0;
   }
  return pos;

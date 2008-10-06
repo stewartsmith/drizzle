@@ -54,7 +54,7 @@ const uint Field_varstring::MAX_SIZE= UINT16_MAX;
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_varstring::do_save_field_metadata(uchar *metadata_ptr)
+int Field_varstring::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   char *ptr= (char *)metadata_ptr;
   assert(field_length <= 65535);
@@ -79,7 +79,7 @@ int Field_varstring::store(const char *from,uint length, const CHARSET_INFO * co
                                        &from_end_pos);
 
   if (length_bytes == 1)
-    *ptr= (uchar) copy_length;
+    *ptr= (unsigned char) copy_length;
   else
     int2store(ptr, copy_length);
 
@@ -142,7 +142,7 @@ my_decimal *Field_varstring::val_decimal(my_decimal *decimal_value)
 }
 
 
-int Field_varstring::cmp_max(const uchar *a_ptr, const uchar *b_ptr,
+int Field_varstring::cmp_max(const unsigned char *a_ptr, const unsigned char *b_ptr,
                              uint max_len)
 {
   uint a_length, b_length;
@@ -176,7 +176,7 @@ int Field_varstring::cmp_max(const uchar *a_ptr, const uchar *b_ptr,
     varstring and blob keys are ALWAYS stored with a 2 byte length prefix
 */
 
-int Field_varstring::key_cmp(const uchar *key_ptr, uint max_key_length)
+int Field_varstring::key_cmp(const unsigned char *key_ptr, uint max_key_length)
 {
   uint length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint local_char_length= max_key_length / field_charset->mbmaxlen;
@@ -201,7 +201,7 @@ int Field_varstring::key_cmp(const uchar *key_ptr, uint max_key_length)
     (keys are created and compared in key.cc)
 */
 
-int Field_varstring::key_cmp(const uchar *a,const uchar *b)
+int Field_varstring::key_cmp(const unsigned char *a,const unsigned char *b)
 {
   return field_charset->coll->strnncollsp(field_charset,
                                           a + HA_KEY_BLOB_LENGTH,
@@ -212,7 +212,7 @@ int Field_varstring::key_cmp(const uchar *a,const uchar *b)
 }
 
 
-void Field_varstring::sort_string(uchar *to,uint length)
+void Field_varstring::sort_string(unsigned char *to,uint length)
 {
   uint tot_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
 
@@ -265,7 +265,7 @@ uint32_t Field_varstring::data_length()
 
 uint32_t Field_varstring::used_length()
 {
-  return length_bytes == 1 ? 1 + (uint32_t) (uchar) *ptr : 2 + uint2korr(ptr);
+  return length_bytes == 1 ? 1 + (uint32_t) (unsigned char) *ptr : 2 + uint2korr(ptr);
 }
 
 /*
@@ -273,7 +273,7 @@ uint32_t Field_varstring::used_length()
   Here the number of length bytes are depending on the given max_length
 */
 
-uchar *Field_varstring::pack(uchar *to, const uchar *from,
+unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *from,
                              uint max_length,
                              bool low_byte_first __attribute__((unused)))
 {
@@ -294,8 +294,8 @@ uchar *Field_varstring::pack(uchar *to, const uchar *from,
 }
 
 
-uchar *
-Field_varstring::pack_key(uchar *to, const uchar *key, uint max_length,
+unsigned char *
+Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint max_length,
                           bool low_byte_first __attribute__((unused)))
 {
   uint length=  length_bytes == 1 ? (uint) *key : uint2korr(key);
@@ -332,9 +332,9 @@ Field_varstring::pack_key(uchar *to, const uchar *key, uint max_length,
     Pointer to end of 'key' (To the next key part if multi-segment key)
 */
 
-const uchar *
-Field_varstring::unpack_key(uchar *to __attribute__((unused)),
-                            const uchar *key, uint max_length,
+const unsigned char *
+Field_varstring::unpack_key(unsigned char *to __attribute__((unused)),
+                            const unsigned char *key, uint max_length,
                             bool low_byte_first __attribute__((unused)))
 {
   /* get length of the blob key */
@@ -344,7 +344,7 @@ Field_varstring::unpack_key(uchar *to __attribute__((unused)),
 
   /* put the length into the record buffer */
   if (length_bytes == 1)
-    *ptr= (uchar) length;
+    *ptr= (unsigned char) length;
   else
     int2store(ptr, length);
   memcpy(ptr + length_bytes, key, length);
@@ -362,8 +362,8 @@ Field_varstring::unpack_key(uchar *to __attribute__((unused)),
     end of key storage
 */
 
-uchar *
-Field_varstring::pack_key_from_key_image(uchar *to, const uchar *from, uint max_length,
+unsigned char *
+Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint max_length,
                                          bool low_byte_first __attribute__((unused)))
 {
   /* Key length is always stored as 2 bytes */
@@ -394,8 +394,8 @@ Field_varstring::pack_key_from_key_image(uchar *to, const uchar *from, uint max_
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *
-Field_varstring::unpack(uchar *to, const uchar *from,
+const unsigned char *
+Field_varstring::unpack(unsigned char *to, const unsigned char *from,
                         uint param_data,
                         bool low_byte_first __attribute__((unused)))
 {
@@ -421,7 +421,7 @@ Field_varstring::unpack(uchar *to, const uchar *from,
 }
 
 
-int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
+int Field_varstring::pack_cmp(const unsigned char *a, const unsigned char *b,
                               uint key_length_arg,
                               bool insert_or_update)
 {
@@ -443,10 +443,10 @@ int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
 }
 
 
-int Field_varstring::pack_cmp(const uchar *b, uint key_length_arg,
+int Field_varstring::pack_cmp(const unsigned char *b, uint key_length_arg,
                               bool insert_or_update)
 {
-  uchar *a= ptr+ length_bytes;
+  unsigned char *a= ptr+ length_bytes;
   uint a_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint b_length;
   uint local_char_length= ((field_charset->mbmaxlen > 1) ?
@@ -474,7 +474,7 @@ int Field_varstring::pack_cmp(const uchar *b, uint key_length_arg,
 }
 
 
-uint Field_varstring::packed_col_length(const uchar *data_ptr, uint length)
+uint Field_varstring::packed_col_length(const unsigned char *data_ptr, uint length)
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;
@@ -487,13 +487,13 @@ uint Field_varstring::max_packed_col_length(uint max_length)
   return (max_length > 255 ? 2 : 1)+max_length;
 }
 
-uint Field_varstring::get_key_image(uchar *buff,
+uint Field_varstring::get_key_image(unsigned char *buff,
                                     uint length,
                                     imagetype type __attribute__((unused)))
 {
   uint f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint local_char_length= length / field_charset->mbmaxlen;
-  uchar *pos= ptr+length_bytes;
+  unsigned char *pos= ptr+length_bytes;
   local_char_length= my_charpos(field_charset, pos, pos + f_length,
                                 local_char_length);
   set_if_smaller(f_length, local_char_length);
@@ -512,7 +512,7 @@ uint Field_varstring::get_key_image(uchar *buff,
 }
 
 
-void Field_varstring::set_key_image(const uchar *buff,uint length)
+void Field_varstring::set_key_image(const unsigned char *buff,uint length)
 {
   length= uint2korr(buff);			// Real length is here
   (void) Field_varstring::store((const char*) buff+HA_KEY_BLOB_LENGTH, length,
@@ -520,7 +520,7 @@ void Field_varstring::set_key_image(const uchar *buff,uint length)
 }
 
 
-int Field_varstring::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
+int Field_varstring::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_ptr,
                                 uint32_t max_length)
 {
   uint32_t a_length,b_length;
@@ -555,7 +555,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_ty
 
 Field *Field_varstring::new_key_field(MEM_ROOT *root,
                                       Table *new_table,
-                                      uchar *new_ptr, uchar *new_null_ptr,
+                                      unsigned char *new_ptr, unsigned char *new_null_ptr,
                                       uint new_null_bit)
 {
   Field_varstring *res;

@@ -35,12 +35,12 @@
 
 #include "myisamdef.h"
 
-int _mi_read_cache(IO_CACHE *info, uchar *buff, my_off_t pos, uint length,
+int _mi_read_cache(IO_CACHE *info, unsigned char *buff, my_off_t pos, uint length,
 		   int flag)
 {
   uint read_length,in_buff_length;
   my_off_t offset;
-  uchar *in_buff_pos;
+  unsigned char *in_buff_pos;
 
   if (pos < info->pos_in_file)
   {

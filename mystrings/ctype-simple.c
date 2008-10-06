@@ -70,37 +70,37 @@ size_t my_strnxfrmlen_simple(const CHARSET_INFO * const cs, size_t len)
 
 
 size_t my_strnxfrm_simple(const CHARSET_INFO * const  cs,
-                       uchar *dst, size_t dstlen, uint nweights,
-                       const uchar *src, size_t srclen, uint flags)
+                       unsigned char *dst, size_t dstlen, uint nweights,
+                       const unsigned char *src, size_t srclen, uint flags)
 {
-  uchar *map= cs->sort_order;
-  uchar *d0= dst;
+  unsigned char *map= cs->sort_order;
+  unsigned char *d0= dst;
   uint frmlen;
   if ((frmlen= cmin(dstlen, nweights)) > srclen)
     frmlen= srclen;
   if (dst != src)
   {
-    const uchar *end;
+    const unsigned char *end;
     for (end= src + frmlen; src < end;)
       *dst++= map[*src++];
   }
   else
   {
-    const uchar *end;
+    const unsigned char *end;
     for (end= dst + frmlen; dst < end; dst++)
-      *dst= map[(uchar) *dst];
+      *dst= map[(unsigned char) *dst];
   }
   return my_strxfrm_pad_desc_and_reverse(cs, d0, dst, d0 + dstlen,
                                          nweights - frmlen, flags, 0);
 }
 
 
-int my_strnncoll_simple(const CHARSET_INFO * const  cs, const uchar *s, size_t slen, 
-                        const uchar *t, size_t tlen,
+int my_strnncoll_simple(const CHARSET_INFO * const  cs, const unsigned char *s, size_t slen, 
+                        const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
 {
   size_t len = ( slen > tlen ) ? tlen : slen;
-  uchar *map= cs->sort_order;
+  unsigned char *map= cs->sort_order;
   if (t_is_prefix && slen > tlen)
     slen=tlen;
   while (len--)
@@ -146,11 +146,11 @@ int my_strnncoll_simple(const CHARSET_INFO * const  cs, const uchar *s, size_t s
     > 0	 a > b
 */
 
-int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const uchar *a, size_t a_length, 
-			  const uchar *b, size_t b_length,
+int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const unsigned char *a, size_t a_length, 
+			  const unsigned char *b, size_t b_length,
                           bool diff_if_only_endspace_difference)
 {
-  const uchar *map= cs->sort_order, *end;
+  const unsigned char *map= cs->sort_order, *end;
   size_t length;
   int res;
 
@@ -194,9 +194,9 @@ int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const uchar *a, size_t
 
 size_t my_caseup_str_8bit(const CHARSET_INFO * const  cs,char *str)
 {
-  register uchar *map= cs->to_upper;
+  register unsigned char *map= cs->to_upper;
   char *str_orig= str;
-  while ((*str= (char) map[(uchar) *str]) != 0)
+  while ((*str= (char) map[(unsigned char) *str]) != 0)
     str++;
   return (size_t) (str - str_orig);
 }
@@ -204,9 +204,9 @@ size_t my_caseup_str_8bit(const CHARSET_INFO * const  cs,char *str)
 
 size_t my_casedn_str_8bit(const CHARSET_INFO * const  cs,char *str)
 {
-  register uchar *map= cs->to_lower;
+  register unsigned char *map= cs->to_lower;
   char *str_orig= str;
-  while ((*str= (char) map[(uchar) *str]) != 0)
+  while ((*str= (char) map[(unsigned char) *str]) != 0)
     str++;
   return (size_t) (str - str_orig);
 }
@@ -217,10 +217,10 @@ size_t my_caseup_8bit(const CHARSET_INFO * const  cs, char *src, size_t srclen,
                       size_t dstlen __attribute__((unused)))
 {
   char *end= src + srclen;
-  register uchar *map= cs->to_upper;
+  register unsigned char *map= cs->to_upper;
   assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
-    *src= (char) map[(uchar) *src];
+    *src= (char) map[(unsigned char) *src];
   return srclen;
 }
 
@@ -230,25 +230,25 @@ size_t my_casedn_8bit(const CHARSET_INFO * const  cs, char *src, size_t srclen,
                       size_t dstlen __attribute__((unused)))
 {
   char *end= src + srclen;
-  register uchar *map=cs->to_lower;
+  register unsigned char *map=cs->to_lower;
   assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
-    *src= (char) map[(uchar) *src];
+    *src= (char) map[(unsigned char) *src];
   return srclen;
 }
 
 int my_strcasecmp_8bit(const CHARSET_INFO * const  cs,const char *s, const char *t)
 {
-  register uchar *map=cs->to_upper;
-  while (map[(uchar) *s] == map[(uchar) *t++])
+  register unsigned char *map=cs->to_upper;
+  while (map[(unsigned char) *s] == map[(unsigned char) *t++])
     if (!*s++) return 0;
-  return ((int) map[(uchar) s[0]] - (int) map[(uchar) t[-1]]);
+  return ((int) map[(unsigned char) s[0]] - (int) map[(unsigned char) t[-1]]);
 }
 
 
 int my_mb_wc_8bit(const CHARSET_INFO * const cs,my_wc_t *wc,
-		  const uchar *str,
-		  const uchar *end __attribute__((unused)))
+		  const unsigned char *str,
+		  const unsigned char *end __attribute__((unused)))
 {
   if (str >= end)
     return MY_CS_TOOSMALL;
@@ -258,8 +258,8 @@ int my_mb_wc_8bit(const CHARSET_INFO * const cs,my_wc_t *wc,
 }
 
 int my_wc_mb_8bit(const CHARSET_INFO * const cs,my_wc_t wc,
-		  uchar *str,
-		  uchar *end)
+		  unsigned char *str,
+		  unsigned char *end)
 {
   MY_UNI_IDX *idx;
 
@@ -299,11 +299,11 @@ size_t my_snprintf_8bit(const CHARSET_INFO * const cs  __attribute__((unused)),
 
 
 void my_hash_sort_simple(const CHARSET_INFO * const cs,
-			 const uchar *key, size_t len,
+			 const unsigned char *key, size_t len,
 			 uint32_t *nr1, uint32_t *nr2)
 {
-  register uchar *sort_order=cs->sort_order;
-  const uchar *end;
+  register unsigned char *sort_order=cs->sort_order;
+  const unsigned char *end;
   
   /*
     Remove end space. We have to do this to be able to compare
@@ -329,7 +329,7 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
   register uint cutlim;
   register uint32_t i;
   register const char *s;
-  register uchar c;
+  register unsigned char c;
   const char *save, *e;
   int overflow;
 
@@ -452,7 +452,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
   register uint cutlim;
   register uint32_t i;
   register const char *s;
-  register uchar c;
+  register unsigned char c;
   const char *save, *e;
   int overflow;
 
@@ -630,7 +630,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   i = 0;
   for ( ; s != e; s++)
   {
-    register uchar c= *s;
+    register unsigned char c= *s;
     if (c>='0' && c<='9')
       c -= '0';
     else if (c>='A' && c<='Z')
@@ -753,7 +753,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
   i = 0;
   for ( ; s != e; s++)
   {
-    register uchar c= *s;
+    register unsigned char c= *s;
 
     if (c>='0' && c<='9')
       c -= '0';
@@ -940,9 +940,9 @@ cnv:
 */
 
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(s,A) (uchar) my_toupper(s,A)
+#define likeconv(s,A) (unsigned char) my_toupper(s,A)
 #else
-#define likeconv(s,A) (uchar) (s)->sort_order[(uchar) (A)]
+#define likeconv(s,A) (unsigned char) (s)->sort_order[(unsigned char) (A)]
 #endif
 
 #define INC_PTR(cs,A,B) (A)++
@@ -981,7 +981,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
     }
     if (*wildstr == w_many)
     {						/* Found w_many */
-      uchar cmp;
+      unsigned char cmp;
       
       wildstr++;
       /* Remove any '%' and '_' from the wild search string */
@@ -1010,7 +1010,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
       cmp=likeconv(cs,cmp);
       do
       {
-	while (str != str_end && (uchar) likeconv(cs,*str) != cmp)
+	while (str != str_end && (unsigned char) likeconv(cs,*str) != cmp)
 	  str++;
 	if (str++ == str_end) return(-1);
 	{
@@ -1165,7 +1165,7 @@ size_t my_lengthsp_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
                         const char *ptr, size_t length)
 {
   const char *end;
-  end= (const char *) skip_trailing_space((const uchar *)ptr, length);
+  end= (const char *) skip_trailing_space((const unsigned char *)ptr, length);
   return (size_t) (end-ptr);
 }
 
@@ -1175,7 +1175,7 @@ uint my_instr_simple(const CHARSET_INFO * const cs,
                      const char *s, size_t s_length,
                      my_match_t *match, uint nmatch)
 {
-  register const uchar *str, *search, *end, *search_end;
+  register const unsigned char *str, *search, *end, *search_end;
   
   if (s_length <= b_length)
   {
@@ -1190,17 +1190,17 @@ uint my_instr_simple(const CHARSET_INFO * const cs,
       return 1;		/* Empty string is always found */
     }
     
-    str= (const uchar*) b;
-    search= (const uchar*) s;
-    end= (const uchar*) b+b_length-s_length+1;
-    search_end= (const uchar*) s + s_length;
+    str= (const unsigned char*) b;
+    search= (const unsigned char*) s;
+    end= (const unsigned char*) b+b_length-s_length+1;
+    search_end= (const unsigned char*) s + s_length;
     
 skip:
     while (str != end)
     {
       if (cs->sort_order[*str++] == cs->sort_order[*search])
       {
-	register const uchar *i,*j;
+	register const unsigned char *i,*j;
 	
 	i= str; 
 	j= search+1;
@@ -1212,7 +1212,7 @@ skip:
 	if (nmatch > 0)
 	{
 	  match[0].beg= 0;
-	  match[0].end= (size_t) (str- (const uchar*)b-1);
+	  match[0].end= (size_t) (str- (const unsigned char*)b-1);
 	  match[0].mb_len= match[0].end;
 	  
 	  if (nmatch > 1)
@@ -1301,7 +1301,7 @@ static bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
       break;
     
     numchars=idx[i].uidx.to-idx[i].uidx.from+1;
-    if (!(idx[i].uidx.tab=(uchar*) alloc(numchars * sizeof(*idx[i].uidx.tab))))
+    if (!(idx[i].uidx.tab=(unsigned char*) alloc(numchars * sizeof(*idx[i].uidx.tab))))
       return true;
     
     memset(idx[i].uidx.tab, 0, numchars*sizeof(*idx[i].uidx.tab));
@@ -1340,18 +1340,18 @@ static bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
 
 static void set_max_sort_char(CHARSET_INFO *cs)
 {
-  uchar max_char;
+  unsigned char max_char;
   uint  i;
   
   if (!cs->sort_order)
     return;
   
-  max_char=cs->sort_order[(uchar) cs->max_sort_char];
+  max_char=cs->sort_order[(unsigned char) cs->max_sort_char];
   for (i= 0; i < 256; i++)
   {
-    if ((uchar) cs->sort_order[i] > max_char)
+    if ((unsigned char) cs->sort_order[i] > max_char)
     {
-      max_char=(uchar) cs->sort_order[i];
+      max_char=(unsigned char) cs->sort_order[i];
       cs->max_sort_char= i;
     }
   }
@@ -1373,7 +1373,7 @@ int64_t my_strtoll10_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
 
 
 int my_mb_ctype_8bit(const CHARSET_INFO * const cs, int *ctype,
-                   const uchar *s, const uchar *e)
+                   const unsigned char *s, const unsigned char *e)
 {
   if (s >= e)
   {
@@ -1481,7 +1481,7 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   const char *dot, *end9, *beg, *end= str + length;
   uint64_t ull;
   ulong ul;
-  uchar ch;
+  unsigned char ch;
   int shift= 0, digits= 0, negative, addon;
 
   /* Skip leading spaces and tabs */
@@ -1499,7 +1499,7 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   beg= str;
   end9= (str + 9) > end ? end : (str + 9);
   /* Accumulate small number into ulong, for performance purposes */
-  for (ul= 0 ; str < end9 && (ch= (uchar) (*str - '0')) < 10; str++)
+  for (ul= 0 ; str < end9 && (ch= (unsigned char) (*str - '0')) < 10; str++)
   {
     ul= ul * 10 + ch;
   }
@@ -1532,7 +1532,7 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   /* Continue to accumulate into uint64_t */
   for (dot= NULL, ull= ul; str < end; str++)
   {
-    if ((ch= (uchar) (*str - '0')) < 10)
+    if ((ch= (unsigned char) (*str - '0')) < 10)
     {
       if (ull < CUTOFF || (ull == CUTOFF && ch <= CUTLIM))
       {
@@ -1555,17 +1555,17 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
         addon= (*str >= '5');
       if (!dot)
       {
-        for ( ; str < end && (ch= (uchar) (*str - '0')) < 10; shift++, str++);
+        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; shift++, str++);
         if (str < end && *str == '.')
         {
           str++;
-          for ( ; str < end && (ch= (uchar) (*str - '0')) < 10; str++);
+          for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++);
         }
       }
       else
       {
         shift= dot - str;
-        for ( ; str < end && (ch= (uchar) (*str - '0')) < 10; str++);
+        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++);
       }
       goto exp;
     }
@@ -1611,7 +1611,7 @@ exp:    /* [ E [ <sign> ] <unsigned integer> ] */
           goto ret_sign;
       }
       for (exponent= 0 ;
-           str < end && (ch= (uchar) (*str - '0')) < 10;
+           str < end && (ch= (unsigned char) (*str - '0')) < 10;
            str++)
       {
         exponent= exponent * 10 + ch;
@@ -1753,7 +1753,7 @@ ret_too_big:
 
 
 bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)),
-                            const uchar *str __attribute__((unused)),
+                            const unsigned char *str __attribute__((unused)),
                             size_t length __attribute__((unused)))
 {
   return 1;
@@ -1761,7 +1761,7 @@ bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)),
 
 
 bool my_propagate_complex(const CHARSET_INFO * const cs __attribute__((unused)),
-                             const uchar *str __attribute__((unused)),
+                             const unsigned char *str __attribute__((unused)),
                              size_t length __attribute__((unused)))
 {
   return 0;
@@ -1855,7 +1855,7 @@ uint my_strxfrm_flag_normalize(uint flags, uint maximum)
     the string is not changed.
     
 */
-void my_strxfrm_desc_and_reverse(uchar *str, uchar *strend,
+void my_strxfrm_desc_and_reverse(unsigned char *str, unsigned char *strend,
                                  uint flags, uint level)
 {
   if (flags & (MY_STRXFRM_DESC_LEVEL1 << level))
@@ -1864,7 +1864,7 @@ void my_strxfrm_desc_and_reverse(uchar *str, uchar *strend,
     {
       for (strend--; str <= strend;)
       {
-        uchar tmp= *str;
+        unsigned char tmp= *str;
         *str++= ~*strend;
         *strend--= ~tmp;
       }
@@ -1879,7 +1879,7 @@ void my_strxfrm_desc_and_reverse(uchar *str, uchar *strend,
   {
     for (strend--; str < strend;)
     {
-      uchar tmp= *str;
+      unsigned char tmp= *str;
       *str++= *strend;
       *strend--= tmp;
     }
@@ -1889,7 +1889,7 @@ void my_strxfrm_desc_and_reverse(uchar *str, uchar *strend,
 
 size_t
 my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
-                                uchar *str, uchar *frmend, uchar *strend,
+                                unsigned char *str, unsigned char *frmend, unsigned char *strend,
                                 uint nweights, uint flags, uint level)
 {
   if (nweights && frmend < strend && (flags & MY_STRXFRM_PAD_WITH_SPACE))

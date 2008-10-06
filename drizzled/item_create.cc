@@ -3013,13 +3013,13 @@ static Native_func_registry func_array[] =
 
 static HASH native_functions_hash;
 
-extern "C" uchar*
-get_native_fct_hash_key(const uchar *buff, size_t *length,
+extern "C" unsigned char*
+get_native_fct_hash_key(const unsigned char *buff, size_t *length,
                         bool /* unused */)
 {
   Native_func_registry *func= (Native_func_registry*) buff;
   *length= func->name.length;
-  return (uchar*) func->name.str;
+  return (unsigned char*) func->name.str;
 }
 
 /*
@@ -3044,7 +3044,7 @@ int item_create_init()
 
   for (func= func_array; func->builder != NULL; func++)
   {
-    if (my_hash_insert(& native_functions_hash, (uchar*) func))
+    if (my_hash_insert(& native_functions_hash, (unsigned char*) func))
       return(1);
   }
 
@@ -3072,7 +3072,7 @@ find_native_function_builder(THD *thd __attribute__((unused)),
 
   /* Thread safe */
   func= (Native_func_registry*) hash_search(& native_functions_hash,
-                                            (uchar*) name.str,
+                                            (unsigned char*) name.str,
                                              name.length);
 
   if (func)

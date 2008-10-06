@@ -443,7 +443,7 @@ invalid value '%s'",
 	  opt_found= 0;
 	  for (optp= longopts; optp->id; optp++)
 	  {
-	    if (optp->id == (int) (uchar) *optend)
+	    if (optp->id == (int) (unsigned char) *optend)
 	    {
 	      /* Option recognized. Find next what to do with it */
 	      opt_found= 1;

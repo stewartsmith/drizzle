@@ -23,12 +23,12 @@
 #include <drizzled/rpl_reporting.h>
 
 size_t pack_row(Table* table, MY_BITMAP const* cols,
-                uchar *row_data, const uchar *data);
+                unsigned char *row_data, const unsigned char *data);
 
 int unpack_row(Relay_log_info const *rli,
                Table *table, uint const colcnt,
-               uchar const *const row_data, MY_BITMAP const *cols,
-               uchar const **const row_end, ulong *const master_reclength);
+               unsigned char const *const row_data, MY_BITMAP const *cols,
+               unsigned char const **const row_end, ulong *const master_reclength);
 
 // Fill table's record[0] with default values.
 int prepare_record(Table *const, const MY_BITMAP *cols, uint width, const bool);

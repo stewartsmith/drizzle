@@ -45,10 +45,10 @@ TODO:
 
 
 /*
-  uchar + uchar + uint64_t + uint64_t + uint64_t + uint64_t + uchar
+  unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
-#define META_BUFFER_SIZE sizeof(uchar) + sizeof(uchar) + sizeof(uint64_t) \
-  + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uchar)
+#define META_BUFFER_SIZE sizeof(unsigned char) + sizeof(unsigned char) + sizeof(uint64_t) \
+  + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(unsigned char)
 #define TINA_CHECK_HEADER 254 // The number we use to determine corruption
 #define BLOB_MEMROOT_ALLOC_SIZE 8192
 
@@ -91,11 +91,11 @@ int sort_set (tina_set *a, tina_set *b)
   return ( a->begin > b->begin ? 1 : ( a->begin < b->begin ? -1 : 0 ) );
 }
 
-static uchar* tina_get_key(TINA_SHARE *share, size_t *length,
+static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length,
                           bool not_used __attribute__((unused)))
 {
   *length=share->table_name_length;
-  return (uchar*) share->table_name;
+  return (unsigned char*) share->table_name;
 }
 
 static int tina_init_func(void *p)
@@ -142,7 +142,7 @@ static TINA_SHARE *get_share(const char *table_name,
     initialize its members.
   */
   if (!(share=(TINA_SHARE*) hash_search(&tina_open_tables,
-                                        (uchar*) table_name,
+                                        (unsigned char*) table_name,
                                        length)))
   {
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
@@ -172,7 +172,7 @@ static TINA_SHARE *get_share(const char *table_name,
       goto error;
     share->saved_data_file_length= file_stat.st_size;
 
-    if (my_hash_insert(&tina_open_tables, (uchar*) share))
+    if (my_hash_insert(&tina_open_tables, (unsigned char*) share))
       goto error;
     thr_lock_init(&share->lock);
     pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
@@ -201,7 +201,7 @@ static TINA_SHARE *get_share(const char *table_name,
 
 error:
   pthread_mutex_unlock(&tina_mutex);
-  free((uchar*) share);
+  free((unsigned char*) share);
 
   return NULL;
 }
@@ -228,11 +228,11 @@ error:
 
 static int read_meta_file(File meta_file, ha_rows *rows)
 {
-  uchar meta_buffer[META_BUFFER_SIZE];
-  uchar *ptr= meta_buffer;
+  unsigned char meta_buffer[META_BUFFER_SIZE];
+  unsigned char *ptr= meta_buffer;
 
   my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
-  if (my_read(meta_file, (uchar*)meta_buffer, META_BUFFER_SIZE, 0)
+  if (my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(HA_ERR_CRASHED_ON_USAGE);
 
@@ -240,7 +240,7 @@ static int read_meta_file(File meta_file, ha_rows *rows)
     Parse out the meta data, we ignore version at the moment
   */
 
-  ptr+= sizeof(uchar)*2; // Move past header
+  ptr+= sizeof(unsigned char)*2; // Move past header
   *rows= (ha_rows)uint8korr(ptr);
   ptr+= sizeof(uint64_t); // Move past rows
   /*
@@ -250,7 +250,7 @@ static int read_meta_file(File meta_file, ha_rows *rows)
   ptr+= 3*sizeof(uint64_t);
 
   /* check crashed bit and magic number */
-  if ((meta_buffer[0] != (uchar)TINA_CHECK_HEADER) ||
+  if ((meta_buffer[0] != (unsigned char)TINA_CHECK_HEADER) ||
       ((bool)(*ptr)== true))
     return(HA_ERR_CRASHED_ON_USAGE);
 
@@ -281,13 +281,13 @@ static int read_meta_file(File meta_file, ha_rows *rows)
 
 static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
 {
-  uchar meta_buffer[META_BUFFER_SIZE];
-  uchar *ptr= meta_buffer;
+  unsigned char meta_buffer[META_BUFFER_SIZE];
+  unsigned char *ptr= meta_buffer;
 
-  *ptr= (uchar)TINA_CHECK_HEADER;
-  ptr+= sizeof(uchar);
-  *ptr= (uchar)TINA_VERSION;
-  ptr+= sizeof(uchar);
+  *ptr= (unsigned char)TINA_CHECK_HEADER;
+  ptr+= sizeof(unsigned char);
+  *ptr= (unsigned char)TINA_VERSION;
+  ptr+= sizeof(unsigned char);
   int8store(ptr, (uint64_t)rows);
   ptr+= sizeof(uint64_t);
   memset(ptr, 0, 3*sizeof(uint64_t));
@@ -296,10 +296,10 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
      We'll need them later.
   */
   ptr+= 3*sizeof(uint64_t);
-  *ptr= (uchar)dirty;
+  *ptr= (unsigned char)dirty;
 
   my_seek(meta_file, 0, MY_SEEK_SET, MYF(0));
-  if (my_write(meta_file, (uchar *)meta_buffer, META_BUFFER_SIZE, 0)
+  if (my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(-1);
 
@@ -364,10 +364,10 @@ static int free_share(TINA_SHARE *share)
       share->tina_write_opened= false;
     }
 
-    hash_delete(&tina_open_tables, (uchar*) share);
+    hash_delete(&tina_open_tables, (unsigned char*) share);
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->mutex);
-    free((uchar*) share);
+    free((unsigned char*) share);
   }
   pthread_mutex_unlock(&tina_mutex);
 
@@ -442,7 +442,7 @@ ha_tina::ha_tina(handlerton *hton, TABLE_SHARE *table_arg)
   Encode a buffer into the quoted format.
 */
 
-int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
+int ha_tina::encode_quote(unsigned char *buf __attribute__((unused)))
 {
   char attribute_buffer[1024];
   String attribute(attribute_buffer, sizeof(attribute_buffer),
@@ -544,7 +544,7 @@ int ha_tina::chain_append()
       if (chain_alloced)
       {
         /* Must cast since my_malloc unlike malloc doesn't have a void ptr */
-        if ((chain= (tina_set *) my_realloc((uchar*)chain,
+        if ((chain= (tina_set *) my_realloc((unsigned char*)chain,
                                             chain_size, MYF(MY_WME))) == NULL)
           return -1;
       }
@@ -570,7 +570,7 @@ int ha_tina::chain_append()
 /*
   Scans for a row.
 */
-int ha_tina::find_current_row(uchar *buf)
+int ha_tina::find_current_row(unsigned char *buf)
 {
   off_t end_offset, curr_offset= current_position;
   int eoln_len;
@@ -667,7 +667,7 @@ int ha_tina::find_current_row(uchar *buf)
       if ((*field)->flags & BLOB_FLAG)
       {
         Field_blob *blob= *(Field_blob**) field;
-        uchar *src, *tgt;
+        unsigned char *src, *tgt;
         uint length, packlength;
         
         packlength= blob->pack_length_no_ptr();
@@ -675,7 +675,7 @@ int ha_tina::find_current_row(uchar *buf)
         memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
-          tgt= (uchar*) alloc_root(&blobroot, length);
+          tgt= (unsigned char*) alloc_root(&blobroot, length);
           memcpy(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
@@ -827,7 +827,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(uchar * buf)
+int ha_tina::write_row(unsigned char * buf)
 {
   int size;
 
@@ -846,7 +846,7 @@ int ha_tina::write_row(uchar * buf)
       return(-1);
 
    /* use pwrite, as concurrent reader could have changed the position */
-  if (my_write(share->tina_write_filedes, (uchar*)buffer.ptr(), size,
+  if (my_write(share->tina_write_filedes, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     return(-1);
 
@@ -890,8 +890,8 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const uchar * old_data __attribute__((unused)),
-                        uchar * new_data)
+int ha_tina::update_row(const unsigned char * old_data __attribute__((unused)),
+                        unsigned char * new_data)
 {
   int size;
   int rc= -1;
@@ -916,7 +916,7 @@ int ha_tina::update_row(const uchar * old_data __attribute__((unused)),
   if (open_update_temp_file_if_needed())
     goto err;
 
-  if (my_write(update_temp_file, (uchar*)buffer.ptr(), size,
+  if (my_write(update_temp_file, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     goto err;
   temp_file_length+= size;
@@ -936,7 +936,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const uchar * buf __attribute__((unused)))
+int ha_tina::delete_row(const unsigned char * buf __attribute__((unused)))
 {
   ha_statistic_increment(&SSV::ha_delete_count);
 
@@ -1042,7 +1042,7 @@ int ha_tina::rnd_init(bool scan __attribute__((unused)))
   NULL and "". This is ok since this table handler is for spreadsheets and
   they don't know about them either :)
 */
-int ha_tina::rnd_next(uchar *buf)
+int ha_tina::rnd_next(unsigned char *buf)
 {
   int rc;
 
@@ -1073,7 +1073,7 @@ int ha_tina::rnd_next(uchar *buf)
   its just a position. Look at the bdb code if you want to see a case
   where something other then a number is stored.
 */
-void ha_tina::position(const uchar *record __attribute__((unused)))
+void ha_tina::position(const unsigned char *record __attribute__((unused)))
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1085,7 +1085,7 @@ void ha_tina::position(const uchar *record __attribute__((unused)))
   my_get_ptr() retrieves the data for you.
 */
 
-int ha_tina::rnd_pos(uchar * buf, uchar *pos)
+int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
   current_position= (off_t)my_get_ptr(pos,ref_length);
@@ -1168,7 +1168,7 @@ int ha_tina::rnd_end()
       if (write_length)
       {
         if (my_write(update_temp_file, 
-                     (uchar*) (file_buff->ptr() +
+                     (unsigned char*) (file_buff->ptr() +
                                (write_begin - file_buff->start())),
                      write_length, MYF_RW))
           goto error;
@@ -1273,7 +1273,7 @@ int ha_tina::repair(THD* thd,
                     HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   char repaired_fname[FN_REFLEN];
-  uchar *buf;
+  unsigned char *buf;
   File repair_file;
   int rc;
   ha_rows rows_repaired= 0;
@@ -1288,7 +1288,7 @@ int ha_tina::repair(THD* thd,
 
   /* Don't assert in field::val() functions */
   table->use_all_columns();
-  if (!(buf= (uchar*) my_malloc(table->s->reclength, MYF(MY_WME))))
+  if (!(buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
     return(HA_ERR_OUT_OF_MEM);
 
   /* position buffer to the start of the file */
@@ -1350,7 +1350,7 @@ int ha_tina::repair(THD* thd,
   {
     write_end= std::min(file_buff->end(), current_position);
     if ((write_end - write_begin) &&
-        (my_write(repair_file, (uchar*)file_buff->ptr(),
+        (my_write(repair_file, (unsigned char*)file_buff->ptr(),
                   write_end - write_begin, MYF_RW)))
       return(-1);
 
@@ -1471,12 +1471,12 @@ int ha_tina::check(THD* thd,
                    HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
-  uchar *buf;
+  unsigned char *buf;
   const char *old_proc_info;
   ha_rows count= share->rows_recorded;
 
   old_proc_info= thd_proc_info(thd, "Checking table");
-  if (!(buf= (uchar*) my_malloc(table->s->reclength, MYF(MY_WME))))
+  if (!(buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
     return(HA_ERR_OUT_OF_MEM);
 
   /* position buffer to the start of the file */

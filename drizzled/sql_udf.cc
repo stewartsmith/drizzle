@@ -21,12 +21,12 @@ static bool udf_startup= false; /* We do not lock because startup is single thre
 static MEM_ROOT mem;
 static HASH udf_hash;
 
-extern "C" uchar* get_hash_key(const uchar *buff, size_t *length,
+extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length,
                                bool not_used __attribute__((unused)))
 {
   udf_func *udf= (udf_func*) buff;
   *length= (uint) udf->name.length;
-  return (uchar*) udf->name.str;
+  return (unsigned char*) udf->name.str;
 }
 
 
@@ -59,7 +59,7 @@ udf_func *find_udf(const char *name, uint length)
     return NULL;
 
   udf= (udf_func*) hash_search(&udf_hash,
-                               (uchar*) name,
+                               (unsigned char*) name,
                                length ? length : (uint) strlen(name));
 
   return (udf);
@@ -67,7 +67,7 @@ udf_func *find_udf(const char *name, uint length)
 
 static bool add_udf(udf_func *udf)
 {
-  if (my_hash_insert(&udf_hash, (uchar*) udf))
+  if (my_hash_insert(&udf_hash, (unsigned char*) udf))
     return false;
 
   using_udf_functions= 1;

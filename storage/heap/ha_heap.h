@@ -73,27 +73,27 @@ public:
   int open(const char *name, int mode, uint test_if_locked);
   int close(void);
   void set_keys_for_scanning(void);
-  int write_row(uchar * buf);
-  int update_row(const uchar * old_data, uchar * new_data);
-  int delete_row(const uchar * buf);
+  int write_row(unsigned char * buf);
+  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int delete_row(const unsigned char * buf);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map,
+  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
-  int index_read_last_map(uchar *buf, const uchar *key, key_part_map keypart_map);
-  int index_read_idx_map(uchar * buf, uint index, const uchar * key,
+  int index_read_last_map(unsigned char *buf, const unsigned char *key, key_part_map keypart_map);
+  int index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
-  int index_next(uchar * buf);
-  int index_prev(uchar * buf);
-  int index_first(uchar * buf);
-  int index_last(uchar * buf);
+  int index_next(unsigned char * buf);
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
   int rnd_init(bool scan);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
-  void position(const uchar *record);
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
+  void position(const unsigned char *record);
   int info(uint);
   int extra(enum ha_extra_function operation);
   int reset();
@@ -111,7 +111,7 @@ public:
 
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
-  int cmp_ref(const uchar *ref1, const uchar *ref2)
+  int cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
   {
     return memcmp(ref1, ref2, sizeof(HEAP_PTR));
   }

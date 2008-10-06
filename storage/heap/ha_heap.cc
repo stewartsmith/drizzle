@@ -202,7 +202,7 @@ void ha_heap::update_key_stats()
 }
 
 
-int ha_heap::write_row(uchar * buf)
+int ha_heap::write_row(unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&SSV::ha_write_count);
@@ -226,7 +226,7 @@ int ha_heap::write_row(uchar * buf)
   return res;
 }
 
-int ha_heap::update_row(const uchar * old_data, uchar * new_data)
+int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
   ha_statistic_increment(&SSV::ha_update_count);
@@ -245,7 +245,7 @@ int ha_heap::update_row(const uchar * old_data, uchar * new_data)
   return res;
 }
 
-int ha_heap::delete_row(const uchar * buf)
+int ha_heap::delete_row(const unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&SSV::ha_delete_count);
@@ -262,7 +262,7 @@ int ha_heap::delete_row(const uchar * buf)
   return res;
 }
 
-int ha_heap::index_read_map(uchar *buf, const uchar *key,
+int ha_heap::index_read_map(unsigned char *buf, const unsigned char *key,
                             key_part_map keypart_map,
                             enum ha_rkey_function find_flag)
 {
@@ -273,7 +273,7 @@ int ha_heap::index_read_map(uchar *buf, const uchar *key,
   return error;
 }
 
-int ha_heap::index_read_last_map(uchar *buf, const uchar *key,
+int ha_heap::index_read_last_map(unsigned char *buf, const unsigned char *key,
                                  key_part_map keypart_map)
 {
   assert(inited==INDEX);
@@ -284,7 +284,7 @@ int ha_heap::index_read_last_map(uchar *buf, const uchar *key,
   return error;
 }
 
-int ha_heap::index_read_idx_map(uchar *buf, uint index, const uchar *key,
+int ha_heap::index_read_idx_map(unsigned char *buf, uint index, const unsigned char *key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
@@ -294,7 +294,7 @@ int ha_heap::index_read_idx_map(uchar *buf, uint index, const uchar *key,
   return error;
 }
 
-int ha_heap::index_next(uchar * buf)
+int ha_heap::index_next(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
@@ -303,7 +303,7 @@ int ha_heap::index_next(uchar * buf)
   return error;
 }
 
-int ha_heap::index_prev(uchar * buf)
+int ha_heap::index_prev(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_prev_count);
@@ -312,7 +312,7 @@ int ha_heap::index_prev(uchar * buf)
   return error;
 }
 
-int ha_heap::index_first(uchar * buf)
+int ha_heap::index_first(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_first_count);
@@ -321,7 +321,7 @@ int ha_heap::index_first(uchar * buf)
   return error;
 }
 
-int ha_heap::index_last(uchar * buf)
+int ha_heap::index_last(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_last_count);
@@ -335,7 +335,7 @@ int ha_heap::rnd_init(bool scan)
   return scan ? heap_scan_init(file) : 0;
 }
 
-int ha_heap::rnd_next(uchar *buf)
+int ha_heap::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   int error=heap_scan(file, buf);
@@ -343,7 +343,7 @@ int ha_heap::rnd_next(uchar *buf)
   return error;
 }
 
-int ha_heap::rnd_pos(uchar * buf, uchar *pos)
+int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   int error;
   HEAP_PTR heap_position;
@@ -354,7 +354,7 @@ int ha_heap::rnd_pos(uchar * buf, uchar *pos)
   return error;
 }
 
-void ha_heap::position(const uchar *record __attribute__((unused)))
+void ha_heap::position(const unsigned char *record __attribute__((unused)))
 {
   *(HEAP_PTR*) ref= heap_position(file);	// Ref is aligned
 }
@@ -620,7 +620,7 @@ int ha_heap::create(const char *name, Table *table_arg,
     if (field->null_bit)
     {
       column->null_bit= field->null_bit;
-      column->null_pos= (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
     }
     else
     {
@@ -710,7 +710,7 @@ int ha_heap::create(const char *name, Table *table_arg,
       if (field->null_ptr)
       {
 	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
       }
       else
       {
@@ -768,7 +768,7 @@ int ha_heap::create(const char *name, Table *table_arg,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
   
-  free((uchar*) keydef);
+  free((unsigned char*) keydef);
   free((void *) columndef);
   assert(file == 0);
   return (error);

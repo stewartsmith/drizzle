@@ -411,7 +411,7 @@ typedef enum monotonicity_info
 } enum_monotonicity_info;
 
 /*************************************************************************/
-typedef bool (Item::*Item_processor) (uchar *arg);
+typedef bool (Item::*Item_processor) (unsigned char *arg);
 /*
   Analyzer function
     SYNOPSIS
@@ -423,8 +423,8 @@ typedef bool (Item::*Item_processor) (uchar *arg);
       false  Don't do it
 
 */
-typedef bool (Item::*Item_analyzer) (uchar **argp);
-typedef Item* (Item::*Item_transformer) (uchar *arg);
+typedef bool (Item::*Item_analyzer) (unsigned char **argp);
+typedef Item* (Item::*Item_transformer) (unsigned char *arg);
 typedef void (*Cond_traverser) (const Item *item, void *arg);
 
 
@@ -434,7 +434,7 @@ class Item
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
-  virtual bool is_expensive_processor(uchar *arg __attribute__((unused)))
+  virtual bool is_expensive_processor(unsigned char *arg __attribute__((unused)))
   { return 0; }
 
 public:
@@ -831,12 +831,12 @@ public:
 
   virtual bool walk(Item_processor processor __attribute__((unused)),
                     bool walk_subquery __attribute__((unused)),
-                    uchar *arg)
+                    unsigned char *arg)
   {
     return (this->*processor)(arg);
   }
 
-  virtual Item* transform(Item_transformer transformer, uchar *arg);
+  virtual Item* transform(Item_transformer transformer, unsigned char *arg);
 
   /*
     This function performs a generic "compilation" of the Item tree.
@@ -854,8 +854,8 @@ public:
     i.e. analysis is performed top-down while transformation is done
     bottom-up.      
   */
-  virtual Item* compile(Item_analyzer analyzer, uchar **arg_p,
-                        Item_transformer transformer, uchar *arg_t)
+  virtual Item* compile(Item_analyzer analyzer, unsigned char **arg_p,
+                        Item_transformer transformer, unsigned char *arg_t)
   {
     if ((this->*analyzer) (arg_p))
       return ((this->*transformer) (arg_t));
@@ -869,34 +869,34 @@ public:
      (*traverser)(this, arg);
    }
 
-  virtual bool remove_dependence_processor(uchar * arg __attribute__((unused)))
+  virtual bool remove_dependence_processor(unsigned char * arg __attribute__((unused)))
   { return 0; }
-  virtual bool remove_fixed(uchar * arg __attribute__((unused)))
+  virtual bool remove_fixed(unsigned char * arg __attribute__((unused)))
   {
     fixed= 0;
     return 0;
   }
-  virtual bool cleanup_processor(uchar *arg __attribute__((unused)));
-  virtual bool collect_item_field_processor(uchar * arg __attribute__((unused)))
+  virtual bool cleanup_processor(unsigned char *arg __attribute__((unused)));
+  virtual bool collect_item_field_processor(unsigned char * arg __attribute__((unused)))
   { return 0; }
-  virtual bool find_item_in_field_list_processor(uchar *arg __attribute__((unused)))
+  virtual bool find_item_in_field_list_processor(unsigned char *arg __attribute__((unused)))
  { return 0; }
-  virtual bool change_context_processor(uchar *context __attribute__((unused)))
+  virtual bool change_context_processor(unsigned char *context __attribute__((unused)))
   { return 0; }
-  virtual bool reset_query_id_processor(uchar *query_id_arg __attribute__((unused)))
+  virtual bool reset_query_id_processor(unsigned char *query_id_arg __attribute__((unused)))
   { return 0; }
-  virtual bool register_field_in_read_map(uchar *arg __attribute__((unused)))
+  virtual bool register_field_in_read_map(unsigned char *arg __attribute__((unused)))
   { return 0; }
-  virtual bool subst_argument_checker(uchar **arg)
+  virtual bool subst_argument_checker(unsigned char **arg)
   {
     if (*arg)
       *arg= NULL;
     return true;
   }
 
-  virtual Item *equal_fields_propagator(uchar * arg __attribute__((unused))) { return this; }
-  virtual bool set_no_const_sub(uchar *arg __attribute__((unused))) { return false; }
-  virtual Item *replace_equal_field(uchar * arg __attribute__((unused))) { return this; }
+  virtual Item *equal_fields_propagator(unsigned char * arg __attribute__((unused))) { return this; }
+  virtual bool set_no_const_sub(unsigned char *arg __attribute__((unused))) { return false; }
+  virtual Item *replace_equal_field(unsigned char * arg __attribute__((unused))) { return this; }
 
   /*
     For SP local variable returns pointer to Item representing its
@@ -925,7 +925,7 @@ public:
   virtual Item_field *filed_for_view_update() { return 0; }
 
   virtual Item *neg_transformer(THD *thd __attribute__((unused))) { return NULL; }
-  virtual Item *update_value_transformer(uchar *select_arg __attribute__((unused))) { return this; }
+  virtual Item *update_value_transformer(unsigned char *select_arg __attribute__((unused))) { return this; }
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   void delete_self()
   {
@@ -957,7 +957,7 @@ public:
   virtual bool is_expensive()
   {
     if (is_expensive_cache < 0)
-      is_expensive_cache= walk(&Item::is_expensive_processor, 0, (uchar*)0);
+      is_expensive_cache= walk(&Item::is_expensive_processor, 0, (unsigned char*)0);
     return test(is_expensive_cache);
   }
   String *check_well_formed_result(String *str, bool send_error= 0);
@@ -1038,9 +1038,9 @@ public:
   Item_ident(THD *thd, Item_ident *item);
   const char *full_name() const;
   void cleanup();
-  bool remove_dependence_processor(uchar * arg);
+  bool remove_dependence_processor(unsigned char * arg);
   virtual void print(String *str, enum_query_type query_type);
-  virtual bool change_context_processor(uchar *cntx)
+  virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(THD *thd, Name_resolution_context *context,
                             const char *db_name,
@@ -1151,24 +1151,24 @@ public:
   bool is_null() { return field->is_null(); }
   void update_null_value();
   Item *get_tmp_table_item(THD *thd);
-  bool collect_item_field_processor(uchar * arg);
-  bool find_item_in_field_list_processor(uchar *arg);
-  bool register_field_in_read_map(uchar *arg);
+  bool collect_item_field_processor(unsigned char * arg);
+  bool find_item_in_field_list_processor(unsigned char *arg);
+  bool register_field_in_read_map(unsigned char *arg);
   void cleanup();
   bool result_as_int64_t()
   {
     return field->can_be_compared_as_int64_t();
   }
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
-  bool subst_argument_checker(uchar **arg);
-  Item *equal_fields_propagator(uchar *arg);
-  bool set_no_const_sub(uchar *arg);
-  Item *replace_equal_field(uchar *arg);
+  bool subst_argument_checker(unsigned char **arg);
+  Item *equal_fields_propagator(unsigned char *arg);
+  bool set_no_const_sub(unsigned char *arg);
+  Item *replace_equal_field(unsigned char *arg);
   inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(THD *thd, Field **field, Item **reference);
-  virtual Item *update_value_transformer(uchar *select_arg);
+  virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual void print(String *str, enum_query_type query_type);
 
   friend class Item_default_value;
@@ -1325,7 +1325,7 @@ public:
     don't need to check that packet is not broken there). See
     sql_prepare.cc for details.
   */
-  void (*set_param_func)(Item_param *param, uchar **pos, ulong len);
+  void (*set_param_func)(Item_param *param, unsigned char **pos, ulong len);
 
   const String *query_val_str(String *str) const;
 
@@ -1428,7 +1428,7 @@ public:
   Item_decimal(my_decimal *value_par);
   Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
-  Item_decimal(const uchar *bin, int precision, int scale);
+  Item_decimal(const unsigned char *bin, int precision, int scale);
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
@@ -1868,7 +1868,7 @@ public:
   {
     return ref ? (*ref)->real_item() : this;
   }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
   { return (*ref)->walk(processor, walk_subquery, arg); }
   virtual void print(String *str, enum_query_type query_type);
   bool result_as_int64_t()
@@ -2191,7 +2191,7 @@ public:
 
 class Cached_item_field :public Cached_item
 {
-  uchar *buff;
+  unsigned char *buff;
   Field *field;
   uint length;
 
@@ -2200,7 +2200,7 @@ public:
   {
     field= arg_field;
     /* TODO: take the memory allocation below out of the constructor. */
-    buff= (uchar*) sql_calloc(length=field->pack_length());
+    buff= (unsigned char*) sql_calloc(length=field->pack_length());
   }
   bool cmp(void);
 };
@@ -2224,13 +2224,13 @@ public:
   int save_in_field(Field *field_arg, bool no_conversions);
   table_map used_tables() const { return (table_map)0L; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *args)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
   {
     return arg->walk(processor, walk_subquery, args) ||
       (this->*processor)(args);
   }
 
-  Item *transform(Item_transformer transformer, uchar *args);
+  Item *transform(Item_transformer transformer, unsigned char *args);
 };
 
 /*
@@ -2264,7 +2264,7 @@ public:
   */
   table_map used_tables() const { return RAND_TABLE_BIT; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *args)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
   {
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);

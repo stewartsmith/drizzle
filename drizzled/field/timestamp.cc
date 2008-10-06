@@ -69,9 +69,9 @@
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
 
-Field_timestamp::Field_timestamp(uchar *ptr_arg,
+Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  uint32_t len_arg __attribute__((unused)),
-                                 uchar *null_ptr_arg, uchar null_bit_arg,
+                                 unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TABLE_SHARE *share,
@@ -95,8 +95,8 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((uchar*) 0, MAX_DATETIME_WIDTH,
-             maybe_null_arg ? (uchar*) "": 0, 0,
+  :Field_str((unsigned char*) 0, MAX_DATETIME_WIDTH,
+             maybe_null_arg ? (unsigned char*) "": 0, 0,
 	     NONE, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
@@ -385,7 +385,7 @@ bool Field_timestamp::send_binary(Protocol *protocol)
 }
 
 
-int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -404,7 +404,7 @@ int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
 }
 
 
-void Field_timestamp::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_timestamp::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

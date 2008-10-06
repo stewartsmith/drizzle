@@ -81,7 +81,7 @@ const char *ha_blackhole::index_type(uint key_number __attribute__((unused)))
   return("BTREE");
 }
 
-int ha_blackhole::write_row(uchar * buf __attribute__((unused)))
+int ha_blackhole::write_row(unsigned char * buf __attribute__((unused)))
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
@@ -92,21 +92,21 @@ int ha_blackhole::rnd_init(bool scan __attribute__((unused)))
 }
 
 
-int ha_blackhole::rnd_next(uchar *buf __attribute__((unused)))
+int ha_blackhole::rnd_next(unsigned char *buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::rnd_pos(uchar * buf __attribute__((unused)),
-                          uchar *pos __attribute__((unused)))
+int ha_blackhole::rnd_pos(unsigned char * buf __attribute__((unused)),
+                          unsigned char *pos __attribute__((unused)))
 {
   assert(0);
   return(0);
 }
 
 
-void ha_blackhole::position(const uchar *record __attribute__((unused)))
+void ha_blackhole::position(const unsigned char *record __attribute__((unused)))
 {
   assert(0);
   return;
@@ -164,8 +164,8 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
 }
 
 
-int ha_blackhole::index_read_map(uchar * buf __attribute__((unused)),
-                                 const uchar * key __attribute__((unused)),
+int ha_blackhole::index_read_map(unsigned char * buf __attribute__((unused)),
+                                 const unsigned char * key __attribute__((unused)),
                                  key_part_map keypart_map  __attribute__((unused)),
                                  enum ha_rkey_function find_flag __attribute__((unused)))
 {
@@ -173,9 +173,9 @@ int ha_blackhole::index_read_map(uchar * buf __attribute__((unused)),
 }
 
 
-int ha_blackhole::index_read_idx_map(uchar * buf __attribute__((unused)),
+int ha_blackhole::index_read_idx_map(unsigned char * buf __attribute__((unused)),
                                      uint idx __attribute__((unused)),
-                                     const uchar * key __attribute__((unused)),
+                                     const unsigned char * key __attribute__((unused)),
                                      key_part_map keypart_map __attribute__((unused)),
                                      enum ha_rkey_function find_flag __attribute__((unused)))
 {
@@ -183,33 +183,33 @@ int ha_blackhole::index_read_idx_map(uchar * buf __attribute__((unused)),
 }
 
 
-int ha_blackhole::index_read_last_map(uchar * buf __attribute__((unused)),
-                                      const uchar * key __attribute__((unused)),
+int ha_blackhole::index_read_last_map(unsigned char * buf __attribute__((unused)),
+                                      const unsigned char * key __attribute__((unused)),
                                       key_part_map keypart_map __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_next(uchar * buf __attribute__((unused)))
+int ha_blackhole::index_next(unsigned char * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_prev(uchar * buf __attribute__((unused)))
+int ha_blackhole::index_prev(unsigned char * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_first(uchar * buf __attribute__((unused)))
+int ha_blackhole::index_first(unsigned char * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_last(uchar * buf __attribute__((unused)))
+int ha_blackhole::index_last(unsigned char * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
@@ -224,7 +224,7 @@ static st_blackhole_share *get_share(const char *table_name)
   pthread_mutex_lock(&blackhole_mutex);
     
   if (!(share= (st_blackhole_share*) hash_search(&blackhole_open_tables,
-                                                 (uchar*) table_name, length)))
+                                                 (unsigned char*) table_name, length)))
   {
     if (!(share= (st_blackhole_share*) my_malloc(sizeof(st_blackhole_share) +
                                                  length,
@@ -234,9 +234,9 @@ static st_blackhole_share *get_share(const char *table_name)
     share->table_name_length= length;
     my_stpcpy(share->table_name, table_name);
     
-    if (my_hash_insert(&blackhole_open_tables, (uchar*) share))
+    if (my_hash_insert(&blackhole_open_tables, (unsigned char*) share))
     {
-      free((uchar*) share);
+      free((unsigned char*) share);
       share= NULL;
       goto error;
     }
@@ -254,21 +254,21 @@ static void free_share(st_blackhole_share *share)
 {
   pthread_mutex_lock(&blackhole_mutex);
   if (!--share->use_count)
-    hash_delete(&blackhole_open_tables, (uchar*) share);
+    hash_delete(&blackhole_open_tables, (unsigned char*) share);
   pthread_mutex_unlock(&blackhole_mutex);
 }
 
 static void blackhole_free_key(st_blackhole_share *share)
 {
   thr_lock_delete(&share->lock);
-  free((uchar*) share);
+  free((unsigned char*) share);
 }
 
-static uchar* blackhole_get_key(st_blackhole_share *share, size_t *length,
+static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length,
                                 bool not_used __attribute__((unused)))
 {
   *length= share->table_name_length;
-  return (uchar*) share->table_name;
+  return (unsigned char*) share->table_name;
 }
 
 static int blackhole_init(void *p)

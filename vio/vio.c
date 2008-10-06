@@ -100,8 +100,8 @@ void vio_delete(Vio* vio)
 
   if (vio->type != VIO_CLOSED)
     vio->vioclose(vio);
-  free((uchar*) vio->read_buffer);
-  free((uchar*) vio);
+  free((unsigned char*) vio->read_buffer);
+  free((unsigned char*) vio);
 }
 
 

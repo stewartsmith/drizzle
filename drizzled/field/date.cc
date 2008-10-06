@@ -247,7 +247,7 @@ bool Field_newdate::get_time(DRIZZLE_TIME *ltime)
 }
 
 
-int Field_newdate::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_newdate::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint32_t a,b;
   a=(uint32_t) uint3korr(a_ptr);
@@ -256,7 +256,7 @@ int Field_newdate::cmp(const uchar *a_ptr, const uchar *b_ptr)
 }
 
 
-void Field_newdate::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_newdate::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
   to[0] = ptr[2];
   to[1] = ptr[1];

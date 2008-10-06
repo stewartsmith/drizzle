@@ -52,7 +52,7 @@ void* my_realloc(void* oldpoint, size_t size, myf my_flags)
     free(oldpoint);
   }
 #else
-  if ((point= (uchar*) realloc(oldpoint,size)) == NULL)
+  if ((point= (unsigned char*) realloc(oldpoint,size)) == NULL)
   {
     if (my_flags & MY_FREE_ON_ERROR)
       free(oldpoint);

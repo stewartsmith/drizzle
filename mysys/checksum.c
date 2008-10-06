@@ -29,7 +29,7 @@
       length    length of the block
 */
 
-ha_checksum my_checksum(ha_checksum crc, const uchar *pos, size_t length)
+ha_checksum my_checksum(ha_checksum crc, const unsigned char *pos, size_t length)
 {
   return (ha_checksum)crc32((uint)crc, pos, length);
 }

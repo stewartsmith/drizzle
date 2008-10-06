@@ -59,7 +59,7 @@ class ha_tina: public handler
   off_t next_position;     /* Next position in the file scan */
   off_t local_saved_data_file_length; /* save position for reads */
   off_t temp_file_length;
-  uchar byte_buffer[IO_SIZE];
+  unsigned char byte_buffer[IO_SIZE];
   Transparent_file *file_buff;
   File data_file;                   /* File handler for readers */
   File update_temp_file;
@@ -72,7 +72,7 @@ class ha_tina: public handler
   tina_set chain_buffer[DEFAULT_CHAIN_LENGTH];
   tina_set *chain;
   tina_set *chain_ptr;
-  uchar chain_alloced;
+  unsigned char chain_alloced;
   uint32_t chain_size;
   uint local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
@@ -131,12 +131,12 @@ public:
 
   int open(const char *name, int mode, uint open_options);
   int close(void);
-  int write_row(uchar * buf);
-  int update_row(const uchar * old_data, uchar * new_data);
-  int delete_row(const uchar * buf);
+  int write_row(unsigned char * buf);
+  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int delete_row(const unsigned char * buf);
   int rnd_init(bool scan=1);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
   bool check_and_repair(THD *thd);
   int check(THD* thd, HA_CHECK_OPT* check_opt);
   bool is_crashed() const;
@@ -144,7 +144,7 @@ public:
   int repair(THD* thd, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   bool auto_repair() const { return 1; }
-  void position(const uchar *record);
+  void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
@@ -162,8 +162,8 @@ public:
   void update_status();
 
   /* The following methods were added just for TINA */
-  int encode_quote(uchar *buf);
-  int find_current_row(uchar *buf);
+  int encode_quote(unsigned char *buf);
+  int find_current_row(unsigned char *buf);
   int chain_append();
 };
 

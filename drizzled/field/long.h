@@ -23,8 +23,8 @@
 
 class Field_long :public Field_num {
 public:
-  Field_long(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-	     uchar null_bit_arg,
+  Field_long(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+	     unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     bool zero_arg, bool unsigned_arg)
     :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -33,7 +33,7 @@ public:
     {}
   Field_long(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
 	     bool unsigned_arg)
-    :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
+    :Field_num((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0,0,
 	       NONE, field_name_arg,0,0,unsigned_arg)
     {}
   enum Item_result result_type () const { return INT_RESULT; }
@@ -48,12 +48,12 @@ public:
   int64_t val_int(void);
   bool send_binary(Protocol *protocol);
   String *val_str(String*,String *);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint length);
   uint32_t pack_length() const { return 4; }
   void sql_type(String &str) const;
   uint32_t max_display_length() { return MY_INT32_NUM_DECIMAL_DIGITS; }
-  virtual uchar *pack(uchar* to, const uchar *from,
+  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                       uint max_length __attribute__((unused)),
                       bool low_byte_first __attribute__((unused)))
   {
@@ -74,7 +74,7 @@ public:
     return to + sizeof(val);
   }
 
-  virtual const uchar *unpack(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint param_data __attribute__((unused)),
                               bool low_byte_first __attribute__((unused)))
   {

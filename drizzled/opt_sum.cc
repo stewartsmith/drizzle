@@ -227,7 +227,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         Item *expr=item_sum->args[0];
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
-          uchar key_buff[MAX_KEY_LENGTH];
+          unsigned char key_buff[MAX_KEY_LENGTH];
           TABLE_REF ref;
           uint range_fl, prefix_len;
 
@@ -375,7 +375,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         Item *expr=item_sum->args[0];
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
-          uchar key_buff[MAX_KEY_LENGTH];
+          unsigned char key_buff[MAX_KEY_LENGTH];
           TABLE_REF ref;
           uint range_fl, prefix_len;
 
@@ -667,7 +667,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     less_fl= 1-less_fl;                         // Convert '<' -> '>' (etc)
 
   /* Check if field is part of the tested partial key */
-  uchar *key_ptr= ref->key_buff;
+  unsigned char *key_ptr= ref->key_buff;
   KEY_PART_INFO *part;
   for (part= keyinfo->key_part; ; key_ptr+= part++->store_length)
 
@@ -716,14 +716,14 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     if (is_null)
     {
       part->field->set_null();
-      *key_ptr= (uchar) 1;
+      *key_ptr= (unsigned char) 1;
     }
     else
     {
       store_val_in_field(part->field, args[between && max_fl ? 2 : 1],
                          CHECK_FIELD_IGNORE);
       if (part->null_bit) 
-        *key_ptr++= (uchar) test(part->field->is_null());
+        *key_ptr++= (unsigned char) test(part->field->is_null());
       part->field->get_key_image(key_ptr, part->length, Field::itRAW);
     }
     if (is_field_part)

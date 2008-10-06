@@ -101,7 +101,7 @@ static unsigned int global_version;
 #define ARM ".ARM"               // Meta file (deprecated)
 
 /*
-  uchar + uchar
+  unsigned char + unsigned char
 */
 #define DATA_BUFFER_SIZE 2       // Size of the data used in the data file
 #define ARCHIVE_CHECK_HEADER 254 // The number we use to determine corruption
@@ -112,7 +112,7 @@ static handler *archive_create_handler(handlerton *hton,
                                        MEM_ROOT *mem_root);
 int archive_discover(handlerton *hton, THD* thd, const char *db, 
                      const char *name,
-                     uchar **frmblob, 
+                     unsigned char **frmblob, 
                      size_t *frmlen);
 
 static bool archive_use_aio= false;
@@ -137,11 +137,11 @@ static handler *archive_create_handler(handlerton *hton,
 /*
   Used for hash table that tracks open tables.
 */
-static uchar* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
+static unsigned char* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
                              bool not_used __attribute__((unused)))
 {
   *length=share->table_name_length;
-  return (uchar*) share->table_name;
+  return (unsigned char*) share->table_name;
 }
 
 
@@ -220,7 +220,7 @@ int archive_discover(handlerton *hton __attribute__((unused)),
                      THD* thd __attribute__((unused)),
                      const char *db,
                      const char *name,
-                     uchar **frmblob,
+                     unsigned char **frmblob,
                      size_t *frmlen)
 {
   azio_stream frm_stream;
@@ -248,7 +248,7 @@ int archive_discover(handlerton *hton __attribute__((unused)),
   azclose(&frm_stream);
 
   *frmlen= frm_stream.frm_length;
-  *frmblob= (uchar*) frm_ptr;
+  *frmblob= (unsigned char*) frm_ptr;
 
   return(0);
 err:
@@ -286,7 +286,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
   length=(uint) strlen(table_name);
 
   if (!(share=(ARCHIVE_SHARE*) hash_search(&archive_open_tables,
-                                           (uchar*) table_name,
+                                           (unsigned char*) table_name,
                                            length)))
   {
     char *tmp_name;
@@ -340,7 +340,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     }
     azclose(&archive_tmp);
 
-    my_hash_insert(&archive_open_tables, (uchar*) share);
+    my_hash_insert(&archive_open_tables, (unsigned char*) share);
     thr_lock_init(&share->lock);
   }
   share->use_count++;
@@ -363,7 +363,7 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    hash_delete(&archive_open_tables, (uchar*) share);
+    hash_delete(&archive_open_tables, (unsigned char*) share);
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->mutex);
     /* 
@@ -378,7 +378,7 @@ int ha_archive::free_share()
       if (azclose(&(share->archive_write)))
         rc= 1;
     }
-    free((uchar*) share);
+    free((unsigned char*) share);
   }
   pthread_mutex_unlock(&archive_mutex);
 
@@ -557,7 +557,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   azio_stream create_stream;            /* Archive file we are working with */
   File frm_file;                   /* File handler for readers */
   struct stat file_stat;
-  uchar *frm_ptr;
+  unsigned char *frm_ptr;
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
@@ -622,12 +622,12 @@ int ha_archive::create(const char *name, Table *table_arg,
     {
       if (fstat(frm_file, &file_stat))
       {
-        frm_ptr= (uchar *)my_malloc(sizeof(uchar) * file_stat.st_size, MYF(0));
+        frm_ptr= (unsigned char *)my_malloc(sizeof(unsigned char) * file_stat.st_size, MYF(0));
         if (frm_ptr)
         {
           my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
           azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
-          free((uchar*)frm_ptr);
+          free((unsigned char*)frm_ptr);
         }
       }
       my_close(frm_file, MYF(0));
@@ -664,7 +664,7 @@ error:
 /*
   This is where the actual row is written out.
 */
-int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
+int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
 {
   my_off_t written;
   unsigned int r_pack_length;
@@ -690,7 +690,7 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
   the bytes required for the length in the header.
 */
 
-uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((unused)))
+uint32_t ha_archive::max_row_length(const unsigned char *buf __attribute__((unused)))
 {
   uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
@@ -707,9 +707,9 @@ uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((unused)))
 }
 
 
-unsigned int ha_archive::pack_row(uchar *record)
+unsigned int ha_archive::pack_row(unsigned char *record)
 {
-  uchar *ptr;
+  unsigned char *ptr;
 
   if (fix_rec_buff(max_row_length(record)))
     return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
@@ -737,12 +737,12 @@ unsigned int ha_archive::pack_row(uchar *record)
   for implementing start_bulk_insert() is that we could skip 
   setting dirty to true each time.
 */
-int ha_archive::write_row(uchar *buf)
+int ha_archive::write_row(unsigned char *buf)
 {
   int rc;
-  uchar *read_buf= NULL;
+  unsigned char *read_buf= NULL;
   uint64_t temp_auto;
-  uchar *record=  table->record[0];
+  unsigned char *record=  table->record[0];
 
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -785,7 +785,7 @@ int ha_archive::write_row(uchar *buf)
         First we create a buffer that we can use for reading rows, and can pass
         to get_row().
       */
-      if (!(read_buf= (uchar*) my_malloc(table->s->reclength, MYF(MY_WME))))
+      if (!(read_buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
       {
         rc= HA_ERR_OUT_OF_MEM;
         goto error;
@@ -835,7 +835,7 @@ int ha_archive::write_row(uchar *buf)
 error:
   pthread_mutex_unlock(&share->mutex);
   if (read_buf)
-    free((uchar*) read_buf);
+    free((unsigned char*) read_buf);
 
   return(rc);
 }
@@ -863,7 +863,7 @@ int ha_archive::index_init(uint keynr, bool sorted __attribute__((unused)))
   No indexes, so if we get a request for an index search since we tell
   the optimizer that we have unique indexes, we scan
 */
-int ha_archive::index_read(uchar *buf, const uchar *key,
+int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
                              uint key_len, enum ha_rkey_function find_flag)
 {
   int rc;
@@ -872,7 +872,7 @@ int ha_archive::index_read(uchar *buf, const uchar *key,
 }
 
 
-int ha_archive::index_read_idx(uchar *buf, uint index, const uchar *key,
+int ha_archive::index_read_idx(unsigned char *buf, uint index, const unsigned char *key,
                                uint key_len,
                                enum ha_rkey_function find_flag __attribute__((unused)))
 {
@@ -905,7 +905,7 @@ error:
 }
 
 
-int ha_archive::index_next(uchar * buf) 
+int ha_archive::index_next(unsigned char * buf) 
 { 
   bool found= 0;
 
@@ -949,7 +949,7 @@ int ha_archive::rnd_init(bool scan)
   This is the method that is used to read a row. It assumes that the row is 
   positioned where you want it.
 */
-int ha_archive::get_row(azio_stream *file_to_read, uchar *buf)
+int ha_archive::get_row(azio_stream *file_to_read, unsigned char *buf)
 {
   int rc;
 
@@ -968,8 +968,8 @@ bool ha_archive::fix_rec_buff(unsigned int length)
 
   if (length > record_buffer->length)
   {
-    uchar *newptr;
-    if (!(newptr=(uchar*) my_realloc((uchar*) record_buffer->buffer, 
+    unsigned char *newptr;
+    if (!(newptr=(unsigned char*) my_realloc((unsigned char*) record_buffer->buffer, 
                                     length,
 				    MYF(MY_ALLOW_ZERO_PTR))))
       return(1);
@@ -982,14 +982,14 @@ bool ha_archive::fix_rec_buff(unsigned int length)
   return(0);
 }
 
-int ha_archive::unpack_row(azio_stream *file_to_read, uchar *record)
+int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
 {
   unsigned int read;
   int error;
-  const uchar *ptr;
+  const unsigned char *ptr;
 
   read= azread_row(file_to_read, &error);
-  ptr= (const uchar *)file_to_read->row_ptr;
+  ptr= (const unsigned char *)file_to_read->row_ptr;
 
   if (error || read == 0)
   {
@@ -1010,7 +1010,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, uchar *record)
 }
 
 
-int ha_archive::get_row_version3(azio_stream *file_to_read, uchar *buf)
+int ha_archive::get_row_version3(azio_stream *file_to_read, unsigned char *buf)
 {
   int returnable= unpack_row(file_to_read, buf);
 
@@ -1023,7 +1023,7 @@ int ha_archive::get_row_version3(azio_stream *file_to_read, uchar *buf)
   or by having had ha_archive::rnd_pos() called before it is called.
 */
 
-int ha_archive::rnd_next(uchar *buf)
+int ha_archive::rnd_next(unsigned char *buf)
 {
   int rc;
 
@@ -1050,7 +1050,7 @@ int ha_archive::rnd_next(uchar *buf)
   needed.
 */
 
-void ha_archive::position(const uchar *record __attribute__((unused)))
+void ha_archive::position(const unsigned char *record __attribute__((unused)))
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1064,7 +1064,7 @@ void ha_archive::position(const uchar *record __attribute__((unused)))
   correctly ordered row.
 */
 
-int ha_archive::rnd_pos(uchar * buf, uchar *pos)
+int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   current_position= (my_off_t)my_get_ptr(pos, ref_length);
@@ -1428,7 +1428,7 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   }
   r->length= (int)length;
 
-  if (!(r->buffer= (uchar*) my_malloc(r->length,
+  if (!(r->buffer= (unsigned char*) my_malloc(r->length,
                                     MYF(MY_WME))))
   {
     free((char*) r);

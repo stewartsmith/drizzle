@@ -224,7 +224,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   pthread_mutex_unlock(&share->intern_lock);
 #if defined(FULL_LOG) || defined(_lint)
   lock_type|=(int) (flag << 8);		/* Set bit to set if real lock */
-  myisam_log_command(MI_LOG_LOCK,info,(uchar*) &lock_type,sizeof(lock_type),
+  myisam_log_command(MI_LOG_LOCK,info,(unsigned char*) &lock_type,sizeof(lock_type),
 		     error);
 #endif
   return(error);
@@ -449,7 +449,7 @@ int _mi_test_if_changed(register MI_INFO *info)
 
 int _mi_mark_file_changed(MI_INFO *info)
 {
-  uchar buff[3];
+  unsigned char buff[3];
   register MYISAM_SHARE *share=info->s;
 
   if (!(share->state.changed & STATE_CHANGED) || ! share->global_changed)
@@ -481,7 +481,7 @@ int _mi_mark_file_changed(MI_INFO *info)
 
 int _mi_decrement_open_count(MI_INFO *info)
 {
-  uchar buff[2];
+  unsigned char buff[2];
   register MYISAM_SHARE *share=info->s;
   int lock_error=0,write_error=0;
   if (share->global_changed)

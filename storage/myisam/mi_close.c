@@ -81,8 +81,8 @@ int mi_close(register MI_INFO *info)
     }
     if (share->decode_trees)
     {
-      free((uchar*) share->decode_trees);
-      free((uchar*) share->decode_tables);
+      free((unsigned char*) share->decode_trees);
+      free((unsigned char*) share->decode_tables);
     }
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->intern_lock);
@@ -94,14 +94,14 @@ int mi_close(register MI_INFO *info)
 	rwlock_destroy(&share->key_root_lock[i]);
       }
     }
-    free((uchar*) info->s);
+    free((unsigned char*) info->s);
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
 
   if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
     error = my_errno;
 
-  free((uchar*) info);
+  free((unsigned char*) info);
 
   if (error)
   {

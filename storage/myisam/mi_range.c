@@ -20,10 +20,10 @@
 
 #include "myisamdef.h"
 
-static ha_rows _mi_record_pos(MI_INFO *, const uchar *, key_part_map,
+static ha_rows _mi_record_pos(MI_INFO *, const unsigned char *, key_part_map,
                               enum ha_rkey_function);
-static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,uchar *, uint,uint,my_off_t);
-static uint _mi_keynr(MI_INFO *info,MI_KEYDEF *,uchar *, uchar *,uint *);
+static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,my_off_t);
+static uint _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned char *,uint *);
 
 /*
   Estimate how many records there is in a given range
@@ -82,19 +82,19 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
 
 	/* Find relative position (in records) for key in index-tree */
 
-static ha_rows _mi_record_pos(MI_INFO *info, const uchar *key,
+static ha_rows _mi_record_pos(MI_INFO *info, const unsigned char *key,
                               key_part_map keypart_map,
 			      enum ha_rkey_function search_flag)
 {
   uint inx=(uint) info->lastinx, nextflag, key_len;
   MI_KEYDEF *keyinfo=info->s->keyinfo+inx;
-  uchar *key_buff;
+  unsigned char *key_buff;
   double pos;
 
   assert(keypart_map);
 
   key_buff=info->lastkey+info->s->base.max_key_length;
-  key_len=_mi_pack_key(info,inx,key_buff,(uchar*) key, keypart_map,
+  key_len=_mi_pack_key(info,inx,key_buff,(unsigned char*) key, keypart_map,
 		       (HA_KEYSEG**) 0);
   nextflag=myisam_read_vec[search_flag];
   if (!(nextflag & (SEARCH_FIND | SEARCH_NO_FIND | SEARCH_LAST)))
@@ -150,13 +150,13 @@ static ha_rows _mi_record_pos(MI_INFO *info, const uchar *key,
 
 static double _mi_search_pos(register MI_INFO *info,
 			     register MI_KEYDEF *keyinfo,
-			     uchar *key, uint key_len, uint nextflag,
+			     unsigned char *key, uint key_len, uint nextflag,
 			     register my_off_t pos)
 {
   int flag;
   uint nod_flag, keynr, max_keynr= 0;
   bool after_key;
-  uchar *keypos,*buff;
+  unsigned char *keypos,*buff;
   double offset;
 
   if (pos == HA_OFFSET_ERROR)
@@ -212,11 +212,11 @@ err:
 
 	/* Get keynummer of current key and max number of keys in nod */
 
-static uint _mi_keynr(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
-                      uchar *keypos, uint *ret_max_key)
+static uint _mi_keynr(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
+                      unsigned char *keypos, uint *ret_max_key)
 {
   uint nod_flag,keynr,max_key;
-  uchar t_buff[MI_MAX_KEY_BUFF],*end;
+  unsigned char t_buff[MI_MAX_KEY_BUFF],*end;
 
   end= page+mi_getint(page);
   nod_flag=mi_test_if_nod(page);

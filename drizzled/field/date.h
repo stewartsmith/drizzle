@@ -23,7 +23,7 @@
 
 class Field_newdate :public Field_str {
 public:
-  Field_newdate(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
+  Field_newdate(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 		enum utype unireg_check_arg, const char *field_name_arg,
 		const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
@@ -31,7 +31,7 @@ public:
     {}
   Field_newdate(bool maybe_null_arg, const char *field_name_arg,
                 const CHARSET_INFO * const cs)
-    :Field_str((uchar*) 0,10, maybe_null_arg ? (uchar*) "": 0,0,
+    :Field_str((unsigned char*) 0,10, maybe_null_arg ? (unsigned char*) "": 0,0,
                NONE, field_name_arg, cs) {}
   enum_field_types type() const { return DRIZZLE_TYPE_NEWDATE;}
   enum_field_types real_type() const { return DRIZZLE_TYPE_NEWDATE; }
@@ -46,8 +46,8 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint length);
   uint32_t pack_length() const { return 3; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }

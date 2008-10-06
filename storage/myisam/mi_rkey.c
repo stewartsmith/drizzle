@@ -20,10 +20,10 @@
 	/* Read a record using key */
 	/* Ordinary search_flag is 0 ; Give error if no record with key */
 
-int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
+int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key,
             key_part_map keypart_map, enum ha_rkey_function search_flag)
 {
-  uchar *key_buff;
+  unsigned char *key_buff;
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *keyinfo;
   HA_KEYSEG *last_used_keyseg;
@@ -55,7 +55,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
     assert(keypart_map);
     /* Save the packed key for later use in the second buffer of lastkey. */
     key_buff=info->lastkey+info->s->base.max_key_length;
-    pack_key_length=_mi_pack_key(info,(uint) inx, key_buff, (uchar*) key,
+    pack_key_length=_mi_pack_key(info,(uint) inx, key_buff, (unsigned char*) key,
 				 keypart_map, &last_used_keyseg);
     /* Save packed_key_length for use by the MERGE engine. */
     info->pack_key_length= pack_key_length;

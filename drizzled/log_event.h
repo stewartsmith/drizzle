@@ -836,7 +836,7 @@ public:
   static void operator delete(void *ptr,
                               size_t size __attribute__((unused)))
   {
-    free((uchar*) ptr);
+    free((unsigned char*) ptr);
   }
 
   /* Placement version of the above operators */
@@ -1467,7 +1467,7 @@ public:
   ~Query_log_event()
   {
     if (data_buf)
-      free((uchar*) data_buf);
+      free((unsigned char*) data_buf);
   }
   Log_event_type get_type_code() { return QUERY_EVENT; }
   bool write(IO_CACHE* file);
@@ -1792,7 +1792,7 @@ public:
   uint32_t fname_len;
   uint32_t num_fields;
   const char* fields;
-  const uchar* field_lens;
+  const unsigned char* field_lens;
   uint32_t field_block_len;
 
   const char* table_name;
@@ -1972,7 +1972,7 @@ public:
   uint8_t number_of_event_types;
   /* The list of post-headers' lengthes */
   uint8_t *post_header_len;
-  uchar server_version_split[3];
+  unsigned char server_version_split[3];
   const uint8_t *event_type_permutation;
 
   Format_description_log_event(uint8_t binlog_ver, const char* server_ver=0);
@@ -1981,7 +1981,7 @@ public:
                                *description_event);
   ~Format_description_log_event()
   {
-    free((uchar*)post_header_len);
+    free((unsigned char*)post_header_len);
   }
   Log_event_type get_type_code() { return FORMAT_DESCRIPTION_EVENT;}
   bool write(IO_CACHE* file);
@@ -2051,9 +2051,9 @@ class Intvar_log_event: public Log_event
 {
 public:
   uint64_t val;
-  uchar type;
+  unsigned char type;
 
-  Intvar_log_event(THD* thd_arg,uchar type_arg, uint64_t val_arg)
+  Intvar_log_event(THD* thd_arg,unsigned char type_arg, uint64_t val_arg)
     :Log_event(thd_arg,0,0),val(val_arg),type(type_arg)
   {}
   void pack_info(Protocol* protocol);
@@ -2314,7 +2314,7 @@ public:
   ~Rotate_log_event()
   {
     if (flags & DUP_NAME)
-      free((uchar*) new_log_ident);
+      free((unsigned char*) new_log_ident);
   }
   Log_event_type get_type_code() { return ROTATE_EVENT;}
   int get_data_size() { return  ident_len + ROTATE_HEADER_LEN;}
@@ -2345,7 +2345,7 @@ protected:
   */
   bool fake_base;
 public:
-  uchar* block;
+  unsigned char* block;
   const char *event_buf;
   uint block_len;
   uint file_id;
@@ -2355,7 +2355,7 @@ public:
 			const char* table_name_arg,
 			List<Item>& fields_arg,
 			enum enum_duplicates handle_dup, bool ignore,
-			uchar* block_arg, uint block_len_arg,
+			unsigned char* block_arg, uint block_len_arg,
 			bool using_trans);
   void pack_info(Protocol* protocol);
 
@@ -2399,7 +2399,7 @@ private:
 class Append_block_log_event: public Log_event
 {
 public:
-  uchar* block;
+  unsigned char* block;
   uint block_len;
   uint file_id;
   /*
@@ -2415,7 +2415,7 @@ public:
   */
   const char* db;
 
-  Append_block_log_event(THD* thd, const char* db_arg, uchar* block_arg,
+  Append_block_log_event(THD* thd, const char* db_arg, unsigned char* block_arg,
 			 uint block_len_arg, bool using_trans);
   void pack_info(Protocol* protocol);
   virtual int get_create_or_append() const;
@@ -2507,7 +2507,7 @@ class Begin_load_query_log_event: public Append_block_log_event
 {
 public:
   Begin_load_query_log_event(THD* thd_arg, const char *db_arg,
-                             uchar* block_arg, uint block_len_arg,
+                             unsigned char* block_arg, uint block_len_arg,
                              bool using_trans);
   Begin_load_query_log_event(THD* thd);
   int get_create_or_append() const;
@@ -2896,21 +2896,21 @@ private:
   char const    *m_tblnam;
   size_t         m_tbllen;
   ulong          m_colcnt;
-  uchar         *m_coltype;
+  unsigned char         *m_coltype;
 
-  uchar         *m_memory;
+  unsigned char         *m_memory;
   ulong          m_table_id;
   flag_set       m_flags;
 
   size_t         m_data_size;
 
-  uchar          *m_field_metadata;        // buffer for field metadata
+  unsigned char          *m_field_metadata;        // buffer for field metadata
   /*
     The size of field metadata buffer set by calling save_field_metadata()
   */
   ulong          m_field_metadata_size;   
-  uchar         *m_null_bits;
-  uchar         *m_meta_memory;
+  unsigned char         *m_null_bits;
+  unsigned char         *m_meta_memory;
 };
 
 
@@ -2986,7 +2986,7 @@ public:
 
   virtual void pack_info(Protocol *protocol);
 
-  int add_row_data(uchar *data, size_t length)
+  int add_row_data(unsigned char *data, size_t length)
   {
     return do_add_row_data(data,length); 
   }
@@ -3025,7 +3025,7 @@ protected:
 		 Log_event_type event_type,
 		 const Format_description_log_event *description_event);
 
-  virtual int do_add_row_data(uchar *data, size_t length);
+  virtual int do_add_row_data(unsigned char *data, size_t length);
 
   Table *m_table;		/* The table the rows belong to */
   ulong       m_table_id;	/* Table ID */
@@ -3046,17 +3046,17 @@ protected:
   uint32_t    m_bitbuf[128/(sizeof(uint32_t)*8)];
   uint32_t    m_bitbuf_ai[128/(sizeof(uint32_t)*8)];
 
-  uchar    *m_rows_buf;		/* The rows in packed format */
-  uchar    *m_rows_cur;		/* One-after the end of the data */
-  uchar    *m_rows_end;		/* One-after the end of the allocated space */
+  unsigned char    *m_rows_buf;		/* The rows in packed format */
+  unsigned char    *m_rows_cur;		/* One-after the end of the data */
+  unsigned char    *m_rows_end;		/* One-after the end of the allocated space */
 
   flag_set m_flags;		/* Flags for row-level events */
 
   /* helper functions */
 
-  const uchar *m_curr_row;     /* Start of the row being processed */
-  const uchar *m_curr_row_end; /* One-after the end of the current row */
-  uchar    *m_key;      /* Buffer to keep key value during searches */
+  const unsigned char *m_curr_row;     /* Start of the row being processed */
+  const unsigned char *m_curr_row_end; /* One-after the end of the current row */
+  unsigned char    *m_key;      /* Buffer to keep key value during searches */
 
   int find_row(const Relay_log_info *const);
   int write_row(const Relay_log_info *const, const bool);
@@ -3159,9 +3159,9 @@ public:
                        const Format_description_log_event *description_event);
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record
+                                          const unsigned char *before_record
                                           __attribute__((unused)),
-                                          const uchar *after_record)
+                                          const unsigned char *after_record)
   {
     return thd->binlog_write_row(table, is_transactional, after_record);
   }
@@ -3208,8 +3208,8 @@ public:
 
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record,
-                                          const uchar *after_record)
+                                          const unsigned char *before_record,
+                                          const unsigned char *after_record)
   {
     return thd->binlog_update_row(table, is_transactional,
                                   before_record, after_record);
@@ -3263,8 +3263,8 @@ public:
 			const Format_description_log_event *description_event);
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record,
-                                          const uchar *after_record
+                                          const unsigned char *before_record,
+                                          const unsigned char *after_record
                                           __attribute__((unused)))
   {
     return thd->binlog_delete_row(table, is_transactional, before_record);

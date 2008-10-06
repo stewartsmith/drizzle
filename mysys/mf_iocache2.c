@@ -221,7 +221,7 @@ size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length)
 
   for (;;)
   {
-    uchar *pos, *end;
+    unsigned char *pos, *end;
     if (length > max_length)
       length=max_length;
     for (pos=info->read_pos,end=pos+length ; pos < end ;)
@@ -299,7 +299,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 
     length= (size_t) (fmt - start);
     out_length+=length;
-    if (my_b_write(info, (const uchar*) start, length))
+    if (my_b_write(info, (const unsigned char*) start, length))
       goto err;
 
     if (*fmt == '\0')				/* End of format */
@@ -370,14 +370,14 @@ process_flags:
       size_t length2 = strlen(par);
       /* TODO: implement precision */
       out_length+= length2;
-      if (my_b_write(info, (const uchar*) par, length2))
+      if (my_b_write(info, (const unsigned char*) par, length2))
 	goto err;
     }
     else if (*fmt == 'b')                       /* Sized buffer parameter, only precision makes sense */
     {
       char *par = va_arg(args, char *);
       out_length+= precision;
-      if (my_b_write(info, (const uchar*) par, precision))
+      if (my_b_write(info, (const unsigned char*) par, precision))
         goto err;
     }
     else if (*fmt == 'd' || *fmt == 'u')	/* Integer parameter */
@@ -396,14 +396,14 @@ process_flags:
       if (minimum_width > length2) 
       {
         const size_t buflen = minimum_width - length2;
-        uchar *buffz= my_alloca(buflen);
+        unsigned char *buffz= my_alloca(buflen);
         memset(buffz, is_zero_padded ? '0' : ' ', buflen);
         my_b_write(info, buffz, buflen);
         my_afree(buffz);
       }
 
       out_length+= length2;
-      if (my_b_write(info, (const uchar *)buff, length2))
+      if (my_b_write(info, (const unsigned char *)buff, length2))
 	goto err;
     }
     else if ((*fmt == 'l' && fmt[1] == 'd') || fmt[1] == 'u')
@@ -419,13 +419,13 @@ process_flags:
       else
 	length2= (size_t) (int10_to_str(iarg,buff,10)- buff);
       out_length+= length2;
-      if (my_b_write(info, (uchar*) buff, length2))
+      if (my_b_write(info, (unsigned char*) buff, length2))
 	goto err;
     }
     else
     {
       /* %% or unknown code */
-      if (my_b_write(info, (const uchar*) backtrack, (size_t) (fmt-backtrack)))
+      if (my_b_write(info, (const unsigned char*) backtrack, (size_t) (fmt-backtrack)))
         goto err;
       out_length+= fmt-backtrack;
     }

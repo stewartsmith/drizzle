@@ -263,7 +263,7 @@ bool Field_datetime::get_time(DRIZZLE_TIME *ltime)
   return Field_datetime::get_date(ltime,0);
 }
 
-int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -282,7 +282,7 @@ int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
-void Field_datetime::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_datetime::sort_string(unsigned char *to,uint length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

@@ -47,7 +47,7 @@ extern "C" {
 #endif /* defined HAVE_OS_LINUX */
 
 #ifdef HAVE_STACKTRACE
-  void print_stacktrace(uchar* stack_bottom, ulong thread_stack);
+  void print_stacktrace(unsigned char* stack_bottom, ulong thread_stack);
   void safe_print_str(const char* name, const char* val, int max_len);
 #else
 /* Define empty prototypes for functions that are not implemented */

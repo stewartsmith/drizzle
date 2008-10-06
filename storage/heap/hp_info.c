@@ -18,7 +18,7 @@
 #include "heapdef.h"
 
 
-uchar *heap_position(HP_INFO *info)
+unsigned char *heap_position(HP_INFO *info)
 {
   return ((info->update & HA_STATE_AKTIV) ? info->current_ptr :
 	  (HEAP_PTR) 0);

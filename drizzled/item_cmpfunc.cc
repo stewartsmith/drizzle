@@ -561,8 +561,8 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
         which would be transformed to:
         WHERE col= 'j'
       */
-      (*a)->walk(&Item::set_no_const_sub, false, (uchar*) 0);
-      (*b)->walk(&Item::set_no_const_sub, false, (uchar*) 0);
+      (*a)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
+      (*b)->walk(&Item::set_no_const_sub, false, (unsigned char*) 0);
     }
     break;
   }
@@ -1621,7 +1621,7 @@ bool Item_in_optimizer::is_null()
     @retval NULL if an error occurred
 */
 
-Item *Item_in_optimizer::transform(Item_transformer transformer, uchar *argument)
+Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *argument)
 {
   Item *new_item;
 
@@ -2671,7 +2671,7 @@ bool Item_func_case::fix_fields(THD *thd, Item **ref)
     buff should match stack usage from
     Item_func_case::val_int() -> Item_func_case::find_item()
   */
-  uchar buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2+sizeof(double)*2+sizeof(int64_t)*2];
+  unsigned char buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2+sizeof(double)*2+sizeof(int64_t)*2];
   bool res= Item_func::fix_fields(thd, ref);
   /*
     Call check_stack_overrun after fix_fields to be sure that stack variable
@@ -3052,7 +3052,7 @@ static int cmp_decimal(void *cmp_arg __attribute__((unused)), my_decimal *a, my_
 
 int in_vector::find(Item *item)
 {
-  uchar *result=get_value(item);
+  unsigned char *result=get_value(item);
   if (!result || !used_count)
     return 0;				// Null value
 
@@ -3110,9 +3110,9 @@ void in_string::set(uint pos,Item *item)
 }
 
 
-uchar *in_string::get_value(Item *item)
+unsigned char *in_string::get_value(Item *item)
 {
-  return (uchar*) item->val_str(&tmp);
+  return (unsigned char*) item->val_str(&tmp);
 }
 
 in_row::in_row(uint elements, Item * item __attribute__((unused)))
@@ -3134,12 +3134,12 @@ in_row::~in_row()
     delete [] (cmp_item_row*) base;
 }
 
-uchar *in_row::get_value(Item *item)
+unsigned char *in_row::get_value(Item *item)
 {
   tmp.store_value(item);
   if (item->is_null())
     return 0;
-  return (uchar *)&tmp;
+  return (unsigned char *)&tmp;
 }
 
 void in_row::set(uint pos, Item *item)
@@ -3160,13 +3160,13 @@ void in_int64_t::set(uint pos,Item *item)
   buff->unsigned_flag= item->unsigned_flag;
 }
 
-uchar *in_int64_t::get_value(Item *item)
+unsigned char *in_int64_t::get_value(Item *item)
 {
   tmp.val= item->val_int();
   if (item->null_value)
     return 0;
   tmp.unsigned_flag= item->unsigned_flag;
-  return (uchar*) &tmp;
+  return (unsigned char*) &tmp;
 }
 
 void in_datetime::set(uint pos,Item *item)
@@ -3179,7 +3179,7 @@ void in_datetime::set(uint pos,Item *item)
   buff->unsigned_flag= 1L;
 }
 
-uchar *in_datetime::get_value(Item *item)
+unsigned char *in_datetime::get_value(Item *item)
 {
   bool is_null;
   Item **tmp_item= lval_cache ? &lval_cache : &item;
@@ -3187,7 +3187,7 @@ uchar *in_datetime::get_value(Item *item)
   if (item->null_value)
     return 0;
   tmp.unsigned_flag= 1L;
-  return (uchar*) &tmp;
+  return (unsigned char*) &tmp;
 }
 
 in_double::in_double(uint elements)
@@ -3199,12 +3199,12 @@ void in_double::set(uint pos,Item *item)
   ((double*) base)[pos]= item->val_real();
 }
 
-uchar *in_double::get_value(Item *item)
+unsigned char *in_double::get_value(Item *item)
 {
   tmp= item->val_real();
   if (item->null_value)
     return 0;					/* purecov: inspected */
-  return (uchar*) &tmp;
+  return (unsigned char*) &tmp;
 }
 
 
@@ -3226,12 +3226,12 @@ void in_decimal::set(uint pos, Item *item)
 }
 
 
-uchar *in_decimal::get_value(Item *item)
+unsigned char *in_decimal::get_value(Item *item)
 {
   my_decimal *result= item->val_decimal(&val);
   if (item->null_value)
     return 0;
-  return (uchar *)result;
+  return (unsigned char *)result;
 }
 
 
@@ -3508,8 +3508,8 @@ Item_func_in::fix_fields(THD *thd, Item **ref)
 static int srtcmp_in(const CHARSET_INFO * const cs, const String *x,const String *y)
 {
   return cs->coll->strnncollsp(cs,
-                               (uchar *) x->ptr(),x->length(),
-                               (uchar *) y->ptr(),y->length(), 0);
+                               (unsigned char *) x->ptr(),x->length(),
+                               (unsigned char *) y->ptr(),y->length(), 0);
 }
 
 
@@ -3876,7 +3876,7 @@ Item_cond::fix_fields(THD *thd, Item **ref __attribute__((unused)))
   List_iterator<Item> li(list);
   Item *item;
   void *orig_thd_marker= thd->thd_marker;
-  uchar buff[sizeof(char*)];			// Max local vars in function
+  unsigned char buff[sizeof(char*)];			// Max local vars in function
   not_null_tables_cache= used_tables_cache= 0;
   const_item_cache= 1;
 
@@ -3979,7 +3979,7 @@ void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref __attrib
 }
 
 
-bool Item_cond::walk(Item_processor processor, bool walk_subquery, uchar *arg)
+bool Item_cond::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
   List_iterator_fast<Item> li(list);
   Item *item;
@@ -4008,7 +4008,7 @@ bool Item_cond::walk(Item_processor processor, bool walk_subquery, uchar *arg)
     Item returned as the result of transformation of the root node 
 */
 
-Item *Item_cond::transform(Item_transformer transformer, uchar *arg)
+Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
 {
   List_iterator<Item> li(list);
   Item *item;
@@ -4055,8 +4055,8 @@ Item *Item_cond::transform(Item_transformer transformer, uchar *arg)
     Item returned as the result of transformation of the root node 
 */
 
-Item *Item_cond::compile(Item_analyzer analyzer, uchar **arg_p,
-                         Item_transformer transformer, uchar *arg_t)
+Item *Item_cond::compile(Item_analyzer analyzer, unsigned char **arg_p,
+                         Item_transformer transformer, unsigned char *arg_t)
 {
   if (!(this->*analyzer)(arg_p))
     return 0;
@@ -4069,7 +4069,7 @@ Item *Item_cond::compile(Item_analyzer analyzer, uchar **arg_p,
       The same parameter value of arg_p must be passed
       to analyze any argument of the condition formula.
     */   
-    uchar *arg_v= *arg_p;
+    unsigned char *arg_v= *arg_p;
     Item *new_item= item->compile(analyzer, &arg_v, transformer, arg_t);
     if (new_item && new_item != item)
       li.replace(new_item);
@@ -4429,8 +4429,8 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
         const CHARSET_INFO * const cs= escape_str->charset();
         my_wc_t wc;
         int rc= cs->cset->mb_wc(cs, &wc,
-                                (const uchar*) escape_str->ptr(),
-                                (const uchar*) escape_str->ptr() +
+                                (const unsigned char*) escape_str->ptr(),
+                                (const unsigned char*) escape_str->ptr() +
                                                escape_str->length());
         escape= (int) (rc > 0 ? wc : '\\');
       }
@@ -4510,9 +4510,9 @@ void Item_func_like::cleanup()
 }
 
 #ifdef LIKE_CMP_TOUPPER
-#define likeconv(cs,A) (uchar) (cs)->toupper(A)
+#define likeconv(cs,A) (unsigned char) (cs)->toupper(A)
 #else
-#define likeconv(cs,A) (uchar) (cs)->sort_order[(uchar) (A)]
+#define likeconv(cs,A) (unsigned char) (cs)->sort_order[(unsigned char) (A)]
 #endif
 
 
@@ -4634,7 +4634,7 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   if (!cs->sort_order)
   {
     for (j = 0; j < plm1; j++)
-      bmBc[(uint) (uchar) pattern[j]] = plm1 - j;
+      bmBc[(uint) (unsigned char) pattern[j]] = plm1 - j;
   }
   else
   {
@@ -4680,7 +4680,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 
       register const int v = plm1 - i;
       turboShift = u - v;
-      bcShift    = bmBc[(uint) (uchar) text[i + j]] - plm1 + i;
+      bcShift    = bmBc[(uint) (unsigned char) text[i + j]] - plm1 + i;
       shift      = (turboShift > bcShift) ? turboShift : bcShift;
       shift      = (shift > bmGs[i]) ? shift : bmGs[i];
       if (shift == bmGs[i])
@@ -5156,7 +5156,7 @@ void Item_equal::fix_length_and_dec()
                                       item->collation.collation);
 }
 
-bool Item_equal::walk(Item_processor processor, bool walk_subquery, uchar *arg)
+bool Item_equal::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
   List_iterator_fast<Item_field> it(fields);
   Item *item;
@@ -5168,7 +5168,7 @@ bool Item_equal::walk(Item_processor processor, bool walk_subquery, uchar *arg)
   return Item_func::walk(processor, walk_subquery, arg);
 }
 
-Item *Item_equal::transform(Item_transformer transformer, uchar *arg)
+Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
 {
   List_iterator<Item_field> it(fields);
   Item *item;

@@ -187,10 +187,10 @@ public:
   {
     return agg_item_charsets(c, func_name(), items, nitems, flags, item_sep);
   }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
-  Item* compile(Item_analyzer analyzer, uchar **arg_p,
-                Item_transformer transformer, uchar *arg_t);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
+  Item* compile(Item_analyzer analyzer, unsigned char **arg_p,
+                Item_transformer transformer, unsigned char *arg_t);
   void traverse_cond(Cond_traverser traverser,
                      void * arg, traverse_order order);
   inline double fix_result(double value)
@@ -1059,7 +1059,7 @@ public:
     return save_in_field(field, no_conversions, 1);
   }
   void save_org_in_field(Field *field) { (void)save_in_field(field, 1, 0); }
-  bool register_field_in_read_map(uchar *arg);
+  bool register_field_in_read_map(unsigned char *arg);
 };
 
 

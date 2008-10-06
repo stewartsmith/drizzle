@@ -135,7 +135,7 @@ Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
   assert(fixed == 0);
   Item **arg,**arg_end;
   void *save_thd_marker= thd->thd_marker;
-  uchar buff[STACK_BUFF_ALLOC];			// Max argument in function
+  unsigned char buff[STACK_BUFF_ALLOC];			// Max argument in function
   thd->thd_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
   const_item_cache=1;
@@ -211,7 +211,7 @@ void Item_func::fix_after_pullout(st_select_lex *new_parent,
 
 
 bool Item_func::walk(Item_processor processor, bool walk_subquery,
-                     uchar *argument)
+                     unsigned char *argument)
 {
   if (arg_count)
   {
@@ -270,7 +270,7 @@ void Item_func::traverse_cond(Cond_traverser traverser,
     Item returned as the result of transformation of the root node
 */
 
-Item *Item_func::transform(Item_transformer transformer, uchar *argument)
+Item *Item_func::transform(Item_transformer transformer, unsigned char *argument)
 {
   if (arg_count)
   {
@@ -319,8 +319,8 @@ Item *Item_func::transform(Item_transformer transformer, uchar *argument)
     Item returned as the result of transformation of the root node
 */
 
-Item *Item_func::compile(Item_analyzer analyzer, uchar **arg_p,
-                         Item_transformer transformer, uchar *arg_t)
+Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
+                         Item_transformer transformer, unsigned char *arg_t)
 {
   if (!(this->*analyzer)(arg_p))
     return 0;
@@ -333,7 +333,7 @@ Item *Item_func::compile(Item_analyzer analyzer, uchar **arg_p,
         The same parameter value of arg_p must be passed
         to analyze any argument of the condition formula.
       */   
-      uchar *arg_v= *arg_p;
+      unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
         current_thd->change_item_tree(arg, new_item);
@@ -2592,7 +2592,7 @@ int64_t Item_func_ascii::val_int()
     return 0;
   }
   null_value=0;
-  return (int64_t) (res->length() ? (uchar) (*res)[0] : (uchar) 0);
+  return (int64_t) (res->length() ? (unsigned char) (*res)[0] : (unsigned char) 0);
 }
 
 int64_t Item_func_ord::val_int()
@@ -2612,13 +2612,13 @@ int64_t Item_func_ord::val_int()
     register const char *str=res->ptr();
     register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
     if (!l)
-      return (int64_t)((uchar) *str);
+      return (int64_t)((unsigned char) *str);
     while (l--)
-      n=(n<<8)|(uint32_t)((uchar) *str++);
+      n=(n<<8)|(uint32_t)((unsigned char) *str++);
     return (int64_t) n;
   }
 #endif
-  return (int64_t) ((uchar) (*res)[0]);
+  return (int64_t) ((unsigned char) (*res)[0]);
 }
 
 	/* Search after a string in a string of strings separated by ',' */
@@ -2665,14 +2665,14 @@ int64_t Item_func_find_in_set::val_int()
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
-    const uchar *find_str= (const uchar *) find->ptr();
+    const unsigned char *find_str= (const unsigned char *) find->ptr();
     uint find_str_len= find->length();
     int position= 0;
     while (1)
     {
       int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (uchar*) str_end, 
-                                       (uchar*) real_end)) > 0)
+      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, 
+                                       (unsigned char*) real_end)) > 0)
       {
         const char *substr_end= str_end + symbol_len;
         bool is_last_item= (substr_end == real_end);
@@ -2682,7 +2682,7 @@ int64_t Item_func_find_in_set::val_int()
           position++;
           if (is_last_item && !is_separator)
             str_end= substr_end;
-          if (!my_strnncoll(cs, (const uchar *) str_begin,
+          if (!my_strnncoll(cs, (const unsigned char *) str_begin,
                             str_end - str_begin,
                             find_str, find_str_len))
             return (int64_t) position;
@@ -2720,7 +2720,7 @@ static HASH hash_user_locks;
 
 class User_level_lock
 {
-  uchar *key;
+  unsigned char *key;
   size_t key_length;
 
 public:
@@ -2730,14 +2730,14 @@ public:
   my_thread_id thread_id;
   void set_thread(THD *thd) { thread_id= thd->thread_id; }
 
-  User_level_lock(const uchar *key_arg,uint length, ulong id) 
+  User_level_lock(const unsigned char *key_arg,uint length, ulong id) 
     :key_length(length),count(1),locked(1), thread_id(id)
   {
-    key= (uchar*) my_memdup(key_arg,length,MYF(0));
+    key= (unsigned char*) my_memdup(key_arg,length,MYF(0));
     pthread_cond_init(&cond,NULL);
     if (key)
     {
-      if (my_hash_insert(&hash_user_locks,(uchar*) this))
+      if (my_hash_insert(&hash_user_locks,(unsigned char*) this))
       {
 	free(key);
 	key=0;
@@ -2748,18 +2748,18 @@ public:
   {
     if (key)
     {
-      hash_delete(&hash_user_locks,(uchar*) this);
+      hash_delete(&hash_user_locks,(unsigned char*) this);
       free(key);
     }
     pthread_cond_destroy(&cond);
   }
   inline bool initialized() { return key != 0; }
   friend void item_user_lock_release(User_level_lock *ull);
-  friend uchar *ull_get_key(const User_level_lock *ull, size_t *length,
+  friend unsigned char *ull_get_key(const User_level_lock *ull, size_t *length,
                             bool not_used);
 };
 
-uchar *ull_get_key(const User_level_lock *ull, size_t *length,
+unsigned char *ull_get_key(const User_level_lock *ull, size_t *length,
                    bool not_used __attribute__((unused)))
 {
   *length= ull->key_length;
@@ -2934,7 +2934,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
 {
   user_var_entry *entry;
 
-  if (!(entry = (user_var_entry*) hash_search(hash, (uchar*) name.str,
+  if (!(entry = (user_var_entry*) hash_search(hash, (unsigned char*) name.str,
 					      name.length)) &&
       create_if_not_exists)
   {
@@ -2964,7 +2964,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
     entry->used_query_id=current_thd->query_id;
     entry->type=STRING_RESULT;
     memcpy(entry->name.str, name.str, name.length+1);
-    if (my_hash_insert(hash,(uchar*) entry))
+    if (my_hash_insert(hash,(unsigned char*) entry))
     {
       free((char*) entry);
       return 0;
@@ -3033,7 +3033,7 @@ Item_func_set_user_var::fix_length_and_dec()
     column read set or to register used fields in a view
 */
 
-bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
+bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 {
   if (result_field)
   {
@@ -3763,7 +3763,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
   }
   /* Mark that this variable has been used by this query */
   var_entry->used_query_id= thd->query_id;
-  if (insert_dynamic(&thd->user_var_events, (uchar*) &user_var_event))
+  if (insert_dynamic(&thd->user_var_events, (unsigned char*) &user_var_event))
     goto err;
 
   *out_entry= var_entry;
@@ -4060,7 +4060,7 @@ int64_t Item_func_is_free_lock::val_int()
   }
   
   pthread_mutex_lock(&LOCK_user_locks);
-  ull= (User_level_lock *) hash_search(&hash_user_locks, (uchar*) res->ptr(),
+  ull= (User_level_lock *) hash_search(&hash_user_locks, (unsigned char*) res->ptr(),
                                        (size_t) res->length());
   pthread_mutex_unlock(&LOCK_user_locks);
   if (!ull || !ull->locked)
@@ -4079,7 +4079,7 @@ int64_t Item_func_is_used_lock::val_int()
     return 0;
   
   pthread_mutex_lock(&LOCK_user_locks);
-  ull= (User_level_lock *) hash_search(&hash_user_locks, (uchar*) res->ptr(),
+  ull= (User_level_lock *) hash_search(&hash_user_locks, (unsigned char*) res->ptr(),
                                        (size_t) res->length());
   pthread_mutex_unlock(&LOCK_user_locks);
   if (!ull || !ull->locked)

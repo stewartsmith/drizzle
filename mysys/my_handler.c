@@ -38,8 +38,8 @@
 #define CMP_NUM(a,b) (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
 
 
-int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_length,
-		    uchar *b, uint b_length, bool part_key,
+int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint a_length,
+		    unsigned char *b, uint b_length, bool part_key,
 		    bool skip_end_space)
 {
   if (!part_key)
@@ -50,11 +50,11 @@ int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_le
 }
 
 
-static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
+static int compare_bin(unsigned char *a, uint a_length, unsigned char *b, uint b_length,
                        bool part_key, bool skip_end_space)
 {
   uint length= cmin(a_length,b_length);
-  uchar *end= a+ length;
+  unsigned char *end= a+ length;
   int flag;
 
   while (a < end)
@@ -133,8 +133,8 @@ static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
 
 #define FCMP(A,B) ((int) (A) - (int) (B))
 
-int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
-	       register uchar *b, uint key_length, uint nextflag,
+int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
+	       register unsigned char *b, uint key_length, uint nextflag,
 	       uint *diff_pos)
 {
   int flag;
@@ -144,12 +144,12 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
   float f_1,f_2;
   double d_1,d_2;
   uint next_key_length;
-  uchar *orig_b= b;
+  unsigned char *orig_b= b;
 
   *diff_pos=0;
   for ( ; (int) key_length >0 ; key_length=next_key_length, keyseg++)
   {
-    uchar *end;
+    unsigned char *end;
     uint piks=! (keyseg->flag & HA_NO_SORT);
     (*diff_pos)++;
     diff_pos[1]= (uint)(b - orig_b);
@@ -381,7 +381,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
       if (keyseg->flag & HA_REVERSE_SORT)
       {
-        swap_variables(uchar*, a, b);
+        swap_variables(unsigned char*, a, b);
         swap_flag=1;                            /* Remember swap of a & b */
         end= a+ (int) (end-b);
       }
@@ -406,7 +406,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 	  if (*b != '-')
 	    return -1;
 	  a++; b++;
-	  swap_variables(uchar*, a, b);
+	  swap_variables(unsigned char*, a, b);
 	  swap_variables(int, alength, blength);
 	  swap_flag=1-swap_flag;
 	  alength--; blength--;
@@ -435,7 +435,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       }
 
       if (swap_flag)                            /* Restore pointers */
-        swap_variables(uchar*, a, b);
+        swap_variables(unsigned char*, a, b);
       break;
     }
     case HA_KEYTYPE_LONGLONG:
@@ -511,11 +511,11 @@ end:
     NULLs.
 */
 
-HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a)
+HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
 {
   for (; (enum ha_base_keytype) keyseg->type != HA_KEYTYPE_END; keyseg++)
   {
-    uchar *end;
+    unsigned char *end;
     if (keyseg->null_bit)
     {
       if (!*a++)

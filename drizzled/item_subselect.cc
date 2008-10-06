@@ -158,7 +158,7 @@ bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
   assert(fixed == 0);
   engine->set_thd((thd= thd_param));
 
-  if (check_stack_overrun(thd, STACK_MIN_SIZE, (uchar*)&res))
+  if (check_stack_overrun(thd, STACK_MIN_SIZE, (unsigned char*)&res))
     return true;
 
   res= engine->prepare();
@@ -221,7 +221,7 @@ err:
 
 
 bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
-                          uchar *argument)
+                          unsigned char *argument)
 {
 
   if (walk_subquery)
@@ -506,7 +506,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
       'upper' select is not really dependent => we remove this dependence
     */
     substitution->walk(&Item::remove_dependence_processor, 0,
-		       (uchar *) select_lex->outer_select());
+		       (unsigned char *) select_lex->outer_select());
     return(RES_REDUCE);
   }
   return(RES_OK);
@@ -1853,7 +1853,7 @@ bool Item_in_subselect::init_left_expr_cache()
   @retval false otherwise
 */
 
-bool Item_in_subselect::is_expensive_processor(uchar *arg __attribute__((unused)))
+bool Item_in_subselect::is_expensive_processor(unsigned char *arg __attribute__((unused)))
 {
   return exec_method == MATERIALIZATION;
 }
@@ -2989,7 +2989,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
   if (!(tab->ref.key_buff=
-        (uchar*) thd->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
+        (unsigned char*) thd->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
       !(tab->ref.key_copy=
         (store_key**) thd->alloc((sizeof(store_key*) *
                                   (tmp_key_parts + 1)))) ||
@@ -2999,7 +2999,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
 
   KEY_PART_INFO *cur_key_part= tmp_key->key_part;
   store_key **ref_key= tab->ref.key_copy;
-  uchar *cur_ref_buff= tab->ref.key_buff;
+  unsigned char *cur_ref_buff= tab->ref.key_buff;
   
   for (uint i= 0; i < tmp_key_parts; i++, cur_key_part++, ref_key++)
   {

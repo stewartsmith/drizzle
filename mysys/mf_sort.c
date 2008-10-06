@@ -18,23 +18,23 @@
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 
-void my_string_ptr_sort(uchar *base, uint items, size_t size)
+void my_string_ptr_sort(unsigned char *base, uint items, size_t size)
 {
 #if INT_MAX > 65536L
-  uchar **ptr= NULL;
+  unsigned char **ptr= NULL;
 
   if (size <= 20 && items >= 1000 && items < 100000 &&
-      (ptr= (uchar**) my_malloc(items*sizeof(char*),MYF(0))))
+      (ptr= (unsigned char**) my_malloc(items*sizeof(char*),MYF(0))))
   {
-    radixsort_for_str_ptr((uchar**) base,items,size,ptr);
-    free((uchar*) ptr);
+    radixsort_for_str_ptr((unsigned char**) base,items,size,ptr);
+    free((unsigned char*) ptr);
   }
   else
 #endif
   {
     if (size && items)
     {
-      my_qsort2(base,items, sizeof(uchar*), get_ptr_compare(size),
+      my_qsort2(base,items, sizeof(unsigned char*), get_ptr_compare(size),
                 (void*) &size);
     }
   }

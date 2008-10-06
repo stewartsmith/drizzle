@@ -18,12 +18,12 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 
-bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
+bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
 			ha_checksum unique_hash, my_off_t disk_pos)
 {
   my_off_t lastpos=info->lastpos;
   MI_KEYDEF *key= &info->s->keyinfo[def->key];
-  uchar *key_buff=info->lastkey2;
+  unsigned char *key_buff=info->lastkey2;
 
   mi_unique_store(record+key->seg->start, unique_hash);
   _mi_make_key(info,def->key,key_buff,record,0);
@@ -71,9 +71,9 @@ bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
     Add support for bit fields
 */
 
-ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
+ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
 {
-  const uchar *pos, *end;
+  const unsigned char *pos, *end;
   ha_checksum crc= 0;
   uint32_t seed1=0, seed2= 4;
   HA_KEYSEG *keyseg;
@@ -101,7 +101,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
     if (keyseg->flag & HA_VAR_LENGTH_PART)
     {
       uint pack_length=  keyseg->bit_start;
-      uint tmp_length= (pack_length == 1 ? (uint) *(uchar*) pos :
+      uint tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                         uint2korr(pos));
       pos+= pack_length;			/* Skip VARCHAR length */
       set_if_smaller(length,tmp_length);
@@ -118,14 +118,14 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
         type == HA_KEYTYPE_VARTEXT2)
     {
       keyseg->charset->coll->hash_sort(keyseg->charset,
-                                       (const uchar*) pos, length, &seed1,
+                                       (const unsigned char*) pos, length, &seed1,
                                        &seed2);
       crc^= seed1;
     }
     else
       while (pos != end)
 	crc=((crc << 8) +
-	     (((uchar)  *(uchar*) pos++))) +
+	     (((unsigned char)  *(unsigned char*) pos++))) +
 	  (crc >> (8*sizeof(ha_checksum)-8));
   }
   return crc;
@@ -143,10 +143,10 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
     #   Rows are different
 */
 
-int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
+int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned char *b,
 		   bool null_are_equal)
 {
-  const uchar *pos_a, *pos_b, *end;
+  const unsigned char *pos_a, *pos_b, *end;
   HA_KEYSEG *keyseg;
 
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)
@@ -176,8 +176,8 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
       uint pack_length= keyseg->bit_start;
       if (pack_length == 1)
       {
-        a_length= (uint) *(uchar*) pos_a++;
-        b_length= (uint) *(uchar*) pos_b++;
+        a_length= (uint) *(unsigned char*) pos_a++;
+        b_length= (uint) *(unsigned char*) pos_b++;
       }
       else
       {
@@ -210,8 +210,8 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
     if (type == HA_KEYTYPE_TEXT || type == HA_KEYTYPE_VARTEXT1 ||
         type == HA_KEYTYPE_VARTEXT2)
     {
-      if (ha_compare_text(keyseg->charset, (uchar *) pos_a, a_length,
-                                           (uchar *) pos_b, b_length, 0, 1))
+      if (ha_compare_text(keyseg->charset, (unsigned char *) pos_a, a_length,
+                                           (unsigned char *) pos_b, b_length, 0, 1))
         return 1;
     }
     else

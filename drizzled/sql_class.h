@@ -1058,11 +1058,11 @@ public:
   void binlog_set_stmt_begin();
   int binlog_write_table_map(Table *table, bool is_transactional);
   int binlog_write_row(Table* table, bool is_transactional,
-                       const uchar *new_data);
+                       const unsigned char *new_data);
   int binlog_delete_row(Table* table, bool is_transactional,
-                        const uchar *old_data);
+                        const unsigned char *old_data);
   int binlog_update_row(Table* table, bool is_transactional,
-                        const uchar *old_data, const uchar *new_data);
+                        const unsigned char *old_data, const unsigned char *new_data);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
 
@@ -2103,7 +2103,7 @@ public:
   List<Item> save_copy_funcs;
   Copy_field *copy_field, *copy_field_end;
   Copy_field *save_copy_field, *save_copy_field_end;
-  uchar	    *group_buff;
+  unsigned char	    *group_buff;
   Item	    **items_to_copy;			/* Fields in tmp table */
   MI_COLUMNDEF *recinfo,*start_recinfo;
   KEY *keyinfo;
@@ -2316,7 +2316,7 @@ class Unique :public Sql_alloc
   uint64_t max_in_memory_size;
   IO_CACHE file;
   TREE tree;
-  uchar *record_pointers;
+  unsigned char *record_pointers;
   bool flush();
   uint size;
 
@@ -2347,8 +2347,8 @@ public:
   void reset();
   bool walk(tree_walk_action action, void *walk_action_arg);
 
-  friend int unique_write_to_file(uchar* key, element_count count, Unique *unique);
-  friend int unique_write_to_ptrs(uchar* key, element_count count, Unique *unique);
+  friend int unique_write_to_file(unsigned char* key, element_count count, Unique *unique);
+  friend int unique_write_to_ptrs(unsigned char* key, element_count count, Unique *unique);
 };
 
 

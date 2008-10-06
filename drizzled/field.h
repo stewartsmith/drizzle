@@ -58,8 +58,8 @@ public:
                               size_t size __attribute__((unused)))
   { TRASH(ptr_arg, size); }
 
-  uchar		*ptr;			// Position to field in record
-  uchar		*null_ptr;		// Byte where null_bit is
+  unsigned char		*ptr;			// Position to field in record
+  unsigned char		*null_ptr;		// Byte where null_bit is
   /*
     Note that you can use table->in_use as replacement for current_thd member 
     only inside of val_*() and store() members (e.g. you can't use it in cons)
@@ -89,7 +89,7 @@ public:
   uint32_t	field_length;		// Length of field
   uint32_t	flags;
   uint16_t        field_index;            // field number in fields array
-  uchar		null_bit;		// Bit used to test null bit
+  unsigned char		null_bit;		// Bit used to test null bit
   /**
      If true, this field was created in create_tmp_field_from_item from a NULL
      value. This means that the type of the field is just a guess, and the type
@@ -101,8 +101,8 @@ public:
    */
   bool is_created_from_null_item;
 
-  Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
-        uchar null_bit_arg, utype unireg_check_arg,
+  Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
+        unsigned char null_bit_arg, utype unireg_check_arg,
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
@@ -178,7 +178,7 @@ public:
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
   virtual uint32_t row_pack_length() { return 0; }
-  virtual int save_field_metadata(uchar *first_byte)
+  virtual int save_field_metadata(unsigned char *first_byte)
   { return do_save_field_metadata(first_byte); }
 
   /*
@@ -211,7 +211,7 @@ public:
     my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
     memcpy(ptr, ptr + l_offset, pack_length());
     if (null_ptr)
-      *null_ptr= ((*null_ptr & (uchar) ~null_bit) | (null_ptr[l_offset] & null_bit));
+      *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
   }
   virtual bool binary() const { return 1; }
   virtual bool zero_pack() const { return 1; }
@@ -219,21 +219,21 @@ public:
   virtual uint32_t key_length() const { return pack_length(); }
   virtual enum_field_types type() const =0;
   virtual enum_field_types real_type() const { return type(); }
-  inline  int cmp(const uchar *str) { return cmp(ptr,str); }
-  virtual int cmp_max(const uchar *a, const uchar *b,
+  inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
+  virtual int cmp_max(const unsigned char *a, const unsigned char *b,
                       uint32_t max_len __attribute__((unused)))
     { return cmp(a, b); }
-  virtual int cmp(const uchar *,const uchar *)=0;
-  virtual int cmp_binary(const uchar *a,const uchar *b,
+  virtual int cmp(const unsigned char *,const unsigned char *)=0;
+  virtual int cmp_binary(const unsigned char *a,const unsigned char *b,
                          uint32_t  __attribute__((unused)) max_length=UINT32_MAX)
   { return memcmp(a,b,pack_length()); }
   virtual int cmp_offset(uint32_t row_offset)
   { return cmp(ptr,ptr+row_offset); }
   virtual int cmp_binary_offset(uint32_t row_offset)
   { return cmp_binary(ptr, ptr+row_offset); };
-  virtual int key_cmp(const uchar *a,const uchar *b)
+  virtual int key_cmp(const unsigned char *a,const unsigned char *b)
   { return cmp(a, b); }
-  virtual int key_cmp(const uchar *str, uint32_t length __attribute__((unused)))
+  virtual int key_cmp(const unsigned char *str, uint32_t length __attribute__((unused)))
   { return cmp(ptr,str); }
   virtual uint32_t decimals() const { return 0; }
   /*
@@ -247,7 +247,7 @@ public:
   { return null_ptr ? (null_ptr[row_offset] & null_bit ? 1 : 0) : table->null_row; }
   inline bool is_real_null(my_ptrdiff_t row_offset= 0)
     { return null_ptr ? (null_ptr[row_offset] & null_bit ? 1 : 0) : 0; }
-  inline bool is_null_in_record(const uchar *record)
+  inline bool is_null_in_record(const unsigned char *record)
   {
     if (!null_ptr)
       return 0;
@@ -263,7 +263,7 @@ public:
   inline void set_null(my_ptrdiff_t row_offset= 0)
     { if (null_ptr) null_ptr[row_offset]|= null_bit; }
   inline void set_notnull(my_ptrdiff_t row_offset= 0)
-    { if (null_ptr) null_ptr[row_offset]&= (uchar) ~null_bit; }
+    { if (null_ptr) null_ptr[row_offset]&= (unsigned char) ~null_bit; }
   inline bool maybe_null(void) { return null_ptr != 0 || table->maybe_null; }
   inline bool real_maybe_null(void) { return null_ptr != 0; }
 
@@ -293,7 +293,7 @@ public:
   }
 
   virtual void make_field(Send_field *);
-  virtual void sort_string(uchar *buff,uint32_t length)=0;
+  virtual void sort_string(unsigned char *buff,uint32_t length)=0;
   virtual bool optimize_range(uint32_t idx, uint32_t part);
   /*
     This should be true for fields which, when compared with constant
@@ -307,24 +307,24 @@ public:
   virtual Field *new_field(MEM_ROOT *root, Table *new_table,
                            bool keep_type);
   virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
-                               uchar *new_ptr, uchar *new_null_ptr,
+                               unsigned char *new_ptr, unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   Field *clone(MEM_ROOT *mem_root, Table *new_table);
-  inline void move_field(uchar *ptr_arg,uchar *null_ptr_arg,uchar null_bit_arg)
+  inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr=ptr_arg; null_ptr=null_ptr_arg; null_bit=null_bit_arg;
   }
-  inline void move_field(uchar *ptr_arg) { ptr=ptr_arg; }
+  inline void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
   virtual void move_field_offset(my_ptrdiff_t ptr_diff)
   {
-    ptr=ADD_TO_PTR(ptr,ptr_diff, uchar*);
+    ptr=ADD_TO_PTR(ptr,ptr_diff, unsigned char*);
     if (null_ptr)
-      null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,uchar*);
+      null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
-  virtual void get_image(uchar *buff, uint32_t length,
+  virtual void get_image(unsigned char *buff, uint32_t length,
                          const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(buff,ptr,length); }
-  virtual void set_image(const uchar *buff,uint32_t length,
+  virtual void set_image(const unsigned char *buff,uint32_t length,
                          const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(ptr,buff,length); }
 
@@ -355,13 +355,13 @@ public:
       Number of copied bytes (excluding padded zero bytes -- see above).
   */
 
-  virtual uint32_t get_key_image(uchar *buff, uint32_t length,
+  virtual uint32_t get_key_image(unsigned char *buff, uint32_t length,
                              imagetype type __attribute__((unused)))
   {
     get_image(buff, length, &my_charset_bin);
     return length;
   }
-  virtual void set_key_image(const uchar *buff,uint32_t length)
+  virtual void set_key_image(const unsigned char *buff,uint32_t length)
     { set_image(buff,length, &my_charset_bin); }
   inline int64_t val_int_offset(uint32_t row_offset)
     {
@@ -370,77 +370,77 @@ public:
       ptr-=row_offset;
       return tmp;
     }
-  inline int64_t val_int(const uchar *new_ptr)
+  inline int64_t val_int(const unsigned char *new_ptr)
   {
-    uchar *old_ptr= ptr;
+    unsigned char *old_ptr= ptr;
     int64_t return_value;
-    ptr= (uchar*) new_ptr;
+    ptr= (unsigned char*) new_ptr;
     return_value= val_int();
     ptr= old_ptr;
     return return_value;
   }
-  inline String *val_str(String *str, const uchar *new_ptr)
+  inline String *val_str(String *str, const unsigned char *new_ptr)
   {
-    uchar *old_ptr= ptr;
-    ptr= (uchar*) new_ptr;
+    unsigned char *old_ptr= ptr;
+    ptr= (unsigned char*) new_ptr;
     val_str(str);
     ptr= old_ptr;
     return str;
   }
   virtual bool send_binary(Protocol *protocol);
 
-  virtual uchar *pack(uchar *to, const uchar *from,
+  virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
                       uint32_t max_length, bool low_byte_first);
   /**
-     @overload Field::pack(uchar*, const uchar*, uint32_t, bool)
+     @overload Field::pack(unsigned char*, const unsigned char*, uint32_t, bool)
   */
-  uchar *pack(uchar *to, const uchar *from)
+  unsigned char *pack(unsigned char *to, const unsigned char *from)
   {
-    uchar *result= this->pack(to, from, UINT_MAX, table->s->db_low_byte_first);
+    unsigned char *result= this->pack(to, from, UINT_MAX, table->s->db_low_byte_first);
     return(result);
   }
 
-  virtual const uchar *unpack(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint32_t param_data, bool low_byte_first);
   /**
-     @overload Field::unpack(uchar*, const uchar*, uint32_t, bool)
+     @overload Field::unpack(unsigned char*, const unsigned char*, uint32_t, bool)
   */
-  const uchar *unpack(uchar* to, const uchar *from)
+  const unsigned char *unpack(unsigned char* to, const unsigned char *from)
   {
-    const uchar *result= unpack(to, from, 0U, table->s->db_low_byte_first);
+    const unsigned char *result= unpack(to, from, 0U, table->s->db_low_byte_first);
     return(result);
   }
 
-  virtual uchar *pack_key(uchar* to, const uchar *from,
+  virtual unsigned char *pack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual uchar *pack_key_from_key_image(uchar* to, const uchar *from,
+  virtual unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
 					uint32_t max_length, bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual const uchar *unpack_key(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
                                   uint32_t max_length, bool low_byte_first)
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint32_t packed_col_length(const uchar *to __attribute__((unused)),
+  virtual uint32_t packed_col_length(const unsigned char *to __attribute__((unused)),
                                  uint32_t length)
   { return length;}
   virtual uint32_t max_packed_col_length(uint32_t max_length)
   { return max_length;}
 
-  virtual int pack_cmp(const uchar *a,const uchar *b,
+  virtual int pack_cmp(const unsigned char *a,const unsigned char *b,
                        uint32_t key_length_arg __attribute__((unused)),
                        bool insert_or_update __attribute__((unused)))
   { return cmp(a,b); }
-  virtual int pack_cmp(const uchar *b,
+  virtual int pack_cmp(const unsigned char *b,
                        uint32_t key_length_arg __attribute__((unused)),
                        bool insert_or_update __attribute__((unused)))
   { return cmp(ptr,b); }
-  uint32_t offset(uchar *record)
+  uint32_t offset(unsigned char *record)
   {
     return (uint32_t) (ptr - record);
   }
@@ -539,7 +539,7 @@ private:
 
    @returns 0 no bytes written.
 */
-  virtual int do_save_field_metadata(uchar *metadata_ptr __attribute__((unused)))
+  virtual int do_save_field_metadata(unsigned char *metadata_ptr __attribute__((unused)))
   { return 0; }
 };
 
@@ -549,8 +549,8 @@ public:
   const uint8_t dec;
   bool decimal_precision;	// Purify cannot handle bit fields & only for decimal type
   bool unsigned_flag;	// Purify cannot handle bit fields
-  Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-	    uchar null_bit_arg, utype unireg_check_arg,
+  Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+	    unsigned char null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg,
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
@@ -577,8 +577,8 @@ protected:
   const CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
 public:
-  Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-	    uchar null_bit_arg, utype unireg_check_arg,
+  Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+	    unsigned char null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg, const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint32_t decimals() const { return NOT_FIXED_DEC; }
@@ -609,8 +609,8 @@ class Field_longstr :public Field_str
 protected:
   int report_if_important_data(const char *ptr, const char *end);
 public:
-  Field_longstr(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-                uchar null_bit_arg, utype unireg_check_arg,
+  Field_longstr(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+                unsigned char null_bit_arg, utype unireg_check_arg,
                 const char *field_name_arg, const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
                field_name_arg, charset_arg)
@@ -625,8 +625,8 @@ class Field_real :public Field_num {
 public:
   bool not_fixed;
 
-  Field_real(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-             uchar null_bit_arg, utype unireg_check_arg,
+  Field_real(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+             unsigned char null_bit_arg, utype unireg_check_arg,
              const char *field_name_arg,
              uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
     :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
@@ -638,17 +638,17 @@ public:
   int truncate(double *nr, double max_length);
   uint32_t max_display_length() { return field_length; }
   uint32_t size_of() const { return sizeof(*this); }
-  virtual const uchar *unpack(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint32_t param_data, bool low_byte_first);
-  virtual uchar *pack(uchar* to, const uchar *from,
+  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                       uint32_t max_length, bool low_byte_first);
 };
 
 
 class Field_tiny :public Field_num {
 public:
-  Field_tiny(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
-	     uchar null_bit_arg,
+  Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+	     unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     bool zero_arg, bool unsigned_arg)
     :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -667,13 +667,13 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint32_t length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 1; }
   void sql_type(String &str) const;
   uint32_t max_display_length() { return 4; }
 
-  virtual uchar *pack(uchar* to, const uchar *from,
+  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                       uint32_t max_length __attribute__((unused)),
                       bool low_byte_first __attribute__((unused)))
   {
@@ -681,7 +681,7 @@ public:
     return to + 1;
   }
 
-  virtual const uchar *unpack(uchar* to, const uchar *from,
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint32_t param_data __attribute__((unused)),
                               bool low_byte_first __attribute__((unused)))
   {
@@ -779,8 +779,8 @@ class Copy_field :public Sql_alloc {
   typedef void Copy_func(Copy_field*);
   Copy_func *get_copy_func(Field *to, Field *from);
 public:
-  uchar *from_ptr,*to_ptr;
-  uchar *from_null_ptr,*to_null_ptr;
+  unsigned char *from_ptr,*to_ptr;
+  unsigned char *from_null_ptr,*to_null_ptr;
   bool *null_row;
   uint32_t	from_bit,to_bit;
   uint32_t from_length,to_length;
@@ -790,14 +790,14 @@ public:
   Copy_field() {}
   ~Copy_field() {}
   void set(Field *to,Field *from,bool save);	// Field to field 
-  void set(uchar *to,Field *from);		// Field to string
+  void set(unsigned char *to,Field *from);		// Field to string
   void (*do_copy)(Copy_field *);
   void (*do_copy2)(Copy_field *);		// Used to handle null values
 };
 
 
-Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
-		  uchar *null_pos, uchar null_bit,
+Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
+		  unsigned char *null_pos, unsigned char null_bit,
 		  uint32_t pack_flag, enum_field_types field_type,
 		  const CHARSET_INFO * cs,
 		  Field::utype unireg_check,

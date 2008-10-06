@@ -408,7 +408,7 @@ int decimal2string(decimal_t *from, char *to, int *to_len,
       for (i=cmin(frac, DIG_PER_DEC1); i; i--)
       {
         dec1 y=x/DIG_MASK;
-        *s1++='0'+(uchar)y;
+        *s1++='0'+(unsigned char)y;
         x-=y*DIG_MASK;
         x*=10;
       }
@@ -431,7 +431,7 @@ int decimal2string(decimal_t *from, char *to, int *to_len,
       for (i=cmin(intg, DIG_PER_DEC1); i; i--)
       {
         dec1 y=x/10;
-        *--s='0'+(uchar)(x-y*10);
+        *--s='0'+(unsigned char)(x-y*10);
         x=y;
       }
     }
@@ -1177,7 +1177,7 @@ int decimal2int64_t(decimal_t *from, int64_t *to)
 
                 7E F2 04 37 2D FB 2D
 */
-int decimal2bin(decimal_t *from, uchar *to, int precision, int frac)
+int decimal2bin(decimal_t *from, unsigned char *to, int precision, int frac)
 {
   dec1 mask=from->sign ? -1 : 0, *buf1=from->buf, *stop1;
   int error=E_DEC_OK, intg=precision-frac,
@@ -1193,7 +1193,7 @@ int decimal2bin(decimal_t *from, uchar *to, int precision, int frac)
       fsize1=frac1*sizeof(dec1)+dig2bytes[frac1x];
   const int orig_isize0= isize0;
   const int orig_fsize0= fsize0;
-  uchar *orig_to= to;
+  unsigned char *orig_to= to;
 
   buf1= remove_leading_zeroes(from, &from_intg);
 
@@ -1283,10 +1283,10 @@ int decimal2bin(decimal_t *from, uchar *to, int precision, int frac)
   }
   if (fsize0 > fsize1)
   {
-    uchar *to_end= orig_to + orig_fsize0 + orig_isize0;
+    unsigned char *to_end= orig_to + orig_fsize0 + orig_isize0;
 
     while (fsize0-- > fsize1 && to < to_end)
-      *to++= (uchar)mask;
+      *to++= (unsigned char)mask;
   }
   orig_to[0]^= 0x80;
 
@@ -1312,19 +1312,19 @@ int decimal2bin(decimal_t *from, uchar *to, int precision, int frac)
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
 */
 
-int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
+int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int scale)
 {
   int error=E_DEC_OK, intg=precision-scale,
       intg0=intg/DIG_PER_DEC1, frac0=scale/DIG_PER_DEC1,
       intg0x=intg-intg0*DIG_PER_DEC1, frac0x=scale-frac0*DIG_PER_DEC1,
       intg1=intg0+(intg0x>0), frac1=frac0+(frac0x>0);
   dec1 *buf=to->buf, mask=(*from & 0x80) ? 0 : -1;
-  const uchar *stop;
-  uchar *d_copy;
+  const unsigned char *stop;
+  unsigned char *d_copy;
   int bin_size= decimal_bin_size(precision, scale);
 
   sanity(to);
-  d_copy= (uchar*) alloca(bin_size);
+  d_copy= (unsigned char*) alloca(bin_size);
   memcpy(d_copy, from, bin_size);
   d_copy[0]^= 0x80;
   from= d_copy;
@@ -2507,7 +2507,7 @@ void test_d2b2d(const char *str, int p, int s, const char *orig, int ex)
   {
     printf("0x");
     for (i=0; i < size; i++)
-      printf("%02x", ((uchar *)buf)[i]);
+      printf("%02x", ((unsigned char *)buf)[i]);
   }
   res=bin2decimal(buf, &a, p, s);
   printf(" => res=%d ", res);

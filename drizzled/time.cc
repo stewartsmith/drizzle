@@ -142,7 +142,7 @@ void get_date_from_daynr(long daynr,uint *ret_year,uint *ret_month,
 			 uint *ret_day)
 {
   uint year,temp,leap_day,day_of_year,days_in_year;
-  uchar *month_pos;
+  unsigned char *month_pos;
 
   if (daynr <= 365L || daynr >= 3652500)
   {						/* Fix if wrong daynr */
@@ -355,7 +355,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   uint offset= 0, separators= 0;
   const char *ptr= format, *format_str;
   const char *end= ptr+format_length;
-  uchar *dt_pos= date_time_format->positions;
+  unsigned char *dt_pos= date_time_format->positions;
   /* need_p is set if we are using AM/PM format */
   bool need_p= 0, allow_separator= 0;
   uint32_t part_map= 0, separator_map= 0;
@@ -525,8 +525,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     */
     if (format_length == 6 && !need_p &&
 	!my_strnncoll(&my_charset_bin,
-		      (const uchar *) format, 6, 
-		      (const uchar *) format_str, 6))
+		      (const unsigned char *) format, 6, 
+		      (const unsigned char *) format_str, 6))
       return 0;
     if (separator_map == (1 | 2))
     {
@@ -548,8 +548,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     */
     if ((format_length == 12 && !need_p &&
 	 !my_strnncoll(&my_charset_bin, 
-		       (const uchar *) format, 12,
-		       (const uchar*) known_date_time_formats[INTERNAL_FORMAT].datetime_format,
+		       (const unsigned char *) format, 12,
+		       (const unsigned char*) known_date_time_formats[INTERNAL_FORMAT].datetime_format,
 		       12)) ||
 	(separators == 5 && separator_map == (1 | 2 | 8 | 16)))
       return 0;

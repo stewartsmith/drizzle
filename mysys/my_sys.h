@@ -238,7 +238,7 @@ typedef struct st_record_cache	/* Used when cacheing records */
   int	rc_seek,error,inited;
   uint	rc_length,read_length,reclength;
   my_off_t rc_record_pos,end_of_file;
-  uchar *rc_buff,*rc_buff2,*rc_pos,*rc_end,*rc_request_pos;
+  unsigned char *rc_buff,*rc_buff2,*rc_pos,*rc_end,*rc_request_pos;
 #ifdef HAVE_AIOWAIT
   int	use_async_io;
   my_aio_result aio_result;
@@ -265,7 +265,7 @@ extern struct st_my_file_info *my_file_info;
 
 typedef struct st_dynamic_array
 {
-  uchar *buffer;
+  unsigned char *buffer;
   uint elements,max_element;
   uint alloc_increment;
   uint size_of_element;
@@ -291,8 +291,8 @@ typedef struct st_io_cache_share
   my_off_t              pos_in_file;
   /* If a synchronized write cache is the source of the data. */
   struct st_io_cache    *source_cache;
-  uchar                 *buffer;         /* The read buffer. */
-  uchar                 *read_end;       /* Behind last valid byte of buffer. */
+  unsigned char                 *buffer;         /* The read buffer. */
+  unsigned char                 *read_end;       /* Behind last valid byte of buffer. */
   int                   running_threads; /* threads not in lock. */
   int                   total_threads;   /* threads sharing the cache. */
   int                   error;           /* Last error. */
@@ -304,7 +304,7 @@ typedef struct st_io_cache_share
 
 typedef struct st_io_cache		/* Used when cacheing files */
 {
-  /* Offset in file corresponding to the first byte of uchar* buffer. */
+  /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
   /*
     The offset of end of file for READ_CACHE and WRITE_CACHE.
@@ -313,26 +313,26 @@ typedef struct st_io_cache		/* Used when cacheing files */
   */
   my_off_t end_of_file;
   /* Points to current read position in the buffer */
-  uchar	*read_pos;
+  unsigned char	*read_pos;
   /* the non-inclusive boundary in the buffer for the currently valid read */
-  uchar  *read_end;
-  uchar  *buffer;				/* The read buffer */
+  unsigned char  *read_end;
+  unsigned char  *buffer;				/* The read buffer */
   /* Used in ASYNC_IO */
-  uchar  *request_pos;
+  unsigned char  *request_pos;
 
   /* Only used in WRITE caches and in SEQ_READ_APPEND to buffer writes */
-  uchar  *write_buffer;
+  unsigned char  *write_buffer;
   /*
     Only used in SEQ_READ_APPEND, and points to the current read position
     in the write buffer. Note that reads in SEQ_READ_APPEND caches can
-    happen from both read buffer (uchar* buffer) and write buffer
-    (uchar* write_buffer).
+    happen from both read buffer (unsigned char* buffer) and write buffer
+    (unsigned char* write_buffer).
   */
-  uchar *append_read_pos;
+  unsigned char *append_read_pos;
   /* Points to current write position in the write buffer */
-  uchar *write_pos;
+  unsigned char *write_pos;
   /* The non-inclusive boundary of the valid write area */
-  uchar *write_end;
+  unsigned char *write_end;
 
   /*
     Current_pos and current_end are convenience variables used by
@@ -340,7 +340,7 @@ typedef struct st_io_cache		/* Used when cacheing files */
     current_pos points to &write_pos, and current_end to &write_end in a
     WRITE_CACHE, and &read_pos and &read_end respectively otherwise
   */
-  uchar  **current_pos, **current_end;
+  unsigned char  **current_pos, **current_end;
   /*
     The lock is for append buffer used in SEQ_READ_APPEND cache
     need mutex copying from append buffer to read buffer.
@@ -362,12 +362,12 @@ typedef struct st_io_cache		/* Used when cacheing files */
     my_b_read() will call read_function to fetch the data. read_function
     must never be invoked directly.
   */
-  int (*read_function)(struct st_io_cache *,uchar *,size_t);
+  int (*read_function)(struct st_io_cache *,unsigned char *,size_t);
   /*
     Same idea as in the case of read_function, except my_b_write() needs to
     be replaced with my_b_append() for a SEQ_READ_APPEND cache
   */
-  int (*write_function)(struct st_io_cache *,const uchar *,size_t);
+  int (*write_function)(struct st_io_cache *,const unsigned char *,size_t);
   /*
     Specifies the type of the cache. Depending on the type of the cache
     certain operations might not be available and yield unpredicatable
@@ -447,7 +447,7 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 
 #define my_b_get(info) \
   ((info)->read_pos != (info)->read_end ?\
-   ((info)->read_pos++, (int) (uchar) (info)->read_pos[-1]) :\
+   ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
 	/* my_b_write_byte dosn't have any err-check */
@@ -511,13 +511,13 @@ extern File my_create_with_symlink(const char *linkname, const char *filename,
 extern int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
 extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
-extern size_t my_read(File Filedes,uchar *Buffer,size_t Count,myf MyFlags);
+extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
 extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
 extern my_off_t my_tell(File fd,myf MyFlags);
-extern size_t my_write(File Filedes,const uchar *Buffer,size_t Count,
+extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fwrite(FILE *stream,const uchar *Buffer,size_t Count,
+extern size_t my_fwrite(FILE *stream,const unsigned char *Buffer,size_t Count,
 		      myf MyFlags);
 extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
 extern void *_mymalloc(size_t uSize,const char *sFile,
@@ -612,25 +612,25 @@ extern void soundex(CHARSET_INFO *, char * out_pntr, char * in_pntr,
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);
-extern int read_cache_record(RECORD_CACHE *info,uchar *to);
+extern int read_cache_record(RECORD_CACHE *info,unsigned char *to);
 extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
-			      const uchar *record,size_t length);
+			      const unsigned char *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
 extern RETSIGTYPE sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
 extern RETSIGTYPE my_set_alarm_variable(int signo);
-extern void my_string_ptr_sort(uchar *base,uint items,size_t size);
-extern void radixsort_for_str_ptr(uchar* base[], uint number_of_elements,
-				  size_t size_of_element,uchar *buffer[]);
+extern void my_string_ptr_sort(unsigned char *base,uint items,size_t size);
+extern void radixsort_for_str_ptr(unsigned char* base[], uint number_of_elements,
+				  size_t size_of_element,unsigned char *buffer[]);
 extern RETQSORTTYPE my_qsort(void *base_ptr, size_t total_elems, size_t size,
                              qsort_cmp cmp);
 extern RETQSORTTYPE my_qsort2(void *base_ptr, size_t total_elems, size_t size,
                               qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
-void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos);
-my_off_t my_get_ptr(uchar *ptr, size_t pack_length);
+void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
+my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
 			 enum cache_type type,my_off_t seek_offset,
 			 bool use_async_io, myf cache_myflags);
@@ -638,20 +638,20 @@ extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
 			       my_off_t seek_offset,bool use_async_io,
 			       bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
-extern int _my_b_read(IO_CACHE *info,uchar *Buffer,size_t Count);
-extern int _my_b_read_r(IO_CACHE *info,uchar *Buffer,size_t Count);
+extern int _my_b_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
+extern int _my_b_read_r(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                                 IO_CACHE *write_cache, uint num_threads);
 extern void remove_io_thread(IO_CACHE *info);
-extern int _my_b_seq_read(IO_CACHE *info,uchar *Buffer,size_t Count);
-extern int _my_b_net_read(IO_CACHE *info,uchar *Buffer,size_t Count);
+extern int _my_b_seq_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
+extern int _my_b_net_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_get(IO_CACHE *info);
-extern int _my_b_async_read(IO_CACHE *info,uchar *Buffer,size_t Count);
-extern int _my_b_write(IO_CACHE *info,const uchar *Buffer,size_t Count);
-extern int my_b_append(IO_CACHE *info,const uchar *Buffer,size_t Count);
-extern int my_b_safe_write(IO_CACHE *info,const uchar *Buffer,size_t Count);
+extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
+extern int _my_b_write(IO_CACHE *info,const unsigned char *Buffer,size_t Count);
+extern int my_b_append(IO_CACHE *info,const unsigned char *Buffer,size_t Count);
+extern int my_b_safe_write(IO_CACHE *info,const unsigned char *Buffer,size_t Count);
 
-extern int my_block_write(IO_CACHE *info, const uchar *Buffer,
+extern int my_block_write(IO_CACHE *info, const unsigned char *Buffer,
 			  size_t Count, my_off_t pos);
 extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 
@@ -683,16 +683,16 @@ extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint element_size,
 extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint element_size,
                                   uint init_alloc,uint alloc_increment
                                   CALLER_INFO_PROTO);
-extern bool insert_dynamic(DYNAMIC_ARRAY *array,uchar * element);
-extern uchar *alloc_dynamic(DYNAMIC_ARRAY *array);
-extern uchar *pop_dynamic(DYNAMIC_ARRAY*);
-extern bool set_dynamic(DYNAMIC_ARRAY *array,uchar * element,uint array_index);
+extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
+extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
+extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
+extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint array_index);
 extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements);
-extern void get_dynamic(DYNAMIC_ARRAY *array,uchar * element,uint array_index);
+extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint array_index);
 extern void delete_dynamic(DYNAMIC_ARRAY *array);
 extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint array_index);
 extern void freeze_size(DYNAMIC_ARRAY *array);
-extern int  get_index_dynamic(DYNAMIC_ARRAY *array, uchar * element);
+extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define dynamic_array_ptr(array,array_index) ((array)->buffer+(array_index)*(array)->size_of_element)
 #define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 #define push_dynamic(A,B) insert_dynamic((A),(B))
@@ -728,7 +728,7 @@ extern int my_search_option_files(const char *conf_file, int *argc,
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
-extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
+extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
 extern uint my_set_max_open_files(uint files);
@@ -739,7 +739,7 @@ extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(uint64_t microtime);
-extern bool my_gethwaddr(uchar *to);
+extern bool my_gethwaddr(unsigned char *to);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>

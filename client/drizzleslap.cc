@@ -1470,7 +1470,7 @@ get_options(int *argc,char ***argv)
       }
       tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-      my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
@@ -1507,7 +1507,7 @@ get_options(int *argc,char ***argv)
       }
       tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-      my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
       if (user_supplied_query)
@@ -1539,7 +1539,7 @@ get_options(int *argc,char ***argv)
     }
     tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-    my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
     if (user_supplied_pre_statements)
@@ -1571,7 +1571,7 @@ get_options(int *argc,char ***argv)
     }
     tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-    my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
     if (user_supplied_post_statements)
@@ -2349,7 +2349,7 @@ print_conclusions_csv(conclusions *con)
            con->real_users, /* Children used max_timing */
            con->avg_rows  /* Queries run */
            );
-  my_write(csv_file, (uchar*) buffer, (uint)strlen(buffer), MYF(0));
+  my_write(csv_file, (unsigned char*) buffer, (uint)strlen(buffer), MYF(0));
 }
 
 void

@@ -30,7 +30,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info);
 static int rr_from_pointers(READ_RECORD *info);
 static int rr_from_cache(READ_RECORD *info);
 static int init_rr_cache(THD *thd, READ_RECORD *info);
-static int rr_cmp(uchar *a,uchar *b);
+static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
 
@@ -426,7 +426,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info)
 static int rr_from_pointers(READ_RECORD *info)
 {
   int tmp;
-  uchar *cache_pos;
+  unsigned char *cache_pos;
 
   for (;;)
   {
@@ -493,7 +493,7 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (info->cache_records <= 2 ||
-      !(info->cache=(uchar*) my_malloc_lock(rec_cache_size+info->cache_records*
+      !(info->cache=(unsigned char*) my_malloc_lock(rec_cache_size+info->cache_records*
 					   info->struct_length+1,
 					   MYF(0))))
     return(1);
@@ -514,7 +514,7 @@ static int rr_from_cache(READ_RECORD *info)
   uint32_t length;
   my_off_t rest_of_file;
   int16_t error;
-  uchar *position,*ref_position,*record_pos;
+  unsigned char *position,*ref_position,*record_pos;
   uint32_t record;
 
   for (;;)
@@ -579,7 +579,7 @@ static int rr_from_cache(READ_RECORD *info)
 } /* rr_from_cache */
 
 
-static int rr_cmp(uchar *a,uchar *b)
+static int rr_cmp(unsigned char *a,unsigned char *b)
 {
   if (a[0] != b[0])
     return (int) a[0] - (int) b[0];

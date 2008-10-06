@@ -129,9 +129,9 @@ bool check_table_access(THD *thd, ulong want_access, TableList *tables,
   set_key_field_ptr changes all fields of an index using a key_info object.
   All methods presume that there is at least one field to change.
 */
-void set_field_ptr(Field **ptr, const uchar *new_buf, const uchar *old_buf);
-void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
-                       const uchar *old_buf);
+void set_field_ptr(Field **ptr, const unsigned char *new_buf, const unsigned char *old_buf);
+void set_key_field_ptr(KEY *key_info, const unsigned char *new_buf,
+                       const unsigned char *old_buf);
 /* </UNUSED> */
 
 /* sql_base.cc */
@@ -563,17 +563,17 @@ void dump_TableList_graph(SELECT_LEX *select_lex, TableList* tl);
 void mysql_print_status();
 
 /* key.cc */
-int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
+int find_ref_key(KEY *key, uint key_count, unsigned char *record, Field *field,
                  uint *key_length, uint *keypart);
-void key_copy(uchar *to_key, uchar *from_record, KEY *key_info, uint key_length);
-void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
+void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info, uint key_length);
+void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
                  uint16_t key_length);
-void key_zero_nulls(uchar *tuple, KEY *key_info);
-bool key_cmp_if_same(Table *form,const uchar *key,uint index,uint key_length);
+void key_zero_nulls(unsigned char *tuple, KEY *key_info);
+bool key_cmp_if_same(Table *form,const unsigned char *key,uint index,uint key_length);
 void key_unpack(String *to,Table *form,uint index);
 bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields);
-int key_cmp(KEY_PART_INFO *key_part, const uchar *key, uint key_length);
-extern "C" int key_rec_cmp(void *key_info, uchar *a, uchar *b);
+int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint key_length);
+extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 
 bool init_errmessage(void);
 File open_binlog(IO_CACHE *log, const char *log_file_name,
@@ -810,7 +810,7 @@ void unlock_table_names(THD *thd, TableList *table_list,
 bool lock_table_names_exclusively(THD *thd, TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(THD *thd, 
                                                      TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
+bool is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *key,
                                                      int key_length);
 
 
@@ -844,10 +844,10 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg);
 int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
                           uint db_stat, uint prgflag, uint ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
-int readfrm(const char *name, uchar **data, size_t *length);
-int writefrm(const char* name, const uchar* data, size_t len);
+int readfrm(const char *name, unsigned char **data, size_t *length);
+int writefrm(const char* name, const unsigned char* data, size_t len);
 int closefrm(Table *table, bool free_share);
-int read_string(File file, uchar* *to, size_t length);
+int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 ulong convert_period_to_month(ulong period);
@@ -892,7 +892,7 @@ uint64_t get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
-void change_byte(uchar *,uint,char,char);
+void change_byte(unsigned char *,uint,char,char);
 void init_read_record(READ_RECORD *info, THD *thd, Table *reg_form,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_errors);
@@ -904,7 +904,7 @@ ha_rows filesort(THD *thd, Table *form,struct st_sort_field *sortorder,
 		 ha_rows max_rows, bool sort_positions,
                  ha_rows *examined_rows);
 void filesort_free_buffers(Table *table, bool full);
-void change_double_for_sort(double nr,uchar *to);
+void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
 int get_quick_record(SQL_SELECT *select);
@@ -914,13 +914,13 @@ uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year);
 void find_date(char *pos,uint *vek,uint flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
-ulong get_form_pos(File file, uchar *head, TYPELIB *save_names);
-ulong make_new_entry(File file,uchar *fileinfo,TYPELIB *formnames,
+ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
+ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint length);
 int create_frm(THD *thd, const char *name, const char *db, const char *table,
-               uint reclength, uchar *fileinfo,
+               uint reclength, unsigned char *fileinfo,
 	       HA_CREATE_INFO *create_info, uint keys, KEY *key_info);
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
@@ -1087,7 +1087,7 @@ static inline double log2(double x)
 
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
 void kill_delayed_threads(void);
-bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
+bool check_stack_overrun(THD *thd, long margin, unsigned char *dummy);
 
 /** 
  * Used by handlers to store things in schema tables 

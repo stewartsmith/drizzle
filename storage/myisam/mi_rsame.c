@@ -25,7 +25,7 @@
 	*/
 
 
-int mi_rsame(MI_INFO *info, uchar *record, int inx)
+int mi_rsame(MI_INFO *info, unsigned char *record, int inx)
 {
   if (inx != -1 && ! mi_is_key_active(info->s->state.key_map, inx))
   {

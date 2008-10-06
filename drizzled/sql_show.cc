@@ -451,7 +451,7 @@ static const char *require_quotes(const char *name, uint name_length)
 
   for (; name < end ; name++)
   {
-    uchar chr= (uchar) *name;
+    unsigned char chr= (unsigned char) *name;
     length= my_mbcharlen(system_charset_info, chr);
     if (length == 1 && !system_charset_info->ident_map[chr])
       return name;
@@ -500,7 +500,7 @@ append_identifier(THD *thd, String *packet, const char *name, uint length)
 
   for (name_end= name+length ; name < name_end ; name+= length)
   {
-    uchar chr= (uchar) *name;
+    unsigned char chr= (unsigned char) *name;
     length= my_mbcharlen(system_charset_info, chr);
     /*
       my_mbcharlen can return 0 on a wrong multibyte
@@ -511,7 +511,7 @@ append_identifier(THD *thd, String *packet, const char *name, uint length)
     */
     if (!length)
       length= 1;
-    if (length == 1 && chr == (uchar) quote_char)
+    if (length == 1 && chr == (unsigned char) quote_char)
       packet->append(&quote_char, 1, system_charset_info);
     packet->append(name, length, system_charset_info);
   }
@@ -1353,8 +1353,8 @@ int add_status_vars(SHOW_VAR *list)
     goto err;
   }
   while (list->name)
-    res|= insert_dynamic(&all_status_vars, (uchar*)list++);
-  res|= insert_dynamic(&all_status_vars, (uchar*)list); // appending NULL-element
+    res|= insert_dynamic(&all_status_vars, (unsigned char*)list++);
+  res|= insert_dynamic(&all_status_vars, (unsigned char*)list); // appending NULL-element
   all_status_vars.elements--; // but next insert_dynamic should overwite it
   if (status_vars_inited)
     sort_dynamic(&all_status_vars, show_var_cmp);
@@ -1759,17 +1759,17 @@ bool get_lookup_value(THD *thd, Item_func *item_func,
       return 1;
 
     /* Lookup value is database name */
-    if (!cs->coll->strnncollsp(cs, (uchar *) field_name1, strlen(field_name1),
-                               (uchar *) item_field->field_name,
+    if (!cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
+                               (unsigned char *) item_field->field_name,
                                strlen(item_field->field_name), 0))
     {
       thd->make_lex_string(&lookup_field_vals->db_value, tmp_str->ptr(),
                            tmp_str->length(), false);
     }
     /* Lookup value is table name */
-    else if (!cs->coll->strnncollsp(cs, (uchar *) field_name2,
+    else if (!cs->coll->strnncollsp(cs, (unsigned char *) field_name2,
                                     strlen(field_name2),
-                                    (uchar *) item_field->field_name,
+                                    (unsigned char *) item_field->field_name,
                                     strlen(item_field->field_name), 0))
     {
       thd->make_lex_string(&lookup_field_vals->table_value, tmp_str->ptr(),
@@ -1854,11 +1854,11 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
     const char *field_name2= schema_table->idx_field2 >= 0 ?
       field_info[schema_table->idx_field2].field_name : "";
     if (table->table != item_field->field->table ||
-        (cs->coll->strnncollsp(cs, (uchar *) field_name1, strlen(field_name1),
-                               (uchar *) item_field->field_name,
+        (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
+                               (unsigned char *) item_field->field_name,
                                strlen(item_field->field_name), 0) &&
-         cs->coll->strnncollsp(cs, (uchar *) field_name2, strlen(field_name2),
-                               (uchar *) item_field->field_name,
+         cs->coll->strnncollsp(cs, (unsigned char *) field_name2, strlen(field_name2),
+                               (unsigned char *) item_field->field_name,
                                strlen(item_field->field_name), 0)))
       return 0;
   }
@@ -3116,9 +3116,9 @@ static int get_schema_column_record(THD *thd, TableList *tables,
     if (!show_table->read_set)
     {
       /* to satisfy 'field->val_str' ASSERTs */
-      uchar *bitmaps;
+      unsigned char *bitmaps;
       uint bitmap_size= show_table_share->column_bitmap_size;
-      if (!(bitmaps= (uchar*) alloc_root(thd->mem_root, bitmap_size)))
+      if (!(bitmaps= (unsigned char*) alloc_root(thd->mem_root, bitmap_size)))
         return(0);
       bitmap_init(&show_table->def_read_set,
                   (my_bitmap_map*) bitmaps, show_table_share->fields, false);
@@ -3130,7 +3130,7 @@ static int get_schema_column_record(THD *thd, TableList *tables,
 
   for (; (field= *ptr) ; ptr++)
   {
-    uchar *pos;
+    unsigned char *pos;
     char tmp[MAX_FIELD_WIDTH];
     String type(tmp,sizeof(tmp), system_charset_info);
     char *end;
@@ -3158,12 +3158,12 @@ static int get_schema_column_record(THD *thd, TableList *tables,
       table->field[5]->store(type.ptr(), type.length(), cs);
       table->field[5]->set_notnull();
     }
-    pos=(uchar*) ((field->flags & NOT_NULL_FLAG) ?  "NO" : "YES");
+    pos=(unsigned char*) ((field->flags & NOT_NULL_FLAG) ?  "NO" : "YES");
     table->field[6]->store((const char*) pos,
                            strlen((const char*) pos), cs);
     store_column_type(table, field, cs, 7);
 
-    pos=(uchar*) ((field->flags & PRI_KEY_FLAG) ? "PRI" :
+    pos=(unsigned char*) ((field->flags & PRI_KEY_FLAG) ? "PRI" :
                  (field->flags & UNIQUE_KEY_FLAG) ? "UNI" :
                  (field->flags & MULTIPLE_KEY_FLAG) ? "MUL":"");
     table->field[15]->store((const char*) pos,
@@ -3181,10 +3181,10 @@ static int get_schema_column_record(THD *thd, TableList *tables,
     {
       enum column_format_type column_format= (enum column_format_type)
         ((field->flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      pos=(uchar*)"Default";
+      pos=(unsigned char*)"Default";
       table->field[19]->store((const char*) pos,
                               strlen((const char*) pos), cs);
-      pos=(uchar*)(column_format == COLUMN_FORMAT_TYPE_DEFAULT ? "Default" :
+      pos=(unsigned char*)(column_format == COLUMN_FORMAT_TYPE_DEFAULT ? "Default" :
                    column_format == COLUMN_FORMAT_TYPE_FIXED ? "Fixed" :
                                                              "Dynamic");
       table->field[20]->store((const char*) pos,

@@ -62,8 +62,8 @@ uint sf_malloc_prehunc=0,		/* If you have problem with core- */
 uint32_t sf_malloc_cur_memory= 0L;		/* Current memory usage */
 uint32_t sf_malloc_max_memory= 0L;		/* Maximum memory usage */
 uint  sf_malloc_count= 0;		/* Number of times NEW() was called */
-uchar *sf_min_adress= (uchar*) ~(unsigned long) 0L,
-     *sf_max_adress= (uchar*) 0L;
+unsigned char *sf_min_adress= (unsigned char*) ~(unsigned long) 0L,
+     *sf_max_adress= (unsigned char*) 0L;
 /* Root of the linked list of struct st_irem */
 struct st_irem *sf_malloc_root = NULL;
 

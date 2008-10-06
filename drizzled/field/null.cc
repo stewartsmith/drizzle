@@ -25,7 +25,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/null.h>
 
-uchar Field_null::null[1]={1};
+unsigned char Field_null::null[1]={1};
 
 /****************************************************************************
   Field_null, a field that always return NULL

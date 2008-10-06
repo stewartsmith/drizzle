@@ -245,7 +245,7 @@ public:
   const char *func_name() const { return "<in_optimizer>"; }
   Item_cache **get_cache() { return &cache; }
   void keep_top_level_cache();
-  Item *transform(Item_transformer transformer, uchar *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
 };
 
 class Comp_creator
@@ -367,7 +367,7 @@ public:
   }
   Item *neg_transformer(THD *thd);
   virtual Item *negated_item();
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
 };
 
@@ -585,7 +585,7 @@ public:
     return this;
   }
   bool eq(const Item *item, bool binary_cmp) const;
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
 };
 
@@ -762,7 +762,7 @@ public:
      count(elements), used_count(elements) {}
   virtual ~in_vector() {}
   virtual void set(uint pos,Item *item)=0;
-  virtual uchar *get_value(Item *item)=0;
+  virtual unsigned char *get_value(Item *item)=0;
   void sort()
   {
     my_qsort2(base,used_count,size,compare, (void *) collation);
@@ -806,7 +806,7 @@ public:
   in_string(uint elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs);
   ~in_string();
   void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   Item* create_item()
   { 
     return new Item_string(collation);
@@ -836,7 +836,7 @@ protected:
 public:
   in_int64_t(uint elements);
   void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   
   Item* create_item()
   { 
@@ -877,7 +877,7 @@ public:
     :in_int64_t(elements), thd(current_thd), warn_item(warn_item_arg),
      lval_cache(0) {};
   void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
 };
 
@@ -888,7 +888,7 @@ class in_double :public in_vector
 public:
   in_double(uint elements);
   void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   Item *create_item()
   { 
     return new Item_float(0.0, 0);
@@ -907,7 +907,7 @@ class in_decimal :public in_vector
 public:
   in_decimal(uint elements);
   void set(uint pos, Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   Item *create_item()
   { 
     return new Item_decimal(0, false);
@@ -1264,7 +1264,7 @@ public:
   in_row(uint elements, Item *);
   ~in_row();
   void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  unsigned char *get_value(Item *item);
   friend void Item_func_in::fix_length_and_dec();
   Item_result result_type() { return ROW_RESULT; }
 };
@@ -1436,15 +1436,15 @@ public:
                          COND **conds);
   void top_level_item() { abort_on_null=1; }
   void copy_andor_arguments(THD *thd, Item_cond *item);
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   void traverse_cond(Cond_traverser, void *arg, traverse_order order);
   void neg_arguments(THD *thd);
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
-  Item *compile(Item_analyzer analyzer, uchar **arg_p,
-                Item_transformer transformer, uchar *arg_t);
+  Item *compile(Item_analyzer analyzer, unsigned char **arg_p,
+                Item_transformer transformer, unsigned char *arg_t);
 };
 
 
@@ -1553,8 +1553,8 @@ public:
   void fix_length_and_dec();
   bool fix_fields(THD *thd, Item **ref);
   void update_used_tables();
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
   const CHARSET_INFO *compare_collation() 
   { return fields.head()->collation.collation; }

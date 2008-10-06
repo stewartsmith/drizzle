@@ -17,10 +17,10 @@
 
 #include "heapdef.h"
 
-int heap_update(HP_INFO *info, const uchar *old_record, const uchar *new_record)
+int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned char *new_record)
 {
   HP_KEYDEF *keydef, *end, *p_lastinx;
-  uchar *pos;
+  unsigned char *pos;
   bool auto_key_changed= 0;
   HP_SHARE *share= info->s;
   uint old_length, new_length;

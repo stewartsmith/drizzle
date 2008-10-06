@@ -63,7 +63,7 @@ extern const char *soundex_map;
 extern USED_MEM* my_once_root_block;
 extern uint	 my_once_extra;
 
-extern uchar	*sf_min_adress,*sf_max_adress;
+extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;
 extern struct st_irem *sf_malloc_root;
 

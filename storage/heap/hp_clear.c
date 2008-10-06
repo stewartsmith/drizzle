@@ -86,7 +86,7 @@ void hp_clear_keys(HP_SHARE *info)
     {
       HP_BLOCK *block= &keyinfo->block;
       if (block->levels)
-        hp_free_level(block,block->levels,block->root,(uchar*) 0);
+        hp_free_level(block,block->levels,block->root,(unsigned char*) 0);
       block->levels=0;
       block->last_allocated=0;
       keyinfo->hash_buckets= 0;

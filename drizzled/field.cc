@@ -503,8 +503,8 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
 /**
   Numeric fields base class constructor.
 */
-Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-                     uchar null_bit_arg, utype unireg_check_arg,
+Field_num::Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg,
                      uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -736,8 +736,8 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 
 
 /// This is used as a table name when the table structure is not set up
-Field::Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
-	     uchar null_bit_arg,
+Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
+	     unsigned char null_bit_arg,
 	     utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
    table(0), orig_table(0), table_name(0),
@@ -783,7 +783,7 @@ void Field::copy_from_tmp(int row_offset)
   memcpy(ptr,ptr+row_offset,pack_length());
   if (null_ptr)
   {
-    *null_ptr= (uchar) ((null_ptr[0] & (uchar) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (uchar) null_bit));
+    *null_ptr= (unsigned char) ((null_ptr[0] & (unsigned char) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (unsigned char) null_bit));
   }
 }
 
@@ -867,8 +867,8 @@ int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
    the value of this flag is a moot point since the native format is
    little-endian.
 */
-uchar *
-Field::pack(uchar *to, const uchar *from, uint32_t max_length,
+unsigned char *
+Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
             bool low_byte_first __attribute__((unused)))
 {
   uint32_t length= pack_length();
@@ -907,8 +907,8 @@ Field::pack(uchar *to, const uchar *from, uint32_t max_length,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *
-Field::unpack(uchar* to, const uchar *from, uint32_t param_data,
+const unsigned char *
+Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
               bool low_byte_first __attribute__((unused)))
 {
   uint32_t length=pack_length();
@@ -1069,8 +1069,8 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 }
 
 
-Field_str::Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-                     uchar null_bit_arg, utype unireg_check_arg,
+Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg, const CHARSET_INFO * const charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg)
@@ -1212,7 +1212,7 @@ Field *Field::new_field(MEM_ROOT *root, Table *new_table,
 
 
 Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
-                            uchar *new_ptr, uchar *new_null_ptr,
+                            unsigned char *new_ptr, unsigned char *new_null_ptr,
                             uint32_t new_null_bit)
 {
   Field *tmp;
@@ -1384,21 +1384,21 @@ bool Field_tiny::send_binary(Protocol *protocol)
   return protocol->store_tiny((int64_t) (int8_t) ptr[0]);
 }
 
-int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_tiny::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   signed char a,b;
   a=(signed char) a_ptr[0]; b= (signed char) b_ptr[0];
   if (unsigned_flag)
-    return ((uchar) a < (uchar) b) ? -1 : ((uchar) a > (uchar) b) ? 1 : 0;
+    return ((unsigned char) a < (unsigned char) b) ? -1 : ((unsigned char) a > (unsigned char) b) ? 1 : 0;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_tiny::sort_string(uchar *to,uint32_t length __attribute__((unused)))
+void Field_tiny::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   if (unsigned_flag)
     *to= *ptr;
   else
-    to[0] = (char) (ptr[0] ^ (uchar) 128);	/* Revers signbit */
+    to[0] = (char) (ptr[0] ^ (unsigned char) 128);	/* Revers signbit */
 }
 
 void Field_tiny::sql_type(String &res) const
@@ -1633,9 +1633,9 @@ bool Field_enum::eq_def(Field *field)
     return 0;
   for (uint32_t i=0 ; i < from_lib->count ; i++)
     if (my_strnncoll(field_charset,
-                     (const uchar*)typelib->type_names[i],
+                     (const unsigned char*)typelib->type_names[i],
                      strlen(typelib->type_names[i]),
-                     (const uchar*)from_lib->type_names[i],
+                     (const unsigned char*)from_lib->type_names[i],
                      strlen(from_lib->type_names[i])))
       return 0;
   return 1;
@@ -2014,8 +2014,8 @@ uint32_t pack_length_to_packflag(uint32_t type)
 }
 
 
-Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
-		  uchar *null_pos, uchar null_bit,
+Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
+		  unsigned char *null_pos, unsigned char null_bit,
 		  uint32_t pack_flag,
 		  enum_field_types field_type,
 		  const CHARSET_INFO * field_charset,
@@ -2030,7 +2030,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
   }
   else
   {
-    null_bit= ((uchar) 1) << null_bit;
+    null_bit= ((unsigned char) 1) << null_bit;
   }
 
   switch (field_type) {

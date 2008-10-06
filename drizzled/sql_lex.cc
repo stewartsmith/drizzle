@@ -42,7 +42,7 @@ const LEX_STRING null_lex_str= {NULL, 0};
   used when comparing keywords
 */
 
-static uchar to_upper_lex[]=
+static unsigned char to_upper_lex[]=
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -77,7 +77,7 @@ const char * index_hint_type_name[] =
 inline int lex_casecmp(const char *s, const char *t, uint len)
 {
   while (len-- != 0 &&
-	 to_upper_lex[(uchar) *s++] == to_upper_lex[(uchar) *t++]) ;
+	 to_upper_lex[(unsigned char) *s++] == to_upper_lex[(unsigned char) *t++]) ;
   return (int) len+1;
 }
 
@@ -88,9 +88,9 @@ void lex_init(void)
 {
   uint i;
   for (i=0 ; i < array_elements(symbols) ; i++)
-    symbols[i].length=(uchar) strlen(symbols[i].name);
+    symbols[i].length=(unsigned char) strlen(symbols[i].name);
   for (i=0 ; i < array_elements(sql_functions) ; i++)
-    sql_functions[i].length=(uchar) strlen(sql_functions[i].name);
+    sql_functions[i].length=(unsigned char) strlen(sql_functions[i].name);
 
   return;
 }
@@ -478,7 +478,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register uchar c,sep;
+  register unsigned char c,sep;
   uint found_escape=0;
   const CHARSET_INFO * const cs= lip->m_thd->charset();
 
@@ -688,7 +688,7 @@ static inline uint int_token(const char *str,uint length)
     }
   }
   while (*cmp && *cmp++ == *str++) ;
-  return ((uchar) str[-1] <= (uchar) cmp[-1]) ? smaller : bigger;
+  return ((unsigned char) str[-1] <= (unsigned char) cmp[-1]) ? smaller : bigger;
 }
 
 
@@ -766,8 +766,8 @@ int lex_one_token(void *arg, void *yythd)
   LEX *lex= thd->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   const CHARSET_INFO * const cs= thd->charset();
-  uchar *state_map= cs->state_map;
-  uchar *ident_map= cs->ident_map;
+  unsigned char *state_map= cs->state_map;
+  unsigned char *ident_map= cs->ident_map;
 
   lip->yylval=yylval;			// The global state
 
@@ -1591,7 +1591,7 @@ void st_select_lex::init_select()
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
   order_list.first= 0;
-  order_list.next= (uchar**) &order_list.first;
+  order_list.next= (unsigned char**) &order_list.first;
   /* Set limit and offset to default values */
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
@@ -2408,7 +2408,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
     {
       select_lex.context.table_list= 
         select_lex.context.first_name_resolution_table= first->next_local;
-      select_lex.table_list.first= (uchar*) (first->next_local);
+      select_lex.table_list.first= (unsigned char*) (first->next_local);
       select_lex.table_list.elements--;	//safety
       first->next_local= 0;
       /*
@@ -2489,7 +2489,7 @@ void st_lex::link_first_table_back(TableList *first,
     {
       first->next_local= (TableList*) select_lex.table_list.first;
       select_lex.context.table_list= first;
-      select_lex.table_list.first= (uchar*) first;
+      select_lex.table_list.first= (unsigned char*) first;
       select_lex.table_list.elements++;	//safety
     }
   }

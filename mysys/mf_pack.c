@@ -55,7 +55,7 @@ void pack_dirname(char * to, const char *from)
 	 (buff_length == d_length && !memcmp(buff,start,d_length))) &&
 	*start != FN_LIBCHAR && *start)
     {						/* Put current dir before */
-      bchange((uchar*) to, d_length, (uchar*) buff, buff_length, strlen(to)+1);
+      bchange((unsigned char*) to, d_length, (unsigned char*) buff, buff_length, strlen(to)+1);
     }
   }
 
@@ -323,7 +323,7 @@ size_t unpack_dirname(char * to, const char *from)
 	if (buff+h_length < suffix)
 	  memcpy(buff+h_length, suffix, length);
 	else
-	  bmove_upp((uchar*) buff+h_length+length, (uchar*) suffix+length, length);
+	  bmove_upp((unsigned char*) buff+h_length+length, (unsigned char*) suffix+length, length);
 	memcpy(buff, tilde_expansion, h_length);
       }
     }

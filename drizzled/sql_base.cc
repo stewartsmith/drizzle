@@ -42,12 +42,12 @@ static void close_old_data_files(THD *thd, Table *table, bool morph_locks,
                                  bool send_refresh);
 
 
-extern "C" uchar *table_cache_key(const uchar *record, size_t *length,
+extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
                                   bool not_used __attribute__((unused)))
 {
   Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
-  return (uchar*) entry->s->table_cache_key.str;
+  return (unsigned char*) entry->s->table_cache_key.str;
 }
 
 
@@ -119,12 +119,12 @@ uint create_table_def_key(THD *thd, char *key, TableList *table_list,
   Functions to handle table definition cach (TABLE_SHARE)
 *****************************************************************************/
 
-extern "C" uchar *table_def_key(const uchar *record, size_t *length,
+extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *length,
                                 bool not_used __attribute__((unused)))
 {
   TABLE_SHARE *entry=(TABLE_SHARE*) record;
   *length= entry->table_cache_key.length;
-  return (uchar*) entry->table_cache_key.str;
+  return (unsigned char*) entry->table_cache_key.str;
 }
 
 
@@ -207,7 +207,7 @@ TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
   *error= 0;
 
   /* Read table definition from cache */
-  if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(uchar*) key,
+  if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key,
                                          key_length)))
     goto found;
 
@@ -237,7 +237,7 @@ TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
    */
   assign_new_table_id(share);
 
-  if (my_hash_insert(&table_def_cache, (uchar*) share))
+  if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
     free_table_share(share);
     return(0);				// return error
@@ -245,7 +245,7 @@ TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
   if (open_table_def(thd, share, db_flags))
   {
     *error= share->error;
-    (void) hash_delete(&table_def_cache, (uchar*) share);
+    (void) hash_delete(&table_def_cache, (unsigned char*) share);
     return(0);
   }
   share->ref_count++;				// Mark in use
@@ -288,7 +288,7 @@ found:
          oldest_unused_share->next)
   {
     pthread_mutex_lock(&oldest_unused_share->mutex);
-    hash_delete(&table_def_cache, (uchar*) oldest_unused_share);
+    hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
   }
 
   return(share);
@@ -406,7 +406,7 @@ void release_table_share(TABLE_SHARE *share,
 
   if (to_be_deleted)
   {
-    hash_delete(&table_def_cache, (uchar*) share);
+    hash_delete(&table_def_cache, (unsigned char*) share);
     return;
   }
   pthread_mutex_unlock(&share->mutex);
@@ -437,7 +437,7 @@ TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name)
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
   key_length= create_table_def_key((THD*) 0, key, &table_list, 0);
-  return (TABLE_SHARE*) hash_search(&table_def_cache,(uchar*) key, key_length);
+  return (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }  
 
 
@@ -611,7 +611,7 @@ static void free_cache_entry(Table *table)
 	unused_tables=0;
     }
   }
-  free((uchar*) table);
+  free((unsigned char*) table);
   return;
 }
 
@@ -622,7 +622,7 @@ void free_io_cache(Table *table)
   if (table->sort.io_cache)
   {
     close_cached_file(table->sort.io_cache);
-    free((uchar*) table->sort.io_cache);
+    free((unsigned char*) table->sort.io_cache);
     table->sort.io_cache=0;
   }
   return;
@@ -658,17 +658,17 @@ bool close_cached_tables(THD *thd, TableList *tables, bool have_lock,
     while (unused_tables)
     {
 #ifdef EXTRA_DEBUG
-      if (hash_delete(&open_cache,(uchar*) unused_tables))
+      if (hash_delete(&open_cache,(unsigned char*) unused_tables))
 	printf("Warning: Couldn't delete open table from hash\n");
 #else
-      hash_delete(&open_cache,(uchar*) unused_tables);
+      hash_delete(&open_cache,(unsigned char*) unused_tables);
 #endif
     }
     /* Free table shares */
     while (oldest_unused_share->next)
     {
       pthread_mutex_lock(&oldest_unused_share->mutex);
-      hash_delete(&table_def_cache, (uchar*) oldest_unused_share);
+      hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
     }
     if (wait_for_refresh)
     {
@@ -955,7 +955,7 @@ static void close_open_tables(THD *thd)
 
   /* Free tables to hold down open files */
   while (open_cache.records > table_cache_size && unused_tables)
-    hash_delete(&open_cache,(uchar*) unused_tables); /* purecov: tested */
+    hash_delete(&open_cache,(unsigned char*) unused_tables); /* purecov: tested */
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
@@ -1090,7 +1090,7 @@ bool close_thread_table(THD *thd, Table **table_ptr)
   if (table->needs_reopen_or_name_lock() ||
       thd->version != refresh_version || !table->db_stat)
   {
-    hash_delete(&open_cache,(uchar*) table);
+    hash_delete(&open_cache,(unsigned char*) table);
     found_old_table=1;
   }
   else
@@ -1646,7 +1646,7 @@ void unlink_open_table(THD *thd, Table *find, bool unlock)
       /* Remove table from open_tables list. */
       *prev= list->next;
       /* Close table. */
-      hash_delete(&open_cache,(uchar*) list); // Close table
+      hash_delete(&open_cache,(unsigned char*) list); // Close table
     }
     else
     {
@@ -1905,9 +1905,9 @@ Table *table_cache_insert_placeholder(THD *thd, const char *key,
   table->in_use= thd;
   table->locked_by_name=1;
 
-  if (my_hash_insert(&open_cache, (uchar*)table))
+  if (my_hash_insert(&open_cache, (unsigned char*)table))
   {
-    free((uchar*) table);
+    free((unsigned char*) table);
     return(NULL);
   }
 
@@ -1946,7 +1946,7 @@ bool lock_table_name_if_not_cached(THD *thd, const char *db,
   key_length= (uint)(my_stpcpy(my_stpcpy(key, db) + 1, table_name) - key) + 1;
   pthread_mutex_lock(&LOCK_open);
 
-  if (hash_search(&open_cache, (uchar *)key, key_length))
+  if (hash_search(&open_cache, (unsigned char *)key, key_length))
   {
     pthread_mutex_unlock(&LOCK_open);
     *table= 0;
@@ -2077,7 +2077,7 @@ Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
     *refresh=0;
 
   /* an open table operation needs a lot of the stack space */
-  if (check_stack_overrun(thd, STACK_MIN_SIZE_FOR_OPEN, (uchar *)&alias))
+  if (check_stack_overrun(thd, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
     return(0);
 
   if (thd->killed)
@@ -2269,10 +2269,10 @@ Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
     an implicit "pending locks queue" - see
     wait_for_locked_table_names for details.
   */
-  for (table= (Table*) hash_first(&open_cache, (uchar*) key, key_length,
+  for (table= (Table*) hash_first(&open_cache, (unsigned char*) key, key_length,
                                   &state);
        table && table->in_use ;
-       table= (Table*) hash_next(&open_cache, (uchar*) key, key_length,
+       table= (Table*) hash_next(&open_cache, (unsigned char*) key, key_length,
                                  &state))
   {
     /*
@@ -2376,7 +2376,7 @@ Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
     int error;
     /* Free cache if too big */
     while (open_cache.records > table_cache_size && unused_tables)
-      hash_delete(&open_cache,(uchar*) unused_tables); /* purecov: tested */
+      hash_delete(&open_cache,(unsigned char*) unused_tables); /* purecov: tested */
 
     if (table_list->create)
     {
@@ -2423,17 +2423,17 @@ Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
     /* Combine the follow two */
     if (error > 0)
     {
-      free((uchar*)table);
+      free((unsigned char*)table);
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
     if (error < 0)
     {
-      free((uchar*)table);
+      free((unsigned char*)table);
       pthread_mutex_unlock(&LOCK_open);
       return(0); // VIEW
     }
-    my_hash_insert(&open_cache,(uchar*) table);
+    my_hash_insert(&open_cache,(unsigned char*) table);
   }
 
   pthread_mutex_unlock(&LOCK_open);
@@ -2703,7 +2703,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
     if (!tables || (!db_stat && reopen_table(table)))
     {
       my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-      hash_delete(&open_cache,(uchar*) table);
+      hash_delete(&open_cache,(unsigned char*) table);
       error=1;
     }
     else
@@ -2748,7 +2748,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
   }
   if (get_locks && tables)
   {
-    my_afree((uchar*) tables);
+    my_afree((unsigned char*) tables);
   }
   broadcast_refresh();
   return(error);
@@ -2855,10 +2855,10 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
     uint key_length= table->s->table_cache_key.length;
 
     HASH_SEARCH_STATE state;
-    for (Table *search= (Table*) hash_first(&open_cache, (uchar*) key,
+    for (Table *search= (Table*) hash_first(&open_cache, (unsigned char*) key,
                                              key_length, &state);
 	 search ;
-         search= (Table*) hash_next(&open_cache, (uchar*) key,
+         search= (Table*) hash_next(&open_cache, (unsigned char*) key,
                                     key_length, &state))
     {
       if (search->in_use == table->in_use)
@@ -2968,7 +2968,7 @@ Table *drop_locked_tables(THD *thd,const char *db, const char *table_name)
       else
       {
         /* We already have a name lock, remove copy */
-        hash_delete(&open_cache,(uchar*) table);
+        hash_delete(&open_cache,(unsigned char*) table);
       }
     }
     else
@@ -2982,7 +2982,7 @@ Table *drop_locked_tables(THD *thd,const char *db, const char *table_name)
     broadcast_refresh();
   if (thd->locked_tables && thd->locked_tables->table_count == 0)
   {
-    free((uchar*) thd->locked_tables);
+    free((unsigned char*) thd->locked_tables);
     thd->locked_tables=0;
   }
   return(found);
@@ -4098,7 +4098,7 @@ find_field_in_table(THD *thd, Table *table, const char *name, uint length,
     field_ptr= table->field + cached_field_index;
   else if (table->s->name_hash.records)
   {
-    field_ptr= (Field**) hash_search(&table->s->name_hash, (uchar*) name,
+    field_ptr= (Field**) hash_search(&table->s->name_hash, (unsigned char*) name,
                                      length);
     if (field_ptr)
     {
@@ -4292,7 +4292,7 @@ find_field_in_table_ref(THD *thd, TableList *table_list,
           else
           {
             if (thd->mark_used_columns == MARK_COLUMNS_READ)
-              it->walk(&Item::register_field_in_read_map, 1, (uchar *) 0);
+              it->walk(&Item::register_field_in_read_map, 1, (unsigned char *) 0);
           }
         }
         else
@@ -4331,7 +4331,7 @@ Field *find_field_in_table_sef(Table *table, const char *name)
   Field **field_ptr;
   if (table->s->name_hash.records)
   {
-    field_ptr= (Field**)hash_search(&table->s->name_hash,(uchar*) name,
+    field_ptr= (Field**)hash_search(&table->s->name_hash,(unsigned char*) name,
                                     strlen(name));
     if (field_ptr)
     {
@@ -6264,7 +6264,7 @@ void remove_db_from_cache(const char *db)
     }
   }
   while (unused_tables && !unused_tables->s->version)
-    hash_delete(&open_cache,(uchar*) unused_tables);
+    hash_delete(&open_cache,(unsigned char*) unused_tables);
 }
 
 
@@ -6280,7 +6280,7 @@ void flush_tables()
 {
   (void) pthread_mutex_lock(&LOCK_open);
   while (unused_tables)
-    hash_delete(&open_cache,(uchar*) unused_tables);
+    hash_delete(&open_cache,(unsigned char*) unused_tables);
   (void) pthread_mutex_unlock(&LOCK_open);
 }
 
@@ -6315,10 +6315,10 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
     HASH_SEARCH_STATE state;
     result= signalled= 0;
 
-    for (table= (Table*) hash_first(&open_cache, (uchar*) key, key_length,
+    for (table= (Table*) hash_first(&open_cache, (unsigned char*) key, key_length,
                                     &state);
          table;
-         table= (Table*) hash_next(&open_cache, (uchar*) key, key_length,
+         table= (Table*) hash_next(&open_cache, (unsigned char*) key, key_length,
                                    &state))
     {
       THD *in_use;
@@ -6362,17 +6362,17 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
         result= result || (flags & RTFC_OWNED_BY_THD_FLAG);
     }
     while (unused_tables && !unused_tables->s->version)
-      hash_delete(&open_cache,(uchar*) unused_tables);
+      hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */
-    if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(uchar*) key,
+    if ((share= (TABLE_SHARE*) hash_search(&table_def_cache,(unsigned char*) key,
                                            key_length)))
     {
       share->version= 0;                          // Mark for delete
       if (share->ref_count == 0)
       {
         pthread_mutex_lock(&share->mutex);
-        hash_delete(&table_def_cache, (uchar*) share);
+        hash_delete(&table_def_cache, (unsigned char*) share);
       }
     }
 

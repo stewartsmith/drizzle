@@ -282,7 +282,7 @@ void init_slave_skip_errors(const char* arg)
   use_slave_mask = 1;
   for (;my_isspace(system_charset_info,*arg);++arg)
     /* empty */;
-  if (!my_strnncoll(system_charset_info,(uchar*)arg,4,(const uchar*)"all",4))
+  if (!my_strnncoll(system_charset_info,(unsigned char*)arg,4,(const unsigned char*)"all",4))
   {
     bitmap_set_all(&slave_error_mask);
     return;
@@ -541,7 +541,7 @@ int32_t start_slave_threads(bool need_slave_mutex, bool wait_for_start,
 
 
 #ifdef NOT_USED_YET
-static int32_t end_slave_on_walk(Master_info* mi, uchar* /*unused*/)
+static int32_t end_slave_on_walk(Master_info* mi, unsigned char* /*unused*/)
 {
   end_master_info(mi);
   return(0);
@@ -635,15 +635,15 @@ void skip_load_data_infile(NET *net)
 {
   (void)net_request_file(net, "/dev/null");
   (void)my_net_read(net);                               // discard response
-  (void)net_write_command(net, 0, (uchar*) "", 0, (uchar*) "", 0); // ok
+  (void)net_write_command(net, 0, (unsigned char*) "", 0, (unsigned char*) "", 0); // ok
   return;
 }
 
 
 bool net_request_file(NET* net, const char* fname)
 {
-  return(net_write_command(net, 251, (uchar*) fname, strlen(fname),
-                                (uchar*) "", 0));
+  return(net_write_command(net, 251, (unsigned char*) fname, strlen(fname),
+                                (unsigned char*) "", 0));
 }
 
 /*
@@ -1092,7 +1092,7 @@ static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((unuse
 int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
                              bool *suppress_warnings)
 {
-  uchar buf[1024], *pos= buf;
+  unsigned char buf[1024], *pos= buf;
   uint32_t report_host_len, report_user_len=0, report_password_len=0;
 
   *suppress_warnings= false;
@@ -1109,9 +1109,9 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
     return(0);                                     // safety
 
   int4store(pos, server_id); pos+= 4;
-  pos= net_store_data(pos, (uchar*) report_host, report_host_len);
-  pos= net_store_data(pos, (uchar*) report_user, report_user_len);
-  pos= net_store_data(pos, (uchar*) report_password, report_password_len);
+  pos= net_store_data(pos, (unsigned char*) report_host, report_host_len);
+  pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
+  pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
   int4store(pos, rpl_recovery_rank);    pos+= 4;
   /* The master will fill in master_id */
@@ -1321,7 +1321,7 @@ bool show_master_info(THD* thd, Master_info* mi)
     pthread_mutex_unlock(&mi->rli.data_lock);
     pthread_mutex_unlock(&mi->data_lock);
 
-    if (my_net_write(&thd->net, (uchar*) thd->packet.ptr(), packet->length()))
+    if (my_net_write(&thd->net, (unsigned char*) thd->packet.ptr(), packet->length()))
       return(true);
   }
   my_eof(thd);
@@ -1448,7 +1448,7 @@ static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed
 static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
                         bool *suppress_warnings)
 {
-  uchar buf[FN_REFLEN + 10];
+  unsigned char buf[FN_REFLEN + 10];
   int32_t len;
   int32_t binlog_flags = 0; // for now
   char* logname = mi->master_log_name;
@@ -2551,7 +2551,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
       if (unlikely(!num_bytes)) /* eof */
       {
 	/* 3.23 master wants it */
-        net_write_command(net, 0, (uchar*) "", 0, (uchar*) "", 0);
+        net_write_command(net, 0, (unsigned char*) "", 0, (unsigned char*) "", 0);
         /*
           If we wrote Create_file_log_event, then we need to write
           Execute_load_log_event. If we did not write Create_file_log_event,
@@ -3273,7 +3273,7 @@ bool flush_relay_log_info(Relay_log_info* rli)
   *pos++='\n';
   pos=int64_t2str(rli->group_master_log_pos, pos, 10);
   *pos='\n';
-  if (my_b_write(file, (uchar*) buff, (size_t) (pos-buff)+1))
+  if (my_b_write(file, (unsigned char*) buff, (size_t) (pos-buff)+1))
     error=1;
   if (flush_io_cache(file))
     error=1;
@@ -3706,8 +3706,8 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
 {
   struct st_version_range_for_one_bug {
     uint32_t        bug_id;
-    const uchar introduced_in[3]; // first version with bug
-    const uchar fixed_in[3];      // first version with fix
+    const unsigned char introduced_in[3]; // first version with bug
+    const unsigned char fixed_in[3];      // first version with fix
   };
   static struct st_version_range_for_one_bug versions_for_all_bugs[]=
   {
@@ -3716,7 +3716,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
     {33029, { 5, 0,  0 }, { 5, 0, 58 } },
     {33029, { 5, 1,  0 }, { 5, 1, 12 } },
   };
-  const uchar *master_ver=
+  const unsigned char *master_ver=
     rli->relay_log.description_event_for_exec->server_version_split;
 
   assert(sizeof(rli->relay_log.description_event_for_exec->server_version_split) == 3);
@@ -3724,7 +3724,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
   for (uint32_t i= 0;
        i < sizeof(versions_for_all_bugs)/sizeof(*versions_for_all_bugs);i++)
   {
-    const uchar *introduced_in= versions_for_all_bugs[i].introduced_in,
+    const unsigned char *introduced_in= versions_for_all_bugs[i].introduced_in,
       *fixed_in= versions_for_all_bugs[i].fixed_in;
     if ((versions_for_all_bugs[i].bug_id == bug_id) &&
         (memcmp(introduced_in, master_ver, 3) <= 0) &&

@@ -155,7 +155,7 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
     /* Reset lock type. */
     (*ldata)->type= TL_UNLOCK;
   }
-  free((uchar*) sql_lock);
+  free((unsigned char*) sql_lock);
   *mysql_lock= 0;
 }
 
@@ -335,7 +335,7 @@ void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
   if (sql_lock->table_count)
     unlock_external(thd,sql_lock->table,sql_lock->table_count);
-  free((uchar*) sql_lock);
+  free((unsigned char*) sql_lock);
   return;
 }
 
@@ -510,7 +510,7 @@ void mysql_lock_downgrade_write(THD *thd, Table *table,
   {
     for (uint i=0; i < locked->lock_count; i++)
       thr_downgrade_write_lock(locked->locks[i], new_lock_type);
-    free((uchar*) locked);
+    free((unsigned char*) locked);
   }
 }
 
@@ -527,7 +527,7 @@ void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock)
   {
     for (uint i=0; i < locked->lock_count; i++)
       thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
-    free((uchar*) locked);
+    free((unsigned char*) locked);
   }
   return;
 }
@@ -560,7 +560,7 @@ bool mysql_lock_abort_for_thread(THD *thd, Table *table)
                                      table->in_use->thread_id))
         result= true;
     }
-    free((uchar*) locked);
+    free((unsigned char*) locked);
   }
   return(result);
 }
@@ -601,8 +601,8 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
   }
 
   /* Delete old, not needed locks */
-  free((uchar*) a);
-  free((uchar*) b);
+  free((unsigned char*) a);
+  free((unsigned char*) b);
   return(sql_lock);
 }
 
@@ -919,10 +919,10 @@ int lock_table_name(THD *thd, TableList *table_list, bool check_in_use)
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(Table*) hash_first(&open_cache, (uchar*)key,
+    for (table=(Table*) hash_first(&open_cache, (unsigned char*)key,
                                    key_length, &state);
          table ;
-         table = (Table*) hash_next(&open_cache,(uchar*) key,
+         table = (Table*) hash_next(&open_cache,(unsigned char*) key,
                                     key_length, &state))
     {
       if (table->reginfo.lock_type < TL_WRITE)
@@ -968,7 +968,7 @@ void unlock_table_name(THD *thd __attribute__((unused)),
 {
   if (table_list->table)
   {
-    hash_delete(&open_cache, (uchar*) table_list->table);
+    hash_delete(&open_cache, (unsigned char*) table_list->table);
     broadcast_refresh();
   }
 }
@@ -1118,7 +1118,7 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd,
 
   key_length= create_table_def_key(thd, key, table_list, 0);
 
-  return is_table_name_exclusively_locked_by_this_thread(thd, (uchar *)key,
+  return is_table_name_exclusively_locked_by_this_thread(thd, (unsigned char *)key,
                                                          key_length);
 }
 
@@ -1137,7 +1137,7 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd,
  */
 
 bool
-is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
+is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *key,
                                                 int key_length)
 {
   HASH_SEARCH_STATE state;

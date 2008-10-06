@@ -86,7 +86,7 @@ char *int64_t2str(int64_t val,char *dst,int radix)
   while (long_val != 0)
   {
     long quo= long_val/radix;
-    *--p = _dig_vec_upper[(uchar) (long_val - quo*radix)];
+    *--p = _dig_vec_upper[(unsigned char) (long_val - quo*radix)];
     long_val= quo;
   }
   while ((*dst++ = *p++) != 0) ;
@@ -133,7 +133,7 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   while (long_val != 0)
   {
     long quo= long_val/10;
-    *--p = _dig_vec_upper[(uchar) (long_val - quo*10)];
+    *--p = _dig_vec_upper[(unsigned char) (long_val - quo*10)];
     long_val= quo;
   }
   while ((*dst++ = *p++) != 0) ;

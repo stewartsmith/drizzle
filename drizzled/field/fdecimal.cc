@@ -31,9 +31,9 @@
 ** Field_new_decimal
 ****************************************************************************/
 
-Field_new_decimal::Field_new_decimal(uchar *ptr_arg,
-                                     uint32_t len_arg, uchar *null_ptr_arg,
-                                     uchar null_bit_arg,
+Field_new_decimal::Field_new_decimal(unsigned char *ptr_arg,
+                                     uint32_t len_arg, unsigned char *null_ptr_arg,
+                                     unsigned char null_bit_arg,
                                      enum utype unireg_check_arg,
                                      const char *field_name_arg,
                                      uint8_t dec_arg,bool zero_arg,
@@ -54,8 +54,8 @@ Field_new_decimal::Field_new_decimal(uint32_t len_arg,
                                      const char *name,
                                      uint8_t dec_arg,
                                      bool unsigned_arg)
-  :Field_num((uchar*) 0, len_arg,
-             maybe_null_arg ? (uchar*) "": 0, 0,
+  :Field_num((unsigned char*) 0, len_arg,
+             maybe_null_arg ? (unsigned char*) "": 0, 0,
              NONE, name, dec_arg, 0, unsigned_arg)
 {
   precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
@@ -290,13 +290,13 @@ String *Field_new_decimal::val_str(String *val_buffer,
 }
 
 
-int Field_new_decimal::cmp(const uchar *a,const uchar*b)
+int Field_new_decimal::cmp(const unsigned char *a,const unsigned char*b)
 {
   return memcmp(a, b, bin_size);
 }
 
 
-void Field_new_decimal::sort_string(uchar *buff,
+void Field_new_decimal::sort_string(unsigned char *buff,
                                     uint length __attribute__((unused)))
 {
   memcpy(buff, ptr, bin_size);
@@ -323,7 +323,7 @@ void Field_new_decimal::sql_type(String &str) const
 
    @returns number of bytes written to metadata_ptr
 */
-int Field_new_decimal::do_save_field_metadata(uchar *metadata_ptr)
+int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= precision;
   *(metadata_ptr + 1)= decimals();
@@ -406,9 +406,9 @@ uint Field_new_decimal::is_equal(Create_field *new_field)
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *
-Field_new_decimal::unpack(uchar* to,
-                          const uchar *from,
+const unsigned char *
+Field_new_decimal::unpack(unsigned char* to,
+                          const unsigned char *from,
                           uint param_data,
                           bool low_byte_first)
 {
@@ -439,7 +439,7 @@ Field_new_decimal::unpack(uchar* to,
       just the first step the resizing operation. The second step does the
       resizing using the precision and decimals from the slave.
     */
-    bin2decimal((uchar *)from, &dec, from_precision, from_decimal);
+    bin2decimal((unsigned char *)from, &dec, from_precision, from_decimal);
     decimal2bin(&dec, to, precision, decimals());
   }
   else

@@ -55,13 +55,13 @@ get_collation_number_internal(const char *name)
 static bool init_state_maps(CHARSET_INFO *cs)
 {
   uint i;
-  uchar *state_map;
-  uchar *ident_map;
+  unsigned char *state_map;
+  unsigned char *ident_map;
 
-  if (!(cs->state_map= (uchar*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->state_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
     
-  if (!(cs->ident_map= (uchar*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->ident_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
 
   state_map= cs->state_map;
@@ -71,47 +71,47 @@ static bool init_state_maps(CHARSET_INFO *cs)
   for (i=0; i < 256 ; i++)
   {
     if (my_isalpha(cs,i))
-      state_map[i]=(uchar) MY_LEX_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_IDENT;
     else if (my_isdigit(cs,i))
-      state_map[i]=(uchar) MY_LEX_NUMBER_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_NUMBER_IDENT;
 #if defined(USE_MB) && defined(USE_MB_IDENT)
     else if (my_mbcharlen(cs, i)>1)
-      state_map[i]=(uchar) MY_LEX_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_IDENT;
 #endif
     else if (my_isspace(cs,i))
-      state_map[i]=(uchar) MY_LEX_SKIP;
+      state_map[i]=(unsigned char) MY_LEX_SKIP;
     else
-      state_map[i]=(uchar) MY_LEX_CHAR;
+      state_map[i]=(unsigned char) MY_LEX_CHAR;
   }
-  state_map[(uchar)'_']=state_map[(uchar)'$']=(uchar) MY_LEX_IDENT;
-  state_map[(uchar)'\'']=(uchar) MY_LEX_STRING;
-  state_map[(uchar)'.']=(uchar) MY_LEX_REAL_OR_POINT;
-  state_map[(uchar)'>']=state_map[(uchar)'=']=state_map[(uchar)'!']= (uchar) MY_LEX_CMP_OP;
-  state_map[(uchar)'<']= (uchar) MY_LEX_LONG_CMP_OP;
-  state_map[(uchar)'&']=state_map[(uchar)'|']=(uchar) MY_LEX_BOOL;
-  state_map[(uchar)'#']=(uchar) MY_LEX_COMMENT;
-  state_map[(uchar)';']=(uchar) MY_LEX_SEMICOLON;
-  state_map[(uchar)':']=(uchar) MY_LEX_SET_VAR;
-  state_map[0]=(uchar) MY_LEX_EOL;
-  state_map[(uchar)'\\']= (uchar) MY_LEX_ESCAPE;
-  state_map[(uchar)'/']= (uchar) MY_LEX_LONG_COMMENT;
-  state_map[(uchar)'*']= (uchar) MY_LEX_END_LONG_COMMENT;
-  state_map[(uchar)'@']= (uchar) MY_LEX_USER_END;
-  state_map[(uchar) '`']= (uchar) MY_LEX_USER_VARIABLE_DELIMITER;
-  state_map[(uchar)'"']= (uchar) MY_LEX_STRING_OR_DELIMITER;
+  state_map[(unsigned char)'_']=state_map[(unsigned char)'$']=(unsigned char) MY_LEX_IDENT;
+  state_map[(unsigned char)'\'']=(unsigned char) MY_LEX_STRING;
+  state_map[(unsigned char)'.']=(unsigned char) MY_LEX_REAL_OR_POINT;
+  state_map[(unsigned char)'>']=state_map[(unsigned char)'=']=state_map[(unsigned char)'!']= (unsigned char) MY_LEX_CMP_OP;
+  state_map[(unsigned char)'<']= (unsigned char) MY_LEX_LONG_CMP_OP;
+  state_map[(unsigned char)'&']=state_map[(unsigned char)'|']=(unsigned char) MY_LEX_BOOL;
+  state_map[(unsigned char)'#']=(unsigned char) MY_LEX_COMMENT;
+  state_map[(unsigned char)';']=(unsigned char) MY_LEX_SEMICOLON;
+  state_map[(unsigned char)':']=(unsigned char) MY_LEX_SET_VAR;
+  state_map[0]=(unsigned char) MY_LEX_EOL;
+  state_map[(unsigned char)'\\']= (unsigned char) MY_LEX_ESCAPE;
+  state_map[(unsigned char)'/']= (unsigned char) MY_LEX_LONG_COMMENT;
+  state_map[(unsigned char)'*']= (unsigned char) MY_LEX_END_LONG_COMMENT;
+  state_map[(unsigned char)'@']= (unsigned char) MY_LEX_USER_END;
+  state_map[(unsigned char) '`']= (unsigned char) MY_LEX_USER_VARIABLE_DELIMITER;
+  state_map[(unsigned char)'"']= (unsigned char) MY_LEX_STRING_OR_DELIMITER;
 
   /*
     Create a second map to make it faster to find identifiers
   */
   for (i=0; i < 256 ; i++)
   {
-    ident_map[i]= (uchar) (state_map[i] == MY_LEX_IDENT ||
+    ident_map[i]= (unsigned char) (state_map[i] == MY_LEX_IDENT ||
 			   state_map[i] == MY_LEX_NUMBER_IDENT);
   }
 
   /* Special handling of hex and binary strings */
-  state_map[(uchar)'x']= state_map[(uchar)'X']= (uchar) MY_LEX_IDENT_OR_HEX;
-  state_map[(uchar)'b']= state_map[(uchar)'B']= (uchar) MY_LEX_IDENT_OR_BIN;
+  state_map[(unsigned char)'x']= state_map[(unsigned char)'X']= (unsigned char) MY_LEX_IDENT_OR_HEX;
+  state_map[(unsigned char)'b']= state_map[(unsigned char)'B']= (unsigned char) MY_LEX_IDENT_OR_BIN;
   return 0;
 }
 

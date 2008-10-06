@@ -1083,7 +1083,7 @@ void Relay_log_info::clear_tables_to_lock()
 {
   while (tables_to_lock)
   {
-    uchar* to_free= reinterpret_cast<uchar*>(tables_to_lock);
+    unsigned char* to_free= reinterpret_cast<unsigned char*>(tables_to_lock);
     if (tables_to_lock->m_tabledef_valid)
     {
       tables_to_lock->m_tabledef.table_def::~table_def();

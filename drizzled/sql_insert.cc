@@ -869,9 +869,9 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
 	    goto err;
 	  }
 	}
-	key_copy((uchar*) key,table->record[0],table->key_info+key_nr,0);
+	key_copy((unsigned char*) key,table->record[0],table->key_info+key_nr,0);
 	if ((error=(table->file->index_read_idx_map(table->record[1],key_nr,
-                                                    (uchar*) key, HA_WHOLE_KEY,
+                                                    (unsigned char*) key, HA_WHOLE_KEY,
                                                     HA_READ_KEY_EXACT))))
 	  goto err;
       }
@@ -1215,7 +1215,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       while ((item= li++))
       {
         item->transform(&Item::update_value_transformer,
-                        (uchar*)lex->current_select);
+                        (unsigned char*)lex->current_select);
       }
     }
 

@@ -391,12 +391,12 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	if (val_len < 2 || ! usa_time)
 	  goto err;
 	if (!my_strnncoll(&my_charset_utf8_general_ci,
-			  (const uchar *) val, 2, 
-			  (const uchar *) "PM", 2))
+			  (const unsigned char *) val, 2, 
+			  (const unsigned char *) "PM", 2))
 	  daypart= 12;
 	else if (my_strnncoll(&my_charset_utf8_general_ci,
-			      (const uchar *) val, 2, 
-			      (const uchar *) "AM", 2))
+			      (const unsigned char *) val, 2, 
+			      (const unsigned char *) "AM", 2))
 	  goto err;
 	val+= 2;
 	break;
@@ -878,7 +878,7 @@ static bool get_interval_info(const char *str,uint length, const CHARSET_INFO * 
     {
       i++;
       /* Change values[0...i-1] -> values[0...count-1] */
-      bmove_upp((uchar*) (values+count), (uchar*) (values+i),
+      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+i),
 		sizeof(*values)*i);
       memset(values, 0, sizeof(*values)*(count-i));
       break;
@@ -3045,8 +3045,8 @@ String *Item_func_get_format::val_str(String *str)
     format_name_len= strlen(format_name);
     if (val_len == format_name_len &&
 	!my_strnncoll(&my_charset_utf8_general_ci, 
-		      (const uchar *) val->ptr(), val_len, 
-		      (const uchar *) format_name, val_len))
+		      (const unsigned char *) val->ptr(), val_len, 
+		      (const unsigned char *) format_name, val_len))
     {
       const char *format_str= get_date_time_format_str(format, type);
       str->set(format_str, strlen(format_str), &my_charset_bin);

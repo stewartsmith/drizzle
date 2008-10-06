@@ -397,7 +397,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
   assert(trx_data->empty());
   thd_set_ha_data(thd, binlog_hton, NULL);
   trx_data->~binlog_trx_data();
-  free((uchar*)trx_data);
+  free((unsigned char*)trx_data);
   return 0;
 }
 
@@ -725,7 +725,7 @@ int check_binlog_magic(IO_CACHE* log, const char** errmsg)
   char magic[4];
   assert(my_b_tell(log) == 0);
 
-  if (my_b_read(log, (uchar*) magic, sizeof(magic)))
+  if (my_b_read(log, (unsigned char*) magic, sizeof(magic)))
   {
     *errmsg = _("I/O error reading the header from the binary log");
     sql_print_error("%s, errno=%d, io cache code=%d", *errmsg, my_errno,
@@ -902,7 +902,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
                      );
     end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
-    if (my_b_write(&log_file, (uchar*) buff, (uint) (end-buff)) ||
+    if (my_b_write(&log_file, (unsigned char*) buff, (uint) (end-buff)) ||
 	flush_io_cache(&log_file))
       goto err;
   }
@@ -1191,7 +1191,7 @@ bool DRIZZLE_BIN_LOG::open(const char *log_name,
 	an extension for the binary log files.
 	In this case we write a standard header to it.
       */
-      if (my_b_safe_write(&log_file, (uchar*) BINLOG_MAGIC,
+      if (my_b_safe_write(&log_file, (unsigned char*) BINLOG_MAGIC,
 			  BIN_LOG_HEADER_SIZE))
         goto err;
       bytes_written+= BIN_LOG_HEADER_SIZE;
@@ -1262,9 +1262,9 @@ bool DRIZZLE_BIN_LOG::open(const char *log_name,
         As this is a new log file, we write the file name to the index
         file. As every time we write to the index file, we sync it.
       */
-      if (my_b_write(&index_file, (uchar*) log_file_name,
+      if (my_b_write(&index_file, (unsigned char*) log_file_name,
 		     strlen(log_file_name)) ||
-	  my_b_write(&index_file, (uchar*) "\n", 1) ||
+	  my_b_write(&index_file, (unsigned char*) "\n", 1) ||
 	  flush_io_cache(&index_file) ||
           my_sync(index_file.file, MYF(MY_WME)))
 	goto err;
@@ -1332,7 +1332,7 @@ static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
   int bytes_read;
   my_off_t init_offset= offset;
   File file= index_file->file;
-  uchar io_buf[IO_SIZE*2];
+  unsigned char io_buf[IO_SIZE*2];
 
   for (;; offset+= bytes_read)
   {
@@ -1596,7 +1596,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     need_start_event=1;
   if (!open_index_file(index_file_name, 0))
     open(save_name, log_type, 0, io_cache_type, no_auto_events, max_size, 0);
-  free((uchar*) save_name);
+  free((unsigned char*) save_name);
 
 err:
   pthread_mutex_unlock(&LOCK_thread_count);
@@ -2173,7 +2173,7 @@ bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint len,...)
   safe_mutex_assert_owner(&LOCK_log);
   do
   {
-    if (my_b_append(&log_file,(uchar*) buf,len))
+    if (my_b_append(&log_file,(unsigned char*) buf,len))
     {
       error= 1;
       goto err;
@@ -2244,7 +2244,7 @@ int THD::binlog_setup_trx_data()
       open_cached_file(&trx_data->trans_log, mysql_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
   {
-    free((uchar*)trx_data);
+    free((unsigned char*)trx_data);
     return(1);                      // Didn't manage to set it up
   }
   thd_set_ha_data(this, binlog_hton, trx_data);
@@ -2574,7 +2574,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       {
         if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
         {
-          Intvar_log_event e(thd,(uchar) LAST_INSERT_ID_EVENT,
+          Intvar_log_event e(thd,(unsigned char) LAST_INSERT_ID_EVENT,
                              thd->first_successful_insert_id_in_prev_stmt_for_binlog);
           if (e.write(file))
             goto err;
@@ -2586,7 +2586,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
             MyISAM or BDB) (table->next_number_keypart != 0), such event is
             in fact not necessary. We could avoid logging it.
           */
-          Intvar_log_event e(thd, (uchar) INSERT_ID_EVENT,
+          Intvar_log_event e(thd, (unsigned char) INSERT_ID_EVENT,
                              thd->auto_inc_intervals_in_cur_stmt_for_binlog.
                              minimum());
           if (e.write(file))
@@ -2603,7 +2603,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
           for (uint i= 0; i < thd->user_var_events.elements; i++)
           {
             BINLOG_USER_VAR_EVENT *user_var_event;
-            get_dynamic(&thd->user_var_events,(uchar*) &user_var_event, i);
+            get_dynamic(&thd->user_var_events,(unsigned char*) &user_var_event, i);
             User_var_log_event e(thd, user_var_event->user_var_event->name.str,
                                  user_var_event->user_var_event->name.length,
                                  user_var_event->value,
@@ -2709,7 +2709,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
     return ER_ERROR_ON_WRITE;
   uint length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
   long val;
-  uchar header[LOG_EVENT_HEADER_LEN];
+  unsigned char header[LOG_EVENT_HEADER_LEN];
 
   /*
     The events in the buffer have incorrect end_log_pos data
@@ -2790,14 +2790,14 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         {
           /* we've got a full event-header, and it came in one piece */
 
-          uchar *log_pos= (uchar *)cache->read_pos + hdr_offs + LOG_POS_OFFSET;
+          unsigned char *log_pos= (unsigned char *)cache->read_pos + hdr_offs + LOG_POS_OFFSET;
 
           /* fix end_log_pos */
           val= uint4korr(log_pos) + group;
           int4store(log_pos, val);
 
           /* next event header at ... */
-          log_pos= (uchar *)cache->read_pos + hdr_offs + EVENT_LEN_OFFSET;
+          log_pos= (unsigned char *)cache->read_pos + hdr_offs + EVENT_LEN_OFFSET;
           hdr_offs += uint4korr(log_pos);
 
         }
@@ -3028,7 +3028,7 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
     if (log_file.type == WRITE_CACHE && log_type == LOG_BIN)
     {
       my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
-      uchar flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
+      unsigned char flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
       pwrite(log_file.file, &flags, 1, offset);
     }
 
@@ -3152,7 +3152,7 @@ bool flush_error_log()
     {
       int fd;
       size_t bytes;
-      uchar buf[IO_SIZE];
+      unsigned char buf[IO_SIZE];
 
       freopen(err_temp,"a+",stderr);
       (void) my_delete(err_renamed, MYF(0));
@@ -3372,7 +3372,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
       goto err;
   }
 
-  data= (uchar *)my_mmap(0, (size_t)file_length, PROT_READ|PROT_WRITE,
+  data= (unsigned char *)my_mmap(0, (size_t)file_length, PROT_READ|PROT_WRITE,
                         MAP_NOSYNC|MAP_SHARED, fd, 0);
   if (data == MAP_FAILED)
   {
@@ -3408,7 +3408,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
       goto err;
 
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
-  data[sizeof(tc_log_magic)]= (uchar)total_ha_2pc;
+  data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
   msync(data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
@@ -3563,7 +3563,7 @@ int TC_LOG_MMAP::log_xid(THD *thd __attribute__((unused)), my_xid xid)
   }
 
   /* found! store xid there and mark the page dirty */
-  cookie= (ulong)((uchar *)p->ptr - data);      // can never be zero
+  cookie= (ulong)((unsigned char *)p->ptr - data);      // can never be zero
   *p->ptr++= xid;
   p->free--;
   p->state= DIRTY;
@@ -3682,7 +3682,7 @@ void TC_LOG_MMAP::close()
       pthread_cond_destroy(&pages[i].cond);
     }
   case 3:
-    free((uchar*)pages);
+    free((unsigned char*)pages);
   case 2:
     my_munmap((char*)data, (size_t)file_length);
   case 1:
@@ -3724,7 +3724,7 @@ int TC_LOG_MMAP::recover()
   for ( ; p < end_p ; p++)
   {
     for (my_xid *x=p->start; x < p->end; x++)
-      if (*x && my_hash_insert(&xids, (uchar *)x))
+      if (*x && my_hash_insert(&xids, (unsigned char *)x))
         goto err2; // OOM
   }
 
@@ -3932,7 +3932,7 @@ int TC_LOG_BINLOG::recover(IO_CACHE *log, Format_description_log_event *fdle)
     if (ev->get_type_code() == XID_EVENT)
     {
       Xid_log_event *xev=(Xid_log_event *)ev;
-      uchar *x= (uchar *) memdup_root(&mem_root, (uchar*) &xev->xid,
+      unsigned char *x= (unsigned char *) memdup_root(&mem_root, (unsigned char*) &xev->xid,
                                       sizeof(xev->xid));
       if (! x)
         goto err2;

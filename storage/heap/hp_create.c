@@ -17,16 +17,16 @@
 #include "libdrizzle/drizzle_com.h"
 #include "drizzled/error.h"
 
-static int keys_compare(heap_rb_param *param, uchar *key1, uchar *key2);
+static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint chunk_length, uint32_t min_records,
                         uint32_t max_records);
 
-#define FIXED_REC_OVERHEAD (sizeof(uchar))
-#define VARIABLE_REC_OVERHEAD (sizeof(uchar**) + sizeof(uchar))
+#define FIXED_REC_OVERHEAD (sizeof(unsigned char))
+#define VARIABLE_REC_OVERHEAD (sizeof(unsigned char**) + sizeof(unsigned char))
  
 /* Minimum size that a chunk can take, 12 bytes on 32bit, 24 bytes on 64bit */
 #define VARIABLE_MIN_CHUNK_SIZE \
-        ((sizeof(uchar**) + VARIABLE_REC_OVERHEAD + sizeof(uchar**) - 1) & ~(sizeof(uchar**) - 1))
+        ((sizeof(unsigned char**) + VARIABLE_REC_OVERHEAD + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1))
 
 
 /* Create a heap table */
@@ -155,10 +155,10 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     }
 
     /*
-      We store uchar* del_link inside the data area of deleted records,
-      so the data length should be at least sizeof(uchar*)
+      We store unsigned char* del_link inside the data area of deleted records,
+      so the data length should be at least sizeof(unsigned char*)
     */
-    set_if_bigger(chunk_dataspace_length, sizeof (uchar**));
+    set_if_bigger(chunk_dataspace_length, sizeof (unsigned char**));
 
     if (is_variable_size)
     {
@@ -170,7 +170,7 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     }
 
     /* Align chunk length to the next pointer */
-    chunk_length= (uint) (chunk_length + sizeof(uchar**) - 1) & ~(sizeof(uchar**) - 1);
+    chunk_length= (uint) (chunk_length + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1);
 
 
     
@@ -233,7 +233,7 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
       }
       keyinfo->length= length;
       length+= keyinfo->rb_tree.size_of_element + 
-	       ((keyinfo->algorithm == HA_KEY_ALG_BTREE) ? sizeof(uchar*) : 0);
+	       ((keyinfo->algorithm == HA_KEY_ALG_BTREE) ? sizeof(unsigned char*) : 0);
       if (length > max_length)
 	max_length= length;
       key_segs+= keyinfo->keysegs;
@@ -285,12 +285,12 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
       {
 	/* additional HA_KEYTYPE_END keyseg */
 	keyseg->type=     HA_KEYTYPE_END;
-	keyseg->length=   sizeof(uchar*);
+	keyseg->length=   sizeof(unsigned char*);
 	keyseg->flag=     0;
 	keyseg->null_bit= 0;
 	keyseg++;
 
-	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(uchar*),
+	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(unsigned char*),
 		  (qsort_cmp2)keys_compare, 1, NULL, NULL);
 	keyinfo->delete_key= hp_rb_delete_key;
 	keyinfo->write_key= hp_rb_write_key;
@@ -329,7 +329,7 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
 
     if (is_variable_size) {
       share->recordspace.offset_link= chunk_dataspace_length;
-      share->recordspace.offset_status= share->recordspace.offset_link + sizeof(uchar**);
+      share->recordspace.offset_status= share->recordspace.offset_link + sizeof(unsigned char**);
     } else {
       share->recordspace.offset_link= 1<<22; /* Make it likely to fail if anyone uses this offset */
       share->recordspace.offset_status= chunk_dataspace_length;
@@ -338,7 +338,7 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     /* Must be allocated separately for rename to work */
     if (!(share->name= my_strdup(name,MYF(0))))
     {
-      free((uchar*) share);
+      free((unsigned char*) share);
       goto err;
     }
     thr_lock_init(&share->lock);
@@ -364,7 +364,7 @@ err:
 } /* heap_create */
 
 
-static int keys_compare(heap_rb_param *param, uchar *key1, uchar *key2)
+static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2)
 {
   uint not_used[2];
   return ha_key_cmp(param->keyseg, key1, key2, param->key_length, 
@@ -381,7 +381,7 @@ static void init_block(HP_BLOCK *block, uint chunk_length, uint32_t min_records,
     max_records= 1000;			/* As good as quess as anything */
   
   /* we want to start each chunk at 8 bytes boundary, round recbuffer to the next 8 */
-  recbuffer= (uint) (chunk_length + sizeof(uchar**) - 1) & ~(sizeof(uchar**) - 1);  
+  recbuffer= (uint) (chunk_length + sizeof(unsigned char**) - 1) & ~(sizeof(unsigned char**) - 1);  
   records_in_block= max_records / 10;
   if (records_in_block < 10 && max_records)
     records_in_block= 10;
@@ -445,7 +445,7 @@ void hp_free(HP_SHARE *share)
   hp_clear(share);			/* Remove blocks from memory */
   thr_lock_delete(&share->lock);
   pthread_mutex_destroy(&share->intern_lock);
-  free((uchar*) share->name);
-  free((uchar*) share);
+  free((unsigned char*) share->name);
+  free((unsigned char*) share);
   return;
 }

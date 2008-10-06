@@ -33,7 +33,7 @@ int heap_scan_init(register HP_INFO *info)
   return(0);
 }
 
-int heap_scan(register HP_INFO *info, uchar *record)
+int heap_scan(register HP_INFO *info, unsigned char *record)
 {
   HP_SHARE *share=info->s;
   uint32_t pos;

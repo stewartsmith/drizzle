@@ -130,7 +130,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
 {
   uint i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
-  uchar *record;
+  unsigned char *record;
   KEY *pos;
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo, *recinfo_pos;
@@ -190,7 +190,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
       {
         keydef[i].seg[j].null_bit= field->null_bit;
         keydef[i].seg[j].null_pos= (uint) (field->null_ptr-
-                                           (uchar*) table_arg->record[0]);
+                                           (unsigned char*) table_arg->record[0]);
       }
       else
       {
@@ -258,7 +258,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
     {
       recinfo_pos->null_bit= found->null_bit;
       recinfo_pos->null_pos= (uint) (found->null_ptr -
-                                     (uchar*) table_arg->record[0]);
+                                     (unsigned char*) table_arg->record[0]);
     }
     else
     {
@@ -585,7 +585,7 @@ int ha_myisam::open(const char *name, int mode, uint test_if_locked)
     recinfo must be freed.
   */
   if (recinfo)
-    free((uchar*) recinfo);
+    free((unsigned char*) recinfo);
   return my_errno;
 }
 
@@ -596,7 +596,7 @@ int ha_myisam::close(void)
   return mi_close(tmp);
 }
 
-int ha_myisam::write_row(uchar *buf)
+int ha_myisam::write_row(unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_write_count);
 
@@ -1282,7 +1282,7 @@ bool ha_myisam::is_crashed() const
 	  (file->s->state.open_count));
 }
 
-int ha_myisam::update_row(const uchar *old_data, uchar *new_data)
+int ha_myisam::update_row(const unsigned char *old_data, unsigned char *new_data)
 {
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -1290,7 +1290,7 @@ int ha_myisam::update_row(const uchar *old_data, uchar *new_data)
   return mi_update(file,old_data,new_data);
 }
 
-int ha_myisam::delete_row(const uchar *buf)
+int ha_myisam::delete_row(const unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_delete_count);
   return mi_delete(file,buf);
@@ -1338,7 +1338,7 @@ int ha_myisam::index_end()
 }
 
 
-int ha_myisam::index_read_map(uchar *buf, const uchar *key,
+int ha_myisam::index_read_map(unsigned char *buf, const unsigned char *key,
                               key_part_map keypart_map,
                               enum ha_rkey_function find_flag)
 {
@@ -1349,7 +1349,7 @@ int ha_myisam::index_read_map(uchar *buf, const uchar *key,
   return error;
 }
 
-int ha_myisam::index_read_idx_map(uchar *buf, uint index, const uchar *key,
+int ha_myisam::index_read_idx_map(unsigned char *buf, uint index, const unsigned char *key,
                                   key_part_map keypart_map,
                                   enum ha_rkey_function find_flag)
 {
@@ -1359,7 +1359,7 @@ int ha_myisam::index_read_idx_map(uchar *buf, uint index, const uchar *key,
   return error;
 }
 
-int ha_myisam::index_read_last_map(uchar *buf, const uchar *key,
+int ha_myisam::index_read_last_map(unsigned char *buf, const unsigned char *key,
                                    key_part_map keypart_map)
 {
   assert(inited==INDEX);
@@ -1370,7 +1370,7 @@ int ha_myisam::index_read_last_map(uchar *buf, const uchar *key,
   return(error);
 }
 
-int ha_myisam::index_next(uchar *buf)
+int ha_myisam::index_next(unsigned char *buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
@@ -1379,7 +1379,7 @@ int ha_myisam::index_next(uchar *buf)
   return error;
 }
 
-int ha_myisam::index_prev(uchar *buf)
+int ha_myisam::index_prev(unsigned char *buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_prev_count);
@@ -1388,7 +1388,7 @@ int ha_myisam::index_prev(uchar *buf)
   return error;
 }
 
-int ha_myisam::index_first(uchar *buf)
+int ha_myisam::index_first(unsigned char *buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_first_count);
@@ -1397,7 +1397,7 @@ int ha_myisam::index_first(uchar *buf)
   return error;
 }
 
-int ha_myisam::index_last(uchar *buf)
+int ha_myisam::index_last(unsigned char *buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_last_count);
@@ -1406,8 +1406,8 @@ int ha_myisam::index_last(uchar *buf)
   return error;
 }
 
-int ha_myisam::index_next_same(uchar *buf,
-			       const uchar *key __attribute__((unused)),
+int ha_myisam::index_next_same(unsigned char *buf,
+			       const unsigned char *key __attribute__((unused)),
 			       uint length __attribute__((unused)))
 {
   int error;
@@ -1454,7 +1454,7 @@ int ha_myisam::rnd_init(bool scan)
   return mi_reset(file);                        // Free buffers
 }
 
-int ha_myisam::rnd_next(uchar *buf)
+int ha_myisam::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   int error=mi_scan(file, buf);
@@ -1462,12 +1462,12 @@ int ha_myisam::rnd_next(uchar *buf)
   return error;
 }
 
-int ha_myisam::restart_rnd_next(uchar *buf, uchar *pos)
+int ha_myisam::restart_rnd_next(unsigned char *buf, unsigned char *pos)
 {
   return rnd_pos(buf,pos);
 }
 
-int ha_myisam::rnd_pos(uchar *buf, uchar *pos)
+int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
   int error=mi_rrnd(file, buf, my_get_ptr(pos,ref_length));
@@ -1476,7 +1476,7 @@ int ha_myisam::rnd_pos(uchar *buf, uchar *pos)
 }
 
 
-void ha_myisam::position(const uchar *record __attribute__((unused)))
+void ha_myisam::position(const unsigned char *record __attribute__((unused)))
 {
   my_off_t row_position= mi_position(file);
   my_store_ptr(ref, ref_length, row_position);
@@ -1656,7 +1656,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
                    records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
-  free((uchar*) recinfo);
+  free((unsigned char*) recinfo);
   return(error);
 }
 
@@ -1675,7 +1675,7 @@ void ha_myisam::get_auto_increment(uint64_t offset __attribute__((unused)),
 {
   uint64_t nr;
   int error;
-  uchar key[MI_MAX_KEY_LENGTH];
+  unsigned char key[MI_MAX_KEY_LENGTH];
 
   if (!table->s->next_number_key_offset)
   {						// Autoincrement at key-start

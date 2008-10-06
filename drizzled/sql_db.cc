@@ -62,13 +62,13 @@ typedef struct my_dblock_st
   lock_db key.
 */
 
-extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
+extern "C" unsigned char* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
 
-uchar* lock_db_get_key(my_dblock_t *ptr, size_t *length,
+unsigned char* lock_db_get_key(my_dblock_t *ptr, size_t *length,
                        bool not_used __attribute__((unused)))
 {
   *length= ptr->name_length;
-  return (uchar*) ptr->name;
+  return (unsigned char*) ptr->name;
 }
 
 
@@ -93,8 +93,8 @@ void lock_db_delete(const char *name, uint length)
   my_dblock_t *opt;
   safe_mutex_assert_owner(&LOCK_lock_db);
   if ((opt= (my_dblock_t *)hash_search(&lock_db_cache,
-                                       (const uchar*) name, length)))
-    hash_delete(&lock_db_cache, (uchar*) opt);
+                                       (const unsigned char*) name, length)))
+    hash_delete(&lock_db_cache, (unsigned char*) opt);
 }
 
 
@@ -116,14 +116,14 @@ typedef struct my_dbopt_st
   Function we use in the creation of our hash to get key.
 */
 
-extern "C" uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
+extern "C" unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
                                     bool not_used);
 
-uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
+unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
                          bool not_used __attribute__((unused)))
 {
   *length= opt->name_length;
-  return (uchar*) opt->name;
+  return (unsigned char*) opt->name;
 }
 
 
@@ -150,7 +150,7 @@ extern "C" void free_dbopt(void *dbopt);
 
 void free_dbopt(void *dbopt)
 {
-  free((uchar*) dbopt);
+  free((unsigned char*) dbopt);
 }
 
 
@@ -243,7 +243,7 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
   length= (uint) strlen(dbname);
   
   rw_rdlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
+  if ((opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   {
     create->default_table_charset= opt->charset;
     error= true;
@@ -274,7 +274,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
   length= (uint) strlen(dbname);
   
   rw_wrlock(&LOCK_dboptions);
-  if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
+  if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   { 
     /* Options are not in the hash, insert them */
     char *tmp_name;
@@ -290,7 +290,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
     my_stpcpy(opt->name, dbname);
     opt->name_length= length;
     
-    if ((error= my_hash_insert(&dboptions, (uchar*) opt)))
+    if ((error= my_hash_insert(&dboptions, (unsigned char*) opt)))
     {
       free(opt);
       goto end;
@@ -314,9 +314,9 @@ void del_dbopt(const char *path)
 {
   my_dbopt_t *opt;
   rw_wrlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const uchar*) path,
+  if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const unsigned char*) path,
                                       strlen(path))))
-    hash_delete(&dboptions, (uchar*) opt);
+    hash_delete(&dboptions, (unsigned char*) opt);
   rw_unlock(&LOCK_dboptions);
 }
 

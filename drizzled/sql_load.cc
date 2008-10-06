@@ -23,7 +23,7 @@
 
 class READ_INFO {
   File	file;
-  uchar	*buffer,			/* Buffer for read text */
+  unsigned char	*buffer,			/* Buffer for read text */
 	*end_of_buff;			/* Data in bufferts ends here */
   uint	buff_length,			/* Length of buffert */
 	max_length;			/* Max length of row */
@@ -38,7 +38,7 @@ class READ_INFO {
 
 public:
   bool error,line_cuted,found_null,enclosed;
-  uchar	*row_start,			/* Found row starts here */
+  unsigned char	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
@@ -530,7 +530,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
       continue;
     }
     it.rewind();
-    uchar *pos=read_info.row_start;
+    unsigned char *pos=read_info.row_start;
 #ifdef HAVE_purify
     read_info.row_end[0]=0;
 #endif
@@ -564,7 +564,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
       else
       {
 	uint length;
-	uchar save_chr;
+	unsigned char save_chr;
 	if ((length=(uint) (read_info.row_end-pos)) >
 	    field->field_length)
 	  length=field->field_length;
@@ -643,7 +643,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
     while ((item= it++))
     {
       uint length;
-      uchar *pos;
+      unsigned char *pos;
       Item *real_item;
 
       if (read_info.read_field())
@@ -852,9 +852,9 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const 
     line_term_ptr=(char*) "";
   }
   enclosed_char= (enclosed_length=enclosed_par.length()) ?
-    (uchar) enclosed_par[0] : INT_MAX;
-  field_term_char= field_term_length ? (uchar) field_term_ptr[0] : INT_MAX;
-  line_term_char= line_term_length ? (uchar) line_term_ptr[0] : INT_MAX;
+    (unsigned char) enclosed_par[0] : INT_MAX;
+  field_term_char= field_term_length ? (unsigned char) field_term_ptr[0] : INT_MAX;
+  line_term_char= line_term_length ? (unsigned char) line_term_ptr[0] : INT_MAX;
   error=eof=found_end_of_line=found_null=line_cuted=0;
   buff_length=tot_length;
 
@@ -864,7 +864,7 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const 
   set_if_bigger(length,line_start.length());
   stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
 
-  if (!(buffer=(uchar*) my_malloc(buff_length+1,MYF(0))))
+  if (!(buffer=(unsigned char*) my_malloc(buff_length+1,MYF(0))))
     error=1; /* purecov: inspected */
   else
   {
@@ -874,7 +874,7 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const 
 		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
-      free((uchar*) buffer); /* purecov: inspected */
+      free((unsigned char*) buffer); /* purecov: inspected */
       error=1;
     }
     else
@@ -903,7 +903,7 @@ READ_INFO::~READ_INFO()
   {
     if (need_end_io_cache)
       ::end_io_cache(&cache);
-    free((uchar*) buffer);
+    free((unsigned char*) buffer);
     error=1;
   }
 }
@@ -928,7 +928,7 @@ inline int READ_INFO::terminator(char *ptr,uint length)
     return 1;
   PUSH(chr);
   while (i-- > 1)
-    PUSH((uchar) *--ptr);
+    PUSH((unsigned char) *--ptr);
   return 0;
 }
 
@@ -936,7 +936,7 @@ inline int READ_INFO::terminator(char *ptr,uint length)
 int READ_INFO::read_field()
 {
   int chr,found_enclosed_char;
-  uchar *to,*new_buffer;
+  unsigned char *to,*new_buffer;
 
   found_null=0;
   if (found_end_of_line)
@@ -959,7 +959,7 @@ int READ_INFO::read_field()
   if (chr == enclosed_char)
   {
     found_enclosed_char=enclosed_char;
-    *to++=(uchar) chr;				// If error
+    *to++=(unsigned char) chr;				// If error
   }
   else
   {
@@ -976,7 +976,7 @@ int READ_INFO::read_field()
       if ((my_mbcharlen(read_charset, chr) > 1) &&
           to+my_mbcharlen(read_charset, chr) <= end_of_buff)
       {
-	  uchar* p = (uchar*)to;
+	  unsigned char* p = (unsigned char*)to;
 	  *to++ = chr;
 	  int ml = my_mbcharlen(read_charset, chr);
 	  int i;
@@ -991,7 +991,7 @@ int READ_INFO::read_field()
                           (const char *)to))
 	    continue;
 	  for (i=0; i<ml; i++)
-	    PUSH((uchar) *--to);
+	    PUSH((unsigned char) *--to);
 	  chr = GET;
       }
 #endif
@@ -1001,7 +1001,7 @@ int READ_INFO::read_field()
       {
 	if ((chr=GET) == my_b_EOF)
 	{
-	  *to++= (uchar) escape_char;
+	  *to++= (unsigned char) escape_char;
 	  goto found_eof;
 	}
         /*
@@ -1013,7 +1013,7 @@ int READ_INFO::read_field()
          */
         if (escape_char != enclosed_char || chr == escape_char)
         {
-          *to++ = (uchar) unescape((char) chr);
+          *to++ = (unsigned char) unescape((char) chr);
           continue;
         }
         PUSH(chr);
@@ -1038,7 +1038,7 @@ int READ_INFO::read_field()
       {
 	if ((chr=GET) == found_enclosed_char)
 	{					// Remove dupplicated
-	  *to++ = (uchar) chr;
+	  *to++ = (unsigned char) chr;
 	  continue;
 	}
 	// End of enclosed field if followed by field_term or line_term
@@ -1077,12 +1077,12 @@ int READ_INFO::read_field()
 	  return 0;
 	}
       }
-      *to++ = (uchar) chr;
+      *to++ = (unsigned char) chr;
     }
     /*
     ** We come here if buffer is too small. Enlarge it and continue
     */
-    if (!(new_buffer=(uchar*) my_realloc((char*) buffer,buff_length+1+IO_SIZE,
+    if (!(new_buffer=(unsigned char*) my_realloc((char*) buffer,buff_length+1+IO_SIZE,
 					MYF(MY_WME))))
       return (error=1);
     to=new_buffer + (to-buffer);
@@ -1117,7 +1117,7 @@ found_eof:
 int READ_INFO::read_fixed_length()
 {
   int chr;
-  uchar *to;
+  unsigned char *to;
   if (found_end_of_line)
     return 1;					// One have to call next_line
 
@@ -1137,10 +1137,10 @@ int READ_INFO::read_fixed_length()
     {
       if ((chr=GET) == my_b_EOF)
       {
-	*to++= (uchar) escape_char;
+	*to++= (unsigned char) escape_char;
 	goto found_eof;
       }
-      *to++ =(uchar) unescape((char) chr);
+      *to++ =(unsigned char) unescape((char) chr);
       continue;
     }
     if (chr == line_term_char)
@@ -1152,7 +1152,7 @@ int READ_INFO::read_fixed_length()
 	return 0;
       }
     }
-    *to++ = (uchar) chr;
+    *to++ = (unsigned char) chr;
   }
   row_end=to;					// Found full line
   return 0;
@@ -1230,7 +1230,7 @@ bool READ_INFO::find_start_of_fields()
       PUSH(chr);
       while (--ptr != line_start_ptr)
       {						// Restart with next char
-	PUSH((uchar) *ptr);
+	PUSH((unsigned char) *ptr);
       }
       goto try_again;
     }

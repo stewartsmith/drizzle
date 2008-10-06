@@ -274,7 +274,7 @@ static int handle_default_option(void *in_ctx, const char *group_name,
   {
     if (!(tmp= alloc_root(ctx->alloc, strlen(option) + 1)))
       return 1;
-    if (insert_dynamic(ctx->args, (uchar*) &tmp))
+    if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
     my_stpcpy(tmp, option);
   }

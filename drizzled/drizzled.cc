@@ -835,7 +835,7 @@ void clean_up(bool print_message)
   if (tc_log)
     tc_log->close();
   xid_cache_free();
-  delete_elements(&key_caches, (void (*)(const char*, uchar*)) free_key_cache);
+  delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
   free_status_vars();
   end_thr_alarm(1);			/* Free allocated memory */
@@ -1473,7 +1473,7 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
                      "where mysqld died. If you see no messages after this, "
                      "something went\n"
                      "terribly wrong...\n"));
-    print_stacktrace(thd ? (uchar*) thd->thread_stack : (uchar*) 0,
+    print_stacktrace(thd ? (unsigned char*) thd->thread_stack : (unsigned char*) 0,
                      my_thread_stack_size);
   }
   if (thd)
@@ -1883,7 +1883,7 @@ void *my_str_malloc_mysqld(size_t size)
 
 void my_str_free_mysqld(void *ptr)
 {
-  free((uchar*)ptr);
+  free((unsigned char*)ptr);
 }
 
 
@@ -4983,7 +4983,7 @@ static void create_pid_file()
     char buff[21], *end;
     end= int10_to_str((long) getpid(), buff, 10);
     *end++= '\n';
-    if (!my_write(file, (uchar*) buff, (uint) (end-buff), MYF(MY_WME | MY_NABP)))
+    if (!my_write(file, (unsigned char*) buff, (uint) (end-buff), MYF(MY_WME | MY_NABP)))
     {
       (void) my_close(file, MYF(0));
       return;

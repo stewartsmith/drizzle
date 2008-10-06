@@ -236,7 +236,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
       }
     }
     else
-      memcpy((uchar*) element + tree->offset_to_key, key, key_size);
+      memcpy((unsigned char*) element + tree->offset_to_key, key, key_size);
     element->count=1;			/* May give warning in purify */
     tree->elements_in_tree++;
     rb_insert(tree,parent,element);	/* rebalance tree */
@@ -309,7 +309,7 @@ int tree_delete(TREE *tree, void *key, uint key_size, void *custom_arg)
   if (tree->free)
     (*tree->free)(ELEMENT_KEY(tree,element), free_free, tree->custom_arg);
   tree->allocated-= sizeof(TREE_ELEMENT) + tree->size_of_element + key_size;
-  free((uchar*) element);
+  free((unsigned char*) element);
   tree->elements_in_tree--;
   return 0;
 }

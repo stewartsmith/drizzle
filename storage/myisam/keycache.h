@@ -84,7 +84,7 @@ typedef struct st_key_cache
   HASH_LINK *free_hash_list;     /* list of free hash links                  */
   BLOCK_LINK *free_block_list;   /* list of free blocks */
   BLOCK_LINK *block_root;        /* memory for block links                   */
-  uchar *block_mem;     /* memory for block buffers                 */
+  unsigned char *block_mem;     /* memory for block buffers                 */
   BLOCK_LINK *used_last;         /* ptr to the last block of the LRU chain   */
   BLOCK_LINK *used_ins;          /* ptr to the insertion block in LRU chain  */
   pthread_mutex_t cache_lock;    /* to lock access to the cache structure    */
@@ -131,16 +131,16 @@ extern int resize_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 			    uint age_threshold);
 extern void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
 				   uint age_threshold);
-extern uchar *key_cache_read(KEY_CACHE *keycache,
+extern unsigned char *key_cache_read(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
-                            uchar *buff, uint length,
+                            unsigned char *buff, uint length,
 			    uint block_length,int return_buffer);
 extern int key_cache_insert(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
-                            uchar *buff, uint length);
+                            unsigned char *buff, uint length);
 extern int key_cache_write(KEY_CACHE *keycache,
                            File file, my_off_t filepos, int level,
-                           uchar *buff, uint length,
+                           unsigned char *buff, uint length,
 			   uint block_length,int force_write);
 extern int flush_key_blocks(KEY_CACHE *keycache,
                             int file, enum flush_type type);
@@ -149,8 +149,8 @@ extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
 /* Functions to handle multiple key caches */
 extern bool multi_keycache_init(void);
 extern void multi_keycache_free(void);
-extern KEY_CACHE *multi_key_cache_search(uchar *key, uint length);
-extern bool multi_key_cache_set(const uchar *key, uint length,
+extern KEY_CACHE *multi_key_cache_search(unsigned char *key, uint length);
+extern bool multi_key_cache_set(const unsigned char *key, uint length,
 				   KEY_CACHE *key_cache);
 extern void multi_key_cache_change(KEY_CACHE *old_data,
 				   KEY_CACHE *new_data);
