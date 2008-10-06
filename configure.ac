@@ -862,10 +862,6 @@ then
   AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
-AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
-                uchar, uint, ulong],[],[], [
-#include <sys/types.h>
-])
 AC_CHECK_TYPES([fp_except], [], [], [
 #include <sys/types.h>
 #include <ieeefp.h>
@@ -993,7 +989,6 @@ DRIZZLE_TZNAME
 DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
-AC_CHECK_TYPES([u_int32_t])
 
 DRIZZLE_PTHREAD_YIELD
 
