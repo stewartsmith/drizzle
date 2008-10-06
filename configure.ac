@@ -228,6 +228,7 @@ AM_PROG_CC_C_O
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
+AC_CXX_CMATH
 
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in

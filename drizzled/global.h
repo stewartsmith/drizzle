@@ -29,20 +29,48 @@
 #include "config.h"
 
 #if defined(__cplusplus)
+
+# if defined(__GNUC) && defined(__EXCEPTIONS)
+#  error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
+# endif
+
 # include CSTDINT_H
 # include CINTTYPES_H
+# include CMATH_H
+# include <cstdio>
+# include <cstdlib>
+# include <cstddef>
+# include <cassert>
+# include <cerrno>
 #else
-# if defined(HAVE_STDINT_H)
-#  include <stdint.h>
+# include <stdint.h>
+# include <inttypes.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <stddef.h>
+# include <math.h>
+# include <errno.h>        /* Recommended by debian */
+/*
+  A lot of our programs uses asserts, so better to always include it
+*/
+# include <assert.h>
+# include <stdbool.h>
+
+#endif // __cplusplus
+
+#ifdef HAVE_SYS_TIMEB_H
+# include <sys/timeb.h>        /* Avoid warnings on SCO */
+#endif
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
 # else
-#  error "You must have stdint!"
+#  include <time.h>
 # endif
-# if defined(HAVE_INTTYPES_H)
-#  include <inttypes.h>
-# else
-#  error "You must have inttypes!"
-# endif
-#endif 
+#endif /* TIME_WITH_SYS_TIME */
 
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
@@ -57,24 +85,6 @@
 
 #define _REENTRANT  1  /* Threads requires reentrant code */
 
-
-/* gcc/egcs issues */
-
-#if defined(__GNUC) && defined(__EXCEPTIONS)
-#error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
-#endif
-
-#ifndef stdin
-#include <stdio.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_STDDEF_H
-#include <stddef.h>
-#endif
-
-#include <math.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
@@ -85,19 +95,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#ifdef HAVE_SYS_TIMEB_H
-#include <sys/timeb.h>        /* Avoid warnings on SCO */
-#endif
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif /* TIME_WITH_SYS_TIME */
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -109,26 +107,16 @@
 #include <alloca.h>
 #endif
 
-#include <errno.h>        /* Recommended by debian */
 
-#if defined(HAVE_STDBOOL_H)
-#include <stdbool.h>
-#endif
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
 
-/*
-  A lot of our programs uses asserts, so better to always include it
-*/
-#include <assert.h>
-
 #if !defined(HAVE_UINT)
 #undef HAVE_UINT
 #define HAVE_UINT
 typedef unsigned int uint;
-typedef unsigned short ushort;
 #endif
 
 /* Declared in int2str() */

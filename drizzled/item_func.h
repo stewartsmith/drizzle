@@ -195,7 +195,7 @@ public:
                      void * arg, traverse_order order);
   inline double fix_result(double value)
   {
-    if (isfinite(value))
+    if (CMATH_C99_NAMESPACE::isfinite(value))
       return value;
     null_value=1;
     return 0.0;
