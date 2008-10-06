@@ -154,8 +154,6 @@ AH_VERBATIM([builtin_expect],[
 #define unlikely(x)  __builtin_expect((x),0)
 ])
 
-AC_DEFINE([HAVE_REPLICATION],[1],[We always have replication])
-
 dnl  InnoDB depends on some Drizzle's internals which other plugins should not
 dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
 dnl  truncation, and other similar legacy features.
