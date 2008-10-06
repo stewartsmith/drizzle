@@ -146,13 +146,8 @@ extern char *int10_to_str(long val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
-#if SIZEOF_LONG == SIZEOF_LONG_LONG
-#define int64_t2str(A,B,C) int2str((A),(B),(C),1)
-#define int64_t10_to_str(A,B,C) int10_to_str((A),(B),(C))
-#else
 extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
-#endif
 
 
 #if defined(__cplusplus)

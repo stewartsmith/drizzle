@@ -23,7 +23,6 @@ static inline uint32_t my_bit_log2(uint32_t value)
 
 static inline uint32_t my_count_bits(uint64_t v)
 {
-#if SIZEOF_LONG_LONG > 4
   /* The following code is a bit faster on 16 bit machines than if we would
      only shift v */
   uint32_t v2=(uint32_t) (v >> 32);
@@ -35,12 +34,6 @@ static inline uint32_t my_count_bits(uint64_t v)
                          _my_bits_nbits[(unsigned char) (v2 >> 8)] +
                          _my_bits_nbits[(unsigned char) (v2 >> 16)] +
                          _my_bits_nbits[(unsigned char) (v2 >> 24)]);
-#else
-  return (uint) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
-                         _my_bits_nbits[(unsigned char) (v >> 8)] +
-                         _my_bits_nbits[(unsigned char) (v >> 16)] +
-                         _my_bits_nbits[(unsigned char) (v >> 24)]);
-#endif
 }
 
 static inline uint32_t my_count_bits_ushort(ushort v)

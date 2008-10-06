@@ -942,16 +942,6 @@ if test "$ac_cv_sizeof_int" -eq 0
 then
   AC_MSG_ERROR("No size for int type.")
 fi
-AC_CHECK_SIZEOF(long, 4)
-if test "$ac_cv_sizeof_long" -eq 0
-then
-  AC_MSG_ERROR("No size for long type.")
-fi
-AC_CHECK_SIZEOF(long long, 8)
-if test "$ac_cv_sizeof_long_long" -eq 0
-then
-  AC_MSG_ERROR("Drizzle needs a long long type.")
-fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0

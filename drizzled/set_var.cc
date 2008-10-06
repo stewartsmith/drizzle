@@ -998,15 +998,12 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
     *value= (ulong) fix_unsigned(thd, tmp, option_limits);
   else
   {
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    /* Avoid overflows on 32 bit systems */
-    if (tmp > ULONG_MAX)
+    if (tmp > UINT32_MAX)
     {
-      tmp= ULONG_MAX;
+      tmp= UINT32_MAX;
       throw_bounds_warning(thd, true, true, name,
                            (int64_t) var->save_result.uint64_t_value);
     }
-#endif
     *value= (ulong) tmp;
   }
 
@@ -1103,13 +1100,11 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   
   if (option_limits)
     tmp= (ulong) fix_unsigned(thd, tmp, option_limits);
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-  else if (tmp > ULONG_MAX)
+  else if (tmp > UINT32_MAX)
   {
-    tmp= ULONG_MAX;
+    tmp= UINT32_MAX;
     throw_bounds_warning(thd, true, true, name, (int64_t) var->save_result.uint64_t_value);
   }
-#endif
   
   if (var->type == OPT_GLOBAL)
      global_system_variables.*offset= (ulong) tmp;

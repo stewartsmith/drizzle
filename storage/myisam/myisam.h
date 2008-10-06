@@ -69,7 +69,7 @@ extern "C" {
   This means that clearing of high keys is ignored, setting one high key
   sets all high keys.
 */
-#define MI_KEYMAP_BITS      (8 * SIZEOF_LONG_LONG)
+#define MI_KEYMAP_BITS      (64)
 #define MI_KEYMAP_HIGH_MASK (1UL << (MI_KEYMAP_BITS - 1))
 #define mi_get_mask_all_keys_active(_keys_) \
                             (((_keys_) < MI_KEYMAP_BITS) ? \

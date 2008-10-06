@@ -820,13 +820,11 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
     }
     break;
   case GET_LONG:
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (int64_t) LONG_MAX)
+    if (num > (int64_t) INT32_MAX)
     {
-      num= ((int64_t) LONG_MAX);
+      num= ((int64_t) INT32_MAX);
       adjusted= true;
     }
-#endif
     break;
   default:
     assert((optp->var_type & GET_TYPE_MASK) == GET_LL);
@@ -888,13 +886,11 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     }
     break;
   case GET_ULONG:
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (uint64_t) ULONG_MAX)
+    if (num > (uint64_t) UINT32_MAX)
     {
-      num= ((uint64_t) ULONG_MAX);
+      num= ((uint64_t) UINT32_MAX);
       adjusted= true;
     }
-#endif
     break;
   default:
     assert((optp->var_type & GET_TYPE_MASK) == GET_ULL);
