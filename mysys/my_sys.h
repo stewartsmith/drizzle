@@ -153,11 +153,11 @@ extern char *my_strndup(const char *from, size_t length,
 #if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
 #define alloca __builtin_alloca
 #endif /* GNUC */
-#define my_alloca(SZ) alloca((size_t) (SZ))
-#define my_afree(PTR) {}
+#define my_alloca(SZ) malloc((size_t) (SZ))
+#define my_afree(PTR) free((PTR))
 #else
-#define my_alloca(SZ) malloc(SZ)
-#define my_afree(PTR) free(PTR)
+#define my_alloca(SZ) malloc((SZ))
+#define my_afree(PTR) free((PTR))
 #endif /* HAVE_ALLOCA */
 
 #ifndef errno				/* did we already get it? */

@@ -69,7 +69,8 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     key_parts,unique_key_parts,fulltext_keys,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
        data_name[FN_REFLEN];
-  uchar *disk_cache, *disk_pos, *end_pos;
+  uchar *disk_cache= NULL;
+  uchar *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
@@ -142,7 +143,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 
     info_length=mi_uint2korr(share->state.header.header_length);
     base_pos=mi_uint2korr(share->state.header.base_pos);
-    if (!(disk_cache= (uchar*) my_alloca(info_length+128)))
+    if (!(disk_cache= (uchar*) malloc(info_length+128)))
     {
       my_errno=ENOMEM;
       goto err;
@@ -378,7 +379,8 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     share->data_file_type=STATIC_RECORD;
     if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
-    my_afree(disk_cache);
+    free(disk_cache);
+    disk_cache= NULL;
     mi_setup_functions(share);
     share->is_log_table= false;
     thr_lock_init(&share->lock);
@@ -510,6 +512,8 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   return(m_info);
 
 err:
+  if (disk_cache != NULL)
+    free(disk_cache);
   save_errno=my_errno ? my_errno : HA_ERR_END_OF_FILE;
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
@@ -528,9 +532,6 @@ err:
     free((uchar*) share);
     /* fall through */
   case 3:
-    /* fall through */
-  case 2:
-    my_afree(disk_cache);
     /* fall through */
   case 1:
     my_close(kfile,MYF(0));
