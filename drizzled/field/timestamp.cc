@@ -142,7 +142,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 
 int Field_timestamp::store(const char *from,
-                           uint len,
+                           uint32_t len,
                            const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
@@ -347,7 +347,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 }
 
 
-bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
   THD *thd= table ? table->in_use : current_thd;
@@ -404,7 +404,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_timestamp::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_timestamp::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

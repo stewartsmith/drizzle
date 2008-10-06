@@ -29,7 +29,7 @@
  Field type int64_t int (8 bytes)
 ****************************************************************************/
 
-int Field_int64_t::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error= 0;
   char *end;
@@ -177,8 +177,8 @@ String *Field_int64_t::val_str(String *val_buffer,
 				String *val_ptr __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
-  uint mlength=cmax(field_length+1,22*cs->mbmaxlen);
+  uint32_t length;
+  uint32_t mlength=cmax(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int64_t j;
@@ -224,7 +224,7 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_int64_t::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -273,7 +273,7 @@ void Field_int64_t::sql_type(String &res) const
 
 unsigned char *
 Field_real::pack(unsigned char *to, const unsigned char *from,
-                 uint max_length, bool low_byte_first)
+                 uint32_t max_length, bool low_byte_first)
 {
   assert(max_length >= pack_length());
 #ifdef WORDS_BIGENDIAN
@@ -291,7 +291,7 @@ Field_real::pack(unsigned char *to, const unsigned char *from,
 
 const unsigned char *
 Field_real::unpack(unsigned char *to, const unsigned char *from,
-                   uint param_data, bool low_byte_first)
+                   uint32_t param_data, bool low_byte_first)
 {
 #ifdef WORDS_BIGENDIAN
   if (low_byte_first != table->s->db_low_byte_first)

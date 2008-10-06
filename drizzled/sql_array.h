@@ -30,9 +30,9 @@ template <class Elem> class Array
 {
   enum {alloc_increment = 16};
   Elem **buffer;
-  uint n_elements, max_element;
+  uint32_t n_elements, max_element;
 public:
-  Array(MEM_ROOT *mem_root, uint prealloc=16)
+  Array(MEM_ROOT *mem_root, uint32_t prealloc=16)
   {
     buffer= (Elem**)alloc_root(mem_root, prealloc * sizeof(Elem**));
     max_element = buffer? prealloc : 0;

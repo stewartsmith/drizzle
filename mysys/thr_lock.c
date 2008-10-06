@@ -112,13 +112,13 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 
 #ifdef EXTRA_DEBUG
 #define MAX_FOUND_ERRORS	10		/* Report 10 first errors */
-static uint found_errors=0;
+static uint32_t found_errors=0;
 
 static int check_lock(struct st_lock_list *list, const char* lock_type,
 		      const char *where, bool same_owner, bool no_cond)
 {
   THR_LOCK_DATA *data,**prev;
-  uint count=0;
+  uint32_t count=0;
   THR_LOCK_OWNER *first_owner;
 
   prev= &list->data;
@@ -177,7 +177,7 @@ static int check_lock(struct st_lock_list *list, const char* lock_type,
 static void check_locks(THR_LOCK *lock, const char *where,
 			bool allow_no_locks)
 {
-  uint old_found_errors=found_errors;
+  uint32_t old_found_errors=found_errors;
 
   if (found_errors < MAX_FOUND_ERRORS)
   {
@@ -189,7 +189,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
     if (found_errors < MAX_FOUND_ERRORS)
     {
-      uint count=0;
+      uint32_t count=0;
       THR_LOCK_DATA *data;
       for (data=lock->read.data ; data ; data=data->next)
       {
@@ -880,7 +880,7 @@ end:
 
 #define LOCK_CMP(A,B) ((unsigned char*) (A->lock) - (uint) ((A)->type) < (unsigned char*) (B->lock)- (uint) ((B)->type))
 
-static void sort_locks(THR_LOCK_DATA **data,uint count)
+static void sort_locks(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end,**prev,*tmp;
 
@@ -902,7 +902,7 @@ static void sort_locks(THR_LOCK_DATA **data,uint count)
 
 
 enum enum_thr_lock_result
-thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
+thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 {
   THR_LOCK_DATA **pos,**end;
   if (count > 1)
@@ -973,7 +973,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
 
   /* free all locks */
 
-void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
+void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end;
 
@@ -1207,7 +1207,7 @@ bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 #ifdef MAIN
 
 struct st_test {
-  uint lock_nr;
+  uint32_t lock_nr;
   enum thr_lock_type lock_type;
 };
 
@@ -1256,7 +1256,7 @@ int lock_counts[]= {sizeof(test_0)/sizeof(struct st_test),
 
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
-static uint thread_count;
+static uint32_t thread_count;
 static uint32_t sum=0;
 
 #define MAX_LOCK_COUNT 8

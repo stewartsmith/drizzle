@@ -70,12 +70,12 @@ size_t my_strnxfrmlen_simple(const CHARSET_INFO * const cs, size_t len)
 
 
 size_t my_strnxfrm_simple(const CHARSET_INFO * const  cs,
-                       unsigned char *dst, size_t dstlen, uint nweights,
-                       const unsigned char *src, size_t srclen, uint flags)
+                       unsigned char *dst, size_t dstlen, uint32_t nweights,
+                       const unsigned char *src, size_t srclen, uint32_t flags)
 {
   unsigned char *map= cs->sort_order;
   unsigned char *d0= dst;
-  uint frmlen;
+  uint32_t frmlen;
   if ((frmlen= cmin(dstlen, nweights)) > srclen)
     frmlen= srclen;
   if (dst != src)
@@ -326,7 +326,7 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
 {
   int negative;
   register uint32_t cutoff;
-  register uint cutlim;
+  register uint32_t cutlim;
   register uint32_t i;
   register const char *s;
   register unsigned char c;
@@ -449,7 +449,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
 {
   int negative;
   register uint32_t cutoff;
-  register uint cutlim;
+  register uint32_t cutlim;
   register uint32_t i;
   register const char *s;
   register unsigned char c;
@@ -563,7 +563,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
 {
   int negative;
   register uint64_t cutoff;
-  register uint cutlim;
+  register uint32_t cutlim;
   register uint64_t i;
   register const char *s, *e;
   const char *save;
@@ -686,7 +686,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
 {
   int negative;
   register uint64_t cutoff;
-  register uint cutlim;
+  register uint32_t cutlim;
   register uint64_t i;
   register const char *s, *e;
   const char *save;
@@ -842,7 +842,7 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unused
   char buffer[66];
   register char *p, *e;
   long int new_val;
-  uint sign=0;
+  uint32_t sign=0;
   unsigned long int uval = (unsigned long int) val;
 
   e = p = &buffer[sizeof(buffer)-1];
@@ -884,7 +884,7 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unu
   char buffer[65];
   register char *p, *e;
   long long_val;
-  uint sign= 0;
+  uint32_t sign= 0;
   uint64_t uval = (uint64_t)val;
   
   if (radix < 0)
@@ -912,7 +912,7 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const cs __attribute__((unu
   while (uval > (uint64_t) LONG_MAX)
   {
     uint64_t quo= uval/(uint) 10;
-    uint rem= (uint) (uval- quo* (uint) 10);
+    uint32_t rem= (uint) (uval- quo* (uint) 10);
     *--p = '0' + rem;
     uval= quo;
   }
@@ -1170,10 +1170,10 @@ size_t my_lengthsp_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
 }
 
 
-uint my_instr_simple(const CHARSET_INFO * const cs,
+uint32_t my_instr_simple(const CHARSET_INFO * const cs,
                      const char *b, size_t b_length, 
                      const char *s, size_t s_length,
-                     my_match_t *match, uint nmatch)
+                     my_match_t *match, uint32_t nmatch)
 {
   register const unsigned char *str, *search, *end, *search_end;
   
@@ -1341,7 +1341,7 @@ static bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
 static void set_max_sort_char(CHARSET_INFO *cs)
 {
   unsigned char max_char;
-  uint  i;
+  uint32_t  i;
   
   if (!cs->sort_order)
     return;
@@ -1786,24 +1786,24 @@ bool my_propagate_complex(const CHARSET_INFO * const cs __attribute__((unused)),
     normalized flags
 */
 
-uint my_strxfrm_flag_normalize(uint flags, uint maximum)
+uint32_t my_strxfrm_flag_normalize(uint32_t flags, uint32_t maximum)
 {
   assert(maximum >= 1 && maximum <= MY_STRXFRM_NLEVELS);
   
   /* If levels are omitted, then 1-maximum is assumed*/
   if (!(flags & MY_STRXFRM_LEVEL_ALL))
   {
-    static uint def_level_flags[]= {0, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F };
-    uint flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
+    static uint32_t def_level_flags[]= {0, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F };
+    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
     flags= def_level_flags[maximum] | flag_pad;
   }
   else
   {
-    uint i;
-    uint flag_lev= flags & MY_STRXFRM_LEVEL_ALL;
-    uint flag_dsc= (flags >> MY_STRXFRM_DESC_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint flag_rev= (flags >> MY_STRXFRM_REVERSE_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
+    uint32_t i;
+    uint32_t flag_lev= flags & MY_STRXFRM_LEVEL_ALL;
+    uint32_t flag_dsc= (flags >> MY_STRXFRM_DESC_SHIFT) & MY_STRXFRM_LEVEL_ALL;
+    uint32_t flag_rev= (flags >> MY_STRXFRM_REVERSE_SHIFT) & MY_STRXFRM_LEVEL_ALL;
+    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
 
     /*
       If any level number is greater than the maximum,
@@ -1811,8 +1811,8 @@ uint my_strxfrm_flag_normalize(uint flags, uint maximum)
     */
     for (maximum--, flags= 0, i= 0; i < MY_STRXFRM_NLEVELS; i++)
     {
-      uint src_bit= 1 << i;
-      uint dst_bit= 1 << cmin(i, maximum);
+      uint32_t src_bit= 1 << i;
+      uint32_t dst_bit= 1 << cmin(i, maximum);
       if (flag_lev & src_bit)
       {
         flags|= dst_bit;
@@ -1856,7 +1856,7 @@ uint my_strxfrm_flag_normalize(uint flags, uint maximum)
     
 */
 void my_strxfrm_desc_and_reverse(unsigned char *str, unsigned char *strend,
-                                 uint flags, uint level)
+                                 uint32_t flags, uint32_t level)
 {
   if (flags & (MY_STRXFRM_DESC_LEVEL1 << level))
   {
@@ -1890,11 +1890,11 @@ void my_strxfrm_desc_and_reverse(unsigned char *str, unsigned char *strend,
 size_t
 my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
                                 unsigned char *str, unsigned char *frmend, unsigned char *strend,
-                                uint nweights, uint flags, uint level)
+                                uint32_t nweights, uint32_t flags, uint32_t level)
 {
   if (nweights && frmend < strend && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint fill_length= cmin((uint) (strend - frmend), nweights * cs->mbminlen);
+    uint32_t fill_length= cmin((uint) (strend - frmend), nweights * cs->mbminlen);
     cs->cset->fill(cs, (char*) frmend, fill_length, cs->pad_char);
     frmend+= fill_length;
   }

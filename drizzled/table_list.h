@@ -122,7 +122,7 @@ public:
   */
   table_map     sj_inner_tables;
   /* Number of IN-compared expressions */
-  uint          sj_in_exprs; 
+  uint32_t          sj_in_exprs; 
   /*
     The structure of ON expression presented in the member above
     can be changed during certain optimizations. This member
@@ -167,7 +167,7 @@ public:
   /* Index names in a "... JOIN ... USE/IGNORE INDEX ..." clause. */
   List<Index_hint> *index_hints;
   Table        *table;    /* opened table */
-  uint          table_id; /* table id (from binlog) for opened table */
+  uint32_t          table_id; /* table id (from binlog) for opened table */
   /*
     select_result for derived table to pass it from table creation to table
     filling procedure
@@ -241,10 +241,10 @@ public:
   */
   bool          is_fqtn;
 
-  uint i_s_requested_object;
+  uint32_t i_s_requested_object;
   bool has_db_lookup_value;
   bool has_table_lookup_value;
-  uint table_open_method;
+  uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
   void set_underlying_merge();
   bool setup_underlying(THD *thd);

@@ -38,8 +38,8 @@
 #define CMP_NUM(a,b) (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
 
 
-int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint a_length,
-		    unsigned char *b, uint b_length, bool part_key,
+int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint32_t a_length,
+		    unsigned char *b, uint32_t b_length, bool part_key,
 		    bool skip_end_space)
 {
   if (!part_key)
@@ -50,10 +50,10 @@ int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, u
 }
 
 
-static int compare_bin(unsigned char *a, uint a_length, unsigned char *b, uint b_length,
+static int compare_bin(unsigned char *a, uint32_t a_length, unsigned char *b, uint32_t b_length,
                        bool part_key, bool skip_end_space)
 {
-  uint length= cmin(a_length,b_length);
+  uint32_t length= cmin(a_length,b_length);
   unsigned char *end= a+ length;
   int flag;
 
@@ -134,8 +134,8 @@ static int compare_bin(unsigned char *a, uint a_length, unsigned char *b, uint b
 #define FCMP(A,B) ((int) (A) - (int) (B))
 
 int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
-	       register unsigned char *b, uint key_length, uint nextflag,
-	       uint *diff_pos)
+	       register unsigned char *b, uint32_t key_length, uint32_t nextflag,
+	       uint32_t *diff_pos)
 {
   int flag;
   int16_t s_1,s_2;
@@ -143,14 +143,14 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
   uint32_t u_1,u_2;
   float f_1,f_2;
   double d_1,d_2;
-  uint next_key_length;
+  uint32_t next_key_length;
   unsigned char *orig_b= b;
 
   *diff_pos=0;
   for ( ; (int) key_length >0 ; key_length=next_key_length, keyseg++)
   {
     unsigned char *end;
-    uint piks=! (keyseg->flag & HA_NO_SORT);
+    uint32_t piks=! (keyseg->flag & HA_NO_SORT);
     (*diff_pos)++;
     diff_pos[1]= (uint)(b - orig_b);
 
@@ -205,7 +205,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       }
       else
       {
-	uint length=(uint) (end-a), a_length=length, b_length=length;
+	uint32_t length=(uint) (end-a), a_length=length, b_length=length;
         if (piks &&
             (flag= ha_compare_text(keyseg->charset, a, a_length, b, b_length,
 				   (bool) ((nextflag & SEARCH_PREFIX) &&
@@ -236,7 +236,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       }
       else
       {
-        uint length=keyseg->length;
+        uint32_t length=keyseg->length;
         if (piks &&
 	    (flag=compare_bin(a,length,b,length,
                               (bool) ((nextflag & SEARCH_PREFIX) &&
@@ -468,7 +468,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
 end:
   if (!(nextflag & SEARCH_FIND))
   {
-    uint i;
+    uint32_t i;
     if (nextflag & (SEARCH_NO_FIND | SEARCH_LAST)) /* Find record after key */
       return (nextflag & (SEARCH_BIGGER | SEARCH_LAST)) ? -1 : 1;
     flag=0;

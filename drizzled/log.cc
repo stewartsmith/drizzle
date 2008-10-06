@@ -204,11 +204,11 @@ handlerton *binlog_hton;
 
 
 /* Check if a given table is opened log table */
-int check_if_log_table(uint db_len __attribute__((unused)),
+int check_if_log_table(uint32_t db_len __attribute__((unused)),
                        const char *db __attribute__((unused)),
-                       uint table_name_len __attribute__((unused)),
+                       uint32_t table_name_len __attribute__((unused)),
                        const char *table_name __attribute__((unused)),
-                       uint check_if_opened __attribute__((unused)))
+                       uint32_t check_if_opened __attribute__((unused)))
 {
   return 0;
 }
@@ -287,7 +287,7 @@ bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
   return rc;
 }
 
-void LOGGER::init_error_log(uint error_log_printer)
+void LOGGER::init_error_log(uint32_t error_log_printer)
 {
   if (error_log_printer & LOG_NONE)
   {
@@ -297,7 +297,7 @@ void LOGGER::init_error_log(uint error_log_printer)
 
 }
 
-int LOGGER::set_handlers(uint error_log_printer)
+int LOGGER::set_handlers(uint32_t error_log_printer)
 {
   /* error log table is not supported yet */
   lock_exclusive();
@@ -788,7 +788,7 @@ err:
 static int find_uniq_filename(char *name)
 {
   long                  number;
-  uint                  i;
+  uint32_t                  i;
   char                  buff[FN_REFLEN];
   struct st_my_dir     *dir_info;
   register struct fileinfo *file_info;
@@ -963,7 +963,7 @@ void DRIZZLE_LOG::init_pthread_objects()
     The internal structures are not freed until cleanup() is called
 */
 
-void DRIZZLE_LOG::close(uint exiting)
+void DRIZZLE_LOG::close(uint32_t exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
@@ -1042,7 +1042,7 @@ const char *DRIZZLE_LOG::generate_name(const char *log_name,
   if (strip_ext)
   {
     char *p= fn_ext(log_name);
-    uint length= (uint) (p - log_name);
+    uint32_t length= (uint) (p - log_name);
     strmake(buff, log_name, cmin(length, (uint)FN_REFLEN));
     return (const char*)buff;
   }
@@ -1385,7 +1385,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 {
   int error= 0;
   char *fname= linfo->log_file_name;
-  uint log_name_len= log_name ? (uint) strlen(log_name) : 0;
+  uint32_t log_name_len= log_name ? (uint) strlen(log_name) : 0;
 
   /*
     Mutex needed because we need to make sure the file pointer does not
@@ -1400,7 +1400,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 
   for (;;)
   {
-    uint length;
+    uint32_t length;
     my_off_t offset= my_b_tell(&index_file);
     /* If we get 0 or 1 characters, this is the end of the file */
 
@@ -1456,7 +1456,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 int DRIZZLE_BIN_LOG::find_next_log(LOG_INFO* linfo, bool need_lock)
 {
   int error= 0;
-  uint length;
+  uint32_t length;
   char *fname= linfo->log_file_name;
 
   if (need_lock)
@@ -1992,7 +1992,7 @@ err:
 
 void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
 {
-  uint dir_len = dirname_length(log_file_name); 
+  uint32_t dir_len = dirname_length(log_file_name); 
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
   my_stpncpy(buf, log_file_name, dir_len);
@@ -2162,7 +2162,7 @@ err:
 }
 
 
-bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint len,...)
+bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint32_t len,...)
 {
   bool error= 0;
   va_list(args);
@@ -2600,7 +2600,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
         }
         if (thd->user_var_events.elements)
         {
-          for (uint i= 0; i < thd->user_var_events.elements; i++)
+          for (uint32_t i= 0; i < thd->user_var_events.elements; i++)
           {
             BINLOG_USER_VAR_EVENT *user_var_event;
             get_dynamic(&thd->user_var_events,(unsigned char*) &user_var_event, i);
@@ -2658,7 +2658,7 @@ int error_log_print(enum loglevel level, const char *format,
   return logger.error_log_print(level, format, args);
 }
 
-void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
+void DRIZZLE_BIN_LOG::rotate_and_purge(uint32_t flags)
 {
   if (!(flags & RP_LOCK_LOG_IS_ALREADY_LOCKED))
     pthread_mutex_lock(&LOCK_log);
@@ -2677,9 +2677,9 @@ void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
     pthread_mutex_unlock(&LOCK_log);
 }
 
-uint DRIZZLE_BIN_LOG::next_file_id()
+uint32_t DRIZZLE_BIN_LOG::next_file_id()
 {
-  uint res;
+  uint32_t res;
   pthread_mutex_lock(&LOCK_log);
   res = file_id++;
   pthread_mutex_unlock(&LOCK_log);
@@ -2707,7 +2707,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
 
   if (reinit_io_cache(cache, READ_CACHE, 0, 0, 0))
     return ER_ERROR_ON_WRITE;
-  uint length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
+  uint32_t length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
   long val;
   unsigned char header[LOG_EVENT_HEADER_LEN];
 
@@ -3011,7 +3011,7 @@ int DRIZZLE_BIN_LOG::wait_for_update_bin_log(THD* thd,
     The internal structures are not freed until cleanup() is called
 */
 
-void DRIZZLE_BIN_LOG::close(uint exiting)
+void DRIZZLE_BIN_LOG::close(uint32_t exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
@@ -3332,7 +3332,7 @@ ulong tc_log_max_pages_used=0, tc_log_page_size=0, tc_log_cur_pages_used=0;
 
 int TC_LOG_MMAP::open(const char *opt_name)
 {
-  uint i;
+  uint32_t i;
   bool crashed= false;
   PAGE *pg;
 
@@ -3664,7 +3664,7 @@ void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid __attribute__((unused)))
 
 void TC_LOG_MMAP::close()
 {
-  uint i;
+  uint32_t i;
   switch (inited) {
   case 6:
     pthread_mutex_destroy(&LOCK_sync);

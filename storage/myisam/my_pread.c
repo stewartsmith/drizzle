@@ -99,7 +99,7 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
                  my_off_t offset, myf MyFlags)
 {
   size_t writenbytes, written;
-  uint errors;
+  uint32_t errors;
   errors= 0;
   written= 0;
 

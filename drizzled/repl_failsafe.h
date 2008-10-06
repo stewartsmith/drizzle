@@ -45,5 +45,5 @@ bool show_slave_hosts(THD* thd);
 int translate_master(THD* thd, LEX_MASTER_INFO* mi, char* errmsg);
 void init_slave_list();
 void end_slave_list();
-int register_slave(THD* thd, unsigned char* packet, uint packet_length);
+int register_slave(THD* thd, unsigned char* packet, uint32_t packet_length);
 void unregister_slave(THD* thd, bool only_mine, bool need_mutex);

@@ -82,7 +82,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix);
 int64_t getopt_ll_limit_value(int64_t, const struct my_option *,
                                bool *fix);
-bool getopt_compare_strings(const char *s, const char *t, uint length);
+bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 #ifdef __cplusplus
 }

@@ -276,9 +276,9 @@ size_t my_b_printf(IO_CACHE *info, const char* fmt, ...)
 size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 {
   size_t out_length= 0;
-  uint minimum_width; /* as yet unimplemented */
-  uint minimum_width_sign;
-  uint precision; /* as yet unimplemented for anything but %b */
+  uint32_t minimum_width; /* as yet unimplemented */
+  uint32_t minimum_width_sign;
+  uint32_t precision; /* as yet unimplemented for anything but %b */
   bool is_zero_padded;
 
   /*

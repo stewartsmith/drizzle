@@ -77,7 +77,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 
 int
 check_user(THD *thd, const char *passwd,
-           uint passwd_len, const char *db,
+           uint32_t passwd_len, const char *db,
            bool check_count)
 {
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
@@ -161,7 +161,7 @@ extern "C" void free_user(struct user_conn *uc)
   free((char*) uc);
 }
 
-void thd_init_client_charset(THD *thd, uint cs_number)
+void thd_init_client_charset(THD *thd, uint32_t cs_number)
 {
   /*
    Use server character set and collation if
@@ -320,11 +320,11 @@ static int check_connection(THD *thd)
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;
-  uint user_len= passwd - user - 1;
+  uint32_t user_len= passwd - user - 1;
   char *db= passwd;
   char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
   char user_buff[USERNAME_LENGTH + 1];	// buffer to store user in utf8
-  uint dummy_errors;
+  uint32_t dummy_errors;
 
   /*
     Old clients send null-terminated string as password; new clients send
@@ -336,12 +336,12 @@ static int check_connection(THD *thd)
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
-  uint passwd_len= thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
+  uint32_t passwd_len= thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
     (unsigned char)(*passwd++) : strlen(passwd);
   db= thd->client_capabilities & CLIENT_CONNECT_WITH_DB ?
     db + passwd_len + 1 : 0;
   /* strlen() can't be easily deleted without changing protocol */
-  uint db_len= db ? strlen(db) : 0;
+  uint32_t db_len= db ? strlen(db) : 0;
 
   if (passwd + passwd_len + db_len > (char *)net->read_pos + pkt_len)
   {

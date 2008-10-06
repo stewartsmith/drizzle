@@ -161,7 +161,7 @@ struct st_hash_link
   struct st_block_link *block;       /* reference to the block for the page: */
   File file;                         /* from such a file                     */
   my_off_t diskpos;                  /* with such an offset                  */
-  uint requests;                     /* number of requests for the page      */
+  uint32_t requests;                     /* number of requests for the page      */
 };
 
 /* simple states of a block */
@@ -193,13 +193,13 @@ struct st_block_link
     *next_changed, **prev_changed; /* for lists of file dirty/clean blocks   */
   struct st_hash_link *hash_link; /* backward ptr to referring hash_link     */
   KEYCACHE_WQUEUE wqueue[2]; /* queues on waiting requests for new/old pages */
-  uint requests;          /* number of requests for the block                */
+  uint32_t requests;          /* number of requests for the block                */
   unsigned char *buffer;           /* buffer for the block page                       */
-  uint offset;            /* beginning of modified data in the buffer        */
-  uint length;            /* end of data in the buffer                       */
-  uint status;            /* state of the block                              */
+  uint32_t offset;            /* beginning of modified data in the buffer        */
+  uint32_t length;            /* end of data in the buffer                       */
+  uint32_t status;            /* state of the block                              */
   enum BLOCK_TEMPERATURE temperature; /* block temperature: cold, warm, hot */
-  uint hits_left;         /* number of hits left until promotion             */
+  uint32_t hits_left;         /* number of hits left until promotion             */
   uint64_t last_hit_time; /* timestamp of the last hit                      */
   KEYCACHE_CONDVAR *condvar; /* condition variable for 'no readers' event    */
 };
@@ -236,7 +236,7 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
 #define keycache_pthread_mutex_unlock pthread_mutex_unlock
 #define keycache_pthread_cond_signal pthread_cond_signal
 
-static inline uint next_power(uint value)
+static inline uint32_t next_power(uint32_t value)
 {
   return (uint) my_round_up_to_next_power((uint32_t) value) << 1;
 }
@@ -267,9 +267,9 @@ static inline uint next_power(uint value)
 
 */
 
-int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
-		   size_t use_mem, uint division_limit,
-		   uint age_threshold)
+int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
+		   size_t use_mem, uint32_t division_limit,
+		   uint32_t age_threshold)
 {
   uint32_t blocks, hash_links;
   size_t length;
@@ -446,9 +446,9 @@ err:
     (when cnt_for_resize=0).
 */
 
-int resize_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
-		     size_t use_mem, uint division_limit,
-		     uint age_threshold)
+int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
+		     size_t use_mem, uint32_t division_limit,
+		     uint32_t age_threshold)
 {
   int blocks;
 
@@ -580,8 +580,8 @@ static inline void dec_counter_for_resize_op(KEY_CACHE *keycache)
     age_threshold.
 */
 
-void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
-			    uint age_threshold)
+void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+			    uint32_t age_threshold)
 {
   keycache_pthread_mutex_lock(&keycache->cache_lock);
   if (division_limit)
@@ -2098,10 +2098,10 @@ restart:
 */
 
 static void read_block(KEY_CACHE *keycache,
-                       BLOCK_LINK *block, uint read_length,
-                       uint min_length, bool primary)
+                       BLOCK_LINK *block, uint32_t read_length,
+                       uint32_t min_length, bool primary)
 {
-  uint got_length;
+  uint32_t got_length;
 
   /* On entry cache_lock is locked */
 
@@ -2199,8 +2199,8 @@ static void read_block(KEY_CACHE *keycache,
 
 unsigned char *key_cache_read(KEY_CACHE *keycache,
                       File file, my_off_t filepos, int level,
-                      unsigned char *buff, uint length,
-                      uint block_length __attribute__((unused)),
+                      unsigned char *buff, uint32_t length,
+                      uint32_t block_length __attribute__((unused)),
                       int return_buffer __attribute__((unused)))
 {
   bool locked_and_incremented= false;
@@ -2211,9 +2211,9 @@ unsigned char *key_cache_read(KEY_CACHE *keycache,
   {
     /* Key cache is used */
     register BLOCK_LINK *block;
-    uint read_length;
-    uint offset;
-    uint status;
+    uint32_t read_length;
+    uint32_t offset;
+    uint32_t status;
     int page_st;
 
     /*
@@ -2391,7 +2391,7 @@ end:
 
 int key_cache_insert(KEY_CACHE *keycache,
                      File file, my_off_t filepos, int level,
-                     unsigned char *buff, uint length)
+                     unsigned char *buff, uint32_t length)
 {
   int error= 0;
 
@@ -2399,8 +2399,8 @@ int key_cache_insert(KEY_CACHE *keycache,
   {
     /* Key cache is used */
     register BLOCK_LINK *block;
-    uint read_length;
-    uint offset;
+    uint32_t read_length;
+    uint32_t offset;
     int page_st;
     bool locked_and_incremented= false;
 
@@ -2625,8 +2625,8 @@ int key_cache_insert(KEY_CACHE *keycache,
 
 int key_cache_write(KEY_CACHE *keycache,
                     File file, my_off_t filepos, int level,
-                    unsigned char *buff, uint length,
-                    uint block_length  __attribute__((unused)),
+                    unsigned char *buff, uint32_t length,
+                    uint32_t block_length  __attribute__((unused)),
                     int dont_write)
 {
   bool locked_and_incremented= false;
@@ -2648,8 +2648,8 @@ int key_cache_write(KEY_CACHE *keycache,
   {
     /* Key cache is used */
     register BLOCK_LINK *block;
-    uint read_length;
-    uint offset;
+    uint32_t read_length;
+    uint32_t offset;
     int page_st;
 
     /*
@@ -3052,7 +3052,7 @@ static int flush_cached_blocks(KEY_CACHE *keycache,
 {
   int error;
   int last_errno= 0;
-  uint count= (uint) (end-cache);
+  uint32_t count= (uint) (end-cache);
 
   /* Don't lock the cache during the flush */
   keycache_pthread_mutex_unlock(&keycache->cache_lock);
@@ -3184,7 +3184,7 @@ static int flush_key_blocks_int(KEY_CACHE *keycache,
   {
     /* Key cache exists and flush is not disabled */
     int error= 0;
-    uint count= FLUSH_CACHE;
+    uint32_t count= FLUSH_CACHE;
     BLOCK_LINK **pos,**end;
     BLOCK_LINK *first_in_switch= NULL;
     BLOCK_LINK *last_in_flush;
@@ -3433,8 +3433,8 @@ restart:
     {
       BLOCK_LINK *last_for_update= NULL;
       BLOCK_LINK *last_in_switch= NULL;
-      uint total_found= 0;
-      uint found;
+      uint32_t total_found= 0;
+      uint32_t found;
 
       /*
         Finally free all clean blocks for this file.
@@ -3472,8 +3472,8 @@ restart:
               struct st_hash_link *next_hash_link= NULL;
               my_off_t            next_diskpos= 0;
               File                next_file= 0;
-              uint                next_status= 0;
-              uint                hash_requests= 0;
+              uint32_t                next_status= 0;
+              uint32_t                hash_requests= 0;
 
               total_found++;
               found++;
@@ -3651,9 +3651,9 @@ int flush_key_blocks(KEY_CACHE *keycache,
 static int flush_all_key_blocks(KEY_CACHE *keycache)
 {
   BLOCK_LINK    *block;
-  uint          total_found;
-  uint          found;
-  uint          idx;
+  uint32_t          total_found;
+  uint32_t          found;
+  uint32_t          idx;
 
   do
   {
@@ -3784,7 +3784,7 @@ static void keycache_dump(KEY_CACHE *keycache)
   BLOCK_LINK *block;
   HASH_LINK *hash_link;
   KEYCACHE_PAGE *page;
-  uint i;
+  uint32_t i;
 
   fprintf(keycache_dump_file, "thread:%u\n", thread->id);
 

@@ -30,9 +30,9 @@
 int mi_lock_database(MI_INFO *info, int lock_type)
 {
   int error;
-  uint count;
+  uint32_t count;
   MYISAM_SHARE *share=info->s;
-  uint flag;
+  uint32_t flag;
 
   if (share->options & HA_OPTION_READ_ONLY_DATA ||
       info->lock_type == lock_type)
@@ -373,7 +373,7 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
   request
 */
 
-int _mi_writeinfo(register MI_INFO *info, uint operation)
+int _mi_writeinfo(register MI_INFO *info, uint32_t operation)
 {
   int error,olderror;
   MYISAM_SHARE *share=info->s;
@@ -486,7 +486,7 @@ int _mi_decrement_open_count(MI_INFO *info)
   int lock_error=0,write_error=0;
   if (share->global_changed)
   {
-    uint old_lock=info->lock_type;
+    uint32_t old_lock=info->lock_type;
     share->global_changed=0;
     lock_error=mi_lock_database(info,F_WRLCK);
     /* Its not fatal even if we couldn't get the lock ! */

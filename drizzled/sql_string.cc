@@ -91,7 +91,7 @@ bool String::realloc(uint32_t alloc_length)
 
 bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs)
 {
-  uint l=20*cs->mbmaxlen+1;
+  uint32_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
 
   if (alloc(l))
@@ -101,10 +101,10 @@ bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const
   return false;
 }
 
-bool String::set_real(double num,uint decimals, const CHARSET_INFO * const cs)
+bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
-  uint dummy_errors;
+  uint32_t dummy_errors;
   size_t len;
 
   str_charset=cs;
@@ -260,7 +260,7 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
 
 bool String::copy(const char *str, uint32_t arg_length,
 		          const CHARSET_INFO * const from_cs,
-				  const CHARSET_INFO * const to_cs, uint *errors)
+				  const CHARSET_INFO * const to_cs, uint32_t *errors)
 {
   uint32_t offset;
   if (!needs_conversion(arg_length, from_cs, to_cs, &offset))
@@ -309,7 +309,7 @@ bool String::set_ascii(const char *str, uint32_t arg_length)
     set(str, arg_length, str_charset);
     return 0;
   }
-  uint dummy_errors;
+  uint32_t dummy_errors;
   return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
 }
 
@@ -358,7 +358,7 @@ bool String::append(const char *s,uint32_t arg_length)
   if (str_charset->mbminlen > 1)
   {
     uint32_t add_length=arg_length * str_charset->mbmaxlen;
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (realloc(str_length+ add_length))
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
@@ -400,7 +400,7 @@ bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * cons
   if (needs_conversion(arg_length, cs, str_charset, &dummy_offset))
   {
     uint32_t add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (realloc(str_length + add_length)) 
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
@@ -595,7 +595,7 @@ void String::qs_append(int i)
   str_length+= (int) (end-buff);
 }
 
-void String::qs_append(uint i)
+void String::qs_append(uint32_t i)
 {
   char *buff= Ptr + str_length;
   char *end= int10_to_str(i, buff, 10);
@@ -701,7 +701,7 @@ copy_and_convert_extended(char *to, uint32_t to_length,
                           const CHARSET_INFO * const to_cs, 
                           const char *from, uint32_t from_length,
                           const CHARSET_INFO * const from_cs,
-                          uint *errors)
+                          uint32_t *errors)
 {
   int         cnvres;
   my_wc_t     wc;
@@ -710,7 +710,7 @@ copy_and_convert_extended(char *to, uint32_t to_length,
   unsigned char *to_end= (unsigned char*) to+to_length;
   my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
   my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-  uint error_count= 0;
+  uint32_t error_count= 0;
 
   while (1)
   {
@@ -759,7 +759,7 @@ outp:
 uint32_t
 copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs, 
                  const char *from, uint32_t from_length,
-				 const CHARSET_INFO * const from_cs, uint *errors)
+				 const CHARSET_INFO * const from_cs, uint32_t *errors)
 {
   /*
     If any of the character sets is not ASCII compatible,
@@ -903,15 +903,15 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
 
 uint32_t
 well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                        char *to, uint to_length,
+                        char *to, uint32_t to_length,
                         const CHARSET_INFO * const from_cs,
-                        const char *from, uint from_length,
-                        uint nchars,
+                        const char *from, uint32_t from_length,
+                        uint32_t nchars,
                         const char **well_formed_error_pos,
                         const char **cannot_convert_error_pos,
                         const char **from_end_pos)
 {
-  uint res;
+  uint32_t res;
 
   if ((to_cs == &my_charset_bin) || 
       (from_cs == &my_charset_bin) ||
@@ -937,7 +937,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     else
     {
       int well_formed_error;
-      uint from_offset;
+      uint32_t from_offset;
 
       if ((from_offset= (from_length % to_cs->mbminlen)) &&
           (from_cs == &my_charset_bin))
@@ -947,7 +947,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
           INSERT INTO t1 (ucs2_column) VALUES (0x01);
           0x01 -> 0x0001
         */
-        uint pad_length= to_cs->mbminlen - from_offset;
+        uint32_t pad_length= to_cs->mbminlen - from_offset;
         memset(to, 0, pad_length);
         memmove(to + pad_length, from, from_offset);
         nchars--;

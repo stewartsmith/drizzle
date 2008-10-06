@@ -65,7 +65,7 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 			       tx_isolation_names, NULL};
 
 static TYPELIB known_extensions= {0,"known_exts", NULL, NULL};
-uint known_extensions_id= 0;
+uint32_t known_extensions_id= 0;
 
 
 
@@ -367,7 +367,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     break;
   case SHOW_OPTION_YES:
     {
-      uint tmp;
+      uint32_t tmp;
       /* now check the db_type for conflict */
       if (hton->db_type <= DB_TYPE_UNKNOWN ||
           hton->db_type >= DB_TYPE_DEFAULT ||
@@ -1649,7 +1649,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 struct Ha_delete_table_error_handler: public Internal_error_handler
 {
 public:
-  virtual bool handle_error(uint sql_errno,
+  virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
@@ -1659,7 +1659,7 @@ public:
 
 bool
 Ha_delete_table_error_handler::
-handle_error(uint sql_errno  __attribute__((unused)),
+handle_error(uint32_t sql_errno  __attribute__((unused)),
              const char *message,
              DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
              THD *thd __attribute__((unused)))
@@ -1843,7 +1843,7 @@ int handler::rnd_pos_by_record(unsigned char *record)
   This is never called for InnoDB tables, as these table types
   has the HA_STATS_RECORDS_IS_EXACT set.
 */
-int handler::read_first_row(unsigned char * buf, uint primary_key)
+int handler::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
   register int error;
 
@@ -2059,7 +2059,7 @@ int handler::update_auto_increment()
         handler::estimation_rows_to_insert was set by
         handler::ha_start_bulk_insert(); if 0 it means "unknown".
       */
-      uint nb_already_reserved_intervals=
+      uint32_t nb_already_reserved_intervals=
         thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements();
       uint64_t nb_desired_values;
       /*
@@ -2266,7 +2266,7 @@ void handler::ha_release_auto_increment()
 }
 
 
-void handler::print_keydup_error(uint key_nr, const char *msg)
+void handler::print_keydup_error(uint32_t key_nr, const char *msg)
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];
@@ -2282,7 +2282,7 @@ void handler::print_keydup_error(uint key_nr, const char *msg)
   {
     /* Table is opened and defined at this point */
     key_unpack(&str,table,(uint) key_nr);
-    uint max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
+    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
     if (str.length() >= max_length)
     {
       str.length(max_length-4);
@@ -2326,7 +2326,7 @@ void handler::print_error(int error, myf errflag)
     break;
   case HA_ERR_FOUND_DUPP_KEY:
   {
-    uint key_nr=get_dup_key(error);
+    uint32_t key_nr=get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       print_keydup_error(key_nr, ER(ER_DUP_ENTRY_WITH_KEY_NAME));
@@ -2337,10 +2337,10 @@ void handler::print_error(int error, myf errflag)
   }
   case HA_ERR_FOREIGN_DUPLICATE_KEY:
   {
-    uint key_nr= get_dup_key(error);
+    uint32_t key_nr= get_dup_key(error);
     if ((int) key_nr >= 0)
     {
-      uint max_length;
+      uint32_t max_length;
       /* Write the key in the error message */
       char key[MAX_KEY_LENGTH];
       String str(key,sizeof(key),system_charset_info);
@@ -2439,7 +2439,7 @@ void handler::print_error(int error, myf errflag)
   case HA_ERR_DROP_INDEX_FK:
   {
     const char *ptr= "???";
-    uint key_nr= get_dup_key(error);
+    uint32_t key_nr= get_dup_key(error);
     if ((int) key_nr >= 0)
       ptr= table->key_info[key_nr].name;
     my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
@@ -2563,7 +2563,7 @@ static bool update_frm_version(Table *table)
   {
     unsigned char version[4];
     char *key= table->s->table_cache_key.str;
-    uint key_length= table->s->table_cache_key.length;
+    uint32_t key_length= table->s->table_cache_key.length;
     Table *entry;
     HASH_SEARCH_STATE state;
 
@@ -2592,7 +2592,7 @@ err:
   @return
     key if error because of duplicated keys
 */
-uint handler::get_dup_key(int error)
+uint32_t handler::get_dup_key(int error)
 {
   table->file->errkey  = (uint) -1;
   if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
@@ -2758,7 +2758,7 @@ int handler::ha_repair(THD* thd, HA_CHECK_OPT* check_opt)
 
 int
 handler::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                            uint *dup_key_found)
+                            uint32_t *dup_key_found)
 {
   mark_trx_read_write();
 
@@ -2848,7 +2848,7 @@ handler::ha_check_and_repair(THD *thd)
 */
 
 int
-handler::ha_disable_indexes(uint mode)
+handler::ha_disable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -2863,7 +2863,7 @@ handler::ha_disable_indexes(uint mode)
 */
 
 int
-handler::ha_enable_indexes(uint mode)
+handler::ha_enable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -3005,7 +3005,7 @@ int ha_enable_transaction(THD *thd, bool on)
   return(error);
 }
 
-int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint keylen)
+int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
 {
   int error;
   if (!(error=index_next(buf)))
@@ -3192,9 +3192,9 @@ int ha_init_key_cache(const char *name __attribute__((unused)),
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
     uint32_t tmp_buff_size= (uint32_t) key_cache->param_buff_size;
-    uint tmp_block_size= (uint) key_cache->param_block_size;
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t tmp_block_size= (uint) key_cache->param_block_size;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return(!init_key_cache(key_cache,
 				tmp_block_size,
@@ -3215,8 +3215,8 @@ int ha_resize_key_cache(KEY_CACHE *key_cache)
     pthread_mutex_lock(&LOCK_global_system_variables);
     long tmp_buff_size= (long) key_cache->param_buff_size;
     long tmp_block_size= (long) key_cache->param_block_size;
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return(!resize_key_cache(key_cache, tmp_block_size,
 				  tmp_buff_size,
@@ -3234,8 +3234,8 @@ int ha_change_key_cache_param(KEY_CACHE *key_cache)
   if (key_cache->key_cache_inited)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     change_key_cache_param(key_cache, division_limit, age_threshold);
   }
@@ -3390,10 +3390,10 @@ int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
     Estimated cost of 'index only' scan
 */
 
-double handler::index_only_read_time(uint keynr, double records)
+double handler::index_only_read_time(uint32_t keynr, double records)
 {
   double read_time;
-  uint keys_per_block= (stats.block_size/2/
+  uint32_t keys_per_block= (stats.block_size/2/
 			(table->key_info[keynr].key_length + ref_length) + 1);
   read_time=((double) (records + keys_per_block-1) /
              (double) keys_per_block);
@@ -3437,15 +3437,15 @@ double handler::index_only_read_time(uint keynr, double records)
 */
 
 ha_rows
-handler::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                      void *seq_init_param,
-                                     uint n_ranges_arg __attribute__((unused)),
-                                     uint *bufsz, uint *flags, COST_VECT *cost)
+                                     uint32_t n_ranges_arg __attribute__((unused)),
+                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   KEY_MULTI_RANGE range;
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
-  uint n_ranges=0;
+  uint32_t n_ranges=0;
   THD *thd= current_thd;
   
   /* Default MRR implementation doesn't need buffer */
@@ -3528,8 +3528,8 @@ handler::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
     other Error or can't perform the requested scan
 */
 
-int handler::multi_range_read_info(uint keyno, uint n_ranges, uint n_rows,
-                                   uint *bufsz, uint *flags, COST_VECT *cost)
+int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_rows,
+                                   uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   *bufsz= 0; /* Default implementation doesn't need a buffer */
 
@@ -3590,7 +3590,7 @@ int handler::multi_range_read_info(uint keyno, uint n_ranges, uint n_rows,
 
 int
 handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                               uint n_ranges, uint mode,
+                               uint32_t n_ranges, uint32_t mode,
                                HANDLER_BUFFER *buf __attribute__((unused)))
 {
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
@@ -3692,10 +3692,10 @@ scan_it_again:
 
 int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
                            RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                           uint n_ranges, uint mode, HANDLER_BUFFER *buf)
+                           uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf)
 {
-  uint elem_size;
-  uint keyno;
+  uint32_t elem_size;
+  uint32_t keyno;
   Item *pushed_cond= NULL;
   handler *new_h2;
   keyno= h->active_index;
@@ -3834,8 +3834,8 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   dsmrr_eof= test(res == HA_ERR_END_OF_FILE);
 
   /* Sort the buffer contents by rowid */
-  uint elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
-  uint n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
+  uint32_t elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
+  uint32_t n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
   
   my_qsort2(rowids_buf, n_rowids, elem_size, (qsort2_cmp)rowid_cmp,
             (void*)h);
@@ -3893,12 +3893,12 @@ end:
 /**
   DS-MRR implementation: multi_range_read_info() function
 */
-int DsMrr_impl::dsmrr_info(uint keyno, uint n_ranges, uint rows, uint *bufsz,
-                           uint *flags, COST_VECT *cost)
+int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uint32_t *bufsz,
+                           uint32_t *flags, COST_VECT *cost)
 {  
   int res;
-  uint def_flags= *flags;
-  uint def_bufsz= *bufsz;
+  uint32_t def_flags= *flags;
+  uint32_t def_bufsz= *bufsz;
 
   /* Get cost/flags/mem_usage of default MRR implementation */
   res= h->handler::multi_range_read_info(keyno, n_ranges, rows, &def_bufsz,
@@ -3920,13 +3920,13 @@ int DsMrr_impl::dsmrr_info(uint keyno, uint n_ranges, uint rows, uint *bufsz,
   DS-MRR Implementation: multi_range_read_info_const() function
 */
 
-ha_rows DsMrr_impl::dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq,
-                                 void *seq_init_param, uint n_ranges, 
-                                 uint *bufsz, uint *flags, COST_VECT *cost)
+ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
+                                 void *seq_init_param, uint32_t n_ranges, 
+                                 uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ha_rows rows;
-  uint def_flags= *flags;
-  uint def_bufsz= *bufsz;
+  uint32_t def_flags= *flags;
+  uint32_t def_bufsz= *bufsz;
   /* Get cost/flags/mem_usage of default MRR implementation */
   rows= h->handler::multi_range_read_info_const(keyno, seq, seq_init_param,
                                                 n_ranges, &def_bufsz, 
@@ -3974,7 +3974,7 @@ ha_rows DsMrr_impl::dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq,
   @retval false  No
 */
 
-bool DsMrr_impl::key_uses_partial_cols(uint keyno)
+bool DsMrr_impl::key_uses_partial_cols(uint32_t keyno)
 {
   KEY_PART_INFO *kp= table->key_info[keyno].key_part;
   KEY_PART_INFO *kp_end= kp + table->key_info[keyno].key_parts;
@@ -4010,8 +4010,8 @@ bool DsMrr_impl::key_uses_partial_cols(uint keyno)
   @retval false  DS-MRR implementation should be used
 */
 
-bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
-                                 uint *bufsz, COST_VECT *cost)
+bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
+                                 uint32_t *bufsz, COST_VECT *cost)
 {
   COST_VECT dsmrr_cost;
   bool res;
@@ -4027,7 +4027,7 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
     return true;
   }
   
-  uint add_len= table->key_info[keyno].key_length + h->ref_length; 
+  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length; 
   *bufsz -= add_len;
   if (get_disk_sweep_mrr_cost(keyno, rows, *flags, bufsz, &dsmrr_cost))
     return true;
@@ -4077,12 +4077,12 @@ static void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost
                  for even 1 rowid)
 */
 
-bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
-                                         uint *buffer_size, COST_VECT *cost)
+bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags,
+                                         uint32_t *buffer_size, COST_VECT *cost)
 {
   uint32_t max_buff_entries, elem_size;
   ha_rows rows_in_full_step, rows_in_last_step;
-  uint n_full_steps;
+  uint32_t n_full_steps;
   double index_read_cost;
 
   elem_size= h->ref_length + sizeof(void*) * (!test(flags & HA_MRR_NO_ASSOCIATION));
@@ -4368,7 +4368,7 @@ int handler::compare_key2(key_range *range)
   return cmp;
 }
 
-int handler::index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
+int handler::index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
@@ -4452,9 +4452,9 @@ TYPELIB *ha_known_exts(void)
 }
 
 
-static bool stat_print(THD *thd, const char *type, uint type_len,
-                       const char *file, uint file_len,
-                       const char *status, uint status_len)
+static bool stat_print(THD *thd, const char *type, uint32_t type_len,
+                       const char *file, uint32_t file_len,
+                       const char *status, uint32_t status_len)
 {
   Protocol *protocol= thd->protocol;
   protocol->prepare_for_resend();
@@ -4547,7 +4547,7 @@ static int write_locked_table_maps(THD *thd)
     locks[0]= thd->extra_lock;
     locks[1]= thd->lock;
     locks[2]= thd->locked_tables;
-    for (uint i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
+    for (uint32_t i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
     {
       DRIZZLE_LOCK const *const lock= locks[i];
       if (lock == NULL)

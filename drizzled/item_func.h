@@ -41,9 +41,9 @@ protected:
     Allowed numbers of columns in result (usually 1, which means scalar value)
     0 means get this number from first argument
   */
-  uint allowed_arg_cols;
+  uint32_t allowed_arg_cols;
 public:
-  uint arg_count;
+  uint32_t arg_count;
   table_map used_tables_cache, not_null_tables_cache;
   bool const_item_cache;
   enum Functype { UNKNOWN_FUNC,EQ_FUNC,EQUAL_FUNC,NE_FUNC,LT_FUNC,LE_FUNC,
@@ -140,17 +140,17 @@ public:
   virtual bool const_item() const { return const_item_cache; }
   inline Item **arguments() const { return args; }
   void set_arguments(List<Item> &list);
-  inline uint argument_count() const { return arg_count; }
+  inline uint32_t argument_count() const { return arg_count; }
   inline void remove_arguments() { arg_count=0; }
   void split_sum_func(THD *thd, Item **ref_pointer_array, List<Item> &fields);
   virtual void print(String *str, enum_query_type query_type);
   void print_op(String *str, enum_query_type query_type);
-  void print_args(String *str, uint from, enum_query_type query_type);
+  void print_args(String *str, uint32_t from, enum_query_type query_type);
   virtual void fix_num_length_and_dec();
   void count_only_length();
   void count_real_length();
   void count_decimal_length();
-  inline bool get_arg0_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
+  inline bool get_arg0_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
   {
     return (null_value=args[0]->get_date(ltime, fuzzy_date));
   }
@@ -170,20 +170,20 @@ public:
 
   my_decimal *val_decimal(my_decimal *);
 
-  bool agg_arg_collations(DTCollation &c, Item **items, uint nitems,
-                          uint flags)
+  bool agg_arg_collations(DTCollation &c, Item **items, uint32_t nitems,
+                          uint32_t flags)
   {
     return agg_item_collations(c, func_name(), items, nitems, flags, 1);
   }
   bool agg_arg_collations_for_comparison(DTCollation &c,
-                                         Item **items, uint nitems,
-                                         uint flags)
+                                         Item **items, uint32_t nitems,
+                                         uint32_t flags)
   {
     return agg_item_collations_for_comparison(c, func_name(),
                                               items, nitems, flags);
   }
-  bool agg_arg_charsets(DTCollation &c, Item **items, uint nitems,
-                        uint flags, int item_sep)
+  bool agg_arg_charsets(DTCollation &c, Item **items, uint32_t nitems,
+                        uint32_t flags, int item_sep)
   {
     return agg_item_charsets(c, func_name(), items, nitems, flags, item_sep);
   }
@@ -354,7 +354,7 @@ public:
   void fix_length_and_dec()
   { max_length=args[0]->max_length; unsigned_flag=0; }
   virtual void print(String *str, enum_query_type query_type);
-  uint decimal_precision() const { return args[0]->decimal_precision(); }
+  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
 };
 
 
@@ -436,7 +436,7 @@ public:
 class Item_func_div :public Item_num_op
 {
 public:
-  uint prec_increment;
+  uint32_t prec_increment;
   Item_func_div(Item *a,Item *b) :Item_num_op(a,b) {}
   int64_t int_op() { assert(0); return 0; }
   double real_op();
@@ -488,7 +488,7 @@ public:
   enum Functype functype() const   { return NEG_FUNC; }
   void fix_length_and_dec();
   void fix_num_length_and_dec();
-  uint decimal_precision() const { return args[0]->decimal_precision(); }
+  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
 };
 
 
@@ -746,7 +746,7 @@ public:
   void fix_length_and_dec();
   enum Item_result result_type () const { return cmp_type; }
   bool result_as_int64_t() { return compare_as_dates; };
-  uint cmp_datetimes(uint64_t *value);
+  uint32_t cmp_datetimes(uint64_t *value);
   enum_field_types field_type() const { return cached_field_type; }
 };
 
@@ -884,7 +884,7 @@ public:
 class Item_func_find_in_set :public Item_int_func
 {
   String value,value2;
-  uint enum_value;
+  uint32_t enum_value;
   uint64_t enum_bit;
   DTCollation cmp_collation;
 public:
@@ -1040,7 +1040,7 @@ public:
   int64_t val_int_result();
   String *str_result(String *str);
   my_decimal *val_decimal_result(my_decimal *);
-  bool update_hash(void *ptr, uint length, enum Item_result type,
+  bool update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
   bool send(Protocol *protocol, String *str_arg);
   void make_field(Send_field *tmp_field);
@@ -1118,7 +1118,7 @@ public:
   bool fix_fields(THD *thd, Item **ref);
   virtual void print(String *str, enum_query_type query_type);
   void set_null_value(const CHARSET_INFO * const cs);
-  void set_value(const char *str, uint length, const CHARSET_INFO * const cs);
+  void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
 };
 
 

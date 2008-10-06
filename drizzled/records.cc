@@ -54,7 +54,7 @@ static int rr_index(READ_RECORD *info);
 void init_read_record_idx(READ_RECORD *info,
                           THD *thd __attribute__((unused)),
                           Table *table,
-                          bool print_error, uint idx)
+                          bool print_error, uint32_t idx)
 {
   empty_record(table);
   memset(info, 0, sizeof(*info));
@@ -478,7 +478,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 
 static int init_rr_cache(THD *thd, READ_RECORD *info)
 {
-  uint rec_cache_size;
+  uint32_t rec_cache_size;
 
   info->struct_length= 3+MAX_REFLENGTH;
   info->reclength= ALIGN_SIZE(info->table->s->reclength+1);
@@ -510,7 +510,7 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 
 static int rr_from_cache(READ_RECORD *info)
 {
-  register uint i;
+  register uint32_t i;
   uint32_t length;
   my_off_t rest_of_file;
   int16_t error;

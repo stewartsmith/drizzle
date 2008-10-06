@@ -513,7 +513,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
 }
 
 
-void Item_singlerow_subselect::store(uint i, Item *item)
+void Item_singlerow_subselect::store(uint32_t i, Item *item)
 {
   row[i]->store(item);
 }
@@ -555,12 +555,12 @@ void Item_singlerow_subselect::fix_length_and_dec()
     maybe_null= engine->may_be_null();
 }
 
-uint Item_singlerow_subselect::cols()
+uint32_t Item_singlerow_subselect::cols()
 {
   return engine->cols();
 }
 
-bool Item_singlerow_subselect::check_cols(uint c)
+bool Item_singlerow_subselect::check_cols(uint32_t c)
 {
   if (c != engine->cols())
   {
@@ -572,7 +572,7 @@ bool Item_singlerow_subselect::check_cols(uint c)
 
 bool Item_singlerow_subselect::null_inside()
 {
-  for (uint i= 0; i < max_columns ; i++)
+  for (uint32_t i= 0; i < max_columns ; i++)
   {
     if (row[i]->null_value)
       return 1;
@@ -1303,7 +1303,7 @@ Item_subselect::trans_res
 Item_in_subselect::row_value_transformer(JOIN *join)
 {
   SELECT_LEX *select_lex= join->select_lex;
-  uint cols_num= left_expr->cols();
+  uint32_t cols_num= left_expr->cols();
 
   if (select_lex->item_list.elements != left_expr->cols())
   {
@@ -1341,7 +1341,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
       if (!(pushed_cond_guards= (bool*)join->thd->alloc(sizeof(bool) *
                                                         left_expr->cols())))
         return(RES_ERROR);
-      for (uint i= 0; i < cols_num; i++)
+      for (uint32_t i= 0; i < cols_num; i++)
         pushed_cond_guards[i]= true;
     }
   }
@@ -1381,7 +1381,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
 {
   SELECT_LEX *select_lex= join->select_lex;
   Item *having_item= 0;
-  uint cols_num= left_expr->cols();
+  uint32_t cols_num= left_expr->cols();
   bool is_having_used= (join->having || select_lex->with_sum_func ||
                         select_lex->group_list.first ||
                         !select_lex->table_list.elements);
@@ -1403,7 +1403,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
       TODO: say here explicitly if the order of AND parts matters or not.
     */
     Item *item_having_part2= 0;
-    for (uint i= 0; i < cols_num; i++)
+    for (uint32_t i= 0; i < cols_num; i++)
     {
       assert((left_expr->fixed && select_lex->ref_pointer_array[i]->fixed) ||
                   (select_lex->ref_pointer_array[i]->type() == REF_ITEM &&
@@ -1479,7 +1479,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
                                (l3 = v3)
     */
     Item *where_item= 0;
-    for (uint i= 0; i < cols_num; i++)
+    for (uint32_t i= 0; i < cols_num; i++)
     {
       Item *item, *item_isnull;
       assert((left_expr->fixed && select_lex->ref_pointer_array[i]->fixed) ||
@@ -1828,7 +1828,7 @@ bool Item_in_subselect::init_left_expr_cache()
   if (!(left_expr_cache= new List<Cached_item>))
     return true;
 
-  for (uint i= 0; i < left_expr->cols(); i++)
+  for (uint32_t i= 0; i < left_expr->cols(); i++)
   {
     Cached_item *cur_item_cache= new_Cached_item(thd,
                                                  left_expr->element_index(i),
@@ -2064,7 +2064,7 @@ void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
   List_iterator_fast<Item> li(item_list);
   res_type= STRING_RESULT;
   res_field_type= DRIZZLE_TYPE_VARCHAR;
-  for (uint i= 0; (sel_item= li++); i++)
+  for (uint32_t i= 0; (sel_item= li++); i++)
   {
     item->max_length= sel_item->max_length;
     res_type= sel_item->result_type();
@@ -2184,12 +2184,12 @@ int subselect_single_select_engine::exec()
         pushed down into the subquery. Those optimizations are ref[_or_null]
         acceses. Change them to be full table scans.
       */
-      for (uint i=join->const_tables ; i < join->tables ; i++)
+      for (uint32_t i=join->const_tables ; i < join->tables ; i++)
       {
         JOIN_TAB *tab=join->join_tab+i;
         if (tab && tab->keyuse)
         {
-          for (uint i= 0; i < tab->ref.key_parts; i++)
+          for (uint32_t i= 0; i < tab->ref.key_parts; i++)
           {
             bool *cond_guard= tab->ref.cond_guards[i];
             if (cond_guard && !*cond_guard)
@@ -2606,13 +2606,13 @@ int subselect_indexsubquery_engine::exec()
 }
 
 
-uint subselect_single_select_engine::cols()
+uint32_t subselect_single_select_engine::cols()
 {
   return select_lex->item_list.elements;
 }
 
 
-uint subselect_union_engine::cols()
+uint32_t subselect_union_engine::cols()
 {
   return unit->types.elements;
 }
@@ -2724,7 +2724,7 @@ void subselect_uniquesubquery_engine::print(String *str)
 {
   KEY *key_info= tab->table->key_info + tab->ref.key;
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
-  for (uint i= 0; i < key_info->key_parts; i++)
+  for (uint32_t i= 0; i < key_info->key_parts; i++)
     tab->ref.items[i]->print(str);
   str->append(STRING_WITH_LEN(" in "));
   str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
@@ -2924,7 +2924,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   /* The table into which the subquery is materialized. */
   Table         *tmp_table;
   KEY           *tmp_key; /* The only index on the temporary table. */
-  uint          tmp_key_parts; /* Number of keyparts in tmp_key. */
+  uint32_t          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;
 
   /* 1. Create/initialize materialization related objects. */
@@ -3001,7 +3001,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   store_key **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
   
-  for (uint i= 0; i < tmp_key_parts; i++, cur_key_part++, ref_key++)
+  for (uint32_t i= 0; i < tmp_key_parts; i++, cur_key_part++, ref_key++)
   {
     tab->ref.items[i]= item_in->left_expr->element_index(i);
     int null_count= test(cur_key_part->field->real_maybe_null());

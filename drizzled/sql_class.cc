@@ -359,7 +359,7 @@ Diagnostics_area::set_eof_status(THD *thd)
 
 void
 Diagnostics_area::set_error_status(THD *thd __attribute__((unused)),
-                                   uint sql_errno_arg,
+                                   uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
   /*
@@ -522,7 +522,7 @@ void THD::push_internal_handler(Internal_error_handler *handler)
 }
 
 
-bool THD::handle_error(uint sql_errno, const char *message,
+bool THD::handle_error(uint32_t sql_errno, const char *message,
                        DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
@@ -922,7 +922,7 @@ void THD::cleanup_after_query()
   @return  NULL on failure, or pointer to the LEX_STRING object
 */
 LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
-                                 const char* str, uint length,
+                                 const char* str, uint32_t length,
                                  bool allocate_lex_string)
 {
   if (allocate_lex_string)
@@ -956,11 +956,11 @@ LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
 */
 
 bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-			 const char *from, uint from_length,
+			 const char *from, uint32_t from_length,
 			 const CHARSET_INFO * const from_cs)
 {
   size_t new_length= to_cs->mbmaxlen * from_length;
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (!(to->str= (char*) alloc(new_length+1)))
   {
     to->length= 0;				// Safety fix
@@ -991,7 +991,7 @@ bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 bool THD::convert_string(String *s, const CHARSET_INFO * const from_cs,
                          const CHARSET_INFO * const to_cs)
 {
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (convert_buffer.copy(s->ptr(), s->length(), from_cs, to_cs, &dummy_errors))
     return true;
   /* If convert_buffer >> s copying is more efficient long term */
@@ -1212,7 +1212,7 @@ select_result::select_result()
   thd=current_thd;
 }
 
-void select_result::send_error(uint errcode,const char *err)
+void select_result::send_error(uint32_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
 }
@@ -1246,7 +1246,7 @@ sql_exchange::sql_exchange(char *name, bool flag,
   cs= NULL;
 }
 
-bool select_send::send_fields(List<Item> &list, uint flags)
+bool select_send::send_fields(List<Item> &list, uint32_t flags)
 {
   bool res;
   if (!(res= thd->protocol->send_fields(&list, flags)))
@@ -1340,7 +1340,7 @@ bool select_send::send_eof()
   Handling writing to file
 ************************************************************************/
 
-void select_to_file::send_error(uint errcode,const char *err)
+void select_to_file::send_error(uint32_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
   if (file > 0)
@@ -1426,7 +1426,7 @@ static File create_file(THD *thd, char *path, sql_exchange *exchange,
 			IO_CACHE *cache)
 {
   File file;
-  uint option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
+  uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
   option|= MY_REPLACE_DIR;			// Force use of db directory
@@ -1555,7 +1555,7 @@ bool select_export::send_data(List<Item> &items)
   }
   row_count++;
   Item *item;
-  uint used_length=0,items_left=items.elements;
+  uint32_t used_length=0,items_left=items.elements;
   List_iterator_fast<Item> li(items);
 
   if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
@@ -1697,7 +1697,7 @@ bool select_export::send_data(List<Item> &items)
 	  space_inited=1;
 	  memset(space, ' ', sizeof(space));
 	}
-	uint length=item->max_length-used_length;
+	uint32_t length=item->max_length-used_length;
 	for (; length > sizeof(space) ; length-=sizeof(space))
 	{
 	  if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
@@ -1802,7 +1802,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   }
   List_iterator_fast<Item> li(items);
   Item *val_item;
-  for (uint i= 0; (val_item= li++); i++)
+  for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
   it->assigned(1);
   return(0);
@@ -2508,7 +2508,7 @@ namespace {
       return m_memory != 0;
     }
 
-    unsigned char *slot(uint s)
+    unsigned char *slot(uint32_t s)
     {
       assert(s < sizeof(m_ptr)/sizeof(*m_ptr));
       assert(m_ptr[s] != 0);

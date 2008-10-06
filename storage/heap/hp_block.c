@@ -56,7 +56,7 @@ unsigned char *hp_find_block(HP_BLOCK *block, uint32_t pos)
 
 int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 {
-  register uint i,j;
+  register uint32_t i,j;
   HP_PTRS *root;
 
   for (i=0 ; i < block->levels ; i++)
@@ -123,7 +123,7 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 
 	/* free all blocks under level */
 
-unsigned char *hp_free_level(HP_BLOCK *block, uint level, HP_PTRS *pos, unsigned char *last_pos)
+unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsigned char *last_pos)
 {
   int i,max_pos;
   unsigned char *next_ptr;

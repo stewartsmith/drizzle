@@ -112,7 +112,7 @@ extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
 extern void my_handler_error_register(void);
 extern void my_handler_error_unregister(void);
 extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
-                      uint key_length,uint nextflag,uint *diff_length);
+                      uint32_t key_length,uint32_t nextflag,uint32_t *diff_length);
 
 /*
   Inside an in-memory data record, memory pointers to pieces of the

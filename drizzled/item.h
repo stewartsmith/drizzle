@@ -48,7 +48,7 @@ class DTCollation {
 public:
   const CHARSET_INFO *collation;
   enum Derivation derivation;
-  uint repertoire;
+  uint32_t repertoire;
   
   void set_repertoire_from_charset(const CHARSET_INFO * const cs)
   {
@@ -81,7 +81,7 @@ public:
   }
   void set(const CHARSET_INFO * const collation_arg,
            Derivation derivation_arg,
-           uint repertoire_arg)
+           uint32_t repertoire_arg)
   {
     collation= collation_arg;
     derivation= derivation_arg;
@@ -94,8 +94,8 @@ public:
   }
   void set(Derivation derivation_arg)
   { derivation= derivation_arg; }
-  bool aggregate(DTCollation &dt, uint flags= 0);
-  bool set(DTCollation &dt1, DTCollation &dt2, uint flags= 0)
+  bool aggregate(DTCollation &dt, uint32_t flags= 0);
+  bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0)
   { set(dt1); return aggregate(dt2, flags); }
   const char *derivation_name() const
   {
@@ -463,7 +463,7 @@ public:
   enum traverse_order { POSTFIX, PREFIX };
   
   /* Reuse size, only used by SP local variable assignment, otherwize 0 */
-  uint rsize;
+  uint32_t rsize;
 
   /*
     str_values's main purpose is to be used to cache the value in
@@ -475,7 +475,7 @@ public:
   char * orig_name;
   Item *next;
   uint32_t max_length;
-  uint name_length;                     /* Length of name */
+  uint32_t name_length;                     /* Length of name */
   int8_t marker;
   uint8_t decimals;
   bool maybe_null;			/* If item may be null */
@@ -507,7 +507,7 @@ public:
     name=0;
 #endif
   }		/*lint -e1509 */
-  void set_name(const char *str, uint length, const CHARSET_INFO * const cs);
+  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs);
   void rename(char *new_name);
   void init_make_field(Send_field *tmp_field,enum enum_field_types type);
   virtual void cleanup();
@@ -735,9 +735,9 @@ public:
   /* cloning of constant items (0 if it is not const) */
   virtual Item *clone_item() { return 0; }
   virtual cond_result eq_cmp_result() const { return COND_OK; }
-  inline uint float_length(uint decimals_par) const
+  inline uint32_t float_length(uint32_t decimals_par) const
   { return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;}
-  virtual uint decimal_precision() const;
+  virtual uint32_t decimal_precision() const;
   inline int decimal_int_part() const
   { return my_decimal_int_part(decimal_precision(), decimals); }
   /* 
@@ -777,9 +777,9 @@ public:
   /* Called for items that really have to be split */
   void split_sum_func2(THD *thd, Item **ref_pointer_array, List<Item> &fields,
                        Item **ref, bool skip_registered);
-  virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate)
+  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   { return get_date(ltime,fuzzydate); }
   /*
     The method allows to determine nullness of a complex expression 
@@ -912,10 +912,10 @@ public:
   virtual Item **this_item_addr(THD *thd __attribute__((unused)), Item **addr_arg) { return addr_arg; }
 
   // Row emulation
-  virtual uint cols() { return 1; }
-  virtual Item* element_index(uint i __attribute__((unused))) { return this; }
-  virtual Item** addr(uint i __attribute__((unused))) { return 0; }
-  virtual bool check_cols(uint c);
+  virtual uint32_t cols() { return 1; }
+  virtual Item* element_index(uint32_t i __attribute__((unused))) { return this; }
+  virtual Item** addr(uint32_t i __attribute__((unused))) { return 0; }
+  virtual bool check_cols(uint32_t c);
   // It is not row => null inside is impossible
   virtual bool null_inside() { return 0; }
   // used in row subselects to get value of elements
@@ -982,11 +982,11 @@ public:
 };
 
 bool agg_item_collations(DTCollation &c, const char *name,
-                         Item **items, uint nitems, uint flags, int item_sep);
+                         Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 bool agg_item_collations_for_comparison(DTCollation &c, const char *name,
-                                        Item **items, uint nitems, uint flags);
+                                        Item **items, uint32_t nitems, uint32_t flags);
 bool agg_item_charsets(DTCollation &c, const char *name,
-                       Item **items, uint nitems, uint flags, int item_sep);
+                       Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 
 
 class Item_num: public Item_basic_constant
@@ -1024,7 +1024,7 @@ public:
     stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX 
     if index value is not known.
   */
-  uint cached_field_index;
+  uint32_t cached_field_index;
   /*
     Cached pointer to table which contains this field, used for the same reason
     by prep. stmt. too in case then we have not-fully qualified field.
@@ -1085,7 +1085,7 @@ public:
     if any_privileges set to true then here real effective privileges will
     be stored
   */
-  uint have_privileges;
+  uint32_t have_privileges;
   /* field need any privileges (for VIEW creation) */
   bool any_privileges;
   Item_field(Name_resolution_context *context_arg,
@@ -1145,8 +1145,8 @@ public:
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *t_arg __attribute__((unused))) { return result_field; }
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
-  bool get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+  bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
   bool is_null() { return field->is_null(); }
   void update_null_value();
@@ -1293,9 +1293,9 @@ public:
     Offset of placeholder inside statement text. Used to create
     no-placeholders version of this statement for the binary log.
   */
-  uint pos_in_query;
+  uint32_t pos_in_query;
 
-  Item_param(uint pos_in_query_arg);
+  Item_param(uint32_t pos_in_query_arg);
 
   enum Item_result result_type () const { return item_result_type; }
   enum Type type() const { return item_type; }
@@ -1306,7 +1306,7 @@ public:
   my_decimal *val_decimal(my_decimal*);
   String *val_str(String*);
   bool get_time(DRIZZLE_TIME *tm);
-  bool get_date(DRIZZLE_TIME *tm, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *tm, uint32_t fuzzydate);
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
@@ -1369,18 +1369,18 @@ class Item_int :public Item_num
 {
 public:
   int64_t value;
-  Item_int(int32_t i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
+  Item_int(int32_t i,uint32_t length= MY_INT32_NUM_DECIMAL_DIGITS)
     :value((int64_t) i)
     { max_length=length; fixed= 1; }
-  Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(int64_t i,uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value(i)
     { max_length=length; fixed= 1; }
-  Item_int(uint64_t i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(uint64_t i, uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value((int64_t)i)
     { max_length=length; fixed= 1; unsigned_flag= 1; }
-  Item_int(const char *str_arg,int64_t i,uint length) :value(i)
+  Item_int(const char *str_arg,int64_t i,uint32_t length) :value(i)
     { max_length=length; name=(char*) str_arg; fixed= 1; }
-  Item_int(const char *str_arg, uint length=64);
+  Item_int(const char *str_arg, uint32_t length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
@@ -1393,7 +1393,7 @@ public:
   Item *clone_item() { return new Item_int(name,value,max_length); }
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg() { value= -value; return this; }
-  uint decimal_precision() const
+  uint32_t decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
 };
@@ -1402,9 +1402,9 @@ public:
 class Item_uint :public Item_int
 {
 public:
-  Item_uint(const char *str_arg, uint length);
+  Item_uint(const char *str_arg, uint32_t length);
   Item_uint(uint64_t i) :Item_int((uint64_t) i, 10) {}
-  Item_uint(const char *str_arg, int64_t i, uint length);
+  Item_uint(const char *str_arg, int64_t i, uint32_t length);
   double val_real()
     { assert(fixed == 1); return uint64_t2double((uint64_t)value); }
   String *val_str(String*);
@@ -1412,7 +1412,7 @@ public:
   int save_in_field(Field *field, bool no_conversions);
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
-  uint decimal_precision() const { return max_length; }
+  uint32_t decimal_precision() const { return max_length; }
 };
 
 
@@ -1422,9 +1422,9 @@ class Item_decimal :public Item_num
 protected:
   my_decimal decimal_value;
 public:
-  Item_decimal(const char *str_arg, uint length, const CHARSET_INFO * const charset);
+  Item_decimal(const char *str_arg, uint32_t length, const CHARSET_INFO * const charset);
   Item_decimal(const char *str, const my_decimal *val_arg,
-               uint decimal_par, uint length);
+               uint32_t decimal_par, uint32_t length);
   Item_decimal(my_decimal *value_par);
   Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
@@ -1451,7 +1451,7 @@ public:
     unsigned_flag= !decimal_value.sign();
     return this;
   }
-  uint decimal_precision() const { return decimal_value.precision(); }
+  uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
 };
@@ -1463,8 +1463,8 @@ class Item_float :public Item_num
 public:
   double value;
   // Item_real() :value(0) {}
-  Item_float(const char *str_arg, uint length);
-  Item_float(const char *str,double val_arg,uint decimal_par,uint length)
+  Item_float(const char *str_arg, uint32_t length);
+  Item_float(const char *str,double val_arg,uint32_t decimal_par,uint32_t length)
     :value(val_arg)
   {
     presentation= name=(char*) str;
@@ -1472,7 +1472,7 @@ public:
     max_length=length;
     fixed= 1;
   }
-  Item_float(double value_par, uint decimal_par) :presentation(0), value(value_par)
+  Item_float(double value_par, uint32_t decimal_par) :presentation(0), value(value_par)
   {
     decimals= (uint8_t) decimal_par;
     fixed= 1;
@@ -1509,8 +1509,8 @@ class Item_static_float_func :public Item_float
 {
   const char *func_name;
 public:
-  Item_static_float_func(const char *str, double val_arg, uint decimal_par,
-                        uint length)
+  Item_static_float_func(const char *str, double val_arg, uint32_t decimal_par,
+                        uint32_t length)
     :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
@@ -1527,9 +1527,9 @@ public:
 class Item_string :public Item_basic_constant
 {
 public:
-  Item_string(const char *str,uint length,
+  Item_string(const char *str,uint32_t length,
               const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint repertoire= MY_REPERTOIRE_UNICODE30)
+              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -1557,9 +1557,9 @@ public:
     decimals= NOT_FIXED_DEC;
     fixed= 1;
   }
-  Item_string(const char *name_par, const char *str, uint length,
+  Item_string(const char *name_par, const char *str, uint32_t length,
               const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint repertoire= MY_REPERTOIRE_UNICODE30)
+              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -1574,7 +1574,7 @@ public:
     This is used in stored procedures to avoid memory leaks and
     does a deep copy of its argument.
   */
-  void set_str_with_copy(const char *str_arg, uint length_arg)
+  void set_str_with_copy(const char *str_arg, uint32_t length_arg)
   {
     str_value.copy(str_arg, length_arg, collation.collation);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
@@ -1605,7 +1605,7 @@ public:
     			   str_value.length(), collation.collation);
   }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  inline void append(char *str, uint length)
+  inline void append(char *str, uint32_t length)
   {
     str_value.append(str, length);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
@@ -1660,7 +1660,7 @@ class Item_static_string_func :public Item_string
 {
   const char *func_name;
 public:
-  Item_static_string_func(const char *name_par, const char *str, uint length,
+  Item_static_string_func(const char *name_par, const char *str, uint32_t length,
                           const CHARSET_INFO * const cs,
                           Derivation dv= DERIVATION_COERCIBLE)
     :Item_string(NULL, str, length, cs, dv), func_name(name_par)
@@ -1691,7 +1691,7 @@ public:
 class Item_blob :public Item_string
 {
 public:
-  Item_blob(const char *name, uint length) :
+  Item_blob(const char *name, uint32_t length) :
     Item_string(name, length, &my_charset_bin)
   { max_length= length; }
   enum Type type() const { return TYPE_HOLDER; }
@@ -1708,7 +1708,7 @@ public:
 class Item_empty_string :public Item_string
 {
 public:
-  Item_empty_string(const char *header,uint length, const CHARSET_INFO * cs= NULL) :
+  Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
     Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
     { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
   void make_field(Send_field *field);
@@ -1719,7 +1719,7 @@ class Item_return_int :public Item_int
 {
   enum_field_types int_field_type;
 public:
-  Item_return_int(const char *name_arg, uint length,
+  Item_return_int(const char *name_arg, uint32_t length,
 		  enum_field_types field_type_arg, int64_t value= 0)
     :Item_int(name_arg, value, length), int_field_type(field_type_arg)
   {
@@ -1733,7 +1733,7 @@ class Item_hex_string: public Item_basic_constant
 {
 public:
   Item_hex_string() {}
-  Item_hex_string(const char *str,uint str_length);
+  Item_hex_string(const char *str,uint32_t str_length);
   enum Type type() const { return VARBIN_ITEM; }
   double val_real()
   { 
@@ -1757,7 +1757,7 @@ public:
 class Item_bin_string: public Item_hex_string
 {
 public:
-  Item_bin_string(const char *str,uint str_length);
+  Item_bin_string(const char *str,uint32_t str_length);
 };
 
 class Item_result_field :public Item	/* Item with result field */
@@ -1831,7 +1831,7 @@ public:
   bool val_bool();
   String *val_str(String* tmp);
   bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   double val_result();
   int64_t val_int_result();
   String *str_result(String* tmp);
@@ -1881,19 +1881,19 @@ public:
   virtual Ref_Type ref_type() { return REF; }
 
   // Row emulation: forwarding of ROW-related calls to ref
-  uint cols()
+  uint32_t cols()
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->cols() : 1;
   }
-  Item* element_index(uint i)
+  Item* element_index(uint32_t i)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->element_index(i) : this;
   }
-  Item** addr(uint i)
+  Item** addr(uint32_t i)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->addr(i) : 0;
   }
-  bool check_cols(uint c)
+  bool check_cols(uint32_t c)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->check_cols(c) 
                                               : Item::check_cols(c);
@@ -1934,7 +1934,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
   bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual Ref_Type ref_type() { return DIRECT_REF; }
 };
 
@@ -2046,7 +2046,7 @@ public:
   String* val_str(String* s);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
   virtual void print(String *str, enum_query_type query_type);
   /*
     we add RAND_TABLE_BIT to prevent moving this item from HAVING to WHERE
@@ -2193,7 +2193,7 @@ class Cached_item_field :public Cached_item
 {
   unsigned char *buff;
   Field *field;
-  uint length;
+  uint32_t length;
 
 public:
   Cached_item_field(Field *arg_field) : field(arg_field)
@@ -2301,7 +2301,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint i __attribute__((unused)))
+  virtual bool allocate(uint32_t i __attribute__((unused)))
   { return 0; }
   virtual bool setup(Item *item)
   {
@@ -2411,7 +2411,7 @@ public:
 class Item_cache_row: public Item_cache
 {
   Item_cache  **values;
-  uint item_count;
+  uint32_t item_count;
   bool save_array;
 public:
   Item_cache_row()
@@ -2421,7 +2421,7 @@ public:
     'allocate' used only in row transformer, to preallocate space for row 
     cache.
   */
-  bool allocate(uint num);
+  bool allocate(uint32_t num);
   /*
     'setup' is needed only by row => it not called by simple row subselect
     (only by IN subselect (in subselect optimizer))
@@ -2456,10 +2456,10 @@ public:
 
   enum Item_result result_type() const { return ROW_RESULT; }
   
-  uint cols() { return item_count; }
-  Item *element_index(uint i) { return values[i]; }
-  Item **addr(uint i) { return (Item **) (values + i); }
-  bool check_cols(uint c);
+  uint32_t cols() { return item_count; }
+  Item *element_index(uint32_t i) { return values[i]; }
+  Item **addr(uint32_t i) { return (Item **) (values + i); }
+  bool check_cols(uint32_t c);
   bool null_inside();
   void bring_value();
   void keep_array() { save_array= 1; }

@@ -23,13 +23,13 @@
 
 class Field_enum :public Field_str {
 protected:
-  uint packlength;
+  uint32_t packlength;
 public:
   TYPELIB *typelib;
   Field_enum(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
              enum utype unireg_check_arg, const char *field_name_arg,
-             uint packlength_arg,
+             uint32_t packlength_arg,
              TYPELIB *typelib_arg,
              const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -43,25 +43,25 @@ public:
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return (uint32_t) packlength; }
   void store_type(uint64_t value);
   void sql_type(String &str) const;
-  uint size_of() const { return sizeof(*this); }
+  uint32_t size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return DRIZZLE_TYPE_ENUM; }
-  uint pack_length_from_metadata(uint field_metadata)
+  uint32_t pack_length_from_metadata(uint32_t field_metadata)
   { return (field_metadata & 0x00ff); }
-  uint row_pack_length() { return pack_length(); }
+  uint32_t row_pack_length() { return pack_length(); }
   virtual bool zero_pack() const { return 0; }
-  bool optimize_range(uint idx __attribute__((unused)),
-                      uint part __attribute__((unused)))
+  bool optimize_range(uint32_t idx __attribute__((unused)),
+                      uint32_t part __attribute__((unused)))
   { return 0; }
   bool eq_def(Field *field);
   bool has_charset(void) const { return true; }

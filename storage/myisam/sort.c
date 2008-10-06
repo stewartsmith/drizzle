@@ -43,24 +43,24 @@ extern void print_error(const char *fmt,...);
 
 /* Functions defined in this file */
 
-static ha_rows  find_all_keys(MI_SORT_PARAM *info,uint keys,
+static ha_rows  find_all_keys(MI_SORT_PARAM *info,uint32_t keys,
                                     unsigned char **sort_keys,
                                     DYNAMIC_ARRAY *buffpek,int *maxbuffer,
                                     IO_CACHE *tempfile,
                                     IO_CACHE *tempfile_for_exceptions);
 static int  write_keys(MI_SORT_PARAM *info,unsigned char **sort_keys,
-                             uint count, BUFFPEK *buffpek,IO_CACHE *tempfile);
+                             uint32_t count, BUFFPEK *buffpek,IO_CACHE *tempfile);
 static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile);
 static int  write_index(MI_SORT_PARAM *info,unsigned char * *sort_keys,
-                              uint count);
-static int  merge_many_buff(MI_SORT_PARAM *info,uint keys,
+                              uint32_t count);
+static int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
                                   unsigned char * *sort_keys,
                                   BUFFPEK *buffpek,int *maxbuffer,
                                   IO_CACHE *t_file);
-static uint  read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
-                                  uint sort_length);
-static int  merge_buffers(MI_SORT_PARAM *info,uint keys,
+static uint32_t  read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+                                  uint32_t sort_length);
+static int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
                                 IO_CACHE *from_file, IO_CACHE *to_file,
                                 unsigned char * *sort_keys, BUFFPEK *lastbuff,
                                 BUFFPEK *Fb, BUFFPEK *Tb);
@@ -68,16 +68,16 @@ static int  merge_index(MI_SORT_PARAM *,uint,unsigned char **,BUFFPEK *, int,
                               IO_CACHE *);
 
 static int  write_keys_varlen(MI_SORT_PARAM *info,unsigned char **sort_keys,
-                                    uint count, BUFFPEK *buffpek,
+                                    uint32_t count, BUFFPEK *buffpek,
                                     IO_CACHE *tempfile);
-static uint  read_to_buffer_varlen(IO_CACHE *fromfile,BUFFPEK *buffpek,
-                                         uint sort_length);
+static uint32_t  read_to_buffer_varlen(IO_CACHE *fromfile,BUFFPEK *buffpek,
+                                         uint32_t sort_length);
 static int  write_merge_key(MI_SORT_PARAM *info, IO_CACHE *to_file,
-                                  unsigned char *key, uint sort_length, uint count);
+                                  unsigned char *key, uint32_t sort_length, uint32_t count);
 static int  write_merge_key_varlen(MI_SORT_PARAM *info,
 					 IO_CACHE *to_file,
-					 unsigned char* key, uint sort_length,
-					 uint count);
+					 unsigned char* key, uint32_t sort_length,
+					 uint32_t count);
 static inline int
 my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, unsigned char *bufs);
 
@@ -99,7 +99,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 			  uint32_t sortbuff_size)
 {
   int error,maxbuffer,skr;
-  uint memavl,old_memavl,keys,sort_length;
+  uint32_t memavl,old_memavl,keys,sort_length;
   DYNAMIC_ARRAY buffpek;
   ha_rows records;
   unsigned char **sort_keys;
@@ -213,8 +213,8 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   if (my_b_inited(&tempfile_for_exceptions))
   {
     MI_INFO *idx=info->sort_info->info;
-    uint     keyno=info->key;
-    uint     key_length, ref_length=idx->s->rec_reflength;
+    uint32_t     keyno=info->key;
+    uint32_t     key_length, ref_length=idx->s->rec_reflength;
 
     if (!no_messages)
       printf("  - Adding exceptions\n"); /* purecov: tested */
@@ -247,13 +247,13 @@ err:
 
 /* Search after all keys and place them in a temp. file */
 
-static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint keys,
+static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
 				    unsigned char **sort_keys, DYNAMIC_ARRAY *buffpek,
 				    int *maxbuffer, IO_CACHE *tempfile,
 				    IO_CACHE *tempfile_for_exceptions)
 {
   int error;
-  uint idx;
+  uint32_t idx;
 
   idx=error=0;
   sort_keys[0]=(unsigned char*) (sort_keys+keys);
@@ -301,8 +301,8 @@ pthread_handler_t thr_find_all_keys(void *arg)
 {
   MI_SORT_PARAM *sort_param= (MI_SORT_PARAM*) arg;
   int error;
-  uint memavl,old_memavl,keys,sort_length;
-  uint idx, maxbuffer;
+  uint32_t memavl,old_memavl,keys,sort_length;
+  uint32_t idx, maxbuffer;
   unsigned char **sort_keys=0;
 
   error=1;
@@ -345,7 +345,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
         keys= idx+1;
       else
       {
-        uint skr;
+        uint32_t skr;
         do
         {
           skr= maxbuffer;
@@ -472,7 +472,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
   uint32_t length= 0, keys;
   ulong *rec_per_key_part= param->rec_per_key_part;
   int got_error=sort_info->got_error;
-  uint i;
+  uint32_t i;
   MI_INFO *info=sort_info->info;
   MYISAM_SHARE *share=info->s;
   MI_SORT_PARAM *sinfo;
@@ -540,7 +540,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     }
     if (sinfo->buffpek.elements)
     {
-      uint maxbuffer=sinfo->buffpek.elements-1;
+      uint32_t maxbuffer=sinfo->buffpek.elements-1;
       if (!mergebuf)
       {
         length=param->sort_buffer_length;
@@ -588,7 +588,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     }
     if (my_b_inited(&sinfo->tempfile_for_exceptions))
     {
-      uint key_length;
+      uint32_t key_length;
 
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Dumping 'long' keys\n", sinfo->key+1);
@@ -621,10 +621,10 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         /* Write all keys in memory to file for later merge */
 
 static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
-                             uint count, BUFFPEK *buffpek, IO_CACHE *tempfile)
+                             uint32_t count, BUFFPEK *buffpek, IO_CACHE *tempfile)
 {
   unsigned char **end;
-  uint sort_length=info->key_length;
+  uint32_t sort_length=info->key_length;
 
   my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
             info);
@@ -662,7 +662,7 @@ my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, unsigned char *bufs)
 
 static int  write_keys_varlen(MI_SORT_PARAM *info,
 				    register unsigned char **sort_keys,
-                                    uint count, BUFFPEK *buffpek,
+                                    uint32_t count, BUFFPEK *buffpek,
 				    IO_CACHE *tempfile)
 {
   unsigned char **end;
@@ -689,7 +689,7 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,
 static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile)
 {
-  uint key_length=info->real_key_length;
+  uint32_t key_length=info->real_key_length;
 
   if (!my_b_inited(tempfile) &&
       open_cached_file(tempfile, my_tmpdir(info->tmpdir), "ST",
@@ -706,7 +706,7 @@ static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 /* Write index */
 
 static int  write_index(MI_SORT_PARAM *info, register unsigned char **sort_keys,
-                              register uint count)
+                              register uint32_t count)
 {
   my_qsort2((unsigned char*) sort_keys,(size_t) count,sizeof(unsigned char*),
            (qsort2_cmp) info->key_cmp,info);
@@ -721,7 +721,7 @@ static int  write_index(MI_SORT_PARAM *info, register unsigned char **sort_keys,
 
         /* Merge buffers to make < MERGEBUFF2 buffers */
 
-static int  merge_many_buff(MI_SORT_PARAM *info, uint keys,
+static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
                                   unsigned char **sort_keys, BUFFPEK *buffpek,
                                   int *maxbuffer, IO_CACHE *t_file)
 {
@@ -778,11 +778,11 @@ cleanup:
     -1	Error
 */
 
-static uint  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
-                                  uint sort_length)
+static uint32_t  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
+                                  uint32_t sort_length)
 {
-  register uint count;
-  uint length;
+  register uint32_t count;
+  uint32_t length;
 
   if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
   {
@@ -797,12 +797,12 @@ static uint  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
   return (count*sort_length);
 } /* read_to_buffer */
 
-static uint  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
-                                         uint sort_length)
+static uint32_t  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
+                                         uint32_t sort_length)
 {
-  register uint count;
+  register uint32_t count;
   uint16_t length_of_key = 0;
-  uint idx;
+  uint32_t idx;
   unsigned char *buffp;
 
   if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
@@ -831,9 +831,9 @@ static uint  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
 
 static int  write_merge_key_varlen(MI_SORT_PARAM *info,
 					 IO_CACHE *to_file, unsigned char* key,
-                                         uint sort_length, uint count)
+                                         uint32_t sort_length, uint32_t count)
 {
-  uint idx;
+  uint32_t idx;
   unsigned char *bufs = key;
 
   for (idx=1;idx<=count;idx++)
@@ -849,7 +849,7 @@ static int  write_merge_key_varlen(MI_SORT_PARAM *info,
 
 static int  write_merge_key(MI_SORT_PARAM *info __attribute__((unused)),
 				  IO_CACHE *to_file, unsigned char *key,
-				  uint sort_length, uint count)
+				  uint32_t sort_length, uint32_t count)
 {
   return my_b_write(to_file, key, (size_t) sort_length*count);
 }
@@ -860,12 +860,12 @@ static int  write_merge_key(MI_SORT_PARAM *info __attribute__((unused)),
 */
 
 static int
-merge_buffers(MI_SORT_PARAM *info, uint keys, IO_CACHE *from_file,
+merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
               IO_CACHE *to_file, unsigned char **sort_keys, BUFFPEK *lastbuff,
               BUFFPEK *Fb, BUFFPEK *Tb)
 {
   int error;
-  uint sort_length,maxcount;
+  uint32_t sort_length,maxcount;
   ha_rows count;
   my_off_t to_start_filepos= 0;
   unsigned char *strpos;
@@ -928,7 +928,7 @@ merge_buffers(MI_SORT_PARAM *info, uint keys, IO_CACHE *from_file,
         if (!(error=(int) info->read_to_buffer(from_file,buffpek,sort_length)))
         {
           unsigned char *base=buffpek->base;
-          uint max_keys=buffpek->max_keys;
+          uint32_t max_keys=buffpek->max_keys;
 
           queue_remove(&queue,0);
 
@@ -1001,7 +1001,7 @@ err:
         /* Do a merge to output-file (save only positions) */
 
 static int
-merge_index(MI_SORT_PARAM *info, uint keys, unsigned char **sort_keys,
+merge_index(MI_SORT_PARAM *info, uint32_t keys, unsigned char **sort_keys,
             BUFFPEK *buffpek, int maxbuffer, IO_CACHE *tempfile)
 {
   if (merge_buffers(info,keys,tempfile,(IO_CACHE*) 0,sort_keys,buffpek,buffpek,

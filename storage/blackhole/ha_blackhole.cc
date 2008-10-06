@@ -54,7 +54,7 @@ const char **ha_blackhole::bas_ext() const
 }
 
 int ha_blackhole::open(const char *name, int mode __attribute__((unused)),
-                       uint test_if_locked __attribute__((unused)))
+                       uint32_t test_if_locked __attribute__((unused)))
 {
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
@@ -76,7 +76,7 @@ int ha_blackhole::create(const char *name __attribute__((unused)),
   return(0);
 }
 
-const char *ha_blackhole::index_type(uint key_number __attribute__((unused)))
+const char *ha_blackhole::index_type(uint32_t key_number __attribute__((unused)))
 {
   return("BTREE");
 }
@@ -113,7 +113,7 @@ void ha_blackhole::position(const unsigned char *record __attribute__((unused)))
 }
 
 
-int ha_blackhole::info(uint flag)
+int ha_blackhole::info(uint32_t flag)
 {
   memset(&stats, 0, sizeof(stats));
   if (flag & HA_STATUS_AUTO)
@@ -174,7 +174,7 @@ int ha_blackhole::index_read_map(unsigned char * buf __attribute__((unused)),
 
 
 int ha_blackhole::index_read_idx_map(unsigned char * buf __attribute__((unused)),
-                                     uint idx __attribute__((unused)),
+                                     uint32_t idx __attribute__((unused)),
                                      const unsigned char * key __attribute__((unused)),
                                      key_part_map keypart_map __attribute__((unused)),
                                      enum ha_rkey_function find_flag __attribute__((unused)))
@@ -218,7 +218,7 @@ int ha_blackhole::index_last(unsigned char * buf __attribute__((unused)))
 static st_blackhole_share *get_share(const char *table_name)
 {
   st_blackhole_share *share;
-  uint length;
+  uint32_t length;
 
   length= (uint) strlen(table_name);
   pthread_mutex_lock(&blackhole_mutex);

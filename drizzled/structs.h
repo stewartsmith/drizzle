@@ -26,7 +26,7 @@ class Field;
 typedef struct st_date_time_format {
   unsigned char positions[8];
   char  time_separator;			/* Separator between hour and minute */
-  uint flag;				/* For future */
+  uint32_t flag;				/* For future */
   LEX_STRING format;
 } DATE_TIME_FORMAT;
 
@@ -34,8 +34,8 @@ typedef struct st_date_time_format {
 typedef struct st_keyfile_info {	/* used with ha_info() */
   unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
   unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
-  uint ref_length;			/* Length of ref (1-8) */
-  uint block_size;			/* index block size */
+  uint32_t ref_length;			/* Length of ref (1-8) */
+  uint32_t block_size;			/* index block size */
   File filenr;				/* (uniq) filenr for table */
   ha_rows records;			/* Records i datafilen */
   ha_rows deleted;			/* Deleted records */
@@ -80,9 +80,9 @@ typedef struct st_key {
   uint	key_length;			/* Tot length of key */
   ulong flags;                          /* dupp key and pack flags */
   uint	key_parts;			/* How many key_parts */
-  uint  extra_length;
+  uint32_t  extra_length;
   uint	usable_key_parts;		/* Should normally be = key_parts */
-  uint  block_size;
+  uint32_t  block_size;
   enum  ha_key_alg algorithm;
   KEY_PART_INFO *key_part;
   char	*name;				/* Name of key */
@@ -120,9 +120,9 @@ typedef struct st_read_record {			/* Parameter to read_record */
   int (*read_record)(struct st_read_record *);
   THD *thd;
   SQL_SELECT *select;
-  uint cache_records;
-  uint ref_length,struct_length,reclength,rec_cache_size,error_offset;
-  uint index;
+  uint32_t cache_records;
+  uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
+  uint32_t index;
   unsigned char *ref_pos;				/* pointer to form->refpos */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
@@ -164,23 +164,23 @@ typedef struct	st_lex_user {
 */
 typedef struct user_resources {
   /* Maximum number of queries/statements per hour. */
-  uint questions;
+  uint32_t questions;
   /*
      Maximum number of updating statements per hour (which statements are
      updating is defined by sql_command_flags array).
   */
-  uint updates;
+  uint32_t updates;
   /* Maximum number of connections established per hour. */
-  uint conn_per_hour;
+  uint32_t conn_per_hour;
   /* Maximum number of concurrent connections. */
-  uint user_conn;
+  uint32_t user_conn;
   /*
      Values of this enum and specified_limits member are used by the
      parser to store which user limits were specified in GRANT statement.
   */
   enum {QUERIES_PER_HOUR= 1, UPDATES_PER_HOUR= 2, CONNECTIONS_PER_HOUR= 4,
         USER_CONNECTIONS= 8};
-  uint specified_limits;
+  uint32_t specified_limits;
 } USER_RESOURCES;
 
 
@@ -204,14 +204,14 @@ typedef struct  user_conn {
   */
   uint64_t reset_utime;
   /* Total length of the key. */
-  uint len;
+  uint32_t len;
   /* Current amount of concurrent connections for this account. */
-  uint connections;
+  uint32_t connections;
   /*
      Current number of connections per hour, number of updating statements
      per hour and total number of statements per hour for this account.
   */
-  uint conn_per_hour, updates, questions;
+  uint32_t conn_per_hour, updates, questions;
   /* Maximum amount of resources which account is allowed to consume. */
   USER_RESOURCES user_resources;
 } USER_CONN;
@@ -302,7 +302,7 @@ private:
     "head" to "tail" then to NULL).
   */
   Discrete_interval        *current;
-  uint                  elements; // number of elements
+  uint32_t                  elements; // number of elements
 
   /* helper function for copy construct and assignment operator */
   void copy_(const Discrete_intervals_list& from)
@@ -352,5 +352,5 @@ public:
   bool append(Discrete_interval *interval);
   uint64_t minimum()     const { return (head ? head->minimum() : 0); };
   uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
-  uint      nb_elements() const { return elements; }
+  uint32_t      nb_elements() const { return elements; }
 };

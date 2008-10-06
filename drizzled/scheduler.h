@@ -33,7 +33,7 @@ struct event;
 class scheduler_functions
 {
 public:
-  uint max_threads;
+  uint32_t max_threads;
   bool (*init)(void);
   bool (*init_new_connection_thread)(void);
   void (*add_connection)(THD *thd);

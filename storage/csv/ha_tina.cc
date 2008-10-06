@@ -132,7 +132,7 @@ static TINA_SHARE *get_share(const char *table_name,
   char meta_file_name[FN_REFLEN];
   struct stat file_stat;
   char *tmp_name;
-  uint length;
+  uint32_t length;
 
   pthread_mutex_lock(&tina_mutex);
   length=(uint) strlen(table_name);
@@ -668,7 +668,7 @@ int ha_tina::find_current_row(unsigned char *buf)
       {
         Field_blob *blob= *(Field_blob**) field;
         unsigned char *src, *tgt;
-        uint length, packlength;
+        uint32_t length, packlength;
         
         packlength= blob->pack_length_no_ptr();
         length= blob->get_length(blob->ptr);
@@ -780,7 +780,7 @@ void ha_tina::update_status()
   that need to be reset should be kept in the ::extra() call.
 */
 int ha_tina::open(const char *name, int mode __attribute__((unused)),
-                  uint open_options)
+                  uint32_t open_options)
 {
   if (!(share= get_share(name, table)))
     return(HA_ERR_OUT_OF_MEM);
@@ -1097,7 +1097,7 @@ int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
   Currently this table handler doesn't implement most of the fields
   really needed. SHOW also makes use of this data
 */
-int ha_tina::info(uint flag __attribute__((unused)))
+int ha_tina::info(uint32_t flag __attribute__((unused)))
 {
   /* This is a lie, but you don't want the optimizer to see zero or 1 */
   if (!records_is_known && stats.records < 2) 
@@ -1518,7 +1518,7 @@ int ha_tina::check(THD* thd,
 
 
 bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((unused)),
-                                         uint table_changes __attribute__((unused)))
+                                         uint32_t table_changes __attribute__((unused)))
 {
   return COMPATIBLE_DATA_YES;
 }

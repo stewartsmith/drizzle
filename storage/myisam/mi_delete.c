@@ -17,23 +17,23 @@
 
 #include "myisamdef.h"
 
-static int d_search(MI_INFO *info,MI_KEYDEF *keyinfo,uint comp_flag,
-                    unsigned char *key,uint key_length,my_off_t page,unsigned char *anc_buff);
+static int d_search(MI_INFO *info,MI_KEYDEF *keyinfo,uint32_t comp_flag,
+                    unsigned char *key,uint32_t key_length,my_off_t page,unsigned char *anc_buff);
 static int del(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,unsigned char *anc_buff,
 	       my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos,
 	       my_off_t next_block,unsigned char *ret_key);
 static int underflow(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *anc_buff,
 		     my_off_t leaf_page,unsigned char *leaf_buff,unsigned char *keypos);
-static uint remove_key(MI_KEYDEF *keyinfo,uint nod_flag,unsigned char *keypos,
+static uint32_t remove_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char *keypos,
 		       unsigned char *lastkey,unsigned char *page_end,
 		       my_off_t *next_block);
 static int _mi_ck_real_delete(register MI_INFO *info,MI_KEYDEF *keyinfo,
-			      unsigned char *key, uint key_length, my_off_t *root);
+			      unsigned char *key, uint32_t key_length, my_off_t *root);
 
 
 int mi_delete(MI_INFO *info,const unsigned char *record)
 {
-  uint i;
+  uint32_t i;
   unsigned char *old_key;
   int save_errno;
   char lastpos[8];
@@ -116,8 +116,8 @@ err:
 
 	/* Remove a key from the btree index */
 
-int _mi_ck_delete(register MI_INFO *info, uint keynr, unsigned char *key,
-		  uint key_length)
+int _mi_ck_delete(register MI_INFO *info, uint32_t keynr, unsigned char *key,
+		  uint32_t key_length)
 {
   return _mi_ck_real_delete(info, info->s->keyinfo+keynr, key, key_length,
                             &info->s->state.key_root[keynr]);
@@ -125,10 +125,10 @@ int _mi_ck_delete(register MI_INFO *info, uint keynr, unsigned char *key,
 
 
 static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
-			      unsigned char *key, uint key_length, my_off_t *root)
+			      unsigned char *key, uint32_t key_length, my_off_t *root)
 {
   int error;
-  uint nod_flag;
+  uint32_t nod_flag;
   my_off_t old_root;
   unsigned char *root_buff;
 
@@ -185,11 +185,11 @@ err:
 	*/
 
 static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-                    uint comp_flag, unsigned char *key, uint key_length,
+                    uint32_t comp_flag, unsigned char *key, uint32_t key_length,
                     my_off_t page, unsigned char *anc_buff)
 {
   int flag,ret_value,save_flag;
-  uint length,nod_flag,search_key_length;
+  uint32_t length,nod_flag,search_key_length;
   bool last_key;
   unsigned char *leaf_buff,*keypos;
   my_off_t leaf_page= 0, next_block;
@@ -232,7 +232,7 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   else
   {						/* Found key */
-    uint tmp;
+    uint32_t tmp;
     length=mi_getint(anc_buff);
     if (!(tmp= remove_key(keyinfo,nod_flag,keypos,lastkey,anc_buff+length,
                           &next_block)))
@@ -295,7 +295,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned cha
 	       unsigned char *ret_key)		/* key before keypos in anc_buff */
 {
   int ret_value,length;
-  uint a_length,nod_flag,tmp;
+  uint32_t a_length,nod_flag,tmp;
   my_off_t next_page;
   unsigned char keybuff[MI_MAX_KEY_BUFF],*endpos,*next_buff,*key_start, *prev_key;
   MYISAM_SHARE *share=info->s;
@@ -392,7 +392,7 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		     unsigned char *keypos)	/* Position to pos after key */
 {
   int t_length;
-  uint length,anc_length,buff_length,leaf_length,p_length,s_length,nod_flag,
+  uint32_t length,anc_length,buff_length,leaf_length,p_length,s_length,nod_flag,
        key_reflength,key_length;
   my_off_t next_page;
   unsigned char anc_key[MI_MAX_KEY_BUFF],leaf_key[MI_MAX_KEY_BUFF],
@@ -631,7 +631,7 @@ err:
 	  returns how many chars was removed or 0 on error
 	*/
 
-static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
+static uint32_t remove_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
 		       unsigned char *keypos,	/* Where key starts */
 		       unsigned char *lastkey,	/* key to be removed */
 		       unsigned char *page_end, /* End of page */
@@ -663,7 +663,7 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
       if (keyinfo->flag & HA_BINARY_PACK_KEY)
       {
 	unsigned char *old_key=start;
-	uint next_length,prev_length,prev_pack_length;
+	uint32_t next_length,prev_length,prev_pack_length;
 	get_key_length(next_length,keypos);
 	get_key_pack_length(prev_length,prev_pack_length,old_key);
 	if (next_length > prev_length)
@@ -682,7 +682,7 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
 	if ((keyinfo->seg->flag & HA_PACK_KEY) && *keypos & 128)
 	{
 	  /* Next key is packed against the current one */
-	  uint next_length,prev_length,prev_pack_length,lastkey_length,
+	  uint32_t next_length,prev_length,prev_pack_length,lastkey_length,
 	    rest_length;
 	  if (keyinfo->seg[0].length >= 127)
 	  {
@@ -715,7 +715,7 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
 
 	  if (next_length >= prev_length)
 	  {		/* Key after is based on deleted key */
-	    uint pack_length,tmp;
+	    uint32_t pack_length,tmp;
 	    bmove_upp(keypos, (lastkey+next_length),
 		      tmp=(next_length-prev_length));
 	    rest_length+=tmp;

@@ -30,7 +30,7 @@
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
-  uint elements;
+  uint32_t elements;
   unsigned char *first;
   unsigned char **next;
 
@@ -149,7 +149,7 @@ protected:
   list_node *first,**last;
 
 public:
-  uint elements;
+  uint32_t elements;
 
   inline void empty() { elements=0; first= &end_of_list; last=&first;}
   inline base_list() { empty(); }
@@ -300,7 +300,7 @@ public:
   {
     base_list *list= this;
     list_node *node= first;
-    uint cnt= 0;
+    uint32_t cnt= 0;
 
     while (node->next != &end_of_list)
     {
@@ -340,7 +340,7 @@ class base_list_iterator
 protected:
   base_list *list;
   list_node **el,**prev,*current;
-  void sublist(base_list &ls, uint elm)
+  void sublist(base_list &ls, uint32_t elm)
   {
     ls.first= *el;
     ls.last= list->last;
@@ -485,7 +485,7 @@ public:
   inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
   inline void rewind(void)  { base_list_iterator::rewind(); }
-  void sublist(List<T> &list_arg, uint el_arg)
+  void sublist(List<T> &list_arg, uint32_t el_arg)
   {
     base_list_iterator::sublist(list_arg, el_arg);
   }

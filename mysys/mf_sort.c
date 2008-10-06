@@ -18,7 +18,7 @@
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 
-void my_string_ptr_sort(unsigned char *base, uint items, size_t size)
+void my_string_ptr_sort(unsigned char *base, uint32_t items, size_t size)
 {
 #if INT_MAX > 65536L
   unsigned char **ptr= NULL;

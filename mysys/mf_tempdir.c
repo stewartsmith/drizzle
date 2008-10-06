@@ -35,7 +35,7 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
       pathlist=(char*) P_tmpdir;
   }
   do {
-    uint length;
+    uint32_t length;
     end= strrchr(pathlist, DELIM);
     if (end == NULL)
       end= pathlist+strlen(pathlist);
@@ -73,7 +73,7 @@ char *my_tmpdir(MY_TMPDIR *tmpdir)
 
 void free_tmpdir(MY_TMPDIR *tmpdir)
 {
-  uint i;
+  uint32_t i;
   for (i=0; i<=tmpdir->max; i++)
     free(tmpdir->list[i]);
   delete_dynamic(&tmpdir->full_list);

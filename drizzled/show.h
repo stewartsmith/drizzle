@@ -30,7 +30,7 @@
 bool mysqld_show_open_tables(THD *thd,const char *wild);
 bool mysqld_show_logs(THD *thd);
 void append_identifier(THD *thd, String *packet, const char *name,
-		       uint length);
+		       uint32_t length);
 void mysqld_list_fields(THD *thd,TableList *table, const char *wild);
 int mysqld_dump_create_info(THD *thd, TableList *table_list, int fd);
 bool mysqld_show_create(THD *thd, TableList *table_list);

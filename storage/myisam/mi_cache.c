@@ -35,10 +35,10 @@
 
 #include "myisamdef.h"
 
-int _mi_read_cache(IO_CACHE *info, unsigned char *buff, my_off_t pos, uint length,
+int _mi_read_cache(IO_CACHE *info, unsigned char *buff, my_off_t pos, uint32_t length,
 		   int flag)
 {
-  uint read_length,in_buff_length;
+  uint32_t read_length,in_buff_length;
   my_off_t offset;
   unsigned char *in_buff_pos;
 

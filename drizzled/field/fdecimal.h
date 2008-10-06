@@ -27,8 +27,8 @@ private:
   int do_save_field_metadata(unsigned char *first_byte);
 public:
   /* The maximum number of decimal digits can be stored */
-  uint precision;
-  uint bin_size;
+  uint32_t precision;
+  uint32_t bin_size;
   /*
     Constructors take max_length of the field as a parameter - not the
     precision as the number of decimal digits allowed.
@@ -48,7 +48,7 @@ public:
   int  reset(void);
   bool store_value(const my_decimal *decimal_value);
   void set_value_on_overflow(my_decimal *decimal_value, bool sign);
-  int  store(const char *to, uint length, const CHARSET_INFO * const charset);
+  int  store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
@@ -58,18 +58,18 @@ public:
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*, String *);
   int cmp(const unsigned char *, const unsigned char *);
-  void sort_string(unsigned char *buff, uint length);
+  void sort_string(unsigned char *buff, uint32_t length);
   bool zero_pack() const { return 0; }
   void sql_type(String &str) const;
   uint32_t max_display_length() { return field_length; }
-  uint size_of() const { return sizeof(*this); } 
+  uint32_t size_of() const { return sizeof(*this); } 
   uint32_t pack_length() const { return (uint32_t) bin_size; }
-  uint pack_length_from_metadata(uint field_metadata);
-  uint row_pack_length() { return pack_length(); }
-  int compatible_field_size(uint field_metadata);
-  uint is_equal(Create_field *new_field);
+  uint32_t pack_length_from_metadata(uint32_t field_metadata);
+  uint32_t row_pack_length() { return pack_length(); }
+  int compatible_field_size(uint32_t field_metadata);
+  uint32_t is_equal(Create_field *new_field);
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint param_data, bool low_byte_first);
+                              uint32_t param_data, bool low_byte_first);
 };
 
 #endif

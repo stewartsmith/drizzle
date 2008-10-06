@@ -22,7 +22,7 @@
 #include <mystrings/m_string.h>
 #include <signal.h>
 
-uint thd_lib_detected= 0;
+uint32_t thd_lib_detected= 0;
 
 #ifdef USE_TLS
 pthread_key(struct st_my_thread_var*, THR_KEY_mysys);
@@ -33,8 +33,8 @@ pthread_mutex_t THR_LOCK_malloc,THR_LOCK_open,
 	        THR_LOCK_lock,THR_LOCK_isam,THR_LOCK_myisam,THR_LOCK_heap,
                 THR_LOCK_net, THR_LOCK_charset, THR_LOCK_threads, THR_LOCK_time;
 pthread_cond_t  THR_COND_threads;
-uint            THR_thread_count= 0;
-uint 		my_thread_end_wait_time= 5;
+uint32_t            THR_thread_count= 0;
+uint32_t 		my_thread_end_wait_time= 5;
 #if !defined(HAVE_LOCALTIME_R) || !defined(HAVE_GMTIME_R)
 pthread_mutex_t LOCK_localtime_r;
 #endif
@@ -66,7 +66,7 @@ nptl_pthread_exit_hack_handler(void *arg __attribute((unused)))
 #endif /* TARGET_OS_LINUX */
 
 
-static uint get_thread_lib(void);
+static uint32_t get_thread_lib(void);
 
 /*
   initialize thread environment
@@ -358,7 +358,7 @@ my_thread_id my_thread_dbug_id()
   return my_thread_var->id;
 }
 
-static uint get_thread_lib(void)
+static uint32_t get_thread_lib(void)
 {
 #ifdef _CS_GNU_LIBPTHREAD_VERSION
   char buff[64];

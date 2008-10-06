@@ -40,11 +40,11 @@
 
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 {
-  uint i;
+  uint32_t i;
   uint32_t length, block_length= 0;
   unsigned char *buff= NULL;
   MYISAM_SHARE* share= info->s;
-  uint keys= share->state.header.keys;
+  uint32_t keys= share->state.header.keys;
   MI_KEYDEF *keyinfo= share->keyinfo;
   my_off_t key_file_length= share->state.state.key_file_length;
   my_off_t pos= share->base.keystart;

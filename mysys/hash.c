@@ -29,16 +29,16 @@
 #define HIGHUSED 8
 
 typedef struct st_hash_info {
-  uint next;					/* index to next key */
+  uint32_t next;					/* index to next key */
   unsigned char *data;					/* data for current entry */
 } HASH_LINK;
 
-static uint hash_mask(uint hashnr,uint buffmax,uint maxlength);
-static void movelink(HASH_LINK *array,uint pos,uint next_link,uint newlink);
+static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
+static void movelink(HASH_LINK *array,uint32_t pos,uint32_t next_link,uint32_t newlink);
 static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
                    size_t length);
 
-static uint calc_hash(const HASH *hash, const unsigned char *key, size_t length)
+static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t length)
 {
   uint32_t nr1=1, nr2=4;
   hash->charset->coll->hash_sort(hash->charset,(const unsigned char*) key,length,&nr1,&nr2);
@@ -46,10 +46,10 @@ static uint calc_hash(const HASH *hash, const unsigned char *key, size_t length)
 }
 
 bool
-_hash_init(HASH *hash,uint growth_size, const CHARSET_INFO * const charset,
+_hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
 	   uint32_t size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
-	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)
+	   void (*free_element)(void*),uint32_t flags CALLER_INFO_PROTO)
 {
   hash->records=0;
   if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
@@ -148,14 +148,14 @@ hash_key(const HASH *hash, const unsigned char *record, size_t *length,
 
 	/* Calculate pos according to keys */
 
-static uint hash_mask(uint hashnr,uint buffmax,uint maxlength)
+static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength)
 {
   if ((hashnr & (buffmax-1)) < maxlength) return (hashnr & (buffmax-1));
   return (hashnr & ((buffmax >> 1) -1));
 }
 
-static uint hash_rec_mask(const HASH *hash, HASH_LINK *pos,
-                          uint buffmax, uint maxlength)
+static uint32_t hash_rec_mask(const HASH *hash, HASH_LINK *pos,
+                          uint32_t buffmax, uint32_t maxlength)
 {
   size_t length;
   unsigned char *key= (unsigned char*) hash_key(hash,pos->data,&length,0);
@@ -194,7 +194,7 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key, size_t len
                 HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
-  uint flag,idx;
+  uint32_t flag,idx;
 
   flag=1;
   if (hash->records)
@@ -229,7 +229,7 @@ unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t leng
                HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
-  uint idx;
+  uint32_t idx;
 
   if (*current_record != NO_RECORD)
   {
@@ -251,7 +251,7 @@ unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t leng
 
 	/* Change link from pos to new_link */
 
-static void movelink(HASH_LINK *array,uint find,uint next_link,uint newlink)
+static void movelink(HASH_LINK *array,uint32_t find,uint32_t next_link,uint32_t newlink)
 {
   HASH_LINK *old_link;
   do
@@ -299,7 +299,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
 {
   int flag;
   size_t idx;
-  uint halfbuff,hash_nr,first_index;
+  uint32_t halfbuff,hash_nr,first_index;
   unsigned char *ptr_to_rec=NULL,*ptr_to_rec2=NULL;
   HASH_LINK *data,*empty,*gpos=NULL,*gpos2=NULL,*pos;
 
@@ -435,7 +435,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
 
 bool hash_delete(HASH *hash,unsigned char *record)
 {
-  uint blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
+  uint32_t blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
   HASH_LINK *data,*lastpos,*gpos,*pos,*pos3,*empty;
   if (!hash->records)
     return(1);
@@ -522,7 +522,7 @@ exit:
 bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
                     size_t old_key_length)
 {
-  uint new_index,new_pos_index,blength,records,empty;
+  uint32_t new_index,new_pos_index,blength,records,empty;
   size_t idx;
   HASH_LINK org_link,*data,*previous,*pos;
   

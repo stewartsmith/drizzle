@@ -125,7 +125,7 @@ void  print_stacktrace(unsigned char* stack_bottom, ulong thread_stack)
   return;
 #endif
   unsigned char** fp;
-  uint frame_count = 0, sigreturn_frame_count;
+  uint32_t frame_count = 0, sigreturn_frame_count;
 
 #ifdef __i386__
   __asm __volatile__ ("movl %%ebp,%0"

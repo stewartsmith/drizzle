@@ -27,8 +27,8 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *keyinfo;
   HA_KEYSEG *last_used_keyseg;
-  uint pack_key_length, use_key_length, nextflag;
-  uint myisam_search_flag;
+  uint32_t pack_key_length, use_key_length, nextflag;
+  uint32_t myisam_search_flag;
   int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
@@ -104,7 +104,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
              (info->index_cond_func && 
               !(res= mi_check_index_cond(info, inx, buf))))
       {
-        uint not_used[2];
+        uint32_t not_used[2];
         /*
           Skip rows that are inserted by other threads since we got a lock
           Note that this can only happen if we are not searching after an

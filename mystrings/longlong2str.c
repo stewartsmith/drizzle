@@ -78,7 +78,7 @@ char *int64_t2str(int64_t val,char *dst,int radix)
   while (uval > (uint64_t) LONG_MAX)
   {
     uint64_t quo= uval/(uint) radix;
-    uint rem= (uint) (uval- quo* (uint) radix);
+    uint32_t rem= (uint) (uval- quo* (uint) radix);
     *--p = _dig_vec_upper[rem];
     uval= quo;
   }
@@ -125,7 +125,7 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   while (uval > (uint64_t) LONG_MAX)
   {
     uint64_t quo= uval/(uint) 10;
-    uint rem= (uint) (uval- quo* (uint) 10);
+    uint32_t rem= (uint) (uval- quo* (uint) 10);
     *--p = _dig_vec_upper[rem];
     uval= quo;
   }

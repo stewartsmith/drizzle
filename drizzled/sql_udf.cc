@@ -51,7 +51,7 @@ void udf_free()
 }
 
 /* This is only called if using_udf_functions != 0 */
-udf_func *find_udf(const char *name, uint length)
+udf_func *find_udf(const char *name, uint32_t length)
 {
   udf_func *udf;
 

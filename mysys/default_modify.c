@@ -63,10 +63,10 @@ int modify_defaults_file(const char *file_location, const char *option,
   struct stat file_stat;
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
-  uint nr_newlines= 0, buffer_size;
+  uint32_t nr_newlines= 0, buffer_size;
   bool in_section= false, opt_applied= 0;
-  uint reserve_extended;
-  uint new_opt_len;
+  uint32_t reserve_extended;
+  uint32_t new_opt_len;
   int reserve_occupied= 0;
 
   if (!(cnf_file= my_fopen(file_location, O_RDWR | O_BINARY, MYF(0))))

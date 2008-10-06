@@ -47,7 +47,7 @@
 typedef struct st_safe_hash_entry
 {
   unsigned char *key;
-  uint length;
+  uint32_t length;
   unsigned char *data;
   struct st_safe_hash_entry *next, **prev;
 } SAFE_HASH_ENTRY;
@@ -103,7 +103,7 @@ static unsigned char *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length
     1  error
 */
 
-static bool safe_hash_init(SAFE_HASH *hash, uint elements,
+static bool safe_hash_init(SAFE_HASH *hash, uint32_t elements,
 			      unsigned char *default_value)
 {
   if (hash_init(&hash->hash, &my_charset_bin, elements,
@@ -145,7 +145,7 @@ static void safe_hash_free(SAFE_HASH *hash)
   Return the value stored for a key or default value if no key
 */
 
-static unsigned char *safe_hash_search(SAFE_HASH *hash, const unsigned char *key, uint length)
+static unsigned char *safe_hash_search(SAFE_HASH *hash, const unsigned char *key, uint32_t length)
 {
   unsigned char *result;
   rw_rdlock(&hash->mutex);
@@ -179,7 +179,7 @@ static unsigned char *safe_hash_search(SAFE_HASH *hash, const unsigned char *key
     1  error (Can only be EOM). In this case my_message() is called.
 */
 
-static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint length,
+static bool safe_hash_set(SAFE_HASH *hash, const unsigned char *key, uint32_t length,
 			     unsigned char *data)
 {
   SAFE_HASH_ENTRY *entry;
@@ -307,7 +307,7 @@ void multi_keycache_free(void)
   SYNOPSIS
     multi_key_cache_search()
     key				key to find (usually table path)
-    uint length			Length of key.
+    uint32_t length			Length of key.
 
   NOTES
     This function is coded in such a way that we will return the
@@ -318,7 +318,7 @@ void multi_keycache_free(void)
     key cache to use
 */
 
-KEY_CACHE *multi_key_cache_search(unsigned char *key, uint length)
+KEY_CACHE *multi_key_cache_search(unsigned char *key, uint32_t length)
 {
   if (!key_cache_hash.hash.records)
     return dflt_key_cache;
@@ -342,7 +342,7 @@ KEY_CACHE *multi_key_cache_search(unsigned char *key, uint length)
 */
 
 
-bool multi_key_cache_set(const unsigned char *key, uint length,
+bool multi_key_cache_set(const unsigned char *key, uint32_t length,
 			    KEY_CACHE *key_cache)
 {
   return safe_hash_set(&key_cache_hash, key, length, (unsigned char*) key_cache);

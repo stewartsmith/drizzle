@@ -35,7 +35,7 @@ static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
-				 const char *db, const char *path, uint level, 
+				 const char *db, const char *path, uint32_t level, 
                                  TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
@@ -54,7 +54,7 @@ int creating_database= 0;  // how many database locks are made
 typedef struct my_dblock_st
 {
   char *name;        /* Database name        */
-  uint name_length;  /* Database length name */
+  uint32_t name_length;  /* Database length name */
 } my_dblock_t;
 
 
@@ -88,7 +88,7 @@ void lock_db_free_element(void *ptr)
   Delete a database lock entry from hash.
 */
 
-void lock_db_delete(const char *name, uint length)
+void lock_db_delete(const char *name, uint32_t length)
 {
   my_dblock_t *opt;
   safe_mutex_assert_owner(&LOCK_lock_db);
@@ -107,7 +107,7 @@ static rw_lock_t LOCK_dboptions;
 typedef struct my_dbopt_st
 {
   char *name;			/* Database name                  */
-  uint name_length;		/* Database length name           */
+  uint32_t name_length;		/* Database length name           */
   const CHARSET_INFO *charset;	/* Database default character set */
 } my_dbopt_t;
 
@@ -131,8 +131,8 @@ unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
   Helper function to write a query to binlog used by mysql_rm_db()
 */
 
-static inline void write_to_binlog(THD *thd, char *query, uint q_len,
-                                   char *db, uint db_len)
+static inline void write_to_binlog(THD *thd, char *query, uint32_t q_len,
+                                   char *db, uint32_t db_len)
 {
   Query_log_event qinfo(thd, query, q_len, 0, 0);
   qinfo.error_code= 0;
@@ -237,7 +237,7 @@ void my_dbopt_cleanup(void)
 static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
-  uint length;
+  uint32_t length;
   bool error= true;
   
   length= (uint) strlen(dbname);
@@ -268,7 +268,7 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
-  uint length;
+  uint32_t length;
   bool error= false;
 
   length= (uint) strlen(dbname);
@@ -529,8 +529,8 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
   long result= 1;
   int error= 0;
   struct stat stat_info;
-  uint create_options= create_info ? create_info->options : 0;
-  uint path_len;
+  uint32_t create_options= create_info ? create_info->options : 0;
+  uint32_t path_len;
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.str))
@@ -617,7 +617,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
   if (!silent)
   {
     char *query;
-    uint query_length;
+    uint32_t query_length;
 
     if (!thd->query)				// Only in replication
     {
@@ -764,7 +764,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   int error= false;
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
-  uint length;
+  uint32_t length;
   TableList* dropped_tables= 0;
 
   if (db && (strcmp(db, "information_schema") == 0))
@@ -874,7 +874,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   {
     char *query, *query_pos, *query_end, *query_data_start;
     TableList *tbl;
-    uint db_len;
+    uint32_t db_len;
 
     if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
@@ -884,7 +884,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
 
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
     {
-      uint tbl_name_len;
+      uint32_t tbl_name_len;
 
       /* 3 for the quotes and the comma*/
       tbl_name_len= strlen(tbl->table_name) + 3;
@@ -929,7 +929,7 @@ exit2:
 */
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
-				 const char *org_path, uint level,
+				 const char *org_path, uint32_t level,
                                  TableList **dropped_tables)
 {
   long deleted=0;
@@ -939,7 +939,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 
   tot_list_next= &tot_list;
 
-  for (uint idx=0 ;
+  for (uint32_t idx=0 ;
        idx < (uint) dirp->number_off_files && !thd->killed ;
        idx++)
   {
@@ -1429,7 +1429,7 @@ bool mysql_opt_change_db(THD *thd,
 bool check_db_dir_existence(const char *db_name)
 {
   char db_dir_path[FN_REFLEN];
-  uint db_dir_path_len;
+  uint32_t db_dir_path_len;
 
   db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
                                         db_name, "", "", 0);

@@ -37,12 +37,12 @@ int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
 uint32_t copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
 			const char *from, uint32_t from_length,
-			const CHARSET_INFO * const from_cs, uint *errors);
+			const CHARSET_INFO * const from_cs, uint32_t *errors);
 uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                               char *to, uint to_length,
+                               char *to, uint32_t to_length,
                                const CHARSET_INFO * const from_cs,
-                               const char *from, uint from_length,
-                               uint nchars,
+                               const char *from, uint32_t from_length,
+                               uint32_t nchars,
                                const char **well_formed_error_pos,
                                const char **cannot_convert_error_pos,
                                const char **from_end_pos);
@@ -167,7 +167,7 @@ public:
   { return set_int(num, false, cs); }
   bool set(uint64_t num, const CHARSET_INFO * const cs)
   { return set_int((int64_t)num, true, cs); }
-  bool set_real(double num,uint decimals, const CHARSET_INFO * const cs);
+  bool set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs);
 
   /*
     PMG 2004.11.12
@@ -259,7 +259,7 @@ public:
 		    const CHARSET_INFO * const cs);
   bool set_or_copy_aligned(const char *s, uint32_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,uint32_t arg_length, const CHARSET_INFO * const csfrom,
-	    const CHARSET_INFO * const csto, uint *errors);
+	    const CHARSET_INFO * const csto, uint32_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,uint32_t arg_length);
@@ -342,7 +342,7 @@ public:
      str_length++;
   }
   void qs_append(int i);
-  void qs_append(uint i);
+  void qs_append(uint32_t i);
 
   /* Inline (general) functions used by the protocol functions */
 

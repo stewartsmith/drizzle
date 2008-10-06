@@ -21,7 +21,7 @@ class Item_row: public Item
 {
   Item **items;
   table_map used_tables_cache;
-  uint arg_count;
+  uint32_t arg_count;
   bool const_item_cache;
   bool with_null;
 public:
@@ -75,10 +75,10 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
 
-  uint cols() { return arg_count; }
-  Item* element_index(uint i) { return items[i]; }
-  Item** addr(uint i) { return items + i; }
-  bool check_cols(uint c);
+  uint32_t cols() { return arg_count; }
+  Item* element_index(uint32_t i) { return items[i]; }
+  Item** addr(uint32_t i) { return items + i; }
+  bool check_cols(uint32_t c);
   bool null_inside() { return with_null; };
   void bring_value();
 };

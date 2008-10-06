@@ -18,7 +18,7 @@
 #include "drizzled/error.h"
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
-static void init_block(HP_BLOCK *block,uint chunk_length, uint32_t min_records,
+static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
                         uint32_t max_records);
 
 #define FIXED_REC_OVERHEAD (sizeof(unsigned char))
@@ -31,14 +31,14 @@ static void init_block(HP_BLOCK *block,uint chunk_length, uint32_t min_records,
 
 /* Create a heap table */
 
-int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
-    uint columns, HP_COLUMNDEF *columndef,
-    uint max_key_fieldnr, uint key_part_size,
-    uint reclength, uint keys_memory_size,
+int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
+    uint32_t columns, HP_COLUMNDEF *columndef,
+    uint32_t max_key_fieldnr, uint32_t key_part_size,
+    uint32_t reclength, uint32_t keys_memory_size,
     uint32_t max_records, uint32_t min_records,
     HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
-  uint i, j, key_segs, max_length, length;
+  uint32_t i, j, key_segs, max_length, length;
   uint32_t max_rows_for_stated_memory;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
@@ -55,13 +55,13 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
 
   if (!share)
   {
-    uint chunk_dataspace_length, chunk_length, is_variable_size;
-    uint fixed_data_length, fixed_column_count;
+    uint32_t chunk_dataspace_length, chunk_length, is_variable_size;
+    uint32_t fixed_data_length, fixed_column_count;
     HP_KEYDEF *keyinfo;
 
     if (create_info->max_chunk_size)
     {
-      uint configured_chunk_size= create_info->max_chunk_size;
+      uint32_t configured_chunk_size= create_info->max_chunk_size;
 
       /* User requested variable-size records, let's see if they're possible */
 
@@ -109,7 +109,7 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     if (is_variable_size)
     {
       /* Check whether we have any variable size records past key data */
-      uint has_variable_fields= 0;
+      uint32_t has_variable_fields= 0;
 
       fixed_data_length= key_part_size;
       fixed_column_count= max_key_fieldnr;
@@ -366,15 +366,15 @@ err:
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2)
 {
-  uint not_used[2];
+  uint32_t not_used[2];
   return ha_key_cmp(param->keyseg, key1, key2, param->key_length, 
 		    param->search_flag, not_used);
 }
 
-static void init_block(HP_BLOCK *block, uint chunk_length, uint32_t min_records,
+static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_records,
 		       uint32_t max_records)
 {
-  uint i,recbuffer,records_in_block;
+  uint32_t i,recbuffer,records_in_block;
 
   max_records= cmax(min_records,max_records);
   if (!max_records)

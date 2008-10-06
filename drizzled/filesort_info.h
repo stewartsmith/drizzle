@@ -26,7 +26,7 @@ struct filesort_info_st
   IO_CACHE *io_cache;           /* If sorted through filesort */
   unsigned char     **sort_keys;        /* Buffer for sorting keys */
   unsigned char     *buffpek;           /* Buffer for buffpek structures */
-  uint      buffpek_len;        /* Max number of buffpeks in the buffer */
+  uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
   unsigned char     *addon_buf;         /* Pointer to a buffer if sorted with fields */
   size_t    addon_length;       /* Length of the buffer */
   struct st_sort_addon_field *addon_field;     /* Pointer to the fields info */

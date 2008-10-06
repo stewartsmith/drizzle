@@ -2653,7 +2653,7 @@ Create_func_space::create(THD *thd, Item *arg1)
 
   if (cs->mbminlen > 1)
   {
-    uint dummy_errors;
+    uint32_t dummy_errors;
     sp= new (thd->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE, MY_REPERTOIRE_ASCII);
     sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
@@ -3099,7 +3099,7 @@ create_func_cast(THD *thd, Item *a, Cast_target cast_type,
 {
   Item *res;
   uint32_t len;
-  uint dec;
+  uint32_t dec;
 
   switch (cast_type) {
   case ITEM_CAST_BINARY:

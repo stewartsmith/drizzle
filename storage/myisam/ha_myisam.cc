@@ -60,7 +60,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 {
   THD* thd = (THD*)param->thd;
   Protocol *protocol= thd->protocol;
-  uint length, msg_length;
+  uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];
 
@@ -126,9 +126,9 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 */
 
 int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
-                 MI_COLUMNDEF **recinfo_out, uint *records_out)
+                 MI_COLUMNDEF **recinfo_out, uint32_t *records_out)
 {
-  uint i, j, recpos, minpos, fieldpos, temp_length, length;
+  uint32_t i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
   unsigned char *record;
   KEY *pos;
@@ -136,7 +136,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   MI_COLUMNDEF *recinfo, *recinfo_pos;
   HA_KEYSEG *keyseg;
   TABLE_SHARE *share= table_arg->s;
-  uint options= share->db_options_in_use;
+  uint32_t options= share->db_options_in_use;
   if (!(my_multi_malloc(MYF(MY_WME),
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
@@ -314,11 +314,11 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
 */
 
 int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
-                     uint t1_keys, uint t1_recs,
+                     uint32_t t1_keys, uint32_t t1_recs,
                      MI_KEYDEF *t2_keyinfo, MI_COLUMNDEF *t2_recinfo,
-                     uint t2_keys, uint t2_recs, bool strict)
+                     uint32_t t2_keys, uint32_t t2_recs, bool strict)
 {
-  uint i, j;
+  uint32_t i, j;
   if ((strict ? t1_keys != t2_keys : t1_keys > t2_keys))
   {
     return(1);
@@ -440,7 +440,7 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...)
 */
 
 void _mi_report_crashed(MI_INFO *file, const char *message,
-                        const char *sfile, uint sline)
+                        const char *sfile, uint32_t sline)
 {
   THD *cur_thd;
   LIST *element;
@@ -499,18 +499,18 @@ const char **ha_myisam::bas_ext() const
 }
 
 
-const char *ha_myisam::index_type(uint key_number __attribute__((unused)))
+const char *ha_myisam::index_type(uint32_t key_number __attribute__((unused)))
 {
   return "BTREE";
 }
 
 /* Name is here without an extension */
-int ha_myisam::open(const char *name, int mode, uint test_if_locked)
+int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
 {
   MI_KEYDEF *keyinfo;
   MI_COLUMNDEF *recinfo= 0;
-  uint recs;
-  uint i;
+  uint32_t recs;
+  uint32_t i;
 
   /*
     If the user wants to have memory mapped data files, add an
@@ -661,7 +661,7 @@ int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
 	  (param.testflag & (T_EXTEND | T_MEDIUM)))) ||
 	mi_is_crashed(file))
     {
-      uint old_testflag=param.testflag;
+      uint32_t old_testflag=param.testflag;
       param.testflag|=T_MEDIUM;
       if (!(error= init_io_cache(&param.read_cache, file->dfile,
                                  my_default_record_cache_size, READ_CACHE,
@@ -818,7 +818,7 @@ int ha_myisam::optimize(THD* thd, HA_CHECK_OPT *check_opt)
 int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
 {
   int error=0;
-  uint local_testflag=param.testflag;
+  uint32_t local_testflag=param.testflag;
   bool optimize_done= !do_optimize, statistics_done=0;
   const char *old_proc_info= thd->get_proc_info();
   char fixed_name[FN_REFLEN];
@@ -866,7 +866,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
     uint64_t key_map= ((local_testflag & T_CREATE_MISSING_KEYS) ?
 			mi_get_mask_all_keys_active(share->base.keys) :
 			share->state.key_map);
-    uint testflag=param.testflag;
+    uint32_t testflag=param.testflag;
     if (mi_test_if_sort_rep(file,file->state->records,key_map,0) &&
 	(local_testflag & T_REP_BY_SORT))
     {
@@ -1034,7 +1034,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
     HA_ERR_WRONG_COMMAND  mode not implemented.
 */
 
-int ha_myisam::disable_indexes(uint mode)
+int ha_myisam::disable_indexes(uint32_t mode)
 {
   int error;
 
@@ -1086,7 +1086,7 @@ int ha_myisam::disable_indexes(uint mode)
     HA_ERR_WRONG_COMMAND  mode not implemented.
 */
 
-int ha_myisam::enable_indexes(uint mode)
+int ha_myisam::enable_indexes(uint32_t mode)
 {
   int error;
 
@@ -1241,7 +1241,7 @@ bool ha_myisam::check_and_repair(THD *thd)
   int error=0;
   int marked_crashed;
   char *old_query;
-  uint old_query_length;
+  uint32_t old_query_length;
   HA_CHECK_OPT check_opt;
 
   check_opt.init();
@@ -1317,7 +1317,7 @@ bool index_cond_func_myisam(void *arg)
 #endif
 
 
-int ha_myisam::index_init(uint idx, bool sorted __attribute__((unused)))
+int ha_myisam::index_init(uint32_t idx, bool sorted __attribute__((unused)))
 { 
   active_index=idx;
   //in_range_read= false;
@@ -1349,7 +1349,7 @@ int ha_myisam::index_read_map(unsigned char *buf, const unsigned char *key,
   return error;
 }
 
-int ha_myisam::index_read_idx_map(unsigned char *buf, uint index, const unsigned char *key,
+int ha_myisam::index_read_idx_map(unsigned char *buf, uint32_t index, const unsigned char *key,
                                   key_part_map keypart_map,
                                   enum ha_rkey_function find_flag)
 {
@@ -1408,7 +1408,7 @@ int ha_myisam::index_last(unsigned char *buf)
 
 int ha_myisam::index_next_same(unsigned char *buf,
 			       const unsigned char *key __attribute__((unused)),
-			       uint length __attribute__((unused)))
+			       uint32_t length __attribute__((unused)))
 {
   int error;
   assert(inited==INDEX);
@@ -1482,7 +1482,7 @@ void ha_myisam::position(const unsigned char *record __attribute__((unused)))
   my_store_ptr(ref, ref_length, row_position);
 }
 
-int ha_myisam::info(uint flag)
+int ha_myisam::info(uint32_t flag)
 {
   MI_ISAMINFO misam_info;
   char name_buff[FN_REFLEN];
@@ -1616,13 +1616,13 @@ int ha_myisam::create(const char *name, register Table *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
-  uint create_flags= 0, records;
+  uint32_t create_flags= 0, records;
   char buff[FN_REFLEN];
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
   TABLE_SHARE *share= table_arg->s;
-  uint options= share->db_options_in_use;
+  uint32_t options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
   memset(&create_info, 0, sizeof(create_info));
@@ -1741,23 +1741,23 @@ void ha_myisam::get_auto_increment(uint64_t offset __attribute__((unused)),
 			the range.
 */
 
-ha_rows ha_myisam::records_in_range(uint inx, key_range *min_key,
+ha_rows ha_myisam::records_in_range(uint32_t inx, key_range *min_key,
                                     key_range *max_key)
 {
   return (ha_rows) mi_records_in_range(file, (int) inx, min_key, max_key);
 }
 
 
-uint ha_myisam::checksum() const
+uint32_t ha_myisam::checksum() const
 {
   return (uint)file->state->checksum;
 }
 
 
 bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
-					   uint table_changes)
+					   uint32_t table_changes)
 {
-  uint options= table->s->db_options_in_use;
+  uint32_t options= table->s->db_options_in_use;
 
   if (info->auto_increment_value != stats.auto_increment_value ||
       info->data_file_name != data_file_name ||
@@ -1797,7 +1797,7 @@ static int myisam_init(void *p)
  ***************************************************************************/
 
 int ha_myisam::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                     uint n_ranges, uint mode, 
+                                     uint32_t n_ranges, uint32_t mode, 
                                      HANDLER_BUFFER *buf)
 {
   return ds_mrr.dsmrr_init(this, &table->key_info[active_index], 
@@ -1809,10 +1809,10 @@ int ha_myisam::multi_range_read_next(char **range_info)
   return ds_mrr.dsmrr_next(this, range_info);
 }
 
-ha_rows ha_myisam::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+ha_rows ha_myisam::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                                void *seq_init_param, 
-                                               uint n_ranges, uint *bufsz,
-                                               uint *flags, COST_VECT *cost)
+                                               uint32_t n_ranges, uint32_t *bufsz,
+                                               uint32_t *flags, COST_VECT *cost)
 {
   /*
     This call is here because there is no location where this->table would
@@ -1824,8 +1824,8 @@ ha_rows ha_myisam::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
                                  flags, cost);
 }
 
-int ha_myisam::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
-                                     uint *bufsz, uint *flags, COST_VECT *cost)
+int ha_myisam::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
+                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ds_mrr.init(this, table);
   return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
@@ -1837,7 +1837,7 @@ int ha_myisam::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
 /* Index condition pushdown implementation*/
 
 
-Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
+Item *ha_myisam::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
 {
   pushed_idx_cond_keyno= keyno_arg;
   pushed_idx_cond= idx_cond_arg;

@@ -534,7 +534,7 @@ enum data_file_type {
 typedef struct st_key_range
 {
   const unsigned char *key;
-  uint length;
+  uint32_t length;
   key_part_map keypart_map;
   enum ha_rkey_function flag;
 } key_range;
@@ -544,7 +544,7 @@ typedef struct st_key_multi_range
   key_range start_key;
   key_range end_key;
   char  *ptr;                 /* Free to use by caller (ptr to row etc) */
-  uint  range_flag;           /* key range flags see above */
+  uint32_t  range_flag;           /* key range flags see above */
 } KEY_MULTI_RANGE;
 
 

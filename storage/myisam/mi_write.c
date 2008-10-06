@@ -22,27 +22,27 @@
 	/* Functions declared in this file */
 
 static int w_search(MI_INFO *info,MI_KEYDEF *keyinfo,
-		    uint comp_flag, unsigned char *key,
-		    uint key_length, my_off_t pos, unsigned char *father_buff,
+		    uint32_t comp_flag, unsigned char *key,
+		    uint32_t key_length, my_off_t pos, unsigned char *father_buff,
 		    unsigned char *father_keypos, my_off_t father_page,
 		    bool insert_last);
 static int _mi_balance_page(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
 			    unsigned char *curr_buff,unsigned char *father_buff,
 			    unsigned char *father_keypos,my_off_t father_page);
 static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
-				unsigned char *key, uint *return_key_length,
+				unsigned char *key, uint32_t *return_key_length,
 				unsigned char **after_key);
-int _mi_ck_write_tree(register MI_INFO *info, uint keynr,unsigned char *key,
-		      uint key_length);
-int _mi_ck_write_btree(register MI_INFO *info, uint keynr,unsigned char *key,
-		       uint key_length);
+int _mi_ck_write_tree(register MI_INFO *info, uint32_t keynr,unsigned char *key,
+		      uint32_t key_length);
+int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr,unsigned char *key,
+		       uint32_t key_length);
 
 	/* Write new record to database */
 
 int mi_write(MI_INFO *info, unsigned char *record)
 {
   MYISAM_SHARE *share=info->s;
-  uint i;
+  uint32_t i;
   int save_errno;
   my_off_t filepos;
   unsigned char *buff;
@@ -157,7 +157,7 @@ err:
   {
     if (info->bulk_insert)
     {
-      uint j;
+      uint32_t j;
       for (j=0 ; j < share->base.keys ; j++)
         mi_flush_bulk_insert(info, j);
     }
@@ -172,7 +172,7 @@ err:
 	if (local_lock_tree)
 	  rw_wrlock(&share->key_root_lock[i]);
 	{
-	  uint key_length=_mi_make_key(info,i,buff,record,filepos);
+	  uint32_t key_length=_mi_make_key(info,i,buff,record,filepos);
 	  if (_mi_ck_delete(info,i,buff,key_length))
 	  {
 	    if (local_lock_tree)
@@ -201,7 +201,7 @@ err2:
 
 	/* Write one key to btree */
 
-int _mi_ck_write(MI_INFO *info, uint keynr, unsigned char *key, uint key_length)
+int _mi_ck_write(MI_INFO *info, uint32_t keynr, unsigned char *key, uint32_t key_length)
 {
   if (info->bulk_insert && is_tree_inited(&info->bulk_insert[keynr]))
   {
@@ -218,11 +218,11 @@ int _mi_ck_write(MI_INFO *info, uint keynr, unsigned char *key, uint key_length)
  *                Normal insert code                                  *
  **********************************************************************/
 
-int _mi_ck_write_btree(register MI_INFO *info, uint keynr, unsigned char *key,
-		       uint key_length)
+int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr, unsigned char *key,
+		       uint32_t key_length)
 {
-  uint error;
-  uint comp_flag;
+  uint32_t error;
+  uint32_t comp_flag;
   MI_KEYDEF *keyinfo=info->s->keyinfo+keynr;
   my_off_t  *root=&info->s->state.key_root[keynr];
 
@@ -243,7 +243,7 @@ int _mi_ck_write_btree(register MI_INFO *info, uint keynr, unsigned char *key,
 } /* _mi_ck_write_btree */
 
 int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
-    unsigned char *key, uint key_length, my_off_t *root, uint comp_flag)
+    unsigned char *key, uint32_t key_length, my_off_t *root, uint32_t comp_flag)
 {
   int error;
   /* key_length parameter is used only if comp_flag is SEARCH_FIND */
@@ -261,7 +261,7 @@ int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
 int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
                      my_off_t *root)
 {
-  uint t_length,nod_flag;
+  uint32_t t_length,nod_flag;
   MI_KEY_PARAM s_temp;
   MYISAM_SHARE *share=info->s;
 
@@ -287,12 +287,12 @@ int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
 	*/
 
 static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		    uint comp_flag, unsigned char *key, uint key_length, my_off_t page,
+		    uint32_t comp_flag, unsigned char *key, uint32_t key_length, my_off_t page,
 		    unsigned char *father_buff, unsigned char *father_keypos,
 		    my_off_t father_page, bool insert_last)
 {
   int error,flag;
-  uint nod_flag, search_key_length;
+  uint32_t nod_flag, search_key_length;
   unsigned char *temp_buff,*keypos;
   unsigned char keybuff[MI_MAX_KEY_BUFF];
   bool was_last_key;
@@ -310,7 +310,7 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   nod_flag=mi_test_if_nod(temp_buff);
   if (flag == 0)
   {
-    uint tmp_key_length;
+    uint32_t tmp_key_length;
 	/* get position to record with duplicated key */
     tmp_key_length=(*keyinfo->get_key)(keyinfo,nod_flag,&keypos,keybuff);
     if (tmp_key_length)
@@ -377,7 +377,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
                unsigned char *father_buff, unsigned char *father_key_pos, my_off_t father_page,
 	       bool insert_last)
 {
-  uint a_length,nod_flag;
+  uint32_t a_length,nod_flag;
   int t_length;
   unsigned char *endpos, *prev_key;
   MI_KEY_PARAM s_temp;
@@ -435,7 +435,7 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		   unsigned char *key, unsigned char *buff, unsigned char *key_buff,
 		   bool insert_last_key)
 {
-  uint length,a_length,key_ref_length,t_length,nod_flag,key_length;
+  uint32_t length,a_length,key_ref_length,t_length,nod_flag,key_length;
   unsigned char *key_pos,*pos, *after_key= NULL;
   my_off_t new_pos;
   MI_KEY_PARAM s_temp;
@@ -495,11 +495,11 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	  after_key will contain the position to where the next key starts
 	*/
 
-unsigned char *_mi_find_half_pos(uint nod_flag, MI_KEYDEF *keyinfo, unsigned char *page,
-			 unsigned char *key, uint *return_key_length,
+unsigned char *_mi_find_half_pos(uint32_t nod_flag, MI_KEYDEF *keyinfo, unsigned char *page,
+			 unsigned char *key, uint32_t *return_key_length,
 			 unsigned char **after_key)
 {
-  uint keys,length,key_ref_length;
+  uint32_t keys,length,key_ref_length;
   unsigned char *end,*lastpos;
 
   key_ref_length=2+nod_flag;
@@ -539,13 +539,13 @@ unsigned char *_mi_find_half_pos(uint nod_flag, MI_KEYDEF *keyinfo, unsigned cha
 	*/
 
 static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
-				unsigned char *key, uint *return_key_length,
+				unsigned char *key, uint32_t *return_key_length,
 				unsigned char **after_key)
 {
-  uint keys;
-  uint length;
-  uint last_length= 0;
-  uint key_ref_length;
+  uint32_t keys;
+  uint32_t length;
+  uint32_t last_length= 0;
+  uint32_t key_ref_length;
   unsigned char *end, *lastpos, *prevpos= NULL;
   unsigned char key_buff[MI_MAX_KEY_BUFF];
 
@@ -594,7 +594,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 			    unsigned char *father_key_pos, my_off_t father_page)
 {
   bool right;
-  uint k_length,father_length,father_keylength,nod_flag,curr_keylength,
+  uint32_t k_length,father_length,father_keylength,nod_flag,curr_keylength,
        right_length,left_length,new_right_length,new_left_length,extra_length,
        length,keys;
   unsigned char *pos,*buff,*extra_buff;
@@ -723,11 +723,11 @@ err:
 
 typedef struct {
   MI_INFO *info;
-  uint keynr;
+  uint32_t keynr;
 } bulk_insert_param;
 
-int _mi_ck_write_tree(register MI_INFO *info, uint keynr, unsigned char *key,
-		      uint key_length)
+int _mi_ck_write_tree(register MI_INFO *info, uint32_t keynr, unsigned char *key,
+		      uint32_t key_length)
 {
   int error;
 
@@ -743,7 +743,7 @@ int _mi_ck_write_tree(register MI_INFO *info, uint keynr, unsigned char *key,
 
 static int keys_compare(bulk_insert_param *param, unsigned char *key1, unsigned char *key2)
 {
-  uint not_used[2];
+  uint32_t not_used[2];
   return ha_key_cmp(param->info->s->keyinfo[param->keynr].seg,
                     key1, key2, USE_WHOLE_KEY, SEARCH_SAME,
                     not_used);
@@ -757,7 +757,7 @@ static int keys_free(unsigned char *key, TREE_FREE mode, bulk_insert_param *para
     and to be safe I'd better use local lastkey.
   */
   unsigned char lastkey[MI_MAX_KEY_BUFF];
-  uint keylen;
+  uint32_t keylen;
   MI_KEYDEF *keyinfo;
 
   switch (mode) {
@@ -788,7 +788,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *key=share->keyinfo;
   bulk_insert_param *params;
-  uint i, num_keys, total_keylength;
+  uint32_t i, num_keys, total_keylength;
   uint64_t key_map;
 
   assert(!info->bulk_insert &&
@@ -843,7 +843,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
   return(0);
 }
 
-void mi_flush_bulk_insert(MI_INFO *info, uint inx)
+void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx)
 {
   if (info->bulk_insert)
   {
@@ -856,7 +856,7 @@ void mi_end_bulk_insert(MI_INFO *info)
 {
   if (info->bulk_insert)
   {
-    uint i;
+    uint32_t i;
     for (i=0 ; i < info->s->base.keys ; i++)
     {
       if (is_tree_inited(& info->bulk_insert[i]))

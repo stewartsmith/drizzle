@@ -103,7 +103,7 @@ public:
 class Item_str_conv :public Item_str_func
 {
 protected:
-  uint multiply;
+  uint32_t multiply;
   my_charset_conv_case converter;
   String tmp_value;
 public:
@@ -531,7 +531,7 @@ public:
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {
-      uint errors= 0;
+      uint32_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
       if (!str || str_value.copy(str->ptr(), str->length(),
                                  str->charset(), conv_charset, &errors))
@@ -610,10 +610,10 @@ public:
 class Item_func_weight_string :public Item_str_func
 {
   String tmp_value;
-  uint flags;
-  uint nweights;
+  uint32_t flags;
+  uint32_t nweights;
 public:
-  Item_func_weight_string(Item *a, uint nweights_arg, uint flags_arg)
+  Item_func_weight_string(Item *a, uint32_t nweights_arg, uint32_t flags_arg)
   :Item_str_func(a) { nweights= nweights_arg; flags= flags_arg; }
   const char *func_name() const { return "weight_string"; }
   String *val_str(String *);

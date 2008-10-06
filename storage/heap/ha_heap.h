@@ -28,8 +28,8 @@ class ha_heap: public handler
   HP_SHARE *internal_share;
   key_map btree_keys;
   /* number of records changed since last statistics update */
-  uint    records_changed;
-  uint    key_stat_version;
+  uint32_t    records_changed;
+  uint32_t    key_stat_version;
   bool internal_table;
 public:
   ha_heap(handlerton *hton, TABLE_SHARE *table);
@@ -39,7 +39,7 @@ public:
   {
     return "MEMORY";
   }
-  const char *index_type(uint inx)
+  const char *index_type(uint32_t inx)
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
             "BTREE" : "HASH");
@@ -53,7 +53,7 @@ public:
             HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS |
             HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT);
   }
-  uint32_t index_flags(uint inx, uint part __attribute__((unused)),
+  uint32_t index_flags(uint32_t inx, uint32_t part __attribute__((unused)),
                        bool all_parts __attribute__((unused))) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
@@ -61,16 +61,16 @@ public:
             HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
   }
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
-  uint max_supported_keys()          const { return MAX_KEY; }
-  uint max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
+  uint32_t max_supported_keys()          const { return MAX_KEY; }
+  uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
-  double read_time(uint index __attribute__((unused)),
-                   uint ranges __attribute__((unused)),
+  double read_time(uint32_t index __attribute__((unused)),
+                   uint32_t ranges __attribute__((unused)),
                    ha_rows rows)
   { return (double) rows /  20.0+1; }
 
-  int open(const char *name, int mode, uint test_if_locked);
+  int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   void set_keys_for_scanning(void);
   int write_row(unsigned char * buf);
@@ -83,7 +83,7 @@ public:
   int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
   int index_read_last_map(unsigned char *buf, const unsigned char *key, key_part_map keypart_map);
-  int index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
+  int index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
@@ -99,10 +99,10 @@ public:
   int reset();
   int external_lock(THD *thd, int lock_type);
   int delete_all_rows(void);
-  int disable_indexes(uint mode);
-  int enable_indexes(uint mode);
+  int disable_indexes(uint32_t mode);
+  int enable_indexes(uint32_t mode);
   int indexes_are_disabled(void);
-  ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
+  ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   int delete_table(const char *from);
   void drop_table(const char *name);
   int rename_table(const char * from, const char * to);
@@ -115,7 +115,7 @@ public:
   {
     return memcmp(ref1, ref2, sizeof(HEAP_PTR));
   }
-  bool check_if_incompatible_data(HA_CREATE_INFO *info, uint table_changes);
+  bool check_if_incompatible_data(HA_CREATE_INFO *info, uint32_t table_changes);
 private:
   void update_key_stats();
 };

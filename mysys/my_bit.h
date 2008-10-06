@@ -14,14 +14,14 @@ extern const unsigned char _my_bits_reverse_table[256];
   This can be used to divide a number with value by doing a shift instead
 */
 
-static inline uint my_bit_log2(uint32_t value)
+static inline uint32_t my_bit_log2(uint32_t value)
 {
-  uint bit;
+  uint32_t bit;
   for (bit=0 ; value > 1 ; value>>=1, bit++) ;
   return bit;
 }
 
-static inline uint my_count_bits(uint64_t v)
+static inline uint32_t my_count_bits(uint64_t v)
 {
 #if SIZEOF_LONG_LONG > 4
   /* The following code is a bit faster on 16 bit machines than if we would
@@ -43,7 +43,7 @@ static inline uint my_count_bits(uint64_t v)
 #endif
 }
 
-static inline uint my_count_bits_ushort(ushort v)
+static inline uint32_t my_count_bits_ushort(ushort v)
 {
   return _my_bits_nbits[v];
 }

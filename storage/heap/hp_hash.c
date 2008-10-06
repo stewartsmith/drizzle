@@ -95,11 +95,11 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
 	/* next_flag:  Search=0, next=1, prev =2, same =3 */
 
 unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *key,
-                uint nextflag)
+                uint32_t nextflag)
 {
   register HASH_INFO *pos,*prev_ptr;
   int flag;
-  uint old_nextflag;
+  uint32_t old_nextflag;
   HP_SHARE *share=info->s;
   old_nextflag=nextflag;
   flag=1;
@@ -255,10 +255,10 @@ uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key
     if (seg->type == HA_KEYTYPE_TEXT)
     {
        const CHARSET_INFO * const cs= seg->charset;
-       uint length= seg->length;
+       uint32_t length= seg->length;
        if (cs->mbmaxlen > 1)
        {
-         uint char_length;
+         uint32_t char_length;
          char_length= my_charpos(cs, pos, pos + length, length/cs->mbmaxlen);
          set_if_smaller(length, char_length);
        }
@@ -267,11 +267,11 @@ uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
        const CHARSET_INFO * const cs= seg->charset;
-       uint pack_length= 2;                     /* Key packing is constant */
-       uint length= uint2korr(pos);
+       uint32_t pack_length= 2;                     /* Key packing is constant */
+       uint32_t length= uint2korr(pos);
        if (cs->mbmaxlen > 1)
        {
-         uint char_length;
+         uint32_t char_length;
          char_length= my_charpos(cs, pos +pack_length,
                                  pos +pack_length + length,
                                  seg->length/cs->mbmaxlen);
@@ -313,7 +313,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     if (seg->type == HA_KEYTYPE_TEXT)
     {
       const CHARSET_INFO * const cs= seg->charset;
-      uint char_length= seg->length;
+      uint32_t char_length= seg->length;
       if (cs->mbmaxlen > 1)
       {
         char_length= my_charpos(cs, pos, pos + char_length,
@@ -325,11 +325,11 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
       const CHARSET_INFO * const cs= seg->charset;
-      uint pack_length= seg->bit_start;
-      uint length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
+      uint32_t pack_length= seg->bit_start;
+      uint32_t length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
       if (cs->mbmaxlen > 1)
       {
-        uint char_length;
+        uint32_t char_length;
         char_length= my_charpos(cs, pos + pack_length,
                                 pos + pack_length + length,
                                 seg->length/cs->mbmaxlen);
@@ -401,8 +401,8 @@ uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key
     }
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
-      uint pack_length= 2;                      /* Key packing is constant */
-      uint length= uint2korr(pos);
+      uint32_t pack_length= 2;                      /* Key packing is constant */
+      uint32_t length= uint2korr(pos);
       seg->charset->coll->hash_sort(seg->charset, pos+pack_length, length,
                                     &nr, &nr2);
       key+= pack_length;
@@ -439,14 +439,14 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     }
     if (seg->type == HA_KEYTYPE_TEXT)
     {
-      uint char_length= seg->length; /* TODO: fix to use my_charpos() */
+      uint32_t char_length= seg->length; /* TODO: fix to use my_charpos() */
       seg->charset->coll->hash_sort(seg->charset, pos, char_length,
                                     &nr, &nr2);
     }
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
-      uint pack_length= seg->bit_start;
-      uint length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
+      uint32_t pack_length= seg->bit_start;
+      uint32_t length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
       seg->charset->coll->hash_sort(seg->charset, pos+pack_length,
                                     length, &nr, &nr2);
     }
@@ -504,13 +504,13 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
     if (seg->type == HA_KEYTYPE_TEXT)
     {
       const CHARSET_INFO * const cs= seg->charset;
-      uint char_length1;
-      uint char_length2;
+      uint32_t char_length1;
+      uint32_t char_length2;
       unsigned char *pos1= (unsigned char*)rec1 + seg->start;
       unsigned char *pos2= (unsigned char*)rec2 + seg->start;
       if (cs->mbmaxlen > 1)
       {
-        uint char_length= seg->length / cs->mbmaxlen;
+        uint32_t char_length= seg->length / cs->mbmaxlen;
         char_length1= my_charpos(cs, pos1, pos1 + seg->length, char_length);
         set_if_smaller(char_length1, seg->length);
         char_length2= my_charpos(cs, pos2, pos2 + seg->length, char_length);
@@ -529,8 +529,8 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
     {
       unsigned char *pos1= (unsigned char*) rec1 + seg->start;
       unsigned char *pos2= (unsigned char*) rec2 + seg->start;
-      uint char_length1, char_length2;
-      uint pack_length= seg->bit_start;
+      uint32_t char_length1, char_length2;
+      uint32_t pack_length= seg->bit_start;
       const CHARSET_INFO * const cs= seg->charset;
       if (pack_length == 1)
       {
@@ -546,9 +546,9 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
       }
       if (cs->mbmaxlen > 1)
       {
-        uint safe_length1= char_length1;
-        uint safe_length2= char_length2;
-        uint char_length= seg->length / cs->mbmaxlen;
+        uint32_t safe_length1= char_length1;
+        uint32_t safe_length2= char_length2;
+        uint32_t char_length= seg->length / cs->mbmaxlen;
         char_length1= my_charpos(cs, pos1, pos1 + char_length1, char_length);
         set_if_smaller(char_length1, safe_length1);
         char_length2= my_charpos(cs, pos2, pos2 + char_length2, char_length);
@@ -597,12 +597,12 @@ int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char 
     if (seg->type == HA_KEYTYPE_TEXT)
     {
       const CHARSET_INFO * const cs= seg->charset;
-      uint char_length_key;
-      uint char_length_rec;
+      uint32_t char_length_key;
+      uint32_t char_length_rec;
       unsigned char *pos= (unsigned char*) rec + seg->start;
       if (cs->mbmaxlen > 1)
       {
-        uint char_length= seg->length / cs->mbmaxlen;
+        uint32_t char_length= seg->length / cs->mbmaxlen;
         char_length_key= my_charpos(cs, key, key + seg->length, char_length);
         set_if_smaller(char_length_key, seg->length);
         char_length_rec= my_charpos(cs, pos, pos + seg->length, char_length);
@@ -623,16 +623,16 @@ int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char 
     {
       unsigned char *pos= (unsigned char*) rec + seg->start;
       const CHARSET_INFO * const cs= seg->charset;
-      uint pack_length= seg->bit_start;
-      uint char_length_rec= (pack_length == 1 ? (uint) *(unsigned char*) pos :
+      uint32_t pack_length= seg->bit_start;
+      uint32_t char_length_rec= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                              uint2korr(pos));
       /* Key segments are always packed with 2 bytes */
-      uint char_length_key= uint2korr(key);
+      uint32_t char_length_key= uint2korr(key);
       pos+= pack_length;
       key+= 2;                                  /* skip key pack length */
       if (cs->mbmaxlen > 1)
       {
-        uint char_length1, char_length2;
+        uint32_t char_length1, char_length2;
         char_length1= char_length2= seg->length / cs->mbmaxlen; 
         char_length1= my_charpos(cs, key, key + char_length_key, char_length1);
         set_if_smaller(char_length_key, char_length1);
@@ -664,7 +664,7 @@ void hp_make_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *rec
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
   {
     const CHARSET_INFO * const cs= seg->charset;
-    uint char_length= seg->length;
+    uint32_t char_length= seg->length;
     unsigned char *pos= (unsigned char*) rec + seg->start;
     if (seg->null_bit)
       *key++= test(rec[seg->null_pos] & seg->null_bit);
@@ -689,7 +689,7 @@ void hp_make_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *rec
   } while(0)
 
 
-uint hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key, 
+uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key, 
 		    const unsigned char *rec, unsigned char *recpos)
 {
   unsigned char *start_key= key;
@@ -697,7 +697,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 
   for (seg= keydef->seg, endseg= seg + keydef->keysegs; seg < endseg; seg++)
   {
-    uint char_length;
+    uint32_t char_length;
     if (seg->null_bit)
     {
       if (!(*key++= 1 - test(rec[seg->null_pos] & seg->null_bit)))
@@ -705,7 +705,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     }
     if (seg->flag & HA_SWAP_KEY)
     {
-      uint length= seg->length;
+      uint32_t length= seg->length;
       unsigned char *pos= (unsigned char*) rec + seg->start;
       
 #ifdef HAVE_ISNAN
@@ -744,9 +744,9 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
     if (seg->flag & HA_VAR_LENGTH_PART)
     {
       unsigned char *pos=      (unsigned char*) rec + seg->start;
-      uint length=     seg->length;
-      uint pack_length= seg->bit_start;
-      uint tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
+      uint32_t length=     seg->length;
+      uint32_t pack_length= seg->bit_start;
+      uint32_t tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                         uint2korr(pos));
       const CHARSET_INFO * const cs= seg->charset;
       char_length= length/cs->mbmaxlen;
@@ -779,7 +779,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 }
 
 
-uint hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *old,
+uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *old,
                     key_part_map keypart_map)
 {
   HA_KEYSEG *seg, *endseg;
@@ -788,7 +788,7 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *
   for (seg= keydef->seg, endseg= seg + keydef->keysegs;
        seg < endseg && keypart_map; old+= seg->length, seg++)
   {
-    uint char_length;
+    uint32_t char_length;
     keypart_map>>= 1;
     if (seg->null_bit)
     {
@@ -797,7 +797,7 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *
       }
     if (seg->flag & HA_SWAP_KEY)
     {
-      uint length= seg->length;
+      uint32_t length= seg->length;
       unsigned char *pos= (unsigned char*) old + length;
       
       while (length--)
@@ -809,8 +809,8 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *
     if (seg->flag & (HA_VAR_LENGTH_PART | HA_BLOB_PART))
     {
       /* Length of key-part used with heap_rkey() always 2 */
-      uint tmp_length=uint2korr(old);
-      uint length= seg->length;
+      uint32_t tmp_length=uint2korr(old);
+      uint32_t length= seg->length;
       const CHARSET_INFO * const cs= seg->charset;
       char_length= length/cs->mbmaxlen;
 
@@ -839,14 +839,14 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *
 }
 
 
-uint hp_rb_key_length(HP_KEYDEF *keydef, 
+uint32_t hp_rb_key_length(HP_KEYDEF *keydef, 
 		      const unsigned char *key __attribute__((unused)))
 {
   return keydef->length;
 }
 
 
-uint hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key)
+uint32_t hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key)
 {
   const unsigned char *start_key= key;
   HA_KEYSEG *seg, *endseg;
@@ -861,14 +861,14 @@ uint hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key)
 }
                   
 
-uint hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key)
+uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key)
 {
   const unsigned char *start_key= key;
   HA_KEYSEG *seg, *endseg;
   
   for (seg= keydef->seg, endseg= seg + keydef->keysegs; seg < endseg; seg++)
   {
-    uint length= seg->length;
+    uint32_t length= seg->length;
     if (seg->null_bit && !*key++)
       continue;
     if (seg->flag & (HA_VAR_LENGTH_PART | HA_BLOB_PART))

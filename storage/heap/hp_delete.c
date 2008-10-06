@@ -22,7 +22,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   unsigned char *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keydef, *end, *p_lastinx;
-  uint rec_length, chunk_count;
+  uint32_t rec_length, chunk_count;
 
   test_active(info);
 
@@ -63,7 +63,7 @@ int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
 		   const unsigned char *record, unsigned char *recpos, int flag)
 {
   heap_rb_param custom_arg;
-  uint old_allocated;
+  uint32_t old_allocated;
   int res;
 
   if (flag) 

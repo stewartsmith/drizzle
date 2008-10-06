@@ -23,7 +23,7 @@
 static ha_rows _mi_record_pos(MI_INFO *, const unsigned char *, key_part_map,
                               enum ha_rkey_function);
 static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,my_off_t);
-static uint _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned char *,uint *);
+static uint32_t _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned char *,uint32_t *);
 
 /*
   Estimate how many records there is in a given range
@@ -86,7 +86,7 @@ static ha_rows _mi_record_pos(MI_INFO *info, const unsigned char *key,
                               key_part_map keypart_map,
 			      enum ha_rkey_function search_flag)
 {
-  uint inx=(uint) info->lastinx, nextflag, key_len;
+  uint32_t inx=(uint) info->lastinx, nextflag, key_len;
   MI_KEYDEF *keyinfo=info->s->keyinfo+inx;
   unsigned char *key_buff;
   double pos;
@@ -150,11 +150,11 @@ static ha_rows _mi_record_pos(MI_INFO *info, const unsigned char *key,
 
 static double _mi_search_pos(register MI_INFO *info,
 			     register MI_KEYDEF *keyinfo,
-			     unsigned char *key, uint key_len, uint nextflag,
+			     unsigned char *key, uint32_t key_len, uint32_t nextflag,
 			     register my_off_t pos)
 {
   int flag;
-  uint nod_flag, keynr, max_keynr= 0;
+  uint32_t nod_flag, keynr, max_keynr= 0;
   bool after_key;
   unsigned char *keypos,*buff;
   double offset;
@@ -212,10 +212,10 @@ err:
 
 	/* Get keynummer of current key and max number of keys in nod */
 
-static uint _mi_keynr(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
-                      unsigned char *keypos, uint *ret_max_key)
+static uint32_t _mi_keynr(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *page,
+                      unsigned char *keypos, uint32_t *ret_max_key)
 {
-  uint nod_flag,keynr,max_key;
+  uint32_t nod_flag,keynr,max_key;
   unsigned char t_buff[MI_MAX_KEY_BUFF],*end;
 
   end= page+mi_getint(page);

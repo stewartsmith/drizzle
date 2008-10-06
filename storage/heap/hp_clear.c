@@ -73,7 +73,7 @@ void heap_clear_keys(HP_INFO *info)
 
 void hp_clear_keys(HP_SHARE *info)
 {
-  uint key;
+  uint32_t key;
 
   for (key=0 ; key < info->keys ; key++)
   {

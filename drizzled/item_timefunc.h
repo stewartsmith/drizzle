@@ -431,7 +431,7 @@ class Item_func_curtime :public Item_str_timefunc
 {
   int64_t value;
   char buff[9*2+32];
-  uint buff_length;
+  uint32_t buff_length;
 public:
   Item_func_curtime() :Item_str_timefunc() {}
   Item_func_curtime(Item *a) :Item_str_timefunc(a) {}
@@ -480,7 +480,7 @@ public:
   int64_t val_int() { assert(fixed == 1); return (value) ; }
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
 };
 
@@ -510,7 +510,7 @@ class Item_func_now :public Item_date_func
 protected:
   int64_t value;
   char buff[20*2+32];	// +32 to make my_snprintf_{8bit|ucs2} happy
-  uint buff_length;
+  uint32_t buff_length;
   DRIZZLE_TIME ltime;
 public:
   Item_func_now() :Item_date_func() {}
@@ -520,7 +520,7 @@ public:
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
 };
 
@@ -563,7 +563,7 @@ public:
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   void update_used_tables()
   {
     Item_func_now::update_used_tables();
@@ -577,7 +577,7 @@ class Item_func_from_days :public Item_date
 public:
   Item_func_from_days(Item *a) :Item_date(a) {}
   const char *func_name() const { return "from_days"; }
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };
 
 
@@ -593,7 +593,7 @@ public:
   const char *func_name() const
     { return is_time_format ? "time_format" : "date_format"; }
   void fix_length_and_dec();
-  uint format_length(const String *format);
+  uint32_t format_length(const String *format);
   bool eq(const Item *item, bool binary_cmp) const;
 };
 
@@ -607,7 +607,7 @@ class Item_func_from_unixtime :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "from_unixtime"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };
 
 
@@ -642,7 +642,7 @@ class Item_func_convert_tz :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "convert_tz"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   void cleanup();
 };
 
@@ -684,7 +684,7 @@ public:
   void fix_length_and_dec();
   enum_field_types field_type() const { return cached_field_type; }
   int64_t val_int();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };
@@ -768,7 +768,7 @@ public:
   Item_date_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_date"; }
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
   bool get_time(DRIZZLE_TIME *ltime);
   const char *cast_type() const { return "date"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
@@ -1009,7 +1009,7 @@ public:
     :Item_str_func(a, b), const_item(false)
   {}
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
   const char *func_name() const { return "str_to_date"; }
   enum_field_types field_type() const { return cached_field_type; }
   void fix_length_and_dec();
@@ -1025,5 +1025,5 @@ class Item_func_last_day :public Item_date
 public:
   Item_func_last_day(Item *a) :Item_date(a) {}
   const char *func_name() const { return "last_day"; }
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };

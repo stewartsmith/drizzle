@@ -33,8 +33,8 @@ protected:
   THD	 *thd;
   String *packet;
   String *convert;
-  uint field_pos;
-  uint field_count;
+  uint32_t field_pos;
+  uint32_t field_count;
   bool net_store_data(const unsigned char *from, size_t length);
   bool net_store_data(const unsigned char *from, size_t length,
                       const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
@@ -47,7 +47,7 @@ public:
   void init(THD* thd_arg);
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
-  virtual bool send_fields(List<Item> *list, uint flags);
+  virtual bool send_fields(List<Item> *list, uint32_t flags);
 
   bool store(I_List<i_string> *str_list);
   bool store(const char *from, const CHARSET_INFO * const cs);
@@ -128,8 +128,8 @@ public:
   virtual enum enum_protocol_type type() { return PROTOCOL_TEXT; };
 };
 
-void send_warning(THD *thd, uint sql_errno, const char *err=0);
-void net_send_error(THD *thd, uint sql_errno=0, const char *err=0);
+void send_warning(THD *thd, uint32_t sql_errno, const char *err=0);
+void net_send_error(THD *thd, uint32_t sql_errno=0, const char *err=0);
 void net_end_statement(THD *thd);
 unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
 unsigned char *net_store_data(unsigned char *to,int32_t from);

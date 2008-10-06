@@ -42,9 +42,9 @@ static int _mi_find_writepos(MI_INFO *info,ulong reclength,my_off_t *filepos,
 static int update_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *record,
 				 ulong reclength);
 static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
-				 uint second_read);
+				 uint32_t second_read);
 static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
-			  uint length);
+			  uint32_t length);
 
 /* Play it safe; We have a small stack when using threads */
 #undef my_alloca
@@ -240,7 +240,7 @@ int _mi_write_dynamic_record(MI_INFO *info, const unsigned char *record)
 
 int _mi_update_dynamic_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
 {
-  uint length=_mi_rec_pack(info,info->rec_buff,record);
+  uint32_t length=_mi_rec_pack(info,info->rec_buff,record);
   return (update_dynamic_record(info,pos,info->rec_buff,length));
 }
 
@@ -518,9 +518,9 @@ static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
 	/* info->rec_cache.seek_not_done is updated in cmp_record */
 
 static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
-				 uint second_read)
+				 uint32_t second_read)
 {
-  uint length,b_type;
+  uint32_t length,b_type;
   MI_BLOCK_INFO block_info,del_block;
   int error;
   bool remove_next_block;
@@ -769,7 +769,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
 				 ulong reclength)
 {
   int flag;
-  uint error;
+  uint32_t error;
   ulong length;
   MI_BLOCK_INFO block_info;
 
@@ -834,7 +834,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
       length=(ulong) (block_info.filepos-filepos) + block_info.block_len;
       if (length < reclength)
       {
-	uint tmp=MY_ALIGN(reclength - length + 3 +
+	uint32_t tmp=MY_ALIGN(reclength - length + 3 +
 			  test(reclength >= 65520L),MI_DYN_ALIGN_SIZE);
 	/* Don't create a block bigger than MI_MAX_BLOCK_LENGTH */
 	tmp= cmin(length+tmp, MI_MAX_BLOCK_LENGTH)-length;
@@ -928,7 +928,7 @@ err:
 
 	/* Pack a record. Return new reclength */
 
-uint _mi_rec_pack(MI_INFO *info, register unsigned char *to,
+uint32_t _mi_rec_pack(MI_INFO *info, register unsigned char *to,
                   register const unsigned char *from)
 {
   uint		length,new_length,flag,bit,i;
@@ -1009,8 +1009,8 @@ uint _mi_rec_pack(MI_INFO *info, register unsigned char *to,
       }
       else if (type == FIELD_VARCHAR)
       {
-        uint pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
-	uint tmp_length;
+        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
+	uint32_t tmp_length;
         if (pack_length == 1)
         {
           tmp_length= (uint) *(unsigned char*) from;
@@ -1076,7 +1076,7 @@ bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *rec
     {
       if (type == FIELD_BLOB)
       {
-	uint blob_length=
+	uint32_t blob_length=
 	  _mi_calc_blob_length(length-portable_sizeof_char_ptr,record);
 	if (!blob_length && !(flag & bit))
 	  goto err;
@@ -1131,8 +1131,8 @@ bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *rec
       }
       else if (type == FIELD_VARCHAR)
       {
-        uint pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
-	uint tmp_length;
+        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec->length -1);
+	uint32_t tmp_length;
         if (pack_length == 1)
         {
           tmp_length= (uint) *(unsigned char*) record;
@@ -1182,7 +1182,7 @@ err:
 ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigned char *from,
 		     ulong found_length)
 {
-  uint flag,bit,length,rec_length,min_pack_length;
+  uint32_t flag,bit,length,rec_length,min_pack_length;
   enum en_fieldtype type;
   unsigned char *from_end,*to_end,*packpos;
   register MI_COLUMNDEF *rec,*end_field;
@@ -1204,7 +1204,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigne
     {
       if (type == FIELD_VARCHAR)
       {
-        uint pack_length= HA_VARCHAR_PACKLENGTH(rec_length-1);
+        uint32_t pack_length= HA_VARCHAR_PACKLENGTH(rec_length-1);
         if (pack_length == 1)
         {
           length= (uint) *(unsigned char*) from;
@@ -1264,7 +1264,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigne
       }
       else if (type == FIELD_BLOB)
       {
-	uint size_length=rec_length- portable_sizeof_char_ptr;
+	uint32_t size_length=rec_length- portable_sizeof_char_ptr;
 	ulong blob_length=_mi_calc_blob_length(size_length,from);
         ulong from_left= (ulong) (from_end - from);
         if (from_left < size_length ||
@@ -1328,7 +1328,7 @@ ulong _my_calc_total_blob_length(MI_INFO *info, const unsigned char *record)
 }
 
 
-ulong _mi_calc_blob_length(uint length, const unsigned char *pos)
+ulong _mi_calc_blob_length(uint32_t length, const unsigned char *pos)
 {
   switch (length) {
   case 1:
@@ -1346,7 +1346,7 @@ ulong _mi_calc_blob_length(uint length, const unsigned char *pos)
 }
 
 
-void _my_store_blob_length(unsigned char *pos,uint pack_length,uint length)
+void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t length)
 {
   switch (pack_length) {
   case 1:
@@ -1402,7 +1402,7 @@ void _my_store_blob_length(unsigned char *pos,uint pack_length,uint length)
 int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
 {
   int block_of_record;
-  uint b_type, left_length= 0;
+  uint32_t b_type, left_length= 0;
   unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
   File file;
@@ -1448,8 +1448,8 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
 	goto panic;			/* Wrong linked record */
       /* copy information that is already read */
       {
-        uint offset= (uint) (block_info.filepos - filepos);
-        uint prefetch_len= (sizeof(block_info.header) - offset);
+        uint32_t offset= (uint) (block_info.filepos - filepos);
+        uint32_t prefetch_len= (sizeof(block_info.header) - offset);
         filepos+= sizeof(block_info.header);
 
         if (prefetch_len > block_info.data_len)
@@ -1532,7 +1532,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 
 int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char *record)
 {
-  uint flag,reclength,b_type;
+  uint32_t flag,reclength,b_type;
   my_off_t filepos;
   unsigned char *buffer;
   MI_BLOCK_INFO block_info;
@@ -1608,9 +1608,9 @@ err:
 	/* Compare file to buffert */
 
 static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
-			  uint length)
+			  uint32_t length)
 {
-  uint next_length;
+  uint32_t next_length;
   unsigned char temp_buff[IO_SIZE*2];
 
   next_length= IO_SIZE*2 - (uint) (filepos & (IO_SIZE-1));
@@ -1672,7 +1672,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
 				bool skip_deleted_blocks)
 {
   int block_of_record, info_read, save_errno;
-  uint left_len,b_type;
+  uint32_t left_len,b_type;
   unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
   MYISAM_SHARE *share=info->s;
@@ -1763,8 +1763,8 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
 
     /* copy information that is already read */
     {
-      uint offset=(uint) (block_info.filepos - filepos);
-      uint tmp_length= (sizeof(block_info.header) - offset);
+      uint32_t offset=(uint) (block_info.filepos - filepos);
+      uint32_t tmp_length= (sizeof(block_info.header) - offset);
       filepos=block_info.filepos;
 
       if (tmp_length > block_info.data_len)
@@ -1837,9 +1837,9 @@ err:
 
 	/* Read and process header from a dynamic-record-file */
 
-uint _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
+uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
 {
-  uint return_val=0;
+  uint32_t return_val=0;
   unsigned char *header=info->header;
 
   if (file >= 0)

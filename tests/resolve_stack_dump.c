@@ -239,7 +239,7 @@ static void clean_up(void)
 
 static void verify_sort()
 {
-  uint i;
+  uint32_t i;
   unsigned char* last = 0;
 
   for (i = 0; i < sym_table.elements; i++)
@@ -256,7 +256,7 @@ static void verify_sort()
 
 static SYM_ENTRY* resolve_addr(unsigned char* addr, SYM_ENTRY* se)
 {
-  uint i;
+  uint32_t i;
   get_dynamic(&sym_table, (unsigned char*)se, 0);
   if (addr < se->addr)
     return 0;

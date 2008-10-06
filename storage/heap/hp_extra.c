@@ -65,7 +65,7 @@ int heap_reset(HP_INFO *info)
 static void heap_extra_keyflag(register HP_INFO *info,
                                enum ha_extra_function function)
 {
-  uint  idx;
+  uint32_t  idx;
 
   for (idx= 0; idx< info->s->keys; idx++)
   {

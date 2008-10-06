@@ -65,11 +65,11 @@ typedef struct st_key_cache
   bool resize_in_flush;       /* true during flush of resize operation    */
   bool can_be_used;           /* usage of cache for read/write is allowed */
   size_t key_cache_mem_size;      /* specified size of the cache memory       */
-  uint key_cache_block_size;     /* size of the page buffer of a cache block */
+  uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
   ulong min_warm_blocks;         /* min number of warm blocks;               */
   ulong age_threshold;           /* age threshold for hot blocks             */
   uint64_t keycache_time;       /* total number of block link operations    */
-  uint hash_entries;             /* max number of entries in the hash table  */
+  uint32_t hash_entries;             /* max number of entries in the hash table  */
   int hash_links;                /* max number of hash links                 */
   int hash_links_used;           /* number of hash links currently used      */
   int disk_blocks;               /* max number of blocks in the cache        */
@@ -123,25 +123,25 @@ typedef struct st_key_cache
 /* The default key cache */
 extern KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
 
-extern int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
-			  size_t use_mem, uint division_limit,
-			  uint age_threshold);
-extern int resize_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
-			    size_t use_mem, uint division_limit,
-			    uint age_threshold);
-extern void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
-				   uint age_threshold);
+extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
+			  size_t use_mem, uint32_t division_limit,
+			  uint32_t age_threshold);
+extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
+			    size_t use_mem, uint32_t division_limit,
+			    uint32_t age_threshold);
+extern void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+				   uint32_t age_threshold);
 extern unsigned char *key_cache_read(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
-                            unsigned char *buff, uint length,
-			    uint block_length,int return_buffer);
+                            unsigned char *buff, uint32_t length,
+			    uint32_t block_length,int return_buffer);
 extern int key_cache_insert(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
-                            unsigned char *buff, uint length);
+                            unsigned char *buff, uint32_t length);
 extern int key_cache_write(KEY_CACHE *keycache,
                            File file, my_off_t filepos, int level,
-                           unsigned char *buff, uint length,
-			   uint block_length,int force_write);
+                           unsigned char *buff, uint32_t length,
+			   uint32_t block_length,int force_write);
 extern int flush_key_blocks(KEY_CACHE *keycache,
                             int file, enum flush_type type);
 extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
@@ -149,8 +149,8 @@ extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
 /* Functions to handle multiple key caches */
 extern bool multi_keycache_init(void);
 extern void multi_keycache_free(void);
-extern KEY_CACHE *multi_key_cache_search(unsigned char *key, uint length);
-extern bool multi_key_cache_set(const unsigned char *key, uint length,
+extern KEY_CACHE *multi_key_cache_search(unsigned char *key, uint32_t length);
+extern bool multi_key_cache_set(const unsigned char *key, uint32_t length,
 				   KEY_CACHE *key_cache);
 extern void multi_key_cache_change(KEY_CACHE *old_data,
 				   KEY_CACHE *new_data);

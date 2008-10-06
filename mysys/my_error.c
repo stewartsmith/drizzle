@@ -106,7 +106,7 @@ void my_error(int nr, myf MyFlags, ...)
       ...	variable list
 */
 
-void my_printf_error(uint error, const char *format, myf MyFlags, ...)
+void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
@@ -128,7 +128,7 @@ void my_printf_error(uint error, const char *format, myf MyFlags, ...)
       MyFlags	Flags
 */
 
-void my_message(uint error, const char *str, register myf MyFlags)
+void my_message(uint32_t error, const char *str, register myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }

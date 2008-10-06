@@ -126,7 +126,7 @@ static char *remove_end_comment(char *ptr);
 */
 
 int my_search_option_files(const char *conf_file, int *argc, char ***argv,
-                           uint *args_used, Process_option_func func,
+                           uint32_t *args_used, Process_option_func func,
                            void *func_ctx)
 {
   const char **dirs, *forced_default_file, *forced_extra_defaults;
@@ -155,9 +155,9 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
   if (my_defaults_group_suffix && func == handle_default_option)
   {
     /* Handle --defaults-group-suffix= */
-    uint i;
+    uint32_t i;
     const char **extra_groups;
-    const uint instance_len= strlen(my_defaults_group_suffix); 
+    const uint32_t instance_len= strlen(my_defaults_group_suffix); 
     struct handle_option_ctx *ctx= (struct handle_option_ctx*) func_ctx;
     char *ptr;
     TYPELIB *group= ctx->group;
@@ -169,7 +169,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     
     for (i= 0; i < group->count; i++)
     {
-      uint len;
+      uint32_t len;
       extra_groups[i]= group->type_names[i]; /** copy group */
       
       len= strlen(extra_groups[i]);
@@ -372,7 +372,7 @@ int load_defaults(const char *conf_file, const char **groups,
   DYNAMIC_ARRAY args;
   TYPELIB group;
   bool found_print_defaults= 0;
-  uint args_used= 0;
+  uint32_t args_used= 0;
   int error= 0;
   MEM_ROOT alloc;
   char *ptr,**res;
@@ -387,7 +387,7 @@ int load_defaults(const char *conf_file, const char **groups,
   if (*argc >= 2 && !strcmp(argv[0][1],"--no-defaults"))
   {
     /* remove the --no-defaults argument and return only the other arguments */
-    uint i;
+    uint32_t i;
     if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
 				 (*argc + 1)*sizeof(char*))))
       goto err;
@@ -517,7 +517,7 @@ static int search_default_file(Process_option_func opt_handler,
 */
 
 static char *get_argument(const char *keyword, size_t kwlen,
-                          char *ptr, char *name, uint line)
+                          char *ptr, char *name, uint32_t line)
 {
   char *end;
 
@@ -586,9 +586,9 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   static const char include_keyword[]= "include";
   const int max_recursion_level= 10;
   FILE *fp;
-  uint line=0;
+  uint32_t line=0;
   bool found_group=0;
-  uint i;
+  uint32_t i;
   MY_DIR *search_dir;
   FILEINFO *search_file;
 

@@ -30,7 +30,7 @@
   double precision floating point numbers
 ****************************************************************************/
 
-int Field_double::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_double::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error;
   char *end;
@@ -95,8 +95,8 @@ int Field_real::truncate(double *nr, double max_value)
 
   if (!not_fixed)
   {
-    uint order= field_length - dec;
-    uint step= array_elements(log_10) - 1;
+    uint32_t order= field_length - dec;
+    uint32_t step= array_elements(log_10) - 1;
     max_value= 1.0;
     for (; order > step; order-= step)
       max_value*= log_10[step];
@@ -210,7 +210,7 @@ String *Field_double::val_str(String *val_buffer,
 #endif
     doubleget(nr,ptr);
 
-  uint to_length=cmax(field_length, (uint32_t)DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
+  uint32_t to_length=cmax(field_length, (uint32_t)DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
   val_buffer->alloc(to_length);
   char *to=(char*) val_buffer->ptr();
   size_t len;
@@ -254,7 +254,7 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 
 /* The following should work for IEEE */
 
-void Field_double::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_double::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   double nr;
 #ifdef WORDS_BIGENDIAN

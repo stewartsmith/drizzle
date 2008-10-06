@@ -28,26 +28,26 @@
 
 #include <mysys/my_bitmap.h>
 
-template <uint default_width> class Bitmap
+template <uint32_t default_width> class Bitmap
 {
   MY_BITMAP map;
   uint32_t buffer[(default_width+31)/32];
 public:
   Bitmap() { init(); }
   Bitmap(const Bitmap& from) { *this=from; }
-  explicit Bitmap(uint prefix_to_set) { init(prefix_to_set); }
+  explicit Bitmap(uint32_t prefix_to_set) { init(prefix_to_set); }
   void init() { bitmap_init(&map, buffer, default_width, 0); }
-  void init(uint prefix_to_set) { init(); set_prefix(prefix_to_set); }
-  uint length() const { return default_width; }
+  void init(uint32_t prefix_to_set) { init(); set_prefix(prefix_to_set); }
+  uint32_t length() const { return default_width; }
   Bitmap& operator=(const Bitmap& map2)
   {
     init();
     memcpy(buffer, map2.buffer, sizeof(buffer));
     return *this;
   }
-  void set_bit(uint n) { bitmap_set_bit(&map, n); }
-  void clear_bit(uint n) { bitmap_clear_bit(&map, n); }
-  void set_prefix(uint n) { bitmap_set_prefix(&map, n); }
+  void set_bit(uint32_t n) { bitmap_set_bit(&map, n); }
+  void clear_bit(uint32_t n) { bitmap_clear_bit(&map, n); }
+  void set_prefix(uint32_t n) { bitmap_set_prefix(&map, n); }
   void set_all() { bitmap_set_all(&map); }
   void clear_all() { bitmap_clear_all(&map); }
   void intersect(Bitmap& map2) { bitmap_intersect(&map, &map2.map); }
@@ -67,16 +67,16 @@ public:
   }
   void subtract(Bitmap& map2) { bitmap_subtract(&map, &map2.map); }
   void merge(Bitmap& map2) { bitmap_union(&map, &map2.map); }
-  bool is_set(uint n) const { return bitmap_is_set(&map, n); }
+  bool is_set(uint32_t n) const { return bitmap_is_set(&map, n); }
   bool is_set() const { return !bitmap_is_clear_all(&map); }
-  bool is_prefix(uint n) const { return bitmap_is_prefix(&map, n); }
+  bool is_prefix(uint32_t n) const { return bitmap_is_prefix(&map, n); }
   bool is_clear_all() const { return bitmap_is_clear_all(&map); }
   bool is_set_all() const { return bitmap_is_set_all(&map); }
   bool is_subset(const Bitmap& map2) const { return bitmap_is_subset(&map, &map2.map); }
   bool is_overlapping(const Bitmap& map2) const { return bitmap_is_overlapping(&map, &map2.map); }
   bool operator==(const Bitmap& map2) const { return bitmap_cmp(&map, &map2.map); }
   bool operator!=(const Bitmap& map2) const { return !bitmap_cmp(&map, &map2.map); }
-  Bitmap operator&=(uint n)
+  Bitmap operator&=(uint32_t n)
   {
     if (bitmap_is_set(&map, n))
     {
@@ -92,7 +92,7 @@ public:
     bitmap_intersect(&map, &map2.map);
     return *this;
   }
-  Bitmap operator&(uint n)
+  Bitmap operator&(uint32_t n)
   {
     Bitmap bm(*this);
     bm&= n;
@@ -104,7 +104,7 @@ public:
     bm&= map2;
     return bm;
   }
-  Bitmap operator|=(uint n)
+  Bitmap operator|=(uint32_t n)
   {
     bitmap_set_bit(&map, n);
     return *this;
@@ -113,7 +113,7 @@ public:
   {
     bitmap_union(&map, &map2.map);
   }
-  Bitmap operator|(uint n)
+  Bitmap operator|(uint32_t n)
   {
     Bitmap bm(*this);
     bm|= n;
@@ -162,13 +162,13 @@ template <> class Bitmap<64>
   uint64_t map;
 public:
   Bitmap<64>() { map= 0; }
-  explicit Bitmap<64>(uint prefix_to_set) { set_prefix(prefix_to_set); }
+  explicit Bitmap<64>(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
   void init() { }
-  void init(uint prefix_to_set) { set_prefix(prefix_to_set); }
-  uint length() const { return 64; }
-  void set_bit(uint n) { map|= ((uint64_t)1) << n; }
-  void clear_bit(uint n) { map&= ~(((uint64_t)1) << n); }
-  void set_prefix(uint n)
+  void init(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
+  uint32_t length() const { return 64; }
+  void set_bit(uint32_t n) { map|= ((uint64_t)1) << n; }
+  void clear_bit(uint32_t n) { map&= ~(((uint64_t)1) << n); }
+  void set_prefix(uint32_t n)
   {
     if (n >= length())
       set_all();
@@ -182,8 +182,8 @@ public:
   void intersect_extended(uint64_t map2) { map&= map2; }
   void subtract(Bitmap<64>& map2) { map&= ~map2.map; }
   void merge(Bitmap<64>& map2) { map|= map2.map; }
-  bool is_set(uint n) const { return test(map & (((uint64_t)1) << n)); }
-  bool is_prefix(uint n) const { return map == (((uint64_t)1) << n)-1; }
+  bool is_set(uint32_t n) const { return test(map & (((uint64_t)1) << n)); }
+  bool is_prefix(uint32_t n) const { return map == (((uint64_t)1) << n)-1; }
   bool is_clear_all() const { return map == (uint64_t)0; }
   bool is_set_all() const { return map == ~(uint64_t)0; }
   bool is_subset(const Bitmap<64>& map2) const { return !(map & ~map2.map); }
@@ -198,7 +198,7 @@ public:
 class Table_map_iterator
 {
   uint64_t bmp;
-  uint no;
+  uint32_t no;
 public:
   Table_map_iterator(uint64_t t) : bmp(t), no(0) {}
   int next_bit()
@@ -207,7 +207,7 @@ public:
                                       2, 0, 1, 0, 
                                       3, 0, 1, 0,
                                       2, 0, 1, 0};
-    uint bit;
+    uint32_t bit;
     while ((bit= last_bit[bmp & 0xF]) == 32)
     {
       no += 4;

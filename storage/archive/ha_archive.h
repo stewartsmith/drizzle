@@ -36,7 +36,7 @@ typedef struct st_archive_record_buffer {
 typedef struct st_archive_share {
   char *table_name;
   char data_file_name[FN_REFLEN];
-  uint table_name_length,use_count;
+  uint32_t table_name_length,use_count;
   pthread_mutex_t mutex;
   THR_LOCK lock;
   azio_stream archive_write;     /* Archive file we are working with */
@@ -71,8 +71,8 @@ class ha_archive: public handler
   bool delayed_insert;       /* If the insert is delayed */
   bool bulk_insert;          /* If we are performing a bulk insert */
   const unsigned char *current_key;
-  uint current_key_len;
-  uint current_k_offset;
+  uint32_t current_key_len;
+  uint32_t current_k_offset;
   archive_record_buffer *record_buffer;
   bool archive_reader_open;
 
@@ -85,7 +85,7 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint inx __attribute__((unused)))
+  const char *index_type(uint32_t inx __attribute__((unused)))
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -96,8 +96,8 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED);
   }
-  uint32_t index_flags(uint idx __attribute__((unused)),
-                       uint part __attribute__((unused)),
+  uint32_t index_flags(uint32_t idx __attribute__((unused)),
+                       uint32_t part __attribute__((unused)),
                        bool all_parts __attribute__((unused))) const
   {
     return HA_ONLY_WHOLE_INDEX;
@@ -106,17 +106,17 @@ public:
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  uint max_supported_keys()          const { return 1; }
-  uint max_supported_key_length()    const { return sizeof(uint64_t); }
-  uint max_supported_key_part_length() const { return sizeof(uint64_t); }
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
   ha_rows records() { return share->rows_recorded; }
-  int index_init(uint keynr, bool sorted);
+  int index_init(uint32_t keynr, bool sorted);
   virtual int index_read(unsigned char * buf, const unsigned char * key,
-			 uint key_len, enum ha_rkey_function find_flag);
-  virtual int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
-			     uint key_len, enum ha_rkey_function find_flag);
+			 uint32_t key_len, enum ha_rkey_function find_flag);
+  virtual int index_read_idx(unsigned char * buf, uint32_t index, const unsigned char * key,
+			     uint32_t key_len, enum ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
-  int open(const char *name, int mode, uint test_if_locked);
+  int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int write_row(unsigned char * buf);
   int real_write_row(unsigned char *buf, azio_stream *writer);

@@ -2225,7 +2225,7 @@ my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
 
 static inline void
-my_hash_add(uint32_t *n1, uint32_t *n2, uint ch)
+my_hash_add(uint32_t *n1, uint32_t *n2, uint32_t ch)
 {
   n1[0]^= (((n1[0] & 63) + n2[0]) * (ch)) + (n1[0] << 8);
   n2[0]+= 3;
@@ -2591,8 +2591,8 @@ my_strnxfrmlen_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)), si
 
 static size_t
 my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
-                    unsigned char *dst, size_t dstlen, uint nweights,
-                    const unsigned char *src, size_t srclen, uint flags)
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
@@ -2644,7 +2644,7 @@ my_ismbchar_utf8mb4(const CHARSET_INFO * const cs, const char *b, const char *e)
 
 
 static uint
-my_mbcharlen_utf8mb4(const CHARSET_INFO * const cs  __attribute__((unused)), uint c)
+my_mbcharlen_utf8mb4(const CHARSET_INFO * const cs  __attribute__((unused)), uint32_t c)
 {
   if (c < 0x80)
     return 1;
@@ -3514,8 +3514,8 @@ my_strnxfrmlen_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)), si
 
 static size_t
 my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
-                    unsigned char *dst, size_t dstlen, uint nweights,
-                    const unsigned char *src, size_t srclen, uint flags)
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
@@ -3559,8 +3559,8 @@ my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
 
 static size_t
 my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
-                        unsigned char *dst, size_t dstlen, uint nweights,
-                        const unsigned char *src, size_t srclen, uint flags)
+                        unsigned char *dst, size_t dstlen, uint32_t nweights,
+                        const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
@@ -3606,7 +3606,7 @@ my_ismbchar_utf8mb3(const CHARSET_INFO * const cs, const char *b, const char *e)
 
 
 static uint
-my_mbcharlen_utf8mb3(const CHARSET_INFO * const cs  __attribute__((unused)), uint c)
+my_mbcharlen_utf8mb3(const CHARSET_INFO * const cs  __attribute__((unused)), uint32_t c)
 {
   if (c < 0x80)
     return 1;
@@ -5259,7 +5259,7 @@ static void test_mb(CHARSET_INFO *cs, unsigned char *s)
   {
     if (my_ismbhead_utf8(cs,*s))
     {
-      uint len=my_mbcharlen_utf8(cs,*s);
+      uint32_t len=my_mbcharlen_utf8(cs,*s);
       while(len--)
       {
         printf("%c",*s);

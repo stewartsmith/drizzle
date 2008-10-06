@@ -33,9 +33,9 @@
   @return The size of the required storage in bytes
 */
 
-uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint *chunk_count)
+uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint32_t *chunk_count)
 {
-  uint i, dst_offset;
+  uint32_t i, dst_offset;
 
   dst_offset= info->fixed_data_length;
 
@@ -48,7 +48,7 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uin
 
   for (i= info->fixed_column_count; i < info->column_count; i++)
   {
-    uint src_offset, length;
+    uint32_t src_offset, length;
 
     HP_COLUMNDEF* column= info->column_defs + i;
 
@@ -64,7 +64,7 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uin
     src_offset= column->offset;
     if (column->type == DRIZZLE_TYPE_VARCHAR)
     {
-      uint pack_length;
+      uint32_t pack_length;
 
       /* >= 5.0.3 true VARCHAR */
 
@@ -88,11 +88,11 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uin
 
 /*static void dump_chunk(HP_SHARE *info, const unsigned char* curr_chunk)
 {
-  uint i;
+  uint32_t i;
   fprintf(stdout, "Chunk dump at 0x%lx: ", (long)curr_chunk);
   for (i= 0; i < info->chunk_dataspace_length; i++)
   {
-    uint b= *((unsigned char*)(curr_chunk + i));
+    uint32_t b= *((unsigned char*)(curr_chunk + i));
     if (b < 0x10)
     {
       fprintf(stdout, "0");
@@ -121,10 +121,10 @@ uint hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uin
     @retval  zero      otherwise
 */
 
-uint hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record,
-                                      unsigned char *pos, uint is_compare)
+uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record,
+                                      unsigned char *pos, uint32_t is_compare)
 {
-  uint i, dst_offset;
+  uint32_t i, dst_offset;
   unsigned char* curr_chunk= pos;
 
   if (is_compare)
@@ -149,7 +149,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *rec
 
   for (i= info->fixed_column_count; i < info->column_count; i++)
   {
-    uint src_offset, length;
+    uint32_t src_offset, length;
 
     HP_COLUMNDEF* column= info->column_defs + i;
 
@@ -165,7 +165,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *rec
     src_offset= column->offset;
     if (column->type == DRIZZLE_TYPE_VARCHAR)
     {
-      uint pack_length;
+      uint32_t pack_length;
 
       /* >= 5.0.3 true VARCHAR */
 
@@ -181,7 +181,7 @@ uint hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *rec
 
     while (length > 0)
     {
-      uint to_copy;
+      uint32_t to_copy;
 
       to_copy= info->recordspace.chunk_dataspace_length - dst_offset;
       if (to_copy == 0)
@@ -260,7 +260,7 @@ void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record
 
 void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos)
 {
-  uint i, src_offset;
+  uint32_t i, src_offset;
   const unsigned char* curr_chunk= pos;
 
 
@@ -281,7 +281,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
 
   for (i= info->fixed_column_count; i < info->column_count; i++)
   {
-    uint dst_offset, length, is_null = 0;
+    uint32_t dst_offset, length, is_null = 0;
 
     HP_COLUMNDEF* column= info->column_defs + i;
 
@@ -296,7 +296,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
     dst_offset= column->offset;
     if (column->type == DRIZZLE_TYPE_VARCHAR)
     {
-      uint pack_length, byte1, byte2;
+      uint32_t pack_length, byte1, byte2;
 
       /* >= 5.0.3 true VARCHAR */
 
@@ -347,7 +347,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
 
     while (length > 0)
     {
-      uint to_copy;
+      uint32_t to_copy;
 
       to_copy= info->recordspace.chunk_dataspace_length - src_offset;
       if (to_copy == 0)

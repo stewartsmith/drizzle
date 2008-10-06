@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 
-static void _print_array(uint8 *data, uint size)
+static void _print_array(uint8 *data, uint32_t size)
 {
-  uint i;
+  uint32_t i;
   for (i = 0; i < size; ++i)
   {
     if (i == 0 || i % 16 == size % 16) printf("  ");

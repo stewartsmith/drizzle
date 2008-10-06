@@ -92,7 +92,7 @@ Rpl_filter::tables_ok(const char* db, TableList* tables)
   {
     char hash_key[2*NAME_LEN+2];
     char *end;
-    uint len;
+    uint32_t len;
 
     if (!tables->updating) 
       continue;
@@ -298,7 +298,7 @@ Rpl_filter::add_table_rule(HASH* h, const char* table_spec)
   const char* dot = strchr(table_spec, '.');
   if (!dot) return 1;
   // len is always > 0 because we know the there exists a '.'
-  uint len = (uint)strlen(table_spec);
+  uint32_t len = (uint)strlen(table_spec);
   TABLE_RULE_ENT* e = (TABLE_RULE_ENT*)my_malloc(sizeof(TABLE_RULE_ENT)
 						 + len, MYF(MY_WME));
   if (!e) return 1;
@@ -320,7 +320,7 @@ Rpl_filter::add_wild_table_rule(DYNAMIC_ARRAY* a, const char* table_spec)
 {
   const char* dot = strchr(table_spec, '.');
   if (!dot) return 1;
-  uint len = (uint)strlen(table_spec);
+  uint32_t len = (uint)strlen(table_spec);
   TABLE_RULE_ENT* e = (TABLE_RULE_ENT*)my_malloc(sizeof(TABLE_RULE_ENT)
 						 + len, MYF(MY_WME));
   if (!e) return 1;
@@ -390,7 +390,7 @@ Rpl_filter::init_table_rule_array(DYNAMIC_ARRAY* a, bool* a_inited)
 TABLE_RULE_ENT* 
 Rpl_filter::find_wild(DYNAMIC_ARRAY *a, const char* key, int len)
 {
-  uint i;
+  uint32_t i;
   const char* key_end= key + len;
   
   for (i= 0; i < a->elements; i++)
@@ -411,7 +411,7 @@ Rpl_filter::find_wild(DYNAMIC_ARRAY *a, const char* key, int len)
 void 
 Rpl_filter::free_string_array(DYNAMIC_ARRAY *a)
 {
-  uint i;
+  uint32_t i;
   for (i= 0; i < a->elements; i++)
   {
     char* p;
@@ -441,7 +441,7 @@ Rpl_filter::table_rule_ent_hash_to_str(String* s, HASH* h, bool inited)
   s->length(0);
   if (inited)
   {
-    for (uint i= 0; i < h->records; i++)
+    for (uint32_t i= 0; i < h->records; i++)
     {
       TABLE_RULE_ENT* e= (TABLE_RULE_ENT*) hash_element(h, i);
       if (s->length())
@@ -459,7 +459,7 @@ Rpl_filter::table_rule_ent_dynamic_array_to_str(String* s, DYNAMIC_ARRAY* a,
   s->length(0);
   if (inited)
   {
-    for (uint i= 0; i < a->elements; i++)
+    for (uint32_t i= 0; i < a->elements; i++)
     {
       TABLE_RULE_ENT* e;
       get_dynamic(a, (unsigned char*)&e, i);

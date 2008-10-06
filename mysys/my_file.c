@@ -38,10 +38,10 @@
 #define RLIM_INFINITY ((uint) 0xffffffff)
 #endif
 
-static uint set_max_open_files(uint max_file_limit)
+static uint32_t set_max_open_files(uint32_t max_file_limit)
 {
   struct rlimit rlimit;
-  uint old_cur;
+  uint32_t old_cur;
 
   if (!getrlimit(RLIMIT_NOFILE,&rlimit))
   {
@@ -65,7 +65,7 @@ static uint set_max_open_files(uint max_file_limit)
 }
 
 #else
-static int set_max_open_files(uint max_file_limit)
+static int set_max_open_files(uint32_t max_file_limit)
 {
   /* We don't know the limit. Return best guess */
   return cmin(max_file_limit, OS_FILE_LIMIT);
@@ -84,7 +84,7 @@ static int set_max_open_files(uint max_file_limit)
     number of files available for open
 */
 
-uint my_set_max_open_files(uint files)
+uint32_t my_set_max_open_files(uint32_t files)
 {
   struct st_my_file_info *tmp;
 

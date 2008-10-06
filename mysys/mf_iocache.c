@@ -597,7 +597,7 @@ int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 */
 
 void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
-                         IO_CACHE *write_cache, uint num_threads)
+                         IO_CACHE *write_cache, uint32_t num_threads)
 {
   assert(num_threads > 1);
   assert(read_cache->type == READ_CACHE);
@@ -649,7 +649,7 @@ void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
 void remove_io_thread(IO_CACHE *cache)
 {
   IO_CACHE_SHARE *cshare= cache->share;
-  uint total;
+  uint32_t total;
 
   /* If the writer goes, it needs to flush the write cache. */
   if (cache == cshare->source_cache)

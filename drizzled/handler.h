@@ -355,7 +355,7 @@ typedef uint64_t my_xid; // this line is the same as in log_event.h
 #define COMPATIBLE_DATA_NO  1
 
 typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
-                                      uint key_length,
+                                      uint32_t key_length,
                                       uint64_t *engine_data);
 
 /**
@@ -417,7 +417,7 @@ struct xid_t {
            !memcmp(data, DRIZZLE_XID_PREFIX, DRIZZLE_XID_PREFIX_LEN) ?
            quick_get_my_xid() : 0;
   }
-  uint length()
+  uint32_t length()
   {
     return sizeof(formatID)+sizeof(gtrid_length)+sizeof(bqual_length)+
            gtrid_length+bqual_length;
@@ -426,7 +426,7 @@ struct xid_t {
   {
     return (unsigned char *)&gtrid_length;
   }
-  uint key_length()
+  uint32_t key_length()
   {
     return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
   }
@@ -445,9 +445,9 @@ class Table;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
-typedef bool (stat_print_fn)(THD *thd, const char *type, uint type_len,
-                             const char *file, uint file_len,
-                             const char *status, uint status_len);
+typedef bool (stat_print_fn)(THD *thd, const char *type, uint32_t type_len,
+                             const char *file, uint32_t file_len,
+                             const char *status, uint32_t status_len);
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 extern st_plugin_int *hton2plugin[MAX_HA];
 
@@ -483,7 +483,7 @@ struct handlerton
 
    slot number is initialized by MySQL after xxx_init() is called.
    */
-   uint slot;
+   uint32_t slot;
    /*
      to store per-savepoint data storage engine is provided with an area
      of a requested size (0 is ok here).
@@ -493,7 +493,7 @@ struct handlerton
      area and need not be used by storage engine.
      see binlog_hton and binlog_savepoint_set/rollback for an example.
    */
-   uint savepoint_offset;
+   uint32_t savepoint_offset;
    /*
      handlerton methods:
 
@@ -524,7 +524,7 @@ struct handlerton
    int  (*commit)(handlerton *hton, THD *thd, bool all);
    int  (*rollback)(handlerton *hton, THD *thd, bool all);
    int  (*prepare)(handlerton *hton, THD *thd, bool all);
-   int  (*recover)(handlerton *hton, XID *xid_list, uint len);
+   int  (*recover)(handlerton *hton, XID *xid_list, uint32_t len);
    int  (*commit_by_xid)(handlerton *hton, XID *xid);
    int  (*rollback_by_xid)(handlerton *hton, XID *xid);
    void *(*create_cursor_read_view)(handlerton *hton, THD *thd);
@@ -742,9 +742,9 @@ typedef struct st_ha_create_information
   uint32_t block_size;
   handlerton *db_type;
   enum row_type row_type;
-  uint null_bits;                       /* NULL bits at start of record */
-  uint options;				/* OR of HA_CREATE_ options */
-  uint extra_size;                      /* length of extra data segment */
+  uint32_t null_bits;                       /* NULL bits at start of record */
+  uint32_t options;				/* OR of HA_CREATE_ options */
+  uint32_t extra_size;                      /* length of extra data segment */
   bool table_existed;			/* 1 in create if table existed */
   bool frm_only;                        /* 1 if no ha_create_table() */
   bool varchar;                         /* 1 if table has a VARCHAR */
@@ -754,11 +754,11 @@ typedef struct st_ha_create_information
 typedef struct st_ha_alter_information
 {
   KEY  *key_info_buffer;
-  uint key_count;
-  uint index_drop_count;
-  uint *index_drop_buffer;
-  uint index_add_count;
-  uint *index_add_buffer;
+  uint32_t key_count;
+  uint32_t index_drop_count;
+  uint32_t *index_drop_buffer;
+  uint32_t index_add_count;
+  uint32_t *index_add_buffer;
   void *data;
 } HA_ALTER_INFO;
 
@@ -792,19 +792,19 @@ public:
   TABLEOP_HOOKS() {}
   virtual ~TABLEOP_HOOKS() {}
 
-  inline void prelock(Table **tables, uint count)
+  inline void prelock(Table **tables, uint32_t count)
   {
     do_prelock(tables, count);
   }
 
-  inline int postlock(Table **tables, uint count)
+  inline int postlock(Table **tables, uint32_t count)
   {
     return do_postlock(tables, count);
   }
 private:
   /* Function primitive that is called prior to locking tables */
   virtual void do_prelock(Table **tables __attribute__((unused)),
-                          uint count __attribute__((unused)))
+                          uint32_t count __attribute__((unused)))
   {
     /* Default is to do nothing */
   }
@@ -818,7 +818,7 @@ private:
      @return Error code or zero.
    */
   virtual int do_postlock(Table **tables __attribute__((unused)),
-                          uint count __attribute__((unused)))
+                          uint32_t count __attribute__((unused)))
   {
     return 0;                           /* Default is to do nothing */
   }
@@ -835,8 +835,8 @@ typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
   uint32_t sort_buffer_size;
-  uint flags;       /* isam layer flags (e.g. for myisamchk) */
-  uint sql_flags;   /* sql layer flags - for something myisamchk cannot do */
+  uint32_t flags;       /* isam layer flags (e.g. for myisamchk) */
+  uint32_t sql_flags;   /* sql layer flags - for something myisamchk cannot do */
   KEY_CACHE *key_cache;	/* new key cache when changing key cache */
   void init();
 } HA_CHECK_OPT;
@@ -876,7 +876,7 @@ typedef struct st_range_seq_if
     RETURN
       An opaque value to be used as RANGE_SEQ_IF::next() parameter
   */
-  range_seq_t (*init)(void *init_params, uint n_ranges, uint flags);
+  range_seq_t (*init)(void *init_params, uint32_t n_ranges, uint32_t flags);
 
 
   /*
@@ -891,11 +891,11 @@ typedef struct st_range_seq_if
       0 - Ok, the range structure filled with info about the next range
       1 - No more ranges
   */
-  uint (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
+  uint32_t (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
 } RANGE_SEQ_IF;
 
-uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint idx);
-char* &mrr_get_ptr_by_idx(range_seq_t seq, uint idx);
+uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx);
+char* &mrr_get_ptr_by_idx(range_seq_t seq, uint32_t idx);
 
 class COST_VECT
 { 
@@ -1021,7 +1021,7 @@ public:
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
-  uint block_size;			/* index block size */
+  uint32_t block_size;			/* index block size */
 
   ha_statistics():
     data_file_length(0), max_data_file_length(0),
@@ -1031,7 +1031,7 @@ public:
   {}
 };
 
-uint calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
+uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
@@ -1111,7 +1111,7 @@ public:
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
   RANGE_SEQ_IF mrr_funcs;  /* Range sequence traversal functions */
   HANDLER_BUFFER *multi_range_buffer; /* MRR buffer info */
-  uint ranges_in_seq; /* Total number of ranges in the traversed sequence */
+  uint32_t ranges_in_seq; /* Total number of ranges in the traversed sequence */
   /* true <=> source MRR ranges and the output are ordered */
   bool mrr_is_output_sorted;
 
@@ -1131,18 +1131,18 @@ public:
   */
   bool in_range_check_pushed_down;
 
-  uint errkey;				/* Last dup key */
-  uint key_used_on_scan;
-  uint active_index;
+  uint32_t errkey;				/* Last dup key */
+  uint32_t key_used_on_scan;
+  uint32_t active_index;
   /** Length of ref (1-8 or the clustered key length) */
-  uint ref_length;
+  uint32_t ref_length;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
   bool implicit_emptied;                /* Can be !=0 only if HEAP */
   const Item *pushed_cond;
 
   Item *pushed_idx_cond;
-  uint pushed_idx_cond_keyno;  /* The index which the above condition is for */
+  uint32_t pushed_idx_cond_keyno;  /* The index which the above condition is for */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -1192,7 +1192,7 @@ public:
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint idx, bool sorted)
+  int ha_index_init(uint32_t idx, bool sorted)
   {
     int result;
     assert(inited==NONE);
@@ -1255,14 +1255,14 @@ public:
     return end_bulk_insert();
   }
   int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                         uint *dup_key_found);
+                         uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
   int ha_optimize(THD* thd, HA_CHECK_OPT* check_opt);
   int ha_analyze(THD* thd, HA_CHECK_OPT* check_opt);
   bool ha_check_and_repair(THD *thd);
-  int ha_disable_indexes(uint mode);
-  int ha_enable_indexes(uint mode);
+  int ha_disable_indexes(uint32_t mode);
+  int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
   int ha_rename_table(const char *from, const char *to);
@@ -1276,10 +1276,10 @@ public:
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
-  void print_keydup_error(uint key_nr, const char *msg);
+  void print_keydup_error(uint32_t key_nr, const char *msg);
   virtual void print_error(int error, myf errflag);
   virtual bool get_error_message(int error, String *buf);
-  uint get_dup_key(int error);
+  uint32_t get_dup_key(int error);
   virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share)
   {
     table= table_arg;
@@ -1288,20 +1288,20 @@ public:
   /* Estimates calculation */
   virtual double scan_time(void)
   { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
-  virtual double read_time(uint index __attribute__((unused)),
-                           uint ranges, ha_rows rows)
+  virtual double read_time(uint32_t index __attribute__((unused)),
+                           uint32_t ranges, ha_rows rows)
   { return rows2double(ranges+rows); }
 
-  virtual double index_only_read_time(uint keynr, double records);
+  virtual double index_only_read_time(uint32_t keynr, double records);
   
-  virtual ha_rows multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+  virtual ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                               void *seq_init_param, 
-                                              uint n_ranges, uint *bufsz,
-                                              uint *flags, COST_VECT *cost);
-  virtual int multi_range_read_info(uint keyno, uint n_ranges, uint keys,
-                                    uint *bufsz, uint *flags, COST_VECT *cost);
+                                              uint32_t n_ranges, uint32_t *bufsz,
+                                              uint32_t *flags, COST_VECT *cost);
+  virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
+                                    uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
   virtual int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                    uint n_ranges, uint mode,
+                                    uint32_t n_ranges, uint32_t mode,
                                     HANDLER_BUFFER *buf);
   virtual int multi_range_read_next(char **range_info);
 
@@ -1309,7 +1309,7 @@ public:
   virtual const key_map *keys_to_use_for_scanning() { return &key_map_empty; }
   bool has_transactions()
   { return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0; }
-  virtual uint extra_rec_buf_length() const { return 0; }
+  virtual uint32_t extra_rec_buf_length() const { return 0; }
 
   /**
     This method is used to analyse the error to see whether the error
@@ -1321,7 +1321,7 @@ public:
     same thing as HA_ERR_FOUND_DUP_KEY but can in some cases lead to
     a slightly different error message.
   */
-  virtual bool is_fatal_error(int error, uint flags)
+  virtual bool is_fatal_error(int error, uint32_t flags)
   {
     if (!error ||
         ((flags & HA_CHECK_DUP_KEY) &&
@@ -1351,7 +1351,7 @@ public:
   */
   virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
 
-  virtual const char *index_type(uint key_number __attribute__((unused)))
+  virtual const char *index_type(uint32_t key_number __attribute__((unused)))
   { assert(0); return "";}
 
 
@@ -1363,7 +1363,7 @@ public:
     as there may be several calls to this routine.
   */
   virtual void column_bitmaps_signal();
-  uint get_index(void) const { return active_index; }
+  uint32_t get_index(void) const { return active_index; }
   virtual int close(void)=0;
 
   /**
@@ -1387,7 +1387,7 @@ public:
     @retval  0           Success
     @retval  >0          Error code
   */
-  virtual int exec_bulk_update(uint *dup_key_found __attribute__((unused)))
+  virtual int exec_bulk_update(uint32_t *dup_key_found __attribute__((unused)))
   {
     assert(false);
     return HA_ERR_WRONG_COMMAND;
@@ -1418,7 +1418,7 @@ public:
                              key_part_map keypart_map,
                              enum ha_rkey_function find_flag)
   {
-    uint key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
     return  index_read(buf, key, key_len, find_flag);
   }
   /**
@@ -1427,7 +1427,7 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_idx_map(unsigned char * buf, uint index, const unsigned char * key,
+  virtual int index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
                                  key_part_map keypart_map,
                                  enum ha_rkey_function find_flag);
   virtual int index_next(unsigned char * buf __attribute__((unused)))
@@ -1440,7 +1440,7 @@ public:
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_next_same(unsigned char *buf __attribute__((unused)),
                               const unsigned char *key __attribute__((unused)),
-                              uint keylen __attribute__((unused)));
+                              uint32_t keylen __attribute__((unused)));
   /**
      @brief
      The following functions works like index_read, but it find the last
@@ -1449,7 +1449,7 @@ public:
   virtual int index_read_last_map(unsigned char * buf, const unsigned char * key,
                                   key_part_map keypart_map)
   {
-    uint key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
     return index_read_last(buf, key, key_len);
   }
   virtual int read_range_first(const key_range *start_key,
@@ -1468,7 +1468,7 @@ public:
     handlers for random position.
   */
   virtual int rnd_pos_by_record(unsigned char *record);
-  virtual int read_first_row(unsigned char *buf, uint primary_key);
+  virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
   /**
     The following function is only needed for tables that may be temporary
     tables during joins.
@@ -1477,9 +1477,9 @@ public:
                                unsigned char *pos __attribute__((unused)))
     { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_same(unsigned char *buf __attribute__((unused)),
-                       uint inx __attribute__((unused)))
+                       uint32_t inx __attribute__((unused)))
     { return HA_ERR_WRONG_COMMAND; }
-  virtual ha_rows records_in_range(uint inx __attribute__((unused)),
+  virtual ha_rows records_in_range(uint32_t inx __attribute__((unused)),
                                    key_range *min_key __attribute__((unused)),
                                    key_range *max_key __attribute__((unused)))
     { return (ha_rows) 10; }
@@ -1563,7 +1563,7 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint index __attribute__((unused)))
+  virtual bool is_fk_defined_on_table_or_index(uint32_t index __attribute__((unused)))
   { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return(NULL);}  /* gets foreign key create string from InnoDB */
@@ -1573,7 +1573,7 @@ public:
   virtual int get_foreign_key_list(THD *thd __attribute__((unused)),
                                    List<FOREIGN_KEY_INFO> *f_key_list __attribute__((unused)))
   { return 0; }
-  virtual uint referenced_by_foreign_key() { return 0;}
+  virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void init_table_handle_for_HANDLER()
   { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char* str __attribute__((unused))) {}
@@ -1594,47 +1594,47 @@ public:
 
   virtual int get_default_no_partitions(HA_CREATE_INFO *info __attribute__((unused))) { return 1;}
   virtual bool get_no_parts(const char *name __attribute__((unused)),
-                            uint *no_parts)
+                            uint32_t *no_parts)
   {
     *no_parts= 0;
     return 0;
   }
 
-  virtual uint32_t index_flags(uint idx, uint part, bool all_parts) const =0;
+  virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *table_arg __attribute__((unused)),
                         KEY *key_info __attribute__((unused)),
-                        uint num_of_keys __attribute__((unused)))
+                        uint32_t num_of_keys __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
   virtual int prepare_drop_index(Table *table_arg __attribute__((unused)),
-                                 uint *key_num __attribute__((unused)),
-                                 uint num_of_keys __attribute__((unused)))
+                                 uint32_t *key_num __attribute__((unused)),
+                                 uint32_t num_of_keys __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
   virtual int final_drop_index(Table *table_arg __attribute__((unused)))
   { return (HA_ERR_WRONG_COMMAND); }
 
-  uint max_record_length() const
+  uint32_t max_record_length() const
   { return cmin((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
-  uint max_keys() const
+  uint32_t max_keys() const
   { return cmin((unsigned int)MAX_KEY, max_supported_keys()); }
-  uint max_key_parts() const
+  uint32_t max_key_parts() const
   { return cmin((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
-  uint max_key_length() const
+  uint32_t max_key_length() const
   { return cmin((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
-  uint max_key_part_length(void) const
+  uint32_t max_key_part_length(void) const
   { return cmin((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
 
-  virtual uint max_supported_record_length(void) const
+  virtual uint32_t max_supported_record_length(void) const
   { return HA_MAX_REC_LENGTH; }
-  virtual uint max_supported_keys(void) const { return 0; }
-  virtual uint max_supported_key_parts(void) const { return MAX_REF_PARTS; }
-  virtual uint max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
-  virtual uint max_supported_key_part_length(void) const { return 255; }
-  virtual uint min_record_length(uint options __attribute__((unused))) const
+  virtual uint32_t max_supported_keys(void) const { return 0; }
+  virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
+  virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
+  virtual uint32_t max_supported_key_part_length(void) const { return 255; }
+  virtual uint32_t min_record_length(uint32_t options __attribute__((unused))) const
   { return 1; }
 
   virtual bool low_byte_first(void) const { return 1; }
-  virtual uint checksum(void) const { return 0; }
+  virtual uint32_t checksum(void) const { return 0; }
   virtual bool is_crashed(void) const  { return 0; }
   virtual bool auto_repair(void) const { return 0; }
 
@@ -1647,7 +1647,7 @@ public:
   /**
     @note lock_count() can return > 1 if the table is MERGE or partitioned.
   */
-  virtual uint lock_count(void) const { return 1; }
+  virtual uint32_t lock_count(void) const { return 1; }
   /**
     Is not invoked for non-transactional temporary tables.
 
@@ -1702,7 +1702,7 @@ public:
   virtual bool
     register_query_cache_table(THD *thd __attribute__((unused)),
                                char *table_key __attribute__((unused)),
-                               uint key_length __attribute__((unused)),
+                               uint32_t key_length __attribute__((unused)),
                                qc_engine_callback *engine_callback,
                                uint64_t *engine_data __attribute__((unused)))
   {
@@ -1758,7 +1758,7 @@ public:
  virtual void cond_pop(void) { return; }
 
  virtual Item
-   *idx_cond_push(uint keyno __attribute__((unused)),
+   *idx_cond_push(uint32_t keyno __attribute__((unused)),
                   Item* idx_cond __attribute__((unused)))
  { return idx_cond; }
 
@@ -1767,7 +1767,7 @@ public:
   */
  virtual bool
    check_if_incompatible_data(HA_CREATE_INFO *create_info __attribute__((unused)),
-                              uint table_changes __attribute__((unused)))
+                              uint32_t table_changes __attribute__((unused)))
  { return COMPATIBLE_DATA_NO; }
 
  /* On-line ALTER Table interface */
@@ -1799,7 +1799,7 @@ public:
    check_if_supported_alter(Table *altered_table __attribute__((unused)),
                             HA_CREATE_INFO *create_info,
                             HA_ALTER_FLAGS *alter_flags __attribute__((unused)),
-                            uint table_changes)
+                            uint32_t table_changes)
  {
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
@@ -1935,8 +1935,8 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *name, int mode, uint test_if_locked)=0;
-  virtual int index_init(uint idx,
+  virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
+  virtual int index_init(uint32_t idx,
                          bool sorted __attribute__((unused)))
   { active_index= idx; return 0; }
   virtual int index_end() { active_index= MAX_KEY; return 0; }
@@ -2020,12 +2020,12 @@ private:
   virtual int end_bulk_insert(void) { return 0; }
   virtual int index_read(unsigned char * buf __attribute__((unused)),
                          const unsigned char * key __attribute__((unused)),
-                         uint key_len __attribute__((unused)),
+                         uint32_t key_len __attribute__((unused)),
                          enum ha_rkey_function find_flag __attribute__((unused)))
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_read_last(unsigned char * buf __attribute__((unused)),
                               const unsigned char * key __attribute__((unused)),
-                              uint key_len __attribute__((unused)))
+                              uint32_t key_len __attribute__((unused)))
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
   /**
     This method is similar to update_row, however the handler doesn't need
@@ -2042,7 +2042,7 @@ private:
   */
   virtual int bulk_update_row(const unsigned char *old_data __attribute__((unused)),
                               unsigned char *new_data __attribute__((unused)),
-                              uint *dup_key_found __attribute__((unused)))
+                              uint32_t *dup_key_found __attribute__((unused)))
   {
     assert(false);
     return HA_ERR_WRONG_COMMAND;
@@ -2071,9 +2071,9 @@ private:
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual bool check_and_repair(THD *thd __attribute__((unused)))
   { return true; }
-  virtual int disable_indexes(uint mode __attribute__((unused)))
+  virtual int disable_indexes(uint32_t mode __attribute__((unused)))
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int enable_indexes(uint mode __attribute__((unused)))
+  virtual int enable_indexes(uint32_t mode __attribute__((unused)))
   { return HA_ERR_WRONG_COMMAND; }
   virtual int discard_or_import_tablespace(bool discard __attribute__((unused)))
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
@@ -2138,24 +2138,24 @@ public:
     table= table_arg;
   }
   int dsmrr_init(handler *h, KEY *key, RANGE_SEQ_IF *seq_funcs, 
-                 void *seq_init_param, uint n_ranges, uint mode, 
+                 void *seq_init_param, uint32_t n_ranges, uint32_t mode, 
                  HANDLER_BUFFER *buf);
   void dsmrr_close();
   int dsmrr_fill_buffer(handler *h);
   int dsmrr_next(handler *h, char **range_info);
 
-  int dsmrr_info(uint keyno, uint n_ranges, uint keys, uint *bufsz,
-                 uint *flags, COST_VECT *cost);
+  int dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys, uint32_t *bufsz,
+                 uint32_t *flags, COST_VECT *cost);
 
-  ha_rows dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq, 
-                            void *seq_init_param, uint n_ranges, uint *bufsz,
-                            uint *flags, COST_VECT *cost);
+  ha_rows dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq, 
+                            void *seq_init_param, uint32_t n_ranges, uint32_t *bufsz,
+                            uint32_t *flags, COST_VECT *cost);
 private:
-  bool key_uses_partial_cols(uint keyno);
-  bool choose_mrr_impl(uint keyno, ha_rows rows, uint *flags, uint *bufsz, 
+  bool key_uses_partial_cols(uint32_t keyno);
+  bool choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags, uint32_t *bufsz, 
                        COST_VECT *cost);
-  bool get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags, 
-                               uint *buffer_size, COST_VECT *cost);
+  bool get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags, 
+                               uint32_t *buffer_size, COST_VECT *cost);
 };
 
 extern const char *ha_row_type[];

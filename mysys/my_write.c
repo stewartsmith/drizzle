@@ -23,7 +23,7 @@
 size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFlags)
 {
   size_t writenbytes, written;
-  uint errors;
+  uint32_t errors;
   errors=0; written=0;
 
   /* The behavior of write(fd, buf, 0) is not portable */
