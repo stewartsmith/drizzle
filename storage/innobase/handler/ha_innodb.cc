@@ -68,8 +68,6 @@ static int64_t index_cond_func_innodb(void *arg);
 
 #define INSIDE_HA_INNOBASE_CC
 
-typedef int64_t longlong;
-
 /* Include necessary InnoDB headers */
 extern "C" {
 #include "storage/innobase/include/univ.i"

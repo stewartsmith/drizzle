@@ -1434,7 +1434,7 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
   DESCRIPTION
     This function takes the decimal representation of integer number
     from string str and converts it to an signed or unsigned
-    long long integer value.
+    int64_t value.
     Space characters and tab are ignored.
     A sign character might precede the digit characters.
     The number may have any number of pre-zero digits.

@@ -474,13 +474,13 @@ AC_DEFUN([DRIZZLE_STACK_DIRECTION],
 
 AC_DEFUN([DRIZZLE_CHECK_LONGLONG_TO_FLOAT],
 [
-AC_MSG_CHECKING(if conversion of longlong to float works)
+AC_MSG_CHECKING(if conversion of int64_t to float works)
 AC_CACHE_VAL(ac_cv_conv_longlong_to_float,
 [AC_TRY_RUN([#include <stdio.h>
-typedef long long longlong;
+typedef int64_t int64_t;
 int main()
 {
-  longlong ll=1;
+  int64_t ll=1;
   float f;
   FILE *file=fopen("conftestval", "w");
   f = (float) ll;

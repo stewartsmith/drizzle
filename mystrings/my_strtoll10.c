@@ -40,7 +40,7 @@ static unsigned long lfactor[9]=
   DESCRIPTION
     This function takes the decimal representation of integer number
     from string nptr and converts it to an signed or unsigned
-    long long integer value.
+    int64_t value.
     Space characters and tab are ignored.
     A sign character might precede the digit characters. The number
     may have any number of pre-zero digits.
