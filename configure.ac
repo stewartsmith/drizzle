@@ -68,27 +68,8 @@ DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-dnl Include m4 
-sinclude(m4/alloca.m4)
-sinclude(m4/check_cpu.m4)
-sinclude(m4/character_sets.m4)
-sinclude(m4/compiler_flag.m4)
 sinclude(m4/dtrace.m4)
-sinclude(m4/plugins.m4)
-sinclude(m4/large_file.m4)
-sinclude(m4/misc.m4)
-sinclude(m4/readline.m4)
-sinclude(m4/ssl.m4)
-sinclude(m4/pkg.m4)
-sinclude(m4/lib-link.m4)
-sinclude(m4/lib-prefix.m4)
-sinclude(m4/gettext.m4)
-sinclude(m4/progtest.m4)
-sinclude(m4/po.m4)
-sinclude(m4/nls.m4)
-sinclude(m4/iconv.m4)
-sinclude(m4/lib-ld.m4)
-sinclude(m4/ac_cxx_header_stdcxx_98.m4)
+sinclude(m4/character_sets.m4)
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
