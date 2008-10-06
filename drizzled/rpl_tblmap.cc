@@ -15,8 +15,6 @@
 
 #include <drizzled/server_includes.h>
 
-#ifdef HAVE_REPLICATION
-
 #include "rpl_tblmap.h"
 
 #define MAYBE_TABLE_NAME(T) ((T) ? (T)->s->table_name.str : "<>")
@@ -132,5 +130,3 @@ void table_mapping::clear_tables()
   my_hash_reset(&m_table_ids);
   return;
 }
-
-#endif

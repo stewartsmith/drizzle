@@ -340,7 +340,6 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_long_ptr	sys_server_id(&vars, "server_id", &server_id, fix_server_id);
 static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_protocol",
 						      &opt_slave_compressed_protocol);
-#ifdef HAVE_REPLICATION
 static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
                                                          &slave_allow_batching);
 static sys_var_set_slave_mode slave_exec_mode(&vars,
@@ -348,7 +347,6 @@ static sys_var_set_slave_mode slave_exec_mode(&vars,
                                               &slave_exec_mode_options,
                                               &slave_exec_mode_typelib,
                                               0);
-#endif
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
 					     &slow_launch_time);
 static sys_var_thd_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
@@ -734,7 +732,6 @@ static int check_completion_type(THD *thd __attribute__((unused)),
   If we are changing the thread variable, we have to copy it to NET too
 */
 
-#ifdef HAVE_REPLICATION
 static void fix_net_read_timeout(THD *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
@@ -753,17 +750,6 @@ static void fix_net_retry_count(THD *thd, enum_var_type type)
   if (type != OPT_GLOBAL)
     thd->net.retry_count=thd->variables.net_retry_count;
 }
-#else /* HAVE_REPLICATION */
-static void fix_net_read_timeout(THD *thd __attribute__((unused)),
-				 enum_var_type type __attribute__((unused)))
-{}
-static void fix_net_write_timeout(THD *thd __attribute__((unused)),
-				  enum_var_type type __attribute__((unused)))
-{}
-static void fix_net_retry_count(THD *thd __attribute__((unused)),
-				enum_var_type type __attribute__((unused)))
-{}
-#endif /* HAVE_REPLICATION */
 
 
 extern void fix_delay_key_write(THD *thd __attribute__((unused)),
@@ -903,20 +889,16 @@ static void fix_max_binlog_size(THD *thd __attribute__((unused)),
                                 enum_var_type type __attribute__((unused)))
 {
   mysql_bin_log.set_max_size(max_binlog_size);
-#ifdef HAVE_REPLICATION
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
-#endif
   return;
 }
 
 static void fix_max_relay_log_size(THD *thd __attribute__((unused)),
                                    enum_var_type type __attribute__((unused)))
 {
-#ifdef HAVE_REPLICATION
   active_mi->rli.relay_log.set_max_size(max_relay_log_size ?
                                         max_relay_log_size: max_binlog_size);
-#endif
   return;
 }
 

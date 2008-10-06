@@ -37,8 +37,6 @@
 */
 #define SLAVE_MAX_HEARTBEAT_PERIOD 4294967
 
-#ifdef HAVE_REPLICATION
-
 #include "log.h"
 #include <mysys/my_list.h>
 #include "rpl_filter.h"
@@ -226,8 +224,6 @@ extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
        
 extern I_List<THD> threads;
-
-#endif /* HAVE_REPLICATION */
 
 /* masks for start/stop operations on io and sql slave threads */
 #define SLAVE_IO  1

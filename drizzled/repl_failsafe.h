@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef HAVE_REPLICATION
-
 #include <drizzled/server_includes.h>
 
 typedef enum {RPL_AUTH_MASTER=0,RPL_ACTIVE_SLAVE,RPL_IDLE_SLAVE,
@@ -49,5 +47,3 @@ void init_slave_list();
 void end_slave_list();
 int register_slave(THD* thd, uchar* packet, uint packet_length);
 void unregister_slave(THD* thd, bool only_mine, bool need_mutex);
-
-#endif /* HAVE_REPLICATION */
