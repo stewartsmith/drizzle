@@ -453,7 +453,7 @@ uint32_t bitmap_bits_set(const MY_BITMAP *map)
   assert(map->bitmap);
   *map->last_word_ptr&= ~map->last_word_mask; /*Reset last bits to zero*/
   while (m < end)
-    res+= my_count_bits_ushort(*m++);
+    res+= my_count_bits_uint16(*m++);
   return res;
 }
 

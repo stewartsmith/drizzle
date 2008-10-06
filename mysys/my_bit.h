@@ -36,7 +36,7 @@ static inline uint32_t my_count_bits(uint64_t v)
                          _my_bits_nbits[(unsigned char) (v2 >> 24)]);
 }
 
-static inline uint32_t my_count_bits_ushort(ushort v)
+static inline uint32_t my_count_bits_uint16(uint16_t v)
 {
   return _my_bits_nbits[v];
 }
