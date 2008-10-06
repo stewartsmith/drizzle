@@ -221,8 +221,6 @@ drizzled_SOURCES = \
 		   sql_derived.cc \
 		   sql_client.cc \
 		   stacktrace.cc \
-		   repl_failsafe.h \
-		   repl_failsafe.cc \
 		   sql_olap.cc \
 		   tztime.cc \
 		   my_decimal.cc\

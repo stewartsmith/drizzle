@@ -30,7 +30,6 @@
 #include "rpl_rli.h"
 #include "sql_repl.h"
 #include "rpl_filter.h"
-#include "repl_failsafe.h"
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/sql_common.h>
 #include <libdrizzle/errmsg.h>
@@ -2159,8 +2158,6 @@ err:
   /* Forget the relay log's format */
   delete mi->rli.relay_log.description_event_for_queue;
   mi->rli.relay_log.description_event_for_queue= 0;
-  // TODO: make rpl_status part of Master_info
-  change_rpl_status(RPL_ACTIVE_SLAVE,RPL_IDLE_SLAVE);
   assert(thd->net.buff != 0);
   net_end(&thd->net); // destructor will not free it, because net.vio is 0
   close_thread_tables(thd);
@@ -3137,8 +3134,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
     if (++err_count == master_retry_count)
     {
       slave_was_killed=1;
-      if (reconnect)
-        change_rpl_status(RPL_ACTIVE_SLAVE,RPL_LOST_SOLDIER);
       break;
     }
     safe_sleep(thd,mi->connect_retry,(CHECK_KILLED_FUNC)io_slave_killed,
@@ -3156,10 +3151,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                                 mi->host, mi->port,
                                 IO_RPL_LOG_NAME,
                                 llstr(mi->master_log_pos,llbuff));
-    }
-    else
-    {
-      change_rpl_status(RPL_IDLE_SLAVE,RPL_ACTIVE_SLAVE);
     }
   }
   drizzle->reconnect= 1;

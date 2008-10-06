@@ -17,7 +17,6 @@
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
-#include "repl_failsafe.h"
 #include "logging.h"
 #include <drizzled/drizzled_error_messages.h>
 
@@ -187,7 +186,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_CHARSETS]=    CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_COLLATIONS]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_SLAVE_HOSTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOG_EVENTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
@@ -541,12 +539,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
     break;
   }
-  case COM_REGISTER_SLAVE:
-  {
-    if (!register_slave(thd, (unsigned char*)packet, packet_length))
-      my_ok(thd);
-    break;
-  }
   case COM_CHANGE_USER:
   {
     status_var_increment(thd->status_var.com_other);
@@ -779,7 +771,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       thd->server_id = slave_server_id;
 
       mysql_binlog_send(thd, thd->strdup(packet + 10), (my_off_t) pos, flags);
-      unregister_slave(thd,1,1);
       /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
       error = true;
       break;
@@ -1263,11 +1254,6 @@ mysql_execute_command(THD *thd)
   {
     res= mysqld_show_warnings(thd, (uint32_t)
 			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
-  case SQLCOM_SHOW_SLAVE_HOSTS:
-  {
-    res = show_slave_hosts(thd);
     break;
   }
   case SQLCOM_SHOW_BINLOG_EVENTS:
