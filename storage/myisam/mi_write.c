@@ -864,7 +864,7 @@ void mi_end_bulk_insert(MI_INFO *info)
         delete_tree(& info->bulk_insert[i]);
       }
     }
-    my_free((void *)info->bulk_insert, MYF(0));
+    free((void *)info->bulk_insert);
     info->bulk_insert=0;
   }
 }

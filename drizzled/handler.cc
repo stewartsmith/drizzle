@@ -303,7 +303,7 @@ static int ha_finish_errors(void)
   /* Allocate a pointer array for the error message strings. */
   if (! (errmsgs= my_error_unregister(HA_ERR_FIRST, HA_ERR_LAST)))
     return 1;
-  my_free((uchar*) errmsgs, MYF(0));
+  free((uchar*) errmsgs);
   return 0;
 }
 
@@ -326,7 +326,7 @@ int ha_finalize_handlerton(st_plugin_int *plugin)
   if (hton && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(hton);
 
-  my_free((uchar*)hton, MYF(0));
+  free((uchar*)hton);
 
   return(0);
 }
@@ -1345,7 +1345,7 @@ int ha_recover(HASH *commit_list)
   plugin_foreach(NULL, xarecover_handlerton, 
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
-  my_free((uchar*)info.list, MYF(0));
+  free((uchar*)info.list);
   if (info.found_foreign_xids)
     sql_print_warning(_("Found %d prepared XA transactions"), 
                       info.found_foreign_xids);
@@ -3140,7 +3140,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   build_table_filename(path, FN_REFLEN-1, db, name, "", 0);
   // Save the frm file
   error= writefrm(path, frmblob, frmlen);
-  my_free(frmblob, MYF(0));
+  free(frmblob);
   if (error)
     return(2);
 

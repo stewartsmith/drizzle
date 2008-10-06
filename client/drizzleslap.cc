@@ -400,14 +400,14 @@ burnin:
 
   /* now free all the strings we created */
   if (opt_password)
-    my_free(opt_password, MYF(0));
+    free(opt_password);
 
-  my_free(concurrency, MYF(0));
+  free(concurrency);
 
   statement_cleanup(create_statements);
   for (x= 0; x < query_statements_count; x++)
     statement_cleanup(query_statements[x]);
-  my_free(query_statements, MYF(0));
+  free(query_statements);
   statement_cleanup(pre_statements);
   statement_cleanup(post_statements);
   option_cleanup(engine_options);
@@ -415,7 +415,7 @@ burnin:
 
 #ifdef HAVE_SMEM
   if (shared_memory_base_name)
-    my_free(shared_memory_base_name, MYF(MY_ALLOW_ZERO_PTR));
+    free(shared_memory_base_name);
 #endif
   free_defaults(defaults_argv);
   my_end(my_end_arg);
@@ -502,7 +502,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   if (opt_csv_str)
     print_conclusions_csv(&conclusion);
 
-  my_free(head_sptr, MYF(0));
+  free(head_sptr);
 
 }
 
@@ -730,7 +730,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start= argument;
-      my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
@@ -1088,7 +1088,7 @@ build_insert_string(void)
     }
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
-      my_free(blob_ptr, MYF(0));
+      free(blob_ptr);
   }
 
   insert_string.append(")", 1);
@@ -1474,7 +1474,7 @@ get_options(int *argc,char ***argv)
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
-      my_free(tmp_string, MYF(0));
+      free(tmp_string);
     }
     else if (create_string)
     {
@@ -1513,7 +1513,7 @@ get_options(int *argc,char ***argv)
       if (user_supplied_query)
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
-      my_free(tmp_string, MYF(0));
+      free(tmp_string);
     }
     else if (user_supplied_query)
     {
@@ -1545,7 +1545,7 @@ get_options(int *argc,char ***argv)
     if (user_supplied_pre_statements)
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
-    my_free(tmp_string, MYF(0));
+    free(tmp_string);
   }
   else if (user_supplied_pre_statements)
   {
@@ -1577,7 +1577,7 @@ get_options(int *argc,char ***argv)
     if (user_supplied_post_statements)
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);
-    my_free(tmp_string, MYF(0));
+    free(tmp_string);
   }
   else if (user_supplied_post_statements)
   {
@@ -1674,9 +1674,9 @@ drop_primary_key_list(void)
   if (primary_keys_number_of)
   {
     for (counter= 0; counter < primary_keys_number_of; counter++)
-      my_free(primary_keys[counter], MYF(0));
+      free(primary_keys[counter]);
 
-    my_free(primary_keys, MYF(0));
+    free(primary_keys);
   }
 
   return 0;
@@ -2117,7 +2117,7 @@ end:
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
 
-  my_free(con, MYF(0));
+  free(con);
 
   return(0);
 }
@@ -2419,10 +2419,10 @@ option_cleanup(option_string *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0));
+      free(ptr->string);
     if (ptr->option)
-      my_free(ptr->option, MYF(0));
-    my_free(ptr, MYF(0));
+      free(ptr->option);
+    free(ptr);
   }
 }
 
@@ -2437,8 +2437,8 @@ statement_cleanup(statement *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0));
-    my_free(ptr, MYF(0));
+      free(ptr->string);
+    free(ptr);
   }
 }
 

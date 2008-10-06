@@ -136,7 +136,7 @@ void bitmap_free(MY_BITMAP *map)
   {
     if (map->mutex)
       pthread_mutex_destroy(map->mutex);
-    my_free((char*) map->bitmap, MYF(0));
+    free((char*) map->bitmap);
     map->bitmap=0;
   }
   return;

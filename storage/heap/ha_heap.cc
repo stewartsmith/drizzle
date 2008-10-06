@@ -645,7 +645,7 @@ int ha_heap::create(const char *name, Table *table_arg,
 				       parts * sizeof(HA_KEYSEG),
 				       MYF(MY_WME))))
   {
-    my_free((void *) columndef, MYF(0));
+    free((void *) columndef);
     return my_errno;
   }
 
@@ -768,8 +768,8 @@ int ha_heap::create(const char *name, Table *table_arg,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
   
-  my_free((uchar*) keydef, MYF(0));
-  my_free((void *) columndef, MYF(0));
+  free((uchar*) keydef);
+  free((void *) columndef);
   assert(file == 0);
   return (error);
 }

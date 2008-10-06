@@ -585,7 +585,7 @@ int ha_myisam::open(const char *name, int mode, uint test_if_locked)
     recinfo must be freed.
   */
   if (recinfo)
-    my_free((uchar*) recinfo, MYF(0));
+    free((uchar*) recinfo);
   return my_errno;
 }
 
@@ -1656,7 +1656,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
                    records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
-  my_free((uchar*) recinfo, MYF(0));
+  free((uchar*) recinfo);
   return(error);
 }
 

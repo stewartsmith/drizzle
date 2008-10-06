@@ -114,7 +114,7 @@ int finalize_udf(st_plugin_int *plugin)
     (void)plugin->plugin->deinit(udff);
 
   if (udff)
-    my_free(udff, MYF(0));
+    free(udff);
 
   return 0;
 }

@@ -216,11 +216,11 @@ int modify_defaults_file(const char *file_location, const char *option,
   if (my_fclose(cnf_file, MYF(MY_WME)))
     return(1);
 
-  my_free(file_buffer, MYF(0));
+  free(file_buffer);
   return(0);
 
 err:
-  my_free(file_buffer, MYF(0));
+  free(file_buffer);
 malloc_err:
   my_fclose(cnf_file, MYF(0));
   return(1); /* out of resources */

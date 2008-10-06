@@ -303,7 +303,7 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 {
   if (p->handle)
     dlclose(p->handle);
-  my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
+  free(p->dl.str);
 }
 
 
@@ -724,7 +724,7 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 
   pi= plugin_ref_to_int(plugin);
 
-  my_free((uchar*) plugin, MYF(MY_WME));
+  free((uchar*) plugin);
 
   if (lex)
   {
@@ -1576,7 +1576,7 @@ static void update_func_str(THD *thd __attribute__((unused)), struct st_mysql_sy
   if (var->flags & PLUGIN_VAR_MEMALLOC)
   {
     *(char **)tgt= my_strdup(*(char **) save, MYF(0));
-    my_free(old, MYF(0));
+    free(old);
   }
 }
 
@@ -1949,7 +1949,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
         flags & PLUGIN_VAR_THDLOCAL && flags & PLUGIN_VAR_MEMALLOC)
     {
       char **ptr= (char**) pivar->real_value_ptr(thd, OPT_SESSION);
-      my_free(*ptr, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      free(*ptr);
       *ptr= NULL;
     }
   }
@@ -1957,7 +1957,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
 
   assert(vars->table_plugin == NULL);
 
-  my_free(vars->dynamic_variables_ptr, MYF(MY_ALLOW_ZERO_PTR));
+  free(vars->dynamic_variables_ptr);
   vars->dynamic_variables_ptr= NULL;
   vars->dynamic_variables_size= 0;
   vars->dynamic_variables_version= 0;
@@ -2008,7 +2008,7 @@ static void plugin_vars_free_values(sys_var *vars)
     {
       /* Free the string from global_system_variables. */
       char **valptr= (char**) piv->real_value_ptr(NULL, OPT_GLOBAL);
-      my_free(*valptr, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      free(*valptr);
       *valptr= NULL;
     }
   }

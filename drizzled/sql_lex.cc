@@ -360,8 +360,8 @@ void lex_end(LEX *lex)
 {
   if (lex->yacc_yyss)
   {
-    my_free(lex->yacc_yyss, MYF(0));
-    my_free(lex->yacc_yyvs, MYF(0));
+    free(lex->yacc_yyss);
+    free(lex->yacc_yyvs);
     lex->yacc_yyss= 0;
     lex->yacc_yyvs= 0;
   }

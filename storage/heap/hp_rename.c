@@ -32,7 +32,7 @@ int heap_rename(const char *old_name, const char *new_name)
       pthread_mutex_unlock(&THR_LOCK_heap);
       return(my_errno);
     }
-    my_free(info->name,MYF(0));
+    free(info->name);
     info->name=name_buff;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);

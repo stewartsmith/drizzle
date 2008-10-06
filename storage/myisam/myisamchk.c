@@ -1553,11 +1553,13 @@ err:
   {
     my_afree((uchar*) temp_buff);
   }
-  my_free(mi_get_rec_buff_ptr(info, sort_param.record),
-          MYF(MY_ALLOW_ZERO_PTR));
+  void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
+  if (rec_buff_ptr != NULL)
+    free(rec_buff_ptr);
+
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   end_io_cache(&info->rec_cache);
-  my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
+  free(sort_info.buff);
   sort_info.buff=0;
   share->state.sortkey=sort_key;
   return(flush_blocks(param, share->key_cache, share->kfile) |

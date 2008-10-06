@@ -572,7 +572,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     format_length	Length of string
 
   NOTES
-    The returned object should be freed with my_free()
+    The returned object should be freed with free()
 
   RETURN
     NULL ponter:	Error
@@ -606,7 +606,7 @@ DATE_TIME_FORMAT
     format		format to copy
 
   NOTES
-    The returned object should be freed with my_free()
+    The returned object should be freed with free()
 
   RETURN
     NULL ponter:	Error

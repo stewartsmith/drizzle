@@ -684,7 +684,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (my_close(file,MYF(0)))
     goto err;
-  my_free((char*) rec_per_key_part,MYF(0));
+  free((char*) rec_per_key_part);
   return(0);
 
 err:
@@ -708,7 +708,7 @@ err:
                                        MY_UNPACK_FILENAME | MY_APPEND_EXT),
 			     MYF(0));
   }
-  my_free((char*) rec_per_key_part, MYF(0));
+  free((char*) rec_per_key_part);
   return(my_errno=save_errno);		/* return the fatal errno */
 }
 

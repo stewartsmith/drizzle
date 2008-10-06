@@ -507,7 +507,7 @@ struct ilink
   static void operator delete(void* ptr_arg,
                               size_t size __attribute__((unused)))
   {
-     my_free((uchar*)ptr_arg, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
+     free((uchar*)ptr_arg);
   }
 
   inline ilink()

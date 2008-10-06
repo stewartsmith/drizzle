@@ -2722,7 +2722,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
                       "master could be corrupt but a more likely cause "
                       "of this is a bug"),
                     errmsg);
-    my_free((char*) tmp_buf, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) tmp_buf);
     return(1);
   }
 
@@ -2758,7 +2758,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
     delete ev;
     mi->master_log_pos += inc_pos;
     pthread_mutex_unlock(&mi->data_lock);
-    my_free((char*)tmp_buf, MYF(0));
+    free((char*)tmp_buf);
     return(error);
   }
   default:
@@ -2808,7 +2808,7 @@ static int32_t queue_binlog_ver_3_event(Master_info *mi, const char *buf,
                       "master could be corrupt but a more likely cause of "
                       "this is a bug"),
                     errmsg);
-    my_free((char*) tmp_buf, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) tmp_buf);
     return(1);
   }
   pthread_mutex_lock(&mi->data_lock);

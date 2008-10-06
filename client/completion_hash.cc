@@ -17,7 +17,7 @@
  *
  * by  Andi Gutmans <andi@zend.com>
  * and Zeev Suraski <zeev@zend.com>
- * Small portability changes by Monty. Changed also to use my_malloc/my_free
+ * Small portability changes by Monty.
  */
 
 #include "client_priv.h"
@@ -40,8 +40,8 @@ uint hashpjw(const char *arKey, uint nKeyLength)
 
 int completion_hash_init(HashTable *ht, uint nSize)
 {
-  ht->arBuckets = (Bucket **) my_malloc(nSize* sizeof(Bucket *),
-					MYF(MY_ZEROFILL | MY_WME));
+  ht->arBuckets = (Bucket **) malloc(nSize* sizeof(Bucket *));
+  memset(ht->arBuckets, 0, nSize* sizeof(Bucket *));
 
   if (!ht->arBuckets)
   {
@@ -211,7 +211,7 @@ void completion_hash_clean(HashTable *ht)
 void completion_hash_free(HashTable *ht)
 {
   completion_hash_clean(ht);
-  my_free(ht->arBuckets, MYF(0));
+  free(ht->arBuckets);
 }
 
 

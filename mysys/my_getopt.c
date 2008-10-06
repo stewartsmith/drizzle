@@ -636,7 +636,7 @@ static int setval(const struct my_option *opts, char **value, char *argument,
       break;
     case GET_STR_ALLOC:
       if ((*((char**) result_pos)))
-	my_free((*(char**) result_pos), MYF(MY_WME | MY_FAE));
+	free((*(char**) result_pos));
       if (!(*((char**) result_pos)= my_strdup(argument, MYF(MY_WME))))
 	return EXIT_OUT_OF_MEMORY;
       break;
@@ -1013,7 +1013,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     */
     if ((char*) (intptr_t) value)
     {
-      my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
+      free((*(char**) variable));
       *((char**) variable)= my_strdup((char*) (intptr_t) value, MYF(MY_WME));
     }
     break;
@@ -1038,7 +1038,7 @@ static void fini_one_value(const struct my_option *option, char **variable,
 {
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_STR_ALLOC:
-    my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
+    free((*(char**) variable));
     *((char**) variable)= NULL;
     break;
   default: /* dummy default to avoid compiler warnings */

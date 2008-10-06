@@ -633,7 +633,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                 plugin_data(tmp_plugin, handlerton *)))
         {
           /* bad file, legacy_db_type did not match the name */
-          my_free(buff, MYF(0));
+          free(buff);
           goto err;
         }
         /*
@@ -649,7 +649,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         /* purecov: begin inspected */
         error= 8;
         my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), name.str);
-        my_free(buff, MYF(0));
+        free(buff);
         goto err;
         /* purecov: end */
       }
@@ -665,14 +665,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       //reading long table comment
       if (next_chunk + 2 > buff_end)
       {
-          my_free(buff, MYF(0));
+          free(buff);
           goto err;
       }
       share->comment.length = uint2korr(next_chunk);
       if (! (share->comment.str= strmake_root(&share->mem_root,
                                (char*)next_chunk + 2, share->comment.length)))
       {
-          my_free(buff, MYF(0));
+          free(buff);
           goto err;
       }
       next_chunk+= 2 + share->comment.length;
@@ -1161,12 +1161,12 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
   delete handler_file;
   if (buff)
-    my_free(buff, MYF(0));
+    free(buff);
   return (0);
 
  err:
   if (buff)
-    my_free(buff, MYF(0));
+    free(buff);
   share->error= error;
   share->open_errno= my_errno;
   share->errarg= errarg;
@@ -1443,7 +1443,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   outparam->file= 0;				// For easier error checking
   outparam->db_stat=0;
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
-  my_free((char*) outparam->alias, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) outparam->alias);
   return (error);
 }
 
@@ -1463,7 +1463,7 @@ int closefrm(register Table *table, bool free_share)
 
   if (table->db_stat)
     error=table->file->close();
-  my_free((char*) table->alias, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) table->alias);
   table->alias= 0;
   if (table->field)
   {
@@ -1533,7 +1533,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
   if (! save_names)
   {
     if (names)
-      my_free((uchar*) buf,MYF(0));
+      free((uchar*) buf);
   }
   else if (!names)
     memset(save_names, 0, sizeof(save_names));

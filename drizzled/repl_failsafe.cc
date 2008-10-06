@@ -144,7 +144,7 @@ int register_slave(THD* thd, uchar* packet, uint packet_length)
   return res;
 
 err:
-  my_free(si, MYF(MY_WME));
+  free(si);
   my_message(ER_UNKNOWN_ERROR, errmsg, MYF(0)); /* purecov: inspected */
 err2:
   return 1;
@@ -160,7 +160,7 @@ extern "C" uint32_t
 
 extern "C" void slave_info_free(void *s)
 {
-  my_free(s, MYF(MY_WME));
+  free(s);
 }
 
 void init_slave_list()

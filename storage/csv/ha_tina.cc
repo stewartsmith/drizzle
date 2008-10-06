@@ -201,7 +201,7 @@ static TINA_SHARE *get_share(const char *table_name,
 
 error:
   pthread_mutex_unlock(&tina_mutex);
-  my_free((uchar*) share, MYF(0));
+  free((uchar*) share);
 
   return NULL;
 }
@@ -367,7 +367,7 @@ static int free_share(TINA_SHARE *share)
     hash_delete(&tina_open_tables, (uchar*) share);
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->mutex);
-    my_free((uchar*) share, MYF(0));
+    free((uchar*) share);
   }
   pthread_mutex_unlock(&tina_mutex);
 
@@ -1316,7 +1316,7 @@ int ha_tina::repair(THD* thd,
 
   free_root(&blobroot, MYF(0));
 
-  my_free((char*)buf, MYF(0));
+  free((char*)buf);
 
   if (rc == HA_ERR_END_OF_FILE)
   {
@@ -1504,7 +1504,7 @@ int ha_tina::check(THD* thd,
   
   free_root(&blobroot, MYF(0));
 
-  my_free((char*)buf, MYF(0));
+  free((char*)buf);
   thd_proc_info(thd, old_proc_info);
 
   if ((rc != HA_ERR_END_OF_FILE) || count)

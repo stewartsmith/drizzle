@@ -39,7 +39,7 @@ void* my_realloc(void* oldpoint, size_t size, myf my_flags)
   if (!(point = malloc(size)))
   {
     if (my_flags & MY_FREE_ON_ERROR)
-      my_free(oldpoint,my_flags);
+      free(oldpoint);
     if (my_flags & MY_HOLD_ON_ERROR)
       return(oldpoint);
     my_errno=errno;
@@ -55,7 +55,7 @@ void* my_realloc(void* oldpoint, size_t size, myf my_flags)
   if ((point= (uchar*) realloc(oldpoint,size)) == NULL)
   {
     if (my_flags & MY_FREE_ON_ERROR)
-      my_free(oldpoint, my_flags);
+      free(oldpoint);
     if (my_flags & MY_HOLD_ON_ERROR)
       return(oldpoint);
     my_errno=errno;

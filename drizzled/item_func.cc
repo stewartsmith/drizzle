@@ -2739,7 +2739,7 @@ public:
     {
       if (my_hash_insert(&hash_user_locks,(uchar*) this))
       {
-	my_free(key,MYF(0));
+	free(key);
 	key=0;
       }
     }
@@ -2749,7 +2749,7 @@ public:
     if (key)
     {
       hash_delete(&hash_user_locks,(uchar*) this);
-      my_free(key, MYF(0));
+      free(key);
     }
     pthread_cond_destroy(&cond);
   }
@@ -2968,7 +2968,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
     memcpy(entry->name.str, name.str, name.length+1);
     if (my_hash_insert(hash,(uchar*) entry))
     {
-      my_free((char*) entry,MYF(0));
+      free((char*) entry);
       return 0;
     }
   }
@@ -3076,7 +3076,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
   {
     char *pos= (char*) entry+ ALIGN_SIZE(sizeof(user_var_entry));
     if (entry->value && entry->value != pos)
-      my_free(entry->value,MYF(0));
+      free(entry->value);
     entry->value= 0;
     entry->length= 0;
   }
@@ -3091,7 +3091,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
       if (entry->value != pos)
       {
 	if (entry->value)
-	  my_free(entry->value,MYF(0));
+	  free(entry->value);
 	entry->value=pos;
       }
     }

@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 
   for (argument= arguments+1 ; *argument ; argument++)
     puts(*argument);
-  my_free((char*) load_default_groups,MYF(0));
+  free((char*) load_default_groups);
   free_defaults(arguments);
 
   exit(error);

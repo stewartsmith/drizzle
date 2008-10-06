@@ -803,7 +803,7 @@ static void close_connections(void)
     drizzle_close(&next_con->drizzle);
     if (next_con->util_drizzle)
       drizzle_close(next_con->util_drizzle);
-    my_free(next_con->name, MYF(MY_ALLOW_ZERO_PTR));
+    free(next_con->name);
   }
   return;
 }
@@ -818,7 +818,7 @@ static void close_files(void)
     {
       my_fclose(cur_file->file, MYF(0));
     }
-    my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
+    free((uchar*) cur_file->file_name);
     cur_file->file_name= 0;
   }
   return;
@@ -848,13 +848,13 @@ static void free_used_memory(void)
   for (i= 0; i < 10; i++)
   {
     if (var_reg[i].alloced_len)
-      my_free(var_reg[i].str_val, MYF(MY_WME));
+      free(var_reg[i].str_val);
   }
   while (embedded_server_arg_count > 1)
-    my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
+    free(embedded_server_args[--embedded_server_arg_count]);
 
   free_all_replace();
-  my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_pass);
   free_defaults(default_argv);
 
   return;
@@ -1586,10 +1586,10 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
 
 void var_free(void *v)
 {
-  my_free(((VAR*) v)->str_val, MYF(MY_WME));
-  my_free(((VAR*) v)->env_s, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
+  free(((VAR*) v)->str_val);
+  free(((VAR*) v)->env_s);
   if (((VAR*)v)->alloced)
-    my_free(v, MYF(MY_WME));
+    free(v);
 }
 
 
@@ -1714,7 +1714,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
       die("Out of memory");
     putenv(v->env_s);
-    my_free(old_env_s, MYF(MY_ALLOW_ZERO_PTR));
+    free(old_env_s);
   }
   return;
 }
@@ -3518,7 +3518,7 @@ static void do_close_connection(struct st_command *command)
     drizzle_close(con->util_drizzle);
   con->util_drizzle= 0;
 
-  my_free(con->name, MYF(0));
+  free(con->name);
 
   /*
     When the connection is closed set name to "-closed_connection-"
@@ -4029,7 +4029,7 @@ static int read_line(char *buf, int size)
         my_fclose(cur_file->file, MYF(0));
         cur_file->file= 0;
       }
-      my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
+      free((uchar*) cur_file->file_name);
       cur_file->file_name= 0;
       if (cur_file == file_stack)
       {
@@ -4598,7 +4598,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'p':
     if (argument)
     {
-      my_free(opt_pass, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_pass);
       opt_pass= my_strdup(argument, MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       tty_password= 0;
@@ -5939,11 +5939,11 @@ void do_get_replace_column(struct st_command *command)
     if (!*from)
       die("Wrong number of arguments to replace_column in '%s'", command->query);
     to= get_string(&buff, &from, command);
-    my_free(replace_column[column_number-1], MY_ALLOW_ZERO_PTR);
+    free(replace_column[column_number-1]);
     replace_column[column_number-1]= my_strdup(to, MYF(MY_WME | MY_FAE));
     set_if_bigger(max_replace_column, column_number);
   }
-  my_free(start, MYF(0));
+  free(start);
   command->last_argument= command->end;
 }
 
@@ -5955,7 +5955,7 @@ void free_replace_column()
   {
     if (replace_column[i])
     {
-      my_free(replace_column[i], 0);
+      free(replace_column[i]);
       replace_column[i]= 0;
     }
   }
@@ -6033,7 +6033,7 @@ void do_get_replace(struct st_command *command)
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
   free_pointer_array(&to_array);
-  my_free(start, MYF(0));
+  free(start);
   command->last_argument= command->end;
   return;
 }
@@ -6044,7 +6044,7 @@ void free_replace()
 
   if (glob_replace)
   {
-    my_free(glob_replace,MYF(0));
+    free(glob_replace);
     glob_replace=0;
   }
   return;
@@ -6255,7 +6255,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   return res;
 
 err:
-  my_free(res,0);
+  free(res);
   die("Error parsing replace_regex \"%s\"", expr);
   return 0;
 }
@@ -6347,9 +6347,9 @@ void free_replace_regex()
   if (glob_replace_regex)
   {
     delete_dynamic(&glob_replace_regex->regex_arr);
-    my_free(glob_replace_regex->even_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(glob_replace_regex->odd_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(glob_replace_regex,MYF(0));
+    free(glob_replace_regex->even_buf);
+    free(glob_replace_regex->odd_buf);
+    free(glob_replace_regex);
     glob_replace_regex=0;
   }
 }
@@ -6533,7 +6533,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   if (!(follow=(FOLLOWS*) my_malloc((states+2)*sizeof(FOLLOWS),MYF(MY_WME))))
   {
     free_sets(&sets);
-    my_free(found_set,MYF(0));
+    free(found_set);
     return(0);
   }
 
@@ -6755,9 +6755,9 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
           replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
-  my_free(follow,MYF(0));
+  free(follow);
   free_sets(&sets);
-  my_free(found_set,MYF(0));
+  free(found_set);
   return(replace);
 }
 
@@ -6772,7 +6772,7 @@ int init_sets(REP_SETS *sets,uint states)
   if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
                                            SET_MALLOC_HUNC,MYF(MY_WME))))
   {
-    my_free(sets->set,MYF(0));
+    free(sets->set);
     return 1;
   }
   return 0;
@@ -6833,8 +6833,8 @@ void free_last_set(REP_SETS *sets)
 
 void free_sets(REP_SETS *sets)
 {
-  my_free(sets->set_buffer,MYF(0));
-  my_free(sets->bit_buffer,MYF(0));
+  free(sets->set_buffer);
+  free(sets->bit_buffer);
   return;
 }
 
@@ -6971,7 +6971,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     if (!(pa->str= (uchar*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
                                       MYF(MY_WME))))
     {
-      my_free((char*) pa->typelib.type_names,MYF(0));
+      free((char*) pa->typelib.type_names);
       return (-1);
     }
     pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(uchar*)+
@@ -7032,9 +7032,9 @@ void free_pointer_array(POINTER_ARRAY *pa)
   if (pa->typelib.count)
   {
     pa->typelib.count=0;
-    my_free((char*) pa->typelib.type_names,MYF(0));
+    free((char*) pa->typelib.type_names);
     pa->typelib.type_names=0;
-    my_free(pa->str,MYF(0));
+    free(pa->str);
   }
 } /* free_pointer_array */
 

@@ -117,7 +117,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start=argument;
-      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';   /* Destroy argument */
       if (*start)
@@ -217,8 +217,8 @@ int main(int argc,char *argv[])
     error=execute_commands(&drizzle,argc,commands);
     drizzle_close(&drizzle);
   }
-  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(user,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
+  free(user);
   free_defaults(save_argv);
   my_end(my_end_arg);
   exit(error ? 1 : 0);

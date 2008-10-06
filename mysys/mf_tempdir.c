@@ -75,7 +75,7 @@ void free_tmpdir(MY_TMPDIR *tmpdir)
 {
   uint i;
   for (i=0; i<=tmpdir->max; i++)
-    my_free(tmpdir->list[i], MYF(0));
+    free(tmpdir->list[i]);
   delete_dynamic(&tmpdir->full_list);
   pthread_mutex_destroy(&tmpdir->mutex);
 }

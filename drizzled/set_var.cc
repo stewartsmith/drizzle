@@ -615,7 +615,7 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
   var_str->value= res;
   var_str->value_length= new_length;
   rw_unlock(var_mutex);
-  my_free(old_value, MYF(MY_ALLOW_ZERO_PTR));
+  free(old_value);
   return 0;
 }
 
@@ -1581,7 +1581,7 @@ void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
     old= (thd->variables.*offset);
     (thd->variables.*offset)= new_value;
   }
-  my_free((char*) old, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) old);
   return;
 }
 
@@ -1620,7 +1620,7 @@ bool sys_var_thd_date_time_format::check(THD *thd, set_var *var)
     update is aborted
   */
   var->save_result.date_time_format= date_time_format_copy(thd, format);
-  my_free((char*) format, MYF(0));
+  free((char*) format);
   return var->save_result.date_time_format == 0;
 }
 
@@ -2068,7 +2068,7 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
   old_value= var_str->value;
   var_str->value= res;
   var_str->value_length= str_length;
-  my_free(old_value, MYF(MY_ALLOW_ZERO_PTR));
+  free(old_value);
   if (log_state)
   {
     switch (log_type) {
@@ -3190,7 +3190,7 @@ static KEY_CACHE *create_key_cache(const char *name, uint length)
   {
     if (!new NAMED_LIST(&key_caches, name, length, (uchar*) key_cache))
     {
-      my_free((char*) key_cache, MYF(0));
+      free((char*) key_cache);
       key_cache= 0;
     }
     else
@@ -3229,7 +3229,7 @@ void free_key_cache(const char *name __attribute__((unused)),
                     KEY_CACHE *key_cache)
 {
   ha_end_key_cache(key_cache);
-  my_free((char*) key_cache, MYF(0));
+  free((char*) key_cache);
 }
 
 

@@ -155,7 +155,7 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
     /* Reset lock type. */
     (*ldata)->type= TL_UNLOCK;
   }
-  my_free((uchar*) sql_lock, MYF(0));
+  free((uchar*) sql_lock);
   *mysql_lock= 0;
 }
 
@@ -335,7 +335,7 @@ void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
   if (sql_lock->table_count)
     unlock_external(thd,sql_lock->table,sql_lock->table_count);
-  my_free((uchar*) sql_lock,MYF(0));
+  free((uchar*) sql_lock);
   return;
 }
 
@@ -510,7 +510,7 @@ void mysql_lock_downgrade_write(THD *thd, Table *table,
   {
     for (uint i=0; i < locked->lock_count; i++)
       thr_downgrade_write_lock(locked->locks[i], new_lock_type);
-    my_free((uchar*) locked,MYF(0));
+    free((uchar*) locked);
   }
 }
 
@@ -527,7 +527,7 @@ void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock)
   {
     for (uint i=0; i < locked->lock_count; i++)
       thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
-    my_free((uchar*) locked,MYF(0));
+    free((uchar*) locked);
   }
   return;
 }
@@ -560,7 +560,7 @@ bool mysql_lock_abort_for_thread(THD *thd, Table *table)
                                      table->in_use->thread_id))
         result= true;
     }
-    my_free((uchar*) locked,MYF(0));
+    free((uchar*) locked);
   }
   return(result);
 }
@@ -601,8 +601,8 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
   }
 
   /* Delete old, not needed locks */
-  my_free((uchar*) a,MYF(0));
-  my_free((uchar*) b,MYF(0));
+  free((uchar*) a);
+  free((uchar*) b);
   return(sql_lock);
 }
 

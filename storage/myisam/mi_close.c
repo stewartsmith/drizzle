@@ -56,7 +56,9 @@ int mi_close(register MI_INFO *info)
   myisam_open_list=list_delete(myisam_open_list,&info->open_list);
   pthread_mutex_unlock(&share->intern_lock);
 
-  my_free(mi_get_rec_buff_ptr(info, info->rec_buff), MYF(MY_ALLOW_ZERO_PTR));
+  void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);
+  if (rec_buff_ptr != NULL)
+    free(rec_buff_ptr);
   if (flag)
   {
     if (share->kfile >= 0 &&
@@ -79,8 +81,8 @@ int mi_close(register MI_INFO *info)
     }
     if (share->decode_trees)
     {
-      my_free((uchar*) share->decode_trees,MYF(0));
-      my_free((uchar*) share->decode_tables,MYF(0));
+      free((uchar*) share->decode_trees);
+      free((uchar*) share->decode_tables);
     }
     thr_lock_delete(&share->lock);
     pthread_mutex_destroy(&share->intern_lock);
@@ -92,14 +94,14 @@ int mi_close(register MI_INFO *info)
 	rwlock_destroy(&share->key_root_lock[i]);
       }
     }
-    my_free((uchar*) info->s,MYF(0));
+    free((uchar*) info->s);
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
 
   if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
     error = my_errno;
 
-  my_free((uchar*) info,MYF(0));
+  free((uchar*) info);
 
   if (error)
   {

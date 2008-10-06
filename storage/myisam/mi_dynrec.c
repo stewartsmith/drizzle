@@ -49,8 +49,8 @@ static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
 /* Play it safe; We have a small stack when using threads */
 #undef my_alloca
 #undef my_afree
-#define my_alloca(A) my_malloc((A),MYF(0))
-#define my_afree(A) my_free((A),MYF(0))
+#define my_alloca(A) malloc((A))
+#define my_afree(A) free((A))
 
 	/* Interface function from MI_INFO */
 
@@ -1518,7 +1518,9 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
     error=mi_unique_comp(def, record, old_record, def->null_are_equal);
   if (info->s->base.blobs)
   {
-    my_free(mi_get_rec_buff_ptr(info, info->rec_buff), MYF(MY_ALLOW_ZERO_PTR));
+    void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);
+    if (rec_buff_ptr != NULL)
+      free(rec_buff_ptr);
     info->rec_buff=rec_buff;
   }
   my_afree(old_record);

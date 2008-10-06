@@ -158,7 +158,7 @@ extern "C" uchar *get_key_conn(user_conn *buff, size_t *length,
 
 extern "C" void free_user(struct user_conn *uc)
 {
-  my_free((char*) uc,MYF(0));
+  free((char*) uc);
 }
 
 void thd_init_client_charset(THD *thd, uint cs_number)

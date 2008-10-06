@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
       ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
       azread_frm(&reader_handle, ptr);
       azwrite_frm(&writer_handle, ptr, reader_handle.frm_length);
-      my_free(ptr, MYF(0));
+      free(ptr);
     }
 
     if (reader_handle.comment_length)
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
       ptr= (char *)my_malloc(sizeof(char) * reader_handle.comment_length, MYF(0));
       azread_comment(&reader_handle, ptr);
       azwrite_comment(&writer_handle, ptr, reader_handle.comment_length);
-      my_free(ptr, MYF(0));
+      free(ptr);
     }
 
     while ((read= azread_row(&reader_handle, &error)))
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     azread_frm(&reader_handle, ptr);
     my_write(frm_file, (uchar*) ptr, reader_handle.frm_length, MYF(0));
     my_close(frm_file, MYF(0));
-    my_free(ptr, MYF(0));
+    free(ptr);
   }
 
 end:

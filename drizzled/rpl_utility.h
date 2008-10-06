@@ -138,7 +138,7 @@ public:
   }
 
   ~table_def() {
-    my_free(m_memory, MYF(0));
+    free(m_memory);
     m_type= 0;
     m_size= 0;
   }

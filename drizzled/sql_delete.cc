@@ -873,7 +873,7 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
                                              OTM_OPEN))))
       (void) rm_temporary_table(table_type, path, frm_only);
     free_table_share(share);
-    my_free((char*) table,MYF(0));
+    free((char*) table);
     /*
       If we return here we will not have logged the truncation to the bin log
       and we will not my_ok() to the client.

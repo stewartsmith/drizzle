@@ -806,7 +806,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
         */
         convert_path_to_forward_slashes((char*) ce->fname);
   ce->print(result_file, print_event_info, true);
-  my_free((char*)ce->fname,MYF(MY_WME));
+  free((char*)ce->fname);
   delete ce;
       }
       else
@@ -861,7 +861,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
       }
 
       if (fname)
-  my_free(fname, MYF(MY_WME));
+  free(fname);
       break;
     }
     case TABLE_MAP_EVENT:
@@ -1127,11 +1127,11 @@ static void warning(const char *format,...)
 */
 static void cleanup()
 {
-  my_free(pass,MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) database, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) host, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) user, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) dirname_for_local_load, MYF(MY_ALLOW_ZERO_PTR));
+  free(pass);
+  free((char*) database);
+  free((char*) host);
+  free((char*) user);
+  free((char*) dirname_for_local_load);
 
   delete glob_description_event;
   if (drizzle)
@@ -1193,7 +1193,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'p':
     if (argument)
     {
-      my_free(pass,MYF(MY_ALLOW_ZERO_PTR));
+      free(pass);
       char *start=argument;
       pass= my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */

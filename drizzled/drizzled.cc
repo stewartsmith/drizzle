@@ -840,18 +840,15 @@ void clean_up(bool print_message)
   free_status_vars();
   end_thr_alarm(1);			/* Free allocated memory */
   my_free_open_file_info();
-  my_free((char*) global_system_variables.date_format,
-	  MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) global_system_variables.time_format,
-	  MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) global_system_variables.datetime_format,
-	  MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) global_system_variables.date_format);
+  free((char*) global_system_variables.time_format);
+  free((char*) global_system_variables.datetime_format);
   if (defaults_argv)
     free_defaults(defaults_argv);
-  my_free(sys_init_connect.value, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(sys_init_slave.value, MYF(MY_ALLOW_ZERO_PTR));
+  free(sys_init_connect.value);
+  free(sys_init_slave.value);
   free_tmpdir(&mysql_tmpdir_list);
-  my_free(slave_load_tmpdir,MYF(MY_ALLOW_ZERO_PTR));
+  free(slave_load_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
   if (opt_relay_logname)
@@ -873,7 +870,7 @@ void clean_up(bool print_message)
   (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
   // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
 /*  if (freeme != NULL)
-    my_free(freeme, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));  */
+    free(freeme);  */
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -1886,7 +1883,7 @@ void *my_str_malloc_mysqld(size_t size)
 
 void my_str_free_mysqld(void *ptr)
 {
-  my_free((uchar*)ptr, MYF(MY_FAE));
+  free((uchar*)ptr);
 }
 
 
@@ -2382,7 +2379,7 @@ static int init_server_components()
     }
     if (ln == buf)
     {
-      my_free(opt_bin_logname, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_bin_logname);
       opt_bin_logname=my_strdup(buf, MYF(0));
     }
     if (mysql_bin_log.open_index_file(opt_binlog_index_name, ln))
@@ -4878,7 +4875,7 @@ static void fix_paths(void)
   if (opt_secure_file_priv)
   {
     convert_dirname(buff, opt_secure_file_priv, NULL);
-    my_free(opt_secure_file_priv, MYF(0));
+    free(opt_secure_file_priv);
     opt_secure_file_priv= my_strdup(buff, MYF(MY_FAE));
   }
 }

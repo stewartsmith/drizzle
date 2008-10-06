@@ -138,7 +138,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 
   if (error)
   {
-    my_free(screen_buff, MYF(0));
+    free(screen_buff);
     if (! pack_header_error_handler.is_handled)
       return(1);
 
@@ -149,7 +149,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
                     create_fields,info_length,
 		    screens, create_info->table_options, data_offset, db_file))
     {
-      my_free(screen_buff, MYF(0));
+      free(screen_buff);
       return(1);
     }
   }
@@ -186,7 +186,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     my_error(ER_WRONG_STRING_LENGTH, MYF(0),
              create_info->comment.str,"Table COMMENT",
              (uint) TABLE_COMMENT_MAXLEN);
-    my_free(screen_buff,MYF(0));
+    free(screen_buff);
     return(1);
   }
 
@@ -213,7 +213,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if ((file=create_frm(thd, file_name, db, table, reclength, fileinfo,
 		       create_info, keys, key_info)) < 0)
   {
-    my_free(screen_buff, MYF(0));
+    free(screen_buff);
     return(1);
   }
 
@@ -311,8 +311,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
       pack_fields(file, create_fields, data_offset))
     goto err;
 
-  my_free(screen_buff,MYF(0));
-  my_free(keybuff, MYF(0));
+  free(screen_buff);
+  free(keybuff);
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       (my_sync(file, MYF(MY_WME)) ||
@@ -341,8 +341,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   return(0);
 
 err:
-  my_free(screen_buff, MYF(0));
-  my_free(keybuff, MYF(0));
+  free(screen_buff);
+  free(keybuff);
 err2:
   my_close(file,MYF(MY_WME));
 err3:
@@ -992,7 +992,7 @@ static bool make_empty_rec(THD *thd, File file,
   error= my_write(file, buff, (size_t) reclength,MYF_RW) != 0;
 
 err:
-  my_free(buff, MYF(MY_FAE));
+  free(buff);
   thd->count_cuted_fields= old_count_cuted_fields;
   return(error);
 } /* make_empty_rec */

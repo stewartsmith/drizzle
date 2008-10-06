@@ -89,7 +89,7 @@ public:
   ~ha_tina()
   {
     if (chain_alloced)
-      my_free(chain, 0);
+      free(chain);
     if (file_buff)
       delete file_buff;
   }

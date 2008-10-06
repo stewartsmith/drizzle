@@ -4660,7 +4660,7 @@ int initialize_schema_table(st_plugin_int *plugin)
 
   return(0);
 err:
-  my_free(schema_table, MYF(0));
+  free(schema_table);
   return(1);
 }
 
@@ -4669,7 +4669,7 @@ int finalize_schema_table(st_plugin_int *plugin)
   ST_SCHEMA_TABLE *schema_table= (ST_SCHEMA_TABLE *)plugin->data;
 
   if (schema_table && plugin->plugin->deinit)
-    my_free(schema_table, MYF(0));
+    free(schema_table);
 
   return(0);
 }

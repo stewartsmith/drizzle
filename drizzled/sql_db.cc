@@ -80,7 +80,7 @@ extern "C" void lock_db_free_element(void *ptr);
 
 void lock_db_free_element(void *ptr)
 {
-  my_free(ptr, MYF(0));
+  free(ptr);
 }
 
 
@@ -150,7 +150,7 @@ extern "C" void free_dbopt(void *dbopt);
 
 void free_dbopt(void *dbopt)
 {
-  my_free((uchar*) dbopt, MYF(0));
+  free((uchar*) dbopt);
 }
 
 
@@ -292,7 +292,7 @@ static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
     
     if ((error= my_hash_insert(&dboptions, (uchar*) opt)))
     {
-      my_free(opt, MYF(0));
+      free(opt);
       goto end;
     }
   }
@@ -1323,7 +1323,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
   if (check_db_name(&new_db_file_name))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
-    my_free(new_db_file_name.str, MYF(0));
+    free(new_db_file_name.str);
 
     if (force_switch)
       mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
@@ -1341,7 +1341,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
                           new_db_file_name.str);
 
-      my_free(new_db_file_name.str, MYF(0));
+      free(new_db_file_name.str);
 
       /* Change db to NULL. */
 
@@ -1356,7 +1356,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
       /* Report an error and free new_db_file_name. */
 
       my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      my_free(new_db_file_name.str, MYF(0));
+      free(new_db_file_name.str);
 
       /* The operation failed. */
 

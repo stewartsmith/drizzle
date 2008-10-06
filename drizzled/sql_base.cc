@@ -611,7 +611,7 @@ static void free_cache_entry(Table *table)
 	unused_tables=0;
     }
   }
-  my_free((uchar*) table,MYF(0));
+  free((uchar*) table);
   return;
 }
 
@@ -622,7 +622,7 @@ void free_io_cache(Table *table)
   if (table->sort.io_cache)
   {
     close_cached_file(table->sort.io_cache);
-    my_free((uchar*) table->sort.io_cache,MYF(0));
+    free((uchar*) table->sort.io_cache);
     table->sort.io_cache=0;
   }
   return;
@@ -1552,7 +1552,7 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   if (free_share)
   {
     free_table_share(table->s);
-    my_free((char*) table,MYF(0));
+    free((char*) table);
   }
   return;
 }
@@ -1907,7 +1907,7 @@ Table *table_cache_insert_placeholder(THD *thd, const char *key,
 
   if (my_hash_insert(&open_cache, (uchar*)table))
   {
-    my_free((uchar*) table, MYF(0));
+    free((uchar*) table);
     return(NULL);
   }
 
@@ -2423,13 +2423,13 @@ Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
     /* Combine the follow two */
     if (error > 0)
     {
-      my_free((uchar*)table, MYF(0));
+      free((uchar*)table);
       pthread_mutex_unlock(&LOCK_open);
       return(NULL);
     }
     if (error < 0)
     {
-      my_free((uchar*)table, MYF(0));
+      free((uchar*)table);
       pthread_mutex_unlock(&LOCK_open);
       return(0); // VIEW
     }
@@ -2982,7 +2982,7 @@ Table *drop_locked_tables(THD *thd,const char *db, const char *table_name)
     broadcast_refresh();
   if (thd->locked_tables && thd->locked_tables->table_count == 0)
   {
-    my_free((uchar*) thd->locked_tables,MYF(0));
+    free((uchar*) thd->locked_tables);
     thd->locked_tables=0;
   }
   return(found);
@@ -3209,7 +3209,7 @@ retry:
                       share->db.str,"`.`",share->table_name.str,"`", NULL);
         thd->binlog_query(THD::STMT_QUERY_TYPE,
                           query, (ulong)(end-query), false, false);
-        my_free(query, MYF(0));
+        free(query);
       }
       else
       {
@@ -3884,7 +3884,7 @@ Table *open_temporary_table(THD *thd, const char *path, const char *db,
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     free_table_share(share);
-    my_free((char*) tmp_table,MYF(0));
+    free((char*) tmp_table);
     return(0);
   }
 

@@ -570,7 +570,7 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
                   (BUFFPEK *) file_ptrs.buffer + file_ptrs.elements,
                   action, walk_action_arg,
                   tree.compare, tree.custom_arg, &file);
-  my_free((char*) merge_buffer, MYF(0));
+  free((char*) merge_buffer);
   return res;
 }
 

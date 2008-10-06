@@ -4872,7 +4872,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       Note that MERGE tables do not have their children attached here.
     */
     intern_close_table(new_table);
-    my_free(new_table,MYF(0));
+    free(new_table);
   }
   pthread_mutex_lock(&LOCK_open);
   if (error)
@@ -4980,7 +4980,7 @@ end_online:
     if (t_table)
     {
       intern_close_table(t_table);
-      my_free(t_table, MYF(0));
+      free(t_table);
     }
     else
       sql_print_warning(_("Could not open table %s.%s after rename\n"),

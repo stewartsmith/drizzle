@@ -34,8 +34,8 @@
 #define my_safe_alloca(size, min_length) my_alloca(size)
 #define my_safe_afree(ptr, size, min_length) my_afree(ptr)
 #else
-#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : my_malloc(size,MYF(0)))
-#define my_safe_afree(ptr, size, min_length) if (size > min_length) my_free(ptr,MYF(0))
+#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : malloc(size))
+#define my_safe_afree(ptr, size, min_length) if (size > min_length) free(ptr)
 #endif
 
 

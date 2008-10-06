@@ -77,7 +77,7 @@ int my_close(File fd, myf MyFlags)
   }
   if ((uint) fd < my_file_limit && my_file_info[fd].type != UNOPEN)
   {
-    my_free(my_file_info[fd].name, MYF(0));
+    free(my_file_info[fd].name);
 #if !defined(HAVE_PREAD)
     pthread_mutex_destroy(&my_file_info[fd].mutex);
 #endif

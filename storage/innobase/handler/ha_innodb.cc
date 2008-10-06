@@ -1265,7 +1265,7 @@ innobase_print_identifier(
 				namelen = filename_to_tablename(temp_name,
 						qname, qnamelen);
 			}
-			my_free(temp_name, MYF(0));
+			free(temp_name);
 		}
 	}
 
@@ -1292,7 +1292,7 @@ innobase_print_identifier(
 		putc(q, f);
 	}
 
-	my_free(qname, MYF(MY_ALLOW_ZERO_PTR));
+	free(qname);
 }
 
 /**************************************************************************
@@ -1514,8 +1514,8 @@ innobase_init(
 	if (ret == FALSE) {
 		sql_print_error(
 			"InnoDB: syntax error in innodb_data_file_path");
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+			free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1545,8 +1545,8 @@ innobase_init(
 	  sql_print_error("syntax error in innodb_log_group_home_dir, or a "
 			  "wrong number of mirrored log groups");
 
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+		if (internal_innobase_data_file_path)
+			free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1626,8 +1626,8 @@ innobase_init(
 	err = innobase_start_or_create_for_mysql();
 
 	if (err != DB_SUCCESS) {
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+                        free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1663,8 +1663,8 @@ innobase_deinit(void *p __attribute__((unused)))
 			err = 1;
 		}
 		hash_free(&innobase_open_tables);
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+                        free(internal_innobase_data_file_path);
 		pthread_mutex_destroy(&innobase_share_mutex);
 		pthread_mutex_destroy(&prepare_commit_mutex);
 		pthread_mutex_destroy(&commit_threads_m);
@@ -2266,7 +2266,7 @@ ha_innobase::open(
 				"how you can resolve the problem.\n",
 				norm_name);
 		free_share(share);
-		my_free(upd_buff, MYF(0));
+		free(upd_buff);
 		my_errno = ENOENT;
 
 		return(HA_ERR_NO_SUCH_TABLE);
@@ -2282,7 +2282,7 @@ ha_innobase::open(
 				"how you can resolve the problem.\n",
 				norm_name);
 		free_share(share);
-		my_free(upd_buff, MYF(0));
+		free(upd_buff);
 		my_errno = ENOENT;
 
 		dict_table_decrement_handle_count(ib_table);
@@ -2387,7 +2387,7 @@ ha_innobase::close(void)
 
 	row_prebuilt_free(prebuilt);
 
-	my_free(upd_buff, MYF(0));
+	free(upd_buff);
 	free_share(share);
 
 	/* Tell InnoDB server that there might be work for
@@ -4715,7 +4715,7 @@ create_index(
 
 	error = convert_error_code_to_mysql(error, NULL);
 
-	my_free(field_lengths, MYF(0));
+	free(field_lengths);
 
 	return(error);
 }
@@ -5166,7 +5166,7 @@ innobase_drop_database(
 	}
 
 	error = row_drop_database_for_mysql(namebuf, trx);
-	my_free(namebuf, MYF(0));
+	free(namebuf);
 
 	/* Flush the log to reduce probability that the .frm files and
 	the InnoDB data dictionary get out-of-sync if the user runs
@@ -5351,7 +5351,7 @@ ha_innobase::records_in_range(
 	dtuple_free_for_mysql(heap1);
 	dtuple_free_for_mysql(heap2);
 
-	my_free(key_val_buff2, MYF(0));
+	free(key_val_buff2);
 
 	prebuilt->trx->op_info = (char*)"";
 
@@ -6075,7 +6075,7 @@ ha_innobase::free_foreign_key_create_info(
 	char*	str)	/* in, own: create info string to free	*/
 {
 	if (str) {
-		my_free(str, MYF(0));
+		free(str);
 	}
 }
 
@@ -6613,7 +6613,7 @@ innodb_show_status(
 			STRING_WITH_LEN(""), str, flen)) {
 		result= TRUE;
 	}
-	my_free(str, MYF(0));
+	free(str);
 
 	return(FALSE);
 }
@@ -6767,7 +6767,7 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 		if (my_hash_insert(&innobase_open_tables,
 				(uchar*) share)) {
 			pthread_mutex_unlock(&innobase_share_mutex);
-			my_free(share,0);
+			free(share);
 
 			return 0;
 		}
@@ -6790,7 +6790,7 @@ static void free_share(INNOBASE_SHARE* share)
 		hash_delete(&innobase_open_tables, (uchar*) share);
 		thr_lock_delete(&share->lock);
 		pthread_mutex_destroy(&share->mutex);
-		my_free(share, MYF(0));
+		free(share);
 	}
 
 	pthread_mutex_unlock(&innobase_share_mutex);

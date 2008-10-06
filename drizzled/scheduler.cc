@@ -108,7 +108,7 @@ thd_scheduler::thd_scheduler()
 
 thd_scheduler::~thd_scheduler()
 {
-  my_free(io_event, MYF(MY_ALLOW_ZERO_PTR));
+  free(io_event);
 }
 
 

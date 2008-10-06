@@ -13614,7 +13614,7 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
   if (hash_init(&hash, &my_charset_bin, (uint) file->stats.records, 0, 
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    my_free((char*) key_buffer,MYF(0));
+    free((char*) key_buffer);
     return(1);
   }
 
@@ -13663,14 +13663,14 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  my_free((char*) key_buffer,MYF(0));
+  free((char*) key_buffer);
   hash_free(&hash);
   file->extra(HA_EXTRA_NO_CACHE);
   (void) file->ha_rnd_end();
   return(0);
 
 err:
-  my_free((char*) key_buffer,MYF(0));
+  free((char*) key_buffer);
   hash_free(&hash);
   file->extra(HA_EXTRA_NO_CACHE);
   (void) file->ha_rnd_end();
@@ -13758,7 +13758,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
 
 		  sizeof(CACHE_FIELD*))))
   {
-    my_free((uchar*) cache->buff,MYF(0));		/* purecov: inspected */
+    free((uchar*) cache->buff);		/* purecov: inspected */
     cache->buff=0;				/* purecov: inspected */
     return(1);				/* purecov: inspected */
   }

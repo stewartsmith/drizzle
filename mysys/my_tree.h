@@ -66,7 +66,7 @@ void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);
 void reset_tree(TREE*);
-  /* similar to delete tree, except we do not my_free() blocks in mem_root
+  /* similar to delete tree, except we do not free() blocks in mem_root
    */
 #define is_tree_inited(tree) ((tree)->root != 0)
 

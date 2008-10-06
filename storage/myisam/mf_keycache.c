@@ -408,7 +408,7 @@ err:
   }
   if (keycache->block_root)
   {
-    my_free((uchar*) keycache->block_root, MYF(0));
+    free((uchar*) keycache->block_root);
     keycache->block_root= NULL;
   }
   my_errno= error;
@@ -618,7 +618,7 @@ void end_key_cache(KEY_CACHE *keycache, bool cleanup)
     {
       free(keycache->block_mem);
       keycache->block_mem= NULL;
-      my_free((uchar*) keycache->block_root, MYF(0));
+      free((uchar*) keycache->block_root);
       keycache->block_root= NULL;
     }
     keycache->disk_blocks= -1;
@@ -3573,7 +3573,7 @@ restart:
 
 err:
   if (cache != cache_buff)
-    my_free((uchar*) cache, MYF(0));
+    free((uchar*) cache);
   if (last_errno)
     errno=last_errno;                /* Return first error */
   return(last_errno != 0);

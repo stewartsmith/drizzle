@@ -325,7 +325,7 @@ void filesort_free_buffers(Table *table, bool full)
 {
   if (table->sort.record_pointers)
   {
-    my_free((uchar*) table->sort.record_pointers,MYF(0));
+    free((uchar*) table->sort.record_pointers);
     table->sort.record_pointers=0;
   }
   if (full)
@@ -346,8 +346,8 @@ void filesort_free_buffers(Table *table, bool full)
   }
   if (table->sort.addon_buf)
   {
-    my_free((char *) table->sort.addon_buf, MYF(0));
-    my_free((char *) table->sort.addon_field, MYF(MY_ALLOW_ZERO_PTR));
+    free((char *) table->sort.addon_buf);
+    free((char *) table->sort.addon_field);
     table->sort.addon_buf=0;
     table->sort.addon_field=0;
   }
@@ -389,7 +389,7 @@ static uchar *read_buffpek_from_file(IO_CACHE *buffpek_pointers, uint count,
     if (reinit_io_cache(buffpek_pointers,READ_CACHE,0L,0,0) ||
 	my_b_read(buffpek_pointers, (uchar*) tmp, length))
     {
-      my_free((char*) tmp, MYF(0));
+      free((char*) tmp);
       tmp=0;
     }
   }

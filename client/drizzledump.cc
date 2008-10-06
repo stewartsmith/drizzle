@@ -621,7 +621,7 @@ static void write_footer(FILE *sql_file)
 
 static void free_table_ent(char *key)
 {
-  my_free(key, MYF(0));
+  free(key);
 }
 
 
@@ -642,7 +642,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start=argument;
-      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password=my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';               /* Destroy argument */
       if (*start)
@@ -1027,7 +1027,7 @@ static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
     my_fclose(md_result_file, MYF(0));
-  my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
   if (hash_inited(&ignore_table))
     hash_free(&ignore_table);
   if (defaults_argv)
@@ -1113,7 +1113,7 @@ static void unescape(FILE *file,char *pos,uint length)
   fputs(tmp, file);
   fputc('\'', file);
   check_io(file);
-  my_free(tmp, MYF(MY_WME));
+  free(tmp);
   return;
 } /* unescape */
 
@@ -1473,7 +1473,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
   if (opt_order_by_primary)
   {
-    my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+    free(order_by);
     order_by= primary_key_fields(result_table);
   }
 
@@ -1560,12 +1560,12 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           if (drizzle_errno(drizzle) == ER_VIEW_INVALID)
             fprintf(sql_file, "\n-- failed on view %s: %s\n\n", result_table, scv_buff ? scv_buff : "");
 
-          my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
+          free(scv_buff);
 
           return(0);
         }
         else
-          my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
+          free(scv_buff);
 
         if (drizzle_num_rows(result))
         {
@@ -2659,7 +2659,7 @@ static int dump_all_tables_in_db(char *database)
     if (include_table((uchar*) hash_key, end - hash_key))
     {
       dump_table(table,database);
-      my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+      free(order_by);
       order_by= 0;
     }
   }
@@ -2799,7 +2799,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     dump_table(*pos, db);
 
   free_root(&root, MYF(0));
-  my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+  free(order_by);
   order_by= 0;
   if (opt_xml)
   {

@@ -303,7 +303,7 @@ void delete_dynamic(DYNAMIC_ARRAY *array)
   else
   if (array->buffer)
   {
-    my_free(array->buffer,MYF(MY_WME));
+    free(array->buffer);
     array->buffer=0;
     array->elements=array->max_element=0;
   }

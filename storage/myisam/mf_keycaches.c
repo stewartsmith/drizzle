@@ -70,7 +70,7 @@ typedef struct st_safe_hash_with_default
 
 static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 {
-  my_free((uchar*) entry, MYF(0));
+  free((uchar*) entry);
   return;
 }
 
@@ -228,7 +228,7 @@ static bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
     if (my_hash_insert(&hash->hash, (uchar*) entry))
     {
       /* This can only happen if hash got out of memory */
-      my_free((char*) entry, MYF(0));
+      free((char*) entry);
       error= 1;
       goto end;
     }

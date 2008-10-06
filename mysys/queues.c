@@ -191,7 +191,7 @@ void delete_queue(QUEUE *queue)
 {
   if (queue->root)
   {
-    my_free((uchar*) queue->root,MYF(0));
+    free((uchar*) queue->root);
     queue->root=0;
   }
   return;

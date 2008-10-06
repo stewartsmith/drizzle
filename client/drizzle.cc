@@ -1151,7 +1151,7 @@ int main(int argc,char *argv[])
           strncmp(link_name, "/dev/null", 10) == 0)
       {
         /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        my_free(histfile, MYF(MY_ALLOW_ZERO_PTR));
+        free(histfile);
         histfile= 0;
       }
     }
@@ -1202,17 +1202,17 @@ RETSIGTYPE drizzle_end(int sig)
     delete glob_buffer;
   if (processed_prompt)
     delete processed_prompt;
-  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(opt_drizzle_unix_port,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(histfile,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(histfile_tmp,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_user,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
+  free(opt_drizzle_unix_port);
+  free(histfile);
+  free(histfile_tmp);
+  free(current_db);
+  free(current_host);
+  free(current_user);
+  free(full_username);
+  free(part_username);
+  free(default_prompt);
+  free(current_prompt);
   free_defaults(defaults_argv);
   my_end(my_end_arg);
   exit(status.exit_status);
@@ -1565,7 +1565,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start= argument;
-      my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= strdup(argument);
       while (*argument) *argument++= 'x';        // Destroy argument
       if (*start)
@@ -1653,7 +1653,7 @@ static int get_options(int argc, char **argv)
   if (argc == 1)
   {
     skip_updates= 0;
-    my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+    free(current_db);
     current_db= strdup(*argv);
   }
   if (tty_password)
@@ -2444,7 +2444,7 @@ static void get_current_db(void)
 {
   DRIZZLE_RES *res;
 
-  my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+  free(current_db);
   current_db= NULL;
   /* In case of error below current_db will be NULL */
   if (!drizzle_query(&drizzle, "SELECT DATABASE()") &&
@@ -3045,7 +3045,7 @@ print_table_data(DRIZZLE_RES *result)
     (void) tee_fputs("\n", PAGER);
   }
   tee_puts(separator.c_str(), PAGER);
-  my_free(num_flag, MYF(MY_ALLOW_ZERO_PTR));
+  free(num_flag);
 }
 
 /**
@@ -3449,12 +3449,12 @@ com_connect(string *buffer, const char *line)
     tmp= get_arg(buff, 0);
     if (tmp && *tmp)
     {
-      my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+      free(current_db);
       current_db= strdup(tmp);
       tmp= get_arg(buff, 1);
       if (tmp)
       {
-        my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
+        free(current_host);
         current_host=strdup(tmp);
       }
     }
@@ -3633,7 +3633,7 @@ com_use(string *buffer __attribute__((unused)), const char *line)
       if (drizzle_select_db(&drizzle,tmp))
         return put_error(&drizzle);
     }
-    my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
+    free(current_db);
     current_db= strdup(tmp);
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
@@ -4286,8 +4286,8 @@ static void add_int_to_prompt(int toadd)
 
 static void init_username()
 {
-  my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
+  free(full_username);
+  free(part_username);
 
   DRIZZLE_RES *result;
   if (!drizzle_query(&drizzle,"select USER()") &&
@@ -4305,7 +4305,7 @@ static int com_prompt(string *buffer __attribute__((unused)),
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
-  my_free(current_prompt, MYF(MY_ALLOW_ZERO_PTR));
+  free(current_prompt);
   current_prompt= strdup(ptr ? ptr+1 : default_prompt);
   if (!ptr)
     tee_fprintf(stdout, "Returning to default PROMPT of %s\n",

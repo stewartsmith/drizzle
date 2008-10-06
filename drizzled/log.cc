@@ -397,7 +397,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
   assert(trx_data->empty());
   thd_set_ha_data(thd, binlog_hton, NULL);
   trx_data->~binlog_trx_data();
-  my_free((uchar*)trx_data, MYF(0));
+  free((uchar*)trx_data);
   return 0;
 }
 
@@ -1600,7 +1600,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     need_start_event=1;
   if (!open_index_file(index_file_name, 0))
     open(save_name, log_type, 0, io_cache_type, no_auto_events, max_size, 0);
-  my_free((uchar*) save_name, MYF(0));
+  free((uchar*) save_name);
 
 err:
   pthread_mutex_unlock(&LOCK_thread_count);
@@ -2131,7 +2131,7 @@ void DRIZZLE_BIN_LOG::new_file_impl(bool need_lock)
 
   open(old_name, log_type, new_name_ptr,
        io_cache_type, no_auto_events, max_size, 1);
-  my_free(old_name,MYF(0));
+  free(old_name);
 
 end:
   if (need_lock)
@@ -2250,7 +2250,7 @@ int THD::binlog_setup_trx_data()
       open_cached_file(&trx_data->trans_log, mysql_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
   {
-    my_free((uchar*)trx_data, MYF(MY_ALLOW_ZERO_PTR));
+    free((uchar*)trx_data);
     return(1);                      // Didn't manage to set it up
   }
   thd_set_ha_data(this, binlog_hton, trx_data);
@@ -3696,7 +3696,7 @@ void TC_LOG_MMAP::close()
       pthread_cond_destroy(&pages[i].cond);
     }
   case 3:
-    my_free((uchar*)pages, MYF(0));
+    free((uchar*)pages);
   case 2:
     my_munmap((char*)data, (size_t)file_length);
   case 1:

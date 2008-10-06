@@ -1250,7 +1250,7 @@ public:
   }
   ~NAMED_LIST()
   {
-    my_free((uchar*) name, MYF(0));
+    free((uchar*) name);
   }
   friend bool process_key_caches(process_key_cache_t func);
   friend void delete_elements(I_List<NAMED_LIST> *list,

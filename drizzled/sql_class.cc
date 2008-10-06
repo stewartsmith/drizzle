@@ -70,8 +70,8 @@ extern "C" void free_user_var(user_var_entry *entry)
 {
   char *pos= (char*) entry+ALIGN_SIZE(sizeof(*entry));
   if (entry->value && entry->value != pos)
-    my_free(entry->value, MYF(0));
-  my_free((char*) entry,MYF(0));
+    free(entry->value);
+  free((char*) entry);
 }
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
@@ -677,9 +677,9 @@ void THD::cleanup(void)
   delete_dynamic(&user_var_events);
   hash_free(&user_vars);
   close_temporary_tables(this);
-  my_free((char*) variables.time_format, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) variables.date_format, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) variables.datetime_format, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) variables.time_format);
+  free((char*) variables.date_format);
+  free((char*) variables.datetime_format);
   
   if (global_read_lock)
     unlock_global_read_lock(this);
@@ -2262,7 +2262,7 @@ uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
 void xid_free_hash(void *ptr)
 {
   if (!((XID_STATE*)ptr)->in_thd)
-    my_free((uchar*)ptr, MYF(0));
+    free((uchar*)ptr);
 }
 
 bool xid_cache_init()
@@ -2496,7 +2496,7 @@ namespace {
     ~Row_data_memory()
     {
       if (m_memory != 0 && m_release_memory_on_destruction)
-        my_free((uchar*) m_memory, MYF(MY_WME));
+        free((uchar*) m_memory);
     }
 
     /**

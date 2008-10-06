@@ -378,7 +378,7 @@ int ha_archive::free_share()
       if (azclose(&(share->archive_write)))
         rc= 1;
     }
-    my_free((uchar*) share, MYF(0));
+    free((uchar*) share);
   }
   pthread_mutex_unlock(&archive_mutex);
 
@@ -627,7 +627,7 @@ int ha_archive::create(const char *name, Table *table_arg,
         {
           my_read(frm_file, frm_ptr, file_stat.st_size, MYF(0));
           azwrite_frm(&create_stream, (char *)frm_ptr, file_stat.st_size);
-          my_free((uchar*)frm_ptr, MYF(0));
+          free((uchar*)frm_ptr);
         }
       }
       my_close(frm_file, MYF(0));
@@ -835,7 +835,7 @@ int ha_archive::write_row(uchar *buf)
 error:
   pthread_mutex_unlock(&share->mutex);
   if (read_buf)
-    my_free((uchar*) read_buf, MYF(0));
+    free((uchar*) read_buf);
 
   return(rc);
 }
@@ -1431,7 +1431,7 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   if (!(r->buffer= (uchar*) my_malloc(r->length,
                                     MYF(MY_WME))))
   {
-    my_free((char*) r, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) r);
     return(NULL); /* purecov: inspected */
   }
 
@@ -1440,8 +1440,8 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
 
 void ha_archive::destroy_record_buffer(archive_record_buffer *r) 
 {
-  my_free((char*) r->buffer, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) r, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) r->buffer);
+  free((char*) r);
   return;
 }
 
