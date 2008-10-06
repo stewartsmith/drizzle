@@ -291,14 +291,14 @@ dnl  C++ compiler does not!
 
 dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
 dnl       Need for all of this? 
-if test "${build_vendor}" = "sun"
-then
+case "$target_os" in
+  *solaris*)
   dnl Do we need both of these? 
-  dnl This is for C++
-  AC_DEFINE([__C99FEATURES__],[1],[C99 Features])
-  dnl This is for C
-  AC_DEFINE([_XOPEN_SOURCE],[600],[X/Open Level])
-fi
+  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  ;;
+esac
+
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
