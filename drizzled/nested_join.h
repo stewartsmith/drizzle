@@ -33,7 +33,7 @@ struct nested_join_st
        by the join optimizer. 
     Before each use the counters are zeroed by reset_nj_counters.
   */
-  uint              counter_;
+  uint32_t              counter_;
   nested_join_map   nj_map;          /* Bit used to identify this nested join*/
   /*
     (Valid only for semi-join nests) Bitmap of tables outside the semi-join

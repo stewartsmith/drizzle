@@ -26,11 +26,11 @@ size_t pack_row(Table* table, MY_BITMAP const* cols,
                 unsigned char *row_data, const unsigned char *data);
 
 int unpack_row(Relay_log_info const *rli,
-               Table *table, uint const colcnt,
+               Table *table, uint32_t const colcnt,
                unsigned char const *const row_data, MY_BITMAP const *cols,
                unsigned char const **const row_end, ulong *const master_reclength);
 
 // Fill table's record[0] with default values.
-int prepare_record(Table *const, const MY_BITMAP *cols, uint width, const bool);
+int prepare_record(Table *const, const MY_BITMAP *cols, uint32_t width, const bool);
 
 #endif /* DRIZZLED_RPL_RECORD_H */

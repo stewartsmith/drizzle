@@ -42,7 +42,7 @@ public:
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
-  READ_INFO(File file,uint tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(File file,uint32_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape,bool get_it_from_net, bool is_fifo);
   ~READ_INFO();
@@ -50,7 +50,7 @@ public:
   int read_fixed_length(void);
   int next_line(void);
   char unescape(char chr);
-  int terminator(char *ptr,uint length);
+  int terminator(char *ptr,uint32_t length);
   bool find_start_of_fields();
 
   /*
@@ -208,7 +208,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
 
   table->mark_columns_needed_for_insert();
 
-  uint tot_length=0;
+  uint32_t tot_length=0;
   bool use_blobs= 0, use_vars= 0;
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
@@ -563,7 +563,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
       }
       else
       {
-	uint length;
+	uint32_t length;
 	unsigned char save_chr;
 	if ((length=(uint) (read_info.row_end-pos)) >
 	    field->field_length)
@@ -623,7 +623,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
   Table *table= table_list->table;
-  uint enclosed_length;
+  uint32_t enclosed_length;
   uint64_t id;
   bool err;
 
@@ -642,7 +642,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
 
     while ((item= it++))
     {
-      uint length;
+      uint32_t length;
       unsigned char *pos;
       Item *real_item;
 
@@ -822,7 +822,7 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const cs,
+READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool get_it_from_net,
 		     bool is_fifo)
@@ -860,7 +860,7 @@ READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const 
 
 
   /* Set of a stack for unget if long terminators */
-  uint length=cmax(field_term_length,line_term_length)+1;
+  uint32_t length=cmax(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
   stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
 
@@ -913,10 +913,10 @@ READ_INFO::~READ_INFO()
 #define PUSH(A) *(stack_pos++)=(A)
 
 
-inline int READ_INFO::terminator(char *ptr,uint length)
+inline int READ_INFO::terminator(char *ptr,uint32_t length)
 {
   int chr=0;					// Keep gcc happy
-  uint i;
+  uint32_t i;
   for (i=1 ; i < length ; i++)
   {
     if ((chr=GET) != *++ptr)
@@ -1183,7 +1183,7 @@ int READ_INFO::next_line()
 #ifdef USE_MB
    if (my_mbcharlen(read_charset, chr) > 1)
    {
-       for (uint i=1;
+       for (uint32_t i=1;
             chr != my_b_EOF && i<my_mbcharlen(read_charset, chr);
             i++)
 	   chr = GET;

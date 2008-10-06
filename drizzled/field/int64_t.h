@@ -41,7 +41,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_LONGLONG;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
-  int store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void)
@@ -54,13 +54,13 @@ public:
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   uint32_t max_display_length() { return 20; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint max_length __attribute__((unused)),
+                      uint32_t max_length __attribute__((unused)),
                       bool low_byte_first __attribute__((unused)))
   {
     int64_t val;
@@ -81,7 +81,7 @@ public:
   }
 
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint param_data __attribute__((unused)),
+                              uint32_t param_data __attribute__((unused)),
                               bool low_byte_first __attribute__((unused)))
   {
     int64_t val;

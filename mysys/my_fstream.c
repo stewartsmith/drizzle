@@ -47,7 +47,7 @@ size_t my_fwrite(FILE *stream, const unsigned char *Buffer, size_t Count, myf My
   size_t writtenbytes =0;
   my_off_t seekptr;
 #if !defined(NO_BACKGROUND) && defined(USE_MY_STREAM)
-  uint errors;
+  uint32_t errors;
 #endif
 
 #if !defined(NO_BACKGROUND) && defined(USE_MY_STREAM)

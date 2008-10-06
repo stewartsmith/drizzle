@@ -90,7 +90,7 @@ class Master_info : public Slave_reporting_capability
   int events_till_disconnect;
   bool inited;
   volatile bool abort_slave;
-  volatile uint slave_running;
+  volatile uint32_t slave_running;
   volatile uint32_t slave_run_id;
   /*
      The difference in seconds between the clock of the master and the clock of

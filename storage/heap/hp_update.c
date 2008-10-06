@@ -23,8 +23,8 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   unsigned char *pos;
   bool auto_key_changed= 0;
   HP_SHARE *share= info->s;
-  uint old_length, new_length;
-  uint old_chunk_count, new_chunk_count;
+  uint32_t old_length, new_length;
+  uint32_t old_chunk_count, new_chunk_count;
 
   test_active(info);
   pos=info->current_ptr;

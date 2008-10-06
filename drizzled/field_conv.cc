@@ -371,7 +371,7 @@ static void do_cut_string_complex(Copy_field *copy)
   int well_formed_error;
   const CHARSET_INFO * const cs= copy->from_field->charset();
   const unsigned char *from_end= copy->from_ptr + copy->from_length;
-  uint copy_length= cs->cset->well_formed_len(cs,
+  uint32_t copy_length= cs->cset->well_formed_len(cs,
                                               (char*) copy->from_ptr,
                                               (char*) from_end, 
                                               copy->to_length / cs->mbmaxlen,
@@ -419,7 +419,7 @@ static void do_expand_string(Copy_field *copy)
 
 static void do_varstring1(Copy_field *copy)
 {
-  uint length= (uint) *(unsigned char*) copy->from_ptr;
+  uint32_t length= (uint) *(unsigned char*) copy->from_ptr;
   if (length > copy->to_length- 1)
   {
     length=copy->to_length - 1;
@@ -436,10 +436,10 @@ static void do_varstring1_mb(Copy_field *copy)
 {
   int well_formed_error;
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  uint from_length= (uint) *(unsigned char*) copy->from_ptr;
+  uint32_t from_length= (uint) *(unsigned char*) copy->from_ptr;
   const unsigned char *from_ptr= copy->from_ptr + 1;
-  uint to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
-  uint length= cs->cset->well_formed_len(cs, (char*) from_ptr,
+  uint32_t to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
+  uint32_t length= cs->cset->well_formed_len(cs, (char*) from_ptr,
                                          (char*) from_ptr + from_length,
                                          to_char_length, &well_formed_error);
   if (length < from_length)
@@ -455,7 +455,7 @@ static void do_varstring1_mb(Copy_field *copy)
 
 static void do_varstring2(Copy_field *copy)
 {
-  uint length=uint2korr(copy->from_ptr);
+  uint32_t length=uint2korr(copy->from_ptr);
   if (length > copy->to_length- HA_KEY_BLOB_LENGTH)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
@@ -473,10 +473,10 @@ static void do_varstring2_mb(Copy_field *copy)
 {
   int well_formed_error;
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  uint char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
-  uint from_length= uint2korr(copy->from_ptr);
+  uint32_t char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
+  uint32_t from_length= uint2korr(copy->from_ptr);
   const unsigned char *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
-  uint length= cs->cset->well_formed_len(cs, (char*) from_beg,
+  uint32_t length= cs->cset->well_formed_len(cs, (char*) from_beg,
                                          (char*) from_beg + from_length,
                                          char_length, &well_formed_error);
   if (length < from_length)

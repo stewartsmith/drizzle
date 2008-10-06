@@ -10,10 +10,10 @@ MY_COLLATION_HANDLER.
 
 typedef struct charset_info_st
 {
-  uint      number;
-  uint      primary_number;
-  uint      binary_number;
-  uint      state;
+  uint32_t      number;
+  uint32_t      primary_number;
+  uint32_t      binary_number;
+  uint32_t      state;
 
   const char *csname;
   const char *name;
@@ -30,9 +30,9 @@ typedef struct charset_info_st
   uchar state_map[256];
   uchar ident_map[256];
 
-  uint      strxfrm_multiply;
-  uint      mbminlen;
-  uint      mbmaxlen;
+  uint32_t      strxfrm_multiply;
+  uint32_t      mbminlen;
+  uint32_t      mbmaxlen;
   uint16    max_sort_char; /* For LIKE optimization */
 
   MY_CHARSET_HANDLER *cset;

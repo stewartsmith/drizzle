@@ -32,7 +32,7 @@
 #define ETIME ETIMEDOUT
 #endif
 
-uint thr_client_alarm;
+uint32_t thr_client_alarm;
 static int alarm_aborted=1;			/* No alarm thread */
 bool thr_alarm_inited= 0;
 volatile bool alarm_thread_running= 0;
@@ -43,7 +43,7 @@ static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
 static sigset_t full_signal_set;
 static QUEUE alarm_queue;
-static uint max_used_alarms=0;
+static uint32_t max_used_alarms=0;
 pthread_t alarm_thread;
 
 #ifdef USE_ALARM_THREAD
@@ -62,7 +62,7 @@ static int compare_uint32_t(void *not_used __attribute__((unused)),
   return (a < b) ? -1  : (a == b) ? 0 : 1;
 }
 
-void init_thr_alarm(uint max_alarms)
+void init_thr_alarm(uint32_t max_alarms)
 {
   sigset_t s;
   alarm_aborted=0;
@@ -112,7 +112,7 @@ void init_thr_alarm(uint max_alarms)
 }
 
 
-void resize_thr_alarm(uint max_alarms)
+void resize_thr_alarm(uint32_t max_alarms)
 {
   pthread_mutex_lock(&LOCK_alarm);
   /*
@@ -144,7 +144,7 @@ void resize_thr_alarm(uint max_alarms)
     when the alarm has been given
 */
 
-bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
+bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
 {
   time_t now;
 #ifndef USE_ONE_SIGNAL_HAND
@@ -236,7 +236,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
 #ifndef USE_ONE_SIGNAL_HAND
   sigset_t old_mask;
 #endif
-  uint i, found=0;
+  uint32_t i, found=0;
 
 #ifndef USE_ONE_SIGNAL_HAND
   pthread_sigmask(SIG_BLOCK,&full_signal_set,&old_mask);
@@ -320,7 +320,7 @@ static RETSIGTYPE process_alarm_part2(int sig __attribute__((unused)))
   {
     if (alarm_aborted)
     {
-      uint i;
+      uint32_t i;
       for (i=0 ; i < alarm_queue.elements ;)
       {
 	alarm_data=(ALARM*) queue_element(&alarm_queue,i);
@@ -448,7 +448,7 @@ void end_thr_alarm(bool free_structures)
 
 void thr_alarm_kill(my_thread_id thread_id)
 {
-  uint i;
+  uint32_t i;
   if (alarm_aborted)
     return;
   pthread_mutex_lock(&LOCK_alarm);
@@ -578,7 +578,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
-static uint thread_count;
+static uint32_t thread_count;
 
 #ifdef HPUX10
 typedef int * fd_set_ptr;
@@ -625,7 +625,7 @@ static void *test_thread(void *arg)
       if (wait_time == 7)
       {						/* Simulate alarm-miss */
 	fd_set readFDs;
-	uint max_connection=fileno(stdin);
+	uint32_t max_connection=fileno(stdin);
 	FD_ZERO(&readFDs);
 	FD_SET(max_connection,&readFDs);
 	retry=0;

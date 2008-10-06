@@ -5476,7 +5476,7 @@ in various fields of the handle object. */
 int
 ha_innobase::info(
 /*==============*/
-	uint flag)	/* in: what information MySQL requests */
+	uint32_t flag)	/* in: what information MySQL requests */
 {
 	dict_table_t*	ib_table;
 	dict_index_t*	index;
@@ -5903,10 +5903,10 @@ ha_innobase::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list)
   foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
 
   while (foreign != NULL) {
-	  uint i;
+	  uint32_t i;
 	  FOREIGN_KEY_INFO f_key_info;
 	  LEX_STRING *name= 0;
-          uint ulen;
+          uint32_t ulen;
           char uname[NAME_LEN+1];           /* Unencoded name */
           char db_name[NAME_LEN+1];
 	  const char *tmp_buff;
@@ -6751,7 +6751,7 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 {
 	INNOBASE_SHARE *share;
 	pthread_mutex_lock(&innobase_share_mutex);
-	uint length=(uint) strlen(table_name);
+	uint32_t length=(uint) strlen(table_name);
 
 	if (!(share=(INNOBASE_SHARE*) hash_search(&innobase_open_tables,
 				(unsigned char*) table_name,
@@ -6852,7 +6852,7 @@ ha_innobase::store_lock(
 
 	assert(thd == current_thd);
 	const bool in_lock_tables = thd_in_lock_tables(thd);
-	const uint sql_command = thd_sql_command(thd);
+	const uint32_t sql_command = thd_sql_command(thd);
 
 	if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -7994,7 +7994,7 @@ mysql_declare_plugin_end;
  */
 
 int ha_innobase::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                          uint n_ranges, uint mode, HANDLER_BUFFER *buf)
+                          uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf)
 {
   return ds_mrr.dsmrr_init(this, &table->key_info[active_index], 
                            seq, seq_init_param, n_ranges, mode, buf);
@@ -8005,10 +8005,10 @@ int ha_innobase::multi_range_read_next(char **range_info)
   return ds_mrr.dsmrr_next(this, range_info);
 }
 
-ha_rows ha_innobase::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+ha_rows ha_innobase::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                                  void *seq_init_param,  
-                                                 uint n_ranges, uint *bufsz,
-                                                 uint *flags, 
+                                                 uint32_t n_ranges, uint32_t *bufsz,
+                                                 uint32_t *flags, 
                                                  COST_VECT *cost)
 {
   /* See comments in ha_myisam::multi_range_read_info_const */
@@ -8017,8 +8017,8 @@ ha_rows ha_innobase::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
                                  flags, cost);
 }
 
-int ha_innobase::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
-                          uint *bufsz, uint *flags, COST_VECT *cost)
+int ha_innobase::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
+                          uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ds_mrr.init(this, table);
   return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
@@ -8053,7 +8053,7 @@ static int64_t index_cond_func_innodb(void *arg)
 
 
 
-Item *ha_innobase::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
+Item *ha_innobase::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
 {
   if (keyno_arg != primary_key)
   {

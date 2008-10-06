@@ -222,7 +222,7 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
-static uint kill_cached_threads, wake_thread;
+static uint32_t kill_cached_threads, wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
 static volatile uint32_t cached_thread_count= 0;
@@ -297,12 +297,12 @@ const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
-uint mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
-uint mysqld_port_timeout;
-uint delay_key_write_options, protocol_version;
-uint lower_case_table_names= 1;
-uint tc_heuristic_recover= 0;
-uint volatile thread_count, thread_running;
+uint32_t mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
+uint32_t mysqld_port_timeout;
+uint32_t delay_key_write_options, protocol_version;
+uint32_t lower_case_table_names= 1;
+uint32_t tc_heuristic_recover= 0;
+uint32_t volatile thread_count, thread_running;
 uint64_t thd_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
@@ -329,7 +329,7 @@ ulong binlog_cache_use= 0;
 ulong binlog_cache_disk_use= 0;
 ulong max_connections;
 ulong max_connect_errors;
-uint  max_user_connections= 0;
+uint32_t  max_user_connections= 0;
 ulong thread_id=1L;
 ulong current_pid;
 ulong slow_launch_threads = 0;
@@ -381,13 +381,13 @@ char mysql_real_data_home[FN_REFLEN],
      language[FN_REFLEN], reg_ext[FN_EXTLEN], mysql_charsets_dir[FN_REFLEN],
      *opt_init_file, *opt_tc_log_file;
 char mysql_unpacked_real_data_home[FN_REFLEN];
-uint reg_ext_length;
+uint32_t reg_ext_length;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
 const char *opt_date_time_formats[3];
 
-uint mysql_data_home_len;
+uint32_t mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
@@ -451,7 +451,7 @@ pthread_attr_t connection_attrib;
 pthread_cond_t  COND_server_started;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
-uint report_port= DRIZZLE_PORT;
+uint32_t report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
 char *relay_log_info_file, *report_user, *report_password, *report_host;
@@ -477,7 +477,7 @@ struct rand_struct sql_rand; ///< used by sql_class.cc:THD::THD()
 
 struct passwd *user_info;
 static pthread_t select_thread;
-static uint thr_kill_signal;
+static uint32_t thr_kill_signal;
 
 /* OS specific variables */
 
@@ -489,7 +489,7 @@ scheduler_functions thread_scheduler;
   Number of currently active user connections. The variable is protected by
   LOCK_connection_count.
 */
-uint connection_count= 0;
+uint32_t connection_count= 0;
 
 /* Function declarations */
 
@@ -544,7 +544,7 @@ static void close_connections(void)
       break;					// allready dead
 #endif
     set_timespec(abstime, 2);
-    for (uint tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
+    for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
     {
       error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count,
 				   &abstime);
@@ -892,7 +892,7 @@ void clean_up(bool print_message)
 */
 static void wait_for_signal_thread_to_end()
 {
-  uint i;
+  uint32_t i;
   /*
     Wait up to 10 seconds for signal thread to die. We use this mainly to
     avoid getting warnings that my_thread_end has not been called
@@ -1089,9 +1089,9 @@ static void set_root(const char *path)
 static void network_init(void)
 {
   int   ret;
-  uint  waited;
-  uint  this_wait;
-  uint  retry;
+  uint32_t  waited;
+  uint32_t  this_wait;
+  uint32_t  retry;
   char port_buf[NI_MAXSERV];
   struct addrinfo *ai;
   struct addrinfo *next;
@@ -1223,7 +1223,7 @@ static void network_init(void)
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void close_connection(THD *thd, uint errcode, bool lock)
+void close_connection(THD *thd, uint32_t errcode, bool lock)
 {
   st_vio *vio;
   if (lock)
@@ -1814,9 +1814,9 @@ static void check_data_home(const char *path __attribute__((unused)))
   for the client.
 */
 /* ARGSUSED */
-extern "C" void my_message_sql(uint error, const char *str, myf MyFlags);
+extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
-void my_message_sql(uint error, const char *str, myf MyFlags)
+void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   THD *thd;
   /*
@@ -2079,7 +2079,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   /* connections and databases needs lots of files */
   {
-    uint files, wanted_files, max_open_files;
+    uint32_t files, wanted_files, max_open_files;
 
     /* MyISAM requires two file handles per table. */
     wanted_files= 10+max_connections+table_cache_size*2;
@@ -2790,7 +2790,7 @@ void handle_connections_sockets()
 {
   int x;
   int sock,new_sock;
-  uint error_count=0;
+  uint32_t error_count=0;
   THD *thd;
   struct sockaddr_storage cAddr;
 
@@ -2833,7 +2833,7 @@ void handle_connections_sockets()
     }
     assert(sock != -1);
 
-    for (uint retry=0; retry < MAX_ACCEPT_RETRY; retry++)
+    for (uint32_t retry=0; retry < MAX_ACCEPT_RETRY; retry++)
     {
       SOCKET_SIZE_TYPE length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
@@ -4638,11 +4638,11 @@ mysqld_get_one_option(int optid,
 
 /** Handle arguments for multiple key caches. */
 
-extern "C" char **mysql_getopt_value(const char *keyname, uint key_length,
+extern "C" char **mysql_getopt_value(const char *keyname, uint32_t key_length,
                                       const struct my_option *option);
 
 char**
-mysql_getopt_value(const char *keyname, uint key_length,
+mysql_getopt_value(const char *keyname, uint32_t key_length,
 		   const struct my_option *option)
 {
   switch (option->id) {

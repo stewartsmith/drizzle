@@ -47,7 +47,7 @@ scheduler_functions::scheduler_functions()
    end_thread(end_thread_dummy), end(end_dummy)
 {}
 
-static uint created_threads, killed_threads;
+static uint32_t created_threads, killed_threads;
 static bool kill_pool_threads;
 
 static struct event thd_add_event;
@@ -196,7 +196,7 @@ void thd_scheduler::swap_dbug_explain()
 
 static bool libevent_init(void)
 {
-  uint i;
+  uint32_t i;
 
   event_init();
   

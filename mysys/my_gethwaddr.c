@@ -22,9 +22,9 @@
 #ifndef MAIN
 
 #if defined(__FreeBSD__) || defined(__linux__)
-static bool memcpy_and_test(unsigned char *to, unsigned char *from, uint len)
+static bool memcpy_and_test(unsigned char *to, unsigned char *from, uint32_t len)
 {
-  uint i, res=1;
+  uint32_t i, res=1;
 
   for (i=0; i < len; i++)
     if ((*to++= *from++))
@@ -113,7 +113,7 @@ bool my_gethwaddr(unsigned char *to __attribute__((unused)))
 int main(int argc __attribute__((unused)),char **argv)
 {
   unsigned char mac[6];
-  uint i;
+  uint32_t i;
   MY_INIT(argv[0]);
   if (my_gethwaddr(mac))
   {

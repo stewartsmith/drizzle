@@ -81,7 +81,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)
   {
     enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
-    uint length=keyseg->length;
+    uint32_t length=keyseg->length;
 
     if (keyseg->null_bit)
     {
@@ -100,15 +100,15 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
     pos= record+keyseg->start;
     if (keyseg->flag & HA_VAR_LENGTH_PART)
     {
-      uint pack_length=  keyseg->bit_start;
-      uint tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
+      uint32_t pack_length=  keyseg->bit_start;
+      uint32_t tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                         uint2korr(pos));
       pos+= pack_length;			/* Skip VARCHAR length */
       set_if_smaller(length,tmp_length);
     }
     else if (keyseg->flag & HA_BLOB_PART)
     {
-      uint tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
+      uint32_t tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
       memcpy(&pos,pos+keyseg->bit_start,sizeof(char*));
       if (!length || length > tmp_length)
 	length=tmp_length;			/* The whole blob */
@@ -152,13 +152,13 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned cha
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)
   {
     enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
-    uint a_length, b_length;
+    uint32_t a_length, b_length;
     a_length= b_length= keyseg->length;
 
     /* If part is NULL it's regarded as different */
     if (keyseg->null_bit)
     {
-      uint tmp;
+      uint32_t tmp;
       if ((tmp=(a[keyseg->null_pos] & keyseg->null_bit)) !=
 	  (uint) (b[keyseg->null_pos] & keyseg->null_bit))
 	return 1;
@@ -173,7 +173,7 @@ int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned cha
     pos_b= b+keyseg->start;
     if (keyseg->flag & HA_VAR_LENGTH_PART)
     {
-      uint pack_length= keyseg->bit_start;
+      uint32_t pack_length= keyseg->bit_start;
       if (pack_length == 1)
       {
         a_length= (uint) *(unsigned char*) pos_a++;

@@ -359,7 +359,7 @@ void Item_func::update_used_tables()
 {
   used_tables_cache=0;
   const_item_cache=1;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     args[i]->update_used_tables();
     used_tables_cache|=args[i]->used_tables();
@@ -389,9 +389,9 @@ void Item_func::print(String *str, enum_query_type query_type)
 }
 
 
-void Item_func::print_args(String *str, uint from, enum_query_type query_type)
+void Item_func::print_args(String *str, uint32_t from, enum_query_type query_type)
 {
-  for (uint i=from ; i < arg_count ; i++)
+  for (uint32_t i=from ; i < arg_count ; i++)
   {
     if (i != from)
       str->append(',');
@@ -403,7 +403,7 @@ void Item_func::print_args(String *str, uint from, enum_query_type query_type)
 void Item_func::print_op(String *str, enum_query_type query_type)
 {
   str->append('(');
-  for (uint i=0 ; i < arg_count-1 ; i++)
+  for (uint32_t i=0 ; i < arg_count-1 ; i++)
   {
     args[i]->print(str, query_type);
     str->append(' ');
@@ -431,7 +431,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
       (func_type == Item_func::FUNC_SP &&
        my_strcasecmp(system_charset_info, func_name(), item_func->func_name())))
     return 0;
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
     if (!args[i]->eq(item_func->args[i], binary_cmp))
       return 0;
   return 1;
@@ -506,9 +506,9 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
 
 void Item_func::fix_num_length_and_dec()
 {
-  uint fl_length= 0;
+  uint32_t fl_length= 0;
   decimals=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(decimals,args[i]->decimals);
     set_if_bigger(fl_length, args[i]->max_length);
@@ -536,7 +536,7 @@ void Item_func::count_decimal_length()
   int max_int_part= 0;
   decimals= 0;
   unsigned_flag= 1;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(decimals, args[i]->decimals);
     set_if_bigger(max_int_part, args[i]->decimal_int_part());
@@ -556,7 +556,7 @@ void Item_func::count_only_length()
 {
   max_length= 0;
   unsigned_flag= 0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(max_length, args[i]->max_length);
     set_if_bigger(unsigned_flag, args[i]->unsigned_flag);
@@ -574,7 +574,7 @@ void Item_func::count_real_length()
   uint32_t length= 0;
   decimals= 0;
   max_length= 0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (decimals != NOT_FIXED_DEC)
     {
@@ -1014,7 +1014,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
 {
   my_decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
   bool sign;
-  uint precision;
+  uint32_t precision;
 
   if ((null_value= args[0]->null_value))
     return NULL;
@@ -1052,7 +1052,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   char len_buf[20*3 + 1];
   char *end;
 
-  uint precision= my_decimal_length_to_precision(max_length, decimals,
+  uint32_t precision= my_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str, query_type);
@@ -1281,7 +1281,7 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 
 void Item_func_div::result_precision()
 {
-  uint precision=cmin(args[0]->decimal_precision() + prec_increment,
+  uint32_t precision=cmin(args[0]->decimal_precision() + prec_increment,
                      (unsigned int)DECIMAL_MAX_PRECISION);
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
@@ -1304,7 +1304,7 @@ void Item_func_div::fix_length_and_dec()
     decimals=cmax(args[0]->decimals,args[1]->decimals)+prec_increment;
     set_if_smaller(decimals, NOT_FIXED_DEC);
     max_length=args[0]->max_length - args[0]->decimals + decimals;
-    uint tmp=float_length(decimals);
+    uint32_t tmp=float_length(decimals);
     set_if_smaller(max_length,tmp);
     break;
   }
@@ -1715,7 +1715,7 @@ double Item_func_tan::val_real()
 int64_t Item_func_shift_left::val_int()
 {
   assert(fixed == 1);
-  uint shift;
+  uint32_t shift;
   uint64_t res= ((uint64_t) args[0]->val_int() <<
 		  (shift=(uint) args[1]->val_int()));
   if (args[0]->null_value || args[1]->null_value)
@@ -1730,7 +1730,7 @@ int64_t Item_func_shift_left::val_int()
 int64_t Item_func_shift_right::val_int()
 {
   assert(fixed == 1);
-  uint shift;
+  uint32_t shift;
   uint64_t res= (uint64_t) args[0]->val_int() >>
     (shift=(uint) args[1]->val_int());
   if (args[0]->null_value || args[1]->null_value)
@@ -1758,7 +1758,7 @@ int64_t Item_func_bit_neg::val_int()
 void Item_func_integer::fix_length_and_dec()
 {
   max_length=args[0]->max_length - args[0]->decimals+1;
-  uint tmp=float_length(decimals);
+  uint32_t tmp=float_length(decimals);
   set_if_smaller(max_length,tmp);
   decimals=0;
 }
@@ -1768,7 +1768,7 @@ void Item_func_int_val::fix_num_length_and_dec()
   max_length= args[0]->max_length - (args[0]->decimals ?
                                      args[0]->decimals + 1 :
                                      0) + 2;
-  uint tmp= float_length(decimals);
+  uint32_t tmp= float_length(decimals);
   set_if_smaller(max_length,tmp);
   decimals= 0;
 }
@@ -2170,7 +2170,7 @@ void Item_func_min_max::fix_length_and_dec()
   maybe_null=0;
   cmp_type=args[0]->result_type();
 
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(max_length, args[i]->max_length);
     set_if_bigger(decimals, args[i]->decimals);
@@ -2219,12 +2219,12 @@ void Item_func_min_max::fix_length_and_dec()
    #	index of the least/greatest argument
 */
 
-uint Item_func_min_max::cmp_datetimes(uint64_t *value)
+uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
 {
   uint64_t min_max= 0;
-  uint min_max_idx= 0;
+  uint32_t min_max_idx= 0;
 
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     Item **arg= args + i;
     bool is_null;
@@ -2253,7 +2253,7 @@ String *Item_func_min_max::val_str(String *str)
   if (compare_as_dates)
   {
     String *str_res;
-    uint min_max_idx= cmp_datetimes(NULL);
+    uint32_t min_max_idx= cmp_datetimes(NULL);
     if (null_value)
       return 0;
     str_res= args[min_max_idx]->val_str(str);
@@ -2289,7 +2289,7 @@ String *Item_func_min_max::val_str(String *str)
   {
     String *res= NULL;
 
-    for (uint i=0; i < arg_count ; i++)
+    for (uint32_t i=0; i < arg_count ; i++)
     {
       if (i == 0)
 	res=args[i]->val_str(str);
@@ -2330,7 +2330,7 @@ double Item_func_min_max::val_real()
     (void)cmp_datetimes(&result);
     return (double)result;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       value= args[i]->val_real();
@@ -2357,7 +2357,7 @@ int64_t Item_func_min_max::val_int()
     (void)cmp_datetimes(&result);
     return (int64_t)result;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       value=args[i]->val_int();
@@ -2386,7 +2386,7 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
     uint64_t2decimal(value, dec);
     return dec;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       res= args[i]->val_decimal(dec);
@@ -2525,7 +2525,7 @@ int64_t Item_func_field::val_int()
     String *field;
     if (!(field= args[0]->val_str(&value)))
       return 0;
-    for (uint i=1 ; i < arg_count ; i++)
+    for (uint32_t i=1 ; i < arg_count ; i++)
     {
       String *tmp_value=args[i]->val_str(&tmp);
       if (tmp_value && !sortcmp(field,tmp_value,cmp_collation.collation))
@@ -2537,7 +2537,7 @@ int64_t Item_func_field::val_int()
     int64_t val= args[0]->val_int();
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count ; i++)
+    for (uint32_t i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_int() && !args[i]->null_value)
         return (int64_t) (i);
@@ -2549,7 +2549,7 @@ int64_t Item_func_field::val_int()
                dec_buf, *dec= args[0]->val_decimal(&dec_buf);
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count; i++)
+    for (uint32_t i=1; i < arg_count; i++)
     {
       dec_arg= args[i]->val_decimal(&dec_arg_buf);
       if (!args[i]->null_value && !my_decimal_cmp(dec_arg, dec))
@@ -2561,7 +2561,7 @@ int64_t Item_func_field::val_int()
     double val= args[0]->val_real();
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count ; i++)
+    for (uint32_t i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_real() && !args[i]->null_value)
         return (int64_t) (i);
@@ -2575,7 +2575,7 @@ void Item_func_field::fix_length_and_dec()
 {
   maybe_null=0; max_length=3;
   cmp_type= args[0]->result_type();
-  for (uint i=1; i < arg_count ; i++)
+  for (uint32_t i=1; i < arg_count ; i++)
     cmp_type= item_cmp_type(cmp_type, args[i]->result_type());
   if (cmp_type == STRING_RESULT)
     agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1);
@@ -2666,7 +2666,7 @@ int64_t Item_func_find_in_set::val_int()
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
     const unsigned char *find_str= (const unsigned char *) find->ptr();
-    uint find_str_len= find->length();
+    uint32_t find_str_len= find->length();
     int position= 0;
     while (1)
     {
@@ -2730,7 +2730,7 @@ public:
   my_thread_id thread_id;
   void set_thread(THD *thd) { thread_id= thd->thread_id; }
 
-  User_level_lock(const unsigned char *key_arg,uint length, ulong id) 
+  User_level_lock(const unsigned char *key_arg,uint32_t length, ulong id) 
     :key_length(length),count(1),locked(1), thread_id(id)
   {
     key= (unsigned char*) my_memdup(key_arg,length,MYF(0));
@@ -2826,7 +2826,7 @@ int64_t Item_master_pos_wait::val_int()
 }
 
 #ifdef EXTRA_DEBUG
-void debug_sync_point(const char* lock_name, uint lock_timeout)
+void debug_sync_point(const char* lock_name, uint32_t lock_timeout)
 {
 }
 
@@ -2938,7 +2938,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
 					      name.length)) &&
       create_if_not_exists)
   {
-    uint size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
+    uint32_t size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
     if (!hash_inited(hash))
       return 0;
     if (!(entry = (user_var_entry*) my_malloc(size,MYF(MY_WME | ME_FATALERROR))))
@@ -3066,7 +3066,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 */
 
 static bool
-update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
+update_hash(user_var_entry *entry, bool set_null, void *ptr, uint32_t length,
             Item_result type, const CHARSET_INFO * const cs, Derivation dv,
             bool unsigned_arg)
 {
@@ -3126,7 +3126,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
 
 
 bool
-Item_func_set_user_var::update_hash(void *ptr, uint length,
+Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
                                     Item_result res_type,
                                     const CHARSET_INFO * const cs, Derivation dv,
                                     bool unsigned_arg)
@@ -3209,7 +3209,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
 /** Get the value of a variable as a string. */
 
 String *user_var_entry::val_str(bool *null_value, String *str,
-				uint decimals)
+				uint32_t decimals)
 {
   if ((*null_value= (value == 0)))
     return (String*) 0;
@@ -3726,7 +3726,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
     return 0;
   }
 
-  uint size;
+  uint32_t size;
   /*
     First we need to store value of var_entry, when the next situation
     appears:
@@ -3889,7 +3889,7 @@ void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
 }
 
 
-void Item_user_var_as_out_param::set_value(const char *str, uint length,
+void Item_user_var_as_out_param::set_value(const char *str, uint32_t length,
                                            const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,

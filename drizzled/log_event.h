@@ -886,7 +886,7 @@ public:
     is calculated during write()
   */
   virtual int get_data_size() { return 0;}
-  static Log_event* read_log_event(const char* buf, uint event_len,
+  static Log_event* read_log_event(const char* buf, uint32_t event_len,
 				   const char **error,
                                    const Format_description_log_event
                                    *description_event);
@@ -1406,7 +1406,7 @@ public:
     concerned) from here.
   */
 
-  uint catalog_len;			// <= 255 char; 0 means uninited
+  uint32_t catalog_len;			// <= 255 char; 0 means uninited
 
   /*
     We want to be able to store a variable number of N-bit status vars:
@@ -1448,10 +1448,10 @@ public:
   ulong sql_mode;
   ulong auto_increment_increment, auto_increment_offset;
   char charset[6];
-  uint time_zone_len; /* 0 means uninited */
+  uint32_t time_zone_len; /* 0 means uninited */
   const char *time_zone_str;
-  uint lc_time_names_number; /* 0 means en_US */
-  uint charset_database_number;
+  uint32_t lc_time_names_number; /* 0 means en_US */
+  uint32_t charset_database_number;
 
 
   Query_log_event(THD* thd_arg, const char* query_arg, ulong query_length,
@@ -1461,7 +1461,7 @@ public:
   void pack_info(Protocol* protocol);
 
   Query_log_event();
-  Query_log_event(const char* buf, uint event_len,
+  Query_log_event(const char* buf, uint32_t event_len,
                   const Format_description_log_event *description_event,
                   Log_event_type event_type);
   ~Query_log_event()
@@ -1557,7 +1557,7 @@ public:
   Slave_log_event(THD* thd_arg, Relay_log_info* rli);
   void pack_info(Protocol* protocol);
 
-  Slave_log_event(const char* buf, uint event_len);
+  Slave_log_event(const char* buf, uint32_t event_len);
   ~Slave_log_event();
   int get_data_size();
   bool is_valid() const { return master_host != 0; }
@@ -1771,7 +1771,7 @@ private:
 class Load_log_event: public Log_event
 {
 private:
-  uint get_query_buffer_length();
+  uint32_t get_query_buffer_length();
   void print_query(bool need_db, char *buf, char **end,
                    char **fn_start, char **fn_end);
 protected:
@@ -1803,7 +1803,7 @@ public:
   bool local_fname;
 
   /* fname doesn't point to memory inside Log_event::temp_buf  */
-  void set_fname_outside_temp_buf(const char *afname, uint alen)
+  void set_fname_outside_temp_buf(const char *afname, uint32_t alen)
   {
     fname= afname;
     fname_len= alen;
@@ -1833,7 +1833,7 @@ public:
     logging of LOAD DATA is going to be changed in 4.1 or 5.0, this is only used
     for the common_header_len (post_header_len will not be changed).
   */
-  Load_log_event(const char* buf, uint event_len,
+  Load_log_event(const char* buf, uint32_t event_len,
                  const Format_description_log_event* description_event);
   ~Load_log_event()
   {}
@@ -1976,7 +1976,7 @@ public:
   const uint8_t *event_type_permutation;
 
   Format_description_log_event(uint8_t binlog_ver, const char* server_ver=0);
-  Format_description_log_event(const char* buf, uint event_len,
+  Format_description_log_event(const char* buf, uint32_t event_len,
                                const Format_description_log_event
                                *description_event);
   ~Format_description_log_event()
@@ -2179,16 +2179,16 @@ class User_var_log_event: public Log_event
 {
 public:
   char *name;
-  uint name_len;
+  uint32_t name_len;
   char *val;
   ulong val_len;
   Item_result type;
-  uint charset_number;
+  uint32_t charset_number;
   bool is_null;
   User_var_log_event(THD* thd_arg __attribute__((unused)),
-                     char *name_arg, uint name_len_arg,
+                     char *name_arg, uint32_t name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
-		     uint charset_number_arg)
+		     uint32_t charset_number_arg)
     :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
     val_len(val_len_arg), type(type_arg), charset_number(charset_number_arg)
     { is_null= !val; }
@@ -2302,14 +2302,14 @@ public:
   };
   const char* new_log_ident;
   uint64_t pos;
-  uint ident_len;
-  uint flags;
+  uint32_t ident_len;
+  uint32_t flags;
   Rotate_log_event(const char* new_log_ident_arg,
-		   uint ident_len_arg,
-		   uint64_t pos_arg, uint flags);
+		   uint32_t ident_len_arg,
+		   uint64_t pos_arg, uint32_t flags);
   void pack_info(Protocol* protocol);
 
-  Rotate_log_event(const char* buf, uint event_len,
+  Rotate_log_event(const char* buf, uint32_t event_len,
                    const Format_description_log_event* description_event);
   ~Rotate_log_event()
   {
@@ -2347,19 +2347,19 @@ protected:
 public:
   unsigned char* block;
   const char *event_buf;
-  uint block_len;
-  uint file_id;
+  uint32_t block_len;
+  uint32_t file_id;
   bool inited_from_old;
 
   Create_file_log_event(THD* thd, sql_exchange* ex, const char* db_arg,
 			const char* table_name_arg,
 			List<Item>& fields_arg,
 			enum enum_duplicates handle_dup, bool ignore,
-			unsigned char* block_arg, uint block_len_arg,
+			unsigned char* block_arg, uint32_t block_len_arg,
 			bool using_trans);
   void pack_info(Protocol* protocol);
 
-  Create_file_log_event(const char* buf, uint event_len,
+  Create_file_log_event(const char* buf, uint32_t event_len,
                         const Format_description_log_event* description_event);
   ~Create_file_log_event()
   {
@@ -2400,8 +2400,8 @@ class Append_block_log_event: public Log_event
 {
 public:
   unsigned char* block;
-  uint block_len;
-  uint file_id;
+  uint32_t block_len;
+  uint32_t file_id;
   /*
     'db' is filled when the event is created in mysql_load() (the
     event needs to have a 'db' member to be well filtered by
@@ -2416,11 +2416,11 @@ public:
   const char* db;
 
   Append_block_log_event(THD* thd, const char* db_arg, unsigned char* block_arg,
-			 uint block_len_arg, bool using_trans);
+			 uint32_t block_len_arg, bool using_trans);
   void pack_info(Protocol* protocol);
   virtual int get_create_or_append() const;
 
-  Append_block_log_event(const char* buf, uint event_len,
+  Append_block_log_event(const char* buf, uint32_t event_len,
                          const Format_description_log_event
                          *description_event);
   ~Append_block_log_event() {}
@@ -2444,13 +2444,13 @@ private:
 class Delete_file_log_event: public Log_event
 {
 public:
-  uint file_id;
+  uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
   Delete_file_log_event(THD* thd, const char* db_arg, bool using_trans);
   void pack_info(Protocol* protocol);
 
-  Delete_file_log_event(const char* buf, uint event_len,
+  Delete_file_log_event(const char* buf, uint32_t event_len,
                         const Format_description_log_event* description_event);
   ~Delete_file_log_event() {}
   Log_event_type get_type_code() { return DELETE_FILE_EVENT;}
@@ -2473,13 +2473,13 @@ private:
 class Execute_load_log_event: public Log_event
 {
 public:
-  uint file_id;
+  uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
   Execute_load_log_event(THD* thd, const char* db_arg, bool using_trans);
   void pack_info(Protocol* protocol);
 
-  Execute_load_log_event(const char* buf, uint event_len,
+  Execute_load_log_event(const char* buf, uint32_t event_len,
                          const Format_description_log_event
                          *description_event);
   ~Execute_load_log_event() {}
@@ -2507,11 +2507,11 @@ class Begin_load_query_log_event: public Append_block_log_event
 {
 public:
   Begin_load_query_log_event(THD* thd_arg, const char *db_arg,
-                             unsigned char* block_arg, uint block_len_arg,
+                             unsigned char* block_arg, uint32_t block_len_arg,
                              bool using_trans);
   Begin_load_query_log_event(THD* thd);
   int get_create_or_append() const;
-  Begin_load_query_log_event(const char* buf, uint event_len,
+  Begin_load_query_log_event(const char* buf, uint32_t event_len,
                              const Format_description_log_event
                              *description_event);
   ~Begin_load_query_log_event() {}
@@ -2539,10 +2539,10 @@ enum enum_load_dup_handling { LOAD_DUP_ERROR= 0, LOAD_DUP_IGNORE,
 class Execute_load_query_log_event: public Query_log_event
 {
 public:
-  uint file_id;       // file_id of temporary file
-  uint fn_pos_start;  // pointer to the part of the query that should
+  uint32_t file_id;       // file_id of temporary file
+  uint32_t fn_pos_start;  // pointer to the part of the query that should
                       // be substituted
-  uint fn_pos_end;    // pointer to the end of this part of query
+  uint32_t fn_pos_end;    // pointer to the end of this part of query
   /*
     We have to store type of duplicate handling explicitly, because
     for LOAD DATA it also depends on LOCAL option. And this part
@@ -2552,14 +2552,14 @@ public:
   enum_load_dup_handling dup_handling;
 
   Execute_load_query_log_event(THD* thd, const char* query_arg,
-                               ulong query_length, uint fn_pos_start_arg,
-                               uint fn_pos_end_arg,
+                               ulong query_length, uint32_t fn_pos_start_arg,
+                               uint32_t fn_pos_end_arg,
                                enum_load_dup_handling dup_handling_arg,
                                bool using_trans, bool suppress_use,
                                THD::killed_state
                                killed_err_arg= THD::KILLED_NO_VALUE);
   void pack_info(Protocol* protocol);
-  Execute_load_query_log_event(const char* buf, uint event_len,
+  Execute_load_query_log_event(const char* buf, uint32_t event_len,
                                const Format_description_log_event
                                *description_event);
   ~Execute_load_query_log_event() {}
@@ -2575,7 +2575,7 @@ private:
 };
 
 
-char *str_to_hex(char *to, const char *from, uint len);
+char *str_to_hex(char *to, const char *from, uint32_t len);
 
 /**
   @class Table_map_log_event
@@ -2870,7 +2870,7 @@ public:
 
   Table_map_log_event(THD *thd, Table *tbl, ulong tid, 
 		      bool is_transactional, uint16_t flags);
-  Table_map_log_event(const char *buf, uint event_len, 
+  Table_map_log_event(const char *buf, uint32_t event_len, 
                       const Format_description_log_event *description_event);
 
   ~Table_map_log_event();
@@ -3012,7 +3012,7 @@ public:
     return m_rows_buf && m_cols.bitmap;
   }
 
-  uint     m_row_count;         /* The number of rows added to the event */
+  uint32_t     m_row_count;         /* The number of rows added to the event */
 
 protected:
   /* 
@@ -3021,7 +3021,7 @@ protected:
   */
   Rows_log_event(THD*, Table*, ulong table_id, 
 		 MY_BITMAP const *cols, bool is_transactional);
-  Rows_log_event(const char *row_data, uint event_len, 
+  Rows_log_event(const char *row_data, uint32_t event_len, 
 		 Log_event_type event_type,
 		 const Format_description_log_event *description_event);
 
@@ -3155,7 +3155,7 @@ public:
 
   Write_rows_log_event(THD*, Table*, ulong table_id, 
 		       bool is_transactional);
-  Write_rows_log_event(const char *buf, uint event_len, 
+  Write_rows_log_event(const char *buf, uint32_t event_len, 
                        const Format_description_log_event *description_event);
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
@@ -3203,7 +3203,7 @@ public:
 
   virtual ~Update_rows_log_event();
 
-  Update_rows_log_event(const char *buf, uint event_len, 
+  Update_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
 
   static bool binlog_row_logging_function(THD *thd, Table *table,
@@ -3259,7 +3259,7 @@ public:
 
   Delete_rows_log_event(THD*, Table*, ulong, 
 			bool is_transactional);
-  Delete_rows_log_event(const char *buf, uint event_len, 
+  Delete_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
@@ -3334,7 +3334,7 @@ public:
 
   void pack_info(Protocol*);
 
-  Incident_log_event(const char *buf, uint event_len,
+  Incident_log_event(const char *buf, uint32_t event_len,
                      const Format_description_log_event *descr_event);
 
   virtual ~Incident_log_event();
@@ -3387,7 +3387,7 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
 class Heartbeat_log_event: public Log_event
 {
 public:
-  Heartbeat_log_event(const char* buf, uint event_len,
+  Heartbeat_log_event(const char* buf, uint32_t event_len,
                       const Format_description_log_event* description_event);
   Log_event_type get_type_code() { return HEARTBEAT_LOG_EVENT; }
   bool is_valid() const
@@ -3396,11 +3396,11 @@ public:
               log_pos >= BIN_LOG_HEADER_SIZE);
     }
   const char * get_log_ident() { return log_ident; }
-  uint get_ident_len() { return ident_len; }
+  uint32_t get_ident_len() { return ident_len; }
   
 private:
   const char* log_ident;
-  uint ident_len;
+  uint32_t ident_len;
 };
 
 /**

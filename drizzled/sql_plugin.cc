@@ -99,7 +99,7 @@ static int plugin_array_version=0;
   the following variables/structures
 */
 static MEM_ROOT plugin_mem_root;
-static uint global_variables_dynamic_size= 0;
+static uint32_t global_variables_dynamic_size= 0;
 static HASH bookmark_hash;
 
 
@@ -126,9 +126,9 @@ struct st_item_value_holder : public st_mysql_value
 */
 struct st_bookmark
 {
-  uint name_len;
+  uint32_t name_len;
   int offset;
-  uint version;
+  uint32_t version;
   char key[1];
 };
 
@@ -199,7 +199,7 @@ static void reap_plugins(void);
 
 
 /* declared in set_var.cc */
-extern sys_var *intern_find_sys_var(const char *str, uint length, bool no_error);
+extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
 extern bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
                                  const char *name, int64_t val);
 
@@ -263,7 +263,7 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
 
 static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_dl *tmp;
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
@@ -279,7 +279,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 
 static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_dl *tmp;
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
@@ -310,7 +310,7 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
   char dlpath[FN_REFLEN];
-  uint plugin_dir_len, dummy_errors, dlpathlen;
+  uint32_t plugin_dir_len, dummy_errors, dlpathlen;
   struct st_plugin_dl *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
@@ -403,7 +403,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 
 static void plugin_dl_del(const LEX_STRING *dl)
 {
-  uint i;
+  uint32_t i;
 
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
@@ -429,7 +429,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int type)
 {
-  uint i;
+  uint32_t i;
   if (! initialized)
     return(0);
 
@@ -529,7 +529,7 @@ plugin_ref plugin_lock_by_name(THD *thd, const LEX_STRING *name, int type
 
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_int *tmp;
   for (i= 0; i < plugin_array.elements; i++)
   {
@@ -575,7 +575,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   /* Find plugin by name */
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
-    uint name_len= strlen(plugin->name);
+    uint32_t name_len= strlen(plugin->name);
     if (plugin->type >= 0 && plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
         ! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
@@ -682,7 +682,7 @@ static void plugin_del(struct st_plugin_int *plugin)
 
 static void reap_plugins(void)
 {
-  uint count, idx;
+  uint32_t count, idx;
   struct st_plugin_int *plugin, **reap, **list;
 
   if (!reap_needed)
@@ -762,7 +762,7 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
 }
 
 
-void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
+void plugin_unlock_list(THD *thd, plugin_ref *list, uint32_t count)
 {
   LEX *lex= thd ? thd->lex : 0;
   assert(list);
@@ -870,7 +870,7 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length,
 */
 int plugin_init(int *argc, char **argv, int flags)
 {
-  uint i;
+  uint32_t i;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1101,7 +1101,7 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint i, count= plugin_array.elements, free_slots= 0;
+  uint32_t i, count= plugin_array.elements, free_slots= 0;
   struct st_plugin_int **plugins, *plugin;
   struct st_plugin_dl **dl;
 
@@ -1225,9 +1225,9 @@ void plugin_shutdown(void)
 
 
 bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
-                       int type, uint state_mask, void *arg)
+                       int type, uint32_t state_mask, void *arg)
 {
-  uint idx, total;
+  uint32_t idx, total;
   struct st_plugin_int *plugin, **plugins;
   int version=plugin_array_version;
 
@@ -1264,7 +1264,7 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
   {
     if (unlikely(version != plugin_array_version))
     {
-      for (uint i=idx; i < total; i++)
+      for (uint32_t i=idx; i < total; i++)
         if (plugins[i] && plugins[i]->state & state_mask)
           plugins[i]=0;
     }
@@ -1373,7 +1373,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(uint *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
+    *(uint32_t *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1493,7 +1493,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
   const char *strvalue= "NULL", *str;
   TYPELIB *typelib;
   uint64_t result;
-  uint error_len;
+  uint32_t error_len;
   bool not_used;
   int length;
 
@@ -1586,7 +1586,7 @@ static void update_func_str(THD *thd __attribute__((unused)), struct st_mysql_sy
 ****************************************************************************/
 
 
-sys_var *find_sys_var(THD *thd, const char *str, uint length)
+sys_var *find_sys_var(THD *thd, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1629,7 +1629,7 @@ sys_var *find_sys_var(THD *thd, const char *str, uint length)
 static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
-  uint namelen, length, pluginlen= 0;
+  uint32_t namelen, length, pluginlen= 0;
   char *varname, *p;
 
   if (!(flags & PLUGIN_VAR_THDLOCAL))
@@ -1669,7 +1669,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
 static st_bookmark *register_var(const char *plugin, const char *name,
                                  int flags)
 {
-  uint length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
+  uint32_t length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
   st_bookmark *result;
   char *varname, *p;
 
@@ -1785,7 +1785,7 @@ static unsigned char *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
   if (!thd->variables.dynamic_variables_ptr ||
       (uint)offset > thd->variables.dynamic_variables_head)
   {
-    uint idx;
+    uint32_t idx;
 
     rw_rdlock(&LOCK_system_variables_hash);
 
@@ -1931,7 +1931,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
   sys_var_pluginvar *pivar;
   sys_var *var;
   int flags;
-  uint idx;
+  uint32_t idx;
 
   rw_rdlock(&LOCK_system_variables_hash);
   for (idx= 0; idx < bookmark_hash.records; idx++)
@@ -1966,7 +1966,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
 
 void plugin_thdvar_cleanup(THD *thd)
 {
-  uint idx;
+  uint32_t idx;
   plugin_ref *list;
 
   unlock_variables(thd, &thd->variables);
@@ -2103,7 +2103,7 @@ unsigned char* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
     String str(buffer, sizeof(buffer), system_charset_info);
     TYPELIB *typelib= plugin_var_typelib();
     uint64_t mask= 1, value= *(uint64_t*) result;
-    uint i;
+    uint32_t i;
 
     str.length(0);
     for (i= 0; i < typelib->count; i++, mask<<=1)
@@ -2356,8 +2356,8 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
                              my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->plugin->name;
-  uint namelen= strlen(plugin_name), optnamelen;
-  uint buffer_length= namelen * 4 + (can_disable ? 75 : 10);
+  uint32_t namelen= strlen(plugin_name), optnamelen;
+  uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
   char *name= (char*) alloc_root(mem_root, buffer_length) + 1;
   char *optname, *p;
   int index= 0, offset= 0;
@@ -2572,7 +2572,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
   st_mysql_sys_var **opt;
   my_option *opts;
   bool can_disable;
-  uint count= EXTRA_OPTIONS;
+  uint32_t count= EXTRA_OPTIONS;
 
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
 
@@ -2624,7 +2624,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   st_mysql_sys_var *o;
   sys_var *v;
   struct st_bookmark *var;
-  uint len, count= EXTRA_OPTIONS;
+  uint32_t len, count= EXTRA_OPTIONS;
   assert(tmp->plugin && tmp->name.str);
 
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
@@ -2729,7 +2729,7 @@ static int option_cmp(my_option *a, my_option *b)
 }
 
 
-void my_print_help_inc_plugins(my_option *main_options, uint size)
+void my_print_help_inc_plugins(my_option *main_options, uint32_t size)
 {
   DYNAMIC_ARRAY all_options;
   struct st_plugin_int *p;
@@ -2740,7 +2740,7 @@ void my_print_help_inc_plugins(my_option *main_options, uint size)
   my_init_dynamic_array(&all_options, sizeof(my_option), size, size/4);
 
   if (initialized)
-    for (uint idx= 0; idx < plugin_array.elements; idx++)
+    for (uint32_t idx= 0; idx < plugin_array.elements; idx++)
     {
       p= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
 

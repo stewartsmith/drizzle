@@ -50,7 +50,7 @@ public:
                           (has_charset() ? ' ' : 0));
     return 0;
   }
-  int store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int store(int64_t nr, bool unsigned_val);
   int store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
@@ -58,26 +58,26 @@ public:
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
-                      uint max_length, bool low_byte_first);
+                      uint32_t max_length, bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint param_data, bool low_byte_first);
-  uint pack_length_from_metadata(uint field_metadata)
+                              uint32_t param_data, bool low_byte_first);
+  uint32_t pack_length_from_metadata(uint32_t field_metadata)
   { return (field_metadata & 0x00ff); }
-  uint row_pack_length() { return (field_length + 1); }
-  int pack_cmp(const unsigned char *a,const unsigned char *b,uint key_length,
+  uint32_t row_pack_length() { return (field_length + 1); }
+  int pack_cmp(const unsigned char *a,const unsigned char *b,uint32_t key_length,
                bool insert_or_update);
-  int pack_cmp(const unsigned char *b,uint key_length,bool insert_or_update);
-  uint packed_col_length(const unsigned char *to, uint length);
-  uint max_packed_col_length(uint max_length);
-  uint size_of() const { return sizeof(*this); }
+  int pack_cmp(const unsigned char *b,uint32_t key_length,bool insert_or_update);
+  uint32_t packed_col_length(const unsigned char *to, uint32_t length);
+  uint32_t max_packed_col_length(uint32_t max_length);
+  uint32_t size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
-  virtual uint get_key_image(unsigned char *buff,uint length, imagetype type);
+  virtual uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 };

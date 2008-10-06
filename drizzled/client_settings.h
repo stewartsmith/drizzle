@@ -38,6 +38,6 @@
 #define mysql_server_init(a,b,c) 0
 
 DRIZZLE_DATA * cli_read_rows(MYSQL *mysql,DRIZZLE_FIELD *mysql_fields,
-                           uint fields);
+                           uint32_t fields);
 extern int mysql_init_character_set(MYSQL *mysql);
 

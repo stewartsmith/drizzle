@@ -164,7 +164,7 @@ pack_row(Table *table, MY_BITMAP const* cols,
  */
 int
 unpack_row(Relay_log_info const *rli,
-           Table *table, uint const colcnt,
+           Table *table, uint32_t const colcnt,
            unsigned char const *const row_data, MY_BITMAP const *cols,
            unsigned char const **const row_end, ulong *const master_reclength)
 {
@@ -185,7 +185,7 @@ unpack_row(Relay_log_info const *rli,
   unsigned int null_mask= 1U;
   // The "current" null bits
   unsigned int null_bits= *null_ptr++;
-  uint i= 0;
+  uint32_t i= 0;
 
   /*
     Use the rli class to get the table's metadata. If tabledef is not NULL
@@ -251,7 +251,7 @@ unpack_row(Relay_log_info const *rli,
     (tabledef not NULL). If tabledef is NULL then it is assumed that
     there are no extra columns.
   */
-  uint max_cols= tabledef ? cmin(tabledef->size(), cols->n_bits) : 0;
+  uint32_t max_cols= tabledef ? cmin(tabledef->size(), cols->n_bits) : 0;
   for (; i < max_cols; i++)
   {
     if (bitmap_is_set(cols, i))
@@ -318,7 +318,7 @@ unpack_row(Relay_log_info const *rli,
 */
 int prepare_record(Table *const table,
                    const MY_BITMAP *cols,
-                   uint width __attribute__((unused)),
+                   uint32_t width __attribute__((unused)),
                    const bool check)
 {
 

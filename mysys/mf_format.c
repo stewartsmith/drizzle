@@ -24,7 +24,7 @@
 */
 
 char * fn_format(char * to, const char *name, const char *dir,
-		    const char *extension, uint flag)
+		    const char *extension, uint32_t flag)
 {
   char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
   const char *startpos = name;

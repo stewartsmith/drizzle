@@ -29,21 +29,21 @@
 #define FCOMP			17		/* Bytes for a packed field */
 
 static unsigned char * pack_screens(List<Create_field> &create_fields,
-			    uint *info_length, uint *screens, bool small_file);
-static uint pack_keys(unsigned char *keybuff,uint key_count, KEY *key_info,
+			    uint32_t *info_length, uint32_t *screens, bool small_file);
+static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count, KEY *key_info,
                       ulong data_offset);
 static bool pack_header(unsigned char *forminfo,
 			List<Create_field> &create_fields,
-			uint info_length, uint screens, uint table_options,
+			uint32_t info_length, uint32_t screens, uint32_t table_options,
 			ulong data_offset, handler *file);
-static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
+static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
 			    Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
 static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
-			   uint table_options,
+			   uint32_t table_options,
 			   List<Create_field> &create_fields,
-			   uint reclength, ulong data_offset,
+			   uint32_t reclength, ulong data_offset,
                            handler *handler);
 
 /**
@@ -55,7 +55,7 @@ static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
 
 struct Pack_header_error_handler: public Internal_error_handler
 {
-  virtual bool handle_error(uint sql_errno,
+  virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
@@ -66,7 +66,7 @@ struct Pack_header_error_handler: public Internal_error_handler
 
 bool
 Pack_header_error_handler::
-handle_error(uint sql_errno,
+handle_error(uint32_t sql_errno,
              const char * /* message */,
              DRIZZLE_ERROR::enum_warning_level /* level */,
              THD * /* thd */)
@@ -99,11 +99,11 @@ bool mysql_create_frm(THD *thd, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_fields,
-		      uint keys, KEY *key_info,
+		      uint32_t keys, KEY *key_info,
 		      handler *db_file)
 {
   LEX_STRING str_db_type;
-  uint reclength, info_length, screens, key_info_length, maxlength, tmp_len;
+  uint32_t reclength, info_length, screens, key_info_length, maxlength, tmp_len;
   ulong key_buff_length;
   File file;
   ulong filepos, data_offset;
@@ -111,8 +111,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   TYPELIB formnames;
   unsigned char *screen_buff;
   char buff[128];
-  const uint format_section_header_size= 8;
-  uint format_section_len;
+  const uint32_t format_section_header_size= 8;
+  uint32_t format_section_len;
   Pack_header_error_handler pack_header_error_handler;
   int error;
 
@@ -276,7 +276,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   {
     /* prepare header */
     {
-      uint flags= 0;
+      uint32_t flags= 0;
 
       memset(buff, 0, format_section_header_size);
       /* length of section 2 bytes*/
@@ -375,7 +375,7 @@ int rea_create_table(THD *thd, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
-                     uint keys, KEY *key_info, handler *file)
+                     uint32_t keys, KEY *key_info, handler *file)
 {
   
 
@@ -407,14 +407,14 @@ err_handler:
 	/* Pack screens to a screen for save in a form-file */
 
 static unsigned char *pack_screens(List<Create_field> &create_fields,
-                           uint *info_length, uint *screens,
+                           uint32_t *info_length, uint32_t *screens,
                            bool small_file)
 {
-  register uint i;
-  uint row,start_row,end_row,fields_on_screen;
-  uint length,cols;
+  register uint32_t i;
+  uint32_t row,start_row,end_row,fields_on_screen;
+  uint32_t length,cols;
   unsigned char *info,*pos,*start_screen;
-  uint fields=create_fields.elements;
+  uint32_t fields=create_fields.elements;
   List_iterator<Create_field> it(create_fields);
   
 
@@ -482,10 +482,10 @@ static unsigned char *pack_screens(List<Create_field> &create_fields,
 
 	/* Pack keyinfo and keynames to keybuff for save in form-file. */
 
-static uint pack_keys(unsigned char *keybuff, uint key_count, KEY *keyinfo,
+static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyinfo,
                       ulong data_offset)
 {
-  uint key_parts,length;
+  uint32_t key_parts,length;
   unsigned char *pos, *keyname_pos;
   KEY *key,*end;
   KEY_PART_INFO *key_part,*key_part_end;
@@ -507,7 +507,7 @@ static uint pack_keys(unsigned char *keybuff, uint key_count, KEY *keyinfo,
 	 key_part++)
 
     {
-      uint offset;
+      uint32_t offset;
       int2store(pos,key_part->fieldnr+1+FIELD_NAME_USED);
       offset= (uint) (key_part->offset+data_offset+1);
       int2store(pos+2, offset);
@@ -561,11 +561,11 @@ static uint pack_keys(unsigned char *keybuff, uint key_count, KEY *keyinfo,
 
 static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
-                        uint info_length, uint screens, uint table_options,
+                        uint32_t info_length, uint32_t screens, uint32_t table_options,
                         ulong data_offset, handler *file)
 {
-  uint length,int_count,int_length,no_empty, int_parts;
-  uint time_stamp_pos,null_fields;
+  uint32_t length,int_count,int_length,no_empty, int_parts;
+  uint32_t time_stamp_pos,null_fields;
   ulong reclength, totlength, n_length, com_length;
 
 
@@ -587,7 +587,7 @@ static bool pack_header(unsigned char *forminfo,
   Create_field *field;
   while ((field=it++))
   {
-    uint tmp_len= system_charset_info->cset->charpos(system_charset_info,
+    uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                                      field->comment.str,
                                                      field->comment.str +
                                                      field->comment.length,
@@ -628,7 +628,7 @@ static bool pack_header(unsigned char *forminfo,
     field->save_interval= 0;
     if (field->interval)
     {
-      uint old_int_count=int_count;
+      uint32_t old_int_count=int_count;
 
       if (field->charset->mbminlen > 1)
       {
@@ -648,13 +648,13 @@ static bool pack_header(unsigned char *forminfo,
 				    (field->interval->count+1));
         field->interval->type_names[field->interval->count]= 0;
         field->interval->type_lengths=
-          (uint *) sql_alloc(sizeof(uint) * field->interval->count);
+          (uint32_t *) sql_alloc(sizeof(uint) * field->interval->count);
  
-        for (uint pos= 0; pos < field->interval->count; pos++)
+        for (uint32_t pos= 0; pos < field->interval->count; pos++)
         {
           char *dst;
           const char *src= field->save_interval->type_names[pos];
-          uint hex_length;
+          uint32_t hex_length;
           length= field->save_interval->type_lengths[pos];
           hex_length= length * 2;
           field->interval->type_lengths[pos]= hex_length;
@@ -719,7 +719,7 @@ static bool pack_header(unsigned char *forminfo,
 
 	/* get each unique interval each own id */
 
-static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
+static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
 			    Create_field *last_field)
 {
   List_iterator<Create_field> it(create_fields);
@@ -750,8 +750,8 @@ static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset)
 {
-  register uint i;
-  uint int_count, comment_length=0;
+  register uint32_t i;
+  uint32_t int_count, comment_length=0;
   unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
   
@@ -763,7 +763,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   int_count=0;
   while ((field=it++))
   {
-    uint recpos;
+    uint32_t recpos;
     buff[0]= (unsigned char) field->row;
     buff[1]= (unsigned char) field->col;
     buff[2]= (unsigned char) field->sc_length;
@@ -816,13 +816,13 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       {
         unsigned char  sep= 0;
         unsigned char  occ[256];
-        uint           i;
+        uint32_t           i;
         unsigned char *val= NULL;
 
         memset(occ, 0, sizeof(occ));
 
         for (i=0; (val= (unsigned char*) field->interval->type_names[i]); i++)
-          for (uint j = 0; j < field->interval->type_lengths[i]; j++)
+          for (uint32_t j = 0; j < field->interval->type_lengths[i]; j++)
             occ[(unsigned int) (val[j])]= 1;
 
         if (!occ[(unsigned char)NAMES_SEP_CHAR])
@@ -831,7 +831,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
           sep= ',';
         else
         {
-          for (uint i=1; i<256; i++)
+          for (uint32_t i=1; i<256; i++)
           {
             if(!occ[i])
             {
@@ -881,15 +881,15 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 
 static bool make_empty_rec(THD *thd, File file,
                            enum legacy_db_type table_type __attribute__((unused)),
-                           uint table_options,
+                           uint32_t table_options,
                            List<Create_field> &create_fields,
-                           uint reclength,
+                           uint32_t reclength,
                            ulong data_offset,
                            handler *handler)
 {
   int error= 0;
   Field::utype type;
-  uint null_count;
+  uint32_t null_count;
   unsigned char *buff,*null_pos;
   Table table;
   TABLE_SHARE share;

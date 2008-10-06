@@ -25,20 +25,20 @@
   Old options is used when recreating database, from myisamchk
 */
 
-int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
-	      uint columns, MI_COLUMNDEF *recinfo,
-	      uint uniques, MI_UNIQUEDEF *uniquedefs,
-	      MI_CREATE_INFO *ci,uint flags)
+int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
+	      uint32_t columns, MI_COLUMNDEF *recinfo,
+	      uint32_t uniques, MI_UNIQUEDEF *uniquedefs,
+	      MI_CREATE_INFO *ci,uint32_t flags)
 {
-  register uint i, j;
+  register uint32_t i, j;
   File dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
-  uint fields,length,max_key_length,packed,pointer,real_length_diff,
+  uint32_t fields,length,max_key_length,packed,pointer,real_length_diff,
        key_length,info_length,key_segs,options,min_key_length_skip,
        base_pos,long_varchar_count,varchar_length,
        max_key_block_length,unique_key_parts,fulltext_keys,offset;
-  uint aligned_key_start, block_length;
+  uint32_t aligned_key_start, block_length;
   ulong reclength, real_reclength,min_pack_length;
   char filename[FN_REFLEN],linkname[FN_REFLEN], *linkname_ptr;
   ulong pack_reclength;
@@ -603,7 +603,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   /* Write key and keyseg definitions */
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
-    uint sp_segs= 0;
+    uint32_t sp_segs= 0;
 
     if (mi_keydef_write(file, &keydefs[i]))
       goto err;
@@ -713,7 +713,7 @@ err:
 }
 
 
-uint mi_get_pointer_length(uint64_t file_length, uint def)
+uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def)
 {
   assert(def >= 2 && def <= 7);
   if (file_length)				/* If not default */

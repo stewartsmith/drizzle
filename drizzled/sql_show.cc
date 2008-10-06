@@ -208,12 +208,12 @@ find_files_result
 find_files(THD *thd, List<LEX_STRING> *files, const char *db,
            const char *path, const char *wild, bool dir)
 {
-  uint i;
+  uint32_t i;
   char *ext;
   MY_DIR *dirp;
   FILEINFO *file;
   LEX_STRING *file_name= 0;
-  uint file_name_len;
+  uint32_t file_name_len;
   TableList table_list;
 
   if (wild && !wild[0])
@@ -443,9 +443,9 @@ mysqld_list_fields(THD *thd, TableList *table_list, const char *wild)
     0	No conflicting character
 */
 
-static const char *require_quotes(const char *name, uint name_length)
+static const char *require_quotes(const char *name, uint32_t name_length)
 {
-  uint length;
+  uint32_t length;
   bool pure_digit= true;
   const char *end= name + name_length;
 
@@ -477,7 +477,7 @@ static const char *require_quotes(const char *name, uint name_length)
 */
 
 void
-append_identifier(THD *thd, String *packet, const char *name, uint length)
+append_identifier(THD *thd, String *packet, const char *name, uint32_t length)
 {
   const char *name_end;
   char quote_char;
@@ -542,7 +542,7 @@ append_identifier(THD *thd, String *packet, const char *name, uint length)
     #	  Quote character
 */
 
-int get_quote_char_for_identifier(THD *thd, const char *name, uint length)
+int get_quote_char_for_identifier(THD *thd, const char *name, uint32_t length)
 {
   if (length &&
       !is_keyword(name,length) &&
@@ -561,7 +561,7 @@ static void append_directory(THD *thd __attribute__((unused)),
 {
   if (filename)
   {
-    uint length= dirname_length(filename);
+    uint32_t length= dirname_length(filename);
     packet->append(' ');
     packet->append(dir_type);
     packet->append(STRING_WITH_LEN(" DIRECTORY='"));
@@ -606,7 +606,7 @@ static bool get_field_default_value(THD *thd __attribute__((unused)),
       if (type.length())
       {
         String def_val;
-        uint dummy_errors;
+        uint32_t dummy_errors;
         /* convert to system_charset_info == utf8 */
         def_val.copy(type.ptr(), type.length(), field->charset(),
                      system_charset_info, &dummy_errors);
@@ -659,7 +659,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
   String type(tmp, sizeof(tmp), system_charset_info);
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
-  uint primary_key;
+  uint32_t primary_key;
   KEY *key_info;
   Table *table= table_list->table;
   handler *file= table->file;
@@ -699,7 +699,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
-    uint flags = field->flags;
+    uint32_t flags = field->flags;
 
     if (ptr != table->field)
       packet->append(STRING_WITH_LEN(",\n"));
@@ -789,7 +789,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
   file->update_create_info(&create_info);
   primary_key= share->primary_key;
 
-  for (uint i=0 ; i < share->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
   {
     KEY_PART_INFO *key_part= key_info->key_part;
     bool found_primary=0;
@@ -814,7 +814,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
 
     packet->append(STRING_WITH_LEN(" ("));
 
-    for (uint j=0 ; j < key_info->key_parts ; j++,key_part++)
+    for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
     {
       if (j)
         packet->append(',');
@@ -994,7 +994,7 @@ bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO create;
-  uint create_options = create_info ? create_info->options : 0;
+  uint32_t create_options = create_info ? create_info->options : 0;
 
   if (!my_strcasecmp(system_charset_info, dbname,
                      INFORMATION_SCHEMA_NAME.str))
@@ -1084,7 +1084,7 @@ public:
 
   ulong thread_id;
   time_t start_time;
-  uint   command;
+  uint32_t   command;
   const char *user,*host,*db,*proc_info,*state_info;
   char *query;
 };
@@ -1162,7 +1162,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
 	    the comment in sql_class.h why this prevents crashes in possible
             races with query_length
           */
-          uint length= cmin((uint32_t)max_query_length, tmp->query_length);
+          uint32_t length= cmin((uint32_t)max_query_length, tmp->query_length);
           thd_info->query=(char*) thd->strmake(tmp->query,length);
         }
         thread_infos.append(thd_info);
@@ -1307,7 +1307,7 @@ static int show_var_cmp(const void *var1, const void *var2)
 */
 static void shrink_var_array(DYNAMIC_ARRAY *array)
 {
-  uint a,b;
+  uint32_t a,b;
   SHOW_VAR *all= dynamic_element(array, 0, SHOW_VAR *);
 
   for (a= b= 0; b < array->elements; b++)
@@ -1448,7 +1448,7 @@ void remove_status_vars(SHOW_VAR *list)
   else
   {
     SHOW_VAR *all= dynamic_element(&all_status_vars, 0, SHOW_VAR *);
-    uint i;
+    uint32_t i;
     for (; list->name; list++)
     {
       for (i= 0; i < all_status_vars.elements; i++)
@@ -1837,7 +1837,7 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
   if (item->type() == Item::FUNC_ITEM)
   {
     Item_func *item_func= (Item_func*)item;
-    for (uint i=0; i<item_func->argument_count(); i++)
+    for (uint32_t i=0; i<item_func->argument_count(); i++)
     {
       if (!uses_only_table_name_fields(item_func->arguments()[i], table))
         return 0;
@@ -2365,7 +2365,7 @@ static int fill_schema_table_names(THD *thd, Table *table,
     @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
 */
 
-static uint get_table_open_method(TableList *tables,
+static uint32_t get_table_open_method(TableList *tables,
                                   ST_SCHEMA_TABLE *schema_table,
                                   enum enum_schema_tables schema_table_idx __attribute__((unused)))
 {
@@ -2416,10 +2416,10 @@ static int fill_schema_table_from_frm(THD *thd,TableList *tables,
   TABLE_SHARE *share;
   Table tbl;
   TableList table_list;
-  uint res= 0;
+  uint32_t res= 0;
   int error;
   char key[MAX_DBKEY_LENGTH];
-  uint key_length;
+  uint32_t key_length;
 
   memset(&table_list, 0, sizeof(TableList));
   memset(&tbl, 0, sizeof(Table));
@@ -2489,11 +2489,11 @@ int get_all_tables(THD *thd, TableList *tables, COND *cond)
   List<LEX_STRING> db_names;
   List_iterator_fast<LEX_STRING> it(db_names);
   COND *partial_cond= 0;
-  uint derived_tables= lex->derived_tables; 
+  uint32_t derived_tables= lex->derived_tables; 
   int error= 1;
   Open_tables_state open_tables_state_backup;
   Query_tables_list query_tables_list_backup;
-  uint table_open_method;
+  uint32_t table_open_method;
   bool old_value= thd->no_warnings_for_error;
 
   lex->reset_n_backup_query_tables_list(&query_tables_list_backup);
@@ -2741,7 +2741,7 @@ int fill_schema_schemata(THD *thd, TableList *tables, COND *cond)
      !with_i_schema)
   {
     char path[FN_REFLEN+16];
-    uint path_len;
+    uint32_t path_len;
     struct stat stat_info;
     if (!lookup_field_vals.db_value.str[0])
       return(0);
@@ -2979,7 +2979,7 @@ static int get_schema_tables_record(THD *thd, TableList *tables,
 */
 
 void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs,
-                       uint offset)
+                       uint32_t offset)
 {
   bool is_blob;
   int decimals, field_length;
@@ -3117,7 +3117,7 @@ static int get_schema_column_record(THD *thd, TableList *tables,
     {
       /* to satisfy 'field->val_str' ASSERTs */
       unsigned char *bitmaps;
-      uint bitmap_size= show_table_share->column_bitmap_size;
+      uint32_t bitmap_size= show_table_share->column_bitmap_size;
       if (!(bitmaps= (unsigned char*) alloc_root(thd->mem_root, bitmap_size)))
         return(0);
       bitmap_init(&show_table->def_read_set,
@@ -3330,11 +3330,11 @@ static int get_schema_stat_record(THD *thd, TableList *tables,
       show_table->file->info(HA_STATUS_VARIABLE |
                              HA_STATUS_NO_LOCK |
                              HA_STATUS_TIME);
-    for (uint i=0 ; i < show_table->s->keys ; i++,key_info++)
+    for (uint32_t i=0 ; i < show_table->s->keys ; i++,key_info++)
     {
       KEY_PART_INFO *key_part= key_info->key_part;
       const char *str;
-      for (uint j=0 ; j < key_info->key_parts ; j++,key_part++)
+      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
       {
         restore_record(table, s->default_values);
         table->field[1]->store(db_name->str, db_name->length, cs);
@@ -3375,7 +3375,7 @@ static int get_schema_stat_record(THD *thd, TableList *tables,
                                   key_part->field->charset()->mbmaxlen, true);
           table->field[10]->set_notnull();
         }
-        uint flags= key_part->field ? key_part->field->flags : 0;
+        uint32_t flags= key_part->field ? key_part->field->flags : 0;
         const char *pos=(char*) ((flags & NOT_NULL_FLAG) ? "" : "YES");
         table->field[12]->store(pos, strlen(pos), cs);
         if (!show_table->s->keys_in_use.is_set(i))
@@ -3399,7 +3399,7 @@ static int get_schema_stat_record(THD *thd, TableList *tables,
 
 bool store_constraints(THD *thd, Table *table, LEX_STRING *db_name,
                        LEX_STRING *table_name, const char *key_name,
-                       uint key_len, const char *con_type, uint con_len)
+                       uint32_t key_len, const char *con_type, uint32_t con_len)
 {
   const CHARSET_INFO * const cs= system_charset_info;
   restore_record(table, s->default_values);
@@ -3430,11 +3430,11 @@ static int get_schema_constraints_record(THD *thd, TableList *tables,
     List<FOREIGN_KEY_INFO> f_key_list;
     Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
-    uint primary_key= show_table->s->primary_key;
+    uint32_t primary_key= show_table->s->primary_key;
     show_table->file->info(HA_STATUS_VARIABLE | 
                            HA_STATUS_NO_LOCK |
                            HA_STATUS_TIME);
-    for (uint i=0 ; i < show_table->s->keys ; i++, key_info++)
+    for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
     {
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
         continue;
@@ -3473,7 +3473,7 @@ static int get_schema_constraints_record(THD *thd, TableList *tables,
 
 void store_key_column_usage(Table *table, LEX_STRING *db_name,
                             LEX_STRING *table_name, const char *key_name,
-                            uint key_len, const char *con_type, uint con_len,
+                            uint32_t key_len, const char *con_type, uint32_t con_len,
                             int64_t idx)
 {
   const CHARSET_INFO * const cs= system_charset_info;
@@ -3505,17 +3505,17 @@ static int get_schema_key_column_usage_record(THD *thd,
     List<FOREIGN_KEY_INFO> f_key_list;
     Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
-    uint primary_key= show_table->s->primary_key;
+    uint32_t primary_key= show_table->s->primary_key;
     show_table->file->info(HA_STATUS_VARIABLE | 
                            HA_STATUS_NO_LOCK |
                            HA_STATUS_TIME);
-    for (uint i=0 ; i < show_table->s->keys ; i++, key_info++)
+    for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
     {
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
         continue;
-      uint f_idx= 0;
+      uint32_t f_idx= 0;
       KEY_PART_INFO *key_part= key_info->key_part;
-      for (uint j=0 ; j < key_info->key_parts ; j++,key_part++)
+      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
       {
         if (key_part->field)
         {
@@ -3542,7 +3542,7 @@ static int get_schema_key_column_usage_record(THD *thd,
       LEX_STRING *r_info;
       List_iterator_fast<LEX_STRING> it(f_key_info->foreign_fields),
         it1(f_key_info->referenced_fields);
-      uint f_idx= 0;
+      uint32_t f_idx= 0;
       while ((f_info= it++))
       {
         r_info= it1++;

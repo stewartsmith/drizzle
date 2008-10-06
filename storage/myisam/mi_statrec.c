@@ -52,7 +52,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
 	goto err;
       if (info->s->base.pack_reclength != info->s->base.reclength)
       {
-	uint length=info->s->base.pack_reclength - info->s->base.reclength;
+	uint32_t length=info->s->base.pack_reclength - info->s->base.reclength;
 	memset(temp, 0, length);
 	if (my_b_write(&info->rec_cache, temp,length))
 	  goto err;
@@ -67,7 +67,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
         goto err;
       if (info->s->base.pack_reclength != info->s->base.reclength)
       {
-	uint length=info->s->base.pack_reclength - info->s->base.reclength;
+	uint32_t length=info->s->base.pack_reclength - info->s->base.reclength;
 	memset(temp, 0, length);
 	if (info->s->file_write(info, temp,length,
 		      info->state->data_file_length+
@@ -194,7 +194,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
 			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;
-  uint cache_length;
+  uint32_t cache_length;
   MYISAM_SHARE *share=info->s;
 
   cache_read=0;

@@ -51,7 +51,7 @@
 */
 
 int Field_newdate::store(const char *from,
-                         uint len,
+                         uint32_t len,
                          const CHARSET_INFO * const cs __attribute__((unused)))
 {
   long tmp;
@@ -228,7 +228,7 @@ String *Field_newdate::val_str(String *val_buffer,
 }
 
 
-bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint3korr(ptr);
   ltime->day=   tmp & 31;
@@ -256,7 +256,7 @@ int Field_newdate::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_newdate::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_newdate::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   to[0] = ptr[2];
   to[1] = ptr[1];

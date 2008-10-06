@@ -70,7 +70,7 @@ public:
 
   sys_var *next;
   struct my_option *option_limits;	/* Updated by by set_var_init() */
-  uint name_length;			/* Updated by by set_var_init() */
+  uint32_t name_length;			/* Updated by by set_var_init() */
   const char *name;
 
   sys_after_update_func after_update;
@@ -244,7 +244,7 @@ class sys_var_str :public sys_var
 {
 public:
   char *value;					// Pointer to allocated string
-  uint value_length;
+  uint32_t value_length;
   sys_check_func check_func;
   sys_update_func update_func;
   sys_set_default_func set_default_func;
@@ -354,10 +354,10 @@ public:
 
 class sys_var_enum :public sys_var
 {
-  uint *value;
+  uint32_t *value;
   TYPELIB *enum_names;
 public:
-  sys_var_enum(sys_var_chain *chain, const char *name_arg, uint *value_arg,
+  sys_var_enum(sys_var_chain *chain, const char *name_arg, uint32_t *value_arg,
 	       TYPELIB *typelib, sys_after_update_func func)
     :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
   { chain_sys_var(chain); }
@@ -848,10 +848,10 @@ public:
 
 class sys_var_log_state :public sys_var_bool_ptr
 {
-  uint log_type;
+  uint32_t log_type;
 public:
   sys_var_log_state(sys_var_chain *chain, const char *name_arg, bool *value_arg, 
-                    uint log_type_arg)
+                    uint32_t log_type_arg)
     :sys_var_bool_ptr(chain, name_arg, value_arg), log_type(log_type_arg) {}
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
@@ -996,12 +996,12 @@ public:
 class sys_var_have_plugin: public sys_var_have_option
 {
   const char *plugin_name_str;
-  const uint plugin_name_len;
+  const uint32_t plugin_name_len;
   const int plugin_type;
 
 public:
   sys_var_have_plugin(sys_var_chain *chain, const char *variable_name,
-                      const char *plugin_name_str_arg, uint plugin_name_len_arg, 
+                      const char *plugin_name_str_arg, uint32_t plugin_name_len_arg, 
                       int plugin_type_arg):
     sys_var_have_option(chain, variable_name), 
     plugin_name_str(plugin_name_str_arg), plugin_name_len(plugin_name_len_arg),
@@ -1233,18 +1233,18 @@ extern "C"
 class NAMED_LIST :public ilink
 {
   const char *name;
-  uint name_length;
+  uint32_t name_length;
 public:
   unsigned char* data;
 
   NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
-	     uint name_length_arg, unsigned char* data_arg)
+	     uint32_t name_length_arg, unsigned char* data_arg)
     :name_length(name_length_arg), data(data_arg)
   {
     name= my_strndup(name_arg, name_length, MYF(MY_WME));
     links->push_back(this);
   }
-  inline bool cmp(const char *name_cmp, uint length)
+  inline bool cmp(const char *name_cmp, uint32_t length)
   {
     return length == name_length && !memcmp(name, name_cmp, length);
   }
@@ -1275,11 +1275,11 @@ struct sys_var_with_base
 
 int set_var_init();
 void set_var_free();
-int mysql_append_static_vars(const SHOW_VAR *show_vars, uint count);
+int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count);
 SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted);
 int mysql_add_sys_var_chain(sys_var *chain, struct my_option *long_options);
 int mysql_del_sys_var_chain(sys_var *chain);
-sys_var *find_sys_var(THD *thd, const char *str, uint length=0);
+sys_var *find_sys_var(THD *thd, const char *str, uint32_t length=0);
 int sql_set_variables(THD *thd, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 void fix_delay_key_write(THD *thd, enum_var_type type);
@@ -1290,14 +1290,14 @@ extern sys_var_str sys_init_slave;
 extern sys_var_thd_time_zone sys_time_zone;
 extern sys_var_thd_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
-unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
+unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint32_t length,
 		NAMED_LIST **found);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 
 /* key_cache functions */
 KEY_CACHE *get_key_cache(LEX_STRING *cache_name);
-KEY_CACHE *get_or_create_key_cache(const char *name, uint length);
+KEY_CACHE *get_or_create_key_cache(const char *name, uint32_t length);
 void free_key_cache(const char *name, KEY_CACHE *key_cache);
 bool process_key_caches(process_key_cache_t func);
 void delete_elements(I_List<NAMED_LIST> *list,

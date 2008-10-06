@@ -234,8 +234,8 @@ static int my_strcasecmp_bin(const CHARSET_INFO * const  cs __attribute__((unuse
 }
 
 
-uint my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-                      uint c __attribute__((unused)))
+uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+                      uint32_t c __attribute__((unused)))
 {
   return 1;
 }
@@ -398,8 +398,8 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
 
 static size_t
 my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
-                     unsigned char * dst, size_t dstlen, uint nweights,
-                     const unsigned char *src, size_t srclen, uint flags)
+                     unsigned char * dst, size_t dstlen, uint32_t nweights,
+                     const unsigned char *src, size_t srclen, uint32_t flags)
 {
   set_if_smaller(srclen, dstlen);
   set_if_smaller(srclen, nweights);
@@ -411,10 +411,10 @@ my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
 
 
 static
-uint my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+uint32_t my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 		  const char *b, size_t b_length,
 		  const char *s, size_t s_length,
-		  my_match_t *match, uint nmatch)
+		  my_match_t *match, uint32_t nmatch)
 {
   register const unsigned char *str, *search, *end, *search_end;
 

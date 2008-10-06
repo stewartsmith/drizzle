@@ -2581,7 +2581,7 @@ MY_LOCALE *my_locales[]=
   };
 
 
-MY_LOCALE *my_locale_by_number(uint number)
+MY_LOCALE *my_locale_by_number(uint32_t number)
 {
   MY_LOCALE *locale;
   if (number >= array_elements(my_locales) - 1)

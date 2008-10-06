@@ -43,7 +43,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
   bool		transactional_table, safe_update, const_cond;
   bool          const_cond_result;
   ha_rows	deleted= 0;
-  uint usable_index= MAX_KEY;
+  uint32_t usable_index= MAX_KEY;
   SELECT_LEX   *select_lex= &thd->lex->select_lex;
   THD::killed_state killed_status= THD::NOT_KILLED;
   
@@ -190,7 +190,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
 
   if (order && order->elements)
   {
-    uint         length= 0;
+    uint32_t         length= 0;
     SORT_FIELD  *sortorder;
     ha_rows examined_rows;
     
@@ -492,7 +492,7 @@ int mysql_multi_delete_prepare(THD *thd)
 }
 
 
-multi_delete::multi_delete(TableList *dt, uint num_of_tables_arg)
+multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
   : delete_tables(dt), deleted(0), found(0),
     num_of_tables(num_of_tables_arg), error(0),
     do_delete(0), transactional_tables(0), normal_tables(0), error_handled(0)
@@ -590,7 +590,7 @@ multi_delete::~multi_delete()
     table->no_keyread=0;
   }
 
-  for (uint counter= 0; counter < num_of_tables; counter++)
+  for (uint32_t counter= 0; counter < num_of_tables; counter++)
   {
     if (tempfiles[counter])
       delete tempfiles[counter];
@@ -648,7 +648,7 @@ bool multi_delete::send_data(List<Item> &values __attribute__((unused)))
 }
 
 
-void multi_delete::send_error(uint errcode,const char *err)
+void multi_delete::send_error(uint32_t errcode,const char *err)
 {
   
 
@@ -847,7 +847,7 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
   char path[FN_REFLEN];
   Table *table;
   bool error;
-  uint path_length;
+  uint32_t path_length;
   
 
   memset(&create_info, 0, sizeof(create_info));

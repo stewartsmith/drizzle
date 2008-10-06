@@ -24,7 +24,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
                          unsigned char *buff, int return_buffer)
 {
   unsigned char *tmp;
-  uint page_size;
+  uint32_t page_size;
 
   tmp=(unsigned char*) key_cache_read(info->s->key_cache,
                              info->s->kfile, page, level, (unsigned char*) buff,
@@ -58,7 +58,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
 int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		      my_off_t page, int level, unsigned char *buff)
 {
-  register uint length;
+  register uint32_t length;
 
 #ifndef FAST					/* Safety check */
   if (page < info->s->base.keystart ||

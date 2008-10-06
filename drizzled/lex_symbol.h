@@ -37,7 +37,7 @@ struct st_sym_group;
 typedef struct st_symbol {
   const char *name;
   uint	tok;
-  uint length;
+  uint32_t length;
   struct st_sym_group *group;
 } SYMBOL;
 
@@ -45,7 +45,7 @@ typedef struct st_lex_symbol
 {
   SYMBOL *symbol;
   char   *str;
-  uint   length;
+  uint32_t   length;
 } LEX_SYMBOL;
 
 typedef struct st_sym_group {

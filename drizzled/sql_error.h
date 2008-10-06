@@ -23,11 +23,11 @@ public:
   enum enum_warning_level
   { WARN_LEVEL_NOTE, WARN_LEVEL_WARN, WARN_LEVEL_ERROR, WARN_LEVEL_END};
 
-  uint code;
+  uint32_t code;
   enum_warning_level level;
   char *msg;
   
-  DRIZZLE_ERROR(THD *thd, uint code_arg, enum_warning_level level_arg,
+  DRIZZLE_ERROR(THD *thd, uint32_t code_arg, enum_warning_level level_arg,
 	      const char *msg_arg)
     :code(code_arg), level(level_arg)
   {
@@ -38,9 +38,9 @@ public:
 };
 
 DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
-                          uint code, const char *msg);
+                          uint32_t code, const char *msg);
 void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
-			 uint code, const char *format, ...);
+			 uint32_t code, const char *format, ...);
 void drizzle_reset_errors(THD *thd, bool force);
 bool mysqld_show_warnings(THD *thd, uint32_t levels_to_show);
 

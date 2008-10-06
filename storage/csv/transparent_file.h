@@ -24,7 +24,7 @@ class Transparent_file
   /* current window sizes */
   off_t lower_bound;
   off_t upper_bound;
-  uint buff_size;
+  uint32_t buff_size;
 
 public:
 

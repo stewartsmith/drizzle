@@ -25,7 +25,7 @@ typedef uint32_t my_bitmap_map;
 typedef struct st_bitmap
 {
   my_bitmap_map *bitmap;
-  uint n_bits; /* number of bits occupied by the above */
+  uint32_t n_bits; /* number of bits occupied by the above */
   my_bitmap_map last_word_mask;
   my_bitmap_map *last_word_ptr;
   /*
@@ -40,25 +40,25 @@ typedef struct st_bitmap
 extern "C" {
 #endif
 extern void create_last_word_mask(MY_BITMAP *map);
-extern bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
+extern bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits,
                            bool thread_safe);
 extern bool bitmap_is_clear_all(const MY_BITMAP *map);
-extern bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size);
+extern bool bitmap_is_prefix(const MY_BITMAP *map, uint32_t prefix_size);
 extern bool bitmap_is_set_all(const MY_BITMAP *map);
 extern bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2);
 extern bool bitmap_is_overlapping(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
-extern bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit);
-extern bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
-extern bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
-extern bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit);
-extern uint bitmap_set_next(MY_BITMAP *map);
-extern uint bitmap_get_first(const MY_BITMAP *map);
-extern uint bitmap_get_first_set(const MY_BITMAP *map);
-extern uint bitmap_bits_set(const MY_BITMAP *map);
+extern bool bitmap_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit);
+extern bool bitmap_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit);
+extern bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit);
+extern bool bitmap_fast_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit);
+extern uint32_t bitmap_set_next(MY_BITMAP *map);
+extern uint32_t bitmap_get_first(const MY_BITMAP *map);
+extern uint32_t bitmap_get_first_set(const MY_BITMAP *map);
+extern uint32_t bitmap_bits_set(const MY_BITMAP *map);
 extern void bitmap_free(MY_BITMAP *map);
-extern void bitmap_set_above(MY_BITMAP *map, uint from_byte, uint use_bit);
-extern void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size);
+extern void bitmap_set_above(MY_BITMAP *map, uint32_t from_byte, uint32_t use_bit);
+extern void bitmap_set_prefix(MY_BITMAP *map, uint32_t prefix_size);
 extern void bitmap_intersect(MY_BITMAP *map, const MY_BITMAP *map2);
 extern void bitmap_subtract(MY_BITMAP *map, const MY_BITMAP *map2);
 extern void bitmap_union(MY_BITMAP *map, const MY_BITMAP *map2);
@@ -66,24 +66,24 @@ extern void bitmap_xor(MY_BITMAP *map, const MY_BITMAP *map2);
 extern void bitmap_invert(MY_BITMAP *map);
 extern void bitmap_copy(MY_BITMAP *map, const MY_BITMAP *map2);
 
-extern uint bitmap_lock_set_next(MY_BITMAP *map);
-extern void bitmap_lock_clear_bit(MY_BITMAP *map, uint bitmap_bit);
+extern uint32_t bitmap_lock_set_next(MY_BITMAP *map);
+extern void bitmap_lock_clear_bit(MY_BITMAP *map, uint32_t bitmap_bit);
 #ifdef NOT_USED
-extern uint bitmap_lock_bits_set(const MY_BITMAP *map);
+extern uint32_t bitmap_lock_bits_set(const MY_BITMAP *map);
 extern bool bitmap_lock_is_set_all(const MY_BITMAP *map);
-extern uint bitmap_lock_get_first(const MY_BITMAP *map);
-extern uint bitmap_lock_get_first_set(const MY_BITMAP *map);
+extern uint32_t bitmap_lock_get_first(const MY_BITMAP *map);
+extern uint32_t bitmap_lock_get_first_set(const MY_BITMAP *map);
 extern bool bitmap_lock_is_subset(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
-extern bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint prefix_size);
-extern bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint32_t prefix_size);
+extern bool bitmap_lock_is_set(const MY_BITMAP *map, uint32_t bitmap_bit);
 extern bool bitmap_lock_is_clear_all(const MY_BITMAP *map);
 extern bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2);
 extern void bitmap_lock_set_all(MY_BITMAP *map);
 extern void bitmap_lock_clear_all(MY_BITMAP *map);
-extern void bitmap_lock_set_bit(MY_BITMAP *map, uint bitmap_bit);
-extern void bitmap_lock_flip_bit(MY_BITMAP *map, uint bitmap_bit);
-extern void bitmap_lock_set_prefix(MY_BITMAP *map, uint prefix_size);
+extern void bitmap_lock_set_bit(MY_BITMAP *map, uint32_t bitmap_bit);
+extern void bitmap_lock_flip_bit(MY_BITMAP *map, uint32_t bitmap_bit);
+extern void bitmap_lock_set_prefix(MY_BITMAP *map, uint32_t prefix_size);
 extern void bitmap_lock_intersect(MY_BITMAP *map, const MY_BITMAP *map2);
 extern void bitmap_lock_subtract(MY_BITMAP *map, const MY_BITMAP *map2);
 extern void bitmap_lock_union(MY_BITMAP *map, const MY_BITMAP *map2);

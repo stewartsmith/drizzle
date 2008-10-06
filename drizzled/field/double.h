@@ -43,7 +43,7 @@ public:
     {not_fixed= not_fixed_arg; }
   enum_field_types type() const { return DRIZZLE_TYPE_DOUBLE;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_DOUBLE; }
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int reset(void) { memset(ptr, 0, sizeof(double)); return 0; }
@@ -52,9 +52,9 @@ public:
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return sizeof(double); }
-  uint row_pack_length() { return pack_length(); }
+  uint32_t row_pack_length() { return pack_length(); }
   void sql_type(String &str) const;
 private:
   int do_save_field_metadata(unsigned char *first_byte);

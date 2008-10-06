@@ -356,7 +356,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
 {
   if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
   {
-    uint i=0;
+    uint32_t i=0;
     List_iterator_fast<Item> li(list);
     Item *item;
 
@@ -422,7 +422,7 @@ void Item_sum::make_field(Send_field *tmp_field)
 void Item_sum::print(String *str, enum_query_type query_type)
 {
   str->append(func_name());
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (i)
       str->append(',');
@@ -434,7 +434,7 @@ void Item_sum::print(String *str, enum_query_type query_type)
 void Item_sum::fix_num_length_and_dec()
 {
   decimals=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
     set_if_bigger(decimals,args[i]->decimals);
   max_length=float_length(decimals);
 }
@@ -445,7 +445,7 @@ Item *Item_sum::get_tmp_table_item(THD *thd)
   if (sum_item && sum_item->result_field)	   // If not a const sum func
   {
     Field *result_field_tmp= sum_item->result_field;
-    for (uint i=0 ; i < sum_item->arg_count ; i++)
+    for (uint32_t i=0 ; i < sum_item->arg_count ; i++)
     {
       Item *arg= sum_item->args[i];
       if (!arg->const_item())
@@ -479,7 +479,7 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 
 Field *Item_sum::create_tmp_field(bool group __attribute__((unused)),
                                   Table *table,
-                                  uint convert_blob_length)
+                                  uint32_t convert_blob_length)
 {
   Field *field;
   switch (result_type()) {
@@ -518,7 +518,7 @@ void Item_sum::update_used_tables ()
   if (!forced_const)
   {
     used_tables_cache= 0;
-    for (uint i=0 ; i < arg_count ; i++)
+    for (uint32_t i=0 ; i < arg_count ; i++)
     {
       args[i]->update_used_tables();
       used_tables_cache|= args[i]->used_tables();
@@ -568,7 +568,7 @@ Item_sum_num::fix_fields(THD *thd, Item **ref)
 
   decimals=0;
   maybe_null=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (args[i]->fix_fields(thd, args + i) || args[i]->check_cols(1))
       return true;
@@ -674,7 +674,7 @@ Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
 }
 
 Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
-					 uint convert_blob_length)
+					 uint32_t convert_blob_length)
 {
   Field *field;
   if (args[0]->type() == Item::FIELD_ITEM)
@@ -854,7 +854,7 @@ extern "C" {
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 {
-    return memcmp(key1, key2, *(uint *) arg);
+    return memcmp(key1, key2, *(uint32_t *) arg);
 }
 
 
@@ -1214,7 +1214,7 @@ Item *Item_sum_avg::copy_or_same(THD* thd)
 
 
 Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
-                                      uint convert_blob_len __attribute__((unused)))
+                                      uint32_t convert_blob_len __attribute__((unused)))
 {
   Field *field;
   if (group)
@@ -1424,7 +1424,7 @@ Item *Item_sum_variance::copy_or_same(THD* thd)
   pass around.
 */
 Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
-                                           uint convert_blob_len __attribute__((unused)))
+                                           uint32_t convert_blob_len __attribute__((unused)))
 {
   Field *field;
   if (group)
@@ -2547,7 +2547,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
     return true;
 
   /* Create a table with an unique key over all parameters */
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     Item *item=args[i];
     if (list.push_back(item))
@@ -2758,7 +2758,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
   Item_func_group_concat *item_func= (Item_func_group_concat*)arg;
   Table *table= item_func->table;
 
-  for (uint i= 0; i < item_func->arg_count_field; i++)
+  for (uint32_t i= 0; i < item_func->arg_count_field; i++)
   {
     Item *item= item_func->args[i];
     /* 
@@ -2774,7 +2774,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     */
     Field *field= item->get_tmp_table_field();
     int res;
-    uint offset= field->offset(field->table->record[0])-table->s->null_bytes;
+    uint32_t offset= field->offset(field->table->record[0])-table->s->null_bytes;
     if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
@@ -2811,7 +2811,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
     if (field && !item->const_item())
     {
       int res;
-      uint offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->table->record[0]) -
                     table->s->null_bytes);
       if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
@@ -2839,7 +2839,7 @@ int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)
   String tmp2;
   String *result= &item->result;
   Item **arg= item->args, **arg_end= item->args + item->arg_count_field;
-  uint old_length= result->length();
+  uint32_t old_length= result->length();
 
   if (item->no_appended)
     item->no_appended= false;
@@ -2861,7 +2861,7 @@ int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)
         because it contains both order and arg list fields.
       */
       Field *field= (*arg)->get_tmp_table_field();
-      uint offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->table->record[0]) -
                     table->s->null_bytes);
       assert(offset < table->s->reclength);
       res= field->val_str(&tmp, key + offset);
@@ -2878,7 +2878,7 @@ int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)
     int well_formed_error;
     const CHARSET_INFO * const cs= item->collation.collation;
     const char *ptr= result->ptr();
-    uint add_length;
+    uint32_t add_length;
     /*
       It's ok to use item->result.length() as the fourth argument
       as this is never used to limit the length of the data.
@@ -3064,7 +3064,7 @@ bool Item_func_group_concat::add()
   copy_fields(tmp_table_param);
   copy_funcs(tmp_table_param->items_to_copy);
 
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *show_item= args[i];
     if (!show_item->const_item())
@@ -3081,7 +3081,7 @@ bool Item_func_group_concat::add()
   if (distinct) 
   {
     /* Filter out duplicate rows. */
-    uint count= unique_filter->elements_in_tree();
+    uint32_t count= unique_filter->elements_in_tree();
     unique_filter->unique_add(table->record[0] + table->s->null_bytes);
     if (count == unique_filter->elements_in_tree())
       row_eligible= false;
@@ -3107,7 +3107,7 @@ bool Item_func_group_concat::add()
 bool
 Item_func_group_concat::fix_fields(THD *thd, Item **ref)
 {
-  uint i;                       /* for loop variable */
+  uint32_t i;                       /* for loop variable */
   assert(fixed == 0);
 
   if (init_sum_func_check(thd))
@@ -3144,7 +3144,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
                                   collation.collation, &offset))
   {
     uint32_t buflen= collation.collation->mbmaxlen * separator->length();
-    uint errors, conv_length;
+    uint32_t errors, conv_length;
     char *buf;
     String *new_separator;
 
@@ -3188,7 +3188,7 @@ bool Item_func_group_concat::setup(THD *thd)
                                         collation.collation->mbmaxlen;
   /* Push all not constant fields to the list and create a temp table */
   always_null= 0;
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *item= args[i];
     if (list.push_back(item))
@@ -3249,7 +3249,7 @@ bool Item_func_group_concat::setup(THD *thd)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint tree_key_length= table->s->reclength - table->s->null_bytes;
+  uint32_t tree_key_length= table->s->reclength - table->s->null_bytes;
 
   if (arg_count_order)
   {
@@ -3316,7 +3316,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN("group_concat("));
   if (distinct)
     str->append(STRING_WITH_LEN("distinct "));
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     if (i)
       str->append(',');
@@ -3325,7 +3325,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
   if (arg_count_order)
   {
     str->append(STRING_WITH_LEN(" order by "));
-    for (uint i= 0 ; i < arg_count_order ; i++)
+    for (uint32_t i= 0 ; i < arg_count_order ; i++)
     {
       if (i)
         str->append(',');

@@ -40,7 +40,7 @@
 
 #define ROW_LEN   16
 
-void print_array(const char *name, const unsigned char *array, uint size);
+void print_array(const char *name, const unsigned char *array, uint32_t size);
 
 int main(void)
 {
@@ -56,9 +56,9 @@ int main(void)
   exit(EXIT_SUCCESS);
 }
 
-void print_array(const char *name, const unsigned char *array, uint size)
+void print_array(const char *name, const unsigned char *array, uint32_t size)
 {
-  uint i;
+  uint32_t i;
 
   printf("\n# The %s array must have %d elements.\n", name, size);
 

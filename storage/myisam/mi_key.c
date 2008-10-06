@@ -30,7 +30,7 @@
               set_if_smaller(char_length,length);                           \
             } while(0)
 
-static int _mi_put_key_in_record(MI_INFO *info,uint keynr,unsigned char *record);
+static int _mi_put_key_in_record(MI_INFO *info,uint32_t keynr,unsigned char *record);
 
 /*
   Make a intern key from a record
@@ -47,7 +47,7 @@ static int _mi_put_key_in_record(MI_INFO *info,uint keynr,unsigned char *record)
     Length of key
 */
 
-uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
+uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key,
 		  const unsigned char *record, my_off_t filepos)
 {
   unsigned char *pos;
@@ -58,8 +58,8 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
   {
     enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
-    uint length=keyseg->length;
-    uint char_length;
+    uint32_t length=keyseg->length;
+    uint32_t char_length;
     const CHARSET_INFO * const cs=keyseg->charset;
 
     if (keyseg->null_bit)
@@ -110,8 +110,8 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
     }
     if (keyseg->flag & HA_VAR_LENGTH_PART)
     {
-      uint pack_length= (keyseg->bit_start == 1 ? 1 : 2);
-      uint tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
+      uint32_t pack_length= (keyseg->bit_start == 1 ? 1 : 2);
+      uint32_t tmp_length= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                         uint2korr(pos));
       pos+= pack_length;			/* Skip VARCHAR length */
       set_if_smaller(length,tmp_length);
@@ -123,7 +123,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
     }
     else if (keyseg->flag & HA_BLOB_PART)
     {
-      uint tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
+      uint32_t tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
       memcpy(&pos, pos+keyseg->bit_start, sizeof(char*));
       set_if_smaller(length,tmp_length);
       FIX_LENGTH(cs, pos, length, char_length);
@@ -183,7 +183,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
   SYNOPSIS
     _mi_pack_key()
     info		MyISAM handler
-    uint keynr		key number
+    uint32_t keynr		key number
     key			Store packed key here
     old			Not packed key
     keypart_map         bitmap of used keyparts
@@ -195,7 +195,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, unsigned char *key,
      last_use_keyseg    Store pointer to the keyseg after the last used one
 */
 
-uint _mi_pack_key(register MI_INFO *info, uint keynr, unsigned char *key, unsigned char *old,
+uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key, unsigned char *old,
                   key_part_map keypart_map, HA_KEYSEG **last_used_keyseg)
 {
   unsigned char *start_key=key;
@@ -208,8 +208,8 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, unsigned char *key, unsign
        old+= keyseg->length, keyseg++)
   {
     enum ha_base_keytype type= (enum ha_base_keytype) keyseg->type;
-    uint length= keyseg->length;
-    uint char_length;
+    uint32_t length= keyseg->length;
+    uint32_t char_length;
     unsigned char *pos;
     const CHARSET_INFO * const cs=keyseg->charset;
     keypart_map>>= 1;
@@ -247,7 +247,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, unsigned char *key, unsign
     else if (keyseg->flag & (HA_VAR_LENGTH_PART | HA_BLOB_PART))
     {
       /* Length of key-part used with mi_rkey() always 2 */
-      uint tmp_length=uint2korr(pos);
+      uint32_t tmp_length=uint2korr(pos);
       pos+=2;
       set_if_smaller(length,tmp_length);	/* Safety */
       FIX_LENGTH(cs, pos, length, char_length);
@@ -297,7 +297,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, unsigned char *key, unsign
    1   error
 */
 
-static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
+static int _mi_put_key_in_record(register MI_INFO *info, uint32_t keynr,
 				 unsigned char *record)
 {
   register unsigned char *key;
@@ -321,7 +321,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
     }
     if (keyseg->type == HA_KEYTYPE_BIT)
     {
-      uint length= keyseg->length;
+      uint32_t length= keyseg->length;
 
       if (keyseg->bit_length)
       {
@@ -341,7 +341,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
     }
     if (keyseg->flag & HA_SPACE_PACK)
     {
-      uint length;
+      uint32_t length;
       get_key_length(length,key);
 #ifdef CHECK_KEYS
       if (length > keyseg->length || key+length > key_end)
@@ -367,7 +367,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
 
     if (keyseg->flag & HA_VAR_LENGTH_PART)
     {
-      uint length;
+      uint32_t length;
       get_key_length(length,key);
 #ifdef CHECK_KEYS
       if (length > keyseg->length || key+length > key_end)
@@ -384,7 +384,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
     }
     else if (keyseg->flag & HA_BLOB_PART)
     {
-      uint length;
+      uint32_t length;
       get_key_length(length,key);
 #ifdef CHECK_KEYS
       if (length > keyseg->length || key+length > key_end)
@@ -474,7 +474,7 @@ int _mi_read_key_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
     2   Index condition is not satisfied, end the scan. 
 */
 
-int mi_check_index_cond(register MI_INFO *info, uint keynr, unsigned char *record)
+int mi_check_index_cond(register MI_INFO *info, uint32_t keynr, unsigned char *record)
 {
   if (_mi_put_key_in_record(info, keynr, record))
   {

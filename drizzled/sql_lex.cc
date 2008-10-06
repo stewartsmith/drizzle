@@ -74,7 +74,7 @@ const char * index_hint_type_name[] =
   "FORCE INDEX"
 };
 
-inline int lex_casecmp(const char *s, const char *t, uint len)
+inline int lex_casecmp(const char *s, const char *t, uint32_t len)
 {
   while (len-- != 0 &&
 	 to_upper_lex[(unsigned char) *s++] == to_upper_lex[(unsigned char) *t++]) ;
@@ -86,7 +86,7 @@ inline int lex_casecmp(const char *s, const char *t, uint len)
 
 void lex_init(void)
 {
-  uint i;
+  uint32_t i;
   for (i=0 ; i < array_elements(symbols) ; i++)
     symbols[i].length=(unsigned char) strlen(symbols[i].name);
   for (i=0 ; i < array_elements(sql_functions) ; i++)
@@ -163,7 +163,7 @@ void Lex_input_stream::body_utf8_start(THD *thd, const char *begin_ptr)
   assert(begin_ptr);
   assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
 
-  uint body_utf8_length=
+  uint32_t body_utf8_length=
     (m_buf_length / thd->variables.character_set_client->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
@@ -378,7 +378,7 @@ void lex_end(LEX *lex)
 }
 
 
-static int find_keyword(Lex_input_stream *lip, uint len, bool function)
+static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 {
   const char *tok= lip->get_tok_start();
 
@@ -407,7 +407,7 @@ static int find_keyword(Lex_input_stream *lip, uint len, bool function)
     1         name isn't a keyword
 */
 
-bool is_keyword(const char *name, uint len)
+bool is_keyword(const char *name, uint32_t len)
 {
   assert(len != 0);
   return get_hash_symbol(name,len,0)!=0;
@@ -421,7 +421,7 @@ bool is_lex_native_function(const LEX_STRING *name)
 
 /* make a copy of token before ptr and set yytoklen */
 
-static LEX_STRING get_token(Lex_input_stream *lip, uint skip, uint length)
+static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
   LEX_STRING tmp;
   lip->yyUnget();                       // ptr points now after last token char
@@ -442,8 +442,8 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint skip, uint length)
 */
 
 static LEX_STRING get_quoted_token(Lex_input_stream *lip,
-                                   uint skip,
-                                   uint length, char quote)
+                                   uint32_t skip,
+                                   uint32_t length, char quote)
 {
   LEX_STRING tmp;
   const char *from, *end;
@@ -479,7 +479,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   register unsigned char c,sep;
-  uint found_escape=0;
+  uint32_t found_escape=0;
   const CHARSET_INFO * const cs= lip->m_thd->charset();
 
   lip->tok_bitmap= 0;
@@ -610,16 +610,16 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 */
 
 static const char *long_str="2147483647";
-static const uint long_len=10;
+static const uint32_t long_len=10;
 static const char *signed_long_str="-2147483648";
 static const char *int64_t_str="9223372036854775807";
-static const uint int64_t_len=19;
+static const uint32_t int64_t_len=19;
 static const char *signed_int64_t_str="-9223372036854775808";
-static const uint signed_int64_t_len=19;
+static const uint32_t signed_int64_t_len=19;
 static const char *unsigned_int64_t_str="18446744073709551615";
-static const uint unsigned_int64_t_len=20;
+static const uint32_t unsigned_int64_t_len=20;
 
-static inline uint int_token(const char *str,uint length)
+static inline uint32_t int_token(const char *str,uint32_t length)
 {
   if (length < long_len)			// quick normal case
     return NUM;
@@ -641,7 +641,7 @@ static inline uint int_token(const char *str,uint length)
   if (length < long_len)
     return NUM;
 
-  uint smaller,bigger;
+  uint32_t smaller,bigger;
   const char *cmp;
   if (neg)
   {
@@ -1036,7 +1036,7 @@ int lex_one_token(void *arg, void *yythd)
 
     case MY_LEX_USER_VARIABLE_DELIMITER:	// Found quote char
     {
-      uint double_quotes= 0;
+      uint32_t double_quotes= 0;
       char quote_char= c;                       // Used char
       while ((c=lip->yyGet()))
       {
@@ -1814,7 +1814,7 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
 bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
-uint st_select_lex_node::get_in_sum_expr()           { return 0; }
+uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
 TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
@@ -1904,7 +1904,7 @@ bool st_select_lex::inc_in_sum_expr()
 }
 
 
-uint st_select_lex::get_in_sum_expr()
+uint32_t st_select_lex::get_in_sum_expr()
 {
   return in_sum_expr;
 }
@@ -1926,7 +1926,7 @@ uint32_t st_select_lex::get_table_join_options()
 }
 
 
-bool st_select_lex::setup_ref_array(THD *thd, uint order_group_num)
+bool st_select_lex::setup_ref_array(THD *thd, uint32_t order_group_num)
 {
   if (ref_pointer_array)
     return 0;
@@ -1983,7 +1983,7 @@ void st_select_lex::print_order(String *str,
     if (order->counter_used)
     {
       char buffer[20];
-      uint length= snprintf(buffer, 20, "%d", order->counter);
+      uint32_t length= snprintf(buffer, 20, "%d", order->counter);
       str->append(buffer, length);
     }
     else
@@ -2674,7 +2674,7 @@ void st_select_lex::alloc_index_hints (THD *thd)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool st_select_lex::add_index_hint (THD *thd, char *str, uint length)
+bool st_select_lex::add_index_hint (THD *thd, char *str, uint32_t length)
 {
   return index_hints->push_front (new (thd->mem_root) 
                                  Index_hint(current_index_hint_type,

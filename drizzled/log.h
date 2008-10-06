@@ -79,7 +79,7 @@ class TC_LOG_MMAP: public TC_LOG
   char logname[FN_REFLEN];
   File fd;
   my_off_t file_length;
-  uint npages, inited;
+  uint32_t npages, inited;
   unsigned char *data;
   struct st_page *pages, *syncing, *active, *pool, *pool_last;
   /*
@@ -180,7 +180,7 @@ public:
             enum cache_type io_cache_type_arg);
   void init(enum_log_type log_type_arg,
             enum cache_type io_cache_type_arg);
-  void close(uint exiting);
+  void close(uint32_t exiting);
   inline bool is_open() { return log_state != LOG_CLOSED; }
   const char *generate_name(const char *log_name, const char *suffix,
                             bool strip_ext, char *buff);
@@ -223,8 +223,8 @@ class DRIZZLE_BIN_LOG: public TC_LOG, private DRIZZLE_LOG
   ulong max_size;
   long prepared_xids; /* for tc log - number of xids to remember */
   // current file sequence number for load data infile binary logging
-  uint file_id;
-  uint open_count;				// For replication
+  uint32_t file_id;
+  uint32_t open_count;				// For replication
   int readers_count;
   bool need_start_event;
   /*
@@ -325,13 +325,13 @@ public:
     v stands for vector
     invoked as appendv(buf1,len1,buf2,len2,...,bufn,lenn,0)
   */
-  bool appendv(const char* buf,uint len,...);
+  bool appendv(const char* buf,uint32_t len,...);
   bool append(Log_event* ev);
 
   void make_log_name(char* buf, const char* log_ident);
   bool is_active(const char* log_file_name);
   int update_log_index(LOG_INFO* linfo, bool need_update_threads);
-  void rotate_and_purge(uint flags);
+  void rotate_and_purge(uint32_t flags);
   bool flush_and_sync();
   int purge_logs(const char *to_log, bool included,
                  bool need_mutex, bool need_update_threads,
@@ -339,7 +339,7 @@ public:
   int purge_logs_before_date(time_t purge_time);
   int purge_first_log(Relay_log_info* rli, bool included);
   bool reset_logs(THD* thd);
-  void close(uint exiting);
+  void close(uint32_t exiting);
 
   // iterating through the log index file
   int find_log_pos(LOG_INFO* linfo, const char* log_name,
@@ -347,7 +347,7 @@ public:
   int find_next_log(LOG_INFO* linfo, bool need_mutex);
   int get_current_log(LOG_INFO* linfo);
   int raw_get_current_log(LOG_INFO* linfo);
-  uint next_file_id();
+  uint32_t next_file_id();
   inline char* get_index_fname() { return index_file_name;}
   inline char* get_log_fname() { return log_file_name; }
   inline char* get_name() { return name; }
@@ -378,7 +378,7 @@ class LOGGER
 {
   rw_lock_t LOCK_logger;
   /* flag to check whether logger mutex is initialized */
-  uint inited;
+  uint32_t inited;
 
   /* NULL-terminated arrays of log handlers */
   Log_event_handler *error_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
@@ -407,8 +407,8 @@ public:
   bool error_log_print(enum loglevel level, const char *format,
                       va_list args);
   /* we use this function to setup all enabled log event handlers */
-  int set_handlers(uint error_log_printer);
-  void init_error_log(uint error_log_printer);
+  int set_handlers(uint32_t error_log_printer);
+  void init_error_log(uint32_t error_log_printer);
 };
 
 enum enum_binlog_format {

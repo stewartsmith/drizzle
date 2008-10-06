@@ -2001,8 +2001,8 @@ ws_level_list:
 ws_level_range:
         ws_level_number '-' ws_level_number
         {
-          uint start= $1;
-          uint end= $3;
+          uint32_t start= $1;
+          uint32_t end= $3;
           for ($$= 0; start <= end; start++)
             $$|= (1 << start);
         }
@@ -5620,7 +5620,7 @@ text_literal:
             THD *thd= YYTHD;
             const CHARSET_INFO * const cs_con= thd->variables.collation_connection;
             const CHARSET_INFO * const cs_cli= thd->variables.character_set_client;
-            uint repertoire= thd->lex->text_string_is_7bit &&
+            uint32_t repertoire= thd->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
             if (thd->charset_is_collation_connection ||
@@ -5966,7 +5966,7 @@ IDENT_sys:
             {
               const CHARSET_INFO * const cs= system_charset_info;
               int dummy_error;
-              uint wlen= cs->cset->well_formed_len(cs, $1.str,
+              uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
                                                    $1.str+$1.length,
                                                    $1.length, &dummy_error);
               if (wlen < $1.length)

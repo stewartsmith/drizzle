@@ -50,14 +50,14 @@ typedef struct st_tree_element {
 typedef struct st_tree {
   TREE_ELEMENT *root,null_element;
   TREE_ELEMENT **parents[MAX_TREE_HEIGHT];
-  uint offset_to_key,elements_in_tree,size_of_element;
+  uint32_t offset_to_key,elements_in_tree,size_of_element;
   uint32_t memory_limit, allocated;
   qsort_cmp2 compare;
   void *custom_arg;
   MEM_ROOT mem_root;
   bool with_delete;
   tree_element_free free;
-  uint flag;
+  uint32_t flag;
 } TREE;
 
 	/* Functions on whole tree */
@@ -71,12 +71,12 @@ void reset_tree(TREE*);
 #define is_tree_inited(tree) ((tree)->root != 0)
 
 	/* Functions on leafs */
-TREE_ELEMENT *tree_insert(TREE *tree,void *key, uint key_size, 
+TREE_ELEMENT *tree_insert(TREE *tree,void *key, uint32_t key_size, 
                           void *custom_arg);
 void *tree_search(TREE *tree, void *key, void *custom_arg);
 int tree_walk(TREE *tree,tree_walk_action action,
 	      void *argument, TREE_WALK visit);
-int tree_delete(TREE *tree, void *key, uint key_size, void *custom_arg);
+int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg);
 void *tree_search_key(TREE *tree, const void *key, 
                       TREE_ELEMENT **parents, TREE_ELEMENT ***last_pos,
                       enum ha_rkey_function flag, void *custom_arg);

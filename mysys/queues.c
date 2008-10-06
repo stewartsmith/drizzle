@@ -48,7 +48,7 @@
     1	Could not allocate memory
 */
 
-int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
+int init_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
 	       void *first_cmp_arg)
 {
@@ -90,9 +90,9 @@ int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
     1	Could not allocate memory
 */
 
-int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
+int init_queue_ex(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
-	       void *first_cmp_arg, uint auto_extent)
+	       void *first_cmp_arg, uint32_t auto_extent)
 {
   int ret;
 
@@ -126,7 +126,7 @@ int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
     EE_OUTOFMEMORY	Wrong max_elements
 */
 
-int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
+int reinit_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
 		 bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
 		 void *first_cmp_arg)
 {
@@ -157,7 +157,7 @@ int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
     1	Error.  In this case the queue is unchanged
 */
 
-int resize_queue(QUEUE *queue, uint max_elements)
+int resize_queue(QUEUE *queue, uint32_t max_elements)
 {
   unsigned char **new_root;
   if (queue->max_elements == max_elements)
@@ -202,7 +202,7 @@ void delete_queue(QUEUE *queue)
 
 void queue_insert(register QUEUE *queue, unsigned char *element)
 {
-  register uint idx, next;
+  register uint32_t idx, next;
   assert(queue->elements < queue->max_elements);
   queue->root[0]= element;
   idx= ++queue->elements;
@@ -246,7 +246,7 @@ int queue_insert_safe(register QUEUE *queue, unsigned char *element)
 	/* Remove item from queue */
 	/* Returns pointer to removed element */
 
-unsigned char *queue_remove(register QUEUE *queue, uint idx)
+unsigned char *queue_remove(register QUEUE *queue, uint32_t idx)
 {
   unsigned char *element;
   assert(idx < queue->max_elements);
@@ -267,12 +267,12 @@ void queue_replaced(QUEUE *queue)
 
 #ifndef OLD_VERSION
 
-void _downheap(register QUEUE *queue, uint idx)
+void _downheap(register QUEUE *queue, uint32_t idx)
 {
   unsigned char *element;
-  uint elements,half_queue,offset_to_key, next_index;
+  uint32_t elements,half_queue,offset_to_key, next_index;
   bool first= true;
-  uint start_idx= idx;
+  uint32_t start_idx= idx;
 
   offset_to_key=queue->offset_to_key;
   element=queue->root[idx];
@@ -321,10 +321,10 @@ void _downheap(register QUEUE *queue, uint idx)
     suit or new benchmarks anyone wants to run for comparisons.
   */
 	/* Fix heap when index have changed */
-void _downheap(register QUEUE *queue, uint idx)
+void _downheap(register QUEUE *queue, uint32_t idx)
 {
   unsigned char *element;
-  uint elements,half_queue,next_index,offset_to_key;
+  uint32_t elements,half_queue,next_index,offset_to_key;
 
   offset_to_key=queue->offset_to_key;
   element=queue->root[idx];
@@ -358,7 +358,7 @@ void _downheap(register QUEUE *queue, uint idx)
 
 void queue_fix(QUEUE *queue)
 {
-  uint i;
+  uint32_t i;
   for (i= queue->elements >> 1; i > 0; i--)
     _downheap(queue, i);
 }
@@ -374,18 +374,18 @@ void queue_fix(QUEUE *queue)
    Written by Mikael Ronström, 2005
  */
 
-static uint num_array[1025];
-static uint tot_no_parts= 0;
-static uint tot_no_loops= 0;
-static uint expected_part= 0;
-static uint expected_num= 0;
+static uint32_t num_array[1025];
+static uint32_t tot_no_parts= 0;
+static uint32_t tot_no_loops= 0;
+static uint32_t expected_part= 0;
+static uint32_t expected_num= 0;
 static bool max_ind= 0;
 static bool fix_used= 0;
 static uint64_t start_time= 0;
 
-static bool is_divisible_by(uint num, uint divisor)
+static bool is_divisible_by(uint32_t num, uint32_t divisor)
 {
-  uint quotient= num / divisor;
+  uint32_t quotient= num / divisor;
   if (quotient * divisor == num)
     return true;
   return false;
@@ -393,8 +393,8 @@ static bool is_divisible_by(uint num, uint divisor)
 
 void calculate_next()
 {
-  uint part= expected_part, num= expected_num;
-  uint no_parts= tot_no_parts;
+  uint32_t part= expected_part, num= expected_num;
+  uint32_t no_parts= tot_no_parts;
   if (max_ind)
   {
     do
@@ -430,9 +430,9 @@ void calculate_next()
   }
 }
 
-void calculate_end_next(uint part)
+void calculate_end_next(uint32_t part)
 {
-  uint no_parts= tot_no_parts, num;
+  uint32_t no_parts= tot_no_parts, num;
   num_array[part]= 0;
   if (max_ind)
   {
@@ -474,9 +474,9 @@ void calculate_end_next(uint part)
 }
 static int test_compare(void *null_arg, unsigned char *a, unsigned char *b)
 {
-  uint a_num= (*(uint*)a) & 0x3FFFFF;
-  uint b_num= (*(uint*)b) & 0x3FFFFF;
-  uint a_part, b_part;
+  uint32_t a_num= (*(uint*)a) & 0x3FFFFF;
+  uint32_t b_num= (*(uint*)b) & 0x3FFFFF;
+  uint32_t a_part, b_part;
   if (a_num > b_num)
     return +1;
   if (a_num < b_num)
@@ -490,10 +490,10 @@ static int test_compare(void *null_arg, unsigned char *a, unsigned char *b)
   return 0;
 }
 
-bool check_num(uint num_part)
+bool check_num(uint32_t num_part)
 {
-  uint part= num_part >> 22;
-  uint num= num_part & 0x3FFFFF;
+  uint32_t part= num_part >> 22;
+  uint32_t num= num_part & 0x3FFFFF;
   if (part == expected_part)
     if (num == expected_num)
       return false;
@@ -505,8 +505,8 @@ bool check_num(uint num_part)
 
 void perform_insert(QUEUE *queue)
 {
-  uint i= 1, no_parts= tot_no_parts;
-  uint backward_start= 0;
+  uint32_t i= 1, no_parts= tot_no_parts;
+  uint32_t backward_start= 0;
 
   expected_part= 1;
   expected_num= 1;
@@ -516,7 +516,7 @@ void perform_insert(QUEUE *queue)
 
   do
   {
-    uint num= (i + backward_start);
+    uint32_t num= (i + backward_start);
     if (max_ind)
     {
       while (!is_divisible_by(num, i))
@@ -543,11 +543,11 @@ void perform_insert(QUEUE *queue)
 
 bool perform_ins_del(QUEUE *queue, bool max_ind)
 {
-  uint i= 0, no_loops= tot_no_loops, j= tot_no_parts;
+  uint32_t i= 0, no_loops= tot_no_loops, j= tot_no_parts;
   do
   {
-    uint num_part= *(uint*)queue_top(queue);
-    uint part= num_part >> 22;
+    uint32_t num_part= *(uint*)queue_top(queue);
+    uint32_t part= num_part >> 22;
     if (check_num(num_part))
       return true;
     if (j++ >= no_loops)
@@ -569,7 +569,7 @@ bool perform_ins_del(QUEUE *queue, bool max_ind)
   return false;
 }
 
-bool do_test(uint no_parts, uint l_max_ind, bool l_fix_used)
+bool do_test(uint32_t no_parts, uint32_t l_max_ind, bool l_fix_used)
 {
   QUEUE queue;
   bool result;
@@ -597,7 +597,7 @@ static void start_measurement()
 static void stop_measurement()
 {
   uint64_t stop_time= my_getsystime();
-  uint time_in_micros;
+  uint32_t time_in_micros;
   stop_time-= start_time;
   stop_time/= 10; /* Convert to microseconds */
   time_in_micros= (uint)stop_time;
@@ -608,7 +608,7 @@ static void benchmark_test()
 {
   QUEUE queue_real;
   QUEUE *queue= &queue_real;
-  uint i, add;
+  uint32_t i, add;
   fix_used= true;
   max_ind= false;
   tot_no_parts= 1024;
@@ -649,7 +649,7 @@ static void benchmark_test()
   perform_insert(queue);
   for (i= 0; i < 65536; i++)
   {
-    uint num, part;
+    uint32_t num, part;
     num= *(uint*)queue_top(queue);
     num+= 16;
     part= num >> 22;

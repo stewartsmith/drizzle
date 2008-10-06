@@ -107,7 +107,7 @@ String *Item_func_concat::val_str(String *str)
 {
   assert(fixed == 1);
   String *res,*res2,*use_as_buff;
-  uint i;
+  uint32_t i;
   bool is_const= 0;
 
   null_value=0;
@@ -194,7 +194,7 @@ String *Item_func_concat::val_str(String *str)
           more than 25% of memory will be overcommitted on average.
         */
 
-        uint concat_len= res->length() + res2->length();
+        uint32_t concat_len= res->length() + res2->length();
 
         if (tmp_value.alloced_length() < concat_len)
         {
@@ -205,7 +205,7 @@ String *Item_func_concat::val_str(String *str)
           }
           else
           {
-            uint new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
+            uint32_t new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
 
             if (tmp_value.realloc(new_len))
               goto null;
@@ -237,7 +237,7 @@ void Item_func_concat::fix_length_and_dec()
   if (agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1))
     return;
 
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (args[i]->collation.collation->mbmaxlen != collation.collation->mbmaxlen)
       max_result_length+= (args[i]->max_length /
@@ -267,7 +267,7 @@ String *Item_func_concat_ws::val_str(String *str)
   char tmp_str_buff[10];
   String tmp_sep_str(tmp_str_buff, sizeof(tmp_str_buff),default_charset_info),
          *sep_str, *res, *res2,*use_as_buff;
-  uint i;
+  uint32_t i;
 
   null_value=0;
   if (!(sep_str= args[0]->val_str(&tmp_sep_str)))
@@ -364,7 +364,7 @@ String *Item_func_concat_ws::val_str(String *str)
         25% of memory will be overcommitted on average.
       */
 
-      uint concat_len= res->length() + sep_str->length() + res2->length();
+      uint32_t concat_len= res->length() + sep_str->length() + res2->length();
 
       if (tmp_value.alloced_length() < concat_len)
       {
@@ -375,7 +375,7 @@ String *Item_func_concat_ws::val_str(String *str)
         }
         else
         {
-          uint new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
+          uint32_t new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
 
           if (tmp_value.realloc(new_len))
             goto null;
@@ -412,7 +412,7 @@ void Item_func_concat_ws::fix_length_and_dec()
      so, (arg_count - 2) is safe here.
   */
   max_result_length= (uint64_t) args[0]->max_length * (arg_count - 2);
-  for (uint i=1 ; i < arg_count ; i++)
+  for (uint32_t i=1 ; i < arg_count ; i++)
     max_result_length+=args[i]->max_length;
 
   if (max_result_length >= MAX_BLOB_WIDTH)
@@ -492,7 +492,7 @@ String *Item_func_replace::val_str(String *str)
   assert(fixed == 1);
   String *res,*res2,*res3;
   int offset;
-  uint from_length,to_length;
+  uint32_t from_length,to_length;
   bool alloced=0;
 #ifdef USE_MB
   const char *ptr,*end,*strend,*search,*search_end;
@@ -702,7 +702,7 @@ String *Item_str_conv::val_str(String *str)
   null_value=0;
   if (multiply == 1)
   {
-    uint len;
+    uint32_t len;
     res= copy_if_not_alloced(str,res,res->length());
     len= converter(collation.collation, (char*) res->ptr(), res->length(),
                                         (char*) res->ptr(), res->length());
@@ -711,7 +711,7 @@ String *Item_str_conv::val_str(String *str)
   }
   else
   {
-    uint len= res->length() * multiply;
+    uint32_t len= res->length() * multiply;
     tmp_value.alloc(len);
     tmp_value.set_charset(collation.collation);
     len= converter(collation.collation, (char*) res->ptr(), res->length(),
@@ -747,7 +747,7 @@ String *Item_func_left::val_str(String *str)
 
   /* must be int64_t to avoid truncation */
   int64_t length= args[1]->val_int();
-  uint char_pos;
+  uint32_t char_pos;
 
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
     return 0;
@@ -803,7 +803,7 @@ String *Item_func_right::val_str(String *str)
   if (res->length() <= (uint64_t) length)
     return res; /* purecov: inspected */
 
-  uint start=res->numchars();
+  uint32_t start=res->numchars();
   if (start <= (uint) length)
     return res;
   start=res->charpos(start - (uint) length);
@@ -906,7 +906,7 @@ String *Item_func_substr_index::val_str(String *str)
   String *res= args[0]->val_str(str);
   String *delimiter= args[1]->val_str(&tmp_value);
   int32_t count= (int32_t) args[2]->val_int();
-  uint offset;
+  uint32_t offset;
 
   if (args[0]->null_value || args[1]->null_value || args[2]->null_value)
   {					// string and/or delim are null
@@ -914,7 +914,7 @@ String *Item_func_substr_index::val_str(String *str)
     return 0;
   }
   null_value=0;
-  uint delimiter_length= delimiter->length();
+  uint32_t delimiter_length= delimiter->length();
   if (!res->length() || !delimiter_length || !count)
     return &my_empty_string;		// Wrong parameters
 
@@ -1036,7 +1036,7 @@ String *Item_func_ltrim::val_str(String *str)
   char buff[MAX_FIELD_WIDTH], *ptr, *end;
   String tmp(buff,sizeof(buff),system_charset_info);
   String *res, *remove_str;
-  uint remove_length;
+  uint32_t remove_length;
 
   res= args[0]->val_str(str);
   if ((null_value=args[0]->null_value))
@@ -1082,7 +1082,7 @@ String *Item_func_rtrim::val_str(String *str)
   char buff[MAX_FIELD_WIDTH], *ptr, *end;
   String tmp(buff, sizeof(buff), system_charset_info);
   String *res, *remove_str;
-  uint remove_length;
+  uint32_t remove_length;
 
   res= args[0]->val_str(str);
   if ((null_value=args[0]->null_value))
@@ -1163,7 +1163,7 @@ String *Item_func_trim::val_str(String *str)
   const char *r_ptr;
   String tmp(buff, sizeof(buff), system_charset_info);
   String *res, *remove_str;
-  uint remove_length;
+  uint32_t remove_length;
 
   res= args[0]->val_str(str);
   if ((null_value=args[0]->null_value))
@@ -1256,7 +1256,7 @@ void Item_func_trim::print(String *str, enum_query_type query_type)
 Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
-  uint conv_errors;
+  uint32_t conv_errors;
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
   if (conv_errors ||
@@ -1300,7 +1300,7 @@ bool Item_func_user::init(const char *user, const char *host)
   if (user)
   {
     const CHARSET_INFO * const cs= str_value.charset();
-    uint res_length= (strlen(user)+strlen(host)+2) * cs->mbmaxlen;
+    uint32_t res_length= (strlen(user)+strlen(host)+2) * cs->mbmaxlen;
 
     if (str_value.alloc(res_length))
     {
@@ -1352,7 +1352,7 @@ Item_func_format::Item_func_format(Item *org, Item *dec)
 void Item_func_format::fix_length_and_dec()
 {
   collation.set(default_charset());
-  uint char_length= args[0]->max_length/args[0]->collation.collation->mbmaxlen;
+  uint32_t char_length= args[0]->max_length/args[0]->collation.collation->mbmaxlen;
   max_length= ((char_length + (char_length-args[0]->decimals)/3) *
                collation.collation->mbmaxlen);
 }
@@ -1457,7 +1457,7 @@ void Item_func_elt::fix_length_and_dec()
   if (agg_arg_charsets(collation, args+1, arg_count-1, MY_COLL_ALLOW_CONV, 1))
     return;
 
-  for (uint i= 1 ; i < arg_count ; i++)
+  for (uint32_t i= 1 ; i < arg_count ; i++)
   {
     set_if_bigger(max_length,args[i]->max_length);
     set_if_bigger(decimals,args[i]->decimals);
@@ -1469,7 +1469,7 @@ void Item_func_elt::fix_length_and_dec()
 double Item_func_elt::val_real()
 {
   assert(fixed == 1);
-  uint tmp;
+  uint32_t tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
     return 0.0;
@@ -1482,7 +1482,7 @@ double Item_func_elt::val_real()
 int64_t Item_func_elt::val_int()
 {
   assert(fixed == 1);
-  uint tmp;
+  uint32_t tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
     return 0;
@@ -1496,7 +1496,7 @@ int64_t Item_func_elt::val_int()
 String *Item_func_elt::val_str(String *str)
 {
   assert(fixed == 1);
-  uint tmp;
+  uint32_t tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
     return NULL;
@@ -1524,7 +1524,7 @@ void Item_func_make_set::fix_length_and_dec()
   if (agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1))
     return;
   
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
     max_length+=args[i]->max_length;
 
   used_tables_cache|=	  item->used_tables();
@@ -1632,7 +1632,7 @@ String *Item_func_char::val_str(String *str)
   assert(fixed == 1);
   str->length(0);
   str->set_charset(collation.collation);
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     int32_t num=(int32_t) args[i]->val_int();
     if (!args[i]->null_value)
@@ -1713,7 +1713,7 @@ void Item_func_repeat::fix_length_and_dec()
 String *Item_func_repeat::val_str(String *str)
 {
   assert(fixed == 1);
-  uint length,tot_length;
+  uint32_t length,tot_length;
   char *to;
   /* must be int64_t to avoid truncation */
   int64_t count= args[1]->val_int();
@@ -2003,7 +2003,7 @@ String *Item_func_conv_charset::val_str(String *str)
   if (use_cached_value)
     return null_value ? 0 : &str_value;
   String *arg= args[0]->val_str(str);
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (!arg)
   {
     null_value=1;
@@ -2084,7 +2084,7 @@ bool Item_func_set_collation::eq(const Item *item, bool binary_cmp) const
   Item_func_set_collation *item_func_sc=(Item_func_set_collation*) item;
   if (collation.collation != item_func_sc->collation.collation)
     return 0;
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
     if (!args[i]->eq(item_func_sc->args[i], binary_cmp))
       return 0;
   return 1;
@@ -2105,7 +2105,7 @@ void Item_func_set_collation::print(String *str, enum_query_type query_type)
 String *Item_func_charset::val_str(String *str)
 {
   assert(fixed == 1);
-  uint dummy_errors;
+  uint32_t dummy_errors;
 
   const CHARSET_INFO * const cs= args[0]->collation.collation; 
   null_value= 0;
@@ -2117,7 +2117,7 @@ String *Item_func_charset::val_str(String *str)
 String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
-  uint dummy_errors;
+  uint32_t dummy_errors;
   const CHARSET_INFO * const cs= args[0]->collation.collation; 
 
   null_value= 0;
@@ -2142,7 +2142,7 @@ String *Item_func_weight_string::val_str(String *str)
 {
   String *res;
   const CHARSET_INFO * const cs= args[0]->collation.collation;
-  uint tmp_length, frm_length;
+  uint32_t tmp_length, frm_length;
   assert(fixed == 1);
 
   if (args[0]->result_type() != STRING_RESULT ||
@@ -2221,7 +2221,7 @@ String *Item_func_unhex::val_str(String *str)
   const char *from, *end;
   char *to;
   String *res;
-  uint length;
+  uint32_t length;
   assert(fixed == 1);
 
   res= args[0]->val_str(str);
@@ -2329,7 +2329,7 @@ String* Item_func_export_set::val_str(String* str)
   no = args[2]->val_str(&no_buf);
   String *sep = NULL, sep_buf ;
 
-  uint num_set_values = 64;
+  uint32_t num_set_values = 64;
   uint64_t mask = 0x1;
   str->length(0);
   str->set_charset(collation.collation);
@@ -2365,7 +2365,7 @@ String* Item_func_export_set::val_str(String* str)
   case 3:
     {
       /* errors is not checked - assume "," can always be converted */
-      uint errors;
+      uint32_t errors;
       sep_buf.copy(STRING_WITH_LEN(","), &my_charset_bin, collation.collation, &errors);
       sep = &sep_buf;
     }
@@ -2375,7 +2375,7 @@ String* Item_func_export_set::val_str(String* str)
   }
   null_value=0;
 
-  for (uint i = 0; i < num_set_values; i++, mask = (mask << 1))
+  for (uint32_t i = 0; i < num_set_values; i++, mask = (mask << 1))
   {
     if (the_set & mask)
       str->append(*yes);
@@ -2389,8 +2389,8 @@ String* Item_func_export_set::val_str(String* str)
 
 void Item_func_export_set::fix_length_and_dec()
 {
-  uint length=cmax(args[1]->max_length,args[2]->max_length);
-  uint sep_length=(arg_count > 3 ? args[3]->max_length : 1);
+  uint32_t length=cmax(args[1]->max_length,args[2]->max_length);
+  uint32_t sep_length=(arg_count > 3 ? args[3]->max_length : 1);
   max_length=length*64+sep_length*63;
 
   if (agg_arg_charsets(collation, args+1, cmin((uint)4,arg_count)-1,
@@ -2438,7 +2438,7 @@ String *Item_func_quote::val_str(String *str)
 
   char *from, *to, *end, *start;
   String *arg= args[0]->val_str(str);
-  uint arg_length, new_length;
+  uint32_t arg_length, new_length;
   if (!arg)					// Null argument
   {
     /* Return the string 'NULL' */
@@ -2506,7 +2506,7 @@ null:
 */
 
 static struct rand_struct uuid_rand;
-static uint nanoseq;
+static uint32_t nanoseq;
 static uint64_t uuid_time=0;
 static char clock_seq_and_node_str[]="-0000-000000000000";
 
@@ -2519,7 +2519,7 @@ static char clock_seq_and_node_str[]="-0000-000000000000";
 #define UUID_VERSION      0x1000
 #define UUID_VARIANT      0x8000
 
-static void tohex(char *to, uint from, uint len)
+static void tohex(char *to, uint32_t from, uint32_t len)
 {
   to+= len;
   while (len--)

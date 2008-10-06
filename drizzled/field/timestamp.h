@@ -32,7 +32,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
@@ -41,7 +41,7 @@ public:
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 4; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
@@ -79,7 +79,7 @@ public:
 #endif
       longstore(ptr,(uint32_t) timestamp);
   }
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;
 };

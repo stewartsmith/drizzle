@@ -64,7 +64,7 @@ void change_rpl_status(RPL_STATUS from_status, RPL_STATUS to_status)
 
 #define get_object(p, obj, msg) \
 {\
-  uint len = (uint)*p++;  \
+  uint32_t len = (uint)*p++;  \
   if (p + len > p_end || len >= sizeof(obj)) \
   {\
     errmsg= msg;\
@@ -110,7 +110,7 @@ void unregister_slave(THD* thd, bool only_mine, bool need_mutex)
     1	Error.   Error message sent to client
 */
 
-int register_slave(THD* thd, unsigned char* packet, uint packet_length)
+int register_slave(THD* thd, unsigned char* packet, uint32_t packet_length)
 {
   int res;
   SLAVE_INFO *si;
@@ -204,7 +204,7 @@ bool show_slave_hosts(THD* thd)
 
   pthread_mutex_lock(&LOCK_slave_list);
 
-  for (uint i = 0; i < slave_list.records; ++i)
+  for (uint32_t i = 0; i < slave_list.records; ++i)
   {
     SLAVE_INFO* si = (SLAVE_INFO*) hash_element(&slave_list, i);
     protocol->prepare_for_resend();

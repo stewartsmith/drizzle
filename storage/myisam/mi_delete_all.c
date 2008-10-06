@@ -20,7 +20,7 @@
 
 int mi_delete_all_rows(MI_INFO *info)
 {
-  uint i;
+  uint32_t i;
   MYISAM_SHARE *share=info->s;
   MI_STATE_INFO *state=&share->state;
 

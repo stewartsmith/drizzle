@@ -26,7 +26,7 @@ void my_sleep(uint32_t m_seconds)
   t.tv_usec= m_seconds % 1000000L;
   select(0,0,0,0,&t); /* sleep */
 #else
-  uint sec=    (uint) (m_seconds / 1000000L);
+  uint32_t sec=    (uint) (m_seconds / 1000000L);
   uint32_t start= (uint32_t) time((time_t*) 0);
   while ((uint32_t) time((time_t*) 0) < start+sec);
 #endif

@@ -33,7 +33,7 @@
 ****************************************************************************/
 
 int Field_datetime::store(const char *from,
-                          uint len,
+                          uint32_t len,
                           const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME time_tmp;
@@ -239,7 +239,7 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
@@ -282,7 +282,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
-void Field_datetime::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_datetime::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

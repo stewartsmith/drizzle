@@ -29,7 +29,7 @@ static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<Create_field> &create, bool ignore,
-                                    uint order_num, order_st *order,
+                                    uint32_t order_num, order_st *order,
                                     ha_rows *copied,ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
@@ -40,9 +40,9 @@ static int
 mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                            Alter_info *alter_info,
                            bool tmp_table,
-                               uint *db_options,
+                               uint32_t *db_options,
                                handler *file, KEY **key_info_buffer,
-                               uint *key_count, int select_field_count);
+                               uint32_t *key_count, int select_field_count);
 static bool
 mysql_prepare_alter_table(THD *thd, Table *table,
                           HA_CREATE_INFO *create_info,
@@ -60,10 +60,10 @@ mysql_prepare_alter_table(THD *thd, Table *table,
   RETURN
     Table name length.
 */
-uint filename_to_tablename(const char *from, char *to, uint to_length)
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
-  uint errors;
-  uint res;
+  uint32_t errors;
+  uint32_t res;
 
   if (!memcmp(from, tmp_file_prefix, tmp_file_prefix_length))
   {
@@ -99,9 +99,9 @@ uint filename_to_tablename(const char *from, char *to, uint to_length)
     File name length.
 */
 
-uint tablename_to_filename(const char *from, char *to, uint to_length)
+uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 {
-  uint errors, length;
+  uint32_t errors, length;
 
   if (from[0] == '#' && !strncmp(from, MYSQL50_TABLE_NAME_PREFIX,
                                  MYSQL50_TABLE_NAME_PREFIX_LENGTH))
@@ -153,8 +153,8 @@ uint tablename_to_filename(const char *from, char *to, uint to_length)
     path length
 */
 
-uint build_table_filename(char *buff, size_t bufflen, const char *db,
-                          const char *table_name, const char *ext, uint flags)
+uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
+                          const char *table_name, const char *ext, uint32_t flags)
 {
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
@@ -202,7 +202,7 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
     path length
 */
 
-uint build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
+uint32_t build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
 {
 
   char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
@@ -216,7 +216,7 @@ uint build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
     my_casedn_str(files_charset_info, p);
   }
 
-  uint length= unpack_filename(buff, buff);
+  uint32_t length= unpack_filename(buff, buff);
   return(length);
 }
 
@@ -344,7 +344,7 @@ int mysql_rm_table_part2(THD *thd, TableList *tables, bool if_exists,
 {
   TableList *table;
   char path[FN_REFLEN], *alias;
-  uint path_length;
+  uint32_t path_length;
   String wrong_tables;
   int error= 0;
   int non_temp_tables_count= 0;
@@ -605,12 +605,12 @@ err_with_placeholders:
 */
 
 bool quick_rm_table(handlerton *base,const char *db,
-                    const char *table_name, uint flags)
+                    const char *table_name, uint32_t flags)
 {
   char path[FN_REFLEN];
   bool error= 0;
 
-  uint path_length= build_table_filename(path, sizeof(path),
+  uint32_t path_length= build_table_filename(path, sizeof(path),
                                          db, table_name, reg_ext, flags);
   if (my_delete(path,MYF(0)))
     error= 1; /* purecov: inspected */
@@ -731,12 +731,12 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
                                 uint32_t *max_length, uint32_t *tot_length)
 {
   const char **pos;
-  uint *len;
+  uint32_t *len;
   *max_length= *tot_length= 0;
   for (pos= interval->type_names, len= interval->type_lengths;
        *pos ; pos++, len++)
   {
-    uint length= cs->cset->numchars(cs, *pos, *pos + *len);
+    uint32_t length= cs->cset->numchars(cs, *pos, *pos + *len);
     *tot_length+= length;
     set_if_bigger(*max_length, (uint32_t)length);
   }
@@ -763,7 +763,7 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
 */
 
 int prepare_create_field(Create_field *sql_field, 
-                         uint *blob_columns,
+                         uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags __attribute__((unused)))
 {
@@ -877,9 +877,9 @@ static int
 mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                            Alter_info *alter_info,
                            bool tmp_table,
-                               uint *db_options,
+                               uint32_t *db_options,
                                handler *file, KEY **key_info_buffer,
-                               uint *key_count, int select_field_count)
+                               uint32_t *key_count, int select_field_count)
 {
   const char	*key_name;
   Create_field	*sql_field,*dup_field;
@@ -892,7 +892,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   int		select_field_pos,auto_increment=0;
   List_iterator<Create_field> it(alter_info->create_list);
   List_iterator<Create_field> it2(alter_info->create_list);
-  uint total_uneven_bit_length= 0;
+  uint32_t total_uneven_bit_length= 0;
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
@@ -987,13 +987,13 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                                           (unsigned char*) comma_buf + 
                                           sizeof(comma_buf));
         assert(comma_length > 0);
-        for (uint i= 0; (tmp= int_it++); i++)
+        for (uint32_t i= 0; (tmp= int_it++); i++)
         {
-          uint lengthsp;
+          uint32_t lengthsp;
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
-            uint cnv_errs;
+            uint32_t cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
             interval->type_names[i]= strmake_root(thd->mem_root, conv.ptr(),
                                                   conv.length());
@@ -1157,10 +1157,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
   List_iterator<Key> key_iterator(alter_info->key_list);
   List_iterator<Key> key_iterator2(alter_info->key_list);
-  uint key_parts=0, fk_key_count=0;
+  uint32_t key_parts=0, fk_key_count=0;
   bool primary_key=0,unique_key=0;
   Key *key, *key2;
-  uint tmp, key_number;
+  uint32_t tmp, key_number;
   /* special marker for keys to be ignored */
   static char ignore_key[1];
 
@@ -1250,7 +1250,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   key_number=0;
   for (; (key=key_iterator++) ; key_number++)
   {
-    uint key_length=0;
+    uint32_t key_length=0;
     Key_part_spec *column;
 
     if (key->name.str == ignore_key)
@@ -1294,7 +1294,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
 
-    uint tmp_len= system_charset_info->cset->charpos(system_charset_info,
+    uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                            key->key_create_info.comment.str,
                                            key->key_create_info.comment.str +
                                            key->key_create_info.comment.length,
@@ -1316,9 +1316,9 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     }
 
     List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
-    for (uint column_nr=0 ; (column=cols++) ; column_nr++)
+    for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
-      uint length;
+      uint32_t length;
       Key_part_spec *dup_column;
 
       it.rewind();
@@ -1713,10 +1713,10 @@ bool mysql_create_table_no_lock(THD *thd,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
-                                uint select_field_count)
+                                uint32_t select_field_count)
 {
   char		path[FN_REFLEN];
-  uint          path_length;
+  uint32_t          path_length;
   const char	*alias;
   uint		db_options, key_count;
   KEY		*key_info_buffer;
@@ -1929,7 +1929,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
-                        uint select_field_count)
+                        uint32_t select_field_count)
 {
   Table *name_lock= 0;
   bool result;
@@ -2025,7 +2025,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
     Only 3 chars + '\0' left, so need to limit to 2 digit
     This is ok as we can't have more than 100 keys anyway
   */
-  for (uint i=2 ; i< 100; i++)
+  for (uint32_t i=2 ; i< 100; i++)
   {
     *buff_end= '_';
     int10_to_str(i, buff_end+1, 10);
@@ -2065,7 +2065,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 bool
 mysql_rename_table(handlerton *base, const char *old_db,
                    const char *old_name, const char *new_db,
-                   const char *new_name, uint flags)
+                   const char *new_name, uint32_t flags)
 {
   THD *thd= current_thd;
   char from[FN_REFLEN], to[FN_REFLEN], lc_from[FN_REFLEN], lc_to[FN_REFLEN];
@@ -2225,7 +2225,7 @@ static int prepare_for_repair(THD *thd, TableList *table_list,
   if (!(table= table_list->table))		/* if open_ltable failed */
   {
     char key[MAX_DBKEY_LENGTH];
-    uint key_length;
+    uint32_t key_length;
 
     key_length= create_table_def_key(thd, key, table_list, 0);
     pthread_mutex_lock(&LOCK_open);
@@ -2363,7 +2363,7 @@ static bool mysql_admin_table(THD* thd, TableList* tables,
                               thr_lock_type lock_type,
                               bool open_for_modify,
                               bool no_warnings_for_error,
-                              uint extra_open_options,
+                              uint32_t extra_open_options,
                               int (*prepare_func)(THD *, TableList *,
                                                   HA_CHECK_OPT *),
                               int (handler::*operator_func)(THD *,
@@ -2468,7 +2468,7 @@ static bool mysql_admin_table(THD* thd, TableList* tables,
     {
       /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
-      uint length;
+      uint32_t length;
       protocol->prepare_for_resend();
       protocol->store(table_name, system_charset_info);
       protocol->store(operator_name, system_charset_info);
@@ -2575,7 +2575,7 @@ send_result_message:
     case HA_ADMIN_NOT_IMPLEMENTED:
       {
 	char buf[ERRMSGSIZE+20];
-	uint length=snprintf(buf, ERRMSGSIZE,
+	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
 	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
 	protocol->store(buf, length, system_charset_info);
@@ -2585,7 +2585,7 @@ send_result_message:
     case HA_ADMIN_NOT_BASE_TABLE:
       {
         char buf[ERRMSGSIZE+20];
-        uint length= snprintf(buf, ERRMSGSIZE,
+        uint32_t length= snprintf(buf, ERRMSGSIZE,
                               ER(ER_BAD_TABLE_ERROR), table_name);
         protocol->store(STRING_WITH_LEN("note"), system_charset_info);
         protocol->store(buf, length, system_charset_info);
@@ -2700,7 +2700,7 @@ send_result_message:
     case HA_ADMIN_NEEDS_ALTER:
     {
       char buf[ERRMSGSIZE];
-      uint length;
+      uint32_t length;
 
       protocol->store(STRING_WITH_LEN("error"), system_charset_info);
       length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
@@ -2712,7 +2712,7 @@ send_result_message:
     default:				// Probably HA_ADMIN_INTERNAL_ERROR
       {
         char buf[ERRMSGSIZE+20];
-        uint length=snprintf(buf, ERRMSGSIZE,
+        uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
         protocol->store(STRING_WITH_LEN("error"), system_charset_info);
@@ -2868,8 +2868,8 @@ bool mysql_create_like_schema_frm(THD* thd, TableList* schema_table,
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
   bool tmp_table= (create_info->options & HA_LEX_CREATE_TMP_TABLE);
-  uint keys= schema_table->table->s->keys;
-  uint db_options= 0;
+  uint32_t keys= schema_table->table->s->keys;
+  uint32_t db_options= 0;
 
   memset(&local_create_info, 0, sizeof(local_create_info));
   local_create_info.db_type= schema_table->table->s->db_type();
@@ -2915,12 +2915,12 @@ bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
 {
   Table *name_lock= 0;
   char src_path[FN_REFLEN], dst_path[FN_REFLEN];
-  uint dst_path_length;
+  uint32_t dst_path_length;
   char *db= table->db;
   char *table_name= table->table_name;
   int  err;
   bool res= true;
-  uint not_used;
+  uint32_t not_used;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -3193,7 +3193,7 @@ err:
 
 void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
 {
-  uint flags= alter_info->flags;
+  uint32_t flags= alter_info->flags;
 
   if (ALTER_ADD_COLUMN & flags)
     *alter_flags|= HA_ADD_COLUMN;
@@ -3259,13 +3259,13 @@ compare_tables(THD *thd,
                Table *table,
                Alter_info *alter_info,
                            HA_CREATE_INFO *create_info,
-               uint order_num,
+               uint32_t order_num,
                HA_ALTER_FLAGS *alter_flags,
                HA_ALTER_INFO *ha_alter_info,
-               uint *table_changes)
+               uint32_t *table_changes)
 {
   Field **f_ptr, *field;
-  uint table_changes_local= 0;
+  uint32_t table_changes_local= 0;
   List_iterator_fast<Create_field> new_field_it(alter_info->create_list);
   Create_field *new_field;
   KEY_PART_INFO *key_part;
@@ -3294,7 +3294,7 @@ compare_tables(THD *thd,
     */
     Alter_info tmp_alter_info(*alter_info, thd->mem_root);
     THD *thd= table->in_use;
-    uint db_options= 0; /* not used */
+    uint32_t db_options= 0; /* not used */
     /* Create the prepared information. */
     if (mysql_prepare_create_table(thd, create_info,
                                    &tmp_alter_info,
@@ -3973,9 +3973,9 @@ mysql_prepare_alter_table(THD *thd, Table *table,
   List_iterator<Create_field> find_it(new_create_list);
   List_iterator<Create_field> field_it(new_create_list);
   List<Key_part_spec> key_parts;
-  uint db_create_options= (table->s->db_create_options
+  uint32_t db_create_options= (table->s->db_create_options
                            & ~(HA_OPTION_PACK_RECORD));
-  uint used_fields= create_info->used_fields;
+  uint32_t used_fields= create_info->used_fields;
   KEY *key_info=table->key_info;
   bool rc= true;
 
@@ -4159,7 +4159,7 @@ mysql_prepare_alter_table(THD *thd, Table *table,
     for which some fields exists.
     */
 
-  for (uint i=0 ; i < table->s->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < table->s->keys ; i++,key_info++)
     {
     char *key_name= key_info->name;
     Alter_drop *drop;
@@ -4178,7 +4178,7 @@ mysql_prepare_alter_table(THD *thd, Table *table,
 
     KEY_PART_INFO *key_part= key_info->key_part;
     key_parts.empty();
-    for (uint j=0 ; j < key_info->key_parts ; j++,key_part++)
+    for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
     {
       if (!key_part->field)
 	continue;				// Wrong field (from UNIREG)
@@ -4199,7 +4199,7 @@ mysql_prepare_alter_table(THD *thd, Table *table,
       }
       if (!cfield)
 	continue;				// Field is removed
-      uint key_part_length=key_part->length;
+      uint32_t key_part_length=key_part->length;
       if (cfield->field)			// Not new field
       {
         /*
@@ -4362,7 +4362,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TableList *table_list,
                        Alter_info *alter_info,
-                       uint order_num, order_st *order, bool ignore)
+                       uint32_t order_num, order_st *order, bool ignore)
 {
   Table *table, *new_table=0, *name_lock= 0;;
   int error= 0;
@@ -4660,7 +4660,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     Table *altered_table= 0;
     HA_ALTER_INFO ha_alter_info;
     HA_ALTER_FLAGS ha_alter_flags;
-    uint table_changes= IS_EQUAL_YES;
+    uint32_t table_changes= IS_EQUAL_YES;
     bool need_copy_table= true;
     /* Check how much the tables differ. */
     if (compare_tables(thd, table, alter_info,
@@ -5078,7 +5078,7 @@ static int
 copy_data_between_tables(Table *from,Table *to,
 			 List<Create_field> &create,
                          bool ignore,
-			 uint order_num, order_st *order,
+			 uint32_t order_num, order_st *order,
 			 ha_rows *copied,
 			 ha_rows *deleted,
                          enum enum_enable_or_disable keys_onoff,
@@ -5088,7 +5088,7 @@ copy_data_between_tables(Table *from,Table *to,
   Copy_field *copy,*copy_end;
   ulong found_count,delete_count;
   THD *thd= current_thd;
-  uint length= 0;
+  uint32_t length= 0;
   SORT_FIELD *sortorder;
   READ_RECORD info;
   TableList   tables;
@@ -5222,7 +5222,7 @@ copy_data_between_tables(Table *from,Table *to,
       {
          if (!to->file->is_fatal_error(error, HA_CHECK_DUP))
          {
-           uint key_nr= to->file->get_dup_key(error);
+           uint32_t key_nr= to->file->get_dup_key(error);
            if ((int) key_nr >= 0)
            {
              const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
@@ -5394,7 +5394,7 @@ bool mysql_checksum_table(THD *thd, TableList *tables,
 	      row_crc= my_checksum(row_crc, t->record[0], t->s->null_bytes);
             }
 
-	    for (uint i= 0; i < t->s->fields; i++ )
+	    for (uint32_t i= 0; i < t->s->fields; i++ )
 	    {
 	      Field *f= t->field[i];
 	      if ((f->type() == DRIZZLE_TYPE_BLOB) ||

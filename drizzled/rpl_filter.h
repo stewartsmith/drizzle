@@ -26,7 +26,7 @@ typedef struct st_table_rule_ent
 {
   char* db;
   char* tbl_name;
-  uint key_len;
+  uint32_t key_len;
 } TABLE_RULE_ENT;
 
 /*

@@ -33,7 +33,7 @@ size_t dirname_length(const char *name)
   for ( ; *pos ; pos++)				/* Find last FN_LIBCHAR */
   {
 #ifdef BASKSLASH_MBTAIL
-    uint l;
+    uint32_t l;
     if (use_mb(fs) && (l= my_ismbchar(fs, pos, pos + 3)))
     {
       pos+= l - 1;
@@ -130,7 +130,7 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
       else
       {
 #ifdef BACKSLASH_MBTAIL
-        uint l;
+        uint32_t l;
         if (use_mb(fs) && (l= my_ismbchar(fs, from, from + 3)))
         {
           memmove(to, from, l);

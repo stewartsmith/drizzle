@@ -121,7 +121,7 @@ int table_mapping::remove_table(ulong table_id)
 */
 void table_mapping::clear_tables()
 {
-  for (uint i= 0; i < m_table_ids.records; i++)
+  for (uint32_t i= 0; i < m_table_ids.records; i++)
   {
     entry *e= (entry *)hash_element(&m_table_ids, i);
     e->next= m_free;

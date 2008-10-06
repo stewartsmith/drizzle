@@ -47,7 +47,7 @@ static long my_time_zone=0;
 
 /* Calc days in one year. works with 0 <= year <= 99 */
 
-uint calc_days_in_year(uint year)
+uint32_t calc_days_in_year(uint32_t year)
 {
   return ((year & 3) == 0 && (year%100 || (year%400 == 0 && year)) ?
           366 : 365);
@@ -156,19 +156,19 @@ bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
 #define MAX_DATE_PARTS 8
 
 enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
-                uint flags, int *was_cut)
+str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+                uint32_t flags, int *was_cut)
 {
-  uint field_length, year_length=4, digits, i, number_of_fields;
-  uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
-  uint add_hours= 0, start_loop;
+  uint32_t field_length, year_length=4, digits, i, number_of_fields;
+  uint32_t date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
+  uint32_t add_hours= 0, start_loop;
   uint32_t not_zero_date, allow_space;
   bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
   const unsigned char *format_position;
   bool found_delimitier= 0, found_space= 0;
-  uint frac_pos, frac_len;
+  uint32_t frac_pos, frac_len;
 
   *was_cut= 0;
 
@@ -467,14 +467,14 @@ err:
      1  error
 */
 
-bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
                     int *warning)
 {
   uint32_t date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
   bool found_days,found_hours;
-  uint state;
+  uint32_t state;
 
   l_time->neg=0;
   *warning= 0;
@@ -727,7 +727,7 @@ void init_time(void)
     Year between 1970-2069
 */
 
-uint year_2000_handling(uint year)
+uint32_t year_2000_handling(uint32_t year)
 {
   if ((year=year+1900) < 1900+YY_PART_YEAR)
     year+=100;
@@ -750,7 +750,7 @@ uint year_2000_handling(uint year)
     Days since 0000-00-00
 */
 
-long calc_daynr(uint year,uint month,uint day)
+long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 {
   long delsum;
   int temp;
@@ -793,7 +793,7 @@ my_time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
-  uint loop;
+  uint32_t loop;
   time_t tmp= 0;
   int shift= 0;
   DRIZZLE_TIME tmp_time;
@@ -1003,7 +1003,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 
 int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
-  uint extra_hours= 0;
+  uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
                          (l_time->neg ? "-" : ""),
                          extra_hours+ l_time->hour,
@@ -1089,7 +1089,7 @@ int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
 */
 
 int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
-                            uint flags, int *was_cut)
+                            uint32_t flags, int *was_cut)
 {
   long part1,part2;
 

@@ -54,7 +54,7 @@ get_collation_number_internal(const char *name)
 
 static bool init_state_maps(CHARSET_INFO *cs)
 {
-  uint i;
+  uint32_t i;
   unsigned char *state_map;
   unsigned char *ident_map;
 
@@ -207,14 +207,14 @@ void free_charsets(void)
 }
 
 
-uint get_collation_number(const char *name)
+uint32_t get_collation_number(const char *name)
 {
   init_available_charsets(MYF(0));
   return get_collation_number_internal(name);
 }
 
 
-uint get_charset_number(const char *charset_name, uint cs_flags)
+uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
   CHARSET_INFO **cs;
   init_available_charsets(MYF(0));
@@ -231,7 +231,7 @@ uint get_charset_number(const char *charset_name, uint cs_flags)
 }
 
 
-const char *get_charset_name(uint charset_number)
+const char *get_charset_name(uint32_t charset_number)
 {
   const CHARSET_INFO *cs;
   init_available_charsets(MYF(0));
@@ -244,7 +244,7 @@ const char *get_charset_name(uint charset_number)
 }
 
 
-static const CHARSET_INFO *get_internal_charset(uint cs_number)
+static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
 {
   CHARSET_INFO *cs;
   /*
@@ -273,7 +273,7 @@ static const CHARSET_INFO *get_internal_charset(uint cs_number)
 }
 
 
-const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
+const const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
 {
   const CHARSET_INFO *cs;
   if (cs_number == default_charset_info->number)
@@ -299,7 +299,7 @@ const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
 
 const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 {
-  uint cs_number;
+  uint32_t cs_number;
   const CHARSET_INFO *cs;
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -318,10 +318,10 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 
 
 const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-				    uint cs_flags,
+				    uint32_t cs_flags,
 				    myf flags)
 {
-  uint cs_number;
+  uint32_t cs_number;
   const CHARSET_INFO *cs;
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */

@@ -86,7 +86,7 @@ void Field_enum::store_type(uint64_t value)
     (if there isn't a empty value in the enum)
 */
 
-int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const cs)
+int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const cs)
 {
   int err= 0;
   uint32_t not_used;
@@ -96,7 +96,7 @@ int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const 
   /* Convert character set if necessary */
   if (String::needs_conversion(length, cs, field_charset, &not_used))
   { 
-    uint dummy_errors;
+    uint32_t dummy_errors;
     tmpstr.copy(from, length, cs, field_charset, &dummy_errors);
     from= tmpstr.ptr();
     length=  tmpstr.length();
@@ -104,7 +104,7 @@ int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const 
 
   /* Remove end space */
   length= field_charset->cset->lengthsp(field_charset, from, length);
-  uint tmp=find_type2(typelib, from, length, field_charset);
+  uint32_t tmp=find_type2(typelib, from, length, field_charset);
   if (!tmp)
   {
     if (length < 6) // Can't be more than 99999 enums
@@ -225,7 +225,7 @@ int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
 String *Field_enum::val_str(String *val_buffer __attribute__((unused)),
 			    String *val_ptr)
 {
-  uint tmp=(uint) Field_enum::val_int();
+  uint32_t tmp=(uint) Field_enum::val_int();
   if (!tmp || tmp > typelib->count)
     val_ptr->set("", 0, field_charset);
   else
@@ -246,11 +246,11 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_enum::sort_string(unsigned char *to,uint length __attribute__((unused)))
+void Field_enum::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   uint64_t value=Field_enum::val_int();
   to+=packlength-1;
-  for (uint i=0 ; i < packlength ; i++)
+  for (uint32_t i=0 ; i < packlength ; i++)
   {
     *to-- = (unsigned char) (value & 255);
     value>>=8;
@@ -267,10 +267,10 @@ void Field_enum::sql_type(String &res) const
   res.append(STRING_WITH_LEN("enum("));
 
   bool flag=0;
-  uint *len= typelib->type_lengths;
+  uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */

@@ -181,7 +181,7 @@ static void delete_tree_element(TREE *tree, TREE_ELEMENT *element)
     parent[0] = & parent[-1][0]->right
 */
 
-TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size, 
+TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size, 
                           void* custom_arg)
 {
   int cmp;
@@ -206,7 +206,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
   }
   if (element == &tree->null_element)
   {
-    uint alloc_size=sizeof(TREE_ELEMENT)+key_size+tree->size_of_element;
+    uint32_t alloc_size=sizeof(TREE_ELEMENT)+key_size+tree->size_of_element;
     tree->allocated+=alloc_size;
 
     if (tree->memory_limit && tree->elements_in_tree
@@ -253,7 +253,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
   return element;
 }
 
-int tree_delete(TREE *tree, void *key, uint key_size, void *custom_arg)
+int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg)
 {
   int cmp,remove_colour;
   TREE_ELEMENT *element,***parent, ***org_parent, *nod;

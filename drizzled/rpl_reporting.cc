@@ -8,7 +8,7 @@ Slave_reporting_capability::report(loglevel level, int err_code,
   void (*report_function)(const char *, ...);
   char buff[MAX_SLAVE_ERRMSG];
   char *pbuff= buff;
-  uint pbuffsize= sizeof(buff);
+  uint32_t pbuffsize= sizeof(buff);
   va_list args;
   va_start(args, msg);
 

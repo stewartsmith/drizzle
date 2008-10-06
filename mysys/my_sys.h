@@ -170,10 +170,10 @@ extern int errno;			/* declare errno */
 extern char errbuff[NRERRBUFFS][ERRMSGSIZE];
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
-extern void (*error_handler_hook)(uint my_err, const char *str,myf MyFlags);
-extern void (*fatal_error_handler_hook)(uint my_err, const char *str,
+extern void (*error_handler_hook)(uint32_t my_err, const char *str,myf MyFlags);
+extern void (*fatal_error_handler_hook)(uint32_t my_err, const char *str,
                                         myf MyFlags);
-extern uint my_file_limit;
+extern uint32_t my_file_limit;
 extern uint32_t my_thread_stack_size;
 
 /* charsets */
@@ -266,16 +266,16 @@ extern struct st_my_file_info *my_file_info;
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
-  uint elements,max_element;
-  uint alloc_increment;
-  uint size_of_element;
+  uint32_t elements,max_element;
+  uint32_t alloc_increment;
+  uint32_t size_of_element;
 } DYNAMIC_ARRAY;
 
 typedef struct st_my_tmpdir
 {
   DYNAMIC_ARRAY full_list;
   char **list;
-  uint cur, max;
+  uint32_t cur, max;
   pthread_mutex_t mutex;
 } MY_TMPDIR;
 
@@ -418,7 +418,7 @@ typedef struct st_io_cache		/* Used when cacheing files */
     As inidicated by ifdef, this is for async I/O, which is not currently
     used (because it's not reliable on all systems)
   */
-  uint inited;
+  uint32_t inited;
   my_off_t aio_read_pos;
   my_aio_result aio_result;
 #endif
@@ -497,7 +497,7 @@ extern void *my_once_memdup(const void *src, size_t len, myf myflags);
 extern File my_open(const char *FileName,int Flags,myf MyFlags);
 extern File my_register_filename(File fd, const char *FileName,
 				 enum file_type type_of_file,
-				 uint error_message_number, myf MyFlags);
+				 uint32_t error_message_number, myf MyFlags);
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
 extern int my_close(File Filedes,myf MyFlags);
@@ -521,18 +521,18 @@ extern size_t my_fwrite(FILE *stream,const unsigned char *Buffer,size_t Count,
 		      myf MyFlags);
 extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
 extern void *_mymalloc(size_t uSize,const char *sFile,
-                       uint uLine, myf MyFlag);
+                       uint32_t uLine, myf MyFlag);
 extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
-		       uint uLine, myf MyFlag);
+		       uint32_t uLine, myf MyFlag);
 extern void * my_multi_malloc (myf MyFlags, ...);
-extern void _myfree(void *pPtr, const char *sFile, uint uLine, myf MyFlag);
-extern int _sanity(const char *sFile, uint uLine);
+extern void _myfree(void *pPtr, const char *sFile, uint32_t uLine, myf MyFlag);
+extern int _sanity(const char *sFile, uint32_t uLine);
 extern void *_my_memdup(const void *from, size_t length,
-                        const char *sFile, uint uLine,myf MyFlag);
-extern char * _my_strdup(const char *from, const char *sFile, uint uLine,
+                        const char *sFile, uint32_t uLine,myf MyFlag);
+extern char * _my_strdup(const char *from, const char *sFile, uint32_t uLine,
                          myf MyFlag);
 extern char *_my_strndup(const char *from, size_t length,
-                         const char *sFile, uint uLine,
+                         const char *sFile, uint32_t uLine,
                          myf MyFlag);
 
 #define my_access access
@@ -542,7 +542,7 @@ extern int check_if_legal_tablename(const char *path);
 #define my_delete_allow_opened(fname,flags)  my_delete((fname),(flags))
 
 #ifndef TERMINATE
-extern void TERMINATE(FILE *file, uint flag);
+extern void TERMINATE(FILE *file, uint32_t flag);
 #endif
 extern void init_glob_errs(void);
 extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
@@ -551,13 +551,13 @@ extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
 extern void my_error(int nr,myf MyFlags, ...);
-extern void my_printf_error(uint my_err, const char *format,
+extern void my_printf_error(uint32_t my_err, const char *format,
                             myf MyFlags, ...)
   __attribute__((format(printf, 2, 4)));
 extern int my_error_register(const char **errmsgs, int first, int last);
 extern const char **my_error_unregister(int first, int last);
-extern void my_message(uint my_err, const char *str,myf MyFlags);
-extern void my_message_no_curses(uint my_err, const char *str,myf MyFlags);
+extern void my_message(uint32_t my_err, const char *str,myf MyFlags);
+extern void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 extern bool my_init(void);
 extern void my_end(int infoflag);
 extern int my_redel(const char *from, const char *to, int MyFlags);
@@ -585,7 +585,7 @@ extern void to_unix_path(char * name);
 extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
 extern char * fn_format(char * to,const char *name,const char *dir,
-			   const char *form, uint flag);
+			   const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
 extern void pack_dirname(char * to,const char *from);
 extern size_t unpack_dirname(char * to,const char *from);
@@ -621,8 +621,8 @@ extern RETSIGTYPE sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
 extern RETSIGTYPE my_set_alarm_variable(int signo);
-extern void my_string_ptr_sort(unsigned char *base,uint items,size_t size);
-extern void radixsort_for_str_ptr(unsigned char* base[], uint number_of_elements,
+extern void my_string_ptr_sort(unsigned char *base,uint32_t items,size_t size);
+extern void radixsort_for_str_ptr(unsigned char* base[], uint32_t number_of_elements,
 				  size_t size_of_element,unsigned char *buffer[]);
 extern RETQSORTTYPE my_qsort(void *base_ptr, size_t total_elems, size_t size,
                              qsort_cmp cmp);
@@ -641,7 +641,7 @@ extern void setup_io_cache(IO_CACHE* info);
 extern int _my_b_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_read_r(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
-                                IO_CACHE *write_cache, uint num_threads);
+                                IO_CACHE *write_cache, uint32_t num_threads);
 extern void remove_io_thread(IO_CACHE *info);
 extern int _my_b_seq_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_net_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
@@ -675,22 +675,22 @@ File create_temp_file(char *to, const char *dir, const char *pfx,
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D ORIG_CALLER_INFO)
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E CALLER_INFO)
 #define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E ORIG_CALLER_INFO)
-extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint element_size,
-                                   void *init_buffer, uint init_alloc, 
-                                   uint alloc_increment
+extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
+                                   void *init_buffer, uint32_t init_alloc, 
+                                   uint32_t alloc_increment
                                    CALLER_INFO_PROTO);
 /* init_dynamic_array() function is deprecated */
-extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint element_size,
-                                  uint init_alloc,uint alloc_increment
+extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
+                                  uint32_t init_alloc,uint32_t alloc_increment
                                   CALLER_INFO_PROTO);
 extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
 extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint array_index);
-extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements);
-extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint array_index);
+extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
+extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
+extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 extern void delete_dynamic(DYNAMIC_ARRAY *array);
-extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint array_index);
+extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
 extern void freeze_size(DYNAMIC_ARRAY *array);
 extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define dynamic_array_ptr(array,array_index) ((array)->buffer+(array_index)*(array)->size_of_element)
@@ -723,7 +723,7 @@ extern int modify_defaults_file(const char *file_location, const char *option,
                                 const char *option_value,
                                 const char *section_name, int remove_option);
 extern int my_search_option_files(const char *conf_file, int *argc,
-                                  char ***argv, uint *args_used,
+                                  char ***argv, uint32_t *args_used,
                                   Process_option_func func, void *func_ctx);
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
@@ -731,7 +731,7 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-extern uint my_set_max_open_files(uint files);
+extern uint32_t my_set_max_open_files(uint32_t files);
 void my_free_open_file_info(void);
 
 extern time_t my_time(myf flags);
@@ -775,13 +775,13 @@ int my_munmap(void *, size_t);
 #endif
 
 /* character sets */
-extern uint get_charset_number(const char *cs_name, uint cs_flags);
-extern uint get_collation_number(const char *name);
-extern const char *get_charset_name(uint cs_number);
+extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
+extern uint32_t get_collation_number(const char *name);
+extern const char *get_charset_name(uint32_t cs_number);
 
-extern const CHARSET_INFO *get_charset(uint cs_number, myf flags);
+extern const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags);
 extern const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint cs_flags, myf my_flags);
+extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags, myf my_flags);
 
 extern bool resolve_charset(const char *cs_name,
                             const CHARSET_INFO *default_cs,

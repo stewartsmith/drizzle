@@ -62,10 +62,10 @@ MI_INFO *test_if_reopen(char *filename)
   have an open count of 0.
 ******************************************************************************/
 
-MI_INFO *mi_open(const char *name, int mode, uint open_flags)
+MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
-  uint i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
+  uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
     key_parts,unique_key_parts,fulltext_keys,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
        data_name[FN_REFLEN];
@@ -548,7 +548,7 @@ err:
 
 unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **buf)
 {
-  uint extra;
+  uint32_t extra;
   uint32_t old_length= 0;
 
   if (! *buf || length > (old_length=mi_get_rec_buff_len(info, *buf)))
@@ -694,7 +694,7 @@ static void setup_key_functions(register MI_KEYDEF *keyinfo)
    Function to save and store the header in the index file (.MYI)
 */
 
-uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
+uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
 {
   unsigned char  buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
   unsigned char *ptr=buff;
@@ -734,7 +734,7 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
   }
   if (pWrite & 2)				/* From isamchk */
   {
-    uint key_parts= mi_uint2korr(state->header.key_parts);
+    uint32_t key_parts= mi_uint2korr(state->header.key_parts);
     mi_int4store(ptr,state->sec_index_changed); ptr +=4;
     mi_int4store(ptr,state->sec_index_used);	ptr +=4;
     mi_int4store(ptr,state->version);		ptr +=4;
@@ -759,7 +759,7 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
 
 unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
-  uint i,keys,key_parts,key_blocks;
+  uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
   ptr +=sizeof(state->header);
   keys=(uint) state->header.keys;
@@ -810,7 +810,7 @@ unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 }
 
 
-uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
+uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 {
   unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
@@ -833,7 +833,7 @@ uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 **  store and read of MI_BASE_INFO
 ****************************************************************************/
 
-uint mi_base_info_write(File file, MI_BASE_INFO *base)
+uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
 {
   unsigned char buff[MI_BASE_INFO_SIZE], *ptr=buff;
 
@@ -912,7 +912,7 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   mi_keydef
 ---------------------------------------------------------------------------*/
 
-uint mi_keydef_write(File file, MI_KEYDEF *keydef)
+uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
 {
   unsigned char buff[MI_KEYDEF_SIZE];
   unsigned char *ptr=buff;
@@ -997,7 +997,7 @@ unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
   mi_uniquedef
 ---------------------------------------------------------------------------*/
 
-uint mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
+uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
 {
   unsigned char buff[MI_UNIQUEDEF_SIZE];
   unsigned char *ptr=buff;
@@ -1021,7 +1021,7 @@ unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 **  MI_COLUMNDEF
 ***************************************************************************/
 
-uint mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
+uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
 {
   unsigned char buff[MI_COLUMNDEF_SIZE];
   unsigned char *ptr=buff;

@@ -52,7 +52,7 @@ extern const char **errmesg;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
-extern uint tc_heuristic_recover;
+extern uint32_t tc_heuristic_recover;
 
 typedef struct st_user_var_events
 {
@@ -60,7 +60,7 @@ typedef struct st_user_var_events
   char *value;
   ulong length;
   Item_result type;
-  uint charset_number;
+  uint32_t charset_number;
 } BINLOG_USER_VAR_EVENT;
 
 #define RP_LOCK_LOG_IS_ALREADY_LOCKED 1
@@ -98,11 +98,11 @@ typedef struct st_copy_info {
 class Key_part_spec :public Sql_alloc {
 public:
   LEX_STRING field_name;
-  uint length;
-  Key_part_spec(const LEX_STRING &name, uint len)
+  uint32_t length;
+  Key_part_spec(const LEX_STRING &name, uint32_t len)
     : field_name(name), length(len)
   {}
-  Key_part_spec(const char *name, const size_t name_len, uint len)
+  Key_part_spec(const char *name, const size_t name_len, uint32_t len)
     : length(len)
   { field_name.str= (char *)name; field_name.length= name_len; }
   bool operator==(const Key_part_spec& other) const;
@@ -198,10 +198,10 @@ public:
 
   Table_ident *ref_table;
   List<Key_part_spec> ref_columns;
-  uint delete_opt, update_opt, match_opt;
+  uint32_t delete_opt, update_opt, match_opt;
   Foreign_key(const LEX_STRING &name_arg, List<Key_part_spec> &cols,
 	      Table_ident *table,   List<Key_part_spec> &ref_cols,
-	      uint delete_opt_arg, uint update_opt_arg, uint match_opt_arg)
+	      uint32_t delete_opt_arg, uint32_t update_opt_arg, uint32_t match_opt_arg)
     :Key(FOREIGN_KEY, name_arg, &default_key_create_info, 0, cols),
     ref_table(table), ref_columns(ref_cols),
     delete_opt(delete_opt_arg), update_opt(update_opt_arg),
@@ -219,7 +219,7 @@ public:
 typedef struct st_mysql_lock
 {
   Table **table;
-  uint table_count,lock_count;
+  uint32_t table_count,lock_count;
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
@@ -228,7 +228,7 @@ class LEX_COLUMN : public Sql_alloc
 {
 public:
   String column;
-  uint rights;
+  uint32_t rights;
   LEX_COLUMN (const String& x,const  uint& y ): column (x),rights (y) {}
 };
 
@@ -253,8 +253,8 @@ struct system_variables
   */ 
   ulong dynamic_variables_version;
   char* dynamic_variables_ptr;
-  uint dynamic_variables_head;  /* largest valid variable offset */
-  uint dynamic_variables_size;  /* how many bytes are in use */
+  uint32_t dynamic_variables_head;  /* largest valid variable offset */
+  uint32_t dynamic_variables_size;  /* how many bytes are in use */
   
   uint64_t myisam_max_extra_sort_file_size;
   uint64_t myisam_max_sort_file_size;
@@ -479,7 +479,7 @@ public:
   { return strmake_root(mem_root,str,size); }
   inline void *memdup(const void *str, size_t size)
   { return memdup_root(mem_root,str,size); }
-  inline void *memdup_w_gap(const void *str, size_t size, uint gap)
+  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
     void *ptr;
     if ((ptr= alloc_root(mem_root,size+gap)))
@@ -568,7 +568,7 @@ public:
   */
 
   char *db;
-  uint db_length;
+  uint32_t db_length;
 
 public:
 
@@ -582,7 +582,7 @@ public:
 struct st_savepoint {
   struct st_savepoint *prev;
   char                *name;
-  uint                 length;
+  uint32_t                 length;
   Ha_trx_info         *ha_list;
 };
 
@@ -702,7 +702,7 @@ public:
   DRIZZLE_LOCK *extra_lock;
 
   ulong	version;
-  uint current_tablenr;
+  uint32_t current_tablenr;
 
   enum enum_flags {
     BACKUPS_AVAIL = (1U << 0)     /* There are backups available */
@@ -711,7 +711,7 @@ public:
   /*
     Flags with information about the open tables state.
   */
-  uint state_flags;
+  uint32_t state_flags;
 
   /*
     This constructor serves for creation of Open_tables_state instances
@@ -781,7 +781,7 @@ public:
     @param thd the calling thread
     @return true if the error is handled
   */
-  virtual bool handle_error(uint sql_errno,
+  virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd) = 0;
@@ -820,7 +820,7 @@ public:
                      uint64_t last_insert_id_arg,
                      const char *message);
   void set_eof_status(THD *thd);
-  void set_error_status(THD *thd, uint sql_errno_arg, const char *message_arg);
+  void set_error_status(THD *thd, uint32_t sql_errno_arg, const char *message_arg);
 
   void disable_status();
 
@@ -836,10 +836,10 @@ public:
   const char *message() const
   { assert(m_status == DA_ERROR || m_status == DA_OK); return m_message; }
 
-  uint sql_errno() const
+  uint32_t sql_errno() const
   { assert(m_status == DA_ERROR); return m_sql_errno; }
 
-  uint server_status() const
+  uint32_t server_status() const
   {
     assert(m_status == DA_OK || m_status == DA_EOF);
     return m_server_status;
@@ -851,7 +851,7 @@ public:
   uint64_t last_insert_id() const
   { assert(m_status == DA_OK); return m_last_insert_id; }
 
-  uint total_warn_count() const
+  uint32_t total_warn_count() const
   {
     assert(m_status == DA_OK || m_status == DA_EOF);
     return m_total_warn_count;
@@ -866,7 +866,7 @@ private:
     SQL error number. One of ER_ codes from share/errmsg.txt.
     Set by set_error_status.
   */
-  uint m_sql_errno;
+  uint32_t m_sql_errno;
 
   /**
     Copied from thd->server_status when the diagnostics area is assigned.
@@ -876,7 +876,7 @@ private:
     thd->server_status&= ~...
     Assigned by OK, EOF or ERROR.
   */
-  uint m_server_status;
+  uint32_t m_server_status;
   /**
     The number of rows affected by the last statement. This is
     semantically close to thd->row_count_func, but has a different
@@ -1024,7 +1024,7 @@ public:
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK. 
   */
-  uint dbug_sentry; // watch out for memory corruption
+  uint32_t dbug_sentry; // watch out for memory corruption
   struct st_my_thread_var *mysys_var;
   /*
     Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
@@ -1042,7 +1042,7 @@ public:
   thr_lock_type update_lock_default;
 
   /* <> 0 if we are inside of trigger or stored function. */
-  uint in_sub_stmt;
+  uint32_t in_sub_stmt;
 
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
@@ -1079,7 +1079,7 @@ public:
   int binlog_flush_pending_rows_event(bool stmt_end);
 
 private:
-  uint binlog_table_maps; // Number of table maps currently in the binlog
+  uint32_t binlog_table_maps; // Number of table maps currently in the binlog
 
   enum enum_binlog_flag {
     BINLOG_FLAG_UNSAFE_STMT_PRINTED,
@@ -1092,7 +1092,7 @@ private:
    */
   uint32_t binlog_flags;
 public:
-  uint get_binlog_table_maps() const {
+  uint32_t get_binlog_table_maps() const {
     return binlog_table_maps;
   }
   void clear_binlog_table_maps() {
@@ -1337,7 +1337,7 @@ public:
   uint	     tmp_table, global_read_lock;
   uint	     server_status,open_options;
   enum enum_thread_type system_thread;
-  uint       select_number;             //number of select (used for EXPLAIN)
+  uint32_t       select_number;             //number of select (used for EXPLAIN)
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
@@ -1577,11 +1577,11 @@ public:
   }
 
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
-                              const char* str, uint length,
+                              const char* str, uint32_t length,
                               bool allocate_lex_string);
 
   bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-		      const char *from, uint from_length,
+		      const char *from, uint32_t from_length,
 		      const CHARSET_INFO * const from_cs);
 
   bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
@@ -1786,7 +1786,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(uint sql_errno, const char *message,
+  virtual bool handle_error(uint32_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1890,13 +1890,13 @@ public:
     we need to know number of columns in the result set (if
     there is a result set) apart from sending columns metadata.
   */
-  virtual uint field_count(List<Item> &fields) const
+  virtual uint32_t field_count(List<Item> &fields) const
   { return fields.elements; }
-  virtual bool send_fields(List<Item> &list, uint flags)=0;
+  virtual bool send_fields(List<Item> &list, uint32_t flags)=0;
   virtual bool send_data(List<Item> &items)=0;
   virtual bool initialize_tables (JOIN  __attribute__((unused)) *join=0)
   { return 0; }
-  virtual void send_error(uint errcode,const char *err);
+  virtual void send_error(uint32_t errcode,const char *err);
   virtual bool send_eof()=0;
   /**
     Check if this query returns a result set and therefore is allowed in
@@ -1927,10 +1927,10 @@ class select_result_interceptor: public select_result
 {
 public:
   select_result_interceptor() {}              /* Remove gcc warning */
-  uint field_count(List<Item> &fields __attribute__((unused))) const
+  uint32_t field_count(List<Item> &fields __attribute__((unused))) const
   { return 0; }
   bool send_fields(List<Item> &fields __attribute__((unused)),
-                   uint flag __attribute__((unused))) { return false; }
+                   uint32_t flag __attribute__((unused))) { return false; }
 };
 
 
@@ -1943,7 +1943,7 @@ class select_send :public select_result {
   bool is_result_set_started;
 public:
   select_send() :is_result_set_started(false) {}
-  bool send_fields(List<Item> &list, uint flags);
+  bool send_fields(List<Item> &list, uint32_t flags);
   bool send_data(List<Item> &items);
   bool send_eof();
   virtual bool check_simple_select() const { return false; }
@@ -1964,7 +1964,7 @@ public:
   select_to_file(sql_exchange *ex) :exchange(ex), file(-1),row_count(0L)
   { path[0]=0; }
   ~select_to_file();
-  void send_error(uint errcode,const char *err);
+  void send_error(uint32_t errcode,const char *err);
   bool send_eof();
   void cleanup();
 };
@@ -1980,7 +1980,7 @@ public:
 
 
 class select_export :public select_to_file {
-  uint field_term_length;
+  uint32_t field_term_length;
   int field_sep_char,escape_char,line_sep_char;
   int field_term_char; // first char of FIELDS TERMINATED BY or MAX_INT
   /*
@@ -2036,7 +2036,7 @@ class select_insert :public select_result_interceptor {
   bool send_data(List<Item> &items);
   virtual void store_values(List<Item> &values);
   virtual bool can_rollback_data() { return 0; }
-  void send_error(uint errcode,const char *err);
+  void send_error(uint32_t errcode,const char *err);
   bool send_eof();
   void abort();
   /* not implemented: select_insert is never re-used in prepared statements */
@@ -2070,9 +2070,9 @@ public:
     {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
 
-  void binlog_show_create_table(Table **tables, uint count);
+  void binlog_show_create_table(Table **tables, uint32_t count);
   void store_values(List<Item> &values);
-  void send_error(uint errcode,const char *err);
+  void send_error(uint32_t errcode,const char *err);
   bool send_eof();
   void abort();
   virtual bool can_rollback_data() { return 1; }
@@ -2109,12 +2109,12 @@ public:
   KEY *keyinfo;
   ha_rows end_write_records;
   uint	field_count,sum_func_count,func_count;
-  uint  hidden_field_count;
+  uint32_t  hidden_field_count;
   uint	group_parts,group_length,group_null_parts;
   uint	quick_group;
   bool  using_indirect_summary_function;
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
-  uint  convert_blob_length; 
+  uint32_t  convert_blob_length; 
   const CHARSET_INFO *table_charset; 
   bool schema_table;
   /*
@@ -2224,7 +2224,7 @@ typedef struct st_sort_field {
   Field *field;				/* Field to sort */
   Item	*item;				/* Item if not sorting fields */
   uint	 length;			/* Length of sort field */
-  uint   suffix_length;                 /* Length suffix (0-4) */
+  uint32_t   suffix_length;                 /* Length suffix (0-4) */
   Item_result result_type;		/* Type of item */
   bool reverse;				/* if descending sort */
   bool need_strxnfrm;			/* If we have to use strxnfrm() */
@@ -2232,9 +2232,9 @@ typedef struct st_sort_field {
 
 
 typedef struct st_sort_buffer {
-  uint index;					/* 0 or 1 */
-  uint sort_orders;
-  uint change_pos;				/* If sort-fields changed */
+  uint32_t index;					/* 0 or 1 */
+  uint32_t sort_orders;
+  uint32_t change_pos;				/* If sort-fields changed */
   char **buff;
   SORT_FIELD *sortorder;
 } SORT_BUFFER;
@@ -2296,7 +2296,7 @@ class user_var_entry
 
   double val_real(bool *null_value);
   int64_t val_int(bool *null_value) const;
-  String *val_str(bool *null_value, String *str, uint decimals);
+  String *val_str(bool *null_value, String *str, uint32_t decimals);
   my_decimal *val_decimal(bool *null_value, my_decimal *result);
   DTCollation collation;
 };
@@ -2318,12 +2318,12 @@ class Unique :public Sql_alloc
   TREE tree;
   unsigned char *record_pointers;
   bool flush();
-  uint size;
+  uint32_t size;
 
 public:
   ulong elements;
   Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
-	 uint size_arg, uint64_t max_in_memory_size_arg);
+	 uint32_t size_arg, uint64_t max_in_memory_size_arg);
   ~Unique();
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
@@ -2334,9 +2334,9 @@ public:
   }
 
   bool get(Table *table);
-  static double get_use_cost(uint *buffer, uint nkeys, uint key_size, 
+  static double get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size, 
                              uint64_t max_in_memory_size);
-  inline static int get_cost_calc_buff_size(ulong nkeys, uint key_size, 
+  inline static int get_cost_calc_buff_size(ulong nkeys, uint32_t key_size, 
                                             uint64_t max_in_memory_size)
   {
     register uint64_t max_elems_in_tree=
@@ -2357,7 +2357,7 @@ class multi_delete :public select_result_interceptor
   TableList *delete_tables, *table_being_deleted;
   Unique **tempfiles;
   ha_rows deleted, found;
-  uint num_of_tables;
+  uint32_t num_of_tables;
   int error;
   bool do_delete;
   /* True if at least one table we delete from is transactional */
@@ -2372,12 +2372,12 @@ class multi_delete :public select_result_interceptor
   bool error_handled;
 
 public:
-  multi_delete(TableList *dt, uint num_of_tables);
+  multi_delete(TableList *dt, uint32_t num_of_tables);
   ~multi_delete();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
   bool initialize_tables (JOIN *join);
-  void send_error(uint errcode,const char *err);
+  void send_error(uint32_t errcode,const char *err);
   int  do_deletes();
   bool send_eof();
   virtual void abort();
@@ -2394,7 +2394,7 @@ class multi_update :public select_result_interceptor
   ha_rows updated, found;
   List <Item> *fields, *values;
   List <Item> **fields_for_table, **values_for_table;
-  uint table_count;
+  uint32_t table_count;
   /*
    List of tables referenced in the CHECK OPTION condition of
    the updated view excluding the updated table. 
@@ -2420,7 +2420,7 @@ public:
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
   bool initialize_tables (JOIN *join);
-  void send_error(uint errcode,const char *err);
+  void send_error(uint32_t errcode,const char *err);
   int  do_updates();
   bool send_eof();
   virtual void abort();
@@ -2430,9 +2430,9 @@ class my_var : public Sql_alloc  {
 public:
   LEX_STRING s;
   bool local;
-  uint offset;
+  uint32_t offset;
   enum_field_types type;
-  my_var (LEX_STRING& j, bool i, uint o, enum_field_types t)
+  my_var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
     :s(j), local(i), offset(o), type(t)
   {}
   ~my_var() {}

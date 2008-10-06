@@ -55,7 +55,7 @@ void safe_mutex_global_init(void)
 int safe_mutex_init(safe_mutex_t *mp,
 		    const pthread_mutexattr_t *attr __attribute__((unused)),
 		    const char *file,
-		    uint line)
+		    uint32_t line)
 {
   memset(mp, 0, sizeof(*mp));
   pthread_mutex_init(&mp->global,MY_MUTEX_INIT_ERRCHK);
@@ -92,7 +92,7 @@ int safe_mutex_init(safe_mutex_t *mp,
 }
 
 
-int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint line)
+int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint32_t line)
 {
   int error;
   if (!mp->file)
@@ -171,7 +171,7 @@ line %d more than 1 time\n", file,line);
 }
 
 
-int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line)
+int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint32_t line)
 {
   int error;
   pthread_mutex_lock(&mp->global);
@@ -204,7 +204,7 @@ int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line)
 
 
 int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
-		   uint line)
+		   uint32_t line)
 {
   int error;
   pthread_mutex_lock(&mp->global);
@@ -256,7 +256,7 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
 
 int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
 			struct timespec *abstime,
-			const char *file, uint line)
+			const char *file, uint32_t line)
 {
   int error;
   pthread_mutex_lock(&mp->global);
@@ -292,7 +292,7 @@ int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
 }
 
 
-int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint line)
+int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint32_t line)
 {
   int error=0;
   if (!mp->file)
@@ -433,8 +433,8 @@ int my_pthread_fastmutex_init(my_pthread_fastmutex_t *mp,
 int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp)
 {
   int   res;
-  uint  i;
-  uint  maxdelay= MY_PTHREAD_FASTMUTEX_DELAY;
+  uint32_t  i;
+  uint32_t  maxdelay= MY_PTHREAD_FASTMUTEX_DELAY;
 
   for (i= 0; i < mp->spins; i++)
   {

@@ -36,7 +36,7 @@ public:
     {}
   enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
   int  store(const char *to __attribute__((unused)),
-             uint length __attribute__((unused)),
+             uint32_t length __attribute__((unused)),
              const CHARSET_INFO * const cs __attribute__((unused)))
   { null[0]=1; return 0; }
   int store(double nr __attribute__((unused)))
@@ -59,10 +59,10 @@ public:
   int cmp(const unsigned char *a __attribute__((unused)),
           const unsigned char *b __attribute__((unused))) { return 0;}
   void sort_string(unsigned char *buff __attribute__((unused)),
-                   uint length __attribute__((unused)))  {}
+                   uint32_t length __attribute__((unused)))  {}
   uint32_t pack_length() const { return 0; }
   void sql_type(String &str) const;
-  uint size_of() const { return sizeof(*this); }
+  uint32_t size_of() const { return sizeof(*this); }
   uint32_t max_display_length() { return 4; }
 };
 

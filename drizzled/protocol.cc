@@ -25,9 +25,9 @@
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-static void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
+static void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err);
 static void write_eof_packet(THD *thd, NET *net,
-                             uint server_status, uint total_warn_count);
+                             uint32_t server_status, uint32_t total_warn_count);
 
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
 {
@@ -64,9 +64,9 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
                               const CHARSET_INFO * const from_cs,
 							  const CHARSET_INFO * const to_cs)
 {
-  uint dummy_errors;
+  uint32_t dummy_errors;
   /* Calculate maxumum possible result length */
-  uint conv_length= to_cs->mbmaxlen * length / from_cs->mbminlen;
+  uint32_t conv_length= to_cs->mbmaxlen * length / from_cs->mbminlen;
   if (conv_length > 250)
   {
     /*
@@ -115,7 +115,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void net_send_error(THD *thd, uint sql_errno, const char *err)
+void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -157,7 +157,7 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
 
 static void
 net_send_ok(THD *thd,
-            uint server_status, uint total_warn_count,
+            uint32_t server_status, uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
   NET *net= &thd->net;
@@ -176,7 +176,7 @@ net_send_ok(THD *thd,
   pos+=2;
 
   /* We can only return up to 65535 warnings in two bytes */
-  uint tmp= cmin(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint)65535);
   int2store(pos, tmp);
   pos+= 2;
 
@@ -210,7 +210,7 @@ net_send_ok(THD *thd,
 */    
 
 static void
-net_send_eof(THD *thd, uint server_status, uint total_warn_count)
+net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
 {
   NET *net= &thd->net;
   /* Set to true if no active vio, to work well in case of --init-file */
@@ -230,15 +230,15 @@ net_send_eof(THD *thd, uint server_status, uint total_warn_count)
 */
 
 static void write_eof_packet(THD *thd, NET *net,
-                             uint server_status,
-                             uint total_warn_count)
+                             uint32_t server_status,
+                             uint32_t total_warn_count)
 {
   unsigned char buff[5];
   /*
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint tmp= cmin(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*
@@ -252,10 +252,10 @@ static void write_eof_packet(THD *thd, NET *net,
   my_net_write(net, buff, 5);
 }
 
-void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
+void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err)
 {
   NET *net= &thd->net;
-  uint length;
+  uint32_t length;
   /*
     buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
   */
@@ -287,13 +287,13 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   We keep a separate version for that range because it's widely used in
   libmysql.
 
-  uint is used as agrument type because of MySQL type conventions:
-  - uint for 0..65536
+  uint32_t is used as agrument type because of MySQL type conventions:
+  - uint32_t for 0..65536
   - ulong for 0..4294967296
   - uint64_t for bigger numbers.
 */
 
-static unsigned char *net_store_length_fast(unsigned char *packet, uint length)
+static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t length)
 {
   if (length < 251)
   {
@@ -413,7 +413,7 @@ unsigned char *net_store_data(unsigned char *to, const unsigned char *from, size
 unsigned char *net_store_data(unsigned char *to,int32_t from)
 {
   char buff[20];
-  uint length=(uint) (int10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint) (int10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -422,7 +422,7 @@ unsigned char *net_store_data(unsigned char *to,int32_t from)
 unsigned char *net_store_data(unsigned char *to,int64_t from)
 {
   char buff[22];
-  uint length=(uint) (int64_t10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint) (int64_t10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -476,7 +476,7 @@ bool Protocol::flush()
     1	Error  (Note that in this case the error is not sent to the
     client)
 */
-bool Protocol::send_fields(List<Item> *list, uint flags)
+bool Protocol::send_fields(List<Item> *list, uint32_t flags)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
@@ -528,7 +528,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
     else
     {
       /* With conversion */
-      uint max_char_len;
+      uint32_t max_char_len;
       int2store(pos, thd_charset->number);
       /*
         For TEXT/BLOB columns, field_length describes the maximum data
@@ -600,7 +600,7 @@ bool Protocol::store(const char *from, const CHARSET_INFO * const cs)
 {
   if (!from)
     return store_null();
-  uint length= strlen(from);
+  uint32_t length= strlen(from);
   return store(from, length, cs);
 }
 
@@ -770,7 +770,7 @@ bool Protocol_text::store(Field *field)
 bool Protocol_text::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
-  uint length;
+  uint32_t length;
   length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
 			   (int) tm->year,
 			   (int) tm->month,
@@ -802,8 +802,8 @@ bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
-  uint length;
-  uint day= (tm->year || tm->month) ? 0 : tm->day;
+  uint32_t length;
+  uint32_t day= (tm->year || tm->month) ? 0 : tm->day;
   length= sprintf(buff, "%s%02ld:%02d:%02d",
 			   tm->neg ? "-" : "",
 			   (long) day*24L+(long) tm->hour,

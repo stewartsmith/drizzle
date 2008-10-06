@@ -33,7 +33,7 @@ uint32_t		my_stream_opened=0,my_file_opened=0, my_tmp_file_created=0;
 uint32_t           my_file_total_opened= 0;
 int my_umask=0664, my_umask_dir=0777;
 struct st_my_file_info my_file_info_default[MY_NFILE]= {{0,UNOPEN}};
-uint   my_file_limit= MY_NFILE;
+uint32_t   my_file_limit= MY_NFILE;
 struct st_my_file_info *my_file_info= my_file_info_default;
 
 	/* From mf_brkhant */
@@ -55,13 +55,13 @@ USED_MEM* my_once_root_block=0;			/* pointer to first block */
 uint	  my_once_extra=ONCE_ALLOC_INIT;	/* Memory to alloc / block */
 
 	/* from safe_malloc */
-uint sf_malloc_prehunc=0,		/* If you have problem with core- */
+uint32_t sf_malloc_prehunc=0,		/* If you have problem with core- */
      sf_malloc_endhunc=0,		/* dump when malloc-message.... */
 					/* set theese to 64 or 128  */
      sf_malloc_quick=0;			/* set if no calls to sanity */
 uint32_t sf_malloc_cur_memory= 0L;		/* Current memory usage */
 uint32_t sf_malloc_max_memory= 0L;		/* Maximum memory usage */
-uint  sf_malloc_count= 0;		/* Number of times NEW() was called */
+uint32_t  sf_malloc_count= 0;		/* Number of times NEW() was called */
 unsigned char *sf_min_adress= (unsigned char*) ~(unsigned long) 0L,
      *sf_max_adress= (unsigned char*) 0L;
 /* Root of the linked list of struct st_irem */
@@ -73,9 +73,9 @@ uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 
 	/* from errors.c */
 void (*my_abort_hook)(int) = (void(*)(int)) exit;
-void (*error_handler_hook)(uint error,const char *str,myf MyFlags)=
+void (*error_handler_hook)(uint32_t error,const char *str,myf MyFlags)=
     my_message_no_curses;
-void (*fatal_error_handler_hook)(uint error,const char *str,myf MyFlags)=
+void (*fatal_error_handler_hook)(uint32_t error,const char *str,myf MyFlags)=
   my_message_no_curses;
 
 	/* How to disable options */

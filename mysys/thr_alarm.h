@@ -35,8 +35,8 @@ extern "C" {
 typedef struct st_alarm_info
 {
   uint32_t next_alarm_time;
-  uint active_alarms;
-  uint max_used_alarms;
+  uint32_t active_alarms;
+  uint32_t max_used_alarms;
 } ALARM_INFO;
 
 void thr_alarm_info(ALARM_INFO *info);
@@ -75,14 +75,14 @@ typedef struct st_alarm {
   bool malloced;
 } ALARM;
 
-extern uint thr_client_alarm;
+extern uint32_t thr_client_alarm;
 extern pthread_t alarm_thread;
 
 #define thr_alarm_init(A) (*(A))=0
 #define thr_alarm_in_use(A) (*(A)!= 0)
-void init_thr_alarm(uint max_alarm);
-void resize_thr_alarm(uint max_alarms);
-bool thr_alarm(thr_alarm_t *alarmed, uint sec, ALARM *buff);
+void init_thr_alarm(uint32_t max_alarm);
+void resize_thr_alarm(uint32_t max_alarms);
+bool thr_alarm(thr_alarm_t *alarmed, uint32_t sec, ALARM *buff);
 void thr_alarm_kill(my_thread_id thread_id);
 void thr_end_alarm(thr_alarm_t *alarmed);
 void end_thr_alarm(bool free_structures);

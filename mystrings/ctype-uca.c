@@ -6996,7 +6996,7 @@ static int my_uca_scanner_next_any(my_uca_scanner *scanner)
     if (scanner->contractions && !scanner->page &&
         (scanner->code > 0x40) && (scanner->code < 0x80))
     {
-      uint page1, code1, cweight;
+      uint32_t page1, code1, cweight;
       
       if (((mb_len= scanner->cs->cset->mb_wc(scanner->cs, &wc,
                                             scanner->sbeg, 
@@ -7290,8 +7290,8 @@ static void my_hash_sort_uca(const CHARSET_INFO * const cs,
 
 static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs, 
                            my_uca_scanner_handler *scanner_handler,
-                           unsigned char *dst, size_t dstlen, uint nweights,
-                           const unsigned char *src, size_t srclen, uint flags)
+                           unsigned char *dst, size_t dstlen, uint32_t nweights,
+                           const unsigned char *src, size_t srclen, uint32_t flags)
 {
   unsigned char *d0= dst;
   unsigned char *de= dst + (dstlen & (size_t) ~1); /* add even length for easier code */
@@ -7308,7 +7308,7 @@ static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
   
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint space_count= cmin((uint) (de - dst) / 2, nweights);
+    uint32_t space_count= cmin((uint) (de - dst) / 2, nweights);
     s_res= cs->sort_order_big[0][0x20 * cs->sort_order[0]];
     for (; space_count ; space_count--)
     {
@@ -7716,8 +7716,8 @@ ex:
 
 typedef struct my_coll_rule_item_st
 {
-  uint base;     /* Base character                             */
-  uint curr[2];  /* Current character                          */
+  uint32_t base;     /* Base character                             */
+  uint32_t curr[2];  /* Current character                          */
   int diff[3];   /* Primary, Secondary and Tertiary difference */
 } MY_COLL_RULE;
 
@@ -7908,8 +7908,8 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   {
     if (!rule[i].curr[1]) /* If not a contraction */
     {
-      uint pageb= (rule[i].base >> 8) & 0xFF;
-      uint pagec= (rule[i].curr[0] >> 8) & 0xFF;
+      uint32_t pageb= (rule[i].base >> 8) & 0xFF;
+      uint32_t pagec= (rule[i].curr[0] >> 8) & 0xFF;
     
       if (newlengths[pagec] < deflengths[pageb])
         newlengths[pagec]= deflengths[pageb];
@@ -7920,9 +7920,9 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   
   for (i=0; i < rc;  i++)
   {
-    uint pageb= (rule[i].base >> 8) & 0xFF;
-    uint pagec= (rule[i].curr[0] >> 8) & 0xFF;
-    uint chb, chc;
+    uint32_t pageb= (rule[i].base >> 8) & 0xFF;
+    uint32_t pagec= (rule[i].curr[0] >> 8) & 0xFF;
+    uint32_t chb, chc;
     
     if (rule[i].curr[1]) /* Skip contraction */
       continue;
@@ -7930,7 +7930,7 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
     if (!newweights[pagec])
     {
       /* Alloc new page and copy the default UCA weights */
-      uint size= 256*newlengths[pagec]*sizeof(uint16_t);
+      uint32_t size= 256*newlengths[pagec]*sizeof(uint16_t);
       
       if (!(newweights[pagec]= (uint16_t*) (*alloc)(size)))
         return 1;
@@ -7975,7 +7975,7 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
       8K for weights for basic latin letter pairs,
       plus 256 bytes for "is contraction part" flags.
     */
-    uint size= 0x40*0x40*sizeof(uint16_t) + 256;
+    uint32_t size= 0x40*0x40*sizeof(uint16_t) + 256;
     char *contraction_flags;
     if (!(cs->contractions= (uint16_t*) (*alloc)(size)))
         return 1;
@@ -7985,10 +7985,10 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
     {
       if (rule[i].curr[1])
       {
-        uint pageb= (rule[i].base >> 8) & 0xFF;
-        uint chb= rule[i].base & 0xFF;
+        uint32_t pageb= (rule[i].base >> 8) & 0xFF;
+        uint32_t chb= rule[i].base & 0xFF;
         uint16_t *offsb= defweights[pageb] + chb*deflengths[pageb];
-        uint offsc;
+        uint32_t offsc;
         
         if (offsb[1] || 
             rule[i].curr[0] < 0x40 || rule[i].curr[0] > 0x7f ||
@@ -8055,8 +8055,8 @@ static void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
 }
 
 static size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs, 
-                                  unsigned char *dst, size_t dstlen, uint nweights,
-                                  const unsigned char *src, size_t srclen, uint flags)
+                                  unsigned char *dst, size_t dstlen, uint32_t nweights,
+                                  const unsigned char *src, size_t srclen, uint32_t flags)
 {
   return my_strnxfrm_uca(cs, &my_any_uca_scanner_handler,
                          dst, dstlen, nweights, src, srclen, flags);

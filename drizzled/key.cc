@@ -45,12 +45,12 @@
        key_length is set to length of key before (not including) field
 */
 
-int find_ref_key(KEY *key, uint key_count, unsigned char *record, Field *field,
-                 uint *key_length, uint *keypart)
+int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+                 uint32_t *key_length, uint32_t *keypart)
 {
   register int i;
   register KEY *key_info;
-  uint fieldpos;
+  uint32_t fieldpos;
 
   fieldpos= field->offset(record);
 
@@ -71,7 +71,7 @@ int find_ref_key(KEY *key, uint key_count, unsigned char *record, Field *field,
        i < (int) key_count ;
        i++, key_info++)
   {
-    uint j;
+    uint32_t j;
     KEY_PART_INFO *key_part;
     *key_length=0;
     for (j=0, key_part=key_info->key_part ;
@@ -108,7 +108,7 @@ int find_ref_key(KEY *key, uint key_count, unsigned char *record, Field *field,
 void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
               unsigned int key_length)
 {
-  uint length;
+  uint32_t length;
   KEY_PART_INFO *key_part;
 
   if (key_length == 0)
@@ -134,7 +134,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
       length= cmin((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
       const CHARSET_INFO * const cs= field->charset();
-      uint bytes= field->get_key_image(to_key, length, Field::itRAW);
+      uint32_t bytes= field->get_key_image(to_key, length, Field::itRAW);
       if (bytes < length)
         cs->cset->fill(cs, (char*) to_key + bytes, length - bytes, ' ');
     }
@@ -176,7 +176,7 @@ void key_zero_nulls(unsigned char *tuple, KEY *key_info)
 void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
                  uint16_t key_length)
 {
-  uint length;
+  uint32_t length;
   KEY_PART_INFO *key_part;
 
   if (key_length == 0)
@@ -203,7 +203,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
         Maybe this branch is to be removed, but now we
         have to ignore GCov compaining.
       */
-      uint blob_length= uint2korr(from_key);
+      uint32_t blob_length= uint2korr(from_key);
       Field_blob *field= (Field_blob*) key_part->field;
       from_key+= HA_KEY_BLOB_LENGTH;
       key_length-= HA_KEY_BLOB_LENGTH;
@@ -255,9 +255,9 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
     1	Key has changed
 */
 
-bool key_cmp_if_same(Table *table,const unsigned char *key,uint idx,uint key_length)
+bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t key_length)
 {
-  uint store_length;
+  uint32_t store_length;
   KEY_PART_INFO *key_part;
   const unsigned char *key_end= key + key_length;;
 
@@ -265,7 +265,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint idx,uint key_len
        key < key_end ; 
        key_part++, key+= store_length)
   {
-    uint length;
+    uint32_t length;
     store_length= key_part->store_length;
 
     if (key_part->null_bit)
@@ -290,7 +290,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint idx,uint key_len
                                 FIELDFLAG_PACK)))
     {
       const CHARSET_INFO * const cs= key_part->field->charset();
-      uint char_length= key_part->length / cs->mbmaxlen;
+      uint32_t char_length= key_part->length / cs->mbmaxlen;
       const unsigned char *pos= table->record[0] + key_part->offset;
       if (length > char_length)
       {
@@ -323,7 +323,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint idx,uint key_len
      idx	Key number
 */
 
-void key_unpack(String *to,Table *table,uint idx)
+void key_unpack(String *to,Table *table,uint32_t idx)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
@@ -360,7 +360,7 @@ void key_unpack(String *to,Table *table,uint idx)
           which can break a multi-byte characters in the middle.
           Align, returning not more than "char_length" characters.
         */
-        uint charpos, char_length= key_part->length / cs->mbmaxlen;
+        uint32_t charpos, char_length= key_part->length / cs->mbmaxlen;
         if ((charpos= my_charpos(cs, tmp.ptr(),
                                  tmp.ptr() + tmp.length(),
                                  char_length)) < key_part->length)
@@ -397,7 +397,7 @@ void key_unpack(String *to,Table *table,uint idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
+bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields)
 {
   bitmap_clear_all(&table->tmp_set);
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
@@ -429,9 +429,9 @@ bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
     -   1		Key is larger than range
 */
 
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint key_length)
+int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length)
 {
-  uint store_length;
+  uint32_t store_length;
 
   for (const unsigned char *end=key + key_length;
        key < end;
@@ -493,7 +493,7 @@ int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint key_length)
 int key_rec_cmp(void *key, unsigned char *first_rec, unsigned char *second_rec)
 {
   KEY *key_info= (KEY*)key;
-  uint key_parts= key_info->key_parts, i= 0;
+  uint32_t key_parts= key_info->key_parts, i= 0;
   KEY_PART_INFO *key_part= key_info->key_part;
   unsigned char *rec0= key_part->field->ptr - key_part->offset;
   my_ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;

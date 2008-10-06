@@ -37,18 +37,18 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_INT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
-  int store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
   bool send_binary(Protocol *protocol);
   bool get_time(DRIZZLE_TIME *ltime);
   int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 3; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }

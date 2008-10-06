@@ -190,7 +190,7 @@ void hp_clear_dataspace(HP_DATASPACE *info)
 */
 
 static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
-                                           uint chunk_count, unsigned char* existing_set)
+                                           uint32_t chunk_count, unsigned char* existing_set)
 {
   int alloc_count= chunk_count, i;
   unsigned char *first_chunk= 0, *curr_chunk= 0, *prev_chunk= 0, *last_existing_chunk= 0;
@@ -287,7 +287,7 @@ static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
   @return  Pointer to the first chunk in the new or updated chunkset, or NULL if unsuccessful
 */
 
-unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint chunk_count)
+unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count)
 {
   unsigned char* result;
 
@@ -323,7 +323,7 @@ unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint chunk_count)
   @return  Error code or zero if successful
 */
 
-int hp_reallocate_chunkset(HP_DATASPACE *info, uint chunk_count, unsigned char* pos)
+int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned char* pos)
 {
 
   if (!info->is_variable_size)

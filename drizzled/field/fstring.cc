@@ -35,9 +35,9 @@
 ****************************************************************************/
 
 /* Copy a string and fill with space */
-int Field_string::store(const char *from,uint length, const CHARSET_INFO * const cs)
+int Field_string::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
 {
-  uint copy_length;
+  uint32_t copy_length;
   const char *well_formed_error_pos;
   const char *cannot_convert_error_pos;
   const char *from_end_pos;
@@ -133,7 +133,7 @@ String *Field_string::val_str(String *val_buffer __attribute__((unused)),
 {
   /* See the comment for Field_long::store(long long) */
   assert(table->in_use == current_thd);
-  uint length;
+  uint32_t length;
 
   length= field_charset->cset->lengthsp(field_charset, (const char*) ptr, field_length);
   val_ptr->set((const char*) ptr, length, field_charset);
@@ -164,11 +164,11 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
 
 int Field_string::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
-  uint a_len, b_len;
+  uint32_t a_len, b_len;
 
   if (field_charset->mbmaxlen != 1)
   {
-    uint char_len= field_length/field_charset->mbmaxlen;
+    uint32_t char_len= field_length/field_charset->mbmaxlen;
     a_len= my_charpos(field_charset, a_ptr, a_ptr + field_length, char_len);
     b_len= my_charpos(field_charset, b_ptr, b_ptr + field_length, char_len);
   }
@@ -185,9 +185,9 @@ int Field_string::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_string::sort_string(unsigned char *to,uint length)
+void Field_string::sort_string(unsigned char *to,uint32_t length)
 {
-  uint tmp= my_strnxfrm(field_charset,
+  uint32_t tmp= my_strnxfrm(field_charset,
                                  to, length,
                                  ptr, field_length);
   assert(tmp == length);
@@ -212,11 +212,11 @@ void Field_string::sql_type(String &res) const
 
 
 unsigned char *Field_string::pack(unsigned char *to, const unsigned char *from,
-                          uint max_length,
+                          uint32_t max_length,
                           bool low_byte_first __attribute__((unused)))
 {
-  uint length=      cmin(field_length,max_length);
-  uint local_char_length= max_length/field_charset->mbmaxlen;
+  uint32_t length=      cmin(field_length,max_length);
+  uint32_t local_char_length= max_length/field_charset->mbmaxlen;
   if (length > local_char_length)
     local_char_length= my_charpos(field_charset, from, from+length,
                                   local_char_length);
@@ -254,12 +254,12 @@ unsigned char *Field_string::pack(unsigned char *to, const unsigned char *from,
 const unsigned char *
 Field_string::unpack(unsigned char *to,
                      const unsigned char *from,
-                     uint param_data,
+                     uint32_t param_data,
                      bool low_byte_first __attribute__((unused)))
 {
-  uint from_length=
+  uint32_t from_length=
     param_data ? cmin(param_data & 0x00ff, field_length) : field_length;
-  uint length;
+  uint32_t length;
 
   if (from_length > 255)
   {
@@ -311,10 +311,10 @@ int Field_string::do_save_field_metadata(unsigned char *metadata_ptr)
     > 0   a > b
 */
 
-int Field_string::pack_cmp(const unsigned char *a, const unsigned char *b, uint length,
+int Field_string::pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t length,
                            bool insert_or_update)
 {
-  uint a_length, b_length;
+  uint32_t a_length, b_length;
   if (length > 255)
   {
     a_length= uint2korr(a);
@@ -349,10 +349,10 @@ int Field_string::pack_cmp(const unsigned char *a, const unsigned char *b, uint 
     > 0   row > key
 */
 
-int Field_string::pack_cmp(const unsigned char *key, uint length,
+int Field_string::pack_cmp(const unsigned char *key, uint32_t length,
                            bool insert_or_update)
 {
-  uint row_length, local_key_length;
+  uint32_t row_length, local_key_length;
   unsigned char *end;
   if (length > 255)
   {
@@ -375,7 +375,7 @@ int Field_string::pack_cmp(const unsigned char *key, uint length,
 }
 
 
-uint Field_string::packed_col_length(const unsigned char *data_ptr, uint length)
+uint32_t Field_string::packed_col_length(const unsigned char *data_ptr, uint32_t length)
 {
   if (length > 255)
     return uint2korr(data_ptr)+2;
@@ -383,17 +383,17 @@ uint Field_string::packed_col_length(const unsigned char *data_ptr, uint length)
 }
 
 
-uint Field_string::max_packed_col_length(uint max_length)
+uint32_t Field_string::max_packed_col_length(uint32_t max_length)
 {
   return (max_length > 255 ? 2 : 1)+max_length;
 }
 
 
-uint Field_string::get_key_image(unsigned char *buff,
-                                 uint length,
+uint32_t Field_string::get_key_image(unsigned char *buff,
+                                 uint32_t length,
                                  imagetype type_arg __attribute__((unused)))
 {
-  uint bytes = my_charpos(field_charset, (char*) ptr,
+  uint32_t bytes = my_charpos(field_charset, (char*) ptr,
                           (char*) ptr + field_length,
                           length / field_charset->mbmaxlen);
   memcpy(buff, ptr, bytes);

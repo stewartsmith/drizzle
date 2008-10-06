@@ -99,7 +99,7 @@ void drizzle_reset_errors(THD *thd, bool force)
 */
 
 DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level, 
-                          uint code, const char *msg)
+                          uint32_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
 
@@ -154,7 +154,7 @@ DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
 */
 
 void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
-			 uint code, const char *format, ...)
+			 uint32_t code, const char *format, ...)
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];

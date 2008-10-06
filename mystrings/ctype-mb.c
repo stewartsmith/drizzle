@@ -260,7 +260,7 @@ size_t my_numchars_mb(const CHARSET_INFO * const cs __attribute__((unused)),
   register size_t count= 0;
   while (pos < end) 
   {
-    uint mb_len;
+    uint32_t mb_len;
     pos+= (mb_len= my_ismbchar(cs,pos,end)) ? mb_len : 1;
     count++;
   }
@@ -275,7 +275,7 @@ size_t my_charpos_mb(const CHARSET_INFO * const cs __attribute__((unused)),
   
   while (length && pos < end)
   {
-    uint mb_len;
+    uint32_t mb_len;
     pos+= (mb_len= my_ismbchar(cs, pos, end)) ? mb_len : 1;
     length--;
   }
@@ -305,10 +305,10 @@ size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const
 }
 
 
-uint my_instr_mb(const CHARSET_INFO * const cs,
+uint32_t my_instr_mb(const CHARSET_INFO * const cs,
                  const char *b, size_t b_length, 
                  const char *s, size_t s_length,
-                 my_match_t *match, uint nmatch)
+                 my_match_t *match, uint32_t nmatch)
 {
   register const char *end, *b0;
   int res= 0;
@@ -478,8 +478,8 @@ int my_strnncollsp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused))
 */
 size_t
 my_strnxfrm_mb(const CHARSET_INFO * const cs,
-               unsigned char *dst, size_t dstlen, uint nweights,
-               const unsigned char *src, size_t srclen, uint flags)
+               unsigned char *dst, size_t dstlen, uint32_t nweights,
+               const unsigned char *src, size_t srclen, uint32_t flags)
 {
   unsigned char *d0= dst;
   unsigned char *de= dst + dstlen;
@@ -656,7 +656,7 @@ bool my_like_range_mb(const CHARSET_INFO * const cs,
                          char *min_str,char *max_str,
                          size_t *min_length,size_t *max_length)
 {
-  uint mb_len;
+  uint32_t mb_len;
   const char *end= ptr + ptr_length;
   char *min_org= min_str;
   char *min_end= min_str + res_length;
@@ -1103,7 +1103,7 @@ size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *
   while (b < e)
   {
     int mb_len;
-    uint pg;
+    uint32_t pg;
     if ((mb_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) b, (unsigned char*) e)) <= 0 ||
         wc > 0xFFFF)
     {

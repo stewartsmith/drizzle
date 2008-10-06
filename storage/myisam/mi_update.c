@@ -21,7 +21,7 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
 {
   int flag,key_changed,save_errno;
   register my_off_t pos;
-  uint i;
+  uint32_t i;
   unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
   uint64_t changed;
@@ -81,8 +81,8 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
     if (mi_is_key_active(share->state.key_map, i))
     {
       {
-	uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
-	uint old_length=_mi_make_key(info,i,old_key,oldrec,pos);
+	uint32_t new_length=_mi_make_key(info,i,new_key,newrec,pos);
+	uint32_t old_length=_mi_make_key(info,i,old_key,oldrec,pos);
 
         /* The above changed info->lastkey2. Inform mi_rnext_same(). */
         info->update&= ~HA_STATE_RNEXT_SAME;
@@ -175,8 +175,8 @@ err:
       if (((uint64_t) 1 << i) & changed)
       {
 	{
-	  uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
-	  uint old_length= _mi_make_key(info,i,old_key,oldrec,pos);
+	  uint32_t new_length=_mi_make_key(info,i,new_key,newrec,pos);
+	  uint32_t old_length= _mi_make_key(info,i,old_key,oldrec,pos);
 	  if ((flag++ && _mi_ck_delete(info,i,new_key,new_length)) ||
 	      _mi_ck_write(info,i,old_key,old_length))
 	    break;

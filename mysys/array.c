@@ -40,9 +40,9 @@
     false	Ok
 */
 
-bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
-                            void *init_buffer, uint init_alloc, 
-                            uint alloc_increment CALLER_INFO_PROTO)
+bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
+                            void *init_buffer, uint32_t init_alloc, 
+                            uint32_t alloc_increment CALLER_INFO_PROTO)
 {
   if (!alloc_increment)
   {
@@ -71,9 +71,9 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
   return(false);
 } 
 
-bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
-                           uint init_alloc, 
-                           uint alloc_increment CALLER_INFO_PROTO)
+bool init_dynamic_array(DYNAMIC_ARRAY *array, uint32_t element_size,
+                           uint32_t init_alloc, 
+                           uint32_t alloc_increment CALLER_INFO_PROTO)
 {
   /* placeholder to preserve ABI */
   return my_init_dynamic_array_ci(array, element_size, init_alloc, 
@@ -196,7 +196,7 @@ unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
     false	Ok
 */
 
-bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint idx)
+bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
 {
   if (idx >= array->elements)
   {
@@ -228,11 +228,11 @@ bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint idx)
     true	Allocation of new memory failed
 */
 
-bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
+bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
 {
   if (max_elements >= array->max_element)
   {
-    uint size;
+    uint32_t size;
     unsigned char *new_ptr;
     size= (max_elements + array->alloc_increment)/array->alloc_increment;
     size*= array->alloc_increment;
@@ -273,7 +273,7 @@ bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
       idx	Index of element wanted. 
 */
 
-void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint idx)
+void get_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
 {
   if (idx >= array->elements)
   {
@@ -318,7 +318,7 @@ void delete_dynamic(DYNAMIC_ARRAY *array)
       idx        Index of element to be deleted
 */
 
-void delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
+void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t idx)
 {
   char *ptr= (char*) array->buffer+array->size_of_element*idx;
   array->elements--;
@@ -338,7 +338,7 @@ void delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
 
 void freeze_size(DYNAMIC_ARRAY *array)
 {
-  uint elements=cmax(array->elements,1);
+  uint32_t elements=cmax(array->elements,1);
 
   /*
     Do nothing if we are using a static buffer
@@ -368,7 +368,7 @@ void freeze_size(DYNAMIC_ARRAY *array)
 
 int get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char* element)
 {
-  uint ret;
+  uint32_t ret;
   if (array->buffer > element)
     return -1;
 

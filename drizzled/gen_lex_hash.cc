@@ -515,7 +515,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
           res= symbols+ires;\n\
         else\n\
           res= sql_functions-ires-1;\n\
-        register uint count= cur_str-s;\n\
+        register uint32_t count= cur_str-s;\n\
         return lex_casecmp(cur_str,res->name+count,len-count) ? 0 : res;\n\
       }\n\
 \n\
@@ -544,7 +544,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
         register int16_t ires= (int16_t)(cur_struct>>16);\n\
         if (ires==array_elements(symbols)) return 0;\n\
         register SYMBOL *res= symbols+ires;\n\
-        register uint count= cur_str-s;\n\
+        register uint32_t count= cur_str-s;\n\
         return lex_casecmp(cur_str,res->name+count,len-count)!=0 ? 0 : res;\n\
       }\n\
 \n\

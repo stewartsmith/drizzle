@@ -280,7 +280,7 @@ int ha_archive::read_data_header(azio_stream *file_to_read)
 */
 ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
 {
-  uint length;
+  uint32_t length;
 
   pthread_mutex_lock(&archive_mutex);
   length=(uint) strlen(table_name);
@@ -464,7 +464,7 @@ const char **ha_archive::bas_ext() const
 */
 int ha_archive::open(const char *name,
                      int mode __attribute__((unused)),
-                     uint open_options)
+                     uint32_t open_options)
 {
   int rc= 0;
   share= get_share(name, &rc);
@@ -561,7 +561,7 @@ int ha_archive::create(const char *name, Table *table_arg,
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
-  for (uint key= 0; key < table_arg->sizeKeys(); key++)
+  for (uint32_t key= 0; key < table_arg->sizeKeys(); key++)
   {
     KEY *pos= table_arg->key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
@@ -695,7 +695,7 @@ uint32_t ha_archive::max_row_length(const unsigned char *buf __attribute__((unus
   uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
 
-  uint *ptr, *end;
+  uint32_t *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
@@ -852,7 +852,7 @@ void ha_archive::get_auto_increment(uint64_t offset __attribute__((unused)),
 }
 
 /* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint keynr, bool sorted __attribute__((unused)))
+int ha_archive::index_init(uint32_t keynr, bool sorted __attribute__((unused)))
 {
   active_index= keynr;
   return(0);
@@ -864,7 +864,7 @@ int ha_archive::index_init(uint keynr, bool sorted __attribute__((unused)))
   the optimizer that we have unique indexes, we scan
 */
 int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
-                             uint key_len, enum ha_rkey_function find_flag)
+                             uint32_t key_len, enum ha_rkey_function find_flag)
 {
   int rc;
   rc= index_read_idx(buf, active_index, key, key_len, find_flag);
@@ -872,8 +872,8 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 }
 
 
-int ha_archive::index_read_idx(unsigned char *buf, uint index, const unsigned char *key,
-                               uint key_len,
+int ha_archive::index_read_idx(unsigned char *buf, uint32_t index, const unsigned char *key,
+                               uint32_t key_len,
                                enum ha_rkey_function find_flag __attribute__((unused)))
 {
   int rc;
@@ -1258,7 +1258,7 @@ void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
 /*
   Hints for optimizer, see ha_tina for more information
 */
-int ha_archive::info(uint flag)
+int ha_archive::info(uint32_t flag)
 {
   /* 
     If dirty, we lock, and then reset/flush the data.

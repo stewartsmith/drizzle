@@ -29,7 +29,7 @@ typedef void (*init_func_p)(const struct my_option *option, char **variable,
 static void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
 
-static int findopt(char *optpat, uint length,
+static int findopt(char *optpat, uint32_t length,
 		   const struct my_option **opt_res,
 		   char **ffname);
 static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
@@ -52,7 +52,7 @@ static char *check_struct_option(char *cur_arg, char *key_name);
 */
 static const char *special_opt_prefix[]=
 {"skip", "disable", "enable", "maximum", "loose", 0};
-static const uint special_opt_prefix_lengths[]=
+static const uint32_t special_opt_prefix_lengths[]=
 { 4,      7,         6,        7,         5,      0};
 enum enum_special_opt
 { OPT_SKIP, OPT_DISABLE, OPT_ENABLE, OPT_MAXIMUM, OPT_LOOSE};
@@ -111,7 +111,7 @@ int handle_options(int *argc, char ***argv,
 		   const struct my_option *longopts,
                    my_get_one_option get_one_option)
 {
-  uint opt_found, argvpos= 0, length;
+  uint32_t opt_found, argvpos= 0, length;
   bool end_of_options= 0, must_be_var, set_maximum_value=false,
           option_is_loose;
   char **pos, **pos_end, *optend, *prev_found=NULL,
@@ -574,7 +574,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   */
   if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
-    uint len= (uint) (ptr - cur_arg);
+    uint32_t len= (uint) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);
     strmake(key_name, cur_arg, len);
     return ++ptr;
@@ -681,11 +681,11 @@ static int setval(const struct my_option *opts, char **value, char *argument,
         ffname points to first matching option
 */
 
-static int findopt(char *optpat, uint length,
+static int findopt(char *optpat, uint32_t length,
 		   const struct my_option **opt_res,
 		   char **ffname)
 {
-  uint count;
+  uint32_t count;
   struct my_option *opt= (struct my_option *) *opt_res;
 
   for (count= 0; opt->name; opt++)
@@ -722,7 +722,7 @@ static int findopt(char *optpat, uint length,
 */
 
 bool getopt_compare_strings(register const char *s, register const char *t,
-			       uint length)
+			       uint32_t length)
 {
   char const *end= s + length;
   for (;s != end ; s++, t++)
@@ -1098,7 +1098,7 @@ static void init_variables(const struct my_option *options,
 
 void my_print_help(const struct my_option *options)
 {
-  uint col, name_space= 22, comment_space= 57;
+  uint32_t col, name_space= 22, comment_space= 57;
   const char *line_end;
   const struct my_option *optp;
 
@@ -1182,7 +1182,7 @@ void my_print_help(const struct my_option *options)
 
 void my_print_variables(const struct my_option *options)
 {
-  uint name_space= 34, length, nr;
+  uint32_t name_space= 34, length, nr;
   uint64_t bit, llvalue;
   char buff[255];
   const struct my_option *optp;

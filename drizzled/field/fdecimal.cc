@@ -134,7 +134,7 @@ bool Field_new_decimal::store_value(const my_decimal *decimal_value)
 }
 
 
-int Field_new_decimal::store(const char *from, uint length,
+int Field_new_decimal::store(const char *from, uint32_t length,
                              const CHARSET_INFO * const charset_arg)
 {
   int err;
@@ -283,7 +283,7 @@ String *Field_new_decimal::val_str(String *val_buffer,
                                    String *val_ptr __attribute__((unused)))
 {
   my_decimal decimal_value;
-  uint fixed_precision= decimal_precision ? precision : 0;
+  uint32_t fixed_precision= decimal_precision ? precision : 0;
   my_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                     fixed_precision, dec, '0', val_buffer);
   return val_buffer;
@@ -297,7 +297,7 @@ int Field_new_decimal::cmp(const unsigned char *a,const unsigned char*b)
 
 
 void Field_new_decimal::sort_string(unsigned char *buff,
-                                    uint length __attribute__((unused)))
+                                    uint32_t length __attribute__((unused)))
 {
   memcpy(buff, ptr, bin_size);
 }
@@ -343,11 +343,11 @@ int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 
    @returns The size of the field based on the field metadata.
 */
-uint Field_new_decimal::pack_length_from_metadata(uint field_metadata)
+uint32_t Field_new_decimal::pack_length_from_metadata(uint32_t field_metadata)
 {
-  uint const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint const source_decimal= field_metadata & 0x00ff; 
-  uint const source_size= my_decimal_get_binary_size(source_precision, 
+  uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
+  uint32_t const source_decimal= field_metadata & 0x00ff; 
+  uint32_t const source_size= my_decimal_get_binary_size(source_precision, 
                                                      source_decimal);
   return (source_size);
 }
@@ -366,14 +366,14 @@ uint Field_new_decimal::pack_length_from_metadata(uint field_metadata)
    @retval 0 if this field's size is < the source field's size
    @retval 1 if this field's size is >= the source field's size
 */
-int Field_new_decimal::compatible_field_size(uint field_metadata)
+int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
 {
   int compatible= 0;
-  uint const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint const source_decimal= field_metadata & 0x00ff; 
-  uint const source_size= my_decimal_get_binary_size(source_precision, 
+  uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
+  uint32_t const source_decimal= field_metadata & 0x00ff; 
+  uint32_t const source_size= my_decimal_get_binary_size(source_precision, 
                                                      source_decimal);
-  uint const destination_size= row_pack_length();
+  uint32_t const destination_size= row_pack_length();
   compatible= (source_size <= destination_size);
   if (compatible)
     compatible= (source_precision <= precision) &&
@@ -382,7 +382,7 @@ int Field_new_decimal::compatible_field_size(uint field_metadata)
 }
 
 
-uint Field_new_decimal::is_equal(Create_field *new_field)
+uint32_t Field_new_decimal::is_equal(Create_field *new_field)
 {
   return ((new_field->sql_type == real_type()) &&
           ((new_field->flags & UNSIGNED_FLAG) == 
@@ -409,17 +409,17 @@ uint Field_new_decimal::is_equal(Create_field *new_field)
 const unsigned char *
 Field_new_decimal::unpack(unsigned char* to,
                           const unsigned char *from,
-                          uint param_data,
+                          uint32_t param_data,
                           bool low_byte_first)
 {
   if (param_data == 0)
     return Field::unpack(to, from, param_data, low_byte_first);
 
-  uint from_precision= (param_data & 0xff00) >> 8U;
-  uint from_decimal= param_data & 0x00ff;
-  uint length=pack_length();
-  uint from_pack_len= my_decimal_get_binary_size(from_precision, from_decimal);
-  uint len= (param_data && (from_pack_len < length)) ?
+  uint32_t from_precision= (param_data & 0xff00) >> 8U;
+  uint32_t from_decimal= param_data & 0x00ff;
+  uint32_t length=pack_length();
+  uint32_t from_pack_len= my_decimal_get_binary_size(from_precision, from_decimal);
+  uint32_t len= (param_data && (from_pack_len < length)) ?
             from_pack_len : length;
   if ((from_pack_len && (from_pack_len < length)) ||
       (from_precision < precision) ||

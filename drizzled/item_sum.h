@@ -235,7 +235,7 @@ public:
   Item **args, *tmp_args[2];
   Item **ref_by; /* pointer to a ref to the object used to register it */
   Item_sum *next; /* next in the circular chain of registered objects  */
-  uint arg_count;
+  uint32_t arg_count;
   Item_sum *in_sum_func;  /* embedding set function if any */ 
   st_select_lex * aggr_sel; /* select where the function is aggregated       */ 
   int8_t nest_level;        /* number of the nesting level of the set function */
@@ -371,7 +371,7 @@ public:
   virtual void make_unique(void) {}
   Item *get_tmp_table_item(THD *thd);
   virtual Field *create_tmp_field(bool group, Table *table,
-                                  uint convert_blob_length);
+                                  uint32_t convert_blob_length);
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *argument);
   bool init_sum_func_check(THD *thd);
   bool check_sum_func(THD *thd, Item **ref);
@@ -433,7 +433,7 @@ protected:
   Item_result hybrid_type;
   double sum;
   my_decimal dec_buffs[2];
-  uint curr_dec_buff;
+  uint32_t curr_dec_buff;
   void fix_length_and_dec();
 
 public:
@@ -470,7 +470,7 @@ protected:
   Unique *tree;
   Table *table;
   enum enum_field_types table_field_type;
-  uint tree_key_length;
+  uint32_t tree_key_length;
 protected:
   Item_sum_distinct(THD *thd, Item_sum_distinct *item);
 public:
@@ -527,7 +527,7 @@ private:
   Item_sum_avg_distinct(THD *thd, Item_sum_avg_distinct *original)
     :Item_sum_distinct(thd, original) {}
 public:
-  uint prec_increment;
+  uint32_t prec_increment;
   Item_sum_avg_distinct(Item *item_arg) : Item_sum_distinct(item_arg) {}
 
   void fix_length_and_dec();
@@ -592,7 +592,7 @@ class Item_sum_count_distinct :public Item_sum_int
     (to correctly free resources)
   */
   Item_sum_count_distinct *original;
-  uint tree_key_length;
+  uint32_t tree_key_length;
 
 
   bool always_null;		// Set to 1 if the result is always NULL
@@ -642,8 +642,8 @@ class Item_avg_field :public Item_result_field
 public:
   Field *field;
   Item_result hybrid_type;
-  uint f_precision, f_scale, dec_bin_size;
-  uint prec_increment;
+  uint32_t f_precision, f_scale, dec_bin_size;
+  uint32_t prec_increment;
   Item_avg_field(Item_result res_type, Item_sum_avg *item);
   enum Type type() const { return FIELD_AVG_ITEM; }
   double val_real();
@@ -665,8 +665,8 @@ class Item_sum_avg :public Item_sum_sum
 {
 public:
   uint64_t count;
-  uint prec_increment;
-  uint f_precision, f_scale, dec_bin_size;
+  uint32_t prec_increment;
+  uint32_t f_precision, f_scale, dec_bin_size;
 
   Item_sum_avg(Item *item_par) :Item_sum_sum(item_par), count(0) {}
   Item_sum_avg(THD *thd, Item_sum_avg *item)
@@ -689,7 +689,7 @@ public:
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   void cleanup()
   {
     count= 0;
@@ -704,11 +704,11 @@ class Item_variance_field :public Item_result_field
 public:
   Field *field;
   Item_result hybrid_type;
-  uint f_precision0, f_scale0;
-  uint f_precision1, f_scale1;
-  uint dec_bin_size0, dec_bin_size1;
-  uint sample;
-  uint prec_increment;
+  uint32_t f_precision0, f_scale0;
+  uint32_t f_precision1, f_scale1;
+  uint32_t dec_bin_size0, dec_bin_size1;
+  uint32_t sample;
+  uint32_t prec_increment;
   Item_variance_field(Item_sum_variance *item);
   enum Type type() const {return FIELD_VARIANCE_ITEM; }
   double val_real();
@@ -758,13 +758,13 @@ public:
   int cur_dec;
   double recurrence_m, recurrence_s;    /* Used in recurrence relation. */
   uint64_t count;
-  uint f_precision0, f_scale0;
-  uint f_precision1, f_scale1;
-  uint dec_bin_size0, dec_bin_size1;
-  uint sample;
-  uint prec_increment;
+  uint32_t f_precision0, f_scale0;
+  uint32_t f_precision1, f_scale1;
+  uint32_t dec_bin_size0, dec_bin_size1;
+  uint32_t sample;
+  uint32_t prec_increment;
 
-  Item_sum_variance(Item *item_par, uint sample_arg) :Item_sum_num(item_par),
+  Item_sum_variance(Item *item_par, uint32_t sample_arg) :Item_sum_num(item_par),
     hybrid_type(REAL_RESULT), count(0), sample(sample_arg)
     {}
   Item_sum_variance(THD *thd, Item_sum_variance *item);
@@ -781,7 +781,7 @@ public:
   const char *func_name() const
     { return sample ? "var_samp(" : "variance("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   enum Item_result result_type () const { return REAL_RESULT; }
   void cleanup()
   {
@@ -810,7 +810,7 @@ public:
 class Item_sum_std :public Item_sum_variance
 {
   public:
-  Item_sum_std(Item *item_par, uint sample_arg)
+  Item_sum_std(Item *item_par, uint32_t sample_arg)
     :Item_sum_variance(item_par, sample_arg) {}
   Item_sum_std(THD *thd, Item_sum_std *item)
     :Item_sum_variance(thd, item)
@@ -865,7 +865,7 @@ protected:
   bool any_value() { return was_values; }
   void no_rows_in_result();
   Field *create_tmp_field(bool group, Table *table,
-			  uint convert_blob_length);
+			  uint32_t convert_blob_length);
 };
 
 
@@ -976,10 +976,10 @@ class Item_func_group_concat : public Item_sum
   order_st **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
-  uint arg_count_order;
+  uint32_t arg_count_order;
   /** The number of selected items, aka the expr list. */
-  uint arg_count_field;
-  uint count_cut_values;
+  uint32_t arg_count_field;
+  uint32_t count_cut_values;
   bool distinct;
   bool warning_for_row;
   bool always_null;

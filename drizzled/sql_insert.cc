@@ -236,7 +236,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   bool transactional_table, joins_freed= false;
   bool changed;
   bool was_insert_delayed= (table_list->lock_type ==  TL_WRITE_DELAYED);
-  uint value_count;
+  uint32_t value_count;
   ulong counter = 1;
   uint64_t id;
   COPY_INFO info;
@@ -749,7 +749,7 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
 
 	/* Check if there is more uniq keys after field */
 
-static int last_uniq_key(Table *table,uint keynr)
+static int last_uniq_key(Table *table,uint32_t keynr)
 {
   while (++keynr < table->s->keys)
     if (table->key_info[keynr].flags & HA_NOSAME)
@@ -803,7 +803,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
   {
     while ((error=table->file->ha_write_row(table->record[0])))
     {
-      uint key_nr;
+      uint32_t key_nr;
       /*
         If we do more than one iteration of this loop, from the second one the
         row will have an explicit value in the autoinc field, which was set at
@@ -1386,7 +1386,7 @@ void select_insert::store_values(List<Item> &values)
     fill_record(thd, table->field, values, 1);
 }
 
-void select_insert::send_error(uint errcode,const char *err)
+void select_insert::send_error(uint32_t errcode,const char *err)
 {
   
 
@@ -1565,7 +1565,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
   Table *table= 0;
-  uint select_field_count= items->elements;
+  uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
   Item *item;
@@ -1748,7 +1748,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(Table **tables, uint count)
+    virtual int do_postlock(Table **tables, uint32_t count)
     {
       THD *thd= const_cast<THD*>(ptr->get_thd());
       if (int error= decide_logging_format(thd, &all_tables))
@@ -1836,7 +1836,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 }
 
 void
-select_create::binlog_show_create_table(Table **tables, uint count)
+select_create::binlog_show_create_table(Table **tables, uint32_t count)
 {
   /*
     Note 1: In RBR mode, we generate a CREATE TABLE statement for the
@@ -1882,7 +1882,7 @@ void select_create::store_values(List<Item> &values)
 }
 
 
-void select_create::send_error(uint errcode,const char *err)
+void select_create::send_error(uint32_t errcode,const char *err)
 {
   
 

@@ -40,7 +40,7 @@ char *strmake(register char *dst, register const char *src, size_t length)
     write a character rather than '\0' as this makes spotting these
     problems in the results easier.
   */
-  uint n= 0;
+  uint32_t n= 0;
   while (n < length && src[n++]);
   memset(dst + n, (int) 'Z', length - n + 1);
 #endif

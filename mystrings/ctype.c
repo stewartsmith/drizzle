@@ -179,7 +179,7 @@ my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs)
 bool
 my_charset_is_ascii_compatible(const CHARSET_INFO * const cs)
 {
-  uint i;
+  uint32_t i;
   if (!cs->tab_to_uni)
     return 1;
   for (i= 0; i < 128; i++)

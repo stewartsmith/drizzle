@@ -95,16 +95,16 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 	next week is week 1.
 */
 
-uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year)
+uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
 {
-  uint days;
+  uint32_t days;
   ulong daynr=calc_daynr(l_time->year,l_time->month,l_time->day);
   ulong first_daynr=calc_daynr(l_time->year,1,1);
   bool monday_first= test(week_behaviour & WEEK_MONDAY_FIRST);
   bool week_year= test(week_behaviour & WEEK_YEAR);
   bool first_weekday= test(week_behaviour & WEEK_FIRST_WEEKDAY);
 
-  uint weekday=calc_weekday(first_daynr, !monday_first);
+  uint32_t weekday=calc_weekday(first_daynr, !monday_first);
   *year=l_time->year;
 
   if (l_time->month == 1 && l_time->day <= 7-weekday)
@@ -138,10 +138,10 @@ uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year)
 	/* Change a daynr to year, month and day */
 	/* Daynr 0 is returned as date 00.00.00 */
 
-void get_date_from_daynr(long daynr,uint *ret_year,uint *ret_month,
-			 uint *ret_day)
+void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
+			 uint32_t *ret_day)
 {
-  uint year,temp,leap_day,day_of_year,days_in_year;
+  uint32_t year,temp,leap_day,day_of_year,days_in_year;
   unsigned char *month_pos;
 
   if (daynr <= 365L || daynr >= 3652500)
@@ -217,8 +217,8 @@ ulong convert_month_to_period(ulong month)
 */
 
 enum enum_drizzle_timestamp_type
-str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
-                          uint flags)
+str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+                          uint32_t flags)
 {
   int was_cut;
   THD *thd= current_thd;
@@ -279,7 +279,7 @@ my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *in_dst_time_g
     See str_to_time() for more info.
 */
 bool
-str_to_time_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time)
+str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
 {
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
@@ -349,10 +349,10 @@ void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
 */
 
 bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type, 
-			    const char *format, uint format_length,
+			    const char *format, uint32_t format_length,
 			    DATE_TIME_FORMAT *date_time_format)
 {
-  uint offset= 0, separators= 0;
+  uint32_t offset= 0, separators= 0;
   const char *ptr= format, *format_str;
   const char *end= ptr+format_length;
   unsigned char *dt_pos= date_time_format->positions;
@@ -375,7 +375,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   {
     if (*ptr == '%' && ptr+1 != end)
     {
-      uint position;
+      uint32_t position;
       switch (*++ptr) {
       case 'y':					// Year
       case 'Y':
@@ -479,7 +479,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   if (dt_pos[6] != 255)				// If fractional seconds
   {
     /* remove fractional seconds from later tests */
-    uint pos= dt_pos[6] -1;
+    uint32_t pos= dt_pos[6] -1;
     /* Remove separator before %f from sep map */
     separator_map= ((separator_map & ((ulong) (1 << pos)-1)) |
 		    ((separator_map & ~((ulong) (1 << pos)-1)) >> 1));
@@ -581,7 +581,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
 
 DATE_TIME_FORMAT
 *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
-		       const char *format_str, uint format_length)
+		       const char *format_str, uint32_t format_length)
 {
   DATE_TIME_FORMAT tmp;
 
@@ -689,7 +689,7 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_time_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_time_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -698,7 +698,7 @@ void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
 void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_date_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_date_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -707,7 +707,7 @@ void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
 void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
                    const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -715,7 +715,7 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 
 void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
-				  uint str_length,
+				  uint32_t str_length,
                                   enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name)
 {

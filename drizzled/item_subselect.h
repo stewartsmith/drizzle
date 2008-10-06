@@ -53,7 +53,7 @@ protected:
   /* cache of used external tables */
   table_map used_tables_cache;
   /* allowed number of columns (1 for single value subqueries) */
-  uint max_columns;
+  uint32_t max_columns;
   /* where subquery is placed */
   enum_parsing_place parsing_place;
   /* work with 'substitution' */
@@ -167,7 +167,7 @@ public:
 
   void reset();
   trans_res select_transformer(JOIN *join);
-  void store(uint i, Item* item);
+  void store(uint32_t i, Item* item);
   double val_real();
   int64_t val_int ();
   String *val_str (String *);
@@ -177,10 +177,10 @@ public:
   enum_field_types field_type() const;
   void fix_length_and_dec();
 
-  uint cols();
-  Item* element_index(uint i) { return reinterpret_cast<Item*>(row[i]); }
-  Item** addr(uint i) { return (Item**)row + i; }
-  bool check_cols(uint c);
+  uint32_t cols();
+  Item* element_index(uint32_t i) { return reinterpret_cast<Item*>(row[i]); }
+  Item** addr(uint32_t i) { return (Item**)row + i; }
+  bool check_cols(uint32_t c);
   bool null_inside();
   void bring_value();
 
@@ -441,7 +441,7 @@ public:
           caller should call exec() again for the new engine.
   */
   virtual int exec()= 0;
-  virtual uint cols()= 0; /* return number of columns in select */
+  virtual uint32_t cols()= 0; /* return number of columns in select */
   virtual uint8_t uncacheable()= 0; /* query is uncacheable */
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
@@ -478,7 +478,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols();
+  uint32_t cols();
   uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
@@ -506,7 +506,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols();
+  uint32_t cols();
   uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
@@ -563,7 +563,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols() { return 1; }
+  uint32_t cols() { return 1; }
   uint8_t uncacheable() { return UNCACHEABLE_DEPENDENT; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
@@ -680,7 +680,7 @@ public:
   int prepare() { return 0; }
   int exec();
   virtual void print (String *str, enum_query_type query_type);
-  uint cols()
+  uint32_t cols()
   {
     return materialize_engine->cols();
   }

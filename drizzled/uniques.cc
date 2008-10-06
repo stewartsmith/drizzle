@@ -57,7 +57,7 @@ int unique_write_to_ptrs(unsigned char* key,
 }
 
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
-	       uint size_arg, uint64_t max_in_memory_size_arg)
+	       uint32_t size_arg, uint64_t max_in_memory_size_arg)
   :max_in_memory_size(max_in_memory_size_arg), size(size_arg), elements(0)
 {
   my_b_clear(&file);
@@ -126,12 +126,12 @@ inline double log2_n_fact(double x)
       total_buf_elems* log2(n_buffers) / TIME_FOR_COMPARE_ROWID;
 */
 
-static double get_merge_buffers_cost(uint *buff_elems __attribute__((unused)),
-                                     uint elem_size,
-                                     uint *first, uint *last)
+static double get_merge_buffers_cost(uint32_t *buff_elems __attribute__((unused)),
+                                     uint32_t elem_size,
+                                     uint32_t *first, uint32_t *last)
 {
-  uint total_buf_elems= 0;
-  for (uint *pbuf= first; pbuf <= last; pbuf++)
+  uint32_t total_buf_elems= 0;
+  for (uint32_t *pbuf= first; pbuf <= last; pbuf++)
     total_buf_elems+= *pbuf;
   *last= total_buf_elems;
 
@@ -170,13 +170,13 @@ static double get_merge_buffers_cost(uint *buff_elems __attribute__((unused)),
     Cost of merge in disk seeks.
 */
 
-static double get_merge_many_buffs_cost(uint *buffer,
-                                        uint maxbuffer, uint max_n_elems,
-                                        uint last_n_elems, int elem_size)
+static double get_merge_many_buffs_cost(uint32_t *buffer,
+                                        uint32_t maxbuffer, uint32_t max_n_elems,
+                                        uint32_t last_n_elems, int elem_size)
 {
   register int i;
   double total_cost= 0.0;
-  uint *buff_elems= buffer; /* #s of elements in each of merged sequences */
+  uint32_t *buff_elems= buffer; /* #s of elements in each of merged sequences */
 
   /*
     Set initial state: first maxbuffer sequences contain max_n_elems elements
@@ -194,7 +194,7 @@ static double get_merge_many_buffs_cost(uint *buffer,
   {
     while (maxbuffer >= MERGEBUFF2)
     {
-      uint lastbuff= 0;
+      uint32_t lastbuff= 0;
       for (i = 0; i <= (int) maxbuffer - MERGEBUFF*3/2; i += MERGEBUFF)
       {
         total_cost+=get_merge_buffers_cost(buff_elems, elem_size,
@@ -263,7 +263,7 @@ static double get_merge_many_buffs_cost(uint *buffer,
       these will be random seeks.
 */
 
-double Unique::get_use_cost(uint *buffer, uint nkeys, uint key_size,
+double Unique::get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
                             uint64_t max_in_memory_size)
 {
   ulong max_elements_in_tree;
@@ -420,7 +420,7 @@ static int buffpek_compare(void *arg, unsigned char *key_ptr1, unsigned char *ke
 */
 
 static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
-                       uint key_length, BUFFPEK *begin, BUFFPEK *end,
+                       uint32_t key_length, BUFFPEK *begin, BUFFPEK *end,
                        tree_walk_action walk_action, void *walk_action_arg,
                        qsort_cmp2 compare, void *compare_arg,
                        IO_CACHE *file)
@@ -435,11 +435,11 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
   /* we need space for one key when a piece of merge buffer is re-read */
   merge_buffer_size-= key_length;
   unsigned char *save_key_buff= merge_buffer + merge_buffer_size;
-  uint max_key_count_per_piece= (uint) (merge_buffer_size/(end-begin) /
+  uint32_t max_key_count_per_piece= (uint) (merge_buffer_size/(end-begin) /
                                         key_length);
   /* if piece_size is aligned reuse_freed_buffer will always hit */
-  uint piece_size= max_key_count_per_piece * key_length;
-  uint bytes_read;               /* to hold return value of read_to_buffer */
+  uint32_t piece_size= max_key_count_per_piece * key_length;
+  uint32_t bytes_read;               /* to hold return value of read_to_buffer */
   BUFFPEK *top;
   int res= 1;
   /*
@@ -601,7 +601,7 @@ bool Unique::get(Table *table)
 
   IO_CACHE *outfile=table->sort.io_cache;
   BUFFPEK *file_ptr= (BUFFPEK*) file_ptrs.buffer;
-  uint maxbuffer= file_ptrs.elements - 1;
+  uint32_t maxbuffer= file_ptrs.elements - 1;
   unsigned char *sort_buffer;
   my_off_t save_pos;
   bool error=1;

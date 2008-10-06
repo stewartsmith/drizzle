@@ -44,9 +44,9 @@
 
 typedef struct st_sort_addon_field {  /* Sort addon packed field */
   Field *field;          /* Original field */
-  uint   offset;         /* Offset from the last sorted field */
-  uint   null_offset;    /* Offset to to null bit from the last sorted field */
-  uint   length;         /* Length in the sort buffer */
+  uint32_t   offset;         /* Offset from the last sorted field */
+  uint32_t   null_offset;    /* Offset to to null bit from the last sorted field */
+  uint32_t   length;         /* Length in the sort buffer */
   uint8_t  null_bit;       /* Null bit mask for the field */
 } SORT_ADDON_FIELD;
 
@@ -65,12 +65,12 @@ struct BUFFPEK_COMPARE_CONTEXT
 };
 
 typedef struct st_sort_param {
-  uint rec_length;          /* Length of sorted records */
-  uint sort_length;			/* Length of sorted columns */
-  uint ref_length;			/* Length of record ref. */
-  uint addon_length;        /* Length of added packed fields */
-  uint res_length;          /* Length of records in final sorted file/buffer */
-  uint keys;				/* Max keys / buffer */
+  uint32_t rec_length;          /* Length of sorted records */
+  uint32_t sort_length;			/* Length of sorted columns */
+  uint32_t ref_length;			/* Length of record ref. */
+  uint32_t addon_length;        /* Length of added packed fields */
+  uint32_t res_length;          /* Length of records in final sorted file/buffer */
+  uint32_t keys;				/* Max keys / buffer */
   ha_rows max_rows,examined_rows;
   Table *sort_form;			/* For quicker make_sortkey */
   SORT_FIELD *local_sortorder;
@@ -87,13 +87,13 @@ typedef struct st_sort_param {
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
 		    BUFFPEK *buffpek,
-		    uint *maxbuffer, IO_CACHE *t_file);
-uint read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
-		    uint sort_length);
+		    uint32_t *maxbuffer, IO_CACHE *t_file);
+uint32_t read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+		    uint32_t sort_length);
 int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
 		  IO_CACHE *to_file, unsigned char *sort_buffer,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
-void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint key_length);
+void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length);
 
 #endif

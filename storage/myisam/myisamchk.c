@@ -35,7 +35,7 @@
 
 #include "myisamdef.h"
 
-static uint decode_bits;
+static uint32_t decode_bits;
 static char **default_argv;
 static const char *load_default_groups[]= { "myisamchk", 0 };
 static const char *set_collation_name, *opt_tmpdir;
@@ -71,11 +71,11 @@ static void usage(void);
 static int myisamchk(MI_CHECK *param, char *filename);
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name);
 static int mi_sort_records(MI_CHECK *param, register MI_INFO *info,
-                           char * name, uint sort_key,
+                           char * name, uint32_t sort_key,
 			   bool write_info, bool update_index);
 static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page,unsigned char *buff,uint sortkey,
+			     my_off_t page,unsigned char *buff,uint32_t sortkey,
 			     File new_file, bool update_index);
 
 MI_CHECK check_param;
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	(!(check_param.testflag & (T_REP | T_REP_BY_SORT | T_SORT_RECORDS |
 				   T_SORT_INDEX))))
     {
-      uint old_testflag=check_param.testflag;
+      uint32_t old_testflag=check_param.testflag;
       if (!(check_param.testflag & T_REP))
 	check_param.testflag|= T_REP_BY_SORT;
       check_param.testflag&= ~T_EXTEND;			/* Don't needed  */
@@ -753,7 +753,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
 {
   int error,lock_type,recreate;
   int rep_quick= param->testflag & (T_QUICK | T_FORCE_UNIQUENESS);
-  uint raid_chunks;
+  uint32_t raid_chunks;
   MI_INFO *info;
   File datafile;
   char llbuff[22],llbuff2[22];
@@ -973,7 +973,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
       }
       if (!error && param->testflag & T_SORT_RECORDS)
       {
-	uint key;
+	uint32_t key;
 	/*
 	  We can't update the index in mi_sort_records if we have a
 	  prefix compressed or fulltext index
@@ -1132,7 +1132,7 @@ end2:
 
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 {
-  uint key,keyseg_nr,field,start;
+  uint32_t key,keyseg_nr,field,start;
   register MI_KEYDEF *keyinfo;
   register HA_KEYSEG *keyseg;
   register const char *text;
@@ -1395,12 +1395,12 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 
 static int mi_sort_records(MI_CHECK *param,
 			   register MI_INFO *info, char * name,
-			   uint sort_key,
+			   uint32_t sort_key,
 			   bool write_info,
 			   bool update_index)
 {
   int got_error;
-  uint key;
+  uint32_t key;
   MI_KEYDEF *keyinfo;
   File new_file;
   unsigned char *temp_buff;
@@ -1571,7 +1571,7 @@ err:
 
 static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page, unsigned char *buff, uint sort_key,
+			     my_off_t page, unsigned char *buff, uint32_t sort_key,
 			     File new_file,bool update_index)
 {
   uint	nod_flag,used_length,key_length;

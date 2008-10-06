@@ -111,7 +111,7 @@ static uint64_t fix_unsigned(THD *, uint64_t, const struct my_option *);
 static bool get_unsigned(THD *thd, set_var *var);
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
                           const char *name, int64_t val);
-static KEY_CACHE *create_key_cache(const char *name, uint length);
+static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
 static unsigned char *get_error_count(THD *thd);
 static unsigned char *get_warning_count(THD *thd);
 static unsigned char *get_tmpdir(THD *thd);
@@ -599,7 +599,7 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
 			set_var *var)
 {
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
-  uint new_length= (var ? var->value->str_value.length() : 0);
+  uint32_t new_length= (var ? var->value->str_value.length() : 0);
   if (!old_value)
     old_value= (char*) "";
   if (!(res= my_strndup(old_value, new_length, MYF(0))))
@@ -786,7 +786,7 @@ unsigned char *sys_var_set::value_ptr(THD *thd,
   ulong val= *value;
 
   tmp.length(0);
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -1314,7 +1314,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
 {
   bool not_used;
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
-  uint error_len= 0;
+  uint32_t error_len= 0;
   String str(buff, sizeof(buff), system_charset_info), *res;
 
   if (var->value->result_type() == STRING_RESULT)
@@ -1400,7 +1400,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
   switch (show_type()) {
   case SHOW_INT:
   {
-    uint value;
+    uint32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(uint*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -1454,7 +1454,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
     char *str= *(char**) value_ptr(thd, var_type, base);
     if (str)
     {
-      uint length= strlen(str);
+      uint32_t length= strlen(str);
       tmp= new Item_string(thd->strmake(str, length), length,
                            system_charset_info, DERIVATION_SYSCONST);
     }
@@ -2021,12 +2021,12 @@ void sys_var_log_state::set_default(THD *thd __attribute__((unused)),
 bool update_sys_var_str_path(THD *thd __attribute__((unused)),
                              sys_var_str *var_str,
                              set_var *var, const char *log_ext,
-                             bool log_state, uint log_type)
+                             bool log_state, uint32_t log_type)
 {
   char buff[FN_REFLEN];
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   bool result= 0;
-  uint str_length= (var ? var->value->str_value.length() : 0);
+  uint32_t str_length= (var ? var->value->str_value.length() : 0);
 
   switch (log_type) {
   default:
@@ -2100,7 +2100,7 @@ unsigned char *sys_var_log_output::value_ptr(THD *thd,
   ulong val= *value;
 
   tmp.length(0);
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -2583,7 +2583,7 @@ static unsigned char *get_tmpdir(THD *thd __attribute__((unused)))
 
 static struct my_option *find_option(struct my_option *opt, const char *name) 
 {
-  uint length=strlen(name);
+  uint32_t length=strlen(name);
   for (; opt->name; opt++)
   {
     if (!getopt_compare_strings(opt->name, name, length) &&
@@ -2740,7 +2740,7 @@ SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted)
 
 int set_var_init()
 {
-  uint count= 0;
+  uint32_t count= 0;
   
   for (sys_var *var=vars.first; var; var= var->next, count++) {};
 
@@ -2786,7 +2786,7 @@ void set_var_free()
     0           SUCCESS
     otherwise   FAILURE
 */
-int mysql_append_static_vars(const SHOW_VAR *show_vars, uint count)
+int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count)
 {
   for (; count > 0; count--, show_vars++)
     if (insert_dynamic(&fixed_show_vars, (unsigned char*) show_vars))
@@ -2809,7 +2809,7 @@ int mysql_append_static_vars(const SHOW_VAR *show_vars, uint count)
     0		Unknown variable (error message is given)
 */
 
-sys_var *intern_find_sys_var(const char *str, uint length, bool no_error)
+sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error)
 {
   sys_var *var;
 
@@ -3085,7 +3085,7 @@ symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 
   tmp.length(0);
 
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -3130,7 +3130,7 @@ void sys_var_thd_optimizer_switch::set_default(THD *thd, enum_var_type type)
   Named list handling
 ****************************************************************************/
 
-unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
+unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint32_t length,
 		NAMED_LIST **found)
 {
   I_List_iterator<NAMED_LIST> it(*list);
@@ -3163,7 +3163,7 @@ void delete_elements(I_List<NAMED_LIST> *list,
 
 /* Key cache functions */
 
-static KEY_CACHE *create_key_cache(const char *name, uint length)
+static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
   
@@ -3192,7 +3192,7 @@ static KEY_CACHE *create_key_cache(const char *name, uint length)
 }
 
 
-KEY_CACHE *get_or_create_key_cache(const char *name, uint length)
+KEY_CACHE *get_or_create_key_cache(const char *name, uint32_t length)
 {
   LEX_STRING key_cache_name;
   KEY_CACHE *key_cache;
