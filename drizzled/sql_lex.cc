@@ -604,7 +604,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 /*
 ** Calc type of integer; long integer, int64_t integer or real.
 ** Returns smallest type that match the string.
-** When using unsigned long long values the result is converted to a real
+** When using uint64_t values the result is converted to a real
 ** because else they will be unexpected sign changes because all calculation
 ** is done with int64_t or double.
 */

@@ -50,13 +50,13 @@ pthread_mutex_t row_lock;
 void *run_task(void *p);
 void *timer_thread(void *p);
 void scheduler(az_method use_aio);
-void create_data_file(azio_stream *write_handler, unsigned long long rows);
+void create_data_file(azio_stream *write_handler, uint64_t rows);
 unsigned int write_row(azio_stream *s);
 
 typedef struct thread_context_st thread_context_st;
 struct thread_context_st {
   unsigned int how_often_to_write;
-  unsigned long long counter;
+  uint64_t counter;
   az_method use_aio;
   azio_stream *writer;
 };
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 void scheduler(az_method use_aio)
 {
   unsigned int x;
-  unsigned long long total;
+  uint64_t total;
   azio_stream writer_handle;
   thread_context_st *context;
   pthread_t mainthread;            /* Thread descriptor */
@@ -204,7 +204,7 @@ void scheduler(az_method use_aio)
   free(context);
   azclose(&writer_handle);
 
-  printf("Read %llu rows\n", total);
+  printf("Read %"PRIu64" rows\n", total);
 }
 
 void *timer_thread(void *p)
@@ -239,7 +239,7 @@ void *timer_thread(void *p)
 void *run_task(void *p)
 {
   thread_context_st *context= (thread_context_st *)p;
-  unsigned long long count;
+  uint64_t count;
   int ret;
   int error;
   azio_stream reader_handle;
@@ -285,10 +285,10 @@ void *run_task(void *p)
   return NULL;
 }
 
-void create_data_file(azio_stream *write_handler, unsigned long long rows)
+void create_data_file(azio_stream *write_handler, uint64_t rows)
 {
   int ret;
-  unsigned long long x;
+  uint64_t x;
 
   if (!(ret= azopen(write_handler, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC|O_BINARY,
                     AZ_METHOD_BLOCK)))

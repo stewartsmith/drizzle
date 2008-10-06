@@ -1419,7 +1419,7 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
 
 /*
 
-  Convert a string to unsigned long long integer value
+  Convert a string to uint64_t integer value
   with rounding.
   
   SYNOPSYS

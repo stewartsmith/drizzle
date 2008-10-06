@@ -306,11 +306,11 @@ void write_header(azio_stream *s)
   int4store(ptr + AZ_COMMENT_LENGTH_POS, s->comment_length); /* COMMENT Block */
   int4store(ptr + AZ_META_POS, 0); /* Meta Block */
   int4store(ptr + AZ_META_LENGTH_POS, 0); /* Meta Block */
-  int8store(ptr + AZ_START_POS, (unsigned long long)s->start); /* Start of Data Block Index Block */
-  int8store(ptr + AZ_ROW_POS, (unsigned long long)s->rows); /* Start of Data Block Index Block */
-  int8store(ptr + AZ_FLUSH_POS, (unsigned long long)s->forced_flushes); /* Start of Data Block Index Block */
-  int8store(ptr + AZ_CHECK_POS, (unsigned long long)s->check_point); /* Start of Data Block Index Block */
-  int8store(ptr + AZ_AUTOINCREMENT_POS, (unsigned long long)s->auto_increment); /* Start of Data Block Index Block */
+  int8store(ptr + AZ_START_POS, (uint64_t)s->start); /* Start of Data Block Index Block */
+  int8store(ptr + AZ_ROW_POS, (uint64_t)s->rows); /* Start of Data Block Index Block */
+  int8store(ptr + AZ_FLUSH_POS, (uint64_t)s->forced_flushes); /* Start of Data Block Index Block */
+  int8store(ptr + AZ_CHECK_POS, (uint64_t)s->check_point); /* Start of Data Block Index Block */
+  int8store(ptr + AZ_AUTOINCREMENT_POS, (uint64_t)s->auto_increment); /* Start of Data Block Index Block */
   int4store(ptr+ AZ_LONGEST_POS , s->longest_row); /* Longest row */
   int4store(ptr+ AZ_SHORTEST_POS, s->shortest_row); /* Shorest row */
   int4store(ptr+ AZ_FRM_POS, 
@@ -402,10 +402,10 @@ void read_header(azio_stream *s, unsigned char *buffer)
     s->minor_version= (unsigned int)buffer[AZ_MINOR_VERSION_POS];
     s->block_size= 1024 * buffer[AZ_BLOCK_POS];
     s->start= (size_t)uint8korr(buffer + AZ_START_POS);
-    s->rows= (unsigned long long)uint8korr(buffer + AZ_ROW_POS);
-    s->check_point= (unsigned long long)uint8korr(buffer + AZ_CHECK_POS);
-    s->forced_flushes= (unsigned long long)uint8korr(buffer + AZ_FLUSH_POS);
-    s->auto_increment= (unsigned long long)uint8korr(buffer + AZ_AUTOINCREMENT_POS);
+    s->rows= (uint64_t)uint8korr(buffer + AZ_ROW_POS);
+    s->check_point= (uint64_t)uint8korr(buffer + AZ_CHECK_POS);
+    s->forced_flushes= (uint64_t)uint8korr(buffer + AZ_FLUSH_POS);
+    s->auto_increment= (uint64_t)uint8korr(buffer + AZ_AUTOINCREMENT_POS);
     s->longest_row= (unsigned int)uint4korr(buffer + AZ_LONGEST_POS);
     s->shortest_row= (unsigned int)uint4korr(buffer + AZ_SHORTEST_POS);
     s->frm_start_pos= (unsigned int)uint4korr(buffer + AZ_FRM_POS);

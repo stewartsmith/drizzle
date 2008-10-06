@@ -854,7 +854,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
 /*
   function: getopt_ull
 
-  This is the same as getopt_ll, but is meant for unsigned long long
+  This is the same as getopt_ll, but is meant for uint64_t
   values.
 */
 

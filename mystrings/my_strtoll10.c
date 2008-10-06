@@ -28,7 +28,7 @@ static unsigned long lfactor[9]=
 };
 
 /*
-  Convert a string to an to unsigned long long integer value
+  Convert a string to an to uint64_t integer value
   
   SYNOPSYS
     my_strtoll10()
@@ -59,7 +59,7 @@ static unsigned long lfactor[9]=
     -1		Number was an ok negative number
     0	 	ok
     ERANGE	If the the value of the converted number exceeded the
-	        maximum negative/unsigned long long integer.
+	        maximum negative/uint64_t integer.
 		In this case the return value is UINT64_MAX if value was
 		positive and UINT64_MIN if value was negative.
     EDOM	If the string didn't contain any digits. In this case

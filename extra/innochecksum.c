@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 /* all of these ripped from InnoDB code from MySQL 4.0.22 */
 #define UT_HASH_RANDOM_MASK     1463735687
@@ -145,7 +146,7 @@ int main(int argc, char **argv)
   int lastt;                   /* last time */
   uint32_t oldcsum, oldcsumfield, csum, csumfield, logseq, logseqfield; /* uint32_ts for checksum storage */
   struct stat st;              /* for stat, if you couldn't guess */
-  unsigned long long int size; /* size of file (has to be 64 bits) */
+  uint64_t size; /* size of file (has to be 64 bits) */
   uint32_t pages;                 /* number of pages in file */
   uint32_t start_page= 0, end_page= 0, use_end_page= 0; /* for starting and ending at certain pages */
   off_t offset= 0;
@@ -224,7 +225,7 @@ int main(int argc, char **argv)
   }
   else if (verbose)
   {
-    printf("file %s= %llu bytes (%u pages)...\n", argv[1], size, pages);
+    printf("file %s= %"PRIu64" bytes (%u pages)...\n", argv[1], size, pages);
     printf("checking pages in range %u to %u\n", start_page, use_end_page ? end_page : (pages - 1));
   }
 
