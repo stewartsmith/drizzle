@@ -533,7 +533,7 @@ void append_os_quoted(string *str, const char *append, ...)
       str->append(quote_str, quote_len);
       cur_pos= next_pos + 1;
     }
-    str->append(cur_pos, next_pos - cur_pos);
+    str->append(cur_pos);
     append= va_arg(dirty_text, char *);
   }
   va_end(dirty_text);
@@ -1156,7 +1156,7 @@ static int run_tool(const char *tool_path, string * result, ...)
   string ds_cmdline;
 
 
-  append_os_quoted(&ds_cmdline, tool_path);
+  append_os_quoted(&ds_cmdline, tool_path, NULL);
   ds_cmdline.append(" ");
 
   va_start(args, result);
