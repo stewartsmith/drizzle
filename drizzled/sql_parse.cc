@@ -161,7 +161,7 @@ static bool some_non_temp_table_to_be_updated(THD *thd, TableList *tables)
           a number of modified rows
 */
 
-uint sql_command_flags[SQLCOM_END+1];
+uint32_t sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
@@ -420,7 +420,7 @@ bool do_command(THD *thd)
   my_net_set_read_timeout(net, thd->variables.net_read_timeout);
 
   assert(packet_length);
-  return_value= dispatch_command(command, thd, packet+1, (uint) (packet_length-1));
+  return_value= dispatch_command(command, thd, packet+1, (uint32_t) (packet_length-1));
 
 out:
   return(return_value);
@@ -508,7 +508,7 @@ static bool deny_updates_if_read_only_option(THD *thd,
         COM_QUIT/COM_SHUTDOWN
 */
 bool dispatch_command(enum enum_server_command command, THD *thd,
-		      char* packet, uint packet_length)
+		      char* packet, uint32_t packet_length)
 {
   NET *net= &thd->net;
   bool error= 0;
@@ -577,7 +577,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       terminated, so also '\0' for empty string).
 
       Cast *passwd to an unsigned char, so that it doesn't extend the sign
-      for *passwd > 127 and become 2**32-127 after casting to uint.
+      for *passwd > 127 and become 2**32-127 after casting to uint32_t.
     */
     char db_buff[NAME_LEN+1];                 // buffer to store db in utf8
     char *db= passwd;
@@ -591,9 +591,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       my_message(ER_UNKNOWN_COM_ERROR, ER(ER_UNKNOWN_COM_ERROR), MYF(0));
       break;
     }
-    uint passwd_len= (thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
+    uint32_t passwd_len= (thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
                       (uchar)(*passwd++) : strlen(passwd));
-    uint dummy_errors, save_db_length, db_length;
+    uint32_t dummy_errors, save_db_length, db_length;
     int res;
     Security_context save_security_ctx= *thd->security_ctx;
     USER_CONN *save_user_connect;
@@ -611,7 +611,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     db_length= strlen(db);
 
     char *ptr= db + db_length + 1;
-    uint cs_number= 0;
+    uint32_t cs_number= 0;
 
     if (ptr < packet_end)
     {
@@ -731,7 +731,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     */
     arg_end= strchr(packet, '\0');
     thd->convert_string(&conv_name, system_charset_info,
-			packet, (uint) (arg_end - packet), thd->charset());
+			packet, (uint32_t) (arg_end - packet), thd->charset());
     table_list.alias= table_list.table_name= conv_name.str;
     packet= arg_end + 1;
 
@@ -743,7 +743,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
         table_list.schema_table= schema_table;
     }
 
-    thd->query_length= (uint) (packet_end - packet); // Don't count end \0
+    thd->query_length= (uint32_t) (packet_end - packet); // Don't count end \0
     if (!(thd->query=fields= (char*) thd->memdup(packet,thd->query_length+1)))
       break;
     if (lower_case_table_names)
@@ -776,7 +776,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   case COM_BINLOG_DUMP:
     {
       ulong pos;
-      ushort flags;
+      uint16_t flags;
       uint32_t slave_server_id;
 
       status_var_increment(thd->status_var.com_other);
@@ -822,7 +822,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   case COM_SET_OPTION:
   {
     status_var_increment(thd->status_var.com_stat[SQLCOM_SET_OPTION]);
-    uint opt_command= uint2korr(packet);
+    uint32_t opt_command= uint2korr(packet);
 
     switch (opt_command) {
     case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
@@ -1016,7 +1016,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
     true  error;  In this case thd->fatal_error is set
 */
 
-bool alloc_query(THD *thd, const char *packet, uint packet_length)
+bool alloc_query(THD *thd, const char *packet, uint32_t packet_length)
 {
   /* Remove garbage at start and end of query */
   while (packet_length > 0 && my_isspace(thd->charset(), packet[0]))
@@ -1272,16 +1272,16 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(thd, (uint32_t)
-			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
+			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
 			       ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(thd, (uint32_t)
-			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
+			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
   case SQLCOM_SHOW_SLAVE_HOSTS:
@@ -2564,7 +2564,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 {
   LEX	*lex= current_thd->lex;
   ulong old_info=0;
-  if ((uint) *yystacksize >= MY_YACC_MAX)
+  if ((uint32_t) *yystacksize >= MY_YACC_MAX)
     return 1;
   if (!lex->yacc_yyvs)
     old_info= *yystacksize;
@@ -2802,7 +2802,7 @@ void mysql_init_multi_delete(LEX *lex)
                                the next query in the query text.
 */
 
-void mysql_parse(THD *thd, const char *inBuf, uint length,
+void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
                  const char ** found_semicolon)
 {
   /*
@@ -2880,7 +2880,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
     1	can be ignored
 */
 
-bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
+bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint32_t length)
 {
   LEX *lex= thd->lex;
   bool error= 0;
@@ -2908,7 +2908,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
 
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       char *length, char *decimals,
-		       uint type_modifier,
+		       uint32_t type_modifier,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
@@ -3312,7 +3312,7 @@ TableList *st_select_lex::nest_last_join(THD *thd)
   embedded_list= &nested_join->join_list;
   embedded_list->empty();
 
-  for (uint i=0; i < 2; i++)
+  for (uint32_t i=0; i < 2; i++)
   {
     TableList *table= join_list->pop();
     table->join_list= embedded_list;
@@ -3749,7 +3749,7 @@ kill_one_thread(THD *thd __attribute__((unused)),
                 ulong id, bool only_kill_query)
 {
   THD *tmp;
-  uint error=ER_NO_SUCH_THREAD;
+  uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   I_List_iterator<THD> it(threads);
   while ((tmp=it++))
@@ -3785,7 +3785,7 @@ kill_one_thread(THD *thd __attribute__((unused)),
 
 void sql_kill(THD *thd, ulong id, bool only_kill_query)
 {
-  uint error;
+  uint32_t error;
   if (!(error= kill_one_thread(thd, id, only_kill_query)))
     my_ok(thd);
   else
@@ -4212,7 +4212,7 @@ Item *negate_expression(THD *thd, Item *expr)
 */
 
 bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
-                              uint max_byte_length)
+                              uint32_t max_byte_length)
 {
   if (str->length <= max_byte_length)
     return false;
@@ -4240,11 +4240,11 @@ bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
 
 
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, const CHARSET_INFO * const cs,
+                              uint32_t max_char_length, const CHARSET_INFO * const cs,
                               bool no_error)
 {
   int well_formed_error;
-  uint res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
+  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
                                       max_char_length, &well_formed_error);
 
   if (!well_formed_error &&  str->length == res)
@@ -4256,8 +4256,8 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint max_char_length,
-                           uint err_code, const char *param_for_err_msg)
+bool check_identifier_name(LEX_STRING *str, uint32_t max_char_length,
+                           uint32_t err_code, const char *param_for_err_msg)
 {
 #ifdef HAVE_CHARSET_utf8mb3
   /*
@@ -4270,7 +4270,7 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
   const CHARSET_INFO * const cs= system_charset_info;
 #endif
   int well_formed_error;
-  uint res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
+  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
                                       max_char_length, &well_formed_error);
 
   if (well_formed_error)
@@ -4316,7 +4316,7 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
 bool test_if_data_home_dir(const char *dir)
 {
   char path[FN_REFLEN], conv_path[FN_REFLEN];
-  uint dir_len, home_dir_len= strlen(mysql_unpacked_real_data_home);
+  uint32_t dir_len, home_dir_len= strlen(mysql_unpacked_real_data_home);
 
   if (!dir)
     return(0);

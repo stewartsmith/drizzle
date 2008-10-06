@@ -52,7 +52,7 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
   header[EVENT_TYPE_OFFSET] = ROTATE_EVENT;
 
   char* p = log_file_name+dirname_length(log_file_name);
-  uint ident_len = (uint) strlen(p);
+  uint32_t ident_len = (uint32_t) strlen(p);
   uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
@@ -222,7 +222,7 @@ bool log_in_use(const char* log_name)
 
 bool purge_error_message(THD* thd, int res)
 {
-  uint errmsg= 0;
+  uint32_t errmsg= 0;
 
   switch (res)  {
   case 0: break;
@@ -351,7 +351,7 @@ static int send_heartbeat_event(NET* net, String* packet,
 
   char* p= coord->file_name + dirname_length(coord->file_name);
 
-  uint ident_len = strlen(p);
+  uint32_t ident_len = strlen(p);
   uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
@@ -376,7 +376,7 @@ static int send_heartbeat_event(NET* net, String* packet,
 */
 
 void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
-		       ushort flags)
+		       uint16_t flags)
 {
   LOG_INFO linfo;
   char *log_file_name = linfo.log_file_name;
@@ -1019,7 +1019,7 @@ int reset_slave(THD *thd, Master_info* mi)
   struct stat stat_area;
   char fname[FN_REFLEN];
   int thread_mask= 0, error= 0;
-  uint sql_errno=0;
+  uint32_t sql_errno=0;
   const char* errmsg=0;
 
   lock_slave_threads(mi);
@@ -1348,8 +1348,8 @@ int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
 		   const char* log_file_name2, uint64_t log_pos2)
 {
   int res;
-  uint log_file_name1_len=  strlen(log_file_name1);
-  uint log_file_name2_len=  strlen(log_file_name2);
+  uint32_t log_file_name1_len=  strlen(log_file_name1);
+  uint32_t log_file_name2_len=  strlen(log_file_name2);
 
   //  We assume that both log names match up to '.'
   if (log_file_name1_len == log_file_name2_len)
@@ -1555,7 +1555,7 @@ bool show_binlogs(THD* thd)
   File file;
   char fname[FN_REFLEN];
   List<Item> field_list;
-  uint length;
+  uint32_t length;
   int cur_dir_len;
   Protocol *protocol= thd->protocol;
 
@@ -1632,10 +1632,10 @@ err:
 int log_loaded_block(IO_CACHE* file)
 {
   LOAD_FILE_INFO *lf_info;
-  uint block_len;
+  uint32_t block_len;
   /* buffer contains position where we started last read */
   uchar* buffer= (uchar*) my_b_get_buffer_start(file);
-  uint max_event_size= current_thd->variables.max_allowed_packet;
+  uint32_t max_event_size= current_thd->variables.max_allowed_packet;
   lf_info= (LOAD_FILE_INFO*) file->arg;
   if (lf_info->thd->current_stmt_binlog_row_based)
     return(0);
