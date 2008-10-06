@@ -131,9 +131,7 @@ typedef struct st_lex_master_info
     Enum is used for making it possible to detect if the user
     changed variable or if it should be left at old value
    */
-  enum {LEX_MI_UNCHANGED, LEX_MI_DISABLE, LEX_MI_ENABLE}
-    ssl, ssl_verify_server_cert, heartbeat_opt;
-  char *ssl_key, *ssl_cert, *ssl_ca, *ssl_capath, *ssl_cipher;
+  enum {LEX_MI_UNCHANGED, LEX_MI_DISABLE, LEX_MI_ENABLE} heartbeat_opt;
   char *relay_log_name;
   uint32_t relay_log_pos;
 } LEX_MASTER_INFO;
@@ -1376,7 +1374,6 @@ typedef struct st_lex : public Query_tables_list
   LEX_STRING name;
   char *help_arg;
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
-  char* x509_subject,*x509_issuer,*ssl_cipher;
   String *wild;
   sql_exchange *exchange;
   select_result *result;

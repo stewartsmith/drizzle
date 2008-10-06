@@ -1184,21 +1184,8 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Until_Log_File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Until_Log_Pos", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Allowed", 7));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_File",
-                                             sizeof(mi->ssl_ca)));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_Path",
-                                             sizeof(mi->ssl_capath)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cert",
-                                             sizeof(mi->ssl_cert)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cipher",
-                                             sizeof(mi->ssl_cipher)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Key",
-                                             sizeof(mi->ssl_key)));
   field_list.push_back(new Item_return_int("Seconds_Behind_Master", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Verify_Server_Cert",
-                                             3));
   field_list.push_back(new Item_return_int("Last_IO_Errno", 4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_IO_Error", 20));
   field_list.push_back(new Item_return_int("Last_SQL_Errno", 4, DRIZZLE_TYPE_LONG));
@@ -1264,13 +1251,6 @@ bool show_master_info(THD* thd, Master_info* mi)
     protocol->store(mi->rli.until_log_name, &my_charset_bin);
     protocol->store((uint64_t) mi->rli.until_log_pos);
 
-    protocol->store(mi->ssl? "Ignored":"No", &my_charset_bin);
-    protocol->store(mi->ssl_ca, &my_charset_bin);
-    protocol->store(mi->ssl_capath, &my_charset_bin);
-    protocol->store(mi->ssl_cert, &my_charset_bin);
-    protocol->store(mi->ssl_cipher, &my_charset_bin);
-    protocol->store(mi->ssl_key, &my_charset_bin);
-
     /*
       Seconds_Behind_Master: if SQL thread is running and I/O thread is
       connected, we can compute it otherwise show NULL (i.e. unknown).
@@ -1307,7 +1287,6 @@ bool show_master_info(THD* thd, Master_info* mi)
     {
       protocol->store_null();
     }
-    protocol->store(mi->ssl_verify_server_cert? "Yes":"No", &my_charset_bin);
 
     // Last_IO_Errno
     protocol->store(mi->last_error().number);

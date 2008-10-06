@@ -26,14 +26,12 @@ int init_floatvar_from_file(float* var, IO_CACHE* f, float default_val);
 
 Master_info::Master_info()
   :Slave_reporting_capability("I/O"),
-   ssl(0), ssl_verify_server_cert(0), fd(-1),  io_thd(0), port(DRIZZLE_PORT),
+   fd(-1),  io_thd(0), port(DRIZZLE_PORT),
    connect_retry(DEFAULT_CONNECT_RETRY), heartbeat_period(0),
    received_heartbeats(0), inited(0),
    abort_slave(0), slave_running(0), slave_run_id(0)
 {
   host[0] = 0; user[0] = 0; password[0] = 0;
-  ssl_ca[0]= 0; ssl_capath[0]= 0; ssl_cert[0]= 0;
-  ssl_cipher[0]= 0; ssl_key[0]= 0;
 
   memset(&file, 0, sizeof(file));
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
@@ -178,7 +176,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
 
     mi->fd = fd;
     int port, connect_retry, master_log_pos, lines;
-    int ssl= 0, ssl_verify_server_cert= 0;
     float master_heartbeat_period= 0.0;
     char *first_non_digit;
 
@@ -241,26 +238,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     */
     if (lines >= LINES_IN_MASTER_INFO_WITH_SSL)
     {
-      if (init_intvar_from_file(&ssl, &mi->file, 0) ||
-          init_strvar_from_file(mi->ssl_ca, sizeof(mi->ssl_ca),
-                                &mi->file, 0) ||
-          init_strvar_from_file(mi->ssl_capath, sizeof(mi->ssl_capath),
-                                &mi->file, 0) ||
-          init_strvar_from_file(mi->ssl_cert, sizeof(mi->ssl_cert),
-                                &mi->file, 0) ||
-          init_strvar_from_file(mi->ssl_cipher, sizeof(mi->ssl_cipher),
-                                &mi->file, 0) ||
-          init_strvar_from_file(mi->ssl_key, sizeof(mi->ssl_key),
-                               &mi->file, 0))
-      goto errwithmsg;
-
-      /*
-        Starting from 5.1.16 ssl_verify_server_cert might be
-        in the file
-      */
-      if (lines >= LINE_FOR_MASTER_SSL_VERIFY_SERVER_CERT &&
-          init_intvar_from_file(&ssl_verify_server_cert, &mi->file, 0))
-        goto errwithmsg;
       /*
         Starting from 6.0 master_heartbeat_period might be
         in the file
@@ -270,11 +247,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
         goto errwithmsg;
     }
 
-    if (ssl)
-      sql_print_warning(_("SSL information in the master info file "
-                          "('%s') are ignored because this MySQL slave was "
-                          "compiled without SSL support."), fname);
-
     /*
       This has to be handled here as init_intvar_from_file can't handle
       my_off_t types
@@ -282,8 +254,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     mi->master_log_pos= (my_off_t) master_log_pos;
     mi->port= (uint) port;
     mi->connect_retry= (uint) connect_retry;
-    mi->ssl= (bool) ssl;
-    mi->ssl_verify_server_cert= ssl_verify_server_cert;
     mi->heartbeat_period= master_heartbeat_period;
   }
 
@@ -361,13 +331,11 @@ int flush_master_info(Master_info* mi, bool flush_relay_log_cache)
   sprintf(heartbeat_buf, "%.3f", mi->heartbeat_period);
   my_b_seek(file, 0L);
   my_b_printf(file,
-              "%u\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n",
+              "%u\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%s\n",
               LINES_IN_MASTER_INFO,
               mi->master_log_name, llstr(mi->master_log_pos, lbuf),
               mi->host, mi->user,
               mi->password, mi->port, mi->connect_retry,
-              (int)(mi->ssl), mi->ssl_ca, mi->ssl_capath, mi->ssl_cert,
-              mi->ssl_cipher, mi->ssl_key, mi->ssl_verify_server_cert,
               heartbeat_buf);
   return(-flush_io_cache(file));
 }
