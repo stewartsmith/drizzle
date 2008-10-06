@@ -477,7 +477,7 @@ AC_DEFUN([DRIZZLE_CHECK_LONGLONG_TO_FLOAT],
 AC_MSG_CHECKING(if conversion of int64_t to float works)
 AC_CACHE_VAL(ac_cv_conv_longlong_to_float,
 [AC_TRY_RUN([#include <stdio.h>
-typedef int64_t int64_t;
+#include <stdint.h>
 int main()
 {
   int64_t ll=1;
