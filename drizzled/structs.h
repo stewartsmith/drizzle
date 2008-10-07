@@ -20,6 +20,8 @@
 
 /* The old structures from unireg */
 
+#include <mysys/iocache.h>
+
 class Table;
 class Field;
 

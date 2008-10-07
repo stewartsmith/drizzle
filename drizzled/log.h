@@ -20,6 +20,8 @@
 #ifndef DRIZZLE_SERVER_LOG_H
 #define DRIZZLE_SERVER_LOG_H
 
+#include <mysys/iocache.h>
+
 class Relay_log_info;
 
 class Format_description_log_event;

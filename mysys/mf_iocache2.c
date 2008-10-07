@@ -22,6 +22,7 @@
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mystrings/m_ctype.h>
+#include <mysys/iocache.h>
 
 /*
   Copy contents of an IO_CACHE to a file.

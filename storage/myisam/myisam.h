@@ -29,6 +29,7 @@ extern "C" {
 #include "keycache.h"
 #endif
 #include <mysys/my_handler.h>
+#include <mysys/iocache.h>
 #include <drizzled/plugin.h>
 
 /*
