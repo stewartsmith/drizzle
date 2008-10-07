@@ -222,7 +222,7 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
   Vio* save_vio;
   ulong save_client_capabilities;
 
-  thd_proc_info(thd, "Execution of init_command");
+  thd->set_proc_info("Execution of init_command");
   /*
     We need to lock init_command_var because
     during execution of init_command_var query
@@ -856,9 +856,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   log_slow_statement(thd);
 
-  thd_proc_info(thd, "cleaning up");
+  thd->set_proc_info("cleaning up");
   pthread_mutex_lock(&LOCK_thread_count); // For process list
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   thd->command=COM_SLEEP;
   thd->query=0;
   thd->query_length=0;
@@ -1893,7 +1893,7 @@ end_with_restore_list:
     if (add_item_to_list(thd, new Item_null()))
       goto error;
 
-    thd_proc_info(thd, "init");
+    thd->set_proc_info("init");
     if ((res= open_and_lock_tables(thd, all_tables)))
       break;
 
@@ -2396,7 +2396,7 @@ end_with_restore_list:
     my_ok(thd);
     break;
   }
-  thd_proc_info(thd, "query end");
+  thd->set_proc_info("query end");
 
   /*
     Binlog-related cleanup:
@@ -2825,7 +2825,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
       assert(thd->is_error());
     }
     lex->unit.cleanup();
-    thd_proc_info(thd, "freeing items");
+    thd->set_proc_info("freeing items");
     thd->end_statement();
     thd->cleanup_after_query();
     assert(thd->change_list.is_empty());

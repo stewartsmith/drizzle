@@ -255,8 +255,6 @@ class THD;
 class user_var_entry;
 class Security_context;
 
-#define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
-
 extern pthread_key(THD*, THR_THD);
 inline THD *_current_thd(void)
 {
@@ -264,15 +262,8 @@ inline THD *_current_thd(void)
 }
 #define current_thd _current_thd()
 
-/** 
-  The meat of thd_proc_info(THD*, char*), a macro that packs the last
-  three calling-info parameters. 
-*/
-extern "C"
-const char *set_thd_proc_info(THD *thd, const char *info, 
-                              const char *calling_func, 
-                              const char *calling_file, 
-                              const unsigned int calling_line);
+extern "C" void set_thd_proc_info(THD *thd, const char *info);
+extern "C" const char *get_thd_proc_info(THD *thd);
 
 /*
   External variables

@@ -231,15 +231,24 @@ int thd_tablespace_op(const THD *thd)
 }
 
 
-extern "C"
-const char *set_thd_proc_info(THD *thd, const char *info,
-                              const char *calling_function __attribute__((unused)),
-                              const char *calling_file __attribute__((unused)),
-                              const unsigned int calling_line __attribute__((unused)))
+/**
+   Set the process info field of the THD structure.
+
+   This function is used by plug-ins. Internally, the
+   THD::set_proc_info() function should be used.
+
+   @see THD::set_proc_info
+ */
+extern "C" void
+set_thd_proc_info(THD *thd, const char *info)
 {
-  const char *old_info= thd->get_proc_info();
   thd->set_proc_info(info);
-  return old_info;
+}
+
+extern "C"
+const char *get_thd_proc_info(THD *thd)
+{
+  return thd->get_proc_info();
 }
 
 extern "C"

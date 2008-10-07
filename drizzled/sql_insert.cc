@@ -276,7 +276,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   }
   lock_type= table_list->lock_type;
 
-  thd_proc_info(thd, "init");
+  thd->set_proc_info("init");
   thd->used_tables=0;
   values= its++;
   value_count= values->elements;
@@ -355,7 +355,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
     goto abort;
 
   error=0;
-  thd_proc_info(thd, "update");
+  thd->set_proc_info("update");
   if (duplic == DUP_REPLACE)
     table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (duplic == DUP_UPDATE)
@@ -501,7 +501,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
                 thd->transaction.stmt.modified_non_trans_table);
 
   }
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
   /*
     We'll report to the client this id:
     - if the table contains an autoincrement column and we successfully

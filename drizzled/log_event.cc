@@ -4076,7 +4076,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   memset(&file, 0, sizeof(file));
   fname_buf= my_stpcpy(proc_info, "Making temp file ");
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
-  thd_proc_info(thd, proc_info);
+  thd->set_proc_info(proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
 		     O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
@@ -4129,7 +4129,7 @@ err:
     end_io_cache(&file);
   if (fd >= 0)
     my_close(fd, MYF(0));
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   return error == 0;
 }
 
@@ -4223,7 +4223,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
 
   fname= my_stpcpy(proc_info, "Making temp file ");
   slave_load_file_stem(fname, file_id, server_id, ".data");
-  thd_proc_info(thd, proc_info);
+  thd->set_proc_info(proc_info);
   if (get_create_or_append())
   {
     my_delete(fname, MYF(0)); // old copy may exist already
@@ -4257,7 +4257,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
 err:
   if (fd >= 0)
     my_close(fd, MYF(0));
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   return(error);
 }
 

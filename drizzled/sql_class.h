@@ -1519,7 +1519,7 @@ public:
     safe_mutex_assert_owner(mutex);
     mysys_var->current_mutex = mutex;
     mysys_var->current_cond = cond;
-    thd_proc_info(this, msg);
+    this->set_proc_info(msg);
     return old_msg;
   }
   inline void exit_cond(const char* old_msg)
@@ -1534,7 +1534,7 @@ public:
     pthread_mutex_lock(&mysys_var->mutex);
     mysys_var->current_mutex = 0;
     mysys_var->current_cond = 0;
-    thd_proc_info(this, old_msg);
+    this->set_proc_info(old_msg);
     pthread_mutex_unlock(&mysys_var->mutex);
   }
   inline time_t query_start() { query_start_used=1; return start_time; }

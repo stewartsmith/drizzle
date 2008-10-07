@@ -1844,7 +1844,7 @@ bool mysql_create_table_no_lock(THD *thd,
     }
   }
 
-  thd_proc_info(thd, "creating table");
+  thd->set_proc_info("creating table");
   create_info->table_existed= 0;		// Mark that table is created
 
 #ifdef HAVE_READLINK
@@ -1906,7 +1906,7 @@ unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);
 
 err:
-  thd_proc_info(thd, "After create");
+  thd->set_proc_info("After create");
   delete file;
   return(error);
 
@@ -3141,7 +3141,7 @@ mysql_discard_or_import_tablespace(THD *thd,
     ALTER Table
   */
 
-  thd_proc_info(thd, "discard_or_import_tablespace");
+  thd->set_proc_info("discard_or_import_tablespace");
 
   discard= test(tablespace_op == DISCARD_TABLESPACE);
 
@@ -3158,7 +3158,7 @@ mysql_discard_or_import_tablespace(THD *thd,
 
   error= table->file->ha_discard_or_import_tablespace(discard);
 
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
 
   if (error)
     goto err;
@@ -4383,7 +4383,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     to simplify further comparisons: we want to see if it's a RENAME
     later just by comparing the pointers, avoiding the need for strcmp.
   */
-  thd_proc_info(thd, "init");
+  thd->set_proc_info("init");
   table_name=table_list->table_name;
   alias= (lower_case_table_names == 2) ? table_list->alias : table_name;
   db=table_list->db;
@@ -4508,7 +4508,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     goto err;
   }
 
-  thd_proc_info(thd, "setup");
+  thd->set_proc_info("setup");
   if (!(alter_info->flags & ~(ALTER_RENAME | ALTER_KEYS_ONOFF)) &&
       !table->s->tmp_table) // no need to touch frm
   {
@@ -4563,7 +4563,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
 
     if (!error && (new_name != table_name || new_db != db))
     {
-      thd_proc_info(thd, "rename");
+      thd->set_proc_info("rename");
       /*
         Then do a 'simple' rename of the table. First we need to close all
         instances of 'source' table.
@@ -4812,7 +4812,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   /* Copy the data if necessary. */
   thd->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
   thd->cuted_fields=0L;
-  thd_proc_info(thd, "copy to tmp table");
+  thd->set_proc_info("copy to tmp table");
   copied=deleted=0;
   /*
     We do not copy data for MERGE tables. Only the children have data.
@@ -4897,7 +4897,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
        call to remove name-locks from table cache and list of open table.
   */
 
-  thd_proc_info(thd, "rename result table");
+  thd->set_proc_info("rename result table");
   snprintf(old_name, sizeof(old_name), "%s2-%lx-%lx", tmp_file_prefix,
            current_pid, thd->thread_id);
   if (lower_case_table_names)
@@ -4958,7 +4958,7 @@ end_online:
   }
   pthread_mutex_unlock(&LOCK_open);
 
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
 
   assert(!(mysql_bin_log.is_open() &&
                 thd->current_stmt_binlog_row_based &&

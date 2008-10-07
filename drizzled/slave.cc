@@ -1376,9 +1376,9 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
   lex_start(thd);
 
   if (thd_type == SLAVE_THD_SQL)
-    thd_proc_info(thd, "Waiting for the next event in relay log");
+    thd->set_proc_info("Waiting for the next event in relay log");
   else
-    thd_proc_info(thd, "Waiting for master update");
+    thd->set_proc_info("Waiting for master update");
   thd->version=refresh_version;
   thd->set_time();
   return(0);
@@ -1968,7 +1968,7 @@ pthread_handler_t handle_slave_io(void *arg)
     goto err;
   }
 
-  thd_proc_info(thd, "Connecting to master");
+  thd->set_proc_info("Connecting to master");
   // we can get killed during safe_connect
   if (!safe_connect(thd, drizzle, mi))
   {
@@ -1995,7 +1995,7 @@ connected:
   // TODO: the assignment below should be under mutex (5.0)
   mi->slave_running= DRIZZLE_SLAVE_RUN_CONNECT;
   thd->slave_net = &drizzle->net;
-  thd_proc_info(thd, "Checking master version");
+  thd->set_proc_info("Checking master version");
   if (get_master_version_and_clock(drizzle, mi))
     goto err;
   
@@ -2004,7 +2004,7 @@ connected:
     /*
       Register ourselves with the master.
     */
-    thd_proc_info(thd, "Registering slave on master");
+    thd->set_proc_info("Registering slave on master");
     if (register_slave_on_master(drizzle, mi, &suppress_warnings))
     {
       if (!check_io_slave_killed(thd, mi, "Slave I/O thread killed "
@@ -2032,7 +2032,7 @@ connected:
 
   while (!io_slave_killed(thd,mi))
   {
-    thd_proc_info(thd, "Requesting binlog dump");
+    thd->set_proc_info("Requesting binlog dump");
     if (request_dump(drizzle, mi, &suppress_warnings))
     {
       sql_print_error(_("Failed on request_dump()"));
@@ -2062,7 +2062,7 @@ requesting master dump")) ||
         important thing is to not confuse users by saying "reading" whereas
         we're in fact receiving nothing.
       */
-      thd_proc_info(thd, _("Waiting for master to send event"));
+      thd->set_proc_info(_("Waiting for master to send event"));
       event_len= read_event(drizzle, mi, &suppress_warnings);
       if (check_io_slave_killed(thd, mi, _("Slave I/O thread killed while "
                                            "reading event")))
@@ -2106,7 +2106,7 @@ requesting master dump")) ||
       } // if (event_len == packet_error)
 
       retry_count=0;                    // ok event, reset retry counter
-      thd_proc_info(thd, _("Queueing master event to the relay log"));
+      thd->set_proc_info(_("Queueing master event to the relay log"));
       if (queue_event(mi,(const char*)drizzle->net.read_pos + 1, event_len))
       {
         goto err;
@@ -2164,7 +2164,7 @@ err:
     mi->drizzle=0;
   }
   write_ignored_events_info_to_relay_log(thd, mi);
-  thd_proc_info(thd, _("Waiting for slave mutex on exit"));
+  thd->set_proc_info(_("Waiting for slave mutex on exit"));
   pthread_mutex_lock(&mi->run_lock);
 
   /* Forget the relay log's format */
@@ -2334,7 +2334,7 @@ pthread_handler_t handle_slave_sql(void *arg)
 
   while (!sql_slave_killed(thd,rli))
   {
-    thd_proc_info(thd, _("Reading event from the relay log"));
+    thd->set_proc_info(_("Reading event from the relay log"));
     assert(rli->sql_thd == thd);
     THD_CHECK_SENTRY(thd);
     if (exec_relay_log_event(thd,rli))
@@ -2422,7 +2422,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   thd->query= thd->db= thd->catalog= 0;
   thd->query_length= thd->db_length= 0;
   pthread_mutex_unlock(&LOCK_thread_count);
-  thd_proc_info(thd, "Waiting for slave mutex on exit");
+  thd->set_proc_info("Waiting for slave mutex on exit");
   pthread_mutex_lock(&rli->run_lock);
   /* We need data_lock, at least to wake up any waiting master_pos_wait() */
   pthread_mutex_lock(&rli->data_lock);
