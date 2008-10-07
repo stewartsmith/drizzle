@@ -178,61 +178,19 @@ typedef struct st_mysql_lex_string LEX_STRING;
 /**
   Skip trailing space.
 
-  On most systems reading memory in larger chunks (ideally equal to the size of
-  the chinks that the machine physically reads from memory) causes fewer memory
-  access loops and hence increased performance.
-  This is why the 'int' type is used : it's closest to that (according to how
-  it's defined in C).
-  So when we determine the amount of whitespace at the end of a string we do
-  the following :
-    1. We divide the string into 3 zones :
-      a) from the start of the string (__start) to the first multiple
-        of sizeof(int)  (__start_words)
-      b) from the end of the string (__end) to the last multiple of sizeof(int)
-        (__end_words)
-      c) a zone that is aligned to sizeof(int) and can be safely accessed
-        through an int *
-    2. We start comparing backwards from (c) char-by-char. If all we find is
-       space then we continue
-    3. If there are elements in zone (b) we compare them as unsigned ints to a
-       int mask (SPACE_INT32) consisting of all spaces
-    4. Finally we compare the remaining part (a) of the string char by char.
-       This covers for the last non-space unsigned int from 3. (if any)
-
-   This algorithm works well for relatively larger strings, but it will slow
-   the things down for smaller strings (because of the additional calculations
-   and checks compared to the naive method). Thus the barrier of length 20
-   is added.
-
    @param     ptr   pointer to the input string
    @param     len   the length of the string
    @return          the last non-space character
 */
 
-static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,size_t len)
+static const unsigned char *
+skip_trailing_space(const unsigned char *ptr,size_t len)
 {
   const unsigned char *end= ptr + len;
 
-  if (len > 20)
-  {
-    const unsigned char *end_words= (const unsigned char *)(intptr_t)
-      (((uint64_t)(intptr_t)end) / sizeof(int) * sizeof(int));
-    const unsigned char *start_words= (const unsigned char *)(intptr_t)
-       ((((uint64_t)(intptr_t)ptr) + sizeof(int) - 1) / sizeof(int) * sizeof(int));
-
-    assert(((uint64_t)(intptr_t)ptr) >= sizeof(int));
-    if (end_words > ptr)
-    {
-      while (end > end_words && end[-1] == 0x20)
-        end--;
-      if (end[-1] == 0x20 && start_words < end_words)
-        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT32)
-          end -= sizeof(int);
-    }
-  }
-  while (end > ptr && end[-1] == 0x20)
-    end--;
-  return (end);
+  while (end > ptr && isspace(*--end))
+    continue;
+  return end+1;
 }
 
 #endif
