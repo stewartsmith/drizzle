@@ -1343,6 +1343,13 @@ ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
     [AC_MSG_RESULT(yes)])
 ])])
 
+if test $NDEBUG -eq 1
+then
+	ac_assert="no"
+else
+	ac_assert="yes"
+fi
+
 AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
@@ -1503,3 +1510,23 @@ AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > st
 AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT
+
+echo "---"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION"
+echo ""
+echo "   * Installation prefix:       $prefix"
+echo "   * System type:               $SYSTEM_TYPE"
+echo "   * C Compiler:                $CC_VERSION"
+echo "   * C++ Compiler:              $CXX"
+echo "   * Assertions enabled:        $ac_assert"
+echo "   * Debug enabled:             $with_debug"
+echo "   * Profiling enabled:         $ac_profiling"
+echo "   * Coverage enabled:          $ac_coverage"
+echo "   * Warnings as failure:       $ac_warn_fail"
+echo "   * ac_cv_cxx_cstdint:         $ac_cv_cxx_cstdint"
+echo "   * ac_cv_cxx_hash_map:        $ac_cv_cxx_hash_map"
+echo "   * ac_cv_cxx_hash_namespace:  $ac_cv_cxx_hash_namespace"
+echo "   * ac_cv_cxx_cmath:           $ac_cv_cxx_cmath"
+echo "   * ac_cv_cxx_cmath_namespace: $ac_cv_cxx_cmath_namespace"
+echo ""
+echo "---"
