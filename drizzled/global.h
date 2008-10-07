@@ -265,11 +265,7 @@ typedef int  File;    /* File descriptor */
   Max size that must be added to a so that we know Size to make
   adressable obj.
 */
-#if SIZEOF_CHARP == 4
-typedef int32_t    my_ptrdiff_t;
-#else
-typedef int64_t   my_ptrdiff_t;
-#endif
+typedef ptrdiff_t my_ptrdiff_t;
 
 #define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))

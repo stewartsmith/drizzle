@@ -172,14 +172,8 @@ typedef struct st_mysql_lex_string LEX_STRING;
 #define USTRING_WITH_LEN(X) ((unsigned char*) X), ((size_t) (sizeof(X) - 1))
 #define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
 
-/* SPACE_INT is a word that contains only spaces */
-#if SIZEOF_INT == 4
-#define SPACE_INT 0x20202020
-#elif SIZEOF_INT == 8
-#define SPACE_INT 0x2020202020202020
-#else
-#error define the appropriate constant for a word full of spaces
-#endif
+/* SPACE_INT32 is a word that contains only spaces */
+#define SPACE_INT32 0x20202020
 
 /**
   Skip trailing space.
@@ -201,7 +195,7 @@ typedef struct st_mysql_lex_string LEX_STRING;
     2. We start comparing backwards from (c) char-by-char. If all we find is
        space then we continue
     3. If there are elements in zone (b) we compare them as unsigned ints to a
-       int mask (SPACE_INT) consisting of all spaces
+       int mask (SPACE_INT32) consisting of all spaces
     4. Finally we compare the remaining part (a) of the string char by char.
        This covers for the last non-space unsigned int from 3. (if any)
 
@@ -222,18 +216,18 @@ static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,
   if (len > 20)
   {
     const unsigned char *end_words= (const unsigned char *)(intptr_t)
-      (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
+      (((uint64_t)(intptr_t)end) / sizeof(int) * sizeof(int));
     const unsigned char *start_words= (const unsigned char *)(intptr_t)
-       ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
+       ((((uint64_t)(intptr_t)ptr) + sizeof(int) - 1) / sizeof(int) * sizeof(int));
 
-    assert(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
+    assert(((uint64_t)(intptr_t)ptr) >= sizeof(int));
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)
         end--;
       if (end[-1] == 0x20 && start_words < end_words)
-        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT)
-          end -= SIZEOF_INT;
+        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT32)
+          end -= sizeof(int);
     }
   }
   while (end > ptr && end[-1] == 0x20)
