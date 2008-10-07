@@ -58,6 +58,7 @@
 
 #endif // __cplusplus
 
+/*
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
@@ -67,7 +68,7 @@
 # else
 #  include <time.h>
 # endif
-#endif /* TIME_WITH_SYS_TIME */
+#endif */ /* TIME_WITH_SYS_TIME */
 
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before

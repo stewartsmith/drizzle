@@ -21,6 +21,17 @@
 #include <drizzled/drizzled_error_messages.h>
 #include <libdrizzle/gettext.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 
 /**
