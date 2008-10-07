@@ -16,14 +16,15 @@ AC_DEFUN([AC_CXX_CMATH],
          AC_TRY_COMPILE([#include <$location>],
                         [$namespace::isfinite(1)],
                         [ac_cv_cxx_cmath="<$location>";
-                         ac_cv_cxx_cmath_namespace="$namespace";])
+                         ac_cv_cxx_cmath_namespace="$namespace::";])
        fi
     done
    done
    if test -n "$ac_cv_cxx_cmath"; then
-      ac_cv_cxx_cmath="<math.h>"
       AC_MSG_RESULT([$ac_cv_cxx_cmath])
    else
+      ac_cv_cxx_cmath="<math.h>"
+      ac_cv_cxx_cmath_namespace=""
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cmath header.])
    fi
