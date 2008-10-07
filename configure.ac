@@ -928,20 +928,6 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-# AC_CHECK_SIZEOF return 0 when it does not find the size of a
-# type. We want a error instead.
-AC_CHECK_SIZEOF(char, 1)
-if test "$ac_cv_sizeof_char" -eq 0
-then
-  AC_MSG_ERROR([No size for char type.])
-fi
-AC_CHECK_SIZEOF(char*, 4)
-AC_CHECK_SIZEOF(short, 2)
-AC_CHECK_SIZEOF(int, 4)
-if test "$ac_cv_sizeof_int" -eq 0
-then
-  AC_MSG_ERROR("No size for int type.")
-fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0

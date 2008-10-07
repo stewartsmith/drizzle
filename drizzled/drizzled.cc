@@ -58,11 +58,7 @@
 #define IF_PURIFY(A,B) (B)
 #endif
 
-#if SIZEOF_CHARP == 4
-#define MAX_MEM_TABLE_SIZE ~(uint32_t) 0
-#else
-#define MAX_MEM_TABLE_SIZE ~(uint64_t) 0
-#endif
+#define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 /* We have HAVE_purify below as this speeds up the shutdown of MySQL */
 

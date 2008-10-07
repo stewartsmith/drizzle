@@ -398,17 +398,11 @@ extern my_thread_id my_thread_dbug_id(void);
 /* All thread specific variables are in the following struct */
 
 #define THREAD_NAME_SIZE 10
-#ifndef DEFAULT_THREAD_STACK
-#if SIZEOF_CHARP > 4
 /*
-  MySQL can survive with 32K, but some glibc libraries require > 128K stack
-  To resolve hostnames. Also recursive stored procedures needs stack.
+  Drizzle can survive with 32K, but some glibc libraries require > 128K stack
+  to resolve hostnames. Also recursive stored procedures needs stack.
 */
-#define DEFAULT_THREAD_STACK	(256*1024L)
-#else
-#define DEFAULT_THREAD_STACK	(192*1024)
-#endif
-#endif
+#define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
 
 struct st_my_thread_var
 {
