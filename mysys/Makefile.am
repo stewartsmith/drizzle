@@ -20,7 +20,8 @@ MYSQLBASEdir=		$(prefix)
 noinst_LTLIBRARIES =	libmysys.la
 
 mysysincludedir = ${includedir}/mysys
-dist_mysysinclude_HEADERS = 	my_alloc.h \
+dist_mysysinclude_HEADERS = 	iocache.h \
+                                my_alloc.h \
 				my_getopt.h \
 				my_list.h \
 				my_sys.h \
@@ -44,7 +45,8 @@ noinst_HEADERS =	mysys_priv.h \
 			my_time.h \
 			drizzle_time.h \
 			thr_lock.h \
-			base64.h
+			base64.h \
+			aio_result.h
 
 if BUILD_FAST_MUTEX
 thr_mutex_source=thr_mutex.c

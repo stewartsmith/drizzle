@@ -17,8 +17,9 @@
 
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
-#include "my_static.h"
-#include "mysys_err.h"
+#include <mysys/my_static.h>
+#include <mysys/mysys_err.h>
+#include <mysys/iocache.h>
 
 	/*
 	  Remove an open tempfile so that it doesn't survive

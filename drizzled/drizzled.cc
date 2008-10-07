@@ -25,6 +25,17 @@
 #include <netinet/tcp.h>
 #include <drizzled/drizzled_error_messages.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 #include <storage/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H

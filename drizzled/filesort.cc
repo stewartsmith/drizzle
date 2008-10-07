@@ -790,7 +790,6 @@ static void make_sortkey(register SORTPARAM *param,
               break;
             }
           }
-#if SIZEOF_LONG_LONG > 4
 	  to[7]= (unsigned char) value;
 	  to[6]= (unsigned char) (value >> 8);
 	  to[5]= (unsigned char) (value >> 16);
@@ -802,15 +801,6 @@ static void make_sortkey(register SORTPARAM *param,
             to[0]= (unsigned char) (value >> 56);
           else
             to[0]= (unsigned char) (value >> 56) ^ 128;	/* Reverse signbit */
-#else
-	  to[3]= (unsigned char) value;
-	  to[2]= (unsigned char) (value >> 8);
-	  to[1]= (unsigned char) (value >> 16);
-          if (item->unsigned_flag)                    /* Fix sign */
-            to[0]= (unsigned char) (value >> 24);
-          else
-            to[0]= (unsigned char) (value >> 24) ^ 128;	/* Reverse signbit */
-#endif
 	  break;
 	}
       case DECIMAL_RESULT:
@@ -1408,11 +1398,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint32_t s_length,
         }
 	break;
       case INT_RESULT:
-#if SIZEOF_LONG_LONG > 4
 	sortorder->length=8;			// Size of intern int64_t
-#else
-	sortorder->length=4;
-#endif
 	break;
       case DECIMAL_RESULT:
         sortorder->length=

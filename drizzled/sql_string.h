@@ -31,6 +31,7 @@
 #endif
 
 #include <libdrizzle/drizzle_com.h>
+#include <mysys/iocache.h>
 
 class String;
 int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);

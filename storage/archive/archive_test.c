@@ -20,6 +20,17 @@
 #include <string.h>
 #include <mysys/my_getopt.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
 #define COMMENT_STRING "Your bases"
@@ -32,11 +43,11 @@
 
 char test_string[BUFFER_LEN];
 
-unsigned long long row_lengths[]= {536870912LL, 2147483648LL, 4294967296LL, 8589934592LL};
-unsigned long long row_numbers[]= {524288LL, 2097152LL, 4194304LL, 8388608LL};
+uint64_t row_lengths[]= {536870912LL, 2147483648LL, 4294967296LL, 8589934592LL};
+uint64_t row_numbers[]= {524288LL, 2097152LL, 4194304LL, 8388608LL};
 
 /* prototypes */
-int size_test(unsigned long long length, unsigned long long rows_to_test_for, az_method method);
+int size_test(uint64_t length, uint64_t rows_to_test_for, az_method method);
 int small_test(az_method method);
 long int timedif(struct timeval a, struct timeval b);
 
@@ -78,7 +89,7 @@ int main(int argc, char *argv[])
       struct timeval start_time, end_time;
       long int timing;
 
-      printf("Testing %llu bytes with (%d)\n", row_lengths[x], (int)method);
+      printf("Testing %"PRIu64" bytes with (%d)\n", row_lengths[x], (int)method);
       gettimeofday(&start_time, NULL);
       size_test(row_lengths[x], row_numbers[x], method);
       gettimeofday(&end_time, NULL);
@@ -271,13 +282,13 @@ int small_test(az_method method)
   return 0;
 }
 
-int size_test(unsigned long long length, unsigned long long rows_to_test_for, 
+int size_test(uint64_t length, uint64_t rows_to_test_for, 
               az_method method)
 {
   azio_stream writer_handle, reader_handle;
-  unsigned long long write_length;
-  unsigned long long read_length;
-  unsigned long long count;
+  uint64_t write_length;
+  uint64_t read_length;
+  uint64_t count;
   unsigned int ret;
   int error;
   int x;
@@ -318,7 +329,7 @@ int size_test(unsigned long long length, unsigned long long rows_to_test_for,
   /* We do a double loop to test speed */
   for (x= 0, read_length= 0; x < 2; x++, read_length= 0)
   {
-    unsigned long long count;
+    uint64_t count;
 
     azread_init(&reader_handle);
     for (count= 0; count < writer_handle.rows; count++)

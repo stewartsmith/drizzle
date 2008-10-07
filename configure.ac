@@ -225,6 +225,11 @@ fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
+AC_CXX_STL_HASH
+AC_CXX_CSTDINT
+AC_CXX_CINTTYPES
+AC_CXX_CMATH
+
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in
   *apple-darwin*)
@@ -291,14 +296,14 @@ dnl  C++ compiler does not!
 
 dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
 dnl       Need for all of this? 
-if test "${build_vendor}" = "sun"
-then
+case "$target_os" in
+  *solaris*)
   dnl Do we need both of these? 
-  dnl This is for C++
-  AC_DEFINE([__C99FEATURES__],[1],[C99 Features])
-  dnl This is for C
-  AC_DEFINE([_XOPEN_SOURCE],[600],[X/Open Level])
-fi
+  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  ;;
+esac
+
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
@@ -861,10 +866,6 @@ then
   AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
-AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
-                uchar, uint, ulong],[],[], [
-#include <sys/types.h>
-])
 AC_CHECK_TYPES([fp_except], [], [], [
 #include <sys/types.h>
 #include <ieeefp.h>
@@ -941,16 +942,6 @@ if test "$ac_cv_sizeof_int" -eq 0
 then
   AC_MSG_ERROR("No size for int type.")
 fi
-AC_CHECK_SIZEOF(long, 4)
-if test "$ac_cv_sizeof_long" -eq 0
-then
-  AC_MSG_ERROR("No size for long type.")
-fi
-AC_CHECK_SIZEOF(long long, 8)
-if test "$ac_cv_sizeof_long_long" -eq 0
-then
-  AC_MSG_ERROR("Drizzle needs a long long type.")
-fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0
@@ -1002,7 +993,6 @@ DRIZZLE_TZNAME
 DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
-AC_CHECK_TYPES([u_int32_t])
 
 DRIZZLE_PTHREAD_YIELD
 
@@ -1370,7 +1360,8 @@ ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
 AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
+#CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],

@@ -68,75 +68,6 @@ int Field_double::store(int64_t nr, bool unsigned_val)
                              (double) nr);
 }
 
-/*
-  If a field has fixed length, truncate the double argument pointed to by 'nr'
-  appropriately.
-  Also ensure that the argument is within [-max_value; max_value] range.
-*/
-
-int Field_real::truncate(double *nr, double max_value)
-{
-  int error= 1;
-  double res= *nr;
-  
-  if (isnan(res))
-  {
-    res= 0;
-    set_null();
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    goto end;
-  }
-  else if (unsigned_flag && res < 0)
-  {
-    res= 0;
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    goto end;
-  }
-
-  if (!not_fixed)
-  {
-    uint32_t order= field_length - dec;
-    uint32_t step= array_elements(log_10) - 1;
-    max_value= 1.0;
-    for (; order > step; order-= step)
-      max_value*= log_10[step];
-    max_value*= log_10[order];
-    max_value-= 1.0 / log_10[dec];
-
-    /* Check for infinity so we don't get NaN in calculations */
-    if (!isinf(res))
-    {
-      double tmp= rint((res - floor(res)) * log_10[dec]) / log_10[dec];
-      res= floor(res) + tmp;
-    }
-  }
-  
-  if (res < -max_value)
-  {
-   res= -max_value;
-   set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-  }
-  else if (res > max_value)
-  {
-    res= max_value;
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-  }
-  else
-    error= 0;
-
-end:
-  *nr= res;
-  return error;
-}
-
-
-int Field_real::store_decimal(const my_decimal *dm)
-{
-  double dbl;
-  my_decimal2double(E_DEC_FATAL_ERROR, dm, &dbl);
-  return store(dbl);
-}
-
 double Field_double::val_real(void)
 {
   double j;
@@ -187,13 +118,6 @@ warn:
                         str->c_ptr());
   }
   return res;
-}
-
-
-my_decimal *Field_real::val_decimal(my_decimal *decimal_value)
-{
-  double2my_decimal(E_DEC_FATAL_ERROR, val_real(), decimal_value);
-  return decimal_value;
 }
 
 

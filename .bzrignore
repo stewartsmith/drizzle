@@ -140,3 +140,7 @@ drizzled/serialize/binary_log.pb.cc
 drizzled/version.h
 drizzled/drizzled_safe
 drizzled/drizzled
+*.gmo
+po/POTFILES
+po/stamp-po
+client/drizzleslap

@@ -42,7 +42,7 @@ int Field_string::store(const char *from,uint32_t length, const CHARSET_INFO * c
   const char *cannot_convert_error_pos;
   const char *from_end_pos;
 
-  /* See the comment for Field_long::store(long long) */
+  /* See the comment for Field_long::store(int64_t) */
   assert(table->in_use == current_thd);
 
   copy_length= well_formed_copy_nchars(field_charset,
@@ -131,7 +131,7 @@ int64_t Field_string::val_int(void)
 String *Field_string::val_str(String *val_buffer __attribute__((unused)),
 			      String *val_ptr)
 {
-  /* See the comment for Field_long::store(long long) */
+  /* See the comment for Field_long::store(int64_t) */
   assert(table->in_use == current_thd);
   uint32_t length;
 

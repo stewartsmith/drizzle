@@ -52,8 +52,10 @@ TODO:
 #include <mystrings/m_string.h>
 #ifdef HAVE_AIOWAIT
 #include "mysys_err.h"
+#include <mysys/aio_result.h>
 static void my_aiowait(my_aio_result *result);
 #endif
+#include <mysys/iocache.h>
 #include <errno.h>
 
 #define lock_append_buffer(info) \

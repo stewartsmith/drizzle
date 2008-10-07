@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-#include <stdint.h>
+#include CSTDINT_H
 #include <drizzled/common_includes.h>
 #include <drizzled/item_func.h>
 #include <zlib.h>

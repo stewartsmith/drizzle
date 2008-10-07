@@ -620,31 +620,6 @@ public:
   uint32_t max_data_length() const;
 };
 
-/* base class for float and double and decimal (old one) */
-class Field_real :public Field_num {
-public:
-  bool not_fixed;
-
-  Field_real(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-             unsigned char null_bit_arg, utype unireg_check_arg,
-             const char *field_name_arg,
-             uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
-               field_name_arg, dec_arg, zero_arg, unsigned_arg),
-    not_fixed(dec_arg >= NOT_FIXED_DEC)
-    {}
-  int store_decimal(const my_decimal *);
-  my_decimal *val_decimal(my_decimal *);
-  int truncate(double *nr, double max_length);
-  uint32_t max_display_length() { return field_length; }
-  uint32_t size_of() const { return sizeof(*this); }
-  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data, bool low_byte_first);
-  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length, bool low_byte_first);
-};
-
-
 class Field_tiny :public Field_num {
 public:
   Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
@@ -823,6 +798,7 @@ check_string_copy_error(Field_str *field,
 #include <drizzled/field/null.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
 #include <drizzled/field/double.h>
 #include <drizzled/field/long.h>
 #include <drizzled/field/int64_t.h>

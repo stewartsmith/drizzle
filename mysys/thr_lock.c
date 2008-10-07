@@ -76,6 +76,18 @@ multiple read locks.
 #include <mystrings/m_string.h>
 #include <errno.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
+
 bool thr_lock_inited=0;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;

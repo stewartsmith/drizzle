@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 /* all of these ripped from InnoDB code from MySQL 4.0.22 */
 #define UT_HASH_RANDOM_MASK     1463735687
@@ -53,43 +54,40 @@
 /* command line argument to do page checks (that's it) */
 /* another argument to specify page ranges... seek to right spot and go from there */
 
-typedef uint32_t ulint;
-typedef unsigned char uchar;
-
 /* innodb function in name; modified slightly to not have the ASM version (lots of #ifs that didn't apply) */
-static ulint mach_read_from_4(uchar *b)
+static uint32_t mach_read_from_4(unsigned char *b)
 {
-  return( ((ulint)(b[0]) << 24)
-          + ((ulint)(b[1]) << 16)
-          + ((ulint)(b[2]) << 8)
-          + (ulint)(b[3])
+  return( ((uint32_t)(b[0]) << 24)
+          + ((uint32_t)(b[1]) << 16)
+          + ((uint32_t)(b[2]) << 8)
+          + (uint32_t)(b[3])
           );
 }
 
-static ulint
-ut_fold_ulint_pair(
+static uint32_t
+ut_fold_uint32_t_pair(
 /*===============*/
             /* out: folded value */
-    ulint   n1, /* in: ulint */
-    ulint   n2) /* in: ulint */
+    uint32_t   n1, /* in: uint32_t */
+    uint32_t   n2) /* in: uint32_t */
 {
     return(((((n1 ^ n2 ^ UT_HASH_RANDOM_MASK2) << 8) + n1)
                         ^ UT_HASH_RANDOM_MASK) + n2);
 }
 
-static ulint
+static uint32_t
 ut_fold_binary(
 /*===========*/
             /* out: folded value */
-    uchar*   str,    /* in: string of bytes */
-    ulint   len)    /* in: length */
+    unsigned char*   str,    /* in: string of bytes */
+    uint32_t   len)    /* in: length */
 {
-    ulint   i;
-    ulint   fold= 0;
+    uint32_t   i;
+    uint32_t   fold= 0;
 
     for (i= 0; i < len; i++)
     {
-      fold= ut_fold_ulint_pair(fold, (ulint)(*str));
+      fold= ut_fold_uint32_t_pair(fold, (uint32_t)(*str));
 
       str++;
     }
@@ -97,13 +95,13 @@ ut_fold_binary(
     return(fold);
 }
 
-static ulint
+static uint32_t
 buf_calc_page_new_checksum(
 /*=======================*/
                /* out: checksum */
-    uchar*    page) /* in: buffer page */
+    unsigned char*    page) /* in: buffer page */
 {
-    ulint checksum;
+    uint32_t checksum;
 
     /* Since the fields FIL_PAGE_FILE_FLUSH_LSN and ..._ARCH_LOG_NO
     are written outside the buffer pool to the first pages of data
@@ -122,13 +120,13 @@ buf_calc_page_new_checksum(
     return(checksum);
 }
 
-static ulint
+static uint32_t
 buf_calc_page_old_checksum(
 /*=======================*/
                /* out: checksum */
-    uchar*    page) /* in: buffer page */
+    unsigned char*    page) /* in: buffer page */
 {
-    ulint checksum;
+    uint32_t checksum;
 
     checksum= ut_fold_binary(page, FIL_PAGE_FILE_FLUSH_LSN);
 
@@ -141,16 +139,16 @@ buf_calc_page_old_checksum(
 int main(int argc, char **argv)
 {
   FILE *f;                     /* our input file */
-  uchar *p;                     /* storage of pages read */
+  unsigned char *p;                     /* storage of pages read */
   int bytes;                   /* bytes read count */
-  ulint ct;                    /* current page number (0 based) */
+  uint32_t ct;                    /* current page number (0 based) */
   int now;                     /* current time */
   int lastt;                   /* last time */
-  ulint oldcsum, oldcsumfield, csum, csumfield, logseq, logseqfield; /* ulints for checksum storage */
+  uint32_t oldcsum, oldcsumfield, csum, csumfield, logseq, logseqfield; /* uint32_ts for checksum storage */
   struct stat st;              /* for stat, if you couldn't guess */
-  unsigned long long int size; /* size of file (has to be 64 bits) */
-  ulint pages;                 /* number of pages in file */
-  ulint start_page= 0, end_page= 0, use_end_page= 0; /* for starting and ending at certain pages */
+  uint64_t size; /* size of file (has to be 64 bits) */
+  uint32_t pages;                 /* number of pages in file */
+  uint32_t start_page= 0, end_page= 0, use_end_page= 0; /* for starting and ending at certain pages */
   off_t offset= 0;
   int just_count= 0;          /* if true, just print page count */
   int verbose= 0;
@@ -227,7 +225,7 @@ int main(int argc, char **argv)
   }
   else if (verbose)
   {
-    printf("file %s= %llu bytes (%u pages)...\n", argv[1], size, pages);
+    printf("file %s= %"PRIu64" bytes (%u pages)...\n", argv[1], size, pages);
     printf("checking pages in range %u to %u\n", start_page, use_end_page ? end_page : (pages - 1));
   }
 
@@ -259,7 +257,7 @@ int main(int argc, char **argv)
   }
 
   /* allocate buffer for reading (so we don't realloc every time) */
-  p= (uchar *)malloc(UNIV_PAGE_SIZE);
+  p= (unsigned char *)malloc(UNIV_PAGE_SIZE);
 
   /* main checksumming loop */
   ct= start_page;

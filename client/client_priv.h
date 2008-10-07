@@ -22,6 +22,18 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
+
 enum options_client
 {
   OPT_CHARSETS_DIR=256, OPT_DEFAULT_CHARSET,
