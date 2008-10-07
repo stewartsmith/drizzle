@@ -28,6 +28,7 @@
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <drizzled/innodb_plugin_extras.h>
 
 /*
   The following is used to initialise Table_ident with a internal

@@ -39,6 +39,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <limits.h>
+#include <ctype.h>
 
 /*  This is needed for the definitions of memcpy... on solaris */
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
@@ -172,9 +173,6 @@ typedef struct st_mysql_lex_string LEX_STRING;
 #define USTRING_WITH_LEN(X) ((unsigned char*) X), ((size_t) (sizeof(X) - 1))
 #define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
 
-/* SPACE_INT32 is a word that contains only spaces */
-#define SPACE_INT32 0x20202020
-
 /**
   Skip trailing space.
 
@@ -183,7 +181,7 @@ typedef struct st_mysql_lex_string LEX_STRING;
    @return          the last non-space character
 */
 
-static const unsigned char *
+static inline const unsigned char *
 skip_trailing_space(const unsigned char *ptr,size_t len)
 {
   const unsigned char *end= ptr + len;

@@ -142,6 +142,7 @@ noinst_HEADERS = item.h \
 		 sj_tmp_table.h \
 		 table_list.h \
 		 drizzled_error_messages.h \
+		 innodb_plugin_extras.h \
 		 order.h \
 		 filesort_info.h \
 		 field_iterator.h \
