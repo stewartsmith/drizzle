@@ -52,7 +52,6 @@
 
    @return The number of bytes written at @c row_data.
  */
-#if !defined(DRIZZLE_CLIENT)
 size_t
 pack_row(Table *table, MY_BITMAP const* cols,
          unsigned char *row_data, const unsigned char *record)
@@ -126,7 +125,6 @@ pack_row(Table *table, MY_BITMAP const* cols,
   assert(null_ptr == row_data + null_byte_count);
   return(static_cast<size_t>(pack_ptr - row_data));
 }
-#endif
 
 
 /**

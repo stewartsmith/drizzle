@@ -18,7 +18,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/sql_show.h>
-#include "repl_failsafe.h"
 #include <mysys/my_dir.h>
 #include <libdrizzle/gettext.h>
 

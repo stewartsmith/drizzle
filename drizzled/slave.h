@@ -199,7 +199,6 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,uint64_t pos,
 int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
 		     const char** errmsg);
 void set_slave_thread_options(THD* thd);
-void set_slave_thread_default_charset(THD *thd, Relay_log_info const *rli);
 void rotate_relay_log(Master_info* mi);
 int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
                                bool skip);

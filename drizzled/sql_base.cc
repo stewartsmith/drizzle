@@ -24,6 +24,16 @@
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 
 /**
+  return true if the table was created explicitly.
+*/
+inline bool is_user_table(Table * table)
+{
+  const char *name= table->s->table_name.str;
+  return strncmp(name, tmp_file_prefix, tmp_file_prefix_length);
+}
+
+
+/**
   @defgroup Data_Dictionary Data Dictionary
   @{
 */
