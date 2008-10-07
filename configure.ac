@@ -301,6 +301,7 @@ case "$target_os" in
   dnl Do we need both of these? 
   CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  AC_DEFINE([__EXTENSIONS__],[1],[Turn on needed extensions on Solaris])
   ;;
 esac
 
