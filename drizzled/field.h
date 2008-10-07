@@ -602,24 +602,6 @@ public:
 };
 
 
-/* base class for Field_varstring and Field_blob */
-
-class Field_longstr :public Field_str
-{
-protected:
-  int report_if_important_data(const char *ptr, const char *end);
-public:
-  Field_longstr(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-                unsigned char null_bit_arg, utype unireg_check_arg,
-                const char *field_name_arg, const CHARSET_INFO * const charset_arg)
-    :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
-               field_name_arg, charset_arg)
-    {}
-
-  int store_decimal(const my_decimal *d);
-  uint32_t max_data_length() const;
-};
-
 class Field_tiny :public Field_num {
 public:
   Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
@@ -790,9 +772,15 @@ check_string_copy_error(Field_str *field,
                         const char *end,
                         const CHARSET_INFO * const cs);
 
+bool
+test_if_important_data(const CHARSET_INFO * const cs, 
+		       const char *str,
+                       const char *strend);
+
 /*
   Field subclasses
  */
+#include <drizzled/field/longstr.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
 #include <drizzled/field/null.h>

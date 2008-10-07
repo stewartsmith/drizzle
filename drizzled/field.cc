@@ -443,7 +443,7 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
     true  - If string has some important data
 */
 
-static bool
+bool
 test_if_important_data(const CHARSET_INFO * const cs, const char *str,
                        const char *strend)
 {
@@ -1496,45 +1496,6 @@ check_string_copy_error(Field_str *field,
   return true;
 }
 
-
-/*
-  Check if we lost any important data and send a truncation error/warning
-
-  SYNOPSIS
-    Field_longstr::report_if_important_data()
-    ptr                      - Truncated rest of string
-    end                      - End of truncated string
-
-  RETURN VALUES
-    0   - None was truncated (or we don't count cut fields)
-    2   - Some bytes was truncated
-
-  NOTE
-    Check if we lost any important data (anything in a binary string,
-    or any non-space in others). If only trailing spaces was lost,
-    send a truncation note, otherwise send a truncation error.
-*/
-
-int
-Field_longstr::report_if_important_data(const char *ptr, const char *end)
-{
-  if ((ptr < end) && table->in_use->count_cuted_fields)
-  {
-    if (test_if_important_data(field_charset, ptr, end))
-    {
-      if (table->in_use->abort_on_warning)
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-      else
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    }
-    else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
-    return 2;
-  }
-  return 0;
-}
-
-
 /**
   Store double value in Field_varstring.
 
@@ -1587,20 +1548,6 @@ uint32_t Field_str::is_equal(Create_field *new_field)
   return ((new_field->sql_type == real_type()) &&
 	  new_field->charset == field_charset &&
 	  new_field->length == max_display_length());
-}
-
-
-int Field_longstr::store_decimal(const my_decimal *d)
-{
-  char buff[DECIMAL_MAX_STR_LENGTH+1];
-  String str(buff, sizeof(buff), &my_charset_bin);
-  my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
-  return store(str.ptr(), str.length(), str.charset());
-}
-
-uint32_t Field_longstr::max_data_length() const
-{
-  return field_length + (field_length > 255 ? 2 : 1);
 }
 
 
