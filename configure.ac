@@ -299,7 +299,7 @@ dnl       Need for all of this?
 case "$target_os" in
   *solaris*)
   dnl Do we need both of these? 
-  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
   AC_DEFINE([__EXTENSIONS__],[1],[Turn on needed extensions on Solaris])
   ;;
