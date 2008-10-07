@@ -17,11 +17,13 @@ AC_DEFUN([AC_CXX_CSTDINT],
      fi
    done
    if test -n "$ac_cv_cxx_cstdint"; then
-      AC_DEFINE_UNQUOTED(CSTDINT_H,$ac_cv_cxx_cstdint,
-                         [the location of <cstdint>])
       AC_MSG_RESULT([$ac_cv_cxx_cstdint])
    else
+      CXXFLAGS="${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+      ac_cv_cxx_cstdint="<stdint.h>"
       AC_MSG_RESULT()
-      AC_MSG_ERROR([could not find a cstdint header. Try a newer compiler, or try installing Boost.])
+      AC_MSG_WARN([Could not find a cstdint header.])
    fi
+   AC_DEFINE_UNQUOTED(CSTDINT_H,$ac_cv_cxx_cstdint,
+                      [the location of <cstdint>])
 ])

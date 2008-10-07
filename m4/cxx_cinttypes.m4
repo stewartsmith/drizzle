@@ -19,11 +19,13 @@ AC_DEFUN([AC_CXX_CINTTYPES],
      fi
    done
    if test -n "$ac_cv_cxx_cinttypes"; then
-      AC_DEFINE_UNQUOTED(CINTTYPES_H,$ac_cv_cxx_cinttypes,
-                         [the location of <cinttypes>])
       AC_MSG_RESULT([$ac_cv_cxx_cinttypes])
    else
+      CXXFLAGS="${CXXFLAGS} -D__STDC_LIMIT_MACROS"
+      ac_cv_cxx_cinttypes="<inttypes.h>"
       AC_MSG_RESULT()
-      AC_MSG_ERROR([could not find a cinttypes header. Try a newer compiler, or try installing Boost.])
+      AC_MSG_WARN([Could not find a cinttypes header.])
    fi
+   AC_DEFINE_UNQUOTED(CINTTYPES_H,$ac_cv_cxx_cinttypes,
+                      [the location of <cinttypes>])
 ])

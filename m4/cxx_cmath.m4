@@ -9,6 +9,7 @@ AC_DEFUN([AC_CXX_CMATH],
   AC_LANG_SAVE
    AC_LANG_CPLUSPLUS
    ac_cv_cxx_cmath=""
+   ac_cv_cxx_cmath_namespace=""
    for location in tr1/cmath boost/cmath cmath; do
      for namespace in __gnu_cxx "" std stdext std::tr1; do
        if test -z "$ac_cv_cxx_cmath"; then
@@ -20,13 +21,14 @@ AC_DEFUN([AC_CXX_CMATH],
     done
    done
    if test -n "$ac_cv_cxx_cmath"; then
-      AC_DEFINE_UNQUOTED(CMATH_H,$ac_cv_cxx_cmath,
-                         [the location of <cmath>])
-      AC_DEFINE_UNQUOTED(CMATH_C99_NAMESPACE,$ac_cv_cxx_cmath_namespace,
-                         [the namespace of C99 math extensions])
+      ac_cv_cxx_cmath="<math.h>"
       AC_MSG_RESULT([$ac_cv_cxx_cmath])
    else
       AC_MSG_RESULT()
-      AC_MSG_ERROR([could not find a cmath header. Try a newer compiler, or try installing Boost.])
+      AC_MSG_WARN([Could not find a cmath header.])
    fi
+   AC_DEFINE_UNQUOTED(CMATH_H,$ac_cv_cxx_cmath,
+                      [the location of <cmath>])
+   AC_DEFINE_UNQUOTED(CMATH_C99_NAMESPACE,$ac_cv_cxx_cmath_namespace,
+                      [the namespace of C99 math extensions])
 ])
