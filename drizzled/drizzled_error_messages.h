@@ -1372,7 +1372,25 @@ N_("Can't write to the online backup progress log %-.64s."),
 /* ER_TABLESPACE_NOT_EMPTY */
 N_("Tablespace '%-.192s' not empty"),
 /* ER_BACKUP_TS_CHANGE */
-N_("Tablespace `%-.64s` needed by tables being restored has changed on the server. The original definition of the required tablespace is '%-.256s' while the same tablespace is defined on the server as '%-.256s'")
+N_("Tablespace `%-.64s` needed by tables being restored has changed on the server. The original definition of the required tablespace is '%-.256s' while the same tablespace is defined on the server as '%-.256s'"),
+/* ER_VCOL_BASED_ON_VCOL */
+N_("A virtual column cannot be based on a virtual column"),
+/* ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED */
+N_("Non-deterministic expression for virtual column '%s'."),
+/* ER_DATA_CONVERSION_ERROR_FOR_VIRTUAL_COLUMN */
+N_("Generated value for virtual column '%s' cannot be converted to type '%s'."),
+/* ER_PRIMARY_KEY_BASED_ON_VIRTUAL_COLUMN */
+N_("Primary key cannot be defined upon a virtual column."),
+/* ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN */
+N_("Key/Index cannot be defined on a non-stored virtual column."),
+/* ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN */
+N_("Cannot define foreign key with %s clause on a virtual column."),
+/* ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN */
+N_("The value specified for virtual column '%s' in table '%s' ignored."),
+/* ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN */
+N_("'%s' is not yet supported for virtual columns."),
+/* ER_CONST_EXPR_IN_VCOL */
+N_("Constant expression in virtual column function is not allowed.")
 };
 
 #endif

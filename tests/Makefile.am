@@ -194,3 +194,6 @@ test-drizzle:
         unsafe_binlog_innodb \
         update \
         variables-notembedded
+	  $(PERL) -I$(top_srcdir)/tests/lib \
+		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+		--suite=vcol

@@ -46,7 +46,7 @@ template class List_iterator<Create_field>;
   and index of field in thia array.
 */
 #define FIELDTYPE_TEAR_FROM (DRIZZLE_TYPE_VARCHAR + 1)
-#define FIELDTYPE_TEAR_TO   (DRIZZLE_TYPE_NEWDECIMAL - 1)
+#define FIELDTYPE_TEAR_TO   (DRIZZLE_TYPE_VIRTUAL - 1)
 #define FIELDTYPE_NUM (FIELDTYPE_TEAR_FROM + (255 - FIELDTYPE_TEAR_TO))
 inline int field_type2index (enum_field_types field_type)
 {
@@ -76,6 +76,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -99,6 +101,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -122,6 +126,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -145,6 +151,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -168,6 +176,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_ENUM,
   //DRIZZLE_TYPE_BLOB
@@ -191,6 +201,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -214,6 +226,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -237,6 +251,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -260,6 +276,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -283,6 +301,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -306,10 +326,37 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
+  },
+  /* DRIZZLE_TYPE_VIRTUAL -> */
+  {
+  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
+    DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_DOUBLE
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
+    DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_LONGLONG
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_DATETIME
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
+    DRIZZLE_TYPE_VIRTUAL,     DRIZZLE_TYPE_VIRTUAL,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
+    DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_BLOB
+    DRIZZLE_TYPE_VIRTUAL,
   },
   /* DRIZZLE_TYPE_NEWDECIMAL -> */
   {
@@ -329,6 +376,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -352,6 +401,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
@@ -375,6 +426,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
+  // DRIZZLE_TYPE_VIRTUAL
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_BLOB
@@ -420,6 +473,8 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
   STRING_RESULT,            STRING_RESULT,
+  //DRIZZLE_TYPE_VIRTUAL
+  STRING_RESULT,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
   DECIMAL_RESULT,           STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
@@ -745,7 +800,8 @@ Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
    field_length(length_arg), null_bit(null_bit_arg), 
-   is_created_from_null_item(false)
+   is_created_from_null_item(false),
+   vcol_info(NULL), is_stored(true)
 {
   flags=null_ptr ? 0: NOT_NULL_FLAG;
   comment.str= (char*) "";
@@ -1723,6 +1779,8 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
               ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
               (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
+  vcol_info= NULL;
+  is_stored= true;
 }
 
 
@@ -1741,6 +1799,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
   @param fld_change            Field change
   @param fld_interval_list     Interval list (if any)
   @param fld_charset           Field charset
+  @param fld_vcol_info         Virtual column data
 
   @retval
     false on success
@@ -1755,7 +1814,8 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
                         uint32_t fld_geom_type __attribute__((unused)),
-                        enum column_format_type column_format)
+                        enum column_format_type column_format,
+                        virtual_column_info *fld_vcol_info)
 {
   uint32_t sign_len, allowed_type_modifier= 0;
   uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
@@ -1784,6 +1844,56 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
   interval_list.empty();
 
   comment= *fld_comment;
+  vcol_info= fld_vcol_info;
+  is_stored= true;
+
+  /* Initialize data for a virtual field */
+  if (fld_type == DRIZZLE_TYPE_VIRTUAL)
+  {
+    assert(vcol_info && vcol_info->expr_item);
+    is_stored= vcol_info->get_field_stored();
+    /*
+      Perform per item-type checks to determine if the expression is 
+      allowed for a virtual column.
+      Note that validation of the specific function is done later in
+      procedures open_table_from_share and fix_fields_vcol_func
+    */
+    switch (vcol_info->expr_item->type()) {
+    case Item::FUNC_ITEM:
+         if (((Item_func *)vcol_info->expr_item)->functype() == Item_func::FUNC_SP)
+         {
+           my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
+           return(true);
+         }
+         break;
+    case Item::COPY_STR_ITEM:
+    case Item::FIELD_AVG_ITEM:
+    case Item::PROC_ITEM:
+    case Item::REF_ITEM:
+    case Item::FIELD_STD_ITEM:
+    case Item::FIELD_VARIANCE_ITEM:
+    case Item::INSERT_VALUE_ITEM:
+    case Item::SUBSELECT_ITEM:
+    case Item::CACHE_ITEM:
+    case Item::TYPE_HOLDER:
+    case Item::PARAM_ITEM:
+    case Item::VIEW_FIXER_ITEM: 
+         my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
+         return true;
+         break;
+    default: 
+      // Continue with the field creation
+      break;
+    }
+    /*
+      Make a field created for the real type.
+      Note that "real" and virtual fields differ from each other
+      only by Field::vcol_info, which is always 0 for normal columns.
+      vcol_info is updated for fields later in procedure open_binary_frm.
+    */
+    sql_type= fld_type= vcol_info->get_real_type();
+  }
+
   /*
     Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
     it is NOT NULL, not an AUTO_INCREMENT field and not a TIMESTAMP.
@@ -1938,6 +2048,8 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
       length= 1; /* See comment for DRIZZLE_TYPE_SET above. */
       break;
    }
+  case DRIZZLE_TYPE_VIRTUAL: // Must not happen
+    assert(0);
   }
   /* Remember the value of length */
   char_length= length;
@@ -2117,6 +2229,8 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
   case DRIZZLE_TYPE_NULL:
     return new Field_null(ptr, field_length, unireg_check, field_name,
                           field_charset);
+  case DRIZZLE_TYPE_VIRTUAL:                    // Must not happen
+    assert(0);
   default:					// Impossible (Wrong version)
     break;
   }
@@ -2139,6 +2253,8 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   charset=    old_field->charset();		// May be NULL ptr
   comment=    old_field->comment;
   decimals=   old_field->decimals();
+  vcol_info=  old_field->vcol_info;
+  is_stored= old_field->is_stored;
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)

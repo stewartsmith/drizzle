@@ -887,6 +887,12 @@ public:
   { return 0; }
   virtual bool register_field_in_read_map(unsigned char *arg __attribute__((unused)))
   { return 0; }
+  /*
+    The next function differs from the previous one that a bitmap to be updated
+    is passed as unsigned char *arg.
+  */
+  virtual bool register_field_in_bitmap(unsigned char *arg __attribute__((unused)))
+  { return 0; }
   virtual bool subst_argument_checker(unsigned char **arg)
   {
     if (*arg)
@@ -894,9 +900,22 @@ public:
     return true;
   }
 
+  /*
+    Check if an expression/function is allowed for a virtual column
+    SYNOPSIS
+      check_vcol_func_processor()
+      arg is just ignored
+    RETURN VALUE
+      TRUE                           Function not accepted
+      FALSE                          Function accepted
+  */
+  virtual bool check_vcol_func_processor(unsigned char *arg __attribute__((unused))) 
+  { return true; }
+
   virtual Item *equal_fields_propagator(unsigned char * arg __attribute__((unused))) { return this; }
   virtual bool set_no_const_sub(unsigned char *arg __attribute__((unused))) { return false; }
   virtual Item *replace_equal_field(unsigned char * arg __attribute__((unused))) { return this; }
+
 
   /*
     For SP local variable returns pointer to Item representing its
@@ -1154,6 +1173,9 @@ public:
   bool collect_item_field_processor(unsigned char * arg);
   bool find_item_in_field_list_processor(unsigned char *arg);
   bool register_field_in_read_map(unsigned char *arg);
+  bool register_field_in_bitmap(unsigned char *arg);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
   void cleanup();
   bool result_as_int64_t()
   {
@@ -1209,6 +1231,8 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 class Item_null_result :public Item_null
@@ -1221,6 +1245,8 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return true; }
 };  
 
 /* Item represents one placeholder ('?') of prepared statement */
@@ -1396,6 +1422,8 @@ public:
   uint32_t decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1413,6 +1441,8 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1454,6 +1484,8 @@ public:
   uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1521,6 +1553,8 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1650,6 +1684,8 @@ public:
   {
     m_cs_specified= cs_specified;
   }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 
 private:
   bool m_cs_specified;
@@ -1672,6 +1708,8 @@ public:
   {
     str->append(func_name);
   }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -1751,6 +1789,8 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -1782,6 +1822,8 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -2269,6 +2311,8 @@ public:
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);
   }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
+  { return true; }
 };
 
 

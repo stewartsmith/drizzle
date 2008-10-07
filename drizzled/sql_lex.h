@@ -1382,6 +1382,7 @@ typedef struct st_lex : public Query_tables_list
   XID *xid;
   unsigned char* yacc_yyss, *yacc_yyvs;
   THD *thd;
+  virtual_column_info *vcol_info;
 
   /* maintain a list of used plugins for this LEX */
   DYNAMIC_ARRAY plugins;
@@ -1444,6 +1445,14 @@ typedef struct st_lex : public Query_tables_list
     syntax error back.
   */
   bool expr_allows_subselect;
+  /*
+    A special command "PARSE_VCOL_EXPR" is defined for the parser 
+    to translate an expression statement of a virtual column \
+    (stored in the *.frm file as a string) into an Item object.
+    The following flag is used to prevent other applications to use 
+    this command.
+  */
+  bool parse_vcol_expr;
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;

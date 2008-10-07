@@ -666,7 +666,23 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   Table *table= (Table *) arg;
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
+  if (field->vcol_info && field->vcol_info->expr_item)
+    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+                                             1, arg);
   return 0;
+}
+
+/*
+  Mark field in bitmap supplied as *arg
+
+*/
+
+bool Item_field::register_field_in_bitmap(unsigned char *arg)
+{
+  MY_BITMAP *bitmap= (MY_BITMAP *) arg;
+  assert(bitmap);
+  bitmap_set_bit(bitmap, field->field_index);
+  return false;
 }
 
 

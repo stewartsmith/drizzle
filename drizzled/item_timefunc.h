@@ -73,6 +73,8 @@ public:
   }
   enum_monotonicity_info get_monotonicity_info() const;
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -88,6 +90,8 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1; 
   }
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -112,6 +116,8 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1; 
   }
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -311,6 +317,8 @@ public:
     decimals=0;
     max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
   }
+  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -446,6 +454,8 @@ public:
   */
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
   bool result_as_int64_t() { return true; }
+  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -482,6 +492,8 @@ public:
   void fix_length_and_dec();
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -522,6 +534,8 @@ public:
   void fix_length_and_dec();
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -578,6 +592,8 @@ public:
   Item_func_from_days(Item *a) :Item_date(a) {}
   const char *func_name() const { return "from_days"; }
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 

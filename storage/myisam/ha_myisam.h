@@ -155,6 +155,7 @@ public:
   
   /* Index condition pushdown implementation */
   Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
+  bool check_if_supported_virtual_columns(void) { return true; }
 private:
   DsMrr_impl ds_mrr;
   key_map keys_with_parts;
