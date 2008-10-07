@@ -20,13 +20,6 @@
 #ifndef _drizzled_sql_state_h
 #define _drizzled_sql_state_h
 
-struct st_map_errno_to_sqlstate
-{
-  uint32_t drizzle_errno;
-  const char *odbc_state;
-  const char *jdbc_state;
-};
-
 const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
 
 #endif

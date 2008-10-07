@@ -18,17 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Functions to map mysqld errno to sql_state */
-#include <drizzled/global.h>
-#include <drizzled/error.h>
-#include <libdrizzle/libdrizzle.h>
-#include "sql_state.h"
-#include <vector>
+/* Functions to map drizzle errno to sql_state */
+#include "config.h"
+
+#include CSTDINT_H
 #include <algorithm>
+
+#include <drizzled/sql_state.h>
+#include <drizzled/error.h>
 
 using namespace std;
 
-struct st_map_errno_to_sqlstate sqlstate_array[]=
+typedef struct st_map_errno_to_sqlstate
+{
+  uint32_t drizzle_errno;
+  const char *odbc_state;
+  const char *jdbc_state;
+} errno_sqlstate_map;
+
+errno_sqlstate_map sqlstate_map[]=
 {
   { ER_DUP_KEY                              ,"23000", "" },
   { ER_OUTOFMEMORY                          ,"HY001", "S1001" },
@@ -238,12 +246,8 @@ struct st_map_errno_to_sqlstate sqlstate_array[]=
   { ER_DUP_ENTRY_WITH_KEY_NAME              ,"23000", "S1009" },
 };
 
-vector<struct st_map_errno_to_sqlstate>
-sqlstate_map(sqlstate_array,
-             sqlstate_array + sizeof(sqlstate_array)/sizeof(*sqlstate_array));
-
-bool compare_errno_map(st_map_errno_to_sqlstate a,
-                       st_map_errno_to_sqlstate b)
+bool compare_errno_map(errno_sqlstate_map a,
+                       errno_sqlstate_map b)
 {
   return (a.drizzle_errno < b.drizzle_errno);
 }
@@ -251,10 +255,11 @@ bool compare_errno_map(st_map_errno_to_sqlstate a,
 const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno)
 {
 
-  struct st_map_errno_to_sqlstate the_state= {drizzle_errno, NULL, NULL};
-  vector<struct st_map_errno_to_sqlstate>::iterator result=
-    lower_bound(sqlstate_map.begin(), sqlstate_map.end(),
-                the_state, compare_errno_map);
+  errno_sqlstate_map drizzle_err_state= {drizzle_errno, NULL, NULL};
+  errno_sqlstate_map* result=
+    lower_bound(&sqlstate_map[0],
+                &sqlstate_map[sizeof(sqlstate_map)/sizeof(*sqlstate_map)],
+                drizzle_err_state, compare_errno_map);
 
   if ((*result).drizzle_errno == drizzle_errno)
     return (*result).odbc_state;
