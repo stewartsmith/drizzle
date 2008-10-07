@@ -5159,10 +5159,6 @@ show_param:
           {
             Lex->sql_command = SQLCOM_SHOW_BINLOGS;
           }
-        | SLAVE HOSTS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_SLAVE_HOSTS;
-          }
         | BINLOG_SYM EVENTS_SYM binlog_in binlog_from
           {
             LEX *lex= Lex;

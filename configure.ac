@@ -843,7 +843,6 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
 
 AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
-AC_CHECK_FUNCS(log2)
 
 AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
 AC_CHECK_FUNC(yp_get_default_domain, [],

@@ -23,8 +23,6 @@
   @details
   Mostly this file is used in the server. But a little part of it is used in
   mysqlbinlog too (definition of SELECT_DISTINCT and others).
-  The consequence is that 90% of the file is wrapped in \#ifndef DRIZZLE_CLIENT,
-  except the part which must be in the server and in the client.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
 */
@@ -110,29 +108,8 @@ bool reload_cache(THD *thd, ulong options, TableList *tables, bool *write_to_bin
 
 bool check_simple_select();
 
-/* @TODO <UNUSED> */
 void mysql_init_select(LEX *lex);
 bool mysql_new_select(LEX *lex, bool move_down);
-void init_max_user_conn(void);
-void free_max_user_conn(void);
-pthread_handler_t handle_bootstrap(void *arg);
-int mysql_execute_command(THD *thd);
-bool check_dup(const char *db, const char *name, TableList *tables);
-bool check_table_access(THD *thd, ulong want_access, TableList *tables,
-                        bool no_errors,
-                        bool any_combination_of_privileges_will_do,
-                        uint32_t number);
-/*
-  General routine to change field->ptr of a NULL-terminated array of Field
-  objects. Useful when needed to call val_int, val_str or similar and the
-  field data is not in table->record[0] but in some other structure.
-  set_key_field_ptr changes all fields of an index using a key_info object.
-  All methods presume that there is at least one field to change.
-*/
-void set_field_ptr(Field **ptr, const unsigned char *new_buf, const unsigned char *old_buf);
-void set_key_field_ptr(KEY *key_info, const unsigned char *new_buf,
-                       const unsigned char *old_buf);
-/* </UNUSED> */
 
 /* sql_base.cc */
 void table_cache_free(void);
@@ -1058,28 +1035,6 @@ inline int hexchar_to_int(char c)
   return -1;
 }
 
-/**
-  return true if the table was created explicitly.
-*/
-inline bool is_user_table(Table * table)
-{
-  const char *name= table->s->table_name.str;
-  return strncmp(name, tmp_file_prefix, tmp_file_prefix_length);
-}
-
-
-#ifndef HAVE_LOG2
-/*
-  This will be slightly slower and perhaps a tiny bit less accurate than
-  doing it the IEEE754 way but log2() should be available on C99 systems.
-*/
-static inline double log2(double x)
-{
-  return (log(x) / M_LN2);
-}
-#endif
-
-
 /*
   Some functions that are different in the embedded library and the normal
   server
@@ -1088,50 +1043,5 @@ static inline double log2(double x)
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
 void kill_delayed_threads(void);
 bool check_stack_overrun(THD *thd, long margin, unsigned char *dummy);
-
-/** 
- * Used by handlers to store things in schema tables 
- *
- * @TODO These should be placed in an information_schema.h header
- * file once the new information schema design is finalized.
- */
-#define IS_FILES_FILE_ID              0
-#define IS_FILES_FILE_NAME            1
-#define IS_FILES_FILE_TYPE            2
-#define IS_FILES_TABLESPACE_NAME      3
-#define IS_FILES_TABLE_CATALOG        4
-#define IS_FILES_TABLE_SCHEMA         5
-#define IS_FILES_TABLE_NAME           6
-#define IS_FILES_LOGFILE_GROUP_NAME   7
-#define IS_FILES_LOGFILE_GROUP_NUMBER 8
-#define IS_FILES_ENGINE               9
-#define IS_FILES_FULLTEXT_KEYS       10
-#define IS_FILES_DELETED_ROWS        11
-#define IS_FILES_UPDATE_COUNT        12
-#define IS_FILES_FREE_EXTENTS        13
-#define IS_FILES_TOTAL_EXTENTS       14
-#define IS_FILES_EXTENT_SIZE         15
-#define IS_FILES_INITIAL_SIZE        16
-#define IS_FILES_MAXIMUM_SIZE        17
-#define IS_FILES_AUTOEXTEND_SIZE     18
-#define IS_FILES_CREATION_TIME       19
-#define IS_FILES_LAST_UPDATE_TIME    20
-#define IS_FILES_LAST_ACCESS_TIME    21
-#define IS_FILES_RECOVER_TIME        22
-#define IS_FILES_TRANSACTION_COUNTER 23
-#define IS_FILES_VERSION             24
-#define IS_FILES_ROW_FORMAT          25
-#define IS_FILES_TABLE_ROWS          26
-#define IS_FILES_AVG_ROW_LENGTH      27
-#define IS_FILES_DATA_LENGTH         28
-#define IS_FILES_MAX_DATA_LENGTH     29
-#define IS_FILES_INDEX_LENGTH        30
-#define IS_FILES_DATA_FREE           31
-#define IS_FILES_CREATE_TIME         32
-#define IS_FILES_UPDATE_TIME         33
-#define IS_FILES_CHECK_TIME          34
-#define IS_FILES_CHECKSUM            35
-#define IS_FILES_STATUS              36
-#define IS_FILES_EXTRA               37
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

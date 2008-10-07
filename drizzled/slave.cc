@@ -30,7 +30,6 @@
 #include "rpl_rli.h"
 #include "sql_repl.h"
 #include "rpl_filter.h"
-#include "repl_failsafe.h"
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/sql_common.h>
 #include <libdrizzle/errmsg.h>
@@ -1196,21 +1195,8 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Until_Log_File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Until_Log_Pos", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Allowed", 7));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_File",
-                                             sizeof(mi->ssl_ca)));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_Path",
-                                             sizeof(mi->ssl_capath)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cert",
-                                             sizeof(mi->ssl_cert)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cipher",
-                                             sizeof(mi->ssl_cipher)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Key",
-                                             sizeof(mi->ssl_key)));
   field_list.push_back(new Item_return_int("Seconds_Behind_Master", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Verify_Server_Cert",
-                                             3));
   field_list.push_back(new Item_return_int("Last_IO_Errno", 4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_IO_Error", 20));
   field_list.push_back(new Item_return_int("Last_SQL_Errno", 4, DRIZZLE_TYPE_LONG));
@@ -1276,13 +1262,6 @@ bool show_master_info(THD* thd, Master_info* mi)
     protocol->store(mi->rli.until_log_name, &my_charset_bin);
     protocol->store((uint64_t) mi->rli.until_log_pos);
 
-    protocol->store(mi->ssl? "Ignored":"No", &my_charset_bin);
-    protocol->store(mi->ssl_ca, &my_charset_bin);
-    protocol->store(mi->ssl_capath, &my_charset_bin);
-    protocol->store(mi->ssl_cert, &my_charset_bin);
-    protocol->store(mi->ssl_cipher, &my_charset_bin);
-    protocol->store(mi->ssl_key, &my_charset_bin);
-
     /*
       Seconds_Behind_Master: if SQL thread is running and I/O thread is
       connected, we can compute it otherwise show NULL (i.e. unknown).
@@ -1319,7 +1298,6 @@ bool show_master_info(THD* thd, Master_info* mi)
     {
       protocol->store_null();
     }
-    protocol->store(mi->ssl_verify_server_cert? "Yes":"No", &my_charset_bin);
 
     // Last_IO_Errno
     protocol->store(mi->last_error().number);
@@ -1359,26 +1337,6 @@ void set_slave_thread_options(THD* thd)
     options&= ~OPTION_BIN_LOG;
   thd->options= options;
   thd->variables.completion_type= 0;
-  return;
-}
-
-void set_slave_thread_default_charset(THD* thd, Relay_log_info const *rli)
-{
-  thd->variables.character_set_client=
-    global_system_variables.character_set_client;
-  thd->variables.collation_connection=
-    global_system_variables.collation_connection;
-  thd->variables.collation_server=
-    global_system_variables.collation_server;
-  thd->update_charset();
-
-  /*
-    We use a const cast here since the conceptual (and externally
-    visible) behavior of the function is to set the default charset of
-    the thread.  That the cache has to be invalidated is a secondary
-    effect.
-   */
-  const_cast<Relay_log_info*>(rli)->cached_charset_invalidate();
   return;
 }
 
@@ -2212,8 +2170,6 @@ err:
   /* Forget the relay log's format */
   delete mi->rli.relay_log.description_event_for_queue;
   mi->rli.relay_log.description_event_for_queue= 0;
-  // TODO: make rpl_status part of Master_info
-  change_rpl_status(RPL_ACTIVE_SLAVE,RPL_IDLE_SLAVE);
   assert(thd->net.buff != 0);
   net_end(&thd->net); // destructor will not free it, because net.vio is 0
   close_thread_tables(thd);
@@ -2480,8 +2436,6 @@ pthread_handler_t handle_slave_sql(void *arg)
   pthread_mutex_unlock(&rli->data_lock);
   pthread_cond_broadcast(&rli->data_cond);
   rli->ignore_log_space_limit= 0; /* don't need any lock */
-  /* we die so won't remember charset - re-update them on next thread start */
-  rli->cached_charset_invalidate();
   rli->save_temporary_tables = thd->temporary_tables;
 
   /*
@@ -3192,8 +3146,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
     if (++err_count == master_retry_count)
     {
       slave_was_killed=1;
-      if (reconnect)
-        change_rpl_status(RPL_ACTIVE_SLAVE,RPL_LOST_SOLDIER);
       break;
     }
     safe_sleep(thd,mi->connect_retry,(CHECK_KILLED_FUNC)io_slave_killed,
@@ -3211,10 +3163,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                                 mi->host, mi->port,
                                 IO_RPL_LOG_NAME,
                                 llstr(mi->master_log_pos,llbuff));
-    }
-    else
-    {
-      change_rpl_status(RPL_IDLE_SLAVE,RPL_ACTIVE_SLAVE);
     }
   }
   drizzle->reconnect= 1;

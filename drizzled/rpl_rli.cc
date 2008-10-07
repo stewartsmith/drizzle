@@ -63,7 +63,6 @@ Relay_log_info::Relay_log_info()
   until_log_name[0]= ign_master_log_name_end[0]= 0;
   memset(&info_file, 0, sizeof(info_file));
   memset(&cache_buf, 0, sizeof(cache_buf));
-  cached_charset_invalidate();
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&log_space_lock, MY_MUTEX_INIT_FAST);
@@ -988,25 +987,6 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
   return(((until_log_names_cmp_result == UNTIL_LOG_NAMES_CMP_EQUAL &&
            log_pos >= until_log_pos) ||
           until_log_names_cmp_result == UNTIL_LOG_NAMES_CMP_GREATER));
-}
-
-
-void Relay_log_info::cached_charset_invalidate()
-{
-  /* Full of zeroes means uninitialized. */
-  memset(cached_charset, 0, sizeof(cached_charset));
-  return;
-}
-
-
-bool Relay_log_info::cached_charset_compare(char *charset) const
-{
-  if (memcmp(cached_charset, charset, sizeof(cached_charset)))
-  {
-    memcpy(const_cast<char*>(cached_charset), charset, sizeof(cached_charset));
-    return(1);
-  }
-  return(0);
 }
 
 

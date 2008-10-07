@@ -17,7 +17,6 @@
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
-#include "repl_failsafe.h"
 #include "logging.h"
 #include <drizzled/drizzled_error_messages.h>
 
@@ -70,12 +69,8 @@ static void unlock_locked_tables(THD *thd)
 
 bool end_active_trans(THD *thd)
 {
-  int error=0;
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
+  int error= 0;
+
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
@@ -100,12 +95,7 @@ bool end_active_trans(THD *thd)
 
 bool begin_trans(THD *thd)
 {
-  int error=0;
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return 1;
-  }
+  int error= 0;
   if (thd->locked_tables)
   {
     thd->lock=thd->locked_tables;
@@ -196,7 +186,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_CHARSETS]=    CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_COLLATIONS]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_SLAVE_HOSTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOG_EVENTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
@@ -271,11 +260,6 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
   bool do_release= 0;
   int res= 0;
 
-  if (unlikely(thd->in_sub_stmt))
-  {
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
@@ -555,12 +539,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
     break;
   }
-  case COM_REGISTER_SLAVE:
-  {
-    if (!register_slave(thd, (unsigned char*)packet, packet_length))
-      my_ok(thd);
-    break;
-  }
   case COM_CHANGE_USER:
   {
     status_var_increment(thd->status_var.com_other);
@@ -793,7 +771,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       thd->server_id = slave_server_id;
 
       mysql_binlog_send(thd, thd->strdup(packet + 10), (my_off_t) pos, flags);
-      unregister_slave(thd,1,1);
       /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
       error = true;
       break;
@@ -895,14 +872,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
 void log_slow_statement(THD *thd)
 {
-  /*
-    The following should never be true with our current code base,
-    but better to keep this here so we don't accidently try to log a
-    statement in a trigger or stored function
-  */
-  if (unlikely(thd->in_sub_stmt))
-    return;                           // Don't set time for sub stmt
-
   logging_post_do(thd);
 
   return;
@@ -1285,11 +1254,6 @@ mysql_execute_command(THD *thd)
   {
     res= mysqld_show_warnings(thd, (uint32_t)
 			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
-  case SQLCOM_SHOW_SLAVE_HOSTS:
-  {
-    res = show_slave_hosts(thd);
     break;
   }
   case SQLCOM_SHOW_BINLOG_EVENTS:
@@ -2380,8 +2344,7 @@ end_with_restore_list:
     break;
   }
   case SQLCOM_SAVEPOINT:
-    if (!(thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN) ||
-          thd->in_sub_stmt) || !opt_using_transactions)
+    if (!(thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) || !opt_using_transactions)
       my_ok(thd);
     else
     {
@@ -2608,7 +2571,6 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 void mysql_reset_thd_for_next_command(THD *thd)
 {
-  assert(! thd->in_sub_stmt);
   thd->free_list= 0;
   thd->select_number= 1;
   /*
@@ -3628,8 +3590,6 @@ bool reload_cache(THD *thd, ulong options, TableList *tables,
   bool result=0;
   select_errors=0;				/* Write if more errors */
   bool tmp_write_to_binlog= 1;
-
-  assert(!thd || !thd->in_sub_stmt);
 
   if (options & REFRESH_LOG)
   {

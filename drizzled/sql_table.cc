@@ -402,7 +402,6 @@ int mysql_rm_table_part2(THD *thd, TableList *tables, bool if_exists,
       tmp_table_deleted= 1;
       continue;
     case -1:
-      assert(thd->in_sub_stmt);
       error= 1;
       goto err_with_placeholders;
     default:

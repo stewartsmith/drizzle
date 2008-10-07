@@ -1041,9 +1041,6 @@ public:
   
   thr_lock_type update_lock_default;
 
-  /* <> 0 if we are inside of trigger or stored function. */
-  uint32_t in_sub_stmt;
-
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
 
@@ -1663,17 +1660,7 @@ public:
 
   inline void set_current_stmt_binlog_row_based_if_mixed()
   {
-    /*
-      If in a stored/function trigger, the caller should already have done the
-      change. We test in_sub_stmt to prevent introducing bugs where people
-      wouldn't ensure that, and would switch to row-based mode in the middle
-      of executing a stored function/trigger (which is too late, see also
-      reset_current_stmt_binlog_row_based()); this condition will make their
-      tests fail and so force them to propagate the
-      lex->binlog_row_based_if_mixed upwards to the caller.
-    */
-    if ((variables.binlog_format == BINLOG_FORMAT_MIXED) &&
-        (in_sub_stmt == 0))
+    if (variables.binlog_format == BINLOG_FORMAT_MIXED)
       current_stmt_binlog_row_based= true;
   }
   inline void set_current_stmt_binlog_row_based()
@@ -1692,18 +1679,10 @@ public:
       CREATE TEMPORARY TABLE t SELECT UUID(); # row-based
       # and row-based does not store updates to temp tables
       # in the binlog.
-      INSERT INTO u SELECT * FROM t; # stmt-based
-      and then the INSERT will fail as data inserted into t was not logged.
-      So we continue with row-based until the temp table is dropped.
-      If we are in a stored function or trigger, we mustn't reset in the
-      middle of its execution (as the binary logging way of a stored function
-      or trigger is decided when it starts executing, depending for example on
-      the caller (for a stored function: if caller is SELECT or
-      INSERT/UPDATE/DELETE...).
 
       Don't reset binlog format for NDB binlog injector thread.
     */
-    if ((temporary_tables == NULL) && (in_sub_stmt == 0))
+    if (temporary_tables == NULL)
     {
       current_stmt_binlog_row_based= 
         test(variables.binlog_format == BINLOG_FORMAT_ROW);
