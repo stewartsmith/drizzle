@@ -860,9 +860,11 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
   mi_int2store(ptr,base->max_key_length);		ptr +=2;
   mi_int2store(ptr,base->extra_alloc_bytes);		ptr +=2;
   *ptr++= base->extra_alloc_procent;
-  *ptr++= base->raid_type;
-  mi_int2store(ptr,base->raid_chunks);			ptr +=2;
-  mi_int4store(ptr,base->raid_chunksize);		ptr +=4;
+  /* old raid info  slots */
+  *ptr++= 0;
+  mi_int2store(ptr,UINT16_C(0));			ptr +=2;
+  mi_int4store(ptr,UINT32_C(0));         		ptr +=4;
+
   memset(ptr, 0, 6);					ptr +=6; /* extra */
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
@@ -894,15 +896,9 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   base->max_key_length = mi_uint2korr(ptr);		ptr +=2;
   base->extra_alloc_bytes = mi_uint2korr(ptr);		ptr +=2;
   base->extra_alloc_procent = *ptr++;
-  base->raid_type= *ptr++;
-  base->raid_chunks= mi_uint2korr(ptr);			ptr +=2;
-  base->raid_chunksize= mi_uint4korr(ptr);		ptr +=4;
-  /* TO BE REMOVED: Fix for old RAID files */
-  if (base->raid_type == 0)
-  {
-    base->raid_chunks=0;
-    base->raid_chunksize=0;
-  }
+
+  /* advance past raid_type (1) raid_chunks (2) and raid_chunksize (4) */
+  ptr+= 7; 
 
   ptr+=6;
   return ptr;
@@ -1043,7 +1039,7 @@ unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 }
 
 /**************************************************************************
-Open data file with or without RAID
+Open data file
 We can't use dup() here as the data file descriptors need to have different
 active seek-positions.
 

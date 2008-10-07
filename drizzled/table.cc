@@ -1975,7 +1975,7 @@ File create_frm(THD *thd, const char *name, const char *db,
 		   create_info->default_table_charset->number : 0);
     fileinfo[39]= (unsigned char) create_info->page_checksum;
     fileinfo[40]= (unsigned char) create_info->row_type;
-    /* Next few bytes where for RAID support */
+    /* Next few bytes were for RAID support */
     fileinfo[41]= 0;
     fileinfo[42]= 0;
     int4store(fileinfo+43,create_info->block_size);

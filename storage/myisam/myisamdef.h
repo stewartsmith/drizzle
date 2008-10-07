@@ -25,7 +25,7 @@
 #include <mysys/thr_lock.h>
 #include <libdrizzle/drizzle_com.h>
 
-#if defined(my_write) && !defined(MAP_TO_USE_RAID)
+#if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
 
@@ -130,7 +130,7 @@ typedef struct st_mi_base_info
   uint32_t extra_alloc_procent;
   /* Info about raid */
   uint32_t raid_type,raid_chunks;
-  ulong raid_chunksize;
+  uint32_t raid_chunksize;
   /* The following are from the header */
   uint32_t key_parts,all_key_parts;
 } MI_BASE_INFO;
