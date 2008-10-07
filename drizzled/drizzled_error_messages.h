@@ -375,6 +375,8 @@ N_("All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use 
 N_("Result consisted of more than one row"),
 /* ER_REQUIRES_PRIMARY_KEY 42000  */
 N_("This table type requires a primary key"),
+/* ER_NO_RAID_COMPILED   */
+N_("This version of MySQL is not compiled with RAID support"),
 /* ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE   */
 N_("You are using safe update mode and you tried to update a table without a WHERE that uses a KEY column"),
 /* ER_KEY_DOES_NOT_EXITS 42000 S1009 */
