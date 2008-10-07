@@ -21,14 +21,6 @@
 #ifndef _my_sys_h
 #define _my_sys_h
 
-#ifdef HAVE_AIOWAIT
-#include <sys/asynch.h>			/* Used by record-cache */
-typedef struct my_aio_result {
-  aio_result_t result;
-  int	       pending;
-} my_aio_result;
-#endif
-
 #include <errno.h>
 #define my_errno (errno)
 
@@ -37,6 +29,7 @@ typedef struct my_aio_result {
 #include <mystrings/m_ctype.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
 #include <mysys/typelib.h>
+#include <mysys/aio_result.h>
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 

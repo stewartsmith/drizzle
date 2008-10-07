@@ -45,7 +45,8 @@ noinst_HEADERS =	mysys_priv.h \
 			my_time.h \
 			drizzle_time.h \
 			thr_lock.h \
-			base64.h
+			base64.h \
+			aio_result.h
 
 if BUILD_FAST_MUTEX
 thr_mutex_source=thr_mutex.c
