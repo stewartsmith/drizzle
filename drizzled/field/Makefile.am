@@ -27,6 +27,7 @@ libfield_la_SOURCES = 	blob.cc \
 			long.cc \
 			longstr.cc \
 			null.cc \
+			num.cc \
 			fstring.cc \
 			real.cc \
 			str.cc \
@@ -44,6 +45,7 @@ noinst_HEADERS = blob.h \
 		 long.h \
 		 longstr.h \
 		 null.h \
+		 num.h \
 		 fstring.h \
 		 real.h \
 		 str.h \
