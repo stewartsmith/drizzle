@@ -20,7 +20,8 @@ MYSQLBASEdir=		$(prefix)
 noinst_LTLIBRARIES =	libmysys.la
 
 mysysincludedir = ${includedir}/mysys
-dist_mysysinclude_HEADERS = 	my_alloc.h \
+dist_mysysinclude_HEADERS = 	iocache.h \
+                                my_alloc.h \
 				my_getopt.h \
 				my_list.h \
 				my_sys.h \
