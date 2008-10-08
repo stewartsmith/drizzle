@@ -638,28 +638,6 @@ void Log_event::pack_info(Protocol *protocol)
 
 
 /**
-  Only called by SHOW BINLOG EVENTS
-*/
-int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
-{
-  const char *p= strrchr(log_name, FN_LIBCHAR);
-  const char *event_type;
-  if (p)
-    log_name = p + 1;
-
-  protocol->prepare_for_resend();
-  protocol->store(log_name, &my_charset_bin);
-  protocol->store((uint64_t) pos);
-  event_type = get_type_str();
-  protocol->store(event_type, strlen(event_type), &my_charset_bin);
-  protocol->store((uint32_t) server_id);
-  protocol->store((uint64_t) log_pos);
-  pack_info(protocol);
-  return protocol->write();
-}
-
-
-/**
   init_show_field_list() prepares the column names and types for the
   output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
   EVENTS.

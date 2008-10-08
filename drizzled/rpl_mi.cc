@@ -139,13 +139,12 @@ bool Master_info::setConnectionRetry(uint32_t retry)
 void Master_info::reset()
 {
   log_name.clear();
-  log_pos= BIN_LOG_HEADER_SIZE; 
+  log_pos= 0; 
 }
 
 
 int Master_info::init_master_info(const char* master_info_fname,
                                   const char* slave_info_fname,
-                                  bool abort_if_no_master_info_file __attribute__((unused)),
                                   int thread_mask)
 {
   int error;
@@ -192,12 +191,6 @@ int Master_info::init_master_info(const char* master_info_fname,
   if (access(info_filename.c_str(), F_OK))
   {
     drizzle::MasterList_Record *record;
-
-    if (abort_if_no_master_info_file)
-    {
-      pthread_mutex_unlock(&data_lock);
-      return 0;
-    }
 
     reset();
 

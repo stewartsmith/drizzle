@@ -159,7 +159,7 @@ struct sql_ex_info
   char opt_flags;
   char empty_flags;
 
-  // store in new format even if old is possible
+  /* store in new format even if old is possible */
   void force_new_format() { cached_new_format = 1;}
   int data_size()
   {

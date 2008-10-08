@@ -66,7 +66,7 @@ private:
   string info_filename;
   string log_name;
   uint16_t port;
-  off_t log_pos;
+  uint64_t log_pos;
 
 public:
 
@@ -110,7 +110,6 @@ public:
 
   int init_master_info(const char* master_info_fname,
                        const char* slave_info_fname,
-                       bool abort_if_no_master_info_file,
                        int thread_mask);
 
   bool setUsername(const char *username);

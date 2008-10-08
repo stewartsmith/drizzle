@@ -239,7 +239,7 @@ int32_t init_slave()
     goto err;
   }
 
-  if (active_mi->init_master_info(master_info_file, relay_log_info_file, 1, (SLAVE_IO | SLAVE_SQL)))
+  if (active_mi->init_master_info(master_info_file, relay_log_info_file, (SLAVE_IO | SLAVE_SQL)))
   {
     sql_print_error(_("Failed to initialize the master info structure"));
     goto err;
@@ -1783,7 +1783,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
         */
         if (rli->trans_retries < slave_trans_retries)
         {
-          if (rli->mi->init_master_info(0, 0, 0, SLAVE_SQL))
+          if (rli->mi->init_master_info(0, 0, SLAVE_SQL))
             sql_print_error(_("Failed to initialize the master info structure"));
           else if (init_relay_log_pos(rli,
                                       rli->group_relay_log_name.c_str(),
