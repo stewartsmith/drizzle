@@ -1539,9 +1539,9 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
   tmp=(abs_dec < array_elements(log_10) ?
        log_10[abs_dec] : pow(10.0,(double) abs_dec));
 
-  if (dec_negative && isinf(tmp))
+  if (dec_negative && std::isinf(tmp))
     tmp2= 0;
-  else if (!dec_negative && isinf(value * tmp))
+  else if (!dec_negative && std::isinf(value * tmp))
     tmp2= value;
   else if (truncate)
   {

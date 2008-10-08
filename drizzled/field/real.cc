@@ -72,7 +72,7 @@ int Field_real::truncate(double *nr, double max_value)
   int error= 1;
   double res= *nr;
   
-  if (isnan(res))
+  if (std::isnan(res))
   {
     res= 0;
     set_null();
@@ -97,7 +97,7 @@ int Field_real::truncate(double *nr, double max_value)
     max_value-= 1.0 / log_10[dec];
 
     /* Check for infinity so we don't get NaN in calculations */
-    if (!isinf(res))
+    if (!(std::isinf(res)))
     {
       double tmp= rint((res - floor(res)) * log_10[dec]) / log_10[dec];
       res= floor(res) + tmp;
