@@ -18,10 +18,12 @@
 noinst_LTLIBRARIES = 	libfunctions.la
 
 libfunctions_la_SOURCES = func.cc \
-                          int.cc 
+                          int.cc \
+			  real.cc
 
 noinst_HEADERS = func.h \
-                 int.h
+                 int.h \
+		 real.h
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

@@ -32,22 +32,7 @@ extern "C"				/* Bug in BSDI include file */
 
 #include <drizzled/functions/func.h>
 #include <drizzled/functions/int.h>
-
-class Item_real_func :public Item_func
-{
-public:
-  Item_real_func() :Item_func() {}
-  Item_real_func(Item *a) :Item_func(a) {}
-  Item_real_func(Item *a,Item *b) :Item_func(a,b) {}
-  Item_real_func(List<Item> &list) :Item_func(list) {}
-  String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *decimal_value);
-  int64_t val_int()
-    { assert(fixed == 1); return (int64_t) rint(val_real()); }
-  enum Item_result result_type () const { return REAL_RESULT; }
-  void fix_length_and_dec()
-  { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
-};
+#include <drizzled/functions/real.h>
 
 
 class Item_func_numhybrid: public Item_func

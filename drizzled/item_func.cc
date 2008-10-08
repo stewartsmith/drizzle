@@ -48,29 +48,6 @@ eval_const_cond(COND *cond)
 }
 
 
-
-String *Item_real_func::val_str(String *str)
-{
-  assert(fixed == 1);
-  double nr= val_real();
-  if (null_value)
-    return 0; /* purecov: inspected */
-  str->set_real(nr,decimals, &my_charset_bin);
-  return str;
-}
-
-
-my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
-{
-  assert(fixed);
-  double nr= val_real();
-  if (null_value)
-    return 0; /* purecov: inspected */
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
-  return decimal_value;
-}
-
-
 void Item_func::fix_num_length_and_dec()
 {
   uint32_t fl_length= 0;
