@@ -147,8 +147,6 @@ class Item_num_op :public Item_func_numhybrid
 };
 
 
-#include <drizzled/functions/int.h>
-
 class Item_func_connection_id :public Item_int_func
 {
   int64_t value;
