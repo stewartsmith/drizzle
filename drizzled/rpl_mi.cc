@@ -35,9 +35,7 @@ Master_info::Master_info()
   host[0] = 0; user[0] = 0; password[0] = 0;
   io_thd= NULL;
   port= DRIZZLE_PORT;
-  fd= -1,
 
-  memset(&file, 0, sizeof(file));
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&data_cond, NULL);
@@ -108,6 +106,11 @@ bool Master_info::setLogPosition(off_t position)
   return true;
 }
 
+void Master_info::incrementLogPosition(off_t position)
+{
+  master_log_pos+= position;
+}
+
 const char *Master_info::getLogName()
 {
   return master_log_name.c_str();
@@ -145,8 +148,7 @@ int Master_info::init_master_info(const char* master_info_fname,
                                   bool abort_if_no_master_info_file __attribute__((unused)),
                                   int thread_mask)
 {
-  int fd,error;
-  char fname[FN_REFLEN+128];
+  int error;
 
   if (inited)
   {
@@ -171,7 +173,12 @@ int Master_info::init_master_info(const char* master_info_fname,
 
   drizzle= 0;
   file_id= 1;
-  fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
+  {
+    char fname[FN_REFLEN+128];
+
+    fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
+    master_info_filename.assign(fname);
+  }
 
   /*
     We need a mutex while we are changing master info parameters to
@@ -179,23 +186,22 @@ int Master_info::init_master_info(const char* master_info_fname,
   */
 
   pthread_mutex_lock(&data_lock);
-  fd= -1;
 
   /* does master.info exist ? */
 
-  if (access(fname,F_OK))
+  if (access(master_info_filename.c_str(), F_OK))
   {
     drizzle::MasterList_Record *record;
 
     if (abort_if_no_master_info_file)
     {
-      pthread_mutex_unlock(&mi->data_lock);
+      pthread_mutex_unlock(&data_lock);
       return 0;
     }
 
     reset();
 
-    /* Write new Master info file here (from fname) */
+    /* Write new Master info file here (from master_info_filename) */
     record= list.add_record();
     record->set_hostname(host);
     record->set_username(user);
@@ -205,7 +211,7 @@ int Master_info::init_master_info(const char* master_info_fname,
     record->set_log_name(master_log_name);
     record->set_log_position(master_log_pos);
 
-    fstream output(fname, ios::out | ios::trunc | ios::binary);
+    fstream output(master_info_filename.c_str(), ios::out | ios::trunc | ios::binary);
     if (!list.SerializeToOstream(&output)) 
     { 
       assert(0);
@@ -214,8 +220,8 @@ int Master_info::init_master_info(const char* master_info_fname,
   }
   else // file exists
   {
-    /* Read Master info file here (from fname) */
-    fstream input(fname, ios::in | ios::binary);
+    /* Read Master info file here (from master_info_filename) */
+    fstream input(master_info_filename.c_str(), ios::in | ios::binary);
     if (!list.ParseFromIstream(&input)) 
     {
       assert(0);
@@ -245,22 +251,14 @@ int Master_info::init_master_info(const char* master_info_fname,
     goto err;
 
   inited= 1;
-  // now change cache READ -> WRITE - must do this before flush_master_info
-  reinit_io_cache(&file, WRITE_CACHE, 0L, 0, 1);
-  if ((error= test(flush_master_info(1))))
+  if ((error= test(flush())))
     sql_print_error(_("Failed to flush master info file"));
   pthread_mutex_unlock(&data_lock);
   return(error);
 
 err:
-  if (fd >= 0)
-  {
-    my_close(fd, MYF(0));
-    end_io_cache(&file);
-  }
-  fd= -1;
   pthread_mutex_unlock(&data_lock);
-  return(1);
+  return 1;
 }
 
 
@@ -270,7 +268,7 @@ err:
      1 - flush master info failed
      0 - all ok
 */
-int Master_info::flush_master_info(bool flush_relay_log_cache __attribute__((unused)))
+int Master_info::flush()
 {
   /*
     Flush the relay log to disk. If we don't do it, then the relay log while
@@ -285,6 +283,26 @@ int Master_info::flush_master_info(bool flush_relay_log_cache __attribute__((unu
     the caller is responsible for setting 'flush_relay_log_cache' accordingly.
   */
 
+  /* Write Master info file here (from master_info_filename) */
+  assert(master_info_filename.length());
+  assert(list.record_size() == 1);
+  drizzle::MasterList_Record *record= list.mutable_record(0);
+
+  record->set_hostname(host);
+  record->set_username(user);
+  record->set_password(password);
+  record->set_port(port);
+  record->set_connect_retry(connect_retry);
+  record->set_log_name(master_log_name);
+  record->set_log_position(master_log_pos);
+
+  fstream output(master_info_filename.c_str(), ios::out | ios::trunc | ios::binary);
+  if (!list.SerializeToOstream(&output)) 
+  { 
+    assert(0);
+    return 1;
+  }
+
   return 0;
 }
 
@@ -294,12 +312,6 @@ void Master_info::end_master_info()
   if (!inited)
     return;
   end_relay_log_info(&rli);
-  if (fd >= 0)
-  {
-    end_io_cache(&file);
-    (void)my_close(fd, MYF(MY_WME));
-    fd = -1;
-  }
   inited = 0;
 
   return;

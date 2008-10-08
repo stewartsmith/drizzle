@@ -1037,7 +1037,7 @@ int reset_slave(THD *thd, Master_info* mi)
     goto err;
 
   /* Clear master's log coordinates */
-  mi->init_master_log_pos();
+  mi->reset();
   /*
      Reset errors (the idea is that we forget about the
      old master).
@@ -1155,16 +1155,13 @@ bool change_master(THD* thd, Master_info* mi)
   */
 
   if ((lex_mi->host || lex_mi->port) && !lex_mi->log_file_name && !lex_mi->pos)
-  {
-    mi->master_log_name[0] = 0;
-    mi->master_log_pos= BIN_LOG_HEADER_SIZE;
-  }
+    mi->reset();
 
   if (lex_mi->log_file_name)
     mi->setLogName(lex_mi->log_file_name);
   if (lex_mi->pos)
   {
-    mi->master_log_pos= lex_mi->pos;
+    mi->setLogPosition(lex_mi->pos);
   }
 
   if (lex_mi->host)
@@ -1219,16 +1216,16 @@ bool change_master(THD* thd, Master_info* mi)
        of replication is not 100% clear, so we guard against problems using
        cmax().
       */
-     mi->master_log_pos = ((BIN_LOG_HEADER_SIZE > mi->rli.group_master_log_pos)
-                           ? BIN_LOG_HEADER_SIZE
-			   : mi->rli.group_master_log_pos);
+     mi->setLogPosition(((BIN_LOG_HEADER_SIZE > mi->rli.group_master_log_pos)
+                         ? BIN_LOG_HEADER_SIZE
+                         : mi->rli.group_master_log_pos));
      mi->setLogName(mi->rli.group_master_log_name.c_str());
   }
   /*
     Relay log's IO_CACHE may not be inited, if rli->inited==0 (server was never
     a slave before).
   */
-  if (mi->flush_master_info(0))
+  if (mi->flush())
   {
     my_error(ER_RELAY_LOG_INIT, MYF(0), "Failed to flush master info file");
     unlock_slave_threads(mi);
@@ -1273,8 +1270,8 @@ bool change_master(THD* thd, Master_info* mi)
     ''/0: we have lost all copies of the original good coordinates.
     That's why we always save good coords in rli.
   */
-  mi->rli.group_master_log_pos= mi->master_log_pos;
-  mi->rli.group_master_log_name.assign(mi->master_log_name);
+  mi->rli.group_master_log_pos= mi->getLogPosition();
+  mi->rli.group_master_log_name.assign(mi->getLogName());
 
   if (mi->rli.group_master_log_name.size() == 0) // uninitialized case
     mi->rli.group_master_log_pos= 0;
