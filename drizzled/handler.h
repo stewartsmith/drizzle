@@ -20,9 +20,6 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #include <mysys/my_handler.h>
 #include <storage/myisam/keycache.h>

@@ -32,9 +32,6 @@
 #ifndef _log_event_h
 #define _log_event_h
 
-#if defined(USE_PRAGMA_INTERFACE)
-#pragma interface			/* gcc class implementation */
-#endif
 
 #include <mysys/my_bitmap.h>
 #include "rpl_constants.h"

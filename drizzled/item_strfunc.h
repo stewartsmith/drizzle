@@ -20,9 +20,6 @@
 
 /* This file defines all string functions */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 class Item_str_func :public Item_func
 {

@@ -20,9 +20,6 @@
   Innodb
 */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 typedef struct st_innobase_share {
   THR_LOCK lock;

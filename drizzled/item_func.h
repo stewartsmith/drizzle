@@ -22,9 +22,6 @@
 
 /* Function items used by mysql */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #ifdef HAVE_IEEEFP_H
 extern "C"				/* Bug in BSDI include file */

@@ -19,9 +19,6 @@
 
 /* subselect Item */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 class st_select_lex;
 class st_select_lex_unit;

@@ -18,10 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
 
 #ifndef DRIZZLED_TMP_TABLE_H
 #define DRIZZLED_TMP_TABLE_H

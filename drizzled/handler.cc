@@ -19,10 +19,6 @@
   Handler-calling-functions
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
 #include <drizzled/server_includes.h>
 #include "rpl_filter.h"
 #include <drizzled/drizzled_error_messages.h>
