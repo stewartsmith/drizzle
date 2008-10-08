@@ -285,14 +285,9 @@ typedef ptrdiff_t my_ptrdiff_t;
 typedef unsigned long ulong;      /* Short for unsigned long */
 #endif
 
-#if SIZEOF_OFF_T > 4 
 typedef uint64_t my_off_t;
-#else
-typedef unsigned long my_off_t;
-#endif
-#define MY_FILEPOS_ERROR  (~(my_off_t) 0)
 
-typedef off_t os_off_t;
+#define MY_FILEPOS_ERROR  (UINT64_MAX)
 
 typedef int    myf;  /* Type of MyFlags in my_funcs */
 #define MYF(v)		(myf) (v)
