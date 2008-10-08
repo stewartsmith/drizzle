@@ -759,7 +759,7 @@ bool close_cached_tables(THD *thd, TableList *tables, bool have_lock,
     */
     thd->mysys_var->current_mutex= &LOCK_open;
     thd->mysys_var->current_cond= &COND_refresh;
-    thd_proc_info(thd, "Flushing tables");
+    thd->set_proc_info("Flushing tables");
 
     close_old_data_files(thd,thd->open_tables,1,1);
     mysql_ha_flush(thd);
@@ -824,7 +824,7 @@ bool close_cached_tables(THD *thd, TableList *tables, bool have_lock,
     pthread_mutex_lock(&thd->mysys_var->mutex);
     thd->mysys_var->current_mutex= 0;
     thd->mysys_var->current_cond= 0;
-    thd_proc_info(thd, 0);
+    thd->set_proc_info(0);
     pthread_mutex_unlock(&thd->mysys_var->mutex);
   }
   return(result);
@@ -1739,7 +1739,7 @@ void wait_for_condition(THD *thd, pthread_mutex_t *mutex, pthread_cond_t *cond)
   thd->mysys_var->current_mutex= mutex;
   thd->mysys_var->current_cond= cond;
   proc_info=thd->get_proc_info();
-  thd_proc_info(thd, "Waiting for table");
+  thd->set_proc_info("Waiting for table");
   if (!thd->killed)
     (void) pthread_cond_wait(cond, mutex);
 
@@ -1758,7 +1758,7 @@ void wait_for_condition(THD *thd, pthread_mutex_t *mutex, pthread_cond_t *cond)
   pthread_mutex_lock(&thd->mysys_var->mutex);
   thd->mysys_var->current_mutex= 0;
   thd->mysys_var->current_cond= 0;
-  thd_proc_info(thd, proc_info);
+  thd->set_proc_info(proc_info);
   pthread_mutex_unlock(&thd->mysys_var->mutex);
   return;
 }
@@ -2906,7 +2906,7 @@ bool wait_for_tables(THD *thd)
 {
   bool result;
 
-  thd_proc_info(thd, "Waiting for tables");
+  thd->set_proc_info("Waiting for tables");
   pthread_mutex_lock(&LOCK_open);
   while (!thd->killed)
   {
@@ -2922,12 +2922,12 @@ bool wait_for_tables(THD *thd)
   else
   {
     /* Now we can open all tables without any interference */
-    thd_proc_info(thd, "Reopen tables");
+    thd->set_proc_info("Reopen tables");
     thd->version= refresh_version;
     result=reopen_tables(thd,0,0);
   }
   pthread_mutex_unlock(&LOCK_open);
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   return(result);
 }
 
@@ -3301,7 +3301,7 @@ int open_tables(THD *thd, TableList **start, uint32_t *counter, uint32_t flags)
   thd->current_tablenr= 0;
  restart:
   *counter= 0;
-  thd_proc_info(thd, "Opening tables");
+  thd->set_proc_info("Opening tables");
 
   /*
     For every table in the list of tables to open, try to find or open
@@ -3381,7 +3381,7 @@ int open_tables(THD *thd, TableList **start, uint32_t *counter, uint32_t flags)
     }
   }
 
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   free_root(&new_frm_mem, MYF(0));              // Free pre-alloced block
 
   if (result && tables)
@@ -3514,7 +3514,7 @@ Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type lock_type,
   Table *table;
   bool refresh;
 
-  thd_proc_info(thd, "Opening table");
+  thd->set_proc_info("Opening table");
   thd->current_tablenr= 0;
   while (!(table= open_table(thd, table_list, &refresh, 0)) &&
          refresh)
@@ -3539,7 +3539,7 @@ Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type lock_type,
     }
   }
 
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   return(table);
 }
 

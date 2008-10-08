@@ -17,22 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This file defines structures needed by udf functions */
+#ifndef DRIZZLED_FUNCTIONS_INT_H
+#define DRIZZLED_FUNCTIONS_INT_H
 
+#include <drizzled/item.h>
+#include <drizzled/functions/func.h>
+#include <drizzled/sql_list.h>
 
-#include "item_func.h"
-
-enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
-
-typedef Item_func* (*create_func_item)(MEM_ROOT*);
-
-struct udf_func
+class Item_int_func :public Item_func
 {
-  LEX_STRING name;
-  create_func_item create_func;
+public:
+  Item_int_func() :Item_func() { max_length= 21; }
+  Item_int_func(Item *a) :Item_func(a) { max_length= 21; }
+  Item_int_func(Item *a,Item *b) :Item_func(a,b) { max_length= 21; }
+  Item_int_func(Item *a,Item *b,Item *c) :Item_func(a,b,c)
+  { max_length= 21; }
+  Item_int_func(List<Item> &list) :Item_func(list) { max_length= 21; }
+  Item_int_func(THD *thd, Item_int_func *item) :Item_func(thd, item) {}
+  double val_real();
+  String *val_str(String*str);
+  enum Item_result result_type () const { return INT_RESULT; }
+  void fix_length_and_dec() {}
 };
 
-void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint32_t len=0);
-void free_udf(udf_func *udf);
-int mysql_create_function(THD *thd,udf_func *udf);
+#endif /* DRIZZLED_FUNCTIONS_INT_H */

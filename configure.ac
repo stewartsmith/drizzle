@@ -299,8 +299,9 @@ dnl       Need for all of this?
 case "$target_os" in
   *solaris*)
   dnl Do we need both of these? 
-  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  AC_DEFINE([__EXTENSIONS__],[1],[Turn on needed extensions on Solaris])
   ;;
 esac
 
@@ -812,7 +813,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-DRIZZLE_SYS_LARGEFILE
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
 
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T
@@ -941,23 +943,6 @@ dnl
 
 DRIZZLE_CHECK_TIME_T
 
-
-# do we need #pragma interface/#pragma implementation ?
-# yes if it's gcc 2.x, and not icc pretending to be gcc, and not cygwin
-AC_MSG_CHECKING(the need for @%:@pragma interface/implementation)
-# instead of trying to match SYSTEM_TYPE and CC_VERSION (that doesn't
-# follow any standard), we'll use well-defined preprocessor macros:
-AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
-#if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
-#error USE_PRAGMA_IMPLEMENTATION
-#endif
-]])],[
-  AC_MSG_RESULT(no)
-],[
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION,[1],[pragma implementation is a good idea])
-  AC_DEFINE(USE_PRAGMA_INTERFACE,[1],[pragma interface is a good idea])
-])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
@@ -1343,6 +1328,13 @@ ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
     [AC_MSG_RESULT(yes)])
 ])])
 
+if test "x${NDEBUG}" -eq "x1"
+then
+	ac_assert="no"
+else
+	ac_assert="yes"
+fi
+
 AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
@@ -1490,6 +1482,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/serialize/Makefile dnl
+ drizzled/functions/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
@@ -1503,3 +1496,23 @@ AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > st
 AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT
+
+echo "---"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION"
+echo ""
+echo "   * Installation prefix:       $prefix"
+echo "   * System type:               $SYSTEM_TYPE"
+echo "   * C Compiler:                $CC_VERSION"
+echo "   * C++ Compiler:              $CXX"
+echo "   * Assertions enabled:        $ac_assert"
+echo "   * Debug enabled:             $with_debug"
+echo "   * Profiling enabled:         $ac_profiling"
+echo "   * Coverage enabled:          $ac_coverage"
+echo "   * Warnings as failure:       $ac_warn_fail"
+echo "   * ac_cv_cxx_cstdint:         $ac_cv_cxx_cstdint"
+echo "   * ac_cv_cxx_hash_map:        $ac_cv_cxx_hash_map"
+echo "   * ac_cv_cxx_hash_namespace:  $ac_cv_cxx_hash_namespace"
+echo "   * ac_cv_cxx_cmath:           $ac_cv_cxx_cmath"
+echo "   * ac_cv_cxx_cmath_namespace: $ac_cv_cxx_cmath_namespace"
+echo ""
+echo "---"

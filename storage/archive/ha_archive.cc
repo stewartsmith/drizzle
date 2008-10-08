@@ -13,9 +13,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation        // gcc: Class implementation
-#endif
 
 #include <drizzled/common_includes.h>
 #include <storage/myisam/myisam.h>
@@ -1371,7 +1368,8 @@ int ha_archive::check(THD* thd,
   const char *old_proc_info;
   uint64_t x;
 
-  old_proc_info= thd_proc_info(thd, "Checking table");
+  old_proc_info= get_thd_proc_info(thd);
+  set_thd_proc_info(thd, "Checking table");
   /* Flush any waiting data */
   pthread_mutex_lock(&share->mutex);
   azflush(&(share->archive_write), Z_SYNC_FLUSH);
@@ -1392,7 +1390,7 @@ int ha_archive::check(THD* thd,
       break;
   }
 
-  thd_proc_info(thd, old_proc_info);
+  set_thd_proc_info(thd, old_proc_info);
 
   if ((rc && rc != HA_ERR_END_OF_FILE))  
   {

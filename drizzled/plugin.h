@@ -429,7 +429,6 @@ int thd_in_lock_tables(const DRIZZLE_THD thd);
 int thd_tablespace_op(const DRIZZLE_THD thd);
 int64_t thd_test_options(const DRIZZLE_THD thd, int64_t test_options);
 int thd_sql_command(const DRIZZLE_THD thd);
-const char *thd_proc_info(DRIZZLE_THD thd, const char *info);
 void **thd_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton);
 int thd_tx_isolation(const DRIZZLE_THD thd);
 /* Increments the row counter, see THD::row_count */

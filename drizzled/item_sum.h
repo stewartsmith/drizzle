@@ -20,9 +20,6 @@
 
 /* classes for sum functions */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #include <mysys/my_tree.h>
 

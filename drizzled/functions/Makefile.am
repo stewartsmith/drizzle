@@ -15,43 +15,13 @@
 
 #called from the top level Makefile
 
-noinst_LTLIBRARIES = 	libfield.la
+noinst_LTLIBRARIES = 	libfunctions.la
 
-libfield_la_SOURCES = 	blob.cc \
-			date.cc \
-			datetime.cc \
-			enum.cc \
-			fdecimal.cc \
-			double.cc \
-			int64_t.cc \
-			long.cc \
-			longstr.cc \
-			null.cc \
-			num.cc \
-			fstring.cc \
-			real.cc \
-			str.cc \
-			timestamp.cc \
-			timetype.cc \
-			varstring.cc
+libfunctions_la_SOURCES = func.cc \
+                          int.cc 
 
-noinst_HEADERS = blob.h \
-		 date.h \
-		 datetime.h \
-		 enum.h \
-		 fdecimal.h \
-		 double.h \
-		 int64_t.h \
-		 long.h \
-		 longstr.h \
-		 null.h \
-		 num.h \
-		 fstring.h \
-		 real.h \
-		 str.h \
-		 timestamp.h \
-		 timetype.h \
-		 varstring.h
+noinst_HEADERS = func.h \
+                 int.h
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

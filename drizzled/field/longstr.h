@@ -1,4 +1,4 @@
-/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -18,18 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLE_SERVER_FIELD_LONGSTR
+#define DRIZZLE_SERVER_FIELD_LONGSTR
 
-#include <drizzled/server_includes.h>
-#include <drizzled/field/null.h>
+/* base class for Field_varstring and Field_blob */
 
-unsigned char Field_null::null[1]={1};
-
-/****************************************************************************
-  Field_null, a field that always return NULL
-****************************************************************************/
-
-void Field_null::sql_type(String &res) const
+class Field_longstr :public Field_str
 {
-  res.set_ascii(STRING_WITH_LEN("null"));
-}
+protected:
+  int  report_if_important_data(const char *ptr, const char *end);
+public:
+  Field_longstr(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+                unsigned char null_bit_arg, utype unireg_check_arg,
+                const char *field_name_arg, const CHARSET_INFO * const charset_arg)
+    :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
+               field_name_arg, charset_arg)
+    {}
 
+  int store_decimal(const my_decimal *d);
+  uint32_t max_data_length() const;
+};
+
+#endif

@@ -210,7 +210,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint32_t count,
       break;
     }
 
-    thd_proc_info(thd, "System lock");
+    thd->set_proc_info("System lock");
     if (sql_lock->table_count && lock_external(thd, sql_lock->table,
                                                sql_lock->table_count))
     {
@@ -218,7 +218,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint32_t count,
       reset_lock_data_and_free(&sql_lock);
       break;
     }
-    thd_proc_info(thd, "Table lock");
+    thd->set_proc_info("Table lock");
     /* Copy the lock data array. thr_multi_lock() reorders its contens. */
     memcpy(sql_lock->locks + sql_lock->lock_count, sql_lock->locks,
            sql_lock->lock_count * sizeof(*sql_lock->locks));
@@ -255,7 +255,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint32_t count,
       thd->some_tables_deleted=0;
       break;
     }
-    thd_proc_info(thd, 0);
+    thd->set_proc_info(0);
 
     /* going to retry, unlock all tables */
     if (sql_lock->lock_count)
@@ -279,7 +279,7 @@ retry:
     if (wait_for_tables(thd))
       break;					// Couldn't open tables
   }
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   if (thd->killed)
   {
     thd->send_kill_message();

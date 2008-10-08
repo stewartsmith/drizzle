@@ -17,22 +17,28 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This file defines structures needed by udf functions */
+#include <drizzled/server_includes.h>
 
+#include CSTDINT_H
+#include <cassert>
 
-#include "item_func.h"
+#include <drizzled/sql_string.h>
+#include <drizzled/functions/int.h>
 
-enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
-
-typedef Item_func* (*create_func_item)(MEM_ROOT*);
-
-struct udf_func
+double Item_int_func::val_real()
 {
-  LEX_STRING name;
-  create_func_item create_func;
-};
+  assert(fixed == 1);
 
-void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint32_t len=0);
-void free_udf(udf_func *udf);
-int mysql_create_function(THD *thd,udf_func *udf);
+  return unsigned_flag ? (double) ((uint64_t) val_int()) : (double) val_int();
+}
+
+
+String *Item_int_func::val_str(String *str)
+{
+  assert(fixed == 1);
+  int64_t nr=val_int();
+  if (null_value)
+    return 0;
+  str->set_int(nr, unsigned_flag, &my_charset_bin);
+  return str;
+}

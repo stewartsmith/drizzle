@@ -20,9 +20,6 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #include <mysys/my_handler.h>
 #include <storage/myisam/keycache.h>
@@ -318,7 +315,6 @@ enum enum_binlog_command {
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
 #ifdef DEAD_OPTIONS
-#define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
 #define HA_CREATE_USED_PASSWORD         (1L << 17)
 #endif

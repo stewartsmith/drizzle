@@ -16,7 +16,7 @@ AC_DEFUN([AC_CXX_CMATH],
          AC_TRY_COMPILE([#include <$location>],
                         [$namespace::isfinite(1)],
                         [ac_cv_cxx_cmath="<$location>";
-                         ac_cv_cxx_cmath_namespace="$namespace::";])
+                         ac_cv_cxx_cmath_namespace="$namespace";])
        fi
     done
    done
@@ -30,6 +30,6 @@ AC_DEFUN([AC_CXX_CMATH],
    fi
    AC_DEFINE_UNQUOTED(CMATH_H,$ac_cv_cxx_cmath,
                       [the location of <cmath>])
-   AC_DEFINE_UNQUOTED(CMATH_C99_NAMESPACE,$ac_cv_cxx_cmath_namespace,
+   AC_DEFINE_UNQUOTED(CMATH_NAMESPACE,$ac_cv_cxx_cmath_namespace,
                       [the namespace of C99 math extensions])
 ])

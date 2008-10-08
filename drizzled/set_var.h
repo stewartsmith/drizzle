@@ -19,9 +19,6 @@
 
 /* Classes to support the SET command */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 /****************************************************************************
   Variables that are changable runtime are declared using the

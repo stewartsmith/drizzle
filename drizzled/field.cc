@@ -443,7 +443,7 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
     true  - If string has some important data
 */
 
-static bool
+bool
 test_if_important_data(const CHARSET_INFO * const cs, const char *str,
                        const char *strend)
 {
@@ -499,135 +499,6 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
   }
 }
 
-
-/**
-  Numeric fields base class constructor.
-*/
-Field_num::Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
-                     unsigned char null_bit_arg, utype unireg_check_arg,
-                     const char *field_name_arg,
-                     uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
-  :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-         unireg_check_arg, field_name_arg),
-  dec(dec_arg),decimal_precision(zero_arg),unsigned_flag(unsigned_arg)
-{
-  if (unsigned_flag)
-    flags|=UNSIGNED_FLAG;
-}
-
-
-/**
-  Test if given number is a int.
-
-  @todo
-    Make this multi-byte-character safe
-
-  @param str		String to test
-  @param length        Length of 'str'
-  @param int_end	Pointer to char after last used digit
-  @param cs		Character set
-
-  @note
-    This is called after one has called strntoull10rnd() function.
-
-  @retval
-    0	OK
-  @retval
-    1	error: empty string or wrong integer.
-  @retval
-    2   error: garbage at the end of string.
-*/
-
-int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int length, 
-                         const char *int_end, int error)
-{
-  /* Test if we get an empty string or wrong integer */
-  if (str == int_end || error == MY_ERRNO_EDOM)
-  {
-    char buff[128];
-    String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
-    tmp.copy(str, length, system_charset_info);
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                        ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
-                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
-                        "integer", tmp.c_ptr(), field_name,
-                        (uint32_t) table->in_use->row_count);
-    return 1;
-  }
-  /* Test if we have garbage at the end of the given string. */
-  if (test_if_important_data(cs, int_end, str + length))
-  {
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    return 2;
-  }
-  return 0;
-}
-
-
-/*
-  Conver a string to an integer then check bounds.
-  
-  SYNOPSIS
-    Field_num::get_int
-    cs            Character set
-    from          String to convert
-    len           Length of the string
-    rnd           OUT int64_t value
-    unsigned_max  max unsigned value
-    signed_min    min signed value
-    signed_max    max signed value
-
-  DESCRIPTION
-    The function calls strntoull10rnd() to get an integer value then
-    check bounds and errors returned. In case of any error a warning
-    is raised.
-
-  RETURN
-    0   ok
-    1   error
-*/
-
-bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
-                        int64_t *rnd, uint64_t unsigned_max, 
-                        int64_t signed_min, int64_t signed_max)
-{
-  char *end;
-  int error;
-  
-  *rnd= (int64_t) cs->cset->strntoull10rnd(cs, from, len,
-                                            unsigned_flag, &end,
-                                            &error);
-  if (unsigned_flag)
-  {
-
-    if ((((uint64_t) *rnd > unsigned_max) && (*rnd= (int64_t) unsigned_max)) ||
-        error == MY_ERRNO_ERANGE)
-    {
-      goto out_of_range;
-    }
-  }
-  else
-  {
-    if (*rnd < signed_min)
-    {
-      *rnd= signed_min;
-      goto out_of_range;
-    }
-    else if (*rnd > signed_max)
-    {
-      *rnd= signed_max;
-      goto out_of_range;
-    }
-  }
-  if (table->in_use->count_cuted_fields &&
-      check_int(cs, from, len, end, error))
-    return 1;
-  return 0;
-
-out_of_range:
-  set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-  return 1;
-}
 
 /**
   Process decimal library return codes and issue warnings for overflow and
@@ -947,13 +818,6 @@ my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((unused)))
 }
 
 
-void Field_num::add_unsigned(String &res) const
-{
-  if (unsigned_flag)
-    res.append(STRING_WITH_LEN(" unsigned"));
-}
-
-
 void Field::make_field(Send_field *field)
 {
   if (orig_table && orig_table->s->db.str && *orig_table->s->db.str)
@@ -1022,109 +886,6 @@ int64_t Field::convert_decimal2int64_t(const my_decimal *val,
   }
   return i;
 }
-
-
-/**
-  Storing decimal in integer fields.
-
-  @param val       value for storing
-
-  @note
-    This method is used by all integer fields, real/decimal redefine it
-
-  @retval
-    0     OK
-  @retval
-    !=0  error
-*/
-
-int Field_num::store_decimal(const my_decimal *val)
-{
-  int err= 0;
-  int64_t i= convert_decimal2int64_t(val, unsigned_flag, &err);
-  return test(err | store(i, unsigned_flag));
-}
-
-
-/**
-  Return decimal value of integer field.
-
-  @param decimal_value     buffer for storing decimal value
-
-  @note
-    This method is used by all integer fields, real/decimal redefine it.
-    All int64_t values fit in our decimal buffer which cal store 8*9=72
-    digits of integer number
-
-  @return
-    pointer to decimal buffer with value of field
-*/
-
-my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
-{
-  assert(result_type() == INT_RESULT);
-  int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
-  return decimal_value;
-}
-
-
-Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
-                     unsigned char null_bit_arg, utype unireg_check_arg,
-                     const char *field_name_arg, const CHARSET_INFO * const charset_arg)
-  :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-         unireg_check_arg, field_name_arg)
-{
-  field_charset= charset_arg;
-  if (charset_arg->state & MY_CS_BINSORT)
-    flags|=BINARY_FLAG;
-  field_derivation= DERIVATION_IMPLICIT;
-}
-
-
-void Field_num::make_field(Send_field *field)
-{
-  Field::make_field(field);
-  field->decimals= dec;
-}
-
-/**
-  Decimal representation of Field_str.
-
-  @param d         value for storing
-
-  @note
-    Field_str is the base class for fields like Field_enum,
-    Field_date and some similar. Some dates use fraction and also
-    string value should be converted to floating point value according
-    our rules, so we use double to store value of decimal in string.
-
-  @todo
-    use decimal2string?
-
-  @retval
-    0     OK
-  @retval
-    !=0  error
-*/
-
-int Field_str::store_decimal(const my_decimal *d)
-{
-  double val;
-  /* TODO: use decimal2string? */
-  int err= warn_if_overflow(my_decimal2double(E_DEC_FATAL_ERROR &
-                                            ~E_DEC_OVERFLOW, d, &val));
-  return err | store(val);
-}
-
-
-my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
-{
-  int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
-  return decimal_value;
-}
-
 
 uint32_t Field::fill_cache_field(CACHE_FIELD *copy)
 {
@@ -1409,7 +1170,6 @@ void Field_tiny::sql_type(String &res) const
   add_unsigned(res);
 }
 
-
 /*
   Report "not well formed" or "cannot convert" error
   after storing a character string info a field.
@@ -1424,9 +1184,9 @@ void Field_tiny::sql_type(String &res) const
 
   NOTES
     As of version 5.0 both cases return the same error:
-  
+
       "Invalid string value: 'xxx' for column 't' at row 1"
-  
+
   Future versions will possibly introduce a new error message:
 
       "Cannot convert character string: 'xxx' for column 't' at row 1"
@@ -1496,113 +1256,10 @@ check_string_copy_error(Field_str *field,
   return true;
 }
 
-
-/*
-  Check if we lost any important data and send a truncation error/warning
-
-  SYNOPSIS
-    Field_longstr::report_if_important_data()
-    ptr                      - Truncated rest of string
-    end                      - End of truncated string
-
-  RETURN VALUES
-    0   - None was truncated (or we don't count cut fields)
-    2   - Some bytes was truncated
-
-  NOTE
-    Check if we lost any important data (anything in a binary string,
-    or any non-space in others). If only trailing spaces was lost,
-    send a truncation note, otherwise send a truncation error.
-*/
-
-int
-Field_longstr::report_if_important_data(const char *ptr, const char *end)
-{
-  if ((ptr < end) && table->in_use->count_cuted_fields)
-  {
-    if (test_if_important_data(field_charset, ptr, end))
-    {
-      if (table->in_use->abort_on_warning)
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-      else
-        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    }
-    else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
-    return 2;
-  }
-  return 0;
-}
-
-
-/**
-  Store double value in Field_varstring.
-
-  Pretty prints double number into field_length characters buffer.
-
-  @param nr            number
-*/
-
-int Field_str::store(double nr)
-{
-  char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-  uint32_t local_char_length= field_length / charset()->mbmaxlen;
-  size_t length;
-  bool error;
-
-  length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
-  if (error)
-  {
-    if (table->in_use->abort_on_warning)
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-    else
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-  }
-  return store(buff, length, charset());
-}
-
-
 uint32_t Field::is_equal(Create_field *new_field)
 {
   return (new_field->sql_type == real_type());
 }
-
-
-/* If one of the fields is binary and the other one isn't return 1 else 0 */
-
-bool Field_str::compare_str_field_flags(Create_field *new_field, uint32_t flag_arg)
-{
-  return (((new_field->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
-          !(flag_arg & (BINCMP_FLAG | BINARY_FLAG))) ||
-         (!(new_field->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
-          (flag_arg & (BINCMP_FLAG | BINARY_FLAG))));
-}
-
-
-uint32_t Field_str::is_equal(Create_field *new_field)
-{
-  if (compare_str_field_flags(new_field, flags))
-    return 0;
-
-  return ((new_field->sql_type == real_type()) &&
-	  new_field->charset == field_charset &&
-	  new_field->length == max_display_length());
-}
-
-
-int Field_longstr::store_decimal(const my_decimal *d)
-{
-  char buff[DECIMAL_MAX_STR_LENGTH+1];
-  String str(buff, sizeof(buff), &my_charset_bin);
-  my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
-  return store(str.ptr(), str.length(), str.charset());
-}
-
-uint32_t Field_longstr::max_data_length() const
-{
-  return field_length + (field_length > 255 ? 2 : 1);
-}
-
 
 /**
   @retval
@@ -1640,34 +1297,6 @@ bool Field_enum::eq_def(Field *field)
       return 0;
   return 1;
 }
-
-/**
-  @return
-  returns 1 if the fields are equally defined
-*/
-bool Field_num::eq_def(Field *field)
-{
-  if (!Field::eq_def(field))
-    return 0;
-  Field_num *from_num= (Field_num*) field;
-
-  if (unsigned_flag != from_num->unsigned_flag ||
-      dec != from_num->dec)
-    return 0;
-  return 1;
-}
-
-
-uint32_t Field_num::is_equal(Create_field *new_field)
-{
-  return ((new_field->sql_type == real_type()) &&
-	  ((new_field->flags & UNSIGNED_FLAG) == (uint32_t) (flags &
-							 UNSIGNED_FLAG)) &&
-	  ((new_field->flags & AUTO_INCREMENT_FLAG) ==
-	   (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
-	  (new_field->length <= max_display_length()));
-}
-
 
 /*****************************************************************************
   Handling of field and Create_field

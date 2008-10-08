@@ -22,9 +22,6 @@
   variables must declare the size_of() member function.
 */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
@@ -543,128 +540,6 @@ private:
   { return 0; }
 };
 
-
-class Field_num :public Field {
-public:
-  const uint8_t dec;
-  bool decimal_precision;	// Purify cannot handle bit fields & only for decimal type
-  bool unsigned_flag;	// Purify cannot handle bit fields
-  Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
-	    unsigned char null_bit_arg, utype unireg_check_arg,
-	    const char *field_name_arg,
-            uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
-  Item_result result_type () const { return REAL_RESULT; }
-  void add_unsigned(String &res) const;
-  friend class Create_field;
-  void make_field(Send_field *);
-  uint32_t decimals() const { return (uint32_t) dec; }
-  uint32_t size_of() const { return sizeof(*this); }
-  bool eq_def(Field *field);
-  int store_decimal(const my_decimal *);
-  my_decimal *val_decimal(my_decimal *);
-  uint32_t is_equal(Create_field *new_field);
-  int check_int(const CHARSET_INFO * const cs, const char *str, int length,
-                const char *int_end, int error);
-  bool get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len, 
-               int64_t *rnd, uint64_t unsigned_max, 
-               int64_t signed_min, int64_t signed_max);
-};
-
-/* base class for all string related classes */
-
-class Field_str :public Field {
-protected:
-  const CHARSET_INFO *field_charset;
-  enum Derivation field_derivation;
-public:
-  Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
-	    unsigned char null_bit_arg, utype unireg_check_arg,
-	    const char *field_name_arg, const CHARSET_INFO * const charset);
-  Item_result result_type () const { return STRING_RESULT; }
-  uint32_t decimals() const { return NOT_FIXED_DEC; }
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val)=0;
-  int  store_decimal(const my_decimal *);
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const cs)=0;
-  uint32_t size_of() const { return sizeof(*this); }
-  const CHARSET_INFO *charset(void) const { return field_charset; }
-  void set_charset(const CHARSET_INFO * const charset_arg) { field_charset= charset_arg; }
-  enum Derivation derivation(void) const { return field_derivation; }
-  virtual void set_derivation(enum Derivation derivation_arg)
-  { field_derivation= derivation_arg; }
-  bool binary() const { return field_charset == &my_charset_bin; }
-  uint32_t max_display_length() { return field_length; }
-  friend class Create_field;
-  my_decimal *val_decimal(my_decimal *);
-  virtual bool str_needs_quotes() { return true; }
-  bool compare_str_field_flags(Create_field *new_field, uint32_t flags);
-  uint32_t is_equal(Create_field *new_field);
-};
-
-
-/* base class for Field_varstring and Field_blob */
-
-class Field_longstr :public Field_str
-{
-protected:
-  int report_if_important_data(const char *ptr, const char *end);
-public:
-  Field_longstr(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-                unsigned char null_bit_arg, utype unireg_check_arg,
-                const char *field_name_arg, const CHARSET_INFO * const charset_arg)
-    :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
-               field_name_arg, charset_arg)
-    {}
-
-  int store_decimal(const my_decimal *d);
-  uint32_t max_data_length() const;
-};
-
-class Field_tiny :public Field_num {
-public:
-  Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-	     unsigned char null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
-    {}
-  enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
-  enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
-  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
-  int store(double nr);
-  int store(int64_t nr, bool unsigned_val);
-  int reset(void) { ptr[0]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const { return 1; }
-  void sql_type(String &str) const;
-  uint32_t max_display_length() { return 4; }
-
-  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length __attribute__((unused)),
-                      bool low_byte_first __attribute__((unused)))
-  {
-    *to= *from;
-    return to + 1;
-  }
-
-  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data __attribute__((unused)),
-                              bool low_byte_first __attribute__((unused)))
-  {
-    *to= *from;
-    return from + 1;
-  }
-};
-
 /*
   Create field class for CREATE TABLE
 */
@@ -783,16 +658,18 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 
+
 bool
-check_string_copy_error(Field_str *field,
-                        const char *well_formed_error_pos,
-                        const char *cannot_convert_error_pos,
-                        const char *end,
-                        const CHARSET_INFO * const cs);
+test_if_important_data(const CHARSET_INFO * const cs, 
+		       const char *str,
+                       const char *strend);
 
 /*
   Field subclasses
  */
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
 #include <drizzled/field/null.h>
@@ -802,6 +679,7 @@ check_string_copy_error(Field_str *field,
 #include <drizzled/field/double.h>
 #include <drizzled/field/long.h>
 #include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
 #include <drizzled/field/timetype.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/datetime.h>
@@ -857,3 +735,55 @@ check_string_copy_error(Field_str *field,
 #define f_bit_as_char(x)        ((x) & FIELDFLAG_TREAT_BIT_AS_CHAR)
 #define f_is_hex_escape(x)      ((x) & FIELDFLAG_HEX_ESCAPE)
 
+bool
+check_string_copy_error(Field_str *field,
+                        const char *well_formed_error_pos,
+                        const char *cannot_convert_error_pos,
+                        const char *end,
+                        const CHARSET_INFO * const cs);
+
+
+class Field_tiny :public Field_num {
+public:
+  Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+	     unsigned char null_bit_arg,
+	     enum utype unireg_check_arg, const char *field_name_arg,
+	     bool zero_arg, bool unsigned_arg)
+    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
+	       unireg_check_arg, field_name_arg,
+	       0, zero_arg,unsigned_arg)
+    {}
+  enum Item_result result_type () const { return INT_RESULT; }
+  enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
+  enum ha_base_keytype key_type() const
+    { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
+  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int store(double nr);
+  int store(int64_t nr, bool unsigned_val);
+  int reset(void) { ptr[0]=0; return 0; }
+  double val_real(void);
+  int64_t val_int(void);
+  String *val_str(String*,String *);
+  bool send_binary(Protocol *protocol);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint32_t length);
+  uint32_t pack_length() const { return 1; }
+  void sql_type(String &str) const;
+  uint32_t max_display_length() { return 4; }
+
+  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
+                      uint32_t max_length __attribute__((unused)),
+                      bool low_byte_first __attribute__((unused)))
+  {
+    *to= *from;
+    return to + 1;
+  }
+
+  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
+                              uint32_t param_data __attribute__((unused)),
+                              bool low_byte_first __attribute__((unused)))
+  {
+    *to= *from;
+    return from + 1;
+  }
+};

@@ -32,9 +32,6 @@
 #ifndef DRIZZLED_LOG_EVENT_H
 #define DRIZZLED_LOG_EVENT_H
 
-#if defined(USE_PRAGMA_INTERFACE)
-#pragma interface			/* gcc class implementation */
-#endif
 
 #include <string>
 #include <mysys/my_bitmap.h>

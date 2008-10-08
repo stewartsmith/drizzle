@@ -1975,7 +1975,7 @@ File create_frm(THD *thd, const char *name, const char *db,
 		   create_info->default_table_charset->number : 0);
     fileinfo[39]= (unsigned char) create_info->page_checksum;
     fileinfo[40]= (unsigned char) create_info->row_type;
-    /* Next few bytes where for RAID support */
+    /* Next few bytes were for RAID support */
     fileinfo[41]= 0;
     fileinfo[42]= 0;
     int4store(fileinfo+43,create_info->block_size);
@@ -4513,7 +4513,7 @@ void Table::free_tmp_table(THD *thd)
   const char *save_proc_info;
 
   save_proc_info=thd->get_proc_info();
-  thd_proc_info(thd, "removing tmp table");
+  thd->set_proc_info("removing tmp table");
 
   if (file)
   {
@@ -4535,7 +4535,7 @@ void Table::free_tmp_table(THD *thd)
   plugin_unlock(0, s->db_plugin);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
-  thd_proc_info(thd, save_proc_info);
+  thd->set_proc_info(save_proc_info);
 
   return;
 }
@@ -4570,7 +4570,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
     return(1);				// End of memory
 
   save_proc_info=thd->get_proc_info();
-  thd_proc_info(thd, "converting HEAP to MyISAM");
+  thd->set_proc_info("converting HEAP to MyISAM");
 
   if (new_table.create_myisam_tmp_table(table->key_info, start_recinfo,
 					recinfo, thd->lex->select_lex.options | 
@@ -4637,7 +4637,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
     const char *new_proc_info=
       (!strcmp(save_proc_info,"Copying to tmp table") ?
       "Copying to tmp table on disk" : save_proc_info);
-    thd_proc_info(thd, new_proc_info);
+    thd->set_proc_info(new_proc_info);
   }
   return(0);
 
@@ -4649,7 +4649,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   new_table.file->ha_delete_table(new_table.s->table_name.str);
  err2:
   delete new_table.file;
-  thd_proc_info(thd, save_proc_info);
+  thd->set_proc_info(save_proc_info);
   table->mem_root= new_table.mem_root;
   return(1);
 }

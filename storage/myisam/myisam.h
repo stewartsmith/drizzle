@@ -23,7 +23,7 @@ extern "C" {
 
 #include <drizzled/base.h>
 #ifndef _m_ctype_h
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #endif
 #ifndef _keycache_h
 #include "keycache.h"

@@ -1219,7 +1219,7 @@ JOIN::optimize()
     return(0);
   optimized= 1;
 
-  thd_proc_info(thd, "optimizing");
+  thd->set_proc_info("optimizing");
   row_limit= ((select_distinct || order || group_list) ? HA_POS_ERROR :
 	      unit->select_limit_cnt);
   /* select_limit is used to decide if we are likely to scan the whole table */
@@ -1345,7 +1345,7 @@ JOIN::optimize()
   sort_by_table= get_sort_by_table(order, group_list, select_lex->leaf_tables);
 
   /* Calculate how to do the join */
-  thd_proc_info(thd, "statistics");
+  thd->set_proc_info("statistics");
   if (make_join_statistics(this, select_lex->leaf_tables, conds, &keyuse) ||
       thd->is_fatal_error)
   {
@@ -1354,7 +1354,7 @@ JOIN::optimize()
 
   /* Remove distinct if only const tables */
   select_distinct= select_distinct && (const_tables != tables);
-  thd_proc_info(thd, "preparing");
+  thd->set_proc_info("preparing");
   if (result->initialize_tables(this))
   {
     return(1);				// error == -1
@@ -1789,7 +1789,7 @@ JOIN::optimize()
   /* Create a tmp table if distinct or if the sort is too complicated */
   if (need_tmp)
   {
-    thd_proc_info(thd, "Creating tmp table");
+    thd->set_proc_info("Creating tmp table");
 
     init_items_ref_array();
 
@@ -1837,7 +1837,7 @@ JOIN::optimize()
     /* if group or order on first table, sort first */
     if (group_list && simple_group)
     {
-      thd_proc_info(thd, "Sorting for group");
+      thd->set_proc_info("Sorting for group");
       if (create_sort_index(thd, this, group_list,
 			    HA_POS_ERROR, HA_POS_ERROR, false) ||
 	  alloc_group_fields(this, group_list) ||
@@ -1858,7 +1858,7 @@ JOIN::optimize()
 
       if (!group_list && ! exec_tmp_table1->distinct && order && simple_order)
       {
-        thd_proc_info(thd, "Sorting for order");
+        thd->set_proc_info("Sorting for order");
         if (create_sort_index(thd, this, order,
                               HA_POS_ERROR, HA_POS_ERROR, true))
         {
@@ -2014,7 +2014,7 @@ JOIN::exec()
   List<Item> *columns_list= &fields_list;
   int      tmp_error;
 
-  thd_proc_info(thd, "executing");
+  thd->set_proc_info("executing");
   error= 0;
   (void) result->prepare2(); // Currently, this cannot fail.
 
@@ -2140,7 +2140,7 @@ JOIN::exec()
     curr_tmp_table= exec_tmp_table1;
 
     /* Copy data to the temporary table */
-    thd_proc_info(thd, "Copying to tmp table");
+    thd->set_proc_info("Copying to tmp table");
     if (!curr_join->sort_and_group &&
         curr_join->const_tables != curr_join->tables)
       curr_join->join_tab[curr_join->const_tables].sorted= 0;
@@ -2255,7 +2255,7 @@ JOIN::exec()
       }
       if (curr_join->group_list)
       {
-	thd_proc_info(thd, "Creating sort index");
+	thd->set_proc_info("Creating sort index");
 	if (curr_join->join_tab == join_tab && save_join_tab())
 	{
 	  return;
@@ -2269,7 +2269,7 @@ JOIN::exec()
         sortorder= curr_join->sortorder;
       }
       
-      thd_proc_info(thd, "Copying to group table");
+      thd->set_proc_info("Copying to group table");
       tmp_error= -1;
       if (curr_join != this)
       {
@@ -2326,7 +2326,7 @@ JOIN::exec()
     curr_join->join_free();			/* Free quick selects */
     if (curr_join->select_distinct && ! curr_join->group_list)
     {
-      thd_proc_info(thd, "Removing duplicates");
+      thd->set_proc_info("Removing duplicates");
       if (curr_join->tmp_having)
 	curr_join->tmp_having->update_used_tables();
       if (remove_duplicates(curr_join, curr_tmp_table,
@@ -2384,7 +2384,7 @@ JOIN::exec()
   }
   if (curr_join->group_list || curr_join->order)
   {
-    thd_proc_info(thd, "Sorting result");
+    thd->set_proc_info("Sorting result");
     /* If we have already done the group, add HAVING to sorted table */
     if (curr_join->tmp_having && ! curr_join->group_list && 
 	! curr_join->sort_and_group)
@@ -2494,7 +2494,7 @@ JOIN::exec()
   curr_join->fields= curr_fields_list;
 
   {
-    thd_proc_info(thd, "Sending data");
+    thd->set_proc_info("Sending data");
     result->send_fields(*curr_fields_list,
                         Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
     error= do_select(curr_join, curr_fields_list, NULL);
@@ -2648,7 +2648,7 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
   {
     if (!(join= new JOIN(thd, fields, select_options, result)))
 	return(true);
-    thd_proc_info(thd, "init");
+    thd->set_proc_info("init");
     thd->used_tables=0;                         // Updated by setup_fields
     if ((err= join->prepare(rref_pointer_array, tables, wild_num,
                            conds, og_num, order, group, having, proc_param,
@@ -2691,7 +2691,7 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
 err:
   if (free_join)
   {
-    thd_proc_info(thd, "end");
+    thd->set_proc_info("end");
     err|= select_lex->cleanup();
     return(err || thd->is_error());
   }
