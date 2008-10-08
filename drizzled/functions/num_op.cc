@@ -17,25 +17,45 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_REAL_H
-#define DRIZZLED_FUNCTIONS_REAL_H
+#include <drizzled/server_includes.h>
 
-#include <drizzled/item.h>
+#include CSTDINT_H
+#include <cassert>
 
-class Item_real_func :public Item_func
+#include <drizzled/functions/num_op.h>
+
+/**
+  Check arguments here to determine result's type for a numeric
+  function of two arguments.
+*/
+
+void Item_num_op::find_num_type(void)
 {
-public:
-  Item_real_func() :Item_func() {}
-  Item_real_func(Item *a) :Item_func(a) {}
-  Item_real_func(Item *a,Item *b) :Item_func(a,b) {}
-  Item_real_func(List<Item> &list) :Item_func(list) {}
-  String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *decimal_value);
-  int64_t val_int()
-    { assert(fixed == 1); return (int64_t) rint(val_real()); }
-  enum Item_result result_type () const { return REAL_RESULT; }
-  void fix_length_and_dec()
-  { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
-};
+  assert(arg_count == 2);
+  Item_result r0= args[0]->result_type();
+  Item_result r1= args[1]->result_type();
 
-#endif /* DRIZZLED_FUNCTIONS_REAL_H */
+  if (r0 == REAL_RESULT || r1 == REAL_RESULT ||
+      r0 == STRING_RESULT || r1 ==STRING_RESULT)
+  {
+    count_real_length();
+    max_length= float_length(decimals);
+    hybrid_type= REAL_RESULT;
+  }
+  else if (r0 == DECIMAL_RESULT || r1 == DECIMAL_RESULT)
+  {
+    hybrid_type= DECIMAL_RESULT;
+    result_precision();
+  }
+  else
+  {
+    assert(r0 == INT_RESULT && r1 == INT_RESULT);
+    decimals= 0;
+    hybrid_type=INT_RESULT;
+    result_precision();
+  }
+  return;
+}
+
+
+

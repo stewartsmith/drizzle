@@ -32,70 +32,10 @@ extern "C"				/* Bug in BSDI include file */
 
 #include <drizzled/functions/func.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/numhybrid.h>
+#include <drizzled/functions/num_op.h>
 #include <drizzled/functions/real.h>
 
-
-class Item_func_numhybrid: public Item_func
-{
-protected:
-  Item_result hybrid_type;
-public:
-  Item_func_numhybrid(Item *a) :Item_func(a), hybrid_type(REAL_RESULT)
-  {}
-  Item_func_numhybrid(Item *a,Item *b)
-    :Item_func(a,b), hybrid_type(REAL_RESULT)
-  {}
-  Item_func_numhybrid(List<Item> &list)
-    :Item_func(list), hybrid_type(REAL_RESULT)
-  {}
-
-  enum Item_result result_type () const { return hybrid_type; }
-  void fix_length_and_dec();
-  void fix_num_length_and_dec();
-  virtual void find_num_type()= 0; /* To be called from fix_length_and_dec */
-
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
-  String *val_str(String*str);
-
-  /**
-     @brief Performs the operation that this functions implements when the
-     result type is INT.
-
-     @return The result of the operation.
-  */
-  virtual int64_t int_op()= 0;
-
-  /**
-     @brief Performs the operation that this functions implements when the
-     result type is REAL.
-
-     @return The result of the operation.
-  */
-  virtual double real_op()= 0;
-
-  /**
-     @brief Performs the operation that this functions implements when the
-     result type is DECIMAL.
-
-     @param A pointer where the DECIMAL value will be allocated.
-     @return 
-       - 0 If the result is NULL
-       - The same pointer it was given, with the area initialized to the
-         result of the operation.
-  */
-  virtual my_decimal *decimal_op(my_decimal *)= 0;
-
-  /**
-     @brief Performs the operation that this functions implements when the
-     result type is a string type.
-
-     @return The result of the operation.
-  */
-  virtual String *str_op(String *)= 0;
-  bool is_null() { update_null_value(); return null_value; }
-};
 
 /* function where type of result detected by first argument */
 class Item_func_num1: public Item_func_numhybrid
@@ -105,24 +45,6 @@ public:
   Item_func_num1(Item *a, Item *b) :Item_func_numhybrid(a, b) {}
 
   void fix_num_length_and_dec();
-  void find_num_type();
-  String *str_op(String *str __attribute__((unused)))
-  { assert(0); return 0; }
-};
-
-
-/* Base class for operations like '+', '-', '*' */
-class Item_num_op :public Item_func_numhybrid
-{
- public:
-  Item_num_op(Item *a,Item *b) :Item_func_numhybrid(a, b) {}
-  virtual void result_precision()= 0;
-
-  virtual inline void print(String *str, enum_query_type query_type)
-  {
-    print_op(str, query_type);
-  }
-
   void find_num_type();
   String *str_op(String *str __attribute__((unused)))
   { assert(0); return 0; }
