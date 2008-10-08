@@ -1315,27 +1315,21 @@ else
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
-# AC_HEADER_ASSERT
+# AX_HEADER_ASSERT
 # ----------------
 # Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
+AC_DEFUN([AX_HEADER_ASSERT],
 [
   AC_MSG_CHECKING([whether to enable assertions])
   AC_ARG_ENABLE([assert],
-    [  --disable-assert        turn off assertions],
-    [AC_MSG_RESULT([no])
-     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
-    [AC_MSG_RESULT(yes)])
-])])
+    [AS_HELP_STRING([--disable-assert],
+       [Turn off assertions])],
+    [ac_cv_assert="no"],
+    [ac_cv_assert="yes"])
+  AC_MSG_RESULT([$ac_cv_assert])
+])
 
-if test "x${NDEBUG}" -eq "x1"
-then
-	ac_assert="no"
-else
-	ac_assert="yes"
-fi
-
-AC_HEADER_ASSERT
+AX_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
@@ -1502,17 +1496,19 @@ echo "Configuration summary for $PACKAGE_NAME version $VERSION"
 echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $SYSTEM_TYPE"
+echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
 echo "   * C++ Compiler:              $CXX"
-echo "   * Assertions enabled:        $ac_assert"
+echo "   * Build auth_pam:            $ac_cv_header_security_pam_appl_h"
+echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_warn_fail"
-echo "   * ac_cv_cxx_cstdint:         $ac_cv_cxx_cstdint"
-echo "   * ac_cv_cxx_hash_map:        $ac_cv_cxx_hash_map"
-echo "   * ac_cv_cxx_hash_namespace:  $ac_cv_cxx_hash_namespace"
-echo "   * ac_cv_cxx_cmath:           $ac_cv_cxx_cmath"
-echo "   * ac_cv_cxx_cmath_namespace: $ac_cv_cxx_cmath_namespace"
+echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
+echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
+echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
+echo "   * C++ cmath location:        $ac_cv_cxx_cmath"
+echo "   * C++ cmath namespace:       $ac_cv_cxx_cmath_namespace"
 echo ""
 echo "---"
