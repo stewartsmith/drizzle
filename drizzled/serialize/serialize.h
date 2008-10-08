@@ -6,6 +6,7 @@
 #define DRIZZLED_SERIALIZE_SERIALIZE_H
 
 #include <drizzled/serialize/schema.pb.h>
+#include <drizzled/serialize/master_list.pb.h>
 using namespace std;
 
 #endif /* DRIZZLED_SERIALIZE_SERIALIZE_H */

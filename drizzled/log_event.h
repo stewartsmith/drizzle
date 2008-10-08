@@ -29,13 +29,14 @@
 */
 
 
-#ifndef _log_event_h
-#define _log_event_h
+#ifndef DRIZZLED_LOG_EVENT_H
+#define DRIZZLED_LOG_EVENT_H
 
 #if defined(USE_PRAGMA_INTERFACE)
 #pragma interface			/* gcc class implementation */
 #endif
 
+#include <string>
 #include <mysys/my_bitmap.h>
 #include "rpl_constants.h"
 #include "rpl_record.h"
@@ -746,7 +747,7 @@ public:
     sees the offset of the BEGIN, which is logical as rollback may
     occur), except the COMMIT query which has its real offset.
   */
-  my_off_t log_pos;
+  off_t log_pos;
   /*
      A temp buffer for read_log_event; it is later analysed according to the
      event's type, and its content is distributed in the event-specific fields.
@@ -1541,17 +1542,16 @@ public:        /* !!! Public in this patch to allow old usage */
   </tr>
   </table>
 */
+
 class Slave_log_event: public Log_event
 {
 protected:
   char* mem_pool;
-  void init_from_mem_pool(int data_size);
+  void init_from_mem_pool();
 public:
-  my_off_t master_pos;
-  char* master_host;
-  char* master_log;
-  int master_host_len;
-  int master_log_len;
+  off_t master_pos;
+  std::string master_host;
+  std::string master_log;
   uint16_t master_port;
 
   Slave_log_event(THD* thd_arg, Relay_log_info* rli);
@@ -1560,7 +1560,7 @@ public:
   Slave_log_event(const char* buf, uint32_t event_len);
   ~Slave_log_event();
   int get_data_size();
-  bool is_valid() const { return master_host != 0; }
+  bool is_valid() const { return master_host.length() != 0; }
   Log_event_type get_type_code() { return SLAVE_EVENT; }
   bool write(IO_CACHE* file);
 
@@ -3407,4 +3407,4 @@ private:
   @} (end of group Replication)
 */
 
-#endif /* _log_event_h */
+#endif /* DRIZZLED_LOG_EVENT_H */

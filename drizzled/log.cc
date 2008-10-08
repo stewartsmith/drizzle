@@ -1650,11 +1650,11 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
 
   assert(is_open());
   assert(rli->slave_running == 1);
-  assert(!strcmp(rli->linfo.log_file_name,rli->event_relay_log_name));
+  assert(!strcmp(rli->linfo.log_file_name,rli->event_relay_log_name.c_str()));
 
   pthread_mutex_lock(&LOCK_index);
   pthread_mutex_lock(&rli->log_space_lock);
-  rli->relay_log.purge_logs(rli->group_relay_log_name, included,
+  rli->relay_log.purge_logs(rli->group_relay_log_name.c_str(), included,
                             0, 0, &rli->log_space_total);
   // Tell the I/O thread to take the relay_log_space_limit into account
   rli->ignore_log_space_limit= 0;
@@ -1675,14 +1675,14 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
   */
   if ((included && (error=find_log_pos(&rli->linfo, NULL, 0))) ||
       (!included &&
-       ((error=find_log_pos(&rli->linfo, rli->event_relay_log_name, 0)) ||
+       ((error=find_log_pos(&rli->linfo, rli->event_relay_log_name.c_str(), 0)) ||
         (error=find_next_log(&rli->linfo, 0)))))
   {
     char buff[22];
     sql_print_error(_("next log error: %d  offset: %s  log: %s included: %d"),
                     error,
                     llstr(rli->linfo.index_file_offset,buff),
-                    rli->group_relay_log_name,
+                    rli->group_relay_log_name.c_str(),
                     included);
     goto err;
   }
@@ -1691,8 +1691,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
     Reset rli's coordinates to the current log.
   */
   rli->event_relay_log_pos= BIN_LOG_HEADER_SIZE;
-  strmake(rli->event_relay_log_name,rli->linfo.log_file_name,
-	  sizeof(rli->event_relay_log_name)-1);
+  rli->event_relay_log_name.assign(rli->linfo.log_file_name);
 
   /*
     If we removed the rli->group_relay_log_name file,
@@ -1702,8 +1701,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
   if (included)
   {
     rli->group_relay_log_pos = BIN_LOG_HEADER_SIZE;
-    strmake(rli->group_relay_log_name,rli->linfo.log_file_name,
-            sizeof(rli->group_relay_log_name)-1);
+    rli->group_relay_log_name.assign(rli->linfo.log_file_name);
     rli->notify_group_relay_log_name_update();
   }
 

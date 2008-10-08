@@ -239,8 +239,7 @@ int32_t init_slave()
     goto err;
   }
 
-  if (init_master_info(active_mi,master_info_file,relay_log_info_file,
-                       1, (SLAVE_IO | SLAVE_SQL)))
+  if (active_mi->init_master_info(master_info_file, relay_log_info_file, 1, (SLAVE_IO | SLAVE_SQL)))
   {
     sql_print_error(_("Failed to initialize the master info structure"));
     goto err;
@@ -585,7 +584,7 @@ void end_slave()
       once multi-master code is ready.
     */
     terminate_slave_threads(active_mi,SLAVE_FORCE_ALL);
-    end_master_info(active_mi);
+    active_mi->end_master_info();
     delete active_mi;
     active_mi= 0;
   }
@@ -1084,7 +1083,7 @@ static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((unuse
                      " to the relay log, SHOW SLAVE STATUS may be"
                      " inaccurate"));
       rli->relay_log.harvest_bytes_written(&rli->log_space_total);
-      if (flush_master_info(mi, 1))
+      if (mi->flush_master_info(1))
         sql_print_error(_("Failed to flush master info file"));
       delete ev;
     }
@@ -1221,17 +1220,17 @@ bool show_master_info(THD* thd, Master_info* mi)
 
     pthread_mutex_lock(&mi->data_lock);
     pthread_mutex_lock(&mi->rli.data_lock);
-    protocol->store(mi->host, &my_charset_bin);
-    protocol->store(mi->user, &my_charset_bin);
-    protocol->store((uint32_t) mi->port);
-    protocol->store((uint32_t) mi->connect_retry);
-    protocol->store(mi->master_log_name, &my_charset_bin);
+    protocol->store(mi->getHostname(), &my_charset_bin);
+    protocol->store(mi->getUsername(), &my_charset_bin);
+    protocol->store((uint32_t) mi->getPort());
+    protocol->store(mi->getConnectionRetry());
+    protocol->store(mi->getLogName(), &my_charset_bin);
     protocol->store((uint64_t) mi->master_log_pos);
-    protocol->store(mi->rli.group_relay_log_name +
-                    dirname_length(mi->rli.group_relay_log_name),
+    protocol->store(mi->rli.group_relay_log_name.c_str() +
+                    dirname_length(mi->rli.group_relay_log_name.c_str()),
                     &my_charset_bin);
     protocol->store((uint64_t) mi->rli.group_relay_log_pos);
-    protocol->store(mi->rli.group_master_log_name, &my_charset_bin);
+    protocol->store(mi->rli.group_master_log_name.c_str(), &my_charset_bin);
     protocol->store(mi->slave_running == DRIZZLE_SLAVE_RUN_CONNECT ?
                     "Yes" : "No", &my_charset_bin);
     protocol->store(mi->rli.slave_running ? "Yes":"No", &my_charset_bin);
@@ -1421,7 +1420,7 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
   unsigned char buf[FN_REFLEN + 10];
   int32_t len;
   int32_t binlog_flags = 0; // for now
-  char* logname = mi->master_log_name;
+  const char* logname = mi->getLogName();
   
   *suppress_warnings= false;
 
@@ -1660,7 +1659,7 @@ int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
                   " of the relay log information: the slave may"
                   " be in an inconsistent state."
                   " Stopped in %s position %s"),
-                  rli->group_relay_log_name,
+                  rli->group_relay_log_name.c_str(),
                   llstr(rli->group_relay_log_pos, buf));
       return(2);
     }
@@ -1784,10 +1783,10 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
         */
         if (rli->trans_retries < slave_trans_retries)
         {
-          if (init_master_info(rli->mi, 0, 0, 0, SLAVE_SQL))
+          if (rli->mi->init_master_info(0, 0, 0, SLAVE_SQL))
             sql_print_error(_("Failed to initialize the master info structure"));
           else if (init_relay_log_pos(rli,
-                                      rli->group_relay_log_name,
+                                      rli->group_relay_log_name.c_str(),
                                       rli->group_relay_log_pos,
                                       1, &errmsg, 1))
             sql_print_error(_("Error initializing relay log position: %s"),
@@ -1974,7 +1973,7 @@ pthread_handler_t handle_slave_io(void *arg)
   {
     sql_print_information(_("Slave I/O thread: connected to master '%s@%s:%d',"
                             "replication started in log '%s' at position %s"),
-                          mi->user, mi->host, mi->port,
+                          mi->getUsername(), mi->getHostname(), mi->port,
 			  IO_RPL_LOG_NAME,
 			  llstr(mi->master_log_pos,llbuff));
   /*
@@ -2111,7 +2110,7 @@ requesting master dump")) ||
       {
         goto err;
       }
-      if (flush_master_info(mi, 1))
+      if (mi->flush_master_info(1))
       {
         sql_print_error(_("Failed to flush master info file"));
         goto err;
@@ -2267,7 +2266,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   rli->trans_retries= 0; // start from "no error"
 
   if (init_relay_log_pos(rli,
-                         rli->group_relay_log_name,
+                         rli->group_relay_log_name.c_str(),
                          rli->group_relay_log_pos,
                          1 /*need data lock*/, &errmsg,
                          1 /*look for a description_event*/))
@@ -2299,7 +2298,7 @@ pthread_handler_t handle_slave_sql(void *arg)
                             "position %s, relay log '%s' position: %s"),
                             RPL_LOG_NAME,
                           llstr(rli->group_master_log_pos,llbuff),
-                          rli->group_relay_log_name,
+                          rli->group_relay_log_name.c_str(),
                           llstr(rli->group_relay_log_pos,llbuff1));
 
   /* execute init_slave variable */
@@ -2604,8 +2603,8 @@ static int32_t process_io_rotate(Master_info *mi, Rotate_log_event *rev)
     return(1);
 
   /* Safe copy as 'rev' has been "sanitized" in Rotate_log_event's ctor */
-  memcpy(mi->master_log_name, rev->new_log_ident, rev->ident_len+1);
-  mi->master_log_pos= rev->pos;
+  mi->setLogName(rev->new_log_ident);
+  mi->setLogPosition(rev->pos);
   /*
     If we do not do this, we will be getting the first
     rotate event forever, so we need to not disconnect after one.
@@ -2952,8 +2951,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
 
        TODO: handling `when' for SHOW SLAVE STATUS' snds behind
     */
-    if ((memcmp(mi->master_log_name, hb.get_log_ident(), hb.get_ident_len())
-         && mi->master_log_name != NULL)
+    if ((mi->setLogName(hb.get_log_ident()) && mi->getLogName() != NULL)
         || mi->master_log_pos != hb.log_pos)
     {
       /* missed events of heartbeat from the past */
@@ -3012,9 +3010,9 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
         buf[EVENT_TYPE_OFFSET]!=STOP_EVENT)
     {
       mi->master_log_pos+= inc_pos;
-      memcpy(rli->ign_master_log_name_end, mi->master_log_name, FN_REFLEN);
+      memcpy(rli->ign_master_log_name_end, mi->getLogName(), FN_REFLEN);
       assert(rli->ign_master_log_name_end[0]);
-      rli->ign_master_log_pos_end= mi->master_log_pos;
+      rli->ign_master_log_pos_end= mi->getLogPosition();
     }
     rli->relay_log.signal_update(); // the slave SQL thread needs to re-check
   }
@@ -3122,8 +3120,8 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
 
   while (!(slave_was_killed = io_slave_killed(thd,mi)) &&
          (reconnect ? drizzle_reconnect(drizzle) != 0 :
-          drizzle_connect(drizzle, mi->host, mi->user, mi->password, 0,
-                             mi->port, 0, client_flag) == 0))
+          drizzle_connect(drizzle, mi->getHostname(), mi->getUsername(), mi->getPassword(), 0,
+                             mi->getPort(), 0, client_flag) == 0))
   {
     /* Don't repeat last error */
     if ((int32_t)drizzle_errno(drizzle) != last_errno)
@@ -3134,8 +3132,8 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                  _("error %s to master '%s@%s:%d'"
                    " - retry-time: %d  retries: %u"),
                  (reconnect ? _("reconnecting") : _("connecting")),
-                 mi->user, mi->host, mi->port,
-                 mi->connect_retry, master_retry_count);
+                 mi->getUsername(), mi->getHostname(), mi->getPort(),
+                 mi->getConnectionRetry(), master_retry_count);
     }
     /*
       By default we try forever. The reason is that failure will trigger
@@ -3159,10 +3157,10 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
       if (!suppress_warnings && global_system_variables.log_warnings)
         sql_print_information(_("Slave: connected to master '%s@%s:%d', "
                                 "replication resumed in log '%s' at "
-                                "position %s"), mi->user,
-                                mi->host, mi->port,
+                                "position %s"), mi->getUsername(),
+                                mi->getHostname(), mi->getPort(),
                                 IO_RPL_LOG_NAME,
-                                llstr(mi->master_log_pos,llbuff));
+                                llstr(mi->getLogPosition(),llbuff));
     }
   }
   drizzle->reconnect= 1;
@@ -3216,29 +3214,11 @@ static int32_t safe_reconnect(THD* thd, DRIZZLE *drizzle, Master_info* mi,
 
 bool flush_relay_log_info(Relay_log_info* rli)
 {
-  bool error=0;
+  bool error= 0;
 
   if (unlikely(rli->no_storage))
     return(0);
 
-  IO_CACHE *file = &rli->info_file;
-  char buff[FN_REFLEN*2+22*2+4], *pos;
-
-  my_b_seek(file, 0L);
-  pos=my_stpcpy(buff, rli->group_relay_log_name);
-  *pos++='\n';
-  pos=int64_t2str(rli->group_relay_log_pos, pos, 10);
-  *pos++='\n';
-  pos=my_stpcpy(pos, rli->group_master_log_name);
-  *pos++='\n';
-  pos=int64_t2str(rli->group_master_log_pos, pos, 10);
-  *pos='\n';
-  if (my_b_write(file, (unsigned char*) buff, (size_t) (pos-buff)+1))
-    error=1;
-  if (flush_io_cache(file))
-    error=1;
-
-  /* Flushing the relay log is done by the slave I/O thread */
   return(error);
 }
 
@@ -3253,8 +3233,7 @@ static IO_CACHE *reopen_relay_log(Relay_log_info *rli, const char **errmsg)
   assert(rli->cur_log_fd == -1);
 
   IO_CACHE *cur_log = rli->cur_log=&rli->cache_buf;
-  if ((rli->cur_log_fd=open_binlog(cur_log,rli->event_relay_log_name,
-                                   errmsg)) <0)
+  if ((rli->cur_log_fd=open_binlog(cur_log, rli->event_relay_log_name.c_str(), errmsg)) < 0)
     return(0);
   /*
     We want to start exactly where we was before:
@@ -3496,7 +3475,7 @@ static Log_event* next_event(Relay_log_info* rli)
         if (rli->relay_log.purge_first_log
             (rli,
              rli->group_relay_log_pos == rli->event_relay_log_pos
-             && !strcmp(rli->group_relay_log_name,rli->event_relay_log_name)))
+             && !strcmp(rli->group_relay_log_name.c_str(), rli->event_relay_log_name.c_str())))
         {
           errmsg = "Error purging processed logs";
           goto err;
@@ -3517,8 +3496,7 @@ static Log_event* next_event(Relay_log_info* rli)
           goto err;
         }
         rli->event_relay_log_pos = BIN_LOG_HEADER_SIZE;
-        strmake(rli->event_relay_log_name,rli->linfo.log_file_name,
-                sizeof(rli->event_relay_log_name)-1);
+        rli->event_relay_log_name.assign(rli->linfo.log_file_name);
         flush_relay_log_info(rli);
       }
 

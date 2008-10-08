@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef RPL_REPORTING_H
-#define RPL_REPORTING_H
+#ifndef DRIZZLED_RPL_REPORTING_H
+#define DRIZZLED_RPL_REPORTING_H
 
 /**
    Maximum size of an error message from a slave thread.
@@ -100,5 +100,4 @@ private:
   char const *const m_thread_name;
 };
 
-#endif // RPL_REPORTING_H
-
+#endif /* DRIZZLED_RPL_REPORTING_H */

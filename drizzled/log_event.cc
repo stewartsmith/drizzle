@@ -983,9 +983,6 @@ Log_event* Log_event::read_log_event(const char* buf, uint32_t event_len,
     case ROTATE_EVENT:
       ev = new Rotate_log_event(buf, event_len, description_event);
       break;
-    case SLAVE_EVENT: /* can never happen (unused event) */
-      ev = new Slave_log_event(buf, event_len);
-      break;
     case CREATE_FILE_EVENT:
       ev = new Create_file_log_event(buf, event_len, description_event);
       break;
@@ -3219,11 +3216,10 @@ int Rotate_log_event::do_update_pos(Relay_log_info *rli)
   if ((server_id != ::server_id || rli->replicate_same_server_id) &&
       !rli->is_in_group())
   {
-    memcpy(rli->group_master_log_name, new_log_ident, ident_len+1);
+    rli->group_master_log_name.assign(new_log_ident, ident_len+1);
     rli->notify_group_master_log_name_update();
     rli->group_master_log_pos= pos;
-    strmake(rli->group_relay_log_name, rli->event_relay_log_name,
-            sizeof(rli->group_relay_log_name) - 1);
+    rli->group_relay_log_name.assign(rli->event_relay_log_name);
     rli->notify_group_relay_log_name_update();
     rli->group_relay_log_pos= rli->event_relay_log_pos;
     /*
@@ -3776,11 +3772,11 @@ void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
   pos= my_stpcpy(buf, "host=");
-  pos= my_stpncpy(pos, master_host, HOSTNAME_LENGTH);
+  pos= my_stpncpy(pos, master_host.c_str(), HOSTNAME_LENGTH);
   pos= my_stpcpy(pos, ",port=");
   pos= int10_to_str((long) master_port, pos, 10);
   pos= my_stpcpy(pos, ",log=");
-  pos= my_stpcpy(pos, master_log);
+  pos= my_stpcpy(pos, master_log.c_str());
   pos= my_stpcpy(pos, ",pos=");
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
@@ -3802,17 +3798,13 @@ Slave_log_event::Slave_log_event(THD* thd_arg,
   // TODO: re-write this better without holding both locks at the same time
   pthread_mutex_lock(&mi->data_lock);
   pthread_mutex_lock(&rli->data_lock);
-  master_host_len = strlen(mi->host);
-  master_log_len = strlen(rli->group_master_log_name);
   // on OOM, just do not initialize the structure and print the error
   if ((mem_pool = (char*)my_malloc(get_data_size() + 1,
 				   MYF(MY_WME))))
   {
-    master_host = mem_pool + SL_MASTER_HOST_OFFSET ;
-    memcpy(master_host, mi->host, master_host_len + 1);
-    master_log = master_host + master_host_len + 1;
-    memcpy(master_log, rli->group_master_log_name, master_log_len + 1);
-    master_port = mi->port;
+    master_host.assign(mi->getHostname());
+    master_log.assign(rli->group_master_log_name);
+    master_port = mi->getPort();
     master_pos = rli->group_master_log_pos;
   }
   else
@@ -3831,7 +3823,7 @@ Slave_log_event::~Slave_log_event()
 
 int Slave_log_event::get_data_size()
 {
-  return master_host_len + master_log_len + 1 + SL_MASTER_HOST_OFFSET;
+  return master_host.length() + master_log.length() + 1 + SL_MASTER_HOST_OFFSET;
 }
 
 
@@ -3847,35 +3839,15 @@ bool Slave_log_event::write(IO_CACHE* file)
 }
 
 
-void Slave_log_event::init_from_mem_pool(int data_size)
+void Slave_log_event::init_from_mem_pool()
 {
   master_pos = uint8korr(mem_pool + SL_MASTER_POS_OFFSET);
   master_port = uint2korr(mem_pool + SL_MASTER_PORT_OFFSET);
-  master_host = mem_pool + SL_MASTER_HOST_OFFSET;
-  master_host_len = strlen(master_host);
-  // safety
-  master_log = master_host + master_host_len + 1;
-  if (master_log > mem_pool + data_size)
-  {
-    master_host = 0;
-    return;
-  }
-  master_log_len = strlen(master_log);
-}
-
-
-/** This code is not used, so has not been updated to be format-tolerant. */
-Slave_log_event::Slave_log_event(const char* buf, uint32_t event_len)
-  :Log_event(buf,0) /*unused event*/ ,mem_pool(0),master_host(0)
-{
-  if (event_len < LOG_EVENT_HEADER_LEN)
-    return;
-  event_len -= LOG_EVENT_HEADER_LEN;
-  if (!(mem_pool = (char*) my_malloc(event_len + 1, MYF(MY_WME))))
-    return;
-  memcpy(mem_pool, buf + LOG_EVENT_HEADER_LEN, event_len);
-  mem_pool[event_len] = 0;
-  init_from_mem_pool(event_len);
+#ifdef FIXME
+  /* Assign these correctly */
+  master_host.assign(mem_pool + SL_MASTER_HOST_OFFSET);
+  master_log.assign();
+#endif
 }
 
 

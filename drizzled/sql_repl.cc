@@ -848,10 +848,9 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
     thread_mask&= thd->lex->slave_thd_opt;
   if (thread_mask) //some threads are stopped, start them
   {
-    if (init_master_info(mi,master_info_file,relay_log_info_file, 0,
-			 thread_mask))
+    if (mi->init_master_info(master_info_file, relay_log_info_file, 0, thread_mask))
       slave_errno=ER_MASTER_INFO;
-    else if (server_id_supplied && *mi->host)
+    else if (server_id_supplied && *mi->getHostname())
     {
       /*
         If we will start SQL thread we will care about UNTIL options If
@@ -1038,7 +1037,7 @@ int reset_slave(THD *thd, Master_info* mi)
     goto err;
 
   /* Clear master's log coordinates */
-  init_master_log_pos(mi);
+  mi->init_master_log_pos();
   /*
      Reset errors (the idea is that we forget about the
      old master).
@@ -1047,7 +1046,7 @@ int reset_slave(THD *thd, Master_info* mi)
   mi->rli.clear_until_condition();
 
   // close master_info_file, relay_log_info_file, set mi->inited=rli->inited=0
-  end_master_info(mi);
+  mi->end_master_info();
   // and delete these two files
   fn_format(fname, master_info_file, mysql_data_home, "", 4+32);
   if (!stat(fname, &stat_area) && my_delete(fname, MYF(MY_WME)))
@@ -1137,8 +1136,7 @@ bool change_master(THD* thd, Master_info* mi)
   thd_proc_info(thd, "Changing master");
   LEX_MASTER_INFO* lex_mi= &thd->lex->mi;
   // TODO: see if needs re-write
-  if (init_master_info(mi, master_info_file, relay_log_info_file, 0,
-		       thread_mask))
+  if (mi->init_master_info(master_info_file, relay_log_info_file, 0, thread_mask))
   {
     my_message(ER_MASTER_INFO, ER(ER_MASTER_INFO), MYF(0));
     unlock_slave_threads(mi);
@@ -1163,21 +1161,18 @@ bool change_master(THD* thd, Master_info* mi)
   }
 
   if (lex_mi->log_file_name)
-    strmake(mi->master_log_name, lex_mi->log_file_name,
-	    sizeof(mi->master_log_name)-1);
+    mi->setLogName(lex_mi->log_file_name);
   if (lex_mi->pos)
   {
     mi->master_log_pos= lex_mi->pos;
   }
 
   if (lex_mi->host)
-    strmake(mi->host, lex_mi->host, sizeof(mi->host)-1);
+    mi->setHost(lex_mi->host, lex_mi->port);
   if (lex_mi->user)
-    strmake(mi->user, lex_mi->user, sizeof(mi->user)-1);
+    mi->setUsername(lex_mi->user);
   if (lex_mi->password)
-    strmake(mi->password, lex_mi->password, sizeof(mi->password)-1);
-  if (lex_mi->port)
-    mi->port = lex_mi->port;
+    mi->setPassword(lex_mi->password);
   if (lex_mi->connect_retry)
     mi->connect_retry = lex_mi->connect_retry;
   if (lex_mi->heartbeat_opt != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
@@ -1190,10 +1185,7 @@ bool change_master(THD* thd, Master_info* mi)
   if (lex_mi->relay_log_name)
   {
     need_relay_log_purge= 0;
-    strmake(mi->rli.group_relay_log_name,lex_mi->relay_log_name,
-	    sizeof(mi->rli.group_relay_log_name)-1);
-    strmake(mi->rli.event_relay_log_name,lex_mi->relay_log_name,
-	    sizeof(mi->rli.event_relay_log_name)-1);
+    mi->rli.event_relay_log_name.assign(lex_mi->relay_log_name);
   }
 
   if (lex_mi->relay_log_pos)
@@ -1230,14 +1222,13 @@ bool change_master(THD* thd, Master_info* mi)
      mi->master_log_pos = ((BIN_LOG_HEADER_SIZE > mi->rli.group_master_log_pos)
                            ? BIN_LOG_HEADER_SIZE
 			   : mi->rli.group_master_log_pos);
-     strmake(mi->master_log_name, mi->rli.group_master_log_name,
-             sizeof(mi->master_log_name)-1);
+     mi->setLogName(mi->rli.group_master_log_name.c_str());
   }
   /*
     Relay log's IO_CACHE may not be inited, if rli->inited==0 (server was never
     a slave before).
   */
-  if (flush_master_info(mi, 0))
+  if (mi->flush_master_info(0))
   {
     my_error(ER_RELAY_LOG_INIT, MYF(0), "Failed to flush master info file");
     unlock_slave_threads(mi);
@@ -1262,7 +1253,7 @@ bool change_master(THD* thd, Master_info* mi)
     relay_log_purge= 0;
     /* Relay log is already initialized */
     if (init_relay_log_pos(&mi->rli,
-			   mi->rli.group_relay_log_name,
+			   mi->rli.group_relay_log_name.c_str(),
 			   mi->rli.group_relay_log_pos,
 			   0 /*no data lock*/,
 			   &msg, 0))
@@ -1283,11 +1274,10 @@ bool change_master(THD* thd, Master_info* mi)
     That's why we always save good coords in rli.
   */
   mi->rli.group_master_log_pos= mi->master_log_pos;
-  strmake(mi->rli.group_master_log_name,mi->master_log_name,
-	  sizeof(mi->rli.group_master_log_name)-1);
+  mi->rli.group_master_log_name.assign(mi->master_log_name);
 
-  if (!mi->rli.group_master_log_name[0]) // uninitialized case
-    mi->rli.group_master_log_pos=0;
+  if (mi->rli.group_master_log_name.size() == 0) // uninitialized case
+    mi->rli.group_master_log_pos= 0;
 
   pthread_mutex_lock(&mi->rli.data_lock);
   mi->rli.abort_pos_wait++; /* for MASTER_POS_WAIT() to abort */

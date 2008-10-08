@@ -168,107 +168,12 @@ int32_t init_relay_log_info(Relay_log_info* rli,
   /* if file does not exist */
   if (access(fname,F_OK))
   {
-    /*
-      If someone removed the file from underneath our feet, just close
-      the old descriptor and re-create the old file
-    */
-    if (info_fd >= 0)
-      my_close(info_fd, MYF(MY_WME));
-    if ((info_fd = my_open(fname, O_CREAT|O_RDWR|O_BINARY, MYF(MY_WME))) < 0)
-    {
-      sql_print_error(_("Failed to create a new relay log info file "
-                        "( file '%s', errno %d)"), fname, my_errno);
-      msg= current_thd->main_da.message();
-      goto err;
-    }
-    if (init_io_cache(&rli->info_file, info_fd, IO_SIZE*2, READ_CACHE, 0L,0,
-                      MYF(MY_WME)))
-    {
-      sql_print_error(_("Failed to create a cache on relay log info file '%s'"),
-                      fname);
-      msg= current_thd->main_da.message();
-      goto err;
-    }
-
-    /* Init relay log with first entry in the relay index file */
-    if (init_relay_log_pos(rli,NULL,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
-                           &msg, 0))
-    {
-      sql_print_error(_("Failed to open the relay log 'FIRST' (relay_log_pos 4)"));
-      goto err;
-    }
-    rli->group_master_log_name[0]= 0;
-    rli->group_master_log_pos= 0;
-    rli->info_fd= info_fd;
+    /* Create a new file */
   }
   else // file exists
   {
-    if (info_fd >= 0)
-      reinit_io_cache(&rli->info_file, READ_CACHE, 0L,0,0);
-    else
-    {
-      int32_t error=0;
-      if ((info_fd = my_open(fname, O_RDWR|O_BINARY, MYF(MY_WME))) < 0)
-      {
-        sql_print_error(_("Failed to open the existing relay log info "
-                          "file '%s' (errno %d)"),
-                        fname, my_errno);
-        error= 1;
-      }
-      else if (init_io_cache(&rli->info_file, info_fd,
-                             IO_SIZE*2, READ_CACHE, 0L, 0, MYF(MY_WME)))
-      {
-        sql_print_error(_("Failed to create a cache on relay log info "
-                          "file '%s'"),
-                        fname);
-        error= 1;
-      }
-      if (error)
-      {
-        if (info_fd >= 0)
-          my_close(info_fd, MYF(0));
-        rli->info_fd= -1;
-        rli->relay_log.close(LOG_CLOSE_INDEX | LOG_CLOSE_STOP_EVENT);
-        pthread_mutex_unlock(&rli->data_lock);
-        return(1);
-      }
-    }
-
-    rli->info_fd = info_fd;
-    int32_t relay_log_pos, master_log_pos;
-    if (init_strvar_from_file(rli->group_relay_log_name,
-                              sizeof(rli->group_relay_log_name),
-                              &rli->info_file, "") ||
-       init_intvar_from_file(&relay_log_pos,
-                             &rli->info_file, BIN_LOG_HEADER_SIZE) ||
-       init_strvar_from_file(rli->group_master_log_name,
-                             sizeof(rli->group_master_log_name),
-                             &rli->info_file, "") ||
-       init_intvar_from_file(&master_log_pos, &rli->info_file, 0))
-    {
-      msg="Error reading slave log configuration";
-      goto err;
-    }
-    strmake(rli->event_relay_log_name,rli->group_relay_log_name,
-            sizeof(rli->event_relay_log_name)-1);
-    rli->group_relay_log_pos= rli->event_relay_log_pos= relay_log_pos;
-    rli->group_master_log_pos= master_log_pos;
-
-    if (init_relay_log_pos(rli,
-                           rli->group_relay_log_name,
-                           rli->group_relay_log_pos,
-                           0 /* no data lock*/,
-                           &msg, 0))
-    {
-      char llbuf[22];
-      sql_print_error(_("Failed to open the relay log '%s' (relay_log_pos %s)"),
-                      rli->group_relay_log_name,
-                      llstr(rli->group_relay_log_pos, llbuf));
-      goto err;
-    }
+    /* Open up fname here and pull out the relay.info data */
   }
-  assert(rli->event_relay_log_pos >= BIN_LOG_HEADER_SIZE);
-  assert(my_b_tell(rli->cur_log) == rli->event_relay_log_pos);
 
   /*
     Now change the cache from READ to WRITE - must do this
@@ -442,10 +347,10 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,
     *errmsg="Could not find target log during relay log initialization";
     goto err;
   }
-  strmake(rli->group_relay_log_name,rli->linfo.log_file_name,
-          sizeof(rli->group_relay_log_name)-1);
-  strmake(rli->event_relay_log_name,rli->linfo.log_file_name,
-          sizeof(rli->event_relay_log_name)-1);
+
+  rli->group_relay_log_name.assign(rli->linfo.log_file_name);
+  rli->event_relay_log_name.assign(rli->linfo.log_file_name);
+
   if (rli->relay_log.is_active(rli->linfo.log_file_name))
   {
     /*
@@ -665,10 +570,10 @@ int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
       configuration which does nothing), then group_master_log_pos
       will grow and group_master_log_name will stay "".
     */
-    if (*group_master_log_name)
+    if (group_master_log_name.length())
     {
-      char *basename= (group_master_log_name +
-                       dirname_length(group_master_log_name));
+      const char *basename= (group_master_log_name.c_str() +
+                             dirname_length(group_master_log_name.c_str()));
       /*
         First compare the parts before the extension.
         Find the dot in the master's log basename,
@@ -745,8 +650,7 @@ void Relay_log_info::inc_group_relay_log_pos(uint64_t log_pos,
     pthread_mutex_lock(&data_lock);
   inc_event_relay_log_pos();
   group_relay_log_pos= event_relay_log_pos;
-  strmake(group_relay_log_name,event_relay_log_name,
-          sizeof(group_relay_log_name)-1);
+  group_relay_log_name.assign(event_relay_log_name);
 
   notify_group_relay_log_name_update();
 
@@ -873,10 +777,8 @@ int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
     goto err;
   }
   /* Save name of used relay log file */
-  strmake(rli->group_relay_log_name, rli->relay_log.get_log_fname(),
-          sizeof(rli->group_relay_log_name)-1);
-  strmake(rli->event_relay_log_name, rli->relay_log.get_log_fname(),
-          sizeof(rli->event_relay_log_name)-1);
+  rli->group_relay_log_name.assign(rli->relay_log.get_log_fname());
+  rli->event_relay_log_name.assign(rli->relay_log.get_log_fname());
   rli->group_relay_log_pos= rli->event_relay_log_pos= BIN_LOG_HEADER_SIZE;
   if (count_relay_log_space(rli))
   {
@@ -884,7 +786,7 @@ int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
     goto err;
   }
   if (!just_reset)
-    error= init_relay_log_pos(rli, rli->group_relay_log_name,
+    error= init_relay_log_pos(rli, rli->group_relay_log_name.c_str(),
                               rli->group_relay_log_pos,
                               0 /* do not need data lock */, errmsg, 0);
 
@@ -936,12 +838,12 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
 
   if (until_condition == UNTIL_MASTER_POS)
   {
-    log_name= group_master_log_name;
+    log_name= group_master_log_name.c_str();
     log_pos= master_beg_pos;
   }
   else
   { /* until_condition == UNTIL_RELAY_POS */
-    log_name= group_relay_log_name;
+    log_name= group_relay_log_name.c_str();
     log_pos= group_relay_log_pos;
   }
 
