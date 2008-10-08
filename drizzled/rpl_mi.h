@@ -63,10 +63,10 @@ class Master_info : public Slave_reporting_capability
 {
 private:
   drizzle::MasterList list;
-  string master_info_filename;
-  string master_log_name;
+  string info_filename;
+  string log_name;
   uint16_t port;
-  off_t master_log_pos;
+  off_t log_pos;
 
 public:
 

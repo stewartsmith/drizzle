@@ -96,29 +96,29 @@ uint16_t Master_info::getPort()
 
 off_t Master_info::getLogPosition()
 {
-  return master_log_pos;
+  return log_pos;
 }
 
 bool Master_info::setLogPosition(off_t position)
 {
-  master_log_pos= position;
+  log_pos= position;
 
   return true;
 }
 
 void Master_info::incrementLogPosition(off_t position)
 {
-  master_log_pos+= position;
+  log_pos+= position;
 }
 
 const char *Master_info::getLogName()
 {
-  return master_log_name.c_str();
+  return log_name.c_str();
 }
 
 bool Master_info::setLogName(const char *name)
 {
-  master_log_name.assign(name);
+ log_name.assign(name);
 
   return true;
 }
@@ -138,8 +138,8 @@ bool Master_info::setConnectionRetry(uint32_t retry)
 
 void Master_info::reset()
 {
-  master_log_name.clear();
-  master_log_pos= BIN_LOG_HEADER_SIZE; 
+  log_name.clear();
+  log_pos= BIN_LOG_HEADER_SIZE; 
 }
 
 
@@ -177,7 +177,7 @@ int Master_info::init_master_info(const char* master_info_fname,
     char fname[FN_REFLEN+128];
 
     fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
-    master_info_filename.assign(fname);
+    info_filename.assign(fname);
   }
 
   /*
@@ -189,7 +189,7 @@ int Master_info::init_master_info(const char* master_info_fname,
 
   /* does master.info exist ? */
 
-  if (access(master_info_filename.c_str(), F_OK))
+  if (access(info_filename.c_str(), F_OK))
   {
     drizzle::MasterList_Record *record;
 
@@ -201,17 +201,17 @@ int Master_info::init_master_info(const char* master_info_fname,
 
     reset();
 
-    /* Write new Master info file here (from master_info_filename) */
+    /* Write new Master info file here (from info_filename) */
     record= list.add_record();
     record->set_hostname(host);
     record->set_username(user);
     record->set_password(password);
     record->set_port(port);
     record->set_connect_retry(connect_retry);
-    record->set_log_name(master_log_name);
-    record->set_log_position(master_log_pos);
+    record->set_log_name(log_name);
+    record->set_log_position(log_pos);
 
-    fstream output(master_info_filename.c_str(), ios::out | ios::trunc | ios::binary);
+    fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
     if (!list.SerializeToOstream(&output)) 
     { 
       assert(0);
@@ -220,8 +220,8 @@ int Master_info::init_master_info(const char* master_info_fname,
   }
   else // file exists
   {
-    /* Read Master info file here (from master_info_filename) */
-    fstream input(master_info_filename.c_str(), ios::in | ios::binary);
+    /* Read Master info file here (from info_filename) */
+    fstream input(info_filename.c_str(), ios::in | ios::binary);
     if (!list.ParseFromIstream(&input)) 
     {
       assert(0);
@@ -241,9 +241,9 @@ int Master_info::init_master_info(const char* master_info_fname,
     if (record.has_connect_retry())
       connect_retry= record.connect_retry();
     if (record.has_log_name())
-      master_log_name= record.log_name();
+      log_name= record.log_name();
     if (record.has_log_position())
-      master_log_pos= record.log_position();
+      log_pos= record.log_position();
   }
 
   rli.mi = this;
@@ -283,8 +283,8 @@ int Master_info::flush()
     the caller is responsible for setting 'flush_relay_log_cache' accordingly.
   */
 
-  /* Write Master info file here (from master_info_filename) */
-  assert(master_info_filename.length());
+  /* Write Master info file here (from info_filename) */
+  assert(info_filename.length());
   assert(list.record_size() == 1);
   drizzle::MasterList_Record *record= list.mutable_record(0);
 
@@ -293,10 +293,10 @@ int Master_info::flush()
   record->set_password(password);
   record->set_port(port);
   record->set_connect_retry(connect_retry);
-  record->set_log_name(master_log_name);
-  record->set_log_position(master_log_pos);
+  record->set_log_name(log_name);
+  record->set_log_position(log_pos);
 
-  fstream output(master_info_filename.c_str(), ios::out | ios::trunc | ios::binary);
+  fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
   if (!list.SerializeToOstream(&output)) 
   { 
     assert(0);
