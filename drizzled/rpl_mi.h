@@ -105,7 +105,7 @@ public:
   long clock_diff_with_master;
   int flush_master_info(bool flush_relay_log_cache);
   void end_master_info();
-  void init_master_log_pos();
+  void reset();
 
   int init_master_info(const char* master_info_fname,
                        const char* slave_info_fname,

@@ -15,6 +15,8 @@
 
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
+#include <iostream>
+#include <fstream>
 
 #define DEFAULT_CONNECT_RETRY 60
 
@@ -131,21 +133,10 @@ bool Master_info::setConnectionRetry(uint32_t retry)
 }
 
 
-void Master_info::init_master_log_pos()
+void Master_info::reset()
 {
   master_log_name.clear();
-  master_log_pos = BIN_LOG_HEADER_SIZE;             // skip magic number
-  /* 
-    always request heartbeat unless master_heartbeat_period is set
-    explicitly zero.  Here is the default value for heartbeat period
-    if CHANGE MASTER did not specify it.  (no data loss in conversion
-    as hb period has a max)
-  */
-  heartbeat_period= (float) cmin((double)SLAVE_MAX_HEARTBEAT_PERIOD,
-                                 (slave_net_timeout/2.0));
-  assert(heartbeat_period > (float) 0.001
-         || heartbeat_period == 0);
-  return;
+  master_log_pos= BIN_LOG_HEADER_SIZE; 
 }
 
 
@@ -194,18 +185,66 @@ int Master_info::init_master_info(const char* master_info_fname,
 
   if (access(fname,F_OK))
   {
+    drizzle::MasterList_Record *record;
+
+    if (abort_if_no_master_info_file)
+    {
+      pthread_mutex_unlock(&mi->data_lock);
+      return 0;
+    }
+
+    reset();
+
     /* Write new Master info file here (from fname) */
+    record= list.add_record();
+    record->set_hostname(host);
+    record->set_username(user);
+    record->set_password(password);
+    record->set_port(port);
+    record->set_connect_retry(connect_retry);
+    record->set_log_name(master_log_name);
+    record->set_log_position(master_log_pos);
+
+    fstream output(fname, ios::out | ios::trunc | ios::binary);
+    if (!list.SerializeToOstream(&output)) 
+    { 
+      assert(0);
+      return -1;
+    }
   }
   else // file exists
   {
     /* Read Master info file here (from fname) */
+    fstream input(fname, ios::in | ios::binary);
+    if (!list.ParseFromIstream(&input)) 
+    {
+      assert(0);
+      return -1;
+    }
+
+    /* We do not support multi-master just yet */
+    assert(list.record_size() == 1);
+    const drizzle::MasterList_Record record= list.record(0);
+
+    if (record.has_username())
+      user= record.username();
+    if (record.has_password())
+      password= record.password();
+    if (record.has_port())
+      port= record.port();
+    if (record.has_connect_retry())
+      connect_retry= record.connect_retry();
+    if (record.has_log_name())
+      master_log_name= record.log_name();
+    if (record.has_log_position())
+      master_log_pos= record.log_position();
   }
 
   rli.mi = this;
   if (init_relay_log_info(&rli, slave_info_fname))
     goto err;
 
-  inited = 1;
+  inited= 1;
   // now change cache READ -> WRITE - must do this before flush_master_info
   reinit_io_cache(&file, WRITE_CACHE, 0L, 0, 1);
   if ((error= test(flush_master_info(1))))
