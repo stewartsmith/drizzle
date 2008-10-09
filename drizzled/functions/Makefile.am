@@ -17,14 +17,18 @@
 
 noinst_LTLIBRARIES = 	libfunctions.la
 
-libfunctions_la_SOURCES = func.cc \
+libfunctions_la_SOURCES = connection_id.cc \
+			  func.cc \
                           int.cc \
+			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
 			  real.cc
 
-noinst_HEADERS = func.h \
+noinst_HEADERS = connection_id.h \
+		 func.h \
                  int.h \
+		 num1.h \
                  numhybrid.h \
                  num_op.h \
 		 real.h

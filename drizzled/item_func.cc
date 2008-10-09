@@ -151,57 +151,6 @@ Item *Item_func::get_tmp_table_item(THD *thd)
 }
 
 
-
-void Item_func_connection_id::fix_length_and_dec()
-{
-  Item_int_func::fix_length_and_dec();
-  max_length= 10;
-}
-
-
-bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
-{
-  if (Item_int_func::fix_fields(thd, ref))
-    return true;
-  thd->thread_specific_used= true;
-  value= thd->variables.pseudo_thread_id;
-  return false;
-}
-
-
-/**
-  Set result type for a numeric function of one argument
-  (can be also used by a numeric function of many arguments, if the result
-  type depends only on the first argument)
-*/
-
-void Item_func_num1::find_num_type()
-{
-  switch (hybrid_type= args[0]->result_type()) {
-  case INT_RESULT:
-    unsigned_flag= args[0]->unsigned_flag;
-    break;
-  case STRING_RESULT:
-  case REAL_RESULT:
-    hybrid_type= REAL_RESULT;
-    max_length= float_length(decimals);
-    break;
-  case DECIMAL_RESULT:
-    break;
-  default:
-    assert(0);
-  }
-  return;
-}
-
-
-void Item_func_num1::fix_num_length_and_dec()
-{
-  decimals= args[0]->decimals;
-  max_length= args[0]->max_length;
-}
-
-
 void Item_func_signed::print(String *str, enum_query_type query_type)
 {
   str->append(STRING_WITH_LEN("cast("));

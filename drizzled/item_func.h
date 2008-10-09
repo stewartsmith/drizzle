@@ -31,37 +31,12 @@ extern "C"				/* Bug in BSDI include file */
 #endif
 
 #include <drizzled/functions/func.h>
+#include <drizzled/functions/connection_id.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
+#include <drizzled/functions/num1.h>
 #include <drizzled/functions/real.h>
-
-
-/* function where type of result detected by first argument */
-class Item_func_num1: public Item_func_numhybrid
-{
-public:
-  Item_func_num1(Item *a) :Item_func_numhybrid(a) {}
-  Item_func_num1(Item *a, Item *b) :Item_func_numhybrid(a, b) {}
-
-  void fix_num_length_and_dec();
-  void find_num_type();
-  String *str_op(String *str __attribute__((unused)))
-  { assert(0); return 0; }
-};
-
-
-class Item_func_connection_id :public Item_int_func
-{
-  int64_t value;
-
-public:
-  Item_func_connection_id() {}
-  const char *func_name() const { return "connection_id"; }
-  void fix_length_and_dec();
-  bool fix_fields(THD *thd, Item **ref);
-  int64_t val_int() { assert(fixed == 1); return value; }
-};
 
 
 class Item_func_signed :public Item_int_func
