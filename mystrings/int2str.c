@@ -129,12 +129,12 @@ int2str(register long int val, register char *dst, register int radix,
     Pointer to ending NUL character.
 */
 
-char *int10_to_str(long int val,char *dst,int radix)
+char *int10_to_str(int64_t val,char *dst,int radix)
 {
   char buffer[65];
   register char *p;
-  long int new_val;
-  unsigned long int uval = (unsigned long int) val;
+  int64_t new_val;
+  uint64_t uval = (uint64_t) val;
 
   if (radix < 0)				/* -10 */
   {
@@ -142,14 +142,14 @@ char *int10_to_str(long int val,char *dst,int radix)
     {
       *dst++ = '-';
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (unsigned long int)0 - uval;
+      uval = (uint64_t)0 - uval;
     }
   }
 
   p = &buffer[sizeof(buffer)-1];
   *p = '\0';
-  new_val= (long) (uval / 10);
-  *--p = '0'+ (char) (uval - (unsigned long) new_val * 10);
+  new_val= (int64_t) (uval / 10);
+  *--p = '0'+ (char) (uval - (uint64_t) new_val * 10);
   val = new_val;
 
   while (val != 0)
