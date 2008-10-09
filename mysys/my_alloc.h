@@ -20,6 +20,10 @@
 #ifndef _my_alloc_h
 #define _my_alloc_h
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define ALLOC_MAX_BLOCK_TO_DROP			4096
 #define ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP	10
 
@@ -61,4 +65,7 @@ char *strdup_root(MEM_ROOT *root,const char *str);
 char *strmake_root(MEM_ROOT *root,const char *str,size_t len);
 void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
 
+#if defined(__cplusplus)
+}
+#endif
 #endif
