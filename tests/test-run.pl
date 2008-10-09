@@ -653,7 +653,7 @@ sub command_line_setup () {
 
   if (!$opt_engine)
   {
-    $opt_engine= "pbxt";
+    $opt_engine= "innodb";
   }
 
   if ( $opt_comment )
