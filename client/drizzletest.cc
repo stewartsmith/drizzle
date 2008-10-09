@@ -228,7 +228,7 @@ enum enum_commands {
   Q_DISPLAY_VERTICAL_RESULTS, Q_DISPLAY_HORIZONTAL_RESULTS,
   Q_QUERY_VERTICAL, Q_QUERY_HORIZONTAL, Q_SORTED_RESULT,
   Q_START_TIMER, Q_END_TIMER,
-  Q_CHARACTER_SET, Q_DISABLE_PS_PROTOCOL, Q_ENABLE_PS_PROTOCOL,
+  Q_CHARACTER_SET,
   Q_DISABLE_RECONNECT, Q_ENABLE_RECONNECT,
   Q_IF,
   Q_DISABLE_PARSING, Q_ENABLE_PARSING,
@@ -6402,7 +6402,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     return 1;
   }
   strcpy(new_buf, new_str);
-  buf_p= &new_buf;
+  *buf_p= new_buf;
 
   return 0;
 }
