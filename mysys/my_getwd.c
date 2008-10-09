@@ -22,6 +22,7 @@
 #ifdef HAVE_GETWD
 #include <sys/param.h>
 #endif
+#include <drizzled/util/test.h>
 
 /* Gets current working directory in buff.
 

@@ -28,6 +28,7 @@ struct utimbuf {
 };
 #endif
 
+#include <drizzled/util/test.h>
 
 /*
   int my_copy(const char *from, const char *to, myf MyFlags)

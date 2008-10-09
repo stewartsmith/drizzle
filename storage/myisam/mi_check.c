@@ -52,6 +52,8 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <drizzled/util/test.h>
+
 
 /* Functions defined in this file */
 

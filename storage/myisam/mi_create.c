@@ -20,6 +20,7 @@
 #include <mysys/queues.h>
 #include <mysys/my_bit.h>
 
+#include <drizzled/util/test.h>
 
 /*
   Old options is used when recreating database, from myisamchk

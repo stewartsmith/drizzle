@@ -17,6 +17,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <drizzled/util/test.h>
 
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
 

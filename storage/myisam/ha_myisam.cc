@@ -23,6 +23,7 @@
 #include "ha_myisam.h"
 #include "myisamdef.h"
 #include <drizzled/drizzled_error_messages.h>
+#include <drizzled/util/test.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 

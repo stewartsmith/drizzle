@@ -28,7 +28,7 @@ AC_SUBST(SAVE_CXXLDFLAGS)
 AC_SUBST(CXXLDFLAGS)
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(-Wall -Werror)
+AM_INIT_AUTOMAKE(-Wall -Wno-portability -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -1469,6 +1469,9 @@ case $SYSTEM_TYPE in
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
+dnl GCC Precompiled Header Support
+AM_CONDITIONAL([GCC_PCH],[test "x$GCC" = "xyes"])
+
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  vio/Makefile po/Makefile.in dnl
@@ -1477,6 +1480,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/functions/Makefile dnl
+ drizzled/util/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl

@@ -16,6 +16,7 @@
 /* Remove a row from a MyISAM table */
 
 #include "myisamdef.h"
+#include <drizzled/util/test.h>
 
 static int d_search(MI_INFO *info,MI_KEYDEF *keyinfo,uint32_t comp_flag,
                     unsigned char *key,uint32_t key_length,my_off_t page,unsigned char *anc_buff);

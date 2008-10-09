@@ -29,6 +29,8 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <drizzled/util/test.h>
+
 
 #define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
 #define my_raid_delete(A,B,C) my_delete(A,B)

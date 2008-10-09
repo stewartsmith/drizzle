@@ -121,22 +121,6 @@ typedef unsigned int uint;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
-#if defined(__cplusplus)
-template <class T>
-inline bool test(const T a)
-{
-  return a ? true : false;
-}
-template <class T, class U>
-inline bool test_all_bits(const T a, const U b)
-{
-  return ((a & b) == b);
-}
-#else
-#define test(a)    ((a) ? 1 : 0)
-#define test_all_bits(a,b) (((a) & (b)) == (b))
-#endif
-
 #define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
