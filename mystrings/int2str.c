@@ -49,7 +49,7 @@ char _dig_vec_lower[] =
 */
   
 char *
-int2str(register long int val, register char *dst, register int radix, 
+int2str(register int32_t val, register char *dst, register int radix, 
         int upcase)
 {
   char buffer[65];
@@ -129,27 +129,27 @@ int2str(register long int val, register char *dst, register int radix,
     Pointer to ending NUL character.
 */
 
-char *int10_to_str(int64_t val,char *dst,int radix)
+char *int10_to_str(int32_t val,char *dst,int radix)
 {
   char buffer[65];
   register char *p;
-  int64_t new_val;
-  uint64_t uval = (uint64_t) val;
+  int32_t new_val;
+  uint32_t uval = (uint32_t) val;
 
   if (radix < 0)				/* -10 */
   {
     if (val < 0)
     {
       *dst++ = '-';
-      /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (uint64_t)0 - uval;
+      /* Avoid integer overflow in (-val) for INT32_MIN (BUG#31799). */
+      uval = (uint32_t)0 - uval;
     }
   }
 
   p = &buffer[sizeof(buffer)-1];
   *p = '\0';
-  new_val= (int64_t) (uval / 10);
-  *--p = '0'+ (char) (uval - (uint64_t) new_val * 10);
+  new_val= (int32_t) (uval / 10);
+  *--p = '0'+ (char) (uval - (uint32_t) new_val * 10);
   val = new_val;
 
   while (val != 0)
