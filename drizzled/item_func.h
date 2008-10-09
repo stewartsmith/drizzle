@@ -32,6 +32,7 @@ extern "C"				/* Bug in BSDI include file */
 
 #include <drizzled/functions/func.h>
 #include <drizzled/functions/connection_id.h>
+#include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
@@ -39,27 +40,6 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_decimal_typecast :public Item_func
-{
-  my_decimal decimal_value;
-public:
-  Item_decimal_typecast(Item *a, int len, int dec) :Item_func(a)
-  {
-    decimals= dec;
-    max_length= my_decimal_precision_to_length(len, dec, unsigned_flag);
-  }
-  String *val_str(String *str);
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal*);
-  enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
-  void fix_length_and_dec() {};
-  const char *func_name() const { return "decimal_typecast"; }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
 
 class Item_func_additive_op :public Item_num_op
 {

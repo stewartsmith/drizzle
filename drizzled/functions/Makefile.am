@@ -18,6 +18,7 @@
 noinst_LTLIBRARIES = 	libfunctions.la
 
 libfunctions_la_SOURCES = connection_id.cc \
+			  decimal_typecast.cc \
 			  func.cc \
                           int.cc \
 			  num1.cc \
@@ -28,6 +29,7 @@ libfunctions_la_SOURCES = connection_id.cc \
 			  unsigned.cc
 
 noinst_HEADERS = connection_id.h \
+		 decimal_typecast.h \
 		 func.h \
                  int.h \
 		 num1.h \
