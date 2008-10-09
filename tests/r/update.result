@@ -51,13 +51,13 @@ a
 drop table t1;
 CREATE TABLE t1
 (
-place_id int unsigned NOT NULL,
-shows int unsigned DEFAULT '0' NOT NULL,
-ishows int unsigned DEFAULT '0' NOT NULL,
-ushows int unsigned DEFAULT '0' NOT NULL,
-clicks int unsigned DEFAULT '0' NOT NULL,
-iclicks int unsigned DEFAULT '0' NOT NULL,
-uclicks int unsigned DEFAULT '0' NOT NULL,
+place_id int NOT NULL,
+shows int DEFAULT '0' NOT NULL,
+ishows int DEFAULT '0' NOT NULL,
+ushows int DEFAULT '0' NOT NULL,
+clicks int DEFAULT '0' NOT NULL,
+iclicks int DEFAULT '0' NOT NULL,
+uclicks int DEFAULT '0' NOT NULL,
 ts timestamp,
 PRIMARY KEY (place_id,ts)
 );
@@ -69,20 +69,20 @@ place_id	shows
 1	1
 drop table t1;
 CREATE TABLE t1 (
-lfdnr int unsigned NOT NULL default '0',
-ticket int unsigned NOT NULL default '0',
+lfdnr int NOT NULL default '0',
+ticket int NOT NULL default '0',
 client varchar(255) NOT NULL default '',
 replyto varchar(255) NOT NULL default '',
 subject varchar(100) NOT NULL default '',
-timestamp int unsigned NOT NULL default '0',
+timestamp int NOT NULL default '0',
 tstamp timestamp NOT NULL,
 status int NOT NULL default '0',
 type varchar(15) NOT NULL default '',
-assignment int unsigned NOT NULL default '0',
-fupcount int unsigned NOT NULL default '0',
-parent int unsigned NOT NULL default '0',
-activity int unsigned NOT NULL default '0',
-priority tinyint unsigned NOT NULL default '1',
+assignment int NOT NULL default '0',
+fupcount int NOT NULL default '0',
+parent int NOT NULL default '0',
+activity int NOT NULL default '0',
+priority int NOT NULL default '1',
 cc varchar(255) NOT NULL default '',
 bcc varchar(255) NOT NULL default '',
 body text NOT NULL,
@@ -96,7 +96,7 @@ KEY k4 (assignment),
 KEY ticket (ticket)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (773,773,'','','',980257344,20010318180652,0,'Open',10,0,0,0,1,'','','','','');
-alter table t1 change lfdnr lfdnr int unsigned not null auto_increment;
+alter table t1 change lfdnr lfdnr int not null auto_increment;
 update t1 set status=1 where type='Open';
 select status from t1;
 status
@@ -142,9 +142,9 @@ insert into t2 values (1,1),(1,2),(1,3);
 update t1 set b=(select distinct 1 from (select * from t2) a);
 drop table t1,t2;
 CREATE TABLE t1 (
-`id_param` smallint unsigned NOT NULL default '0',
+`id_param` int NOT NULL default '0',
 `nom_option` char(40) NOT NULL default '',
-`valid` tinyint NOT NULL default '0',
+`valid` int NOT NULL default '0',
 KEY `id_param` (`id_param`,`nom_option`)
 ) ENGINE=MyISAM;
 INSERT INTO t1 (id_param,nom_option,valid) VALUES (185,'600x1200',1);
@@ -347,7 +347,7 @@ update t1 set f2=1 order by f2;
 ERROR 42S22: Unknown column 'f2' in 'order clause'
 drop table t1;
 CREATE TABLE t1 (
-request_id int unsigned NOT NULL auto_increment,
+request_id int NOT NULL auto_increment,
 user_id varchar(12) default NULL,
 time_stamp datetime NOT NULL default '0000-00-00 00:00:00',
 ip_address varchar(15) default NULL,
@@ -424,7 +424,7 @@ a	quux
 DROP TABLE t1;
 set tmp_table_size=1024;
 create table t1 (id int, a int, key idx(a));
-create table t2 (id int unsigned not null auto_increment primary key, a int);
+create table t2 (id int not null auto_increment primary key, a int);
 insert into t2(a) values(1),(2),(3),(4),(5),(6),(7),(8);
 insert into t2(a) select a from t2;
 insert into t2(a) select a from t2;

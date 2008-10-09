@@ -1,18 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @file
@@ -39,7 +42,7 @@ typedef struct keyuse_t {
   Item	*val;				/**< or value if no field */
   table_map used_tables;
   uint	key, keypart;
-  uint optimize; // 0, or KEY_OPTIMIZE_*
+  uint32_t optimize; // 0, or KEY_OPTIMIZE_*
   key_part_map keypart_map;
   ha_rows      ref_table_rows;
   /**
@@ -62,7 +65,7 @@ typedef struct keyuse_t {
      0..64    <=> This was created from semi-join IN-equality # sj_pred_no.
      MAX_UINT  Otherwise
   */
-  uint         sj_pred_no;
+  uint32_t         sj_pred_no;
 } KEYUSE;
 
 class store_key;
@@ -211,7 +214,7 @@ typedef struct st_join_table {
     Bitmap of TAB_INFO_* bits that encodes special line for EXPLAIN 'Extra'
     column, or 0 if there is no info.
   */
-  uint          packed_info;
+  uint32_t          packed_info;
 
   Read_record_func read_first_record;
   Next_select_func next_select;
@@ -281,7 +284,7 @@ typedef struct st_join_table {
      NULL - Not an insideout scan.
   */
   struct st_join_table *insideout_match_tab;
-  uchar *insideout_buf; // Buffer to save index tuple to be able to skip dups
+  unsigned char *insideout_buf; // Buffer to save index tuple to be able to skip dups
 
   /* Used by InsideOut scan. Just set to true when have found a row. */
   bool found_match;
@@ -382,8 +385,8 @@ public:
   */
   Table    *sort_by_table;
   uint	   tables;        /**< Number of tables in the join */
-  uint     outer_tables;  /**< Number of tables that are not inside semijoin */
-  uint     const_tables;
+  uint32_t     outer_tables;  /**< Number of tables that are not inside semijoin */
+  uint32_t     const_tables;
   uint	   send_group_parts;
   bool	   sort_and_group,first_record,full_join,group, no_field_update;
   bool	   do_send_rows;
@@ -491,7 +494,7 @@ public:
   Item **ref_pointer_array; ///<used pointer reference for this select
   // Copy of above to be used with different lists
   Item **items0, **items1, **items2, **items3, **current_ref_pointer_array;
-  uint ref_pointer_array_size; ///< size of above in bytes
+  uint32_t ref_pointer_array_size; ///< size of above in bytes
   const char *zero_result_cause; ///< not 0 if exec must return zero result
   
   bool union_part; ///< this subselect is part of union 
@@ -580,8 +583,8 @@ public:
     no_const_tables= false;
   }
 
-  int prepare(Item ***rref_pointer_array, TableList *tables, uint wind_num,
-	      COND *conds, uint og_num, order_st *order, order_st *group,
+  int prepare(Item ***rref_pointer_array, TableList *tables, uint32_t wind_num,
+	      COND *conds, uint32_t og_num, order_st *order, order_st *group,
 	      Item *having, order_st *proc_param, SELECT_LEX *select,
 	      SELECT_LEX_UNIT *unit);
   int optimize();
@@ -610,8 +613,8 @@ public:
   bool rollup_init();
   bool rollup_make_fields(List<Item> &all_fields, List<Item> &fields,
 			  Item_sum ***func);
-  int rollup_send_data(uint idx);
-  int rollup_write_data(uint idx, Table *table);
+  int rollup_send_data(uint32_t idx);
+  int rollup_write_data(uint32_t idx, Table *table);
   void remove_subq_pushed_predicates(Item **where);
   /**
     Release memory and, if possible, the open tables held by this execution
@@ -640,7 +643,7 @@ public:
 
 
 typedef struct st_select_check {
-  uint const_ref,reg_ref;
+  uint32_t const_ref,reg_ref;
 } SELECT_CHECK;
 
 extern const char *join_type_str[];
@@ -658,12 +661,12 @@ void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param,
 bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 		       Item **ref_pointer_array,
 		       List<Item> &new_list1, List<Item> &new_list2,
-		       uint elements, List<Item> &fields);
+		       uint32_t elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
 Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                    const char *name, Table *table,
-                                   Item_field *item, uint convert_blob_length);
+                                   Item_field *item, uint32_t convert_blob_length);
                                                                       
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
@@ -679,7 +682,7 @@ class store_key :public Sql_alloc
 public:
   bool null_key; /* true <=> the value of the key has a null part */
   enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
-  store_key(THD *thd, Field *field_arg, uchar *ptr, uchar *null, uint length)
+  store_key(THD *thd, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
     :null_key(0), null_ptr(null), err(0)
   {
     if (field_arg->type() == DRIZZLE_TYPE_BLOB)
@@ -723,8 +726,8 @@ public:
 
  protected:
   Field *to_field;				// Store data here
-  uchar *null_ptr;
-  uchar err;
+  unsigned char *null_ptr;
+  unsigned char err;
 
   virtual enum store_key_result copy_inner()=0;
 };
@@ -735,12 +738,12 @@ class store_key_field: public store_key
   Copy_field copy_field;
   const char *field_name;
  public:
-  store_key_field(THD *thd, Field *to_field_arg, uchar *ptr,
-                  uchar *null_ptr_arg,
-		  uint length, Field *from_field, const char *name_arg)
+  store_key_field(THD *thd, Field *to_field_arg, unsigned char *ptr,
+                  unsigned char *null_ptr_arg,
+		  uint32_t length, Field *from_field, const char *name_arg)
     :store_key(thd, to_field_arg,ptr,
 	       null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
-	       : (uchar*) 0, length), field_name(name_arg)
+	       : (unsigned char*) 0, length), field_name(name_arg)
   {
     if (to_field)
     {
@@ -764,11 +767,11 @@ class store_key_item :public store_key
  protected:
   Item *item;
 public:
-  store_key_item(THD *thd, Field *to_field_arg, uchar *ptr,
-                 uchar *null_ptr_arg, uint length, Item *item_arg)
+  store_key_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+                 unsigned char *null_ptr_arg, uint32_t length, Item *item_arg)
     :store_key(thd, to_field_arg, ptr,
 	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-	       &err : (uchar*) 0, length), item(item_arg)
+	       &err : (unsigned char*) 0, length), item(item_arg)
   {}
   const char *name() const { return "func"; }
 
@@ -786,12 +789,12 @@ class store_key_const_item :public store_key_item
 {
   bool inited;
 public:
-  store_key_const_item(THD *thd, Field *to_field_arg, uchar *ptr,
-		       uchar *null_ptr_arg, uint length,
+  store_key_const_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+		       unsigned char *null_ptr_arg, uint32_t length,
 		       Item *item_arg)
     :store_key_item(thd, to_field_arg,ptr,
 		    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-		    &err : (uchar*) 0, length, item_arg), inited(0)
+		    &err : (unsigned char*) 0, length, item_arg), inited(0)
   {
   }
   const char *name() const { return "const"; }

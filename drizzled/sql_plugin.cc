@@ -16,6 +16,7 @@
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
 #include <authentication.h>
+#include <logging.h>
 #include <drizzled/drizzled_error_messages.h>
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
@@ -63,7 +64,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   initialize_udf,  /* UDF */
   0,  /* UDA */
   0,  /* Audit */
-  0,  /* Logger */
+  logging_initializer,  /* Logger */
   authentication_initializer  /* Auth */
 };
 
@@ -75,7 +76,7 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   finalize_udf,  /* UDF */
   0,  /* UDA */
   0,  /* Audit */
-  0,  /* Logger */
+  logging_finalizer,  /* Logger */
   authentication_finalizer  /* Auth */
 };
 
@@ -98,7 +99,7 @@ static int plugin_array_version=0;
   the following variables/structures
 */
 static MEM_ROOT plugin_mem_root;
-static uint global_variables_dynamic_size= 0;
+static uint32_t global_variables_dynamic_size= 0;
 static HASH bookmark_hash;
 
 
@@ -125,9 +126,9 @@ struct st_item_value_holder : public st_mysql_value
 */
 struct st_bookmark
 {
-  uint name_len;
+  uint32_t name_len;
   int offset;
-  uint version;
+  uint32_t version;
   char key[1];
 };
 
@@ -165,9 +166,9 @@ public:
   { return !(plugin_var->flags & PLUGIN_VAR_THDLOCAL) && type != OPT_GLOBAL; }
   bool check_update_type(Item_result type);
   SHOW_TYPE show_type();
-  uchar* real_value_ptr(THD *thd, enum_var_type type);
+  unsigned char* real_value_ptr(THD *thd, enum_var_type type);
   TYPELIB* plugin_var_typelib(void);
-  uchar* value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
+  unsigned char* value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check(THD *thd, set_var *var);
   bool check_default(enum_var_type type __attribute__((unused)))
     { return is_readonly(); }
@@ -198,7 +199,7 @@ static void reap_plugins(void);
 
 
 /* declared in set_var.cc */
-extern sys_var *intern_find_sys_var(const char *str, uint length, bool no_error);
+extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
 extern bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
                                  const char *name, int64_t val);
 
@@ -262,15 +263,15 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
 
 static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_dl *tmp;
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
     tmp= *dynamic_element(&plugin_dl_array, i, struct st_plugin_dl **);
     if (tmp->ref_count &&
         ! my_strnncoll(files_charset_info,
-                       (const uchar *)dl->str, dl->length,
-                       (const uchar *)tmp->dl.str, tmp->dl.length))
+                       (const unsigned char *)dl->str, dl->length,
+                       (const unsigned char *)tmp->dl.str, tmp->dl.length))
       return(tmp);
   }
   return(0);
@@ -278,7 +279,7 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 
 static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_dl *tmp;
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
@@ -289,11 +290,11 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
       return(tmp);
     }
   }
-  if (insert_dynamic(&plugin_dl_array, (uchar*)&plugin_dl))
+  if (insert_dynamic(&plugin_dl_array, (unsigned char*)&plugin_dl))
     return(0);
   tmp= *dynamic_element(&plugin_dl_array, plugin_dl_array.elements - 1,
                         struct st_plugin_dl **)=
-      (struct st_plugin_dl *) memdup_root(&plugin_mem_root, (uchar*)plugin_dl,
+      (struct st_plugin_dl *) memdup_root(&plugin_mem_root, (unsigned char*)plugin_dl,
                                            sizeof(struct st_plugin_dl));
   return(tmp);
 }
@@ -302,14 +303,14 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 {
   if (p->handle)
     dlclose(p->handle);
-  my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
+  free(p->dl.str);
 }
 
 
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
   char dlpath[FN_REFLEN];
-  uint plugin_dir_len, dummy_errors, dlpathlen;
+  uint32_t plugin_dir_len, dummy_errors, dlpathlen;
   struct st_plugin_dl *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
@@ -338,11 +339,11 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   memset(&plugin_dl, 0, sizeof(plugin_dl));
   /* Compile dll path */
   dlpathlen=
-    strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", dl->str, NullS) -
+    strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", dl->str, NULL) -
     dlpath;
   plugin_dl.ref_count= 1;
   /* Open new dll handle */
-  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_NOW)))
+  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_LAZY|RTLD_GLOBAL)))
   {
     const char *errmsg=dlerror();
     if (!strncmp(dlpath, errmsg, dlpathlen))
@@ -402,7 +403,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 
 static void plugin_dl_del(const LEX_STRING *dl)
 {
-  uint i;
+  uint32_t i;
 
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
@@ -410,8 +411,8 @@ static void plugin_dl_del(const LEX_STRING *dl)
                                                struct st_plugin_dl **);
     if (tmp->ref_count &&
         ! my_strnncoll(files_charset_info,
-                       (const uchar *)dl->str, dl->length,
-                       (const uchar *)tmp->dl.str, tmp->dl.length))
+                       (const unsigned char *)dl->str, dl->length,
+                       (const unsigned char *)tmp->dl.str, tmp->dl.length))
     {
       /* Do not remove this element, unless no other plugin uses this dll. */
       if (! --tmp->ref_count)
@@ -428,7 +429,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int type)
 {
-  uint i;
+  uint32_t i;
   if (! initialized)
     return(0);
 
@@ -437,14 +438,14 @@ static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int ty
     for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
     {
       struct st_plugin_int *plugin= (st_plugin_int *)
-        hash_search(&plugin_hash[i], (const uchar *)name->str, name->length);
+        hash_search(&plugin_hash[i], (const unsigned char *)name->str, name->length);
       if (plugin)
         return(plugin);
     }
   }
   else
     return((st_plugin_int *)
-        hash_search(&plugin_hash[type], (const uchar *)name->str, name->length));
+        hash_search(&plugin_hash[type], (const unsigned char *)name->str, name->length));
   return(0);
 }
 
@@ -498,7 +499,7 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
     pi->ref_count++;
 
     if (lex)
-      insert_dynamic(&lex->plugins, (uchar*)&plugin);
+      insert_dynamic(&lex->plugins, (unsigned char*)&plugin);
     return(plugin);
   }
   return(NULL);
@@ -528,7 +529,7 @@ plugin_ref plugin_lock_by_name(THD *thd, const LEX_STRING *name, int type
 
 static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
 {
-  uint i;
+  uint32_t i;
   struct st_plugin_int *tmp;
   for (i= 0; i < plugin_array.elements; i++)
   {
@@ -539,11 +540,11 @@ static st_plugin_int *plugin_insert_or_reuse(struct st_plugin_int *plugin)
       return(tmp);
     }
   }
-  if (insert_dynamic(&plugin_array, (uchar*)&plugin))
+  if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
     return(0);
   tmp= *dynamic_element(&plugin_array, plugin_array.elements - 1,
                         struct st_plugin_int **)=
-       (struct st_plugin_int *) memdup_root(&plugin_mem_root, (uchar*)plugin,
+       (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)plugin,
                                             sizeof(struct st_plugin_int));
   return(tmp);
 }
@@ -574,11 +575,11 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   /* Find plugin by name */
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
-    uint name_len= strlen(plugin->name);
+    uint32_t name_len= strlen(plugin->name);
     if (plugin->type >= 0 && plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
         ! my_strnncoll(system_charset_info,
-                       (const uchar *)name->str, name->length,
-                       (const uchar *)plugin->name,
+                       (const unsigned char *)name->str, name->length,
+                       (const unsigned char *)plugin->name,
                        name_len))
     {
       struct st_plugin_int *tmp_plugin_ptr;
@@ -593,7 +594,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
           plugin_array_version++;
-          if (!my_hash_insert(&plugin_hash[plugin->type], (uchar*)tmp_plugin_ptr))
+          if (!my_hash_insert(&plugin_hash[plugin->type], (unsigned char*)tmp_plugin_ptr))
           {
             init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
             return(false);
@@ -667,7 +668,7 @@ static void plugin_del(struct st_plugin_int *plugin)
 {
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(plugin->system_vars);
-  hash_delete(&plugin_hash[plugin->plugin->type], (uchar*)plugin);
+  hash_delete(&plugin_hash[plugin->plugin->type], (unsigned char*)plugin);
   if (plugin->plugin_dl)
     plugin_dl_del(&plugin->plugin_dl->dl);
   plugin->state= PLUGIN_IS_FREED;
@@ -681,7 +682,7 @@ static void plugin_del(struct st_plugin_int *plugin)
 
 static void reap_plugins(void)
 {
-  uint count, idx;
+  uint32_t count, idx;
   struct st_plugin_int *plugin, **reap, **list;
 
   if (!reap_needed)
@@ -723,7 +724,7 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 
   pi= plugin_ref_to_int(plugin);
 
-  my_free((uchar*) plugin, MYF(MY_WME));
+  free((unsigned char*) plugin);
 
   if (lex)
   {
@@ -761,7 +762,7 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
 }
 
 
-void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
+void plugin_unlock_list(THD *thd, plugin_ref *list, uint32_t count)
 {
   LEX *lex= thd ? thd->lex : 0;
   assert(list);
@@ -838,25 +839,25 @@ err:
 }
 
 
-extern "C" uchar *get_plugin_hash_key(const uchar *, size_t *, bool);
-extern "C" uchar *get_bookmark_hash_key(const uchar *, size_t *, bool);
+extern "C" unsigned char *get_plugin_hash_key(const unsigned char *, size_t *, bool);
+extern "C" unsigned char *get_bookmark_hash_key(const unsigned char *, size_t *, bool);
 
 
-uchar *get_plugin_hash_key(const uchar *buff, size_t *length,
+unsigned char *get_plugin_hash_key(const unsigned char *buff, size_t *length,
                            bool not_used __attribute__((unused)))
 {
   struct st_plugin_int *plugin= (st_plugin_int *)buff;
   *length= (uint)plugin->name.length;
-  return((uchar *)plugin->name.str);
+  return((unsigned char *)plugin->name.str);
 }
 
 
-uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
+unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length,
                              bool not_used __attribute__((unused)))
 {
   struct st_bookmark *var= (st_bookmark *)buff;
   *length= var->name_len + 1;
-  return (uchar*) var->key;
+  return (unsigned char*) var->key;
 }
 
 
@@ -869,7 +870,7 @@ uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
 */
 int plugin_init(int *argc, char **argv, int flags)
 {
-  uint i;
+  uint32_t i;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1002,15 +1003,15 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
   tmp->ref_count= 0;
   tmp->plugin_dl= 0;
 
-  if (insert_dynamic(&plugin_array, (uchar*)&tmp))
+  if (insert_dynamic(&plugin_array, (unsigned char*)&tmp))
     return(1);
 
   *ptr= *dynamic_element(&plugin_array, plugin_array.elements - 1,
                          struct st_plugin_int **)=
-        (struct st_plugin_int *) memdup_root(&plugin_mem_root, (uchar*)tmp,
+        (struct st_plugin_int *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
                                              sizeof(struct st_plugin_int));
 
-  if (my_hash_insert(&plugin_hash[plugin->type],(uchar*) *ptr))
+  if (my_hash_insert(&plugin_hash[plugin->type],(unsigned char*) *ptr))
     return(1);
 
   return(0);
@@ -1100,7 +1101,7 @@ error:
 
 void plugin_shutdown(void)
 {
-  uint i, count= plugin_array.elements, free_slots= 0;
+  uint32_t i, count= plugin_array.elements, free_slots= 0;
   struct st_plugin_int **plugins, *plugin;
   struct st_plugin_dl **dl;
 
@@ -1224,9 +1225,9 @@ void plugin_shutdown(void)
 
 
 bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
-                       int type, uint state_mask, void *arg)
+                       int type, uint32_t state_mask, void *arg)
 {
-  uint idx, total;
+  uint32_t idx, total;
   struct st_plugin_int *plugin, **plugins;
   int version=plugin_array_version;
 
@@ -1263,7 +1264,7 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
   {
     if (unlikely(version != plugin_array_version))
     {
-      for (uint i=idx; i < total; i++)
+      for (uint32_t i=idx; i < total; i++)
         if (plugins[i] && plugins[i]->state & state_mask)
           plugins[i]=0;
     }
@@ -1372,7 +1373,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(uint *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
+    *(uint32_t *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1492,7 +1493,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
   const char *strvalue= "NULL", *str;
   TYPELIB *typelib;
   uint64_t result;
-  uint error_len;
+  uint32_t error_len;
   bool not_used;
   int length;
 
@@ -1510,7 +1511,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      strmake(buff, error, min(sizeof(buff), (unsigned long)error_len));
+      strmake(buff, error, cmin(sizeof(buff), (unsigned long)error_len));
       strvalue= buff;
       goto err;
     }
@@ -1519,7 +1520,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
   {
     if (value->val_int(value, (int64_t *)&result))
       goto err;
-    if (unlikely((result >= (1ULL << typelib->count)) &&
+    if (unlikely((result >= (1UL << typelib->count)) &&
                  (typelib->count < sizeof(long)*8)))
     {
       llstr(result, buff);
@@ -1575,7 +1576,7 @@ static void update_func_str(THD *thd __attribute__((unused)), struct st_mysql_sy
   if (var->flags & PLUGIN_VAR_MEMALLOC)
   {
     *(char **)tgt= my_strdup(*(char **) save, MYF(0));
-    my_free(old, MYF(0));
+    free(old);
   }
 }
 
@@ -1585,7 +1586,7 @@ static void update_func_str(THD *thd __attribute__((unused)), struct st_mysql_sy
 ****************************************************************************/
 
 
-sys_var *find_sys_var(THD *thd, const char *str, uint length)
+sys_var *find_sys_var(THD *thd, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1628,7 +1629,7 @@ sys_var *find_sys_var(THD *thd, const char *str, uint length)
 static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
-  uint namelen, length, pluginlen= 0;
+  uint32_t namelen, length, pluginlen= 0;
   char *varname, *p;
 
   if (!(flags & PLUGIN_VAR_THDLOCAL))
@@ -1642,7 +1643,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
 
   if (plugin)
   {
-    strxmov(varname + 1, plugin, "_", name, NullS);
+    strxmov(varname + 1, plugin, "_", name, NULL);
     for (p= varname + 1; *p; p++)
       if (*p == '-')
         *p= '_';
@@ -1653,7 +1654,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
   varname[0]= flags & PLUGIN_VAR_TYPEMASK;
 
   result= (st_bookmark*) hash_search(&bookmark_hash,
-                                     (const uchar*) varname, length - 1);
+                                     (const unsigned char*) varname, length - 1);
 
   my_afree(varname);
   return result;
@@ -1668,7 +1669,7 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
 static st_bookmark *register_var(const char *plugin, const char *name,
                                  int flags)
 {
-  uint length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
+  uint32_t length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
   st_bookmark *result;
   char *varname, *p;
 
@@ -1699,7 +1700,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
   };
 
   varname= ((char*) my_alloca(length));
-  strxmov(varname + 1, plugin, "_", name, NullS);
+  strxmov(varname + 1, plugin, "_", name, NULL);
   for (p= varname + 1; *p; p++)
     if (*p == '-')
       *p= '_';
@@ -1753,7 +1754,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     result->version= global_system_variables.dynamic_variables_version;
 
     /* this should succeed because we have already checked if a dup exists */
-    if (my_hash_insert(&bookmark_hash, (uchar*) result))
+    if (my_hash_insert(&bookmark_hash, (unsigned char*) result))
     {
       fprintf(stderr, "failed to add placeholder to hash");
       assert(0);
@@ -1770,13 +1771,13 @@ static st_bookmark *register_var(const char *plugin, const char *name,
   If required, will sync with global variables if the requested variable
   has not yet been allocated in the current thread.
 */
-static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
+static unsigned char *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
 {
   assert(offset >= 0);
   assert((uint)offset <= global_system_variables.dynamic_variables_head);
 
   if (!thd)
-    return (uchar*) global_system_variables.dynamic_variables_ptr + offset;
+    return (unsigned char*) global_system_variables.dynamic_variables_ptr + offset;
 
   /*
     dynamic_variables_head points to the largest valid offset
@@ -1784,7 +1785,7 @@ static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
   if (!thd->variables.dynamic_variables_ptr ||
       (uint)offset > thd->variables.dynamic_variables_head)
   {
-    uint idx;
+    uint32_t idx;
 
     rw_rdlock(&LOCK_system_variables_hash);
 
@@ -1846,7 +1847,7 @@ static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
 
     rw_unlock(&LOCK_system_variables_hash);
   }
-  return (uchar*)thd->variables.dynamic_variables_ptr + offset;
+  return (unsigned char*)thd->variables.dynamic_variables_ptr + offset;
 }
 
 static bool *mysql_sys_var_ptr_bool(THD* a_thd, int offset)
@@ -1930,7 +1931,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
   sys_var_pluginvar *pivar;
   sys_var *var;
   int flags;
-  uint idx;
+  uint32_t idx;
 
   rw_rdlock(&LOCK_system_variables_hash);
   for (idx= 0; idx < bookmark_hash.records; idx++)
@@ -1948,7 +1949,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
         flags & PLUGIN_VAR_THDLOCAL && flags & PLUGIN_VAR_MEMALLOC)
     {
       char **ptr= (char**) pivar->real_value_ptr(thd, OPT_SESSION);
-      my_free(*ptr, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      free(*ptr);
       *ptr= NULL;
     }
   }
@@ -1956,7 +1957,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
 
   assert(vars->table_plugin == NULL);
 
-  my_free(vars->dynamic_variables_ptr, MYF(MY_ALLOW_ZERO_PTR));
+  free(vars->dynamic_variables_ptr);
   vars->dynamic_variables_ptr= NULL;
   vars->dynamic_variables_size= 0;
   vars->dynamic_variables_version= 0;
@@ -1965,7 +1966,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
 
 void plugin_thdvar_cleanup(THD *thd)
 {
-  uint idx;
+  uint32_t idx;
   plugin_ref *list;
 
   unlock_variables(thd, &thd->variables);
@@ -1974,7 +1975,7 @@ void plugin_thdvar_cleanup(THD *thd)
   if ((idx= thd->lex->plugins.elements))
   {
     list= ((plugin_ref*) thd->lex->plugins.buffer) + idx - 1;
-    while ((uchar*) list >= thd->lex->plugins.buffer)
+    while ((unsigned char*) list >= thd->lex->plugins.buffer)
       intern_plugin_unlock(NULL, *list--);
   }
 
@@ -2007,7 +2008,7 @@ static void plugin_vars_free_values(sys_var *vars)
     {
       /* Free the string from global_system_variables. */
       char **valptr= (char**) piv->real_value_ptr(NULL, OPT_GLOBAL);
-      my_free(*valptr, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+      free(*valptr);
       *valptr= NULL;
     }
   }
@@ -2055,7 +2056,7 @@ SHOW_TYPE sys_var_pluginvar::show_type()
 }
 
 
-uchar* sys_var_pluginvar::real_value_ptr(THD *thd, enum_var_type type)
+unsigned char* sys_var_pluginvar::real_value_ptr(THD *thd, enum_var_type type)
 {
   assert(thd || (type == OPT_GLOBAL));
   if (plugin_var->flags & PLUGIN_VAR_THDLOCAL)
@@ -2065,7 +2066,7 @@ uchar* sys_var_pluginvar::real_value_ptr(THD *thd, enum_var_type type)
 
     return intern_sys_var_ptr(thd, *(int*) (plugin_var+1), false);
   }
-  return *(uchar**) (plugin_var+1);
+  return *(unsigned char**) (plugin_var+1);
 }
 
 
@@ -2087,22 +2088,22 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 }
 
 
-uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
+unsigned char* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
                                     LEX_STRING *base __attribute__((unused)))
 {
-  uchar* result;
+  unsigned char* result;
 
   result= real_value_ptr(thd, type);
 
   if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_ENUM)
-    result= (uchar*) get_type(plugin_var_typelib(), *(ulong*)result);
+    result= (unsigned char*) get_type(plugin_var_typelib(), *(ulong*)result);
   else if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_SET)
   {
     char buffer[STRING_BUFFER_USUAL_SIZE];
     String str(buffer, sizeof(buffer), system_charset_info);
     TYPELIB *typelib= plugin_var_typelib();
     uint64_t mask= 1, value= *(uint64_t*) result;
-    uint i;
+    uint32_t i;
 
     str.length(0);
     for (i= 0; i < typelib->count; i++, mask<<=1)
@@ -2113,9 +2114,9 @@ uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
       str.append(',');
     }
 
-    result= (uchar*) "";
+    result= (unsigned char*) "";
     if (str.length())
-      result= (uchar*) thd->strmake(str.ptr(), str.length()-1);
+      result= (unsigned char*) thd->strmake(str.ptr(), str.length()-1);
   }
   return result;
 }
@@ -2277,7 +2278,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->typelib= ((sysvar_set_t*) opt)->typelib;
     options->def_value= ((sysvar_set_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
-    options->max_value= (1ULL << options->typelib->count) - 1;
+    options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL:
     options->var_type= GET_BOOL;
@@ -2319,7 +2320,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->typelib= ((thdvar_set_t*) opt)->typelib;
     options->def_value= ((thdvar_set_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
-    options->max_value= (1ULL << options->typelib->count) - 1;
+    options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL | PLUGIN_VAR_THDLOCAL:
     options->var_type= GET_BOOL;
@@ -2355,8 +2356,8 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
                              my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->plugin->name;
-  uint namelen= strlen(plugin_name), optnamelen;
-  uint buffer_length= namelen * 4 + (can_disable ? 75 : 10);
+  uint32_t namelen= strlen(plugin_name), optnamelen;
+  uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
   char *name= (char*) alloc_root(mem_root, buffer_length) + 1;
   char *optname, *p;
   int index= 0, offset= 0;
@@ -2366,7 +2367,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
   /* support --skip-plugin-foo syntax */
   memcpy(name, plugin_name, namelen + 1);
   my_casedn_str(&my_charset_utf8_general_ci, name);
-  strxmov(name + namelen + 1, "plugin-", name, NullS);
+  strxmov(name + namelen + 1, "plugin-", name, NULL);
   /* Now we have namelen + 1 + 7 + namelen + 1 == namelen * 2 + 9. */
 
   for (p= name + namelen*2 + 8; p > name; p--)
@@ -2376,7 +2377,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
   if (can_disable)
   {
     strxmov(name + namelen*2 + 10, "Enable ", plugin_name, " plugin. "
-            "Disable with --skip-", name," (will save memory).", NullS);
+            "Disable with --skip-", name," (will save memory).", NULL);
     /*
       Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
       20 + namelen + 20 + 1 == namelen * 4 + 67.
@@ -2513,7 +2514,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     {
       optnamelen= strlen(opt->name);
       optname= (char*) alloc_root(mem_root, namelen + optnamelen + 2);
-      strxmov(optname, name, "-", opt->name, NullS);
+      strxmov(optname, name, "-", opt->name, NULL);
       optnamelen= namelen + optnamelen + 1;
     }
     else
@@ -2556,7 +2557,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     options[1]= options[0];
     options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
     options[1].comment= 0; // hidden
-    strxmov(p, "plugin-", optname, NullS);
+    strxmov(p, "plugin-", optname, NULL);
 
     options+= 2;
   }
@@ -2571,7 +2572,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
   st_mysql_sys_var **opt;
   my_option *opts;
   bool can_disable;
-  uint count= EXTRA_OPTIONS;
+  uint32_t count= EXTRA_OPTIONS;
 
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
 
@@ -2623,7 +2624,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   st_mysql_sys_var *o;
   sys_var *v;
   struct st_bookmark *var;
-  uint len, count= EXTRA_OPTIONS;
+  uint32_t len, count= EXTRA_OPTIONS;
   assert(tmp->plugin && tmp->name.str);
 
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
@@ -2676,7 +2677,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
       {
         len= tmp->name.length + strlen(o->name) + 2;
         varname= (char*) alloc_root(mem_root, len);
-        strxmov(varname, tmp->name.str, "-", o->name, NullS);
+        strxmov(varname, tmp->name.str, "-", o->name, NULL);
         my_casedn_str(&my_charset_utf8_general_ci, varname);
 
         for (p= varname; *p; p++)
@@ -2728,7 +2729,7 @@ static int option_cmp(my_option *a, my_option *b)
 }
 
 
-void my_print_help_inc_plugins(my_option *main_options, uint size)
+void my_print_help_inc_plugins(my_option *main_options, uint32_t size)
 {
   DYNAMIC_ARRAY all_options;
   struct st_plugin_int *p;
@@ -2739,7 +2740,7 @@ void my_print_help_inc_plugins(my_option *main_options, uint size)
   my_init_dynamic_array(&all_options, sizeof(my_option), size, size/4);
 
   if (initialized)
-    for (uint idx= 0; idx < plugin_array.elements; idx++)
+    for (uint32_t idx= 0; idx < plugin_array.elements; idx++)
     {
       p= *dynamic_element(&plugin_array, idx, struct st_plugin_int **);
 
@@ -2750,16 +2751,16 @@ void my_print_help_inc_plugins(my_option *main_options, uint size)
       /* Only options with a non-NULL comment are displayed in help text */
       for (;opt->id; opt++)
         if (opt->comment)
-          insert_dynamic(&all_options, (uchar*) opt);
+          insert_dynamic(&all_options, (unsigned char*) opt);
     }
 
   for (;main_options->id; main_options++)
-    insert_dynamic(&all_options, (uchar*) main_options);
+    insert_dynamic(&all_options, (unsigned char*) main_options);
 
   sort_dynamic(&all_options, (qsort_cmp) option_cmp);
 
   /* main_options now points to the empty option terminator */
-  insert_dynamic(&all_options, (uchar*) main_options);
+  insert_dynamic(&all_options, (unsigned char*) main_options);
 
   my_print_help((my_option*) all_options.buffer);
   my_print_variables((my_option*) all_options.buffer);

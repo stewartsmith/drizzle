@@ -20,10 +20,10 @@
 
 	/* Write a chunk of bytes to a file */
 
-size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
+size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFlags)
 {
   size_t writenbytes, written;
-  uint errors;
+  uint32_t errors;
   errors=0; written=0;
 
   /* The behavior of write(fd, buf, 0) is not portable */
@@ -50,7 +50,7 @@ size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
       if (!(errors++ % MY_WAIT_GIVE_USER_A_MESSAGE))
 	my_error(EE_DISK_FULL,MYF(ME_BELL | ME_NOREFRESH),
 		 my_filename(Filedes),my_errno,MY_WAIT_FOR_USER_TO_FIX_PANIC);
-      VOID(sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC));
+      sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC);
       continue;
     }
 

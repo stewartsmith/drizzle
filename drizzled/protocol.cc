@@ -21,14 +21,15 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <drizzled/sql_state.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-static void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
+static void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err);
 static void write_eof_packet(THD *thd, NET *net,
-                             uint server_status, uint total_warn_count);
+                             uint32_t server_status, uint32_t total_warn_count);
 
-bool Protocol::net_store_data(const uchar *from, size_t length)
+bool Protocol::net_store_data(const unsigned char *from, size_t length)
 {
   ulong packet_length=packet->length();
   /* 
@@ -38,9 +39,9 @@ bool Protocol::net_store_data(const uchar *from, size_t length)
   if (packet_length+9+length > packet->alloced_length() &&
       packet->realloc(packet_length+9+length))
     return 1;
-  uchar *to= net_store_length((uchar*) packet->ptr()+packet_length, length);
+  unsigned char *to= net_store_length((unsigned char*) packet->ptr()+packet_length, length);
   memcpy(to,from,length);
-  packet->length((uint) (to+length-(uchar*) packet->ptr()));
+  packet->length((uint) (to+length-(unsigned char*) packet->ptr()));
   return 0;
 }
 
@@ -59,13 +60,13 @@ bool Protocol::net_store_data(const uchar *from, size_t length)
   because column, table, database names fit into this limit.
 */
 
-bool Protocol::net_store_data(const uchar *from, size_t length,
+bool Protocol::net_store_data(const unsigned char *from, size_t length,
                               const CHARSET_INFO * const from_cs,
 							  const CHARSET_INFO * const to_cs)
 {
-  uint dummy_errors;
+  uint32_t dummy_errors;
   /* Calculate maxumum possible result length */
-  uint conv_length= to_cs->mbmaxlen * length / from_cs->mbminlen;
+  uint32_t conv_length= to_cs->mbmaxlen * length / from_cs->mbminlen;
   if (conv_length > 250)
   {
     /*
@@ -81,7 +82,7 @@ bool Protocol::net_store_data(const uchar *from, size_t length,
     */
     return (convert->copy((const char*) from, length, from_cs,
                           to_cs, &dummy_errors) ||
-            net_store_data((const uchar*) convert->ptr(), convert->length()));
+            net_store_data((const unsigned char*) convert->ptr(), convert->length()));
   }
 
   ulong packet_length= packet->length();
@@ -96,7 +97,7 @@ bool Protocol::net_store_data(const uchar *from, size_t length,
   to+= copy_and_convert(to, conv_length, to_cs,
                         (const char*) from, length, from_cs, &dummy_errors);
 
-  net_store_length((uchar*) length_pos, to - length_pos - 1);
+  net_store_length((unsigned char*) length_pos, to - length_pos - 1);
   packet->length((uint) (to - packet->ptr()));
   return 0;
 }
@@ -114,7 +115,7 @@ bool Protocol::net_store_data(const uchar *from, size_t length,
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void net_send_error(THD *thd, uint sql_errno, const char *err)
+void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -156,11 +157,11 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
 
 static void
 net_send_ok(THD *thd,
-            uint server_status, uint total_warn_count,
+            uint32_t server_status, uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
   NET *net= &thd->net;
-  uchar buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
+  unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
 
   if (! net->vio)	// hack for re-parsing queries
   {
@@ -175,16 +176,16 @@ net_send_ok(THD *thd,
   pos+=2;
 
   /* We can only return up to 65535 warnings in two bytes */
-  uint tmp= min(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint)65535);
   int2store(pos, tmp);
   pos+= 2;
 
   thd->main_da.can_overwrite_status= true;
 
   if (message && message[0])
-    pos= net_store_data(pos, (uchar*) message, strlen(message));
-  VOID(my_net_write(net, buff, (size_t) (pos-buff)));
-  VOID(net_flush(net));
+    pos= net_store_data(pos, (unsigned char*) message, strlen(message));
+  my_net_write(net, buff, (size_t) (pos-buff));
+  net_flush(net);
 
   thd->main_da.can_overwrite_status= false;
 }
@@ -209,7 +210,7 @@ net_send_ok(THD *thd,
 */    
 
 static void
-net_send_eof(THD *thd, uint server_status, uint total_warn_count)
+net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
 {
   NET *net= &thd->net;
   /* Set to true if no active vio, to work well in case of --init-file */
@@ -217,7 +218,7 @@ net_send_eof(THD *thd, uint server_status, uint total_warn_count)
   {
     thd->main_da.can_overwrite_status= true;
     write_eof_packet(thd, net, server_status, total_warn_count);
-    VOID(net_flush(net));
+    net_flush(net);
     thd->main_da.can_overwrite_status= false;
   }
 }
@@ -229,15 +230,15 @@ net_send_eof(THD *thd, uint server_status, uint total_warn_count)
 */
 
 static void write_eof_packet(THD *thd, NET *net,
-                             uint server_status,
-                             uint total_warn_count)
+                             uint32_t server_status,
+                             uint32_t total_warn_count)
 {
-  uchar buff[5];
+  unsigned char buff[5];
   /*
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint tmp= min(total_warn_count, (uint)65535);
+  uint32_t tmp= cmin(total_warn_count, (uint)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*
@@ -248,17 +249,17 @@ static void write_eof_packet(THD *thd, NET *net,
   if (thd->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
-  VOID(my_net_write(net, buff, 5));
+  my_net_write(net, buff, 5);
 }
 
-void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
+void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err)
 {
   NET *net= &thd->net;
-  uint length;
+  uint32_t length;
   /*
     buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
   */
-  uchar buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
+  unsigned char buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
 
   if (net->vio == 0)
   {
@@ -270,14 +271,13 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   /* The first # is to make the protocol backward compatible */
   buff[2]= '#';
-  pos= (uchar*) stpcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
+  pos= (unsigned char*) my_stpcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
 
   length= (uint) (strmake((char*) pos, err, DRIZZLE_ERRMSG_SIZE-1) -
                   (char*) buff);
   err= (char*) buff;
 
-  VOID(net_write_command(net,(uchar) 255, (uchar*) "", 0, (uchar*) err,
-                         length));
+  net_write_command(net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
   return;
 }
 
@@ -287,17 +287,17 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   We keep a separate version for that range because it's widely used in
   libmysql.
 
-  uint is used as agrument type because of MySQL type conventions:
-  - uint for 0..65536
+  uint32_t is used as agrument type because of MySQL type conventions:
+  - uint32_t for 0..65536
   - ulong for 0..4294967296
   - uint64_t for bigger numbers.
 */
 
-static uchar *net_store_length_fast(uchar *packet, uint length)
+static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t length)
 {
   if (length < 251)
   {
-    *packet=(uchar) length;
+    *packet=(unsigned char) length;
     return packet+1;
   }
   *packet++=252;
@@ -403,26 +403,26 @@ void net_end_statement(THD *thd)
 
 /* The following will only be used for short strings < 65K */
 
-uchar *net_store_data(uchar *to, const uchar *from, size_t length)
+unsigned char *net_store_data(unsigned char *to, const unsigned char *from, size_t length)
 {
   to=net_store_length_fast(to,length);
   memcpy(to,from,length);
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,int32_t from)
+unsigned char *net_store_data(unsigned char *to,int32_t from)
 {
   char buff[20];
-  uint length=(uint) (int10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint) (int10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,int64_t from)
+unsigned char *net_store_data(unsigned char *to,int64_t from)
 {
   char buff[22];
-  uint length=(uint) (int64_t10_to_str(from,buff,10)-buff);
+  uint32_t length=(uint) (int64_t10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -476,11 +476,11 @@ bool Protocol::flush()
     1	Error  (Note that in this case the error is not sent to the
     client)
 */
-bool Protocol::send_fields(List<Item> *list, uint flags)
+bool Protocol::send_fields(List<Item> *list, uint32_t flags)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
-  uchar buff[80];
+  unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
   Protocol_text prot(thd);
   String *local_packet= prot.storage_packet();
@@ -488,7 +488,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
-    uchar *pos= net_store_length(buff, list->elements);
+    unsigned char *pos= net_store_length(buff, list->elements);
     (void) my_net_write(&thd->net, buff, (size_t) (pos-buff));
   }
 
@@ -528,7 +528,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
     else
     {
       /* With conversion */
-      uint max_char_len;
+      uint32_t max_char_len;
       int2store(pos, thd_charset->number);
       /*
         For TEXT/BLOB columns, field_length describes the maximum data
@@ -577,7 +577,7 @@ err:
 
 bool Protocol::write()
 {
-  return(my_net_write(&thd->net, (uchar*) packet->ptr(),
+  return(my_net_write(&thd->net, (unsigned char*) packet->ptr(),
                            packet->length()));
 }
 
@@ -585,7 +585,7 @@ bool Protocol::write()
 /**
   Send \\0 end terminated string.
 
-  @param from	NullS or \\0 terminated string
+  @param from	NULL or \\0 terminated string
 
   @note
     In most cases one should use store(from, length) instead of this function
@@ -600,7 +600,7 @@ bool Protocol::store(const char *from, const CHARSET_INFO * const cs)
 {
   if (!from)
     return store_null();
-  uint length= strlen(from);
+  uint32_t length= strlen(from);
   return store(from, length, cs);
 }
 
@@ -665,10 +665,10 @@ bool Protocol::store_string_aux(const char *from, size_t length,
       tocs != &my_charset_bin)
   {
     /* Store with conversion */
-    return net_store_data((uchar*) from, length, fromcs, tocs);
+    return net_store_data((unsigned char*) from, length, fromcs, tocs);
   }
   /* Store without conversion */
-  return net_store_data((uchar*) from, length);
+  return net_store_data((unsigned char*) from, length);
 }
 
 
@@ -691,7 +691,7 @@ bool Protocol_text::store(const char *from, size_t length,
 bool Protocol_text::store_tiny(int64_t from)
 {
   char buff[20];
-  return net_store_data((uchar*) buff,
+  return net_store_data((unsigned char*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) - buff));
 }
 
@@ -699,7 +699,7 @@ bool Protocol_text::store_tiny(int64_t from)
 bool Protocol_text::store_short(int64_t from)
 {
   char buff[20];
-  return net_store_data((uchar*) buff,
+  return net_store_data((unsigned char*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) -
                                   buff));
 }
@@ -708,7 +708,7 @@ bool Protocol_text::store_short(int64_t from)
 bool Protocol_text::store_long(int64_t from)
 {
   char buff[20];
-  return net_store_data((uchar*) buff,
+  return net_store_data((unsigned char*) buff,
 			(size_t) (int10_to_str((long int)from, buff,
                                                (from <0)?-10:10)-buff));
 }
@@ -717,7 +717,7 @@ bool Protocol_text::store_long(int64_t from)
 bool Protocol_text::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
-  return net_store_data((uchar*) buff,
+  return net_store_data((unsigned char*) buff,
 			(size_t) (int64_t10_to_str(from,buff,
                                                     unsigned_flag ? 10 : -10)-
                                   buff));
@@ -729,21 +729,21 @@ bool Protocol_text::store_decimal(const my_decimal *d)
   char buff[DECIMAL_MAX_STR_LENGTH];
   String str(buff, sizeof(buff), &my_charset_bin);
   (void) my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
-  return net_store_data((uchar*) str.ptr(), str.length());
+  return net_store_data((unsigned char*) str.ptr(), str.length());
 }
 
 
 bool Protocol_text::store(float from, uint32_t decimals, String *buffer)
 {
   buffer->set_real((double) from, decimals, thd->charset());
-  return net_store_data((uchar*) buffer->ptr(), buffer->length());
+  return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
 bool Protocol_text::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, thd->charset());
-  return net_store_data((uchar*) buffer->ptr(), buffer->length());
+  return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
@@ -770,7 +770,7 @@ bool Protocol_text::store(Field *field)
 bool Protocol_text::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
-  uint length;
+  uint32_t length;
   length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
 			   (int) tm->year,
 			   (int) tm->month,
@@ -781,7 +781,7 @@ bool Protocol_text::store(DRIZZLE_TIME *tm)
   if (tm->second_part)
     length+= sprintf(buff+length, ".%06d",
                                      (int)tm->second_part);
-  return net_store_data((uchar*) buff, length);
+  return net_store_data((unsigned char*) buff, length);
 }
 
 
@@ -789,7 +789,7 @@ bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
-  return net_store_data((uchar*) buff, length);
+  return net_store_data((unsigned char*) buff, length);
 }
 
 
@@ -802,8 +802,8 @@ bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
-  uint length;
-  uint day= (tm->year || tm->month) ? 0 : tm->day;
+  uint32_t length;
+  uint32_t day= (tm->year || tm->month) ? 0 : tm->day;
   length= sprintf(buff, "%s%02ld:%02d:%02d",
 			   tm->neg ? "-" : "",
 			   (long) day*24L+(long) tm->hour,
@@ -811,6 +811,6 @@ bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 			   (int) tm->second);
   if (tm->second_part)
     length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-  return net_store_data((uchar*) buff, length);
+  return net_store_data((unsigned char*) buff, length);
 }
 

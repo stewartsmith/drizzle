@@ -32,7 +32,6 @@
   flush_io_cache().  
 */
 #include <drizzled/server_includes.h>
-#ifdef HAVE_REPLICATION
 
 extern "C" {
 
@@ -44,7 +43,7 @@ extern "C" {
   @retval
     0   if record read
 */
-int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
+int _my_b_net_read(register IO_CACHE *info, unsigned char *Buffer,
 		   size_t Count __attribute__((unused)))
 {
   ulong read_length;
@@ -64,7 +63,7 @@ int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
     return(1);
   }
   /* to set up stuff for my_b_get (no _) */
-  info->read_end = (info->read_pos = (uchar*) net->read_pos) + read_length;
+  info->read_end = (info->read_pos = (unsigned char*) net->read_pos) + read_length;
   Buffer[0] = info->read_pos[0];		/* length is always 1 */
 
   /*
@@ -81,4 +80,3 @@ int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
 }
 
 } /* extern "C" */
-#endif /* HAVE_REPLICATION */

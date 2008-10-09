@@ -77,7 +77,7 @@ int my_close(File fd, myf MyFlags)
   }
   if ((uint) fd < my_file_limit && my_file_info[fd].type != UNOPEN)
   {
-    my_free(my_file_info[fd].name, MYF(0));
+    free(my_file_info[fd].name);
 #if !defined(HAVE_PREAD)
     pthread_mutex_destroy(&my_file_info[fd].mutex);
 #endif
@@ -107,7 +107,7 @@ int my_close(File fd, myf MyFlags)
 */
 
 File my_register_filename(File fd, const char *FileName, enum file_type
-			  type_of_file, uint error_message_number, myf MyFlags)
+			  type_of_file, uint32_t error_message_number, myf MyFlags)
 {
   if ((int) fd >= 0)
   {
@@ -159,7 +159,7 @@ void my_print_open_files(void)
 {
   if (my_file_opened | my_stream_opened)
   {
-    uint i;
+    uint32_t i;
     for (i= 0 ; i < my_file_limit ; i++)
     {
       if (my_file_info[i].type != UNOPEN)

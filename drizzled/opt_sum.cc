@@ -51,10 +51,10 @@
 #include <drizzled/sql_select.h>
 
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref, Field* field,
-                                COND *cond, uint *range_fl,
-                                uint *key_prefix_length);
+                                COND *cond, uint32_t *range_fl,
+                                uint32_t *key_prefix_length);
 static int reckey_in_range(bool max_fl, TABLE_REF *ref, Field* field,
-                            COND *cond, uint range_fl, uint prefix_len);
+                            COND *cond, uint32_t range_fl, uint32_t prefix_len);
 static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
 
 
@@ -227,9 +227,9 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         Item *expr=item_sum->args[0];
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
-          uchar key_buff[MAX_KEY_LENGTH];
+          unsigned char key_buff[MAX_KEY_LENGTH];
           TABLE_REF ref;
-          uint range_fl, prefix_len;
+          uint32_t range_fl, prefix_len;
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
@@ -375,9 +375,9 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         Item *expr=item_sum->args[0];
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
-          uchar key_buff[MAX_KEY_LENGTH];
+          unsigned char key_buff[MAX_KEY_LENGTH];
           TABLE_REF ref;
-          uint range_fl, prefix_len;
+          uint32_t range_fl, prefix_len;
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
@@ -593,8 +593,8 @@ bool simple_pred(Item_func *func_item, Item **args, bool *inv_order)
 
 static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo, 
                           KEY_PART_INFO *field_part, COND *cond,
-                          key_part_map *key_part_used, uint *range_fl,
-                          uint *prefix_len)
+                          key_part_map *key_part_used, uint32_t *range_fl,
+                          uint32_t *prefix_len)
 {
   if (!cond)
     return 1;
@@ -667,7 +667,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     less_fl= 1-less_fl;                         // Convert '<' -> '>' (etc)
 
   /* Check if field is part of the tested partial key */
-  uchar *key_ptr= ref->key_buff;
+  unsigned char *key_ptr= ref->key_buff;
   KEY_PART_INFO *part;
   for (part= keyinfo->key_part; ; key_ptr+= part++->store_length)
 
@@ -685,7 +685,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   key_part_map org_key_part_used= *key_part_used;
   if (eq_type || between || max_fl == less_fl)
   {
-    uint length= (key_ptr-ref->key_buff)+part->store_length;
+    uint32_t length= (key_ptr-ref->key_buff)+part->store_length;
     if (ref->key_length < length)
     {
     /* Ultimately ref->key_length will contain the length of the search key */
@@ -716,14 +716,14 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
     if (is_null)
     {
       part->field->set_null();
-      *key_ptr= (uchar) 1;
+      *key_ptr= (unsigned char) 1;
     }
     else
     {
       store_val_in_field(part->field, args[between && max_fl ? 2 : 1],
                          CHECK_FIELD_IGNORE);
       if (part->null_bit) 
-        *key_ptr++= (uchar) test(part->field->is_null());
+        *key_ptr++= (unsigned char) test(part->field->is_null());
       part->field->get_key_image(key_ptr, part->length, Field::itRAW);
     }
     if (is_field_part)
@@ -797,13 +797,13 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
       
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
                                 Field* field, COND *cond,
-                                uint *range_fl, uint *prefix_len)
+                                uint32_t *range_fl, uint32_t *prefix_len)
 {
   if (!(field->flags & PART_KEY_FLAG))
     return 0;                                        // Not key field
 
   Table *table= field->table;
-  uint idx= 0;
+  uint32_t idx= 0;
 
   KEY *keyinfo,*keyinfo_end;
   for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->s->keys ;
@@ -818,7 +818,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
     */
     if (!table->keys_in_use_for_query.is_set(idx))
       continue;
-    uint jdx= 0;
+    uint32_t jdx= 0;
     *prefix_len= 0;
     for (part= keyinfo->key_part, part_end= part+keyinfo->key_parts ;
          part != part_end ;
@@ -903,7 +903,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
 */
 
 static int reckey_in_range(bool max_fl, TABLE_REF *ref, Field* field,
-                            COND *cond, uint range_fl, uint prefix_len)
+                            COND *cond, uint32_t range_fl, uint32_t prefix_len)
 {
   if (key_cmp_if_same(field->table, ref->key_buff, ref->key, prefix_len))
     return 1;

@@ -393,7 +393,7 @@ CREATE TABLE t1 (
   id int NOT NULL,
   name varchar(20) NOT NULL,
   dept varchar(20) NOT NULL,
-  age tinyint(3) unsigned NOT NULL,
+  age tinyint(3) NOT NULL,
   PRIMARY KEY (id),
   INDEX (name,dept)
 ) ENGINE=InnoDB;

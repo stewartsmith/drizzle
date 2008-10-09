@@ -1,29 +1,33 @@
-/* Copyright (C) 2000-2004 DRIZZLE AB
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation.
+#include <config.h>
 
-   There are special exceptions to the terms and conditions of the GPL as it
-   is applied to this software. View the full text of the exception in file
-   EXCEPTIONS-CLIENT in the directory of this software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-
-#include <drizzled/global.h>
-#include "drizzle.h"
+#include "libdrizzle.h"
+#include "libdrizzle_priv.h"
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
+#include <fcntl.h>
+#include <stdio.h>
+
 #ifdef   HAVE_PWD_H
 #include <pwd.h>
 #endif
@@ -50,13 +54,15 @@
 #endif
 
 #include <sql_common.h>
-#include "client_settings.h"
+#include "local_infile.h"
+#include <libdrizzle/gettext.h>
 
+#define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
 
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
   bool result= true;
-  uint packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
+  uint32_t packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
   NET *net= &drizzle->net;
   int readcount;
   void *li_ptr;          /* pass state to local_infile functions */
@@ -76,7 +82,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_OUT_OF_MEMORY, sqlstate_get_unknown());
     return(1);
   }
 
@@ -84,9 +90,9 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   if ((*options->local_infile_init)(&li_ptr, net_filename,
     options->local_infile_userdata))
   {
-    VOID(my_net_write(net,(const uchar*) "",0)); /* Server needs one packet */
+    (void)my_net_write(net,(const unsigned char*) "",0); /* Server needs one packet */
     net_flush(net);
-    strcpy(net->sqlstate, unknown_sqlstate);
+    strcpy(net->sqlstate, sqlstate_get_unknown());
     net->last_errno=
       (*options->local_infile_error)(li_ptr,
                                      net->last_error,
@@ -99,16 +105,16 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
     (*options->local_infile_read)(li_ptr, buf,
           packet_length)) > 0)
   {
-    if (my_net_write(net, (uchar*) buf, readcount))
+    if (my_net_write(net, (unsigned char*) buf, readcount))
     {
       goto err;
     }
   }
 
   /* Send empty packet to mark end of file */
-  if (my_net_write(net, (const uchar*) "", 0) || net_flush(net))
+  if (my_net_write(net, (const unsigned char*) "", 0) || net_flush(net))
   {
-    set_drizzle_error(drizzle, CR_SERVER_LOST, unknown_sqlstate);
+    drizzle_set_error(drizzle, CR_SERVER_LOST, sqlstate_get_unknown());
     goto err;
   }
 
@@ -203,12 +209,12 @@ static int default_local_infile_init(void **ptr, const char *filename,
     < 0    Error
 */
 
-static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
+static int default_local_infile_read(void *ptr, char *buf, uint32_t buf_len)
 {
   int count;
   default_local_infile_data*data = (default_local_infile_data *) ptr;
 
-  if ((count= (int) read(data->fd, (uchar *) buf, buf_len)) < 0)
+  if ((count= (int) read(data->fd, (unsigned char *) buf, buf_len)) < 0)
   {
     data->error_num= 2; /* the errmsg for not entire file read */
     snprintf(data->error_msg, sizeof(data->error_msg)-1,
@@ -257,7 +263,7 @@ static void default_local_infile_end(void *ptr)
 */
 
 static int
-default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
+default_local_infile_error(void *ptr, char *error_msg, uint32_t error_msg_len)
 {
   default_local_infile_data *data = (default_local_infile_data *) ptr;
   if (data)          /* If not error on open */
@@ -275,9 +281,9 @@ void
 drizzle_set_local_infile_handler(DRIZZLE *drizzle,
                                int (*local_infile_init)(void **, const char *,
                                void *),
-                               int (*local_infile_read)(void *, char *, uint),
+                               int (*local_infile_read)(void *, char *, uint32_t),
                                void (*local_infile_end)(void *),
-                               int (*local_infile_error)(void *, char *, uint),
+                               int (*local_infile_error)(void *, char *, uint32_t),
                                void *userdata)
 {
   drizzle->options.local_infile_init=  local_infile_init;

@@ -1,19 +1,24 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #ifndef INCLUDES_DRIZZLE_SQL_LIST_H
 #define INCLUDES_DRIZZLE_SQL_LIST_H
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
 #ifdef USE_PRAGMA_INTERFACE
@@ -21,12 +26,13 @@
 #endif
 
 #include <utility>
+#include <algorithm>
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
-  uint elements;
-  uchar *first;
-  uchar **next;
+  uint32_t elements;
+  unsigned char *first;
+  unsigned char **next;
 
   st_sql_list() {}                              /* Remove gcc warning */
   inline void empty()
@@ -35,7 +41,7 @@ typedef struct st_sql_list {
     first=0;
     next= &first;
   }
-  inline void link_in_list(uchar *element,uchar **next_ptr)
+  inline void link_in_list(unsigned char *element,unsigned char **next_ptr)
   {
     elements++;
     (*next)=element;
@@ -143,7 +149,7 @@ protected:
   list_node *first,**last;
 
 public:
-  uint elements;
+  uint32_t elements;
 
   inline void empty() { elements=0; first= &end_of_list; last=&first;}
   inline base_list() { empty(); }
@@ -294,7 +300,7 @@ public:
   {
     base_list *list= this;
     list_node *node= first;
-    uint cnt= 0;
+    uint32_t cnt= 0;
 
     while (node->next != &end_of_list)
     {
@@ -334,7 +340,7 @@ class base_list_iterator
 protected:
   base_list *list;
   list_node **el,**prev,*current;
-  void sublist(base_list &ls, uint elm)
+  void sublist(base_list &ls, uint32_t elm)
   {
     ls.first= *el;
     ls.last= list->last;
@@ -479,7 +485,7 @@ public:
   inline void init(List<T> &a) { base_list_iterator::init(a); }
   inline T* operator++(int) { return (T*) base_list_iterator::next_fast(); }
   inline void rewind(void)  { base_list_iterator::rewind(); }
-  void sublist(List<T> &list_arg, uint el_arg)
+  void sublist(List<T> &list_arg, uint32_t el_arg)
   {
     base_list_iterator::sublist(list_arg, el_arg);
   }
@@ -501,7 +507,7 @@ struct ilink
   static void operator delete(void* ptr_arg,
                               size_t size __attribute__((unused)))
   {
-     my_free((uchar*)ptr_arg, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
+     free((unsigned char*)ptr_arg);
   }
 
   inline ilink()

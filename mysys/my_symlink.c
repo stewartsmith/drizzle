@@ -35,7 +35,7 @@
 int my_readlink(char *to, const char *filename, myf MyFlags)
 {
 #ifndef HAVE_READLINK
-  stpcpy(to,filename);
+  my_stpcpy(to,filename);
   return 1;
 #else
   int result=0;
@@ -47,7 +47,7 @@ int my_readlink(char *to, const char *filename, myf MyFlags)
     if ((my_errno=errno) == EINVAL)
     {
       result= 1;
-      stpcpy(to,filename);
+      my_stpcpy(to,filename);
     }
     else
     {
@@ -130,13 +130,13 @@ int my_realpath(char *to, const char *filename,
       my_errno=errno;
       if (MyFlags & MY_WME)
 	my_error(EE_REALPATH, MYF(0), filename, my_errno);
-      my_load_path(to, filename, NullS);
+      my_load_path(to, filename, NULL);
       result= -1;
     }
   }
   return(result);
 #else
-  my_load_path(to, filename, NullS);
+  my_load_path(to, filename, NULL);
   return 0;
 #endif
 }

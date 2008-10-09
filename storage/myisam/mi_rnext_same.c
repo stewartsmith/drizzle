@@ -23,10 +23,10 @@
 	   based on the position of the last used key!
 	*/
 
-int mi_rnext_same(MI_INFO *info, uchar *buf)
+int mi_rnext_same(MI_INFO *info, unsigned char *buf)
 {
   int error;
-  uint inx,not_used[2];
+  uint32_t inx,not_used[2];
   MI_KEYDEF *keyinfo;
 
   if ((int) (inx=info->lastinx) < 0 || info->lastpos == HA_OFFSET_ERROR)

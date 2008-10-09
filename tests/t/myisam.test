@@ -30,7 +30,7 @@ drop table t1;
 # Test problem with rows that are 65517-65520 bytes long
 #
 
-create table t1 (a tinyint not null auto_increment, b blob not null, primary key (a));
+create table t1 (a int not null auto_increment, b blob not null, primary key (a));
 
 let $1=100;
 disable_query_log;
@@ -309,12 +309,12 @@ drop table t1;
 # Test of REPAIR that once failed
 #
 CREATE TABLE `t1` (
-  `post_id` mediumint(8) unsigned NOT NULL auto_increment,
-  `topic_id` mediumint(8) unsigned NOT NULL default '0',
+  `post_id` mediumint(8) NOT NULL auto_increment,
+  `topic_id` mediumint(8) NOT NULL default '0',
   `post_time` datetime NOT NULL default '0000-00-00 00:00:00',
   `post_text` text NOT NULL,
   `icon_url` varchar(10) NOT NULL default '',
-  `sign` tinyint(1) unsigned NOT NULL default '0',
+  `sign` int(1) NOT NULL default '0',
   `post_edit` varchar(150) NOT NULL default '',
   `poster_login` varchar(35) NOT NULL default '',
   `ip` varchar(15) NOT NULL default '',
@@ -713,7 +713,7 @@ drop table t1;
 # BUG##20357 - Got error 124 from storage engine using MIN and MAX functions
 #              in queries
 #
-CREATE TABLE t1(a TINYINT, KEY(a)) ENGINE=MyISAM;
+CREATE TABLE t1(a int, KEY(a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(1);
 SELECT MAX(a) FROM t1 IGNORE INDEX(a);
 ALTER TABLE t1 DISABLE KEYS;

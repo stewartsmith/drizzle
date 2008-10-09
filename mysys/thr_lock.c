@@ -76,6 +76,18 @@ multiple read locks.
 #include <mystrings/m_string.h>
 #include <errno.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
+
 bool thr_lock_inited=0;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
@@ -112,13 +124,13 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 
 #ifdef EXTRA_DEBUG
 #define MAX_FOUND_ERRORS	10		/* Report 10 first errors */
-static uint found_errors=0;
+static uint32_t found_errors=0;
 
 static int check_lock(struct st_lock_list *list, const char* lock_type,
 		      const char *where, bool same_owner, bool no_cond)
 {
   THR_LOCK_DATA *data,**prev;
-  uint count=0;
+  uint32_t count=0;
   THR_LOCK_OWNER *first_owner;
 
   prev= &list->data;
@@ -177,7 +189,7 @@ static int check_lock(struct st_lock_list *list, const char* lock_type,
 static void check_locks(THR_LOCK *lock, const char *where,
 			bool allow_no_locks)
 {
-  uint old_found_errors=found_errors;
+  uint32_t old_found_errors=found_errors;
 
   if (found_errors < MAX_FOUND_ERRORS)
   {
@@ -189,7 +201,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
     if (found_errors < MAX_FOUND_ERRORS)
     {
-      uint count=0;
+      uint32_t count=0;
       THR_LOCK_DATA *data;
       for (data=lock->read.data ; data ; data=data->next)
       {
@@ -300,7 +312,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 void thr_lock_init(THR_LOCK *lock)
 {
   memset(lock, 0, sizeof(*lock));
-  VOID(pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST));
+  pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST);
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
@@ -316,7 +328,7 @@ void thr_lock_init(THR_LOCK *lock)
 
 void thr_lock_delete(THR_LOCK *lock)
 {
-  VOID(pthread_mutex_destroy(&lock->mutex));
+  pthread_mutex_destroy(&lock->mutex);
   pthread_mutex_lock(&THR_LOCK_lock);
   thr_lock_thread_list=list_delete(thr_lock_thread_list,&lock->list);
   pthread_mutex_unlock(&THR_LOCK_lock);
@@ -475,7 +487,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
   data->cond=0;					/* safety */
   data->type=lock_type;
   data->owner= owner;                           /* Must be reset ! */
-  VOID(pthread_mutex_lock(&lock->mutex));
+  pthread_mutex_lock(&lock->mutex);
   check_locks(lock,(uint) lock_type <= (uint) TL_READ_NO_INSERT ?
 	      "enter read_lock" : "enter write_lock",0);
   if ((int) lock_type <= (int) TL_READ_NO_INSERT)
@@ -706,7 +718,7 @@ static inline void free_all_read_locks(THR_LOCK *lock,
       lock->read_no_write_count++;
     }      
     data->cond=0;				/* Mark thread free */
-    VOID(pthread_cond_signal(cond));
+    pthread_cond_signal(cond);
   } while ((data=data->next));
   *lock->read_wait.last=0;
   if (!lock->read_wait.data)
@@ -806,7 +818,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  {
 	    pthread_cond_t *cond=data->cond;
 	    data->cond=0;				/* Mark thread free */
-	    VOID(pthread_cond_signal(cond));	/* Start waiting thread */
+	    pthread_cond_signal(cond);	/* Start waiting thread */
 	  }
 	  if (data->type != TL_WRITE_ALLOW_WRITE ||
 	      !lock->write_wait.data ||
@@ -853,7 +865,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	lock->write.last= &data->next;
 	data->next=0;				/* Only one write lock */
 	data->cond=0;				/* Mark thread free */
-	VOID(pthread_cond_signal(cond));	/* Start waiting thread */
+	pthread_cond_signal(cond);	/* Start waiting thread */
       } while (lock_type == TL_WRITE_ALLOW_WRITE &&
 	       (data=lock->write_wait.data) &&
 	       data->type == TL_WRITE_ALLOW_WRITE);
@@ -878,9 +890,9 @@ end:
 */
 
 
-#define LOCK_CMP(A,B) ((uchar*) (A->lock) - (uint) ((A)->type) < (uchar*) (B->lock)- (uint) ((B)->type))
+#define LOCK_CMP(A,B) ((unsigned char*) (A->lock) - (uint) ((A)->type) < (unsigned char*) (B->lock)- (uint) ((B)->type))
 
-static void sort_locks(THR_LOCK_DATA **data,uint count)
+static void sort_locks(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end,**prev,*tmp;
 
@@ -902,7 +914,7 @@ static void sort_locks(THR_LOCK_DATA **data,uint count)
 
 
 enum enum_thr_lock_result
-thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
+thr_multi_lock(THR_LOCK_DATA **data, uint32_t count, THR_LOCK_OWNER *owner)
 {
   THR_LOCK_DATA **pos,**end;
   if (count > 1)
@@ -973,7 +985,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
 
   /* free all locks */
 
-void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
+void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
 {
   THR_LOCK_DATA **pos,**end;
 
@@ -1207,7 +1219,7 @@ bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 #ifdef MAIN
 
 struct st_test {
-  uint lock_nr;
+  uint32_t lock_nr;
   enum thr_lock_type lock_type;
 };
 
@@ -1256,7 +1268,7 @@ int lock_counts[]= {sizeof(test_0)/sizeof(struct st_test),
 
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
-static uint thread_count;
+static uint32_t thread_count;
 static uint32_t sum=0;
 
 #define MAX_LOCK_COUNT 8
@@ -1329,9 +1341,9 @@ static void *test_thread(void *arg)
   thr_print_locks();
   pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
-  VOID(pthread_cond_signal(&COND_thread_count)); /* Tell main we are ready */
+  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
-  free((uchar*) arg);
+  free((unsigned char*) arg);
   return 0;
 }
 
@@ -1388,7 +1400,7 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   }
 #endif
 #ifdef HAVE_THR_SETCONCURRENCY
-  VOID(thr_setconcurrency(2));
+  thr_setconcurrency(2);
 #endif
   for (i=0 ; i < (int) array_elements(lock_counts) ; i++)
   {

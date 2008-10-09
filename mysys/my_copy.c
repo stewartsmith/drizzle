@@ -50,11 +50,11 @@ struct utimbuf {
 
 int my_copy(const char *from, const char *to, myf MyFlags)
 {
-  uint Count;
+  uint32_t Count;
   bool new_file_stat= 0; /* 1 if we could stat "to" */
   int create_flag;
   File from_file,to_file;
-  uchar buff[IO_SIZE];
+  unsigned char buff[IO_SIZE];
   struct stat stat_buff,new_stat_buff;
 
   from_file=to_file= -1;
@@ -92,25 +92,25 @@ int my_copy(const char *from, const char *to, myf MyFlags)
 
     if (MyFlags & MY_HOLD_ORIGINAL_MODES && !new_file_stat)
 	return(0);			/* File copyed but not stat */
-    VOID(chmod(to, stat_buff.st_mode & 07777)); /* Copy modes */
-    VOID(chown(to, stat_buff.st_uid,stat_buff.st_gid)); /* Copy ownership */
+    chmod(to, stat_buff.st_mode & 07777); /* Copy modes */
+    chown(to, stat_buff.st_uid,stat_buff.st_gid); /* Copy ownership */
     if (MyFlags & MY_COPYTIME)
     {
       struct utimbuf timep;
       timep.actime  = stat_buff.st_atime;
       timep.modtime = stat_buff.st_mtime;
-      VOID(utime((char*) to, &timep)); /* last accessed and modified times */
+      utime((char*) to, &timep); /* last accessed and modified times */
     }
     return(0);
   }
 
 err:
-  if (from_file >= 0) VOID(my_close(from_file,MyFlags));
+  if (from_file >= 0) my_close(from_file,MyFlags);
   if (to_file >= 0)
   {
-    VOID(my_close(to_file, MyFlags));
+    my_close(to_file, MyFlags);
     /* attempt to delete the to-file we've partially written */
-    VOID(my_delete(to, MyFlags));
+    my_delete(to, MyFlags);
   }
   return(-1);
 } /* my_copy */

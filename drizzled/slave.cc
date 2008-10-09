@@ -30,14 +30,23 @@
 #include "rpl_rli.h"
 #include "sql_repl.h"
 #include "rpl_filter.h"
-#include "repl_failsafe.h"
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/sql_common.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/drizzled_error_messages.h>
 
-#ifdef HAVE_REPLICATION
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 
 #include "rpl_tblmap.h"
 
@@ -284,7 +293,7 @@ void init_slave_skip_errors(const char* arg)
   use_slave_mask = 1;
   for (;my_isspace(system_charset_info,*arg);++arg)
     /* empty */;
-  if (!my_strnncoll(system_charset_info,(uchar*)arg,4,(const uchar*)"all",4))
+  if (!my_strnncoll(system_charset_info,(unsigned char*)arg,4,(const unsigned char*)"all",4))
   {
     bitmap_set_all(&slave_error_mask);
     return;
@@ -543,7 +552,7 @@ int32_t start_slave_threads(bool need_slave_mutex, bool wait_for_start,
 
 
 #ifdef NOT_USED_YET
-static int32_t end_slave_on_walk(Master_info* mi, uchar* /*unused*/)
+static int32_t end_slave_on_walk(Master_info* mi, unsigned char* /*unused*/)
 {
   end_master_info(mi);
   return(0);
@@ -637,15 +646,15 @@ void skip_load_data_infile(NET *net)
 {
   (void)net_request_file(net, "/dev/null");
   (void)my_net_read(net);                               // discard response
-  (void)net_write_command(net, 0, (uchar*) "", 0, (uchar*) "", 0); // ok
+  (void)net_write_command(net, 0, (unsigned char*) "", 0, (unsigned char*) "", 0); // ok
   return;
 }
 
 
 bool net_request_file(NET* net, const char* fname)
 {
-  return(net_write_command(net, 251, (uchar*) fname, strlen(fname),
-                                (uchar*) "", 0));
+  return(net_write_command(net, 251, (unsigned char*) fname, strlen(fname),
+                                (unsigned char*) "", 0));
 }
 
 /*
@@ -1094,7 +1103,7 @@ static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((unuse
 int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
                              bool *suppress_warnings)
 {
-  uchar buf[1024], *pos= buf;
+  unsigned char buf[1024], *pos= buf;
   uint32_t report_host_len, report_user_len=0, report_password_len=0;
 
   *suppress_warnings= false;
@@ -1111,9 +1120,9 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
     return(0);                                     // safety
 
   int4store(pos, server_id); pos+= 4;
-  pos= net_store_data(pos, (uchar*) report_host, report_host_len);
-  pos= net_store_data(pos, (uchar*) report_user, report_user_len);
-  pos= net_store_data(pos, (uchar*) report_password, report_password_len);
+  pos= net_store_data(pos, (unsigned char*) report_host, report_host_len);
+  pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
+  pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
   int4store(pos, rpl_recovery_rank);    pos+= 4;
   /* The master will fill in master_id */
@@ -1186,21 +1195,8 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Until_Log_File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Until_Log_Pos", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Allowed", 7));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_File",
-                                             sizeof(mi->ssl_ca)));
-  field_list.push_back(new Item_empty_string("Master_SSL_CA_Path",
-                                             sizeof(mi->ssl_capath)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cert",
-                                             sizeof(mi->ssl_cert)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Cipher",
-                                             sizeof(mi->ssl_cipher)));
-  field_list.push_back(new Item_empty_string("Master_SSL_Key",
-                                             sizeof(mi->ssl_key)));
   field_list.push_back(new Item_return_int("Seconds_Behind_Master", 10,
                                            DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Master_SSL_Verify_Server_Cert",
-                                             3));
   field_list.push_back(new Item_return_int("Last_IO_Errno", 4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_IO_Error", 20));
   field_list.push_back(new Item_return_int("Last_SQL_Errno", 4, DRIZZLE_TYPE_LONG));
@@ -1266,13 +1262,6 @@ bool show_master_info(THD* thd, Master_info* mi)
     protocol->store(mi->rli.until_log_name, &my_charset_bin);
     protocol->store((uint64_t) mi->rli.until_log_pos);
 
-    protocol->store(mi->ssl? "Ignored":"No", &my_charset_bin);
-    protocol->store(mi->ssl_ca, &my_charset_bin);
-    protocol->store(mi->ssl_capath, &my_charset_bin);
-    protocol->store(mi->ssl_cert, &my_charset_bin);
-    protocol->store(mi->ssl_cipher, &my_charset_bin);
-    protocol->store(mi->ssl_key, &my_charset_bin);
-
     /*
       Seconds_Behind_Master: if SQL thread is running and I/O thread is
       connected, we can compute it otherwise show NULL (i.e. unknown).
@@ -1297,19 +1286,18 @@ bool show_master_info(THD* thd, Master_info* mi)
         slave is 2. At SHOW SLAVE STATUS time, assume that the difference
         between timestamp of slave and rli->last_master_timestamp is 0
         (i.e. they are in the same second), then we get 0-(2-1)=-1 as a result.
-        This confuses users, so we don't go below 0: hence the max().
+        This confuses users, so we don't go below 0: hence the cmax().
 
         last_master_timestamp == 0 (an "impossible" timestamp 1970) is a
         special marker to say "consider we have caught up".
       */
       protocol->store((int64_t)(mi->rli.last_master_timestamp ?
-                                 max((long)0, time_diff) : 0));
+                                 cmax((long)0, time_diff) : 0));
     }
     else
     {
       protocol->store_null();
     }
-    protocol->store(mi->ssl_verify_server_cert? "Yes":"No", &my_charset_bin);
 
     // Last_IO_Errno
     protocol->store(mi->last_error().number);
@@ -1323,7 +1311,7 @@ bool show_master_info(THD* thd, Master_info* mi)
     pthread_mutex_unlock(&mi->rli.data_lock);
     pthread_mutex_unlock(&mi->data_lock);
 
-    if (my_net_write(&thd->net, (uchar*) thd->packet.ptr(), packet->length()))
+    if (my_net_write(&thd->net, (unsigned char*) thd->packet.ptr(), packet->length()))
       return(true);
   }
   my_eof(thd);
@@ -1349,26 +1337,6 @@ void set_slave_thread_options(THD* thd)
     options&= ~OPTION_BIN_LOG;
   thd->options= options;
   thd->variables.completion_type= 0;
-  return;
-}
-
-void set_slave_thread_default_charset(THD* thd, Relay_log_info const *rli)
-{
-  thd->variables.character_set_client=
-    global_system_variables.character_set_client;
-  thd->variables.collation_connection=
-    global_system_variables.collation_connection;
-  thd->variables.collation_server=
-    global_system_variables.collation_server;
-  thd->update_charset();
-
-  /*
-    We use a const cast here since the conceptual (and externally
-    visible) behavior of the function is to set the default charset of
-    the thread.  That the cache has to be invalidated is a secondary
-    effect.
-   */
-  const_cast<Relay_log_info*>(rli)->cached_charset_invalidate();
   return;
 }
 
@@ -1450,7 +1418,7 @@ static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed
 static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
                         bool *suppress_warnings)
 {
-  uchar buf[FN_REFLEN + 10];
+  unsigned char buf[FN_REFLEN + 10];
   int32_t len;
   int32_t binlog_flags = 0; // for now
   char* logname = mi->master_log_name;
@@ -1829,7 +1797,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
             exec_res= 0;
             end_trans(thd, ROLLBACK);
             /* chance for concurrent connection to get more locks */
-            safe_sleep(thd, min(rli->trans_retries, (uint32_t)MAX_SLAVE_RETRY_PAUSE),
+            safe_sleep(thd, cmin(rli->trans_retries, (uint32_t)MAX_SLAVE_RETRY_PAUSE),
                        (CHECK_KILLED_FUNC)sql_slave_killed, (void*)rli);
             pthread_mutex_lock(&rli->data_lock); // because of SHOW STATUS
             rli->trans_retries++;
@@ -1901,15 +1869,12 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
 */
 
 static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
-                            uint32_t *retry_count, bool suppress_warnings,
-                            const char *messages[SLAVE_RECON_MSG_MAX])
+                                uint32_t *retry_count, bool suppress_warnings,
+                                const char *messages[SLAVE_RECON_MSG_MAX])
 {
   mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
   thd->set_proc_info(_(messages[SLAVE_RECON_MSG_WAIT]));
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->clear_active_vio();
-#endif
-  end_server(drizzle);
+  drizzle_disconnect(drizzle);
   if ((*retry_count)++)
   {
     if (*retry_count > master_retry_count)
@@ -2181,10 +2146,10 @@ err:
   sql_print_information(_("Slave I/O thread exiting, read up to log '%s', "
                           "position %s"),
                         IO_RPL_LOG_NAME, llstr(mi->master_log_pos,llbuff));
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   thd->query = thd->db = 0; // extra safety
   thd->query_length= thd->db_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   if (drizzle)
   {
     /*
@@ -2195,9 +2160,6 @@ err:
       can be called in the middle of closing the VIO associated with
       the 'mysql' object, causing a crash.
     */
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->clear_active_vio();
-#endif
     drizzle_close(drizzle);
     mi->drizzle=0;
   }
@@ -2208,8 +2170,6 @@ err:
   /* Forget the relay log's format */
   delete mi->rli.relay_log.description_event_for_queue;
   mi->rli.relay_log.description_event_for_queue= 0;
-  // TODO: make rpl_status part of Master_info
-  change_rpl_status(RPL_ACTIVE_SLAVE,RPL_IDLE_SLAVE);
   assert(thd->net.buff != 0);
   net_end(&thd->net); // destructor will not free it, because net.vio is 0
   close_thread_tables(thd);
@@ -2453,7 +2413,7 @@ pthread_handler_t handle_slave_sql(void *arg)
     must "proactively" clear playgrounds:
   */
   rli->cleanup_context(thd, 1);
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   /*
     Some extra safety, which should not been needed (normally, event deletion
     should already have done these assignments (each event which sets these
@@ -2461,7 +2421,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   */
   thd->query= thd->db= thd->catalog= 0;
   thd->query_length= thd->db_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   thd_proc_info(thd, "Waiting for slave mutex on exit");
   pthread_mutex_lock(&rli->run_lock);
   /* We need data_lock, at least to wake up any waiting master_pos_wait() */
@@ -2476,8 +2436,6 @@ pthread_handler_t handle_slave_sql(void *arg)
   pthread_mutex_unlock(&rli->data_lock);
   pthread_cond_broadcast(&rli->data_cond);
   rli->ignore_log_space_limit= 0; /* don't need any lock */
-  /* we die so won't remember charset - re-update them on next thread start */
-  rli->cached_charset_invalidate();
   rli->save_temporary_tables = thd->temporary_tables;
 
   /*
@@ -2559,7 +2517,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
       if (unlikely(!num_bytes)) /* eof */
       {
 	/* 3.23 master wants it */
-        net_write_command(net, 0, (uchar*) "", 0, (uchar*) "", 0);
+        net_write_command(net, 0, (unsigned char*) "", 0, (unsigned char*) "", 0);
         /*
           If we wrote Create_file_log_event, then we need to write
           Execute_load_log_event. If we did not write Create_file_log_event,
@@ -2728,7 +2686,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
                       "master could be corrupt but a more likely cause "
                       "of this is a bug"),
                     errmsg);
-    my_free((char*) tmp_buf, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) tmp_buf);
     return(1);
   }
 
@@ -2764,7 +2722,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
     delete ev;
     mi->master_log_pos += inc_pos;
     pthread_mutex_unlock(&mi->data_lock);
-    my_free((char*)tmp_buf, MYF(0));
+    free((char*)tmp_buf);
     return(error);
   }
   default:
@@ -2814,7 +2772,7 @@ static int32_t queue_binlog_ver_3_event(Master_info *mi, const char *buf,
                       "master could be corrupt but a more likely cause of "
                       "this is a bug"),
                     errmsg);
-    my_free((char*) tmp_buf, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) tmp_buf);
     return(1);
   }
   pthread_mutex_lock(&mi->data_lock);
@@ -3147,7 +3105,7 @@ static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
 */
 
 static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
-                             bool reconnect, bool suppress_warnings)
+                                 bool reconnect, bool suppress_warnings)
 {
   int32_t slave_was_killed;
   int32_t last_errno= -2;                           // impossible error
@@ -3161,10 +3119,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
 
   drizzle_options(drizzle, DRIZZLE_OPT_CONNECT_TIMEOUT, (char *) &slave_net_timeout);
   drizzle_options(drizzle, DRIZZLE_OPT_READ_TIMEOUT, (char *) &slave_net_timeout);
-
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset_info->csname);
-  /* This one is not strictly needed but we have it here for completeness */
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_DIR, (char *) charsets_dir);
 
   while (!(slave_was_killed = io_slave_killed(thd,mi)) &&
          (reconnect ? drizzle_reconnect(drizzle) != 0 :
@@ -3192,8 +3146,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
     if (++err_count == master_retry_count)
     {
       slave_was_killed=1;
-      if (reconnect)
-        change_rpl_status(RPL_ACTIVE_SLAVE,RPL_LOST_SOLDIER);
       break;
     }
     safe_sleep(thd,mi->connect_retry,(CHECK_KILLED_FUNC)io_slave_killed,
@@ -3212,15 +3164,6 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                                 IO_RPL_LOG_NAME,
                                 llstr(mi->master_log_pos,llbuff));
     }
-    else
-    {
-      change_rpl_status(RPL_IDLE_SLAVE,RPL_ACTIVE_SLAVE);
-      general_log_print(thd, COM_CONNECT_OUT, "%s@%s:%d",
-                        mi->user, mi->host, mi->port);
-    }
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->set_active_vio(drizzle->net.vio);
-#endif
   }
   drizzle->reconnect= 1;
   return(slave_was_killed);
@@ -3282,15 +3225,15 @@ bool flush_relay_log_info(Relay_log_info* rli)
   char buff[FN_REFLEN*2+22*2+4], *pos;
 
   my_b_seek(file, 0L);
-  pos=stpcpy(buff, rli->group_relay_log_name);
+  pos=my_stpcpy(buff, rli->group_relay_log_name);
   *pos++='\n';
   pos=int64_t2str(rli->group_relay_log_pos, pos, 10);
   *pos++='\n';
-  pos=stpcpy(pos, rli->group_master_log_name);
+  pos=my_stpcpy(pos, rli->group_master_log_name);
   *pos++='\n';
   pos=int64_t2str(rli->group_master_log_pos, pos, 10);
   *pos='\n';
-  if (my_b_write(file, (uchar*) buff, (size_t) (pos-buff)+1))
+  if (my_b_write(file, (unsigned char*) buff, (size_t) (pos-buff)+1))
     error=1;
   if (flush_io_cache(file))
     error=1;
@@ -3318,7 +3261,7 @@ static IO_CACHE *reopen_relay_log(Relay_log_info *rli, const char **errmsg)
     relay_log_pos       Current log pos
     pending             Number of bytes already processed from the event
   */
-  rli->event_relay_log_pos= max(rli->event_relay_log_pos, (uint64_t)BIN_LOG_HEADER_SIZE);
+  rli->event_relay_log_pos= cmax(rli->event_relay_log_pos, (uint64_t)BIN_LOG_HEADER_SIZE);
   my_b_seek(cur_log,rli->event_relay_log_pos);
   return(cur_log);
 }
@@ -3723,8 +3666,8 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
 {
   struct st_version_range_for_one_bug {
     uint32_t        bug_id;
-    const uchar introduced_in[3]; // first version with bug
-    const uchar fixed_in[3];      // first version with fix
+    const unsigned char introduced_in[3]; // first version with bug
+    const unsigned char fixed_in[3];      // first version with fix
   };
   static struct st_version_range_for_one_bug versions_for_all_bugs[]=
   {
@@ -3733,7 +3676,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
     {33029, { 5, 0,  0 }, { 5, 0, 58 } },
     {33029, { 5, 1,  0 }, { 5, 1, 12 } },
   };
-  const uchar *master_ver=
+  const unsigned char *master_ver=
     rli->relay_log.description_event_for_exec->server_version_split;
 
   assert(sizeof(rli->relay_log.description_event_for_exec->server_version_split) == 3);
@@ -3741,7 +3684,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
   for (uint32_t i= 0;
        i < sizeof(versions_for_all_bugs)/sizeof(*versions_for_all_bugs);i++)
   {
-    const uchar *introduced_in= versions_for_all_bugs[i].introduced_in,
+    const unsigned char *introduced_in= versions_for_all_bugs[i].introduced_in,
       *fixed_in= versions_for_all_bugs[i].fixed_in;
     if ((versions_for_all_bugs[i].bug_id == bug_id) &&
         (memcmp(introduced_in, master_ver, 3) <= 0) &&
@@ -3810,5 +3753,3 @@ template class I_List_iterator<i_string_pair>;
 /**
   @} (end of group Replication)
 */
-
-#endif /* HAVE_REPLICATION */

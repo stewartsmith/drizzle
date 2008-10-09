@@ -24,8 +24,8 @@
 typedef struct ttinfo
 {
   long tt_gmtoff; // Offset from UTC in seconds
-  uint tt_isdst;   // Is daylight saving time or not. Used to set tm_isdst
-  uint tt_abbrind; // Index of start of abbreviation for this time type.
+  uint32_t tt_isdst;   // Is daylight saving time or not. Used to set tm_isdst
+  uint32_t tt_abbrind; // Index of start of abbreviation for this time type.
   /*
     We don't use tt_ttisstd and tt_ttisgmt members of original elsie-code
     struct since we don't support POSIX-style TZ descriptions in variables.
@@ -47,7 +47,7 @@ typedef struct lsinfo
 typedef struct revtinfo
 {
   long rt_offset; // Offset of local time from UTC in seconds
-  uint rt_type;    // Type of period 0 - Normal period. 1 - Spring time-gap
+  uint32_t rt_type;    // Type of period 0 - Normal period. 1 - Spring time-gap
 } REVT_INFO;
 
 #ifdef TZNAME_MAX
@@ -63,14 +63,14 @@ typedef struct revtinfo
 */
 typedef struct st_time_zone_info
 {
-  uint leapcnt;  // Number of leap-second corrections
-  uint timecnt;  // Number of transitions between time types
-  uint typecnt;  // Number of local time types
-  uint charcnt;  // Number of characters used for abbreviations
-  uint revcnt;   // Number of transition descr. for TIME->my_time_t conversion
+  uint32_t leapcnt;  // Number of leap-second corrections
+  uint32_t timecnt;  // Number of transitions between time types
+  uint32_t typecnt;  // Number of local time types
+  uint32_t charcnt;  // Number of characters used for abbreviations
+  uint32_t revcnt;   // Number of transition descr. for TIME->my_time_t conversion
   /* The following are dynamical arrays are allocated in MEM_ROOT */
   my_time_t *ats;       // Times of transitions between time types
-  uchar	*types; // Local time types for transitions
+  unsigned char	*types; // Local time types for transitions
   TRAN_TYPE_INFO *ttis; // Local time types descriptions
   /* Storage for local time types abbreviations. They are stored as ASCIIZ */
   char *chars;
@@ -97,19 +97,19 @@ typedef struct st_time_zone_info
 
 #if !defined(TZINFO2SQL)
 
-static const uint mon_lengths[2][MONS_PER_YEAR]=
+static const uint32_t mon_lengths[2][MONS_PER_YEAR]=
 {
   { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
   { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
-static const uint mon_starts[2][MONS_PER_YEAR]=
+static const uint32_t mon_starts[2][MONS_PER_YEAR]=
 {
   { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
   { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
 };
 
-static const uint year_lengths[2]=
+static const uint32_t year_lengths[2]=
 {
   DAYS_PER_NYEAR, DAYS_PER_LYEAR
 };
@@ -141,7 +141,7 @@ sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
   long rem;
   int y;
   int yleap;
-  const uint *ip;
+  const uint32_t *ip;
 
   days= (long) (t / SECS_PER_DAY);
   rem=  (long) (t % SECS_PER_DAY);
@@ -220,9 +220,9 @@ sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
 */
 static uint
 find_time_range(my_time_t t, const my_time_t *range_boundaries,
-                uint higher_bound)
+                uint32_t higher_bound)
 {
-  uint i, lower_bound= 0;
+  uint32_t i, lower_bound= 0;
 
   /*
     Function will work without this assertion but result would be meaningless.
@@ -481,8 +481,8 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
                 bool *in_dst_time_gap)
 {
   my_time_t local_t;
-  uint saved_seconds;
-  uint i;
+  uint32_t saved_seconds;
+  uint32_t i;
   int shift= 0;
 
   if (!validate_timestamp_range(t))
@@ -907,8 +907,8 @@ private:
 Time_zone_offset::Time_zone_offset(long tz_offset_arg):
   offset(tz_offset_arg)
 {
-  uint hours= abs((int)(offset / SECS_PER_HOUR));
-  uint minutes= abs((int)(offset % SECS_PER_HOUR / SECS_PER_MIN));
+  uint32_t hours= abs((int)(offset / SECS_PER_HOUR));
+  uint32_t minutes= abs((int)(offset % SECS_PER_HOUR / SECS_PER_MIN));
   ulong length= snprintf(name_buff, sizeof(name_buff), "%s%02d:%02d",
                          (offset>=0) ? "+" : "-", hours, minutes);
   name.set(name_buff, length, &my_charset_utf8_general_ci);
@@ -1098,7 +1098,7 @@ void my_tz_free()
     1 - String doesn't contain valid time zone offset
 */
 bool
-str_to_offset(const char *str, uint length, long *offset)
+str_to_offset(const char *str, uint32_t length, long *offset)
 {
   const char *end= str + length;
   bool negative;

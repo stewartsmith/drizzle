@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* classes for sum functions */
@@ -225,13 +229,13 @@ public:
   enum Sumfunctype
   { COUNT_FUNC, COUNT_DISTINCT_FUNC, SUM_FUNC, SUM_DISTINCT_FUNC, AVG_FUNC,
     AVG_DISTINCT_FUNC, MIN_FUNC, MAX_FUNC, STD_FUNC,
-    VARIANCE_FUNC, SUM_BIT_FUNC, UDF_SUM_FUNC, GROUP_CONCAT_FUNC
+    VARIANCE_FUNC, SUM_BIT_FUNC, GROUP_CONCAT_FUNC
   };
 
   Item **args, *tmp_args[2];
   Item **ref_by; /* pointer to a ref to the object used to register it */
   Item_sum *next; /* next in the circular chain of registered objects  */
-  uint arg_count;
+  uint32_t arg_count;
   Item_sum *in_sum_func;  /* embedding set function if any */ 
   st_select_lex * aggr_sel; /* select where the function is aggregated       */ 
   int8_t nest_level;        /* number of the nesting level of the set function */
@@ -367,8 +371,8 @@ public:
   virtual void make_unique(void) {}
   Item *get_tmp_table_item(THD *thd);
   virtual Field *create_tmp_field(bool group, Table *table,
-                                  uint convert_blob_length);
-  bool walk(Item_processor processor, bool walk_subquery, uchar *argument);
+                                  uint32_t convert_blob_length);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *argument);
   bool init_sum_func_check(THD *thd);
   bool check_sum_func(THD *thd, Item **ref);
   bool register_sum_func(THD *thd, Item **ref);
@@ -429,7 +433,7 @@ protected:
   Item_result hybrid_type;
   double sum;
   my_decimal dec_buffs[2];
-  uint curr_dec_buff;
+  uint32_t curr_dec_buff;
   void fix_length_and_dec();
 
 public:
@@ -466,7 +470,7 @@ protected:
   Unique *tree;
   Table *table;
   enum enum_field_types table_field_type;
-  uint tree_key_length;
+  uint32_t tree_key_length;
 protected:
   Item_sum_distinct(THD *thd, Item_sum_distinct *item);
 public:
@@ -523,7 +527,7 @@ private:
   Item_sum_avg_distinct(THD *thd, Item_sum_avg_distinct *original)
     :Item_sum_distinct(thd, original) {}
 public:
-  uint prec_increment;
+  uint32_t prec_increment;
   Item_sum_avg_distinct(Item *item_arg) : Item_sum_distinct(item_arg) {}
 
   void fix_length_and_dec();
@@ -588,14 +592,14 @@ class Item_sum_count_distinct :public Item_sum_int
     (to correctly free resources)
   */
   Item_sum_count_distinct *original;
-  uint tree_key_length;
+  uint32_t tree_key_length;
 
 
   bool always_null;		// Set to 1 if the result is always NULL
 
 
-  friend int composite_key_cmp(void* arg, uchar* key1, uchar* key2);
-  friend int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2);
+  friend int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2);
+  friend int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2);
 
 public:
   Item_sum_count_distinct(List<Item> &list)
@@ -638,8 +642,8 @@ class Item_avg_field :public Item_result_field
 public:
   Field *field;
   Item_result hybrid_type;
-  uint f_precision, f_scale, dec_bin_size;
-  uint prec_increment;
+  uint32_t f_precision, f_scale, dec_bin_size;
+  uint32_t prec_increment;
   Item_avg_field(Item_result res_type, Item_sum_avg *item);
   enum Type type() const { return FIELD_AVG_ITEM; }
   double val_real();
@@ -661,8 +665,8 @@ class Item_sum_avg :public Item_sum_sum
 {
 public:
   uint64_t count;
-  uint prec_increment;
-  uint f_precision, f_scale, dec_bin_size;
+  uint32_t prec_increment;
+  uint32_t f_precision, f_scale, dec_bin_size;
 
   Item_sum_avg(Item *item_par) :Item_sum_sum(item_par), count(0) {}
   Item_sum_avg(THD *thd, Item_sum_avg *item)
@@ -685,7 +689,7 @@ public:
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   void cleanup()
   {
     count= 0;
@@ -700,11 +704,11 @@ class Item_variance_field :public Item_result_field
 public:
   Field *field;
   Item_result hybrid_type;
-  uint f_precision0, f_scale0;
-  uint f_precision1, f_scale1;
-  uint dec_bin_size0, dec_bin_size1;
-  uint sample;
-  uint prec_increment;
+  uint32_t f_precision0, f_scale0;
+  uint32_t f_precision1, f_scale1;
+  uint32_t dec_bin_size0, dec_bin_size1;
+  uint32_t sample;
+  uint32_t prec_increment;
   Item_variance_field(Item_sum_variance *item);
   enum Type type() const {return FIELD_VARIANCE_ITEM; }
   double val_real();
@@ -754,13 +758,13 @@ public:
   int cur_dec;
   double recurrence_m, recurrence_s;    /* Used in recurrence relation. */
   uint64_t count;
-  uint f_precision0, f_scale0;
-  uint f_precision1, f_scale1;
-  uint dec_bin_size0, dec_bin_size1;
-  uint sample;
-  uint prec_increment;
+  uint32_t f_precision0, f_scale0;
+  uint32_t f_precision1, f_scale1;
+  uint32_t dec_bin_size0, dec_bin_size1;
+  uint32_t sample;
+  uint32_t prec_increment;
 
-  Item_sum_variance(Item *item_par, uint sample_arg) :Item_sum_num(item_par),
+  Item_sum_variance(Item *item_par, uint32_t sample_arg) :Item_sum_num(item_par),
     hybrid_type(REAL_RESULT), count(0), sample(sample_arg)
     {}
   Item_sum_variance(THD *thd, Item_sum_variance *item);
@@ -777,7 +781,7 @@ public:
   const char *func_name() const
     { return sample ? "var_samp(" : "variance("; }
   Item *copy_or_same(THD* thd);
-  Field *create_tmp_field(bool group, Table *table, uint convert_blob_length);
+  Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   enum Item_result result_type () const { return REAL_RESULT; }
   void cleanup()
   {
@@ -806,7 +810,7 @@ public:
 class Item_sum_std :public Item_sum_variance
 {
   public:
-  Item_sum_std(Item *item_par, uint sample_arg)
+  Item_sum_std(Item *item_par, uint32_t sample_arg)
     :Item_sum_variance(item_par, sample_arg) {}
   Item_sum_std(THD *thd, Item_sum_std *item)
     :Item_sum_variance(thd, item)
@@ -861,7 +865,7 @@ protected:
   bool any_value() { return was_values; }
   void no_rows_in_result();
   Field *create_tmp_field(bool group, Table *table,
-			  uint convert_blob_length);
+			  uint32_t convert_blob_length);
 };
 
 
@@ -919,7 +923,7 @@ public:
 class Item_sum_or :public Item_sum_bit
 {
 public:
-  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0LL) {}
+  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0) {}
   Item_sum_or(THD *thd, Item_sum_or *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_or("; }
@@ -940,7 +944,7 @@ class Item_sum_and :public Item_sum_bit
 class Item_sum_xor :public Item_sum_bit
 {
   public:
-  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0LL) {}
+  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0) {}
   Item_sum_xor(THD *thd, Item_sum_xor *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_xor("; }
@@ -948,149 +952,6 @@ class Item_sum_xor :public Item_sum_bit
 };
 
 
-/*
-  User defined aggregates
-*/
-
-class Item_udf_sum : public Item_sum
-{
-protected:
-  udf_handler udf;
-
-public:
-  Item_udf_sum(udf_func *udf_arg)
-    :Item_sum(), udf(udf_arg)
-  { quick_group=0; }
-  Item_udf_sum(udf_func *udf_arg, List<Item> &list)
-    :Item_sum(list), udf(udf_arg)
-  { quick_group=0;}
-  Item_udf_sum(THD *thd, Item_udf_sum *item)
-    :Item_sum(thd, item), udf(item->udf)
-  { udf.not_original= true; }
-  const char *func_name() const { return udf.name(); }
-  bool fix_fields(THD *thd, Item **ref)
-  {
-    assert(fixed == 0);
-
-    if (init_sum_func_check(thd))
-      return true;
-
-    fixed= 1;
-    if (udf.fix_fields(thd, this, this->arg_count, this->args))
-      return true;
-
-    return check_sum_func(thd, ref);
-  }
-  enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  virtual bool have_field_update(void) const { return 0; }
-
-  void clear();
-  bool add();
-  void reset_field() {};
-  void update_field() {};
-  void cleanup();
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-class Item_sum_udf_float :public Item_udf_sum
-{
- public:
-  Item_sum_udf_float(udf_func *udf_arg)
-    :Item_udf_sum(udf_arg) {}
-  Item_sum_udf_float(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_sum(udf_arg, list) {}
-  Item_sum_udf_float(THD *thd, Item_sum_udf_float *item)
-    :Item_udf_sum(thd, item) {}
-  int64_t val_int()
-  {
-    assert(fixed == 1);
-    return (int64_t) rint(Item_sum_udf_float::val_real());
-  }
-  double val_real();
-  String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *);
-  void fix_length_and_dec() { fix_num_length_and_dec(); }
-  Item *copy_or_same(THD* thd);
-};
-
-
-class Item_sum_udf_int :public Item_udf_sum
-{
-public:
-  Item_sum_udf_int(udf_func *udf_arg)
-    :Item_udf_sum(udf_arg) {}
-  Item_sum_udf_int(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_sum(udf_arg, list) {}
-  Item_sum_udf_int(THD *thd, Item_sum_udf_int *item)
-    :Item_udf_sum(thd, item) {}
-  int64_t val_int();
-  double val_real()
-    { assert(fixed == 1); return (double) Item_sum_udf_int::val_int(); }
-  String *val_str(String*str);
-  my_decimal *val_decimal(my_decimal *);
-  enum Item_result result_type () const { return INT_RESULT; }
-  void fix_length_and_dec() { decimals=0; max_length=21; }
-  Item *copy_or_same(THD* thd);
-};
-
-
-class Item_sum_udf_str :public Item_udf_sum
-{
-public:
-  Item_sum_udf_str(udf_func *udf_arg)
-    :Item_udf_sum(udf_arg) {}
-  Item_sum_udf_str(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_sum(udf_arg,list) {}
-  Item_sum_udf_str(THD *thd, Item_sum_udf_str *item)
-    :Item_udf_sum(thd, item) {}
-  String *val_str(String *);
-  double val_real()
-  {
-    int err_not_used;
-    char *end_not_used;
-    String *res;
-    res=val_str(&str_value);
-    return res ? my_strntod(res->charset(),(char*) res->ptr(),res->length(),
-			    &end_not_used, &err_not_used) : 0.0;
-  }
-  int64_t val_int()
-  {
-    int err_not_used;
-    char *end;
-    String *res;
-    const CHARSET_INFO *cs;
-
-    if (!(res= val_str(&str_value)))
-      return 0;                                 /* Null value */
-    cs= res->charset();
-    end= (char*) res->ptr()+res->length();
-    return cs->cset->strtoll10(cs, res->ptr(), &end, &err_not_used);
-  }
-  my_decimal *val_decimal(my_decimal *dec);
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec();
-  Item *copy_or_same(THD* thd);
-};
-
-
-class Item_sum_udf_decimal :public Item_udf_sum
-{
-public:
-  Item_sum_udf_decimal(udf_func *udf_arg)
-    :Item_udf_sum(udf_arg) {}
-  Item_sum_udf_decimal(udf_func *udf_arg, List<Item> &list)
-    :Item_udf_sum(udf_arg, list) {}
-  Item_sum_udf_decimal(THD *thd, Item_sum_udf_decimal *item)
-    :Item_udf_sum(thd, item) {}
-  String *val_str(String *);
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
-  enum Item_result result_type () const { return DECIMAL_RESULT; }
-  void fix_length_and_dec() { fix_num_length_and_dec(); }
-  Item *copy_or_same(THD* thd);
-};
 
 class DRIZZLE_ERROR;
 
@@ -1115,10 +976,10 @@ class Item_func_group_concat : public Item_sum
   order_st **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
-  uint arg_count_order;
+  uint32_t arg_count_order;
   /** The number of selected items, aka the expr list. */
-  uint arg_count_field;
-  uint count_cut_values;
+  uint32_t arg_count_field;
+  uint32_t count_cut_values;
   bool distinct;
   bool warning_for_row;
   bool always_null;
@@ -1134,7 +995,7 @@ class Item_func_group_concat : public Item_sum
                                                 const void* key2);
   friend int group_concat_key_cmp_with_order(void* arg, const void* key1,
 					     const void* key2);
-  friend int dump_leaf_key(uchar* key,
+  friend int dump_leaf_key(unsigned char* key,
                            element_count count __attribute__((unused)),
 			   Item_func_group_concat *group_concat_item);
 
@@ -1187,6 +1048,6 @@ public:
   Item *copy_or_same(THD* thd);
   void no_rows_in_result() {}
   virtual void print(String *str, enum_query_type query_type);
-  virtual bool change_context_processor(uchar *cntx)
+  virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };

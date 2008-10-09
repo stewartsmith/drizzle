@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 class Protocol;
 struct TableList;
@@ -44,7 +48,7 @@ class DTCollation {
 public:
   const CHARSET_INFO *collation;
   enum Derivation derivation;
-  uint repertoire;
+  uint32_t repertoire;
   
   void set_repertoire_from_charset(const CHARSET_INFO * const cs)
   {
@@ -77,7 +81,7 @@ public:
   }
   void set(const CHARSET_INFO * const collation_arg,
            Derivation derivation_arg,
-           uint repertoire_arg)
+           uint32_t repertoire_arg)
   {
     collation= collation_arg;
     derivation= derivation_arg;
@@ -90,8 +94,8 @@ public:
   }
   void set(Derivation derivation_arg)
   { derivation= derivation_arg; }
-  bool aggregate(DTCollation &dt, uint flags= 0);
-  bool set(DTCollation &dt1, DTCollation &dt2, uint flags= 0)
+  bool aggregate(DTCollation &dt, uint32_t flags= 0);
+  bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0)
   { set(dt1); return aggregate(dt2, flags); }
   const char *derivation_name() const
   {
@@ -407,7 +411,7 @@ typedef enum monotonicity_info
 } enum_monotonicity_info;
 
 /*************************************************************************/
-typedef bool (Item::*Item_processor) (uchar *arg);
+typedef bool (Item::*Item_processor) (unsigned char *arg);
 /*
   Analyzer function
     SYNOPSIS
@@ -419,8 +423,8 @@ typedef bool (Item::*Item_processor) (uchar *arg);
       false  Don't do it
 
 */
-typedef bool (Item::*Item_analyzer) (uchar **argp);
-typedef Item* (Item::*Item_transformer) (uchar *arg);
+typedef bool (Item::*Item_analyzer) (unsigned char **argp);
+typedef Item* (Item::*Item_transformer) (unsigned char *arg);
 typedef void (*Cond_traverser) (const Item *item, void *arg);
 
 
@@ -430,7 +434,7 @@ class Item
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
-  virtual bool is_expensive_processor(uchar *arg __attribute__((unused)))
+  virtual bool is_expensive_processor(unsigned char *arg __attribute__((unused)))
   { return 0; }
 
 public:
@@ -459,7 +463,7 @@ public:
   enum traverse_order { POSTFIX, PREFIX };
   
   /* Reuse size, only used by SP local variable assignment, otherwize 0 */
-  uint rsize;
+  uint32_t rsize;
 
   /*
     str_values's main purpose is to be used to cache the value in
@@ -471,7 +475,7 @@ public:
   char * orig_name;
   Item *next;
   uint32_t max_length;
-  uint name_length;                     /* Length of name */
+  uint32_t name_length;                     /* Length of name */
   int8_t marker;
   uint8_t decimals;
   bool maybe_null;			/* If item may be null */
@@ -503,7 +507,7 @@ public:
     name=0;
 #endif
   }		/*lint -e1509 */
-  void set_name(const char *str, uint length, const CHARSET_INFO * const cs);
+  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs);
   void rename(char *new_name);
   void init_make_field(Send_field *tmp_field,enum enum_field_types type);
   virtual void cleanup();
@@ -731,9 +735,9 @@ public:
   /* cloning of constant items (0 if it is not const) */
   virtual Item *clone_item() { return 0; }
   virtual cond_result eq_cmp_result() const { return COND_OK; }
-  inline uint float_length(uint decimals_par) const
+  inline uint32_t float_length(uint32_t decimals_par) const
   { return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;}
-  virtual uint decimal_precision() const;
+  virtual uint32_t decimal_precision() const;
   inline int decimal_int_part() const
   { return my_decimal_int_part(decimal_precision(), decimals); }
   /* 
@@ -773,9 +777,9 @@ public:
   /* Called for items that really have to be split */
   void split_sum_func2(THD *thd, Item **ref_pointer_array, List<Item> &fields,
                        Item **ref, bool skip_registered);
-  virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate)
+  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   { return get_date(ltime,fuzzydate); }
   /*
     The method allows to determine nullness of a complex expression 
@@ -827,12 +831,12 @@ public:
 
   virtual bool walk(Item_processor processor __attribute__((unused)),
                     bool walk_subquery __attribute__((unused)),
-                    uchar *arg)
+                    unsigned char *arg)
   {
     return (this->*processor)(arg);
   }
 
-  virtual Item* transform(Item_transformer transformer, uchar *arg);
+  virtual Item* transform(Item_transformer transformer, unsigned char *arg);
 
   /*
     This function performs a generic "compilation" of the Item tree.
@@ -850,8 +854,8 @@ public:
     i.e. analysis is performed top-down while transformation is done
     bottom-up.      
   */
-  virtual Item* compile(Item_analyzer analyzer, uchar **arg_p,
-                        Item_transformer transformer, uchar *arg_t)
+  virtual Item* compile(Item_analyzer analyzer, unsigned char **arg_p,
+                        Item_transformer transformer, unsigned char *arg_t)
   {
     if ((this->*analyzer) (arg_p))
       return ((this->*transformer) (arg_t));
@@ -865,31 +869,31 @@ public:
      (*traverser)(this, arg);
    }
 
-  virtual bool remove_dependence_processor(uchar * arg __attribute__((unused)))
+  virtual bool remove_dependence_processor(unsigned char * arg __attribute__((unused)))
   { return 0; }
-  virtual bool remove_fixed(uchar * arg __attribute__((unused)))
+  virtual bool remove_fixed(unsigned char * arg __attribute__((unused)))
   {
     fixed= 0;
     return 0;
   }
-  virtual bool cleanup_processor(uchar *arg __attribute__((unused)));
-  virtual bool collect_item_field_processor(uchar * arg __attribute__((unused)))
+  virtual bool cleanup_processor(unsigned char *arg __attribute__((unused)));
+  virtual bool collect_item_field_processor(unsigned char * arg __attribute__((unused)))
   { return 0; }
-  virtual bool find_item_in_field_list_processor(uchar *arg __attribute__((unused)))
+  virtual bool find_item_in_field_list_processor(unsigned char *arg __attribute__((unused)))
  { return 0; }
-  virtual bool change_context_processor(uchar *context __attribute__((unused)))
+  virtual bool change_context_processor(unsigned char *context __attribute__((unused)))
   { return 0; }
-  virtual bool reset_query_id_processor(uchar *query_id_arg __attribute__((unused)))
+  virtual bool reset_query_id_processor(unsigned char *query_id_arg __attribute__((unused)))
   { return 0; }
-  virtual bool register_field_in_read_map(uchar *arg __attribute__((unused)))
+  virtual bool register_field_in_read_map(unsigned char *arg __attribute__((unused)))
   { return 0; }
   /*
     The next function differs from the previous one that a bitmap to be updated
-    is passed as uchar *arg.
+    is passed as unsigned char *arg.
   */
-  virtual bool register_field_in_bitmap(uchar *arg __attribute__((unused)))
+  virtual bool register_field_in_bitmap(unsigned char *arg __attribute__((unused)))
   { return 0; }
-  virtual bool subst_argument_checker(uchar **arg)
+  virtual bool subst_argument_checker(unsigned char **arg)
   {
     if (*arg)
       *arg= NULL;
@@ -905,12 +909,13 @@ public:
       TRUE                           Function not accepted
       FALSE                          Function accepted
   */
-  virtual bool check_vcol_func_processor(uchar *arg __attribute__((unused))) 
+  virtual bool check_vcol_func_processor(unsigned char *arg __attribute__((unused))) 
   { return true; }
 
-  virtual Item *equal_fields_propagator(uchar * arg __attribute__((unused))) { return this; }
-  virtual bool set_no_const_sub(uchar *arg __attribute__((unused))) { return false; }
-  virtual Item *replace_equal_field(uchar * arg __attribute__((unused))) { return this; }
+  virtual Item *equal_fields_propagator(unsigned char * arg __attribute__((unused))) { return this; }
+  virtual bool set_no_const_sub(unsigned char *arg __attribute__((unused))) { return false; }
+  virtual Item *replace_equal_field(unsigned char * arg __attribute__((unused))) { return this; }
+
 
   /*
     For SP local variable returns pointer to Item representing its
@@ -926,10 +931,10 @@ public:
   virtual Item **this_item_addr(THD *thd __attribute__((unused)), Item **addr_arg) { return addr_arg; }
 
   // Row emulation
-  virtual uint cols() { return 1; }
-  virtual Item* element_index(uint i __attribute__((unused))) { return this; }
-  virtual Item** addr(uint i __attribute__((unused))) { return 0; }
-  virtual bool check_cols(uint c);
+  virtual uint32_t cols() { return 1; }
+  virtual Item* element_index(uint32_t i __attribute__((unused))) { return this; }
+  virtual Item** addr(uint32_t i __attribute__((unused))) { return 0; }
+  virtual bool check_cols(uint32_t c);
   // It is not row => null inside is impossible
   virtual bool null_inside() { return 0; }
   // used in row subselects to get value of elements
@@ -939,7 +944,7 @@ public:
   virtual Item_field *filed_for_view_update() { return 0; }
 
   virtual Item *neg_transformer(THD *thd __attribute__((unused))) { return NULL; }
-  virtual Item *update_value_transformer(uchar *select_arg __attribute__((unused))) { return this; }
+  virtual Item *update_value_transformer(unsigned char *select_arg __attribute__((unused))) { return this; }
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   void delete_self()
   {
@@ -971,7 +976,7 @@ public:
   virtual bool is_expensive()
   {
     if (is_expensive_cache < 0)
-      is_expensive_cache= walk(&Item::is_expensive_processor, 0, (uchar*)0);
+      is_expensive_cache= walk(&Item::is_expensive_processor, 0, (unsigned char*)0);
     return test(is_expensive_cache);
   }
   String *check_well_formed_result(String *str, bool send_error= 0);
@@ -996,11 +1001,11 @@ public:
 };
 
 bool agg_item_collations(DTCollation &c, const char *name,
-                         Item **items, uint nitems, uint flags, int item_sep);
+                         Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 bool agg_item_collations_for_comparison(DTCollation &c, const char *name,
-                                        Item **items, uint nitems, uint flags);
+                                        Item **items, uint32_t nitems, uint32_t flags);
 bool agg_item_charsets(DTCollation &c, const char *name,
-                       Item **items, uint nitems, uint flags, int item_sep);
+                       Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 
 
 class Item_num: public Item_basic_constant
@@ -1038,7 +1043,7 @@ public:
     stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX 
     if index value is not known.
   */
-  uint cached_field_index;
+  uint32_t cached_field_index;
   /*
     Cached pointer to table which contains this field, used for the same reason
     by prep. stmt. too in case then we have not-fully qualified field.
@@ -1052,9 +1057,9 @@ public:
   Item_ident(THD *thd, Item_ident *item);
   const char *full_name() const;
   void cleanup();
-  bool remove_dependence_processor(uchar * arg);
+  bool remove_dependence_processor(unsigned char * arg);
   virtual void print(String *str, enum_query_type query_type);
-  virtual bool change_context_processor(uchar *cntx)
+  virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(THD *thd, Name_resolution_context *context,
                             const char *db_name,
@@ -1099,7 +1104,7 @@ public:
     if any_privileges set to true then here real effective privileges will
     be stored
   */
-  uint have_privileges;
+  uint32_t have_privileges;
   /* field need any privileges (for VIEW creation) */
   bool any_privileges;
   Item_field(Name_resolution_context *context_arg,
@@ -1159,17 +1164,17 @@ public:
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *t_arg __attribute__((unused))) { return result_field; }
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
-  bool get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+  bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
   bool is_null() { return field->is_null(); }
   void update_null_value();
   Item *get_tmp_table_item(THD *thd);
-  bool collect_item_field_processor(uchar * arg);
-  bool find_item_in_field_list_processor(uchar *arg);
-  bool register_field_in_read_map(uchar *arg);
-  bool register_field_in_bitmap(uchar *arg);
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool collect_item_field_processor(unsigned char * arg);
+  bool find_item_in_field_list_processor(unsigned char *arg);
+  bool register_field_in_read_map(unsigned char *arg);
+  bool register_field_in_bitmap(unsigned char *arg);
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
   void cleanup();
   bool result_as_int64_t()
@@ -1177,15 +1182,15 @@ public:
     return field->can_be_compared_as_int64_t();
   }
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
-  bool subst_argument_checker(uchar **arg);
-  Item *equal_fields_propagator(uchar *arg);
-  bool set_no_const_sub(uchar *arg);
-  Item *replace_equal_field(uchar *arg);
+  bool subst_argument_checker(unsigned char **arg);
+  Item *equal_fields_propagator(unsigned char *arg);
+  bool set_no_const_sub(unsigned char *arg);
+  Item *replace_equal_field(unsigned char *arg);
   inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(THD *thd, Field **field, Item **reference);
-  virtual Item *update_value_transformer(uchar *select_arg);
+  virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual void print(String *str, enum_query_type query_type);
 
   friend class Item_default_value;
@@ -1226,7 +1231,7 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1240,7 +1245,7 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return true; }
 };  
 
@@ -1314,9 +1319,9 @@ public:
     Offset of placeholder inside statement text. Used to create
     no-placeholders version of this statement for the binary log.
   */
-  uint pos_in_query;
+  uint32_t pos_in_query;
 
-  Item_param(uint pos_in_query_arg);
+  Item_param(uint32_t pos_in_query_arg);
 
   enum Item_result result_type () const { return item_result_type; }
   enum Type type() const { return item_type; }
@@ -1327,7 +1332,7 @@ public:
   my_decimal *val_decimal(my_decimal*);
   String *val_str(String*);
   bool get_time(DRIZZLE_TIME *tm);
-  bool get_date(DRIZZLE_TIME *tm, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *tm, uint32_t fuzzydate);
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
@@ -1336,7 +1341,8 @@ public:
   void set_decimal(char *str, ulong length);
   bool set_str(const char *str, ulong length);
   bool set_longdata(const char *str, ulong length);
-  void set_time(DRIZZLE_TIME *tm, timestamp_type type, uint32_t max_length_arg);
+  void set_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type type,
+                uint32_t max_length_arg);
   bool set_from_user_var(THD *thd, const user_var_entry *entry);
   void reset();
   /*
@@ -1345,7 +1351,7 @@ public:
     don't need to check that packet is not broken there). See
     sql_prepare.cc for details.
   */
-  void (*set_param_func)(Item_param *param, uchar **pos, ulong len);
+  void (*set_param_func)(Item_param *param, unsigned char **pos, ulong len);
 
   const String *query_val_str(String *str) const;
 
@@ -1389,18 +1395,18 @@ class Item_int :public Item_num
 {
 public:
   int64_t value;
-  Item_int(int32_t i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
+  Item_int(int32_t i,uint32_t length= MY_INT32_NUM_DECIMAL_DIGITS)
     :value((int64_t) i)
     { max_length=length; fixed= 1; }
-  Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(int64_t i,uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value(i)
     { max_length=length; fixed= 1; }
-  Item_int(uint64_t i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(uint64_t i, uint32_t length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value((int64_t)i)
     { max_length=length; fixed= 1; unsigned_flag= 1; }
-  Item_int(const char *str_arg,int64_t i,uint length) :value(i)
+  Item_int(const char *str_arg,int64_t i,uint32_t length) :value(i)
     { max_length=length; name=(char*) str_arg; fixed= 1; }
-  Item_int(const char *str_arg, uint length=64);
+  Item_int(const char *str_arg, uint32_t length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
@@ -1413,10 +1419,10 @@ public:
   Item *clone_item() { return new Item_int(name,value,max_length); }
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg() { value= -value; return this; }
-  uint decimal_precision() const
+  uint32_t decimal_precision() const
   { return (uint)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1424,9 +1430,9 @@ public:
 class Item_uint :public Item_int
 {
 public:
-  Item_uint(const char *str_arg, uint length);
+  Item_uint(const char *str_arg, uint32_t length);
   Item_uint(uint64_t i) :Item_int((uint64_t) i, 10) {}
-  Item_uint(const char *str_arg, int64_t i, uint length);
+  Item_uint(const char *str_arg, int64_t i, uint32_t length);
   double val_real()
     { assert(fixed == 1); return uint64_t2double((uint64_t)value); }
   String *val_str(String*);
@@ -1434,8 +1440,8 @@ public:
   int save_in_field(Field *field, bool no_conversions);
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
-  uint decimal_precision() const { return max_length; }
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  uint32_t decimal_precision() const { return max_length; }
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1446,13 +1452,13 @@ class Item_decimal :public Item_num
 protected:
   my_decimal decimal_value;
 public:
-  Item_decimal(const char *str_arg, uint length, const CHARSET_INFO * const charset);
+  Item_decimal(const char *str_arg, uint32_t length, const CHARSET_INFO * const charset);
   Item_decimal(const char *str, const my_decimal *val_arg,
-               uint decimal_par, uint length);
+               uint32_t decimal_par, uint32_t length);
   Item_decimal(my_decimal *value_par);
   Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
-  Item_decimal(const uchar *bin, int precision, int scale);
+  Item_decimal(const unsigned char *bin, int precision, int scale);
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
@@ -1475,10 +1481,10 @@ public:
     unsigned_flag= !decimal_value.sign();
     return this;
   }
-  uint decimal_precision() const { return decimal_value.precision(); }
+  uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1489,8 +1495,8 @@ class Item_float :public Item_num
 public:
   double value;
   // Item_real() :value(0) {}
-  Item_float(const char *str_arg, uint length);
-  Item_float(const char *str,double val_arg,uint decimal_par,uint length)
+  Item_float(const char *str_arg, uint32_t length);
+  Item_float(const char *str,double val_arg,uint32_t decimal_par,uint32_t length)
     :value(val_arg)
   {
     presentation= name=(char*) str;
@@ -1498,7 +1504,7 @@ public:
     max_length=length;
     fixed= 1;
   }
-  Item_float(double value_par, uint decimal_par) :presentation(0), value(value_par)
+  Item_float(double value_par, uint32_t decimal_par) :presentation(0), value(value_par)
   {
     decimals= (uint8_t) decimal_par;
     fixed= 1;
@@ -1535,9 +1541,9 @@ class Item_static_float_func :public Item_float
 {
   const char *func_name;
 public:
-  Item_static_float_func(const char *str, double val_arg, uint decimal_par,
-                        uint length)
-    :Item_float(NullS, val_arg, decimal_par, length), func_name(str)
+  Item_static_float_func(const char *str, double val_arg, uint32_t decimal_par,
+                        uint32_t length)
+    :Item_float(NULL, val_arg, decimal_par, length), func_name(str)
   {}
 
   virtual inline void print(String *str,
@@ -1547,7 +1553,7 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1555,9 +1561,9 @@ public:
 class Item_string :public Item_basic_constant
 {
 public:
-  Item_string(const char *str,uint length,
+  Item_string(const char *str,uint32_t length,
               const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint repertoire= MY_REPERTOIRE_UNICODE30)
+              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -1585,9 +1591,9 @@ public:
     decimals= NOT_FIXED_DEC;
     fixed= 1;
   }
-  Item_string(const char *name_par, const char *str, uint length,
+  Item_string(const char *name_par, const char *str, uint32_t length,
               const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint repertoire= MY_REPERTOIRE_UNICODE30)
+              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -1602,7 +1608,7 @@ public:
     This is used in stored procedures to avoid memory leaks and
     does a deep copy of its argument.
   */
-  void set_str_with_copy(const char *str_arg, uint length_arg)
+  void set_str_with_copy(const char *str_arg, uint32_t length_arg)
   {
     str_value.copy(str_arg, length_arg, collation.collation);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
@@ -1633,7 +1639,7 @@ public:
     			   str_value.length(), collation.collation);
   }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  inline void append(char *str, uint length)
+  inline void append(char *str, uint32_t length)
   {
     str_value.append(str, length);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
@@ -1678,7 +1684,7 @@ public:
   {
     m_cs_specified= cs_specified;
   }
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 
 private:
@@ -1690,10 +1696,10 @@ class Item_static_string_func :public Item_string
 {
   const char *func_name;
 public:
-  Item_static_string_func(const char *name_par, const char *str, uint length,
+  Item_static_string_func(const char *name_par, const char *str, uint32_t length,
                           const CHARSET_INFO * const cs,
                           Derivation dv= DERIVATION_COERCIBLE)
-    :Item_string(NullS, str, length, cs, dv), func_name(name_par)
+    :Item_string(NULL, str, length, cs, dv), func_name(name_par)
   {}
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 
@@ -1702,7 +1708,7 @@ public:
   {
     str->append(func_name);
   }
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return true; }
 };
 
@@ -1723,7 +1729,7 @@ public:
 class Item_blob :public Item_string
 {
 public:
-  Item_blob(const char *name, uint length) :
+  Item_blob(const char *name, uint32_t length) :
     Item_string(name, length, &my_charset_bin)
   { max_length= length; }
   enum Type type() const { return TYPE_HOLDER; }
@@ -1740,7 +1746,7 @@ public:
 class Item_empty_string :public Item_string
 {
 public:
-  Item_empty_string(const char *header,uint length, const CHARSET_INFO * cs= NULL) :
+  Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
     Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
     { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
   void make_field(Send_field *field);
@@ -1751,7 +1757,7 @@ class Item_return_int :public Item_int
 {
   enum_field_types int_field_type;
 public:
-  Item_return_int(const char *name_arg, uint length,
+  Item_return_int(const char *name_arg, uint32_t length,
 		  enum_field_types field_type_arg, int64_t value= 0)
     :Item_int(name_arg, value, length), int_field_type(field_type_arg)
   {
@@ -1765,7 +1771,7 @@ class Item_hex_string: public Item_basic_constant
 {
 public:
   Item_hex_string() {}
-  Item_hex_string(const char *str,uint str_length);
+  Item_hex_string(const char *str,uint32_t str_length);
   enum Type type() const { return VARBIN_ITEM; }
   double val_real()
   { 
@@ -1783,7 +1789,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1791,7 +1797,7 @@ public:
 class Item_bin_string: public Item_hex_string
 {
 public:
-  Item_bin_string(const char *str,uint str_length);
+  Item_bin_string(const char *str,uint32_t str_length);
 };
 
 class Item_result_field :public Item	/* Item with result field */
@@ -1816,7 +1822,7 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
 };
 
@@ -1867,7 +1873,7 @@ public:
   bool val_bool();
   String *val_str(String* tmp);
   bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   double val_result();
   int64_t val_int_result();
   String *str_result(String* tmp);
@@ -1904,7 +1910,7 @@ public:
   {
     return ref ? (*ref)->real_item() : this;
   }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
   { return (*ref)->walk(processor, walk_subquery, arg); }
   virtual void print(String *str, enum_query_type query_type);
   bool result_as_int64_t()
@@ -1917,19 +1923,19 @@ public:
   virtual Ref_Type ref_type() { return REF; }
 
   // Row emulation: forwarding of ROW-related calls to ref
-  uint cols()
+  uint32_t cols()
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->cols() : 1;
   }
-  Item* element_index(uint i)
+  Item* element_index(uint32_t i)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->element_index(i) : this;
   }
-  Item** addr(uint i)
+  Item** addr(uint32_t i)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->addr(i) : 0;
   }
-  bool check_cols(uint c)
+  bool check_cols(uint32_t c)
   {
     return ref && result_type() == ROW_RESULT ? (*ref)->check_cols(c) 
                                               : Item::check_cols(c);
@@ -1970,7 +1976,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
   bool is_null();
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual Ref_Type ref_type() { return DIRECT_REF; }
 };
 
@@ -2082,7 +2088,7 @@ public:
   String* val_str(String* s);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate);
   virtual void print(String *str, enum_query_type query_type);
   /*
     we add RAND_TABLE_BIT to prevent moving this item from HAVING to WHERE
@@ -2152,15 +2158,15 @@ public:
     int err_not_used;
     char *end_not_used;
     return (null_value ? 0.0 :
-	    my_strntod(str_value.charset(), (char*) str_value.ptr(),
-		       str_value.length(), &end_not_used, &err_not_used));
+            my_strntod(str_value.charset(), (char*) str_value.ptr(),
+                       str_value.length(), &end_not_used, &err_not_used));
   }
   int64_t val_int()
   {
     int err;
-    return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
-                                            str_value.length(),10, (char**) 0,
-                                            &err); 
+    return null_value ? 0 : my_strntoll(str_value.charset(),str_value.ptr(),
+                                        str_value.length(),10, (char**) 0,
+                                        &err);
   }
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
@@ -2227,16 +2233,16 @@ public:
 
 class Cached_item_field :public Cached_item
 {
-  uchar *buff;
+  unsigned char *buff;
   Field *field;
-  uint length;
+  uint32_t length;
 
 public:
   Cached_item_field(Field *arg_field) : field(arg_field)
   {
     field= arg_field;
     /* TODO: take the memory allocation below out of the constructor. */
-    buff= (uchar*) sql_calloc(length=field->pack_length());
+    buff= (unsigned char*) sql_calloc(length=field->pack_length());
   }
   bool cmp(void);
 };
@@ -2260,13 +2266,13 @@ public:
   int save_in_field(Field *field_arg, bool no_conversions);
   table_map used_tables() const { return (table_map)0L; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *args)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
   {
     return arg->walk(processor, walk_subquery, args) ||
       (this->*processor)(args);
   }
 
-  Item *transform(Item_transformer transformer, uchar *args);
+  Item *transform(Item_transformer transformer, unsigned char *args);
 };
 
 /*
@@ -2300,12 +2306,12 @@ public:
   */
   table_map used_tables() const { return RAND_TABLE_BIT; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *args)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
   {
     return arg->walk(processor, walk_subquery, args) ||
 	    (this->*processor)(args);
   }
-  bool check_vcol_func_processor(uchar *arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return true; }
 };
 
@@ -2339,7 +2345,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint i __attribute__((unused)))
+  virtual bool allocate(uint32_t i __attribute__((unused)))
   { return 0; }
   virtual bool setup(Item *item)
   {
@@ -2449,7 +2455,7 @@ public:
 class Item_cache_row: public Item_cache
 {
   Item_cache  **values;
-  uint item_count;
+  uint32_t item_count;
   bool save_array;
 public:
   Item_cache_row()
@@ -2459,7 +2465,7 @@ public:
     'allocate' used only in row transformer, to preallocate space for row 
     cache.
   */
-  bool allocate(uint num);
+  bool allocate(uint32_t num);
   /*
     'setup' is needed only by row => it not called by simple row subselect
     (only by IN subselect (in subselect optimizer))
@@ -2494,10 +2500,10 @@ public:
 
   enum Item_result result_type() const { return ROW_RESULT; }
   
-  uint cols() { return item_count; }
-  Item *element_index(uint i) { return values[i]; }
-  Item **addr(uint i) { return (Item **) (values + i); }
-  bool check_cols(uint c);
+  uint32_t cols() { return item_count; }
+  Item *element_index(uint32_t i) { return values[i]; }
+  Item **addr(uint32_t i) { return (Item **) (values + i); }
+  bool check_cols(uint32_t c);
   bool null_inside();
   void bring_value();
   void keep_array() { save_array= 1; }

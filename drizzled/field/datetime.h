@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -23,7 +23,7 @@
 
 class Field_datetime :public Field_str {
 public:
-  Field_datetime(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
+  Field_datetime(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 		 enum utype unireg_check_arg, const char *field_name_arg,
 		 const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 19, null_ptr_arg, null_bit_arg,
@@ -31,16 +31,16 @@ public:
     {}
   Field_datetime(bool maybe_null_arg, const char *field_name_arg,
 		 const CHARSET_INFO * const cs)
-    :Field_str((uchar*) 0,19, maybe_null_arg ? (uchar*) "": 0,0,
+    :Field_str((unsigned char*) 0,19, maybe_null_arg ? (unsigned char*) "": 0,0,
 	       NONE, field_name_arg, cs) {}
   enum_field_types type() const { return DRIZZLE_TYPE_DATETIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  uint decimals() const { return DATETIME_DEC; }
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
+  uint32_t decimals() const { return DATETIME_DEC; }
+  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(DRIZZLE_TIME *ltime, timestamp_type type);
+  int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
   int reset(void)
   {
     ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;
@@ -50,13 +50,13 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
+  int cmp(const unsigned char *,const unsigned char *);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 8; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
-  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
 };
 

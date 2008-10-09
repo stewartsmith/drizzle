@@ -40,6 +40,7 @@
 #define AZIO_AIO
 
 #include <drizzled/global.h>
+#include <libdrizzle/drizzle_com.h>
 #include <mysys/my_sys.h>
 
 #include <zlib.h>
@@ -57,7 +58,7 @@ extern "C" {
 #define WATCHPOINT_ERRNO(A) fprintf(stderr, "\nWATCHPOINT %s:%d (%s) %s\n", __FILE__, __LINE__,__func__, strerror(A));A= 0;fflush(stderr);
 
 /*
-  uint64_t + uint64_t + uint64_t + uint64_t + uchar
+  uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
 #define AZMETA_BUFFER_SIZE sizeof(uint64_t) \
   + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) \

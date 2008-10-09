@@ -127,13 +127,13 @@ I mysys:
  strlength(const string str)
  Return length of string with end-space:s not counted.
 
- void caseup _A((string str,uint length));
- void casedn _A((string str,uint length));
+ void caseup _A((string str,uint32_t length));
+ void casedn _A((string str,uint32_t length));
  void caseup_str _A((string str));
  void casedn_str _A((string str));
  Converts strings or part of string to upper or lower-case.
 
- void case_sort _A((string str,uint length));
+ void case_sort _A((string str,uint32_t length));
  Converts string to a string with can be compared with strcmp() to
  get strings in rigth order.
 

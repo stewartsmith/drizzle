@@ -19,12 +19,14 @@
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
 /*
   The following extern declarations are ok as these are interface functions
   required by the string function
 */
 
-extern uchar* sql_alloc(unsigned size);
+extern unsigned char* sql_alloc(unsigned size);
 extern void sql_element_free(void *ptr);
 
 #include "sql_string.h"
@@ -89,7 +91,7 @@ bool String::realloc(uint32_t alloc_length)
 
 bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs)
 {
-  uint l=20*cs->mbmaxlen+1;
+  uint32_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
 
   if (alloc(l))
@@ -99,10 +101,10 @@ bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const
   return false;
 }
 
-bool String::set_real(double num,uint decimals, const CHARSET_INFO * const cs)
+bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
-  uint dummy_errors;
+  uint32_t dummy_errors;
   size_t len;
 
   str_charset=cs;
@@ -258,7 +260,7 @@ bool String::set_or_copy_aligned(const char *str,uint32_t arg_length,
 
 bool String::copy(const char *str, uint32_t arg_length,
 		          const CHARSET_INFO * const from_cs,
-				  const CHARSET_INFO * const to_cs, uint *errors)
+				  const CHARSET_INFO * const to_cs, uint32_t *errors)
 {
   uint32_t offset;
   if (!needs_conversion(arg_length, from_cs, to_cs, &offset))
@@ -307,7 +309,7 @@ bool String::set_ascii(const char *str, uint32_t arg_length)
     set(str, arg_length, str_charset);
     return 0;
   }
-  uint dummy_errors;
+  uint32_t dummy_errors;
   return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
 }
 
@@ -356,7 +358,7 @@ bool String::append(const char *s,uint32_t arg_length)
   if (str_charset->mbminlen > 1)
   {
     uint32_t add_length=arg_length * str_charset->mbmaxlen;
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (realloc(str_length+ add_length))
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
@@ -398,7 +400,7 @@ bool String::append(const char *s,uint32_t arg_length, const CHARSET_INFO * cons
   if (needs_conversion(arg_length, cs, str_charset, &dummy_offset))
   {
     uint32_t add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (realloc(str_length + add_length)) 
       return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
@@ -419,7 +421,7 @@ bool String::append(IO_CACHE* file, uint32_t arg_length)
 {
   if (realloc(str_length+arg_length))
     return true;
-  if (my_b_read(file, (uchar*) Ptr + str_length, arg_length))
+  if (my_b_read(file, (unsigned char*) Ptr + str_length, arg_length))
   {
     shrink(str_length);
     return true;
@@ -544,7 +546,7 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
       {
 	if (realloc(str_length+(uint32_t) diff))
 	  return true;
-	bmove_upp((uchar*) Ptr+str_length+diff, (uchar*) Ptr+str_length,
+	bmove_upp((unsigned char*) Ptr+str_length+diff, (unsigned char*) Ptr+str_length,
 		  str_length-offset-arg_length);
       }
       if (to_length)
@@ -561,7 +563,7 @@ int String::reserve(uint32_t space_needed, uint32_t grow_by)
 {
   if (Alloced_length < str_length + space_needed)
   {
-    if (realloc(Alloced_length + max(space_needed, grow_by) - 1))
+    if (realloc(Alloced_length + cmax(space_needed, grow_by) - 1))
       return true;
   }
   return false;
@@ -593,7 +595,7 @@ void String::qs_append(int i)
   str_length+= (int) (end-buff);
 }
 
-void String::qs_append(uint i)
+void String::qs_append(uint32_t i)
 {
   char *buff= Ptr + str_length;
   char *end= int10_to_str(i, buff, 10);
@@ -622,8 +624,8 @@ void String::qs_append(uint i)
 int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 {
  return cs->coll->strnncollsp(cs,
-                              (uchar *) s->ptr(),s->length(),
-                              (uchar *) t->ptr(),t->length(), 0);
+                              (unsigned char *) s->ptr(),s->length(),
+                              (unsigned char *) t->ptr(),t->length(), 0);
 }
 
 
@@ -636,7 +638,7 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
     t		Second string
 
   NOTE:
-    Strings are compared as a stream of uchars
+    Strings are compared as a stream of unsigned chars
 
   RETURN
   < 0	s < t
@@ -647,7 +649,7 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 
 int stringcmp(const String *s,const String *t)
 {
-  uint32_t s_len=s->length(),t_len=t->length(),len=min(s_len,t_len);
+  uint32_t s_len=s->length(),t_len=t->length(),len=cmin(s_len,t_len);
   int cmp= memcmp(s->ptr(), t->ptr(), len);
   return (cmp) ? cmp : (int) (s_len - t_len);
 }
@@ -664,7 +666,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
   }
   if (to->realloc(from_length))
     return from;				// Actually an error
-  if ((to->str_length=min(from->str_length,from_length)))
+  if ((to->str_length=cmin(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;
   return to;
@@ -699,20 +701,20 @@ copy_and_convert_extended(char *to, uint32_t to_length,
                           const CHARSET_INFO * const to_cs, 
                           const char *from, uint32_t from_length,
                           const CHARSET_INFO * const from_cs,
-                          uint *errors)
+                          uint32_t *errors)
 {
   int         cnvres;
   my_wc_t     wc;
-  const uchar *from_end= (const uchar*) from+from_length;
+  const unsigned char *from_end= (const unsigned char*) from+from_length;
   char *to_start= to;
-  uchar *to_end= (uchar*) to+to_length;
+  unsigned char *to_end= (unsigned char*) to+to_length;
   my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
   my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-  uint error_count= 0;
+  uint32_t error_count= 0;
 
   while (1)
   {
-    if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from,
+    if ((cnvres= (*mb_wc)(from_cs, &wc, (unsigned char*) from,
 				      from_end)) > 0)
       from+= cnvres;
     else if (cnvres == MY_CS_ILSEQ)
@@ -735,7 +737,7 @@ copy_and_convert_extended(char *to, uint32_t to_length,
       break;  // Not enough characters
 
 outp:
-    if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+    if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
       to+= cnvres;
     else if (cnvres == MY_CS_ILUNI && wc != '?')
     {
@@ -757,7 +759,7 @@ outp:
 uint32_t
 copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs, 
                  const char *from, uint32_t from_length,
-				 const CHARSET_INFO * const from_cs, uint *errors)
+				 const CHARSET_INFO * const from_cs, uint32_t *errors)
 {
   /*
     If any of the character sets is not ASCII compatible,
@@ -767,7 +769,7 @@ copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
     return copy_and_convert_extended(to, to_length, to_cs,
                                      from, from_length, from_cs, errors);
 
-  uint32_t length= min(to_length, from_length), length2= length;
+  uint32_t length= cmin(to_length, from_length), length2= length;
 
 #if defined(__i386__)
   /*
@@ -901,15 +903,15 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
 
 uint32_t
 well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                        char *to, uint to_length,
+                        char *to, uint32_t to_length,
                         const CHARSET_INFO * const from_cs,
-                        const char *from, uint from_length,
-                        uint nchars,
+                        const char *from, uint32_t from_length,
+                        uint32_t nchars,
                         const char **well_formed_error_pos,
                         const char **cannot_convert_error_pos,
                         const char **from_end_pos)
 {
-  uint res;
+  uint32_t res;
 
   if ((to_cs == &my_charset_bin) || 
       (from_cs == &my_charset_bin) ||
@@ -926,7 +928,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 
     if (to_cs == &my_charset_bin)
     {
-      res= min(min(nchars, to_length), from_length);
+      res= cmin(cmin(nchars, to_length), from_length);
       memmove(to, from, res);
       *from_end_pos= from + res;
       *well_formed_error_pos= NULL;
@@ -935,7 +937,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     else
     {
       int well_formed_error;
-      uint from_offset;
+      uint32_t from_offset;
 
       if ((from_offset= (from_length % to_cs->mbminlen)) &&
           (from_cs == &my_charset_bin))
@@ -945,7 +947,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
           INSERT INTO t1 (ucs2_column) VALUES (0x01);
           0x01 -> 0x0001
         */
-        uint pad_length= to_cs->mbminlen - from_offset;
+        uint32_t pad_length= to_cs->mbminlen - from_offset;
         memset(to, 0, pad_length);
         memmove(to + pad_length, from, from_offset);
         nchars--;
@@ -972,8 +974,8 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     my_wc_t wc;
     my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
     my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-    const uchar *from_end= (const uchar*) from + from_length;
-    uchar *to_end= (uchar*) to + to_length;
+    const unsigned char *from_end= (const unsigned char*) from + from_length;
+    unsigned char *to_end= (unsigned char*) to + to_length;
     char *to_start= to;
     *well_formed_error_pos= NULL;
     *cannot_convert_error_pos= NULL;
@@ -981,7 +983,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
     for ( ; nchars; nchars--)
     {
       const char *from_prev= from;
-      if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
+      if ((cnvres= (*mb_wc)(from_cs, &wc, (unsigned char*) from, from_end)) > 0)
         from+= cnvres;
       else if (cnvres == MY_CS_ILSEQ)
       {
@@ -1005,7 +1007,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
         break;  // Not enough characters
 
 outp:
-      if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+      if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
         to+= cnvres;
       else if (cnvres == MY_CS_ILUNI && wc != '?')
       {
@@ -1034,7 +1036,7 @@ void String::print(String *str)
   char *st= (char*)Ptr, *end= st+str_length;
   for (; st < end; st++)
   {
-    uchar c= *st;
+    unsigned char c= *st;
     switch (c)
     {
     case '\\':

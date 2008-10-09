@@ -29,14 +29,13 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-SET_STACK_SIZE(9000)			/* Minimum stack size for program */
 
 #define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
 #define my_raid_delete(A,B,C) my_delete(A,B)
 
 #include "myisamdef.h"
 
-static uint decode_bits;
+static uint32_t decode_bits;
 static char **default_argv;
 static const char *load_default_groups[]= { "myisamchk", 0 };
 static const char *set_collation_name, *opt_tmpdir;
@@ -72,11 +71,11 @@ static void usage(void);
 static int myisamchk(MI_CHECK *param, char *filename);
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name);
 static int mi_sort_records(MI_CHECK *param, register MI_INFO *info,
-                           char * name, uint sort_key,
+                           char * name, uint32_t sort_key,
 			   bool write_info, bool update_index);
 static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page,uchar *buff,uint sortkey,
+			     my_off_t page,unsigned char *buff,uint32_t sortkey,
 			     File new_file, bool update_index);
 
 MI_CHECK check_param;
@@ -100,28 +99,28 @@ int main(int argc, char **argv)
     int new_error=myisamchk(&check_param, *(argv++));
     if ((check_param.testflag & T_REP_ANY) != T_REP)
       check_param.testflag&= ~T_REP;
-    VOID(fflush(stdout));
-    VOID(fflush(stderr));
+    fflush(stdout);
+    fflush(stderr);
     if ((check_param.error_printed | check_param.warning_printed) &&
 	(check_param.testflag & T_FORCE_CREATE) &&
 	(!(check_param.testflag & (T_REP | T_REP_BY_SORT | T_SORT_RECORDS |
 				   T_SORT_INDEX))))
     {
-      uint old_testflag=check_param.testflag;
+      uint32_t old_testflag=check_param.testflag;
       if (!(check_param.testflag & T_REP))
 	check_param.testflag|= T_REP_BY_SORT;
       check_param.testflag&= ~T_EXTEND;			/* Don't needed  */
       error|=myisamchk(&check_param, argv[-1]);
       check_param.testflag= old_testflag;
-      VOID(fflush(stdout));
-      VOID(fflush(stderr));
+      fflush(stdout);
+      fflush(stderr);
     }
     else
       error|=new_error;
     if (argc && (!(check_param.testflag & T_SILENT) || check_param.testflag & T_INFO))
     {
       puts("\n---------\n");
-      VOID(fflush(stdout));
+      fflush(stdout);
     }
   }
   if (check_param.total_files > 1)
@@ -440,7 +439,7 @@ static void usage(void)
 }
 
 const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
-                                           "nulls_ignored", NullS};
+                                           "nulls_ignored", NULL};
 TYPELIB myisam_stats_method_typelib= {
   array_elements(myisam_stats_method_names) - 1, "",
   myisam_stats_method_names, NULL};
@@ -716,9 +715,9 @@ static void get_options(register int *argc,register char ***argv)
   if ((check_param.testflag & T_UNPACK) &&
       (check_param.testflag & (T_QUICK | T_SORT_RECORDS)))
   {
-    VOID(fprintf(stderr,
-		 "%s: --unpack can't be used with --quick or --sort-records\n",
-		 my_progname_short));
+    fprintf(stderr,
+            "%s: --unpack can't be used with --quick or --sort-records\n",
+            my_progname_short);
     exit(1);
   }
   if ((check_param.testflag & T_READONLY) &&
@@ -726,9 +725,9 @@ static void get_options(register int *argc,register char ***argv)
        (T_REP_ANY | T_STATISTICS | T_AUTO_INC |
 	T_SORT_RECORDS | T_SORT_INDEX | T_FORCE_CREATE)))
   {
-    VOID(fprintf(stderr,
-		 "%s: Can't use --readonly when repairing or sorting\n",
-		 my_progname_short));
+    fprintf(stderr,
+            "%s: Can't use --readonly when repairing or sorting\n",
+            my_progname_short);
     exit(1);
   }
 
@@ -754,7 +753,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
 {
   int error,lock_type,recreate;
   int rep_quick= param->testflag & (T_QUICK | T_FORCE_UNIQUENESS);
-  uint raid_chunks;
+  uint32_t raid_chunks;
   MI_INFO *info;
   File datafile;
   char llbuff[22],llbuff2[22];
@@ -881,9 +880,9 @@ static int myisamchk(MI_CHECK *param, char * filename)
       param->language= set_collation->number;
     if (recreate_table(param, &info,filename))
     {
-      VOID(fprintf(stderr,
-		   "MyISAM-table '%s' is not fixed because of errors\n",
-	      filename));
+      fprintf(stderr,
+              "MyISAM-table '%s' is not fixed because of errors\n",
+              filename);
       return(-1);
     }
     recreate=1;
@@ -974,7 +973,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
       }
       if (!error && param->testflag & T_SORT_RECORDS)
       {
-	uint key;
+	uint32_t key;
 	/*
 	  We can't update the index in mi_sort_records if we have a
 	  prefix compressed or fulltext index
@@ -1032,23 +1031,23 @@ static int myisamchk(MI_CHECK *param, char * filename)
 	  !(param->testflag & (T_FAST | T_FORCE_CREATE)))
       {
 	if (param->testflag & (T_EXTEND | T_MEDIUM))
-	  VOID(init_key_cache(dflt_key_cache,opt_key_cache_block_size,
-                              param->use_buffers, 0, 0));
-	VOID(init_io_cache(&param->read_cache,datafile,
-			   (uint) param->read_buffer_length,
-			   READ_CACHE,
-			   (param->start_check_pos ?
-			    param->start_check_pos :
-			    share->pack.header_length),
-			   1,
-			   MYF(MY_WME)));
+	  init_key_cache(dflt_key_cache,opt_key_cache_block_size,
+                         param->use_buffers, 0, 0);
+	init_io_cache(&param->read_cache,datafile,
+                      (uint) param->read_buffer_length,
+                      READ_CACHE,
+                      (param->start_check_pos ?
+                       param->start_check_pos :
+                       share->pack.header_length),
+                      1,
+                      MYF(MY_WME));
 	lock_memory(param);
 	if ((info->s->options & (HA_OPTION_PACK_RECORD |
 				 HA_OPTION_COMPRESS_RECORD)) ||
 	    (param->testflag & (T_EXTEND | T_MEDIUM)))
 	  error|=chk_data_link(param, info, param->testflag & T_EXTEND);
 	error|=flush_blocks(param, share->key_cache, share->kfile);
-	VOID(end_io_cache(&param->read_cache));
+	end_io_cache(&param->read_cache);
       }
       if (!error)
       {
@@ -1101,30 +1100,30 @@ end2:
       error|=change_to_newfile(filename,MI_NAME_IEXT,INDEX_TMP_EXT,0,
 			       MYF(0));
   }
-  VOID(fflush(stdout)); VOID(fflush(stderr));
+  fflush(stdout); fflush(stderr);
   if (param->error_printed)
   {
     if (param->testflag & (T_REP_ANY | T_SORT_RECORDS | T_SORT_INDEX))
     {
-      VOID(fprintf(stderr,
-		   "MyISAM-table '%s' is not fixed because of errors\n",
-		   filename));
+      fprintf(stderr,
+              "MyISAM-table '%s' is not fixed because of errors\n",
+              filename);
       if (param->testflag & T_REP_ANY)
-	VOID(fprintf(stderr,
-		     "Try fixing it by using the --safe-recover (-o), the --force (-f) option or by not using the --quick (-q) flag\n"));
+	fprintf(stderr,
+                "Try fixing it by using the --safe-recover (-o), the --force (-f) option or by not using the --quick (-q) flag\n");
     }
     else if (!(param->error_printed & 2) &&
 	     !(param->testflag & T_FORCE_CREATE))
-      VOID(fprintf(stderr,
-      "MyISAM-table '%s' is corrupted\nFix it using switch \"-r\" or \"-o\"\n",
-	      filename));
+      fprintf(stderr,
+              "MyISAM-table '%s' is corrupted\nFix it using switch \"-r\" or \"-o\"\n",
+	      filename);
   }
   else if (param->warning_printed &&
 	   ! (param->testflag & (T_REP_ANY | T_SORT_RECORDS | T_SORT_INDEX |
 			  T_FORCE_CREATE)))
-    VOID(fprintf(stderr, "MyISAM-table '%s' is usable but should be fixed\n",
-		 filename));
-  VOID(fflush(stderr));
+    fprintf(stderr, "MyISAM-table '%s' is usable but should be fixed\n",
+            filename);
+  fflush(stderr);
   return(error);
 } /* myisamchk */
 
@@ -1133,7 +1132,7 @@ end2:
 
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 {
-  uint key,keyseg_nr,field,start;
+  uint32_t key,keyseg_nr,field,start;
   register MI_KEYDEF *keyinfo;
   register HA_KEYSEG *keyseg;
   register const char *text;
@@ -1170,21 +1169,21 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     }
     pos=buff;
     if (share->state.changed & STATE_CRASHED)
-      stpcpy(buff,"crashed");
+      my_stpcpy(buff,"crashed");
     else
     {
       if (share->state.open_count)
-	pos=stpcpy(pos,"open,");
+	pos=my_stpcpy(pos,"open,");
       if (share->state.changed & STATE_CHANGED)
-	pos=stpcpy(pos,"changed,");
+	pos=my_stpcpy(pos,"changed,");
       else
-	pos=stpcpy(pos,"checked,");
+	pos=my_stpcpy(pos,"checked,");
       if (!(share->state.changed & STATE_NOT_ANALYZED))
-	pos=stpcpy(pos,"analyzed,");
+	pos=my_stpcpy(pos,"analyzed,");
       if (!(share->state.changed & STATE_NOT_OPTIMIZED_KEYS))
-	pos=stpcpy(pos,"optimized keys,");
+	pos=my_stpcpy(pos,"optimized keys,");
       if (!(share->state.changed & STATE_NOT_SORTED_PAGES))
-	pos=stpcpy(pos,"sorted index pages,");
+	pos=my_stpcpy(pos,"sorted index pages,");
       pos[-1]=0;				/* Remove extra ',' */
     }      
     printf("Status:              %s\n",buff);
@@ -1250,7 +1249,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   printf("Key Start Len Index   Type");
   if (param->testflag & T_VERBOSE)
     printf("                     Rec/key         Root  Blocksize");
-  VOID(putchar('\n'));
+  putchar('\n');
 
   for (key=keyseg_nr=0, keyinfo= &share->keyinfo[0] ;
        key < share->base.keys;
@@ -1263,19 +1262,19 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     pos=buff;
     if (keyseg->flag & HA_REVERSE_SORT)
       *pos++ = '-';
-    pos=stpcpy(pos,type_names[keyseg->type]);
+    pos=my_stpcpy(pos,type_names[keyseg->type]);
     *pos++ = ' ';
     *pos=0;
     if (keyinfo->flag & HA_PACK_KEY)
-      pos=stpcpy(pos,prefix_packed_txt);
+      pos=my_stpcpy(pos,prefix_packed_txt);
     if (keyinfo->flag & HA_BINARY_PACK_KEY)
-      pos=stpcpy(pos,bin_packed_txt);
+      pos=my_stpcpy(pos,bin_packed_txt);
     if (keyseg->flag & HA_SPACE_PACK)
-      pos=stpcpy(pos,diff_txt);
+      pos=my_stpcpy(pos,diff_txt);
     if (keyseg->flag & HA_BLOB_PART)
-      pos=stpcpy(pos,blob_txt);
+      pos=my_stpcpy(pos,blob_txt);
     if (keyseg->flag & HA_NULL_PART)
-      pos=stpcpy(pos,null_txt);
+      pos=my_stpcpy(pos,null_txt);
     *pos=0;
 
     printf("%-4d%-6ld%-3d %-8s%-21s",
@@ -1288,26 +1287,26 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
       printf("%11lu %12s %10d",
 	     share->state.rec_per_key_part[keyseg_nr++],
 	     buff,keyinfo->block_length);
-    VOID(putchar('\n'));
+    putchar('\n');
     while ((++keyseg)->type != HA_KEYTYPE_END)
     {
       pos=buff;
       if (keyseg->flag & HA_REVERSE_SORT)
 	*pos++ = '-';
-      pos=stpcpy(pos,type_names[keyseg->type]);
+      pos=my_stpcpy(pos,type_names[keyseg->type]);
       *pos++= ' ';
       if (keyseg->flag & HA_SPACE_PACK)
-	pos=stpcpy(pos,diff_txt);
+	pos=my_stpcpy(pos,diff_txt);
       if (keyseg->flag & HA_BLOB_PART)
-	pos=stpcpy(pos,blob_txt);
+	pos=my_stpcpy(pos,blob_txt);
       if (keyseg->flag & HA_NULL_PART)
-	pos=stpcpy(pos,null_txt);
+	pos=my_stpcpy(pos,null_txt);
       *pos=0;
       printf("    %-6ld%-3d         %-21s",
 	     (long) keyseg->start+1,keyseg->length,buff);
       if (param->testflag & T_VERBOSE)
 	printf("%11lu", share->state.rec_per_key_part[keyseg_nr++]);
-      VOID(putchar('\n'));
+      putchar('\n');
     }
     keyseg++;
   }
@@ -1345,7 +1344,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     printf("\nField Start Length Nullpos Nullbit Type");
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       printf("                         Huff tree  Bits");
-    VOID(putchar('\n'));
+    putchar('\n');
     start=1;
     for (field=0 ; field < share->base.fields ; field++)
     {
@@ -1353,13 +1352,13 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 	type=share->rec[field].base_type;
       else
 	type=(enum en_fieldtype) share->rec[field].type;
-      end=stpcpy(buff,field_pack[type]);
+      end=my_stpcpy(buff,field_pack[type]);
       if (share->options & HA_OPTION_COMPRESS_RECORD)
       {
 	if (share->rec[field].pack_type & PACK_TYPE_SELECTED)
-	  end=stpcpy(end,", not_always");
+	  end=my_stpcpy(end,", not_always");
 	if (share->rec[field].pack_type & PACK_TYPE_SPACE_FIELDS)
-	  end=stpcpy(end,", no empty");
+	  end=my_stpcpy(end,", no empty");
 	if (share->rec[field].pack_type & PACK_TYPE_ZERO_FILL)
 	{
 	  sprintf(end,", zerofill(%d)",share->rec[field].space_length_bits);
@@ -1367,7 +1366,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 	}
       }
       if (buff[0] == ',')
-	stpcpy(buff,buff+2);
+	my_stpcpy(buff,buff+2);
       int10_to_str((long) share->rec[field].length,length,10);
       null_bit[0]=null_pos[0]=0;
       if (share->rec[field].null_bit)
@@ -1384,7 +1383,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 		 (uint) (share->rec[field].huff_tree-share->decode_trees)+1,
 		 share->rec[field].huff_tree->quick_table_bits);
       }
-      VOID(putchar('\n'));
+      putchar('\n');
       start+=share->rec[field].length;
     }
   }
@@ -1396,15 +1395,15 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 
 static int mi_sort_records(MI_CHECK *param,
 			   register MI_INFO *info, char * name,
-			   uint sort_key,
+			   uint32_t sort_key,
 			   bool write_info,
 			   bool update_index)
 {
   int got_error;
-  uint key;
+  uint32_t key;
   MI_KEYDEF *keyinfo;
   File new_file;
-  uchar *temp_buff;
+  unsigned char *temp_buff;
   ha_rows old_record_count;
   MYISAM_SHARE *share=info->s;
   char llbuff[22],llbuff2[22];
@@ -1453,7 +1452,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   info->opt_flag|=WRITE_CACHE_USED;
 
-  if (!(temp_buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+  if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
   {
     mi_check_print_error(param,"Not enough memory for key block");
     goto err;
@@ -1489,7 +1488,7 @@ static int mi_sort_records(MI_CHECK *param,
   for (key=0 ; key < share->base.keys ; key++)
     share->keyinfo[key].flag|= HA_SORT_ALLOWS_SAME;
 
-  if (my_pread(share->kfile,(uchar*) temp_buff,
+  if (my_pread(share->kfile,(unsigned char*) temp_buff,
 	       (uint) keyinfo->block_length,
 	       share->state.key_root[sort_key],
 	       MYF(MY_NABP+MY_WME)))
@@ -1524,7 +1523,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   }
 
-  VOID(my_close(info->dfile,MYF(MY_WME)));
+  my_close(info->dfile,MYF(MY_WME));
   param->out_flag|=O_NEW_DATA;			/* Data in new file */
   info->dfile=new_file;				/* Use new datafile */
   info->state->del=0;
@@ -1538,27 +1537,29 @@ static int mi_sort_records(MI_CHECK *param,
 
   if (param->testflag & T_WRITE_LOOP)
   {
-    VOID(fputs("          \r",stdout)); VOID(fflush(stdout));
+    fputs("          \r",stdout); fflush(stdout);
   }
   got_error=0;
 
 err:
   if (got_error && new_file >= 0)
   {
-    VOID(end_io_cache(&info->rec_cache));
+    end_io_cache(&info->rec_cache);
     (void) my_close(new_file,MYF(MY_WME));
     (void) my_raid_delete(param->temp_filename, share->base.raid_chunks,
 			  MYF(MY_WME));
   }
   if (temp_buff)
   {
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   }
-  my_free(mi_get_rec_buff_ptr(info, sort_param.record),
-          MYF(MY_ALLOW_ZERO_PTR));
+  void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
+  if (rec_buff_ptr != NULL)
+    free(rec_buff_ptr);
+
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
-  VOID(end_io_cache(&info->rec_cache));
-  my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
+  end_io_cache(&info->rec_cache);
+  free(sort_info.buff);
   sort_info.buff=0;
   share->state.sortkey=sort_key;
   return(flush_blocks(param, share->key_cache, share->kfile) |
@@ -1570,13 +1571,13 @@ err:
 
 static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
                              MI_KEYDEF *keyinfo,
-			     my_off_t page, uchar *buff, uint sort_key,
+			     my_off_t page, unsigned char *buff, uint32_t sort_key,
 			     File new_file,bool update_index)
 {
   uint	nod_flag,used_length,key_length;
-  uchar *temp_buff,*keypos,*endpos;
+  unsigned char *temp_buff,*keypos,*endpos;
   my_off_t next_page,rec_pos;
-  uchar lastkey[MI_MAX_KEY_BUFF];
+  unsigned char lastkey[MI_MAX_KEY_BUFF];
   char llbuff[22];
   SORT_INFO *sort_info= sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
@@ -1586,7 +1587,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
 
   if (nod_flag)
   {
-    if (!(temp_buff=(uchar*) my_alloca((uint) keyinfo->block_length)))
+    if (!(temp_buff=(unsigned char*) my_alloca((uint) keyinfo->block_length)))
     {
       mi_check_print_error(param,"Not Enough memory");
       return(-1);
@@ -1600,7 +1601,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
     if (nod_flag)
     {
       next_page=_mi_kpos(nod_flag,keypos);
-      if (my_pread(info->s->kfile,(uchar*) temp_buff,
+      if (my_pread(info->s->kfile,(unsigned char*) temp_buff,
 		  (uint) keyinfo->block_length, next_page,
 		   MYF(MY_NABP+MY_WME)))
       {
@@ -1639,18 +1640,18 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
   }
   /* Clear end of block to get better compression if the table is backuped */
   memset(buff+used_length, 0, keyinfo->block_length-used_length);
-  if (my_pwrite(info->s->kfile,(uchar*) buff,(uint) keyinfo->block_length,
+  if (my_pwrite(info->s->kfile,(unsigned char*) buff,(uint) keyinfo->block_length,
 		page,param->myf_rw))
   {
     mi_check_print_error(param,"%d when updating keyblock",my_errno);
     goto err;
   }
   if (temp_buff)
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   return(0);
 err:
   if (temp_buff)
-    my_afree((uchar*) temp_buff);
+    my_afree((unsigned char*) temp_buff);
   return(1);
 } /* sort_record_index */
 
@@ -1678,8 +1679,8 @@ void mi_check_print_info(MI_CHECK *param __attribute__((unused)),
   va_list args;
 
   va_start(args,fmt);
-  VOID(vfprintf(stdout, fmt, args));
-  VOID(fputc('\n',stdout));
+  vfprintf(stdout, fmt, args);
+  fputc('\n',stdout);
   va_end(args);
 }
 
@@ -1700,8 +1701,8 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...)
   param->warning_printed=1;
   va_start(args,fmt);
   fprintf(stderr,"%s: warning: ",my_progname_short);
-  VOID(vfprintf(stderr, fmt, args));
-  VOID(fputc('\n',stderr));
+  vfprintf(stderr, fmt, args);
+  fputc('\n',stderr);
   fflush(stderr);
   va_end(args);
   return;
@@ -1723,8 +1724,8 @@ void mi_check_print_error(MI_CHECK *param, const char *fmt,...)
   param->error_printed|=1;
   va_start(args,fmt);
   fprintf(stderr,"%s: error: ",my_progname_short);
-  VOID(vfprintf(stderr, fmt, args));
-  VOID(fputc('\n',stderr));
+  vfprintf(stderr, fmt, args);
+  fputc('\n',stderr);
   fflush(stderr);
   va_end(args);
   return;

@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @addtogroup Replication
@@ -28,18 +32,14 @@
 #ifndef _log_event_h
 #define _log_event_h
 
-#if defined(USE_PRAGMA_INTERFACE) && !defined(DRIZZLE_CLIENT)
+#if defined(USE_PRAGMA_INTERFACE)
 #pragma interface			/* gcc class implementation */
 #endif
 
 #include <mysys/my_bitmap.h>
 #include "rpl_constants.h"
-#ifndef DRIZZLE_CLIENT
 #include "rpl_record.h"
 #include "rpl_reporting.h"
-#else
-#include "my_decimal.h"
-#endif
 
 #include <drizzled/sql_string.h>       /* append_query_string() needs String declaration */
 
@@ -455,7 +455,7 @@ struct sql_ex_info
 
 /* Shouldn't be defined before */
 #define EXPECTED_OPTIONS \
-  ((1ULL << 14) | (1ULL << 26) | (1ULL << 27) | (1ULL << 19))
+  ((1U << 14) | (1U << 26) | (1U << 27) | (1U << 19))
 
 #if OPTIONS_WRITTEN_TO_BIN_LOG != EXPECTED_OPTIONS
 #error OPTIONS_WRITTEN_TO_BIN_LOG must NOT change their values!
@@ -547,92 +547,12 @@ enum Int_event_type
 };
 
 
-#ifndef DRIZZLE_CLIENT
 class String;
 class DRIZZLE_BIN_LOG;
 class THD;
-#endif
 
 class Format_description_log_event;
 class Relay_log_info;
-
-#ifdef DRIZZLE_CLIENT
-enum enum_base64_output_mode {
-  BASE64_OUTPUT_NEVER= 0,
-  BASE64_OUTPUT_AUTO= 1,
-  BASE64_OUTPUT_ALWAYS= 2,
-  BASE64_OUTPUT_UNSPEC= 3,
-  /* insert new output modes here */
-  BASE64_OUTPUT_MODE_COUNT
-};
-
-/*
-  A structure for mysqlbinlog to know how to print events
-
-  This structure is passed to the event's print() methods,
-
-  There are two types of settings stored here:
-  1. Last db, flags2, sql_mode etc comes from the last printed event.
-     They are stored so that only the necessary USE and SET commands
-     are printed.
-  2. Other information on how to print the events, e.g. short_form,
-     hexdump_from.  These are not dependent on the last event.
-*/
-typedef struct st_print_event_info
-{
-  /*
-    Settings for database, sql_mode etc that comes from the last event
-    that was printed.  We cache these so that we don't have to print
-    them if they are unchanged.
-  */
-  // TODO: have the last catalog here ??
-  char db[FN_REFLEN+1]; // TODO: make this a LEX_STRING when thd->db is
-  bool flags2_inited;
-  uint32_t flags2;
-  bool sql_mode_inited;
-  ulong sql_mode;		/* must be same as THD.variables.sql_mode */
-  ulong auto_increment_increment, auto_increment_offset;
-  bool charset_inited;
-  char charset[6]; // 3 variables, each of them storable in 2 bytes
-  char time_zone_str[MAX_TIME_ZONE_NAME_LENGTH];
-  uint32_t lc_time_names_number;
-  uint charset_database_number;
-  uint thread_id;
-  bool thread_id_printed;
-
-  st_print_event_info();
-
-  ~st_print_event_info() {
-    close_cached_file(&head_cache);
-    close_cached_file(&body_cache);
-  }
-  bool init_ok() /* tells if construction was successful */
-    { return my_b_inited(&head_cache) && my_b_inited(&body_cache); }
-
-
-  /* Settings on how to print the events */
-  bool short_form;
-  enum_base64_output_mode base64_output_mode;
-  /*
-    This is set whenever a Format_description_event is printed.
-    Later, when an event is printed in base64, this flag is tested: if
-    no Format_description_event has been seen, it is unsafe to print
-    the base64 event, so an error message is generated.
-  */
-  bool printed_fd_event;
-  my_off_t hexdump_from;
-  uint8_t common_header_len;
-  char delimiter[16];
-
-  /*
-     These two caches are used by the row-based replication events to
-     collect the header information and the main body of the events
-     making up a statement.
-   */
-  IO_CACHE head_cache;
-  IO_CACHE body_cache;
-} PRINT_EVENT_INFO;
-#endif
 
 /**
   the struct aggregates two paramenters that identify an event
@@ -867,7 +787,6 @@ public:
   */
   ulong slave_exec_mode;
 
-#ifndef DRIZZLE_CLIENT
   THD* thd;
 
   Log_event();
@@ -895,7 +814,6 @@ public:
     EVENTS.
   */
   static void init_show_field_list(List<Item>* field_list);
-#ifdef HAVE_REPLICATION
   int net_send(Protocol *protocol, const char* log_name, my_off_t pos);
 
   /*
@@ -905,25 +823,10 @@ public:
 
   virtual void pack_info(Protocol *protocol);
 
-#endif /* HAVE_REPLICATION */
   virtual const char* get_db()
   {
     return thd ? thd->db : 0;
   }
-#else
-  Log_event() : temp_buf(0) {}
-    /* avoid having to link mysqlbinlog against libpthread */
-  static Log_event* read_log_event(IO_CACHE* file,
-                                   const Format_description_log_event
-                                   *description_event);
-  /* print*() functions are used by mysqlbinlog */
-  virtual void print(FILE* file, PRINT_EVENT_INFO* print_event_info) = 0;
-  void print_timestamp(IO_CACHE* file, time_t *ts = 0);
-  void print_header(IO_CACHE* file, PRINT_EVENT_INFO* print_event_info,
-                    bool is_more);
-  void print_base64(IO_CACHE* file, PRINT_EVENT_INFO* print_event_info,
-                    bool is_more);
-#endif
 
   static void *operator new(size_t size)
   {
@@ -933,14 +836,13 @@ public:
   static void operator delete(void *ptr,
                               size_t size __attribute__((unused)))
   {
-    my_free((uchar*) ptr, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
+    free((unsigned char*) ptr);
   }
 
   /* Placement version of the above operators */
   static void *operator new(size_t, void* ptr) { return ptr; }
   static void operator delete(void*, void*) { }
 
-#ifndef DRIZZLE_CLIENT
   bool write_header(IO_CACHE* file, ulong data_length);
   virtual bool write(IO_CACHE* file)
   {
@@ -963,7 +865,6 @@ public:
       return tmp_thd->start_time;
     return my_time(0);
   }
-#endif
   virtual Log_event_type get_type_code() = 0;
   virtual bool is_valid() const = 0;
   virtual bool is_artificial_event() { return 0; }
@@ -976,7 +877,7 @@ public:
   {
     if (temp_buf)
     {
-      my_free(temp_buf, MYF(0));
+      free(temp_buf);
       temp_buf = 0;
     }
   }
@@ -985,7 +886,7 @@ public:
     is calculated during write()
   */
   virtual int get_data_size() { return 0;}
-  static Log_event* read_log_event(const char* buf, uint event_len,
+  static Log_event* read_log_event(const char* buf, uint32_t event_len,
 				   const char **error,
                                    const Format_description_log_event
                                    *description_event);
@@ -1000,7 +901,6 @@ public:
 
   /* Return start of query time or current time */
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 public:
 
   /**
@@ -1139,7 +1039,6 @@ protected:
      non-zero. The caller shall decrease the counter by one.
    */
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -1507,7 +1406,7 @@ public:
     concerned) from here.
   */
 
-  uint catalog_len;			// <= 255 char; 0 means uninited
+  uint32_t catalog_len;			// <= 255 char; 0 means uninited
 
   /*
     We want to be able to store a variable number of N-bit status vars:
@@ -1549,40 +1448,31 @@ public:
   ulong sql_mode;
   ulong auto_increment_increment, auto_increment_offset;
   char charset[6];
-  uint time_zone_len; /* 0 means uninited */
+  uint32_t time_zone_len; /* 0 means uninited */
   const char *time_zone_str;
-  uint lc_time_names_number; /* 0 means en_US */
-  uint charset_database_number;
+  uint32_t lc_time_names_number; /* 0 means en_US */
+  uint32_t charset_database_number;
 
-#ifndef DRIZZLE_CLIENT
 
   Query_log_event(THD* thd_arg, const char* query_arg, ulong query_length,
                   bool using_trans, bool suppress_use,
                   THD::killed_state killed_err_arg= THD::KILLED_NO_VALUE);
   const char* get_db() { return db; }
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print_query_header(IO_CACHE* file, PRINT_EVENT_INFO* print_event_info);
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Query_log_event();
-  Query_log_event(const char* buf, uint event_len,
+  Query_log_event(const char* buf, uint32_t event_len,
                   const Format_description_log_event *description_event,
                   Log_event_type event_type);
   ~Query_log_event()
   {
     if (data_buf)
-      my_free((uchar*) data_buf, MYF(0));
+      free((unsigned char*) data_buf);
   }
   Log_event_type get_type_code() { return QUERY_EVENT; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((unused)))
   { return false; }
-#endif
   bool is_valid() const { return query != 0; }
 
   /*
@@ -1593,7 +1483,6 @@ public:
   /* Writes derived event-specific part of post header. */
 
 public:        /* !!! Public in this patch to allow old usage */
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
@@ -1601,11 +1490,8 @@ public:        /* !!! Public in this patch to allow old usage */
   int do_apply_event(Relay_log_info const *rli,
                        const char *query_arg,
                        uint32_t q_len_arg);
-#endif /* HAVE_REPLICATION */
 };
 
-
-#ifdef HAVE_REPLICATION
 
 /**
   @class Slave_log_event
@@ -1668,29 +1554,19 @@ public:
   int master_log_len;
   uint16_t master_port;
 
-#ifndef DRIZZLE_CLIENT
   Slave_log_event(THD* thd_arg, Relay_log_info* rli);
   void pack_info(Protocol* protocol);
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
-  Slave_log_event(const char* buf, uint event_len);
+  Slave_log_event(const char* buf, uint32_t event_len);
   ~Slave_log_event();
   int get_data_size();
   bool is_valid() const { return master_host != 0; }
   Log_event_type get_type_code() { return SLAVE_EVENT; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const* rli);
-#endif
 };
-
-#endif /* HAVE_REPLICATION */
 
 
 /**
@@ -1895,7 +1771,7 @@ private:
 class Load_log_event: public Log_event
 {
 private:
-  uint get_query_buffer_length();
+  uint32_t get_query_buffer_length();
   void print_query(bool need_db, char *buf, char **end,
                    char **fn_start, char **fn_end);
 protected:
@@ -1916,7 +1792,7 @@ public:
   uint32_t fname_len;
   uint32_t num_fields;
   const char* fields;
-  const uchar* field_lens;
+  const unsigned char* field_lens;
   uint32_t field_block_len;
 
   const char* table_name;
@@ -1927,7 +1803,7 @@ public:
   bool local_fname;
 
   /* fname doesn't point to memory inside Log_event::temp_buf  */
-  void set_fname_outside_temp_buf(const char *afname, uint alen)
+  void set_fname_outside_temp_buf(const char *afname, uint32_t alen)
   {
     fname= afname;
     fname_len= alen;
@@ -1939,7 +1815,6 @@ public:
     return local_fname;
   }
 
-#ifndef DRIZZLE_CLIENT
   String field_lens_buf;
   String fields_buf;
 
@@ -1950,13 +1825,7 @@ public:
   void set_fields(const char* db, List<Item> &fields_arg,
                   Name_resolution_context *context);
   const char* get_db() { return db; }
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info, bool commented);
-#endif
 
   /*
     Note that for all the events related to LOAD DATA (Load_log_event,
@@ -1964,7 +1833,7 @@ public:
     logging of LOAD DATA is going to be changed in 4.1 or 5.0, this is only used
     for the common_header_len (post_header_len will not be changed).
   */
-  Load_log_event(const char* buf, uint event_len,
+  Load_log_event(const char* buf, uint32_t event_len,
                  const Format_description_log_event* description_event);
   ~Load_log_event()
   {}
@@ -1972,10 +1841,8 @@ public:
   {
     return sql_ex.new_format() ? NEW_LOAD_EVENT: LOAD_EVENT;
   }
-#ifndef DRIZZLE_CLIENT
   bool write_data_header(IO_CACHE* file);
   bool write_data_body(IO_CACHE* file);
-#endif
   bool is_valid() const { return table_name != 0; }
   int get_data_size()
   {
@@ -1985,7 +1852,6 @@ public:
   }
 
 public:        /* !!! Public in this patch to allow old usage */
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const* rli)
   {
     return do_apply_event(thd->slave_net,rli,0);
@@ -1993,7 +1859,6 @@ public:        /* !!! Public in this patch to allow old usage */
 
   int do_apply_event(NET *net, Relay_log_info const *rli,
                      bool use_rli_only_for_errors);
-#endif
 };
 
 extern char server_version[SERVER_VERSION_LENGTH];
@@ -2053,23 +1918,14 @@ public:
   */
   bool dont_set_created;
 
-#ifndef DRIZZLE_CLIENT
   Start_log_event_v3();
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  Start_log_event_v3() {}
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Start_log_event_v3(const char* buf,
                      const Format_description_log_event* description_event);
   ~Start_log_event_v3() {}
   Log_event_type get_type_code() { return START_EVENT_V3;}
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const { return 1; }
   int get_data_size()
   {
@@ -2078,7 +1934,6 @@ public:
   virtual bool is_artificial_event() { return artificial_event; }
 
 protected:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info*)
   {
@@ -2091,7 +1946,6 @@ protected:
     else
       return Log_event::EVENT_SKIP_NOT;
   }
-#endif
 };
 
 
@@ -2118,21 +1972,19 @@ public:
   uint8_t number_of_event_types;
   /* The list of post-headers' lengthes */
   uint8_t *post_header_len;
-  uchar server_version_split[3];
+  unsigned char server_version_split[3];
   const uint8_t *event_type_permutation;
 
   Format_description_log_event(uint8_t binlog_ver, const char* server_ver=0);
-  Format_description_log_event(const char* buf, uint event_len,
+  Format_description_log_event(const char* buf, uint32_t event_len,
                                const Format_description_log_event
                                *description_event);
   ~Format_description_log_event()
   {
-    my_free((uchar*)post_header_len, MYF(MY_ALLOW_ZERO_PTR));
+    free((unsigned char*)post_header_len);
   }
   Log_event_type get_type_code() { return FORMAT_DESCRIPTION_EVENT;}
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const
   {
     return ((common_header_len >= ((binlog_version==1) ? OLD_HEADER_LEN :
@@ -2152,11 +2004,9 @@ public:
   void calc_server_version_split();
 
 protected:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -2201,18 +2051,12 @@ class Intvar_log_event: public Log_event
 {
 public:
   uint64_t val;
-  uchar type;
+  unsigned char type;
 
-#ifndef DRIZZLE_CLIENT
-  Intvar_log_event(THD* thd_arg,uchar type_arg, uint64_t val_arg)
+  Intvar_log_event(THD* thd_arg,unsigned char type_arg, uint64_t val_arg)
     :Log_event(thd_arg,0,0),val(val_arg),type(type_arg)
   {}
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Intvar_log_event(const char* buf,
                    const Format_description_log_event *description_event);
@@ -2220,17 +2064,13 @@ public:
   Log_event_type get_type_code() { return INTVAR_EVENT;}
   const char* get_var_type_name();
   int get_data_size() { return  9; /* sizeof(type) + sizeof(val) */;}
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -2278,33 +2118,23 @@ class Rand_log_event: public Log_event
   uint64_t seed1;
   uint64_t seed2;
 
-#ifndef DRIZZLE_CLIENT
   Rand_log_event(THD* thd_arg, uint64_t seed1_arg, uint64_t seed2_arg)
     :Log_event(thd_arg,0,0),seed1(seed1_arg),seed2(seed2_arg)
   {}
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Rand_log_event(const char* buf,
                  const Format_description_log_event *description_event);
   ~Rand_log_event() {}
   Log_event_type get_type_code() { return RAND_EVENT;}
   int get_data_size() { return 16; /* sizeof(uint64_t) * 2*/ }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 /**
@@ -2315,39 +2145,25 @@ private:
 
   @section Xid_log_event_binary_format Binary Format  
 */
-#ifdef DRIZZLE_CLIENT
-typedef uint64_t my_xid; // this line is the same as in handler.h
-#endif
-
 class Xid_log_event: public Log_event
 {
  public:
    my_xid xid;
 
-#ifndef DRIZZLE_CLIENT
   Xid_log_event(THD* thd_arg, my_xid x): Log_event(thd_arg,0,0), xid(x) {}
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Xid_log_event(const char* buf,
                 const Format_description_log_event *description_event);
   ~Xid_log_event() {}
   Log_event_type get_type_code() { return XID_EVENT;}
   int get_data_size() { return sizeof(xid); }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 /**
@@ -2363,40 +2179,32 @@ class User_var_log_event: public Log_event
 {
 public:
   char *name;
-  uint name_len;
+  uint32_t name_len;
   char *val;
   ulong val_len;
   Item_result type;
-  uint charset_number;
+  uint32_t charset_number;
   bool is_null;
-#ifndef DRIZZLE_CLIENT
   User_var_log_event(THD* thd_arg __attribute__((unused)),
-                     char *name_arg, uint name_len_arg,
+                     char *name_arg, uint32_t name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
-		     uint charset_number_arg)
+		     uint32_t charset_number_arg)
     :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
     val_len(val_len_arg), type(type_arg), charset_number(charset_number_arg)
     { is_null= !val; }
   void pack_info(Protocol* protocol);
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   User_var_log_event(const char* buf,
                      const Format_description_log_event *description_event);
   ~User_var_log_event() {}
   Log_event_type get_type_code() { return USER_VAR_EVENT;}
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -2411,12 +2219,8 @@ private:
 class Stop_log_event: public Log_event
 {
 public:
-#ifndef DRIZZLE_CLIENT
   Stop_log_event() :Log_event()
   {}
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
   Stop_log_event(const char* buf,
                  const Format_description_log_event *description_event):
@@ -2427,7 +2231,6 @@ public:
   bool is_valid() const { return 1; }
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((unused)))
   {
@@ -2440,7 +2243,6 @@ private:
     else
       return Log_event::EVENT_SKIP_NOT;
   }
-#endif
 };
 
 /**
@@ -2500,38 +2302,28 @@ public:
   };
   const char* new_log_ident;
   uint64_t pos;
-  uint ident_len;
-  uint flags;
-#ifndef DRIZZLE_CLIENT
+  uint32_t ident_len;
+  uint32_t flags;
   Rotate_log_event(const char* new_log_ident_arg,
-		   uint ident_len_arg,
-		   uint64_t pos_arg, uint flags);
-#ifdef HAVE_REPLICATION
+		   uint32_t ident_len_arg,
+		   uint64_t pos_arg, uint32_t flags);
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
-  Rotate_log_event(const char* buf, uint event_len,
+  Rotate_log_event(const char* buf, uint32_t event_len,
                    const Format_description_log_event* description_event);
   ~Rotate_log_event()
   {
     if (flags & DUP_NAME)
-      my_free((uchar*) new_log_ident, MYF(MY_ALLOW_ZERO_PTR));
+      free((unsigned char*) new_log_ident);
   }
   Log_event_type get_type_code() { return ROTATE_EVENT;}
   int get_data_size() { return  ident_len + ROTATE_HEADER_LEN;}
   bool is_valid() const { return new_log_ident != 0; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -2553,33 +2345,25 @@ protected:
   */
   bool fake_base;
 public:
-  uchar* block;
+  unsigned char* block;
   const char *event_buf;
-  uint block_len;
-  uint file_id;
+  uint32_t block_len;
+  uint32_t file_id;
   bool inited_from_old;
 
-#ifndef DRIZZLE_CLIENT
   Create_file_log_event(THD* thd, sql_exchange* ex, const char* db_arg,
 			const char* table_name_arg,
 			List<Item>& fields_arg,
 			enum enum_duplicates handle_dup, bool ignore,
-			uchar* block_arg, uint block_len_arg,
+			unsigned char* block_arg, uint32_t block_len_arg,
 			bool using_trans);
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info,
-             bool enable_local);
-#endif
 
-  Create_file_log_event(const char* buf, uint event_len,
+  Create_file_log_event(const char* buf, uint32_t event_len,
                         const Format_description_log_event* description_event);
   ~Create_file_log_event()
   {
-    my_free((char*) event_buf, MYF(MY_ALLOW_ZERO_PTR));
+    free((char*) event_buf);
   }
 
   Log_event_type get_type_code()
@@ -2593,7 +2377,6 @@ public:
 	    4 + 1 + block_len);
   }
   bool is_valid() const { return inited_from_old || block != 0; }
-#ifndef DRIZZLE_CLIENT
   bool write_data_header(IO_CACHE* file);
   bool write_data_body(IO_CACHE* file);
   /*
@@ -2601,12 +2384,9 @@ public:
     write it as Load event - used on the slave
   */
   bool write_base(IO_CACHE* file);
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 };
 
 
@@ -2619,9 +2399,9 @@ private:
 class Append_block_log_event: public Log_event
 {
 public:
-  uchar* block;
-  uint block_len;
-  uint file_id;
+  unsigned char* block;
+  uint32_t block_len;
+  uint32_t file_id;
   /*
     'db' is filled when the event is created in mysql_load() (the
     event needs to have a 'db' member to be well filtered by
@@ -2635,33 +2415,23 @@ public:
   */
   const char* db;
 
-#ifndef DRIZZLE_CLIENT
-  Append_block_log_event(THD* thd, const char* db_arg, uchar* block_arg,
-			 uint block_len_arg, bool using_trans);
-#ifdef HAVE_REPLICATION
+  Append_block_log_event(THD* thd, const char* db_arg, unsigned char* block_arg,
+			 uint32_t block_len_arg, bool using_trans);
   void pack_info(Protocol* protocol);
   virtual int get_create_or_append() const;
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
-  Append_block_log_event(const char* buf, uint event_len,
+  Append_block_log_event(const char* buf, uint32_t event_len,
                          const Format_description_log_event
                          *description_event);
   ~Append_block_log_event() {}
   Log_event_type get_type_code() { return APPEND_BLOCK_EVENT;}
   int get_data_size() { return  block_len + APPEND_BLOCK_HEADER_LEN ;}
   bool is_valid() const { return block != 0; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 };
 
 
@@ -2674,35 +2444,23 @@ private:
 class Delete_file_log_event: public Log_event
 {
 public:
-  uint file_id;
+  uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-#ifndef DRIZZLE_CLIENT
   Delete_file_log_event(THD* thd, const char* db_arg, bool using_trans);
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info,
-             bool enable_local);
-#endif
 
-  Delete_file_log_event(const char* buf, uint event_len,
+  Delete_file_log_event(const char* buf, uint32_t event_len,
                         const Format_description_log_event* description_event);
   ~Delete_file_log_event() {}
   Log_event_type get_type_code() { return DELETE_FILE_EVENT;}
   int get_data_size() { return DELETE_FILE_HEADER_LEN ;}
   bool is_valid() const { return file_id != 0; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 };
 
 
@@ -2715,34 +2473,24 @@ private:
 class Execute_load_log_event: public Log_event
 {
 public:
-  uint file_id;
+  uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-#ifndef DRIZZLE_CLIENT
   Execute_load_log_event(THD* thd, const char* db_arg, bool using_trans);
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-#endif
 
-  Execute_load_log_event(const char* buf, uint event_len,
+  Execute_load_log_event(const char* buf, uint32_t event_len,
                          const Format_description_log_event
                          *description_event);
   ~Execute_load_log_event() {}
   Log_event_type get_type_code() { return EXEC_LOAD_EVENT;}
   int get_data_size() { return  EXEC_LOAD_HEADER_LEN ;}
   bool is_valid() const { return file_id != 0; }
-#ifndef DRIZZLE_CLIENT
   bool write(IO_CACHE* file);
   const char* get_db() { return db; }
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 };
 
 
@@ -2758,24 +2506,18 @@ private:
 class Begin_load_query_log_event: public Append_block_log_event
 {
 public:
-#ifndef DRIZZLE_CLIENT
   Begin_load_query_log_event(THD* thd_arg, const char *db_arg,
-                             uchar* block_arg, uint block_len_arg,
+                             unsigned char* block_arg, uint32_t block_len_arg,
                              bool using_trans);
-#ifdef HAVE_REPLICATION
   Begin_load_query_log_event(THD* thd);
   int get_create_or_append() const;
-#endif /* HAVE_REPLICATION */
-#endif
-  Begin_load_query_log_event(const char* buf, uint event_len,
+  Begin_load_query_log_event(const char* buf, uint32_t event_len,
                              const Format_description_log_event
                              *description_event);
   ~Begin_load_query_log_event() {}
   Log_event_type get_type_code() { return BEGIN_LOAD_QUERY_EVENT; }
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 };
 
 
@@ -2797,10 +2539,10 @@ enum enum_load_dup_handling { LOAD_DUP_ERROR= 0, LOAD_DUP_IGNORE,
 class Execute_load_query_log_event: public Query_log_event
 {
 public:
-  uint file_id;       // file_id of temporary file
-  uint fn_pos_start;  // pointer to the part of the query that should
+  uint32_t file_id;       // file_id of temporary file
+  uint32_t fn_pos_start;  // pointer to the part of the query that should
                       // be substituted
-  uint fn_pos_end;    // pointer to the end of this part of query
+  uint32_t fn_pos_end;    // pointer to the end of this part of query
   /*
     We have to store type of duplicate handling explicitly, because
     for LOAD DATA it also depends on LOCAL option. And this part
@@ -2809,24 +2551,15 @@ public:
   */
   enum_load_dup_handling dup_handling;
 
-#ifndef DRIZZLE_CLIENT
   Execute_load_query_log_event(THD* thd, const char* query_arg,
-                               ulong query_length, uint fn_pos_start_arg,
-                               uint fn_pos_end_arg,
+                               ulong query_length, uint32_t fn_pos_start_arg,
+                               uint32_t fn_pos_end_arg,
                                enum_load_dup_handling dup_handling_arg,
                                bool using_trans, bool suppress_use,
                                THD::killed_state
                                killed_err_arg= THD::KILLED_NO_VALUE);
-#ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
-#endif /* HAVE_REPLICATION */
-#else
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-  /* Prints the query as LOAD DATA LOCAL and with rewritten filename */
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info,
-	     const char *local_fname);
-#endif
-  Execute_load_query_log_event(const char* buf, uint event_len,
+  Execute_load_query_log_event(const char* buf, uint32_t event_len,
                                const Format_description_log_event
                                *description_event);
   ~Execute_load_query_log_event() {}
@@ -2835,42 +2568,14 @@ public:
   bool is_valid() const { return Query_log_event::is_valid() && file_id != 0; }
 
   ulong get_post_header_size_for_derived();
-#ifndef DRIZZLE_CLIENT
   bool write_post_header_for_derived(IO_CACHE* file);
-#endif
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 };
 
 
-#ifdef DRIZZLE_CLIENT
-/**
-  @class Unknown_log_event
-
-  @section Unknown_log_event_binary_format Binary Format
-*/
-class Unknown_log_event: public Log_event
-{
-public:
-  /*
-    Even if this is an unknown event, we still pass description_event to
-    Log_event's ctor, this way we can extract maximum information from the
-    event's header (the unique ID for example).
-  */
-  Unknown_log_event(const char* buf,
-                    const Format_description_log_event *description_event):
-    Log_event(buf, description_event)
-  {}
-  ~Unknown_log_event() {}
-  void print(FILE* file, PRINT_EVENT_INFO* print_event_info);
-  Log_event_type get_type_code() { return UNKNOWN_EVENT;}
-  bool is_valid() const { return 1; }
-};
-#endif
-char *str_to_hex(char *to, const char *from, uint len);
+char *str_to_hex(char *to, const char *from, uint32_t len);
 
 /**
   @class Table_map_log_event
@@ -3163,14 +2868,10 @@ public:
   void clear_flags(flag_set flag) { m_flags &= ~flag; }
   flag_set get_flags(flag_set flag) const { return m_flags & flag; }
 
-#ifndef DRIZZLE_CLIENT
   Table_map_log_event(THD *thd, Table *tbl, ulong tid, 
 		      bool is_transactional, uint16_t flags);
-#endif
-#ifdef HAVE_REPLICATION
-  Table_map_log_event(const char *buf, uint event_len, 
+  Table_map_log_event(const char *buf, uint32_t event_len, 
                       const Format_description_log_event *description_event);
-#endif
 
   ~Table_map_log_event();
 
@@ -3178,52 +2879,38 @@ public:
   virtual bool is_valid() const { return m_memory != NULL; /* we check malloc */ }
 
   virtual int get_data_size() { return m_data_size; } 
-#ifndef DRIZZLE_CLIENT
   virtual int save_field_metadata();
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
   virtual const char *get_db() { return m_dbnam; }
-#endif
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual void pack_info(Protocol *protocol);
-#endif
-
-#ifdef DRIZZLE_CLIENT
-  virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
-#endif
-
 
 private:
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-#endif
 
-#ifndef DRIZZLE_CLIENT
   Table         *m_table;
-#endif
   char const    *m_dbnam;
   size_t         m_dblen;
   char const    *m_tblnam;
   size_t         m_tbllen;
   ulong          m_colcnt;
-  uchar         *m_coltype;
+  unsigned char         *m_coltype;
 
-  uchar         *m_memory;
+  unsigned char         *m_memory;
   ulong          m_table_id;
   flag_set       m_flags;
 
   size_t         m_data_size;
 
-  uchar          *m_field_metadata;        // buffer for field metadata
+  unsigned char          *m_field_metadata;        // buffer for field metadata
   /*
     The size of field metadata buffer set by calling save_field_metadata()
   */
   ulong          m_field_metadata_size;   
-  uchar         *m_null_bits;
-  uchar         *m_meta_memory;
+  unsigned char         *m_null_bits;
+  unsigned char         *m_meta_memory;
 };
 
 
@@ -3297,21 +2984,12 @@ public:
   void clear_flags(flag_set flags_arg) { m_flags &= ~flags_arg; }
   flag_set get_flags(flag_set flags_arg) const { return m_flags & flags_arg; }
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual void pack_info(Protocol *protocol);
-#endif
 
-#ifdef DRIZZLE_CLIENT
-  /* not for direct call, each derived has its own ::print() */
-  virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info)= 0;
-#endif
-
-#ifndef DRIZZLE_CLIENT
-  int add_row_data(uchar *data, size_t length)
+  int add_row_data(unsigned char *data, size_t length)
   {
     return do_add_row_data(data,length); 
   }
-#endif
 
   /* Member functions to implement superclass interface */
   virtual int get_data_size();
@@ -3320,11 +2998,9 @@ public:
   size_t get_width() const          { return m_width; }
   ulong get_table_id() const        { return m_table_id; }
 
-#ifndef DRIZZLE_CLIENT
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
   virtual const char *get_db() { return m_table->s->db.str; }
-#endif
   /*
     Check that malloc() succeeded in allocating memory for the rows
     buffer and the COLS vector. Checking that an Update_rows_log_event
@@ -3336,32 +3012,22 @@ public:
     return m_rows_buf && m_cols.bitmap;
   }
 
-  uint     m_row_count;         /* The number of rows added to the event */
+  uint32_t     m_row_count;         /* The number of rows added to the event */
 
 protected:
   /* 
      The constructors are protected since you're supposed to inherit
      this class, not create instances of this class.
   */
-#ifndef DRIZZLE_CLIENT
   Rows_log_event(THD*, Table*, ulong table_id, 
 		 MY_BITMAP const *cols, bool is_transactional);
-#endif
-  Rows_log_event(const char *row_data, uint event_len, 
+  Rows_log_event(const char *row_data, uint32_t event_len, 
 		 Log_event_type event_type,
 		 const Format_description_log_event *description_event);
 
-#ifdef DRIZZLE_CLIENT
-  void print_helper(FILE *, PRINT_EVENT_INFO *, char const *const name);
-#endif
+  virtual int do_add_row_data(unsigned char *data, size_t length);
 
-#ifndef DRIZZLE_CLIENT
-  virtual int do_add_row_data(uchar *data, size_t length);
-#endif
-
-#ifndef DRIZZLE_CLIENT
   Table *m_table;		/* The table the rows belong to */
-#endif
   ulong       m_table_id;	/* Table ID */
   MY_BITMAP   m_cols;		/* Bitmap denoting columns available */
   ulong       m_width;          /* The width of the columns bitmap */
@@ -3380,18 +3046,17 @@ protected:
   uint32_t    m_bitbuf[128/(sizeof(uint32_t)*8)];
   uint32_t    m_bitbuf_ai[128/(sizeof(uint32_t)*8)];
 
-  uchar    *m_rows_buf;		/* The rows in packed format */
-  uchar    *m_rows_cur;		/* One-after the end of the data */
-  uchar    *m_rows_end;		/* One-after the end of the allocated space */
+  unsigned char    *m_rows_buf;		/* The rows in packed format */
+  unsigned char    *m_rows_cur;		/* One-after the end of the data */
+  unsigned char    *m_rows_end;		/* One-after the end of the allocated space */
 
   flag_set m_flags;		/* Flags for row-level events */
 
   /* helper functions */
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
-  const uchar *m_curr_row;     /* Start of the row being processed */
-  const uchar *m_curr_row_end; /* One-after the end of the current row */
-  uchar    *m_key;      /* Buffer to keep key value during searches */
+  const unsigned char *m_curr_row;     /* Start of the row being processed */
+  const unsigned char *m_curr_row_end; /* One-after the end of the current row */
+  unsigned char    *m_key;      /* Buffer to keep key value during searches */
 
   int find_row(const Relay_log_info *const);
   int write_row(const Relay_log_info *const, const bool);
@@ -3409,11 +3074,9 @@ protected:
     ASSERT_OR_RETURN_ERROR(m_curr_row_end <= m_rows_end, HA_ERR_CORRUPT_EVENT);
     return result;
   }
-#endif
 
 private:
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
   virtual int do_update_pos(Relay_log_info *rli);
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
@@ -3468,7 +3131,6 @@ private:
       
   */
   virtual int do_exec_row(const Relay_log_info *const rli) = 0;
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
   friend class Old_rows_log_event;
 };
@@ -3491,37 +3153,25 @@ public:
     TYPE_CODE = WRITE_ROWS_EVENT
   };
 
-#if !defined(DRIZZLE_CLIENT)
   Write_rows_log_event(THD*, Table*, ulong table_id, 
 		       bool is_transactional);
-#endif
-#ifdef HAVE_REPLICATION
-  Write_rows_log_event(const char *buf, uint event_len, 
+  Write_rows_log_event(const char *buf, uint32_t event_len, 
                        const Format_description_log_event *description_event);
-#endif
-#if !defined(DRIZZLE_CLIENT) 
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record
+                                          const unsigned char *before_record
                                           __attribute__((unused)),
-                                          const uchar *after_record)
+                                          const unsigned char *after_record)
   {
     return thd->binlog_write_row(table, is_transactional, after_record);
   }
-#endif
 
 private:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef DRIZZLE_CLIENT
-  void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
-#endif
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
-#endif
 };
 
 
@@ -3546,30 +3196,24 @@ public:
     TYPE_CODE = UPDATE_ROWS_EVENT
   };
 
-#ifndef DRIZZLE_CLIENT
   Update_rows_log_event(THD*, Table*, ulong table_id,
                         bool is_transactional);
 
   void init(MY_BITMAP const *cols);
-#endif
 
   virtual ~Update_rows_log_event();
 
-#ifdef HAVE_REPLICATION
-  Update_rows_log_event(const char *buf, uint event_len, 
+  Update_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
-#endif
 
-#if !defined(DRIZZLE_CLIENT) 
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record,
-                                          const uchar *after_record)
+                                          const unsigned char *before_record,
+                                          const unsigned char *after_record)
   {
     return thd->binlog_update_row(table, is_transactional,
                                   before_record, after_record);
   }
-#endif
 
   virtual bool is_valid() const
   {
@@ -3579,15 +3223,9 @@ public:
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef DRIZZLE_CLIENT
-  void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
-#endif
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 };
 
 /**
@@ -3619,37 +3257,25 @@ public:
     TYPE_CODE = DELETE_ROWS_EVENT
   };
 
-#ifndef DRIZZLE_CLIENT
   Delete_rows_log_event(THD*, Table*, ulong, 
 			bool is_transactional);
-#endif
-#ifdef HAVE_REPLICATION
-  Delete_rows_log_event(const char *buf, uint event_len, 
+  Delete_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
-#endif
-#if !defined(DRIZZLE_CLIENT) 
   static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
-                                          const uchar *before_record,
-                                          const uchar *after_record
+                                          const unsigned char *before_record,
+                                          const unsigned char *after_record
                                           __attribute__((unused)))
   {
     return thd->binlog_delete_row(table, is_transactional, before_record);
   }
-#endif
   
 protected:
   virtual Log_event_type get_type_code() { return (Log_event_type)TYPE_CODE; }
 
-#ifdef DRIZZLE_CLIENT
-  void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
-#endif
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_before_row_operations(const Slave_reporting_capability *const);
   virtual int do_after_row_operations(const Slave_reporting_capability *const,int);
   virtual int do_exec_row(const Relay_log_info *const);
-#endif
 };
 
 
@@ -3691,7 +3317,6 @@ protected:
 */
 class Incident_log_event : public Log_event {
 public:
-#ifndef DRIZZLE_CLIENT
   Incident_log_event(THD *thd_arg, Incident incident)
     : Log_event(thd_arg, 0, false), m_incident(incident)
   {
@@ -3706,24 +3331,15 @@ public:
     m_message= msg;
     return;
   }
-#endif
 
-#ifndef DRIZZLE_CLIENT
   void pack_info(Protocol*);
-#endif
 
-  Incident_log_event(const char *buf, uint event_len,
+  Incident_log_event(const char *buf, uint32_t event_len,
                      const Format_description_log_event *descr_event);
 
   virtual ~Incident_log_event();
 
-#ifdef DRIZZLE_CLIENT
-  virtual void print(FILE *file, PRINT_EVENT_INFO *print_event_info);
-#endif
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_apply_event(Relay_log_info const *rli);
-#endif
 
   virtual bool write_data_header(IO_CACHE *file);
   virtual bool write_data_body(IO_CACHE *file);
@@ -3753,7 +3369,6 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
     reinit_io_cache(cache, WRITE_CACHE, 0, false, true);
 }
 
-#ifndef DRIZZLE_CLIENT
 /*****************************************************************************
 
   Heartbeat Log Event class
@@ -3772,7 +3387,7 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
 class Heartbeat_log_event: public Log_event
 {
 public:
-  Heartbeat_log_event(const char* buf, uint event_len,
+  Heartbeat_log_event(const char* buf, uint32_t event_len,
                       const Format_description_log_event* description_event);
   Log_event_type get_type_code() { return HEARTBEAT_LOG_EVENT; }
   bool is_valid() const
@@ -3781,13 +3396,12 @@ public:
               log_pos >= BIN_LOG_HEADER_SIZE);
     }
   const char * get_log_ident() { return log_ident; }
-  uint get_ident_len() { return ident_len; }
+  uint32_t get_ident_len() { return ident_len; }
   
 private:
   const char* log_ident;
-  uint ident_len;
+  uint32_t ident_len;
 };
-#endif
 
 /**
   @} (end of group Replication)

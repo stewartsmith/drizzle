@@ -7,10 +7,10 @@
 # space small, and this test verifies that the reservation is not too small.
 
 CREATE TABLE `t_bug21476` (
-  `ID_BOARD` smallint(5) unsigned NOT NULL default '0',
-  `ID_MEMBER` mediumint(8) unsigned NOT NULL default '0',
-  `logTime` int(10) unsigned NOT NULL default '0',
-  `ID_MSG` mediumint(8) unsigned NOT NULL default '0',
+  `ID_BOARD` int(5) NOT NULL default '0',
+  `ID_MEMBER` mediumint(8) NOT NULL default '0',
+  `logTime` int(10) NOT NULL default '0',
+  `ID_MSG` mediumint(8) NOT NULL default '0',
   PRIMARY KEY  (`ID_MEMBER`,`ID_BOARD`),
   KEY `logTime` (`logTime`)
 ) ENGINE=MyISAM DEFAULT CHARSET=cp1251 COLLATE=cp1251_bulgarian_ci;

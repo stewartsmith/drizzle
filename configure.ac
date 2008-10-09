@@ -7,15 +7,46 @@ AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
+
+# Save some variables and the command line options for mysqlbug
+SAVE_CC="$CC"
+SAVE_CXX="$CXX"
+SAVE_ASFLAGS="$ASFLAGS"
+SAVE_CFLAGS="$CFLAGS"
+SAVE_CXXFLAGS="$CXXFLAGS"
+SAVE_LDFLAGS="$LDFLAGS"
+SAVE_CXXLDFLAGS="$CXXLDFLAGS"
+CONF_COMMAND="$0 $ac_configure_args"
+AC_SUBST(CONF_COMMAND)
+AC_SUBST(SAVE_CC)
+AC_SUBST(SAVE_CXX)
+AC_SUBST(SAVE_ASFLAGS)
+AC_SUBST(SAVE_CFLAGS)
+AC_SUBST(SAVE_CXXFLAGS)
+AC_SUBST(SAVE_LDFLAGS)
+AC_SUBST(SAVE_CXXLDFLAGS)
+AC_SUBST(CXXLDFLAGS)
+
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(-Wall -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
 # See the libtool docs for information on how to do shared lib versions.
-SHARED_LIB_MAJOR_VERSION=16
+SHARED_LIB_MAJOR_VERSION=1
 SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
 
+
+dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
+dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
+if test "x${CFLAGS}" = "x-g -O2"
+then
+  CFLAGS=
+fi
+if test "x${CXXFLAGS}" = "x-g -O2"
+then
+  CXXFLAGS=
+fi
 
 
 # Set all version vars based on $VERSION. How do we do this more elegant ?
@@ -37,27 +68,8 @@ DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
 # The port should be constant for a LONG time
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-dnl Include m4 
-sinclude(m4/alloca.m4)
-sinclude(m4/check_cpu.m4)
-sinclude(m4/character_sets.m4)
-sinclude(m4/compiler_flag.m4)
 sinclude(m4/dtrace.m4)
-sinclude(m4/plugins.m4)
-sinclude(m4/large_file.m4)
-sinclude(m4/misc.m4)
-sinclude(m4/readline.m4)
-sinclude(m4/ssl.m4)
-sinclude(m4/pkg.m4)
-sinclude(m4/lib-link.m4)
-sinclude(m4/lib-prefix.m4)
-sinclude(m4/gettext.m4)
-sinclude(m4/progtest.m4)
-sinclude(m4/po.m4)
-sinclude(m4/nls.m4)
-sinclude(m4/iconv.m4)
-sinclude(m4/lib-ld.m4)
-sinclude(m4/ac_cxx_header_stdcxx_98.m4)
+sinclude(m4/character_sets.m4)
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
@@ -77,6 +89,70 @@ AC_DEFINE_UNQUOTED([DOT_FRM_VERSION], [$DOT_FRM_VERSION],
 AC_SUBST(SHARED_LIB_MAJOR_VERSION)
 AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
+
+# General Constants
+AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and 
+  a multiple of 512. May be
+  smaller what the disk page size. This influences the speed of the
+  isam btree library. eg to big to slow.])
+AC_DEFINE([SC_MAXWIDTH],[256], [Max width of screen (for error messages)])
+AC_DEFINE([FN_LEN],[256	], [Max file name len ])
+AC_DEFINE([FN_HEADLEN],[253], [Max length of filepart of file name ])
+AC_DEFINE([FN_EXTLEN],[20], [Max length of extension (part of FN_LEN) ])
+AC_DEFINE([FN_REFLEN],[512], [Max length of full path-name ])
+AC_DEFINE([FN_EXTCHAR],['.'], [File extension character])
+AC_DEFINE([FN_HOMELIB],['~'], [~/ is used as abbrev for home dir ])
+AC_DEFINE([FN_CURLIB],['.'], [./ is used as abbrev for current dir ])
+AC_DEFINE([FN_PARENTDIR],[".."], [Parent directory; Must be a string ])
+
+AC_DEFINE([MASTER],[1],[Compile without unireg])
+
+AH_VERBATIM([QUOTE_ARG],[
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+])
+
+AH_VERBATIM([builtin_expect],[
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+])
+
+dnl  InnoDB depends on some Drizzle's internals which other plugins should not
+dnl  need.  This is because of InnoDB's foreign key support, "safe" binlog
+dnl  truncation, and other similar legacy features.
+
+dnl  We define accessors for these internals unconditionally, but do not
+dnl  expose them in mysql/plugin.h.  They are declared in ha_innodb.h for
+dnl  InnoDB's use.
+
+AC_DEFINE([INNODB_COMPATIBILITY_HOOKS],[1],[TODO: Remove the need for this])
+dnl TODO: Make a test for when this needs to be set.
+AC_DEFINE([_REENTRANT],[1],[Some thread libraries require this])
+
+AH_VERBATIM([posix_pthread],[
+/* We want posix threads */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
+])
 
 
 # Canonicalize the configuration name.
@@ -104,25 +180,6 @@ BASE_MACHINE_TYPE=$MACHINE_TYPE
 case $MACHINE_TYPE in
   i?86) BASE_MACHINE_TYPE=i386 ;;
 esac
-
-# Save some variables and the command line options for mysqlbug
-SAVE_CC="$CC"
-SAVE_CXX="$CXX"
-SAVE_ASFLAGS="$ASFLAGS"
-SAVE_CFLAGS="$CFLAGS"
-SAVE_CXXFLAGS="$CXXFLAGS"
-SAVE_LDFLAGS="$LDFLAGS"
-SAVE_CXXLDFLAGS="$CXXLDFLAGS"
-CONF_COMMAND="$0 $ac_configure_args"
-AC_SUBST(CONF_COMMAND)
-AC_SUBST(SAVE_CC)
-AC_SUBST(SAVE_CXX)
-AC_SUBST(SAVE_ASFLAGS)
-AC_SUBST(SAVE_CFLAGS)
-AC_SUBST(SAVE_CXXFLAGS)
-AC_SUBST(SAVE_LDFLAGS)
-AC_SUBST(SAVE_CXXLDFLAGS)
-AC_SUBST(CXXLDFLAGS)
 
 AM_SANITY_CHECK
 # This is needed is SUBDIRS is set
@@ -152,16 +209,10 @@ fi
 
 ################ End of section to be done before AC_PROG_CC #################
 
-# The following hack should ensure that configure doesn't add optimizing
-# or debugging flags to CFLAGS or CXXFLAGS
-# C_EXTRA_FLAGS are flags that are automaticly added to both
-# CFLAGS and CXXFLAGS
-CFLAGS="$CFLAGS $C_EXTRA_FLAGS "
-CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
-
 dnl Checks for programs.
 AC_PROG_CC
 ifdef([AC_PROG_CC_C99],[
+  dnl TODO: Need to fix this to use c99 instead of gnu99
   AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
@@ -173,6 +224,11 @@ then
 fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
+
+AC_CXX_STL_HASH
+AC_CXX_CSTDINT
+AC_CXX_CINTTYPES
+AC_CXX_CMATH
 
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in
@@ -191,6 +247,18 @@ else
 CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
+
+dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
+dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
+if test "x${CFLAGS}" = "x-g -O2"
+then
+  CFLAGS=
+fi
+if test "x${CXXFLAGS}" = "x-g -O2"
+then
+  CXXFLAGS=
+fi
+
 DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
@@ -202,6 +270,40 @@ then
 else
   AC_PATH_PROG(AS, as, as)
 fi
+
+dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
+if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
+then
+  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
+fi
+
+dnl  Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
+
+dnl  System Interfaces and Headers, Issue 5
+
+dnl  saying we should define _XOPEN_SOURCE=500 to get POSIX.1c prototypes,
+dnl  but apparently other systems (namely FreeBSD) don't agree.
+
+dnl  On a newer Solaris 10, the above file recognizes also _XOPEN_SOURCE=600.
+dnl  Furthermore, it tests that if a program requires older standard
+dnl  (_XOPEN_SOURCE<600 or _POSIX_C_SOURCE<200112L) it cannot be
+dnl  run on a new compiler (that defines _STDC_C99) and issues an #error.
+dnl  It's also an #error if a program requires new standard (_XOPEN_SOURCE=600
+dnl  or _POSIX_C_SOURCE=200112L) and a compiler does not define _STDC_C99.
+
+dnl  To add more to this mess, Sun Studio C compiler defines _STDC_C99 while
+dnl  C++ compiler does not!
+
+dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
+dnl       Need for all of this? 
+case "$target_os" in
+  *solaris*)
+  dnl Do we need both of these? 
+  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  ;;
+esac
+
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
@@ -277,7 +379,7 @@ if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions"
 fi
 
 DRIZZLE_PROG_AR
@@ -584,7 +686,7 @@ then
   FIND_PROC="$PS \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
 else
   case $SYSTEM_TYPE in
-    *freebsd*|*dragonfly*)
+    *freebsd*|*dragonfly*|*cygwin*)
       FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
       ;;
     *darwin*)
@@ -741,7 +843,6 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
 
 AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
-AC_CHECK_FUNCS(log2)
 
 AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
 AC_CHECK_FUNC(yp_get_default_domain, [],
@@ -765,10 +866,6 @@ then
   AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
-AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
-                uchar, uint, ulong],[],[], [
-#include <sys/types.h>
-])
 AC_CHECK_TYPES([fp_except], [], [], [
 #include <sys/types.h>
 #include <ieeefp.h>
@@ -788,76 +885,6 @@ AC_SUBST(LIBDL_LIBS)
 
 AC_CHECK_FUNCS(strtok_r)
 
-# Build optimized or debug version ?
-# First check for gcc and g++
-if test "$ac_cv_c_compiler_gnu" = "yes"
-then
-  SYMBOLS_CFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
-  OPTIMIZE_CFLAGS="-O3"
-else
-  SYMBOLS_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-O"
-fi
-if test "$ac_cv_prog_cxx_g" = "yes"
-then
-  SYMBOLS_CXXFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CXX="-O0"
-  OPTIMIZE_CXXFLAGS="-O3"
-else
-  SYMBOLS_CXXFLAGS="-g"
-  DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-O"
-fi
-
-# If the user specified CFLAGS, we won't add any optimizations
-if test -n "$SAVE_CFLAGS"
-then
-  OPTIMIZE_CFLAGS=""
-  DEBUG_OPTIMIZE_CC=""
-fi
-# Ditto for CXXFLAGS
-if test -n "$SAVE_CXXFLAGS"
-then
-  OPTIMIZE_CXXFLAGS=""
-  DEBUG_OPTIMIZE_CXX=""
-fi
-
-dnl TODO: Remove this define once we are using 2.61 across the board.
-# AC_HEADER_ASSERT
-# ----------------
-# Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
-[
-  AC_MSG_CHECKING([whether to enable assertions])
-  AC_ARG_ENABLE([assert],
-    [  --disable-assert        turn off assertions],
-    [AC_MSG_RESULT([no])
-     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
-    [AC_MSG_RESULT(yes)])
-])])
-
-AC_HEADER_ASSERT
-
-CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
-
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
-else
-  # Optimized version. No debug
-  CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
-fi
 
 
 AC_ARG_WITH([fast-mutexes],
@@ -915,16 +942,6 @@ if test "$ac_cv_sizeof_int" -eq 0
 then
   AC_MSG_ERROR("No size for int type.")
 fi
-AC_CHECK_SIZEOF(long, 4)
-if test "$ac_cv_sizeof_long" -eq 0
-then
-  AC_MSG_ERROR("No size for long type.")
-fi
-AC_CHECK_SIZEOF(long long, 8)
-if test "$ac_cv_sizeof_long_long" -eq 0
-then
-  AC_MSG_ERROR("Drizzle needs a long long type.")
-fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0
@@ -948,7 +965,13 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
 #error USE_PRAGMA_IMPLEMENTATION
 #endif
-]])],[AC_MSG_RESULT(no) ],[AC_MSG_RESULT(yes) ; CXXFLAGS="$CXXFLAGS -DUSE_PRAGMA_IMPLEMENTATION"])
+]])],[
+  AC_MSG_RESULT(no)
+],[
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION,[1],[pragma implementation is a good idea])
+  AC_DEFINE(USE_PRAGMA_INTERFACE,[1],[pragma interface is a good idea])
+])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
@@ -970,7 +993,6 @@ DRIZZLE_TZNAME
 DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
-AC_CHECK_TYPES([u_int32_t])
 
 DRIZZLE_PTHREAD_YIELD
 
@@ -1001,7 +1023,7 @@ MAKE_SHELL=/bin/sh
 AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
-AC_CHECK_HEADERS(varargs.h stdarg.h dirent.h locale.h ndir.h sys/dir.h \
+AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
  sys/file.h sys/ndir.h sys/ptem.h sys/pte.h sys/select.h sys/stream.h \
  sys/mman.h curses.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
 paths.h semaphore.h)
@@ -1068,12 +1090,11 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([stpcpy stpncpy])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
-  getcwd getpass getpassphrase getpwnam \
+  getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \
@@ -1083,7 +1104,7 @@ AC_CHECK_FUNCS(bsearch \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
   pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
-  realpath rename rint rwlock_init setupterm \
+  realpath rename rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
   snprintf socket strcasecmp strerror strsignal strpbrk \
@@ -1298,6 +1319,65 @@ DRIZZLE_CONFIGURE_PLUGINS([none])
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+
+# Build optimized or debug version ?
+# First check for gcc and g++
+if test "$ac_cv_c_compiler_gnu" = "yes"
+then
+  SYMBOLS_CFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O3"
+else
+  SYMBOLS_CFLAGS="-g"
+  DEBUG_OPTIMIZE_CC=""
+  OPTIMIZE_CFLAGS="-O"
+fi
+if test "$ac_cv_prog_cxx_g" = "yes"
+then
+  SYMBOLS_CXXFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O3"
+else
+  SYMBOLS_CXXFLAGS="-g"
+  DEBUG_OPTIMIZE_CXX=""
+  OPTIMIZE_CXXFLAGS="-O"
+fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AC_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [  --disable-assert        turn off assertions],
+    [AC_MSG_RESULT([no])
+     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
+    [AC_MSG_RESULT(yes)])
+])])
+
+AC_HEADER_ASSERT
+
+CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
+#CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
+    [with_debug=$withval],
+    [with_debug=no])
+if test "$with_debug" = "yes"
+then
+  # Medium debug.
+  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS ${SAVE_CFLAGS}"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS ${SAVE_CXXFLAGS}"
+else
+  # Optimized version. No debug
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
+  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
+fi
 
 AC_ARG_ENABLE([profiling],
     [AS_HELP_STRING([--enable-profiling],

@@ -33,7 +33,7 @@
       N  number of bytes read.
 */
 
-size_t my_read(File Filedes, uchar *Buffer, size_t Count, myf MyFlags)
+size_t my_read(File Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
 {
   size_t readbytes, save_count;
   save_count= Count;

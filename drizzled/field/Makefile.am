@@ -20,13 +20,14 @@ noinst_LTLIBRARIES = 	libfield.la
 libfield_la_SOURCES = 	blob.cc \
 			date.cc \
 			datetime.cc \
+			enum.cc \
 			fdecimal.cc \
 			double.cc \
 			int64_t.cc \
 			long.cc \
 			null.cc \
-			short.cc \
 			fstring.cc \
+			real.cc \
 			timestamp.cc \
 			timetype.cc \
 			varstring.cc
@@ -34,13 +35,14 @@ libfield_la_SOURCES = 	blob.cc \
 noinst_HEADERS = blob.h \
 		 date.h \
 		 datetime.h \
+		 enum.h \
 		 fdecimal.h \
 		 double.h \
 		 int64_t.h \
 		 long.h \
 		 null.h \
-		 short.h \
 		 fstring.h \
+		 real.h \
 		 timestamp.h \
 		 timetype.h \
 		 varstring.h

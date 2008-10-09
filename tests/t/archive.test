@@ -14,8 +14,8 @@ SET GLOBAL archive_aio=OFF;
 SHOW VARIABLES LIKE "archive_%";
 
 CREATE TABLE t1 (
-  Period smallint unsigned DEFAULT '0000' NOT NULL,
-  Varor_period smallint unsigned DEFAULT '0' NOT NULL
+  Period int DEFAULT '0000' NOT NULL,
+  Varor_period int DEFAULT '0' NOT NULL
 ) ENGINE=archive;
 
 INSERT INTO t1 VALUES (9410,9412);
@@ -30,8 +30,8 @@ select t1.* FROM t1;
 
 CREATE TABLE t2 (
   auto int,
-  fld1 int unsigned DEFAULT '000000' NOT NULL,
-  companynr tinyint unsigned DEFAULT '00' NOT NULL,
+  fld1 int DEFAULT '000000' NOT NULL,
+  companynr int DEFAULT '00' NOT NULL,
   fld3 char(30) DEFAULT '' NOT NULL,
   fld4 char(35) DEFAULT '' NOT NULL,
   fld5 char(35) DEFAULT '' NOT NULL,

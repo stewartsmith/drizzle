@@ -1,17 +1,21 @@
-/* Copyright (C) 2000 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_SQL_STRING_H
 #define DRIZZLE_SERVER_SQL_STRING_H
@@ -26,17 +30,20 @@
 #define NOT_FIXED_DEC			31
 #endif
 
+#include <libdrizzle/drizzle_com.h>
+#include <mysys/iocache.h>
+
 class String;
 int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
 String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
 uint32_t copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
 			const char *from, uint32_t from_length,
-			const CHARSET_INFO * const from_cs, uint *errors);
+			const CHARSET_INFO * const from_cs, uint32_t *errors);
 uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                               char *to, uint to_length,
+                               char *to, uint32_t to_length,
                                const CHARSET_INFO * const from_cs,
-                               const char *from, uint from_length,
-                               uint nchars,
+                               const char *from, uint32_t from_length,
+                               uint32_t nchars,
                                const char **well_formed_error_pos,
                                const char **cannot_convert_error_pos,
                                const char **from_end_pos);
@@ -161,7 +168,7 @@ public:
   { return set_int(num, false, cs); }
   bool set(uint64_t num, const CHARSET_INFO * const cs)
   { return set_int((int64_t)num, true, cs); }
-  bool set_real(double num,uint decimals, const CHARSET_INFO * const cs);
+  bool set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs);
 
   /*
     PMG 2004.11.12
@@ -196,7 +203,7 @@ public:
     {
       alloced=0;
       Alloced_length=0;
-      my_free(Ptr,MYF(0));
+      ::free(Ptr);
       Ptr=0;
       str_length=0;				/* Safety */
     }
@@ -253,7 +260,7 @@ public:
 		    const CHARSET_INFO * const cs);
   bool set_or_copy_aligned(const char *s, uint32_t arg_length, const CHARSET_INFO * const cs);
   bool copy(const char*s,uint32_t arg_length, const CHARSET_INFO * const csfrom,
-	    const CHARSET_INFO * const csto, uint *errors);
+	    const CHARSET_INFO * const csto, uint32_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,uint32_t arg_length);
@@ -336,7 +343,7 @@ public:
      str_length++;
   }
   void qs_append(int i);
-  void qs_append(uint i);
+  void qs_append(uint32_t i);
 
   /* Inline (general) functions used by the protocol functions */
 

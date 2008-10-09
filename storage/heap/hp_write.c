@@ -28,12 +28,12 @@
 static HASH_INFO *hp_find_free_hash(HP_SHARE *info, HP_BLOCK *block,
 				     uint32_t records);
 
-int heap_write(HP_INFO *info, const uchar *record)
+int heap_write(HP_INFO *info, const unsigned char *record)
 {
   HP_KEYDEF *keydef, *end;
-  uchar *pos;
+  unsigned char *pos;
   HP_SHARE *share=info->s;
-  uint rec_length, chunk_count;
+  uint32_t rec_length, chunk_count;
 
   if ((share->records >= share->max_records && share->max_records) ||
     (share->recordspace.total_data_length + share->index_length >= share->max_table_size))
@@ -94,11 +94,11 @@ err:
   Write a key to rb_tree-index 
 */
 
-int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *record, 
-		    uchar *recpos)
+int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *record, 
+		    unsigned char *recpos)
 {
   heap_rb_param custom_arg;
-  uint old_allocated;
+  uint32_t old_allocated;
 
   custom_arg.keyseg= keyinfo->seg;
   custom_arg.key_length= hp_rb_make_key(keyinfo, info->recbuf, record, recpos);
@@ -149,12 +149,12 @@ int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *record,
 */
 
 int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
-		 const uchar *record, uchar *recpos)
+		 const unsigned char *record, unsigned char *recpos)
 {
   HP_SHARE *share = info->s;
   int flag;
   uint32_t halfbuff,hashnr,first_index;
-  uchar *ptr_to_rec= NULL,*ptr_to_rec2= NULL;
+  unsigned char *ptr_to_rec= NULL,*ptr_to_rec2= NULL;
   HASH_INFO *empty, *gpos= NULL, *gpos2= NULL, *pos;
 
   flag=0;
@@ -343,7 +343,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 static HASH_INFO *hp_find_free_hash(HP_SHARE *info,
 				     HP_BLOCK *block, uint32_t records)
 {
-  uint block_pos;
+  uint32_t block_pos;
   size_t length;
 
   if (records < block->last_allocated)
@@ -355,6 +355,6 @@ static HASH_INFO *hp_find_free_hash(HP_SHARE *info,
     info->index_length+=length;
   }
   block->last_allocated=records+1;
-  return((HASH_INFO*) ((uchar*) block->level_info[0].last_blocks+
+  return((HASH_INFO*) ((unsigned char*) block->level_info[0].last_blocks+
 		       block_pos*block->recbuffer));
 }

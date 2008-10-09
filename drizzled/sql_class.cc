@@ -59,19 +59,19 @@ template class List_iterator<Alter_column>;
 ** User variables
 ****************************************************************************/
 
-extern "C" uchar *get_var_key(user_var_entry *entry, size_t *length,
+extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
                               bool not_used __attribute__((unused)))
 {
   *length= entry->name.length;
-  return (uchar*) entry->name.str;
+  return (unsigned char*) entry->name.str;
 }
 
 extern "C" void free_user_var(user_var_entry *entry)
 {
   char *pos= (char*) entry+ALIGN_SIZE(sizeof(*entry));
   if (entry->value && entry->value != pos)
-    my_free(entry->value, MYF(0));
-  my_free((char*) entry,MYF(0));
+    free(entry->value);
+  free((char*) entry);
 }
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
@@ -411,7 +411,7 @@ Diagnostics_area::set_eof_status(THD *thd)
 
 void
 Diagnostics_area::set_error_status(THD *thd __attribute__((unused)),
-                                   uint sql_errno_arg,
+                                   uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
   /*
@@ -451,11 +451,11 @@ Diagnostics_area::disable_status()
 
 
 THD::THD()
-   :Statement(&main_lex, &main_mem_root, CONVENTIONAL_EXECUTION,
+   :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
    Open_tables_state(refresh_version), rli_fake(0),
    lock_id(&main_lock_id),
-   user_time(0), in_sub_stmt(0),
+   user_time(0),
    binlog_table_maps(0), binlog_flags(0UL),
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
@@ -481,7 +481,6 @@ THD::THD()
     will be re-initialized in init_for_queries().
   */
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-  stmt_arena= this;
   thread_stack= 0;
   catalog= (char*)"std"; // the only catalog we have for now
   main_security_ctx.init();
@@ -516,7 +515,6 @@ THD::THD()
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var=0;
   binlog_evt_union.do_union= false;
-  enable_slow_log= 0;
   dbug_sentry=THD_SENTRY_MAGIC;
   net.vio=0;
   client_capabilities= 0;                       // minimalistic client
@@ -525,9 +523,6 @@ THD::THD()
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.m_pending_rows_event= 0;
   transaction.on= 1;
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  active_vio = 0;
-#endif
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -579,7 +574,7 @@ void THD::push_internal_handler(Internal_error_handler *handler)
 }
 
 
-bool THD::handle_error(uint sql_errno, const char *message,
+bool THD::handle_error(uint32_t sql_errno, const char *message,
                        DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
@@ -733,9 +728,9 @@ void THD::cleanup(void)
   delete_dynamic(&user_var_events);
   hash_free(&user_vars);
   close_temporary_tables(this);
-  my_free((char*) variables.time_format, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) variables.date_format, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((char*) variables.datetime_format, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) variables.time_format);
+  free((char*) variables.date_format);
+  free((char*) variables.datetime_format);
   
   if (global_read_lock)
     unlock_global_read_lock(this);
@@ -755,7 +750,7 @@ THD::~THD()
   /* Close connection */
   if (net.vio)
   {
-    vio_delete(net.vio);
+    net_close(&net);
     net_end(&net);
   }
   if (!cleanup_done)
@@ -765,7 +760,11 @@ THD::~THD()
   plugin_thdvar_cleanup(this);
 
   main_security_ctx.destroy();
-  safeFree(db);
+  if (db)
+  {
+    free(db);
+    db= NULL;
+  }
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
@@ -798,7 +797,7 @@ THD::~THD()
 
 void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 {
-  ulong *end= (ulong*) ((uchar*) to_var +
+  ulong *end= (ulong*) ((unsigned char*) to_var +
                         offsetof(STATUS_VAR, last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
@@ -823,7 +822,7 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var)
 {
-  ulong *end= (ulong*) ((uchar*) to_var + offsetof(STATUS_VAR,
+  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(STATUS_VAR,
 						  last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
@@ -844,22 +843,6 @@ void THD::awake(THD::killed_state state_to_set)
     thr_alarm_kill(thread_id);
     if (!slave_thread)
       thread_scheduler.post_kill_notification(this);
-#ifdef SIGNAL_WITH_VIO_CLOSE
-    if (this != current_thd)
-    {
-      /*
-        In addition to a signal, let's close the socket of the thread that
-        is being killed. This is to make sure it does not block if the
-        signal is lost. This needs to be done only on platforms where
-        signals are not a reliable interruption mechanism.
-
-        If we're killing ourselves, we know that we're not blocked, so this
-        hack is not used.
-      */
-
-      close_active_vio();
-    }
-#endif    
   }
   if (mysys_var)
   {
@@ -950,14 +933,7 @@ void THD::cleanup_after_query()
   /*
     Reset rand_used so that detection of calls to rand() will save random 
     seeds if needed by the slave.
-
-    Do not reset rand_used if inside a stored function or trigger because 
-    only the call to these operations is logged. Thus only the calling 
-    statement needs to detect rand() calls made by its substatements. These
-    substatements must not set rand_used to 0 because it would remove the
-    detection of rand() by the calling statement. 
   */
-  if (!in_sub_stmt) /* stored functions and triggers are a special case */
   {
     /* Forget those values, for next binlogger: */
     stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
@@ -991,7 +967,7 @@ void THD::cleanup_after_query()
   @return  NULL on failure, or pointer to the LEX_STRING object
 */
 LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
-                                 const char* str, uint length,
+                                 const char* str, uint32_t length,
                                  bool allocate_lex_string)
 {
   if (allocate_lex_string)
@@ -1025,11 +1001,11 @@ LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
 */
 
 bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-			 const char *from, uint from_length,
+			 const char *from, uint32_t from_length,
 			 const CHARSET_INFO * const from_cs)
 {
   size_t new_length= to_cs->mbmaxlen * from_length;
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (!(to->str= (char*) alloc(new_length+1)))
   {
     to->length= 0;				// Safety fix
@@ -1060,7 +1036,7 @@ bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 bool THD::convert_string(String *s, const CHARSET_INFO * const from_cs,
                          const CHARSET_INFO * const to_cs)
 {
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (convert_buffer.copy(s->ptr(), s->length(), from_cs, to_cs, &dummy_errors))
     return true;
   /* If convert_buffer >> s copying is more efficient long term */
@@ -1210,19 +1186,6 @@ int THD::send_explain_fields(select_result *result)
                               Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
 }
 
-#ifdef SIGNAL_WITH_VIO_CLOSE
-void THD::close_active_vio()
-{
-  safe_mutex_assert_owner(&LOCK_delete); 
-  if (active_vio)
-  {
-    vio_close(active_vio);
-    active_vio = 0;
-  }
-  return;
-}
-#endif
-
 
 struct Item_change_record: public ilink
 {
@@ -1244,7 +1207,7 @@ struct Item_change_record: public ilink
 /*
   Register an item tree tree transformation, performed by the query
   optimizer. We need a pointer to runtime_memroot because it may be !=
-  thd->mem_root (due to possible set_n_backup_active_arena called for thd).
+  thd->mem_root (this may no longer be a true statement)
 */
 
 void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
@@ -1285,26 +1248,6 @@ void THD::rollback_item_tree_changes()
 }
 
 
-/**
-  Check that the endpoint is still available.
-*/
-
-bool THD::vio_is_connected()
-{
-  uint bytes= 0;
-
-  /* End of input is signaled by poll if the socket is aborted. */
-  if (vio_poll_read(net.vio, 0))
-    return true;
-
-  /* Socket is aborted if signaled but no data is available. */
-  if (vio_peek_read(net.vio, &bytes))
-    return true;
-
-  return bytes ? true : false;
-}
-
-
 /*****************************************************************************
 ** Functions to provide a interface to select results
 *****************************************************************************/
@@ -1314,7 +1257,7 @@ select_result::select_result()
   thd=current_thd;
 }
 
-void select_result::send_error(uint errcode,const char *err)
+void select_result::send_error(uint32_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
 }
@@ -1348,7 +1291,7 @@ sql_exchange::sql_exchange(char *name, bool flag,
   cs= NULL;
 }
 
-bool select_send::send_fields(List<Item> &list, uint flags)
+bool select_send::send_fields(List<Item> &list, uint32_t flags)
 {
   bool res;
   if (!(res= thd->protocol->send_fields(&list, flags)))
@@ -1442,7 +1385,7 @@ bool select_send::send_eof()
   Handling writing to file
 ************************************************************************/
 
-void select_to_file::send_error(uint errcode,const char *err)
+void select_to_file::send_error(uint32_t errcode,const char *err)
 {
   my_message(errcode, err, MYF(0));
   if (file > 0)
@@ -1528,7 +1471,7 @@ static File create_file(THD *thd, char *path, sql_exchange *exchange,
 			IO_CACHE *cache)
 {
   File file;
-  uint option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
+  uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
   option|= MY_REPLACE_DIR;			// Force use of db directory
@@ -1537,7 +1480,7 @@ static File create_file(THD *thd, char *path, sql_exchange *exchange,
   if (!dirname_length(exchange->file_name))
   {
     strxnmov(path, FN_REFLEN-1, mysql_real_data_home, thd->db ? thd->db : "",
-             NullS);
+             NULL);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
   else
@@ -1604,17 +1547,17 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   }
   field_term_length=exchange->field_term->length();
   field_term_char= field_term_length ?
-                   (int) (uchar) (*exchange->field_term)[0] : INT_MAX;
+                   (int) (unsigned char) (*exchange->field_term)[0] : INT_MAX;
   if (!exchange->line_term->length())
     exchange->line_term=exchange->field_term;	// Use this if it exists
   field_sep_char= (exchange->enclosed->length() ?
-                  (int) (uchar) (*exchange->enclosed)[0] : field_term_char);
+                  (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char);
   escape_char=	(exchange->escaped->length() ?
-                (int) (uchar) (*exchange->escaped)[0] : -1);
+                (int) (unsigned char) (*exchange->escaped)[0] : -1);
   is_ambiguous_field_sep= test(strchr(ESCAPE_CHARS, field_sep_char));
   is_unsafe_field_sep= test(strchr(NUMERIC_CHARS, field_sep_char));
   line_sep_char= (exchange->line_term->length() ?
-                 (int) (uchar) (*exchange->line_term)[0] : INT_MAX);
+                 (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX);
   if (!field_term_length)
     exchange->opt_enclosed=0;
   if (!exchange->enclosed->length())
@@ -1637,10 +1580,10 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
 }
 
 
-#define NEED_ESCAPING(x) ((int) (uchar) (x) == escape_char    || \
-                          (enclosed ? (int) (uchar) (x) == field_sep_char      \
-                                    : (int) (uchar) (x) == field_term_char) || \
-                          (int) (uchar) (x) == line_sep_char  || \
+#define NEED_ESCAPING(x) ((int) (unsigned char) (x) == escape_char    || \
+                          (enclosed ? (int) (unsigned char) (x) == field_sep_char      \
+                                    : (int) (unsigned char) (x) == field_term_char) || \
+                          (int) (unsigned char) (x) == line_sep_char  || \
                           !(x))
 
 bool select_export::send_data(List<Item> &items)
@@ -1657,10 +1600,10 @@ bool select_export::send_data(List<Item> &items)
   }
   row_count++;
   Item *item;
-  uint used_length=0,items_left=items.elements;
+  uint32_t used_length=0,items_left=items.elements;
   List_iterator_fast<Item> li(items);
 
-  if (my_b_write(&cache,(uchar*) exchange->line_start->ptr(),
+  if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
 		 exchange->line_start->length()))
     goto err;
   while ((item=li++))
@@ -1671,7 +1614,7 @@ bool select_export::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (res && enclosed)
     {
-      if (my_b_write(&cache,(uchar*) exchange->enclosed->ptr(),
+      if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
 		     exchange->enclosed->length()))
 	goto err;
     }
@@ -1683,10 +1626,10 @@ bool select_export::send_data(List<Item> &items)
 	{
 	  null_buff[0]=escape_char;
 	  null_buff[1]='N';
-	  if (my_b_write(&cache,(uchar*) null_buff,2))
+	  if (my_b_write(&cache,(unsigned char*) null_buff,2))
 	    goto err;
 	}
-	else if (my_b_write(&cache,(uchar*) "NULL",4))
+	else if (my_b_write(&cache,(unsigned char*) "NULL",4))
 	  goto err;
       }
       else
@@ -1697,7 +1640,7 @@ bool select_export::send_data(List<Item> &items)
     else
     {
       if (fixed_row_size)
-	used_length=min(res->length(),item->max_length);
+	used_length=cmin(res->length(),item->max_length);
       else
 	used_length=res->length();
       if ((result_type == STRING_RESULT || is_unsafe_field_sep) &&
@@ -1762,7 +1705,7 @@ bool select_export::send_data(List<Item> &items)
 
           if ((NEED_ESCAPING(*pos) ||
                (check_second_byte &&
-                my_mbcharlen(character_set_client, (uchar) *pos) == 2 &&
+                my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
                 pos + 1 < end &&
                 NEED_ESCAPING(pos[1]))) &&
               /*
@@ -1770,23 +1713,23 @@ bool select_export::send_data(List<Item> &items)
                valid for ENCLOSED BY characters:
               */
               (enclosed || !is_ambiguous_field_term ||
-               (int) (uchar) *pos != field_term_char))
+               (int) (unsigned char) *pos != field_term_char))
           {
 	    char tmp_buff[2];
-            tmp_buff[0]= ((int) (uchar) *pos == field_sep_char &&
+            tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
                           is_ambiguous_field_sep) ?
                           field_sep_char : escape_char;
 	    tmp_buff[1]= *pos ? *pos : '0';
-	    if (my_b_write(&cache,(uchar*) start,(uint) (pos-start)) ||
-		my_b_write(&cache,(uchar*) tmp_buff,2))
+	    if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)) ||
+		my_b_write(&cache,(unsigned char*) tmp_buff,2))
 	      goto err;
 	    start=pos+1;
 	  }
 	}
-	if (my_b_write(&cache,(uchar*) start,(uint) (pos-start)))
+	if (my_b_write(&cache,(unsigned char*) start,(uint) (pos-start)))
 	  goto err;
       }
-      else if (my_b_write(&cache,(uchar*) res->ptr(),used_length))
+      else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
 	goto err;
     }
     if (fixed_row_size)
@@ -1799,30 +1742,30 @@ bool select_export::send_data(List<Item> &items)
 	  space_inited=1;
 	  memset(space, ' ', sizeof(space));
 	}
-	uint length=item->max_length-used_length;
+	uint32_t length=item->max_length-used_length;
 	for (; length > sizeof(space) ; length-=sizeof(space))
 	{
-	  if (my_b_write(&cache,(uchar*) space,sizeof(space)))
+	  if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
 	    goto err;
 	}
-	if (my_b_write(&cache,(uchar*) space,length))
+	if (my_b_write(&cache,(unsigned char*) space,length))
 	  goto err;
       }
     }
     if (res && enclosed)
     {
-      if (my_b_write(&cache, (uchar*) exchange->enclosed->ptr(),
+      if (my_b_write(&cache, (unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
     if (--items_left)
     {
-      if (my_b_write(&cache, (uchar*) exchange->field_term->ptr(),
+      if (my_b_write(&cache, (unsigned char*) exchange->field_term->ptr(),
                      field_term_length))
         goto err;
     }
   }
-  if (my_b_write(&cache,(uchar*) exchange->line_term->ptr(),
+  if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
 		 exchange->line_term->length()))
     goto err;
   return(0);
@@ -1868,10 +1811,10 @@ bool select_dump::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (!res)					// If NULL
     {
-      if (my_b_write(&cache,(uchar*) "",1))
+      if (my_b_write(&cache,(unsigned char*) "",1))
 	goto err;
     }
-    else if (my_b_write(&cache,(uchar*) res->ptr(),res->length()))
+    else if (my_b_write(&cache,(unsigned char*) res->ptr(),res->length()))
     {
       my_error(ER_ERROR_ON_WRITE, MYF(0), path, my_errno);
       goto err;
@@ -1904,7 +1847,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   }
   List_iterator_fast<Item> li(items);
   Item *val_item;
-  for (uint i= 0; (val_item= li++); i++)
+  for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
   it->assigned(1);
   return(0);
@@ -2080,26 +2023,12 @@ void Query_arena::free_items()
 }
 
 
-void Query_arena::set_query_arena(Query_arena *set)
-{
-  mem_root= set->mem_root;
-  free_list= set->free_list;
-  state= set->state;
-}
-
-
-void Query_arena::cleanup_stmt()
-{
-  assert("not implemented");
-}
-
 /*
   Statement functions
 */
 
-Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
-                     enum enum_state state_arg, ulong id_arg)
-  :Query_arena(mem_root_arg, state_arg),
+Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
+  :Query_arena(mem_root_arg),
   id(id_arg),
   mark_used_columns(MARK_COLUMNS_READ),
   lex(lex_arg),
@@ -2108,70 +2037,17 @@ Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg,
   db(NULL),
   db_length(0)
 {
-  name.str= NULL;
 }
 
 
-void Statement::set_statement(Statement *stmt)
-{
-  id=             stmt->id;
-  mark_used_columns=   stmt->mark_used_columns;
-  lex=            stmt->lex;
-  query=          stmt->query;
-  query_length=   stmt->query_length;
-}
-
-
-void
-Statement::set_n_backup_statement(Statement *stmt, Statement *backup)
-{
-  backup->set_statement(this);
-  set_statement(stmt);
-  return;
-}
-
-
-void Statement::restore_backup_statement(Statement *stmt, Statement *backup)
-{
-  stmt->set_statement(this);
-  set_statement(backup);
-  return;
-}
-
-
+/*
+  Don't free mem_root, as mem_root is freed in the end of dispatch_command
+  (once for any command).
+*/
 void THD::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
-  delete lex->result;
-  lex->result= 0;
-  /* Note that free_list is freed in cleanup_after_query() */
-
-  /*
-    Don't free mem_root, as mem_root is freed in the end of dispatch_command
-    (once for any command).
-  */
-}
-
-
-void THD::set_n_backup_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena == false);
-
-  backup->set_query_arena(this);
-  set_query_arena(set);
-  backup->is_backup_arena= true;
-  return;
-}
-
-
-void THD::restore_active_arena(Query_arena *set, Query_arena *backup)
-{
-  assert(backup->is_backup_arena);
-  set->set_query_arena(this);
-  set_query_arena(backup);
-  backup->is_backup_arena= false;
-  return;
 }
 
 
@@ -2291,8 +2167,16 @@ void Security_context::init()
 void Security_context::destroy()
 {
   // If not pointer to constant
-  safeFree(user);
-  safeFree(ip);
+  if (user)
+  {
+    free(user);
+    user= NULL;
+  }
+  if (ip)
+  {
+    free(ip);
+    ip= NULL;
+  }
 }
 
 
@@ -2409,10 +2293,10 @@ void mark_transaction_to_rollback(THD *thd, bool all)
 pthread_mutex_t LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, bool);
+extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
 extern "C" void xid_free_hash(void *);
 
-uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
+unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
                         bool not_used __attribute__((unused)))
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
@@ -2422,7 +2306,7 @@ uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
 void xid_free_hash(void *ptr)
 {
   if (!((XID_STATE*)ptr)->in_thd)
-    my_free((uchar*)ptr, MYF(0));
+    free((unsigned char*)ptr);
 }
 
 bool xid_cache_init()
@@ -2464,7 +2348,7 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
     xs->xa_state=xa_state;
     xs->xid.set(xid);
     xs->in_thd=0;
-    res=my_hash_insert(&xid_cache, (uchar*)xs);
+    res=my_hash_insert(&xid_cache, (unsigned char*)xs);
   }
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
@@ -2476,7 +2360,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
   pthread_mutex_lock(&LOCK_xid_cache);
   assert(hash_search(&xid_cache, xid_state->xid.key(),
                           xid_state->xid.key_length())==0);
-  bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
+  bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
 }
@@ -2485,7 +2369,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
 void xid_cache_delete(XID_STATE *xid_state)
 {
   pthread_mutex_lock(&LOCK_xid_cache);
-  hash_delete(&xid_cache, (uchar *)xid_state);
+  hash_delete(&xid_cache, (unsigned char *)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
 }
 
@@ -2495,7 +2379,6 @@ void xid_cache_delete(XID_STATE *xid_state)
   inserted/updated/deleted.
 */
 
-#ifndef DRIZZLE_CLIENT
 
 /*
   Template member function for ensuring that there is an rows log
@@ -2656,7 +2539,7 @@ namespace {
     ~Row_data_memory()
     {
       if (m_memory != 0 && m_release_memory_on_destruction)
-        my_free((uchar*) m_memory, MYF(MY_WME));
+        free((unsigned char*) m_memory);
     }
 
     /**
@@ -2670,7 +2553,7 @@ namespace {
       return m_memory != 0;
     }
 
-    uchar *slot(uint s)
+    unsigned char *slot(uint32_t s)
     {
       assert(s < sizeof(m_ptr)/sizeof(*m_ptr));
       assert(m_ptr[s] != 0);
@@ -2702,27 +2585,27 @@ namespace {
         */
         if (table->write_row_record == 0)
           table->write_row_record=
-            (uchar *) alloc_root(&table->mem_root, 2 * maxlen);
+            (unsigned char *) alloc_root(&table->mem_root, 2 * maxlen);
         m_memory= table->write_row_record;
         m_release_memory_on_destruction= false;
       }
       else
       {
-        m_memory= (uchar *) my_malloc(total_length, MYF(MY_WME));
+        m_memory= (unsigned char *) my_malloc(total_length, MYF(MY_WME));
         m_release_memory_on_destruction= true;
       }
     }
 
     mutable bool m_alloc_checked;
     bool m_release_memory_on_destruction;
-    uchar *m_memory;
-    uchar *m_ptr[2];
+    unsigned char *m_memory;
+    unsigned char *m_ptr[2];
   };
 }
 
 
 int THD::binlog_write_row(Table* table, bool is_trans, 
-                          uchar const *record) 
+                          unsigned char const *record) 
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2734,7 +2617,7 @@ int THD::binlog_write_row(Table* table, bool is_trans,
   if (!memory.has_memory())
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *row_data= memory.slot(0);
+  unsigned char *row_data= memory.slot(0);
 
   size_t const len= pack_row(table, table->write_set, row_data, record);
 
@@ -2749,8 +2632,8 @@ int THD::binlog_write_row(Table* table, bool is_trans,
 }
 
 int THD::binlog_update_row(Table* table, bool is_trans,
-                           const uchar *before_record,
-                           const uchar *after_record)
+                           const unsigned char *before_record,
+                           const unsigned char *after_record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2761,8 +2644,8 @@ int THD::binlog_update_row(Table* table, bool is_trans,
   if (!row_data.has_memory())
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *before_row= row_data.slot(0);
-  uchar *after_row= row_data.slot(1);
+  unsigned char *before_row= row_data.slot(0);
+  unsigned char *after_row= row_data.slot(1);
 
   size_t const before_size= pack_row(table, table->read_set, before_row,
                                         before_record);
@@ -2783,7 +2666,7 @@ int THD::binlog_update_row(Table* table, bool is_trans,
 }
 
 int THD::binlog_delete_row(Table* table, bool is_trans, 
-                           uchar const *record)
+                           unsigned char const *record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
@@ -2795,7 +2678,7 @@ int THD::binlog_delete_row(Table* table, bool is_trans,
   if (unlikely(!memory.has_memory()))
     return HA_ERR_OUT_OF_MEM;
 
-  uchar *row_data= memory.slot(0);
+  unsigned char *row_data= memory.slot(0);
 
   size_t const len= pack_row(table, table->read_set, row_data, record);
 
@@ -2961,5 +2844,3 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   elements++;
   return(0);
 }
-
-#endif /* !defined(DRIZZLE_CLIENT) */

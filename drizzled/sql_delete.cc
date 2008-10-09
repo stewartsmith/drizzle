@@ -43,7 +43,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
   bool		transactional_table, safe_update, const_cond;
   bool          const_cond_result;
   ha_rows	deleted= 0;
-  uint usable_index= MAX_KEY;
+  uint32_t usable_index= MAX_KEY;
   SELECT_LEX   *select_lex= &thd->lex->select_lex;
   THD::killed_state killed_status= THD::NOT_KILLED;
   
@@ -190,7 +190,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
 
   if (order && order->elements)
   {
-    uint         length= 0;
+    uint32_t         length= 0;
     SORT_FIELD  *sortorder;
     ha_rows examined_rows;
     
@@ -419,7 +419,7 @@ int mysql_prepare_delete(THD *thd, TableList *table_list, Item **conds)
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 {
   handler *file= (handler*)arg;
-  return file->cmp_ref((const uchar*)a, (const uchar*)b);
+  return file->cmp_ref((const unsigned char*)a, (const unsigned char*)b);
 }
 
 /*
@@ -492,7 +492,7 @@ int mysql_multi_delete_prepare(THD *thd)
 }
 
 
-multi_delete::multi_delete(TableList *dt, uint num_of_tables_arg)
+multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
   : delete_tables(dt), deleted(0), found(0),
     num_of_tables(num_of_tables_arg), error(0),
     do_delete(0), transactional_tables(0), normal_tables(0), error_handled(0)
@@ -590,7 +590,7 @@ multi_delete::~multi_delete()
     table->no_keyread=0;
   }
 
-  for (uint counter= 0; counter < num_of_tables; counter++)
+  for (uint32_t counter= 0; counter < num_of_tables; counter++)
   {
     if (tempfiles[counter])
       delete tempfiles[counter];
@@ -648,7 +648,7 @@ bool multi_delete::send_data(List<Item> &values __attribute__((unused)))
 }
 
 
-void multi_delete::send_error(uint errcode,const char *err)
+void multi_delete::send_error(uint32_t errcode,const char *err)
 {
   
 
@@ -847,7 +847,7 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
   char path[FN_REFLEN];
   Table *table;
   bool error;
-  uint path_length;
+  uint32_t path_length;
   
 
   memset(&create_info, 0, sizeof(create_info));
@@ -873,7 +873,7 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
                                              OTM_OPEN))))
       (void) rm_temporary_table(table_type, path, frm_only);
     free_table_share(share);
-    my_free((char*) table,MYF(0));
+    free((char*) table);
     /*
       If we return here we will not have logged the truncation to the bin log
       and we will not my_ok() to the client.
@@ -885,32 +885,16 @@ bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
                                     table_list->table_name, reg_ext, 0);
 
   if (!dont_send_ok)
-  {
-    enum legacy_db_type table_type;
-    mysql_frm_type(thd, path, &table_type);
-    if (table_type == DB_TYPE_UNKNOWN)
-    {
-      my_error(ER_NO_SUCH_TABLE, MYF(0),
-               table_list->db, table_list->table_name);
-      return(true);
-    }
-
-    if (!ha_check_storage_engine_flag(ha_resolve_by_legacy_type(thd, table_type),
-                                      HTON_CAN_RECREATE))
-      goto trunc_by_del;
-
-    if (lock_and_wait_for_table_name(thd, table_list))
-      return(true);
-  }
+    goto trunc_by_del;
 
   // Remove the .frm extension AIX 5.2 64-bit compiler bug (BUG#16155): this
   // crashes, replacement works.  *(path + path_length - reg_ext_length)=
   // '\0';
   path[path_length - reg_ext_length] = 0;
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   error= ha_create_table(thd, path, table_list->db, table_list->table_name,
                          &create_info, 1);
-  VOID(pthread_mutex_unlock(&LOCK_open));
+  pthread_mutex_unlock(&LOCK_open);
 
 end:
   if (!dont_send_ok)
@@ -924,15 +908,15 @@ end:
       write_bin_log(thd, true, thd->query, thd->query_length);
       my_ok(thd);		// This should return record count
     }
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     unlock_table_name(thd, table_list);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
   }
   else if (error)
   {
-    VOID(pthread_mutex_lock(&LOCK_open));
+    pthread_mutex_lock(&LOCK_open);
     unlock_table_name(thd, table_list);
-    VOID(pthread_mutex_unlock(&LOCK_open));
+    pthread_mutex_unlock(&LOCK_open);
   }
   return(error);
 
@@ -946,7 +930,7 @@ trunc_by_del:
   bool save_binlog_row_based= thd->current_stmt_binlog_row_based;
   thd->clear_current_stmt_binlog_row_based();
   error= mysql_delete(thd, table_list, (COND*) 0, (SQL_LIST*) 0,
-                      HA_POS_ERROR, 0LL, true);
+                      HA_POS_ERROR, 0L, true);
   ha_enable_transaction(thd, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)

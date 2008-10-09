@@ -59,16 +59,16 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
 /* Reset initialized VIO to use with another transport type */
 
 void vio_reset(Vio* vio, enum enum_vio_type type,
-               int sd, uint flags)
+               int sd, uint32_t flags)
 {
-  my_free(vio->read_buffer, MYF(MY_ALLOW_ZERO_PTR));
+  free(vio->read_buffer);
   vio_init(vio, type, sd, flags);
 }
 
 
 /* Open the socket or TCP/IP connection and read the fnctl() status */
 
-Vio *vio_new(int sd, enum enum_vio_type type, uint flags)
+Vio *vio_new(int sd, enum enum_vio_type type, uint32_t flags)
 {
   Vio *vio;
 
@@ -100,8 +100,8 @@ void vio_delete(Vio* vio)
 
   if (vio->type != VIO_CLOSED)
     vio->vioclose(vio);
-  my_free((uchar*) vio->read_buffer, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((uchar*) vio, MYF(0));
+  free((unsigned char*) vio->read_buffer);
+  free((unsigned char*) vio);
 }
 
 

@@ -20,6 +20,17 @@ Created 5/11/1994 Heikki Tuuri
 #include "trx0trx.h"
 #include "ha_prototypes.h"
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 ibool	ut_always_false	= FALSE;
 
 #ifdef __WIN__

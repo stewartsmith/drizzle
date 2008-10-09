@@ -1,20 +1,24 @@
-/* Copyright (C) 2005 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-#ifndef TABLE_MAPPING_H
-#define TABLE_MAPPING_H
+#ifndef DRIZZLED_RPL_TBLMAP_H
+#define DRIZZLED_RPL_TBLMAP_H
 
 /* Forward declarations */
 class Table;
@@ -84,7 +88,7 @@ private:
   entry *find_entry(ulong table_id)
   {
     return (entry *)hash_search(&m_table_ids,
-				(uchar*)&table_id,
+				(unsigned char*)&table_id,
 				sizeof(table_id));
   }
   int expand();
@@ -100,4 +104,4 @@ private:
   HASH m_table_ids;
 };
 
-#endif
+#endif /* DRIZZLED_RPL_TBLMAP_H */

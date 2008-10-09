@@ -86,10 +86,10 @@ extern HASH open_cache;
 #define GET_LOCK_UNLOCK         1
 #define GET_LOCK_STORE_LOCKS    2
 
-static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table,uint count,
-				 uint flags, Table **write_locked);
-static int lock_external(THD *thd, Table **table,uint count);
-static int unlock_external(THD *thd, Table **table,uint count);
+static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table,uint32_t count,
+				 uint32_t flags, Table **write_locked);
+static int lock_external(THD *thd, Table **table,uint32_t count);
+static int unlock_external(THD *thd, Table **table,uint32_t count);
 static void print_lock_error(int error, const char *);
 
 /*
@@ -155,13 +155,13 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
     /* Reset lock type. */
     (*ldata)->type= TL_UNLOCK;
   }
-  my_free((uchar*) sql_lock, MYF(0));
+  free((unsigned char*) sql_lock);
   *mysql_lock= 0;
 }
 
 
-DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint count,
-                              uint flags, bool *need_reopen)
+DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint32_t count,
+                              uint32_t flags, bool *need_reopen)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -230,7 +230,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint count,
     if (rc > 1)                                 /* a timeout or a deadlock */
     {
       if (sql_lock->table_count)
-        VOID(unlock_external(thd, sql_lock->table, sql_lock->table_count));
+        unlock_external(thd, sql_lock->table, sql_lock->table_count);
       reset_lock_data_and_free(&sql_lock);
       my_error(rc, MYF(0));
       break;
@@ -262,7 +262,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint count,
         thr_multi_unlock(sql_lock->locks, sql_lock->lock_count);
 
     if (sql_lock->table_count)
-      VOID(unlock_external(thd, sql_lock->table, sql_lock->table_count));
+      unlock_external(thd, sql_lock->table, sql_lock->table_count);
 
     /*
       If thr_multi_lock fails it resets lock type for tables, which
@@ -295,9 +295,9 @@ retry:
 }
 
 
-static int lock_external(THD *thd, Table **tables, uint count)
+static int lock_external(THD *thd, Table **tables, uint32_t count)
 {
-  register uint i;
+  register uint32_t i;
   int lock_type,error;
   for (i=1 ; i <= count ; i++, tables++)
   {
@@ -334,8 +334,8 @@ void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
   if (sql_lock->lock_count)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
   if (sql_lock->table_count)
-    VOID(unlock_external(thd,sql_lock->table,sql_lock->table_count));
-  my_free((uchar*) sql_lock,MYF(0));
+    unlock_external(thd,sql_lock->table,sql_lock->table_count);
+  free((unsigned char*) sql_lock);
   return;
 }
 
@@ -345,7 +345,7 @@ void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(THD *thd, Table **table,uint count)
+void mysql_unlock_some_tables(THD *thd, Table **table,uint32_t count)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -361,7 +361,7 @@ void mysql_unlock_some_tables(THD *thd, Table **table,uint count)
 
 void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
 {
-  uint i,found;
+  uint32_t i,found;
 
   /* Move all write locks first */
   THR_LOCK_DATA **lock=sql_lock->locks;
@@ -397,7 +397,7 @@ void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
   /* Unlock all read locked tables */
   if (i != found)
   {
-    VOID(unlock_external(thd,table,i-found));
+    unlock_external(thd,table,i-found);
     sql_lock->table_count=found;
   }
   /* Fix the lock positions in Table */
@@ -442,14 +442,14 @@ void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,Table *table,
     mysql_unlock_some_tables(thd, &table, /* table count */ 1);
   if (locked)
   {
-    register uint i;
+    register uint32_t i;
     for (i=0; i < locked->table_count; i++)
     {
       if (locked->table[i] == table)
       {
-        uint  j, removed_locks, old_tables;
+        uint32_t  j, removed_locks, old_tables;
         Table *tbl;
-        uint lock_data_end;
+        uint32_t lock_data_end;
 
         assert(table->lock_position == i);
 
@@ -508,9 +508,9 @@ void mysql_lock_downgrade_write(THD *thd, Table *table,
   if ((locked = get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                               &write_lock_used)))
   {
-    for (uint i=0; i < locked->lock_count; i++)
+    for (uint32_t i=0; i < locked->lock_count; i++)
       thr_downgrade_write_lock(locked->locks[i], new_lock_type);
-    my_free((uchar*) locked,MYF(0));
+    free((unsigned char*) locked);
   }
 }
 
@@ -525,9 +525,9 @@ void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock)
   if ((locked= get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                              &write_lock_used)))
   {
-    for (uint i=0; i < locked->lock_count; i++)
+    for (uint32_t i=0; i < locked->lock_count; i++)
       thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
-    my_free((uchar*) locked,MYF(0));
+    free((unsigned char*) locked);
   }
   return;
 }
@@ -554,13 +554,13 @@ bool mysql_lock_abort_for_thread(THD *thd, Table *table)
   if ((locked= get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                              &write_lock_used)))
   {
-    for (uint i=0; i < locked->lock_count; i++)
+    for (uint32_t i=0; i < locked->lock_count; i++)
     {
       if (thr_abort_locks_for_thread(locked->locks[i]->lock,
                                      table->in_use->thread_id))
         result= true;
     }
-    my_free((uchar*) locked,MYF(0));
+    free((unsigned char*) locked);
   }
   return(result);
 }
@@ -601,8 +601,8 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
   }
 
   /* Delete old, not needed locks */
-  my_free((uchar*) a,MYF(0));
-  my_free((uchar*) b,MYF(0));
+  free((unsigned char*) a);
+  free((unsigned char*) b);
   return(sql_lock);
 }
 
@@ -710,7 +710,7 @@ TableList *mysql_lock_have_duplicate(THD *thd, TableList *needle,
 
 /** Unlock a set of external. */
 
-static int unlock_external(THD *thd, Table **table,uint count)
+static int unlock_external(THD *thd, Table **table,uint32_t count)
 {
   int error,error_code;
 
@@ -743,10 +743,10 @@ static int unlock_external(THD *thd, Table **table,uint count)
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
-static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table_ptr, uint count,
-				 uint flags, Table **write_lock_used)
+static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table_ptr, uint32_t count,
+				 uint32_t flags, Table **write_lock_used)
 {
-  uint i,tables,lock_count;
+  uint32_t i,tables,lock_count;
   DRIZZLE_LOCK *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
@@ -861,7 +861,7 @@ int lock_and_wait_for_table_name(THD *thd, TableList *table_list)
 
   if (wait_if_global_read_lock(thd, 0, 1))
     return(1);
-  VOID(pthread_mutex_lock(&LOCK_open));
+  pthread_mutex_lock(&LOCK_open);
   if ((lock_retcode = lock_table_name(thd, table_list, true)) < 0)
     goto end;
   if (lock_retcode && wait_for_locked_table_names(thd, table_list))
@@ -910,7 +910,7 @@ int lock_table_name(THD *thd, TableList *table_list, bool check_in_use)
   Table *table;
   char  key[MAX_DBKEY_LENGTH];
   char *db= table_list->db;
-  uint  key_length;
+  uint32_t  key_length;
   bool  found_locked_table= false;
   HASH_SEARCH_STATE state;
 
@@ -919,10 +919,10 @@ int lock_table_name(THD *thd, TableList *table_list, bool check_in_use)
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(Table*) hash_first(&open_cache, (uchar*)key,
+    for (table=(Table*) hash_first(&open_cache, (unsigned char*)key,
                                    key_length, &state);
          table ;
-         table = (Table*) hash_next(&open_cache,(uchar*) key,
+         table = (Table*) hash_next(&open_cache,(unsigned char*) key,
                                     key_length, &state))
     {
       if (table->reginfo.lock_type < TL_WRITE)
@@ -968,7 +968,7 @@ void unlock_table_name(THD *thd __attribute__((unused)),
 {
   if (table_list->table)
   {
-    hash_delete(&open_cache, (uchar*) table_list->table);
+    hash_delete(&open_cache, (unsigned char*) table_list->table);
     broadcast_refresh();
   }
 }
@@ -1114,11 +1114,11 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd,
                                                 TableList *table_list)
 {
   char  key[MAX_DBKEY_LENGTH];
-  uint  key_length;
+  uint32_t  key_length;
 
   key_length= create_table_def_key(thd, key, table_list, 0);
 
-  return is_table_name_exclusively_locked_by_this_thread(thd, (uchar *)key,
+  return is_table_name_exclusively_locked_by_this_thread(thd, (unsigned char *)key,
                                                          key_length);
 }
 
@@ -1137,7 +1137,7 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd,
  */
 
 bool
-is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
+is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *key,
                                                 int key_length)
 {
   HASH_SEARCH_STATE state;
@@ -1300,10 +1300,10 @@ static void print_lock_error(int error, const char *table)
 
 ****************************************************************************/
 
-volatile uint global_read_lock=0;
-volatile uint global_read_lock_blocks_commit=0;
-static volatile uint protect_against_global_read_lock=0;
-static volatile uint waiting_for_read_lock=0;
+volatile uint32_t global_read_lock=0;
+volatile uint32_t global_read_lock_blocks_commit=0;
+static volatile uint32_t protect_against_global_read_lock=0;
+static volatile uint32_t waiting_for_read_lock=0;
 
 #define GOT_GLOBAL_READ_LOCK               1
 #define MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT 2
@@ -1344,7 +1344,7 @@ bool lock_global_read_lock(THD *thd)
 
 void unlock_global_read_lock(THD *thd)
 {
-  uint tmp;
+  uint32_t tmp;
 
   pthread_mutex_lock(&LOCK_global_read_lock);
   tmp= --global_read_lock;
@@ -1483,8 +1483,8 @@ bool make_global_read_lock_block_commit(THD *thd)
 
 void broadcast_refresh(void)
 {
-  VOID(pthread_cond_broadcast(&COND_refresh));
-  VOID(pthread_cond_broadcast(&COND_global_read_lock));
+  pthread_cond_broadcast(&COND_refresh);
+  pthread_cond_broadcast(&COND_global_read_lock);
 }
 
 
@@ -1508,7 +1508,7 @@ void broadcast_refresh(void)
 
 int try_transactional_lock(THD *thd, TableList *table_list)
 {
-  uint          dummy_counter;
+  uint32_t          dummy_counter;
   int           error;
   int           result= 0;
 

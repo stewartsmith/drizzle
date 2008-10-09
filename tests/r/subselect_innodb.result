@@ -41,13 +41,13 @@ processor_id INTEGER NOT NULL,
 PRIMARY KEY (processor_id)
 ) ENGINE=InnoDB;
 CREATE TABLE t3 (
-yod_id BIGINT UNSIGNED AUTO_INCREMENT NOT NULL,
-login_processor INTEGER UNSIGNED ,
+yod_id BIGINT AUTO_INCREMENT NOT NULL,
+login_processor INTEGER ,
 PRIMARY KEY (yod_id)
 ) ENGINE=InnoDB;
 CREATE TABLE t2 (
 processor_id INTEGER NOT NULL,
-yod_id BIGINT UNSIGNED NOT NULL,
+yod_id BIGINT NOT NULL,
 PRIMARY KEY (processor_id, yod_id),
 INDEX (processor_id),
 INDEX (yod_id),

@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* This file defines all string functions */
@@ -99,7 +103,7 @@ public:
 class Item_str_conv :public Item_str_func
 {
 protected:
-  uint multiply;
+  uint32_t multiply;
   my_charset_conv_case converter;
   String tmp_value;
 public:
@@ -220,7 +224,7 @@ public:
     call
   */
   virtual const char *fully_qualified_func_name() const = 0;
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
 
@@ -327,12 +331,12 @@ public:
   void update_used_tables();
   const char *func_name() const { return "make_set"; }
 
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
   {
     return item->walk(processor, walk_subquery, arg) ||
       Item_str_func::walk(processor, walk_subquery, arg);
   }
-  Item *transform(Item_transformer transformer, uchar *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
 };
 
@@ -486,7 +490,7 @@ public:
     maybe_null=1;
     max_length=MAX_BLOB_WIDTH;
   }
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
 
@@ -531,7 +535,7 @@ public:
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {
-      uint errors= 0;
+      uint32_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
       if (!str || str_value.copy(str->ptr(), str->length(),
                                  str->charset(), conv_charset, &errors))
@@ -610,10 +614,10 @@ public:
 class Item_func_weight_string :public Item_str_func
 {
   String tmp_value;
-  uint flags;
-  uint nweights;
+  uint32_t flags;
+  uint32_t nweights;
 public:
-  Item_func_weight_string(Item *a, uint nweights_arg, uint flags_arg)
+  Item_func_weight_string(Item *a, uint32_t nweights_arg, uint32_t flags_arg)
   :Item_str_func(a) { nweights= nweights_arg; flags= flags_arg; }
   const char *func_name() const { return "weight_string"; }
   String *val_str(String *);
@@ -622,44 +626,8 @@ public:
     TODO: Currently this Item is not allowed for virtual columns
     only due to a bug in generating virtual column value.
   */
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
-};
-
-class Item_func_uncompressed_length : public Item_int_func
-{
-  String value;
-public:
-  Item_func_uncompressed_length(Item *a):Item_int_func(a){}
-  const char *func_name() const{return "uncompressed_length";}
-  void fix_length_and_dec() { max_length=10; }
-  int64_t val_int();
-};
-
-#ifdef HAVE_COMPRESS
-#define ZLIB_DEPENDED_FUNCTION ;
-#else
-#define ZLIB_DEPENDED_FUNCTION { null_value=1; return 0; }
-#endif
-
-class Item_func_compress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_compress(Item *a):Item_str_func(a){}
-  void fix_length_and_dec(){max_length= (args[0]->max_length*120)/100+12;}
-  const char *func_name() const{return "compress";}
-  String *val_str(String *) ZLIB_DEPENDED_FUNCTION
-};
-
-class Item_func_uncompress: public Item_str_func
-{
-  String buffer;
-public:
-  Item_func_uncompress(Item *a): Item_str_func(a){}
-  void fix_length_and_dec(){ maybe_null= 1; max_length= MAX_BLOB_WIDTH; }
-  const char *func_name() const{return "uncompress";}
-  String *val_str(String *) ZLIB_DEPENDED_FUNCTION
 };
 
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
@@ -678,7 +646,7 @@ public:
   }
   const char *func_name() const{ return "uuid"; }
   String *val_str(String *);
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
 

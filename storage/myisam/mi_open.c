@@ -62,14 +62,15 @@ MI_INFO *test_if_reopen(char *filename)
   have an open count of 0.
 ******************************************************************************/
 
-MI_INFO *mi_open(const char *name, int mode, uint open_flags)
+MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
-  uint i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
+  uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
     key_parts,unique_key_parts,fulltext_keys,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
        data_name[FN_REFLEN];
-  uchar *disk_cache, *disk_pos, *end_pos;
+  unsigned char *disk_cache= NULL;
+  unsigned char *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
@@ -92,7 +93,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.key_cache= multi_key_cache_search((uchar*) name_buff,
+    share_buff.key_cache= multi_key_cache_search((unsigned char*) name_buff,
                                                  strlen(name_buff));
 
     if ((kfile=my_open(name_buff,(open_mode=O_RDWR) | O_SHARE,MYF(0))) < 0)
@@ -135,14 +136,14 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     /* Don't call realpath() if the name can't be a link */
     if (!strcmp(name_buff, org_name) ||
         my_readlink(index_name, org_name, MYF(0)) == -1)
-      (void) stpcpy(index_name, org_name);
+      (void) my_stpcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
 
     info_length=mi_uint2korr(share->state.header.header_length);
     base_pos=mi_uint2korr(share->state.header.base_pos);
-    if (!(disk_cache= (uchar*) my_alloca(info_length+128)))
+    if (!(disk_cache= (unsigned char*) malloc(info_length+128)))
     {
       my_errno=ENOMEM;
       goto err;
@@ -150,7 +151,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     end_pos=disk_cache+info_length;
     errpos=2;
 
-    VOID(my_seek(kfile,0L,MY_SEEK_SET,MYF(0)));
+    my_seek(kfile,0L,MY_SEEK_SET,MYF(0));
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
@@ -240,7 +241,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
 			 &share->key_root_lock,sizeof(rw_lock_t)*keys,
 			 &share->mmap_lock,sizeof(rw_lock_t),
-			 NullS))
+			 NULL))
       goto err;
     errpos=4;
     *share=share_buff;
@@ -250,12 +251,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
            sizeof(my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
            sizeof(my_off_t) * share->state.header.max_block_size_index);
-    stpcpy(share->unique_file_name, name_buff);
+    my_stpcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
-    stpcpy(share->index_file_name,  index_name);
-    stpcpy(share->data_file_name,   data_name);
+    my_stpcpy(share->index_file_name,  index_name);
+    my_stpcpy(share->data_file_name,   data_name);
 
-    share->blocksize=min(IO_SIZE,myisam_block_size);
+    share->blocksize=cmin(IO_SIZE,myisam_block_size);
     {
       HA_KEYSEG *pos=share->keyparts;
       for (i=0 ; i < keys ; i++)
@@ -374,18 +375,19 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     share->base.margin_key_file_length=(share->base.max_key_file_length -
 					(keys ? MI_INDEX_BLOCK_MARGIN *
 					 share->blocksize * keys : 0));
-    share->blocksize=min(IO_SIZE,myisam_block_size);
+    share->blocksize=cmin(IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
     if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
-    my_afree(disk_cache);
+    free(disk_cache);
+    disk_cache= NULL;
     mi_setup_functions(share);
     share->is_log_table= false;
     thr_lock_init(&share->lock);
-    VOID(pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST));
+    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     for (i=0; i<keys; i++)
-      VOID(my_rwlock_init(&share->key_root_lock[i], NULL));
-    VOID(my_rwlock_init(&share->mmap_lock, NULL));
+      my_rwlock_init(&share->key_root_lock[i], NULL);
+    my_rwlock_init(&share->mmap_lock, NULL);
     if (!thr_lock_inited)
     {
       /* Probably a single threaded program; Don't use concurrent inserts */
@@ -440,14 +442,14 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 		       &info.first_mbr_key, share->base.max_key_length,
 		       &info.filename,strlen(name)+1,
 		       &info.rtree_recursion_state,have_rtree ? 1024 : 0,
-		       NullS))
+		       NULL))
     goto err;
   errpos=6;
 
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  stpcpy(info.filename,name);
+  my_stpcpy(info.filename,name);
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -510,6 +512,8 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   return(m_info);
 
 err:
+  if (disk_cache != NULL)
+    free(disk_cache);
   save_errno=my_errno ? my_errno : HA_ERR_END_OF_FILE;
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
@@ -517,23 +521,20 @@ err:
     mi_report_error(save_errno, name);
   switch (errpos) {
   case 6:
-    my_free((uchar*) m_info,MYF(0));
+    free((unsigned char*) m_info);
     /* fall through */
   case 5:
-    VOID(my_close(info.dfile,MYF(0)));
+    my_close(info.dfile,MYF(0));
     if (old_info)
       break;					/* Don't remove open table */
     /* fall through */
   case 4:
-    my_free((uchar*) share,MYF(0));
+    free((unsigned char*) share);
     /* fall through */
   case 3:
     /* fall through */
-  case 2:
-    my_afree(disk_cache);
-    /* fall through */
   case 1:
-    VOID(my_close(kfile,MYF(0)));
+    my_close(kfile,MYF(0));
     /* fall through */
   case 0:
   default:
@@ -545,23 +546,23 @@ err:
 } /* mi_open */
 
 
-uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
+unsigned char *mi_alloc_rec_buff(MI_INFO *info, ulong length, unsigned char **buf)
 {
-  uint extra;
+  uint32_t extra;
   uint32_t old_length= 0;
 
   if (! *buf || length > (old_length=mi_get_rec_buff_len(info, *buf)))
   {
-    uchar *newptr = *buf;
+    unsigned char *newptr = *buf;
 
     /* to simplify initial init of info->rec_buf in mi_open and mi_extra */
     if (length == (ulong) -1)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
-        length= max(info->s->base.pack_reclength, info->s->max_pack_length);
+        length= cmax(info->s->base.pack_reclength, info->s->max_pack_length);
       else
         length= info->s->base.pack_reclength;
-      length= max(length, info->s->base.max_key_length);
+      length= cmax(length, info->s->base.max_key_length);
       /* Avoid unnecessary realloc */
       if (newptr && length == old_length)
 	return newptr;
@@ -572,7 +573,7 @@ uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
 	    MI_REC_BUFF_OFFSET : 0);
     if (extra && newptr)
       newptr-= MI_REC_BUFF_OFFSET;
-    if (!(newptr=(uchar*) my_realloc((uchar*)newptr, length+extra+8,
+    if (!(newptr=(unsigned char*) my_realloc((unsigned char*)newptr, length+extra+8,
                                      MYF(MY_ALLOW_ZERO_PTR))))
       return newptr;
     *((uint32_t *) newptr)= (uint32_t) length;
@@ -693,10 +694,10 @@ static void setup_key_functions(register MI_KEYDEF *keyinfo)
    Function to save and store the header in the index file (.MYI)
 */
 
-uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
+uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
 {
-  uchar  buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
-  uchar *ptr=buff;
+  unsigned char  buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
+  unsigned char *ptr=buff;
   uint	i, keys= (uint) state->header.keys,
 	key_blocks=state->header.max_block_size_index;
 
@@ -705,7 +706,7 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
 
   /* open_count must be first because of _mi_mark_file_changed ! */
   mi_int2store(ptr,state->open_count);		ptr +=2;
-  *ptr++= (uchar)state->changed; *ptr++= state->sortkey;
+  *ptr++= (unsigned char)state->changed; *ptr++= state->sortkey;
   mi_rowstore(ptr,state->state.records);	ptr +=8;
   mi_rowstore(ptr,state->state.del);		ptr +=8;
   mi_rowstore(ptr,state->split);		ptr +=8;
@@ -733,7 +734,7 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
   }
   if (pWrite & 2)				/* From isamchk */
   {
-    uint key_parts= mi_uint2korr(state->header.key_parts);
+    uint32_t key_parts= mi_uint2korr(state->header.key_parts);
     mi_int4store(ptr,state->sec_index_changed); ptr +=4;
     mi_int4store(ptr,state->sec_index_used);	ptr +=4;
     mi_int4store(ptr,state->version);		ptr +=4;
@@ -756,9 +757,9 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
 }
 
 
-uchar *mi_state_info_read(uchar *ptr, MI_STATE_INFO *state)
+unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
-  uint i,keys,key_parts,key_blocks;
+  uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
   ptr +=sizeof(state->header);
   keys=(uint) state->header.keys;
@@ -809,9 +810,9 @@ uchar *mi_state_info_read(uchar *ptr, MI_STATE_INFO *state)
 }
 
 
-uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
+uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 {
-  uchar	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
+  unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
   if (!myisam_single_user)
   {
@@ -832,9 +833,9 @@ uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 **  store and read of MI_BASE_INFO
 ****************************************************************************/
 
-uint mi_base_info_write(File file, MI_BASE_INFO *base)
+uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
 {
-  uchar buff[MI_BASE_INFO_SIZE], *ptr=buff;
+  unsigned char buff[MI_BASE_INFO_SIZE], *ptr=buff;
 
   mi_sizestore(ptr,base->keystart);			ptr +=8;
   mi_sizestore(ptr,base->max_data_file_length);		ptr +=8;
@@ -867,7 +868,7 @@ uint mi_base_info_write(File file, MI_BASE_INFO *base)
 }
 
 
-uchar *my_n_base_info_read(uchar *ptr, MI_BASE_INFO *base)
+unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
 {
   base->keystart = mi_sizekorr(ptr);			ptr +=8;
   base->max_data_file_length = mi_sizekorr(ptr);	ptr +=8;
@@ -911,12 +912,12 @@ uchar *my_n_base_info_read(uchar *ptr, MI_BASE_INFO *base)
   mi_keydef
 ---------------------------------------------------------------------------*/
 
-uint mi_keydef_write(File file, MI_KEYDEF *keydef)
+uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
 {
-  uchar buff[MI_KEYDEF_SIZE];
-  uchar *ptr=buff;
+  unsigned char buff[MI_KEYDEF_SIZE];
+  unsigned char *ptr=buff;
 
-  *ptr++ = (uchar) keydef->keysegs;
+  *ptr++ = (unsigned char) keydef->keysegs;
   *ptr++ = keydef->key_alg;			/* Rtree or Btree */
   mi_int2store(ptr,keydef->flag);		ptr +=2;
   mi_int2store(ptr,keydef->block_length);	ptr +=2;
@@ -926,7 +927,7 @@ uint mi_keydef_write(File file, MI_KEYDEF *keydef)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef)
+unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 {
    keydef->keysegs	= (uint) *ptr++;
    keydef->key_alg	= *ptr++;		/* Rtree or Btree */
@@ -948,8 +949,8 @@ uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef)
 
 int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
 {
-  uchar buff[HA_KEYSEG_SIZE];
-  uchar *ptr=buff;
+  unsigned char buff[HA_KEYSEG_SIZE];
+  unsigned char *ptr=buff;
   ulong pos;
 
   *ptr++= keyseg->type;
@@ -969,7 +970,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
 }
 
 
-uchar *mi_keyseg_read(uchar *ptr, HA_KEYSEG *keyseg)
+unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
 {
    keyseg->type		= *ptr++;
    keyseg->language	= *ptr++;
@@ -996,19 +997,19 @@ uchar *mi_keyseg_read(uchar *ptr, HA_KEYSEG *keyseg)
   mi_uniquedef
 ---------------------------------------------------------------------------*/
 
-uint mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
+uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
 {
-  uchar buff[MI_UNIQUEDEF_SIZE];
-  uchar *ptr=buff;
+  unsigned char buff[MI_UNIQUEDEF_SIZE];
+  unsigned char *ptr=buff;
 
   mi_int2store(ptr,def->keysegs);		ptr+=2;
-  *ptr++=  (uchar) def->key;
-  *ptr++ = (uchar) def->null_are_equal;
+  *ptr++=  (unsigned char) def->key;
+  *ptr++ = (unsigned char) def->null_are_equal;
 
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-uchar *mi_uniquedef_read(uchar *ptr, MI_UNIQUEDEF *def)
+unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 {
    def->keysegs = mi_uint2korr(ptr);
    def->key	= ptr[2];
@@ -1020,10 +1021,10 @@ uchar *mi_uniquedef_read(uchar *ptr, MI_UNIQUEDEF *def)
 **  MI_COLUMNDEF
 ***************************************************************************/
 
-uint mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
+uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
 {
-  uchar buff[MI_COLUMNDEF_SIZE];
-  uchar *ptr=buff;
+  unsigned char buff[MI_COLUMNDEF_SIZE];
+  unsigned char *ptr=buff;
 
   mi_int2store(ptr,recinfo->type);	ptr +=2;
   mi_int2store(ptr,recinfo->length);	ptr +=2;
@@ -1032,7 +1033,7 @@ uint mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-uchar *mi_recinfo_read(uchar *ptr, MI_COLUMNDEF *recinfo)
+unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;

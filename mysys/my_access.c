@@ -30,7 +30,7 @@ static const char *reserved_names[]=
   "CON", "PRN", "AUX", "NUL",
   "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
   "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-  NullS
+  NULL
 };
 
 #define MAX_RESERVED_NAME_LENGTH 6
@@ -109,9 +109,9 @@ static char reserved_map[256]=
 
 int check_if_legal_tablename(const char *name)
 {
-  return((reserved_map[(uchar) name[0]] & 1) &&
-              (reserved_map[(uchar) name[1]] & 2) &&
-              (reserved_map[(uchar) name[2]] & 4) &&
+  return((reserved_map[(unsigned char) name[0]] & 1) &&
+              (reserved_map[(unsigned char) name[1]] & 2) &&
+              (reserved_map[(unsigned char) name[2]] & 4) &&
               str_list_find(&reserved_names[1], name));
 }
 

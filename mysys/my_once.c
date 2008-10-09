@@ -32,7 +32,7 @@
 void* my_once_alloc(size_t Size, myf MyFlags)
 {
   size_t get_size, max_left;
-  uchar* point;
+  unsigned char* point;
   register USED_MEM *next;
   register USED_MEM **prev;
 
@@ -56,14 +56,14 @@ void* my_once_alloc(size_t Size, myf MyFlags)
       my_errno=errno;
       if (MyFlags & (MY_FAE+MY_WME))
 	my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_WAITTANG),get_size);
-      return((uchar*) 0);
+      return((unsigned char*) 0);
     }
     next->next= 0;
     next->size= get_size;
     next->left= get_size-ALIGN_SIZE(sizeof(USED_MEM));
     *prev=next;
   }
-  point= (uchar*) ((char*) next+ (next->size-next->left));
+  point= (unsigned char*) ((char*) next+ (next->size-next->left));
   next->left-= Size;
 
   if (MyFlags & MY_ZEROFILL)
@@ -75,7 +75,7 @@ void* my_once_alloc(size_t Size, myf MyFlags)
 char *my_once_strdup(const char *src,myf myflags)
 {
   size_t len= strlen(src)+1;
-  uchar *dst= my_once_alloc(len, myflags);
+  unsigned char *dst= my_once_alloc(len, myflags);
   if (dst)
     memcpy(dst, src, len);
   return (char*) dst;
@@ -84,7 +84,7 @@ char *my_once_strdup(const char *src,myf myflags)
 
 void *my_once_memdup(const void *src, size_t len, myf myflags)
 {
-  uchar *dst= my_once_alloc(len, myflags);
+  unsigned char *dst= my_once_alloc(len, myflags);
   if (dst)
     memcpy(dst, src, len);
   return dst;
@@ -105,7 +105,7 @@ void my_once_free(void)
   for (next=my_once_root_block ; next ; )
   {
     old=next; next= next->next ;
-    free((uchar*) old);
+    free((unsigned char*) old);
   }
   my_once_root_block=0;
 

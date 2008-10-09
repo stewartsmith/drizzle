@@ -6,9 +6,9 @@
 drop table if exists t1,t2,t3;
 --enable_warnings
 
-create table t1 (bandID MEDIUMINT UNSIGNED NOT NULL PRIMARY KEY, payoutID SMALLINT UNSIGNED NOT NULL);
+create table t1 (bandID MEDIUMINT NOT NULL PRIMARY KEY, payoutID int NOT NULL);
 insert into t1 (bandID,payoutID) VALUES (1,6),(2,6),(3,4),(4,9),(5,10),(6,1),(7,12),(8,12);
-create table t2 (payoutID SMALLINT UNSIGNED NOT NULL PRIMARY KEY);
+create table t2 (payoutID int NOT NULL PRIMARY KEY);
 insert into t2 (payoutID) SELECT DISTINCT payoutID FROM t1;
 --error ER_DUP_ENTRY
 insert into t2 (payoutID) SELECT payoutID+10 FROM t1;
@@ -22,14 +22,14 @@ drop table t1,t2;
 #
 
 CREATE TABLE `t1` (
-  `numeropost` bigint(20) unsigned NOT NULL default '0',
-  `icone` tinyint(4) unsigned NOT NULL default '0',
-  `numreponse` bigint(20) unsigned NOT NULL auto_increment,
+  `numeropost` bigint(20) NOT NULL default '0',
+  `icone` int(4) NOT NULL default '0',
+  `numreponse` bigint(20) NOT NULL auto_increment,
   `contenu` text NOT NULL,
   `pseudo` varchar(50) NOT NULL default '',
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
   `ip` bigint(11) NOT NULL default '0',
-  `signature` tinyint(1) unsigned NOT NULL default '0',
+  `signature` int(1) NOT NULL default '0',
   PRIMARY KEY  (`numeropost`,`numreponse`)
   ,KEY `ip` (`ip`),
   KEY `date` (`date`),
@@ -38,14 +38,14 @@ CREATE TABLE `t1` (
 ) ENGINE=MyISAM;
 
 CREATE TABLE `t2` (
-  `numeropost` bigint(20) unsigned NOT NULL default '0',
-  `icone` tinyint(4) unsigned NOT NULL default '0',
-  `numreponse` bigint(20) unsigned NOT NULL auto_increment,
+  `numeropost` bigint(20) NOT NULL default '0',
+  `icone` int(4) NOT NULL default '0',
+  `numreponse` bigint(20) NOT NULL auto_increment,
   `contenu` text NOT NULL,
   `pseudo` varchar(50) NOT NULL default '',
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
   `ip` bigint(11) NOT NULL default '0',
-  `signature` tinyint(1) unsigned NOT NULL default '0',
+  `signature` int(1) NOT NULL default '0',
   PRIMARY KEY  (`numeropost`,`numreponse`),
   KEY `ip` (`ip`),
   KEY `date` (`date`),
@@ -113,8 +113,8 @@ drop table t1,t2;
 # Test that caused uninitialized memory access in auto_increment_key update
 #
 
-CREATE TABLE t1 ( USID INTEGER UNSIGNED, ServerID TINYINT UNSIGNED, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User CHAR(32) NOT NULL DEFAULT '<UNKNOWN>', NASAddr INTEGER UNSIGNED, NASPort INTEGER UNSIGNED, NASPortType INTEGER UNSIGNED, ConnectSpeed INTEGER UNSIGNED, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER UNSIGNED, SessionTime INTEGER UNSIGNED, PacketsIn INTEGER UNSIGNED, OctetsIn INTEGER UNSIGNED, PacketsOut INTEGER UNSIGNED, OctetsOut INTEGER UNSIGNED, TerminateCause INTEGER UNSIGNED, UnauthTime TINYINT UNSIGNED, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL);
-CREATE TABLE t2 ( USID INTEGER UNSIGNED AUTO_INCREMENT, ServerID TINYINT UNSIGNED, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User TEXT NOT NULL, NASAddr INTEGER UNSIGNED, NASPort INTEGER UNSIGNED, NASPortType INTEGER UNSIGNED, ConnectSpeed INTEGER UNSIGNED, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER UNSIGNED, SessionTime INTEGER UNSIGNED, PacketsIn INTEGER UNSIGNED, OctetsIn INTEGER UNSIGNED, PacketsOut INTEGER UNSIGNED, OctetsOut INTEGER UNSIGNED, TerminateCause INTEGER UNSIGNED, UnauthTime TINYINT UNSIGNED, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL, INDEX(USID,ServerID,NASAddr,SessionID), INDEX(AssignedAddr));
+CREATE TABLE t1 ( USID INTEGER UNSIGNED, ServerID int UNSIGNED, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User CHAR(32) NOT NULL DEFAULT '<UNKNOWN>', NASAddr INTEGER UNSIGNED, NASPort INTEGER UNSIGNED, NASPortType INTEGER UNSIGNED, ConnectSpeed INTEGER UNSIGNED, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER UNSIGNED, SessionTime INTEGER UNSIGNED, PacketsIn INTEGER UNSIGNED, OctetsIn INTEGER UNSIGNED, PacketsOut INTEGER UNSIGNED, OctetsOut INTEGER UNSIGNED, TerminateCause INTEGER UNSIGNED, UnauthTime int UNSIGNED, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL);
+CREATE TABLE t2 ( USID INTEGER AUTO_INCREMENT, ServerID int UNSIGNED, State ENUM ('unknown', 'Access-Granted', 'Session-Active', 'Session-Closed' ) NOT NULL DEFAULT 'unknown', SessionID CHAR(32), User TEXT NOT NULL, NASAddr INTEGER UNSIGNED, NASPort INTEGER UNSIGNED, NASPortType INTEGER UNSIGNED, ConnectSpeed INTEGER UNSIGNED, CarrierType CHAR(32), CallingStationID CHAR(32), CalledStationID CHAR(32), AssignedAddr INTEGER UNSIGNED, SessionTime INTEGER UNSIGNED, PacketsIn INTEGER UNSIGNED, OctetsIn INTEGER UNSIGNED, PacketsOut INTEGER UNSIGNED, OctetsOut INTEGER UNSIGNED, TerminateCause INTEGER UNSIGNED, UnauthTime int UNSIGNED, AccessRequestTime DATETIME, AcctStartTime DATETIME, AcctLastTime DATETIME, LastModification TIMESTAMP NOT NULL, INDEX(USID,ServerID,NASAddr,SessionID), INDEX(AssignedAddr));
 INSERT INTO t1 VALUES (39,42,'Access-Granted','46','491721000045',2130706433,17690,NULL,NULL,'Localnet','491721000045','49172200000',754974766,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2003-07-18 00:11:21',NULL,NULL,20030718001121);
 INSERT INTO t2 SELECT USID, ServerID, State, SessionID, User, NASAddr, NASPort, NASPortType, ConnectSpeed, CarrierType, CallingStationID, CalledStationID, AssignedAddr, SessionTime, PacketsIn, OctetsIn, PacketsOut, OctetsOut, TerminateCause, UnauthTime, AccessRequestTime, AcctStartTime, AcctLastTime, LastModification from t1 LIMIT 1;
 drop table t1,t2;
@@ -125,9 +125,9 @@ drop table t1,t2;
 
 CREATE TABLE t1(
  Month date NOT NULL,
- Type tinyint(3) unsigned NOT NULL auto_increment,
- Field int(10) unsigned NOT NULL,
- Count int(10) unsigned NOT NULL,
+ Type int(3) NOT NULL auto_increment,
+ Field int(10) NOT NULL,
+ Count int(10) NOT NULL,
  UNIQUE KEY Month (Month,Type,Field)
 );
 	  
@@ -244,7 +244,7 @@ DROP TABLE t1;
 #
 
 CREATE TABLE t1 (
-    f1 int(10) unsigned NOT NULL auto_increment PRIMARY KEY,
+    f1 int(10) NOT NULL auto_increment PRIMARY KEY,
     f2 varchar(100) NOT NULL default ''
 );
 CREATE TABLE t2 (

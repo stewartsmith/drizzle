@@ -26,6 +26,7 @@
 
 #define DUMP_VERSION "10.13"
 
+#include "config.h"
 #include <string>
 #include "client_priv.h"
 
@@ -115,8 +116,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file=0;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-
 /*
   Constant for detection of default value of default_charset.
   If default_charset is equal to drizzle_universal_client_charset, then
@@ -134,7 +133,7 @@ const char *compatible_mode_names[]=
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
   "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
   "ANSI",
-  NullS
+  NULL
 };
 #define MASK_ANSI_QUOTES \
 (\
@@ -622,15 +621,15 @@ static void write_footer(FILE *sql_file)
 
 static void free_table_ent(char *key)
 {
-  my_free(key, MYF(0));
+  free(key);
 }
 
 
-static uchar* get_table_key(const char *entry, size_t *length,
+static unsigned char* get_table_key(const char *entry, size_t *length,
                             bool not_used __attribute__((unused)))
 {
   *length= strlen(entry);
-  return (uchar*) entry;
+  return (unsigned char*) entry;
 }
 
 
@@ -643,7 +642,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start=argument;
-      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password=my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';               /* Destroy argument */
       if (*start)
@@ -718,7 +717,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       fprintf(stderr, "Illegal use of option --ignore-table=<database>.<table>\n");
       exit(1);
     }
-    if (my_hash_insert(&ignore_table, (uchar*)my_strdup(argument, MYF(0))))
+    if (my_hash_insert(&ignore_table, (unsigned char*)my_strdup(argument, MYF(0))))
       exit(EX_EOM);
     break;
   }
@@ -738,7 +737,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                                     &err_ptr, &error_len);
       if (error_len)
       {
-        strmake(buff, err_ptr, min(sizeof(buff), error_len));
+        strmake(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -747,8 +746,8 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       {
         if (mode & 1)
         {
-          end= stpcpy(end, compatible_mode_names[i]);
-          end= stpcpy(end, ",");
+          end= my_stpcpy(end, compatible_mode_names[i]);
+          end= my_stpcpy(end, ",");
         }
       }
       if (end!=compatible_mode_normal_str)
@@ -783,17 +782,17 @@ static int get_options(int *argc, char ***argv)
     return(EX_EOM);
   /* Don't copy internal log tables */
   if (my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.apply_status", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.apply_status", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.schema", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.schema", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.general_log", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.general_log", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.slow_log", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.slow_log", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.online_backup", MYF(MY_WME))) ||
+                     (unsigned char*) my_strdup("mysql.online_backup", MYF(MY_WME))) ||
       my_hash_insert(&ignore_table,
-                     (uchar*) my_strdup("mysql.online_backup_progress", MYF(MY_WME))))
+                     (unsigned char*) my_strdup("mysql.online_backup_progress", MYF(MY_WME))))
     return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
@@ -862,7 +861,7 @@ static int get_options(int *argc, char ***argv)
     return EX_USAGE;
   }
   if (tty_password)
-    opt_password=get_tty_password(NullS);
+    opt_password=get_tty_password(NULL);
   return(0);
 } /* get_options */
 
@@ -1017,7 +1016,7 @@ static FILE* open_sql_file_for_table(const char* table)
 {
   FILE* res;
   char filename[FN_REFLEN], tmp_path[FN_REFLEN];
-  convert_dirname(tmp_path,path,NullS);
+  convert_dirname(tmp_path,path,NULL);
   res= my_fopen(fn_format(filename, table, tmp_path, ".sql", 4),
                 O_WRONLY, MYF(MY_WME));
   return res;
@@ -1028,7 +1027,7 @@ static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
     my_fclose(md_result_file, MYF(0));
-  my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
   if (hash_inited(&ignore_table))
     hash_free(&ignore_table);
   if (defaults_argv)
@@ -1062,10 +1061,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
   verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
   drizzle_create(&drizzle_connection);
   if (opt_compress)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NullS);
-  if (opt_protocol)
-    drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(&drizzle_connection, DRIZZLE_SET_CHARSET_NAME, default_charset);
+    drizzle_options(&drizzle_connection,DRIZZLE_OPT_COMPRESS,NULL);
   if (!(drizzle= drizzle_connect(&drizzle_connection,host,user,passwd,
                                   NULL,opt_drizzle_port, NULL,
                                   0)))
@@ -1112,12 +1108,12 @@ static void unescape(FILE *file,char *pos,uint length)
   if (!(tmp=(char*) my_malloc(length*2+1, MYF(MY_WME))))
     die(EX_DRIZZLEERR, "Couldn't allocate memory");
 
-  drizzle_real_escape_string(&drizzle_connection, tmp, pos, length);
+  drizzle_escape_string(tmp, pos, length);
   fputc('\'', file);
   fputs(tmp, file);
   fputc('\'', file);
   check_io(file);
-  my_free(tmp, MYF(MY_WME));
+  free(tmp);
   return;
 } /* unescape */
 
@@ -1258,7 +1254,7 @@ static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
 
   SYNOPSIS
     print_xml_tag(xml_file, sbeg, send, tag_name, first_attribute_name, 
-                    ..., attribute_name_n, attribute_value_n, NullS)
+                    ..., attribute_name_n, attribute_value_n, NULL)
     xml_file              - output file
     sbeg                  - line beginning
     line_end              - line ending
@@ -1295,10 +1291,10 @@ static void print_xml_tag(FILE * xml_file, const char* sbeg,
 
   va_start(arg_list, first_attribute_name);
   attribute_name= first_attribute_name;
-  while (attribute_name != NullS)
+  while (attribute_name != NULL)
   {
     attribute_value= va_arg(arg_list, char *);
-    assert(attribute_value != NullS);
+    assert(attribute_value != NULL);
 
     fputc(' ', xml_file);
     fputs(attribute_name, xml_file);    
@@ -1413,7 +1409,7 @@ static void print_blob_as_hex(FILE *output_file, const char *str, uint32_t len)
     /* sakaik got the idea to to provide blob's in hex notation. */
     const char *ptr= str, *end= ptr + len;
     for (; ptr < end ; ptr++)
-      fprintf(output_file, "%02X", *((uchar *)ptr));
+      fprintf(output_file, "%02X", *((unsigned char *)ptr));
     check_io(output_file);
 }
 
@@ -1477,7 +1473,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
   if (opt_order_by_primary)
   {
-    my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+    free(order_by);
     order_by= primary_key_fields(result_table);
   }
 
@@ -1564,12 +1560,12 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           if (drizzle_errno(drizzle) == ER_VIEW_INVALID)
             fprintf(sql_file, "\n-- failed on view %s: %s\n\n", result_table, scv_buff ? scv_buff : "");
 
-          my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
+          free(scv_buff);
 
           return(0);
         }
         else
-          my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
+          free(scv_buff);
 
         if (drizzle_num_rows(result))
         {
@@ -1705,7 +1701,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         fprintf(sql_file, "CREATE TABLE %s (\n", result_table);
       else
         print_xml_tag(sql_file, "\t", "\n", "table_structure", "name=", table, 
-                NullS);
+                NULL);
       check_io(sql_file);
     }
 
@@ -2075,7 +2071,7 @@ static void dump_table(char *table, char *db)
       Convert the path to native os format
       and resolve to the full filepath.
     */
-    convert_dirname(tmp_path,path,NullS);    
+    convert_dirname(tmp_path,path,NULL);    
     my_load_path(tmp_path, tmp_path, NULL);
     fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
 
@@ -2203,7 +2199,7 @@ static void dump_table(char *table, char *db)
     init_length=(uint) insert_pat.length()+4;
     if (opt_xml)
       print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
-              NullS);
+              NULL);
     if (opt_autocommit)
     {
       fprintf(md_result_file, "set autocommit=0;\n");
@@ -2257,7 +2253,7 @@ static void dump_table(char *table, char *db)
           {
             if (length)
             {
-              if (!IS_NUM_FIELD(field))
+              if (!(field->type & NUM_FLAG))
               {
                 /*
                   "length * 2 + 2" is OK for both HEX and non-HEX modes:
@@ -2278,9 +2274,8 @@ static void dump_table(char *table, char *db)
                 else
                 {
                   extended_row.append("'");
-                  drizzle_real_escape_string(&drizzle_connection,
-                                             tmp_str,
-                                             row[i],length);
+                  drizzle_escape_string(tmp_str,
+                                        row[i],length);
                   extended_row.append(tmp_str);
                   extended_row.append("'");
                 }
@@ -2314,7 +2309,7 @@ static void dump_table(char *table, char *db)
           }
           if (row[i])
           {
-            if (!IS_NUM_FIELD(field))
+            if (!(field->type & NUM_FLAG))
             {
               if (opt_xml)
               {
@@ -2322,13 +2317,13 @@ static void dump_table(char *table, char *db)
                 {
                   /* Define xsi:type="xs:hexBinary" for hex encoded data */
                   print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                                field->name, "xsi:type=", "xs:hexBinary", NullS);
+                                field->name, "xsi:type=", "xs:hexBinary", NULL);
                   print_blob_as_hex(md_result_file, row[i], length);
                 }
                 else
                 {
                   print_xml_tag(md_result_file, "\t\t", "", "field", "name=", 
-                                field->name, NullS);
+                                field->name, NULL);
                   print_quoted_xml(md_result_file, row[i], length);
                 }
                 fputs("</field>\n", md_result_file);
@@ -2348,7 +2343,7 @@ static void dump_table(char *table, char *db)
               if (opt_xml)
               {
                 print_xml_tag(md_result_file, "\t\t", "", "field", "name=",
-                        field->name, NullS);
+                        field->name, NULL);
                 fputs(!my_isalpha(charset_info, *ptr) ? ptr: "NULL",
                       md_result_file);
                 fputs("</field>\n", md_result_file);
@@ -2464,7 +2459,7 @@ static char *getTableName(int reset)
 
   if (!res)
   {
-    if (!(res= drizzle_list_tables(drizzle,NullS)))
+    if (!(res= drizzle_list_tables(drizzle,NULL)))
       return(NULL);
   }
   if ((row= drizzle_fetch_row(res)))
@@ -2610,7 +2605,7 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-static bool include_table(const uchar *hash_key, size_t len)
+static bool include_table(const unsigned char *hash_key, size_t len)
 {
   return !hash_search(&ignore_table, hash_key, len);
 }
@@ -2626,21 +2621,21 @@ static int dump_all_tables_in_db(char *database)
   int using_mysql_db= my_strcasecmp(&my_charset_utf8_general_ci, database, "mysql");
 
 
-  afterdot= stpcpy(hash_key, database);
+  afterdot= my_stpcpy(hash_key, database);
   *afterdot++= '.';
 
   if (init_dumping(database, init_dumping_tables))
     return(1);
   if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NullS);
+    print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NULL);
   if (lock_tables)
   {
     string query;
     query= "LOCK TABLES ";
     for (numrows= 0 ; (table= getTableName(1)) ; )
     {
-      char *end= stpcpy(afterdot, table);
-      if (include_table((uchar*) hash_key,end - hash_key))
+      char *end= my_stpcpy(afterdot, table);
+      if (include_table((unsigned char*) hash_key,end - hash_key))
       {
         numrows++;
         query.append( quote_name(table, table_buff, 1));
@@ -2660,11 +2655,11 @@ static int dump_all_tables_in_db(char *database)
   }
   while ((table= getTableName(0)))
   {
-    char *end= stpcpy(afterdot, table);
-    if (include_table((uchar*) hash_key, end - hash_key))
+    char *end= my_stpcpy(afterdot, table);
+    if (include_table((unsigned char*) hash_key, end - hash_key))
     {
       dump_table(table,database);
-      my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+      free(order_by);
       order_by= 0;
     }
   }
@@ -2674,7 +2669,7 @@ static int dump_all_tables_in_db(char *database)
     check_io(md_result_file);
   }
   if (lock_tables)
-    VOID(drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES"));
+    drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
   if (flush_privileges && using_mysql_db == 0)
   {
     fprintf(md_result_file,"\n--\n-- Flush Grant Tables \n--\n");
@@ -2710,7 +2705,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
            quote_for_like(old_table_name, show_name_buff));
 
   if (drizzle_query_with_error_report(drizzle, 0, query))
-    return NullS;
+    return NULL;
 
   if ((table_res= drizzle_store_result(drizzle)))
   {
@@ -2797,14 +2792,14 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
      /* We shall countinue here, if --force was given */
   }
   if (opt_xml)
-    print_xml_tag(md_result_file, "", "\n", "database", "name=", db, NullS);
+    print_xml_tag(md_result_file, "", "\n", "database", "name=", db, NULL);
 
   /* Dump each selected table */
   for (pos= dump_tables; pos < end; pos++)
     dump_table(*pos, db);
 
   free_root(&root, MYF(0));
-  my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
+  free(order_by);
   order_by= 0;
   if (opt_xml)
   {
@@ -2812,7 +2807,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     check_io(md_result_file);
   }
   if (lock_tables)
-    VOID(drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES"));
+    drizzle_query_with_error_report(drizzle, 0, "UNLOCK TABLES");
   return(0);
 } /* dump_selected_tables */
 
@@ -3093,7 +3088,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint32_t) (pos - start);
-      strmake(buff, start, min(sizeof(buff), var_len));
+      strmake(buff, start, min((uint32_t)sizeof(buff), var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {
@@ -3298,11 +3293,11 @@ static char *primary_key_fields(const char *table_name)
     drizzle_data_seek(res, 0);
     row= drizzle_fetch_row(res);
     quoted_field= quote_name(row[4], buff, 0);
-    end= stpcpy(result, quoted_field);
+    end= my_stpcpy(result, quoted_field);
     while ((row= drizzle_fetch_row(res)) && atoi(row[3]) > 1)
     {
       quoted_field= quote_name(row[4], buff, 0);
-      end= strxmov(end, ",", quoted_field, NullS);
+      end= strxmov(end, ",", quoted_field, NULL);
     }
   }
 

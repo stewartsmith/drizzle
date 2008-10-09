@@ -17,12 +17,12 @@
 
 #include "heapdef.h"
 
-int heap_delete(HP_INFO *info, const uchar *record)
+int heap_delete(HP_INFO *info, const unsigned char *record)
 {
-  uchar *pos;
+  unsigned char *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keydef, *end, *p_lastinx;
-  uint rec_length, chunk_count;
+  uint32_t rec_length, chunk_count;
 
   test_active(info);
 
@@ -60,10 +60,10 @@ err:
 */
 
 int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
-		   const uchar *record, uchar *recpos, int flag)
+		   const unsigned char *record, unsigned char *recpos, int flag)
 {
   heap_rb_param custom_arg;
-  uint old_allocated;
+  uint32_t old_allocated;
   int res;
 
   if (flag) 
@@ -97,7 +97,7 @@ int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
 */
 
 int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
-		  const uchar *record, uchar *recpos, int flag)
+		  const unsigned char *record, unsigned char *recpos, int flag)
 {
   uint32_t blength,pos2,pos_hashnr,lastpos_hashnr;
   HASH_INFO *lastpos,*gpos,*pos,*pos3,*empty,*last_ptr;

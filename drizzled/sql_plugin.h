@@ -1,17 +1,21 @@
-/* Copyright (C) 2005 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /** 
  * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,  
@@ -78,7 +82,7 @@ struct st_plugin_dl
   LEX_STRING dl;
   void *handle;
   struct st_mysql_plugin *plugins;
-  uint ref_count;            /* number of plugins loaded from the library */
+  uint32_t ref_count;            /* number of plugins loaded from the library */
 };
 
 /* A handle of a plugin */
@@ -88,8 +92,8 @@ struct st_plugin_int
   LEX_STRING name;
   struct st_mysql_plugin *plugin;
   struct st_plugin_dl *plugin_dl;
-  uint state;
-  uint ref_count;               /* number of threads using the plugin */
+  uint32_t state;
+  uint32_t ref_count;               /* number of threads using the plugin */
   void *data;                   /* plugin type specific, e.g. handlerton */
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
@@ -117,7 +121,7 @@ extern const LEX_STRING plugin_type_names[];
 
 extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
-extern void my_print_help_inc_plugins(struct my_option *options, uint size);
+extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 #define my_plugin_lock_by_name(A,B,C) plugin_lock_by_name(A,B,C CALLER_INFO)
 #define my_plugin_lock_by_name_ci(A,B,C) plugin_lock_by_name(A,B,C ORIG_CALLER_INFO)
@@ -127,7 +131,7 @@ extern plugin_ref plugin_lock(THD *thd, plugin_ref *ptr CALLER_INFO_PROTO);
 extern plugin_ref plugin_lock_by_name(THD *thd, const LEX_STRING *name,
                                       int type CALLER_INFO_PROTO);
 extern void plugin_unlock(THD *thd, plugin_ref plugin);
-extern void plugin_unlock_list(THD *thd, plugin_ref *list, uint count);
+extern void plugin_unlock_list(THD *thd, plugin_ref *list, uint32_t count);
 extern bool mysql_install_plugin(THD *thd, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(THD *thd, const LEX_STRING *name);
@@ -140,5 +144,5 @@ typedef bool (plugin_foreach_func)(THD *thd,
                                    void *arg);
 #define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
 extern bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
-                                     int type, uint state_mask, void *arg);
+                                     int type, uint32_t state_mask, void *arg);
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

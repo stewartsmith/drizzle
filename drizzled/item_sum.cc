@@ -356,7 +356,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
 {
   if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
   {
-    uint i=0;
+    uint32_t i=0;
     List_iterator_fast<Item> li(list);
     Item *item;
 
@@ -422,7 +422,7 @@ void Item_sum::make_field(Send_field *tmp_field)
 void Item_sum::print(String *str, enum_query_type query_type)
 {
   str->append(func_name());
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (i)
       str->append(',');
@@ -434,7 +434,7 @@ void Item_sum::print(String *str, enum_query_type query_type)
 void Item_sum::fix_num_length_and_dec()
 {
   decimals=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
     set_if_bigger(decimals,args[i]->decimals);
   max_length=float_length(decimals);
 }
@@ -445,7 +445,7 @@ Item *Item_sum::get_tmp_table_item(THD *thd)
   if (sum_item && sum_item->result_field)	   // If not a const sum func
   {
     Field *result_field_tmp= sum_item->result_field;
-    for (uint i=0 ; i < sum_item->arg_count ; i++)
+    for (uint32_t i=0 ; i < sum_item->arg_count ; i++)
     {
       Item *arg= sum_item->args[i];
       if (!arg->const_item())
@@ -462,7 +462,7 @@ Item *Item_sum::get_tmp_table_item(THD *thd)
 
 
 bool Item_sum::walk (Item_processor processor, bool walk_subquery,
-                     uchar *argument)
+                     unsigned char *argument)
 {
   if (arg_count)
   {
@@ -479,7 +479,7 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 
 Field *Item_sum::create_tmp_field(bool group __attribute__((unused)),
                                   Table *table,
-                                  uint convert_blob_length)
+                                  uint32_t convert_blob_length)
 {
   Field *field;
   switch (result_type()) {
@@ -518,7 +518,7 @@ void Item_sum::update_used_tables ()
   if (!forced_const)
   {
     used_tables_cache= 0;
-    for (uint i=0 ; i < arg_count ; i++)
+    for (uint32_t i=0 ; i < arg_count ; i++)
     {
       args[i]->update_used_tables();
       used_tables_cache|= args[i]->used_tables();
@@ -568,7 +568,7 @@ Item_sum_num::fix_fields(THD *thd, Item **ref)
 
   decimals=0;
   maybe_null=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (args[i]->fix_fields(thd, args + i) || args[i]->check_cols(1))
       return true;
@@ -674,7 +674,7 @@ Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
 }
 
 Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
-					 uint convert_blob_length)
+					 uint32_t convert_blob_length)
 {
   Field *field;
   if (args[0]->type() == Item::FIELD_ITEM)
@@ -846,13 +846,15 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Declarations for auxilary C-callbacks */
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 {
-    return memcmp(key1, key2, *(uint *) arg);
+    return memcmp(key1, key2, *(uint32_t *) arg);
 }
 
 
@@ -863,7 +865,9 @@ static int item_sum_distinct_walk(void *element,
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 /* Item_sum_distinct */
 
@@ -1127,7 +1131,7 @@ Item_sum_avg_distinct::fix_length_and_dec()
     AVG() will divide val by count. We need to reserve digits
     after decimal point as the result can be fractional.
   */
-  decimals= min(decimals + prec_increment, (unsigned int)NOT_FIXED_DEC);
+  decimals= cmin(decimals + prec_increment, (unsigned int)NOT_FIXED_DEC);
 }
 
 
@@ -1189,15 +1193,15 @@ void Item_sum_avg::fix_length_and_dec()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int precision= args[0]->decimal_precision() + prec_increment;
-    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
+    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
-    f_precision= min(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
+    f_precision= cmin(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
     f_scale=  args[0]->decimals;
     dec_bin_size= my_decimal_get_binary_size(f_precision, f_scale);
   }
   else {
-    decimals= min(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
+    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
     max_length= args[0]->max_length + prec_increment;
   }
 }
@@ -1210,7 +1214,7 @@ Item *Item_sum_avg::copy_or_same(THD* thd)
 
 
 Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
-                                      uint convert_blob_len __attribute__((unused)))
+                                      uint32_t convert_blob_len __attribute__((unused)))
 {
   Field *field;
   if (group)
@@ -1388,13 +1392,13 @@ void Item_sum_variance::fix_length_and_dec()
   switch (args[0]->result_type()) {
   case REAL_RESULT:
   case STRING_RESULT:
-    decimals= min(args[0]->decimals + 4, NOT_FIXED_DEC);
+    decimals= cmin(args[0]->decimals + 4, NOT_FIXED_DEC);
     break;
   case INT_RESULT:
   case DECIMAL_RESULT:
   {
     int precision= args[0]->decimal_precision()*2 + prec_increment;
-    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
+    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
 
@@ -1420,7 +1424,7 @@ Item *Item_sum_variance::copy_or_same(THD* thd)
   pass around.
 */
 Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
-                                           uint convert_blob_len __attribute__((unused)))
+                                           uint32_t convert_blob_len __attribute__((unused)))
 {
   Field *field;
   if (group)
@@ -1495,7 +1499,7 @@ my_decimal *Item_sum_variance::val_decimal(my_decimal *dec_buf)
 void Item_sum_variance::reset_field()
 {
   double nr;
-  uchar *res= result_field->ptr;
+  unsigned char *res= result_field->ptr;
 
   nr= args[0]->val_real();              /* sets null_value as side-effect */
 
@@ -1518,7 +1522,7 @@ void Item_sum_variance::reset_field()
 void Item_sum_variance::update_field()
 {
   uint64_t field_count;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   double nr= args[0]->val_real();       /* sets null_value as side-effect */
 
@@ -1881,7 +1885,7 @@ bool Item_sum_and::add()
 void Item_sum_num::reset_field()
 {
   double nr= args[0]->val_real();
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   if (maybe_null)
   {
@@ -2003,7 +2007,7 @@ void Item_sum_sum::reset_field()
 
 void Item_sum_count::reset_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   int64_t nr=0;
 
   if (!args[0]->maybe_null || !args[0]->is_null())
@@ -2014,7 +2018,7 @@ void Item_sum_count::reset_field()
 
 void Item_sum_avg::reset_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
     int64_t tmp;
@@ -2055,7 +2059,7 @@ void Item_sum_bit::reset_field()
 
 void Item_sum_bit::update_field()
 {
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   bits= uint8korr(res);
   add();
   int8store(res, bits);
@@ -2090,7 +2094,7 @@ void Item_sum_sum::update_field()
   else
   {
     double old_nr,nr;
-    uchar *res=result_field->ptr;
+    unsigned char *res=result_field->ptr;
 
     float8get(old_nr,res);
     nr= args[0]->val_real();
@@ -2107,7 +2111,7 @@ void Item_sum_sum::update_field()
 void Item_sum_count::update_field()
 {
   int64_t nr;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
 
   nr=sint8korr(res);
   if (!args[0]->maybe_null || !args[0]->is_null())
@@ -2119,7 +2123,7 @@ void Item_sum_count::update_field()
 void Item_sum_avg::update_field()
 {
   int64_t field_count;
-  uchar *res=result_field->ptr;
+  unsigned char *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
     my_decimal value, *arg_val= args[0]->val_decimal(&value);
@@ -2292,7 +2296,7 @@ double Item_avg_field::val_real()
   // fix_fields() never calls for this Item
   double nr;
   int64_t count;
-  uchar *res;
+  unsigned char *res;
 
   if (hybrid_type == DECIMAL_RESULT)
     return val_real_from_decimal();
@@ -2425,7 +2429,7 @@ double Item_variance_field::val_real()
 ** COUNT(DISTINCT ...)
 ****************************************************************************/
 
-int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2)
+int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Field *f= (Field*) arg;
   return f->cmp(key1, key2);
@@ -2438,7 +2442,7 @@ int simple_str_key_cmp(void* arg, uchar* key1, uchar* key2)
   static
 */
 
-int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
+int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
   Field **field    = item->table->field;
@@ -2457,8 +2461,9 @@ int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
   return 0;
 }
 
-
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static int count_distinct_walk(void *elem __attribute__((unused)),
                                element_count count __attribute__((unused)),
@@ -2468,7 +2473,10 @@ static int count_distinct_walk(void *elem __attribute__((unused)),
   return 0;
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+
 
 
 void Item_sum_count_distinct::cleanup()
@@ -2539,7 +2547,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
     return true;
 
   /* Create a table with an unique key over all parameters */
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     Item *item=args[i];
     if (list.push_back(item))
@@ -2691,7 +2699,7 @@ int64_t Item_sum_count_distinct::val_int()
   int error;
   assert(fixed == 1);
   if (!table)					// Empty query
-    return 0LL;
+    return 0L;
   if (tree)
   {
     if (is_evaluated)
@@ -2713,159 +2721,6 @@ int64_t Item_sum_count_distinct::val_int()
   }
 
   return table->file->stats.records;
-}
-
-
-/****************************************************************************
-** Functions to handle dynamic loadable aggregates
-** Original source by: Alexis Mikhailov <root@medinf.chuvashia.su>
-** Adapted for UDAs by: Andreas F. Bobak <bobak@relog.ch>.
-** Rewritten by: Monty.
-****************************************************************************/
-
-void Item_udf_sum::clear()
-{
-  udf.clear();
-  return;
-}
-
-bool Item_udf_sum::add()
-{
-  udf.add(&null_value);
-  return(0);
-}
-
-void Item_udf_sum::cleanup()
-{
-  /*
-    udf_handler::cleanup() nicely handles case when we have not
-    original item but one created by copy_or_same() method.
-  */
-  udf.cleanup();
-  Item_sum::cleanup();
-}
-
-
-void Item_udf_sum::print(String *str, enum_query_type query_type)
-{
-  str->append(func_name());
-  str->append('(');
-  for (uint i=0 ; i < arg_count ; i++)
-  {
-    if (i)
-      str->append(',');
-    args[i]->print(str, query_type);
-  }
-  str->append(')');
-}
-
-
-Item *Item_sum_udf_float::copy_or_same(THD* thd)
-{
-  return new (thd->mem_root) Item_sum_udf_float(thd, this);
-}
-
-double Item_sum_udf_float::val_real()
-{
-  assert(fixed == 1);
-  return(udf.val(&null_value));
-}
-
-
-String *Item_sum_udf_float::val_str(String *str)
-{
-  return val_string_from_real(str);
-}
-
-
-my_decimal *Item_sum_udf_float::val_decimal(my_decimal *dec)
-{
-  return val_decimal_from_real(dec);
-}
-
-
-String *Item_sum_udf_decimal::val_str(String *str)
-{
-  return val_string_from_decimal(str);
-}
-
-
-double Item_sum_udf_decimal::val_real()
-{
-  return val_real_from_decimal();
-}
-
-
-int64_t Item_sum_udf_decimal::val_int()
-{
-  return val_int_from_decimal();
-}
-
-
-my_decimal *Item_sum_udf_decimal::val_decimal(my_decimal *dec_buf)
-{
-  assert(fixed == 1);
-  return(udf.val_decimal(&null_value, dec_buf));
-}
-
-
-Item *Item_sum_udf_decimal::copy_or_same(THD* thd)
-{
-  return new (thd->mem_root) Item_sum_udf_decimal(thd, this);
-}
-
-
-Item *Item_sum_udf_int::copy_or_same(THD* thd)
-{
-  return new (thd->mem_root) Item_sum_udf_int(thd, this);
-}
-
-int64_t Item_sum_udf_int::val_int()
-{
-  assert(fixed == 1);
-  return(udf.val_int(&null_value));
-}
-
-
-String *Item_sum_udf_int::val_str(String *str)
-{
-  return val_string_from_int(str);
-}
-
-my_decimal *Item_sum_udf_int::val_decimal(my_decimal *dec)
-{
-  return val_decimal_from_int(dec);
-}
-
-
-/** Default max_length is max argument length. */
-
-void Item_sum_udf_str::fix_length_and_dec()
-{
-  max_length=0;
-  for (uint i = 0; i < arg_count; i++)
-    set_if_bigger(max_length,args[i]->max_length);
-  return;
-}
-
-
-Item *Item_sum_udf_str::copy_or_same(THD* thd)
-{
-  return new (thd->mem_root) Item_sum_udf_str(thd, this);
-}
-
-
-my_decimal *Item_sum_udf_str::val_decimal(my_decimal *dec)
-{
-  return val_decimal_from_string(dec);
-}
-
-String *Item_sum_udf_str::val_str(String *str)
-{
-  assert(fixed == 1);
-  String *res=udf.val_str(str,&str_value);
-  null_value = !res;
-  return(res);
 }
 
 /*****************************************************************************
@@ -2903,7 +2758,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
   Item_func_group_concat *item_func= (Item_func_group_concat*)arg;
   Table *table= item_func->table;
 
-  for (uint i= 0; i < item_func->arg_count_field; i++)
+  for (uint32_t i= 0; i < item_func->arg_count_field; i++)
   {
     Item *item= item_func->args[i];
     /* 
@@ -2919,8 +2774,8 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     */
     Field *field= item->get_tmp_table_field();
     int res;
-    uint offset= field->offset(field->table->record[0])-table->s->null_bytes;
-    if((res= field->cmp((uchar*)key1 + offset, (uchar*)key2 + offset)))
+    uint32_t offset= field->offset(field->table->record[0])-table->s->null_bytes;
+    if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
   return 0;
@@ -2956,9 +2811,9 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
     if (field && !item->const_item())
     {
       int res;
-      uint offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->table->record[0]) -
                     table->s->null_bytes);
-      if ((res= field->cmp((uchar*)key1 + offset, (uchar*)key2 + offset)))
+      if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
     }
   }
@@ -2975,7 +2830,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
   Append data from current leaf to item->result.
 */
 
-int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
+int dump_leaf_key(unsigned char* key, element_count count __attribute__((unused)),
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
@@ -2984,7 +2839,7 @@ int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
   String tmp2;
   String *result= &item->result;
   Item **arg= item->args, **arg_end= item->args + item->arg_count_field;
-  uint old_length= result->length();
+  uint32_t old_length= result->length();
 
   if (item->no_appended)
     item->no_appended= false;
@@ -3006,7 +2861,7 @@ int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
         because it contains both order and arg list fields.
       */
       Field *field= (*arg)->get_tmp_table_field();
-      uint offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->table->record[0]) -
                     table->s->null_bytes);
       assert(offset < table->s->reclength);
       res= field->val_str(&tmp, key + offset);
@@ -3023,7 +2878,7 @@ int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
     int well_formed_error;
     const CHARSET_INFO * const cs= item->collation.collation;
     const char *ptr= result->ptr();
-    uint add_length;
+    uint32_t add_length;
     /*
       It's ok to use item->result.length() as the fourth argument
       as this is never used to limit the length of the data.
@@ -3209,13 +3064,13 @@ bool Item_func_group_concat::add()
   copy_fields(tmp_table_param);
   copy_funcs(tmp_table_param->items_to_copy);
 
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *show_item= args[i];
     if (!show_item->const_item())
     {
       Field *f= show_item->get_tmp_table_field();
-      if (f->is_null_in_record((const uchar*) table->record[0]))
+      if (f->is_null_in_record((const unsigned char*) table->record[0]))
         return 0;                               // Skip row if it contains null
     }
   }
@@ -3226,7 +3081,7 @@ bool Item_func_group_concat::add()
   if (distinct) 
   {
     /* Filter out duplicate rows. */
-    uint count= unique_filter->elements_in_tree();
+    uint32_t count= unique_filter->elements_in_tree();
     unique_filter->unique_add(table->record[0] + table->s->null_bytes);
     if (count == unique_filter->elements_in_tree())
       row_eligible= false;
@@ -3252,7 +3107,7 @@ bool Item_func_group_concat::add()
 bool
 Item_func_group_concat::fix_fields(THD *thd, Item **ref)
 {
-  uint i;                       /* for loop variable */
+  uint32_t i;                       /* for loop variable */
   assert(fixed == 0);
 
   if (init_sum_func_check(thd))
@@ -3289,12 +3144,12 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
                                   collation.collation, &offset))
   {
     uint32_t buflen= collation.collation->mbmaxlen * separator->length();
-    uint errors, conv_length;
+    uint32_t errors, conv_length;
     char *buf;
     String *new_separator;
 
-    if (!(buf= (char*) thd->stmt_arena->alloc(buflen)) ||
-        !(new_separator= new(thd->stmt_arena->mem_root)
+    if (!(buf= (char*) thd->alloc(buflen)) ||
+        !(new_separator= new(thd->mem_root)
                            String(buf, buflen, collation.collation)))
       return true;
     
@@ -3333,7 +3188,7 @@ bool Item_func_group_concat::setup(THD *thd)
                                         collation.collation->mbmaxlen;
   /* Push all not constant fields to the list and create a temp table */
   always_null= 0;
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *item= args[i];
     if (list.push_back(item))
@@ -3394,7 +3249,7 @@ bool Item_func_group_concat::setup(THD *thd)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint tree_key_length= table->s->reclength - table->s->null_bytes;
+  uint32_t tree_key_length= table->s->reclength - table->s->null_bytes;
 
   if (arg_count_order)
   {
@@ -3404,7 +3259,7 @@ bool Item_func_group_concat::setup(THD *thd)
       syntax of this function). If there is no order_st BY clause, we don't
       create this tree.
     */
-    init_tree(tree, (uint) min(thd->variables.max_heap_table_size,
+    init_tree(tree, (uint) cmin(thd->variables.max_heap_table_size,
                                thd->variables.sortbuff_size/16), 0,
               tree_key_length, 
               group_concat_key_cmp_with_order , 0, NULL, (void*) this);
@@ -3461,7 +3316,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN("group_concat("));
   if (distinct)
     str->append(STRING_WITH_LEN("distinct "));
-  for (uint i= 0; i < arg_count_field; i++)
+  for (uint32_t i= 0; i < arg_count_field; i++)
   {
     if (i)
       str->append(',');
@@ -3470,7 +3325,7 @@ void Item_func_group_concat::print(String *str, enum_query_type query_type)
   if (arg_count_order)
   {
     str->append(STRING_WITH_LEN(" order by "));
-    for (uint i= 0 ; i < arg_count_order ; i++)
+    for (uint32_t i= 0 ; i < arg_count_order ; i++)
     {
       if (i)
         str->append(',');

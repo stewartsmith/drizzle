@@ -1,17 +1,25 @@
-/* Copyright (C) 2000 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
+#ifndef _DRIZZLED_SQL_SORT_H
+#define _DRIZZLED_SQL_SORT_H
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Defines used by filesort and uniques */
 
@@ -36,15 +44,15 @@
 
 typedef struct st_sort_addon_field {  /* Sort addon packed field */
   Field *field;          /* Original field */
-  uint   offset;         /* Offset from the last sorted field */
-  uint   null_offset;    /* Offset to to null bit from the last sorted field */
-  uint   length;         /* Length in the sort buffer */
+  uint32_t   offset;         /* Offset from the last sorted field */
+  uint32_t   null_offset;    /* Offset to to null bit from the last sorted field */
+  uint32_t   length;         /* Length in the sort buffer */
   uint8_t  null_bit;       /* Null bit mask for the field */
 } SORT_ADDON_FIELD;
 
 typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
   my_off_t file_pos;			/* Where we are in the sort file */
-  uchar *base,*key;			/* key pointers */
+  unsigned char *base,*key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
   ulong mem_count;			/* numbers of keys in memory */
   ulong max_keys;			/* Max keys in buffert */
@@ -57,18 +65,18 @@ struct BUFFPEK_COMPARE_CONTEXT
 };
 
 typedef struct st_sort_param {
-  uint rec_length;          /* Length of sorted records */
-  uint sort_length;			/* Length of sorted columns */
-  uint ref_length;			/* Length of record ref. */
-  uint addon_length;        /* Length of added packed fields */
-  uint res_length;          /* Length of records in final sorted file/buffer */
-  uint keys;				/* Max keys / buffer */
+  uint32_t rec_length;          /* Length of sorted records */
+  uint32_t sort_length;			/* Length of sorted columns */
+  uint32_t ref_length;			/* Length of record ref. */
+  uint32_t addon_length;        /* Length of added packed fields */
+  uint32_t res_length;          /* Length of records in final sorted file/buffer */
+  uint32_t keys;				/* Max keys / buffer */
   ha_rows max_rows,examined_rows;
   Table *sort_form;			/* For quicker make_sortkey */
   SORT_FIELD *local_sortorder;
   SORT_FIELD *end;
   SORT_ADDON_FIELD *addon_field; /* Descriptors for companion fields */
-  uchar *unique_buff;
+  unsigned char *unique_buff;
   bool not_killable;
   char* tmp_buffer;
   /* The fields below are used only by Unique class */
@@ -77,13 +85,15 @@ typedef struct st_sort_param {
 } SORTPARAM;
 
 
-int merge_many_buff(SORTPARAM *param, uchar *sort_buffer,
+int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
 		    BUFFPEK *buffpek,
-		    uint *maxbuffer, IO_CACHE *t_file);
-uint read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
-		    uint sort_length);
+		    uint32_t *maxbuffer, IO_CACHE *t_file);
+uint32_t read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+		    uint32_t sort_length);
 int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
-		  IO_CACHE *to_file, uchar *sort_buffer,
+		  IO_CACHE *to_file, unsigned char *sort_buffer,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
-void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint key_length);
+void reuse_freed_buff(QUEUE *queue, BUFFPEK *reuse, uint32_t key_length);
+
+#endif

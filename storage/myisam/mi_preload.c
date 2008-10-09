@@ -40,11 +40,11 @@
 
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 {
-  uint i;
+  uint32_t i;
   uint32_t length, block_length= 0;
-  uchar *buff= NULL;
+  unsigned char *buff= NULL;
   MYISAM_SHARE* share= info->s;
-  uint keys= share->state.header.keys;
+  uint32_t keys= share->state.header.keys;
   MI_KEYDEF *keyinfo= share->keyinfo;
   my_off_t key_file_length= share->state.state.key_file_length;
   my_off_t pos= share->base.keystart;
@@ -69,7 +69,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   length= info->preload_buff_size/block_length * block_length;
   set_if_bigger(length, block_length);
 
-  if (!(buff= (uchar *) my_malloc(length, MYF(MY_WME))))
+  if (!(buff= (unsigned char *) my_malloc(length, MYF(MY_WME))))
     return(my_errno= HA_ERR_OUT_OF_MEM);
 
   if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
@@ -80,19 +80,19 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     /* Read the next block of index file into the preload buffer */
     if ((my_off_t) length > (key_file_length-pos))
       length= (uint32_t) (key_file_length-pos);
-    if (my_pread(share->kfile, (uchar*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
+    if (my_pread(share->kfile, (unsigned char*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
       goto err;
 
     if (ignore_leaves)
     {
-      uchar *end= buff+length;
+      unsigned char *end= buff+length;
       do
       {
         if (mi_test_if_nod(buff))
         {
           if (key_cache_insert(share->key_cache,
                                share->kfile, pos, DFLT_INIT_HITS,
-                              (uchar*) buff, block_length))
+                              (unsigned char*) buff, block_length))
 	    goto err;
 	}
         pos+= block_length;
@@ -104,18 +104,18 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     {
       if (key_cache_insert(share->key_cache,
                            share->kfile, pos, DFLT_INIT_HITS,
-                           (uchar*) buff, length))
+                           (unsigned char*) buff, length))
 	goto err;
       pos+= length;
     }
   }
   while (pos != key_file_length);
 
-  my_free((char*) buff, MYF(0));
+  free((char*) buff);
   return(0);
 
 err:
-  my_free((char*) buff, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) buff);
   return(my_errno= errno);
 }
 

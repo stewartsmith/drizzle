@@ -15,7 +15,7 @@
 
 /*
   strtol,strtoul,strtoll,strtoull
-  convert string to long, unsigned long, long long or unsigned long long.
+  convert string to long, unsigned long, int64_t or uint64_t.
   strtoxx(char *src,char **ptr,int base)
   converts the string pointed to by src to an long of appropriate long and
   returnes it. It skips leading spaces and tabs (but not newlines, formfeeds,
@@ -86,7 +86,7 @@ function (const char *nptr,char **endptr,int base)
   register unsigned int cutlim;
   register ulongtype i;
   register const char *s;
-  register uchar c;
+  register unsigned char c;
   const char *save;
   int overflow;
 

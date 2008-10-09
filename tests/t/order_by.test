@@ -28,7 +28,7 @@ CREATE TABLE t2 (
   id int(6) NOT NULL auto_increment,
   description varchar(40) NOT NULL,
   idform varchar(40),
-  ordre int(6) unsigned DEFAULT '0' NOT NULL,
+  ordre int(6) DEFAULT '0' NOT NULL,
   image varchar(60),
   PRIMARY KEY (id),
   KEY id (id,ordre)
@@ -120,9 +120,9 @@ drop table t1;
 
 CREATE TABLE t1
 (
-  a          int unsigned       NOT NULL,
-  b          int unsigned       NOT NULL,
-  c          int unsigned       NOT NULL,
+  a          int       NOT NULL,
+  b          int       NOT NULL,
+  c          int       NOT NULL,
   UNIQUE(a),
   INDEX(b),
   INDEX(c)
@@ -130,14 +130,14 @@ CREATE TABLE t1
 
 CREATE TABLE t2
 (
-  c          int unsigned       NOT NULL,
-  i          int unsigned       NOT NULL,
+  c          int       NOT NULL,
+  i          int       NOT NULL,
   INDEX(c)
 );
 
 CREATE TABLE t3
 (
-  c          int unsigned       NOT NULL,
+  c          int       NOT NULL,
   v          varchar(64),
   INDEX(c)
 );
@@ -278,8 +278,8 @@ drop table t1;
 
 
 CREATE TABLE t1 (
-  gid int(10) unsigned NOT NULL auto_increment,
-  cid smallint(5) unsigned NOT NULL default '0',
+  gid int(10) NOT NULL auto_increment,
+  cid int(5) NOT NULL default '0',
   PRIMARY KEY  (gid),
   KEY component_id (cid)
 ) ENGINE=MyISAM;
@@ -287,9 +287,9 @@ INSERT INTO t1 VALUES (103853,108),(103867,108),(103962,108),(104505,108),(10461
 ALTER TABLE t1 add skr int(10) not null;
 
 CREATE TABLE t2 (
-  gid int(10) unsigned NOT NULL default '0',
-  uid smallint(5) unsigned NOT NULL default '1',
-  sid tinyint(3) unsigned NOT NULL default '1',
+  gid int(10) NOT NULL default '0',
+  uid int(5) NOT NULL default '1',
+  sid int(3) NOT NULL default '1',
   PRIMARY KEY  (gid),
   KEY uid (uid),
   KEY status_id (sid)
@@ -297,7 +297,7 @@ CREATE TABLE t2 (
 INSERT INTO t2 VALUES (103853,250,5),(103867,27,5),(103962,27,5),(104505,117,5),(104619,75,5),(104620,15,5);
 
 CREATE TABLE t3 (
-  uid smallint(6) NOT NULL auto_increment,
+  uid int(6) NOT NULL auto_increment,
   PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(15),(27),(75),(117),(250);
@@ -322,17 +322,17 @@ drop table t1,t2,t3;
 
 CREATE TABLE t1 (
   `titre` char(80) NOT NULL default '',
-  `numeropost` mediumint(8) unsigned NOT NULL auto_increment,
+  `numeropost` mediumint(8) NOT NULL auto_increment,
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
   `auteur` char(35) NOT NULL default '',
-  `icone` tinyint(2) unsigned NOT NULL default '0',
+  `icone` int(2) NOT NULL default '0',
   `lastauteur` char(35) NOT NULL default '',
-  `nbrep` smallint(6) unsigned NOT NULL default '0',
+  `nbrep` int(6) NOT NULL default '0',
   `dest` char(35) NOT NULL default '',
-  `lu` tinyint(1) unsigned NOT NULL default '0',
-  `vue` mediumint(8) unsigned NOT NULL default '0',
-  `ludest` tinyint(1) unsigned NOT NULL default '0',
-  `ouvert` tinyint(1) unsigned NOT NULL default '1',
+  `lu` int(1) NOT NULL default '0',
+  `vue` mediumint(8) NOT NULL default '0',
+  `ludest` int(1) NOT NULL default '0',
+  `ouvert` int(1) NOT NULL default '1',
   PRIMARY KEY  (`numeropost`),
   KEY `date` (`date`),
   KEY `dest` (`dest`,`ludest`),
@@ -342,7 +342,7 @@ CREATE TABLE t1 (
 ) CHECKSUM=1;
 
 CREATE TABLE t2 (
-  `numeropost` mediumint(8) unsigned NOT NULL default '0',
+  `numeropost` mediumint(8) NOT NULL default '0',
   `pseudo` char(35) NOT NULL default '',
   PRIMARY KEY  (`numeropost`,`pseudo`),
   KEY `pseudo` (`pseudo`)
@@ -417,7 +417,7 @@ DROP TABLE t1;
 # Bug when doing an order by on a 1 byte string (Bug #2147)
 #
 
-CREATE TABLE t1 (  id smallint(6) unsigned NOT NULL default '0',  menu tinyint(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
+CREATE TABLE t1 (  id int(6) NOT NULL default '0',  menu int(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (11384, 2),(11392, 2);
 SELECT id FROM t1 WHERE id <11984 AND menu =2 ORDER BY id DESC LIMIT 1 ;
 drop table t1;
@@ -593,7 +593,7 @@ DROP TABLE t1;
 #       crashes server
 #
 CREATE TABLE bug25126 (
-  val int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY
+  val int NOT NULL AUTO_INCREMENT PRIMARY KEY
 );
 --error 1054
 UPDATE bug25126 SET MissingCol = MissingCol;
@@ -715,7 +715,7 @@ drop table t1;
 #
 # Bug#26672: Incorrect SEC_TO_TIME() casting in ORDER BY
 #
-CREATE TABLE t1 (a INT UNSIGNED NOT NULL, b TIME);
+CREATE TABLE t1 (a INT NOT NULL, b TIME);
 INSERT INTO t1 (a) VALUES (100000), (0), (100), (1000000),(10000), (1000), (10);
 UPDATE t1 SET b = SEC_TO_TIME(a);
 

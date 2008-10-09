@@ -30,9 +30,9 @@
 int mi_lock_database(MI_INFO *info, int lock_type)
 {
   int error;
-  uint count;
+  uint32_t count;
   MYISAM_SHARE *share=info->s;
-  uint flag;
+  uint32_t flag;
 
   if (share->options & HA_OPTION_READ_ONLY_DATA ||
       info->lock_type == lock_type)
@@ -160,7 +160,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  break;
 	}
       }
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
       share->r_locks++;
       share->tot_locks++;
       info->lock_type=lock_type;
@@ -194,7 +194,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  }
 	}
       }
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
         
       info->lock_type=lock_type;
       info->invalidator=info->s->invalidator;
@@ -224,7 +224,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   pthread_mutex_unlock(&share->intern_lock);
 #if defined(FULL_LOG) || defined(_lint)
   lock_type|=(int) (flag << 8);		/* Set bit to set if real lock */
-  myisam_log_command(MI_LOG_LOCK,info,(uchar*) &lock_type,sizeof(lock_type),
+  myisam_log_command(MI_LOG_LOCK,info,(unsigned char*) &lock_type,sizeof(lock_type),
 		     error);
 #endif
   return(error);
@@ -356,7 +356,7 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
       }
     }
     if (check_keybuffer)
-      VOID(_mi_test_if_changed(info));
+      _mi_test_if_changed(info);
     info->invalidator=info->s->invalidator;
   }
   else if (lock_type == F_WRLCK && info->lock_type == F_RDLCK)
@@ -373,7 +373,7 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
   request
 */
 
-int _mi_writeinfo(register MI_INFO *info, uint operation)
+int _mi_writeinfo(register MI_INFO *info, uint32_t operation)
 {
   int error,olderror;
   MYISAM_SHARE *share=info->s;
@@ -416,7 +416,7 @@ int _mi_test_if_changed(register MI_INFO *info)
       share->state.update_count != info->last_loop)
   {						/* Keyfile has changed */
     if (share->state.process != share->this_process)
-      VOID(flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE));
+      flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE);
     share->last_process=share->state.process;
     info->last_unique=	share->state.unique;
     info->last_loop=	share->state.update_count;
@@ -449,7 +449,7 @@ int _mi_test_if_changed(register MI_INFO *info)
 
 int _mi_mark_file_changed(MI_INFO *info)
 {
-  uchar buff[3];
+  unsigned char buff[3];
   register MYISAM_SHARE *share=info->s;
 
   if (!(share->state.changed & STATE_CHANGED) || ! share->global_changed)
@@ -481,12 +481,12 @@ int _mi_mark_file_changed(MI_INFO *info)
 
 int _mi_decrement_open_count(MI_INFO *info)
 {
-  uchar buff[2];
+  unsigned char buff[2];
   register MYISAM_SHARE *share=info->s;
   int lock_error=0,write_error=0;
   if (share->global_changed)
   {
-    uint old_lock=info->lock_type;
+    uint32_t old_lock=info->lock_type;
     share->global_changed=0;
     lock_error=mi_lock_database(info,F_WRLCK);
     /* Its not fatal even if we couldn't get the lock ! */

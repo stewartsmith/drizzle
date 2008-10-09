@@ -67,7 +67,7 @@ void
 Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 {
   item->decimals= arg->decimals;
-  item->max_length= min(arg->max_length + DECIMAL_LONGLONG_DIGITS,
+  item->max_length= cmin(arg->max_length + DECIMAL_LONGLONG_DIGITS,
                         (unsigned int)DECIMAL_MAX_STR_LENGTH);
 }
 
@@ -429,14 +429,14 @@ Item::Item(THD *thd, Item *item):
 }
 
 
-uint Item::decimal_precision() const
+uint32_t Item::decimal_precision() const
 {
   Item_result restype= result_type();
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
-    return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
+    return cmin(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
                (unsigned int)DECIMAL_MAX_PRECISION);
-  return min(max_length, (uint32_t)DECIMAL_MAX_PRECISION);
+  return cmin(max_length, (uint32_t)DECIMAL_MAX_PRECISION);
 }
 
 
@@ -469,7 +469,7 @@ void Item::cleanup()
   @param arg   a dummy parameter, is not used here
 */
 
-bool Item::cleanup_processor(uchar *arg __attribute__((unused)))
+bool Item::cleanup_processor(unsigned char *arg __attribute__((unused)))
 {
   if (fixed)
     cleanup();
@@ -524,7 +524,7 @@ void Item::rename(char *new_name)
     pointer to newly allocated item is returned.
 */
 
-Item* Item::transform(Item_transformer transformer, uchar *arg)
+Item* Item::transform(Item_transformer transformer, unsigned char *arg)
 {
   return (this->*transformer)(arg);
 }
@@ -581,7 +581,7 @@ void Item_ident::cleanup()
   return;
 }
 
-bool Item_ident::remove_dependence_processor(uchar * arg)
+bool Item_ident::remove_dependence_processor(unsigned char * arg)
 {
   if (depended_from == (st_select_lex *) arg)
     depended_from= 0;
@@ -607,7 +607,7 @@ bool Item_ident::remove_dependence_processor(uchar * arg)
     for the subsequent items.
 */
 
-bool Item_field::collect_item_field_processor(uchar *arg)
+bool Item_field::collect_item_field_processor(unsigned char *arg)
 {
   List<Item_field> *item_list= (List<Item_field>*) arg;
   List_iterator<Item_field> item_list_it(*item_list);
@@ -638,7 +638,7 @@ bool Item_field::collect_item_field_processor(uchar *arg)
     false otherwise
 */
 
-bool Item_field::find_item_in_field_list_processor(uchar *arg)
+bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
   KEY_PART_INFO *first_non_group_part= *((KEY_PART_INFO **) arg);
   KEY_PART_INFO *last_part= *(((KEY_PART_INFO **) arg) + 1);
@@ -661,7 +661,7 @@ bool Item_field::find_item_in_field_list_processor(uchar *arg)
     column read set or to register used fields in a view
 */
 
-bool Item_field::register_field_in_read_map(uchar *arg)
+bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->table == table || !table)
@@ -677,7 +677,7 @@ bool Item_field::register_field_in_read_map(uchar *arg)
 
 */
 
-bool Item_field::register_field_in_bitmap(uchar *arg)
+bool Item_field::register_field_in_bitmap(unsigned char *arg)
 {
   MY_BITMAP *bitmap= (MY_BITMAP *) arg;
   assert(bitmap);
@@ -686,7 +686,7 @@ bool Item_field::register_field_in_bitmap(uchar *arg)
 }
 
 
-bool Item::check_cols(uint c)
+bool Item::check_cols(uint32_t c)
 {
   if (c != 1)
   {
@@ -697,7 +697,7 @@ bool Item::check_cols(uint c)
 }
 
 
-void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
+void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs)
 {
   if (!length)
   {
@@ -708,7 +708,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
   }
   if (cs->ctype)
   {
-    uint orig_len= length;
+    uint32_t orig_len= length;
     /*
       This will probably need a better implementation in the future:
       a function in CHARSET_INFO structure.
@@ -738,7 +738,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
 				   &res_length);
   }
   else
-    name= sql_strmake(str, (name_length= min(length,(unsigned int)MAX_ALIAS_NAME)));
+    name= sql_strmake(str, (name_length= cmin(length,(unsigned int)MAX_ALIAS_NAME)));
 }
 
 
@@ -813,7 +813,7 @@ Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const 
 Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
-  uint conv_errors;
+  uint32_t conv_errors;
   char *ptr;
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
@@ -842,7 +842,7 @@ Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   if (const_item())
   {
-    uint cnv_errors;
+    uint32_t cnv_errors;
     String *ostr= val_str(&cnvstr);
     cnvitem->str_value.copy(ostr->ptr(), ostr->length(),
                             ostr->charset(), tocs, &cnv_errors);
@@ -859,7 +859,7 @@ Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 Item *Item_static_string_func::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
-  uint conv_errors;
+  uint32_t conv_errors;
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
   if (conv_errors ||
@@ -901,7 +901,7 @@ bool Item_string::eq(const Item *item, bool binary_cmp) const
   As a extra convenience the time structure is reset on error!
 */
 
-bool Item::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   if (result_type() == STRING_RESULT)
   {
@@ -916,13 +916,13 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
   {
     int64_t value= val_int();
     int was_cut;
-    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1LL)
+    if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
       end= int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
-                                   NullS);
+                                   NULL);
       goto err;
     }
   }
@@ -1055,7 +1055,7 @@ void Item::split_sum_func2(THD *thd, Item **ref_pointer_array,
       Item_ref to allow fields from view being stored in tmp table.
     */
     Item_aggregate_ref *item_ref;
-    uint el= fields.elements;
+    uint32_t el= fields.elements;
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
@@ -1125,7 +1125,7 @@ left_is_superset(DTCollation *left, DTCollation *right)
   @endcode
 */
 
-bool DTCollation::aggregate(DTCollation &dt, uint flags)
+bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
 {
   if (!my_charset_same(collation, dt.collation))
   {
@@ -1245,7 +1245,7 @@ void my_coll_agg_error(DTCollation &c1, DTCollation &c2, DTCollation &c3,
 
 
 static
-void my_coll_agg_error(Item** args, uint count, const char *fname,
+void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
                        int item_sep)
 {
   if (count == 2)
@@ -1259,9 +1259,9 @@ void my_coll_agg_error(Item** args, uint count, const char *fname,
 
 
 bool agg_item_collations(DTCollation &c, const char *fname,
-                         Item **av, uint count, uint flags, int item_sep)
+                         Item **av, uint32_t count, uint32_t flags, int item_sep)
 {
-  uint i;
+  uint32_t i;
   Item **arg;
   c.set(av[0]->collation);
   for (i= 1, arg= &av[item_sep]; i < count; i++, arg++)
@@ -1283,7 +1283,7 @@ bool agg_item_collations(DTCollation &c, const char *fname,
 
 
 bool agg_item_collations_for_comparison(DTCollation &c, const char *fname,
-                                        Item **av, uint count, uint flags)
+                                        Item **av, uint32_t count, uint32_t flags)
 {
   return (agg_item_collations(c, fname, av, count,
                               flags | MY_COLL_DISALLOW_NONE, 1));
@@ -1322,7 +1322,7 @@ bool agg_item_collations_for_comparison(DTCollation &c, const char *fname,
 */
 
 bool agg_item_charsets(DTCollation &coll, const char *fname,
-                       Item **args, uint nargs, uint flags, int item_sep)
+                       Item **args, uint32_t nargs, uint32_t flags, int item_sep)
 {
   Item **arg, *safe_args[2];
 
@@ -1345,14 +1345,8 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
   }
 
   THD *thd= current_thd;
-  Query_arena *arena, backup;
   bool res= false;
-  uint i;
-  /*
-    In case we're in statement prepare, create conversion item
-    in its memory: it will be reused on each execute.
-  */
-  arena= NULL;
+  uint32_t i;
 
   for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
   {
@@ -1398,8 +1392,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
     */
     conv->fix_fields(thd, arg);
   }
-  if (arena)
-    thd->restore_active_arena(arena, &backup);
+
   return res;
 }
 
@@ -1420,7 +1413,7 @@ void Item_ident_for_show::make_field(Send_field *tmp_field)
 /**********************************************/
 
 Item_field::Item_field(Field *f)
-  :Item_ident(0, NullS, *f->table_name, f->field_name),
+  :Item_ident(0, NULL, *f->table_name, f->field_name),
    item_equal(0), no_const_subst(0),
    have_privileges(0), any_privileges(0)
 {
@@ -1520,7 +1513,7 @@ const char *Item_ident::full_name() const
   {
     tmp=(char*) sql_alloc((uint) strlen(db_name)+(uint) strlen(table_name)+
 			  (uint) strlen(field_name)+3);
-    strxmov(tmp,db_name,".",table_name,".",field_name,NullS);
+    strxmov(tmp,db_name,".",table_name,".",field_name,NULL);
   }
   else
   {
@@ -1528,7 +1521,7 @@ const char *Item_ident::full_name() const
     {
       tmp= (char*) sql_alloc((uint) strlen(table_name) +
 			     (uint) strlen(field_name) + 2);
-      strxmov(tmp, table_name, ".", field_name, NullS);
+      strxmov(tmp, table_name, ".", field_name, NULL);
     }
     else
       tmp= (char*) field_name;
@@ -1547,13 +1540,13 @@ void Item_ident::print(String *str,
   {
     if (table_name && table_name[0])
     {
-      stpcpy(t_name_buff, table_name);
+      my_stpcpy(t_name_buff, table_name);
       my_casedn_str(files_charset_info, t_name_buff);
       t_name= t_name_buff;
     }
     if (db_name && db_name[0])
     {
-      stpcpy(d_name_buff, db_name);
+      my_stpcpy(d_name_buff, db_name);
       my_casedn_str(files_charset_info, d_name_buff);
       d_name= d_name_buff;
     }
@@ -1634,7 +1627,7 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Item_field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
@@ -1644,7 +1637,7 @@ bool Item_field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
   return 0;
 }
 
-bool Item_field::get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Item_field::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
@@ -1788,7 +1781,7 @@ int64_t Item_field::val_int_endpoint(bool left_endp __attribute__((unused)),
   This is always 'signed'. Unsigned values are created with Item_uint()
 */
 
-Item_int::Item_int(const char *str_arg, uint length)
+Item_int::Item_int(const char *str_arg, uint32_t length)
 {
   char *end_ptr= (char*) str_arg + length;
   int error;
@@ -1822,14 +1815,14 @@ void Item_int::print(String *str,
 }
 
 
-Item_uint::Item_uint(const char *str_arg, uint length):
+Item_uint::Item_uint(const char *str_arg, uint32_t length):
   Item_int(str_arg, length)
 {
   unsigned_flag= 1;
 }
 
 
-Item_uint::Item_uint(const char *str_arg, int64_t i, uint length):
+Item_uint::Item_uint(const char *str_arg, int64_t i, uint32_t length):
   Item_int(str_arg, i, length)
 {
   unsigned_flag= 1;
@@ -1854,7 +1847,7 @@ void Item_uint::print(String *str,
 }
 
 
-Item_decimal::Item_decimal(const char *str_arg, uint length,
+Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
                            const CHARSET_INFO * const charset)
 {
   str2my_decimal(E_DEC_FATAL_ERROR, str_arg, length, charset, &decimal_value);
@@ -1888,7 +1881,7 @@ Item_decimal::Item_decimal(double val,
 
 
 Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
-                           uint decimal_par, uint length)
+                           uint32_t decimal_par, uint32_t length)
 {
   my_decimal2decimal(val_arg, &decimal_value);
   name= (char*) str;
@@ -1908,7 +1901,7 @@ Item_decimal::Item_decimal(my_decimal *value_par)
 }
 
 
-Item_decimal::Item_decimal(const uchar *bin, int precision, int scale)
+Item_decimal::Item_decimal(const unsigned char *bin, int precision, int scale)
 {
   binary2my_decimal(E_DEC_FATAL_ERROR, bin,
                     &decimal_value, precision, scale);
@@ -2143,14 +2136,14 @@ Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 
 static void
 default_set_param_func(Item_param *param,
-                       uchar **pos __attribute__((unused)),
+                       unsigned char **pos __attribute__((unused)),
                        ulong len __attribute__((unused)))
 {
   param->set_null();
 }
 
 
-Item_param::Item_param(uint pos_in_query_arg) :
+Item_param::Item_param(uint32_t pos_in_query_arg) :
   state(NO_VALUE),
   item_result_type(STRING_RESULT),
   /* Don't pretend to be a literal unless value for this item is set. */
@@ -2249,7 +2242,8 @@ void Item_param::set_decimal(char *str, ulong length)
     the fact that even wrong value sent over binary protocol fits into
     MAX_DATE_STRING_REP_LENGTH buffer.
 */
-void Item_param::set_time(DRIZZLE_TIME *tm, timestamp_type time_type,
+void Item_param::set_time(DRIZZLE_TIME *tm,
+                          enum enum_drizzle_timestamp_type time_type,
                           uint32_t max_length_arg)
 { 
   value.time= *tm;
@@ -2261,7 +2255,7 @@ void Item_param::set_time(DRIZZLE_TIME *tm, timestamp_type time_type,
       value.time.minute > 59 || value.time.second > 59)
   {
     char buff[MAX_DATE_STRING_REP_LENGTH];
-    uint length= my_TIME_to_str(&value.time, buff);
+    uint32_t length= my_TIME_to_str(&value.time, buff);
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  buff, length, time_type, 0);
     set_zero_time(&value.time, DRIZZLE_TIMESTAMP_ERROR);
@@ -2281,7 +2275,7 @@ bool Item_param::set_str(const char *str, ulong length)
     Assign string with no conversion: data is converted only after it's
     been written to the binary log.
   */
-  uint dummy_errors;
+  uint32_t dummy_errors;
   if (str_value.copy(str, length, &my_charset_bin, &my_charset_bin,
                      &dummy_errors))
     return(true);
@@ -2477,7 +2471,7 @@ bool Item_param::get_time(DRIZZLE_TIME *res)
 }
 
 
-bool Item_param::get_date(DRIZZLE_TIME *res, uint fuzzydate)
+bool Item_param::get_date(DRIZZLE_TIME *res, uint32_t fuzzydate)
 {
   if (state == TIME_VALUE)
   {
@@ -2899,7 +2893,7 @@ String* Item_ref_null_helper::val_str(String* s)
 }
 
 
-bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {  
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }
@@ -3156,7 +3150,7 @@ resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
   Item **select_ref= NULL;
   order_st *group_list= (order_st*) select->group_list.first;
   bool ambiguous_fields= false;
-  uint counter;
+  uint32_t counter;
   enum_resolution_type resolution;
 
   /*
@@ -3573,7 +3567,7 @@ bool Item_field::fix_fields(THD *thd, Item **reference)
       /* Look up in current select's item_list to find aliased fields */
       if (thd->lex->current_select->is_item_list_lookup)
       {
-        uint counter;
+        uint32_t counter;
         enum_resolution_type resolution;
         Item** res= find_item_in_list(this, thd->lex->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
@@ -3793,7 +3787,7 @@ Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
     false  otherwise
 */
 
-bool Item_field::subst_argument_checker(uchar **arg)
+bool Item_field::subst_argument_checker(unsigned char **arg)
 {
   return (result_type() != STRING_RESULT) || (*arg);
 }
@@ -3823,7 +3817,7 @@ bool Item_field::subst_argument_checker(uchar **arg)
     - pointer to the field item, otherwise.
 */
 
-Item *Item_field::equal_fields_propagator(uchar *arg)
+Item *Item_field::equal_fields_propagator(unsigned char *arg)
 {
   if (no_const_subst)
     return this;
@@ -3856,7 +3850,7 @@ Item *Item_field::equal_fields_propagator(uchar *arg)
   See comments in Arg_comparator::set_compare_func() for details.
 */
 
-bool Item_field::set_no_const_sub(uchar *arg __attribute__((unused)))
+bool Item_field::set_no_const_sub(unsigned char *arg __attribute__((unused)))
 {
   if (field->charset() != &my_charset_bin)
     no_const_subst=1;
@@ -3889,7 +3883,7 @@ bool Item_field::set_no_const_sub(uchar *arg __attribute__((unused)))
     - this - otherwise.
 */
 
-Item *Item_field::replace_equal_field(uchar *arg __attribute__((unused)))
+Item *Item_field::replace_equal_field(unsigned char *arg __attribute__((unused)))
 {
   if (item_equal)
   {
@@ -3985,7 +3979,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
   /* Check whether we got a well-formed string */
   const CHARSET_INFO * const cs= str->charset();
   int well_formed_error;
-  uint wlen= cs->cset->well_formed_len(cs,
+  uint32_t wlen= cs->cset->well_formed_len(cs,
                                        str->ptr(), str->ptr() + str->length(),
                                        str->length(), &well_formed_error);
   if (wlen < str->length())
@@ -3993,7 +3987,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     THD *thd= current_thd;
     char hexbuf[7];
     enum DRIZZLE_ERROR::enum_warning_level level;
-    uint diff= str->length() - wlen;
+    uint32_t diff= str->length() - wlen;
     set_if_smaller(diff, 3);
     octet2hex(hexbuf, str->ptr() + wlen, diff);
     if (send_error)
@@ -4101,37 +4095,33 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
   /*
     The field functions defines a field to be not null if null_ptr is not 0
   */
-  uchar *null_ptr= maybe_null ? (uchar*) "" : 0;
+  unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
   Field *field;
 
   switch (field_type()) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((uchar*) 0, max_length, null_ptr, 0,
+    field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
                                  Field::NONE, name, decimals, 0,
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_TINY:
-    field= new Field_tiny((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_tiny((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
-  case DRIZZLE_TYPE_SHORT:
-    field= new Field_short((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			   name, 0, unsigned_flag);
-    break;
   case DRIZZLE_TYPE_LONG:
-    field= new Field_long((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONGLONG:
-    field= new Field_int64_t((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_int64_t((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			      name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_DOUBLE:
-    field= new Field_double((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_double((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			    name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((uchar*) 0, max_length, Field::NONE,
+    field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_NEWDATE:
@@ -4393,7 +4383,7 @@ Item_num *Item_uint::neg()
 }
 
 
-static uint nr_of_decimals(const char *str, const char *end)
+static uint32_t nr_of_decimals(const char *str, const char *end)
 {
   const char *decimal_point;
 
@@ -4421,7 +4411,7 @@ static uint nr_of_decimals(const char *str, const char *end)
   value is not a true double value (overflow)
 */
 
-Item_float::Item_float(const char *str_arg, uint length)
+Item_float::Item_float(const char *str_arg, uint32_t length)
 {
   int error;
   char *end_not_used;
@@ -4491,7 +4481,7 @@ bool Item_float::eq(const Item *arg,
 }
 
 
-inline uint char_val(char X)
+inline uint32_t char_val(char X)
 {
   return (uint) (X >= '0' && X <= '9' ? X-'0' :
 		 X >= 'A' && X <= 'Z' ? X-'A'+10 :
@@ -4499,7 +4489,7 @@ inline uint char_val(char X)
 }
 
 
-Item_hex_string::Item_hex_string(const char *str, uint str_length)
+Item_hex_string::Item_hex_string(const char *str, uint32_t str_length)
 {
   max_length=(str_length+1)/2;
   char *ptr=(char*) sql_alloc(max_length+1);
@@ -4525,11 +4515,11 @@ int64_t Item_hex_string::val_int()
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end=(char*) str_value.ptr()+str_value.length(),
-       *ptr=end-min(str_value.length(),(uint32_t)sizeof(int64_t));
+       *ptr=end-cmin(str_value.length(),(uint32_t)sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
-    value=(value << 8)+ (uint64_t) (uchar) *ptr;
+    value=(value << 8)+ (uint64_t) (unsigned char) *ptr;
   return (int64_t) value;
 }
 
@@ -4579,12 +4569,12 @@ void Item_hex_string::print(String *str,
                             enum_query_type query_type __attribute__((unused)))
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
+       *ptr= end - cmin(str_value.length(), (uint32_t)sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
-    str->append(_dig_vec_lower[((uchar) *ptr) >> 4]);
-    str->append(_dig_vec_lower[((uchar) *ptr) & 0x0F]);
+    str->append(_dig_vec_lower[((unsigned char) *ptr) >> 4]);
+    str->append(_dig_vec_lower[((unsigned char) *ptr) & 0x0F]);
   }
 }
 
@@ -4620,11 +4610,11 @@ Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
   In number context this is a int64_t value.
 */
   
-Item_bin_string::Item_bin_string(const char *str, uint str_length)
+Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
 {
   const char *end= str + str_length - 1;
-  uchar bits= 0;
-  uint power= 1;
+  unsigned char bits= 0;
+  uint32_t power= 1;
 
   max_length= (str_length + 7) >> 3;
   char *ptr= (char*) sql_alloc(max_length + 1);
@@ -4689,14 +4679,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     nr= val_int();
     if (!null_value)
       result= protocol->store_tiny(nr);
-    break;
-  }
-  case DRIZZLE_TYPE_SHORT:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= protocol->store_short(nr);
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -4796,7 +4778,7 @@ void Item_field::update_null_value()
     this field    otherwise
 */
 
-Item *Item_field::update_value_transformer(uchar *select_arg)
+Item *Item_field::update_value_transformer(unsigned char *select_arg)
 {
   SELECT_LEX *select= (SELECT_LEX*)select_arg;
   assert(fixed);
@@ -4838,7 +4820,7 @@ Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
                    const char *field_name_arg,
                    bool alias_name_used_arg)
-  :Item_ident(context_arg, NullS, table_name_arg, field_name_arg),
+  :Item_ident(context_arg, NULL, table_name_arg, field_name_arg),
    result_field(0), ref(item)
 {
   alias_name_used= alias_name_used_arg;
@@ -5319,7 +5301,7 @@ bool Item_ref::is_null()
 }
 
 
-bool Item_ref::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Item_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   return (null_value=(*ref)->get_date_result(ltime,fuzzydate));
 }
@@ -5433,7 +5415,7 @@ bool Item_direct_ref::is_null()
 }
 
 
-bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   return (null_value=(*ref)->get_date(ltime,fuzzydate));
 }
@@ -5639,7 +5621,7 @@ int Item_default_value::save_in_field(Field *field_arg, bool no_conversions)
   same time it can replace some nodes in the tree.
 */ 
 
-Item *Item_default_value::transform(Item_transformer transformer, uchar *args)
+Item *Item_default_value::transform(Item_transformer transformer, unsigned char *args)
 {
   Item *new_item= arg->transform(transformer, args);
   if (!new_item)
@@ -5767,7 +5749,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
       new_item= new Item_null(name);
     else
     {
-      uint length= result->length();
+      uint32_t length= result->length();
       char *tmp_str= sql_strmake(result->ptr(), length);
       new_item= new Item_string(name, tmp_str, length, result->charset());
     }
@@ -5776,7 +5758,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
   case INT_RESULT:
   {
     int64_t result=item->val_int();
-    uint length=item->max_length;
+    uint32_t length=item->max_length;
     bool null_value=item->null_value;
     new_item= (null_value ? (Item*) new Item_null(name) :
                (Item*) new Item_int(name, result, length));
@@ -5795,7 +5777,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
     */
     Item_row *item_row= (Item_row*) item;
     Item_row *comp_item_row= (Item_row*) comp_item;
-    uint col;
+    uint32_t col;
     new_item= 0;
     /*
       If item and comp_item are both Item_rows and have same number of cols
@@ -5815,7 +5797,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
   case REAL_RESULT:
   {						// It must REAL_RESULT
     double result= item->val_real();
-    uint length=item->max_length,decimals=item->decimals;
+    uint32_t length=item->max_length,decimals=item->decimals;
     bool null_value=item->null_value;
     new_item= (null_value ? (Item*) new Item_null(name) : (Item*)
                new Item_float(name, result, decimals, length));
@@ -5825,7 +5807,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
   {
     my_decimal decimal_value;
     my_decimal *result= item->val_decimal(&decimal_value);
-    uint length= item->max_length, decimals= item->decimals;
+    uint32_t length= item->max_length, decimals= item->decimals;
     bool null_value= item->null_value;
     new_item= (null_value ?
                (Item*) new Item_null(name) :
@@ -6078,7 +6060,7 @@ int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 }
 
 
-bool Item_cache_row::allocate(uint num)
+bool Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
   THD *thd= current_thd;
@@ -6092,7 +6074,7 @@ bool Item_cache_row::setup(Item * item)
   example= item;
   if (!values && allocate(item->cols()))
     return 1;
-  for (uint i= 0; i < item_count; i++)
+  for (uint32_t i= 0; i < item_count; i++)
   {
     Item *el= item->element_index(i);
     Item_cache *tmp;
@@ -6108,7 +6090,7 @@ void Item_cache_row::store(Item * item)
 {
   null_value= 0;
   item->bring_value();
-  for (uint i= 0; i < item_count; i++)
+  for (uint32_t i= 0; i < item_count; i++)
   {
     values[i]->store(item->element_index(i));
     null_value|= values[i]->null_value;
@@ -6124,7 +6106,7 @@ void Item_cache_row::illegal_method_call(const char *method __attribute__((unuse
 }
 
 
-bool Item_cache_row::check_cols(uint c)
+bool Item_cache_row::check_cols(uint32_t c)
 {
   if (c != item_count)
   {
@@ -6137,7 +6119,7 @@ bool Item_cache_row::check_cols(uint c)
 
 bool Item_cache_row::null_inside()
 {
-  for (uint i= 0; i < item_count; i++)
+  for (uint32_t i= 0; i < item_count; i++)
   {
     if (values[i]->cols() > 1)
     {
@@ -6157,7 +6139,7 @@ bool Item_cache_row::null_inside()
 
 void Item_cache_row::bring_value()
 {
-  for (uint i= 0; i < item_count; i++)
+  for (uint32_t i= 0; i < item_count; i++)
     values[i]->bring_value();
   return;
 }
@@ -6271,20 +6253,20 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
 bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
                                   Item *item)
 {
-  uint max_length_orig= max_length;
-  uint decimals_orig= decimals;
+  uint32_t max_length_orig= max_length;
+  uint32_t decimals_orig= decimals;
   fld_type= Field::field_type_merge(fld_type, get_real_type(item));
   {
     int item_decimals= item->decimals;
     /* fix variable decimals which always is NOT_FIXED_DEC */
     if (Field::result_merge_type(fld_type) == INT_RESULT)
       item_decimals= 0;
-    decimals= max((int)decimals, item_decimals);
+    decimals= cmax((int)decimals, item_decimals);
   }
   if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
   {
-    decimals= min((int)max(decimals, item->decimals), DECIMAL_MAX_SCALE);
-    int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
+    decimals= cmin((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
+    int precision= cmin(cmax(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
     max_length= my_decimal_precision_to_length(precision, decimals,
@@ -6315,7 +6297,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
      */
     if (collation.collation != &my_charset_bin)
     {
-      max_length= max(old_max_chars * collation.collation->mbmaxlen,
+      max_length= cmax(old_max_chars * collation.collation->mbmaxlen,
                       display_length(item) /
                       item->collation.collation->mbmaxlen *
                       collation.collation->mbmaxlen);
@@ -6330,7 +6312,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     {
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
-      max_length= max(delta1, delta2) + decimals;
+      max_length= cmax(delta1, delta2) + decimals;
       if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
       {
         max_length= DBL_DIG + 7;
@@ -6342,7 +6324,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     break;
   }
   default:
-    max_length= max(max_length, display_length(item));
+    max_length= cmax(max_length, display_length(item));
   };
   maybe_null|= item->maybe_null;
   get_full_info(item);
@@ -6378,8 +6360,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_TINY:
     return 4;
-  case DRIZZLE_TYPE_SHORT:
-    return 6;
   case DRIZZLE_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
   case DRIZZLE_TYPE_DOUBLE:
@@ -6410,13 +6390,13 @@ Field *Item_type_holder::make_field_by_type(Table *table)
   /*
     The field functions defines a field to be not null if null_ptr is not 0
   */
-  uchar *null_ptr= maybe_null ? (uchar*) "" : 0;
+  unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
   Field *field;
 
   switch (fld_type) {
   case DRIZZLE_TYPE_ENUM:
     assert(enum_set_typelib);
-    field= new Field_enum((uchar *) 0, max_length, null_ptr, 0,
+    field= new Field_enum((unsigned char *) 0, max_length, null_ptr, 0,
                           Field::NONE, name,
                           get_enum_pack_length(enum_set_typelib->count),
                           enum_set_typelib, collation.collation);

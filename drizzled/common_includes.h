@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
  * @file
@@ -30,6 +34,7 @@
  */
 #ifndef DRIZZLE_SERVER_COMMON_INCLUDES_H
 #define DRIZZLE_SERVER_COMMON_INCLUDES_H
+
 
 /* Cross-platform portability code and standard includes */
 #include <drizzled/global.h>                    
@@ -75,13 +80,13 @@
 #include <drizzled/error.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
-/* Virtual I/O wrapper library */
-#include <vio/violite.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
+#else
+#undef _DTRACE_VERSION
 #endif
 #include "probes.h"
 
@@ -285,7 +290,6 @@ extern ulong server_id;
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
 #include "protocol.h"
-#include "sql_udf.h"
 #include "item.h"
 
 extern my_decimal decimal_zero;
@@ -314,21 +318,22 @@ bool fn_format_relative_to_data_home(char * to, const char *name,
  */
 #if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
 bool check_global_access(THD *thd, ulong want_access);
-int get_quote_char_for_identifier(THD *thd, const char *name, uint length);
+int get_quote_char_for_identifier(THD *thd, const char *name, uint32_t length);
 extern struct system_variables global_system_variables;
-extern uint mysql_data_home_len;
+extern uint32_t mysql_data_home_len;
 extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
             mysql_real_data_home[], mysql_unpacked_real_data_home[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern char reg_ext[FN_EXTLEN];
-extern uint reg_ext_length;
+extern uint32_t reg_ext_length;
 extern ulong specialflag;
-extern uint lower_case_table_names;
-uint strconvert(const CHARSET_INFO *from_cs, const char *from,
-                const CHARSET_INFO *to_cs, char *to, uint to_length,
-                uint *errors);
-uint filename_to_tablename(const char *from, char *to, uint to_length);
-uint tablename_to_filename(const char *from, char *to, uint to_length);
+extern uint32_t lower_case_table_names;
+uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
+                const CHARSET_INFO *to_cs, char *to, uint32_t to_length,
+                uint32_t *errors);
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
 #endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
+
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* Function items used by mysql */
@@ -69,7 +73,7 @@ public:
   }
   enum_monotonicity_info get_monotonicity_info() const;
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return false; }
 };
 
@@ -86,7 +90,7 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1; 
   }
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return false; }
 };
 
@@ -112,7 +116,7 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1; 
   }
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return false; }
 };
 
@@ -313,7 +317,7 @@ public:
     decimals=0;
     max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
   }
-  bool check_vcol_func_processor(uchar *int_arg  __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
   { return true; }
 };
 
@@ -435,7 +439,7 @@ class Item_func_curtime :public Item_str_timefunc
 {
   int64_t value;
   char buff[9*2+32];
-  uint buff_length;
+  uint32_t buff_length;
 public:
   Item_func_curtime() :Item_str_timefunc() {}
   Item_func_curtime(Item *a) :Item_str_timefunc(a) {}
@@ -450,7 +454,7 @@ public:
   */
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
   bool result_as_int64_t() { return true; }
-  bool check_vcol_func_processor(uchar *int_arg  __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
   { return true; }
 };
 
@@ -486,9 +490,9 @@ public:
   int64_t val_int() { assert(fixed == 1); return (value) ; }
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
 
@@ -518,7 +522,7 @@ class Item_func_now :public Item_date_func
 protected:
   int64_t value;
   char buff[20*2+32];	// +32 to make my_snprintf_{8bit|ucs2} happy
-  uint buff_length;
+  uint32_t buff_length;
   DRIZZLE_TIME ltime;
 public:
   Item_func_now() :Item_date_func() {}
@@ -528,9 +532,9 @@ public:
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
 
@@ -573,7 +577,7 @@ public:
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   void update_used_tables()
   {
     Item_func_now::update_used_tables();
@@ -587,8 +591,8 @@ class Item_func_from_days :public Item_date
 public:
   Item_func_from_days(Item *a) :Item_date(a) {}
   const char *func_name() const { return "from_days"; }
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
-  bool check_vcol_func_processor(uchar *int_arg __attribute__((unused)))
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return false; }
 };
 
@@ -605,7 +609,7 @@ public:
   const char *func_name() const
     { return is_time_format ? "time_format" : "date_format"; }
   void fix_length_and_dec();
-  uint format_length(const String *format);
+  uint32_t format_length(const String *format);
   bool eq(const Item *item, bool binary_cmp) const;
 };
 
@@ -619,7 +623,7 @@ class Item_func_from_unixtime :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "from_unixtime"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };
 
 
@@ -654,7 +658,7 @@ class Item_func_convert_tz :public Item_date_func
   String *val_str(String *str);
   const char *func_name() const { return "convert_tz"; }
   void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   void cleanup();
 };
 
@@ -696,7 +700,7 @@ public:
   void fix_length_and_dec();
   enum_field_types field_type() const { return cached_field_type; }
   int64_t val_int();
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };
@@ -780,7 +784,7 @@ public:
   Item_date_typecast(Item *a) :Item_typecast_maybe_null(a) {}
   const char *func_name() const { return "cast_as_date"; }
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
   bool get_time(DRIZZLE_TIME *ltime);
   const char *cast_type() const { return "date"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
@@ -994,8 +998,8 @@ enum date_time_format
 class Item_func_get_format :public Item_str_func
 {
 public:
-  const timestamp_type type; // keep it public
-  Item_func_get_format(timestamp_type type_arg, Item *a)
+  const enum enum_drizzle_timestamp_type type; // keep it public
+  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
     :Item_str_func(a), type(type_arg)
   {}
   String *val_str(String *str);
@@ -1014,14 +1018,14 @@ class Item_func_str_to_date :public Item_str_func
 {
   enum_field_types cached_field_type;
   date_time_format_types cached_format_type;
-  timestamp_type cached_timestamp_type;
+  enum enum_drizzle_timestamp_type cached_timestamp_type;
   bool const_item;
 public:
   Item_func_str_to_date(Item *a, Item *b)
     :Item_str_func(a, b), const_item(false)
   {}
   String *val_str(String *str);
-  bool get_date(DRIZZLE_TIME *ltime, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
   const char *func_name() const { return "str_to_date"; }
   enum_field_types field_type() const { return cached_field_type; }
   void fix_length_and_dec();
@@ -1037,5 +1041,5 @@ class Item_func_last_day :public Item_date
 public:
   Item_func_last_day(Item *a) :Item_date(a) {}
   const char *func_name() const { return "last_day"; }
-  bool get_date(DRIZZLE_TIME *res, uint fuzzy_date);
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };

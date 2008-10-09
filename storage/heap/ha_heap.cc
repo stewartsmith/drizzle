@@ -35,7 +35,6 @@ int heap_init(void *p)
 
   heap_hton= (handlerton *)p;
   heap_hton->state=      SHOW_OPTION_YES;
-  heap_hton->db_type=    DB_TYPE_HEAP;
   heap_hton->create=     heap_create_handler;
   heap_hton->flags=      HTON_CAN_RECREATE;
 
@@ -61,7 +60,7 @@ ha_heap::ha_heap(handlerton *hton, TABLE_SHARE *table_arg)
 
 
 static const char *ha_heap_exts[] = {
-  NullS
+  NULL
 };
 
 const char **ha_heap::bas_ext() const
@@ -82,7 +81,7 @@ const char **ha_heap::bas_ext() const
 */
 #define HEAP_STATS_UPDATE_THRESHOLD 10
 
-int ha_heap::open(const char *name, int mode, uint test_if_locked)
+int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
 {
   if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && my_errno == ENOENT))
   {
@@ -168,7 +167,7 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
 void ha_heap::set_keys_for_scanning(void)
 {
   btree_keys.clear_all();
-  for (uint i= 0 ; i < table->s->keys ; i++)
+  for (uint32_t i= 0 ; i < table->s->keys ; i++)
   {
     if (table->key_info[i].algorithm == HA_KEY_ALG_BTREE)
       btree_keys.set_bit(i);
@@ -178,7 +177,7 @@ void ha_heap::set_keys_for_scanning(void)
 
 void ha_heap::update_key_stats()
 {
-  for (uint i= 0; i < table->s->keys; i++)
+  for (uint32_t i= 0; i < table->s->keys; i++)
   {
     KEY *key=table->key_info+i;
     if (!key->rec_per_key)
@@ -190,7 +189,7 @@ void ha_heap::update_key_stats()
       else
       {
         ha_rows hash_buckets= file->s->keydef[i].hash_buckets;
-        uint no_records= hash_buckets ? (uint) (file->s->records/hash_buckets) : 2;
+        uint32_t no_records= hash_buckets ? (uint) (file->s->records/hash_buckets) : 2;
         if (no_records < 2)
           no_records= 2;
         key->rec_per_key[key->key_parts-1]= no_records;
@@ -203,7 +202,7 @@ void ha_heap::update_key_stats()
 }
 
 
-int ha_heap::write_row(uchar * buf)
+int ha_heap::write_row(unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&SSV::ha_write_count);
@@ -227,7 +226,7 @@ int ha_heap::write_row(uchar * buf)
   return res;
 }
 
-int ha_heap::update_row(const uchar * old_data, uchar * new_data)
+int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
   ha_statistic_increment(&SSV::ha_update_count);
@@ -246,7 +245,7 @@ int ha_heap::update_row(const uchar * old_data, uchar * new_data)
   return res;
 }
 
-int ha_heap::delete_row(const uchar * buf)
+int ha_heap::delete_row(const unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&SSV::ha_delete_count);
@@ -263,7 +262,7 @@ int ha_heap::delete_row(const uchar * buf)
   return res;
 }
 
-int ha_heap::index_read_map(uchar *buf, const uchar *key,
+int ha_heap::index_read_map(unsigned char *buf, const unsigned char *key,
                             key_part_map keypart_map,
                             enum ha_rkey_function find_flag)
 {
@@ -274,7 +273,7 @@ int ha_heap::index_read_map(uchar *buf, const uchar *key,
   return error;
 }
 
-int ha_heap::index_read_last_map(uchar *buf, const uchar *key,
+int ha_heap::index_read_last_map(unsigned char *buf, const unsigned char *key,
                                  key_part_map keypart_map)
 {
   assert(inited==INDEX);
@@ -285,7 +284,7 @@ int ha_heap::index_read_last_map(uchar *buf, const uchar *key,
   return error;
 }
 
-int ha_heap::index_read_idx_map(uchar *buf, uint index, const uchar *key,
+int ha_heap::index_read_idx_map(unsigned char *buf, uint32_t index, const unsigned char *key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
@@ -295,7 +294,7 @@ int ha_heap::index_read_idx_map(uchar *buf, uint index, const uchar *key,
   return error;
 }
 
-int ha_heap::index_next(uchar * buf)
+int ha_heap::index_next(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
@@ -304,7 +303,7 @@ int ha_heap::index_next(uchar * buf)
   return error;
 }
 
-int ha_heap::index_prev(uchar * buf)
+int ha_heap::index_prev(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_prev_count);
@@ -313,7 +312,7 @@ int ha_heap::index_prev(uchar * buf)
   return error;
 }
 
-int ha_heap::index_first(uchar * buf)
+int ha_heap::index_first(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_first_count);
@@ -322,7 +321,7 @@ int ha_heap::index_first(uchar * buf)
   return error;
 }
 
-int ha_heap::index_last(uchar * buf)
+int ha_heap::index_last(unsigned char * buf)
 {
   assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_last_count);
@@ -336,7 +335,7 @@ int ha_heap::rnd_init(bool scan)
   return scan ? heap_scan_init(file) : 0;
 }
 
-int ha_heap::rnd_next(uchar *buf)
+int ha_heap::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   int error=heap_scan(file, buf);
@@ -344,7 +343,7 @@ int ha_heap::rnd_next(uchar *buf)
   return error;
 }
 
-int ha_heap::rnd_pos(uchar * buf, uchar *pos)
+int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   int error;
   HEAP_PTR heap_position;
@@ -355,12 +354,12 @@ int ha_heap::rnd_pos(uchar * buf, uchar *pos)
   return error;
 }
 
-void ha_heap::position(const uchar *record __attribute__((unused)))
+void ha_heap::position(const unsigned char *record __attribute__((unused)))
 {
   *(HEAP_PTR*) ref= heap_position(file);	// Ref is aligned
 }
 
-int ha_heap::info(uint flag)
+int ha_heap::info(uint32_t flag)
 {
   HEAPINFO hp_info;
   (void) heap_info(file,&hp_info,flag);
@@ -451,7 +450,7 @@ int ha_heap::external_lock(THD *thd __attribute__((unused)),
     HA_ERR_WRONG_COMMAND  mode not implemented.
 */
 
-int ha_heap::disable_indexes(uint mode)
+int ha_heap::disable_indexes(uint32_t mode)
 {
   int error;
 
@@ -498,7 +497,7 @@ int ha_heap::disable_indexes(uint mode)
     HA_ERR_WRONG_COMMAND  mode not implemented.
 */
 
-int ha_heap::enable_indexes(uint mode)
+int ha_heap::enable_indexes(uint32_t mode)
 {
   int error;
 
@@ -569,7 +568,7 @@ int ha_heap::rename_table(const char * from, const char * to)
 }
 
 
-ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
+ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
                                   key_range *max_key)
 {
   KEY *key=table->key_info+inx;
@@ -595,10 +594,10 @@ ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
 int ha_heap::create(const char *name, Table *table_arg,
 		    HA_CREATE_INFO *create_info)
 {
-  uint key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
-  uint auto_key= 0, auto_key_type= 0;
-  uint max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
-  uint column_idx, column_count= table_arg->s->fields;
+  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
+  uint32_t auto_key= 0, auto_key_type= 0;
+  uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
+  uint32_t column_idx, column_count= table_arg->s->fields;
   HP_COLUMNDEF *columndef;
   HP_KEYDEF *keydef;
   HA_KEYSEG *seg;
@@ -621,7 +620,7 @@ int ha_heap::create(const char *name, Table *table_arg,
     if (field->null_bit)
     {
       column->null_bit= field->null_bit;
-      column->null_pos= (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
     }
     else
     {
@@ -646,11 +645,11 @@ int ha_heap::create(const char *name, Table *table_arg,
 				       parts * sizeof(HA_KEYSEG),
 				       MYF(MY_WME))))
   {
-    my_free((void *) columndef, MYF(0));
+    free((void *) columndef);
     return my_errno;
   }
 
-  seg= my_reinterpret_cast(HA_KEYSEG*) (keydef + keys);
+  seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
     KEY *pos= table_arg->key_info+key;
@@ -711,7 +710,7 @@ int ha_heap::create(const char *name, Table *table_arg,
       if (field->null_ptr)
       {
 	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
       }
       else
       {
@@ -769,8 +768,8 @@ int ha_heap::create(const char *name, Table *table_arg,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
   
-  my_free((uchar*) keydef, MYF(0));
-  my_free((void *) columndef, MYF(0));
+  free((unsigned char*) keydef);
+  free((void *) columndef);
   assert(file == 0);
   return (error);
 }
@@ -804,7 +803,7 @@ void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
 
 
 bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
-					 uint table_changes)
+					 uint32_t table_changes)
 {
   /* Check that auto_increment value was not changed */
   if ((info->used_fields & HA_CREATE_USED_AUTO &&

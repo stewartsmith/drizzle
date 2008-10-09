@@ -1,0 +1,9 @@
+select crc32('12341234');
+crc32('12341234')
+2136042507
+select crc32('a');
+crc32('a')
+3904355907
+select crc32('taohuoahusoahusoa haneo uhnteoahu ntoahu saonhu aoeuoa hun');
+crc32('taohuoahusoahusoa haneo uhnteoahu ntoahu saonhu aoeuoa hun')
+734998015

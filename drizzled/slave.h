@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_SLAVE_H
 #define DRIZZLE_SERVER_SLAVE_H
@@ -32,8 +36,6 @@
    The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
 */
 #define SLAVE_MAX_HEARTBEAT_PERIOD 4294967
-
-#ifdef HAVE_REPLICATION
 
 #include "log.h"
 #include <mysys/my_list.h>
@@ -197,7 +199,6 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,uint64_t pos,
 int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
 		     const char** errmsg);
 void set_slave_thread_options(THD* thd);
-void set_slave_thread_default_charset(THD *thd, Relay_log_info const *rli);
 void rotate_relay_log(Master_info* mi);
 int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
                                bool skip);
@@ -222,8 +223,6 @@ extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
        
 extern I_List<THD> threads;
-
-#endif /* HAVE_REPLICATION */
 
 /* masks for start/stop operations on io and sql slave threads */
 #define SLAVE_IO  1

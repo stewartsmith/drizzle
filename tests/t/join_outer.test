@@ -8,11 +8,11 @@ drop table if exists t0,t1,t2,t3,t4,t5;
 
 CREATE TABLE t1 (
   grp int default NULL,
-  a bigint unsigned default NULL,
+  a bigint default NULL,
   c char(10) NOT NULL default ''
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1,'a'),(2,2,'b'),(2,3,'c'),(3,4,'E'),(3,5,'C'),(3,6,'D'),(NULL,NULL,'');
-create table t2 (id int, a bigint unsigned not null, c char(10), d int, primary key (a));
+create table t2 (id int, a bigint not null, c char(10), d int, primary key (a));
 insert into t2 values (1,1,"a",1),(3,4,"A",4),(3,5,"B",5),(3,6,"C",6),(4,7,"D",7);
 
 select t1.*,t2.* from t1 JOIN t2 where t1.a=t2.a;
@@ -55,23 +55,23 @@ drop table t1,t2;
 #
 
 CREATE TABLE t1 (
- usr_id INT unsigned NOT NULL,
- uniq_id INT unsigned NOT NULL AUTO_INCREMENT,
-        start_num INT unsigned NOT NULL DEFAULT 1,
-        increment INT unsigned NOT NULL DEFAULT 1,
+ usr_id INT NOT NULL,
+ uniq_id INT NOT NULL AUTO_INCREMENT,
+        start_num INT NOT NULL DEFAULT 1,
+        increment INT NOT NULL DEFAULT 1,
  PRIMARY KEY (uniq_id),
  INDEX usr_uniq_idx (usr_id, uniq_id),
  INDEX uniq_usr_idx (uniq_id, usr_id)
 );
 CREATE TABLE t2 (
- id INT unsigned NOT NULL DEFAULT 0,
- usr2_id INT unsigned NOT NULL DEFAULT 0,
- max INT unsigned NOT NULL DEFAULT 0,
- c_amount INT unsigned NOT NULL DEFAULT 0,
- d_max INT unsigned NOT NULL DEFAULT 0,
- d_num INT unsigned NOT NULL DEFAULT 0,
- orig_time INT unsigned NOT NULL DEFAULT 0,
- c_time INT unsigned NOT NULL DEFAULT 0,
+ id INT NOT NULL DEFAULT 0,
+ usr2_id INT NOT NULL DEFAULT 0,
+ max INT NOT NULL DEFAULT 0,
+ c_amount INT NOT NULL DEFAULT 0,
+ d_max INT NOT NULL DEFAULT 0,
+ d_num INT NOT NULL DEFAULT 0,
+ orig_time INT NOT NULL DEFAULT 0,
+ c_time INT NOT NULL DEFAULT 0,
  active ENUM ("no","yes") NOT NULL,
  PRIMARY KEY (id,usr2_id),
  INDEX id_idx (id),
@@ -140,7 +140,7 @@ INSERT INTO t1 VALUES (11406,'Calcul Infinitesimal','Cßlculo Infinitesimal','Ca
 CREATE TABLE t2 (
   idAssignatura int DEFAULT '0' NOT NULL,
   Grup int DEFAULT '0' NOT NULL,
-  Places smallint DEFAULT '0' NOT NULL,
+  Places int DEFAULT '0' NOT NULL,
   PlacesOcupades int DEFAULT '0',
   PRIMARY KEY (idAssignatura,Grup)
 );
@@ -177,8 +177,8 @@ CREATE TABLE t3 (
   dni_pasaporte char(16) DEFAULT '' NOT NULL,
   idPla int DEFAULT '0' NOT NULL,
   cod_asig int DEFAULT '0' NOT NULL,
-  any smallint DEFAULT '0' NOT NULL,
-  quatrimestre smallint DEFAULT '0' NOT NULL,
+  any int DEFAULT '0' NOT NULL,
+  quatrimestre int DEFAULT '0' NOT NULL,
   estat char(1) DEFAULT 'M' NOT NULL,
   PRIMARY KEY (id),
   UNIQUE dni_pasaporte (dni_pasaporte,idPla),
@@ -215,7 +215,7 @@ drop table t1,t2,t3,test.t4;
 #
 
 CREATE TABLE t1 (
-  id smallint unsigned NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   name char(60) DEFAULT '' NOT NULL,
   PRIMARY KEY (id)
 );
@@ -224,8 +224,8 @@ INSERT INTO t1 VALUES (2,'Lilliana Angelovska');
 INSERT INTO t1 VALUES (3,'Thimble Smith');
 
 CREATE TABLE t2 (
-  id smallint unsigned NOT NULL auto_increment,
-  owner smallint unsigned DEFAULT '0' NOT NULL,
+  id int NOT NULL auto_increment,
+  owner int DEFAULT '0' NOT NULL,
   name char(60),
   PRIMARY KEY (id)
 );
@@ -374,7 +374,7 @@ drop table t1,t2;
 CREATE TABLE t1 (
   id int,
   pid int,
-  rep_del tinyint,
+  rep_del int,
   KEY id (id),
   KEY pid (pid)
 );
@@ -414,8 +414,8 @@ drop table t1,t2;
 #
 # Test problem with LEFT JOIN
 
-create table t1 (fooID smallint unsigned auto_increment, primary key (fooID));
-create table t2 (fooID smallint unsigned not null, barID smallint unsigned not null, primary key (fooID,barID));
+create table t1 (fooID int auto_increment, primary key (fooID));
+create table t2 (fooID int not null, barID int not null, primary key (fooID,barID));
 insert into t1 (fooID) values (10),(20),(30);
 insert into t2 values (10,1),(20,2),(30,3);
 explain select * from t2 left join t1 on t1.fooID = t2.fooID and t1.fooID = 30;
@@ -476,8 +476,8 @@ drop table t1,t2;
 # Test for BUG#5088
 
 create table t1 (
-  match_id tinyint unsigned not null auto_increment,
-  home tinyint unsigned default '0',
+  match_id int not null auto_increment,
+  home int default '0',
   unique key match_id (match_id),
   key match_id_2 (match_id)
 );
@@ -485,8 +485,8 @@ create table t1 (
 insert into t1 values("1", "2");
 
 create table t2 (
-  player_id tinyint unsigned default '0',
-  match_1_h tinyint unsigned default '0',
+  player_id int default '0',
+  match_1_h int default '0',
   key player_id (player_id)
 );
 
@@ -539,7 +539,7 @@ drop table t1, t2;
 
 CREATE TABLE t1 (
   ts_id bigint default NULL,
-  inst_id tinyint default NULL,
+  inst_id int default NULL,
   flag_name varchar(64) default NULL,
   flag_value text,
   UNIQUE KEY ts_id (ts_id,inst_id,flag_name)
@@ -547,7 +547,7 @@ CREATE TABLE t1 (
 
 CREATE TABLE t2 (
   ts_id bigint default NULL,
-  inst_id tinyint default NULL,
+  inst_id int default NULL,
   flag_name varchar(64) default NULL,
   flag_value text,
   UNIQUE KEY ts_id (ts_id,inst_id,flag_name)
@@ -571,8 +571,8 @@ SELECT t1.flag_name,t2.flag_value
 DROP TABLE t1,t2;
 
 CREATE TABLE t1 (
-  id int unsigned NOT NULL auto_increment,
-  text_id int unsigned default NULL,
+  id int NOT NULL auto_increment,
+  text_id int default NULL,
   PRIMARY KEY  (id)
 );
 
@@ -669,11 +669,11 @@ set group_concat_max_len=default;
 #
 # BUG#10162 - ON is merged with WHERE, left join is convered to a regular join
 #
-create table t1 (gid smallint unsigned not null, x int not null, y int not null, art int not null, primary key  (gid,x,y));
+create table t1 (gid int not null, x int not null, y int not null, art int not null, primary key  (gid,x,y));
 insert t1 values (1, -5, -8, 2), (1, 2, 2, 1), (1, 1, 1, 1);
-create table t2 (gid smallint unsigned not null, x int not null, y int not null, id int not null, primary key  (gid,id,x,y), key id (id));
+create table t2 (gid int not null, x int not null, y int not null, id int not null, primary key  (gid,id,x,y), key id (id));
 insert t2 values (1, -5, -8, 1), (1, 1, 1, 1), (1, 2, 2, 1);
-create table t3 ( set_id smallint unsigned not null, id tinyint unsigned not null, name char(12) not null, primary key  (id,set_id));
+create table t3 ( set_id int not null, id int not null, name char(12) not null, primary key  (id,set_id));
 insert t3 values (0, 1, 'a'), (1, 1, 'b'), (0, 2, 'c'), (1, 2, 'd'), (1, 3, 'e'), (1, 4, 'f'), (1, 5, 'g'), (1, 6, 'h');
 explain select name from t1 left join t2 on t1.x = t2.x and t1.y = t2.y
 left join t3 on t1.art = t3.id where t2.id =1 and t2.x = -5 and t2.y =-8
@@ -760,12 +760,12 @@ DROP TABLE t1,t2;
 # 
 
 CREATE TABLE t1 (
-  f1 varchar(16) collate latin1_swedish_ci PRIMARY KEY,
-  f2 varchar(16) collate latin1_swedish_ci
+  f1 varchar(16) collate utf8_swedish_ci PRIMARY KEY,
+  f2 varchar(16) collate utf8_swedish_ci
 );
 CREATE TABLE t2 (
-  f1 varchar(16) collate latin1_swedish_ci PRIMARY KEY,
-  f3 varchar(16) collate latin1_swedish_ci
+  f1 varchar(16) collate utf8_swedish_ci PRIMARY KEY,
+  f3 varchar(16) collate utf8_swedish_ci
 );
 
 INSERT INTO t1 VALUES ('bla','blah');

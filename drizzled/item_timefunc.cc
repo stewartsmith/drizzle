@@ -53,7 +53,7 @@ static bool make_datetime(date_time_format_types format, DRIZZLE_TIME *ltime,
 {
   char *buff;
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length= MAX_DATE_STRING_REP_LENGTH;
+  uint32_t length= MAX_DATE_STRING_REP_LENGTH;
 
   if (str->alloc(length))
     return 1;
@@ -121,7 +121,7 @@ static bool make_datetime_with_warn(date_time_format_types format, DRIZZLE_TIME 
 
   make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                str->ptr(), str->length(),
-                               DRIZZLE_TIMESTAMP_TIME, NullS);
+                               DRIZZLE_TIMESTAMP_TIME, NULL);
   return make_datetime(format, ltime, str);
 }
 
@@ -148,7 +148,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
   {
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
-                                 DRIZZLE_TIMESTAMP_TIME, NullS);
+                                 DRIZZLE_TIMESTAMP_TIME, NULL);
     make_time(format, l_time, str);
   }
 
@@ -178,7 +178,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
   
 static bool sec_to_time(int64_t seconds, bool unsigned_flag, DRIZZLE_TIME *ltime)
 {
-  uint sec;
+  uint32_t sec;
 
   memset(ltime, 0, sizeof(*ltime));
   
@@ -211,7 +211,7 @@ overflow:
                  - buf);
   make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                buf, len, DRIZZLE_TIMESTAMP_TIME,
-                               NullS);
+                               NULL);
   
   return 1;
 }
@@ -262,8 +262,8 @@ static DATE_TIME_FORMAT time_24hrs_format= {{0}, '\0', 0,
 */
 
 static bool extract_date_time(DATE_TIME_FORMAT *format,
-			      const char *val, uint length, DRIZZLE_TIME *l_time,
-                              timestamp_type cached_timestamp_type,
+			      const char *val, uint32_t length, DRIZZLE_TIME *l_time,
+                              enum enum_drizzle_timestamp_type cached_timestamp_type,
                               const char **sub_pattern_end,
                               const char *date_time_type)
 {
@@ -302,14 +302,14 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       switch (*++ptr) {
 	/* Year */
       case 'Y':
-	tmp= (char*) val + min(4, val_len);
+	tmp= (char*) val + cmin(4, val_len);
 	l_time->year= (int) my_strtoll10(val, &tmp, &error);
         if ((int) (tmp-val) <= 2)
           l_time->year= year_2000_handling(l_time->year);
 	val= tmp;
 	break;
       case 'y':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->year= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
         l_time->year= year_2000_handling(l_time->year);
@@ -318,7 +318,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Month */
       case 'm':
       case 'c':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->month= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -335,15 +335,15 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Day */
       case 'd':
       case 'e':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->day= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
       case 'D':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->day= (int) my_strtoll10(val, &tmp, &error);
 	/* Skip 'st, 'nd, 'th .. */
-	val= tmp + min((int) (val_end-tmp), 2);
+	val= tmp + cmin((int) (val_end-tmp), 2);
 	break;
 
 	/* Hour */
@@ -354,14 +354,14 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* fall through */
       case 'k':
       case 'H':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->hour= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
 
 	/* Minute */
       case 'i':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->minute= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -369,7 +369,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	/* Second */
       case 's':
       case 'S':
-	tmp= (char*) val + min(2, val_len);
+	tmp= (char*) val + cmin(2, val_len);
 	l_time->second= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -391,12 +391,12 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	if (val_len < 2 || ! usa_time)
 	  goto err;
 	if (!my_strnncoll(&my_charset_utf8_general_ci,
-			  (const uchar *) val, 2, 
-			  (const uchar *) "PM", 2))
+			  (const unsigned char *) val, 2, 
+			  (const unsigned char *) "PM", 2))
 	  daypart= 12;
 	else if (my_strnncoll(&my_charset_utf8_general_ci,
-			      (const uchar *) val, 2, 
-			      (const uchar *) "AM", 2))
+			      (const unsigned char *) val, 2, 
+			      (const unsigned char *) "AM", 2))
 	  goto err;
 	val+= 2;
 	break;
@@ -421,7 +421,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 	val= tmp;
 	break;
       case 'j':
-	tmp= (char*) val + min(val_len, 3);
+	tmp= (char*) val + cmin(val_len, 3);
 	yearday= (int) my_strtoll10(val, &tmp, &error);
 	val= tmp;
 	break;
@@ -433,7 +433,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       case 'u':
         sunday_first_n_first_week_non_iso= (*ptr=='U' || *ptr== 'V');
         strict_week_number= (*ptr=='V' || *ptr=='v');
-	tmp= (char*) val + min(val_len, 2);
+	tmp= (char*) val + cmin(val_len, 2);
 	if ((week_number= (int) my_strtoll10(val, &tmp, &error)) < 0 ||
             (strict_week_number && !week_number) ||
             week_number > 53)
@@ -445,7 +445,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       case 'X':
       case 'x':
         strict_week_number_year_type= (*ptr=='X');
-        tmp= (char*) val + min(4, val_len);
+        tmp= (char*) val + cmin(4, val_len);
         strict_week_number_year= (int) my_strtoll10(val, &tmp, &error);
         val= tmp;
         break;
@@ -515,7 +515,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 
   if (yearday > 0)
   {
-    uint days;
+    uint32_t days;
     days= calc_daynr(l_time->year,1,1) +  yearday - 1;
     if (days <= 0 || days > MAX_DAY_NUMBER)
       goto err;
@@ -525,7 +525,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
   if (week_number >= 0 && weekday)
   {
     int days;
-    uint weekday_b;
+    uint32_t weekday_b;
 
     /*
       %V,%v require %X,%x resprectively,
@@ -579,7 +579,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
       {
 	make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                      val_begin, length,
-				     cached_timestamp_type, NullS);
+				     cached_timestamp_type, NULL);
 	break;
       }
     } while (++val != val_end);
@@ -589,7 +589,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 err:
   {
     char buff[128];
-    strmake(buff, val_begin, min(length, (uint)sizeof(buff)-1));
+    strmake(buff, val_begin, cmin(length, (uint)sizeof(buff)-1));
     push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
@@ -603,11 +603,11 @@ err:
 */
 
 bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-		    timestamp_type type, String *str)
+		    enum enum_drizzle_timestamp_type type, String *str)
 {
   char intbuff[15];
-  uint hours_i;
-  uint weekday;
+  uint32_t hours_i;
+  uint32_t weekday;
   ulong length;
   const char *ptr, *end;
   THD *thd= current_thd;
@@ -771,7 +771,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
       case 'U':
       case 'u':
       {
-	uint year;
+	uint32_t year;
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_week(l_time,
@@ -785,7 +785,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
       case 'v':
       case 'V':
       {
-	uint year;
+	uint32_t year;
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_week(l_time,
@@ -800,7 +800,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
       case 'x':
       case 'X':
       {
-	uint year;
+	uint32_t year;
 	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	(void) calc_week(l_time,
@@ -850,12 +850,12 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
                          For example, '1.1' -> '1.100000'
 */
 
-static bool get_interval_info(const char *str,uint length, const CHARSET_INFO * const cs,
-                              uint count, uint64_t *values,
+static bool get_interval_info(const char *str,uint32_t length, const CHARSET_INFO * const cs,
+                              uint32_t count, uint64_t *values,
                               bool transform_msec)
 {
   const char *end=str+length;
-  uint i;
+  uint32_t i;
   while (str != end && !my_isdigit(cs,*str))
     str++;
 
@@ -864,7 +864,7 @@ static bool get_interval_info(const char *str,uint length, const CHARSET_INFO * 
     int64_t value;
     const char *start= str;
     for (value=0; str != end && my_isdigit(cs,*str) ; str++)
-      value= value * 10LL + (int64_t) (*str - '0');
+      value= value * 10L + (int64_t) (*str - '0');
     if (transform_msec && i == count - 1) // microseconds always last
     {
       long msec_length= 6 - (str - start);
@@ -878,7 +878,7 @@ static bool get_interval_info(const char *str,uint length, const CHARSET_INFO * 
     {
       i++;
       /* Change values[0...i-1] -> values[0...count-1] */
-      bmove_upp((uchar*) (values+count), (uchar*) (values+i),
+      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+i),
 		sizeof(*values)*i);
       memset(values, 0, sizeof(*values)*(count-i));
       break;
@@ -1023,7 +1023,7 @@ String* Item_func_monthname::val_str(String* str)
 {
   assert(fixed == 1);
   const char *month_name;
-  uint   month= (uint) val_int();
+  uint32_t   month= (uint) val_int();
   THD *thd= current_thd;
 
   if (null_value || !month)
@@ -1079,9 +1079,9 @@ int64_t Item_func_second::val_int()
 }
 
 
-uint week_mode(uint mode)
+uint32_t week_mode(uint32_t mode)
 {
-  uint week_format= (mode & 7);
+  uint32_t week_format= (mode & 7);
   if (!(week_format & WEEK_MONDAY_FIRST))
     week_format^= WEEK_FIRST_WEEKDAY;
   return week_format;
@@ -1121,7 +1121,7 @@ uint week_mode(uint mode)
 int64_t Item_func_week::val_int()
 {
   assert(fixed == 1);
-  uint year;
+  uint32_t year;
   DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
@@ -1134,7 +1134,7 @@ int64_t Item_func_week::val_int()
 int64_t Item_func_yearweek::val_int()
 {
   assert(fixed == 1);
-  uint year,week;
+  uint32_t year,week;
   DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
@@ -1162,7 +1162,7 @@ int64_t Item_func_weekday::val_int()
 String* Item_func_dayname::val_str(String* str)
 {
   assert(fixed == 1);
-  uint weekday=(uint) val_int();		// Always Item_func_daynr()
+  uint32_t weekday=(uint) val_int();		// Always Item_func_daynr()
   const char *day_name;
   THD *thd= current_thd;
 
@@ -1463,7 +1463,7 @@ int64_t Item_date::val_int()
 }
 
 
-bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
 {
   int64_t value=args[0]->val_int();
   if ((null_value=args[0]->null_value))
@@ -1530,7 +1530,7 @@ void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 
 
 bool Item_func_curdate::get_date(DRIZZLE_TIME *res,
-				 uint fuzzy_date __attribute__((unused)))
+				 uint32_t fuzzy_date __attribute__((unused)))
 {
   *res=ltime;
   return 0;
@@ -1636,7 +1636,7 @@ void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 
 
 bool Item_func_now::get_date(DRIZZLE_TIME *res,
-                             uint fuzzy_date __attribute__((unused)))
+                             uint32_t fuzzy_date __attribute__((unused)))
 {
   *res= ltime;
   return 0;
@@ -1697,7 +1697,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 
 
 bool Item_func_sysdate_local::get_date(DRIZZLE_TIME *res,
-                                       uint fuzzy_date __attribute__((unused)))
+                                       uint32_t fuzzy_date __attribute__((unused)))
 {
   store_now_in_TIME(&ltime);
   *res= ltime;
@@ -1774,7 +1774,7 @@ void Item_func_date_format::fix_length_and_dec()
   else
   {
     fixed_length=0;
-    max_length=min(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
+    max_length=cmin(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
                    collation.collation->mbmaxlen;
     set_if_smaller(max_length,MAX_BLOB_WIDTH);
   }
@@ -1807,9 +1807,9 @@ bool Item_func_date_format::eq(const Item *item, bool binary_cmp) const
 
 
 
-uint Item_func_date_format::format_length(const String *format)
+uint32_t Item_func_date_format::format_length(const String *format)
 {
-  uint size=0;
+  uint32_t size=0;
   const char *ptr=format->ptr();
   const char *end=ptr+format->length();
 
@@ -1884,7 +1884,7 @@ String *Item_func_date_format::val_str(String *str)
 {
   String *format;
   DRIZZLE_TIME l_time;
-  uint size;
+  uint32_t size;
   assert(fixed == 1);
 
   if (!is_time_format)
@@ -1982,7 +1982,7 @@ int64_t Item_func_from_unixtime::val_int()
 }
 
 bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
-				       uint fuzzy_date __attribute__((unused)))
+				       uint32_t fuzzy_date __attribute__((unused)))
 {
   uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*
@@ -2035,7 +2035,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
 {
   INTERVAL interval;
 
@@ -2170,7 +2170,7 @@ int64_t Item_extract::val_int()
 {
   assert(fixed == 1);
   DRIZZLE_TIME ltime;
-  uint year;
+  uint32_t year;
   ulong week_format;
   long neg;
   if (date_value)
@@ -2322,7 +2322,7 @@ String *Item_char_typecast::val_str(String *str)
   else
   {
     // Convert character set if differ
-    uint dummy_errors;
+    uint32_t dummy_errors;
     if (!(res= args[0]->val_str(&tmp_value)) ||
         str->copy(res->ptr(), res->length(), from_cs,
         cast_cs, &dummy_errors))
@@ -2486,7 +2486,7 @@ String *Item_time_typecast::val_str(String *str)
 }
 
 
-bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date __attribute__((unused)))
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
@@ -2844,7 +2844,7 @@ String *Item_func_maketime::val_str(String *str)
       sprintf(ptr, ":%02u:%02u", (uint)minute, (uint)second);
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  buf, len, DRIZZLE_TIMESTAMP_TIME,
-                                 NullS);
+                                 NULL);
   }
   
   if (make_time_with_warn((DATE_TIME_FORMAT *) 0, &ltime, str))
@@ -2895,9 +2895,9 @@ int64_t Item_func_timestamp_diff::val_int()
       int_type == INTERVAL_QUARTER ||
       int_type == INTERVAL_MONTH)
   {
-    uint year_beg, year_end, month_beg, month_end, day_beg, day_end;
-    uint years= 0;
-    uint second_beg, second_end, microsecond_beg, microsecond_end;
+    uint32_t year_beg, year_end, month_beg, month_end, day_beg, day_end;
+    uint32_t years= 0;
+    uint32_t second_beg, second_end, microsecond_beg, microsecond_end;
 
     if (neg == -1)
     {
@@ -3016,7 +3016,7 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
     break;
   }
 
-  for (uint i=0 ; i < 2 ; i++)
+  for (uint32_t i=0 ; i < 2 ; i++)
   {
     str->append(',');
     args[i]->print(str, query_type);
@@ -3041,12 +3041,12 @@ String *Item_func_get_format::val_str(String *str)
        (format_name= format->format_name);
        format++)
   {
-    uint format_name_len;
+    uint32_t format_name_len;
     format_name_len= strlen(format_name);
     if (val_len == format_name_len &&
 	!my_strnncoll(&my_charset_utf8_general_ci, 
-		      (const uchar *) val->ptr(), val_len, 
-		      (const uchar *) format_name, val_len))
+		      (const unsigned char *) val->ptr(), val_len, 
+		      (const unsigned char *) format_name, val_len))
     {
       const char *format_str= get_date_time_format_str(format, type);
       str->set(format_str, strlen(format_str), &my_charset_bin);
@@ -3107,7 +3107,7 @@ void Item_func_get_format::print(String *str, enum_query_type query_type)
 */
 
 static date_time_format_types
-get_date_time_result_type(const char *format, uint length)
+get_date_time_result_type(const char *format, uint32_t length)
 {
   const char *time_part_frms= "HISThiklrs";
   const char *date_part_frms= "MVUXYWabcjmvuxyw";
@@ -3189,7 +3189,7 @@ void Item_func_str_to_date::fix_length_and_dec()
 }
 
 
-bool Item_func_str_to_date::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
+bool Item_func_str_to_date::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
 {
   DATE_TIME_FORMAT date_time_format;
   char val_buff[64], format_buff[64];
@@ -3243,7 +3243,7 @@ String *Item_func_str_to_date::val_str(String *str)
 }
 
 
-bool Item_func_last_day::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
+bool Item_func_last_day::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date)
 {
   if (get_arg0_date(ltime, fuzzy_date & ~TIME_FUZZY_DATE) ||
       (ltime->month == 0))
@@ -3252,7 +3252,7 @@ bool Item_func_last_day::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
     return 1;
   }
   null_value= 0;
-  uint month_idx= ltime->month-1;
+  uint32_t month_idx= ltime->month-1;
   ltime->day= days_in_month[month_idx];
   if ( month_idx == 1 && calc_days_in_year(ltime->year) == 366)
     ltime->day= 29;

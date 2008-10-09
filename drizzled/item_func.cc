@@ -135,7 +135,7 @@ Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
   assert(fixed == 0);
   Item **arg,**arg_end;
   void *save_thd_marker= thd->thd_marker;
-  uchar buff[STACK_BUFF_ALLOC];			// Max argument in function
+  unsigned char buff[STACK_BUFF_ALLOC];			// Max argument in function
   thd->thd_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
   const_item_cache=1;
@@ -211,7 +211,7 @@ void Item_func::fix_after_pullout(st_select_lex *new_parent,
 
 
 bool Item_func::walk(Item_processor processor, bool walk_subquery,
-                     uchar *argument)
+                     unsigned char *argument)
 {
   if (arg_count)
   {
@@ -270,7 +270,7 @@ void Item_func::traverse_cond(Cond_traverser traverser,
     Item returned as the result of transformation of the root node
 */
 
-Item *Item_func::transform(Item_transformer transformer, uchar *argument)
+Item *Item_func::transform(Item_transformer transformer, unsigned char *argument)
 {
   if (arg_count)
   {
@@ -319,8 +319,8 @@ Item *Item_func::transform(Item_transformer transformer, uchar *argument)
     Item returned as the result of transformation of the root node
 */
 
-Item *Item_func::compile(Item_analyzer analyzer, uchar **arg_p,
-                         Item_transformer transformer, uchar *arg_t)
+Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
+                         Item_transformer transformer, unsigned char *arg_t)
 {
   if (!(this->*analyzer)(arg_p))
     return 0;
@@ -333,7 +333,7 @@ Item *Item_func::compile(Item_analyzer analyzer, uchar **arg_p,
         The same parameter value of arg_p must be passed
         to analyze any argument of the condition formula.
       */   
-      uchar *arg_v= *arg_p;
+      unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
         current_thd->change_item_tree(arg, new_item);
@@ -359,7 +359,7 @@ void Item_func::update_used_tables()
 {
   used_tables_cache=0;
   const_item_cache=1;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     args[i]->update_used_tables();
     used_tables_cache|=args[i]->used_tables();
@@ -389,9 +389,9 @@ void Item_func::print(String *str, enum_query_type query_type)
 }
 
 
-void Item_func::print_args(String *str, uint from, enum_query_type query_type)
+void Item_func::print_args(String *str, uint32_t from, enum_query_type query_type)
 {
-  for (uint i=from ; i < arg_count ; i++)
+  for (uint32_t i=from ; i < arg_count ; i++)
   {
     if (i != from)
       str->append(',');
@@ -403,7 +403,7 @@ void Item_func::print_args(String *str, uint from, enum_query_type query_type)
 void Item_func::print_op(String *str, enum_query_type query_type)
 {
   str->append('(');
-  for (uint i=0 ; i < arg_count-1 ; i++)
+  for (uint32_t i=0 ; i < arg_count-1 ; i++)
   {
     args[i]->print(str, query_type);
     str->append(' ');
@@ -431,7 +431,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
       (func_type == Item_func::FUNC_SP &&
        my_strcasecmp(system_charset_info, func_name(), item_func->func_name())))
     return 0;
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
     if (!args[i]->eq(item_func->args[i], binary_cmp))
       return 0;
   return 1;
@@ -506,9 +506,9 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
 
 void Item_func::fix_num_length_and_dec()
 {
-  uint fl_length= 0;
+  uint32_t fl_length= 0;
   decimals=0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(decimals,args[i]->decimals);
     set_if_bigger(fl_length, args[i]->max_length);
@@ -536,13 +536,13 @@ void Item_func::count_decimal_length()
   int max_int_part= 0;
   decimals= 0;
   unsigned_flag= 1;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(decimals, args[i]->decimals);
     set_if_bigger(max_int_part, args[i]->decimal_int_part());
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
-  int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  int precision= cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -556,7 +556,7 @@ void Item_func::count_only_length()
 {
   max_length= 0;
   unsigned_flag= 0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(max_length, args[i]->max_length);
     set_if_bigger(unsigned_flag, args[i]->unsigned_flag);
@@ -574,7 +574,7 @@ void Item_func::count_real_length()
   uint32_t length= 0;
   decimals= 0;
   max_length= 0;
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (decimals != NOT_FIXED_DEC)
     {
@@ -1014,7 +1014,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
 {
   my_decimal tmp_buf, *tmp= args[0]->val_decimal(&tmp_buf);
   bool sign;
-  uint precision;
+  uint32_t precision;
 
   if ((null_value= args[0]->null_value))
     return NULL;
@@ -1052,7 +1052,7 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   char len_buf[20*3 + 1];
   char *end;
 
-  uint precision= my_decimal_length_to_precision(max_length, decimals,
+  uint32_t precision= my_decimal_length_to_precision(max_length, decimals,
                                                  unsigned_flag);
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str, query_type);
@@ -1120,10 +1120,10 @@ my_decimal *Item_func_plus::decimal_op(my_decimal *decimal_value)
 */
 void Item_func_additive_op::result_precision()
 {
-  decimals= max(args[0]->decimals, args[1]->decimals);
-  int max_int_part= max(args[0]->decimal_precision() - args[0]->decimals,
+  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  int max_int_part= cmax(args[0]->decimal_precision() - args[0]->decimals,
                         args[1]->decimal_precision() - args[1]->decimals);
-  int precision= min(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
+  int precision= cmin(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
@@ -1232,8 +1232,8 @@ void Item_func_mul::result_precision()
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= min(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
-  int precision= min(args[0]->decimal_precision() + args[1]->decimal_precision(),
+  decimals= cmin(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
+  int precision= cmin(args[0]->decimal_precision() + args[1]->decimal_precision(),
                      (unsigned int)DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,unsigned_flag);
 }
@@ -1281,14 +1281,14 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 
 void Item_func_div::result_precision()
 {
-  uint precision=min(args[0]->decimal_precision() + prec_increment,
+  uint32_t precision=cmin(args[0]->decimal_precision() + prec_increment,
                      (unsigned int)DECIMAL_MAX_PRECISION);
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= min(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
+  decimals= cmin(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -1301,10 +1301,10 @@ void Item_func_div::fix_length_and_dec()
   switch(hybrid_type) {
   case REAL_RESULT:
   {
-    decimals=max(args[0]->decimals,args[1]->decimals)+prec_increment;
+    decimals=cmax(args[0]->decimals,args[1]->decimals)+prec_increment;
     set_if_smaller(decimals, NOT_FIXED_DEC);
     max_length=args[0]->max_length - args[0]->decimals + decimals;
-    uint tmp=float_length(decimals);
+    uint32_t tmp=float_length(decimals);
     set_if_smaller(max_length,tmp);
     break;
   }
@@ -1422,8 +1422,8 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
 
 void Item_func_mod::result_precision()
 {
-  decimals= max(args[0]->decimals, args[1]->decimals);
-  max_length= max(args[0]->max_length, args[1]->max_length);
+  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  max_length= cmax(args[0]->max_length, args[1]->max_length);
 }
 
 
@@ -1715,7 +1715,7 @@ double Item_func_tan::val_real()
 int64_t Item_func_shift_left::val_int()
 {
   assert(fixed == 1);
-  uint shift;
+  uint32_t shift;
   uint64_t res= ((uint64_t) args[0]->val_int() <<
 		  (shift=(uint) args[1]->val_int()));
   if (args[0]->null_value || args[1]->null_value)
@@ -1724,13 +1724,13 @@ int64_t Item_func_shift_left::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0L);
 }
 
 int64_t Item_func_shift_right::val_int()
 {
   assert(fixed == 1);
-  uint shift;
+  uint32_t shift;
   uint64_t res= (uint64_t) args[0]->val_int() >>
     (shift=(uint) args[1]->val_int());
   if (args[0]->null_value || args[1]->null_value)
@@ -1739,7 +1739,7 @@ int64_t Item_func_shift_right::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0);
 }
 
 
@@ -1758,7 +1758,7 @@ int64_t Item_func_bit_neg::val_int()
 void Item_func_integer::fix_length_and_dec()
 {
   max_length=args[0]->max_length - args[0]->decimals+1;
-  uint tmp=float_length(decimals);
+  uint32_t tmp=float_length(decimals);
   set_if_smaller(max_length,tmp);
   decimals=0;
 }
@@ -1768,7 +1768,7 @@ void Item_func_int_val::fix_num_length_and_dec()
   max_length= args[0]->max_length - (args[0]->decimals ?
                                      args[0]->decimals + 1 :
                                      0) + 2;
-  uint tmp= float_length(decimals);
+  uint32_t tmp= float_length(decimals);
   set_if_smaller(max_length,tmp);
   decimals= 0;
 }
@@ -1932,7 +1932,7 @@ void Item_func_round::fix_length_and_dec()
   if (args[0]->decimals == NOT_FIXED_DEC)
   {
     max_length= args[0]->max_length;
-    decimals= min(decimals_to_set, NOT_FIXED_DEC);
+    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
     hybrid_type= REAL_RESULT;
     return;
   }
@@ -1941,7 +1941,7 @@ void Item_func_round::fix_length_and_dec()
   case REAL_RESULT:
   case STRING_RESULT:
     hybrid_type= REAL_RESULT;
-    decimals= min(decimals_to_set, NOT_FIXED_DEC);
+    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
     max_length= float_length(decimals);
     break;
   case INT_RESULT:
@@ -1958,13 +1958,13 @@ void Item_func_round::fix_length_and_dec()
   case DECIMAL_RESULT:
   {
     hybrid_type= DECIMAL_RESULT;
-    decimals_to_set= min(DECIMAL_MAX_SCALE, decimals_to_set);
+    decimals_to_set= cmin(DECIMAL_MAX_SCALE, decimals_to_set);
     int decimals_delta= args[0]->decimals - decimals_to_set;
     int precision= args[0]->decimal_precision();
     int length_increase= ((decimals_delta <= 0) || truncate) ? 0:1;
 
     precision-= decimals_delta - length_increase;
-    decimals= min(decimals_to_set, DECIMAL_MAX_SCALE);
+    decimals= cmin(decimals_to_set, DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     break;
@@ -1989,9 +1989,9 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
   tmp=(abs_dec < array_elements(log_10) ?
        log_10[abs_dec] : pow(10.0,(double) abs_dec));
 
-  if (dec_negative && my_isinf(tmp))
+  if (dec_negative && isinf(tmp))
     tmp2= 0;
-  else if (!dec_negative && my_isinf(value * tmp))
+  else if (!dec_negative && isinf(value * tmp))
     tmp2= value;
   else if (truncate)
   {
@@ -2064,7 +2064,7 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   my_decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= min(dec, (int64_t) decimals);
+    dec= cmin(dec, (int64_t) decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
     
@@ -2099,15 +2099,11 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
   if (arg_count)
   {					// Only use argument once in query
     /*
-      Allocate rand structure once: we must use thd->stmt_arena
-      to create rand in proper mem_root if it's a prepared statement or
-      stored procedure.
-
       No need to send a Rand log event if seed was given eg: RAND(seed),
       as it will be replicated in the query as such.
     */
     if (!rand && !(rand= (struct rand_struct*)
-                   thd->stmt_arena->alloc(sizeof(*rand))))
+                   thd->alloc(sizeof(*rand))))
       return true;
 
     if (args[0]->const_item())
@@ -2174,7 +2170,7 @@ void Item_func_min_max::fix_length_and_dec()
   maybe_null=0;
   cmp_type=args[0]->result_type();
 
-  for (uint i=0 ; i < arg_count ; i++)
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
     set_if_bigger(max_length, args[i]->max_length);
     set_if_bigger(decimals, args[i]->decimals);
@@ -2223,12 +2219,12 @@ void Item_func_min_max::fix_length_and_dec()
    #	index of the least/greatest argument
 */
 
-uint Item_func_min_max::cmp_datetimes(uint64_t *value)
+uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
 {
   uint64_t min_max= 0;
-  uint min_max_idx= 0;
+  uint32_t min_max_idx= 0;
 
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     Item **arg= args + i;
     bool is_null;
@@ -2257,7 +2253,7 @@ String *Item_func_min_max::val_str(String *str)
   if (compare_as_dates)
   {
     String *str_res;
-    uint min_max_idx= cmp_datetimes(NULL);
+    uint32_t min_max_idx= cmp_datetimes(NULL);
     if (null_value)
       return 0;
     str_res= args[min_max_idx]->val_str(str);
@@ -2293,7 +2289,7 @@ String *Item_func_min_max::val_str(String *str)
   {
     String *res= NULL;
 
-    for (uint i=0; i < arg_count ; i++)
+    for (uint32_t i=0; i < arg_count ; i++)
     {
       if (i == 0)
 	res=args[i]->val_str(str);
@@ -2334,7 +2330,7 @@ double Item_func_min_max::val_real()
     (void)cmp_datetimes(&result);
     return (double)result;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       value= args[i]->val_real();
@@ -2361,7 +2357,7 @@ int64_t Item_func_min_max::val_int()
     (void)cmp_datetimes(&result);
     return (int64_t)result;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       value=args[i]->val_int();
@@ -2390,7 +2386,7 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
     uint64_t2decimal(value, dec);
     return dec;
   }
-  for (uint i=0; i < arg_count ; i++)
+  for (uint32_t i=0; i < arg_count ; i++)
   {
     if (i == 0)
       res= args[i]->val_decimal(dec);
@@ -2529,7 +2525,7 @@ int64_t Item_func_field::val_int()
     String *field;
     if (!(field= args[0]->val_str(&value)))
       return 0;
-    for (uint i=1 ; i < arg_count ; i++)
+    for (uint32_t i=1 ; i < arg_count ; i++)
     {
       String *tmp_value=args[i]->val_str(&tmp);
       if (tmp_value && !sortcmp(field,tmp_value,cmp_collation.collation))
@@ -2541,7 +2537,7 @@ int64_t Item_func_field::val_int()
     int64_t val= args[0]->val_int();
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count ; i++)
+    for (uint32_t i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_int() && !args[i]->null_value)
         return (int64_t) (i);
@@ -2553,7 +2549,7 @@ int64_t Item_func_field::val_int()
                dec_buf, *dec= args[0]->val_decimal(&dec_buf);
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count; i++)
+    for (uint32_t i=1; i < arg_count; i++)
     {
       dec_arg= args[i]->val_decimal(&dec_arg_buf);
       if (!args[i]->null_value && !my_decimal_cmp(dec_arg, dec))
@@ -2565,7 +2561,7 @@ int64_t Item_func_field::val_int()
     double val= args[0]->val_real();
     if (args[0]->null_value)
       return 0;
-    for (uint i=1; i < arg_count ; i++)
+    for (uint32_t i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_real() && !args[i]->null_value)
         return (int64_t) (i);
@@ -2579,7 +2575,7 @@ void Item_func_field::fix_length_and_dec()
 {
   maybe_null=0; max_length=3;
   cmp_type= args[0]->result_type();
-  for (uint i=1; i < arg_count ; i++)
+  for (uint32_t i=1; i < arg_count ; i++)
     cmp_type= item_cmp_type(cmp_type, args[i]->result_type());
   if (cmp_type == STRING_RESULT)
     agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1);
@@ -2596,7 +2592,7 @@ int64_t Item_func_ascii::val_int()
     return 0;
   }
   null_value=0;
-  return (int64_t) (res->length() ? (uchar) (*res)[0] : (uchar) 0);
+  return (int64_t) (res->length() ? (unsigned char) (*res)[0] : (unsigned char) 0);
 }
 
 int64_t Item_func_ord::val_int()
@@ -2616,13 +2612,13 @@ int64_t Item_func_ord::val_int()
     register const char *str=res->ptr();
     register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
     if (!l)
-      return (int64_t)((uchar) *str);
+      return (int64_t)((unsigned char) *str);
     while (l--)
-      n=(n<<8)|(uint32_t)((uchar) *str++);
+      n=(n<<8)|(uint32_t)((unsigned char) *str++);
     return (int64_t) n;
   }
 #endif
-  return (int64_t) ((uchar) (*res)[0]);
+  return (int64_t) ((unsigned char) (*res)[0]);
 }
 
 	/* Search after a string in a string of strings separated by ',' */
@@ -2669,14 +2665,14 @@ int64_t Item_func_find_in_set::val_int()
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
-    const uchar *find_str= (const uchar *) find->ptr();
-    uint find_str_len= find->length();
+    const unsigned char *find_str= (const unsigned char *) find->ptr();
+    uint32_t find_str_len= find->length();
     int position= 0;
     while (1)
     {
       int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (uchar*) str_end, 
-                                       (uchar*) real_end)) > 0)
+      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, 
+                                       (unsigned char*) real_end)) > 0)
       {
         const char *substr_end= str_end + symbol_len;
         bool is_last_item= (substr_end == real_end);
@@ -2686,7 +2682,7 @@ int64_t Item_func_find_in_set::val_int()
           position++;
           if (is_last_item && !is_separator)
             str_end= substr_end;
-          if (!my_strnncoll(cs, (const uchar *) str_begin,
+          if (!my_strnncoll(cs, (const unsigned char *) str_begin,
                             str_end - str_begin,
                             find_str, find_str_len))
             return (int64_t) position;
@@ -2700,7 +2696,7 @@ int64_t Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (int64_t) ++position;
       else
-        return 0LL;
+        return 0L;
     }
   }
   return 0;
@@ -2715,454 +2711,6 @@ int64_t Item_func_bit_count::val_int()
   return (int64_t) my_count_bits(value);
 }
 
-
-/****************************************************************************
-** Functions to handle dynamic loadable functions
-** Original source by: Alexis Mikhailov <root@medinf.chuvashia.su>
-** Rewritten by monty.
-****************************************************************************/
-
-void udf_handler::cleanup()
-{
-  if (!not_original)
-  {
-    if (initialized)
-    {
-      if (u_d->func_deinit != NULL)
-      {
-        Udf_func_deinit deinit= u_d->func_deinit;
-        (*deinit)(&initid);
-      }
-
-      initialized= false;
-    }
-    if (buffers)				// Because of bug in ecc
-      delete [] buffers;
-    buffers= 0;
-  }
-}
-
-
-bool
-udf_handler::fix_fields(THD *thd, Item_result_field *func,
-			uint arg_count, Item **arguments)
-{
-  uchar buff[STACK_BUFF_ALLOC];			// Max argument in function
-
-  if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
-    return(true);				// Fatal error flag is set!
-
-  udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length);
-
-  if (!tmp_udf)
-  {
-    my_error(ER_CANT_FIND_UDF, MYF(0), u_d->name.str, errno);
-    return(true);
-  }
-  u_d=tmp_udf;
-  args=arguments;
-
-  /* Fix all arguments */
-  func->maybe_null=0;
-  used_tables_cache=0;
-  const_item_cache=1;
-
-  if ((f_args.arg_count=arg_count))
-  {
-    if (!(f_args.arg_type= (Item_result*)
-	  sql_alloc(f_args.arg_count*sizeof(Item_result))))
-
-    {
-      return(true);
-    }
-    uint i;
-    Item **arg,**arg_end;
-    for (i=0, arg=arguments, arg_end=arguments+arg_count;
-	 arg != arg_end ;
-	 arg++,i++)
-    {
-      if (!(*arg)->fixed &&
-          (*arg)->fix_fields(thd, arg))
-	return(1);
-      // we can't assign 'item' before, because fix_fields() can change arg
-      Item *item= *arg;
-      if (item->check_cols(1))
-	return(true);
-      /*
-	TODO: We should think about this. It is not always
-	right way just to set an UDF result to return my_charset_bin
-	if one argument has binary sorting order.
-	The result collation should be calculated according to arguments
-	derivations in some cases and should not in other cases.
-	Moreover, some arguments can represent a numeric input
-	which doesn't effect the result character set and collation.
-	There is no a general rule for UDF. Everything depends on
-        the particular user defined function.
-      */
-      if (item->collation.collation->state & MY_CS_BINSORT)
-	func->collation.set(&my_charset_bin);
-      if (item->maybe_null)
-	func->maybe_null=1;
-      func->with_sum_func= func->with_sum_func || item->with_sum_func;
-      used_tables_cache|=item->used_tables();
-      const_item_cache&=item->const_item();
-      f_args.arg_type[i]=item->result_type();
-    }
-    //TODO: why all following memory is not allocated with 1 call of sql_alloc?
-    if (!(buffers=new String[arg_count]) ||
-	!(f_args.args= (char**) sql_alloc(arg_count * sizeof(char *))) ||
-	!(f_args.lengths= (ulong*) sql_alloc(arg_count * sizeof(long))) ||
-	!(f_args.maybe_null= (char*) sql_alloc(arg_count * sizeof(char))) ||
-	!(num_buffer= (char*) sql_alloc(arg_count *
-					ALIGN_SIZE(sizeof(double)))) ||
-	!(f_args.attributes= (char**) sql_alloc(arg_count * sizeof(char *))) ||
-	!(f_args.attribute_lengths= (ulong*) sql_alloc(arg_count *
-						       sizeof(long))))
-    {
-      return(true);
-    }
-  }
-  func->fix_length_and_dec();
-  initid.max_length=func->max_length;
-  initid.maybe_null=func->maybe_null;
-  initid.const_item=const_item_cache;
-  initid.decimals=func->decimals;
-  initid.ptr=0;
-
-  if (u_d->func_init)
-  {
-    char init_msg_buff[DRIZZLE_ERRMSG_SIZE];
-    char *to=num_buffer;
-    for (uint i=0; i < arg_count; i++)
-    {
-      /*
-       For a constant argument i, args->args[i] points to the argument value. 
-       For non-constant, args->args[i] is NULL.
-      */
-      f_args.args[i]= NULL;         /* Non-const unless updated below. */
-
-      f_args.lengths[i]= arguments[i]->max_length;
-      f_args.maybe_null[i]= (char) arguments[i]->maybe_null;
-      f_args.attributes[i]= arguments[i]->name;
-      f_args.attribute_lengths[i]= arguments[i]->name_length;
-
-      if (arguments[i]->const_item())
-      {
-        switch (arguments[i]->result_type()) 
-        {
-        case STRING_RESULT:
-        case DECIMAL_RESULT:
-        {
-          String *res= arguments[i]->val_str(&buffers[i]);
-          if (arguments[i]->null_value)
-            continue;
-          f_args.args[i]= (char*) res->c_ptr();
-          f_args.lengths[i]= res->length();
-          break;
-        }
-        case INT_RESULT:
-          *((int64_t*) to)= arguments[i]->val_int();
-          if (arguments[i]->null_value)
-            continue;
-          f_args.args[i]= to;
-          to+= ALIGN_SIZE(sizeof(int64_t));
-          break;
-        case REAL_RESULT:
-          *((double*) to)= arguments[i]->val_real();
-          if (arguments[i]->null_value)
-            continue;
-          f_args.args[i]= to;
-          to+= ALIGN_SIZE(sizeof(double));
-          break;
-        case ROW_RESULT:
-        default:
-          // This case should never be chosen
-          assert(0);
-          break;
-        }
-      }
-    }
-    Udf_func_init init= u_d->func_init;
-    if ((error=(uchar) init(&initid, &f_args, init_msg_buff)))
-    {
-      my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
-               u_d->name.str, init_msg_buff);
-      return(true);
-    }
-    func->max_length=min(initid.max_length,(unsigned long)MAX_BLOB_WIDTH);
-    func->maybe_null=initid.maybe_null;
-    const_item_cache=initid.const_item;
-    /* 
-      Keep used_tables_cache in sync with const_item_cache.
-      See the comment in Item_udf_func::update_used tables.
-    */  
-    if (!const_item_cache && !used_tables_cache)
-      used_tables_cache= RAND_TABLE_BIT;
-    func->decimals=min(initid.decimals,(unsigned int)NOT_FIXED_DEC);
-  }
-  initialized=1;
-  if (error)
-  {
-    my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
-             u_d->name.str, ER(ER_UNKNOWN_ERROR));
-    return(true);
-  }
-  return(false);
-}
-
-
-bool udf_handler::get_arguments()
-{
-  if (error)
-    return 1;					// Got an error earlier
-  char *to= num_buffer;
-  uint str_count=0;
-  for (uint i=0; i < f_args.arg_count; i++)
-  {
-    f_args.args[i]=0;
-    switch (f_args.arg_type[i]) {
-    case STRING_RESULT:
-    case DECIMAL_RESULT:
-      {
-	String *res=args[i]->val_str(&buffers[str_count++]);
-	if (!(args[i]->null_value))
-	{
-	  f_args.args[i]=    (char*) res->ptr();
-	  f_args.lengths[i]= res->length();
-	  break;
-	}
-      }
-    case INT_RESULT:
-      *((int64_t*) to) = args[i]->val_int();
-      if (!args[i]->null_value)
-      {
-	f_args.args[i]=to;
-	to+= ALIGN_SIZE(sizeof(int64_t));
-      }
-      break;
-    case REAL_RESULT:
-      *((double*) to)= args[i]->val_real();
-      if (!args[i]->null_value)
-      {
-	f_args.args[i]=to;
-	to+= ALIGN_SIZE(sizeof(double));
-      }
-      break;
-    case ROW_RESULT:
-    default:
-      // This case should never be chosen
-      assert(0);
-      break;
-    }
-  }
-  return 0;
-}
-
-/**
-  @return
-    (String*)NULL in case of NULL values
-*/
-String *udf_handler::val_str(String *str,String *save_str)
-{
-  uchar is_null_tmp=0;
-  ulong res_length;
-
-  if (get_arguments())
-    return(0);
-  char * (*func)(UDF_INIT *, UDF_ARGS *, char *, ulong *, uchar *, uchar *)=
-    (char* (*)(UDF_INIT *, UDF_ARGS *, char *, ulong *, uchar *, uchar *))
-    u_d->func;
-
-  if ((res_length=str->alloced_length()) < MAX_FIELD_WIDTH)
-  {						// This happens VERY seldom
-    if (str->alloc(MAX_FIELD_WIDTH))
-    {
-      error=1;
-      return(0);
-    }
-  }
-  char *res=func(&initid, &f_args, (char*) str->ptr(), &res_length,
-		 &is_null_tmp, &error);
-  if (is_null_tmp || !res || error)		// The !res is for safety
-  {
-    return(0);
-  }
-  if (res == str->ptr())
-  {
-    str->length(res_length);
-    return(str);
-  }
-  save_str->set(res, res_length, str->charset());
-  return(save_str);
-}
-
-
-/*
-  For the moment, UDF functions are returning DECIMAL values as strings
-*/
-
-my_decimal *udf_handler::val_decimal(bool *null_value, my_decimal *dec_buf)
-{
-  char buf[DECIMAL_MAX_STR_LENGTH+1], *end;
-  ulong res_length= DECIMAL_MAX_STR_LENGTH;
-
-  if (get_arguments())
-  {
-    *null_value=1;
-    return 0;
-  }
-  char *(*func)(UDF_INIT *, UDF_ARGS *, char *, ulong *, uchar *, uchar *)=
-    (char* (*)(UDF_INIT *, UDF_ARGS *, char *, ulong *, uchar *, uchar *))
-    u_d->func;
-
-  char *res= func(&initid, &f_args, buf, &res_length, &is_null, &error);
-  if (is_null || error)
-  {
-    *null_value= 1;
-    return 0;
-  }
-  end= res+ res_length;
-  str2my_decimal(E_DEC_FATAL_ERROR, res, dec_buf, &end);
-  return dec_buf;
-}
-
-
-void Item_udf_func::cleanup()
-{
-  udf.cleanup();
-  Item_func::cleanup();
-}
-
-
-void Item_udf_func::print(String *str, enum_query_type query_type)
-{
-  str->append(func_name());
-  str->append('(');
-  for (uint i=0 ; i < arg_count ; i++)
-  {
-    if (i != 0)
-      str->append(',');
-    args[i]->print_item_w_name(str, query_type);
-  }
-  str->append(')');
-}
-
-
-double Item_func_udf_float::val_real()
-{
-  assert(fixed == 1);
-  return(udf.val(&null_value));
-}
-
-
-String *Item_func_udf_float::val_str(String *str)
-{
-  assert(fixed == 1);
-  double nr= val_real();
-  if (null_value)
-    return 0;					/* purecov: inspected */
-  str->set_real(nr,decimals,&my_charset_bin);
-  return str;
-}
-
-
-int64_t Item_func_udf_int::val_int()
-{
-  assert(fixed == 1);
-  return(udf.val_int(&null_value));
-}
-
-
-String *Item_func_udf_int::val_str(String *str)
-{
-  assert(fixed == 1);
-  int64_t nr=val_int();
-  if (null_value)
-    return 0;
-  str->set_int(nr, unsigned_flag, &my_charset_bin);
-  return str;
-}
-
-
-int64_t Item_func_udf_decimal::val_int()
-{
-  my_decimal dec_buf, *dec= udf.val_decimal(&null_value, &dec_buf);
-  int64_t result;
-  if (null_value)
-    return 0;
-  my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
-  return result;
-}
-
-
-double Item_func_udf_decimal::val_real()
-{
-  my_decimal dec_buf, *dec= udf.val_decimal(&null_value, &dec_buf);
-  double result;
-  if (null_value)
-    return 0.0;
-  my_decimal2double(E_DEC_FATAL_ERROR, dec, &result);
-  return result;
-}
-
-
-my_decimal *Item_func_udf_decimal::val_decimal(my_decimal *dec_buf)
-{
-  assert(fixed == 1);
-  return(udf.val_decimal(&null_value, dec_buf));
-}
-
-
-String *Item_func_udf_decimal::val_str(String *str)
-{
-  my_decimal dec_buf, *dec= udf.val_decimal(&null_value, &dec_buf);
-  if (null_value)
-    return 0;
-  if (str->length() < DECIMAL_MAX_STR_LENGTH)
-    str->length(DECIMAL_MAX_STR_LENGTH);
-  my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
-  my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, '0', str);
-  return str;
-}
-
-
-void Item_func_udf_decimal::fix_length_and_dec()
-{
-  fix_num_length_and_dec();
-}
-
-
-/* Default max_length is max argument length */
-
-void Item_func_udf_str::fix_length_and_dec()
-{
-  max_length=0;
-  for (uint i = 0; i < arg_count; i++)
-    set_if_bigger(max_length,args[i]->max_length);
-  return;
-}
-
-String *Item_func_udf_str::val_str(String *str)
-{
-  assert(fixed == 1);
-  String *res=udf.val_str(str,&str_value);
-  null_value = !res;
-  return res;
-}
-
-
-/**
-  @note
-  This has to come last in the udf_handler methods, or C for AIX
-  version 6.0.0.0 fails to compile with debugging enabled. (Yes, really.)
-*/
-
-udf_handler::~udf_handler()
-{
-  /* Everything should be properly cleaned up by this moment. */
-  assert(not_original || !(initialized || buffers));
-}
-
 /*
 ** User level locks
 */
@@ -3172,7 +2720,7 @@ static HASH hash_user_locks;
 
 class User_level_lock
 {
-  uchar *key;
+  unsigned char *key;
   size_t key_length;
 
 public:
@@ -3182,16 +2730,16 @@ public:
   my_thread_id thread_id;
   void set_thread(THD *thd) { thread_id= thd->thread_id; }
 
-  User_level_lock(const uchar *key_arg,uint length, ulong id) 
+  User_level_lock(const unsigned char *key_arg,uint32_t length, ulong id) 
     :key_length(length),count(1),locked(1), thread_id(id)
   {
-    key= (uchar*) my_memdup(key_arg,length,MYF(0));
+    key= (unsigned char*) my_memdup(key_arg,length,MYF(0));
     pthread_cond_init(&cond,NULL);
     if (key)
     {
-      if (my_hash_insert(&hash_user_locks,(uchar*) this))
+      if (my_hash_insert(&hash_user_locks,(unsigned char*) this))
       {
-	my_free(key,MYF(0));
+	free(key);
 	key=0;
       }
     }
@@ -3200,18 +2748,18 @@ public:
   {
     if (key)
     {
-      hash_delete(&hash_user_locks,(uchar*) this);
-      my_free(key, MYF(0));
+      hash_delete(&hash_user_locks,(unsigned char*) this);
+      free(key);
     }
     pthread_cond_destroy(&cond);
   }
   inline bool initialized() { return key != 0; }
   friend void item_user_lock_release(User_level_lock *ull);
-  friend uchar *ull_get_key(const User_level_lock *ull, size_t *length,
+  friend unsigned char *ull_get_key(const User_level_lock *ull, size_t *length,
                             bool not_used);
 };
 
-uchar *ull_get_key(const User_level_lock *ull, size_t *length,
+unsigned char *ull_get_key(const User_level_lock *ull, size_t *length,
                    bool not_used __attribute__((unused)))
 {
   *length= ull->key_length;
@@ -3267,7 +2815,6 @@ int64_t Item_master_pos_wait::val_int()
     null_value = 1;
     return 0;
   }
-#ifdef HAVE_REPLICATION
   int64_t pos = (ulong)args[1]->val_int();
   int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
   if ((event_count = active_mi->rli.wait_for_pos(thd, log_name, pos, timeout)) == -2)
@@ -3275,12 +2822,11 @@ int64_t Item_master_pos_wait::val_int()
     null_value = 1;
     event_count=0;
   }
-#endif
   return event_count;
 }
 
 #ifdef EXTRA_DEBUG
-void debug_sync_point(const char* lock_name, uint lock_timeout)
+void debug_sync_point(const char* lock_name, uint32_t lock_timeout)
 {
 }
 
@@ -3388,11 +2934,11 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
 {
   user_var_entry *entry;
 
-  if (!(entry = (user_var_entry*) hash_search(hash, (uchar*) name.str,
+  if (!(entry = (user_var_entry*) hash_search(hash, (unsigned char*) name.str,
 					      name.length)) &&
       create_if_not_exists)
   {
-    uint size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
+    uint32_t size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
     if (!hash_inited(hash))
       return 0;
     if (!(entry = (user_var_entry*) my_malloc(size,MYF(MY_WME | ME_FATALERROR))))
@@ -3418,9 +2964,9 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
     entry->used_query_id=current_thd->query_id;
     entry->type=STRING_RESULT;
     memcpy(entry->name.str, name.str, name.length+1);
-    if (my_hash_insert(hash,(uchar*) entry))
+    if (my_hash_insert(hash,(unsigned char*) entry))
     {
-      my_free((char*) entry,MYF(0));
+      free((char*) entry);
       return 0;
     }
   }
@@ -3487,7 +3033,7 @@ Item_func_set_user_var::fix_length_and_dec()
     column read set or to register used fields in a view
 */
 
-bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
+bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 {
   if (result_field)
   {
@@ -3507,7 +3053,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 
 */
 
-bool Item_func_set_user_var::register_field_in_bitmap(uchar *arg)
+bool Item_func_set_user_var::register_field_in_bitmap(unsigned char *arg)
 {
   MY_BITMAP *bitmap = (MY_BITMAP *) arg;
   assert(bitmap);
@@ -3540,7 +3086,7 @@ bool Item_func_set_user_var::register_field_in_bitmap(uchar *arg)
 */
 
 static bool
-update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
+update_hash(user_var_entry *entry, bool set_null, void *ptr, uint32_t length,
             Item_result type, const CHARSET_INFO * const cs, Derivation dv,
             bool unsigned_arg)
 {
@@ -3548,7 +3094,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
   {
     char *pos= (char*) entry+ ALIGN_SIZE(sizeof(user_var_entry));
     if (entry->value && entry->value != pos)
-      my_free(entry->value,MYF(0));
+      free(entry->value);
     entry->value= 0;
     entry->length= 0;
   }
@@ -3563,7 +3109,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
       if (entry->value != pos)
       {
 	if (entry->value)
-	  my_free(entry->value,MYF(0));
+	  free(entry->value);
 	entry->value=pos;
       }
     }
@@ -3600,7 +3146,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
 
 
 bool
-Item_func_set_user_var::update_hash(void *ptr, uint length,
+Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
                                     Item_result res_type,
                                     const CHARSET_INFO * const cs, Derivation dv,
                                     bool unsigned_arg)
@@ -3654,7 +3200,7 @@ double user_var_entry::val_real(bool *null_value)
 int64_t user_var_entry::val_int(bool *null_value) const
 {
   if ((*null_value= (value == 0)))
-    return 0LL;
+    return 0L;
 
   switch (type) {
   case REAL_RESULT:
@@ -3676,14 +3222,14 @@ int64_t user_var_entry::val_int(bool *null_value) const
     assert(1);				// Impossible
     break;
   }
-  return 0LL;					// Impossible
+  return 0L;					// Impossible
 }
 
 
 /** Get the value of a variable as a string. */
 
 String *user_var_entry::val_str(bool *null_value, String *str,
-				uint decimals)
+				uint32_t decimals)
 {
   if ((*null_value= (value == 0)))
     return (String*) 0;
@@ -4107,7 +3653,7 @@ int64_t Item_func_get_user_var::val_int()
 {
   assert(fixed == 1);
   if (!var_entry)
-    return 0LL;				// No such variable
+    return 0L;				// No such variable
   return (var_entry->val_int(&null_value));
 }
 
@@ -4146,8 +3692,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
     calling statement. We must log all such variables even if they are 
     not involved in table-updating statements.
   */
-  if (!(opt_bin_log && 
-       (is_update_query(sql_command) || thd->in_sub_stmt)))
+  if (!(opt_bin_log && is_update_query(sql_command)))
   {
     *out_entry= var_entry;
     return 0;
@@ -4200,7 +3745,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
     return 0;
   }
 
-  uint size;
+  uint32_t size;
   /*
     First we need to store value of var_entry, when the next situation
     appears:
@@ -4237,7 +3782,7 @@ int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
   }
   /* Mark that this variable has been used by this query */
   var_entry->used_query_id= thd->query_id;
-  if (insert_dynamic(&thd->user_var_events, (uchar*) &user_var_event))
+  if (insert_dynamic(&thd->user_var_events, (unsigned char*) &user_var_event))
     goto err;
 
   *out_entry= var_entry;
@@ -4363,7 +3908,7 @@ void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
 }
 
 
-void Item_user_var_as_out_param::set_value(const char *str, uint length,
+void Item_user_var_as_out_param::set_value(const char *str, uint32_t length,
                                            const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,
@@ -4534,7 +4079,7 @@ int64_t Item_func_is_free_lock::val_int()
   }
   
   pthread_mutex_lock(&LOCK_user_locks);
-  ull= (User_level_lock *) hash_search(&hash_user_locks, (uchar*) res->ptr(),
+  ull= (User_level_lock *) hash_search(&hash_user_locks, (unsigned char*) res->ptr(),
                                        (size_t) res->length());
   pthread_mutex_unlock(&LOCK_user_locks);
   if (!ull || !ull->locked)
@@ -4553,7 +4098,7 @@ int64_t Item_func_is_used_lock::val_int()
     return 0;
   
   pthread_mutex_lock(&LOCK_user_locks);
-  ull= (User_level_lock *) hash_search(&hash_user_locks, (uchar*) res->ptr(),
+  ull= (User_level_lock *) hash_search(&hash_user_locks, (unsigned char*) res->ptr(),
                                        (size_t) res->length());
   pthread_mutex_unlock(&LOCK_user_locks);
   if (!ull || !ull->locked)

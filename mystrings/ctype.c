@@ -71,10 +71,10 @@ typedef struct my_cs_file_info
 {
   char   csname[MY_CS_NAME_SIZE];
   char   name[MY_CS_NAME_SIZE];
-  uchar  ctype[MY_CS_CTYPE_TABLE_SIZE];
-  uchar  to_lower[MY_CS_TO_LOWER_TABLE_SIZE];
-  uchar  to_upper[MY_CS_TO_UPPER_TABLE_SIZE];
-  uchar  sort_order[MY_CS_SORT_ORDER_TABLE_SIZE];
+  unsigned char  ctype[MY_CS_CTYPE_TABLE_SIZE];
+  unsigned char  to_lower[MY_CS_TO_LOWER_TABLE_SIZE];
+  unsigned char  to_upper[MY_CS_TO_UPPER_TABLE_SIZE];
+  unsigned char  sort_order[MY_CS_SORT_ORDER_TABLE_SIZE];
   uint16_t tab_to_uni[MY_CS_TO_UNI_TABLE_SIZE];
   char   comment[MY_CS_CSDESCR_SIZE];
   char   tailoring[MY_CS_TAILORING_SIZE];
@@ -96,7 +96,7 @@ my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong lengt
   {
     for ( ; str < strend; str++)
     {
-      if (((uchar) *str) > 0x7F)
+      if (((unsigned char) *str) > 0x7F)
         return MY_REPERTOIRE_UNICODE30;
     }
   }
@@ -104,7 +104,7 @@ my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong lengt
   {
     my_wc_t wc;
     int chlen;
-    for (; (chlen= cs->cset->mb_wc(cs, &wc, (uchar *)str, (uchar *)strend)) > 0; str+= chlen)
+    for (; (chlen= cs->cset->mb_wc(cs, &wc, (unsigned char *)str, (unsigned char *)strend)) > 0; str+= chlen)
     {
       if (wc > 0x7F)
         return MY_REPERTOIRE_UNICODE30;
@@ -179,7 +179,7 @@ my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs)
 bool
 my_charset_is_ascii_compatible(const CHARSET_INFO * const cs)
 {
-  uint i;
+  uint32_t i;
   if (!cs->tab_to_uni)
     return 1;
   for (i= 0; i < 128; i++)

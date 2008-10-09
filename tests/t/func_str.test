@@ -158,16 +158,16 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  id int(10) unsigned NOT NULL,
+  id int(10) NOT NULL,
   title varchar(255) default NULL,
-  prio int(10) unsigned default NULL,
-  category int(10) unsigned default NULL,
-  program int(10) unsigned default NULL,
+  prio int(10) default NULL,
+  category int(10) default NULL,
+  program int(10) default NULL,
   bugdesc text,
   created datetime default NULL,
   modified timestamp NOT NULL,
-  bugstatus int(10) unsigned default NULL,
-  submitter int(10) unsigned default NULL
+  bugstatus int(10) default NULL,
+  submitter int(10) default NULL
 ) ENGINE=MyISAM;
 
 INSERT INTO t1 VALUES (1,'Link',1,1,1,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','2001-02-28 08:40:16',20010228084016,0,4);
@@ -187,7 +187,7 @@ SELECT 1 FROM t1 WHERE tmp=AES_DECRYPT(tmp,"password");
 DROP TABLE t1;
 
 CREATE TABLE t1 (
-  wid int(10) unsigned NOT NULL auto_increment,
+  wid int(10) NOT NULL auto_increment,
   data_podp date default NULL,
   status_wnio enum('nowy','podp','real','arch') NOT NULL default 'nowy',
   PRIMARY KEY(wid)
@@ -559,12 +559,12 @@ select trim(leading NULL from 'kate') as "must_be_null";
 select trim(trailing NULL from 'xyz') as "must_be_null";
 
 #
-# Bug #7751 - conversion for a bigint unsigned constant 
+# Bug #7751 - conversion for a bigint constant 
 #
 
 CREATE TABLE t1 (
   id int(11) NOT NULL auto_increment,
-  a bigint(20) unsigned default NULL,
+  a bigint(20) default NULL,
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM;
 
@@ -654,20 +654,20 @@ DROP TABLE t1;
 
 
 CREATE TABLE t1(
-  trackid     int(10) unsigned NOT NULL auto_increment,
+  trackid     int(10) NOT NULL auto_increment,
   trackname   varchar(100) NOT NULL default '',
   PRIMARY KEY (trackid)
 );
 
 CREATE TABLE t2(
-  artistid    int(10) unsigned NOT NULL auto_increment,
+  artistid    int(10) NOT NULL auto_increment,
   artistname  varchar(100) NOT NULL default '',
   PRIMARY KEY (artistid)
 );
 
 CREATE TABLE t3(
-  trackid     int(10) unsigned NOT NULL,
-  artistid    int(10) unsigned NOT NULL,
+  trackid     int(10) NOT NULL,
+  artistid    int(10) NOT NULL,
   PRIMARY KEY (trackid,artistid)
 );
 
@@ -1111,13 +1111,13 @@ SELECT CHAR(0xff,0x8f USING utf8) IS NULL;
 SET SQL_MODE=@orig_sql_mode;
 
 #
-# Bug #24947: problem with some string function with unsigned int parameters
+# Bug #24947: problem with some string function with int parameters
 #
 
-select substring('abc', cast(2 as unsigned int));
-select repeat('a', cast(2 as unsigned int));
-select rpad('abc', cast(5 as unsigned integer), 'x');
-select lpad('abc', cast(5 as unsigned integer), 'x');
+select substring('abc', cast(2 as int));
+select repeat('a', cast(2 as int));
+select rpad('abc', cast(5 as integer), 'x');
+select lpad('abc', cast(5 as integer), 'x');
 
 #
 # Bug#15757: Wrong SUBSTRING() result when a tmp table was employed.
@@ -1140,7 +1140,7 @@ DROP TABLE IF EXISTS t1;
 
 CREATE TABLE `t1` (
   `id` varchar(20) NOT NULL,
-  `tire` tinyint(3) unsigned NOT NULL,
+  `tire` int(3) NOT NULL,
   PRIMARY KEY (`id`)
 );
 
@@ -1221,14 +1221,14 @@ SELECT id FROM t1 WHERE LOCATE(a,p) <=> NULL;
 DROP TABLE t1;
 
 #
-# Bug #27130: SUBSTR with UNSIGNED 0 as the last argument
+# Bug #27130: SUBSTR with 0 as the last argument
 #
 
 SELECT SUBSTR('foo',1,0);
 SELECT SUBSTR('foo',1,CAST(0 AS SIGNED));
 SELECT SUBSTR('foo',1,CAST(0 AS UNSIGNED));
 
-CREATE TABLE t1 (a varchar(10), len int unsigned);
+CREATE TABLE t1 (a varchar(10), len int);
 INSERT INTO t1 VALUES ('bar', 2), ('foo', 0);
 
 SELECT SUBSTR(a,1,len) FROM t1;

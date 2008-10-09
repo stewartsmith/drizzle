@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_SQL_LEX_H
 #define DRIZZLE_SERVER_SQL_LEX_H
@@ -19,6 +23,8 @@
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
+
+#include "sql_udf.h"
 
 /* YACC and LEX Definitions */
 
@@ -81,7 +87,7 @@ enum enum_sql_command {
   SQLCOM_RENAME_TABLE,  
   SQLCOM_RESET, SQLCOM_PURGE, SQLCOM_PURGE_BEFORE, SQLCOM_SHOW_BINLOGS,
   SQLCOM_SHOW_OPEN_TABLES,
-  SQLCOM_SHOW_SLAVE_HOSTS, SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
+  SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
   SQLCOM_SHOW_BINLOG_EVENTS,
   SQLCOM_SHOW_WARNS, SQLCOM_EMPTY_QUERY, SQLCOM_SHOW_ERRORS,
   SQLCOM_CHECKSUM,
@@ -125,9 +131,7 @@ typedef struct st_lex_master_info
     Enum is used for making it possible to detect if the user
     changed variable or if it should be left at old value
    */
-  enum {LEX_MI_UNCHANGED, LEX_MI_DISABLE, LEX_MI_ENABLE}
-    ssl, ssl_verify_server_cert, heartbeat_opt;
-  char *ssl_key, *ssl_cert, *ssl_ca, *ssl_capath, *ssl_cipher;
+  enum {LEX_MI_UNCHANGED, LEX_MI_DISABLE, LEX_MI_ENABLE} heartbeat_opt;
   char *relay_log_name;
   uint32_t relay_log_pos;
 } LEX_MASTER_INFO;
@@ -154,7 +158,7 @@ enum tablespace_op_type
   Keep in sync with index_hint_type.
 */
 extern const char * index_hint_type_name[];
-typedef uchar index_clause_map;
+typedef unsigned char index_clause_map;
 
 /*
   Bits in index_clause_map : one for each possible FOR clause in
@@ -449,11 +453,11 @@ public:
   st_select_lex* outer_select();
   st_select_lex* first_select()
   {
-    return my_reinterpret_cast(st_select_lex*)(slave);
+    return reinterpret_cast<st_select_lex*>(slave);
   }
   st_select_lex_unit* next_unit()
   {
-    return my_reinterpret_cast(st_select_lex_unit*)(next);
+    return reinterpret_cast<st_select_lex_unit*>(next);
   }
   st_select_lex* return_after_parsing() { return return_to; }
   void exclude_level();
@@ -576,20 +580,6 @@ public:
   bool subquery_in_having;
   /* true <=> this SELECT is correlated w.r.t. some ancestor select */
   bool is_correlated;
-  /*
-    This variable is required to ensure proper work of subqueries and
-    stored procedures. Generally, one should use the states of
-    Query_arena to determine if it's a statement prepare or first
-    execution of a stored procedure. However, in case when there was an
-    error during the first execution of a stored procedure, the SP body
-    is not expelled from the SP cache. Therefore, a deeply nested
-    subquery might be left unoptimized. So we need this per-subquery
-    variable to inidicate the optimization/execution state of every
-    subquery. Prepared statements work OK in that regard, as in
-    case of an error during prepare the PS is not created.
-  */
-  bool first_execution;
-  bool first_cond_optimization;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;
   /* List of fields that aren't under an aggregate function */
@@ -672,7 +662,7 @@ public:
   {
     order_list.elements= 0;
     order_list.first= 0;
-    order_list.next= (uchar**) &order_list.first;
+    order_list.next= (unsigned char**) &order_list.first;
   }
   /*
     This method created for reiniting LEX in mysql_admin_table() and can be
@@ -864,7 +854,7 @@ public:
     in which it was right after query parsing.
   */
   SQL_LIST sroutines_list;
-  uchar    **sroutines_list_own_last;
+  unsigned char    **sroutines_list_own_last;
   uint32_t     sroutines_list_own_elements;
 
   /*
@@ -1336,7 +1326,7 @@ public:
   const char *found_semicolon;
 
   /** Token character bitmaps, to detect 7bit strings. */
-  uchar tok_bitmap;
+  unsigned char tok_bitmap;
 
   /** SQL_MODE = IGNORE_SPACE. */
   bool ignore_space;
@@ -1384,14 +1374,13 @@ typedef struct st_lex : public Query_tables_list
   LEX_STRING name;
   char *help_arg;
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
-  char* x509_subject,*x509_issuer,*ssl_cipher;
   String *wild;
   sql_exchange *exchange;
   select_result *result;
   Item *default_value, *on_update_value;
   LEX_STRING comment, ident;
   XID *xid;
-  uchar* yacc_yyss, *yacc_yyvs;
+  unsigned char* yacc_yyss, *yacc_yyvs;
   THD *thd;
   virtual_column_info *vcol_info;
 
@@ -1499,7 +1488,7 @@ typedef struct st_lex : public Query_tables_list
   uint8_t derived_tables;
   bool drop_if_exists, drop_temporary, local_file, one_shot_set;
   bool autocommit;
-  bool verbose, no_write_to_binlog;
+  bool verbose;
 
   bool tx_chain, tx_release;
   bool subqueries, ignore;

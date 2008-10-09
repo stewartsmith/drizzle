@@ -1755,8 +1755,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
     while (1)
     {
       bool escaped= 0;
-      if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
-                       (const uchar*)wildend)) <= 0)
+      if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
+                       (const unsigned char*)wildend)) <= 0)
         return 1;
 
       if (w_wc == (my_wc_t)w_many)
@@ -1768,15 +1768,15 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
       wildstr+= scan;
       if (w_wc ==  (my_wc_t)escape && wildstr < wildend)
       {
-        if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
-                         (const uchar*)wildend)) <= 0)
+        if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
+                         (const unsigned char*)wildend)) <= 0)
           return 1;
         wildstr+= scan;
         escaped= 1;
       }
       
-      if ((scan= mb_wc(cs, &s_wc, (const uchar*)str,
-                       (const uchar*)str_end)) <= 0)
+      if ((scan= mb_wc(cs, &s_wc, (const unsigned char*)str,
+                       (const unsigned char*)str_end)) <= 0)
         return 1;
       str+= scan;
       
@@ -1813,8 +1813,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
       /* Remove any '%' and '_' from the wild search string */
       for (; wildstr != wildend ;)
       {
-        if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
-                         (const uchar*)wildend)) <= 0)
+        if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
+                         (const unsigned char*)wildend)) <= 0)
           return 1;
         
 	if (w_wc == (my_wc_t)w_many)
@@ -1826,8 +1826,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
 	if (w_wc == (my_wc_t)w_one)
 	{
 	  wildstr+= scan;
-          if ((scan= mb_wc(cs, &s_wc, (const uchar*)str,
-                           (const uchar*)str_end)) <=0)
+          if ((scan= mb_wc(cs, &s_wc, (const unsigned char*)str,
+                           (const unsigned char*)str_end)) <=0)
             return 1;
           str+= scan;
 	  continue;
@@ -1841,8 +1841,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
       if (str == str_end)
 	return -1;
       
-      if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
-                       (const uchar*)wildend)) <=0)
+      if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
+                       (const unsigned char*)wildend)) <=0)
         return 1;
       wildstr+= scan;
       
@@ -1850,8 +1850,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
       {
         if (wildstr < wildend)
         {
-          if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
-                           (const uchar*)wildend)) <=0)
+          if ((scan= mb_wc(cs, &w_wc, (const unsigned char*)wildstr,
+                           (const unsigned char*)wildend)) <=0)
             return 1;
           wildstr+= scan;
         }
@@ -1862,8 +1862,8 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
         /* Skip until the first character from wildstr is found */
         while (str != str_end)
         {
-          if ((scan= mb_wc(cs, &s_wc, (const uchar*)str,
-                           (const uchar*)str_end)) <=0)
+          if ((scan= mb_wc(cs, &s_wc, (const unsigned char*)str,
+                           (const unsigned char*)str_end)) <=0)
             return 1;
           if (weights)
           {
@@ -1903,7 +1903,7 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
   expressions. Note, there is no need to mark byte 255  as a
   letter, it is illegal byte in UTF8.
 */
-static uchar ctype_utf8mb4[]=
+static unsigned char ctype_utf8mb4[]=
 {
     0,
    32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 32, 32,
@@ -1925,7 +1925,7 @@ static uchar ctype_utf8mb4[]=
 };
 
 
-static uchar to_lower_utf8mb4[]=
+static unsigned char to_lower_utf8mb4[]=
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -1946,7 +1946,7 @@ static uchar to_lower_utf8mb4[]=
 };
 
 
-static uchar to_upper_utf8mb4[]=
+static unsigned char to_upper_utf8mb4[]=
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -1968,11 +1968,11 @@ static uchar to_upper_utf8mb4[]=
 
 
 static inline int
-bincmp_utf8mb4(const uchar *s, const uchar *se,
-               const uchar *t, const uchar *te)
+bincmp_utf8mb4(const unsigned char *s, const unsigned char *se,
+               const unsigned char *t, const unsigned char *te)
 {
   int slen= (int) (se - s), tlen= (int) (te - t);
-  int len= min(slen, tlen);
+  int len= cmin(slen, tlen);
   int cmp= memcmp(s, t, len);
   return cmp ? cmp : slen - tlen;
 }
@@ -1980,9 +1980,9 @@ bincmp_utf8mb4(const uchar *s, const uchar *se,
 
 static int
 my_mb_wc_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)),
-                 my_wc_t * pwc, const uchar *s, const uchar *e)
+                 my_wc_t * pwc, const unsigned char *s, const unsigned char *e)
 {
-  uchar c;
+  unsigned char c;
 
   if (s >= e)
     return MY_CS_TOOSMALL;
@@ -2046,9 +2046,9 @@ my_mb_wc_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)),
 */
 static int
 my_mb_wc_utf8mb4_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
-                          my_wc_t *pwc, const uchar *s)
+                          my_wc_t *pwc, const unsigned char *s)
 {
-  uchar c;
+  unsigned char c;
 
   c= s[0];
   if (c < 0x80)
@@ -2100,7 +2100,7 @@ my_mb_wc_utf8mb4_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
 
 static int
 my_wc_mb_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)),
-                 my_wc_t wc, uchar *r, uchar *e)
+                 my_wc_t wc, unsigned char *r, unsigned char *e)
 {
   int count;
 
@@ -2122,10 +2122,10 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)),
 
   switch (count) {
     /* Fall through all cases!!! */
-    case 4: r[3] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
-    case 3: r[2] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
-    case 2: r[1] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0xc0;
-    case 1: r[0] = (uchar) wc;
+    case 4: r[3] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
+    case 3: r[2] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
+    case 2: r[1] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0xc0;
+    case 1: r[0] = (unsigned char) wc;
   }
   return count;
 }
@@ -2136,7 +2136,7 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)),
 */
 static int
 my_wc_mb_utf8mb4_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
-                          my_wc_t wc, uchar *r)
+                          my_wc_t wc, unsigned char *r)
 {
   int count;
 
@@ -2154,10 +2154,10 @@ my_wc_mb_utf8mb4_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
   switch (count)
   {
     /* Fall through all cases!!! */
-    case 4: r[3]= (uchar) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x10000;
-    case 3: r[2]= (uchar) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x800;
-    case 2: r[1]= (uchar) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0xc0;
-    case 1: r[0]= (uchar) wc;
+    case 4: r[3]= (unsigned char) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x10000;
+    case 3: r[2]= (unsigned char) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x800;
+    case 2: r[1]= (unsigned char) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0xc0;
+    case 1: r[0]= (unsigned char) wc;
   }
   return count;
 }
@@ -2212,10 +2212,10 @@ my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
-                                   (uchar *) src, (uchar*) srcend)) > 0)
+                                   (unsigned char *) src, (unsigned char*) srcend)) > 0)
   {
     my_toupper_utf8mb4(uni_plane, &wc);
-    if ((dstres= my_wc_mb_utf8mb4(cs, wc, (uchar*) dst, (uchar*) dstend)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb4(cs, wc, (unsigned char*) dst, (unsigned char*) dstend)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -2225,7 +2225,7 @@ my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
 
 static inline void
-my_hash_add(uint32_t *n1, uint32_t *n2, uint ch)
+my_hash_add(uint32_t *n1, uint32_t *n2, uint32_t ch)
 {
   n1[0]^= (((n1[0] & 63) + n2[0]) * (ch)) + (n1[0] << 8);
   n2[0]+= 3;
@@ -2233,12 +2233,12 @@ my_hash_add(uint32_t *n1, uint32_t *n2, uint ch)
 
 
 static void
-my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
+my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const unsigned char *s, size_t slen,
                      uint32_t *n1, uint32_t *n2)
 {
   my_wc_t wc;
   int res;
-  const uchar *e= s + slen;
+  const unsigned char *e= s + slen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
   /*
@@ -2248,7 +2248,7 @@ my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
   while (e > s && e[-1] == ' ')
     e--;
 
-  while ((res= my_mb_wc_utf8mb4(cs, &wc, (const uchar*) s, (const uchar*) e)) > 0)
+  while ((res= my_mb_wc_utf8mb4(cs, &wc, (const unsigned char*) s, (const unsigned char*) e)) > 0)
   {
     my_tosort_utf8mb4(uni_plane, &wc);
     my_hash_add(n1, n2, (uint) (wc & 0xFF));
@@ -2279,10 +2279,10 @@ my_caseup_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
   assert(cs->caseup_multiply == 1);
 
   while (*src &&
-         (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
+         (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (unsigned char *) src)) > 0)
   {
     my_toupper_utf8mb4(uni_plane, &wc);
-    if ((dstres= my_wc_mb_utf8mb4_no_range(cs, wc, (uchar*) dst)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb4_no_range(cs, wc, (unsigned char*) dst)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -2305,10 +2305,10 @@ my_casedn_utf8mb4(const CHARSET_INFO * const cs,
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
-                                   (uchar*) src, (uchar*) srcend)) > 0)
+                                   (unsigned char*) src, (unsigned char*) srcend)) > 0)
   {
     my_tolower_utf8mb4(uni_plane, &wc);
-    if ((dstres= my_wc_mb_utf8mb4(cs, wc, (uchar*) dst, (uchar*) dstend)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb4(cs, wc, (unsigned char*) dst, (unsigned char*) dstend)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -2327,10 +2327,10 @@ my_casedn_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
   assert(cs->casedn_multiply == 1);
 
   while (*src &&
-         (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
+         (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (unsigned char *) src)) > 0)
   {
     my_tolower_utf8mb4(uni_plane, &wc);
-    if ((dstres= my_wc_mb_utf8mb4_no_range(cs, wc, (uchar*) dst)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb4_no_range(cs, wc, (unsigned char*) dst)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -2358,13 +2358,14 @@ my_casedn_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
 
 static int
 my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
-                     const uchar *s, size_t slen,
-                     const uchar *t, size_t tlen,
+                     const unsigned char *s, size_t slen,
+                     const unsigned char *t, size_t tlen,
                      bool t_is_prefix)
 {
-  my_wc_t s_wc=0, t_wc;
-  const uchar *se= s + slen;
-  const uchar *te= t + tlen;
+  my_wc_t s_wc=0;
+  my_wc_t t_wc=0;
+  const unsigned char *se= s + slen;
+  const unsigned char *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
   while ( s < se && t < te )
@@ -2422,13 +2423,14 @@ my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
 
 static int
 my_strnncollsp_utf8mb4(const CHARSET_INFO * const cs,
-                       const uchar *s, size_t slen,
-                       const uchar *t, size_t tlen,
+                       const unsigned char *s, size_t slen,
+                       const unsigned char *t, size_t tlen,
                        bool diff_if_only_endspace_difference)
 {
   int res;
-  my_wc_t s_wc=0, t_wc;
-  const uchar *se= s + slen, *te= t + tlen;
+  my_wc_t s_wc=0;
+  my_wc_t t_wc=0;
+  const unsigned char *se= s + slen, *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
@@ -2516,19 +2518,19 @@ my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs, const char *s, const char *
   {
     my_wc_t s_wc,t_wc;
     
-    if ((uchar) s[0] < 128)
+    if ((unsigned char) s[0] < 128)
     {
       /* 
         s[0] is between 0 and 127.
         It represents a single byte character.
         Convert it into weight according to collation.
       */
-      s_wc= plane00[(uchar) s[0]].tolower;
+      s_wc= plane00[(unsigned char) s[0]].tolower;
       s++;
     }
     else
     {
-      int res= my_mb_wc_utf8mb4_no_range(cs, &s_wc, (const uchar*) s);
+      int res= my_mb_wc_utf8mb4_no_range(cs, &s_wc, (const unsigned char*) s);
       
       /* 
          In the case of wrong multibyte sequence we will
@@ -2544,15 +2546,15 @@ my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs, const char *s, const char *
     
     /* Do the same for the second string */
     
-    if ((uchar) t[0] < 128)
+    if ((unsigned char) t[0] < 128)
     {
       /* Convert single byte character into weight */
-      t_wc= plane00[(uchar) t[0]].tolower;
+      t_wc= plane00[(unsigned char) t[0]].tolower;
       t++;
     }
     else
     {
-      int res= my_mb_wc_utf8mb4_no_range(cs, &t_wc, (const uchar*) t);
+      int res= my_mb_wc_utf8mb4_no_range(cs, &t_wc, (const unsigned char*) t);
       if (res <= 0)
         return strcmp(s, t);
       t+= res;
@@ -2564,7 +2566,7 @@ my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs, const char *s, const char *
     if ( s_wc != t_wc )
       return  ((int) s_wc) - ((int) t_wc);
   }
-  return ((int) (uchar) s[0]) - ((int) (uchar) t[0]);
+  return ((int) (unsigned char) s[0]) - ((int) (unsigned char) t[0]);
 }
 
 
@@ -2589,15 +2591,15 @@ my_strnxfrmlen_utf8mb4(const CHARSET_INFO * const cs __attribute__((unused)), si
 
 static size_t
 my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
-                    uchar *dst, size_t dstlen, uint nweights,
-                    const uchar *src, size_t srclen, uint flags)
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
-  uchar *dst0= dst;
-  uchar *de= dst + dstlen;
-  uchar *de_beg= de - 1;
-  const uchar *se = src + srclen;
+  unsigned char *dst0= dst;
+  unsigned char *de= dst + dstlen;
+  unsigned char *de_beg= de - 1;
+  const unsigned char *se = src + srclen;
   MY_UNICASE_INFO **uni_plane= (cs->state & MY_CS_BINSORT) ?
                                 NULL : cs->caseinfo;
 
@@ -2610,8 +2612,8 @@ my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
     if (uni_plane)
       my_tosort_utf8mb4(uni_plane, &wc);
     
-    *dst++= (uchar)(wc >> 8);
-    *dst++= (uchar)(wc & 0xFF);
+    *dst++= (unsigned char)(wc >> 8);
+    *dst++= (unsigned char)(wc & 0xFF);
     
   }
   
@@ -2636,13 +2638,13 @@ static uint
 my_ismbchar_utf8mb4(const CHARSET_INFO * const cs, const char *b, const char *e)
 {
   my_wc_t wc;
-  int res= my_mb_wc_utf8mb4(cs,&wc, (const uchar*)b, (const uchar*)e);
+  int res= my_mb_wc_utf8mb4(cs,&wc, (const unsigned char*)b, (const unsigned char*)e);
   return (res > 1) ? res : 0;
 }
 
 
 static uint
-my_mbcharlen_utf8mb4(const CHARSET_INFO * const cs  __attribute__((unused)), uint c)
+my_mbcharlen_utf8mb4(const CHARSET_INFO * const cs  __attribute__((unused)), uint32_t c)
 {
   if (c < 0x80)
     return 1;
@@ -2803,7 +2805,7 @@ CHARSET_INFO my_charset_utf8mb4_bin=
   expressions. Note, there is no need to mark byte 255  as a
   letter, it is illegal byte in UTF8.
 */
-static uchar ctype_utf8[] = {
+static unsigned char ctype_utf8[] = {
     0,
    32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 32, 32,
    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -2825,7 +2827,7 @@ static uchar ctype_utf8[] = {
 
 /* The below are taken from usa7 implementation */
 
-static uchar to_lower_utf8[] = {
+static unsigned char to_lower_utf8[] = {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -2844,7 +2846,7 @@ static uchar to_lower_utf8[] = {
   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
 };
 
-static uchar to_upper_utf8[] = {
+static unsigned char to_upper_utf8[] = {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -2863,11 +2865,11 @@ static uchar to_upper_utf8[] = {
   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
 };
 
-static inline int bincmp(const uchar *s, const uchar *se,
-                         const uchar *t, const uchar *te)
+static inline int bincmp(const unsigned char *s, const unsigned char *se,
+                         const unsigned char *t, const unsigned char *te)
 {
   int slen= (int) (se-s), tlen= (int) (te-t);
-  int len=min(slen,tlen);
+  int len=cmin(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : slen-tlen;
 }
@@ -2875,9 +2877,9 @@ static inline int bincmp(const uchar *s, const uchar *se,
 
 static int
 my_mb_wc_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)),
-                 my_wc_t * pwc, const uchar *s, const uchar *e)
+                 my_wc_t * pwc, const unsigned char *s, const unsigned char *e)
 {
-  uchar c;
+  unsigned char c;
 
   if (s >= e)
     return MY_CS_TOOSMALL;
@@ -2986,9 +2988,9 @@ my_mb_wc_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)),
 */
 static int
 my_mb_wc_utf8mb3_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
-                          my_wc_t * pwc, const uchar *s)
+                          my_wc_t * pwc, const unsigned char *s)
 {
-  uchar c;
+  unsigned char c;
 
   c= s[0];
   if (c < 0x80)
@@ -3028,7 +3030,7 @@ my_mb_wc_utf8mb3_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
 
 static int
 my_wc_mb_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)),
-                 my_wc_t wc, uchar *r, uchar *e)
+                 my_wc_t wc, unsigned char *r, unsigned char *e)
 {
   int count;
 
@@ -3061,13 +3063,13 @@ my_wc_mb_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)),
   switch (count) {
     /* Fall through all cases!!! */
 #ifdef UNICODE_32BIT
-    case 6: r[5] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x4000000;
-    case 5: r[4] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x200000;
-    case 4: r[3] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
+    case 6: r[5] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x4000000;
+    case 5: r[4] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x200000;
+    case 4: r[3] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
 #endif
-    case 3: r[2] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
-    case 2: r[1] = (uchar) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0xc0;
-    case 1: r[0] = (uchar) wc;
+    case 3: r[2] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
+    case 2: r[1] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0xc0;
+    case 1: r[0] = (unsigned char) wc;
   }
   return count;
 }
@@ -3078,7 +3080,7 @@ my_wc_mb_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)),
 */
 static int
 my_wc_mb_utf8mb3_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
-                          my_wc_t wc, uchar *r)
+                          my_wc_t wc, unsigned char *r)
 {
   int count;
 
@@ -3094,9 +3096,9 @@ my_wc_mb_utf8mb3_no_range(const CHARSET_INFO * const cs __attribute__((unused)),
   switch (count)
   {
     /* Fall through all cases!!! */
-    case 3: r[2]= (uchar) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x800;
-    case 2: r[1]= (uchar) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0xc0;
-    case 1: r[0]= (uchar) wc;
+    case 3: r[2]= (unsigned char) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0x800;
+    case 2: r[1]= (unsigned char) (0x80 | (wc & 0x3f)); wc= wc >> 6; wc |= 0xc0;
+    case 1: r[0]= (unsigned char) wc;
   }
   return count;
 }
@@ -3114,11 +3116,11 @@ my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
-                                   (uchar *) src, (uchar*) srcend)) > 0)
+                                   (unsigned char *) src, (unsigned char*) srcend)) > 0)
   {
     int plane= (wc>>8) & 0xFF;
     wc= uni_plane[plane] ? uni_plane[plane][wc & 0xFF].toupper : wc;
-    if ((dstres= my_wc_mb_utf8mb3(cs, wc, (uchar*) dst, (uchar*) dstend)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb3(cs, wc, (unsigned char*) dst, (unsigned char*) dstend)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -3128,12 +3130,12 @@ my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
 
 static void
-my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
+my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const unsigned char *s, size_t slen,
                      uint32_t *n1, uint32_t *n2)
 {
   my_wc_t wc;
   int res;
-  const uchar *e=s+slen;
+  const unsigned char *e=s+slen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
   /*
@@ -3144,7 +3146,7 @@ my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
     e--;
 
   while ((s < e) && (res= my_mb_wc_utf8mb3(cs, &wc,
-                                    (const uchar *)s, (const uchar*)e)) > 0)
+                                    (const unsigned char *)s, (const unsigned char*)e)) > 0)
   {
     const int plane = (wc>>8) & 0xFF;
     wc = uni_plane[plane] ? uni_plane[plane][wc & 0xFF].sort : wc;
@@ -3167,11 +3169,11 @@ my_caseup_str_utf8mb3(const CHARSET_INFO * const cs, char *src)
   assert(cs->caseup_multiply == 1);
 
   while (*src &&
-         (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
+         (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (unsigned char *) src)) > 0)
   {
     const int plane= (wc>>8) & 0xFF;
     wc= uni_plane[plane] ? uni_plane[plane][wc & 0xFF].toupper : wc;
-    if ((dstres= my_wc_mb_utf8mb3_no_range(cs, wc, (uchar*) dst)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb3_no_range(cs, wc, (unsigned char*) dst)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -3193,11 +3195,11 @@ my_casedn_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
-                                   (uchar*) src, (uchar*)srcend)) > 0)
+                                   (unsigned char*) src, (unsigned char*)srcend)) > 0)
   {
     int plane= (wc>>8) & 0xFF;
     wc= uni_plane[plane] ? uni_plane[plane][wc & 0xFF].tolower : wc;
-    if ((dstres= my_wc_mb_utf8mb3(cs, wc, (uchar*) dst, (uchar*) dstend)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb3(cs, wc, (unsigned char*) dst, (unsigned char*) dstend)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -3216,11 +3218,11 @@ my_casedn_str_utf8mb3(const CHARSET_INFO * const cs, char *src)
   assert(cs->casedn_multiply == 1);
 
   while (*src &&
-         (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
+         (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (unsigned char *) src)) > 0)
   {
     int plane= (wc>>8) & 0xFF;
     wc= uni_plane[plane] ? uni_plane[plane][wc & 0xFF].tolower : wc;
-    if ((dstres= my_wc_mb_utf8mb3_no_range(cs, wc, (uchar*) dst)) <= 0)
+    if ((dstres= my_wc_mb_utf8mb3_no_range(cs, wc, (unsigned char*) dst)) <= 0)
       break;
     src+= srcres;
     dst+= dstres;
@@ -3248,14 +3250,15 @@ my_casedn_str_utf8mb3(const CHARSET_INFO * const cs, char *src)
 
 static int
 my_strnncoll_utf8mb3(const CHARSET_INFO * const cs,
-                     const uchar *s, size_t slen,
-                     const uchar *t, size_t tlen,
+                     const unsigned char *s, size_t slen,
+                     const unsigned char *t, size_t tlen,
                      bool t_is_prefix)
 {
   int s_res,t_res;
-  my_wc_t s_wc=0,t_wc;
-  const uchar *se=s+slen;
-  const uchar *te=t+tlen;
+  my_wc_t s_wc=0;
+  my_wc_t t_wc=0;
+  const unsigned char *se=s+slen;
+  const unsigned char *te=t+tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
   while ( s < se && t < te )
@@ -3315,13 +3318,13 @@ my_strnncoll_utf8mb3(const CHARSET_INFO * const cs,
 
 static int
 my_strnncollsp_utf8mb3(const CHARSET_INFO * const cs,
-                       const uchar *s, size_t slen,
-                       const uchar *t, size_t tlen,
+                       const unsigned char *s, size_t slen,
+                       const unsigned char *t, size_t tlen,
                        bool diff_if_only_endspace_difference)
 {
   int s_res, t_res, res;
   my_wc_t s_wc=0, t_wc=0;
-  const uchar *se= s+slen, *te= t+tlen;
+  const unsigned char *se= s+slen, *te= t+tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
@@ -3415,14 +3418,14 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs, const char *s, const char *
   {
     my_wc_t s_wc,t_wc;
     
-    if ((uchar) s[0] < 128)
+    if ((unsigned char) s[0] < 128)
     {
       /* 
         s[0] is between 0 and 127.
         It represents a single byte character.
         Convert it into weight according to collation.
       */
-      s_wc= plane00[(uchar) s[0]].tolower;
+      s_wc= plane00[(unsigned char) s[0]].tolower;
       s++;
     }
     else
@@ -3444,7 +3447,7 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs, const char *s, const char *
         loop with finish.
       */
       
-      res= my_mb_wc_utf8mb3(cs, &s_wc, (const uchar*)s, (const uchar*) s + 3);
+      res= my_mb_wc_utf8mb3(cs, &s_wc, (const unsigned char*)s, (const unsigned char*) s + 3);
       
       /* 
          In the case of wrong multibyte sequence we will
@@ -3462,17 +3465,17 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs, const char *s, const char *
     
     /* Do the same for the second string */
     
-    if ((uchar) t[0] < 128)
+    if ((unsigned char) t[0] < 128)
     {
       /* Convert single byte character into weight */
-      t_wc= plane00[(uchar) t[0]].tolower;
+      t_wc= plane00[(unsigned char) t[0]].tolower;
       t++;
     }
     else
     {
       int plane;
       int res= my_mb_wc_utf8mb3(cs, &t_wc,
-                                (const uchar*)t, (const uchar*) t + 3);
+                                (const unsigned char*)t, (const unsigned char*) t + 3);
       if (res <= 0)
         return strcmp(s, t);
       t+= res;
@@ -3486,7 +3489,7 @@ my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs, const char *s, const char *
     if ( s_wc != t_wc )
       return  ((int) s_wc) - ((int) t_wc);
   }
-  return ((int)(uchar)s[0]) - ((int) (uchar) t[0]);
+  return ((int)(unsigned char)s[0]) - ((int) (unsigned char) t[0]);
 }
 
 
@@ -3511,16 +3514,16 @@ my_strnxfrmlen_utf8mb3(const CHARSET_INFO * const cs __attribute__((unused)), si
 
 static size_t
 my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
-                    uchar *dst, size_t dstlen, uint nweights,
-                    const uchar *src, size_t srclen, uint flags)
+                    unsigned char *dst, size_t dstlen, uint32_t nweights,
+                    const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
   int plane;
-  uchar *dst0= dst;
-  uchar *de= dst + dstlen;
-  uchar *de_beg= de - 1;
-  const uchar *se = src + srclen;
+  unsigned char *dst0= dst;
+  unsigned char *de= dst + dstlen;
+  unsigned char *de_beg= de - 1;
+  const unsigned char *se = src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
   for (; dst < de_beg && nweights; nweights--)
@@ -3532,8 +3535,8 @@ my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
     plane=(wc>>8) & 0xFF;
     wc = uni_plane[plane] ? uni_plane[plane][wc & 0xFF].sort : wc;
 
-    *dst++= (uchar)(wc >> 8);
-    *dst++= (uchar)(wc & 0xFF);
+    *dst++= (unsigned char)(wc >> 8);
+    *dst++= (unsigned char)(wc & 0xFF);
     
   }
   
@@ -3556,15 +3559,15 @@ my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
 
 static size_t
 my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
-                        uchar *dst, size_t dstlen, uint nweights,
-                        const uchar *src, size_t srclen, uint flags)
+                        unsigned char *dst, size_t dstlen, uint32_t nweights,
+                        const unsigned char *src, size_t srclen, uint32_t flags)
 {
   my_wc_t wc;
   int res;
-  uchar *dst0= dst;
-  uchar *de= dst + dstlen;
-  uchar *de_beg= de - 1;
-  const uchar *se= src + srclen;
+  unsigned char *dst0= dst;
+  unsigned char *de= dst + dstlen;
+  unsigned char *de_beg= de - 1;
+  const unsigned char *se= src + srclen;
 
   for (; dst < de_beg && nweights; nweights--)
   {
@@ -3572,8 +3575,8 @@ my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
       break;
     src+=res;
 
-    *dst++= (uchar)(wc >> 8);
-    *dst++= (uchar)(wc & 0xFF);
+    *dst++= (unsigned char)(wc >> 8);
+    *dst++= (unsigned char)(wc & 0xFF);
   }
   
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
@@ -3597,13 +3600,13 @@ static uint
 my_ismbchar_utf8mb3(const CHARSET_INFO * const cs, const char *b, const char *e)
 {
   my_wc_t wc;
-  int  res= my_mb_wc_utf8mb3(cs, &wc, (const uchar*) b, (const uchar*) e);
+  int  res= my_mb_wc_utf8mb3(cs, &wc, (const unsigned char*) b, (const unsigned char*) e);
   return (res>1) ? res : 0;
 }
 
 
 static uint
-my_mbcharlen_utf8mb3(const CHARSET_INFO * const cs  __attribute__((unused)), uint c)
+my_mbcharlen_utf8mb3(const CHARSET_INFO * const cs  __attribute__((unused)), uint32_t c)
 {
   if (c < 0x80)
     return 1;
@@ -3770,14 +3773,14 @@ CHARSET_INFO my_charset_utf8mb3_bin=
 
 static int
 my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs, 
-                        const uchar *s, size_t slen,
-                        const uchar *t, size_t tlen,
+                        const unsigned char *s, size_t slen,
+                        const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc,t_wc;
-  const uchar *se=s+slen;
-  const uchar *te=t+tlen;
+  const unsigned char *se=s+slen;
+  const unsigned char *te=t+tlen;
   int save_diff = 0;
   int diff;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
@@ -3817,14 +3820,14 @@ my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
 
 static int
 my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs, 
-                          const uchar *s, size_t slen,
-                          const uchar *t, size_t tlen,
+                          const unsigned char *s, size_t slen,
+                          const unsigned char *t, size_t tlen,
                           bool diff_if_only_endspace_difference)
 {
   int s_res, t_res, res;
   my_wc_t s_wc, t_wc;
-  const uchar *se= s + slen;
-  const uchar *te= t + tlen;
+  const unsigned char *se= s + slen;
+  const unsigned char *te= t + tlen;
   int save_diff= 0;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
@@ -3890,8 +3893,8 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
     */
     for ( ; s < se; s++)
     {
-      if (*s != (uchar) ' ')
-        return (*s < (uchar) ' ') ? -swap : swap;
+      if (*s != (unsigned char) ' ')
+        return (*s < (unsigned char) ' ') ? -swap : swap;
     }
   }
   return save_diff;
@@ -5069,7 +5072,7 @@ static char filename_safe_char[128]=
 
 static int
 my_mb_wc_filename(const CHARSET_INFO * const cs __attribute__((unused)),
-                  my_wc_t *pwc, const uchar *s, const uchar *e)
+                  my_wc_t *pwc, const unsigned char *s, const unsigned char *e)
 {
   int byte1, byte2;
   if (s >= e)
@@ -5127,13 +5130,13 @@ my_mb_wc_filename(const CHARSET_INFO * const cs __attribute__((unused)),
 
 static int
 my_wc_mb_filename(const CHARSET_INFO * const cs __attribute__((unused)),
-                  my_wc_t wc, uchar *s, uchar *e)
+                  my_wc_t wc, unsigned char *s, unsigned char *e)
 {
   int code;
   char hex[]= "0123456789abcdef";
   if (wc < 128 && filename_safe_char[wc])
   {
-    *s= (uchar) wc;
+    *s= (unsigned char) wc;
     return 1;
   }
   
@@ -5250,13 +5253,13 @@ CHARSET_INFO my_charset_filename=
 #ifdef MY_TEST_UTF8
 #include <stdio.h>
 
-static void test_mb(CHARSET_INFO *cs, uchar *s)
+static void test_mb(CHARSET_INFO *cs, unsigned char *s)
 {
   while(*s)
   {
     if (my_ismbhead_utf8(cs,*s))
     {
-      uint len=my_mbcharlen_utf8(cs,*s);
+      uint32_t len=my_mbcharlen_utf8(cs,*s);
       while(len--)
       {
         printf("%c",*s);
@@ -5277,7 +5280,7 @@ int main()
   char str[1024]=" utf8 test проба ПЕРА по-РУССКИ";
   CHARSET_INFO *cs;
 
-  test_mb(cs,(uchar*)str);
+  test_mb(cs,(unsigned char*)str);
 
   printf("orig      :'%s'\n",str);
 

@@ -16,8 +16,6 @@
 #ifndef _my_getopt_h
 #define _my_getopt_h
 
-C_MODE_START
-
 #define GET_NO_ARG     1
 #define GET_BOOL       2
 #define GET_INT        3
@@ -35,6 +33,10 @@ C_MODE_START
 
 #define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <mysys/my_sys.h>
 
@@ -80,9 +82,11 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix);
 int64_t getopt_ll_limit_value(int64_t, const struct my_option *,
                                bool *fix);
-bool getopt_compare_strings(const char *s, const char *t, uint length);
+bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _my_getopt_h */
 

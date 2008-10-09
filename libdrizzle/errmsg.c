@@ -1,26 +1,24 @@
-/* Copyright (C) 2000-2004 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation.
-
-   There are special exceptions to the terms and conditions of the GPL as it
-   is applied to this software. View the full text of the exception in file
-   EXCEPTIONS-CLIENT in the directory of this software distribution.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /* Error messages for MySQL clients */
-/* (Error messages for the daemon are in share/language/errmsg.sys) */
 
-#include <drizzled/global.h>
 #include <libdrizzle/gettext.h>
 #include "errmsg.h"
 
@@ -95,6 +93,16 @@ const char *client_errors[]=
   N_("Lost connection to Drizzle server while setting initial database, "
      "system error: %d"),
   N_("Statement closed indirectly because of a preceeding %s() call"),
+/* CR_NET_UNCOMPRESS_ERROR 08S01  */
+  N_("Couldn't uncompress communication packet"),
+/* CR_NET_READ_ERROR 08S01  */
+  N_("Got an error reading communication packets"),
+/* CR_NET_READ_INTERRUPTED 08S01  */
+  N_("Got timeout reading communication packets"),
+/* CR_NET_ERROR_ON_WRITE 08S01  */
+  N_("Got an error writing communication packets"),
+/* CR_NET_WRITE_INTERRUPTED 08S01  */
+  N_("Got timeout writing communication packets"),
   ""
 };
 

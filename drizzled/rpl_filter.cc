@@ -92,22 +92,22 @@ Rpl_filter::tables_ok(const char* db, TableList* tables)
   {
     char hash_key[2*NAME_LEN+2];
     char *end;
-    uint len;
+    uint32_t len;
 
     if (!tables->updating) 
       continue;
     some_tables_updating= 1;
-    end= stpcpy(hash_key, tables->db ? tables->db : db);
+    end= my_stpcpy(hash_key, tables->db ? tables->db : db);
     *end++= '.';
-    len= (uint) (stpcpy(end, tables->table_name) - hash_key);
+    len= (uint) (my_stpcpy(end, tables->table_name) - hash_key);
     if (do_table_inited) // if there are any do's
     {
-      if (hash_search(&do_table, (uchar*) hash_key, len))
+      if (hash_search(&do_table, (unsigned char*) hash_key, len))
 	return(1);
     }
     if (ignore_table_inited) // if there are any ignores
     {
-      if (hash_search(&ignore_table, (uchar*) hash_key, len))
+      if (hash_search(&ignore_table, (unsigned char*) hash_key, len))
 	return(0); 
     }
     if (wild_do_table_inited && 
@@ -217,7 +217,7 @@ Rpl_filter::db_ok_with_wild_table(const char *db)
   char hash_key[NAME_LEN+2];
   char *end;
   int len;
-  end= stpcpy(hash_key, db);
+  end= my_stpcpy(hash_key, db);
   *end++= '.';
   len= end - hash_key ;
   if (wild_do_table_inited && find_wild(&wild_do_table, hash_key, len))
@@ -298,7 +298,7 @@ Rpl_filter::add_table_rule(HASH* h, const char* table_spec)
   const char* dot = strchr(table_spec, '.');
   if (!dot) return 1;
   // len is always > 0 because we know the there exists a '.'
-  uint len = (uint)strlen(table_spec);
+  uint32_t len = (uint)strlen(table_spec);
   TABLE_RULE_ENT* e = (TABLE_RULE_ENT*)my_malloc(sizeof(TABLE_RULE_ENT)
 						 + len, MYF(MY_WME));
   if (!e) return 1;
@@ -307,7 +307,7 @@ Rpl_filter::add_table_rule(HASH* h, const char* table_spec)
   e->key_len= len;
   memcpy(e->db, table_spec, len);
 
-  return my_hash_insert(h, (uchar*)e);
+  return my_hash_insert(h, (unsigned char*)e);
 }
 
 
@@ -320,7 +320,7 @@ Rpl_filter::add_wild_table_rule(DYNAMIC_ARRAY* a, const char* table_spec)
 {
   const char* dot = strchr(table_spec, '.');
   if (!dot) return 1;
-  uint len = (uint)strlen(table_spec);
+  uint32_t len = (uint)strlen(table_spec);
   TABLE_RULE_ENT* e = (TABLE_RULE_ENT*)my_malloc(sizeof(TABLE_RULE_ENT)
 						 + len, MYF(MY_WME));
   if (!e) return 1;
@@ -328,7 +328,7 @@ Rpl_filter::add_wild_table_rule(DYNAMIC_ARRAY* a, const char* table_spec)
   e->tbl_name= e->db + (dot - table_spec) + 1;
   e->key_len= len;
   memcpy(e->db, table_spec, len);
-  insert_dynamic(a, (uchar*)&e);
+  insert_dynamic(a, (unsigned char*)&e);
   return 0;
 }
 
@@ -348,16 +348,16 @@ Rpl_filter::add_ignore_db(const char* table_spec)
   ignore_db.push_back(db);
 }
 
-extern "C" uchar *get_table_key(const uchar *, size_t *, bool);
+extern "C" unsigned char *get_table_key(const unsigned char *, size_t *, bool);
 extern "C" void free_table_ent(void* a);
 
-uchar *get_table_key(const uchar* a, size_t *len,
+unsigned char *get_table_key(const unsigned char* a, size_t *len,
                      bool __attribute__((unused)))
 {
   TABLE_RULE_ENT *e= (TABLE_RULE_ENT *) a;
 
   *len= e->key_len;
-  return (uchar*)e->db;
+  return (unsigned char*)e->db;
 }
 
 
@@ -365,7 +365,7 @@ void free_table_ent(void* a)
 {
   TABLE_RULE_ENT *e= (TABLE_RULE_ENT *) a;
   
-  my_free((uchar*) e, MYF(0));
+  free((unsigned char*) e);
 }
 
 
@@ -390,13 +390,13 @@ Rpl_filter::init_table_rule_array(DYNAMIC_ARRAY* a, bool* a_inited)
 TABLE_RULE_ENT* 
 Rpl_filter::find_wild(DYNAMIC_ARRAY *a, const char* key, int len)
 {
-  uint i;
+  uint32_t i;
   const char* key_end= key + len;
   
   for (i= 0; i < a->elements; i++)
   {
     TABLE_RULE_ENT* e ;
-    get_dynamic(a, (uchar*)&e, i);
+    get_dynamic(a, (unsigned char*)&e, i);
     if (!my_wildcmp(system_charset_info, key, key_end, 
 		    (const char*)e->db,
 		    (const char*)(e->db + e->key_len),
@@ -411,12 +411,12 @@ Rpl_filter::find_wild(DYNAMIC_ARRAY *a, const char* key, int len)
 void 
 Rpl_filter::free_string_array(DYNAMIC_ARRAY *a)
 {
-  uint i;
+  uint32_t i;
   for (i= 0; i < a->elements; i++)
   {
     char* p;
-    get_dynamic(a, (uchar*) &p, i);
-    my_free(p, MYF(MY_WME));
+    get_dynamic(a, (unsigned char*) &p, i);
+    free(p);
   }
   delete_dynamic(a);
 }
@@ -441,7 +441,7 @@ Rpl_filter::table_rule_ent_hash_to_str(String* s, HASH* h, bool inited)
   s->length(0);
   if (inited)
   {
-    for (uint i= 0; i < h->records; i++)
+    for (uint32_t i= 0; i < h->records; i++)
     {
       TABLE_RULE_ENT* e= (TABLE_RULE_ENT*) hash_element(h, i);
       if (s->length())
@@ -459,10 +459,10 @@ Rpl_filter::table_rule_ent_dynamic_array_to_str(String* s, DYNAMIC_ARRAY* a,
   s->length(0);
   if (inited)
   {
-    for (uint i= 0; i < a->elements; i++)
+    for (uint32_t i= 0; i < a->elements; i++)
     {
       TABLE_RULE_ENT* e;
-      get_dynamic(a, (uchar*)&e, i);
+      get_dynamic(a, (unsigned char*)&e, i);
       if (s->length())
         s->append(',');
       s->append(e->db,e->key_len);

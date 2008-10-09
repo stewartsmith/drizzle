@@ -20,7 +20,7 @@
 
 int mi_delete_all_rows(MI_INFO *info)
 {
-  uint i;
+  uint32_t i;
   MYISAM_SHARE *share=info->s;
   MI_STATE_INFO *state=&share->state;
 
@@ -53,13 +53,13 @@ int mi_delete_all_rows(MI_INFO *info)
   flush_key_blocks(share->key_cache, share->kfile, FLUSH_IGNORE_CHANGED);
   if (ftruncate(info->dfile, 0) || ftruncate(share->kfile, share->base.keystart))
     goto err;
-  VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   return(0);
 
 err:
   {
     int save_errno=my_errno;
-    VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+    _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
     info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
     return(my_errno=save_errno);
   }

@@ -17,9 +17,9 @@
 
 /* Read next record with the same key */
 
-int heap_rnext(HP_INFO *info, uchar *record)
+int heap_rnext(HP_INFO *info, unsigned char *record)
 {
-  uchar *pos;
+  unsigned char *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keyinfo;
   
@@ -75,7 +75,7 @@ int heap_rnext(HP_INFO *info, uchar *record)
     if (pos)
     {
       memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), 
-	     sizeof(uchar*));
+	     sizeof(unsigned char*));
       info->current_ptr = pos;
     }
     else

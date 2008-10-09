@@ -37,9 +37,9 @@
 
 static const char field_separator=',';
 
-uint64_t find_set(TYPELIB *lib, const char *str, uint length,
+uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
                   const CHARSET_INFO * const cs,
-                  char **err_pos, uint *err_len, bool *set_warning)
+                  char **err_pos, uint32_t *err_len, bool *set_warning)
 {
   const CHARSET_INFO * const strip= cs ? cs : &my_charset_utf8_general_ci;
   const char *end= str + strip->cset->lengthsp(strip, str, length);
@@ -51,7 +51,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint length,
     for (;;)
     {
       const char *pos= start;
-      uint var_len;
+      uint32_t var_len;
       int mblen= 1;
 
       if (cs && cs->mbminlen > 1)
@@ -59,8 +59,8 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint length,
         for ( ; pos < end; pos+= mblen)
         {
           my_wc_t wc;
-          if ((mblen= cs->cset->mb_wc(cs, &wc, (const uchar *) pos, 
-                                               (const uchar *) end)) < 1)
+          if ((mblen= cs->cset->mb_wc(cs, &wc, (const unsigned char *) pos, 
+                                               (const unsigned char *) end)) < 1)
             mblen= 1; // Not to hang on a wrong multibyte sequence
           if (wc == (my_wc_t) field_separator)
             break;
@@ -69,7 +69,7 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint length,
       else
         for (; pos != end && *pos != field_separator; pos++) ;
       var_len= (uint) (pos - start);
-      uint find= cs ? find_type2(lib, start, var_len, cs) :
+      uint32_t find= cs ? find_type2(lib, start, var_len, cs) :
                       find_type(lib, start, var_len, (bool) 0);
       if (!find)
       {
@@ -104,14 +104,14 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint length,
   > 0 position in TYPELIB->type_names +1
 */
 
-uint find_type(const TYPELIB *lib, const char *find, uint length,
+uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                bool part_match)
 {
-  uint found_count=0, found_pos=0;
+  uint32_t found_count=0, found_pos=0;
   const char *end= find+length;
   const char *i;
   const char *j;
-  for (uint pos=0 ; (j=lib->type_names[pos++]) ; )
+  for (uint32_t pos=0 ; (j=lib->type_names[pos++]) ; )
   {
     for (i=find ; i != end && 
 	   my_toupper(system_charset_info,*i) == 
@@ -145,7 +145,7 @@ uint find_type(const TYPELIB *lib, const char *find, uint length,
     >0  Offset+1 in typelib for matched string
 */
 
-uint find_type2(const TYPELIB *typelib, const char *x, uint length,
+uint32_t find_type2(const TYPELIB *typelib, const char *x, uint32_t length,
                 const CHARSET_INFO * const cs)
 {
   int pos;
@@ -158,8 +158,8 @@ uint find_type2(const TYPELIB *typelib, const char *x, uint length,
 
   for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
   {
-    if (!my_strnncoll(cs, (const uchar*) x, length,
-                          (const uchar*) j, typelib->type_lengths[pos]))
+    if (!my_strnncoll(cs, (const unsigned char*) x, length,
+                          (const unsigned char*) j, typelib->type_lengths[pos]))
       return(pos+1);
   }
   return(0);
@@ -181,7 +181,7 @@ uint find_type2(const TYPELIB *typelib, const char *x, uint length,
 
 void unhex_type2(TYPELIB *interval)
 {
-  for (uint pos= 0; pos < interval->count; pos++)
+  for (uint32_t pos= 0; pos < interval->count; pos++)
   {
     char *from, *to;
     for (from= to= (char*) interval->type_names[pos]; *from; )
@@ -219,7 +219,7 @@ void unhex_type2(TYPELIB *interval)
 	 end_of_word will point to separator character/end in 'val'
 */
 
-uint check_word(TYPELIB *lib, const char *val, const char *end,
+uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
 		const char **end_of_word)
 {
   int res;
@@ -254,16 +254,16 @@ uint check_word(TYPELIB *lib, const char *val, const char *end,
 */
 
 
-uint strconvert(const CHARSET_INFO * const from_cs, const char *from,
-                const CHARSET_INFO * const to_cs, char *to, uint to_length, uint *errors)
+uint32_t strconvert(const CHARSET_INFO * const from_cs, const char *from,
+                const CHARSET_INFO * const to_cs, char *to, uint32_t to_length, uint32_t *errors)
 {
   int cnvres;
   my_wc_t wc;
   char *to_start= to;
-  uchar *to_end= (uchar*) to + to_length - 1;
+  unsigned char *to_end= (unsigned char*) to + to_length - 1;
   my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
   my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-  uint error_count= 0;
+  uint32_t error_count= 0;
 
   while (1)
   {
@@ -274,7 +274,7 @@ uint strconvert(const CHARSET_INFO * const from_cs, const char *from,
         with error because of unexpected '\0' character.
     */
     if ((cnvres= (*mb_wc)(from_cs, &wc,
-                          (uchar*) from, (uchar*) from + 10)) > 0)
+                          (unsigned char*) from, (unsigned char*) from + 10)) > 0)
     {
       if (!wc)
         break;
@@ -291,7 +291,7 @@ uint strconvert(const CHARSET_INFO * const from_cs, const char *from,
 
 outp:
 
-    if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+    if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
       to+= cnvres;
     else if (cnvres == MY_CS_ILUNI && wc != '?')
     {
@@ -330,8 +330,8 @@ int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
 {
   const LEX_STRING *pos;
   for (pos= haystack; pos->str; pos++)
-    if (!cs->coll->strnncollsp(cs, (uchar *) pos->str, pos->length,
-                               (uchar *) needle->str, needle->length, 0))
+    if (!cs->coll->strnncollsp(cs, (unsigned char *) pos->str, pos->length,
+                               (unsigned char *) needle->str, needle->length, 0))
     {
       return (pos - haystack);
     }

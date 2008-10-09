@@ -35,7 +35,7 @@ LINE_BUFFER *batch_readline_init(uint32_t max_size,FILE *file)
     return 0;
   if (init_line_buffer(line_buff,fileno(file),IO_SIZE,max_size))
   {
-    my_free(line_buff,MYF(0));
+    free(line_buff);
     return 0;
   }
   return line_buff;
@@ -62,8 +62,8 @@ void batch_readline_end(LINE_BUFFER *line_buff)
 {
   if (line_buff)
   {
-    my_free(line_buff->buffer,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(line_buff,MYF(0));
+    free(line_buff->buffer);
+    free(line_buff);
   }
 }
 
@@ -76,7 +76,7 @@ LINE_BUFFER *batch_readline_command(LINE_BUFFER *line_buff, char * str)
       return 0;
   if (init_line_buffer_from_string(line_buff,str))
   {
-    my_free(line_buff,MYF(0));
+    free(line_buff);
     return 0;
   }
   return line_buff;
@@ -111,7 +111,7 @@ static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str)
   uint old_length=(uint)(buffer->end - buffer->buffer);
   uint length= (uint) strlen(str);
   if (!(buffer->buffer= buffer->start_of_line= buffer->end_of_line=
-	(char*) my_realloc((uchar*) buffer->buffer, old_length+length+2,
+	(char*) my_realloc((unsigned char*) buffer->buffer, old_length+length+2,
                            MYF(MY_FAE|MY_ALLOW_ZERO_PTR))))
     return 1;
   buffer->end= buffer->buffer + old_length;
@@ -166,7 +166,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
   }
 
   /* Read in new stuff. */
-  if ((read_count= my_read(buffer->file, (uchar*) buffer->end, read_count,
+  if ((read_count= my_read(buffer->file, (unsigned char*) buffer->end, read_count,
 			   MYF(MY_WME))) == MY_FILE_ERROR)
     return (size_t) -1;
 

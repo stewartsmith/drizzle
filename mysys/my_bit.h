@@ -2,46 +2,41 @@
   Some useful bit functions
 */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern const char _my_bits_nbits[256];
-extern const uchar _my_bits_reverse_table[256];
+extern const unsigned char _my_bits_reverse_table[256];
 
 /*
   Find smallest X in 2^X >= value
   This can be used to divide a number with value by doing a shift instead
 */
 
-static inline uint my_bit_log2(uint32_t value)
+static inline uint32_t my_bit_log2(uint32_t value)
 {
-  uint bit;
+  uint32_t bit;
   for (bit=0 ; value > 1 ; value>>=1, bit++) ;
   return bit;
 }
 
-static inline uint my_count_bits(uint64_t v)
+static inline uint32_t my_count_bits(uint64_t v)
 {
-#if SIZEOF_LONG_LONG > 4
   /* The following code is a bit faster on 16 bit machines than if we would
      only shift v */
   uint32_t v2=(uint32_t) (v >> 32);
-  return (uint) (uchar) (_my_bits_nbits[(uchar)  v] +
-                         _my_bits_nbits[(uchar) (v >> 8)] +
-                         _my_bits_nbits[(uchar) (v >> 16)] +
-                         _my_bits_nbits[(uchar) (v >> 24)] +
-                         _my_bits_nbits[(uchar) (v2)] +
-                         _my_bits_nbits[(uchar) (v2 >> 8)] +
-                         _my_bits_nbits[(uchar) (v2 >> 16)] +
-                         _my_bits_nbits[(uchar) (v2 >> 24)]);
-#else
-  return (uint) (uchar) (_my_bits_nbits[(uchar)  v] +
-                         _my_bits_nbits[(uchar) (v >> 8)] +
-                         _my_bits_nbits[(uchar) (v >> 16)] +
-                         _my_bits_nbits[(uchar) (v >> 24)]);
-#endif
+  return (uint) (unsigned char) (_my_bits_nbits[(unsigned char)  v] +
+                         _my_bits_nbits[(unsigned char) (v >> 8)] +
+                         _my_bits_nbits[(unsigned char) (v >> 16)] +
+                         _my_bits_nbits[(unsigned char) (v >> 24)] +
+                         _my_bits_nbits[(unsigned char) (v2)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 8)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 16)] +
+                         _my_bits_nbits[(unsigned char) (v2 >> 24)]);
 }
 
-static inline uint my_count_bits_ushort(ushort v)
+static inline uint32_t my_count_bits_uint16(uint16_t v)
 {
   return _my_bits_nbits[v];
 }
@@ -97,4 +92,7 @@ static inline uint32_t my_reverse_bits(uint32_t key)
      _my_bits_reverse_table[(key>>24)      ];
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
+

@@ -22,10 +22,10 @@
 	   based on the position of the last used key!
 	*/
 
-int mi_rprev(MI_INFO *info, uchar *buf, int inx)
+int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
 {
   int error,changed;
-  register uint flag;
+  register uint32_t flag;
   MYISAM_SHARE *share=info->s;
 
   if ((inx = _mi_check_index(info,inx)) < 0)

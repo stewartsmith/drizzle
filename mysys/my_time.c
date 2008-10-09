@@ -30,13 +30,13 @@ uint64_t log_10_int[20]=
 
 /* Position for YYYY-DD-MM HH-MM-DD.FFFFFF AM in default format */
 
-static uchar internal_format_positions[]=
-{0, 1, 2, 3, 4, 5, 6, (uchar) 255};
+static unsigned char internal_format_positions[]=
+{0, 1, 2, 3, 4, 5, 6, (unsigned char) 255};
 
 static char time_separator=':';
 
 static uint32_t const days_at_timestart=719528;	/* daynr at 1970.01.01 */
-uchar days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+unsigned char days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 /*
   Offset of system time zone from UTC in seconds used to speed up 
@@ -47,7 +47,7 @@ static long my_time_zone=0;
 
 /* Calc days in one year. works with 0 <= year <= 99 */
 
-uint calc_days_in_year(uint year)
+uint32_t calc_days_in_year(uint32_t year)
 {
   return ((year & 3) == 0 && (year%100 || (year%400 == 0 && year)) ?
           366 : 365);
@@ -156,19 +156,19 @@ bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
 #define MAX_DATE_PARTS 8
 
 enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
-                uint flags, int *was_cut)
+str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+                uint32_t flags, int *was_cut)
 {
-  uint field_length, year_length=4, digits, i, number_of_fields;
-  uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
-  uint add_hours= 0, start_loop;
+  uint32_t field_length, year_length=4, digits, i, number_of_fields;
+  uint32_t date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
+  uint32_t add_hours= 0, start_loop;
   uint32_t not_zero_date, allow_space;
   bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
-  const uchar *format_position;
+  const unsigned char *format_position;
   bool found_delimitier= 0, found_space= 0;
-  uint frac_pos, frac_len;
+  uint32_t frac_pos, frac_len;
 
   *was_cut= 0;
 
@@ -244,7 +244,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
     2003-03-03 20:00:20 AM
     20:00:20.000000 AM 03-03-2000
   */
-  i= max((uint) format_position[0], (uint) format_position[1]);
+  i= cmax((uint) format_position[0], (uint) format_position[1]);
   set_if_bigger(i, (uint) format_position[2]);
   allow_space= ((1 << i) | (1 << format_position[6]));
   allow_space&= (1 | 2 | 4 | 8);
@@ -256,11 +256,11 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
        i++)
   {
     const char *start= str;
-    uint32_t tmp_value= (uint) (uchar) (*str++ - '0');
+    uint32_t tmp_value= (uint) (unsigned char) (*str++ - '0');
     while (str != end && my_isdigit(&my_charset_utf8_general_ci,str[0]) &&
            (!is_internal_format || --field_length))
     {
-      tmp_value=tmp_value*10 + (uint32_t) (uchar) (*str - '0');
+      tmp_value=tmp_value*10 + (uint32_t) (unsigned char) (*str - '0');
       str++;
     }
     date_len[i]= (uint) (str - start);
@@ -369,7 +369,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
       date[frac_pos]*= (uint) log_10_int[6 - frac_len];
     l_time->second_part= date[frac_pos];
 
-    if (format_position[7] != (uchar) 255)
+    if (format_position[7] != (unsigned char) 255)
     {
       if (l_time->hour > 12)
       {
@@ -467,14 +467,14 @@ err:
      1  error
 */
 
-bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
                     int *warning)
 {
   uint32_t date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
   bool found_days,found_hours;
-  uint state;
+  uint32_t state;
 
   l_time->neg=0;
   *warning= 0;
@@ -558,7 +558,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
     /* Fix the date to assume that seconds was given */
     if (!found_hours && !found_days)
     {
-      bmove_upp((uchar*) (date+4), (uchar*) (date+state),
+      bmove_upp((unsigned char*) (date+4), (unsigned char*) (date+state),
                 sizeof(long)*(state-1));
       memset(date, 0, sizeof(long)*(4-state));
     }
@@ -571,11 +571,11 @@ fractional:
   if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_utf8_general_ci,str[1]))
   {
     int field_length= 5;
-    str++; value=(uint) (uchar) (*str - '0');
+    str++; value=(uint) (unsigned char) (*str - '0');
     while (++str != end && my_isdigit(&my_charset_utf8_general_ci, *str))
     {
       if (field_length-- > 0)
-        value= value*10 + (uint) (uchar) (*str - '0');
+        value= value*10 + (uint) (unsigned char) (*str - '0');
     }
     if (field_length > 0)
       value*= (long) log_10_int[field_length];
@@ -727,7 +727,7 @@ void init_time(void)
     Year between 1970-2069
 */
 
-uint year_2000_handling(uint year)
+uint32_t year_2000_handling(uint32_t year)
 {
   if ((year=year+1900) < 1900+YY_PART_YEAR)
     year+=100;
@@ -750,7 +750,7 @@ uint year_2000_handling(uint year)
     Days since 0000-00-00
 */
 
-long calc_daynr(uint year,uint month,uint day)
+long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
 {
   long delsum;
   int temp;
@@ -793,7 +793,7 @@ my_time_t
 my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
-  uint loop;
+  uint32_t loop;
   time_t tmp= 0;
   int shift= 0;
   DRIZZLE_TIME tmp_time;
@@ -1003,7 +1003,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 
 int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
-  uint extra_hours= 0;
+  uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
                          (l_time->neg ? "-" : ""),
                          extra_hours+ l_time->hour,
@@ -1089,7 +1089,7 @@ int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
 */
 
 int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
-                            uint flags, int *was_cut)
+                            uint32_t flags, int *was_cut)
 {
   long part1,part2;
 

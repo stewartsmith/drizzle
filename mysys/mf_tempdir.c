@@ -35,14 +35,14 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
       pathlist=(char*) P_tmpdir;
   }
   do {
-    uint length;
+    uint32_t length;
     end= strrchr(pathlist, DELIM);
     if (end == NULL)
       end= pathlist+strlen(pathlist);
     strmake(buff, pathlist, (uint) (end-pathlist));
     length= cleanup_dirname(buff, buff);
     if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
-        insert_dynamic(&tmpdir->full_list, (uchar*) &copy))
+        insert_dynamic(&tmpdir->full_list, (unsigned char*) &copy))
       return(true);
     pathlist=end+1;
   } while (*end != '\0');
@@ -73,9 +73,9 @@ char *my_tmpdir(MY_TMPDIR *tmpdir)
 
 void free_tmpdir(MY_TMPDIR *tmpdir)
 {
-  uint i;
+  uint32_t i;
   for (i=0; i<=tmpdir->max; i++)
-    my_free(tmpdir->list[i], MYF(0));
+    free(tmpdir->list[i]);
   delete_dynamic(&tmpdir->full_list);
   pthread_mutex_destroy(&tmpdir->mutex);
 }

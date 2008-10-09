@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -26,9 +26,9 @@
  */
 
 class Field_null :public Field_str {
-  static uchar null[1];
+  static unsigned char null[1];
 public:
-  Field_null(uchar *ptr_arg, uint32_t len_arg,
+  Field_null(unsigned char *ptr_arg, uint32_t len_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, len_arg, null, 1,
@@ -36,7 +36,7 @@ public:
     {}
   enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
   int  store(const char *to __attribute__((unused)),
-             uint length __attribute__((unused)),
+             uint32_t length __attribute__((unused)),
              const CHARSET_INFO * const cs __attribute__((unused)))
   { null[0]=1; return 0; }
   int store(double nr __attribute__((unused)))
@@ -56,13 +56,13 @@ public:
   String *val_str(String *value __attribute__((unused)),
                   String *value2)
   { value2->length(0); return value2;}
-  int cmp(const uchar *a __attribute__((unused)),
-          const uchar *b __attribute__((unused))) { return 0;}
-  void sort_string(uchar *buff __attribute__((unused)),
-                   uint length __attribute__((unused)))  {}
+  int cmp(const unsigned char *a __attribute__((unused)),
+          const unsigned char *b __attribute__((unused))) { return 0;}
+  void sort_string(unsigned char *buff __attribute__((unused)),
+                   uint32_t length __attribute__((unused)))  {}
   uint32_t pack_length() const { return 0; }
   void sql_type(String &str) const;
-  uint size_of() const { return sizeof(*this); }
+  uint32_t size_of() const { return sizeof(*this); }
   uint32_t max_display_length() { return 4; }
 };
 

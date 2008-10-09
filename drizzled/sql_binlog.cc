@@ -167,7 +167,6 @@ void mysql_client_binlog_statement(THD* thd)
         not used at all: the rli_fake instance is used only for error
         reporting.
       */
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
       if (apply_event_and_update_pos(ev, thd, thd->rli_fake, false))
       {
         /*
@@ -177,7 +176,6 @@ void mysql_client_binlog_statement(THD* thd)
         my_error(ER_UNKNOWN_ERROR, MYF(0), "Error executing BINLOG statement");
         goto end;
       }
-#endif
 
       /*
         Format_description_log_event should not be deleted because it
@@ -195,6 +193,6 @@ void mysql_client_binlog_statement(THD* thd)
 
 end:
   thd->rli_fake->clear_tables_to_lock();
-  my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
+  free(buf);
   return;
 }

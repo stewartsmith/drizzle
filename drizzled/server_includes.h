@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @file
@@ -19,12 +23,8 @@
   @details
   Mostly this file is used in the server. But a little part of it is used in
   mysqlbinlog too (definition of SELECT_DISTINCT and others).
-  The consequence is that 90% of the file is wrapped in \#ifndef DRIZZLE_CLIENT,
-  except the part which must be in the server and in the client.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
-
-  @TODO Get rid of the DRIZZLE_CLIENT and DRIZZLE_SERVER conditionals
 */
 
 #ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
@@ -64,7 +64,7 @@ bool mysql_opt_change_db(THD *thd,
 /* sql_repl.cc */
 void write_bin_log(THD *thd, bool clear_error,
                    char const *query, ulong query_length);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
+void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, uint16_t flags);
 void mysql_client_binlog_statement(THD *thd);
 
 /* sql_rename.cc */
@@ -74,15 +74,15 @@ bool do_rename(THD *thd, TableList *ren_table, char *new_db,
                       bool skip_error);
 
 /* sql_parse.cc */
-void mysql_parse(THD *thd, const char *inBuf, uint length,
+void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
                  const char ** semicolon);
 
-bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint length);
+bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint32_t length);
 
 
 bool is_update_query(enum enum_sql_command command);
 
-bool alloc_query(THD *thd, const char *packet, uint packet_length);
+bool alloc_query(THD *thd, const char *packet, uint32_t packet_length);
 
 void mysql_reset_thd_for_next_command(THD *thd);
 
@@ -97,7 +97,7 @@ void init_update_queries(void);
 bool do_command(THD *thd);
 
 bool dispatch_command(enum enum_server_command command, THD *thd,
-		      char* packet, uint packet_length);
+		      char* packet, uint32_t packet_length);
 
 void log_slow_statement(THD *thd);
 
@@ -108,29 +108,8 @@ bool reload_cache(THD *thd, ulong options, TableList *tables, bool *write_to_bin
 
 bool check_simple_select();
 
-/* @TODO <UNUSED> */
 void mysql_init_select(LEX *lex);
 bool mysql_new_select(LEX *lex, bool move_down);
-void init_max_user_conn(void);
-void free_max_user_conn(void);
-pthread_handler_t handle_bootstrap(void *arg);
-int mysql_execute_command(THD *thd);
-bool check_dup(const char *db, const char *name, TableList *tables);
-bool check_table_access(THD *thd, ulong want_access, TableList *tables,
-                        bool no_errors,
-                        bool any_combination_of_privileges_will_do,
-                        uint number);
-/*
-  General routine to change field->ptr of a NULL-terminated array of Field
-  objects. Useful when needed to call val_int, val_str or similar and the
-  field data is not in table->record[0] but in some other structure.
-  set_key_field_ptr changes all fields of an index using a key_info object.
-  All methods presume that there is at least one field to change.
-*/
-void set_field_ptr(Field **ptr, const uchar *new_buf, const uchar *old_buf);
-void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
-                       const uchar *old_buf);
-/* </UNUSED> */
 
 /* sql_base.cc */
 void table_cache_free(void);
@@ -138,12 +117,12 @@ bool table_cache_init(void);
 bool table_def_init(void);
 void table_def_free(void);
 void assign_new_table_id(TABLE_SHARE *share);
-uint cached_open_tables(void);
-uint cached_table_definitions(void);
+uint32_t cached_open_tables(void);
+uint32_t cached_table_definitions(void);
 
 /* drizzled.cc */
 void kill_mysql(void);
-void close_connection(THD *thd, uint errcode, bool lock);
+void close_connection(THD *thd, uint32_t errcode, bool lock);
 
 /* sql_select.cc */
 Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
@@ -151,7 +130,7 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 /* handler.cc */
 bool mysql_xa_recover(THD *thd);
 
-SORT_FIELD * make_unireg_sortorder(order_st *order, uint *length,
+SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                   SORT_FIELD *sortorder);
 int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
 		List<Item> &fields, List <Item> &all_fields, order_st *order);
@@ -164,8 +143,8 @@ bool fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
 bool handle_select(THD *thd, LEX *lex, select_result *result,
                    ulong setup_tables_done_option);
 bool mysql_select(THD *thd, Item ***rref_pointer_array,
-                  TableList *tables, uint wild_num,  List<Item> &list,
-                  COND *conds, uint og_num, order_st *order, order_st *group,
+                  TableList *tables, uint32_t wild_num,  List<Item> &list,
+                  COND *conds, uint32_t og_num, order_st *order, order_st *group,
                   Item *having, order_st *proc_param, uint64_t select_type, 
                   select_result *result, SELECT_LEX_UNIT *unit, 
                   SELECT_LEX *select_lex);
@@ -187,39 +166,39 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
 			bool group, bool modify_item,
 			bool table_cant_handle_bit_fields,
                         bool make_copy_field,
-                        uint convert_blob_length);
+                        uint32_t convert_blob_length);
 void sp_prepare_create_field(THD *thd, Create_field *sql_field);
 int prepare_create_field(Create_field *sql_field, 
-			 uint *blob_columns, 
+			 uint32_t *blob_columns, 
 			 int *timestamps, int *timestamps_with_niladic,
 			 int64_t table_flags);
 bool mysql_create_table(THD *thd,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
-                        bool tmp_table, uint select_field_count);
+                        bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(THD *thd, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint select_field_count);
+                                bool tmp_table, uint32_t select_field_count);
 
 bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TableList *table_list,
                        Alter_info *alter_info,
-                       uint order_num, order_st *order, bool ignore);
+                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_recreate_table(THD *thd, TableList *table_list);
 bool mysql_create_like_table(THD *thd, TableList *table,
                              TableList *src_table,
                              HA_CREATE_INFO *create_info);
 bool mysql_rename_table(handlerton *base, const char *old_db,
                         const char * old_name, const char *new_db,
-                        const char * new_name, uint flags);
+                        const char * new_name, uint32_t flags);
 bool mysql_prepare_update(THD *thd, TableList *table_list,
-                          Item **conds, uint order_num, order_st *order);
+                          Item **conds, uint32_t order_num, order_st *order);
 int mysql_update(THD *thd,TableList *tables,List<Item> &fields,
 		 List<Item> &values,COND *conds,
-		 uint order_num, order_st *order, ha_rows limit,
+		 uint32_t order_num, order_st *order, ha_rows limit,
 		 enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_multi_update(THD *thd, TableList *table_list,
                         List<Item> *fields, List<Item> *values,
@@ -244,19 +223,19 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok);
-uint create_table_def_key(THD *thd, char *key, TableList *table_list,
+uint32_t create_table_def_key(THD *thd, char *key, TableList *table_list,
                           bool tmp_table);
 TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
-                             uint key_length, uint db_flags, int *error);
+                             uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TABLE_SHARE *share, enum release_type type);
 TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type update,
-                   uint lock_flags);
-Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags);
+                   uint32_t lock_flags);
+Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint32_t flags);
 bool name_lock_locked_table(THD *thd, TableList *tables);
 bool reopen_name_locked_table(THD* thd, TableList* table_list, bool link_in);
 Table *table_cache_insert_placeholder(THD *thd, const char *key,
-                                      uint key_length);
+                                      uint32_t key_length);
 bool lock_table_name_if_not_cached(THD *thd, const char *db,
                                    const char *table_name, Table **table);
 Table *find_locked_table(THD *thd, const char *db,const char *table_name);
@@ -269,8 +248,8 @@ void close_data_files_and_morph_locks(THD *thd, const char *db,
                                       const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool open_new_frm(THD *thd, TABLE_SHARE *share, const char *alias,
-                  uint db_stat, uint prgflag,
-                  uint ha_open_flags, Table *outparam,
+                  uint32_t db_stat, uint32_t prgflag,
+                  uint32_t ha_open_flags, Table *outparam,
                   TableList *table_desc, MEM_ROOT *mem_root);
 bool wait_for_tables(THD *thd);
 bool table_is_used(Table *table, bool wait_for_name_lock);
@@ -291,15 +270,15 @@ find_field_in_tables(THD *thd, Item_ident *item,
                      bool check_privileges, bool register_tree_change);
 Field *
 find_field_in_table_ref(THD *thd, TableList *table_list,
-                        const char *name, uint length,
+                        const char *name, uint32_t length,
                         const char *item_name, const char *db_name,
                         const char *table_name, Item **ref,
                         bool check_privileges, bool allow_rowid,
-                        uint *cached_field_index_ptr,
+                        uint32_t *cached_field_index_ptr,
                         bool register_tree_change, TableList **actual_table);
 Field *
-find_field_in_table(THD *thd, Table *table, const char *name, uint length,
-                    bool allow_rowid, uint *cached_field_index_ptr);
+find_field_in_table(THD *thd, Table *table, const char *name, uint32_t length,
+                    bool allow_rowid, uint32_t *cached_field_index_ptr);
 Field *
 find_field_in_table_sef(Table *table, const char *name);
 int update_virtual_fields_marked_for_write(Table *table,
@@ -346,10 +325,10 @@ void mysql_ha_cleanup(THD *thd);
 
 /* sql_base.cc */
 #define TMP_TABLE_KEY_EXTRA 8
-void set_item_name(Item *item,char *pos,uint length);
+void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
-		       uint type_modifier,
+		       uint32_t type_modifier,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
@@ -358,7 +337,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types t
 		       virtual_column_info *vcol_info);
 Create_field * new_create_field(THD *thd, char *field_name, enum_field_types type,
 				char *length, char *decimals,
-				uint type_modifier, 
+				uint32_t type_modifier, 
 				Item *default_value, Item *on_update_value,
 				LEX_STRING *comment, char *change, 
 				List<String> *interval_list, CHARSET_INFO *cs,
@@ -410,7 +389,7 @@ enum enum_resolution_type {
   RESOLVED_WITH_NO_ALIAS,
   RESOLVED_AGAINST_ALIAS
 };
-Item ** find_item_in_list(Item *item, List<Item> &items, uint *counter,
+Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
                           find_item_error_report_type report_error,
                           enum_resolution_type *resolution);
 bool get_key_map_from_key_list(key_map *map, Table *table,
@@ -428,7 +407,7 @@ bool setup_tables_and_check_access(THD *thd,
                                    TableList **leaves, 
                                    bool select_insert);
 int setup_wild(THD *thd, TableList *tables, List<Item> &fields,
-	       List<Item> *sum_func_list, uint wild_num);
+	       List<Item> *sum_func_list, uint32_t wild_num);
 bool setup_fields(THD *thd, Item** ref_pointer_array,
                   List<Item> &item, enum_mark_columns mark_used_columns,
                   List<Item> *sum_func_list, bool allow_sum_func);
@@ -449,7 +428,7 @@ int setup_ftfuncs(SELECT_LEX* select);
 int init_ftfuncs(THD *thd, SELECT_LEX* select, bool no_order);
 void wait_for_condition(THD *thd, pthread_mutex_t *mutex,
                         pthread_cond_t *cond);
-int open_tables(THD *thd, TableList **tables, uint *counter, uint flags);
+int open_tables(THD *thd, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
 int open_and_lock_tables_derived(THD *thd, TableList *tables, bool derived);
 /* simple open_and_lock_tables without derived handling */
@@ -465,8 +444,8 @@ inline int open_and_lock_tables(THD *thd, TableList *tables)
 /* simple open_and_lock_tables without derived handling for single table */
 Table *open_n_lock_single_table(THD *thd, TableList *table_l,
                                 thr_lock_type lock_type);
-bool open_normal_and_derived_tables(THD *thd, TableList *tables, uint flags);
-int lock_tables(THD *thd, TableList *tables, uint counter, bool *need_reopen);
+bool open_normal_and_derived_tables(THD *thd, TableList *tables, uint32_t flags);
+int lock_tables(THD *thd, TableList *tables, uint32_t counter, bool *need_reopen);
 int decide_logging_format(THD *thd, TableList *tables);
 Table *open_temporary_table(THD *thd, const char *path, const char *db,
                             const char *table_name, bool link_in_list,
@@ -502,7 +481,7 @@ char *make_default_log_name(char *buff,const char* log_ext);
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
 #define RTFC_CHECK_KILLED_FLAG      0x0004
 bool remove_table_from_cache(THD *thd, const char *db, const char *table,
-                             uint flags);
+                             uint32_t flags);
 
 #define NORMAL_PART_NAME 0
 #define TEMP_PART_NAME 1
@@ -557,25 +536,25 @@ int write_record(THD *thd, Table *table, COPY_INFO *info);
 /* sql_test.cc */
 void print_where(COND *cond,const char *info, enum_query_type query_type);
 void print_cached_tables(void);
-void TEST_filesort(SORT_FIELD *sortorder,uint s_length);
-void print_plan(JOIN* join,uint idx, double record_count, double read_time,
+void TEST_filesort(SORT_FIELD *sortorder,uint32_t s_length);
+void print_plan(JOIN* join,uint32_t idx, double record_count, double read_time,
                 double current_read_time, const char *info);
 void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
 void dump_TableList_graph(SELECT_LEX *select_lex, TableList* tl);
 void mysql_print_status();
 
 /* key.cc */
-int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
-                 uint *key_length, uint *keypart);
-void key_copy(uchar *to_key, uchar *from_record, KEY *key_info, uint key_length);
-void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
+int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+                 uint32_t *key_length, uint32_t *keypart);
+void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info, uint32_t key_length);
+void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
                  uint16_t key_length);
-void key_zero_nulls(uchar *tuple, KEY *key_info);
-bool key_cmp_if_same(Table *form,const uchar *key,uint index,uint key_length);
-void key_unpack(String *to,Table *form,uint index);
-bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields);
-int key_cmp(KEY_PART_INFO *key_part, const uchar *key, uint key_length);
-extern "C" int key_rec_cmp(void *key_info, uchar *a, uchar *b);
+void key_zero_nulls(unsigned char *tuple, KEY *key_info);
+bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
+void key_unpack(String *to,Table *form,uint32_t index);
+bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields);
+int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
+extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 
 bool init_errmessage(void);
 File open_binlog(IO_CACHE *log, const char *log_file_name,
@@ -593,23 +572,23 @@ void flush_thread_cache();
 
 /* item_func.cc */
 extern bool check_reserved_words(LEX_STRING *name);
-extern enum_field_types agg_field_type(Item **items, uint nitems);
+extern enum_field_types agg_field_type(Item **items, uint32_t nitems);
 
 /* strfunc.cc */
-uint64_t find_set(TYPELIB *lib, const char *x, uint length, const CHARSET_INFO * const cs,
-		   char **err_pos, uint *err_len, bool *set_warning);
-uint find_type(const TYPELIB *lib, const char *find, uint length,
+uint64_t find_set(TYPELIB *lib, const char *x, uint32_t length, const CHARSET_INFO * const cs,
+		   char **err_pos, uint32_t *err_len, bool *set_warning);
+uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                bool part_match);
-uint find_type2(const TYPELIB *lib, const char *find, uint length,
+uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                 const CHARSET_INFO *cs);
 void unhex_type2(TYPELIB *lib);
-uint check_word(TYPELIB *lib, const char *val, const char *end,
+uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
 		const char **end_of_word);
 int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
                          const CHARSET_INFO * const cs);
 
 
-bool is_keyword(const char *name, uint len);
+bool is_keyword(const char *name, uint32_t len);
 
 #define MY_DB_OPT_FILE "db.opt"
 bool my_database_names_init(void);
@@ -662,7 +641,7 @@ extern ulong table_cache_size, table_def_size;
 extern ulong max_connections,max_connect_errors, connect_timeout;
 extern bool slave_allow_batching;
 extern ulong slave_net_timeout, slave_trans_retries;
-extern uint max_user_connections;
+extern uint32_t max_user_connections;
 extern ulong what_to_log,flush_time;
 extern ulong binlog_cache_size, max_binlog_cache_size, open_files_limit;
 extern ulong max_binlog_size, max_relay_log_size;
@@ -675,9 +654,9 @@ extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
 extern ulong tc_log_page_waits;
 extern bool relay_log_purge;
 extern bool opt_innodb_safe_binlog, opt_innodb;
-extern uint test_flags,select_errors,ha_open_options;
-extern uint protocol_version, mysqld_port, dropping_tables;
-extern uint delay_key_write_options;
+extern uint32_t test_flags,select_errors,ha_open_options;
+extern uint32_t protocol_version, mysqld_port, dropping_tables;
+extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool opt_using_transactions;
@@ -689,8 +668,8 @@ extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
-extern uint volatile thread_count, thread_running, global_read_lock;
-extern uint connection_count;
+extern uint32_t volatile thread_count, thread_running, global_read_lock;
+extern uint32_t connection_count;
 extern bool opt_sql_bin_update;
 extern bool opt_safe_user_create;
 extern bool opt_no_mix_types;
@@ -706,7 +685,7 @@ extern bool opt_log_slow_admin_statements;
 extern bool opt_log_slow_slave_statements;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
-extern uint opt_crash_binlog_innodb;
+extern uint32_t opt_crash_binlog_innodb;
 extern char *default_tz_name;
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
@@ -750,7 +729,7 @@ extern const LEX_STRING view_type;
 extern scheduler_functions thread_scheduler;
 extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
-extern uint sql_command_flags[];
+extern uint32_t sql_command_flags[];
 extern TYPELIB log_output_typelib;
 
 /* optional things, have_* variables */
@@ -765,8 +744,8 @@ extern SHOW_COMP_OPTION have_compress;
 
 extern pthread_t signal_thread;
 
-DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **table, uint count,
-                              uint flags, bool *need_reopen);
+DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **table, uint32_t count,
+                              uint32_t flags, bool *need_reopen);
 /* mysql_lock_tables() and open_table() flags bits */
 #define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
@@ -777,7 +756,7 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **table, uint count,
 
 void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
 void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_some_tables(THD *thd, Table **table,uint count);
+void mysql_unlock_some_tables(THD *thd, Table **table,uint32_t count);
 void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,Table *table,
                        bool always_unlock);
 void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock);
@@ -812,7 +791,7 @@ void unlock_table_names(THD *thd, TableList *table_list,
 bool lock_table_names_exclusively(THD *thd, TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(THD *thd, 
                                                      TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
+bool is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *key,
                                                      int key_length);
 
 
@@ -824,48 +803,48 @@ bool mysql_create_frm(THD *thd, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_field,
-		      uint key_count,KEY *key_info,handler *db_type);
+		      uint32_t key_count,KEY *key_info,handler *db_type);
 int rea_create_table(THD *thd, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
   		     List<Create_field> &create_field,
-                     uint key_count,KEY *key_info,
+                     uint32_t key_count,KEY *key_info,
                      handler *file);
-int format_number(uint inputflag,uint max_length,char * pos,uint length,
+int format_number(uint32_t inputflag,uint32_t max_length,char * pos,uint32_t length,
 		  char * *errpos);
 
 /* table.cc */
 TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
-                               uint key_length);
+                               uint32_t key_length);
 void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
-                          uint key_length,
+                          uint32_t key_length,
                           const char *table_name, const char *path);
 void free_table_share(TABLE_SHARE *share);
-int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags);
+int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags);
 void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg);
 int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
-                          uint db_stat, uint prgflag, uint ha_open_flags,
+                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
-int readfrm(const char *name, uchar **data, size_t *length);
-int writefrm(const char* name, const uchar* data, size_t len);
+int readfrm(const char *name, unsigned char **data, size_t *length);
+int writefrm(const char* name, const unsigned char* data, size_t len);
 int closefrm(Table *table, bool free_share);
-int read_string(File file, uchar* *to, size_t length);
+int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 ulong convert_period_to_month(ulong period);
 ulong convert_month_to_period(ulong month);
-void get_date_from_daynr(long daynr,uint *year, uint *month,
-			 uint *day);
+void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
+			 uint32_t *day);
 my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *not_exist);
-bool str_to_time_with_warn(const char *str,uint length,DRIZZLE_TIME *l_time);
-timestamp_type str_to_datetime_with_warn(const char *str, uint length,
-                                         DRIZZLE_TIME *l_time, uint flags);
+bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
+enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
+                                         DRIZZLE_TIME *l_time, uint32_t flags);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
 void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
-				  uint str_length, timestamp_type time_type,
+				  uint32_t str_length, enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name);
 
 bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL interval);
@@ -874,15 +853,15 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
 
 extern LEX_STRING interval_type_to_name[];
 
-extern DATE_TIME_FORMAT *date_time_format_make(timestamp_type format_type,
+extern DATE_TIME_FORMAT *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
 					       const char *format_str,
-					       uint format_length);
+					       uint32_t format_length);
 extern DATE_TIME_FORMAT *date_time_format_copy(THD *thd,
 					       DATE_TIME_FORMAT *format);
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				     timestamp_type type);
+				                             enum enum_drizzle_timestamp_type type);
 extern bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-			   timestamp_type type, String *str);
+			                     enum enum_drizzle_timestamp_type type, String *str);
 void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
                    String *str);
 void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
@@ -894,47 +873,47 @@ uint64_t get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
-void change_byte(uchar *,uint,char,char);
+void change_byte(unsigned char *,uint,char,char);
 void init_read_record(READ_RECORD *info, THD *thd, Table *reg_form,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_errors);
 void init_read_record_idx(READ_RECORD *info, THD *thd, Table *table, 
-                          bool print_error, uint idx);
+                          bool print_error, uint32_t idx);
 void end_read_record(READ_RECORD *info);
 ha_rows filesort(THD *thd, Table *form,struct st_sort_field *sortorder,
-		 uint s_length, SQL_SELECT *select,
+		 uint32_t s_length, SQL_SELECT *select,
 		 ha_rows max_rows, bool sort_positions,
                  ha_rows *examined_rows);
 void filesort_free_buffers(Table *table, bool full);
-void change_double_for_sort(double nr,uchar *to);
+void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
 int get_quick_record(SQL_SELECT *select);
 
 int calc_weekday(long daynr,bool sunday_first_day_of_week);
-uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year);
-void find_date(char *pos,uint *vek,uint flag);
+uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
+void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
-ulong get_form_pos(File file, uchar *head, TYPELIB *save_names);
-ulong make_new_entry(File file,uchar *fileinfo,TYPELIB *formnames,
+ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
+ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
-void append_unescaped(String *res, const char *pos, uint length);
+void append_unescaped(String *res, const char *pos, uint32_t length);
 int create_frm(THD *thd, const char *name, const char *db, const char *table,
-               uint reclength, uchar *fileinfo,
-	       HA_CREATE_INFO *create_info, uint keys, KEY *key_info);
+               uint32_t reclength, unsigned char *fileinfo,
+	       HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info);
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);
-bool check_table_name(const char *name, uint length);
+bool check_table_name(const char *name, uint32_t length);
 char *get_field(MEM_ROOT *mem, Field *field);
 bool get_field(MEM_ROOT *mem, Field *field, class String *res);
 char *fn_rext(char *name);
 
 /* Conversion functions */
-uint build_table_filename(char *buff, size_t bufflen, const char *db,
-                          const char *table, const char *ext, uint flags);
+uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
+                          const char *table, const char *ext, uint32_t flags);
 
 #define MYSQL50_TABLE_NAME_PREFIX         "#mysql50#"
 #define MYSQL50_TABLE_NAME_PREFIX_LENGTH  9
@@ -986,7 +965,7 @@ inline void mark_as_null_row(Table *table)
   memset(table->null_flags, 255, table->s->null_bytes);
 }
 
-inline void table_case_convert(char * name, uint length)
+inline void table_case_convert(char * name, uint32_t length)
 {
   if (lower_case_table_names)
     files_charset_info->cset->casedn(files_charset_info,
@@ -1024,7 +1003,7 @@ Item * all_any_subquery_creator(Item *left_expr,
   @param table_list   TableList structure pointer (owner of Table)
   @param tablenr     table number
 */
-inline void setup_table_map(Table *table, TableList *table_list, uint tablenr)
+inline void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr)
 {
   table->used_fields= 0;
   table->const_table= 0;
@@ -1060,28 +1039,6 @@ inline int hexchar_to_int(char c)
   return -1;
 }
 
-/**
-  return true if the table was created explicitly.
-*/
-inline bool is_user_table(Table * table)
-{
-  const char *name= table->s->table_name.str;
-  return strncmp(name, tmp_file_prefix, tmp_file_prefix_length);
-}
-
-
-#ifndef HAVE_LOG2
-/*
-  This will be slightly slower and perhaps a tiny bit less accurate than
-  doing it the IEEE754 way but log2() should be available on C99 systems.
-*/
-static inline double log2(double x)
-{
-  return (log(x) / M_LN2);
-}
-#endif
-
-
 /*
   Some functions that are different in the embedded library and the normal
   server
@@ -1089,51 +1046,6 @@ static inline double log2(double x)
 
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
 void kill_delayed_threads(void);
-bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
-
-/** 
- * Used by handlers to store things in schema tables 
- *
- * @TODO These should be placed in an information_schema.h header
- * file once the new information schema design is finalized.
- */
-#define IS_FILES_FILE_ID              0
-#define IS_FILES_FILE_NAME            1
-#define IS_FILES_FILE_TYPE            2
-#define IS_FILES_TABLESPACE_NAME      3
-#define IS_FILES_TABLE_CATALOG        4
-#define IS_FILES_TABLE_SCHEMA         5
-#define IS_FILES_TABLE_NAME           6
-#define IS_FILES_LOGFILE_GROUP_NAME   7
-#define IS_FILES_LOGFILE_GROUP_NUMBER 8
-#define IS_FILES_ENGINE               9
-#define IS_FILES_FULLTEXT_KEYS       10
-#define IS_FILES_DELETED_ROWS        11
-#define IS_FILES_UPDATE_COUNT        12
-#define IS_FILES_FREE_EXTENTS        13
-#define IS_FILES_TOTAL_EXTENTS       14
-#define IS_FILES_EXTENT_SIZE         15
-#define IS_FILES_INITIAL_SIZE        16
-#define IS_FILES_MAXIMUM_SIZE        17
-#define IS_FILES_AUTOEXTEND_SIZE     18
-#define IS_FILES_CREATION_TIME       19
-#define IS_FILES_LAST_UPDATE_TIME    20
-#define IS_FILES_LAST_ACCESS_TIME    21
-#define IS_FILES_RECOVER_TIME        22
-#define IS_FILES_TRANSACTION_COUNTER 23
-#define IS_FILES_VERSION             24
-#define IS_FILES_ROW_FORMAT          25
-#define IS_FILES_TABLE_ROWS          26
-#define IS_FILES_AVG_ROW_LENGTH      27
-#define IS_FILES_DATA_LENGTH         28
-#define IS_FILES_MAX_DATA_LENGTH     29
-#define IS_FILES_INDEX_LENGTH        30
-#define IS_FILES_DATA_FREE           31
-#define IS_FILES_CREATE_TIME         32
-#define IS_FILES_UPDATE_TIME         33
-#define IS_FILES_CHECK_TIME          34
-#define IS_FILES_CHECKSUM            35
-#define IS_FILES_STATUS              36
-#define IS_FILES_EXTRA               37
+bool check_stack_overrun(THD *thd, long margin, unsigned char *dummy);
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

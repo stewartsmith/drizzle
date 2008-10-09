@@ -17,6 +17,7 @@
 
 #define CHECK_VERSION "2.5.0"
 
+#include "config.h"
 #include <vector>
 #include <string>
 #include "client_priv.h"
@@ -257,7 +258,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start = argument;
-      my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password = my_strdup(argument, MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
@@ -282,8 +283,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 'V': print_version(); exit(0);
   case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   }
   return 0;
@@ -341,7 +340,7 @@ static int get_options(int *argc, char ***argv)
     return 1;
   }
   if (tty_password)
-    opt_password = get_tty_password(NullS);
+    opt_password = get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -414,7 +413,7 @@ static int process_selected_tables(char *db, char **table_names, int tables)
     }
     *--end = 0;
     handle_request_for_tables(table_names_comma_sep + 1, tot_length - 1);
-    my_free(table_names_comma_sep, MYF(0));
+    free(table_names_comma_sep);
   }
   else
     for (; tables > 0; tables--, table_names++)
@@ -507,7 +506,7 @@ static int process_all_tables_in_db(char *database)
     *--end = 0;
     if (tot_length)
       handle_request_for_tables(tables + 1, tot_length - 1);
-    my_free(tables, MYF(0));
+    free(tables);
   }
   else
   {
@@ -604,18 +603,18 @@ static int handle_request_for_tables(const char *tables, uint length)
   switch (what_to_do) {
   case DO_CHECK:
     op = "CHECK";
-    if (opt_quick)              end = stpcpy(end, " QUICK");
-    if (opt_fast)               end = stpcpy(end, " FAST");
-    if (opt_medium_check)       end = stpcpy(end, " MEDIUM"); /* Default */
-    if (opt_extended)           end = stpcpy(end, " EXTENDED");
-    if (opt_check_only_changed) end = stpcpy(end, " CHANGED");
-    if (opt_upgrade)            end = stpcpy(end, " FOR UPGRADE");
+    if (opt_quick)              end = my_stpcpy(end, " QUICK");
+    if (opt_fast)               end = my_stpcpy(end, " FAST");
+    if (opt_medium_check)       end = my_stpcpy(end, " MEDIUM"); /* Default */
+    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
+    if (opt_check_only_changed) end = my_stpcpy(end, " CHANGED");
+    if (opt_upgrade)            end = my_stpcpy(end, " FOR UPGRADE");
     break;
   case DO_REPAIR:
     op= (opt_write_binlog) ? "REPAIR" : "REPAIR NO_WRITE_TO_BINLOG";
-    if (opt_quick)              end = stpcpy(end, " QUICK");
-    if (opt_extended)           end = stpcpy(end, " EXTENDED");
-    if (opt_frm)                end = stpcpy(end, " USE_FRM");
+    if (opt_quick)              end = my_stpcpy(end, " QUICK");
+    if (opt_extended)           end = my_stpcpy(end, " EXTENDED");
+    if (opt_frm)                end = my_stpcpy(end, " USE_FRM");
     break;
   case DO_ANALYZE:
     op= (opt_write_binlog) ? "ANALYZE" : "ANALYZE NO_WRITE_TO_BINLOG";
@@ -638,9 +637,9 @@ static int handle_request_for_tables(const char *tables, uint length)
   {
     char *ptr;
 
-    ptr= stpcpy(stpcpy(query, op), " TABLE ");
+    ptr= my_stpcpy(my_stpcpy(query, op), " TABLE ");
     ptr= fix_table_name(ptr, tables);
-    ptr= strxmov(ptr, " ", options, NullS);
+    ptr= strxmov(ptr, " ", options, NULL);
     query_length= (uint) (ptr - query);
   }
   if (drizzle_real_query(sock, query, query_length))
@@ -650,7 +649,7 @@ static int handle_request_for_tables(const char *tables, uint length)
     return 1;
   }
   print_result();
-  my_free(query, MYF(0));
+  free(query);
   return 0;
 }
 
@@ -695,7 +694,7 @@ static void print_result()
     }
     else
       printf("%-9s: %s", row[2], row[3]);
-    stpcpy(prev, row[0]);
+    my_stpcpy(prev, row[0]);
     putchar('\n');
   }
   /* add the last table to be repaired to the list */
@@ -714,7 +713,7 @@ static int dbConnect(char *host, char *user, char *passwd)
   }
   drizzle_create(&drizzle_connection);
   if (opt_compress)
-    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NullS);
+    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NULL);
   if (opt_protocol)
     drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,
@@ -805,7 +804,7 @@ int main(int argc, char **argv)
   }
  end:
   dbDisconnect(current_host);
-  my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
   my_end(my_end_arg);
   return(first_error!=0);
 } /* main */

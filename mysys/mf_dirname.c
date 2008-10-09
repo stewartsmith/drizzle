@@ -33,7 +33,7 @@ size_t dirname_length(const char *name)
   for ( ; *pos ; pos++)				/* Find last FN_LIBCHAR */
   {
 #ifdef BASKSLASH_MBTAIL
-    uint l;
+    uint32_t l;
     if (use_mb(fs) && (l= my_ismbchar(fs, pos, pos + 3)))
     {
       pos+= l - 1;
@@ -80,7 +80,7 @@ size_t dirname_part(char *to, const char *name, size_t *to_res_length)
   SYNPOSIS
     convert_dirname()
     to				Store result here. Must be at least of size
-    				min(FN_REFLEN, strlen(from) + 1) to make room
+    				cmin(FN_REFLEN, strlen(from) + 1) to make room
     				for adding FN_LIBCHAR at the end.
     from			Original filename. May be == to
     from_end			Pointer at end of filename (normally end \0)
@@ -91,7 +91,7 @@ size_t dirname_part(char *to, const char *name, size_t *to_res_length)
     Adds a FN_LIBCHAR to end if the result string if there isn't one
     and the last isn't dev_char.
     Copies data from 'from' until ASCII(0) for until from == from_end
-    If you want to use the whole 'from' string, just send NullS as the
+    If you want to use the whole 'from' string, just send NULL as the
     last argument.
 
     If the result string is larger than FN_REFLEN -1, then it's cut.
@@ -130,7 +130,7 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
       else
       {
 #ifdef BACKSLASH_MBTAIL
-        uint l;
+        uint32_t l;
         if (use_mb(fs) && (l= my_ismbchar(fs, from, from + 3)))
         {
           memmove(to, from, l);

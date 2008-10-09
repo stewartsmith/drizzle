@@ -1,24 +1,28 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_LOCALE_H
 #define DRIZZLE_SERVER_LOCALE_H
 
 typedef struct my_locale_st
 {
-  uint  number;
+  uint32_t  number;
   const char *name;
   const char *description;
   const bool is_ascii;
@@ -27,7 +31,7 @@ typedef struct my_locale_st
   TYPELIB *day_names;
   TYPELIB *ab_day_names;
 #ifdef __cplusplus 
-  my_locale_st(uint number_par,
+  my_locale_st(uint32_t number_par,
                const char *name_par, const char *descr_par, bool is_ascii_par,
                TYPELIB *month_names_par, TYPELIB *ab_month_names_par,
                TYPELIB *day_names_par, TYPELIB *ab_day_names_par) : 
@@ -44,6 +48,6 @@ extern MY_LOCALE *my_locales[];
 extern MY_LOCALE *my_default_lc_time_names;
 
 MY_LOCALE *my_locale_by_name(const char *name);
-MY_LOCALE *my_locale_by_number(uint number);
+MY_LOCALE *my_locale_by_number(uint32_t number);
 
 #endif /* DRIZZLE_SERVER_LOCALE_H */

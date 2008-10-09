@@ -16,6 +16,8 @@
 # This file is public domain and comes with NO WARRANTY of any kind
 
 LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
+			$(top_builddir)/mysys/libmysys.la \
+			$(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL) -lz
 
 
@@ -28,7 +30,6 @@ CLEANFILES =		$(BUILT_SOURCES)
 
 bin_PROGRAMS =	drizzle \
 				drizzleadmin \
-				drizzlebinlog \
 				drizzlecheck \
 				drizzledump \
 				drizzleimport \
@@ -40,12 +41,6 @@ drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} -fexceptions
 drizzleadmin_SOURCES =		drizzleadmin.cc
-
-drizzlebinlog_SOURCES =     drizzlebinlog.cc \
-                $(top_srcdir)/mysys/mf_tempdir.c \
-                $(top_srcdir)/mysys/my_bit.c \
-                $(top_srcdir)/mysys/my_bitmap.c \
-                $(top_srcdir)/mysys/base64.c
 
 drizzlecheck_SOURCES =		drizzlecheck.cc
 drizzledump_SOURCES=            drizzledump.cc 

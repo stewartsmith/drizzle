@@ -106,7 +106,7 @@ void my_error(int nr, myf MyFlags, ...)
       ...	variable list
 */
 
-void my_printf_error(uint error, const char *format, myf MyFlags, ...)
+void my_printf_error(uint32_t error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
@@ -128,7 +128,7 @@ void my_printf_error(uint error, const char *format, myf MyFlags, ...)
       MyFlags	Flags
 */
 
-void my_message(uint error, const char *str, register myf MyFlags)
+void my_message(uint32_t error, const char *str, register myf MyFlags)
 {
   (*error_handler_hook)(error, str, MyFlags);
 }
@@ -182,7 +182,7 @@ int my_error_register(const char **errmsgs, int first, int last)
   /* Error numbers must be unique. No overlapping is allowed. */
   if (*search_meh_pp && ((*search_meh_pp)->meh_first <= last))
   {
-    my_free((uchar*)meh_p, MYF(0));
+    free((unsigned char*)meh_p);
     return 1;
   }
 
@@ -240,7 +240,7 @@ const char **my_error_unregister(int first, int last)
   errmsgs= meh_p->meh_errmsgs;
   bool is_globerrs= meh_p->is_globerrs;
 
-  my_free((uchar*) meh_p, MYF(0));
+  free((unsigned char*) meh_p);
 
   if (is_globerrs)
     return NULL;
@@ -255,7 +255,7 @@ void my_error_unregister_all(void)
   for (list= my_errmsgs_globerrs.meh_next; list; list= next)
   {
     next= list->meh_next;
-    my_free((uchar*) list, MYF(0));
+    free((unsigned char*) list);
   }
   my_errmsgs_list= &my_errmsgs_globerrs;
 }

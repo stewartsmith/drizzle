@@ -52,15 +52,15 @@ LIST *list_delete(LIST *root, LIST *element)
 }
 
 
-void list_free(LIST *root, uint free_data)
+void list_free(LIST *root, uint32_t free_data)
 {
   LIST *next;
   while (root)
   {
     next=root->next;
     if (free_data)
-      my_free((uchar*) root->data,MYF(0));
-    my_free((uchar*) root,MYF(0));
+      free((unsigned char*) root->data);
+    free((unsigned char*) root);
     root=next;
   }
 }
@@ -91,7 +91,7 @@ LIST *list_reverse(LIST *root)
   return last;
 }
 
-int list_walk(LIST *list, list_walk_action action, uchar* argument)
+int list_walk(LIST *list, list_walk_action action, unsigned char* argument)
 {
   while (list)
   {

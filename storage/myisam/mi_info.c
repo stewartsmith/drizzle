@@ -31,7 +31,7 @@ my_off_t mi_position(MI_INFO *info)
 /* Get information about the table */
 /* if flag == 2 one get current info (no sync from database */
 
-int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
+int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint32_t flag)
 {
   struct stat state;
   MYISAM_SHARE *share=info->s;
@@ -42,7 +42,7 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
   if (!(flag & HA_STATUS_NO_LOCK))
   {
     pthread_mutex_lock(&share->intern_lock);
-    VOID(_mi_readinfo(info,F_RDLCK,0));
+    _mi_readinfo(info,F_RDLCK,0);
     fast_mi_writeinfo(info);
     pthread_mutex_unlock(&share->intern_lock);
   }

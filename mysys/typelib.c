@@ -68,7 +68,7 @@ int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
 */
 
 
-int find_type(char *x, const TYPELIB *typelib, uint full_name)
+int find_type(char *x, const TYPELIB *typelib, uint32_t full_name)
 {
   int find,pos,findpos=0;
   register char * i;
@@ -111,7 +111,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) stpcpy(x,typelib->type_names[findpos]);
+    (void) my_stpcpy(x,typelib->type_names[findpos]);
   return(findpos+1);
 } /* find_type */
 
@@ -119,13 +119,13 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
 	/* Get name of type nr 'nr' */
 	/* Warning first type is 1, 0 = empty field */
 
-void make_type(register char * to, register uint nr,
+void make_type(register char * to, register uint32_t nr,
 	       register TYPELIB *typelib)
 {
   if (!nr)
     to[0]=0;
   else
-    (void) stpcpy(to,get_type(typelib,nr-1));
+    (void) my_stpcpy(to,get_type(typelib,nr-1));
   return;
 } /* make_type */
 
@@ -133,7 +133,7 @@ void make_type(register char * to, register uint nr,
 	/* Get type */
 	/* Warning first type is 0 */
 
-const char *get_type(TYPELIB *typelib, uint nr)
+const char *get_type(TYPELIB *typelib, uint32_t nr)
 {
   if (nr < (uint) typelib->count && typelib->type_names)
     return(typelib->type_names[nr]);
@@ -198,7 +198,7 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
 TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from)
 {
   TYPELIB *to;
-  uint i;
+  uint32_t i;
 
   if (!from)
     return NULL;

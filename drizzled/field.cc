@@ -62,16 +62,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_NEWDECIMAL,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_NEWDECIMAL,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_NEWDECIMAL,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_NEWDECIMAL,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -87,41 +87,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_TINY,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_SHORT,       DRIZZLE_TYPE_LONG,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_LONG,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_TINY,        DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATETIME
+  //DRIZZLE_TYPE_TIME
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  // DRIZZLE_TYPE_VIRTUAL
-    DRIZZLE_TYPE_VIRTUAL,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
-  /* DRIZZLE_TYPE_SHORT -> */
-  {
-  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_SHORT,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_SHORT,       DRIZZLE_TYPE_LONG,
-  //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_DOUBLE,
-  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_SHORT,       DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -137,16 +112,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_LONG,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_LONG,        DRIZZLE_TYPE_LONG,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_LONG,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_LONG,         DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -162,16 +137,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_DOUBLE,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_DOUBLE,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_DOUBLE,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -187,16 +162,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_TINY,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_SHORT,       DRIZZLE_TYPE_LONG,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_LONG,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_NULL,        DRIZZLE_TYPE_TIMESTAMP,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_TIME,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_TIME,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -212,16 +187,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_TIMESTAMP,   DRIZZLE_TYPE_TIMESTAMP,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,    DRIZZLE_TYPE_DATETIME,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -237,16 +212,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_LONGLONG,    DRIZZLE_TYPE_LONGLONG,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_LONGLONG,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_LONGLONG,    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_LONGLONG,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -258,45 +233,20 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
-  /* DRIZZLE_TYPE_DATE -> */
-  {
-  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_DATETIME,
-  //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_DATETIME,
-  //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_DATETIME,
-  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
-  // DRIZZLE_TYPE_VIRTUAL
-    DRIZZLE_TYPE_VIRTUAL,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
   /* DRIZZLE_TYPE_TIME -> */
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_TIME,        DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,    DRIZZLE_TYPE_TIME,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_TIME,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -312,16 +262,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_DATETIME,    DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_DATETIME,    DRIZZLE_TYPE_DATETIME,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -337,16 +287,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_DATETIME,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -362,16 +312,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -387,16 +337,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_VIRTUAL,  DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VIRTUAL,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VIRTUAL,     DRIZZLE_TYPE_VIRTUAL,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VIRTUAL,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -412,16 +362,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_NEWDECIMAL,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_NEWDECIMAL,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_NEWDECIMAL,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_NEWDECIMAL,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -437,16 +387,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_ENUM,        DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -462,16 +412,16 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
+  //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_LONGLONG
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
+  //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -509,16 +459,16 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
 {
   //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
   DECIMAL_RESULT,           INT_RESULT,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-  INT_RESULT,               INT_RESULT,
+  //DRIZZLE_TYPE_LONG
+  INT_RESULT,
   //DRIZZLE_TYPE_DOUBLE
   REAL_RESULT,
   //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
   STRING_RESULT,            STRING_RESULT,
   //DRIZZLE_TYPE_LONGLONG
   INT_RESULT,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-  STRING_RESULT,            STRING_RESULT,
+  //DRIZZLE_TYPE_TIME
+  STRING_RESULT,
   //DRIZZLE_TYPE_DATETIME
   STRING_RESULT,
   //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
@@ -608,8 +558,8 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
 /**
   Numeric fields base class constructor.
 */
-Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-                     uchar null_bit_arg, utype unireg_check_arg,
+Field_num::Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg,
                      uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -692,7 +642,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
     1   error
 */
 
-bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint len,
+bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
                         int64_t *rnd, uint64_t unsigned_max, 
                         int64_t signed_min, int64_t signed_max)
 {
@@ -826,12 +776,12 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
 String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
+  uint32_t length;
   int64_t value= val_int();
 
   if (val_buffer->alloc(MY_INT64_NUM_DECIMAL_DIGITS))
     return 0;
-  length= (uint) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
+  length= (uint32_t) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
                                                 MY_INT64_NUM_DECIMAL_DIGITS,
                                                 unsigned_val ? 10 : -10,
                                                 value);
@@ -841,8 +791,8 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 
 
 /// This is used as a table name when the table structure is not set up
-Field::Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
-	     uchar null_bit_arg,
+Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
+	     unsigned char null_bit_arg,
 	     utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
    table(0), orig_table(0), table_name(0),
@@ -868,7 +818,7 @@ void Field::hash(uint32_t *nr, uint32_t *nr2)
   }
   else
   {
-    uint len= pack_length();
+    uint32_t len= pack_length();
     const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
@@ -889,7 +839,7 @@ void Field::copy_from_tmp(int row_offset)
   memcpy(ptr,ptr+row_offset,pack_length());
   if (null_ptr)
   {
-    *null_ptr= (uchar) ((null_ptr[0] & (uchar) ~(uint) null_bit) | (null_ptr[row_offset] & (uchar) null_bit));
+    *null_ptr= (unsigned char) ((null_ptr[0] & (unsigned char) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (unsigned char) null_bit));
   }
 }
 
@@ -916,15 +866,15 @@ bool Field::send_binary(Protocol *protocol)
    @retval 0 if this field's size is < the source field's size
    @retval 1 if this field's size is >= the source field's size
 */
-int Field::compatible_field_size(uint field_metadata)
+int Field::compatible_field_size(uint32_t field_metadata)
 {
-  uint const source_size= pack_length_from_metadata(field_metadata);
-  uint const destination_size= row_pack_length();
+  uint32_t const source_size= pack_length_from_metadata(field_metadata);
+  uint32_t const destination_size= row_pack_length();
   return (source_size <= destination_size);
 }
 
 
-int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
+int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -973,8 +923,8 @@ int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
    the value of this flag is a moot point since the native format is
    little-endian.
 */
-uchar *
-Field::pack(uchar *to, const uchar *from, uint max_length,
+unsigned char *
+Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
             bool low_byte_first __attribute__((unused)))
 {
   uint32_t length= pack_length();
@@ -1013,11 +963,11 @@ Field::pack(uchar *to, const uchar *from, uint max_length,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *
-Field::unpack(uchar* to, const uchar *from, uint param_data,
+const unsigned char *
+Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
               bool low_byte_first __attribute__((unused)))
 {
-  uint length=pack_length();
+  uint32_t length=pack_length();
   int from_type= 0;
   /*
     If from length is > 255, it has encoded data in the upper bits. Need
@@ -1037,7 +987,7 @@ Field::unpack(uchar* to, const uchar *from, uint param_data,
     return from+length;
   }
 
-  uint len= (param_data && (param_data < length)) ?
+  uint32_t len= (param_data && (param_data < length)) ?
             param_data : length;
 
   memcpy(to, from, param_data > length ? length : len);
@@ -1175,8 +1125,8 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 }
 
 
-Field_str::Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
-                     uchar null_bit_arg, utype unireg_check_arg,
+Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
+                     unsigned char null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg, const CHARSET_INFO * const charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg)
@@ -1232,9 +1182,9 @@ my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
 }
 
 
-uint Field::fill_cache_field(CACHE_FIELD *copy)
+uint32_t Field::fill_cache_field(CACHE_FIELD *copy)
 {
-  uint store_length;
+  uint32_t store_length;
   copy->str=ptr;
   copy->length=pack_length();
   copy->blob_field=0;
@@ -1254,7 +1204,7 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
 }
 
 
-bool Field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Field::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1283,15 +1233,15 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
 */
 
 int Field::store_time(DRIZZLE_TIME *ltime,
-                      timestamp_type type_arg __attribute__((unused)))
+                      enum enum_drizzle_timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
-  uint length= (uint) my_TIME_to_str(ltime, buff);
+  uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
   return store(buff, length, &my_charset_bin);
 }
 
 
-bool Field::optimize_range(uint idx, uint part)
+bool Field::optimize_range(uint32_t idx, uint32_t part)
 {
   return test(table->file->index_flags(idx, part, 1) & HA_READ_RANGE);
 }
@@ -1318,8 +1268,8 @@ Field *Field::new_field(MEM_ROOT *root, Table *new_table,
 
 
 Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
-                            uchar *new_ptr, uchar *new_null_ptr,
-                            uint new_null_bit)
+                            unsigned char *new_ptr, unsigned char *new_null_ptr,
+                            uint32_t new_null_bit)
 {
   Field *tmp;
   if ((tmp= new_field(root, new_table, table == new_table)))
@@ -1351,7 +1301,7 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
 ** tiny int
 ****************************************************************************/
 
-int Field_tiny::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_tiny::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error;
   int64_t rnd;
@@ -1468,16 +1418,16 @@ String *Field_tiny::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
-  uint mlength=max(field_length+1,5*cs->mbmaxlen);
+  uint32_t length;
+  uint32_t mlength=cmax(field_length+1,5*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
 
   if (unsigned_flag)
-    length= (uint) cs->cset->long10_to_str(cs,to,mlength, 10,
+    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength, 10,
 					   (long) *ptr);
   else
-    length= (uint) cs->cset->long10_to_str(cs,to,mlength,-10,
+    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength,-10,
 					   (long) *((signed char*) ptr));
   
   val_buffer->length(length);
@@ -1490,21 +1440,21 @@ bool Field_tiny::send_binary(Protocol *protocol)
   return protocol->store_tiny((int64_t) (int8_t) ptr[0]);
 }
 
-int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_tiny::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   signed char a,b;
   a=(signed char) a_ptr[0]; b= (signed char) b_ptr[0];
   if (unsigned_flag)
-    return ((uchar) a < (uchar) b) ? -1 : ((uchar) a > (uchar) b) ? 1 : 0;
+    return ((unsigned char) a < (unsigned char) b) ? -1 : ((unsigned char) a > (unsigned char) b) ? 1 : 0;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_tiny::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_tiny::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   if (unsigned_flag)
     *to= *ptr;
   else
-    to[0] = (char) (ptr[0] ^ (uchar) 128);	/* Revers signbit */
+    to[0] = (char) (ptr[0] ^ (unsigned char) 128);	/* Revers signbit */
 }
 
 void Field_tiny::sql_type(String &res) const
@@ -1652,7 +1602,7 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
 int Field_str::store(double nr)
 {
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-  uint local_char_length= field_length / charset()->mbmaxlen;
+  uint32_t local_char_length= field_length / charset()->mbmaxlen;
   size_t length;
   bool error;
 
@@ -1668,7 +1618,7 @@ int Field_str::store(double nr)
 }
 
 
-uint Field::is_equal(Create_field *new_field)
+uint32_t Field::is_equal(Create_field *new_field)
 {
   return (new_field->sql_type == real_type());
 }
@@ -1685,7 +1635,7 @@ bool Field_str::compare_str_field_flags(Create_field *new_field, uint32_t flag_a
 }
 
 
-uint Field_str::is_equal(Create_field *new_field)
+uint32_t Field_str::is_equal(Create_field *new_field)
 {
   if (compare_str_field_flags(new_field, flags))
     return 0;
@@ -1707,273 +1657,6 @@ int Field_longstr::store_decimal(const my_decimal *d)
 uint32_t Field_longstr::max_data_length() const
 {
   return field_length + (field_length > 255 ? 2 : 1);
-}
-
-
-/****************************************************************************
-** enum type.
-** This is a string which only can have a selection of different values.
-** If one uses this string in a number context one gets the type number.
-****************************************************************************/
-
-enum ha_base_keytype Field_enum::key_type() const
-{
-  switch (packlength) {
-  default: return HA_KEYTYPE_BINARY;
-  case 2: return HA_KEYTYPE_USHORT_INT;
-  case 3: return HA_KEYTYPE_UINT24;
-  case 4: return HA_KEYTYPE_ULONG_INT;
-  case 8: return HA_KEYTYPE_ULONGLONG;
-  }
-}
-
-void Field_enum::store_type(uint64_t value)
-{
-  switch (packlength) {
-  case 1: ptr[0]= (uchar) value;  break;
-  case 2:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int2store(ptr,(unsigned short) value);
-  }
-  else
-#endif
-    shortstore(ptr,(unsigned short) value);
-  break;
-  case 3: int3store(ptr,(long) value); break;
-  case 4:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int4store(ptr,value);
-  }
-  else
-#endif
-    longstore(ptr,(long) value);
-  break;
-  case 8:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int8store(ptr,value);
-  }
-  else
-#endif
-    int64_tstore(ptr,value); break;
-  }
-}
-
-
-/**
-  @note
-    Storing a empty string in a enum field gives a warning
-    (if there isn't a empty value in the enum)
-*/
-
-int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const cs)
-{
-  int err= 0;
-  uint32_t not_used;
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  String tmpstr(buff,sizeof(buff), &my_charset_bin);
-
-  /* Convert character set if necessary */
-  if (String::needs_conversion(length, cs, field_charset, &not_used))
-  { 
-    uint dummy_errors;
-    tmpstr.copy(from, length, cs, field_charset, &dummy_errors);
-    from= tmpstr.ptr();
-    length=  tmpstr.length();
-  }
-
-  /* Remove end space */
-  length= field_charset->cset->lengthsp(field_charset, from, length);
-  uint tmp=find_type2(typelib, from, length, field_charset);
-  if (!tmp)
-  {
-    if (length < 6) // Can't be more than 99999 enums
-    {
-      /* This is for reading numbers with LOAD DATA INFILE */
-      char *end;
-      tmp=(uint) my_strntoul(cs,from,length,10,&end,&err);
-      if (err || end != from+length || tmp > typelib->count)
-      {
-	tmp=0;
-	set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-      }
-      if (!table->in_use->count_cuted_fields)
-        err= 0;
-    }
-    else
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-  }
-  store_type((uint64_t) tmp);
-  return err;
-}
-
-
-int Field_enum::store(double nr)
-{
-  return Field_enum::store((int64_t) nr, false);
-}
-
-
-int Field_enum::store(int64_t nr,
-                      bool unsigned_val __attribute__((unused)))
-{
-  int error= 0;
-  if ((uint64_t) nr > typelib->count || nr == 0)
-  {
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
-    if (nr != 0 || table->in_use->count_cuted_fields)
-    {
-      nr= 0;
-      error= 1;
-    }
-  }
-  store_type((uint64_t) (uint) nr);
-  return error;
-}
-
-
-double Field_enum::val_real(void)
-{
-  return (double) Field_enum::val_int();
-}
-
-
-int64_t Field_enum::val_int(void)
-{
-  switch (packlength) {
-  case 1:
-    return (int64_t) ptr[0];
-  case 2:
-  {
-    uint16_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=sint2korr(ptr);
-    else
-#endif
-      shortget(tmp,ptr);
-    return (int64_t) tmp;
-  }
-  case 3:
-    return (int64_t) uint3korr(ptr);
-  case 4:
-  {
-    uint32_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=uint4korr(ptr);
-    else
-#endif
-      longget(tmp,ptr);
-    return (int64_t) tmp;
-  }
-  case 8:
-  {
-    int64_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=sint8korr(ptr);
-    else
-#endif
-      int64_tget(tmp,ptr);
-    return tmp;
-  }
-  }
-  return 0;					// impossible
-}
-
-
-/**
-   Save the field metadata for enum fields.
-
-   Saves the real type in the first byte and the pack length in the 
-   second byte of the field metadata array at index of *metadata_ptr and
-   *(metadata_ptr + 1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_enum::do_save_field_metadata(uchar *metadata_ptr)
-{
-  *metadata_ptr= real_type();
-  *(metadata_ptr + 1)= pack_length();
-  return 2;
-}
-
-
-String *Field_enum::val_str(String *val_buffer __attribute__((unused)),
-			    String *val_ptr)
-{
-  uint tmp=(uint) Field_enum::val_int();
-  if (!tmp || tmp > typelib->count)
-    val_ptr->set("", 0, field_charset);
-  else
-    val_ptr->set((const char*) typelib->type_names[tmp-1],
-		 typelib->type_lengths[tmp-1],
-		 field_charset);
-  return val_ptr;
-}
-
-int Field_enum::cmp(const uchar *a_ptr, const uchar *b_ptr)
-{
-  uchar *old= ptr;
-  ptr= (uchar*) a_ptr;
-  uint64_t a=Field_enum::val_int();
-  ptr= (uchar*) b_ptr;
-  uint64_t b=Field_enum::val_int();
-  ptr= old;
-  return (a < b) ? -1 : (a > b) ? 1 : 0;
-}
-
-void Field_enum::sort_string(uchar *to,uint length __attribute__((unused)))
-{
-  uint64_t value=Field_enum::val_int();
-  to+=packlength-1;
-  for (uint i=0 ; i < packlength ; i++)
-  {
-    *to-- = (uchar) (value & 255);
-    value>>=8;
-  }
-}
-
-
-void Field_enum::sql_type(String &res) const
-{
-  char buffer[255];
-  String enum_item(buffer, sizeof(buffer), res.charset());
-
-  res.length(0);
-  res.append(STRING_WITH_LEN("enum("));
-
-  bool flag=0;
-  uint *len= typelib->type_lengths;
-  for (const char **pos= typelib->type_names; *pos; pos++, len++)
-  {
-    uint dummy_errors;
-    if (flag)
-      res.append(',');
-    /* convert to res.charset() == utf8, then quote */
-    enum_item.copy(*pos, *len, charset(), res.charset(), &dummy_errors);
-    append_unescaped(&res, enum_item.ptr(), enum_item.length());
-    flag= 1;
-  }
-  res.append(')');
-}
-
-
-Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
-                             bool keep_type)
-{
-  Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
-  if (res)
-    res->typelib= copy_typelib(root, typelib);
-  return res;
 }
 
 
@@ -2004,11 +1687,11 @@ bool Field_enum::eq_def(Field *field)
 
   if (typelib->count < from_lib->count)
     return 0;
-  for (uint i=0 ; i < from_lib->count ; i++)
+  for (uint32_t i=0 ; i < from_lib->count ; i++)
     if (my_strnncoll(field_charset,
-                     (const uchar*)typelib->type_names[i],
+                     (const unsigned char*)typelib->type_names[i],
                      strlen(typelib->type_names[i]),
-                     (const uchar*)from_lib->type_names[i],
+                     (const unsigned char*)from_lib->type_names[i],
                      strlen(from_lib->type_names[i])))
       return 0;
   return 1;
@@ -2031,13 +1714,13 @@ bool Field_num::eq_def(Field *field)
 }
 
 
-uint Field_num::is_equal(Create_field *new_field)
+uint32_t Field_num::is_equal(Create_field *new_field)
 {
   return ((new_field->sql_type == real_type()) &&
-	  ((new_field->flags & UNSIGNED_FLAG) == (uint) (flags &
+	  ((new_field->flags & UNSIGNED_FLAG) == (uint32_t) (flags &
 							 UNSIGNED_FLAG)) &&
 	  ((new_field->flags & AUTO_INCREMENT_FLAG) ==
-	   (uint) (flags & AUTO_INCREMENT_FLAG)) &&
+	   (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
 	  (new_field->length <= max_display_length()));
 }
 
@@ -2126,25 +1809,25 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
 
 bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
-                        uint fld_type_modifier, Item *fld_default_value,
+                        uint32_t fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
-                        uint fld_geom_type __attribute__((unused)),
+                        uint32_t fld_geom_type __attribute__((unused)),
                         enum column_format_type column_format,
                         virtual_column_info *fld_vcol_info)
 {
-  uint sign_len, allowed_type_modifier= 0;
+  uint32_t sign_len, allowed_type_modifier= 0;
   uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
 
   field= 0;
   field_name= fld_name;
   def= fld_default_value;
   flags= fld_type_modifier;
-  flags|= (((uint)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
+  flags|= (((uint32_t)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
   unireg_check= (fld_type_modifier & AUTO_INCREMENT_FLAG ?
                  Field::NEXT_NUMBER : Field::NONE);
-  decimals= fld_decimals ? (uint)atoi(fld_decimals) : 0;
+  decimals= fld_decimals ? (uint32_t)atoi(fld_decimals) : 0;
   if (decimals >= NOT_FIXED_DEC)
   {
     my_error(ER_TOO_BIG_SCALE, MYF(0), decimals, fld_name,
@@ -2219,7 +1902,7 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
       (fld_type_modifier & NOT_NULL_FLAG) && fld_type != DRIZZLE_TYPE_TIMESTAMP)
     flags|= NO_DEFAULT_VALUE_FLAG;
 
-  if (fld_length && !(length= (uint) atoi(fld_length)))
+  if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0; /* purecov: inspected */
   sign_len= fld_type_modifier & UNSIGNED_FLAG ? 0 : 1;
 
@@ -2227,11 +1910,6 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
   case DRIZZLE_TYPE_TINY:
     if (!fld_length)
       length= MAX_TINYINT_WIDTH+sign_len;
-    allowed_type_modifier= AUTO_INCREMENT_FLAG;
-    break;
-  case DRIZZLE_TYPE_SHORT:
-    if (!fld_length)
-      length= MAX_SMALLINT_WIDTH+sign_len;
     allowed_type_modifier= AUTO_INCREMENT_FLAG;
     break;
   case DRIZZLE_TYPE_LONG:
@@ -2308,7 +1986,7 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
         and 19 as length of 4.1 compatible representation.
       */
       length= ((length+1)/2)*2; /* purecov: inspected */
-      length= min(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
+      length= cmin(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
     }
     flags|= UNSIGNED_FLAG;
     if (fld_default_value)
@@ -2349,10 +2027,6 @@ bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_f
                                               Field::NONE));
     }
     break;
-  case DRIZZLE_TYPE_DATE:
-    /* Old date type. */
-    sql_type= DRIZZLE_TYPE_NEWDATE;
-    /* fall trough */
   case DRIZZLE_TYPE_NEWDATE:
     length= 10;
     break;
@@ -2421,8 +2095,6 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_TINY	: return 1;
-  case DRIZZLE_TYPE_SHORT : return 2;
-  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NEWDATE:
   case DRIZZLE_TYPE_TIME:   return 3;
   case DRIZZLE_TYPE_TIMESTAMP:
@@ -2441,22 +2113,22 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 }
 
 
-uint pack_length_to_packflag(uint type)
+uint32_t pack_length_to_packflag(uint32_t type)
 {
   switch (type) {
-    case 1: return f_settype((uint) DRIZZLE_TYPE_TINY);
-    case 2: return f_settype((uint) DRIZZLE_TYPE_SHORT);
+    case 1: return f_settype((uint32_t) DRIZZLE_TYPE_TINY);
+    case 2: assert(1);
     case 3: assert(1);
-    case 4: return f_settype((uint) DRIZZLE_TYPE_LONG);
-    case 8: return f_settype((uint) DRIZZLE_TYPE_LONGLONG);
+    case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
+    case 8: return f_settype((uint32_t) DRIZZLE_TYPE_LONGLONG);
   }
   return 0;					// This shouldn't happen
 }
 
 
-Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
-		  uchar *null_pos, uchar null_bit,
-		  uint pack_flag,
+Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
+		  unsigned char *null_pos, unsigned char null_bit,
+		  uint32_t pack_flag,
 		  enum_field_types field_type,
 		  const CHARSET_INFO * field_charset,
 		  Field::utype unireg_check,
@@ -2470,11 +2142,10 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
   }
   else
   {
-    null_bit= ((uchar) 1) << null_bit;
+    null_bit= ((unsigned char) 1) << null_bit;
   }
 
   switch (field_type) {
-  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NEWDATE:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
@@ -2497,7 +2168,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
       return 0;                                 // Error
     }
 
-    uint pack_length=calc_pack_length((enum_field_types)
+    uint32_t pack_length=calc_pack_length((enum_field_types)
 				      f_packtype(pack_flag),
 				      field_length);
 
@@ -2532,11 +2203,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 			  unireg_check, field_name,
                           false,
 			  f_is_dec(pack_flag) == 0);
-  case DRIZZLE_TYPE_SHORT:
-    return new Field_short(ptr,field_length,null_pos,null_bit,
-			   unireg_check, field_name,
-                           false,
-			   f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_LONG:
     return new Field_long(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,
@@ -2551,7 +2217,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
     return new Field_timestamp(ptr,field_length, null_pos, null_bit,
                                unireg_check, field_name, share,
                                field_charset);
-  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NEWDATE:
     return new Field_newdate(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);
@@ -2671,7 +2336,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 */
 
 bool 
-Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
+Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
                    int cuted_increment)
 {
   /*
@@ -2709,8 +2374,8 @@ Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
 void 
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                             unsigned int code, 
-                            const char *str, uint str_length, 
-                            timestamp_type ts_type, int cuted_increment)
+                            const char *str, uint32_t str_length, 
+                            enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
   if ((thd->really_abort_on_warning() &&
@@ -2737,8 +2402,8 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 */
 
 void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
-                            int64_t nr, timestamp_type ts_type,
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
+                            int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
@@ -2747,7 +2412,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
   {
     char str_nr[22];
     char *str_end= int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(thd, level, str_nr, (uint) (str_end - str_nr), 
+    make_truncated_value_warning(thd, level, str_nr, (uint32_t) (str_end - str_nr), 
                                  ts_type, field_name);
   }
 }
@@ -2768,8 +2433,8 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
-                            double nr, timestamp_type ts_type)
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
+                            double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   THD *thd= table ? table->in_use : current_thd;
   if (thd->really_abort_on_warning() ||
@@ -2777,7 +2442,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */
     char str_nr[DBL_DIG + 8];
-    uint str_len= sprintf(str_nr, "%g", nr);
+    uint32_t str_len= sprintf(str_nr, "%g", nr);
     make_truncated_value_warning(thd, level, str_nr, str_len, ts_type,
                                  field_name);
   }

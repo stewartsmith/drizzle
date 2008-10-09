@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -33,7 +33,7 @@
 ****************************************************************************/
 
 int Field_datetime::store(const char *from,
-                          uint len,
+                          uint32_t len,
                           const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME time_tmp;
@@ -98,7 +98,7 @@ int Field_datetime::store(int64_t nr,
                                           (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
-  if (nr == -1LL)
+  if (nr == INT64_C(-1))
   {
     nr= 0;
     error= 2;
@@ -122,7 +122,8 @@ int Field_datetime::store(int64_t nr,
 }
 
 
-int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
+int Field_datetime::store_time(DRIZZLE_TIME *ltime,
+                               enum enum_drizzle_timestamp_type time_type)
 {
   int64_t tmp;
   int error= 0;
@@ -133,7 +134,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
   if (time_type == DRIZZLE_TIMESTAMP_DATE ||
       time_type == DRIZZLE_TIMESTAMP_DATETIME)
   {
-    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*1000000LL+
+    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*INT64_C(1000000)+
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
@@ -211,8 +212,8 @@ String *Field_datetime::val_str(String *val_buffer,
     Avoid problem with slow int64_t arithmetic and sprintf
   */
 
-  part1=(long) (tmp/1000000LL);
-  part2=(long) (tmp - (uint64_t) part1*1000000LL);
+  part1=(long) (tmp/INT64_C(1000000));
+  part2=(long) (tmp - (uint64_t) part1*INT64_C(1000000));
 
   pos=(char*) val_buffer->ptr() + MAX_DATETIME_WIDTH;
   *pos--=0;
@@ -238,12 +239,12 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
-  part1=(uint32_t) (tmp/1000000LL);
-  part2=(uint32_t) (tmp - (uint64_t) part1*1000000LL);
+  part1=(uint32_t) (tmp/INT64_C(1000000));
+  part2=(uint32_t) (tmp - (uint64_t) part1*INT64_C(1000000));
 
   ltime->time_type=	DRIZZLE_TIMESTAMP_DATETIME;
   ltime->neg=		0;
@@ -262,7 +263,7 @@ bool Field_datetime::get_time(DRIZZLE_TIME *ltime)
   return Field_datetime::get_date(ltime,0);
 }
 
-int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -281,7 +282,7 @@ int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
 }
 
-void Field_datetime::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_datetime::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

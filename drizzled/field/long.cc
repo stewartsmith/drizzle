@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -29,7 +29,7 @@
 ** long int
 ****************************************************************************/
 
-int Field_long::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   long store_tmp;
   int error;
@@ -167,7 +167,7 @@ double Field_long::val_real(void)
 int64_t Field_long::val_int(void)
 {
   int32_t j;
-  /* See the comment in Field_long::store(long long) */
+  /* See the comment in Field_long::store(int64_t) */
   assert(table->in_use == current_thd);
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -182,8 +182,8 @@ String *Field_long::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
-  uint mlength=max(field_length+1,12*cs->mbmaxlen);
+  uint32_t length;
+  uint32_t mlength=cmax(field_length+1,12*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int32_t j;
@@ -209,7 +209,7 @@ bool Field_long::send_binary(Protocol *protocol)
   return protocol->store_long(Field_long::val_int());
 }
 
-int Field_long::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -229,7 +229,7 @@ int Field_long::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_long::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_long::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)

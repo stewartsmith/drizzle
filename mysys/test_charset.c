@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 
-static void _print_array(uint8 *data, uint size)
+static void _print_array(uint8 *data, uint32_t size)
 {
-  uint i;
+  uint32_t i;
   for (i = 0; i < size; ++i)
   {
     if (i == 0 || i % 16 == size % 16) printf("  ");
@@ -77,11 +77,11 @@ int main(int argc, char **argv) {
 #ifdef NOT_USED_ANYMORE
   cs_list = list_charsets(MYF(MY_CS_COMPILED | MY_CS_CONFIG));
   printf("LIST OF CHARSETS (compiled + *.conf):\n%s\n", cs_list);
-  my_free(cs_list,MYF(0));
+  free(cs_list);
 
   cs_list = list_charsets(MYF(MY_CS_INDEX | MY_CS_LOADED));
   printf("LIST OF CHARSETS (index + loaded):\n%s\n", cs_list);
-  my_free(cs_list,MYF(0));
+  free(cs_list);
 #endif
 
   return 0;

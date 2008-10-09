@@ -26,7 +26,7 @@ extern "C" {
   }
 }
 
-void init_sql_alloc(MEM_ROOT *mem_root, uint block_size, uint pre_alloc)
+void init_sql_alloc(MEM_ROOT *mem_root, uint32_t block_size, uint32_t pre_alloc)
 {
   init_alloc_root(mem_root, block_size, pre_alloc);
   mem_root->error_handler=sql_alloc_error_handler;
@@ -100,12 +100,12 @@ char *sql_strmake_with_convert(const char *str, size_t arg_length,
   if ((from_cs == &my_charset_bin) || (to_cs == &my_charset_bin))
   {
     // Safety if to_cs->mbmaxlen > 0
-    new_length= min(arg_length, max_res_length);
+    new_length= cmin(arg_length, max_res_length);
     memcpy(pos, str, new_length);
   }
   else
   {
-    uint dummy_errors;
+    uint32_t dummy_errors;
     new_length= copy_and_convert((char*) pos, new_length, to_cs, str,
 				 arg_length, from_cs, &dummy_errors);
   }

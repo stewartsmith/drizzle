@@ -1,3 +1,23 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -102,7 +122,7 @@ public:
   */
   table_map     sj_inner_tables;
   /* Number of IN-compared expressions */
-  uint          sj_in_exprs; 
+  uint32_t          sj_in_exprs; 
   /*
     The structure of ON expression presented in the member above
     can be changed during certain optimizations. This member
@@ -147,7 +167,7 @@ public:
   /* Index names in a "... JOIN ... USE/IGNORE INDEX ..." clause. */
   List<Index_hint> *index_hints;
   Table        *table;    /* opened table */
-  uint          table_id; /* table id (from binlog) for opened table */
+  uint32_t          table_id; /* table id (from binlog) for opened table */
   /*
     select_result for derived table to pass it from table creation to table
     filling procedure
@@ -221,10 +241,10 @@ public:
   */
   bool          is_fqtn;
 
-  uint i_s_requested_object;
+  uint32_t i_s_requested_object;
   bool has_db_lookup_value;
   bool has_table_lookup_value;
-  uint table_open_method;
+  uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
   void set_underlying_merge();
   bool setup_underlying(THD *thd);

@@ -72,10 +72,10 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 #elif defined(HAVE_MKSTEMP)
   {
     char prefix_buff[30];
-    uint pfx_len;
+    uint32_t pfx_len;
     File org_file;
 
-    pfx_len= (uint) (stpcpy(stpncpy(prefix_buff,
+    pfx_len= (uint) (my_stpcpy(my_stpncpy(prefix_buff,
 				    prefix ? prefix : "tmp.",
 				    sizeof(prefix_buff)-7),"XXXXXX") -
 		     prefix_buff);
@@ -86,7 +86,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
       errno=my_errno= ENAMETOOLONG;
       return(file);
     }
-    stpcpy(convert_dirname(to,dir,NullS),prefix_buff);
+    my_stpcpy(convert_dirname(to,dir,NULL),prefix_buff);
     org_file=mkstemp(to);
     if (mode & O_TEMPORARY)
       (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));

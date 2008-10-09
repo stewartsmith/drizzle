@@ -172,7 +172,7 @@ show create table t1;
 drop table t1;
 
 #
-# Bug #7498 User variable SET saves SIGNED BIGINT as UNSIGNED BIGINT
+# Bug #7498 User variable SET saves SIGNED BIGINT as BIGINT
 #
 
 # First part, set user var to large number and select it
@@ -182,7 +182,7 @@ select @a;
 # Second part, set user var from large number in table
 # then select it
 CREATE TABLE `bigfailure` (
-  `afield` BIGINT UNSIGNED NOT NULL
+  `afield` BIGINT NOT NULL
 );
 INSERT INTO `bigfailure` VALUES (18446744071710965857);
 SELECT * FROM bigfailure;

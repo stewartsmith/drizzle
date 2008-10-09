@@ -15,6 +15,9 @@
 
 
 /* create and drop of databases */
+#include "config.h"
+#include CSTDINT_H
+#include CINTTYPES_H
 #include <string>
 #include <fstream>
 #include <drizzled/serialize/serialize.h>
@@ -29,12 +32,12 @@ using namespace std;
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
-const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NullS};
+const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NULL};
 static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
-				 const char *db, const char *path, uint level, 
+				 const char *db, const char *path, uint32_t level, 
                                  TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
@@ -53,7 +56,7 @@ int creating_database= 0;  // how many database locks are made
 typedef struct my_dblock_st
 {
   char *name;        /* Database name        */
-  uint name_length;  /* Database length name */
+  uint32_t name_length;  /* Database length name */
 } my_dblock_t;
 
 
@@ -61,13 +64,13 @@ typedef struct my_dblock_st
   lock_db key.
 */
 
-extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
+extern "C" unsigned char* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
 
-uchar* lock_db_get_key(my_dblock_t *ptr, size_t *length,
+unsigned char* lock_db_get_key(my_dblock_t *ptr, size_t *length,
                        bool not_used __attribute__((unused)))
 {
   *length= ptr->name_length;
-  return (uchar*) ptr->name;
+  return (unsigned char*) ptr->name;
 }
 
 
@@ -79,7 +82,7 @@ extern "C" void lock_db_free_element(void *ptr);
 
 void lock_db_free_element(void *ptr)
 {
-  my_free(ptr, MYF(0));
+  free(ptr);
 }
 
 
@@ -87,13 +90,13 @@ void lock_db_free_element(void *ptr)
   Delete a database lock entry from hash.
 */
 
-void lock_db_delete(const char *name, uint length)
+void lock_db_delete(const char *name, uint32_t length)
 {
   my_dblock_t *opt;
   safe_mutex_assert_owner(&LOCK_lock_db);
   if ((opt= (my_dblock_t *)hash_search(&lock_db_cache,
-                                       (const uchar*) name, length)))
-    hash_delete(&lock_db_cache, (uchar*) opt);
+                                       (const unsigned char*) name, length)))
+    hash_delete(&lock_db_cache, (unsigned char*) opt);
 }
 
 
@@ -106,7 +109,7 @@ static rw_lock_t LOCK_dboptions;
 typedef struct my_dbopt_st
 {
   char *name;			/* Database name                  */
-  uint name_length;		/* Database length name           */
+  uint32_t name_length;		/* Database length name           */
   const CHARSET_INFO *charset;	/* Database default character set */
 } my_dbopt_t;
 
@@ -115,14 +118,14 @@ typedef struct my_dbopt_st
   Function we use in the creation of our hash to get key.
 */
 
-extern "C" uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
+extern "C" unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
                                     bool not_used);
 
-uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
+unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
                          bool not_used __attribute__((unused)))
 {
   *length= opt->name_length;
-  return (uchar*) opt->name;
+  return (unsigned char*) opt->name;
 }
 
 
@@ -130,8 +133,8 @@ uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
   Helper function to write a query to binlog used by mysql_rm_db()
 */
 
-static inline void write_to_binlog(THD *thd, char *query, uint q_len,
-                                   char *db, uint db_len)
+static inline void write_to_binlog(THD *thd, char *query, uint32_t q_len,
+                                   char *db, uint32_t db_len)
 {
   Query_log_event qinfo(thd, query, q_len, 0, 0);
   qinfo.error_code= 0;
@@ -149,7 +152,7 @@ extern "C" void free_dbopt(void *dbopt);
 
 void free_dbopt(void *dbopt)
 {
-  my_free((uchar*) dbopt, MYF(0));
+  free((unsigned char*) dbopt);
 }
 
 
@@ -236,13 +239,13 @@ void my_dbopt_cleanup(void)
 static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
-  uint length;
+  uint32_t length;
   bool error= true;
   
   length= (uint) strlen(dbname);
   
   rw_rdlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
+  if ((opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   {
     create->default_table_charset= opt->charset;
     error= true;
@@ -267,31 +270,31 @@ static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
-  uint length;
+  uint32_t length;
   bool error= false;
 
   length= (uint) strlen(dbname);
   
   rw_wrlock(&LOCK_dboptions);
-  if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
+  if (!(opt= (my_dbopt_t*) hash_search(&dboptions, (unsigned char*) dbname, length)))
   { 
     /* Options are not in the hash, insert them */
     char *tmp_name;
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                          &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
-                         NullS))
+                         NULL))
     {
       error= true;
       goto end;
     }
     
     opt->name= tmp_name;
-    stpcpy(opt->name, dbname);
+    my_stpcpy(opt->name, dbname);
     opt->name_length= length;
     
-    if ((error= my_hash_insert(&dboptions, (uchar*) opt)))
+    if ((error= my_hash_insert(&dboptions, (unsigned char*) opt)))
     {
-      my_free(opt, MYF(0));
+      free(opt);
       goto end;
     }
   }
@@ -313,9 +316,9 @@ void del_dbopt(const char *path)
 {
   my_dbopt_t *opt;
   rw_wrlock(&LOCK_dboptions);
-  if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const uchar*) path,
+  if ((opt= (my_dbopt_t *)hash_search(&dboptions, (const unsigned char*) path,
                                       strlen(path))))
-    hash_delete(&dboptions, (uchar*) opt);
+    hash_delete(&dboptions, (unsigned char*) opt);
   rw_unlock(&LOCK_dboptions);
 }
 
@@ -528,8 +531,8 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
   long result= 1;
   int error= 0;
   struct stat stat_info;
-  uint create_options= create_info ? create_info->options : 0;
-  uint path_len;
+  uint32_t create_options= create_info ? create_info->options : 0;
+  uint32_t path_len;
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.str))
@@ -556,7 +559,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
     goto exit2;
   }
 
-  VOID(pthread_mutex_lock(&LOCK_mysql_create_db));
+  pthread_mutex_lock(&LOCK_mysql_create_db);
 
   /* Check directory */
   path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
@@ -616,23 +619,19 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
   if (!silent)
   {
     char *query;
-    uint query_length;
+    uint32_t query_length;
 
     if (!thd->query)				// Only in replication
     {
       query= 	     tmp_query;
       query_length= (uint) (strxmov(tmp_query,"create database `",
-                                    db, "`", NullS) - tmp_query);
+                                    db, "`", NULL) - tmp_query);
     }
     else
     {
       query= 	    thd->query;
       query_length= thd->query_length;
     }
-
-    ha_binlog_log_query(thd, 0, LOGCOM_CREATE_DB,
-                        query, query_length,
-                        db, "");
 
     if (mysql_bin_log.is_open())
     {
@@ -666,7 +665,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent
   }
 
 exit:
-  VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
+  pthread_mutex_unlock(&LOCK_mysql_create_db);
   start_waiting_global_read_lock(thd);
 exit2:
   return(error);
@@ -696,7 +695,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
   if ((error=wait_if_global_read_lock(thd,0,1)))
     goto exit2;
 
-  VOID(pthread_mutex_lock(&LOCK_mysql_create_db));
+  pthread_mutex_lock(&LOCK_mysql_create_db);
 
   /* 
      Recreate db options file: /dbpath/.db.opt
@@ -716,10 +715,6 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
 		     thd->variables.collation_server;
     thd->variables.collation_database= thd->db_charset;
   }
-
-  ha_binlog_log_query(thd, 0, LOGCOM_ALTER_DB,
-                      thd->query, thd->query_length,
-                      db, "");
 
   if (mysql_bin_log.is_open())
   {
@@ -741,7 +736,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
   my_ok(thd, result);
 
 exit:
-  VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
+  pthread_mutex_unlock(&LOCK_mysql_create_db);
   start_waiting_global_read_lock(thd);
 exit2:
   return(error);
@@ -771,7 +766,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   int error= false;
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
-  uint length;
+  uint32_t length;
   TableList* dropped_tables= 0;
 
   if (db && (strcmp(db, "information_schema") == 0))
@@ -798,7 +793,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
     goto exit2;
   }
 
-  VOID(pthread_mutex_lock(&LOCK_mysql_create_db));
+  pthread_mutex_lock(&LOCK_mysql_create_db);
 
   /*
     This statement will be replicated as a statement, even when using
@@ -808,7 +803,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   thd->clear_current_stmt_binlog_row_based();
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
-  stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
+  my_stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
   del_dbopt(path);				// Remove dboption hash entry
   path[length]= '\0';				// Remove file name
 
@@ -849,7 +844,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       /* The client used the old obsolete mysql_drop_db() call */
       query= path;
       query_length= (uint) (strxmov(path, "drop database `", db, "`",
-                                     NullS) - path);
+                                     NULL) - path);
     }
     else
     {
@@ -881,17 +876,17 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   {
     char *query, *query_pos, *query_end, *query_data_start;
     TableList *tbl;
-    uint db_len;
+    uint32_t db_len;
 
     if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
-    query_pos= query_data_start= stpcpy(query,"drop table ");
+    query_pos= query_data_start= my_stpcpy(query,"drop table ");
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= strlen(db);
 
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
     {
-      uint tbl_name_len;
+      uint32_t tbl_name_len;
 
       /* 3 for the quotes and the comma*/
       tbl_name_len= strlen(tbl->table_name) + 3;
@@ -903,7 +898,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       }
 
       *query_pos++ = '`';
-      query_pos= stpcpy(query_pos,tbl->table_name);
+      query_pos= my_stpcpy(query_pos,tbl->table_name);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -924,7 +919,7 @@ exit:
   */
   if (thd->db && !strcmp(thd->db, db))
     mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
-  VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
+  pthread_mutex_unlock(&LOCK_mysql_create_db);
   start_waiting_global_read_lock(thd);
 exit2:
   return(error);
@@ -936,7 +931,7 @@ exit2:
 */
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
-				 const char *org_path, uint level,
+				 const char *org_path, uint32_t level,
                                  TableList **dropped_tables)
 {
   long deleted=0;
@@ -946,7 +941,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 
   tot_list_next= &tot_list;
 
-  for (uint idx=0 ;
+  for (uint32_t idx=0 ;
        idx < (uint) dirp->number_off_files && !thd->killed ;
        idx++)
   {
@@ -981,10 +976,10 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       if (!table_list)
         goto err;
       table_list->db= (char*) (table_list+1);
-      table_list->table_name= stpcpy(table_list->db, db) + 1;
-      VOID(filename_to_tablename(file->name, table_list->table_name,
-                                 MYSQL50_TABLE_NAME_PREFIX_LENGTH +
-                                 strlen(file->name) + 1));
+      table_list->table_name= my_stpcpy(table_list->db, db) + 1;
+      filename_to_tablename(file->name, table_list->table_name,
+                            MYSQL50_TABLE_NAME_PREFIX_LENGTH +
+                            strlen(file->name) + 1);
       table_list->alias= table_list->table_name;	// If lower_case_table_names=2
       table_list->internal_tmp_table= is_prefix(file->name, tmp_file_prefix);
       /* Link into list */
@@ -994,7 +989,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
     }
     else
     {
-      strxmov(filePath, org_path, "/", file->name, NullS);
+      strxmov(filePath, org_path, "/", file->name, NULL);
       if (my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
 	goto err;
@@ -1129,7 +1124,8 @@ static void mysql_change_db_impl(THD *thd,
       the previous database name, we should do it explicitly.
     */
 
-    x_free(thd->db);
+    if (thd->db)
+      free(thd->db);
 
     thd->reset_db(new_db_name->str, new_db_name->length);
   }
@@ -1329,7 +1325,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
   if (check_db_name(&new_db_file_name))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
-    my_free(new_db_file_name.str, MYF(0));
+    free(new_db_file_name.str);
 
     if (force_switch)
       mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
@@ -1347,7 +1343,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
                           new_db_file_name.str);
 
-      my_free(new_db_file_name.str, MYF(0));
+      free(new_db_file_name.str);
 
       /* Change db to NULL. */
 
@@ -1362,7 +1358,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
       /* Report an error and free new_db_file_name. */
 
       my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      my_free(new_db_file_name.str, MYF(0));
+      free(new_db_file_name.str);
 
       /* The operation failed. */
 
@@ -1435,7 +1431,7 @@ bool mysql_opt_change_db(THD *thd,
 bool check_db_dir_existence(const char *db_name)
 {
   char db_dir_path[FN_REFLEN];
-  uint db_dir_path_len;
+  uint32_t db_dir_path_len;
 
   db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
                                         db_name, "", "", 0);

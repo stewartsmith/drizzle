@@ -54,14 +54,14 @@ get_collation_number_internal(const char *name)
 
 static bool init_state_maps(CHARSET_INFO *cs)
 {
-  uint i;
-  uchar *state_map;
-  uchar *ident_map;
+  uint32_t i;
+  unsigned char *state_map;
+  unsigned char *ident_map;
 
-  if (!(cs->state_map= (uchar*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->state_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
     
-  if (!(cs->ident_map= (uchar*) my_once_alloc(256, MYF(MY_WME))))
+  if (!(cs->ident_map= (unsigned char*) my_once_alloc(256, MYF(MY_WME))))
     return 1;
 
   state_map= cs->state_map;
@@ -71,47 +71,47 @@ static bool init_state_maps(CHARSET_INFO *cs)
   for (i=0; i < 256 ; i++)
   {
     if (my_isalpha(cs,i))
-      state_map[i]=(uchar) MY_LEX_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_IDENT;
     else if (my_isdigit(cs,i))
-      state_map[i]=(uchar) MY_LEX_NUMBER_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_NUMBER_IDENT;
 #if defined(USE_MB) && defined(USE_MB_IDENT)
     else if (my_mbcharlen(cs, i)>1)
-      state_map[i]=(uchar) MY_LEX_IDENT;
+      state_map[i]=(unsigned char) MY_LEX_IDENT;
 #endif
     else if (my_isspace(cs,i))
-      state_map[i]=(uchar) MY_LEX_SKIP;
+      state_map[i]=(unsigned char) MY_LEX_SKIP;
     else
-      state_map[i]=(uchar) MY_LEX_CHAR;
+      state_map[i]=(unsigned char) MY_LEX_CHAR;
   }
-  state_map[(uchar)'_']=state_map[(uchar)'$']=(uchar) MY_LEX_IDENT;
-  state_map[(uchar)'\'']=(uchar) MY_LEX_STRING;
-  state_map[(uchar)'.']=(uchar) MY_LEX_REAL_OR_POINT;
-  state_map[(uchar)'>']=state_map[(uchar)'=']=state_map[(uchar)'!']= (uchar) MY_LEX_CMP_OP;
-  state_map[(uchar)'<']= (uchar) MY_LEX_LONG_CMP_OP;
-  state_map[(uchar)'&']=state_map[(uchar)'|']=(uchar) MY_LEX_BOOL;
-  state_map[(uchar)'#']=(uchar) MY_LEX_COMMENT;
-  state_map[(uchar)';']=(uchar) MY_LEX_SEMICOLON;
-  state_map[(uchar)':']=(uchar) MY_LEX_SET_VAR;
-  state_map[0]=(uchar) MY_LEX_EOL;
-  state_map[(uchar)'\\']= (uchar) MY_LEX_ESCAPE;
-  state_map[(uchar)'/']= (uchar) MY_LEX_LONG_COMMENT;
-  state_map[(uchar)'*']= (uchar) MY_LEX_END_LONG_COMMENT;
-  state_map[(uchar)'@']= (uchar) MY_LEX_USER_END;
-  state_map[(uchar) '`']= (uchar) MY_LEX_USER_VARIABLE_DELIMITER;
-  state_map[(uchar)'"']= (uchar) MY_LEX_STRING_OR_DELIMITER;
+  state_map[(unsigned char)'_']=state_map[(unsigned char)'$']=(unsigned char) MY_LEX_IDENT;
+  state_map[(unsigned char)'\'']=(unsigned char) MY_LEX_STRING;
+  state_map[(unsigned char)'.']=(unsigned char) MY_LEX_REAL_OR_POINT;
+  state_map[(unsigned char)'>']=state_map[(unsigned char)'=']=state_map[(unsigned char)'!']= (unsigned char) MY_LEX_CMP_OP;
+  state_map[(unsigned char)'<']= (unsigned char) MY_LEX_LONG_CMP_OP;
+  state_map[(unsigned char)'&']=state_map[(unsigned char)'|']=(unsigned char) MY_LEX_BOOL;
+  state_map[(unsigned char)'#']=(unsigned char) MY_LEX_COMMENT;
+  state_map[(unsigned char)';']=(unsigned char) MY_LEX_SEMICOLON;
+  state_map[(unsigned char)':']=(unsigned char) MY_LEX_SET_VAR;
+  state_map[0]=(unsigned char) MY_LEX_EOL;
+  state_map[(unsigned char)'\\']= (unsigned char) MY_LEX_ESCAPE;
+  state_map[(unsigned char)'/']= (unsigned char) MY_LEX_LONG_COMMENT;
+  state_map[(unsigned char)'*']= (unsigned char) MY_LEX_END_LONG_COMMENT;
+  state_map[(unsigned char)'@']= (unsigned char) MY_LEX_USER_END;
+  state_map[(unsigned char) '`']= (unsigned char) MY_LEX_USER_VARIABLE_DELIMITER;
+  state_map[(unsigned char)'"']= (unsigned char) MY_LEX_STRING_OR_DELIMITER;
 
   /*
     Create a second map to make it faster to find identifiers
   */
   for (i=0; i < 256 ; i++)
   {
-    ident_map[i]= (uchar) (state_map[i] == MY_LEX_IDENT ||
+    ident_map[i]= (unsigned char) (state_map[i] == MY_LEX_IDENT ||
 			   state_map[i] == MY_LEX_NUMBER_IDENT);
   }
 
   /* Special handling of hex and binary strings */
-  state_map[(uchar)'x']= state_map[(uchar)'X']= (uchar) MY_LEX_IDENT_OR_HEX;
-  state_map[(uchar)'b']= state_map[(uchar)'B']= (uchar) MY_LEX_IDENT_OR_BIN;
+  state_map[(unsigned char)'x']= state_map[(unsigned char)'X']= (unsigned char) MY_LEX_IDENT_OR_HEX;
+  state_map[(unsigned char)'b']= state_map[(unsigned char)'B']= (unsigned char) MY_LEX_IDENT_OR_BIN;
   return 0;
 }
 
@@ -134,12 +134,12 @@ char *get_charsets_dir(char *buf)
   {
     if (test_if_hard_path(sharedir) ||
 	is_prefix(sharedir, DEFAULT_CHARSET_HOME))
-      strxmov(buf, sharedir, "/", CHARSET_DIR, NullS);
+      strxmov(buf, sharedir, "/", CHARSET_DIR, NULL);
     else
       strxmov(buf, DEFAULT_CHARSET_HOME, "/", sharedir, "/", CHARSET_DIR,
-	      NullS);
+	      NULL);
   }
-  res= convert_dirname(buf,buf,NullS);
+  res= convert_dirname(buf,buf,NULL);
   return(res);
 }
 
@@ -192,7 +192,7 @@ static bool init_available_charsets(myf myflags)
         }
       }
       
-      stpcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
+      my_stpcpy(get_charsets_dir(fname), MY_CHARSET_INDEX);
       charset_initialized=1;
     }
     pthread_mutex_unlock(&THR_LOCK_charset);
@@ -207,14 +207,14 @@ void free_charsets(void)
 }
 
 
-uint get_collation_number(const char *name)
+uint32_t get_collation_number(const char *name)
 {
   init_available_charsets(MYF(0));
   return get_collation_number_internal(name);
 }
 
 
-uint get_charset_number(const char *charset_name, uint cs_flags)
+uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
   CHARSET_INFO **cs;
   init_available_charsets(MYF(0));
@@ -231,7 +231,7 @@ uint get_charset_number(const char *charset_name, uint cs_flags)
 }
 
 
-const char *get_charset_name(uint charset_number)
+const char *get_charset_name(uint32_t charset_number)
 {
   const CHARSET_INFO *cs;
   init_available_charsets(MYF(0));
@@ -244,7 +244,7 @@ const char *get_charset_name(uint charset_number)
 }
 
 
-static const CHARSET_INFO *get_internal_charset(uint cs_number)
+static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
 {
   CHARSET_INFO *cs;
   /*
@@ -273,7 +273,7 @@ static const CHARSET_INFO *get_internal_charset(uint cs_number)
 }
 
 
-const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
+const const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
 {
   const CHARSET_INFO *cs;
   if (cs_number == default_charset_info->number)
@@ -289,7 +289,7 @@ const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)], cs_string[23];
-    stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     cs_string[0]='#';
     int10_to_str(cs_number, cs_string+1, 10);
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_string, index_file);
@@ -299,7 +299,7 @@ const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
 
 const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 {
-  uint cs_number;
+  uint32_t cs_number;
   const CHARSET_INFO *cs;
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -309,7 +309,7 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     my_error(EE_UNKNOWN_COLLATION, MYF(ME_BELL), cs_name, index_file);
   }
 
@@ -318,10 +318,10 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 
 
 const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-				    uint cs_flags,
+				    uint32_t cs_flags,
 				    myf flags)
 {
-  uint cs_number;
+  uint32_t cs_number;
   const CHARSET_INFO *cs;
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
@@ -332,7 +332,7 @@ const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
   if (!cs && (flags & MY_WME))
   {
     char index_file[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-    stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
+    my_stpcpy(get_charsets_dir(index_file),MY_CHARSET_INDEX);
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_name, index_file);
   }
 
@@ -401,121 +401,6 @@ bool resolve_collation(const char *cl_name,
   }
 
   return false;
-}
-
-
-/*
-  Escape string with backslashes (\)
-
-  SYNOPSIS
-    escape_string_for_drizzle()
-    charset_info        Charset of the strings
-    to                  Buffer for escaped string
-    to_length           Length of destination buffer, or 0
-    from                The string to escape
-    length              The length of the string to escape
-
-  DESCRIPTION
-    This escapes the contents of a string by adding backslashes before special
-    characters, and turning others into specific escape sequences, such as
-    turning newlines into \n and null bytes into \0.
-
-  NOTE
-    To maintain compatibility with the old C API, to_length may be 0 to mean
-    "big enough"
-
-  RETURN VALUES
-    (size_t) -1 The escaped string did not fit in the to buffer
-    #           The length of the escaped string
-*/
-
-size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
-                                 char *to, size_t to_length,
-                                 const char *from, size_t length)
-{
-  const char *to_start= to;
-  const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
-  bool overflow= false;
-#ifdef USE_MB
-  bool use_mb_flag= use_mb(charset_info);
-#endif
-  for (end= from + length; from < end; from++)
-  {
-    char escape= 0;
-#ifdef USE_MB
-    int tmp_length;
-    if (use_mb_flag && (tmp_length= my_ismbchar(charset_info, from, end)))
-    {
-      if (to + tmp_length > to_end)
-      {
-        overflow= true;
-        break;
-      }
-      while (tmp_length--)
-	*to++= *from++;
-      from--;
-      continue;
-    }
-    /*
-     If the next character appears to begin a multi-byte character, we
-     escape that first byte of that apparent multi-byte character. (The
-     character just looks like a multi-byte character -- if it were actually
-     a multi-byte character, it would have been passed through in the test
-     above.)
-
-     Without this check, we can create a problem by converting an invalid
-     multi-byte character into a valid one. For example, 0xbf27 is not
-     a valid GBK character, but 0xbf5c is. (0x27 = ', 0x5c = \)
-    */
-    if (use_mb_flag && (tmp_length= my_mbcharlen(charset_info, *from)) > 1)
-      escape= *from;
-    else
-#endif
-    switch (*from) {
-    case 0:				/* Must be escaped for 'mysql' */
-      escape= '0';
-      break;
-    case '\n':				/* Must be escaped for logs */
-      escape= 'n';
-      break;
-    case '\r':
-      escape= 'r';
-      break;
-    case '\\':
-      escape= '\\';
-      break;
-    case '\'':
-      escape= '\'';
-      break;
-    case '"':				/* Better safe than sorry */
-      escape= '"';
-      break;
-    case '\032':			/* This gives problems on Win32 */
-      escape= 'Z';
-      break;
-    }
-    if (escape)
-    {
-      if (to + 2 > to_end)
-      {
-        overflow= true;
-        break;
-      }
-      *to++= '\\';
-      *to++= escape;
-    }
-    else
-    {
-      if (to + 1 > to_end)
-      {
-        overflow= true;
-        break;
-      }
-      *to++= *from;
-    }
-  }
-  *to= 0;
-  return overflow ? (size_t) -1 : (size_t) (to - to_start);
 }
 
 

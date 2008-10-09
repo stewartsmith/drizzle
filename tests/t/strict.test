@@ -440,9 +440,9 @@ INSERT INTO t1 (col3) VALUES(CONVERT('0000-00-00',DATETIME));
 drop table t1;
 
 
-# Test INSERT with TINYINT
+# Test INSERT with int
 
-CREATE TABLE t1(col1 TINYINT, col2 TINYINT UNSIGNED);
+CREATE TABLE t1(col1 int, col2 int UNSIGNED);
 INSERT INTO t1 VALUES(-128,0),(0,0),(127,255),('-128','0'),('0','0'),('127','255'),(-128.0,0.0),(0.0,0.0),(127.0,255.0);
 # Test that we restored the mode checking properly after an ok query
 SELECT MOD(col1,0) FROM t1 WHERE col1 > 0 LIMIT 2;
@@ -498,9 +498,9 @@ UPDATE IGNORE t1 SET col2=1/NULL where col1=0;
 SELECT * FROM t1;
 DROP TABLE t1;
 
-# Test INSERT with SMALLINT
+# Test INSERT with int
 
-CREATE TABLE t1(col1 SMALLINT, col2 SMALLINT UNSIGNED);
+CREATE TABLE t1(col1 int, col2 int UNSIGNED);
 INSERT INTO t1 VALUES(-32768,0),(0,0),(32767,65535),('-32768','0'),('32767','65535'),(-32768.0,0.0),(32767.0,65535.0);
 
 --error 1264
@@ -994,8 +994,8 @@ insert into t1 (col2) values (cast('abc' as signed integer));
 --error 1292
 insert into t1 (col2) values (10E+0 + 'a');
 --error 1292
-insert into t1 (col2) values (cast('10a' as unsigned integer));
-insert into t1 (col2) values (cast('10' as unsigned integer));
+insert into t1 (col2) values (cast('10a' as integer));
+insert into t1 (col2) values (cast('10' as integer));
 insert into t1 (col2) values (cast('10' as signed integer));
 insert into t1 (col2) values (10E+0 + '0 ');
 select * from t1;
@@ -1039,7 +1039,7 @@ drop table t1;
 #
 # Test of inserting an invalid value via a stored procedure (Bug #5907)
 #
-create table t1 (col1 tinyint);
+create table t1 (col1 int);
 drop procedure if exists t1;
 delimiter |;
 create procedure t1 () begin declare exit handler for sqlexception
@@ -1105,7 +1105,7 @@ create table t1(a varbinary(65537));
 
 set @@sql_mode='traditional';
 create table t1(a int, b date not null);                                       
-alter table t1 modify a bigint unsigned not null;
+alter table t1 modify a bigint not null;
 show create table t1;
 drop table t1;
 
@@ -1169,11 +1169,11 @@ drop table t1;
 # Bug #26359: Strings becoming truncated and converted to numbers under STRICT mode
 #
 set sql_mode= 'traditional';
-create table t1(col1 tinyint, col2 tinyint unsigned, 
-  col3 smallint, col4 smallint unsigned,
-  col5 mediumint, col6 mediumint unsigned,
-  col7 int, col8 int unsigned,
-  col9 bigint, col10 bigint unsigned);
+create table t1(col1 int, col2 int, 
+  col3 int, col4 int,
+  col5 mediumint, col6 mediumint,
+  col7 int, col8 int,
+  col9 bigint, col10 bigint);
 --error 1366
 insert into t1(col1) values('-');
 --error 1366

@@ -20,15 +20,15 @@
 	/* Read a record using key */
 	/* Ordinary search_flag is 0 ; Give error if no record with key */
 
-int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
+int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key,
             key_part_map keypart_map, enum ha_rkey_function search_flag)
 {
-  uchar *key_buff;
+  unsigned char *key_buff;
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *keyinfo;
   HA_KEYSEG *last_used_keyseg;
-  uint pack_key_length, use_key_length, nextflag;
-  uint myisam_search_flag;
+  uint32_t pack_key_length, use_key_length, nextflag;
+  uint32_t myisam_search_flag;
   int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
@@ -55,7 +55,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
     assert(keypart_map);
     /* Save the packed key for later use in the second buffer of lastkey. */
     key_buff=info->lastkey+info->s->base.max_key_length;
-    pack_key_length=_mi_pack_key(info,(uint) inx, key_buff, (uchar*) key,
+    pack_key_length=_mi_pack_key(info,(uint) inx, key_buff, (unsigned char*) key,
 				 keypart_map, &last_used_keyseg);
     /* Save packed_key_length for use by the MERGE engine. */
     info->pack_key_length= pack_key_length;
@@ -104,7 +104,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
              (info->index_cond_func && 
               !(res= mi_check_index_cond(info, inx, buf))))
       {
-        uint not_used[2];
+        uint32_t not_used[2];
         /*
           Skip rows that are inserted by other threads since we got a lock
           Note that this can only happen if we are not searching after an

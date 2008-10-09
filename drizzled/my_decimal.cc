@@ -18,7 +18,6 @@
 #include <drizzled/drizzled_error_messages.h>
 
 
-#ifndef DRIZZLE_CLIENT
 /**
   report result of decimal operation.
 
@@ -86,8 +85,8 @@ int decimal_operation_results(int result)
     @retval E_DEC_OOM
 */
 
-int my_decimal2string(uint mask, const my_decimal *d,
-                      uint fixed_prec, uint fixed_dec,
+int my_decimal2string(uint32_t mask, const my_decimal *d,
+                      uint32_t fixed_prec, uint32_t fixed_dec,
                       char filler, String *str)
 {
   /*
@@ -136,7 +135,7 @@ int my_decimal2string(uint mask, const my_decimal *d,
     E_DEC_OVERFLOW
 */
 
-int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
+int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
 		      int scale)
 {
   int err1= E_DEC_OK, err2;
@@ -175,7 +174,7 @@ int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
     E_DEC_OOM
 */
 
-int str2my_decimal(uint mask, const char *from, uint length,
+int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
                    const CHARSET_INFO * charset, my_decimal *decimal_value)
 {
   char *end, *from_end;
@@ -184,7 +183,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    uint dummy_errors;
+    uint32_t dummy_errors;
     tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
     from= tmp.ptr();
     length=  tmp.length();
@@ -226,7 +225,7 @@ my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 }
 
 
-void my_decimal_trim(uint32_t *precision, uint *scale)
+void my_decimal_trim(uint32_t *precision, uint32_t *scale)
 {
   if (!(*precision) && !(*scale))
   {
@@ -240,5 +239,3 @@ void my_decimal_trim(uint32_t *precision, uint *scale)
 /* routines for debugging print */
 #define DIG_PER_DEC1 9
 #define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
-
-#endif /*DRIZZLE_CLIENT*/

@@ -39,7 +39,7 @@ const char *test_names[]=
   "/../usr/my/srclib/dbug",
   "c/../my",
   "/c/../my",
-  NullS,
+  NULL,
 };
 
 int main(int argc __attribute__((unused)), char **argv)

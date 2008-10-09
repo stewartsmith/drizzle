@@ -25,20 +25,20 @@
   Old options is used when recreating database, from myisamchk
 */
 
-int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
-	      uint columns, MI_COLUMNDEF *recinfo,
-	      uint uniques, MI_UNIQUEDEF *uniquedefs,
-	      MI_CREATE_INFO *ci,uint flags)
+int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
+	      uint32_t columns, MI_COLUMNDEF *recinfo,
+	      uint32_t uniques, MI_UNIQUEDEF *uniquedefs,
+	      MI_CREATE_INFO *ci,uint32_t flags)
 {
-  register uint i, j;
+  register uint32_t i, j;
   File dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
-  uint fields,length,max_key_length,packed,pointer,real_length_diff,
+  uint32_t fields,length,max_key_length,packed,pointer,real_length_diff,
        key_length,info_length,key_segs,options,min_key_length_skip,
        base_pos,long_varchar_count,varchar_length,
        max_key_block_length,unique_key_parts,fulltext_keys,offset;
-  uint aligned_key_start, block_length;
+  uint32_t aligned_key_start, block_length;
   ulong reclength, real_reclength,min_pack_length;
   char filename[FN_REFLEN],linkname[FN_REFLEN], *linkname_ptr;
   ulong pack_reclength;
@@ -354,8 +354,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     block_length= (keydef->block_length ? 
                    my_round_up_to_next_power(keydef->block_length) :
                    myisam_block_size);
-    block_length= max(block_length, MI_MIN_KEY_BLOCK_LENGTH);
-    block_length= min(block_length, MI_MAX_KEY_BLOCK_LENGTH);
+    block_length= cmax(block_length, MI_MIN_KEY_BLOCK_LENGTH);
+    block_length= cmin(block_length, MI_MAX_KEY_BLOCK_LENGTH);
 
     keydef->block_length= (uint16_t) MI_BLOCK_SIZE(length-real_length_diff,
                                                  pointer,MI_MAX_KEYPTR_SIZE,
@@ -443,7 +443,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     got from MYI file header (see also myisampack.c:save_state)
   */
   share.base.key_reflength=
-    mi_get_pointer_length(max(ci->key_file_length,tmp),3);
+    mi_get_pointer_length(cmax(ci->key_file_length,tmp),3);
   share.base.keys= share.state.header.keys= keys;
   share.state.header.uniques= uniques;
   share.state.header.fulltext_keys= fulltext_keys;
@@ -476,7 +476,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   share.base.min_block_length=
     (share.base.pack_reclength+3 < MI_EXTEND_BLOCK_LENGTH &&
      ! share.base.blobs) ?
-    max(share.base.pack_reclength,MI_MIN_BLOCK_LENGTH) :
+    cmax(share.base.pack_reclength,MI_MIN_BLOCK_LENGTH) :
     MI_EXTEND_BLOCK_LENGTH;
   if (! (flags & HA_DONT_TOUCH_DATA))
     share.state.create_time= (long) time((time_t*) 0);
@@ -603,7 +603,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   /* Write key and keyseg definitions */
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
-    uint sp_segs= 0;
+    uint32_t sp_segs= 0;
 
     if (mi_keydef_write(file, &keydefs[i]))
       goto err;
@@ -684,7 +684,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (my_close(file,MYF(0)))
     goto err;
-  my_free((char*) rec_per_key_part,MYF(0));
+  free((char*) rec_per_key_part);
   return(0);
 
 err:
@@ -692,7 +692,7 @@ err:
   save_errno=my_errno;
   switch (errpos) {
   case 3:
-    VOID(my_close(dfile,MYF(0)));
+    my_close(dfile,MYF(0));
     /* fall through */
   case 2:
     /* QQ: Tõnu should add a call to my_raid_delete() here */
@@ -702,18 +702,18 @@ err:
 			   MYF(0));
     /* fall through */
   case 1:
-    VOID(my_close(file,MYF(0)));
+    my_close(file,MYF(0));
     if (! (flags & HA_DONT_TOUCH_DATA))
       my_delete_with_symlink(fn_format(filename,name,"",MI_NAME_IEXT,
                                        MY_UNPACK_FILENAME | MY_APPEND_EXT),
 			     MYF(0));
   }
-  my_free((char*) rec_per_key_part, MYF(0));
+  free((char*) rec_per_key_part);
   return(my_errno=save_errno);		/* return the fatal errno */
 }
 
 
-uint mi_get_pointer_length(uint64_t file_length, uint def)
+uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def)
 {
   assert(def >= 2 && def <= 7);
   if (file_length)				/* If not default */

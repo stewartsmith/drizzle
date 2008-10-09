@@ -22,10 +22,10 @@
 	   based on the position of the last used key!
 	*/
 
-int mi_rnext(MI_INFO *info, uchar *buf, int inx)
+int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 {
   int error,changed;
-  uint flag;
+  uint32_t flag;
   int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)

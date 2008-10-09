@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_SQL_PARSE_H
 #define DRIZZLE_SERVER_SQL_PARSE_H
@@ -37,9 +41,9 @@ Item *negate_expression(THD *thd, Item *expr);
 
 bool test_if_data_home_dir(const char *dir);
 
-bool check_identifier_name(LEX_STRING *str, uint max_char_length,
-                           uint err_code, const char *param_for_err_msg);
-inline bool check_identifier_name(LEX_STRING *str, uint err_code)
+bool check_identifier_name(LEX_STRING *str, uint32_t max_char_length,
+                           uint32_t err_code, const char *param_for_err_msg);
+inline bool check_identifier_name(LEX_STRING *str, uint32_t err_code)
 {
   return check_identifier_name(str, NAME_CHAR_LEN, err_code, "");
 }
@@ -49,9 +53,9 @@ inline bool check_identifier_name(LEX_STRING *str)
 }
 
 bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
-                              uint max_byte_length);
+                              uint32_t max_byte_length);
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, const CHARSET_INFO * const cs,
+                              uint32_t max_char_length, const CHARSET_INFO * const cs,
                               bool no_error);
 
 #endif /* DRIZZLE_SERVER_SQL_PARSE_H */

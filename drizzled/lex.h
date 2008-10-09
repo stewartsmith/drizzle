@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* This file includes all reserved words and functions */
@@ -226,8 +230,6 @@ static SYMBOL symbols[] = {
   { "INSERT_METHOD",    SYM(INSERT_METHOD)},
   { "INSTALL",          SYM(INSTALL_SYM)},
   { "INT",		SYM(INT_SYM)},
-  { "INT1",		SYM(TINYINT)},
-  { "INT2",		SYM(SMALLINT)},
   { "INT4",		SYM(INT_SYM)},
   { "INT8",		SYM(BIGINT)},
   { "INTEGER",		SYM(INT_SYM)},
@@ -403,11 +405,9 @@ static SYMBOL symbols[] = {
   { "SHARE",		SYM(SHARE_SYM)},
   { "SHOW",		SYM(SHOW)},
   { "SHUTDOWN",		SYM(SHUTDOWN)},
-  { "SIGNED",		SYM(SIGNED_SYM)},
   { "SIMPLE",		SYM(SIMPLE_SYM)},
   { "SLAVE",            SYM(SLAVE)},
   { "SNAPSHOT",         SYM(SNAPSHOT_SYM)},
-  { "SMALLINT",		SYM(SMALLINT)},
   { "SOCKET",		SYM(SOCKET_SYM)},
   { "SOME",             SYM(ANY_SYM)},
   { "SONAME",		SYM(SONAME_SYM)},
@@ -460,7 +460,6 @@ static SYMBOL symbols[] = {
   { "TIMESTAMPADD",     SYM(TIMESTAMP_ADD)},
   { "TIMESTAMPDIFF",    SYM(TIMESTAMP_DIFF)},
   { "TINYBLOB",		SYM(BLOB_SYM)},
-  { "TINYINT",		SYM(TINYINT)},
   { "TINYTEXT",		SYM(TEXT_SYM)},
   { "TO",		SYM(TO_SYM)},
   { "TRAILING",		SYM(TRAILING)},
@@ -478,8 +477,6 @@ static SYMBOL symbols[] = {
   { "UNIQUE",		SYM(UNIQUE_SYM)},
   { "UNKNOWN",		SYM(UNKNOWN_SYM)},
   { "UNLOCK",		SYM(UNLOCK_SYM)},
-  { "UNINSTALL",        SYM(UNINSTALL_SYM)},
-  { "UNSIGNED",		SYM(UNSIGNED)},
   { "UNTIL",		SYM(UNTIL_SYM)},
   { "UPDATE",		SYM(UPDATE_SYM)},
   { "UPGRADE",          SYM(UPGRADE_SYM)},
@@ -507,7 +504,6 @@ static SYMBOL symbols[] = {
   { "WHERE",		SYM(WHERE)},
   { "WITH",		SYM(WITH)},
   { "WORK",		SYM(WORK_SYM)},
-  { "WRAPPER",		SYM(WRAPPER_SYM)},
   { "WRITE",		SYM(WRITE_SYM)},
   { "VIRTUAL",          SYM(VIRTUAL_SYM)},
   { "XOR",		SYM(XOR)},

@@ -42,7 +42,7 @@ const LEX_STRING null_lex_str= {NULL, 0};
   used when comparing keywords
 */
 
-static uchar to_upper_lex[]=
+static unsigned char to_upper_lex[]=
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -74,10 +74,10 @@ const char * index_hint_type_name[] =
   "FORCE INDEX"
 };
 
-inline int lex_casecmp(const char *s, const char *t, uint len)
+inline int lex_casecmp(const char *s, const char *t, uint32_t len)
 {
   while (len-- != 0 &&
-	 to_upper_lex[(uchar) *s++] == to_upper_lex[(uchar) *t++]) ;
+	 to_upper_lex[(unsigned char) *s++] == to_upper_lex[(unsigned char) *t++]) ;
   return (int) len+1;
 }
 
@@ -86,11 +86,11 @@ inline int lex_casecmp(const char *s, const char *t, uint len)
 
 void lex_init(void)
 {
-  uint i;
+  uint32_t i;
   for (i=0 ; i < array_elements(symbols) ; i++)
-    symbols[i].length=(uchar) strlen(symbols[i].name);
+    symbols[i].length=(unsigned char) strlen(symbols[i].name);
   for (i=0 ; i < array_elements(sql_functions) ; i++)
-    sql_functions[i].length=(uchar) strlen(sql_functions[i].name);
+    sql_functions[i].length=(unsigned char) strlen(sql_functions[i].name);
 
   return;
 }
@@ -163,7 +163,7 @@ void Lex_input_stream::body_utf8_start(THD *thd, const char *begin_ptr)
   assert(begin_ptr);
   assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
 
-  uint body_utf8_length=
+  uint32_t body_utf8_length=
     (m_buf_length / thd->variables.character_set_client->mbminlen) *
     my_charset_utf8_bin.mbmaxlen;
 
@@ -361,8 +361,8 @@ void lex_end(LEX *lex)
 {
   if (lex->yacc_yyss)
   {
-    my_free(lex->yacc_yyss, MYF(0));
-    my_free(lex->yacc_yyvs, MYF(0));
+    free(lex->yacc_yyss);
+    free(lex->yacc_yyvs);
     lex->yacc_yyss= 0;
     lex->yacc_yyvs= 0;
   }
@@ -372,11 +372,14 @@ void lex_end(LEX *lex)
                      lex->plugins.elements);
   reset_dynamic(&lex->plugins);
 
+  delete lex->result;
+  lex->result= 0;
+
   return;
 }
 
 
-static int find_keyword(Lex_input_stream *lip, uint len, bool function)
+static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 {
   const char *tok= lip->get_tok_start();
 
@@ -405,7 +408,7 @@ static int find_keyword(Lex_input_stream *lip, uint len, bool function)
     1         name isn't a keyword
 */
 
-bool is_keyword(const char *name, uint len)
+bool is_keyword(const char *name, uint32_t len)
 {
   assert(len != 0);
   return get_hash_symbol(name,len,0)!=0;
@@ -419,7 +422,7 @@ bool is_lex_native_function(const LEX_STRING *name)
 
 /* make a copy of token before ptr and set yytoklen */
 
-static LEX_STRING get_token(Lex_input_stream *lip, uint skip, uint length)
+static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
   LEX_STRING tmp;
   lip->yyUnget();                       // ptr points now after last token char
@@ -440,8 +443,8 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint skip, uint length)
 */
 
 static LEX_STRING get_quoted_token(Lex_input_stream *lip,
-                                   uint skip,
-                                   uint length, char quote)
+                                   uint32_t skip,
+                                   uint32_t length, char quote)
 {
   LEX_STRING tmp;
   const char *from, *end;
@@ -476,8 +479,8 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  register uchar c,sep;
-  uint found_escape=0;
+  register unsigned char c,sep;
+  uint32_t found_escape=0;
   const CHARSET_INFO * const cs= lip->m_thd->charset();
 
   lip->tok_bitmap= 0;
@@ -602,22 +605,22 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 /*
 ** Calc type of integer; long integer, int64_t integer or real.
 ** Returns smallest type that match the string.
-** When using unsigned long long values the result is converted to a real
+** When using uint64_t values the result is converted to a real
 ** because else they will be unexpected sign changes because all calculation
 ** is done with int64_t or double.
 */
 
 static const char *long_str="2147483647";
-static const uint long_len=10;
+static const uint32_t long_len=10;
 static const char *signed_long_str="-2147483648";
 static const char *int64_t_str="9223372036854775807";
-static const uint int64_t_len=19;
+static const uint32_t int64_t_len=19;
 static const char *signed_int64_t_str="-9223372036854775808";
-static const uint signed_int64_t_len=19;
+static const uint32_t signed_int64_t_len=19;
 static const char *unsigned_int64_t_str="18446744073709551615";
-static const uint unsigned_int64_t_len=20;
+static const uint32_t unsigned_int64_t_len=20;
 
-static inline uint int_token(const char *str,uint length)
+static inline uint32_t int_token(const char *str,uint32_t length)
 {
   if (length < long_len)			// quick normal case
     return NUM;
@@ -639,7 +642,7 @@ static inline uint int_token(const char *str,uint length)
   if (length < long_len)
     return NUM;
 
-  uint smaller,bigger;
+  uint32_t smaller,bigger;
   const char *cmp;
   if (neg)
   {
@@ -686,7 +689,7 @@ static inline uint int_token(const char *str,uint length)
     }
   }
   while (*cmp && *cmp++ == *str++) ;
-  return ((uchar) str[-1] <= (uchar) cmp[-1]) ? smaller : bigger;
+  return ((unsigned char) str[-1] <= (unsigned char) cmp[-1]) ? smaller : bigger;
 }
 
 
@@ -723,19 +726,19 @@ int MYSQLlex(void *arg, void *yythd)
   switch(token) {
   case WITH:
     /*
-      Parsing 'WITH' 'ROLLUP' or 'WITH' 'CUBE' requires 2 look ups,
+      Parsing 'WITH' 'ROLLUP' requires 2 look ups,
       which makes the grammar LALR(2).
       Replace by a single 'WITH_ROLLUP' or 'WITH_CUBE' token,
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
     token= lex_one_token(arg, yythd);
-    switch(token) {
-    case CUBE_SYM:
-      return WITH_CUBE_SYM;
-    case ROLLUP_SYM:
+    if (token == ROLLUP_SYM)
+    {
       return WITH_ROLLUP_SYM;
-    default:
+    }
+    else
+    {
       /*
         Save the token following 'WITH'
       */
@@ -764,8 +767,8 @@ int lex_one_token(void *arg, void *yythd)
   LEX *lex= thd->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   const CHARSET_INFO * const cs= thd->charset();
-  uchar *state_map= cs->state_map;
-  uchar *ident_map= cs->ident_map;
+  unsigned char *state_map= cs->state_map;
+  unsigned char *ident_map= cs->ident_map;
 
   lip->yylval=yylval;			// The global state
 
@@ -1034,7 +1037,7 @@ int lex_one_token(void *arg, void *yythd)
 
     case MY_LEX_USER_VARIABLE_DELIMITER:	// Found quote char
     {
-      uint double_quotes= 0;
+      uint32_t double_quotes= 0;
       char quote_char= c;                       // Used char
       while ((c=lip->yyGet()))
       {
@@ -1565,8 +1568,6 @@ void st_select_lex::init_query()
   select_n_having_items= 0;
   subquery_in_having= explicit_limit= 0;
   is_item_list_lookup= 0;
-  first_execution= 1;
-  first_cond_optimization= 1;
   parsing_place= NO_MATTER;
   exclude_from_table_unique_test= false;
   nest_level= 0;
@@ -1591,7 +1592,7 @@ void st_select_lex::init_select()
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
   order_list.first= 0;
-  order_list.next= (uchar**) &order_list.first;
+  order_list.next= (unsigned char**) &order_list.first;
   /* Set limit and offset to default values */
   select_limit= 0;      /* denotes the default limit = HA_POS_ERROR */
   offset_limit= 0;      /* denotes the default offset = 0 */
@@ -1814,7 +1815,7 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
 bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
-uint st_select_lex_node::get_in_sum_expr()           { return 0; }
+uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
 TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
@@ -1904,7 +1905,7 @@ bool st_select_lex::inc_in_sum_expr()
 }
 
 
-uint st_select_lex::get_in_sum_expr()
+uint32_t st_select_lex::get_in_sum_expr()
 {
   return in_sum_expr;
 }
@@ -1926,18 +1927,13 @@ uint32_t st_select_lex::get_table_join_options()
 }
 
 
-bool st_select_lex::setup_ref_array(THD *thd, uint order_group_num)
+bool st_select_lex::setup_ref_array(THD *thd, uint32_t order_group_num)
 {
   if (ref_pointer_array)
     return 0;
 
-  /*
-    We have to create array in prepared statement memory if it is
-    prepared statement
-  */
-  Query_arena *arena= thd->stmt_arena;
   return (ref_pointer_array=
-          (Item **)arena->alloc(sizeof(Item*) * (n_child_sum_items +
+          (Item **)thd->alloc(sizeof(Item*) * (n_child_sum_items +
                                                  item_list.elements +
                                                  select_n_having_items +
                                                  select_n_where_fields +
@@ -1988,7 +1984,7 @@ void st_select_lex::print_order(String *str,
     if (order->counter_used)
     {
       char buffer[20];
-      uint length= snprintf(buffer, 20, "%d", order->counter);
+      uint32_t length= snprintf(buffer, 20, "%d", order->counter);
       str->append(buffer, length);
     }
     else
@@ -2024,7 +2020,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
                     ((Item_in_subselect*)item)->exec_method ==
                     Item_in_subselect::MATERIALIZATION) ?
                    true :
-                   (select_limit->val_int() == 1LL) &&
+                   (select_limit->val_int() == 1L) &&
                    offset_limit == 0));
       return;
     }
@@ -2367,7 +2363,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
     select_limit_val= HA_POS_ERROR;
 #endif
   offset_limit_cnt= (ha_rows)(sl->offset_limit ? sl->offset_limit->val_uint() :
-                                                 0ULL);
+                                                 0UL);
   select_limit_cnt= select_limit_val + offset_limit_cnt;
   if (select_limit_cnt < select_limit_val)
     select_limit_cnt= HA_POS_ERROR;		// no limit
@@ -2413,7 +2409,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
     {
       select_lex.context.table_list= 
         select_lex.context.first_name_resolution_table= first->next_local;
-      select_lex.table_list.first= (uchar*) (first->next_local);
+      select_lex.table_list.first= (unsigned char*) (first->next_local);
       select_lex.table_list.elements--;	//safety
       first->next_local= 0;
       /*
@@ -2494,7 +2490,7 @@ void st_lex::link_first_table_back(TableList *first,
     {
       first->next_local= (TableList*) select_lex.table_list.first;
       select_lex.context.table_list= first;
-      select_lex.table_list.first= (uchar*) first;
+      select_lex.table_list.first= (unsigned char*) first;
       select_lex.table_list.elements++;	//safety
     }
   }
@@ -2679,7 +2675,7 @@ void st_select_lex::alloc_index_hints (THD *thd)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool st_select_lex::add_index_hint (THD *thd, char *str, uint length)
+bool st_select_lex::add_index_hint (THD *thd, char *str, uint32_t length)
 {
   return index_hints->push_front (new (thd->mem_root) 
                                  Index_hint(current_index_hint_type,

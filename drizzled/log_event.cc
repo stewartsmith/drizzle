@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef DRIZZLE_CLIENT
-
 #include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include "rpl_mi.h"
@@ -25,12 +23,13 @@
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
 
-#endif /* !DRIZZLE_CLIENT */
+#include <algorithm>
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
 
 #include <libdrizzle/gettext.h>
+#include <libdrizzle/libdrizzle.h>
 
 #define log_cs	&my_charset_utf8_general_ci
 
@@ -46,7 +45,6 @@
 #define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
 
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 static const char *HA_ERR(int i)
 {
   switch (i) {
@@ -125,7 +123,7 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
   const char *handler_error= HA_ERR(ha_error);
   char buff[MAX_SLAVE_ERRMSG], *slider;
   const char *buff_end= buff + sizeof(buff);
-  uint len;
+  uint32_t len;
   List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
   DRIZZLE_ERROR *err;
   buff[0]= 0;
@@ -134,20 +132,20 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
        slider += len, err= it++)
   {
     len= snprintf(slider, buff_end - slider,
-                  " %s, Error_code: %d;", err->msg, err->code);
+                  _(" %s, Error_code: %d;"), err->msg, err->code);
   }
   
   rli->report(level, thd->is_error()? thd->main_da.sql_errno() : 0,
-              "Could not execute %s event on table %s.%s;"
-              "%s handler error %s; "
-              "the event's master log %s, end_log_pos %lu",
+              _("Could not execute %s event on table %s.%s;"
+                "%s handler error %s; "
+                "the event's master log %s, end_log_pos %lu"),
               type, table->s->db.str,
               table->s->table_name.str,
               buff,
-              handler_error == NULL? "<unknown>" : handler_error,
+              handler_error == NULL? _("<unknown>") : handler_error,
               log_name, pos);
 }
-#endif
+
 
 /*
   Cache that will automatically be written to a dedicated file on
@@ -227,38 +225,11 @@ private:
   flag_set m_flags;
 };
 
-uint debug_not_change_ts_if_art_event= 1; // bug#29309 simulation
+uint32_t debug_not_change_ts_if_art_event= 1; // bug#29309 simulation
 
 /*
   pretty_print_str()
 */
-
-#ifdef DRIZZLE_CLIENT
-static void pretty_print_str(IO_CACHE* cache, const char* str, int len)
-{
-  const char* end = str + len;
-  my_b_printf(cache, "\'");
-  while (str < end)
-  {
-    char c;
-    switch ((c=*str++)) {
-    case '\n': my_b_printf(cache, "\\n"); break;
-    case '\r': my_b_printf(cache, "\\r"); break;
-    case '\\': my_b_printf(cache, "\\\\"); break;
-    case '\b': my_b_printf(cache, "\\b"); break;
-    case '\t': my_b_printf(cache, "\\t"); break;
-    case '\'': my_b_printf(cache, "\\'"); break;
-    case 0   : my_b_printf(cache, "\\0"); break;
-    default:
-      my_b_printf(cache, "%c", c);
-      break;
-    }
-  }
-  my_b_printf(cache, "\'");
-}
-#endif /* DRIZZLE_CLIENT */
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 static void clear_all_errors(THD *thd, Relay_log_info *rli)
 {
@@ -277,14 +248,12 @@ inline int ignored_error_code(int err_code)
   return ((err_code == ER_SLAVE_IGNORED_TABLE) ||
           (use_slave_mask && bitmap_is_set(&slave_error_mask, err_code)));
 }
-#endif
 
 
 /*
   pretty_print_str()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 static char *pretty_print_str(char *packet, const char *str, int len)
 {
   const char *end= str + len;
@@ -309,10 +278,7 @@ static char *pretty_print_str(char *packet, const char *str, int len)
   *pos++= '\'';
   return pos;
 }
-#endif /* !DRIZZLE_CLIENT */
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Creates a temporary name for load data infile:.
@@ -326,7 +292,7 @@ static char *pretty_print_str(char *packet, const char *str, int len)
     Pointer to start of extension
 */
 
-static char *slave_load_file_stem(char *buf, uint file_id,
+static char *slave_load_file_stem(char *buf, uint32_t file_id,
                                   int event_server_id, const char *ext)
 {
   char *res;
@@ -339,13 +305,10 @@ static char *slave_load_file_stem(char *buf, uint file_id,
   buf= int10_to_str(event_server_id, buf, 10);
   *buf++ = '-';
   res= int10_to_str(file_id, buf, 10);
-  stpcpy(res, ext);                             // Add extension last
+  my_stpcpy(res, ext);                             // Add extension last
   return res;                                   // Pointer to extension
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Delete all temporary files used for SQL_LOAD.
@@ -355,7 +318,7 @@ static void cleanup_load_tmpdir()
 {
   MY_DIR *dirp;
   FILEINFO *file;
-  uint i;
+  uint32_t i;
   char fname[FN_REFLEN], prefbuf[31], *p;
 
   if (!(dirp=my_dir(slave_load_tmpdir,MYF(MY_WME))))
@@ -386,19 +349,18 @@ static void cleanup_load_tmpdir()
 
   my_dirend(dirp);
 }
-#endif
 
 
 /*
   write_str()
 */
 
-static bool write_str(IO_CACHE *file, const char *str, uint length)
+static bool write_str(IO_CACHE *file, const char *str, uint32_t length)
 {
-  uchar tmp[1];
-  tmp[0]= (uchar) length;
+  unsigned char tmp[1];
+  tmp[0]= (unsigned char) length;
   return (my_b_safe_write(file, tmp, sizeof(tmp)) ||
-	  my_b_safe_write(file, (uchar*) str, length));
+	  my_b_safe_write(file, (unsigned char*) str, length));
 }
 
 
@@ -409,7 +371,7 @@ static bool write_str(IO_CACHE *file, const char *str, uint length)
 static inline int read_str(const char **buf, const char *buf_end,
                            const char **str, uint8_t *len)
 {
-  if (*buf + ((uint) (uchar) **buf) >= buf_end)
+  if (*buf + ((uint) (unsigned char) **buf) >= buf_end)
     return 1;
   *len= (uint8_t) **buf;
   *str= (*buf)+1;
@@ -422,7 +384,7 @@ static inline int read_str(const char **buf, const char *buf_end,
   Transforms a string into "" or its expression in 0x... form.
 */
 
-char *str_to_hex(char *to, const char *from, uint len)
+char *str_to_hex(char *to, const char *from, uint32_t len)
 {
   if (len)
   {
@@ -431,11 +393,10 @@ char *str_to_hex(char *to, const char *from, uint len)
     to= octet2hex(to, from, len);
   }
   else
-    to= stpcpy(to, "\"\"");
+    to= my_stpcpy(to, "\"\"");
   return to;                               // pointer to end 0 of 'to'
 }
 
-#ifndef DRIZZLE_CLIENT
 
 /**
   Append a version of the 'from' string suitable for use in a query to
@@ -459,36 +420,13 @@ append_query_string(const CHARSET_INFO * const csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= escape_string_for_drizzle(csinfo, ptr, 0,
-                                    from->ptr(), from->length());
+    ptr+= drizzle_escape_string(ptr, from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);
   return 0;
 }
-#endif
 
-
-/**
-  Prints a "session_var=value" string. Used by mysqlbinlog to print some SET
-  commands just before it prints a query.
-*/
-
-#ifdef DRIZZLE_CLIENT
-
-static void print_set_option(IO_CACHE* file, uint32_t bits_changed,
-                             uint32_t option, uint32_t flags, const char* name,
-                             bool* need_comma)
-{
-  if (bits_changed & option)
-  {
-    if (*need_comma)
-      my_b_printf(file,", ");
-    my_b_printf(file,"%s=%d", name, test(flags & option));
-    *need_comma= 1;
-  }
-}
-#endif
 
 /**************************************************************************
 	Log_event methods (= the parent class of all events)
@@ -542,7 +480,6 @@ const char* Log_event::get_type_str()
   Log_event::Log_event()
 */
 
-#ifndef DRIZZLE_CLIENT
 Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
@@ -571,7 +508,6 @@ Log_event::Log_event()
   when=		0;
   log_pos=	0;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /*
@@ -582,11 +518,9 @@ Log_event::Log_event(const char* buf,
                      const Format_description_log_event* description_event)
   :temp_buf(0), cache_stmt(0)
 {
-#ifndef DRIZZLE_CLIENT
-  thd = 0;
-#endif
-  when = uint4korr(buf);
-  server_id = uint4korr(buf + SERVER_ID_OFFSET);
+  thd= 0;
+  when= uint4korr(buf);
+  server_id= uint4korr(buf + SERVER_ID_OFFSET);
   data_written= uint4korr(buf + EVENT_LEN_OFFSET);
   if (description_event->binlog_version==1)
   {
@@ -645,8 +579,6 @@ Log_event::Log_event(const char* buf,
   /* otherwise, go on with reading the header from buf (nothing now) */
 }
 
-#ifndef DRIZZLE_CLIENT
-#ifdef HAVE_REPLICATION
 
 int Log_event::do_update_pos(Relay_log_info *rli)
 {
@@ -725,7 +657,6 @@ int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
   pack_info(protocol);
   return protocol->write();
 }
-#endif /* HAVE_REPLICATION */
 
 
 /**
@@ -754,7 +685,7 @@ void Log_event::init_show_field_list(List<Item>* field_list)
 
 bool Log_event::write_header(IO_CACHE* file, ulong event_data_length)
 {
-  uchar header[LOG_EVENT_HEADER_LEN];
+  unsigned char header[LOG_EVENT_HEADER_LEN];
   ulong now;
 
   /* Store number of bytes that will be written by this event */
@@ -839,7 +770,7 @@ int Log_event::read_log_event(IO_CACHE* file, String* packet,
 
   if (log_lock)
     pthread_mutex_lock(log_lock);
-  if (my_b_read(file, (uchar*) buf, sizeof(buf)))
+  if (my_b_read(file, (unsigned char*) buf, sizeof(buf)))
   {
     /*
       If the read hits eof, we must report it as eof so the caller
@@ -897,17 +828,10 @@ end:
     pthread_mutex_unlock(log_lock);
   return(result);
 }
-#endif /* !DRIZZLE_CLIENT */
 
-#ifndef DRIZZLE_CLIENT
 #define UNLOCK_MUTEX if (log_lock) pthread_mutex_unlock(log_lock);
 #define LOCK_MUTEX if (log_lock) pthread_mutex_lock(log_lock);
-#else
-#define UNLOCK_MUTEX
-#define LOCK_MUTEX
-#endif
 
-#ifndef DRIZZLE_CLIENT
 /**
   @note
     Allocates memory;  The caller is responsible for clean-up.
@@ -916,11 +840,6 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
 				     pthread_mutex_t* log_lock,
                                      const Format_description_log_event
                                      *description_event)
-#else
-Log_event* Log_event::read_log_event(IO_CACHE* file,
-                                     const Format_description_log_event
-                                     *description_event)
-#endif
 {
   assert(description_event != 0);
   char head[LOG_EVENT_MINIMAL_HEADER_LEN];
@@ -931,11 +850,11 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
     of 13 bytes, whereas LOG_EVENT_MINIMAL_HEADER_LEN is 19 bytes (it's
     "minimal" over the set {MySQL >=4.0}).
   */
-  uint header_size= min(description_event->common_header_len,
+  uint32_t header_size= cmin(description_event->common_header_len,
                         LOG_EVENT_MINIMAL_HEADER_LEN);
 
   LOCK_MUTEX;
-  if (my_b_read(file, (uchar *) head, header_size))
+  if (my_b_read(file, (unsigned char *) head, header_size))
   {
     UNLOCK_MUTEX;
     /*
@@ -945,13 +864,13 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
     */
     return(0);
   }
-  uint data_len = uint4korr(head + EVENT_LEN_OFFSET);
+  uint32_t data_len = uint4korr(head + EVENT_LEN_OFFSET);
   char *buf= 0;
   const char *error= 0;
   Log_event *res=  0;
 #ifndef max_allowed_packet
   THD *thd=current_thd;
-  uint max_allowed_packet= thd ? thd->variables.max_allowed_packet : ~(ulong)0;
+  uint32_t max_allowed_packet= thd ? thd->variables.max_allowed_packet : ~(ulong)0;
 #endif
 
   if (data_len > max_allowed_packet)
@@ -974,7 +893,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
   }
   buf[data_len] = 0;
   memcpy(buf, head, header_size);
-  if (my_b_read(file, (uchar*) buf + header_size, data_len - header_size))
+  if (my_b_read(file, (unsigned char*) buf + header_size, data_len - header_size))
   {
     error = "read error";
     goto err;
@@ -990,7 +909,7 @@ err:
     sql_print_error(_("Error in Log_event::read_log_event(): "
                     "'%s', data_len: %d, event_type: %d"),
 		    error,data_len,head[EVENT_TYPE_OFFSET]);
-    my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
+    free(buf);
     /*
       The SQL slave thread will check if file->error<0 to know
       if there was an I/O error. Even if there is no "low-level" I/O errors
@@ -1010,7 +929,7 @@ err:
   constructors.
 */
 
-Log_event* Log_event::read_log_event(const char* buf, uint event_len,
+Log_event* Log_event::read_log_event(const char* buf, uint32_t event_len,
 				     const char **error,
                                      const Format_description_log_event *description_event)
 {
@@ -1026,7 +945,7 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     return(NULL); // general sanity check - will fail on a partial read
   }
 
-  uint event_type= buf[EVENT_TYPE_OFFSET];
+  uint32_t event_type= buf[EVENT_TYPE_OFFSET];
   if (event_type > description_event->number_of_event_types &&
       event_type != FORMAT_DESCRIPTION_EVENT)
   {
@@ -1100,7 +1019,6 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case FORMAT_DESCRIPTION_EVENT:
       ev = new Format_description_log_event(buf, event_len, description_event);
       break;
-#if defined(HAVE_REPLICATION) 
     case WRITE_ROWS_EVENT:
       ev = new Write_rows_log_event(buf, event_len, description_event);
       break;
@@ -1113,7 +1031,6 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case TABLE_MAP_EVENT:
       ev = new Table_map_log_event(buf, event_len, description_event);
       break;
-#endif
     case BEGIN_LOAD_QUERY_EVENT:
       ev = new Begin_load_query_log_event(buf, event_len, description_event);
       break;
@@ -1141,195 +1058,12 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
   if (!ev || !ev->is_valid())
   {
     delete ev;
-#ifdef DRIZZLE_CLIENT
-    if (!force_opt) /* then mysqlbinlog dies */
-    {
-      *error= "Found invalid event in binary log";
-      return(0);
-    }
-    ev= new Unknown_log_event(buf, description_event);
-#else
     *error= "Found invalid event in binary log";
     return(0);
-#endif
   }
   return(ev);  
 }
 
-#ifdef DRIZZLE_CLIENT
-
-/*
-  Log_event::print_header()
-*/
-
-void Log_event::print_header(IO_CACHE* file,
-                             PRINT_EVENT_INFO* print_event_info,
-                             bool is_more __attribute__((unused)))
-{
-  char llbuff[22];
-  my_off_t hexdump_from= print_event_info->hexdump_from;
-
-  my_b_printf(file, "#");
-  print_timestamp(file);
-  my_b_printf(file, " server id %d  end_log_pos %s ", server_id,
-              llstr(log_pos,llbuff));
-
-  /* mysqlbinlog --hexdump */
-  if (print_event_info->hexdump_from)
-  {
-    my_b_printf(file, "\n");
-    uchar *ptr= (uchar*)temp_buf;
-    my_off_t size=
-      uint4korr(ptr + EVENT_LEN_OFFSET) - LOG_EVENT_MINIMAL_HEADER_LEN;
-    my_off_t i;
-
-    /* Header len * 4 >= header len * (2 chars + space + extra space) */
-    char *h, hex_string[LOG_EVENT_MINIMAL_HEADER_LEN*4]= {0};
-    char *c, char_string[16+1]= {0};
-
-    /* Pretty-print event common header if header is exactly 19 bytes */
-    if (print_event_info->common_header_len == LOG_EVENT_MINIMAL_HEADER_LEN)
-    {
-      char emit_buf[256];               // Enough for storing one line
-      my_b_printf(file, "# Position  Timestamp   Type   Master ID        "
-                  "Size      Master Pos    Flags \n");
-      int const bytes_written=
-        snprintf(emit_buf, sizeof(emit_buf),
-                 "# %8.8lx %02x %02x %02x %02x   %02x   "
-                 "%02x %02x %02x %02x   %02x %02x %02x %02x   "
-                 "%02x %02x %02x %02x   %02x %02x\n",
-                 (unsigned long) hexdump_from,
-                 ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6],
-                 ptr[7], ptr[8], ptr[9], ptr[10], ptr[11], ptr[12], ptr[13],
-                 ptr[14], ptr[15], ptr[16], ptr[17], ptr[18]);
-      assert(bytes_written >= 0);
-      assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-      my_b_write(file, (uchar*) emit_buf, bytes_written);
-      ptr += LOG_EVENT_MINIMAL_HEADER_LEN;
-      hexdump_from += LOG_EVENT_MINIMAL_HEADER_LEN;
-    }
-
-    /* Rest of event (without common header) */
-    for (i= 0, c= char_string, h=hex_string;
-	 i < size;
-	 i++, ptr++)
-    {
-      snprintf(h, 4, "%02x ", *ptr);
-      h += 3;
-
-      *c++= my_isalnum(&my_charset_bin, *ptr) ? *ptr : '.';
-
-      if (i % 16 == 15)
-      {
-        /*
-          my_b_printf() does not support full printf() formats, so we
-          have to do it this way.
-
-          TODO: Rewrite my_b_printf() to support full printf() syntax.
-         */
-        char emit_buf[256];
-        int const bytes_written=
-          snprintf(emit_buf, sizeof(emit_buf),
-                   "# %8.8lx %-48.48s |%16s|\n",
-                   (unsigned long) (hexdump_from + (i & 0xfffffff0)),
-                   hex_string, char_string);
-        assert(bytes_written >= 0);
-        assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-	my_b_write(file, (uchar*) emit_buf, bytes_written);
-	hex_string[0]= 0;
-	char_string[0]= 0;
-	c= char_string;
-	h= hex_string;
-      }
-      else if (i % 8 == 7) *h++ = ' ';
-    }
-    *c= '\0';
-
-    if (hex_string[0])
-    {
-      char emit_buf[256];
-      int const bytes_written=
-        snprintf(emit_buf, sizeof(emit_buf),
-                    "# %8.8lx %-48.48s |%s|\n",
-                    (unsigned long) (hexdump_from + (i & 0xfffffff0)),
-                    hex_string, char_string);
-      assert(bytes_written >= 0);
-      assert(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
-      my_b_write(file, (uchar*) emit_buf, bytes_written);
-    }
-    /*
-      need a # to prefix the rest of printouts for example those of
-      Rows_log_event::print_helper().
-    */
-    my_b_write(file, reinterpret_cast<const uchar*>("# "), 2);
-  }
-  return;
-}
-
-
-void Log_event::print_base64(IO_CACHE* file,
-                             PRINT_EVENT_INFO* print_event_info,
-                             bool more)
-{
-  const uchar *ptr= (const uchar *)temp_buf;
-  uint32_t size= uint4korr(ptr + EVENT_LEN_OFFSET);
-
-  size_t const tmp_str_sz= base64_needed_encoded_length((int) size);
-  char *const tmp_str= (char *) my_malloc(tmp_str_sz, MYF(MY_WME));
-  if (!tmp_str) {
-    fprintf(stderr, "\nError: Out of memory. "
-            "Could not print correct binlog event.\n");
-    return;
-  }
-
-  if (base64_encode(ptr, (size_t) size, tmp_str))
-  {
-    assert(0);
-  }
-
-  if (my_b_tell(file) == 0)
-    my_b_printf(file, "\nBINLOG '\n");
-
-  my_b_printf(file, "%s\n", tmp_str);
-
-  if (!more)
-    my_b_printf(file, "'%s\n", print_event_info->delimiter);
-
-  my_free(tmp_str, MYF(0));
-  return;
-}
-
-
-/*
-  Log_event::print_timestamp()
-*/
-
-void Log_event::print_timestamp(IO_CACHE* file, time_t* ts)
-{
-  struct tm *res;
-  if (!ts)
-    ts = &when;
-#ifdef DRIZZLE_SERVER				// This is always false
-  struct tm tm_tmp;
-  localtime_r(ts,(res= &tm_tmp));
-#else
-  res=localtime(ts);
-#endif
-
-  my_b_printf(file,"%02d%02d%02d %2d:%02d:%02d",
-              res->tm_year % 100,
-              res->tm_mon+1,
-              res->tm_mday,
-              res->tm_hour,
-              res->tm_min,
-              res->tm_sec);
-  return;
-}
-
-#endif /* DRIZZLE_CLIENT */
-
-
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 inline Log_event::enum_skip_reason
 Log_event::continue_group(Relay_log_info *rli)
 {
@@ -1337,13 +1071,10 @@ Log_event::continue_group(Relay_log_info *rli)
     return Log_event::EVENT_SKIP_IGNORE;
   return Log_event::do_shall_skip(rli);
 }
-#endif
 
 /**************************************************************************
 	Query_log_event methods
 **************************************************************************/
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   This (which is used only for SHOW BINLOG EVENTS) could be updated to
@@ -1364,9 +1095,9 @@ void Query_log_event::pack_info(Protocol *protocol)
   if (!(flags & LOG_EVENT_SUPPRESS_USE_F)
       && db && db_len)
   {
-    pos= stpcpy(buf, "use `");
+    pos= my_stpcpy(buf, "use `");
     memcpy(pos, db, db_len);
-    pos= stpcpy(pos+db_len, "`; ");
+    pos= my_stpcpy(pos+db_len, "`; ");
   }
   if (query && q_len)
   {
@@ -1374,21 +1105,19 @@ void Query_log_event::pack_info(Protocol *protocol)
     pos+= q_len;
   }
   protocol->store(buf, pos-buf, &my_charset_bin);
-  my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
+  free(buf);
 }
-#endif
 
-#ifndef DRIZZLE_CLIENT
 
 /**
   Utility function for the next method (Query_log_event::write()) .
 */
 static void write_str_with_code_and_len(char **dst, const char *src,
-                                        int len, uint code)
+                                        int len, uint32_t code)
 {
   assert(src);
   *((*dst)++)= code;
-  *((*dst)++)= (uchar) len;
+  *((*dst)++)= (unsigned char) len;
   memcpy(*dst, src, len);
   (*dst)+= len;
 }
@@ -1410,7 +1139,7 @@ bool Query_log_event::write(IO_CACHE* file)
     replicating it correctly, since the length is stored in a byte
     /sven
   */
-  uchar buf[QUERY_HEADER_LEN+
+  unsigned char buf[QUERY_HEADER_LEN+
             1+4+           // code of flags2 and flags2
             1+8+           // code of sql_mode and sql_mode
             1+1+FN_REFLEN+ // code of catalog and catalog length and catalog
@@ -1566,12 +1295,12 @@ bool Query_log_event::write(IO_CACHE* file)
   event_length= (uint) (start-buf) + get_post_header_size_for_derived() + db_len + 1 + q_len;
 
   return (write_header(file, event_length) ||
-          my_b_safe_write(file, (uchar*) buf, QUERY_HEADER_LEN) ||
+          my_b_safe_write(file, (unsigned char*) buf, QUERY_HEADER_LEN) ||
           write_post_header_for_derived(file) ||
-          my_b_safe_write(file, (uchar*) start_of_status,
+          my_b_safe_write(file, (unsigned char*) start_of_status,
                           (uint) (start-start_of_status)) ||
-          my_b_safe_write(file, (db) ? (uchar*) db : (uchar*)"", db_len + 1) ||
-          my_b_safe_write(file, (uchar*) query, q_len)) ? 1 : 0;
+          my_b_safe_write(file, (db) ? (unsigned char*) db : (unsigned char*)"", db_len + 1) ||
+          my_b_safe_write(file, (unsigned char*) query, q_len)) ? 1 : 0;
 }
 
 /**
@@ -1673,7 +1402,6 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
   else
     time_zone_len= 0;
 }
-#endif /* DRIZZLE_CLIENT */
 
 
 /* 2 utility functions for the next method */
@@ -1705,12 +1433,12 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
 static int
 get_str_len_and_pointer(const Log_event::Byte **src,
                         const char **dst,
-                        uint *len,
+                        uint32_t *len,
                         const Log_event::Byte *end)
 {
   if (*src >= end)
     return -1;       // Will be UINT_MAX in two-complement arithmetics
-  uint length= **src;
+  uint32_t length= **src;
   if (length > 0)
   {
     if (*src + length >= end)
@@ -1724,7 +1452,7 @@ get_str_len_and_pointer(const Log_event::Byte **src,
 
 static void copy_str_and_move(const char **src, 
                               Log_event::Byte **dst, 
-                              uint len)
+                              uint32_t len)
 {
   memcpy(*dst, *src, len);
   *src= (const char *)*dst;
@@ -1753,12 +1481,12 @@ static void copy_str_and_move(const char **src,
 /**
   This is used by the SQL slave thread to prepare the event before execution.
 */
-Query_log_event::Query_log_event(const char* buf, uint event_len,
+Query_log_event::Query_log_event(const char* buf, uint32_t event_len,
                                  const Format_description_log_event
                                  *description_event,
                                  Log_event_type event_type)
-  :Log_event(buf, description_event), data_buf(0), query(NullS),
-   db(NullS), catalog_len(0), status_vars_len(0),
+  :Log_event(buf, description_event), data_buf(0), query(NULL),
+   db(NULL), catalog_len(0), status_vars_len(0),
    flags2_inited(0), sql_mode_inited(0), charset_inited(0),
    auto_increment_increment(1), auto_increment_offset(1),
    time_zone_len(0), lc_time_names_number(0), charset_database_number(0)
@@ -1803,7 +1531,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       be even bigger, but this will suffice to catch most corruption
       errors that can lead to a crash.
     */
-    if (status_vars_len > min(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
+    if (status_vars_len > cmin(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
     {
       query= 0;
       return;
@@ -1851,14 +1579,6 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       auto_increment_offset=    uint2korr(pos+2);
       pos+= 4;
       break;
-    case Q_CHARSET_CODE:
-    {
-      CHECK_SPACE(pos, end, 6);
-      charset_inited= 1;
-      memcpy(charset, pos, 6);
-      pos+= 6;
-      break;
-    }
     case Q_TIME_ZONE_CODE:
     {
       if (get_str_len_and_pointer(&pos, &time_zone_str, &time_zone_len, end))
@@ -1888,7 +1608,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       break;
     default:
       /* That's why you must write status vars in growing order of code */
-      pos= (const uchar*) end;                         // Break loop
+      pos= (const unsigned char*) end;                         // Break loop
     }
   }
   
@@ -1933,178 +1653,9 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
 }
 
 
-#ifdef DRIZZLE_CLIENT
-/**
-  Query_log_event::print().
-
-  @todo
-    print the catalog ??
-*/
-void Query_log_event::print_query_header(IO_CACHE* file,
-					 PRINT_EVENT_INFO* print_event_info)
-{
-  // TODO: print the catalog ??
-  char buff[40],*end;				// Enough for SET TIMESTAMP
-  bool different_db= 1;
-  uint32_t tmp;
-
-  if (!print_event_info->short_form)
-  {
-    print_header(file, print_event_info, false);
-    my_b_printf(file, "\t%s\tthread_id=%lu\texec_time=%lu\terror_code=%d\n",
-                get_type_str(), (ulong) thread_id, (ulong) exec_time,
-                error_code);
-  }
-
-  if (!(flags & LOG_EVENT_SUPPRESS_USE_F) && db)
-  {
-    if ((different_db= memcmp(print_event_info->db, db, db_len + 1)))
-      memcpy(print_event_info->db, db, db_len + 1);
-    if (db[0] && different_db) 
-      my_b_printf(file, "use %s%s\n", db, print_event_info->delimiter);
-  }
-
-  end=int10_to_str((long) when, stpcpy(buff,"SET TIMESTAMP="),10);
-  end= stpcpy(end, print_event_info->delimiter);
-  *end++='\n';
-  my_b_write(file, (uchar*) buff, (uint) (end-buff));
-  if ((!print_event_info->thread_id_printed ||
-       ((flags & LOG_EVENT_THREAD_SPECIFIC_F) &&
-        thread_id != print_event_info->thread_id)))
-  {
-    // If --short-form, print deterministic value instead of pseudo_thread_id.
-    my_b_printf(file,"SET @@session.pseudo_thread_id=%lu%s\n",
-                short_form ? 999999999 : (ulong)thread_id,
-                print_event_info->delimiter);
-    print_event_info->thread_id= thread_id;
-    print_event_info->thread_id_printed= 1;
-  }
-
-  /*
-    If flags2_inited==0, this is an event from 3.23 or 4.0; nothing to
-    print (remember we don't produce mixed relay logs so there cannot be
-    5.0 events before that one so there is nothing to reset).
-  */
-  if (likely(flags2_inited)) /* likely as this will mainly read 5.0 logs */
-  {
-    /* tmp is a bitmask of bits which have changed. */
-    if (likely(print_event_info->flags2_inited)) 
-      /* All bits which have changed */
-      tmp= (print_event_info->flags2) ^ flags2;
-    else /* that's the first Query event we read */
-    {
-      print_event_info->flags2_inited= 1;
-      tmp= ~((uint32_t)0); /* all bits have changed */
-    }
-
-    if (unlikely(tmp)) /* some bits have changed */
-    {
-      bool need_comma= 0;
-      my_b_printf(file, "SET ");
-      print_set_option(file, tmp, OPTION_NO_FOREIGN_KEY_CHECKS, ~flags2,
-                   "@@session.foreign_key_checks", &need_comma);
-      print_set_option(file, tmp, OPTION_AUTO_IS_NULL, flags2,
-                   "@@session.sql_auto_is_null", &need_comma);
-      print_set_option(file, tmp, OPTION_RELAXED_UNIQUE_CHECKS, ~flags2,
-                   "@@session.unique_checks", &need_comma);
-      my_b_printf(file,"%s\n", print_event_info->delimiter);
-      print_event_info->flags2= flags2;
-    }
-  }
-
-  /*
-    Now the session variables;
-    it's more efficient to pass SQL_MODE as a number instead of a
-    comma-separated list.
-    FOREIGN_KEY_CHECKS, SQL_AUTO_IS_NULL, UNIQUE_CHECKS are session-only
-    variables (they have no global version; they're not listed in
-    sql_class.h), The tests below work for pure binlogs or pure relay
-    logs. Won't work for mixed relay logs but we don't create mixed
-    relay logs (that is, there is no relay log with a format change
-    except within the 3 first events, which mysqlbinlog handles
-    gracefully). So this code should always be good.
-  */
-
-  if (print_event_info->auto_increment_increment != auto_increment_increment ||
-      print_event_info->auto_increment_offset != auto_increment_offset)
-  {
-    my_b_printf(file,"SET @@session.auto_increment_increment=%lu, @@session.auto_increment_offset=%lu%s\n",
-                auto_increment_increment,auto_increment_offset,
-                print_event_info->delimiter);
-    print_event_info->auto_increment_increment= auto_increment_increment;
-    print_event_info->auto_increment_offset=    auto_increment_offset;
-  }
-
-  /* TODO: print the catalog when we feature SET CATALOG */
-
-  if (likely(charset_inited) &&
-      (unlikely(!print_event_info->charset_inited ||
-                memcmp(print_event_info->charset, charset, 6))))
-  {
-    const CHARSET_INFO * const cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
-    if (cs_info)
-    {
-      /* for mysql client */
-      my_b_printf(file, "/*!\\C %s */%s\n",
-                  cs_info->csname, print_event_info->delimiter);
-    }
-    my_b_printf(file,"SET "
-                "@@session.character_set_client=%d,"
-                "@@session.collation_connection=%d,"
-                "@@session.collation_server=%d"
-                "%s\n",
-                uint2korr(charset),
-                uint2korr(charset+2),
-                uint2korr(charset+4),
-                print_event_info->delimiter);
-    memcpy(print_event_info->charset, charset, 6);
-    print_event_info->charset_inited= 1;
-  }
-  if (time_zone_len)
-  {
-    if (memcmp(print_event_info->time_zone_str, time_zone_str, time_zone_len+1))
-    {
-      my_b_printf(file,"SET @@session.time_zone='%s'%s\n",
-                  time_zone_str, print_event_info->delimiter);
-      memcpy(print_event_info->time_zone_str, time_zone_str, time_zone_len+1);
-    }
-  }
-  if (lc_time_names_number != print_event_info->lc_time_names_number)
-  {
-    my_b_printf(file, "SET @@session.lc_time_names=%d%s\n",
-                lc_time_names_number, print_event_info->delimiter);
-    print_event_info->lc_time_names_number= lc_time_names_number;
-  }
-  if (charset_database_number != print_event_info->charset_database_number)
-  {
-    if (charset_database_number)
-      my_b_printf(file, "SET @@session.collation_database=%d%s\n",
-                  charset_database_number, print_event_info->delimiter);
-    else
-      my_b_printf(file, "SET @@session.collation_database=DEFAULT%s\n",
-                  print_event_info->delimiter);
-    print_event_info->charset_database_number= charset_database_number;
-  }
-}
-
-
-void Query_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  print_query_header(&cache, print_event_info);
-  my_b_write(&cache, (uchar*) query, q_len);
-  my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
 /*
   Query_log_event::do_apply_event()
 */
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
-
 int Query_log_event::do_apply_event(Relay_log_info const *rli)
 {
   return do_apply_event(rli, query, q_len);
@@ -2177,9 +1728,9 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
     thd->set_time((time_t)when);
     thd->query_length= q_len_arg;
     thd->query= (char*)query_arg;
-    VOID(pthread_mutex_lock(&LOCK_thread_count));
+    pthread_mutex_lock(&LOCK_thread_count);
     thd->query_id = next_query_id();
-    VOID(pthread_mutex_unlock(&LOCK_thread_count));
+    pthread_mutex_unlock(&LOCK_thread_count);
     thd->variables.pseudo_thread_id= thread_id;		// for temp tables
 
     if (ignored_error_code((expected_error= error_code)) ||
@@ -2191,35 +1742,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
           must take their value from flags2.
         */
         thd->options= flags2|(thd->options & ~OPTIONS_WRITTEN_TO_BIN_LOG);
-      /*
-        else, we are in a 3.23/4.0 binlog; we previously received a
-        Rotate_log_event which reset thd->options and sql_mode etc, so
-        nothing to do.
-      */
-      if (charset_inited)
-      {
-        if (rli->cached_charset_compare(charset))
-        {
-          /* Verify that we support the charsets found in the event. */
-          if (!(thd->variables.character_set_client=
-                get_charset(uint2korr(charset), MYF(MY_WME))) ||
-              !(thd->variables.collation_connection=
-                get_charset(uint2korr(charset+2), MYF(MY_WME))) ||
-              !(thd->variables.collation_server=
-                get_charset(uint2korr(charset+4), MYF(MY_WME))))
-          {
-            /*
-              We updated the thd->variables with nonsensical values (0). Let's
-              set them to something safe (i.e. which avoids crash), and we'll
-              stop with EE_UNKNOWN_CHARSET in compare_errors (unless set to
-              ignore this error).
-            */
-            set_slave_thread_default_charset(thd, rli);
-            goto compare_errors;
-          }
-          thd->update_charset(); // for the charset change to take effect
-        }
-      }
       if (time_zone_len)
       {
         String tmp(time_zone_str, time_zone_len, &my_charset_bin);
@@ -2276,21 +1798,19 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
         clear_all_errors(thd, const_cast<Relay_log_info*>(rli)); /* Can ignore query */
       else
       {
-        rli->report(ERROR_LEVEL, expected_error, 
-                          "\
-Query partially completed on the master (error on master: %d) \
-and was aborted. There is a chance that your master is inconsistent at this \
-point. If you are sure that your master is ok, run this query manually on the \
-slave and then restart the slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; \
-START SLAVE; . Query: '%s'", expected_error, thd->query);
+        rli->report(ERROR_LEVEL, expected_error,
+                    _("Query partially completed on the master "
+                      "(error on master: %d) and was aborted. There is a "
+                      "chance that your master is inconsistent at this "
+                      "point. If you are sure that your master is ok, run "
+                      "this query manually on the slave and then restart the "
+                      "slave with SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; "
+                      "START SLAVE; . Query: '%s'"),
+                    expected_error, thd->query);
         thd->is_slave_error= 1;
       }
       goto end;
     }
-
-    /* If the query was not ignored, it is printed to the general log */
-    if (!thd->is_error() || thd->main_da.sql_errno() != ER_SLAVE_IGNORED_TABLE)
-      general_log_write(thd, COM_QUERY, thd->query, thd->query_length);
 
 compare_errors:
 
@@ -2300,20 +1820,19 @@ compare_errors:
     */
     actual_error= thd->is_error() ? thd->main_da.sql_errno() : 0;
     if ((expected_error != actual_error) &&
- 	expected_error &&
- 	!ignored_error_code(actual_error) &&
- 	!ignored_error_code(expected_error))
+        expected_error &&
+        !ignored_error_code(actual_error) &&
+        !ignored_error_code(expected_error))
     {
       rli->report(ERROR_LEVEL, 0,
-                      "\
-Query caused different errors on master and slave.     \
-Error on master: '%s' (%d), Error on slave: '%s' (%d). \
-Default database: '%s'. Query: '%s'",
-                      ER_SAFE(expected_error),
-                      expected_error,
-                      actual_error ? thd->main_da.message() : "no error",
-                      actual_error,
-                      print_slave_db_safe(db), query_arg);
+                  _("Query caused differenxt errors on master and slave.\n"
+                    "Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
+                    "Default database: '%s'. Query: '%s'"),
+                  ER_SAFE(expected_error),
+                  expected_error,
+                  actual_error ? thd->main_da.message() : _("no error"),
+                  actual_error,
+                  print_slave_db_safe(db), query_arg);
       thd->is_slave_error= 1;
     }
     /*
@@ -2331,9 +1850,9 @@ Default database: '%s'. Query: '%s'",
     else if (thd->is_slave_error || thd->is_fatal_error)
     {
       rli->report(ERROR_LEVEL, actual_error,
-                      "Error '%s' on query. Default database: '%s'. Query: '%s'",
-                      (actual_error ? thd->main_da.message() :
-                       "unexpected success or fatal error"),
+                  _("Error '%s' on query. Default database: '%s'. Query: '%s'"),
+                  (actual_error ? thd->main_da.message() :
+                   _("unexpected success or fatal error")),
                       print_slave_db_safe(thd->db), query_arg);
       thd->is_slave_error= 1;
     }
@@ -2362,7 +1881,7 @@ Default database: '%s'. Query: '%s'",
   } /* End of if (db_ok(... */
 
 end:
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   /*
     Probably we have set thd->query, thd->db, thd->catalog to point to places
     in the data_buf of this event. Now the event is going to be deleted
@@ -2377,7 +1896,7 @@ end:
   thd->set_db(NULL, 0);                 /* will free the current database */
   thd->query= 0;			// just to be sure
   thd->query_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(thd);      
   /*
     As a disk space optimization, future masters will not log an event for
@@ -2432,87 +1951,32 @@ Query_log_event::do_shall_skip(Relay_log_info *rli)
   return(Log_event::do_shall_skip(rli));
 }
 
-#endif
-
 
 /**************************************************************************
 	Start_log_event_v3 methods
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Start_log_event_v3::Start_log_event_v3()
   :Log_event(), created(0), binlog_version(BINLOG_VERSION),
    artificial_event(0), dont_set_created(0)
 {
   memcpy(server_version, ::server_version, ST_SERVER_VER_LEN);
 }
-#endif
 
 /*
   Start_log_event_v3::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Start_log_event_v3::pack_info(Protocol *protocol)
 {
   char buf[12 + ST_SERVER_VER_LEN + 14 + 22], *pos;
-  pos= stpcpy(buf, "Server ver: ");
-  pos= stpcpy(pos, server_version);
-  pos= stpcpy(pos, ", Binlog ver: ");
+  pos= my_stpcpy(buf, "Server ver: ");
+  pos= my_stpcpy(pos, server_version);
+  pos= my_stpcpy(pos, ", Binlog ver: ");
   pos= int10_to_str(binlog_version, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
-
-/*
-  Start_log_event_v3::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Start_log_event_v3::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tStart: binlog v %d, server v %s created ",
-                binlog_version, server_version);
-    print_timestamp(&cache);
-    if (created)
-      my_b_printf(&cache," at startup");
-    my_b_printf(&cache, "\n");
-    if (flags & LOG_EVENT_BINLOG_IN_USE_F)
-      my_b_printf(&cache, "# Warning: this binlog was not closed properly. "
-                  "Most probably mysqld crashed writing it.\n");
-  }
-  if (!artificial_event && created)
-  {
-#ifdef WHEN_WE_HAVE_THE_RESET_CONNECTION_SQL_COMMAND
-    /*
-      This is for mysqlbinlog: like in replication, we want to delete the stale
-      tmp files left by an unclean shutdown of mysqld (temporary tables)
-      and rollback unfinished transaction.
-      Probably this can be done with RESET CONNECTION (syntax to be defined).
-    */
-    my_b_printf(&cache,"RESET CONNECTION%s\n", print_event_info->delimiter);
-#else
-    my_b_printf(&cache,"ROLLBACK%s\n", print_event_info->delimiter);
-#endif
-  }
-  if (temp_buf &&
-      print_event_info->base64_output_mode != BASE64_OUTPUT_NEVER &&
-      !print_event_info->short_form)
-  {
-    my_b_printf(&cache, "BINLOG '\n");
-    print_base64(&cache, print_event_info, false);
-    print_event_info->printed_fd_event= true;
-  }
-  return;
-}
-#endif /* DRIZZLE_CLIENT */
 
 /*
   Start_log_event_v3::Start_log_event_v3()
@@ -2540,7 +2004,6 @@ Start_log_event_v3::Start_log_event_v3(const char* buf,
   Start_log_event_v3::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Start_log_event_v3::write(IO_CACHE* file)
 {
   char buff[START_V3_HEADER_LEN];
@@ -2550,12 +2013,9 @@ bool Start_log_event_v3::write(IO_CACHE* file)
     created= when= get_time();
   int4store(buff + ST_CREATED_OFFSET,created);
   return (write_header(file, sizeof(buff)) ||
-          my_b_safe_write(file, (uchar*) buff, sizeof(buff)));
+          my_b_safe_write(file, (unsigned char*) buff, sizeof(buff)));
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Start_log_event_v3::do_apply_event() .
@@ -2620,7 +2080,6 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
   }
   return(0);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 /***************************************************************************
        Format_description_log_event methods
@@ -2690,9 +2149,9 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
       describes what those old master versions send.
     */
     if (binlog_ver==1)
-      stpcpy(server_version, server_ver ? server_ver : "3.23");
+      my_stpcpy(server_version, server_ver ? server_ver : "3.23");
     else
-      stpcpy(server_version, server_ver ? server_ver : "4.0");
+      my_stpcpy(server_version, server_ver ? server_ver : "4.0");
     common_header_len= binlog_ver==1 ? OLD_HEADER_LEN :
       LOG_EVENT_MINIMAL_HEADER_LEN;
     /*
@@ -2751,7 +2210,7 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
 
 Format_description_log_event::
 Format_description_log_event(const char* buf,
-                             uint event_len,
+                             uint32_t event_len,
                              const
                              Format_description_log_event*
                              description_event)
@@ -2763,7 +2222,7 @@ Format_description_log_event(const char* buf,
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
   /* If alloc fails, we'll detect it in is_valid() */
-  post_header_len= (uint8_t*) my_memdup((uchar*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+  post_header_len= (uint8_t*) my_memdup((unsigned char*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
                                       number_of_event_types*
                                       sizeof(*post_header_len), MYF(0));
   calc_server_version_split();
@@ -2838,7 +2297,7 @@ Format_description_log_event(const char* buf,
     if (number_of_event_types != 22)
     {
       /* this makes is_valid() return false. */
-      my_free(post_header_len, MYF(MY_ALLOW_ZERO_PTR));
+      free(post_header_len);
       post_header_len= NULL;
       return;
     }
@@ -2872,14 +2331,13 @@ Format_description_log_event(const char* buf,
   return;
 }
 
-#ifndef DRIZZLE_CLIENT
 bool Format_description_log_event::write(IO_CACHE* file)
 {
   /*
     We don't call Start_log_event_v3::write() because this would make 2
     my_b_safe_write().
   */
-  uchar buff[FORMAT_DESCRIPTION_HEADER_LEN];
+  unsigned char buff[FORMAT_DESCRIPTION_HEADER_LEN];
   int2store(buff + ST_BINLOG_VER_OFFSET,binlog_version);
   memcpy(buff + ST_SERVER_VER_OFFSET,server_version,ST_SERVER_VER_LEN);
   if (!dont_set_created)
@@ -2891,9 +2349,8 @@ bool Format_description_log_event::write(IO_CACHE* file)
   return (write_header(file, sizeof(buff)) ||
           my_b_safe_write(file, buff, sizeof(buff)));
 }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
+
 int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -2911,10 +2368,10 @@ int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
   {
     /* This is not an error (XA is safe), just an information */
     rli->report(INFORMATION_LEVEL, 0,
-                "Rolling back unfinished transaction (no COMMIT "
-                "or ROLLBACK in relay log). A probable cause is that "
-                "the master died while writing the transaction to "
-                "its binary log, thus rolled back too."); 
+                _("Rolling back unfinished transaction (no COMMIT "
+                  "or ROLLBACK in relay log). A probable cause is that "
+                  "the master died while writing the transaction to "
+                  "its binary log, thus rolled back too."));
     const_cast<Relay_log_info*>(rli)->cleanup_context(thd, 1);
   }
   /*
@@ -2974,8 +2431,6 @@ Format_description_log_event::do_shall_skip(Relay_log_info *rli __attribute__((u
   return Log_event::EVENT_SKIP_NOT;
 }
 
-#endif
-
 
 /**
    Splits the event's 'server_version' string into three numeric pieces stored
@@ -2990,11 +2445,11 @@ void Format_description_log_event::calc_server_version_split()
 {
   char *p= server_version, *r;
   ulong number;
-  for (uint i= 0; i<=2; i++)
+  for (uint32_t i= 0; i<=2; i++)
   {
     number= strtoul(p, &r, 10);
-    server_version_split[i]= (uchar)number;
-    assert(number < 256); // fit in uchar
+    server_version_split[i]= (unsigned char)number;
+    assert(number < 256); // fit in unsigned char
     p= r;
     assert(!((i == 0) && (*r != '.'))); // should be true in practice
     if (*r == '.')
@@ -3024,8 +2479,7 @@ void Format_description_log_event::calc_server_version_split()
   Load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
-uint Load_log_event::get_query_buffer_length()
+uint32_t Load_log_event::get_query_buffer_length()
 {
   return
     5 + db_len + 3 +                        // "use DB; "
@@ -3050,67 +2504,67 @@ void Load_log_event::print_query(bool need_db, char *buf,
 
   if (need_db && db && db_len)
   {
-    pos= stpcpy(pos, "use `");
+    pos= my_stpcpy(pos, "use `");
     memcpy(pos, db, db_len);
-    pos= stpcpy(pos+db_len, "`; ");
+    pos= my_stpcpy(pos+db_len, "`; ");
   }
 
-  pos= stpcpy(pos, "LOAD DATA ");
+  pos= my_stpcpy(pos, "LOAD DATA ");
 
   if (fn_start)
     *fn_start= pos;
 
   if (check_fname_outside_temp_buf())
-    pos= stpcpy(pos, "LOCAL ");
-  pos= stpcpy(pos, "INFILE '");
+    pos= my_stpcpy(pos, "LOCAL ");
+  pos= my_stpcpy(pos, "INFILE '");
   memcpy(pos, fname, fname_len);
-  pos= stpcpy(pos+fname_len, "' ");
+  pos= my_stpcpy(pos+fname_len, "' ");
 
   if (sql_ex.opt_flags & REPLACE_FLAG)
-    pos= stpcpy(pos, " REPLACE ");
+    pos= my_stpcpy(pos, " REPLACE ");
   else if (sql_ex.opt_flags & IGNORE_FLAG)
-    pos= stpcpy(pos, " IGNORE ");
+    pos= my_stpcpy(pos, " IGNORE ");
 
-  pos= stpcpy(pos ,"INTO");
+  pos= my_stpcpy(pos ,"INTO");
 
   if (fn_end)
     *fn_end= pos;
 
-  pos= stpcpy(pos ," Table `");
+  pos= my_stpcpy(pos ," Table `");
   memcpy(pos, table_name, table_name_len);
   pos+= table_name_len;
 
   /* We have to create all optinal fields as the default is not empty */
-  pos= stpcpy(pos, "` FIELDS TERMINATED BY ");
+  pos= my_stpcpy(pos, "` FIELDS TERMINATED BY ");
   pos= pretty_print_str(pos, sql_ex.field_term, sql_ex.field_term_len);
   if (sql_ex.opt_flags & OPT_ENCLOSED_FLAG)
-    pos= stpcpy(pos, " OPTIONALLY ");
-  pos= stpcpy(pos, " ENCLOSED BY ");
+    pos= my_stpcpy(pos, " OPTIONALLY ");
+  pos= my_stpcpy(pos, " ENCLOSED BY ");
   pos= pretty_print_str(pos, sql_ex.enclosed, sql_ex.enclosed_len);
 
-  pos= stpcpy(pos, " ESCAPED BY ");
+  pos= my_stpcpy(pos, " ESCAPED BY ");
   pos= pretty_print_str(pos, sql_ex.escaped, sql_ex.escaped_len);
 
-  pos= stpcpy(pos, " LINES TERMINATED BY ");
+  pos= my_stpcpy(pos, " LINES TERMINATED BY ");
   pos= pretty_print_str(pos, sql_ex.line_term, sql_ex.line_term_len);
   if (sql_ex.line_start_len)
   {
-    pos= stpcpy(pos, " STARTING BY ");
+    pos= my_stpcpy(pos, " STARTING BY ");
     pos= pretty_print_str(pos, sql_ex.line_start, sql_ex.line_start_len);
   }
 
   if ((long) skip_lines > 0)
   {
-    pos= stpcpy(pos, " IGNORE ");
+    pos= my_stpcpy(pos, " IGNORE ");
     pos= int64_t10_to_str((int64_t) skip_lines, pos, 10);
-    pos= stpcpy(pos," LINES ");    
+    pos= my_stpcpy(pos," LINES ");    
   }
 
   if (num_fields)
   {
-    uint i;
+    uint32_t i;
     const char *field= fields;
-    pos= stpcpy(pos, " (");
+    pos= my_stpcpy(pos, " (");
     for (i = 0; i < num_fields; i++)
     {
       if (i)
@@ -3137,12 +2591,9 @@ void Load_log_event::pack_info(Protocol *protocol)
     return;
   print_query(true, buf, &end, 0, 0);
   protocol->store(buf, end-buf, &my_charset_bin);
-  my_free(buf, MYF(0));
+  free(buf);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
-
-#ifndef DRIZZLE_CLIENT
 
 /*
   Load_log_event::write_data_header()
@@ -3157,7 +2608,7 @@ bool Load_log_event::write_data_header(IO_CACHE* file)
   buf[L_TBL_LEN_OFFSET] = (char)table_name_len;
   buf[L_DB_LEN_OFFSET] = (char)db_len;
   int4store(buf + L_NUM_FIELDS_OFFSET, num_fields);
-  return my_b_safe_write(file, (uchar*)buf, LOAD_HEADER_LEN) != 0;
+  return my_b_safe_write(file, (unsigned char*)buf, LOAD_HEADER_LEN) != 0;
 }
 
 
@@ -3171,13 +2622,13 @@ bool Load_log_event::write_data_body(IO_CACHE* file)
     return 1;
   if (num_fields && fields && field_lens)
   {
-    if (my_b_safe_write(file, (uchar*)field_lens, num_fields) ||
-	my_b_safe_write(file, (uchar*)fields, field_block_len))
+    if (my_b_safe_write(file, (unsigned char*)field_lens, num_fields) ||
+	my_b_safe_write(file, (unsigned char*)fields, field_block_len))
       return 1;
   }
-  return (my_b_safe_write(file, (uchar*)table_name, table_name_len + 1) ||
-	  my_b_safe_write(file, (uchar*)db, db_len + 1) ||
-	  my_b_safe_write(file, (uchar*)fname, fname_len));
+  return (my_b_safe_write(file, (unsigned char*)table_name, table_name_len + 1) ||
+	  my_b_safe_write(file, (unsigned char*)db, db_len + 1) ||
+	  my_b_safe_write(file, (unsigned char*)fname, fname_len));
 }
 
 
@@ -3258,16 +2709,15 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   while ((item = li++))
   {
     num_fields++;
-    uchar len = (uchar) strlen(item->name);
+    unsigned char len = (unsigned char) strlen(item->name);
     field_block_len += len + 1;
     fields_buf.append(item->name, len + 1);
     field_lens_buf.append((char*)&len, 1);
   }
 
-  field_lens = (const uchar*)field_lens_buf.ptr();
+  field_lens = (const unsigned char*)field_lens_buf.ptr();
   fields = fields_buf.ptr();
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**
@@ -3275,7 +2725,7 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
     The caller must do buf[event_len] = 0 before he starts using the
     constructed event.
 */
-Load_log_event::Load_log_event(const char *buf, uint event_len,
+Load_log_event::Load_log_event(const char *buf, uint32_t event_len,
                                const Format_description_log_event *description_event)
   :Log_event(buf, description_event), num_fields(0), fields(0),
    field_lens(0),field_block_len(0),
@@ -3305,7 +2755,7 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
                                    int body_offset,
                                    const Format_description_log_event *description_event)
 {
-  uint data_len;
+  uint32_t data_len;
   char* buf_end = (char*)buf + event_len;
   /* this is the beginning of the post-header */
   const char* data_head = buf + description_event->common_header_len;
@@ -3322,7 +2772,7 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
     Sql_ex.init() on success returns the pointer to the first byte after
     the sql_ex structure, which is the start of field lengths array.
   */
-  if (!(field_lens= (uchar*)sql_ex.init((char*)buf + body_offset,
+  if (!(field_lens= (unsigned char*)sql_ex.init((char*)buf + body_offset,
                                         buf_end,
                                         buf[EVENT_TYPE_OFFSET] != LOAD_EVENT)))
     return(1);
@@ -3330,7 +2780,7 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
   data_len = event_len - body_offset;
   if (num_fields > data_len) // simple sanity check against corruption
     return(1);
-  for (uint i = 0; i < num_fields; i++)
+  for (uint32_t i = 0; i < num_fields; i++)
     field_block_len += (uint)field_lens[i] + 1;
 
   fields = (char*)field_lens + num_fields;
@@ -3343,110 +2793,6 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
   return(0);
 }
 
-
-/*
-  Load_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Load_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-
-
-void Load_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info,
-			   bool commented)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file_arg);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tQuery\tthread_id=%ld\texec_time=%ld\n",
-                thread_id, exec_time);
-  }
-
-  bool different_db= 1;
-  if (db)
-  {
-    /*
-      If the database is different from the one of the previous statement, we
-      need to print the "use" command, and we update the last_db.
-      But if commented, the "use" is going to be commented so we should not
-      update the last_db.
-    */
-    if ((different_db= memcmp(print_event_info->db, db, db_len + 1)) &&
-        !commented)
-      memcpy(print_event_info->db, db, db_len + 1);
-  }
-  
-  if (db && db[0] && different_db)
-    my_b_printf(&cache, "%suse %s%s\n", 
-            commented ? "# " : "",
-            db, print_event_info->delimiter);
-
-  if (flags & LOG_EVENT_THREAD_SPECIFIC_F)
-    my_b_printf(&cache,"%sSET @@session.pseudo_thread_id=%lu%s\n",
-            commented ? "# " : "", (ulong)thread_id,
-            print_event_info->delimiter);
-  my_b_printf(&cache, "%sLOAD DATA ",
-              commented ? "# " : "");
-  if (check_fname_outside_temp_buf())
-    my_b_printf(&cache, "LOCAL ");
-  my_b_printf(&cache, "INFILE '%-*s' ", fname_len, fname);
-
-  if (sql_ex.opt_flags & REPLACE_FLAG)
-    my_b_printf(&cache," REPLACE ");
-  else if (sql_ex.opt_flags & IGNORE_FLAG)
-    my_b_printf(&cache," IGNORE ");
-  
-  my_b_printf(&cache, "INTO Table `%s`", table_name);
-  my_b_printf(&cache, " FIELDS TERMINATED BY ");
-  pretty_print_str(&cache, sql_ex.field_term, sql_ex.field_term_len);
-
-  if (sql_ex.opt_flags & OPT_ENCLOSED_FLAG)
-    my_b_printf(&cache," OPTIONALLY ");
-  my_b_printf(&cache, " ENCLOSED BY ");
-  pretty_print_str(&cache, sql_ex.enclosed, sql_ex.enclosed_len);
-     
-  my_b_printf(&cache, " ESCAPED BY ");
-  pretty_print_str(&cache, sql_ex.escaped, sql_ex.escaped_len);
-     
-  my_b_printf(&cache," LINES TERMINATED BY ");
-  pretty_print_str(&cache, sql_ex.line_term, sql_ex.line_term_len);
-
-
-  if (sql_ex.line_start)
-  {
-    my_b_printf(&cache," STARTING BY ");
-    pretty_print_str(&cache, sql_ex.line_start, sql_ex.line_start_len);
-  }
-  if ((long) skip_lines > 0)
-    my_b_printf(&cache, " IGNORE %ld LINES", (long) skip_lines);
-
-  if (num_fields)
-  {
-    uint i;
-    const char* field = fields;
-    my_b_printf(&cache, " (");
-    for (i = 0; i < num_fields; i++)
-    {
-      if (i)
-	my_b_printf(&cache, ",");
-      my_b_printf(&cache, field);
-	  
-      field += field_lens[i]  + 1;
-    }
-    my_b_printf(&cache, ")");
-  }
-
-  my_b_printf(&cache, "%s\n", print_event_info->delimiter);
-  return;
-}
-#endif /* DRIZZLE_CLIENT */
-
-#ifndef DRIZZLE_CLIENT
 
 /**
   Load_log_event::set_fields()
@@ -3462,7 +2808,7 @@ void Load_log_event::set_fields(const char* affected_db,
 				List<Item> &field_list,
                                 Name_resolution_context *context)
 {
-  uint i;
+  uint32_t i;
   const char* field = fields;
   for (i= 0; i < num_fields; i++)
   {
@@ -3471,10 +2817,8 @@ void Load_log_event::set_fields(const char* affected_db,
     field+= field_lens[i]  + 1;
   }
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 /**
   Does the data loading job when executing a LOAD DATA on the slave.
 
@@ -3560,9 +2904,9 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
   if (rpl_filter->db_ok(thd->db))
   {
     thd->set_time((time_t)when);
-    VOID(pthread_mutex_lock(&LOCK_thread_count));
+    pthread_mutex_lock(&LOCK_thread_count);
     thd->query_id = next_query_id();
-    VOID(pthread_mutex_unlock(&LOCK_thread_count));
+    pthread_mutex_unlock(&LOCK_thread_count);
     /*
       Initing thd->row_count is not necessary in theory as this variable has no
       influence in the case of the slave SQL thread (it is used to generate a
@@ -3716,12 +3060,12 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 error:
   thd->net.vio = 0; 
   const char *remember_db= thd->db;
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   thd->catalog= 0;
   thd->set_db(NULL, 0);                   /* will free the current database */
   thd->query= 0;
   thd->query_length= 0;
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(thd);
 
   if (thd->is_slave_error)
@@ -3737,11 +3081,12 @@ error:
     else
     {
       sql_errno=ER_UNKNOWN_ERROR;
-      err=ER(sql_errno);       
+      err=ER(sql_errno);
     }
-    rli->report(ERROR_LEVEL, sql_errno,"\
-Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
-                    err, (char*)table_name, print_slave_db_safe(remember_db));
+    rli->report(ERROR_LEVEL, sql_errno,
+                _("Error '%s' running LOAD DATA INFILE on table '%s'. "
+                  "Default database: '%s'"),
+                err, (char*)table_name, print_slave_db_safe(remember_db));
     free_root(thd->mem_root,MYF(MY_KEEP_PREALLOC));
     return 1;
   }
@@ -3751,8 +3096,8 @@ Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
   {
     char buf[256];
     snprintf(buf, sizeof(buf),
-             "Running LOAD DATA INFILE on table '%-.64s'."
-             " Default database: '%-.64s'",
+             _("Running LOAD DATA INFILE on table '%-.64s'."
+               " Default database: '%-.64s'"),
              (char*)table_name,
              print_slave_db_safe(remember_db));
 
@@ -3761,9 +3106,8 @@ Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
     return 1;
   }
 
-  return ( use_rli_only_for_errors ? 0 : Log_event::do_apply_event(rli) ); 
+  return ( use_rli_only_for_errors ? 0 : Log_event::do_apply_event(rli) );
 }
-#endif
 
 
 /**************************************************************************
@@ -3774,7 +3118,6 @@ Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
   Rotate_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rotate_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], buf[22];
@@ -3785,30 +3128,6 @@ void Rotate_log_event::pack_info(Protocol *protocol)
   tmp.append(llstr(pos,buf));
   protocol->store(tmp.ptr(), tmp.length(), &my_charset_bin);
 }
-#endif
-
-
-/*
-  Rotate_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  char buf[22];
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\tRotate to ");
-  if (new_log_ident)
-    my_b_write(&cache, (uchar*) new_log_ident, (uint)ident_len);
-  my_b_printf(&cache, "  pos: %s\n", llstr(pos, buf));
-}
-#endif /* DRIZZLE_CLIENT */
-
 
 
 /*
@@ -3816,10 +3135,9 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 */
 
 
-#ifndef DRIZZLE_CLIENT
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
-                                   uint ident_len_arg, uint64_t pos_arg,
-                                   uint flags_arg)
+                                   uint32_t ident_len_arg, uint64_t pos_arg,
+                                   uint32_t flags_arg)
   :Log_event(), new_log_ident(new_log_ident_arg),
    pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
                           (uint) strlen(new_log_ident_arg)), flags(flags_arg)
@@ -3828,17 +3146,16 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
     new_log_ident= my_strndup(new_log_ident_arg, ident_len, MYF(MY_WME));
   return;
 }
-#endif
 
 
-Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
+Rotate_log_event::Rotate_log_event(const char* buf, uint32_t event_len,
                                    const Format_description_log_event* description_event)
   :Log_event(buf, description_event) ,new_log_ident(0), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
   uint8_t header_size= description_event->common_header_len;
   uint8_t post_header_len= description_event->post_header_len[ROTATE_EVENT-1];
-  uint ident_offset;
+  uint32_t ident_offset;
   if (event_len < header_size)
     return;
   buf += header_size;
@@ -3856,19 +3173,15 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
   Rotate_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Rotate_log_event::write(IO_CACHE* file)
 {
   char buf[ROTATE_HEADER_LEN];
   int8store(buf + R_POS_OFFSET, pos);
   return (write_header(file, ROTATE_HEADER_LEN + ident_len) ||
-          my_b_safe_write(file, (uchar*)buf, ROTATE_HEADER_LEN) ||
-          my_b_safe_write(file, (uchar*)new_log_ident, (uint) ident_len));
+          my_b_safe_write(file, (unsigned char*)buf, ROTATE_HEADER_LEN) ||
+          my_b_safe_write(file, (unsigned char*)new_log_ident, (uint) ident_len));
 }
-#endif
 
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Got a rotate log event from the master.
@@ -3921,7 +3234,6 @@ int Rotate_log_event::do_update_pos(Relay_log_info *rli)
       master is 4.0 then the events are in the slave's format (conversion).
     */
     set_slave_thread_options(thd);
-    set_slave_thread_default_charset(thd, rli);
     thd->variables.auto_increment_increment=
       thd->variables.auto_increment_offset= 1;
   }
@@ -3950,8 +3262,6 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
   return Log_event::EVENT_SKIP_NOT;             // To keep compiler happy
 }
 
-#endif
-
 
 /**************************************************************************
 	Intvar_log_event methods
@@ -3961,7 +3271,6 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
   Intvar_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Intvar_log_event::pack_info(Protocol *protocol)
 {
   char buf[256], *pos;
@@ -3970,7 +3279,6 @@ void Intvar_log_event::pack_info(Protocol *protocol)
   pos= int64_t10_to_str(val, pos, -10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
 
 /*
@@ -4005,60 +3313,24 @@ const char* Intvar_log_event::get_var_type_name()
   Intvar_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Intvar_log_event::write(IO_CACHE* file)
 {
-  uchar buf[9];
-  buf[I_TYPE_OFFSET]= (uchar) type;
+  unsigned char buf[9];
+  buf[I_TYPE_OFFSET]= (unsigned char) type;
   int8store(buf + I_VAL_OFFSET, val);
   return (write_header(file, sizeof(buf)) ||
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
 
 /*
   Intvar_log_event::print()
 */
 
-#ifdef DRIZZLE_CLIENT
-void Intvar_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  char llbuff[22];
-  const char *msg;
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tIntvar\n");
-  }
-
-  my_b_printf(&cache, "SET ");
-  switch (type) {
-  case LAST_INSERT_ID_EVENT:
-    msg="LAST_INSERT_ID";
-    break;
-  case INSERT_ID_EVENT:
-    msg="INSERT_ID";
-    break;
-  case INVALID_INT_EVENT:
-  default: // cannot happen
-    msg="INVALID_INT";
-    break;
-  }
-  my_b_printf(&cache, "%s=%s%s\n",
-              msg, llstr(val,llbuff), print_event_info->delimiter);
-}
-#endif
-
-
 /*
   Intvar_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION)&& !defined(DRIZZLE_CLIENT)
 int Intvar_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4100,24 +3372,20 @@ Intvar_log_event::do_shall_skip(Relay_log_info *rli)
   return continue_group(rli);
 }
 
-#endif
-
 
 /**************************************************************************
   Rand_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rand_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], *pos;
-  pos= stpcpy(buf1,"rand_seed1=");
+  pos= my_stpcpy(buf1,"rand_seed1=");
   pos= int10_to_str((long) seed1, pos, 10);
-  pos= stpcpy(pos, ",rand_seed2=");
+  pos= my_stpcpy(pos, ",rand_seed2=");
   pos= int10_to_str((long) seed2, pos, 10);
   protocol->store(buf1, (uint) (pos-buf1), &my_charset_bin);
 }
-#endif
 
 
 Rand_log_event::Rand_log_event(const char* buf,
@@ -4130,38 +3398,16 @@ Rand_log_event::Rand_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Rand_log_event::write(IO_CACHE* file)
 {
-  uchar buf[16];
+  unsigned char buf[16];
   int8store(buf + RAND_SEED1_OFFSET, seed1);
   int8store(buf + RAND_SEED2_OFFSET, seed2);
   return (write_header(file, sizeof(buf)) ||
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Rand_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  char llbuff[22],llbuff2[22];
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tRand\n");
-  }
-  my_b_printf(&cache, "SET @@RAND_SEED1=%s, @@RAND_SEED2=%s%s\n",
-              llstr(seed1, llbuff),llstr(seed2, llbuff2),
-              print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Rand_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4196,23 +3442,19 @@ Rand_log_event::do_shall_skip(Relay_log_info *rli)
   return continue_group(rli);
 }
 
-#endif /* !DRIZZLE_CLIENT */
-
 
 /**************************************************************************
   Xid_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
-  pos= stpcpy(buf, "COMMIT /* xid=");
+  pos= my_stpcpy(buf, "COMMIT /* xid=");
   pos= int64_t10_to_str(xid, pos, 10);
-  pos= stpcpy(pos, " */");
+  pos= my_stpcpy(pos, " */");
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif
 
 /**
   @note
@@ -4233,40 +3475,15 @@ Xid_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Xid_log_event::write(IO_CACHE* file)
 {
   return write_header(file, sizeof(xid)) ||
-         my_b_safe_write(file, (uchar*) &xid, sizeof(xid));
+         my_b_safe_write(file, (unsigned char*) &xid, sizeof(xid));
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    char buf[64];
-    int64_t10_to_str(xid, buf, 10);
-
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tXid = %s\n", buf);
-  }
-  my_b_printf(&cache, "COMMIT%s\n", print_event_info->delimiter);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
-  /* For a slave Xid_log_event is COMMIT */
-  general_log_print(thd, COM_QUERY,
-                    "COMMIT /* implicit, from Xid_log_event */");
   return end_trans(thd, COMMIT);
 }
 
@@ -4279,25 +3496,23 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
   }
   return(Log_event::do_shall_skip(rli));
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   User_var_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void User_var_log_event::pack_info(Protocol* protocol)
 {
   char *buf= 0;
-  uint val_offset= 4 + name_len;
-  uint event_len= val_offset;
+  uint32_t val_offset= 4 + name_len;
+  uint32_t event_len= val_offset;
 
   if (is_null)
   {
     if (!(buf= (char*) my_malloc(val_offset + 5, MYF(MY_WME))))
       return;
-    stpcpy(buf + val_offset, "NULL");
+    my_stpcpy(buf + val_offset, "NULL");
     event_len= val_offset + 4;
   }
   else
@@ -4324,7 +3539,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
         return;
       String str(buf+val_offset, DECIMAL_MAX_STR_LENGTH, &my_charset_bin);
       my_decimal dec;
-      binary2my_decimal(E_DEC_FATAL_ERROR, (uchar*) (val+2), &dec, val[0],
+      binary2my_decimal(E_DEC_FATAL_ERROR, (unsigned char*) (val+2), &dec, val[0],
                         val[1]);
       my_decimal2string(E_DEC_FATAL_ERROR, &dec, 0, 0, 0, &str);
       event_len= str.length() + val_offset;
@@ -4339,14 +3554,14 @@ void User_var_log_event::pack_info(Protocol* protocol)
         return;
       if (!(cs= get_charset(charset_number, MYF(0))))
       {
-        stpcpy(buf+val_offset, "???");
+        my_stpcpy(buf+val_offset, "???");
         event_len+= 3;
       }
       else
       {
-        char *p= strxmov(buf + val_offset, "_", cs->csname, " ", NullS);
+        char *p= strxmov(buf + val_offset, "_", cs->csname, " ", NULL);
         p= str_to_hex(p, val, val_len);
-        p= strxmov(p, " COLLATE ", cs->name, NullS);
+        p= strxmov(p, " COLLATE ", cs->name, NULL);
         event_len= p-buf;
       }
       break;
@@ -4362,9 +3577,8 @@ void User_var_log_event::pack_info(Protocol* protocol)
   buf[2+name_len]= '`';
   buf[3+name_len]= '=';
   protocol->store(buf, event_len, &my_charset_bin);
-  my_free(buf, MYF(0));
+  free(buf);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 User_var_log_event::
@@ -4396,14 +3610,13 @@ User_var_log_event(const char* buf,
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool User_var_log_event::write(IO_CACHE* file)
 {
   char buf[UV_NAME_LEN_SIZE];
   char buf1[UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE + 
 	    UV_CHARSET_NUMBER_SIZE + UV_VAL_LEN_SIZE];
-  uchar buf2[(8 > DECIMAL_MAX_FIELD_SIZE + 2) ? 8 : DECIMAL_MAX_FIELD_SIZE +2], *pos= buf2;
-  uint buf1_length;
+  unsigned char buf2[(8 > DECIMAL_MAX_FIELD_SIZE + 2) ? 8 : DECIMAL_MAX_FIELD_SIZE +2], *pos= buf2;
+  uint32_t buf1_length;
   ulong event_length;
 
   int4store(buf, name_len);
@@ -4436,7 +3649,7 @@ bool User_var_log_event::write(IO_CACHE* file)
       break;
     }
     case STRING_RESULT:
-      pos= (uchar*) val;
+      pos= (unsigned char*) val;
       break;
     case ROW_RESULT:
     default:
@@ -4451,126 +3664,18 @@ bool User_var_log_event::write(IO_CACHE* file)
   event_length= sizeof(buf)+ name_len + buf1_length + val_len;
 
   return (write_header(file, event_length) ||
-          my_b_safe_write(file, (uchar*) buf, sizeof(buf))   ||
-	  my_b_safe_write(file, (uchar*) name, name_len)     ||
-	  my_b_safe_write(file, (uchar*) buf1, buf1_length) ||
+          my_b_safe_write(file, (unsigned char*) buf, sizeof(buf))   ||
+	  my_b_safe_write(file, (unsigned char*) name, name_len)     ||
+	  my_b_safe_write(file, (unsigned char*) buf1, buf1_length) ||
 	  my_b_safe_write(file, pos, val_len));
 }
-#endif
 
-
-/*
-  User_var_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (!print_event_info->short_form)
-  {
-    print_header(&cache, print_event_info, false);
-    my_b_printf(&cache, "\tUser_var\n");
-  }
-
-  my_b_printf(&cache, "SET @`");
-  my_b_write(&cache, (uchar*) name, (uint) (name_len));
-  my_b_printf(&cache, "`");
-
-  if (is_null)
-  {
-    my_b_printf(&cache, ":=NULL%s\n", print_event_info->delimiter);
-  }
-  else
-  {
-    switch (type) {
-    case REAL_RESULT:
-      double real_val;
-      char real_buf[FMT_G_BUFSIZE(14)];
-      float8get(real_val, val);
-      sprintf(real_buf, "%.14g", real_val);
-      my_b_printf(&cache, ":=%s%s\n", real_buf, print_event_info->delimiter);
-      break;
-    case INT_RESULT:
-      char int_buf[22];
-      int64_t10_to_str(uint8korr(val), int_buf, -10);
-      my_b_printf(&cache, ":=%s%s\n", int_buf, print_event_info->delimiter);
-      break;
-    case DECIMAL_RESULT:
-    {
-      char str_buf[200];
-      int str_len= sizeof(str_buf) - 1;
-      int precision= (int)val[0];
-      int scale= (int)val[1];
-      decimal_digit_t dec_buf[10];
-      decimal_t dec;
-      dec.len= 10;
-      dec.buf= dec_buf;
-
-      bin2decimal((uchar*) val+2, &dec, precision, scale);
-      decimal2string(&dec, str_buf, &str_len, 0, 0, 0);
-      str_buf[str_len]= 0;
-      my_b_printf(&cache, ":=%s%s\n", str_buf, print_event_info->delimiter);
-      break;
-    }
-    case STRING_RESULT:
-    {
-      /*
-        Let's express the string in hex. That's the most robust way. If we
-        print it in character form instead, we need to escape it with
-        character_set_client which we don't know (we will know it in 5.0, but
-        in 4.1 we don't know it easily when we are printing
-        User_var_log_event). Explanation why we would need to bother with
-        character_set_client (quoting Bar):
-        > Note, the parser doesn't switch to another unescaping mode after
-        > it has met a character set introducer.
-        > For example, if an SJIS client says something like:
-        > SET @a= _ucs2 \0a\0b'
-        > the string constant is still unescaped according to SJIS, not
-        > according to UCS2.
-      */
-      char *hex_str;
-      const CHARSET_INFO *cs;
-
-      if (!(hex_str= (char *)my_alloca(2*val_len+1+2))) // 2 hex digits / byte
-        break; // no error, as we are 'void'
-      str_to_hex(hex_str, val, val_len);
-      /*
-        For proper behaviour when mysqlbinlog|mysql, we need to explicitely
-        specify the variable's collation. It will however cause problems when
-        people want to mysqlbinlog|mysql into another server not supporting the
-        character set. But there's not much to do about this and it's unlikely.
-      */
-      if (!(cs= get_charset(charset_number, MYF(0))))
-        /*
-          Generate an unusable command (=> syntax error) is probably the best
-          thing we can do here.
-        */
-        my_b_printf(&cache, ":=???%s\n", print_event_info->delimiter);
-      else
-        my_b_printf(&cache, ":=_%s %s COLLATE `%s`%s\n",
-                    cs->csname, hex_str, cs->name,
-                    print_event_info->delimiter);
-      my_afree(hex_str);
-    }
-      break;
-    case ROW_RESULT:
-    default:
-      assert(1);
-      return;
-    }
-  }
-}
-#endif
 
 
 /*
   User_var_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int User_var_log_event::do_apply_event(Relay_log_info const *rli)
 {
   Item *it= 0;
@@ -4610,7 +3715,7 @@ int User_var_log_event::do_apply_event(Relay_log_info const *rli)
       break;
     case DECIMAL_RESULT:
     {
-      Item_decimal *dec= new Item_decimal((uchar*) val+2, val[0], val[1]);
+      Item_decimal *dec= new Item_decimal((unsigned char*) val+2, val[0], val[1]);
       it= dec;
       val= (char *)dec->val_decimal(NULL);
       val_len= sizeof(my_decimal);
@@ -4661,44 +3766,27 @@ User_var_log_event::do_shall_skip(Relay_log_info *rli)
   */
   return continue_group(rli);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   Slave_log_event methods
 **************************************************************************/
 
-#ifdef HAVE_REPLICATION
-#ifdef DRIZZLE_CLIENT
-void Unknown_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file_arg);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n# %s", "Unknown event\n");
-}
-#endif  
-
-#ifndef DRIZZLE_CLIENT
 void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
-  pos= stpcpy(buf, "host=");
-  pos= stpncpy(pos, master_host, HOSTNAME_LENGTH);
-  pos= stpcpy(pos, ",port=");
+  pos= my_stpcpy(buf, "host=");
+  pos= my_stpncpy(pos, master_host, HOSTNAME_LENGTH);
+  pos= my_stpcpy(pos, ",port=");
   pos= int10_to_str((long) master_port, pos, 10);
-  pos= stpcpy(pos, ",log=");
-  pos= stpcpy(pos, master_log);
-  pos= stpcpy(pos, ",pos=");
+  pos= my_stpcpy(pos, ",log=");
+  pos= my_stpcpy(pos, master_log);
+  pos= my_stpcpy(pos, ",pos=");
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
-#ifndef DRIZZLE_CLIENT
 /**
   @todo
   re-write this better without holding both locks at the same time
@@ -4733,29 +3821,12 @@ Slave_log_event::Slave_log_event(THD* thd_arg,
   pthread_mutex_unlock(&mi->data_lock);
   return;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 Slave_log_event::~Slave_log_event()
 {
-  my_free(mem_pool, MYF(MY_ALLOW_ZERO_PTR));
+  free(mem_pool);
 }
-
-
-#ifdef DRIZZLE_CLIENT
-void Slave_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  char llbuff[22];
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n\
-Slave: master_host: '%s'  master_port: %d  master_log: '%s'  master_pos: %s\n",
-	  master_host, master_port, master_log, llstr(master_pos, llbuff));
-}
-#endif /* DRIZZLE_CLIENT */
 
 
 int Slave_log_event::get_data_size()
@@ -4764,7 +3835,6 @@ int Slave_log_event::get_data_size()
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool Slave_log_event::write(IO_CACHE* file)
 {
   ulong event_length= get_data_size();
@@ -4773,9 +3843,8 @@ bool Slave_log_event::write(IO_CACHE* file)
   // log and host are already there
 
   return (write_header(file, event_length) ||
-          my_b_safe_write(file, (uchar*) mem_pool, event_length));
+          my_b_safe_write(file, (unsigned char*) mem_pool, event_length));
 }
-#endif
 
 
 void Slave_log_event::init_from_mem_pool(int data_size)
@@ -4796,7 +3865,7 @@ void Slave_log_event::init_from_mem_pool(int data_size)
 
 
 /** This code is not used, so has not been updated to be format-tolerant. */
-Slave_log_event::Slave_log_event(const char* buf, uint event_len)
+Slave_log_event::Slave_log_event(const char* buf, uint32_t event_len)
   :Log_event(buf,0) /*unused event*/ ,mem_pool(0),master_host(0)
 {
   if (event_len < LOG_EVENT_HEADER_LEN)
@@ -4810,40 +3879,18 @@ Slave_log_event::Slave_log_event(const char* buf, uint event_len)
 }
 
 
-#ifndef DRIZZLE_CLIENT
 int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   if (mysql_bin_log.is_open())
     mysql_bin_log.write(this);
   return 0;
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
 	Stop_log_event methods
 **************************************************************************/
 
-/*
-  Stop_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Stop_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file,
-                               Write_on_release_cache::FLUSH_F);
-
-  if (print_event_info->short_form)
-    return;
-
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\tStop\n");
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-#ifndef DRIZZLE_CLIENT
 /*
   The master stopped.  We used to clean up all temporary tables but
   this is useless as, as the master has shut down properly, it has
@@ -4874,9 +3921,6 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !DRIZZLE_CLIENT */
-#endif /* HAVE_REPLICATION */
-
 
 /**************************************************************************
 	Create_file_log_event methods
@@ -4886,13 +3930,12 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   Create_file_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT
 Create_file_log_event::
 Create_file_log_event(THD* thd_arg, sql_exchange* ex,
 		      const char* db_arg, const char* table_name_arg,
 		      List<Item>& fields_arg, enum enum_duplicates handle_dup,
                       bool ignore,
-		      uchar* block_arg, uint block_len_arg, bool using_trans)
+		      unsigned char* block_arg, uint32_t block_len_arg, bool using_trans)
   :Load_log_event(thd_arg,ex,db_arg,table_name_arg,fields_arg,handle_dup, ignore,
 		  using_trans),
    fake_base(0), block(block_arg), event_buf(0), block_len(block_len_arg),
@@ -4912,8 +3955,8 @@ bool Create_file_log_event::write_data_body(IO_CACHE* file)
   bool res;
   if ((res= Load_log_event::write_data_body(file)) || fake_base)
     return res;
-  return (my_b_safe_write(file, (uchar*) "", 1) ||
-          my_b_safe_write(file, (uchar*) block, block_len));
+  return (my_b_safe_write(file, (unsigned char*) "", 1) ||
+          my_b_safe_write(file, (unsigned char*) block, block_len));
 }
 
 
@@ -4924,7 +3967,7 @@ bool Create_file_log_event::write_data_body(IO_CACHE* file)
 bool Create_file_log_event::write_data_header(IO_CACHE* file)
 {
   bool res;
-  uchar buf[CREATE_FILE_HEADER_LEN];
+  unsigned char buf[CREATE_FILE_HEADER_LEN];
   if ((res= Load_log_event::write_data_header(file)) || fake_base)
     return res;
   int4store(buf + CF_FILE_ID_OFFSET, file_id);
@@ -4945,18 +3988,16 @@ bool Create_file_log_event::write_base(IO_CACHE* file)
   return res;
 }
 
-#endif /* !DRIZZLE_CLIENT */
-
 /*
   Create_file_log_event ctor
 */
 
-Create_file_log_event::Create_file_log_event(const char* buf, uint len,
+Create_file_log_event::Create_file_log_event(const char* buf, uint32_t len,
                                              const Format_description_log_event* description_event)
   :Load_log_event(buf,0,description_event),fake_base(0),block(0),inited_from_old(0)
 {
-  uint block_offset;
-  uint header_len= description_event->common_header_len;
+  uint32_t block_offset;
+  uint32_t header_len= description_event->common_header_len;
   uint8_t load_header_len= description_event->post_header_len[LOAD_EVENT-1];
   uint8_t create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
   if (!(event_buf= (char*) my_memdup(buf, len, MYF(MY_WME))) ||
@@ -4989,7 +4030,7 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
                    create_file_header_len + 1);
     if (len < block_offset)
       return;
-    block = (uchar*)buf + block_offset;
+    block = (unsigned char*)buf + block_offset;
     block_len = len - block_offset;
   }
   else
@@ -5002,70 +4043,28 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
 
 
 /*
-  Create_file_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT
-void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info,
-				  bool enable_local)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-  {
-    if (enable_local && check_fname_outside_temp_buf())
-      Load_log_event::print(file, print_event_info);
-    return;
-  }
-
-  if (enable_local)
-  {
-    Load_log_event::print(file, print_event_info,
-			  !check_fname_outside_temp_buf());
-    /* 
-       That one is for "file_id: etc" below: in mysqlbinlog we want the #, in
-       SHOW BINLOG EVENTS we don't.
-    */
-    my_b_printf(&cache, "#"); 
-  }
-
-  my_b_printf(&cache, " file_id: %d  block_len: %d\n", file_id, block_len);
-}
-
-
-void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-#endif /* DRIZZLE_CLIENT */
-
-
-/*
   Create_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Create_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[NAME_LEN*2 + 30 + 21*2], *pos;
-  pos= stpcpy(buf, "db=");
+  pos= my_stpcpy(buf, "db=");
   memcpy(pos, db, db_len);
-  pos= stpcpy(pos + db_len, ";table=");
+  pos= my_stpcpy(pos + db_len, ";table=");
   memcpy(pos, table_name, table_name_len);
-  pos= stpcpy(pos + table_name_len, ";file_id=");
+  pos= my_stpcpy(pos + table_name_len, ";file_id=");
   pos= int10_to_str((long) file_id, pos, 10);
-  pos= stpcpy(pos, ";block_len=");
+  pos= my_stpcpy(pos, ";block_len=");
   pos= int10_to_str((long) block_len, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /*
   Create_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
 {
   char proc_info[17+FN_REFLEN+10], *fname_buf;
@@ -5075,7 +4074,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   int error = 1;
 
   memset(&file, 0, sizeof(file));
-  fname_buf= stpcpy(proc_info, "Making temp file ");
+  fname_buf= my_stpcpy(proc_info, "Making temp file ");
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
   thd_proc_info(thd, proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
@@ -5086,40 +4085,40 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
 		    MYF(MY_WME|MY_NABP)))
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in Create_file event: could not open file '%s'",
+                _("Error in Create_file event: could not open file '%s'"),
                 fname_buf);
     goto err;
   }
   
   // a trick to avoid allocating another buffer
   fname= fname_buf;
-  fname_len= (uint) (stpcpy(ext, ".data") - fname);
+  fname_len= (uint) (my_stpcpy(ext, ".data") - fname);
   if (write_base(&file))
   {
-    stpcpy(ext, ".info"); // to have it right in the error message
+    my_stpcpy(ext, ".info"); // to have it right in the error message
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in Create_file event: could not write to file '%s'",
+                _("Error in Create_file event: could not write to file '%s'"),
                 fname_buf);
     goto err;
   }
   end_io_cache(&file);
   my_close(fd, MYF(0));
-  
+
   // fname_buf now already has .data, not .info, because we did our trick
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
-		     O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
-		     MYF(MY_WME))) < 0)
+                     O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
+                     MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in Create_file event: could not open file '%s'",
+                _("Error in Create_file event: could not open file '%s'"),
                 fname_buf);
     goto err;
   }
-  if (my_write(fd, (uchar*) block, block_len, MYF(MY_WME+MY_NABP)))
+  if (my_write(fd, (unsigned char*) block, block_len, MYF(MY_WME+MY_NABP)))
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in Create_file event: write to '%s' failed",
+                _("Error in Create_file event: write to '%s' failed"),
                 fname_buf);
     goto err;
   }
@@ -5133,7 +4132,6 @@ err:
   thd_proc_info(thd, 0);
   return error == 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5144,35 +4142,33 @@ err:
   Append_block_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT  
 Append_block_log_event::Append_block_log_event(THD *thd_arg,
                                                const char *db_arg,
-					       uchar *block_arg,
-					       uint block_len_arg,
+					       unsigned char *block_arg,
+					       uint32_t block_len_arg,
 					       bool using_trans)
   :Log_event(thd_arg,0, using_trans), block(block_arg),
    block_len(block_len_arg), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
 
 
 /*
   Append_block_log_event ctor
 */
 
-Append_block_log_event::Append_block_log_event(const char* buf, uint len,
+Append_block_log_event::Append_block_log_event(const char* buf, uint32_t len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event),block(0)
 {
   uint8_t common_header_len= description_event->common_header_len; 
   uint8_t append_block_header_len=
     description_event->post_header_len[APPEND_BLOCK_EVENT-1];
-  uint total_header_len= common_header_len+append_block_header_len;
+  uint32_t total_header_len= common_header_len+append_block_header_len;
   if (len < total_header_len)
     return;
   file_id= uint4korr(buf + common_header_len + AB_FILE_ID_OFFSET);
-  block= (uchar*)buf + total_header_len;
+  block= (unsigned char*)buf + total_header_len;
   block_len= len - total_header_len;
   return;
 }
@@ -5182,46 +4178,24 @@ Append_block_log_event::Append_block_log_event(const char* buf, uint len,
   Append_block_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Append_block_log_event::write(IO_CACHE* file)
 {
-  uchar buf[APPEND_BLOCK_HEADER_LEN];
+  unsigned char buf[APPEND_BLOCK_HEADER_LEN];
   int4store(buf + AB_FILE_ID_OFFSET, file_id);
   return (write_header(file, APPEND_BLOCK_HEADER_LEN + block_len) ||
           my_b_safe_write(file, buf, APPEND_BLOCK_HEADER_LEN) ||
-	  my_b_safe_write(file, (uchar*) block, block_len));
+	  my_b_safe_write(file, (unsigned char*) block, block_len));
 }
-#endif
-
-
-/*
-  Append_block_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Append_block_log_event::print(FILE* file,
-				   PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#%s: file_id: %d  block_len: %d\n",
-              get_type_str(), file_id, block_len);
-}
-#endif /* DRIZZLE_CLIENT */
 
 
 /*
   Append_block_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Append_block_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
-  uint length;
+  uint32_t length;
   length= (uint) sprintf(buf, ";file_id=%u;block_len=%u", file_id,
 			     block_len);
   protocol->store(buf, length, &my_charset_bin);
@@ -5247,7 +4221,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
   int fd;
   int error = 1;
 
-  fname= stpcpy(proc_info, "Making temp file ");
+  fname= my_stpcpy(proc_info, "Making temp file ");
   slave_load_file_stem(fname, file_id, server_id, ".data");
   thd_proc_info(thd, proc_info);
   if (get_create_or_append())
@@ -5258,7 +4232,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
 		       MYF(MY_WME))) < 0)
     {
       rli->report(ERROR_LEVEL, my_errno,
-                  "Error in %s event: could not create file '%s'",
+                  _("Error in %s event: could not create file '%s'"),
                   get_type_str(), fname);
       goto err;
     }
@@ -5267,14 +4241,14 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
                          MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in %s event: could not open file '%s'",
+                _("Error in %s event: could not open file '%s'"),
                 get_type_str(), fname);
     goto err;
   }
-  if (my_write(fd, (uchar*) block, block_len, MYF(MY_WME+MY_NABP)))
+  if (my_write(fd, (unsigned char*) block, block_len, MYF(MY_WME+MY_NABP)))
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in %s event: write to '%s' failed",
+                _("Error in %s event: write to '%s' failed"),
                 get_type_str(), fname);
     goto err;
   }
@@ -5286,7 +4260,6 @@ err:
   thd_proc_info(thd, 0);
   return(error);
 }
-#endif
 
 
 /**************************************************************************
@@ -5297,19 +4270,17 @@ err:
   Delete_file_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT
 Delete_file_log_event::Delete_file_log_event(THD *thd_arg, const char* db_arg,
 					     bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
 
 /*
   Delete_file_log_event ctor
 */
 
-Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
+Delete_file_log_event::Delete_file_log_event(const char* buf, uint32_t len,
                                              const Format_description_log_event* description_event)
   :Log_event(buf, description_event),file_id(0)
 {
@@ -5325,63 +4296,40 @@ Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
   Delete_file_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Delete_file_log_event::write(IO_CACHE* file)
 {
- uchar buf[DELETE_FILE_HEADER_LEN];
+ unsigned char buf[DELETE_FILE_HEADER_LEN];
  int4store(buf + DF_FILE_ID_OFFSET, file_id);
  return (write_header(file, sizeof(buf)) ||
          my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
-
-/*
-  Delete_file_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Delete_file_log_event::print(FILE* file,
-				  PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#Delete_file: file_id=%u\n", file_id);
-}
-#endif /* DRIZZLE_CLIENT */
 
 /*
   Delete_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Delete_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
-  uint length;
+  uint32_t length;
   length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
   protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
-#endif
 
 /*
   Delete_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
   (void) my_delete(fname, MYF(MY_WME));
-  stpcpy(ext, ".info");
+  my_stpcpy(ext, ".info");
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5392,21 +4340,19 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   Execute_load_log_event ctor
 */
 
-#ifndef DRIZZLE_CLIENT  
 Execute_load_log_event::Execute_load_log_event(THD *thd_arg,
                                                const char* db_arg,
 					       bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
 {
 }
-#endif
   
 
 /*
   Execute_load_log_event ctor
 */
 
-Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
+Execute_load_log_event::Execute_load_log_event(const char* buf, uint32_t len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event), file_id(0)
 {
@@ -5422,44 +4368,23 @@ Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
   Execute_load_log_event::write()
 */
 
-#ifndef DRIZZLE_CLIENT
 bool Execute_load_log_event::write(IO_CACHE* file)
 {
-  uchar buf[EXEC_LOAD_HEADER_LEN];
+  unsigned char buf[EXEC_LOAD_HEADER_LEN];
   int4store(buf + EL_FILE_ID_OFFSET, file_id);
   return (write_header(file, sizeof(buf)) || 
           my_b_safe_write(file, buf, sizeof(buf)));
 }
-#endif
 
-
-/*
-  Execute_load_log_event::print()
-*/
-
-#ifdef DRIZZLE_CLIENT  
-void Execute_load_log_event::print(FILE* file,
-				   PRINT_EVENT_INFO* print_event_info)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  if (print_event_info->short_form)
-    return;
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n#Exec_load: file_id=%d\n",
-              file_id);
-}
-#endif
 
 /*
   Execute_load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
-  uint length;
+  uint32_t length;
   length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
   protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
@@ -5485,7 +4410,7 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
 		    MYF(MY_WME|MY_NABP)))
   {
     rli->report(ERROR_LEVEL, my_errno,
-                "Error in Exec_load event: could not open file '%s'",
+                _("Error in Exec_load event: could not open file '%s'"),
                 fname);
     goto err;
   }
@@ -5494,8 +4419,10 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
                                                          rli->relay_log.description_event_for_exec)) ||
       lev->get_type_code() != NEW_LOAD_EVENT)
   {
-    rli->report(ERROR_LEVEL, 0, "Error in Exec_load event: "
-                    "file '%s' appears corrupted", fname);
+    rli->report(ERROR_LEVEL, 0,
+                _("Error in Exec_load event: "
+                  "file '%s' appears corrupted"),
+                fname);
     goto err;
   }
 
@@ -5523,8 +4450,9 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
     if (tmp)
     {
       rli->report(ERROR_LEVEL, rli->last_error().number,
-                  "%s. Failed executing load from '%s'", tmp, fname);
-      my_free(tmp,MYF(0));
+                  _("%s. Failed executing load from '%s'"),
+                  tmp, fname);
+      free(tmp);
     }
     goto err;
   }
@@ -5553,42 +4481,35 @@ err:
   return error;
 }
 
-#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
-
 
 /**************************************************************************
 	Begin_load_query_log_event methods
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Begin_load_query_log_event::
-Begin_load_query_log_event(THD* thd_arg, const char* db_arg, uchar* block_arg,
-                           uint block_len_arg, bool using_trans)
+Begin_load_query_log_event(THD* thd_arg, const char* db_arg, unsigned char* block_arg,
+                           uint32_t block_len_arg, bool using_trans)
   :Append_block_log_event(thd_arg, db_arg, block_arg, block_len_arg,
                           using_trans)
 {
    file_id= thd_arg->file_id= mysql_bin_log.next_file_id();
 }
-#endif
 
 
 Begin_load_query_log_event::
-Begin_load_query_log_event(const char* buf, uint len,
+Begin_load_query_log_event(const char* buf, uint32_t len,
                            const Format_description_log_event* desc_event)
   :Append_block_log_event(buf, len, desc_event)
 {
 }
 
 
-#if defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Begin_load_query_log_event::get_create_or_append() const
 {
   return 1; /* create the file */
 }
-#endif /* defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 Log_event::enum_skip_reason
 Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 {
@@ -5598,7 +4519,6 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
   */
   return continue_group(rli);
 }
-#endif
 
 
 /**************************************************************************
@@ -5606,11 +4526,10 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 **************************************************************************/
 
 
-#ifndef DRIZZLE_CLIENT
 Execute_load_query_log_event::
 Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
-                             ulong query_length_arg, uint fn_pos_start_arg,
-                             uint fn_pos_end_arg,
+                             ulong query_length_arg, uint32_t fn_pos_start_arg,
+                             uint32_t fn_pos_end_arg,
                              enum_load_dup_handling dup_handling_arg,
                              bool using_trans, bool suppress_use,
                              THD::killed_state killed_err_arg):
@@ -5620,11 +4539,10 @@ Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
   fn_pos_end(fn_pos_end_arg), dup_handling(dup_handling_arg)
 {
 }
-#endif /* !DRIZZLE_CLIENT */
 
 
 Execute_load_query_log_event::
-Execute_load_query_log_event(const char* buf, uint event_len,
+Execute_load_query_log_event(const char* buf, uint32_t event_len,
                              const Format_description_log_event* desc_event):
   Query_log_event(buf, event_len, desc_event, EXECUTE_LOAD_QUERY_EVENT),
   file_id(0), fn_pos_start(0), fn_pos_end(0)
@@ -5652,63 +4570,18 @@ ulong Execute_load_query_log_event::get_post_header_size_for_derived()
 }
 
 
-#ifndef DRIZZLE_CLIENT
 bool
 Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
 {
-  uchar buf[EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN];
+  unsigned char buf[EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN];
   int4store(buf, file_id);
   int4store(buf + 4, fn_pos_start);
   int4store(buf + 4 + 4, fn_pos_end);
-  *(buf + 4 + 4 + 4)= (uchar) dup_handling;
+  *(buf + 4 + 4 + 4)= (unsigned char) dup_handling;
   return my_b_safe_write(file, buf, EXECUTE_LOAD_QUERY_EXTRA_HEADER_LEN);
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void Execute_load_query_log_event::print(FILE* file,
-                                         PRINT_EVENT_INFO* print_event_info)
-{
-  print(file, print_event_info, 0);
-}
-
-/**
-  Prints the query as LOAD DATA LOCAL and with rewritten filename.
-*/
-void Execute_load_query_log_event::print(FILE* file,
-                                         PRINT_EVENT_INFO* print_event_info,
-                                         const char *local_fname)
-{
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-
-  print_query_header(&cache, print_event_info);
-
-  if (local_fname)
-  {
-    my_b_write(&cache, (uchar*) query, fn_pos_start);
-    my_b_printf(&cache, " LOCAL INFILE \'");
-    my_b_printf(&cache, local_fname);
-    my_b_printf(&cache, "\'");
-    if (dup_handling == LOAD_DUP_REPLACE)
-      my_b_printf(&cache, " REPLACE");
-    my_b_printf(&cache, " INTO");
-    my_b_write(&cache, (uchar*) query + fn_pos_end, q_len-fn_pos_end);
-    my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-  }
-  else
-  {
-    my_b_write(&cache, (uchar*) query, q_len);
-    my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
-  }
-
-  if (!print_event_info->short_form)
-    my_b_printf(&cache, "# file_id: %d \n", file_id);
-}
-#endif
-
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_query_log_event::pack_info(Protocol *protocol)
 {
   char *buf, *pos;
@@ -5717,19 +4590,19 @@ void Execute_load_query_log_event::pack_info(Protocol *protocol)
   pos= buf;
   if (db && db_len)
   {
-    pos= stpcpy(buf, "use `");
+    pos= my_stpcpy(buf, "use `");
     memcpy(pos, db, db_len);
-    pos= stpcpy(pos+db_len, "`; ");
+    pos= my_stpcpy(pos+db_len, "`; ");
   }
   if (query && q_len)
   {
     memcpy(pos, query, q_len);
     pos+= q_len;
   }
-  pos= stpcpy(pos, " ;file_id=");
+  pos= my_stpcpy(pos, " ;file_id=");
   pos= int10_to_str((long) file_id, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
-  my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
+  free(buf);
 }
 
 
@@ -5749,7 +4622,8 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   if (buf == NULL)
   {
     rli->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
-                ER(ER_SLAVE_FATAL_ERROR), "Not enough memory");
+                ER(ER_SLAVE_FATAL_ERROR),
+                _("Not enough memory"));
     return 1;
   }
 
@@ -5786,10 +4660,9 @@ Execute_load_query_log_event::do_apply_event(Relay_log_info const *rli)
   if (!error)
     (void) my_delete(fname, MYF(MY_WME));
 
-  my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
+  free(buf);
   return error;
 }
-#endif
 
 
 /**************************************************************************
@@ -5809,7 +4682,7 @@ bool sql_ex_info::write_data(IO_CACHE* file)
 	    write_str(file, line_term,  (uint) line_term_len) ||
 	    write_str(file, line_start, (uint) line_start_len) ||
 	    write_str(file, escaped,    (uint) escaped_len) ||
-	    my_b_safe_write(file,(uchar*) &opt_flags,1));
+	    my_b_safe_write(file,(unsigned char*) &opt_flags,1));
   }
   else
   {
@@ -5825,7 +4698,7 @@ bool sql_ex_info::write_data(IO_CACHE* file)
     old_ex.escaped=    *escaped;
     old_ex.opt_flags=  opt_flags;
     old_ex.empty_flags=empty_flags;
-    return my_b_safe_write(file, (uchar*) &old_ex, sizeof(old_ex)) != 0;
+    return my_b_safe_write(file, (unsigned char*) &old_ex, sizeof(old_ex)) != 0;
   }
 }
 
@@ -5885,7 +4758,6 @@ const char *sql_ex_info::init(const char *buf, const char *buf_end,
 	Rows_log_event member functions
 **************************************************************************/
 
-#ifndef DRIZZLE_CLIENT
 Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
                                MY_BITMAP const *cols, bool is_transactional)
   : Log_event(thd_arg, 0, is_transactional),
@@ -5894,9 +4766,7 @@ Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
     m_table_id(tid),
     m_width(tbl_arg ? tbl_arg->s->fields : 1),
     m_rows_buf(0), m_rows_cur(0), m_rows_end(0), m_flags(0) 
-#ifdef HAVE_REPLICATION
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
-#endif
 {
   /*
     We allow a special form of dummy event when the table, and cols
@@ -5929,21 +4799,17 @@ Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
     m_cols.bitmap= 0;
   }
 }
-#endif
 
-Rows_log_event::Rows_log_event(const char *buf, uint event_len,
+
+Rows_log_event::Rows_log_event(const char *buf, uint32_t event_len,
                                Log_event_type event_type,
                                const Format_description_log_event
                                *description_event)
   : Log_event(buf, description_event),
     m_row_count(0),
-#ifndef DRIZZLE_CLIENT
     m_table(NULL),
-#endif
     m_table_id(0), m_rows_buf(0), m_rows_cur(0), m_rows_end(0)
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
-#endif
 {
   uint8_t const common_header_len= description_event->common_header_len;
   uint8_t const post_header_len= description_event->post_header_len[event_type-1];
@@ -5964,10 +4830,10 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
 
   m_flags= uint2korr(post_start);
 
-  uchar const *const var_start=
-    (const uchar *)buf + common_header_len + post_header_len;
-  uchar const *const ptr_width= var_start;
-  uchar *ptr_after_width= (uchar*) ptr_width;
+  unsigned char const *const var_start=
+    (const unsigned char *)buf + common_header_len + post_header_len;
+  unsigned char const *const ptr_width= var_start;
+  unsigned char *ptr_after_width= (unsigned char*) ptr_width;
   m_width = net_field_length(&ptr_after_width);
   /* if bitmap_init fails, catched in is_valid() */
   if (likely(!bitmap_init(&m_cols,
@@ -6008,16 +4874,14 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
     }
   }
 
-  const uchar* const ptr_rows_data= (const uchar*) ptr_after_width;
+  const unsigned char* const ptr_rows_data= (const unsigned char*) ptr_after_width;
 
-  size_t const data_size= event_len - (ptr_rows_data - (const uchar *) buf);
+  size_t const data_size= event_len - (ptr_rows_data - (const unsigned char *) buf);
 
-  m_rows_buf= (uchar*) my_malloc(data_size, MYF(MY_WME));
+  m_rows_buf= (unsigned char*) my_malloc(data_size, MYF(MY_WME));
   if (likely((bool)m_rows_buf))
   {
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     m_curr_row= m_rows_buf;
-#endif
     m_rows_end= m_rows_buf + data_size;
     m_rows_cur= m_rows_end;
     memcpy(m_rows_buf, ptr_rows_data, data_size);
@@ -6031,17 +4895,17 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
 Rows_log_event::~Rows_log_event()
 {
   if (m_cols.bitmap == m_bitbuf) // no my_malloc happened
-    m_cols.bitmap= 0; // so no my_free in bitmap_free
+    m_cols.bitmap= 0; // so no free in bitmap_free
   bitmap_free(&m_cols); // To pair with bitmap_init().
-  my_free((uchar*)m_rows_buf, MYF(MY_ALLOW_ZERO_PTR));
+  free((unsigned char*)m_rows_buf);
 }
 
 int Rows_log_event::get_data_size()
 {
   int const type_code= get_type_code();
 
-  uchar buf[sizeof(m_width)+1];
-  uchar *end= net_store_length(buf, (m_width + 7) / 8);
+  unsigned char buf[sizeof(m_width)+1];
+  unsigned char *end= net_store_length(buf, (m_width + 7) / 8);
 
   int data_size= ROWS_HEADER_LEN;
   data_size+= no_bytes_in_map(&m_cols);
@@ -6055,8 +4919,7 @@ int Rows_log_event::get_data_size()
 }
 
 
-#ifndef DRIZZLE_CLIENT
-int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
+int Rows_log_event::do_add_row_data(unsigned char *row_data, size_t length)
 {
   /*
     When the table has a primary key, we would probably want, by default, to
@@ -6087,7 +4950,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
     my_ptrdiff_t const new_alloc= 
         block_size * ((cur_size + length + block_size - 1) / block_size);
 
-    uchar* const new_buf= (uchar*)my_realloc((uchar*)m_rows_buf, (uint) new_alloc,
+    unsigned char* const new_buf= (unsigned char*)my_realloc((unsigned char*)m_rows_buf, (uint) new_alloc,
                                            MYF(MY_ALLOW_ZERO_PTR|MY_WME));
     if (unlikely(!new_buf))
       return(HA_ERR_OUT_OF_MEM);
@@ -6112,9 +4975,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
   m_row_count++;
   return(0);
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Rows_log_event::do_apply_event(Relay_log_info const *rli)
 {
   int error= 0;
@@ -6192,18 +5053,19 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
             Error reporting borrowed from Query_log_event with many excessive
             simplifications (we don't honour --slave-skip-errors)
           */
-          uint actual_error= thd->main_da.sql_errno();
+          uint32_t actual_error= thd->main_da.sql_errno();
           rli->report(ERROR_LEVEL, actual_error,
-                      "Error '%s' in %s event: when locking tables",
-                      (actual_error ? thd->main_da.message():
-                       "unexpected success or fatal error"),
+                      _("Error '%s' in %s event: when locking tables"),
+                      (actual_error
+                       ? thd->main_da.message()
+                       : _("unexpected success or fatal error")),
                       get_type_str());
           thd->is_fatal_error= 1;
         }
         else
         {
           rli->report(ERROR_LEVEL, error,
-                      "Error in %s event: when locking tables",
+                      _("Error in %s event: when locking tables"),
                       get_type_str());
         }
         const_cast<Relay_log_info*>(rli)->clear_tables_to_lock();
@@ -6227,7 +5089,7 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       TableList *tables= rli->tables_to_lock;
       close_tables_for_reopen(thd, &tables);
 
-      uint tables_count= rli->tables_to_lock_count;
+      uint32_t tables_count= rli->tables_to_lock_count;
       if ((error= open_tables(thd, &tables, &tables_count, 0)))
       {
         if (thd->is_slave_error || thd->is_fatal_error)
@@ -6236,11 +5098,12 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
             Error reporting borrowed from Query_log_event with many excessive
             simplifications (we don't honour --slave-skip-errors)
           */
-          uint actual_error= thd->main_da.sql_errno();
+          uint32_t actual_error= thd->main_da.sql_errno();
           rli->report(ERROR_LEVEL, actual_error,
-                      "Error '%s' on reopening tables",
-                      (actual_error ? thd->main_da.message() :
-                       "unexpected success or fatal error"));
+                      _("Error '%s' on reopening tables"),
+                      (actual_error
+                       ? thd->main_da.message()
+                       : _("unexpected success or fatal error")));
           thd->is_slave_error= 1;
         }
         const_cast<Relay_log_info*>(rli)->clear_tables_to_lock();
@@ -6593,8 +5456,8 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
     }
     else
       rli->report(ERROR_LEVEL, error,
-                  "Error in %s event: commit of row events failed, "
-                  "table `%s`.`%s`",
+                  _("Error in %s event: commit of row events failed, "
+                    "table `%s`.`%s`"),
                   get_type_str(), m_table->s->db.str,
                   m_table->s->table_name.str);
   }
@@ -6606,12 +5469,9 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
   return(error);
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifndef DRIZZLE_CLIENT
 bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
-  uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
+  unsigned char buf[ROWS_HEADER_LEN];	// No need to init the buffer
   assert(m_table_id != UINT32_MAX);
   int6store(buf + RW_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + RW_FLAGS_OFFSET, m_flags);
@@ -6624,22 +5484,22 @@ bool Rows_log_event::write_data_body(IO_CACHE*file)
      Note that this should be the number of *bits*, not the number of
      bytes.
   */
-  uchar sbuf[sizeof(m_width)];
+  unsigned char sbuf[sizeof(m_width)];
   my_ptrdiff_t const data_size= m_rows_cur - m_rows_buf;
   bool res= false;
-  uchar *const sbuf_end= net_store_length(sbuf, (size_t) m_width);
+  unsigned char *const sbuf_end= net_store_length(sbuf, (size_t) m_width);
   assert(static_cast<size_t>(sbuf_end - sbuf) <= sizeof(sbuf));
 
   res= res || my_b_safe_write(file, sbuf, (size_t) (sbuf_end - sbuf));
 
-  res= res || my_b_safe_write(file, (uchar*) m_cols.bitmap,
+  res= res || my_b_safe_write(file, (unsigned char*) m_cols.bitmap,
                               no_bytes_in_map(&m_cols));
   /*
     TODO[refactor write]: Remove the "down cast" here (and elsewhere).
    */
   if (get_type_code() == UPDATE_ROWS_EVENT)
   {
-    res= res || my_b_safe_write(file, (uchar*) m_cols_ai.bitmap,
+    res= res || my_b_safe_write(file, (unsigned char*) m_cols_ai.bitmap,
                                 no_bytes_in_map(&m_cols_ai));
   }
   res= res || my_b_safe_write(file, m_rows_buf, (size_t) data_size);
@@ -6647,9 +5507,8 @@ bool Rows_log_event::write_data_body(IO_CACHE*file)
   return res;
 
 }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
+
 void Rows_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -6659,32 +5518,7 @@ void Rows_log_event::pack_info(Protocol *protocol)
                          "table_id: %lu%s", m_table_id, flagstr);
   protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
-#ifdef DRIZZLE_CLIENT
-void Rows_log_event::print_helper(FILE *file,
-                                  PRINT_EVENT_INFO *print_event_info,
-                                  char const *const name)
-{
-  IO_CACHE *const head= &print_event_info->head_cache;
-  IO_CACHE *const body= &print_event_info->body_cache;
-  if (!print_event_info->short_form)
-  {
-    bool const last_stmt_event= get_flags(STMT_END_F);
-    print_header(head, print_event_info, !last_stmt_event);
-    my_b_printf(head, "\t%s: table id %lu%s\n",
-                name, m_table_id,
-                last_stmt_event ? " flags: STMT_END_F" : "");
-    print_base64(body, print_event_info, !last_stmt_event);
-  }
-
-  if (get_flags(STMT_END_F))
-  {
-    copy_event_cache_to_file_and_reinit(head, file);
-    copy_event_cache_to_file_and_reinit(body, file);
-  }
-}
-#endif
 
 /**************************************************************************
 	Table_map_log_event member functions and support functions
@@ -6711,7 +5545,7 @@ void Rows_log_event::print_helper(FILE *file,
   same as the columns for the table on the slave.
 
   Additionally, values saved for field metadata on the master are saved as a 
-  string of bytes (uchar) in the binlog. A field may require 1 or more bytes
+  string of bytes (unsigned char) in the binlog. A field may require 1 or more bytes
   to store the information. In cases where values require multiple bytes 
   (e.g. values > 255), the endian-safe methods are used to properly encode 
   the values on the master and decode them on the slave. When the field
@@ -6722,7 +5556,6 @@ void Rows_log_event::print_helper(FILE *file,
   type used is uint32_t. 
 */
 
-#if !defined(DRIZZLE_CLIENT)
 /**
   Save the field metadata based on the real_type of the field.
   The metadata saved depends on the type of the field. Some fields
@@ -6754,14 +5587,12 @@ int Table_map_log_event::save_field_metadata()
     index+= m_table->s->field[i]->save_field_metadata(&m_field_metadata[index]);
   return(index);
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used to build an event for writing to the binary log.
   Mats says tbl->s lives longer than this event so it's ok to copy pointers
   (tbl->s->db etc) and not pointer content.
  */
-#if !defined(DRIZZLE_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
                                          bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
@@ -6799,9 +5630,9 @@ Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
   m_data_size+= 1 + m_colcnt;	// COLCNT and column types
 
   /* If malloc fails, caught in is_valid() */
-  if ((m_memory= (uchar*) my_malloc(m_colcnt, MYF(MY_WME))))
+  if ((m_memory= (unsigned char*) my_malloc(m_colcnt, MYF(MY_WME))))
   {
-    m_coltype= reinterpret_cast<uchar*>(m_memory);
+    m_coltype= reinterpret_cast<unsigned char*>(m_memory);
     for (unsigned int i= 0 ; i < m_table->s->fields ; ++i)
       m_coltype[i]= m_table->field[i]->type();
   }
@@ -6812,9 +5643,9 @@ Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
     that is not on the slave and is null and thus not in the row data during
     replication.
   */
-  uint num_null_bytes= (m_table->s->fields + 7) / 8;
+  uint32_t num_null_bytes= (m_table->s->fields + 7) / 8;
   m_data_size+= num_null_bytes;
-  m_meta_memory= (uchar *)my_multi_malloc(MYF(MY_WME),
+  m_meta_memory= (unsigned char *)my_multi_malloc(MYF(MY_WME),
                                  &m_null_bits, num_null_bytes,
                                  &m_field_metadata, (m_colcnt * 2),
                                  NULL);
@@ -6842,20 +5673,17 @@ Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
       m_null_bits[(i / 8)]+= 1 << (i % 8);
 
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
+
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#if defined(HAVE_REPLICATION)
-Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
+Table_map_log_event::Table_map_log_event(const char *buf, uint32_t event_len,
                                          const Format_description_log_event
                                          *description_event)
 
   : Log_event(buf, description_event),
-#ifndef DRIZZLE_CLIENT
     m_table(NULL),
-#endif
     m_dbnam(NULL), m_dblen(0), m_tblnam(NULL), m_tbllen(0),
     m_colcnt(0), m_coltype(0),
     m_memory(NULL), m_table_id(ULONG_MAX), m_flags(0),
@@ -6892,24 +5720,24 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
   const char *const vpart= buf + common_header_len + post_header_len;
 
   /* Extract the length of the various parts from the buffer */
-  uchar const *const ptr_dblen= (uchar const*)vpart + 0;
-  m_dblen= *(uchar*) ptr_dblen;
+  unsigned char const *const ptr_dblen= (unsigned char const*)vpart + 0;
+  m_dblen= *(unsigned char*) ptr_dblen;
 
   /* Length of database name + counter + terminating null */
-  uchar const *const ptr_tbllen= ptr_dblen + m_dblen + 2;
-  m_tbllen= *(uchar*) ptr_tbllen;
+  unsigned char const *const ptr_tbllen= ptr_dblen + m_dblen + 2;
+  m_tbllen= *(unsigned char*) ptr_tbllen;
 
   /* Length of table name + counter + terminating null */
-  uchar const *const ptr_colcnt= ptr_tbllen + m_tbllen + 2;
-  uchar *ptr_after_colcnt= (uchar*) ptr_colcnt;
+  unsigned char const *const ptr_colcnt= ptr_tbllen + m_tbllen + 2;
+  unsigned char *ptr_after_colcnt= (unsigned char*) ptr_colcnt;
   m_colcnt= net_field_length(&ptr_after_colcnt);
 
   /* Allocate mem for all fields in one go. If fails, caught in is_valid() */
-  m_memory= (uchar*) my_multi_malloc(MYF(MY_WME),
+  m_memory= (unsigned char*) my_multi_malloc(MYF(MY_WME),
                                      &m_dbnam, (uint) m_dblen + 1,
                                      &m_tblnam, (uint) m_tbllen + 1,
                                      &m_coltype, (uint) m_colcnt,
-                                     NullS);
+                                     NULL);
 
   if (m_memory)
   {
@@ -6919,30 +5747,29 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
     memcpy(m_coltype, ptr_after_colcnt, m_colcnt);
 
     ptr_after_colcnt= ptr_after_colcnt + m_colcnt;
-    bytes_read= ptr_after_colcnt - (uchar *)buf;
+    bytes_read= ptr_after_colcnt - (unsigned char *)buf;
     if (bytes_read < event_len)
     {
       m_field_metadata_size= net_field_length(&ptr_after_colcnt);
       assert(m_field_metadata_size <= (m_colcnt * 2));
-      uint num_null_bytes= (m_colcnt + 7) / 8;
-      m_meta_memory= (uchar *)my_multi_malloc(MYF(MY_WME),
+      uint32_t num_null_bytes= (m_colcnt + 7) / 8;
+      m_meta_memory= (unsigned char *)my_multi_malloc(MYF(MY_WME),
                                      &m_null_bits, num_null_bytes,
                                      &m_field_metadata, m_field_metadata_size,
                                      NULL);
       memcpy(m_field_metadata, ptr_after_colcnt, m_field_metadata_size);
-      ptr_after_colcnt= (uchar*)ptr_after_colcnt + m_field_metadata_size;
+      ptr_after_colcnt= (unsigned char*)ptr_after_colcnt + m_field_metadata_size;
       memcpy(m_null_bits, ptr_after_colcnt, num_null_bytes);
     }
   }
 
   return;
 }
-#endif
 
 Table_map_log_event::~Table_map_log_event()
 {
-  my_free(m_meta_memory, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(m_memory, MYF(MY_ALLOW_ZERO_PTR));
+  free(m_meta_memory);
+  free(m_memory);
 }
 
 /*
@@ -6956,7 +5783,6 @@ Table_map_log_event::~Table_map_log_event()
        4     Daisy-chaining RBR with SBR not possible
  */
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
 {
   RPL_TableList *table_list;
@@ -6974,7 +5800,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
                                 &table_list, (uint) sizeof(RPL_TableList),
                                 &db_mem, (uint) NAME_LEN + 1,
                                 &tname_mem, (uint) NAME_LEN + 1,
-                                NullS)))
+                                NULL)))
     return(HA_ERR_OUT_OF_MEM);
 
   memset(table_list, 0, sizeof(*table_list));
@@ -6984,15 +5810,15 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  stpcpy(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
-  stpcpy(table_list->table_name, m_tblnam);
+  my_stpcpy(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
+  my_stpcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 
   if (!rpl_filter->db_ok(table_list->db) ||
       (rpl_filter->is_on() && !rpl_filter->tables_ok("", table_list)))
   {
-    my_free(memory, MYF(MY_WME));
+    free(memory);
   }
   else
   {
@@ -7032,7 +5858,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
       internally in the open_tables() function, hence we take a copy
       of the pointer to make sure that it's not lost.
     */
-    uint count;
+    uint32_t count;
     assert(thd->lex->query_tables != table_list);
     TableList *tmp_table_list= table_list;
     if ((error= open_tables(thd, &tmp_table_list, &count, 0)))
@@ -7043,11 +5869,12 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
           Error reporting borrowed from Query_log_event with many excessive
           simplifications (we don't honour --slave-skip-errors)
         */
-        uint actual_error= thd->main_da.sql_errno();
+        uint32_t actual_error= thd->main_da.sql_errno();
         rli->report(ERROR_LEVEL, actual_error,
-                    "Error '%s' on opening table `%s`.`%s`",
-                    (actual_error ? thd->main_da.message() :
-                     "unexpected success or fatal error"),
+                    _("Error '%s' on opening table `%s`.`%s`"),
+                    (actual_error
+                     ? thd->main_da.message()
+                     : _("unexpected success or fatal error")),
                     table_list->db, table_list->table_name);
         thd->is_slave_error= 1;
       }
@@ -7088,7 +5915,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   return(error);
 
 err:
-  my_free(memory, MYF(MY_WME));
+  free(memory);
   return(error);
 }
 
@@ -7108,13 +5935,11 @@ int Table_map_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifndef DRIZZLE_CLIENT
 bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
   assert(m_table_id != UINT32_MAX);
-  uchar buf[TABLE_MAP_HEADER_LEN];
+  unsigned char buf[TABLE_MAP_HEADER_LEN];
   int6store(buf + TM_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + TM_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, TABLE_MAP_HEADER_LEN));
@@ -7128,39 +5953,36 @@ bool Table_map_log_event::write_data_body(IO_CACHE *file)
   assert(m_dblen < 128);
   assert(m_tbllen < 128);
 
-  uchar const dbuf[]= { (uchar) m_dblen };
-  uchar const tbuf[]= { (uchar) m_tbllen };
+  unsigned char const dbuf[]= { (unsigned char) m_dblen };
+  unsigned char const tbuf[]= { (unsigned char) m_tbllen };
 
-  uchar cbuf[sizeof(m_colcnt)];
-  uchar *const cbuf_end= net_store_length(cbuf, (size_t) m_colcnt);
+  unsigned char cbuf[sizeof(m_colcnt)];
+  unsigned char *const cbuf_end= net_store_length(cbuf, (size_t) m_colcnt);
   assert(static_cast<size_t>(cbuf_end - cbuf) <= sizeof(cbuf));
 
   /*
     Store the size of the field metadata.
   */
-  uchar mbuf[sizeof(m_field_metadata_size)];
-  uchar *const mbuf_end= net_store_length(mbuf, m_field_metadata_size);
+  unsigned char mbuf[sizeof(m_field_metadata_size)];
+  unsigned char *const mbuf_end= net_store_length(mbuf, m_field_metadata_size);
 
   return (my_b_safe_write(file, dbuf,      sizeof(dbuf)) ||
-          my_b_safe_write(file, (const uchar*)m_dbnam,   m_dblen+1) ||
+          my_b_safe_write(file, (const unsigned char*)m_dbnam,   m_dblen+1) ||
           my_b_safe_write(file, tbuf,      sizeof(tbuf)) ||
-          my_b_safe_write(file, (const uchar*)m_tblnam,  m_tbllen+1) ||
+          my_b_safe_write(file, (const unsigned char*)m_tblnam,  m_tbllen+1) ||
           my_b_safe_write(file, cbuf, (size_t) (cbuf_end - cbuf)) ||
           my_b_safe_write(file, m_coltype, m_colcnt) ||
           my_b_safe_write(file, mbuf, (size_t) (mbuf_end - mbuf)) ||
           my_b_safe_write(file, m_field_metadata, m_field_metadata_size),
           my_b_safe_write(file, m_null_bits, (m_colcnt + 7) / 8));
  }
-#endif
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Print some useful information for the SHOW BINARY LOG information
   field.
  */
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Table_map_log_event::pack_info(Protocol *protocol)
 {
     char buf[256];
@@ -7169,26 +5991,7 @@ void Table_map_log_event::pack_info(Protocol *protocol)
                            m_table_id, m_dbnam, m_tblnam);
     protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
-
-#endif
-
-
-#ifdef DRIZZLE_CLIENT
-void Table_map_log_event::print(FILE * /* unused */,
-                                PRINT_EVENT_INFO *print_event_info)
-{
-  if (!print_event_info->short_form)
-  {
-    print_header(&print_event_info->head_cache, print_event_info, true);
-    my_b_printf(&print_event_info->head_cache,
-                "\tTable_map: `%s`.`%s` mapped to number %lu\n",
-                m_dbnam, m_tblnam, m_table_id);
-    print_base64(&print_event_info->body_cache, print_event_info, true);
-  }
-}
-#endif
 
 /**************************************************************************
 	Write_rows_log_event member functions
@@ -7197,28 +6000,23 @@ void Table_map_log_event::print(FILE * /* unused */,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(DRIZZLE_CLIENT)
 Write_rows_log_event::Write_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                            ulong tid_arg,
                                            bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid_arg, tbl_arg->write_set, is_transactional)
 {
 }
-#endif
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
-Write_rows_log_event::Write_rows_log_event(const char *buf, uint event_len,
+Write_rows_log_event::Write_rows_log_event(const char *buf, uint32_t event_len,
                                            const Format_description_log_event
                                            *description_event)
 : Rows_log_event(buf, event_len, WRITE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int 
 Write_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
 {
@@ -7296,13 +6094,12 @@ Write_rows_log_event::do_after_row_operations(const Slave_reporting_capability *
   return error? error : local_error;
 }
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 /*
   Check if there are more UNIQUE keys after the given key.
 */
 static int
-last_uniq_key(Table *table, uint keyno)
+last_uniq_key(Table *table, uint32_t keyno)
 {
   while (++keyno < table->s->keys)
     if (table->key_info[keyno].flags & HA_NOSAME)
@@ -7468,10 +6265,10 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
         }
       }
 
-      key_copy((uchar*)key.get(), table->record[0], table->key_info + keynum,
+      key_copy((unsigned char*)key.get(), table->record[0], table->key_info + keynum,
                0);
       error= table->file->index_read_idx_map(table->record[1], keynum,
-                                             (const uchar*)key.get(),
+                                             (const unsigned char*)key.get(),
                                              HA_WHOLE_KEY,
                                              HA_READ_KEY_EXACT);
       if (error)
@@ -7545,7 +6342,6 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
   return(error);
 }
 
-#endif
 
 int 
 Write_rows_log_event::do_exec_row(const Relay_log_info *const rli)
@@ -7564,20 +6360,11 @@ Write_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error; 
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifdef DRIZZLE_CLIENT
-void Write_rows_log_event::print(FILE *file, PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Write_rows");
-}
-#endif
 
 /**************************************************************************
 	Delete_rows_log_event member functions
 **************************************************************************/
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 /*
   Compares table->record[0] and table->record[1]
 
@@ -7597,7 +6384,7 @@ static bool record_compare(Table *table)
     records. Check that the other engines also return correct records.
    */
   bool result= false;
-  uchar saved_x[2], saved_filler[2];
+  unsigned char saved_x[2], saved_filler[2];
 
   if (table->s->null_bytes > 0)
   {
@@ -7874,34 +6661,28 @@ err:
   return(error);
 }
 
-#endif
 
 /*
   Constructor used to build an event for writing to the binary log.
  */
 
-#ifndef DRIZZLE_CLIENT
 Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
 {
 }
-#endif /* #if !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
-Delete_rows_log_event::Delete_rows_log_event(const char *buf, uint event_len,
+Delete_rows_log_event::Delete_rows_log_event(const char *buf, uint32_t event_len,
                                              const Format_description_log_event
                                              *description_event)
   : Rows_log_event(buf, event_len, DELETE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Delete_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -7918,7 +6699,7 @@ Delete_rows_log_event::do_before_row_operations(const Slave_reporting_capability
   if (m_table->s->keys > 0)
   {
     // Allocate buffer for key searches
-    m_key= (uchar*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
+    m_key= (unsigned char*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
     if (!m_key)
       return HA_ERR_OUT_OF_MEM;
   }
@@ -7932,7 +6713,7 @@ Delete_rows_log_event::do_after_row_operations(const Slave_reporting_capability 
 {
   /*error= ToDo:find out what this should really be, this triggers close_scan in nbd, returning error?*/
   m_table->file->ha_index_or_rnd_end();
-  my_free(m_key, MYF(MY_ALLOW_ZERO_PTR));
+  free(m_key);
   m_key= NULL;
 
   return error;
@@ -7953,16 +6734,6 @@ int Delete_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
-
-#ifdef DRIZZLE_CLIENT
-void Delete_rows_log_event::print(FILE *file,
-                                  PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Delete_rows");
-}
-#endif
-
 
 /**************************************************************************
 	Update_rows_log_event member functions
@@ -7971,7 +6742,6 @@ void Delete_rows_log_event::print(FILE *file,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(DRIZZLE_CLIENT)
 Update_rows_log_event::Update_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
@@ -7996,13 +6766,12 @@ void Update_rows_log_event::init(MY_BITMAP const *cols)
     }
   }
 }
-#endif /* !defined(DRIZZLE_CLIENT) */
 
 
 Update_rows_log_event::~Update_rows_log_event()
 {
   if (m_cols_ai.bitmap == m_bitbuf_ai) // no my_malloc happened
-    m_cols_ai.bitmap= 0; // so no my_free in bitmap_free
+    m_cols_ai.bitmap= 0; // so no free in bitmap_free
   bitmap_free(&m_cols_ai); // To pair with bitmap_init().
 }
 
@@ -8010,17 +6779,14 @@ Update_rows_log_event::~Update_rows_log_event()
 /*
   Constructor used by slave to read the event from the binary log.
  */
-#ifdef HAVE_REPLICATION
-Update_rows_log_event::Update_rows_log_event(const char *buf, uint event_len,
+Update_rows_log_event::Update_rows_log_event(const char *buf, uint32_t event_len,
                                              const
                                              Format_description_log_event
                                              *description_event)
   : Rows_log_event(buf, event_len, UPDATE_ROWS_EVENT, description_event)
 {
 }
-#endif
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Update_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -8028,7 +6794,7 @@ Update_rows_log_event::do_before_row_operations(const Slave_reporting_capability
   if (m_table->s->keys > 0)
   {
     // Allocate buffer for key searches
-    m_key= (uchar*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
+    m_key= (unsigned char*)my_malloc(m_table->key_info->key_length, MYF(MY_WME));
     if (!m_key)
       return HA_ERR_OUT_OF_MEM;
   }
@@ -8044,7 +6810,7 @@ Update_rows_log_event::do_after_row_operations(const Slave_reporting_capability 
 {
   /*error= ToDo:find out what this should really be, this triggers close_scan in nbd, returning error?*/
   m_table->file->ha_index_or_rnd_end();
-  my_free(m_key, MYF(MY_ALLOW_ZERO_PTR)); // Free for multi_malloc
+  free(m_key); // Free for multi_malloc
   m_key= NULL;
 
   return error;
@@ -8099,18 +6865,8 @@ Update_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifdef DRIZZLE_CLIENT
-void Update_rows_log_event::print(FILE *file,
-				  PRINT_EVENT_INFO* print_event_info)
-{
-  Rows_log_event::print_helper(file, print_event_info, "Update_rows");
-}
-#endif
-
-
-Incident_log_event::Incident_log_event(const char *buf, uint event_len,
+Incident_log_event::Incident_log_event(const char *buf, uint32_t event_len,
                                        const Format_description_log_event *descr_event)
   : Log_event(buf, descr_event)
 {
@@ -8151,7 +6907,6 @@ Incident_log_event::description() const
 }
 
 
-#ifndef DRIZZLE_CLIENT
 void Incident_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -8164,24 +6919,8 @@ void Incident_log_event::pack_info(Protocol *protocol)
                     m_incident, description(), m_message.str);
   protocol->store(buf, bytes, &my_charset_bin);
 }
-#endif
 
 
-#ifdef DRIZZLE_CLIENT
-void
-Incident_log_event::print(FILE *file,
-                          PRINT_EVENT_INFO *print_event_info)
-{
-  if (print_event_info->short_form)
-    return;
-
-  Write_on_release_cache cache(&print_event_info->head_cache, file);
-  print_header(&cache, print_event_info, false);
-  my_b_printf(&cache, "\n# Incident: %s", description());
-}
-#endif
-
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int
 Incident_log_event::do_apply_event(Relay_log_info const *rli)
 {
@@ -8191,12 +6930,12 @@ Incident_log_event::do_apply_event(Relay_log_info const *rli)
               m_message.length > 0 ? m_message.str : "<none>");
   return(1);
 }
-#endif
+
 
 bool
 Incident_log_event::write_data_header(IO_CACHE *file)
 {
-  uchar buf[sizeof(int16_t)];
+  unsigned char buf[sizeof(int16_t)];
   int2store(buf, (int16_t) m_incident);
   return(my_b_safe_write(file, buf, sizeof(buf)));
 }
@@ -8207,8 +6946,7 @@ Incident_log_event::write_data_body(IO_CACHE *file)
   return(write_str(file, m_message.str, m_message.length));
 }
 
-#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
-Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
+Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint32_t event_len,
                     const Format_description_log_event* description_event)
   :Log_event(buf, description_event)
 {
@@ -8217,35 +6955,3 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
   set_if_smaller(ident_len,FN_REFLEN-1);
   log_ident= buf + header_size;
 }
-#endif
-
-
-#ifdef DRIZZLE_CLIENT
-/**
-  The default values for these variables should be values that are
-  *incorrect*, i.e., values that cannot occur in an event.  This way,
-  they will always be printed for the first event.
-*/
-st_print_event_info::st_print_event_info()
-  :flags2_inited(0), sql_mode_inited(0),
-   auto_increment_increment(0),auto_increment_offset(0), charset_inited(0),
-   lc_time_names_number(UINT32_MAX),
-   charset_database_number(ILLEGAL_CHARSET_INFO_NUMBER),
-   thread_id(0), thread_id_printed(false),
-   base64_output_mode(BASE64_OUTPUT_UNSPEC), printed_fd_event(false)
-{
-  /*
-    Currently we only use static PRINT_EVENT_INFO objects, so zeroed at
-    program's startup, but these explicit memset() is for the day someone
-    creates dynamic instances.
-  */
-  memset(db, 0, sizeof(db));
-  memset(charset, 0, sizeof(charset));
-  memset(time_zone_str, 0, sizeof(time_zone_str));
-  delimiter[0]= ';';
-  delimiter[1]= 0;
-  myf const flags = MYF(MY_WME | MY_NABP);
-  open_cached_file(&head_cache, NULL, NULL, 0, flags);
-  open_cached_file(&body_cache, NULL, NULL, 0, flags);
-}
-#endif

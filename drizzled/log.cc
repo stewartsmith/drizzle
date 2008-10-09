@@ -204,95 +204,13 @@ handlerton *binlog_hton;
 
 
 /* Check if a given table is opened log table */
-int check_if_log_table(uint db_len __attribute__((unused)),
+int check_if_log_table(uint32_t db_len __attribute__((unused)),
                        const char *db __attribute__((unused)),
-                       uint table_name_len __attribute__((unused)),
+                       uint32_t table_name_len __attribute__((unused)),
                        const char *table_name __attribute__((unused)),
-                       uint check_if_opened __attribute__((unused)))
+                       uint32_t check_if_opened __attribute__((unused)))
 {
   return 0;
-}
-
-/* log event handlers */
-
-bool Log_to_file_event_handler::
-  log_error(enum loglevel level, const char *format,
-            va_list args)
-{
-  return vprint_msg_to_log(level, format, args);
-}
-
-void Log_to_file_event_handler::init_pthread_objects()
-{
-  mysql_log.init_pthread_objects();
-  mysql_slow_log.init_pthread_objects();
-}
-
-
-/** Wrapper around DRIZZLE_LOG::write() for slow log. */
-
-bool Log_to_file_event_handler::
-  log_slow(THD *thd, time_t current_time, time_t query_start_arg,
-           const char *user_host, uint user_host_len,
-           uint64_t query_utime, uint64_t lock_utime, bool is_command,
-           const char *sql_text, uint sql_text_len)
-{
-  return mysql_slow_log.write(thd, current_time, query_start_arg,
-                              user_host, user_host_len,
-                              query_utime, lock_utime, is_command,
-                              sql_text, sql_text_len);
-}
-
-
-/**
-   Wrapper around DRIZZLE_LOG::write() for general log. We need it since we
-   want all log event handlers to have the same signature.
-*/
-
-bool Log_to_file_event_handler::
-  log_general(THD *thd __attribute__((unused)),
-              time_t event_time, const char *user_host,
-              uint user_host_len, int thread_id,
-              const char *command_type, uint command_type_len,
-              const char *sql_text, uint sql_text_len,
-              const CHARSET_INFO * const client_cs __attribute__((unused)))
-{
-  return mysql_log.write(event_time, user_host, user_host_len,
-                         thread_id, command_type, command_type_len,
-                         sql_text, sql_text_len);
-}
-
-
-bool Log_to_file_event_handler::init()
-{
-  if (!is_initialized)
-  {
-    if (opt_slow_log)
-      mysql_slow_log.open_slow_log(sys_var_slow_log_path.value);
-
-    if (opt_log)
-      mysql_log.open_query_log(sys_var_general_log_path.value);
-
-    is_initialized= true;
-  }
-
-  return false;
-}
-
-
-void Log_to_file_event_handler::cleanup()
-{
-  mysql_log.cleanup();
-  mysql_slow_log.cleanup();
-}
-
-void Log_to_file_event_handler::flush()
-{
-  /* reopen log files */
-  if (opt_log)
-    mysql_log.reopen_file();
-  if (opt_slow_log)
-    mysql_slow_log.reopen_file();
 }
 
 /*
@@ -329,16 +247,12 @@ void LOGGER::cleanup_base()
 {
   assert(inited == 1);
   rwlock_destroy(&LOCK_logger);
-  if (file_log_handler)
-    file_log_handler->cleanup();
 }
 
 
 void LOGGER::cleanup_end()
 {
   assert(inited == 1);
-  if (file_log_handler)
-    delete file_log_handler;
 }
 
 
@@ -351,18 +265,9 @@ void LOGGER::init_base()
   assert(inited == 0);
   inited= 1;
 
-  /*
-    Here we create file log handler. We don't do it for the table log handler
-    here as it cannot be created so early. The reason is THD initialization,
-    which depends on the system variables (parsed later).
-  */
-  if (!file_log_handler)
-    file_log_handler= new Log_to_file_event_handler;
-
   /* by default we use traditional error log */
   init_error_log(LOG_FILE);
 
-  file_log_handler->init_pthread_objects();
   my_rwlock_init(&LOCK_logger, NULL);
 }
 
@@ -377,159 +282,12 @@ bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
   */
   logger.lock_exclusive();
 
-  /* reopen log files */
-  file_log_handler->flush();
-
   /* end of log flush */
   logger.unlock();
   return rc;
 }
 
-
-/*
-  Log slow query with all enabled log event handlers
-
-  SYNOPSIS
-    slow_log_print()
-
-    thd                 THD of the query being logged
-    query               The query being logged
-    query_length        The length of the query string
-    current_utime       Current time in microseconds (from undefined start)
-
-  RETURN
-    FALSE   OK
-    TRUE    error occured
-*/
-
-bool LOGGER::slow_log_print(THD *thd, const char *query, uint query_length,
-                            uint64_t current_utime)
-
-{
-  bool error= false;
-  Log_event_handler **current_handler;
-  bool is_command= false;
-  char user_host_buff[MAX_USER_HOST_SIZE];
-  Security_context *sctx= thd->security_ctx;
-  uint user_host_len= 0;
-  uint64_t query_utime, lock_utime;
-
-  /*
-    Print the message to the buffer if we have slow log enabled
-  */
-
-  if (*slow_log_handler_list)
-  {
-    time_t current_time;
-
-    /* do not log slow queries from replication threads */
-    if (thd->slave_thread && !opt_log_slow_slave_statements)
-      return 0;
-
-    lock_shared();
-    if (!opt_slow_log)
-    {
-      unlock();
-      return 0;
-    }
-
-    /* fill in user_host value: the format is "%s[%s] @ %s [%s]" */
-    user_host_len= (strxnmov(user_host_buff, MAX_USER_HOST_SIZE,
-                             sctx->user, "[", sctx->user, "] @ ",
-                             sctx->ip, " [",
-                             sctx->ip, "]", NullS) -
-                    user_host_buff);
-
-    current_time= my_time_possible_from_micro(current_utime);
-    if (thd->start_utime)
-    {
-      query_utime= (current_utime - thd->start_utime);
-      lock_utime=  (thd->utime_after_lock - thd->start_utime);
-    }
-    else
-    {
-      query_utime= lock_utime= 0;
-    }
-
-    if (!query)
-    {
-      is_command= true;
-      query= command_name[thd->command].str;
-      query_length= command_name[thd->command].length;
-    }
-
-    for (current_handler= slow_log_handler_list; *current_handler ;)
-      error= (*current_handler++)->log_slow(thd, current_time, thd->start_time,
-                                            user_host_buff, user_host_len,
-                                            query_utime, lock_utime, is_command,
-                                            query, query_length) || error;
-
-    unlock();
-  }
-  return error;
-}
-
-bool LOGGER::general_log_write(THD *thd, enum enum_server_command command,
-                               const char *query, uint query_length)
-{
-  bool error= false;
-  Log_event_handler **current_handler= general_log_handler_list;
-  char user_host_buff[MAX_USER_HOST_SIZE];
-  Security_context *sctx= thd->security_ctx;
-  ulong id;
-  uint user_host_len= 0;
-  time_t current_time;
-
-  if (thd)
-    id= thd->thread_id;                 /* Normal thread */
-  else
-    id= 0;                              /* Log from connect handler */
-
-  lock_shared();
-  if (!opt_log)
-  {
-    unlock();
-    return 0;
-  }
-  user_host_len= strxnmov(user_host_buff, MAX_USER_HOST_SIZE,
-                          sctx->user, "[",
-                          sctx->user, "] @ ",
-                          sctx->ip, " [",
-                          sctx->ip, "]", NullS) -
-                                                          user_host_buff;
-
-  current_time= my_time(0);
-
-  while (*current_handler)
-    error|= (*current_handler++)->
-      log_general(thd, current_time, user_host_buff,
-                  user_host_len, id,
-                  command_name[(uint) command].str,
-                  command_name[(uint) command].length,
-                  query, query_length,
-                  thd->variables.character_set_client) || error;
-  unlock();
-
-  return error;
-}
-
-bool LOGGER::general_log_print(THD *thd, enum enum_server_command command,
-                               const char *format, va_list args)
-{
-  uint message_buff_len= 0;
-  char message_buff[MAX_LOG_BUFFER_SIZE];
-
-  /* prepare message */
-  if (format)
-    message_buff_len= vsnprintf(message_buff, sizeof(message_buff),
-                                   format, args);
-  else
-    message_buff[0]= '\0';
-
-  return general_log_write(thd, command, message_buff, message_buff_len);
-}
-
-void LOGGER::init_error_log(uint error_log_printer)
+void LOGGER::init_error_log(uint32_t error_log_printer)
 {
   if (error_log_printer & LOG_NONE)
   {
@@ -537,113 +295,14 @@ void LOGGER::init_error_log(uint error_log_printer)
     return;
   }
 
-  switch (error_log_printer) {
-  case LOG_FILE:
-    error_log_handler_list[0]= file_log_handler;
-    error_log_handler_list[1]= 0;
-    break;
-  }
 }
 
-void LOGGER::init_slow_log(uint slow_log_printer)
-{
-  if (slow_log_printer & LOG_NONE)
-  {
-    slow_log_handler_list[0]= 0;
-    return;
-  }
-
-  slow_log_handler_list[0]= file_log_handler;
-  slow_log_handler_list[1]= 0;
-}
-
-void LOGGER::init_general_log(uint general_log_printer)
-{
-  if (general_log_printer & LOG_NONE)
-  {
-    general_log_handler_list[0]= 0;
-    return;
-  }
-
-  general_log_handler_list[0]= file_log_handler;
-  general_log_handler_list[1]= 0;
-}
-
-
-bool LOGGER::activate_log_handler(THD* thd __attribute__((unused)),
-                                  uint log_type)
-{
-  DRIZZLE_QUERY_LOG *file_log;
-  bool res= false;
-  lock_exclusive();
-  switch (log_type) {
-  case QUERY_LOG_SLOW:
-    if (!opt_slow_log)
-    {
-      file_log= file_log_handler->get_mysql_slow_log();
-
-      file_log->open_slow_log(sys_var_slow_log_path.value);
-      init_slow_log(log_output_options);
-      opt_slow_log= true;
-    }
-    break;
-  case QUERY_LOG_GENERAL:
-    if (!opt_log)
-    {
-      file_log= file_log_handler->get_mysql_log();
-
-      file_log->open_query_log(sys_var_general_log_path.value);
-      init_general_log(log_output_options);
-      opt_log= true;
-    }
-    break;
-  default:
-    assert(0);
-  }
-  unlock();
-  return res;
-}
-
-
-void LOGGER::deactivate_log_handler(THD *thd __attribute__((unused)),
-                                    uint log_type)
-{
-  bool *tmp_opt= 0;
-  DRIZZLE_LOG *file_log;
-
-  switch (log_type) {
-  case QUERY_LOG_SLOW:
-    tmp_opt= &opt_slow_log;
-    file_log= file_log_handler->get_mysql_slow_log();
-    break;
-  case QUERY_LOG_GENERAL:
-    tmp_opt= &opt_log;
-    file_log= file_log_handler->get_mysql_log();
-    break;
-  default:
-    assert(0);                                  // Impossible
-  }
-
-  if (!(*tmp_opt))
-    return;
-
-  lock_exclusive();
-  file_log->close(0);
-  *tmp_opt= false;
-  unlock();
-}
-
-int LOGGER::set_handlers(uint error_log_printer,
-                         uint slow_log_printer,
-                         uint general_log_printer)
+int LOGGER::set_handlers(uint32_t error_log_printer)
 {
   /* error log table is not supported yet */
   lock_exclusive();
 
   init_error_log(error_log_printer);
-  init_slow_log(slow_log_printer);
-  init_general_log(general_log_printer);
-
   unlock();
 
   return 0;
@@ -718,7 +377,6 @@ int binlog_init(void *p)
 {
   binlog_hton= (handlerton *)p;
   binlog_hton->state=opt_bin_log ? SHOW_OPTION_YES : SHOW_OPTION_NO;
-  binlog_hton->db_type=DB_TYPE_BINLOG;
   binlog_hton->savepoint_offset= sizeof(my_off_t);
   binlog_hton->close_connection= binlog_close_connection;
   binlog_hton->savepoint_set= binlog_savepoint_set;
@@ -739,7 +397,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
   assert(trx_data->empty());
   thd_set_ha_data(thd, binlog_hton, NULL);
   trx_data->~binlog_trx_data();
-  my_free((uchar*)trx_data, MYF(0));
+  free((unsigned char*)trx_data);
   return 0;
 }
 
@@ -1067,7 +725,7 @@ int check_binlog_magic(IO_CACHE* log, const char** errmsg)
   char magic[4];
   assert(my_b_tell(log) == 0);
 
-  if (my_b_read(log, (uchar*) magic, sizeof(magic)))
+  if (my_b_read(log, (unsigned char*) magic, sizeof(magic)))
   {
     *errmsg = _("I/O error reading the header from the binary log");
     sql_print_error("%s, errno=%d, io cache code=%d", *errmsg, my_errno,
@@ -1130,7 +788,7 @@ err:
 static int find_uniq_filename(char *name)
 {
   long                  number;
-  uint                  i;
+  uint32_t                  i;
   char                  buff[FN_REFLEN];
   struct st_my_dir     *dir_info;
   register struct fileinfo *file_info;
@@ -1147,7 +805,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    stpcpy(end,".1");				// use name+1
+    my_stpcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -1215,7 +873,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    stpcpy(log_file_name, new_name);
+    my_stpcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 
@@ -1242,9 +900,9 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
                      my_progname, server_version, DRIZZLE_COMPILATION_COMMENT,
                      mysqld_port, ""
                      );
-    end= stpncpy(buff + len, "Time                 Id Command    Argument\n",
+    end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
-    if (my_b_write(&log_file, (uchar*) buff, (uint) (end-buff)) ||
+    if (my_b_write(&log_file, (unsigned char*) buff, (uint) (end-buff)) ||
 	flush_io_cache(&log_file))
       goto err;
   }
@@ -1262,7 +920,11 @@ err:
   if (file >= 0)
     my_close(file, MYF(0));
   end_io_cache(&log_file);
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   log_state= LOG_CLOSED;
   return(1);
 }
@@ -1301,7 +963,7 @@ void DRIZZLE_LOG::init_pthread_objects()
     The internal structures are not freed until cleanup() is called
 */
 
-void DRIZZLE_LOG::close(uint exiting)
+void DRIZZLE_LOG::close(uint32_t exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
@@ -1321,7 +983,11 @@ void DRIZZLE_LOG::close(uint exiting)
   }
 
   log_state= (exiting & LOG_CLOSE_TO_BE_OPENED) ? LOG_TO_BE_OPENED : LOG_CLOSED;
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   return;
 }
 
@@ -1357,298 +1023,6 @@ int DRIZZLE_LOG::generate_new_name(char *new_name, const char *log_name)
 }
 
 
-/*
-  Reopen the log file
-
-  SYNOPSIS
-    reopen_file()
-
-  DESCRIPTION
-    Reopen the log file. The method is used during FLUSH LOGS
-    and locks LOCK_log mutex
-*/
-
-
-void DRIZZLE_QUERY_LOG::reopen_file()
-{
-  char *save_name;
-
-  if (!is_open())
-  {
-    return;
-  }
-
-  pthread_mutex_lock(&LOCK_log);
-
-  save_name= name;
-  name= 0;				// Don't free name
-  close(LOG_CLOSE_TO_BE_OPENED);
-
-  /*
-     Note that at this point, log_state != LOG_CLOSED (important for is_open()).
-  */
-
-  open(save_name, log_type, 0, io_cache_type);
-  my_free(save_name, MYF(0));
-
-  pthread_mutex_unlock(&LOCK_log);
-
-  return;
-}
-
-
-/*
-  Write a command to traditional general log file
-
-  SYNOPSIS
-    write()
-
-    event_time        command start timestamp
-    user_host         the pointer to the string with user@host info
-    user_host_len     length of the user_host string. this is computed once
-                      and passed to all general log  event handlers
-    thread_id         Id of the thread, issued a query
-    command_type      the type of the command being logged
-    command_type_len  the length of the string above
-    sql_text          the very text of the query being executed
-    sql_text_len      the length of sql_text string
-
-  DESCRIPTION
-
-   Log given command to to normal (not rotable) log file
-
-  RETURN
-    FASE - OK
-    TRUE - error occured
-*/
-
-bool DRIZZLE_QUERY_LOG::write(time_t event_time,
-                            const char *user_host __attribute__((unused)),
-                            uint user_host_len __attribute__((unused)),
-                            int thread_id,
-                            const char *command_type, uint command_type_len,
-                            const char *sql_text, uint sql_text_len)
-{
-  char buff[32];
-  uint length= 0;
-  char local_time_buff[MAX_TIME_SIZE];
-  struct tm start;
-  uint time_buff_len= 0;
-
-  (void) pthread_mutex_lock(&LOCK_log);
-
-  /* Test if someone closed between the is_open test and lock */
-  if (is_open())
-  {
-    /* Note that my_b_write() assumes it knows the length for this */
-      if (event_time != last_time)
-      {
-        last_time= event_time;
-
-        localtime_r(&event_time, &start);
-
-        time_buff_len= snprintf(local_time_buff, MAX_TIME_SIZE,
-                                "%02d%02d%02d %2d:%02d:%02d",
-                                start.tm_year % 100, start.tm_mon + 1,
-                                start.tm_mday, start.tm_hour,
-                                start.tm_min, start.tm_sec);
-
-        if (my_b_write(&log_file, (uchar*) local_time_buff, time_buff_len))
-          goto err;
-      }
-      else
-        if (my_b_write(&log_file, (uchar*) "\t\t" ,2) < 0)
-          goto err;
-
-      /* command_type, thread_id */
-      length= snprintf(buff, 32, "%5ld ", (long) thread_id);
-
-    if (my_b_write(&log_file, (uchar*) buff, length))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) command_type, command_type_len))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) "\t", 1))
-      goto err;
-
-    /* sql_text */
-    if (my_b_write(&log_file, (uchar*) sql_text, sql_text_len))
-      goto err;
-
-    if (my_b_write(&log_file, (uchar*) "\n", 1) ||
-        flush_io_cache(&log_file))
-      goto err;
-  }
-
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return false;
-err:
-
-  if (!write_error)
-  {
-    write_error= 1;
-    sql_print_error(ER(ER_ERROR_ON_WRITE), name, errno);
-  }
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return true;
-}
-
-
-/*
-  Log a query to the traditional slow log file
-
-  SYNOPSIS
-    write()
-
-    thd               THD of the query
-    current_time      current timestamp
-    query_start_arg   command start timestamp
-    user_host         the pointer to the string with user@host info
-    user_host_len     length of the user_host string. this is computed once
-                      and passed to all general log event handlers
-    query_utime       Amount of time the query took to execute (in microseconds)
-    lock_utime        Amount of time the query was locked (in microseconds)
-    is_command        The flag, which determines, whether the sql_text is a
-                      query or an administrator command.
-    sql_text          the very text of the query or administrator command
-                      processed
-    sql_text_len      the length of sql_text string
-
-  DESCRIPTION
-
-   Log a query to the slow log file.
-
-  RETURN
-    FALSE - OK
-    TRUE - error occured
-*/
-
-bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
-                            time_t query_start_arg __attribute__((unused)),
-                            const char *user_host,
-                            uint user_host_len, uint64_t query_utime,
-                            uint64_t lock_utime, bool is_command,
-                            const char *sql_text, uint sql_text_len)
-{
-  bool error= 0;
-
-  (void) pthread_mutex_lock(&LOCK_log);
-
-  if (!is_open())
-  {
-    (void) pthread_mutex_unlock(&LOCK_log);
-    return(0);
-  }
-
-  if (is_open())
-  {						// Safety agains reopen
-    int tmp_errno= 0;
-    char buff[80], *end;
-    char query_time_buff[22+7], lock_time_buff[22+7];
-    uint buff_len;
-    end= buff;
-
-    {
-      if (current_time != last_time)
-      {
-        last_time= current_time;
-        struct tm start;
-        localtime_r(&current_time, &start);
-
-        buff_len= snprintf(buff, sizeof buff,
-                           "# Time: %02d%02d%02d %2d:%02d:%02d\n",
-                           start.tm_year % 100, start.tm_mon + 1,
-                           start.tm_mday, start.tm_hour,
-                           start.tm_min, start.tm_sec);
-
-        /* Note that my_b_write() assumes it knows the length for this */
-        if (my_b_write(&log_file, (uchar*) buff, buff_len))
-          tmp_errno= errno;
-      }
-      const uchar uh[]= "# User@Host: ";
-      if (my_b_write(&log_file, uh, sizeof(uh) - 1))
-        tmp_errno= errno;
-      if (my_b_write(&log_file, (uchar*) user_host, user_host_len))
-        tmp_errno= errno;
-      if (my_b_write(&log_file, (uchar*) "\n", 1))
-        tmp_errno= errno;
-    }
-    /* For slow query log */
-    sprintf(query_time_buff, "%.6f", uint64_t2double(query_utime)/1000000.0);
-    sprintf(lock_time_buff,  "%.6f", uint64_t2double(lock_utime)/1000000.0);
-    if (my_b_printf(&log_file,
-                    "# Query_time: %s  Lock_time: %s"
-                    " Rows_sent: %lu  Rows_examined: %lu\n",
-                    query_time_buff, lock_time_buff,
-                    (ulong) thd->sent_row_count,
-                    (ulong) thd->examined_row_count) == (uint) -1)
-      tmp_errno= errno;
-    if (thd->db && strcmp(thd->db, db))
-    {						// Database changed
-      if (my_b_printf(&log_file,"use %s;\n",thd->db) == (uint) -1)
-        tmp_errno= errno;
-      stpcpy(db,thd->db);
-    }
-    if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
-    {
-      end=stpcpy(end, ",last_insert_id=");
-      end=int64_t10_to_str((int64_t)
-                            thd->first_successful_insert_id_in_prev_stmt_for_binlog,
-                            end, -10);
-    }
-    // Save value if we do an insert.
-    if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
-    {
-      {
-        end=stpcpy(end,",insert_id=");
-        end=int64_t10_to_str((int64_t)
-                              thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
-                              end, -10);
-      }
-    }
-
-    /*
-      This info used to show up randomly, depending on whether the query
-      checked the query start time or not. now we always write current
-      timestamp to the slow log
-    */
-    end= stpcpy(end, ",timestamp=");
-    end= int10_to_str((long) current_time, end, 10);
-
-    if (end != buff)
-    {
-      *end++=';';
-      *end='\n';
-      if (my_b_write(&log_file, (uchar*) "SET ", 4) ||
-          my_b_write(&log_file, (uchar*) buff + 1, (uint) (end-buff)))
-        tmp_errno= errno;
-    }
-    if (is_command)
-    {
-      end= strxmov(buff, "# administrator command: ", NullS);
-      buff_len= (ulong) (end - buff);
-      my_b_write(&log_file, (uchar*) buff, buff_len);
-    }
-    if (my_b_write(&log_file, (uchar*) sql_text, sql_text_len) ||
-        my_b_write(&log_file, (uchar*) ";\n",2) ||
-        flush_io_cache(&log_file))
-      tmp_errno= errno;
-    if (tmp_errno)
-    {
-      error= 1;
-      if (! write_error)
-      {
-        write_error= 1;
-        sql_print_error(ER(ER_ERROR_ON_WRITE), name, error);
-      }
-    }
-  }
-  (void) pthread_mutex_unlock(&LOCK_log);
-  return(error);
-}
-
-
 /**
   @todo
   The following should be using fn_format();  We just need to
@@ -1668,8 +1042,8 @@ const char *DRIZZLE_LOG::generate_name(const char *log_name,
   if (strip_ext)
   {
     char *p= fn_ext(log_name);
-    uint length= (uint) (p - log_name);
-    strmake(buff, log_name, min(length, (uint)FN_REFLEN));
+    uint32_t length= (uint) (p - log_name);
+    strmake(buff, log_name, cmin(length, (uint)FN_REFLEN));
     return (const char*)buff;
   }
   return log_name;
@@ -1817,7 +1191,7 @@ bool DRIZZLE_BIN_LOG::open(const char *log_name,
 	an extension for the binary log files.
 	In this case we write a standard header to it.
       */
-      if (my_b_safe_write(&log_file, (uchar*) BINLOG_MAGIC,
+      if (my_b_safe_write(&log_file, (unsigned char*) BINLOG_MAGIC,
 			  BIN_LOG_HEADER_SIZE))
         goto err;
       bytes_written+= BIN_LOG_HEADER_SIZE;
@@ -1888,9 +1262,9 @@ bool DRIZZLE_BIN_LOG::open(const char *log_name,
         As this is a new log file, we write the file name to the index
         file. As every time we write to the index file, we sync it.
       */
-      if (my_b_write(&index_file, (uchar*) log_file_name,
+      if (my_b_write(&index_file, (unsigned char*) log_file_name,
 		     strlen(log_file_name)) ||
-	  my_b_write(&index_file, (uchar*) "\n", 1) ||
+	  my_b_write(&index_file, (unsigned char*) "\n", 1) ||
 	  flush_io_cache(&index_file) ||
           my_sync(index_file.file, MYF(MY_WME)))
 	goto err;
@@ -1911,7 +1285,11 @@ err:
     my_close(file,MYF(0));
   end_io_cache(&log_file);
   end_io_cache(&index_file);
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   log_state= LOG_CLOSED;
   return(1);
 }
@@ -1949,14 +1327,12 @@ int DRIZZLE_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
     0	ok
 */
 
-#ifdef HAVE_REPLICATION
-
 static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
 {
   int bytes_read;
   my_off_t init_offset= offset;
   File file= index_file->file;
-  uchar io_buf[IO_SIZE*2];
+  unsigned char io_buf[IO_SIZE*2];
 
   for (;; offset+= bytes_read)
   {
@@ -1981,8 +1357,6 @@ static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
 err:
   return(1);
 }
-
-#endif /* HAVE_REPLICATION */
 
 /**
   Find the position in the log-index-file for the given log name.
@@ -2011,7 +1385,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 {
   int error= 0;
   char *fname= linfo->log_file_name;
-  uint log_name_len= log_name ? (uint) strlen(log_name) : 0;
+  uint32_t log_name_len= log_name ? (uint) strlen(log_name) : 0;
 
   /*
     Mutex needed because we need to make sure the file pointer does not
@@ -2026,7 +1400,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 
   for (;;)
   {
-    uint length;
+    uint32_t length;
     my_off_t offset= my_b_tell(&index_file);
     /* If we get 0 or 1 characters, this is the end of the file */
 
@@ -2082,7 +1456,7 @@ int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 int DRIZZLE_BIN_LOG::find_next_log(LOG_INFO* linfo, bool need_lock)
 {
   int error= 0;
-  uint length;
+  uint32_t length;
   char *fname= linfo->log_file_name;
 
   if (need_lock)
@@ -2132,7 +1506,6 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
   bool error=0;
   const char* save_name;
 
-  ha_reset_logs(thd);
   /*
     We need to get both locks to be sure that no one is trying to
     write to the index log file.
@@ -2146,7 +1519,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     thread. If the transaction involved MyISAM tables, it should go
     into binlog even on rollback.
   */
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
 
   /* Save variables so that we can reopen the log */
   save_name=name;
@@ -2155,7 +1528,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
 
   /* First delete all old log files */
 
-  if (find_log_pos(&linfo, NullS, 0))
+  if (find_log_pos(&linfo, NULL, 0))
   {
     error=1;
     goto err;
@@ -2223,10 +1596,10 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     need_start_event=1;
   if (!open_index_file(index_file_name, 0))
     open(save_name, log_type, 0, io_cache_type, no_auto_events, max_size, 0);
-  my_free((uchar*) save_name, MYF(0));
+  free((unsigned char*) save_name);
 
 err:
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_mutex_unlock(&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_index);
   pthread_mutex_unlock(&LOCK_log);
   return(error);
@@ -2270,7 +1643,6 @@ err:
     LOG_INFO_IO		Got IO error while reading file
 */
 
-#ifdef HAVE_REPLICATION
 
 int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
 {
@@ -2301,7 +1673,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
     If included is true, we want the first relay log;
     otherwise we want the one after event_relay_log_name.
   */
-  if ((included && (error=find_log_pos(&rli->linfo, NullS, 0))) ||
+  if ((included && (error=find_log_pos(&rli->linfo, NULL, 0))) ||
       (!included &&
        ((error=find_log_pos(&rli->linfo, rli->event_relay_log_name, 0)) ||
         (error=find_next_log(&rli->linfo, 0)))))
@@ -2402,7 +1774,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
     File name exists in index file; delete until we find this file
     or a file that is used.
   */
-  if ((error=find_log_pos(&log_info, NullS, 0 /*no mutex*/)))
+  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
     goto err;
   while ((strcmp(to_log,log_info.log_file_name) || (exit_loop=included)) &&
          !log_in_use(log_info.log_file_name))
@@ -2476,8 +1848,6 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
       }
     }
 
-    ha_binlog_index_purge_file(current_thd, log_info.log_file_name);
-
     if (find_next_log(&log_info, 0) || exit_loop)
       break;
   }
@@ -2529,7 +1899,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
     or a file that is used or a file
     that is older than purge_time.
   */
-  if ((error=find_log_pos(&log_info, NullS, 0 /*no mutex*/)))
+  if ((error=find_log_pos(&log_info, NULL, 0 /*no mutex*/)))
     goto err;
 
   while (strcmp(log_file_name, log_info.log_file_name) &&
@@ -2594,7 +1964,6 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
           goto err;
         }
       }
-      ha_binlog_index_purge_file(current_thd, log_info.log_file_name);
     }
     if (find_next_log(&log_info, 0))
       break;
@@ -2610,7 +1979,6 @@ err:
   pthread_mutex_unlock(&LOCK_index);
   return(error);
 }
-#endif /* HAVE_REPLICATION */
 
 
 /**
@@ -2624,10 +1992,10 @@ err:
 
 void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
 {
-  uint dir_len = dirname_length(log_file_name); 
+  uint32_t dir_len = dirname_length(log_file_name); 
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
-  stpncpy(buf, log_file_name, dir_len);
+  my_stpncpy(buf, log_file_name, dir_len);
   strmake(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
 }
 
@@ -2757,7 +2125,7 @@ void DRIZZLE_BIN_LOG::new_file_impl(bool need_lock)
 
   open(old_name, log_type, new_name_ptr,
        io_cache_type, no_auto_events, max_size, 1);
-  my_free(old_name,MYF(0));
+  free(old_name);
 
 end:
   if (need_lock)
@@ -2794,7 +2162,7 @@ err:
 }
 
 
-bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint len,...)
+bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint32_t len,...)
 {
   bool error= 0;
   va_list(args);
@@ -2805,7 +2173,7 @@ bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint len,...)
   safe_mutex_assert_owner(&LOCK_log);
   do
   {
-    if (my_b_append(&log_file,(uchar*) buf,len))
+    if (my_b_append(&log_file,(unsigned char*) buf,len))
     {
       error= 1;
       goto err;
@@ -2876,7 +2244,7 @@ int THD::binlog_setup_trx_data()
       open_cached_file(&trx_data->trans_log, mysql_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
   {
-    my_free((uchar*)trx_data, MYF(MY_ALLOW_ZERO_PTR));
+    free((unsigned char*)trx_data);
     return(1);                      // Didn't manage to set it up
   }
   thd_set_ha_data(this, binlog_hton, trx_data);
@@ -3150,7 +2518,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
     if ((thd && !(thd->options & OPTION_BIN_LOG)) ||
 	(!binlog_filter->db_ok(local_db)))
     {
-      VOID(pthread_mutex_unlock(&LOCK_log));
+      pthread_mutex_unlock(&LOCK_log);
       return(0);
     }
 
@@ -3206,7 +2574,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       {
         if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
         {
-          Intvar_log_event e(thd,(uchar) LAST_INSERT_ID_EVENT,
+          Intvar_log_event e(thd,(unsigned char) LAST_INSERT_ID_EVENT,
                              thd->first_successful_insert_id_in_prev_stmt_for_binlog);
           if (e.write(file))
             goto err;
@@ -3218,7 +2586,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
             MyISAM or BDB) (table->next_number_keypart != 0), such event is
             in fact not necessary. We could avoid logging it.
           */
-          Intvar_log_event e(thd, (uchar) INSERT_ID_EVENT,
+          Intvar_log_event e(thd, (unsigned char) INSERT_ID_EVENT,
                              thd->auto_inc_intervals_in_cur_stmt_for_binlog.
                              minimum());
           if (e.write(file))
@@ -3232,10 +2600,10 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
         }
         if (thd->user_var_events.elements)
         {
-          for (uint i= 0; i < thd->user_var_events.elements; i++)
+          for (uint32_t i= 0; i < thd->user_var_events.elements; i++)
           {
             BINLOG_USER_VAR_EVENT *user_var_event;
-            get_dynamic(&thd->user_var_events,(uchar*) &user_var_event, i);
+            get_dynamic(&thd->user_var_events,(unsigned char*) &user_var_event, i);
             User_var_log_event e(thd, user_var_event->user_var_event->name.str,
                                  user_var_event->user_var_event->name.length,
                                  user_var_event->value,
@@ -3290,63 +2658,7 @@ int error_log_print(enum loglevel level, const char *format,
   return logger.error_log_print(level, format, args);
 }
 
-
-bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    uint64_t current_utime)
-{
-  return logger.slow_log_print(thd, query, query_length, current_utime);
-}
-
-
-bool LOGGER::log_command(THD *thd, enum enum_server_command command)
-{
-  /*
-    Log command if we have at least one log event handler enabled and want
-    to log this king of commands
-  */
-  if (*general_log_handler_list && (what_to_log & (1L << (uint) command)))
-  {
-    if (thd->options & OPTION_LOG_OFF)
-    {
-      /* No logging */
-      return false;
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-
-bool general_log_print(THD *thd, enum enum_server_command command,
-                       const char *format, ...)
-{
-  va_list args;
-  uint error= 0;
-
-  /* Print the message to the buffer if we want to log this king of commands */
-  if (! logger.log_command(thd, command))
-    return false;
-
-  va_start(args, format);
-  error= logger.general_log_print(thd, command, format, args);
-  va_end(args);
-
-  return error;
-}
-
-bool general_log_write(THD *thd, enum enum_server_command command,
-                       const char *query, uint query_length)
-{
-  /* Write the message to the log if we want to log this king of commands */
-  if (logger.log_command(thd, command))
-    return logger.general_log_write(thd, command, query, query_length);
-
-  return false;
-}
-
-void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
+void DRIZZLE_BIN_LOG::rotate_and_purge(uint32_t flags)
 {
   if (!(flags & RP_LOCK_LOG_IS_ALREADY_LOCKED))
     pthread_mutex_lock(&LOCK_log);
@@ -3354,22 +2666,20 @@ void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
       (my_b_tell(&log_file) >= (my_off_t) max_size))
   {
     new_file_without_locking();
-#ifdef HAVE_REPLICATION
     if (expire_logs_days)
     {
       time_t purge_time= my_time(0) - expire_logs_days*24*60*60;
       if (purge_time >= 0)
         purge_logs_before_date(purge_time);
     }
-#endif
   }
   if (!(flags & RP_LOCK_LOG_IS_ALREADY_LOCKED))
     pthread_mutex_unlock(&LOCK_log);
 }
 
-uint DRIZZLE_BIN_LOG::next_file_id()
+uint32_t DRIZZLE_BIN_LOG::next_file_id()
 {
-  uint res;
+  uint32_t res;
   pthread_mutex_lock(&LOCK_log);
   res = file_id++;
   pthread_mutex_unlock(&LOCK_log);
@@ -3397,9 +2707,9 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
 
   if (reinit_io_cache(cache, READ_CACHE, 0, 0, 0))
     return ER_ERROR_ON_WRITE;
-  uint length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
+  uint32_t length= my_b_bytes_in_cache(cache), group, carry, hdr_offs;
   long val;
-  uchar header[LOG_EVENT_HEADER_LEN];
+  unsigned char header[LOG_EVENT_HEADER_LEN];
 
   /*
     The events in the buffer have incorrect end_log_pos data
@@ -3480,14 +2790,14 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         {
           /* we've got a full event-header, and it came in one piece */
 
-          uchar *log_pos= (uchar *)cache->read_pos + hdr_offs + LOG_POS_OFFSET;
+          unsigned char *log_pos= (unsigned char *)cache->read_pos + hdr_offs + LOG_POS_OFFSET;
 
           /* fix end_log_pos */
           val= uint4korr(log_pos) + group;
           int4store(log_pos, val);
 
           /* next event header at ... */
-          log_pos= (uchar *)cache->read_pos + hdr_offs + EVENT_LEN_OFFSET;
+          log_pos= (unsigned char *)cache->read_pos + hdr_offs + EVENT_LEN_OFFSET;
           hdr_offs += uint4korr(log_pos);
 
         }
@@ -3541,7 +2851,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
 
 bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
 {
-  VOID(pthread_mutex_lock(&LOCK_log));
+  pthread_mutex_lock(&LOCK_log);
 
   /* NULL would represent nothing to replicate after ROLLBACK */
   assert(commit_event != NULL);
@@ -3617,7 +2927,7 @@ bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
     else
       rotate_and_purge(RP_LOCK_LOG_IS_ALREADY_LOCKED);
   }
-  VOID(pthread_mutex_unlock(&LOCK_log));
+  pthread_mutex_unlock(&LOCK_log);
 
   return(0);
 
@@ -3627,7 +2937,7 @@ err:
     write_error= 1;
     sql_print_error(ER(ER_ERROR_ON_WRITE), name, errno);
   }
-  VOID(pthread_mutex_unlock(&LOCK_log));
+  pthread_mutex_unlock(&LOCK_log);
   return(1);
 }
 
@@ -3701,11 +3011,10 @@ int DRIZZLE_BIN_LOG::wait_for_update_bin_log(THD* thd,
     The internal structures are not freed until cleanup() is called
 */
 
-void DRIZZLE_BIN_LOG::close(uint exiting)
+void DRIZZLE_BIN_LOG::close(uint32_t exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
-#ifdef HAVE_REPLICATION
     if (log_type == LOG_BIN && !no_auto_events &&
 	(exiting & LOG_CLOSE_STOP_EVENT))
     {
@@ -3714,13 +3023,12 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
       bytes_written+= s.data_written;
       signal_update();
     }
-#endif /* HAVE_REPLICATION */
 
     /* don't pwrite in a file opened with O_APPEND - it doesn't work */
     if (log_file.type == WRITE_CACHE && log_type == LOG_BIN)
     {
       my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
-      uchar flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
+      unsigned char flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
       pwrite(log_file.file, &flags, 1, offset);
     }
 
@@ -3743,7 +3051,11 @@ void DRIZZLE_BIN_LOG::close(uint exiting)
     }
   }
   log_state= (exiting & LOG_CLOSE_TO_BE_OPENED) ? LOG_TO_BE_OPENED : LOG_CLOSED;
-  safeFree(name);
+  if (name)
+  {
+    free(name);
+    name= NULL;
+  }
   return;
 }
 
@@ -3816,11 +3128,7 @@ static bool test_if_number(register const char *str,
 
 void sql_perror(const char *message)
 {
-#ifdef HAVE_STRERROR
   sql_print_error("%s: %s",message, strerror(errno));
-#else
-  perror(message);
-#endif
 }
 
 
@@ -3831,20 +3139,20 @@ bool flush_error_log()
   {
     char err_renamed[FN_REFLEN], *end;
     end= strmake(err_renamed,log_error_file,FN_REFLEN-4);
-    stpcpy(end, "-old");
-    VOID(pthread_mutex_lock(&LOCK_error_log));
+    my_stpcpy(end, "-old");
+    pthread_mutex_lock(&LOCK_error_log);
     char err_temp[FN_REFLEN+4];
     /*
      On Windows is necessary a temporary file for to rename
      the current error file.
     */
-    strxmov(err_temp, err_renamed,"-tmp",NullS);
+    strxmov(err_temp, err_renamed,"-tmp",NULL);
     (void) my_delete(err_temp, MYF(0)); 
     if (freopen(err_temp,"a+",stdout))
     {
       int fd;
       size_t bytes;
-      uchar buf[IO_SIZE];
+      unsigned char buf[IO_SIZE];
 
       freopen(err_temp,"a+",stderr);
       (void) my_delete(err_renamed, MYF(0));
@@ -3863,7 +3171,7 @@ bool flush_error_log()
     }
     else
      result= 1;
-    VOID(pthread_mutex_unlock(&LOCK_error_log));
+    pthread_mutex_unlock(&LOCK_error_log);
   }
    return result;
 }
@@ -3899,7 +3207,7 @@ static void print_buffer_to_file(enum loglevel level,
   struct tm tm_tmp;
   struct tm *start;
 
-  VOID(pthread_mutex_lock(&LOCK_error_log));
+  pthread_mutex_lock(&LOCK_error_log);
 
   skr= my_time(0);
   localtime_r(&skr, &tm_tmp);
@@ -3918,7 +3226,7 @@ static void print_buffer_to_file(enum loglevel level,
 
   fflush(stderr);
 
-  VOID(pthread_mutex_unlock(&LOCK_error_log));
+  pthread_mutex_unlock(&LOCK_error_log);
   return;
 }
 
@@ -4024,7 +3332,7 @@ ulong tc_log_max_pages_used=0, tc_log_page_size=0, tc_log_cur_pages_used=0;
 
 int TC_LOG_MMAP::open(const char *opt_name)
 {
-  uint i;
+  uint32_t i;
   bool crashed= false;
   PAGE *pg;
 
@@ -4064,7 +3372,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
       goto err;
   }
 
-  data= (uchar *)my_mmap(0, (size_t)file_length, PROT_READ|PROT_WRITE,
+  data= (unsigned char *)my_mmap(0, (size_t)file_length, PROT_READ|PROT_WRITE,
                         MAP_NOSYNC|MAP_SHARED, fd, 0);
   if (data == MAP_FAILED)
   {
@@ -4100,7 +3408,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
       goto err;
 
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
-  data[sizeof(tc_log_magic)]= (uchar)total_ha_2pc;
+  data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
   msync(data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
@@ -4255,7 +3563,7 @@ int TC_LOG_MMAP::log_xid(THD *thd __attribute__((unused)), my_xid xid)
   }
 
   /* found! store xid there and mark the page dirty */
-  cookie= (ulong)((uchar *)p->ptr - data);      // can never be zero
+  cookie= (ulong)((unsigned char *)p->ptr - data);      // can never be zero
   *p->ptr++= xid;
   p->free--;
   p->state= DIRTY;
@@ -4356,7 +3664,7 @@ void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid __attribute__((unused)))
 
 void TC_LOG_MMAP::close()
 {
-  uint i;
+  uint32_t i;
   switch (inited) {
   case 6:
     pthread_mutex_destroy(&LOCK_sync);
@@ -4374,7 +3682,7 @@ void TC_LOG_MMAP::close()
       pthread_cond_destroy(&pages[i].cond);
     }
   case 3:
-    my_free((uchar*)pages, MYF(0));
+    free((unsigned char*)pages);
   case 2:
     my_munmap((char*)data, (size_t)file_length);
   case 1:
@@ -4416,7 +3724,7 @@ int TC_LOG_MMAP::recover()
   for ( ; p < end_p ; p++)
   {
     for (my_xid *x=p->start; x < p->end; x++)
-      if (*x && my_hash_insert(&xids, (uchar *)x))
+      if (*x && my_hash_insert(&xids, (unsigned char *)x))
         goto err2; // OOM
   }
 
@@ -4504,7 +3812,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
     return 1;
   }
 
-  if ((error= find_log_pos(&log_info, NullS, 1)))
+  if ((error= find_log_pos(&log_info, NULL, 1)))
   {
     if (error != LOG_INFO_EOF)
       sql_print_error(_("find_log_pos() failed (error: %d)"), error);
@@ -4624,7 +3932,7 @@ int TC_LOG_BINLOG::recover(IO_CACHE *log, Format_description_log_event *fdle)
     if (ev->get_type_code() == XID_EVENT)
     {
       Xid_log_event *xev=(Xid_log_event *)ev;
-      uchar *x= (uchar *) memdup_root(&mem_root, (uchar*) &xev->xid,
+      unsigned char *x= (unsigned char *) memdup_root(&mem_root, (unsigned char*) &xev->xid,
                                       sizeof(xev->xid));
       if (! x)
         goto err2;

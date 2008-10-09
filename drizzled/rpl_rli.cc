@@ -15,6 +15,18 @@
 
 #include <drizzled/server_includes.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+
 #include "rpl_mi.h"
 #include "rpl_rli.h"
 #include "sql_repl.h"  // For check_binlog_magic
@@ -51,7 +63,6 @@ Relay_log_info::Relay_log_info()
   until_log_name[0]= ign_master_log_name_end[0]= 0;
   memset(&info_file, 0, sizeof(info_file));
   memset(&cache_buf, 0, sizeof(cache_buf));
-  cached_charset_invalidate();
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&log_space_lock, MY_MUTEX_INIT_FAST);
@@ -180,7 +191,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
     }
 
     /* Init relay log with first entry in the relay index file */
-    if (init_relay_log_pos(rli,NullS,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
+    if (init_relay_log_pos(rli,NULL,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
                            &msg, 0))
     {
       sql_print_error(_("Failed to open the relay log 'FIRST' (relay_log_pos 4)"));
@@ -305,7 +316,7 @@ static int32_t count_relay_log_space(Relay_log_info* rli)
 {
   LOG_INFO linfo;
   rli->log_space_total= 0;
-  if (rli->relay_log.find_log_pos(&linfo, NullS, 1))
+  if (rli->relay_log.find_log_pos(&linfo, NULL, 1))
   {
     sql_print_error(_("Could not find first log while counting relay "
                       "log space"));
@@ -420,7 +431,7 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,
     Test to see if the previous run was with the skip of purging
     If yes, we do not purge when we restart
   */
-  if (rli->relay_log.find_log_pos(&rli->linfo, NullS, 1))
+  if (rli->relay_log.find_log_pos(&rli->linfo, NULL, 1))
   {
     *errmsg="Could not find first log during relay log initialization";
     goto err;
@@ -609,7 +620,7 @@ int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
   uint32_t log_name_extension;
   char log_name_tmp[FN_REFLEN]; //make a char[] from String
 
-  strmake(log_name_tmp, log_name->ptr(), min(log_name->length(), (uint32_t)FN_REFLEN-1));
+  strmake(log_name_tmp, log_name->ptr(), cmin(log_name->length(), (uint32_t)FN_REFLEN-1));
 
   char *p= fn_ext(log_name_tmp);
   char *p_end;
@@ -619,7 +630,7 @@ int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
     goto err;
   }
   // Convert 0-3 to 4
-  log_pos= max(log_pos, (int64_t)BIN_LOG_HEADER_SIZE);
+  log_pos= cmax(log_pos, (int64_t)BIN_LOG_HEADER_SIZE);
   /* p points to '.' */
   log_name_extension= strtoul(++p, &p_end, 10);
   /*
@@ -979,25 +990,6 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
 }
 
 
-void Relay_log_info::cached_charset_invalidate()
-{
-  /* Full of zeroes means uninitialized. */
-  memset(cached_charset, 0, sizeof(cached_charset));
-  return;
-}
-
-
-bool Relay_log_info::cached_charset_compare(char *charset) const
-{
-  if (memcmp(cached_charset, charset, sizeof(cached_charset)))
-  {
-    memcpy(const_cast<char*>(cached_charset), charset, sizeof(cached_charset));
-    return(1);
-  }
-  return(0);
-}
-
-
 void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
                                   time_t event_creation_time)
 {
@@ -1046,7 +1038,6 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
   }
 }
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 void Relay_log_info::cleanup_context(THD *thd, bool error)
 {
   assert(sql_thd == thd);
@@ -1084,7 +1075,7 @@ void Relay_log_info::clear_tables_to_lock()
 {
   while (tables_to_lock)
   {
-    uchar* to_free= reinterpret_cast<uchar*>(tables_to_lock);
+    unsigned char* to_free= reinterpret_cast<unsigned char*>(tables_to_lock);
     if (tables_to_lock->m_tabledef_valid)
     {
       tables_to_lock->m_tabledef.table_def::~table_def();
@@ -1093,9 +1084,7 @@ void Relay_log_info::clear_tables_to_lock()
     tables_to_lock=
       static_cast<RPL_TableList*>(tables_to_lock->next_global);
     tables_to_lock_count--;
-    my_free(to_free, MYF(MY_WME));
+    free(to_free);
   }
   assert(tables_to_lock == NULL && tables_to_lock_count == 0);
 }
-
-#endif

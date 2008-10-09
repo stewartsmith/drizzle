@@ -55,15 +55,18 @@ static bool innodb_inited = 0;
 */
 static handlerton *innodb_hton_ptr;
 
-C_MODE_START
-static int64_t index_cond_func_innodb(void *arg);
-C_MODE_END
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+static int64_t index_cond_func_innodb(void *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #define INSIDE_HA_INNOBASE_CC
-
-typedef int64_t longlong;
 
 /* Include necessary InnoDB headers */
 extern "C" {
@@ -144,7 +147,7 @@ static ulong	innobase_active_counter	= 0;
 
 static HASH	innobase_open_tables;
 
-static uchar* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
+static unsigned char* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
                                bool not_used __attribute__((unused)));
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
@@ -404,7 +407,7 @@ static SHOW_VAR innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_read,		  SHOW_LONG},
   {"rows_updated",
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 /* General functions */
@@ -693,7 +696,7 @@ void
 innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
-	VOID(pthread_mutex_lock(&LOCK_thread_count));
+	pthread_mutex_lock(&LOCK_thread_count);
 }
 
 /*****************************************************************
@@ -705,7 +708,7 @@ void
 innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
-	VOID(pthread_mutex_unlock(&LOCK_thread_count));
+	pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 /*****************************************************************
@@ -944,11 +947,10 @@ ha_innobase::ha_innobase(handlerton *hton, TABLE_SHARE *table_arg)
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
 		  HA_CAN_INDEX_BLOBS |
-		  HA_CAN_SQL_HANDLER |
 		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
 		  HA_PRIMARY_KEY_IN_READ_INDEX |
 		  HA_BINLOG_ROW_CAPABLE |
-		  HA_CAN_GEOMETRY | HA_PARTIAL_COLUMN_READ |
+		  HA_PARTIAL_COLUMN_READ |
 		  HA_TABLE_SCAN_ON_INDEX | HA_NEED_READ_RANGE_BUFFER |
                   HA_MRR_CANT_SORT),
   primary_key(0), /* needs initialization because index_flags() may be called 
@@ -1261,7 +1263,7 @@ innobase_print_identifier(
 				namelen = filename_to_tablename(temp_name,
 						qname, qnamelen);
 			}
-			my_free(temp_name, MYF(0));
+			free(temp_name);
 		}
 	}
 
@@ -1288,7 +1290,7 @@ innobase_print_identifier(
 		putc(q, f);
 	}
 
-	my_free(qname, MYF(MY_ALLOW_ZERO_PTR));
+	free(qname);
 }
 
 /**************************************************************************
@@ -1396,7 +1398,6 @@ innobase_init(
         innodb_hton_ptr = innobase_hton;
 
         innobase_hton->state = SHOW_OPTION_YES;
-        innobase_hton->db_type= DB_TYPE_INNODB;
         innobase_hton->savepoint_offset=sizeof(trx_named_savept_t);
         innobase_hton->close_connection=innobase_close_connection;
         innobase_hton->savepoint_set=innobase_savepoint;
@@ -1511,8 +1512,8 @@ innobase_init(
 	if (ret == FALSE) {
 		sql_print_error(
 			"InnoDB: syntax error in innodb_data_file_path");
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+			free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1542,8 +1543,8 @@ innobase_init(
 	  sql_print_error("syntax error in innodb_log_group_home_dir, or a "
 			  "wrong number of mirrored log groups");
 
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+		if (internal_innobase_data_file_path)
+			free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1623,8 +1624,8 @@ innobase_init(
 	err = innobase_start_or_create_for_mysql();
 
 	if (err != DB_SUCCESS) {
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+                        free(internal_innobase_data_file_path);
 		goto error;
 	}
 
@@ -1660,8 +1661,8 @@ innobase_deinit(void *p __attribute__((unused)))
 			err = 1;
 		}
 		hash_free(&innobase_open_tables);
-		my_free(internal_innobase_data_file_path,
-						MYF(MY_ALLOW_ZERO_PTR));
+                if (internal_innobase_data_file_path)
+                        free(internal_innobase_data_file_path);
 		pthread_mutex_destroy(&innobase_share_mutex);
 		pthread_mutex_destroy(&prepare_commit_mutex);
 		pthread_mutex_destroy(&commit_threads_m);
@@ -2138,7 +2139,7 @@ ha_innobase::table_flags() const
 Gives the file extension of an InnoDB single-table tablespace. */
 static const char* ha_innobase_exts[] = {
   ".ibd",
-  NullS
+  NULL
 };
 
 const char**
@@ -2234,10 +2235,10 @@ ha_innobase::open(
 				table->s->stored_rec_length
 				+ table->s->max_key_length
 				+ MAX_REF_PARTS * 3;
-	if (!(uchar*) my_multi_malloc(MYF(MY_WME),
+	if (!(unsigned char*) my_multi_malloc(MYF(MY_WME),
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
-			NullS)) {
+			NULL)) {
 		free_share(share);
 
 		return(1);
@@ -2264,7 +2265,7 @@ ha_innobase::open(
 				"how you can resolve the problem.\n",
 				norm_name);
 		free_share(share);
-		my_free(upd_buff, MYF(0));
+		free(upd_buff);
 		my_errno = ENOENT;
 
 		return(HA_ERR_NO_SUCH_TABLE);
@@ -2280,7 +2281,7 @@ ha_innobase::open(
 				"how you can resolve the problem.\n",
 				norm_name);
 		free_share(share);
-		my_free(upd_buff, MYF(0));
+		free(upd_buff);
 		my_errno = ENOENT;
 
 		dict_table_decrement_handle_count(ib_table);
@@ -2385,7 +2386,7 @@ ha_innobase::close(void)
 
 	row_prebuilt_free(prebuilt);
 
-	my_free(upd_buff, MYF(0));
+	free(upd_buff);
 	free_share(share);
 
 	/* Tell InnoDB server that there might be work for
@@ -2582,10 +2583,6 @@ get_innobase_type_from_mysql_type(
 	case DRIZZLE_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
 		if (field->binary()) {
 			return(DATA_BINARY);
-		} else if (strcmp(
-				   field->charset()->name,
-				   "latin1_swedish_ci") == 0) {
-			return(DATA_VARCHAR);
 		} else {
 			return(DATA_VARMYSQL);
 		}
@@ -2594,7 +2591,6 @@ get_innobase_type_from_mysql_type(
 	case DRIZZLE_TYPE_LONG:
 	case DRIZZLE_TYPE_LONGLONG:
 	case DRIZZLE_TYPE_TINY:
-	case DRIZZLE_TYPE_SHORT:
 	case DRIZZLE_TYPE_DATETIME:
 	case DRIZZLE_TYPE_NEWDATE:
 	case DRIZZLE_TYPE_TIME:
@@ -2635,7 +2631,7 @@ uint
 innobase_read_from_2_little_endian(
 /*===============================*/
 				/* out: value */
-	const uchar*	buf)	/* in: from where to read */
+	const unsigned char*	buf)	/* in: from where to read */
 {
 	return (uint) ((ulint)(buf[0]) + 256 * ((ulint)(buf[1])));
 }
@@ -2651,7 +2647,7 @@ ha_innobase::store_key_val_for_row(
 	char*		buff,	/* in/out: buffer for the key value (in MySQL
 				format) */
 	uint		buff_len,/* in: buffer length */
-	const uchar*	record)/* in: row in MySQL format */
+	const unsigned char*	record)/* in: row in MySQL format */
 {
 	KEY*		key_info	= table->key_info + keynr;
 	KEY_PART_INFO*	key_part	= key_info->key_part;
@@ -2842,7 +2838,7 @@ ha_innobase::store_key_val_for_row(
 
 			ulint			true_len;
 			ulint			key_len;
-			const uchar*		src_start;
+			const unsigned char*		src_start;
 			enum_field_types	real_type;
 
 			key_len = key_part->length;
@@ -3263,7 +3259,7 @@ int
 ha_innobase::write_row(
 /*===================*/
 			/* out: error code */
-	uchar*	record)	/* in: a row in MySQL format */
+	unsigned char*	record)	/* in: a row in MySQL format */
 {
 	int		error = 0;
 	ibool		auto_inc_used= FALSE;
@@ -3472,16 +3468,16 @@ calc_row_difference(
 /*================*/
 					/* out: error number or 0 */
 	upd_t*		uvect,		/* in/out: update vector */
-	uchar*		old_row,	/* in: old row in MySQL format */
-	uchar*		new_row,	/* in: new row in MySQL format */
+	unsigned char*		old_row,	/* in: old row in MySQL format */
+	unsigned char*		new_row,	/* in: new row in MySQL format */
         Table *table,		/* in: table in MySQL data
 					dictionary */
-	uchar*		upd_buff,	/* in: buffer to use */
+	unsigned char*		upd_buff,	/* in: buffer to use */
 	ulint		buff_len,	/* in: buffer length */
 	row_prebuilt_t*	prebuilt,	/* in: InnoDB prebuilt struct */
 	THD*		thd __attribute__((unused)))		/* in: user thread */
 {
-	uchar*		original_upd_buff = upd_buff;
+	unsigned char*		original_upd_buff = upd_buff;
 	Field*		field;
 	enum_field_types field_mysql_type;
 	uint		n_fields;
@@ -3629,8 +3625,8 @@ int
 ha_innobase::update_row(
 /*====================*/
 					/* out: error number or 0 */
-	const uchar*	old_row,	/* in: old row in MySQL format */
-	uchar*		new_row)	/* in: new row in MySQL format */
+	const unsigned char*	old_row,	/* in: old row in MySQL format */
+	unsigned char*		new_row)	/* in: new row in MySQL format */
 {
 	upd_t*		uvect;
 	int		error = 0;
@@ -3650,7 +3646,7 @@ ha_innobase::update_row(
 	/* Build an update vector from the modified fields in the rows
 	(uses upd_buff of the handle) */
 
-	calc_row_difference(uvect, (uchar*) old_row, new_row, table,
+	calc_row_difference(uvect, (unsigned char*) old_row, new_row, table,
 			upd_buff, (ulint)upd_and_key_val_buff_len,
 			prebuilt, user_thd);
 
@@ -3708,7 +3704,7 @@ int
 ha_innobase::delete_row(
 /*====================*/
 				/* out: error number or 0 */
-	const uchar*	record)	/* in: a row in MySQL format */
+	const unsigned char*	record)	/* in: a row in MySQL format */
 {
 	int		error = 0;
 	trx_t*		trx = thd_to_trx(user_thd);
@@ -3973,9 +3969,9 @@ ha_innobase::index_read(
 /*====================*/
 					/* out: 0, HA_ERR_KEY_NOT_FOUND,
 					or error number */
-	uchar*		buf,		/* in/out: buffer for the returned
+	unsigned char*		buf,		/* in/out: buffer for the returned
 					row */
-	const uchar*	key_ptr,	/* in: key value; if this is NULL
+	const unsigned char*	key_ptr,	/* in: key value; if this is NULL
 					we position the cursor at the
 					start or end of index; this can
 					also contain an InnoDB row id, in
@@ -4079,8 +4075,8 @@ ha_innobase::index_read_last(
 /*=========================*/
 				/* out: 0, HA_ERR_KEY_NOT_FOUND, or an
 				error code */
-	uchar*		buf,	/* out: fetched row */
-	const uchar*	key_ptr,/* in: key value, or a prefix of a full
+	unsigned char*		buf,	/* out: fetched row */
+	const unsigned char*	key_ptr,/* in: key value, or a prefix of a full
 				key value */
 	uint		key_len)/* in: length of the key val or prefix
 				in bytes */
@@ -4176,10 +4172,10 @@ int
 ha_innobase::index_read_idx(
 /*========================*/
 					/* out: error number or 0 */
-	uchar*		buf,		/* in/out: buffer for the returned
+	unsigned char*		buf,		/* in/out: buffer for the returned
 					row */
 	uint		keynr,		/* in: use this index */
-	const uchar*	key,		/* in: key value; if this is NULL
+	const unsigned char*	key,		/* in: key value; if this is NULL
 					we position the cursor at the
 					start or end of index */
 	uint		key_len,	/* in: key value length */
@@ -4202,7 +4198,7 @@ ha_innobase::general_fetch(
 /*=======================*/
 				/* out: 0, HA_ERR_END_OF_FILE, or error
 				number */
-	uchar*	buf,		/* in/out: buffer for next row in MySQL
+	unsigned char*	buf,		/* in/out: buffer for next row in MySQL
 				format */
 	uint	direction,	/* in: ROW_SEL_NEXT or ROW_SEL_PREV */
 	uint	match_mode)	/* in: 0, ROW_SEL_EXACT, or
@@ -4247,7 +4243,7 @@ ha_innobase::index_next(
 /*====================*/
 				/* out: 0, HA_ERR_END_OF_FILE, or error
 				number */
-	uchar*		buf)	/* in/out: buffer for next row in MySQL
+	unsigned char*		buf)	/* in/out: buffer for next row in MySQL
 				format */
 {
 	ha_statistic_increment(&SSV::ha_read_next_count);
@@ -4263,8 +4259,8 @@ ha_innobase::index_next_same(
 /*=========================*/
 				/* out: 0, HA_ERR_END_OF_FILE, or error
 				number */
-	uchar*		buf,	/* in/out: buffer for the row */
-	const uchar*	key __attribute__((unused)),	/* in: key value */
+	unsigned char*		buf,	/* in/out: buffer for the row */
+	const unsigned char*	key __attribute__((unused)),	/* in: key value */
 	uint		keylen __attribute__((unused)))	/* in: key value length */
 {
 	ha_statistic_increment(&SSV::ha_read_next_count);
@@ -4280,7 +4276,7 @@ int
 ha_innobase::index_prev(
 /*====================*/
 			/* out: 0, HA_ERR_END_OF_FILE, or error number */
-	uchar*	buf)	/* in/out: buffer for previous row in MySQL format */
+	unsigned char*	buf)	/* in/out: buffer for previous row in MySQL format */
 {
 	ha_statistic_increment(&SSV::ha_read_prev_count);
 
@@ -4295,7 +4291,7 @@ int
 ha_innobase::index_first(
 /*=====================*/
 			/* out: 0, HA_ERR_END_OF_FILE, or error code */
-	uchar*	buf)	/* in/out: buffer for the row */
+	unsigned char*	buf)	/* in/out: buffer for the row */
 {
 	int	error;
 
@@ -4320,7 +4316,7 @@ int
 ha_innobase::index_last(
 /*====================*/
 			/* out: 0, HA_ERR_END_OF_FILE, or error code */
-	uchar*	buf)	/* in/out: buffer for the row */
+	unsigned char*	buf)	/* in/out: buffer for the row */
 {
 	int	error;
 
@@ -4388,7 +4384,7 @@ int
 ha_innobase::rnd_next(
 /*==================*/
 			/* out: 0, HA_ERR_END_OF_FILE, or error number */
-	uchar*	buf)	/* in/out: returns the row in this buffer,
+	unsigned char*	buf)	/* in/out: returns the row in this buffer,
 			in MySQL format */
 {
 	int	error;
@@ -4415,8 +4411,8 @@ int
 ha_innobase::rnd_pos(
 /*=================*/
 			/* out: 0, HA_ERR_KEY_NOT_FOUND, or error code */
-	uchar*	buf,	/* in/out: buffer for the row */
-	uchar*	pos)	/* in: primary key value of the row in the
+	unsigned char*	buf,	/* in/out: buffer for the row */
+	unsigned char*	pos)	/* in: primary key value of the row in the
 			MySQL format, or the row id if the clustered
 			index was internally generated by InnoDB; the
 			length of data in pos has to be ref_length */
@@ -4447,7 +4443,7 @@ was positioned the last time. */
 void
 ha_innobase::position(
 /*==================*/
-	const uchar*	record)	/* in: row in MySQL format */
+	const unsigned char*	record)	/* in: row in MySQL format */
 {
 	uint		len;
 
@@ -4732,7 +4728,7 @@ create_index(
 
 	error = convert_error_code_to_mysql(error, NULL);
 
-	my_free(field_lengths, MYF(0));
+	free(field_lengths);
 
 	return(error);
 }
@@ -5183,7 +5179,7 @@ innobase_drop_database(
 	}
 
 	error = row_drop_database_for_mysql(namebuf, trx);
-	my_free(namebuf, MYF(0));
+	free(namebuf);
 
 	/* Flush the log to reduce probability that the .frm files and
 	the InnoDB data dictionary get out-of-sync if the user runs
@@ -5298,7 +5294,7 @@ ha_innobase::records_in_range(
 {
 	KEY*		key;
 	dict_index_t*	index;
-	uchar*		key_val_buff2	= (uchar*) my_malloc(
+	unsigned char*		key_val_buff2	= (unsigned char*) my_malloc(
 						  table->s->stored_rec_length
 					+ table->s->max_key_length + 100,
 								MYF(MY_FAE));
@@ -5338,7 +5334,7 @@ ha_innobase::records_in_range(
 				(ulint)upd_and_key_val_buff_len,
 				index,
 				(byte*) (min_key ? min_key->key :
-					 (const uchar*) 0),
+					 (const unsigned char*) 0),
 				(ulint) (min_key ? min_key->length : 0),
 				prebuilt->trx);
 
@@ -5346,7 +5342,7 @@ ha_innobase::records_in_range(
 				range_end, (byte*) key_val_buff2,
 				buff2_len, index,
 				(byte*) (max_key ? max_key->key :
-					 (const uchar*) 0),
+					 (const unsigned char*) 0),
 				(ulint) (max_key ? max_key->length : 0),
 				prebuilt->trx);
 
@@ -5368,7 +5364,7 @@ ha_innobase::records_in_range(
 	dtuple_free_for_mysql(heap1);
 	dtuple_free_for_mysql(heap2);
 
-	my_free(key_val_buff2, MYF(0));
+	free(key_val_buff2);
 
 	prebuilt->trx->op_info = (char*)"";
 
@@ -5493,7 +5489,7 @@ in various fields of the handle object. */
 int
 ha_innobase::info(
 /*==============*/
-	uint flag)	/* in: what information MySQL requests */
+	uint32_t flag)	/* in: what information MySQL requests */
 {
 	dict_table_t*	ib_table;
 	dict_index_t*	index;
@@ -5920,10 +5916,10 @@ ha_innobase::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list)
   foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
 
   while (foreign != NULL) {
-	  uint i;
+	  uint32_t i;
 	  FOREIGN_KEY_INFO f_key_info;
 	  LEX_STRING *name= 0;
-          uint ulen;
+          uint32_t ulen;
           char uname[NAME_LEN+1];           /* Unencoded name */
           char db_name[NAME_LEN+1];
 	  const char *tmp_buff;
@@ -6092,7 +6088,7 @@ ha_innobase::free_foreign_key_create_info(
 	char*	str)	/* in, own: create info string to free	*/
 {
 	if (str) {
-		my_free(str, MYF(0));
+		free(str);
 	}
 }
 
@@ -6630,7 +6626,7 @@ innodb_show_status(
 			STRING_WITH_LEN(""), str, flen)) {
 		result= TRUE;
 	}
-	my_free(str, MYF(0));
+	free(str);
 
 	return(FALSE);
 }
@@ -6756,22 +6752,22 @@ bool innobase_show_status(handlerton *hton, THD* thd,
  locking.
 ****************************************************************************/
 
-static uchar* innobase_get_key(INNOBASE_SHARE* share, size_t *length,
+static unsigned char* innobase_get_key(INNOBASE_SHARE* share, size_t *length,
                                bool not_used __attribute__((unused)))
 {
 	*length=share->table_name_length;
 
-	return (uchar*) share->table_name;
+	return (unsigned char*) share->table_name;
 }
 
 static INNOBASE_SHARE* get_share(const char* table_name)
 {
 	INNOBASE_SHARE *share;
 	pthread_mutex_lock(&innobase_share_mutex);
-	uint length=(uint) strlen(table_name);
+	uint32_t length=(uint) strlen(table_name);
 
 	if (!(share=(INNOBASE_SHARE*) hash_search(&innobase_open_tables,
-				(uchar*) table_name,
+				(unsigned char*) table_name,
 				length))) {
 
 		share = (INNOBASE_SHARE *) my_malloc(sizeof(*share)+length+1,
@@ -6779,12 +6775,12 @@ static INNOBASE_SHARE* get_share(const char* table_name)
 
 		share->table_name_length=length;
 		share->table_name=(char*) (share+1);
-		stpcpy(share->table_name,table_name);
+		my_stpcpy(share->table_name,table_name);
 
 		if (my_hash_insert(&innobase_open_tables,
-				(uchar*) share)) {
+				(unsigned char*) share)) {
 			pthread_mutex_unlock(&innobase_share_mutex);
-			my_free(share,0);
+			free(share);
 
 			return 0;
 		}
@@ -6804,10 +6800,10 @@ static void free_share(INNOBASE_SHARE* share)
 	pthread_mutex_lock(&innobase_share_mutex);
 
 	if (!--share->use_count) {
-		hash_delete(&innobase_open_tables, (uchar*) share);
+		hash_delete(&innobase_open_tables, (unsigned char*) share);
 		thr_lock_delete(&share->lock);
 		pthread_mutex_destroy(&share->mutex);
-		my_free(share, MYF(0));
+		free(share);
 	}
 
 	pthread_mutex_unlock(&innobase_share_mutex);
@@ -6869,7 +6865,7 @@ ha_innobase::store_lock(
 
 	assert(thd == current_thd);
 	const bool in_lock_tables = thd_in_lock_tables(thd);
-	const uint sql_command = thd_sql_command(thd);
+	const uint32_t sql_command = thd_sql_command(thd);
 
 	if (sql_command == SQLCOM_DROP_TABLE) {
 
@@ -7319,9 +7315,9 @@ ha_innobase::cmp_ref(
 /*=================*/
 				/* out: < 0 if ref1 < ref2, 0 if equal, else
 				> 0 */
-	const uchar*	ref1,	/* in: an (internal) primary key value in the
+	const unsigned char*	ref1,	/* in: an (internal) primary key value in the
 				MySQL key value format */
-	const uchar*	ref2)	/* in: an (internal) primary key value in the
+	const unsigned char*	ref2)	/* in: an (internal) primary key value in the
 				MySQL key value format */
 {
 	enum_field_types mysql_type;
@@ -7746,7 +7742,7 @@ show_innodb_vars_cont = { &show_innodb_vars };
 
 static SHOW_VAR innodb_status_variables_export[]= {
   {"Innodb",                  (char *) &show_innodb_vars_cont, SHOW_FUNC},
-  {NullS, NullS, SHOW_LONG}
+  {NULL, NULL, SHOW_LONG}
 };
 
 /**/
@@ -8011,7 +8007,7 @@ mysql_declare_plugin_end;
  */
 
 int ha_innobase::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                          uint n_ranges, uint mode, HANDLER_BUFFER *buf)
+                          uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf)
 {
   return ds_mrr.dsmrr_init(this, &table->key_info[active_index], 
                            seq, seq_init_param, n_ranges, mode, buf);
@@ -8022,10 +8018,10 @@ int ha_innobase::multi_range_read_next(char **range_info)
   return ds_mrr.dsmrr_next(this, range_info);
 }
 
-ha_rows ha_innobase::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+ha_rows ha_innobase::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                                  void *seq_init_param,  
-                                                 uint n_ranges, uint *bufsz,
-                                                 uint *flags, 
+                                                 uint32_t n_ranges, uint32_t *bufsz,
+                                                 uint32_t *flags, 
                                                  COST_VECT *cost)
 {
   /* See comments in ha_myisam::multi_range_read_info_const */
@@ -8034,8 +8030,8 @@ ha_rows ha_innobase::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
                                  flags, cost);
 }
 
-int ha_innobase::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
-                          uint *bufsz, uint *flags, COST_VECT *cost)
+int ha_innobase::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
+                          uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ds_mrr.init(this, table);
   return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
@@ -8047,7 +8043,9 @@ int ha_innobase::multi_range_read_info(uint keyno, uint n_ranges, uint keys,
  * Index Condition Pushdown interface implementation
  */
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Index condition check function to be called from within Innobase */
 
@@ -8062,10 +8060,13 @@ static int64_t index_cond_func_innodb(void *arg)
   return h->pushed_idx_cond->val_int();
 }
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 
-Item *ha_innobase::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
+
+Item *ha_innobase::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
 {
   if (keyno_arg != primary_key)
   {

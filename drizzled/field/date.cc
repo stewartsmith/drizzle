@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -51,7 +51,7 @@
 */
 
 int Field_newdate::store(const char *from,
-                         uint len,
+                         uint32_t len,
                          const CHARSET_INFO * const cs __attribute__((unused)))
 {
   long tmp;
@@ -111,7 +111,7 @@ int Field_newdate::store(int64_t nr,
                          (TIME_FUZZY_DATE |
                           (thd->variables.sql_mode &
                            (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
-                         &error) == -1LL)
+                         &error) == INT64_C(-1))
   {
     tmp= 0L;
     error= 2;
@@ -135,7 +135,8 @@ int Field_newdate::store(int64_t nr,
 }
 
 
-int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
+int Field_newdate::store_time(DRIZZLE_TIME *ltime,
+                              enum enum_drizzle_timestamp_type time_type)
 {
   long tmp;
   int error= 0;
@@ -227,7 +228,7 @@ String *Field_newdate::val_str(String *val_buffer,
 }
 
 
-bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
+bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint3korr(ptr);
   ltime->day=   tmp & 31;
@@ -246,7 +247,7 @@ bool Field_newdate::get_time(DRIZZLE_TIME *ltime)
 }
 
 
-int Field_newdate::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_newdate::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint32_t a,b;
   a=(uint32_t) uint3korr(a_ptr);
@@ -255,7 +256,7 @@ int Field_newdate::cmp(const uchar *a_ptr, const uchar *b_ptr)
 }
 
 
-void Field_newdate::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_newdate::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   to[0] = ptr[2];
   to[1] = ptr[1];

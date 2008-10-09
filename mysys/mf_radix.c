@@ -25,9 +25,9 @@
 
 	/* Radixsort */
 
-void radixsort_for_str_ptr(uchar **base, uint number_of_elements, size_t size_of_element, uchar **buffer)
+void radixsort_for_str_ptr(unsigned char **base, uint32_t number_of_elements, size_t size_of_element, unsigned char **buffer)
 {
-  uchar **end,**ptr,**buffer_ptr;
+  unsigned char **end,**ptr,**buffer_ptr;
   uint32_t *count_ptr,*count_end,count[256];
   int pass;
 

@@ -1,17 +1,21 @@
-/* Copyright (C) 2000 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /* subselect Item */
 
@@ -49,7 +53,7 @@ protected:
   /* cache of used external tables */
   table_map used_tables_cache;
   /* allowed number of columns (1 for single value subqueries) */
-  uint max_columns;
+  uint32_t max_columns;
   /* where subquery is placed */
   enum_parsing_place parsing_place;
   /* work with 'substitution' */
@@ -129,7 +133,7 @@ public:
   */
   virtual void reset_value_registration() {}
   enum_parsing_place place() { return parsing_place; }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
 
   /**
     Get the SELECT_LEX structure associated with this Item.
@@ -163,7 +167,7 @@ public:
 
   void reset();
   trans_res select_transformer(JOIN *join);
-  void store(uint i, Item* item);
+  void store(uint32_t i, Item* item);
   double val_real();
   int64_t val_int ();
   String *val_str (String *);
@@ -173,10 +177,10 @@ public:
   enum_field_types field_type() const;
   void fix_length_and_dec();
 
-  uint cols();
-  Item* element_index(uint i) { return my_reinterpret_cast(Item*)(row[i]); }
-  Item** addr(uint i) { return (Item**)row + i; }
-  bool check_cols(uint c);
+  uint32_t cols();
+  Item* element_index(uint32_t i) { return reinterpret_cast<Item*>(row[i]); }
+  Item** addr(uint32_t i) { return (Item**)row + i; }
+  bool check_cols(uint32_t c);
   bool null_inside();
   void bring_value();
 
@@ -353,7 +357,7 @@ public:
   bool fix_fields(THD *thd, Item **ref);
   bool setup_engine();
   bool init_left_expr_cache();
-  bool is_expensive_processor(uchar *arg);
+  bool is_expensive_processor(unsigned char *arg);
 
   friend class Item_ref_null_helper;
   friend class Item_is_not_null_test;
@@ -437,7 +441,7 @@ public:
           caller should call exec() again for the new engine.
   */
   virtual int exec()= 0;
-  virtual uint cols()= 0; /* return number of columns in select */
+  virtual uint32_t cols()= 0; /* return number of columns in select */
   virtual uint8_t uncacheable()= 0; /* query is uncacheable */
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
@@ -474,7 +478,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols();
+  uint32_t cols();
   uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
@@ -502,7 +506,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols();
+  uint32_t cols();
   uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
@@ -559,7 +563,7 @@ public:
   int prepare();
   void fix_length_and_dec(Item_cache** row);
   int exec();
-  uint cols() { return 1; }
+  uint32_t cols() { return 1; }
   uint8_t uncacheable() { return UNCACHEABLE_DEPENDENT; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
@@ -676,7 +680,7 @@ public:
   int prepare() { return 0; }
   int exec();
   virtual void print (String *str, enum_query_type query_type);
-  uint cols()
+  uint32_t cols()
   {
     return materialize_engine->cols();
   }

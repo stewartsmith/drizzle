@@ -34,8 +34,8 @@
 #define my_safe_alloca(size, min_length) my_alloca(size)
 #define my_safe_afree(ptr, size, min_length) my_afree(ptr)
 #else
-#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : my_malloc(size,MYF(0)))
-#define my_safe_afree(ptr, size, min_length) if (size > min_length) my_free(ptr,MYF(0))
+#define my_safe_alloca(size, min_length) ((size <= min_length) ? my_alloca(size) : malloc(size))
+#define my_safe_afree(ptr, size, min_length) if (size > min_length) free(ptr)
 #endif
 
 
@@ -239,7 +239,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   bool transactional_table, joins_freed= false;
   bool changed;
   bool was_insert_delayed= (table_list->lock_type ==  TL_WRITE_DELAYED);
-  uint value_count;
+  uint32_t value_count;
   ulong counter = 1;
   uint64_t id;
   COPY_INFO info;
@@ -351,13 +351,11 @@ bool mysql_insert(THD *thd,TableList *table_list,
   thd->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
-#ifdef HAVE_REPLICATION
   if (thd->slave_thread &&
       (info.handle_duplicates == DUP_UPDATE) &&
       (table->next_number_field != NULL) &&
       rpl_master_has_bug(&active_mi->rli, 24432))
     goto abort;
-#endif
 
   error=0;
   thd_proc_info(thd, "update");
@@ -745,7 +743,6 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
       update_non_unique_table_error(table_list, "INSERT", duplicate);
       return(true);
     }
-    select_lex->first_execution= 0;
   }
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();
@@ -755,7 +752,7 @@ bool mysql_prepare_insert(THD *thd, TableList *table_list,
 
 	/* Check if there is more uniq keys after field */
 
-static int last_uniq_key(Table *table,uint keynr)
+static int last_uniq_key(Table *table,uint32_t keynr)
 {
   while (++keynr < table->s->keys)
     if (table->key_info[keynr].flags & HA_NOSAME)
@@ -809,7 +806,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
   {
     while ((error=table->file->ha_write_row(table->record[0])))
     {
-      uint key_nr;
+      uint32_t key_nr;
       /*
         If we do more than one iteration of this loop, from the second one the
         row will have an explicit value in the autoinc field, which was set at
@@ -875,9 +872,9 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
 	    goto err;
 	  }
 	}
-	key_copy((uchar*) key,table->record[0],table->key_info+key_nr,0);
+	key_copy((unsigned char*) key,table->record[0],table->key_info+key_nr,0);
 	if ((error=(table->file->index_read_idx_map(table->record[1],key_nr,
-                                                    (uchar*) key, HA_WHOLE_KEY,
+                                                    (unsigned char*) key, HA_WHOLE_KEY,
                                                     HA_READ_KEY_EXACT))))
 	  goto err;
       }
@@ -1221,7 +1218,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       while ((item= li++))
       {
         item->transform(&Item::update_value_transformer,
-                        (uchar*)lex->current_select);
+                        (unsigned char*)lex->current_select);
       }
     }
 
@@ -1264,13 +1261,11 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   restore_record(table,s->default_values);		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
-#ifdef HAVE_REPLICATION
   if (thd->slave_thread &&
       (info.handle_duplicates == DUP_UPDATE) &&
       (table->next_number_field != NULL) &&
       rpl_master_has_bug(&active_mi->rli, 24432))
     return(1);
-#endif
 
   thd->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
@@ -1394,7 +1389,7 @@ void select_insert::store_values(List<Item> &values)
     fill_record(thd, table->field, values, 1);
 }
 
-void select_insert::send_error(uint errcode,const char *err)
+void select_insert::send_error(uint32_t errcode,const char *err)
 {
   
 
@@ -1573,7 +1568,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
   Table *table= 0;
-  uint select_field_count= items->elements;
+  uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
   Item *item;
@@ -1670,7 +1665,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
-        VOID(pthread_mutex_lock(&LOCK_open));
+        pthread_mutex_lock(&LOCK_open);
         if (reopen_name_locked_table(thd, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
@@ -1679,7 +1674,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
         }
         else
           table= create_table->table;
-        VOID(pthread_mutex_unlock(&LOCK_open));
+        pthread_mutex_unlock(&LOCK_open);
       }
       else
       {
@@ -1756,7 +1751,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(Table **tables, uint count)
+    virtual int do_postlock(Table **tables, uint32_t count)
     {
       THD *thd= const_cast<THD*>(ptr->get_thd());
       if (int error= decide_logging_format(thd, &all_tables))
@@ -1844,7 +1839,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 }
 
 void
-select_create::binlog_show_create_table(Table **tables, uint count)
+select_create::binlog_show_create_table(Table **tables, uint32_t count)
 {
   /*
     Note 1: In RBR mode, we generate a CREATE TABLE statement for the
@@ -1890,7 +1885,7 @@ void select_create::store_values(List<Item> &values)
 }
 
 
-void select_create::send_error(uint errcode,const char *err)
+void select_create::send_error(uint32_t errcode,const char *err)
 {
   
 

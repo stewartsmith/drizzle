@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
-#include <stdint.h>
+#include CSTDINT_H
 
 #define LENGTH_ENCODE_MAX_BYTES (sizeof(size_t) + 1)
 

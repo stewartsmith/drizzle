@@ -60,13 +60,13 @@ extern const CHARSET_INFO *character_set_filesystem;
 static DYNAMIC_ARRAY fixed_show_vars;
 static HASH system_variable_hash;
 
-const char *bool_type_names[]= { "OFF", "ON", NullS };
+const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
 {
   array_elements(bool_type_names)-1, "", bool_type_names, NULL
 };
 
-const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NullS };
+const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NULL };
 TYPELIB delay_key_write_typelib=
 {
   array_elements(delay_key_write_type_names)-1, "",
@@ -74,7 +74,7 @@ TYPELIB delay_key_write_typelib=
 };
 
 const char *slave_exec_mode_names[]=
-{ "STRICT", "IDEMPOTENT", NullS };
+{ "STRICT", "IDEMPOTENT", NULL };
 static const unsigned int slave_exec_mode_names_len[]=
 { sizeof("STRICT") - 1, sizeof("IDEMPOTENT") - 1, 0 };
 TYPELIB slave_exec_mode_typelib=
@@ -90,7 +90,6 @@ static void sys_default_init_slave(THD*, enum_var_type type);
 static bool set_option_bit(THD *thd, set_var *var);
 static bool set_option_autocommit(THD *thd, set_var *var);
 static int  check_log_update(THD *thd, set_var *var);
-static bool set_log_update(THD *thd, set_var *var);
 static int  check_pseudo_thread_id(THD *thd, set_var *var);
 static void fix_low_priority_updates(THD *thd, enum_var_type type);
 static int check_tx_isolation(THD *thd, set_var *var);
@@ -112,15 +111,10 @@ static uint64_t fix_unsigned(THD *, uint64_t, const struct my_option *);
 static bool get_unsigned(THD *thd, set_var *var);
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
                           const char *name, int64_t val);
-static KEY_CACHE *create_key_cache(const char *name, uint length);
-static uchar *get_error_count(THD *thd);
-static uchar *get_warning_count(THD *thd);
-static uchar *get_tmpdir(THD *thd);
-static int  sys_check_log_path(THD *thd,  set_var *var);
-static bool sys_update_general_log_path(THD *thd, set_var * var);
-static void sys_default_general_log_path(THD *thd, enum_var_type type);
-static bool sys_update_slow_log_path(THD *thd, set_var * var);
-static void sys_default_slow_log_path(THD *thd, enum_var_type type);
+static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
+static unsigned char *get_error_count(THD *thd);
+static unsigned char *get_warning_count(THD *thd);
+static unsigned char *get_tmpdir(THD *thd);
 
 /*
   Variable definition list
@@ -224,12 +218,6 @@ static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age
 							      param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
 					 &opt_local_infile);
-static sys_var_bool_ptr
-  sys_log_queries_not_using_indexes(&vars, "log_queries_not_using_indexes",
-                                    &opt_log_queries_not_using_indexes);
-static sys_var_thd_ulong	sys_log_warnings(&vars, "log_warnings", &SV::log_warnings);
-static sys_var_microseconds	sys_var_long_query_time(&vars, "long_query_time",
-                                                        &SV::long_query_time);
 static sys_var_thd_bool	sys_low_priority_updates(&vars, "low_priority_updates",
 						 &SV::low_priority_updates,
 						 fix_low_priority_updates);
@@ -307,7 +295,7 @@ static sys_var_thd_ulong        sys_optimizer_prune_level(&vars, "optimizer_prun
 static sys_var_thd_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",
                                                    &SV::optimizer_search_depth);
 
-const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NullS};
+const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
 TYPELIB optimizer_use_mrr_typelib= {
   array_elements(optimizer_use_mrr_names) - 1, "",
   optimizer_use_mrr_names, NULL
@@ -352,7 +340,6 @@ static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
 static sys_var_long_ptr	sys_server_id(&vars, "server_id", &server_id, fix_server_id);
 static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_protocol",
 						      &opt_slave_compressed_protocol);
-#ifdef HAVE_REPLICATION
 static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
                                                          &slave_allow_batching);
 static sys_var_set_slave_mode slave_exec_mode(&vars,
@@ -360,7 +347,6 @@ static sys_var_set_slave_mode slave_exec_mode(&vars,
                                               &slave_exec_mode_options,
                                               &slave_exec_mode_typelib,
                                               0);
-#endif
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
 					     &slow_launch_time);
 static sys_var_thd_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
@@ -440,14 +426,6 @@ static sys_var_thd_bit	sys_sql_big_tables(&vars, "sql_big_tables", 0,
 static sys_var_thd_bit	sys_big_selects(&vars, "sql_big_selects", 0,
 					set_option_bit,
 					OPTION_BIG_SELECTS);
-static sys_var_thd_bit	sys_log_off(&vars, "sql_log_off",
-				    check_log_update,
-				    set_option_bit,
-				    OPTION_LOG_OFF);
-static sys_var_thd_bit	sys_log_update(&vars, "sql_log_update",
-                                       check_log_update,
-				       set_log_update,
-				       OPTION_BIN_LOG);
 static sys_var_thd_bit	sys_log_binlog(&vars, "sql_log_bin",
                                        check_log_update,
 				       set_option_bit,
@@ -458,10 +436,6 @@ static sys_var_thd_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
 static sys_var_thd_bit	sys_sql_notes(&vars, "sql_notes", 0,
 					 set_option_bit,
 					 OPTION_SQL_NOTES);
-static sys_var_thd_bit	sys_auto_is_null(&vars, "sql_auto_is_null", 0,
-					 set_option_bit,
-                                         OPTION_AUTO_IS_NULL, 0,
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_thd_bit	sys_safe_updates(&vars, "sql_safe_updates", 0,
 					 set_option_bit,
 					 OPTION_SAFE_UPDATES);
@@ -549,10 +523,10 @@ static sys_var_const_str_ptr    sys_repl_report_host(&vars, "report_host", &repo
 static sys_var_const_str_ptr    sys_repl_report_user(&vars, "report_user", &report_user);
 static sys_var_const_str_ptr    sys_repl_report_password(&vars, "report_password", &report_password);
 
-static uchar *slave_get_report_port(THD *thd)
+static unsigned char *slave_get_report_port(THD *thd)
 {
   thd->sys_var_tmp.long_value= report_port;
-  return (uchar*) &thd->sys_var_tmp.long_value;
+  return (unsigned char*) &thd->sys_var_tmp.long_value;
 }
 
 static sys_var_readonly    sys_repl_report_port(&vars, "report_port", OPT_GLOBAL, SHOW_INT, slave_get_report_port);
@@ -563,28 +537,6 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
-/* Global variables which enable|disable logging */
-static sys_var_log_state sys_var_general_log(&vars, "general_log", &opt_log,
-                                      QUERY_LOG_GENERAL);
-/* Synonym of "general_log" for consistency with SHOW VARIABLES output */
-static sys_var_log_state sys_var_log(&vars, "log", &opt_log, QUERY_LOG_GENERAL);
-static sys_var_log_state sys_var_slow_query_log(&vars, "slow_query_log", &opt_slow_log,
-                                         QUERY_LOG_SLOW);
-/* Synonym of "slow_query_log" for consistency with SHOW VARIABLES output */
-static sys_var_log_state sys_var_log_slow(&vars, "log_slow_queries",
-                                          &opt_slow_log, QUERY_LOG_SLOW);
-sys_var_str sys_var_general_log_path(&vars, "general_log_file", sys_check_log_path,
-				     sys_update_general_log_path,
-				     sys_default_general_log_path,
-				     opt_logname);
-sys_var_str sys_var_slow_log_path(&vars, "slow_query_log_file", sys_check_log_path,
-				  sys_update_slow_log_path, 
-				  sys_default_slow_log_path,
-				  opt_slow_logname);
-static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_output_options,
-					    &log_output_typelib, 0);
-
-
 /*
   Additional variables (not derived from sys_var class, not accessible as
   @@varname in SELECT or SET). Sorted in alphabetical order to facilitate
@@ -647,7 +599,7 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
 			set_var *var)
 {
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
-  uint new_length= (var ? var->value->str_value.length() : 0);
+  uint32_t new_length= (var ? var->value->str_value.length() : 0);
   if (!old_value)
     old_value= (char*) "";
   if (!(res= my_strndup(old_value, new_length, MYF(0))))
@@ -661,7 +613,7 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
   var_str->value= res;
   var_str->value_length= new_length;
   rw_unlock(var_mutex);
-  my_free(old_value, MYF(MY_ALLOW_ZERO_PTR));
+  free(old_value);
   return 0;
 }
 
@@ -780,7 +732,6 @@ static int check_completion_type(THD *thd __attribute__((unused)),
   If we are changing the thread variable, we have to copy it to NET too
 */
 
-#ifdef HAVE_REPLICATION
 static void fix_net_read_timeout(THD *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
@@ -799,17 +750,6 @@ static void fix_net_retry_count(THD *thd, enum_var_type type)
   if (type != OPT_GLOBAL)
     thd->net.retry_count=thd->variables.net_retry_count;
 }
-#else /* HAVE_REPLICATION */
-static void fix_net_read_timeout(THD *thd __attribute__((unused)),
-				 enum_var_type type __attribute__((unused)))
-{}
-static void fix_net_write_timeout(THD *thd __attribute__((unused)),
-				  enum_var_type type __attribute__((unused)))
-{}
-static void fix_net_retry_count(THD *thd __attribute__((unused)),
-				enum_var_type type __attribute__((unused)))
-{}
-#endif /* HAVE_REPLICATION */
 
 
 extern void fix_delay_key_write(THD *thd __attribute__((unused)),
@@ -836,7 +776,7 @@ bool sys_var_set::update(THD *thd __attribute__((unused)),
   return 0;
 }
 
-uchar *sys_var_set::value_ptr(THD *thd,
+unsigned char *sys_var_set::value_ptr(THD *thd,
                               enum_var_type type __attribute__((unused)),
                               LEX_STRING *base __attribute__((unused)))
 {
@@ -846,7 +786,7 @@ uchar *sys_var_set::value_ptr(THD *thd,
   ulong val= *value;
 
   tmp.length(0);
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -858,7 +798,7 @@ uchar *sys_var_set::value_ptr(THD *thd,
 
   if ((length= tmp.length()))
     length--;
-  return (uchar*) thd->strmake(tmp.ptr(), length);
+  return (unsigned char*) thd->strmake(tmp.ptr(), length);
 }
 
 void sys_var_set_slave_mode::set_default(THD *thd __attribute__((unused)),
@@ -926,14 +866,7 @@ bool sys_var_thd_binlog_format::is_readonly() const
     my_error(ER_TEMP_TABLE_PREVENTS_SWITCH_OUT_OF_RBR, MYF(0));
     return 1;
   }
-  /*
-    if in a stored function/trigger, it's too late to change mode
-  */
-  if (thd->in_sub_stmt)
-  {
-    my_error(ER_STORED_FUNCTION_PREVENTS_SWITCH_BINLOG_FORMAT, MYF(0));
-    return 1;    
-  }
+  
   return sys_var_thd_enum::is_readonly();
 }
 
@@ -949,20 +882,16 @@ static void fix_max_binlog_size(THD *thd __attribute__((unused)),
                                 enum_var_type type __attribute__((unused)))
 {
   mysql_bin_log.set_max_size(max_binlog_size);
-#ifdef HAVE_REPLICATION
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
-#endif
   return;
 }
 
 static void fix_max_relay_log_size(THD *thd __attribute__((unused)),
                                    enum_var_type type __attribute__((unused)))
 {
-#ifdef HAVE_REPLICATION
   active_mi->rli.relay_log.set_max_size(max_relay_log_size ?
                                         max_relay_log_size: max_binlog_size);
-#endif
   return;
 }
 
@@ -1062,15 +991,12 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
     *value= (ulong) fix_unsigned(thd, tmp, option_limits);
   else
   {
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    /* Avoid overflows on 32 bit systems */
-    if (tmp > ULONG_MAX)
+    if (tmp > UINT32_MAX)
     {
-      tmp= ULONG_MAX;
+      tmp= UINT32_MAX;
       throw_bounds_warning(thd, true, true, name,
                            (int64_t) var->save_result.uint64_t_value);
     }
-#endif
     *value= (ulong) tmp;
   }
 
@@ -1133,19 +1059,19 @@ bool sys_var_enum::update(THD *thd __attribute__((unused)), set_var *var)
 }
 
 
-uchar *sys_var_enum::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_enum::value_ptr(THD *thd __attribute__((unused)),
                                enum_var_type type __attribute__((unused)),
                                LEX_STRING *base __attribute__((unused)))
 {
-  return (uchar*) enum_names->type_names[*value];
+  return (unsigned char*) enum_names->type_names[*value];
 }
 
 
-uchar *sys_var_enum_const::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_enum_const::value_ptr(THD *thd __attribute__((unused)),
                                      enum_var_type type __attribute__((unused)),
                                      LEX_STRING *base __attribute__((unused)))
 {
-  return (uchar*) enum_names->type_names[global_system_variables.*offset];
+  return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
 }
 
 bool sys_var_thd_ulong::check(THD *thd, set_var *var)
@@ -1167,13 +1093,11 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   
   if (option_limits)
     tmp= (ulong) fix_unsigned(thd, tmp, option_limits);
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-  else if (tmp > ULONG_MAX)
+  else if (tmp > UINT32_MAX)
   {
-    tmp= ULONG_MAX;
+    tmp= UINT32_MAX;
     throw_bounds_warning(thd, true, true, name, (int64_t) var->save_result.uint64_t_value);
   }
-#endif
   
   if (var->type == OPT_GLOBAL)
      global_system_variables.*offset= (ulong) tmp;
@@ -1199,12 +1123,12 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
  }
 
 
-uchar *sys_var_thd_ulong::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_ulong::value_ptr(THD *thd, enum_var_type type,
                                     LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
-    return (uchar*) &(global_system_variables.*offset);
-  return (uchar*) &(thd->variables.*offset);
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(thd->variables.*offset);
 }
 
 
@@ -1248,12 +1172,12 @@ void sys_var_thd_ha_rows::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_thd_ha_rows::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_ha_rows::value_ptr(THD *thd, enum_var_type type,
                                       LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
-    return (uchar*) &(global_system_variables.*offset);
-  return (uchar*) &(thd->variables.*offset);
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(thd->variables.*offset);
 }
 
 bool sys_var_thd_uint64_t::check(THD *thd, set_var *var)
@@ -1299,12 +1223,12 @@ void sys_var_thd_uint64_t::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
-    return (uchar*) &(global_system_variables.*offset);
-  return (uchar*) &(thd->variables.*offset);
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(thd->variables.*offset);
 }
 
 
@@ -1327,12 +1251,12 @@ void sys_var_thd_bool::set_default(THD *thd,  enum_var_type type)
 }
 
 
-uchar *sys_var_thd_bool::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_bool::value_ptr(THD *thd, enum_var_type type,
                                    LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
-    return (uchar*) &(global_system_variables.*offset);
-  return (uchar*) &(thd->variables.*offset);
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(thd->variables.*offset);
 }
 
 
@@ -1378,14 +1302,14 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
 {
   bool not_used;
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
-  uint error_len= 0;
+  uint32_t error_len= 0;
   String str(buff, sizeof(buff), system_charset_info), *res;
 
   if (var->value->result_type() == STRING_RESULT)
   {
     if (!(res= var->value->val_str(&str)))
     {
-      stpcpy(buff, "NULL");
+      my_stpcpy(buff, "NULL");
       goto err;
     }
 
@@ -1404,7 +1328,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, min(sizeof(buff) - 1, (ulong)error_len));
+      strmake(buff, error, cmin(sizeof(buff) - 1, (ulong)error_len));
       goto err;
     }
   }
@@ -1424,7 +1348,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
       For when the enum is made to contain 64 elements, as 1ULL<<64 is
       undefined, we guard with a "count<64" test.
     */
-    if (unlikely((tmp >= ((1ULL) << enum_names->count)) &&
+    if (unlikely((tmp >= ((1UL) << enum_names->count)) &&
                  (enum_names->count < 64)))
     {
       llstr(tmp, buff);
@@ -1464,7 +1388,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
   switch (show_type()) {
   case SHOW_INT:
   {
-    uint value;
+    uint32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(uint*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -1518,7 +1442,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
     char *str= *(char**) value_ptr(thd, var_type, base);
     if (str)
     {
-      uint length= strlen(str);
+      uint32_t length= strlen(str);
       tmp= new Item_string(thd->strmake(str, length), length,
                            system_charset_info, DERIVATION_SYSCONST);
     }
@@ -1572,13 +1496,13 @@ void sys_var_thd_enum::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_thd_enum::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_enum::value_ptr(THD *thd, enum_var_type type,
                                    LEX_STRING *base __attribute__((unused)))
 {
   ulong tmp= ((type == OPT_GLOBAL) ?
 	      global_system_variables.*offset :
 	      thd->variables.*offset);
-  return (uchar*) enum_names->type_names[tmp];
+  return (unsigned char*) enum_names->type_names[tmp];
 }
 
 bool sys_var_thd_bit::check(THD *thd, set_var *var)
@@ -1594,7 +1518,7 @@ bool sys_var_thd_bit::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_thd_bit::value_ptr(THD *thd,
+unsigned char *sys_var_thd_bit::value_ptr(THD *thd,
                                   enum_var_type type __attribute__((unused)),
                                   LEX_STRING *base __attribute__((unused)))
 {
@@ -1604,7 +1528,7 @@ uchar *sys_var_thd_bit::value_ptr(THD *thd,
   */
   thd->sys_var_tmp.bool_value= ((thd->options & bit_flag) ?
 				   !reverse : reverse);
-  return (uchar*) &thd->sys_var_tmp.bool_value;
+  return (unsigned char*) &thd->sys_var_tmp.bool_value;
 }
 
 
@@ -1627,7 +1551,7 @@ void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
     old= (thd->variables.*offset);
     (thd->variables.*offset)= new_value;
   }
-  my_free((char*) old, MYF(MY_ALLOW_ZERO_PTR));
+  free((char*) old);
   return;
 }
 
@@ -1666,7 +1590,7 @@ bool sys_var_thd_date_time_format::check(THD *thd, set_var *var)
     update is aborted
   */
   var->save_result.date_time_format= date_time_format_copy(thd, format);
-  my_free((char*) format, MYF(0));
+  free((char*) format);
   return var->save_result.date_time_format == 0;
 }
 
@@ -1692,7 +1616,7 @@ void sys_var_thd_date_time_format::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_thd_date_time_format::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_date_time_format::value_ptr(THD *thd, enum_var_type type,
                                                LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1705,9 +1629,9 @@ uchar *sys_var_thd_date_time_format::value_ptr(THD *thd, enum_var_type type,
     */
     res= thd->strmake((global_system_variables.*offset)->format.str,
 		      (global_system_variables.*offset)->format.length);
-    return (uchar*) res;
+    return (unsigned char*) res;
   }
-  return (uchar*) (thd->variables.*offset)->format.str;
+  return (unsigned char*) (thd->variables.*offset)->format.str;
 }
 
 
@@ -1799,11 +1723,11 @@ bool sys_var_character_set::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= ci_ptr(thd,type)[0];
-  return cs ? (uchar*) cs->csname : (uchar*) NULL;
+  return cs ? (unsigned char*) cs->csname : (unsigned char*) NULL;
 }
 
 
@@ -1888,12 +1812,12 @@ void sys_var_collation_sv::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_collation_sv::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_collation_sv::value_ptr(THD *thd, enum_var_type type,
                                        LEX_STRING *base __attribute__((unused)))
 {
   const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
 		     global_system_variables.*offset : thd->variables.*offset);
-  return cs ? (uchar*) cs->name : (uchar*) "NULL";
+  return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";
 }
 
 
@@ -1911,14 +1835,14 @@ KEY_CACHE *get_key_cache(LEX_STRING *cache_name)
 }
 
 
-uchar *sys_var_key_cache_param::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_key_cache_param::value_ptr(THD *thd __attribute__((unused)),
                                           enum_var_type type __attribute__((unused)),
                                           LEX_STRING *base __attribute__((unused)))
 {
   KEY_CACHE *key_cache= get_key_cache(base);
   if (!key_cache)
     key_cache= &zero_key_cache;
-  return (uchar*) key_cache + offset ;
+  return (unsigned char*) key_cache + offset ;
 }
 
 
@@ -2064,109 +1988,35 @@ end:
 }
 
 
-bool sys_var_log_state::update(THD *thd, set_var *var)
+bool sys_var_log_state::update(THD *thd __attribute__((unused)), set_var *var)
 {
   bool res;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (!var->save_result.ulong_value)
-  {
-    logger.deactivate_log_handler(thd, log_type);
     res= false;
-  }
   else
-    res= logger.activate_log_handler(thd, log_type);
+    res= true;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return res;
 }
 
-void sys_var_log_state::set_default(THD *thd,
+void sys_var_log_state::set_default(THD *thd __attribute__((unused)),
                                     enum_var_type type __attribute__((unused)))
 {
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.deactivate_log_handler(thd, log_type);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-static int  sys_check_log_path(THD *thd __attribute__((unused)),
-                               set_var *var)
-{
-  char path[FN_REFLEN], buff[FN_REFLEN];
-  struct stat f_stat;
-  String str(buff, sizeof(buff), system_charset_info), *res;
-  const char *log_file_str;
-  size_t path_length;
-
-  if (!(res= var->value->val_str(&str)))
-    goto err;
-
-  log_file_str= res->c_ptr();
-  memset(&f_stat, 0, sizeof(struct stat));
-
-  path_length= unpack_filename(path, log_file_str);
-
-  if (!path_length)
-  {
-    /* File name is empty. */
-
-    goto err;
-  }
-
-  if (!stat(path, &f_stat))
-  {
-    /*
-      A file system object exists. Check if argument is a file and we have
-      'write' permission.
-    */
-
-    if (!S_ISREG(f_stat.st_mode) ||
-        !(f_stat.st_mode & S_IWRITE))
-      goto err;
-
-    return 0;
-  }
-
-  /* Get dirname of the file path. */
-  (void) dirname_part(path, log_file_str, &path_length);
-
-  /* Dirname is empty if file path is relative. */
-  if (!path_length)
-    return 0;
-
-  /*
-    Check if directory exists and we have permission to create file and
-    write to file.
-  */
-  if (my_access(path, (F_OK|W_OK)))
-    goto err;
-
-  return 0;
-
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->name, 
-           res ? log_file_str : "NULL");
-  return 1;
 }
 
 
 bool update_sys_var_str_path(THD *thd __attribute__((unused)),
                              sys_var_str *var_str,
                              set_var *var, const char *log_ext,
-                             bool log_state, uint log_type)
+                             bool log_state, uint32_t log_type)
 {
-  DRIZZLE_QUERY_LOG *file_log;
   char buff[FN_REFLEN];
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   bool result= 0;
-  uint str_length= (var ? var->value->str_value.length() : 0);
+  uint32_t str_length= (var ? var->value->str_value.length() : 0);
 
   switch (log_type) {
-  case QUERY_LOG_SLOW:
-    file_log= logger.get_slow_log_file_handler();
-    break;
-  case QUERY_LOG_GENERAL:
-    file_log= logger.get_log_file_handler();
-    break;
   default:
     assert(0);                                  // Impossible
   }
@@ -2185,21 +2035,13 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
 
-  if (file_log && log_state)
-    file_log->close(0);
   old_value= var_str->value;
   var_str->value= res;
   var_str->value_length= str_length;
-  my_free(old_value, MYF(MY_ALLOW_ZERO_PTR));
-  if (file_log && log_state)
+  free(old_value);
+  if (log_state)
   {
     switch (log_type) {
-    case QUERY_LOG_SLOW:
-      file_log->open_slow_log(sys_var_slow_log_path.value);
-      break;
-    case QUERY_LOG_GENERAL:
-      file_log->open_query_log(sys_var_general_log_path.value);
-      break;
     default:
       assert(0);
     }
@@ -2213,45 +2055,11 @@ err:
 }
 
 
-static bool sys_update_general_log_path(THD *thd, set_var * var)
-{
-  return update_sys_var_str_path(thd, &sys_var_general_log_path,
-                                 var, ".log", opt_log, QUERY_LOG_GENERAL);
-}
-
-
-static void sys_default_general_log_path(THD *thd,
-                                         enum_var_type type __attribute__((unused)))
-{
-  (void) update_sys_var_str_path(thd, &sys_var_general_log_path,
-                                 0, ".log", opt_log, QUERY_LOG_GENERAL);
-}
-
-
-static bool sys_update_slow_log_path(THD *thd, set_var * var)
-{
-  return update_sys_var_str_path(thd, &sys_var_slow_log_path,
-                                 var, "-slow.log", opt_slow_log,
-                                 QUERY_LOG_SLOW);
-}
-
-
-static void sys_default_slow_log_path(THD *thd,
-                                      enum_var_type type __attribute__((unused)))
-{
-  (void) update_sys_var_str_path(thd, &sys_var_slow_log_path,
-                                 0, "-slow.log", opt_slow_log,
-                                 QUERY_LOG_SLOW);
-}
-
-
 bool sys_var_log_output::update(THD *thd __attribute__((unused)),
                                 set_var *var)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
-  logger.init_slow_log(var->save_result.ulong_value);
-  logger.init_general_log(var->save_result.ulong_value);
   *value= var->save_result.ulong_value;
   logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2264,15 +2072,13 @@ void sys_var_log_output::set_default(THD *thd __attribute__((unused)),
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
-  logger.init_slow_log(LOG_FILE);
-  logger.init_general_log(LOG_FILE);
   *value= LOG_FILE;
   logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
 }
 
 
-uchar *sys_var_log_output::value_ptr(THD *thd,
+unsigned char *sys_var_log_output::value_ptr(THD *thd,
                                      enum_var_type type __attribute__((unused)),
                                      LEX_STRING *base __attribute__((unused)))
 {
@@ -2282,7 +2088,7 @@ uchar *sys_var_log_output::value_ptr(THD *thd,
   ulong val= *value;
 
   tmp.length(0);
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -2294,7 +2100,7 @@ uchar *sys_var_log_output::value_ptr(THD *thd,
 
   if ((length= tmp.length()))
     length--;
-  return (uchar*) thd->strmake(tmp.ptr(), length);
+  return (unsigned char*) thd->strmake(tmp.ptr(), length);
 }
 
 
@@ -2340,12 +2146,12 @@ void sys_var_timestamp::set_default(THD *thd,
 }
 
 
-uchar *sys_var_timestamp::value_ptr(THD *thd,
+unsigned char *sys_var_timestamp::value_ptr(THD *thd,
                                     enum_var_type type __attribute__((unused)),
                                     LEX_STRING *base __attribute__((unused)))
 {
   thd->sys_var_tmp.long_value= (long) thd->start_time;
-  return (uchar*) &thd->sys_var_tmp.long_value;
+  return (unsigned char*) &thd->sys_var_tmp.long_value;
 }
 
 
@@ -2357,7 +2163,7 @@ bool sys_var_last_insert_id::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_last_insert_id::value_ptr(THD *thd,
+unsigned char *sys_var_last_insert_id::value_ptr(THD *thd,
                                          enum_var_type type __attribute__((unused)),
                                          LEX_STRING *base __attribute__((unused)))
 {
@@ -2367,7 +2173,7 @@ uchar *sys_var_last_insert_id::value_ptr(THD *thd,
   */
   thd->sys_var_tmp.uint64_t_value= 
     thd->read_first_successful_insert_id_in_prev_stmt();
-  return (uchar*) &thd->sys_var_tmp.uint64_t_value;
+  return (unsigned char*) &thd->sys_var_tmp.uint64_t_value;
 }
 
 
@@ -2378,13 +2184,13 @@ bool sys_var_insert_id::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_insert_id::value_ptr(THD *thd,
+unsigned char *sys_var_insert_id::value_ptr(THD *thd,
                                     enum_var_type type __attribute__((unused)),
                                     LEX_STRING *base __attribute__((unused)))
 {
   thd->sys_var_tmp.uint64_t_value=
     thd->auto_inc_intervals_forced.minimum();
-  return (uchar*) &thd->sys_var_tmp.uint64_t_value;
+  return (unsigned char*) &thd->sys_var_tmp.uint64_t_value;
 }
 
 
@@ -2431,7 +2237,7 @@ bool sys_var_thd_time_zone::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   /* 
@@ -2439,7 +2245,7 @@ uchar *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
     time zone name is guaranteed to be zero ended.
   */
   if (type == OPT_GLOBAL)
-    return (uchar *)(global_system_variables.time_zone->get_name()->ptr());
+    return (unsigned char *)(global_system_variables.time_zone->get_name()->ptr());
   else
   {
     /*
@@ -2451,7 +2257,7 @@ uchar *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
       (binlog code stores session value only).
     */
     thd->time_zone_used= 1;
-    return (uchar *)(thd->variables.time_zone->get_name()->ptr());
+    return (unsigned char *)(thd->variables.time_zone->get_name()->ptr());
   }
 }
 
@@ -2515,13 +2321,13 @@ void sys_var_max_user_conn::set_default(THD *thd __attribute__((unused)),
 }
 
 
-uchar *sys_var_max_user_conn::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_max_user_conn::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   if (type != OPT_GLOBAL &&
       thd->user_connect && thd->user_connect->user_resources.user_conn)
-    return (uchar*) &(thd->user_connect->user_resources.user_conn);
-  return (uchar*) &(max_user_connections);
+    return (unsigned char*) &(thd->user_connect->user_resources.user_conn);
+  return (unsigned char*) &(max_user_connections);
 }
 
 
@@ -2573,13 +2379,13 @@ bool sys_var_thd_lc_time_names::update(THD *thd, set_var *var)
 }
 
 
-uchar *sys_var_thd_lc_time_names::value_ptr(THD *thd,
+unsigned char *sys_var_thd_lc_time_names::value_ptr(THD *thd,
                                             enum_var_type type,
                                             LEX_STRING *base __attribute__((unused)))
 {
   return type == OPT_GLOBAL ?
-                 (uchar *) global_system_variables.lc_time_names->name :
-                 (uchar *) thd->variables.lc_time_names->name;
+                 (unsigned char *) global_system_variables.lc_time_names->name :
+                 (unsigned char *) thd->variables.lc_time_names->name;
 }
 
 
@@ -2635,13 +2441,13 @@ void sys_var_microseconds::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_microseconds::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_microseconds::value_ptr(THD *thd, enum_var_type type,
                                           LEX_STRING *base __attribute__((unused)))
 {
   thd->tmp_double_value= (double) ((type == OPT_GLOBAL) ?
                                    global_system_variables.*offset :
                                    thd->variables.*offset) / 1000000.0;
-  return (uchar*) &thd->tmp_double_value;
+  return (unsigned char*) &thd->tmp_double_value;
 }
 
 
@@ -2697,29 +2503,6 @@ static int check_log_update(THD *thd __attribute__((unused)),
   return 0;
 }
 
-static bool set_log_update(THD *thd __attribute__((unused)),
-                           set_var *var __attribute__((unused)))
-{
-  /*
-    The update log is not supported anymore since 5.0.
-    See sql/mysqld.cc/, comments in function init_server_components() for an
-    explaination of the different warnings we send below
-  */
-
-  if (opt_sql_bin_update)
-  {
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                 ER_UPDATE_LOG_DEPRECATED_TRANSLATED,
-                 ER(ER_UPDATE_LOG_DEPRECATED_TRANSLATED));
-  }
-  else
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                 ER_UPDATE_LOG_DEPRECATED_IGNORED,
-                 ER(ER_UPDATE_LOG_DEPRECATED_IGNORED));
-  set_option_bit(thd, var);
-  return 0;
-}
-
 
 static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
                                   set_var *var)
@@ -2728,20 +2511,20 @@ static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
   return 0;
 }
 
-static uchar *get_warning_count(THD *thd)
+static unsigned char *get_warning_count(THD *thd)
 {
   thd->sys_var_tmp.long_value=
     (thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
      thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
      thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
-  return (uchar*) &thd->sys_var_tmp.long_value;
+  return (unsigned char*) &thd->sys_var_tmp.long_value;
 }
 
-static uchar *get_error_count(THD *thd)
+static unsigned char *get_error_count(THD *thd)
 {
   thd->sys_var_tmp.long_value= 
     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
-  return (uchar*) &thd->sys_var_tmp.long_value;
+  return (unsigned char*) &thd->sys_var_tmp.long_value;
 }
 
 
@@ -2759,11 +2542,11 @@ static uchar *get_error_count(THD *thd)
   @retval
     ptr		pointer to NUL-terminated string
 */
-static uchar *get_tmpdir(THD *thd __attribute__((unused)))
+static unsigned char *get_tmpdir(THD *thd __attribute__((unused)))
 {
   if (opt_mysql_tmpdir)
-    return (uchar *)opt_mysql_tmpdir;
-  return (uchar*)mysql_tmpdir;
+    return (unsigned char *)opt_mysql_tmpdir;
+  return (unsigned char*)mysql_tmpdir;
 }
 
 /****************************************************************************
@@ -2788,7 +2571,7 @@ static uchar *get_tmpdir(THD *thd __attribute__((unused)))
 
 static struct my_option *find_option(struct my_option *opt, const char *name) 
 {
-  uint length=strlen(name);
+  uint32_t length=strlen(name);
   for (; opt->name; opt++)
   {
     if (!getopt_compare_strings(opt->name, name, length) &&
@@ -2809,11 +2592,11 @@ static struct my_option *find_option(struct my_option *opt, const char *name)
   Return variable name and length for hashing of variables.
 */
 
-static uchar *get_sys_var_length(const sys_var *var, size_t *length,
+static unsigned char *get_sys_var_length(const sys_var *var, size_t *length,
                                  bool first __attribute__((unused)))
 {
   *length= var->name_length;
-  return (uchar*) var->name;
+  return (unsigned char*) var->name;
 }
 
 
@@ -2841,7 +2624,7 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
   {
     var->name_length= strlen(var->name);
     /* this fails if there is a conflicting variable name. see HASH_UNIQUE */
-    if (my_hash_insert(&system_variable_hash, (uchar*) var))
+    if (my_hash_insert(&system_variable_hash, (unsigned char*) var))
       goto error;
     if (long_options)
       var->option_limits= find_option(long_options, var->name);
@@ -2850,7 +2633,7 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 
 error:
   for (; first != var; first= first->next)
-    hash_delete(&system_variable_hash, (uchar*) first);
+    hash_delete(&system_variable_hash, (unsigned char*) first);
   return 1;
 }
  
@@ -2874,7 +2657,7 @@ int mysql_del_sys_var_chain(sys_var *first)
   /* A write lock should be held on LOCK_system_variables_hash */
    
   for (sys_var *var= first; var; var= var->next)
-    result|= hash_delete(&system_variable_hash, (uchar*) var);
+    result|= hash_delete(&system_variable_hash, (unsigned char*) var);
 
   return result;
 }
@@ -2945,7 +2728,7 @@ SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted)
 
 int set_var_init()
 {
-  uint count= 0;
+  uint32_t count= 0;
   
   for (sys_var *var=vars.first; var; var= var->next, count++) {};
 
@@ -2991,10 +2774,10 @@ void set_var_free()
     0           SUCCESS
     otherwise   FAILURE
 */
-int mysql_append_static_vars(const SHOW_VAR *show_vars, uint count)
+int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count)
 {
   for (; count > 0; count--, show_vars++)
-    if (insert_dynamic(&fixed_show_vars, (uchar*) show_vars))
+    if (insert_dynamic(&fixed_show_vars, (unsigned char*) show_vars))
       return 1;
   return 0;
 }
@@ -3014,7 +2797,7 @@ int mysql_append_static_vars(const SHOW_VAR *show_vars, uint count)
     0		Unknown variable (error message is given)
 */
 
-sys_var *intern_find_sys_var(const char *str, uint length, bool no_error)
+sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error)
 {
   sys_var *var;
 
@@ -3023,7 +2806,7 @@ sys_var *intern_find_sys_var(const char *str, uint length, bool no_error)
     A lock on LOCK_system_variable_hash should be held
   */
   var= (sys_var*) hash_search(&system_variable_hash,
-			      (uchar*) str, length ? length : strlen(str));
+			      (unsigned char*) str, length ? length : strlen(str));
   if (!(var || no_error))
     my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), (char*) str);
 
@@ -3214,8 +2997,7 @@ bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
         !(engine_name.str= (char *)res->ptr()) ||
         !(engine_name.length= res->length()) ||
 	!(var->save_result.plugin= ha_resolve_by_name(thd, &engine_name)) ||
-        !(hton= plugin_data(var->save_result.plugin, handlerton *)) ||
-        ha_checktype(thd, ha_legacy_type(hton), 1, 0) != hton)
+        !(hton= plugin_data(var->save_result.plugin, handlerton *)))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
@@ -3230,10 +3012,10 @@ err:
 }
 
 
-uchar *sys_var_thd_storage_engine::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_storage_engine::value_ptr(THD *thd, enum_var_type type,
                                              LEX_STRING *base __attribute__((unused)))
 {
-  uchar* result;
+  unsigned char* result;
   handlerton *hton;
   LEX_STRING *engine_name;
   plugin_ref plugin= thd->variables.*offset;
@@ -3241,7 +3023,7 @@ uchar *sys_var_thd_storage_engine::value_ptr(THD *thd, enum_var_type type,
     plugin= my_plugin_lock(thd, &(global_system_variables.*offset));
   hton= plugin_data(plugin, handlerton*);
   engine_name= &hton2plugin[hton->slot]->name;
-  result= (uchar *) thd->strmake(engine_name->str, engine_name->length);
+  result= (unsigned char *) thd->strmake(engine_name->str, engine_name->length);
   if (type == OPT_GLOBAL)
     plugin_unlock(thd, plugin);
   return result;
@@ -3291,7 +3073,7 @@ symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 
   tmp.length(0);
 
-  for (uint i= 0; val; val>>= 1, i++)
+  for (uint32_t i= 0; val; val>>= 1, i++)
   {
     if (val & 1)
     {
@@ -3312,14 +3094,14 @@ symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 }
 
 
-uchar *sys_var_thd_optimizer_switch::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_optimizer_switch::value_ptr(THD *thd, enum_var_type type,
                                                LEX_STRING *base __attribute__((unused)))
 {
   LEX_STRING opts;
   uint64_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
                   thd->variables.*offset);
   (void) symbolic_mode_representation(thd, val, &opts);
-  return (uchar *) opts.str;
+  return (unsigned char *) opts.str;
 }
 
 
@@ -3336,7 +3118,7 @@ void sys_var_thd_optimizer_switch::set_default(THD *thd, enum_var_type type)
   Named list handling
 ****************************************************************************/
 
-uchar* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
+unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint32_t length,
 		NAMED_LIST **found)
 {
   I_List_iterator<NAMED_LIST> it(*list);
@@ -3355,7 +3137,7 @@ uchar* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
 
 
 void delete_elements(I_List<NAMED_LIST> *list,
-		     void (*free_element)(const char *name, uchar*))
+		     void (*free_element)(const char *name, unsigned char*))
 {
   NAMED_LIST *element;
   while ((element= list->get()))
@@ -3369,16 +3151,16 @@ void delete_elements(I_List<NAMED_LIST> *list,
 
 /* Key cache functions */
 
-static KEY_CACHE *create_key_cache(const char *name, uint length)
+static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
 {
   KEY_CACHE *key_cache;
   
   if ((key_cache= (KEY_CACHE*) my_malloc(sizeof(KEY_CACHE),
 					     MYF(MY_ZEROFILL | MY_WME))))
   {
-    if (!new NAMED_LIST(&key_caches, name, length, (uchar*) key_cache))
+    if (!new NAMED_LIST(&key_caches, name, length, (unsigned char*) key_cache))
     {
-      my_free((char*) key_cache, MYF(0));
+      free((char*) key_cache);
       key_cache= 0;
     }
     else
@@ -3398,7 +3180,7 @@ static KEY_CACHE *create_key_cache(const char *name, uint length)
 }
 
 
-KEY_CACHE *get_or_create_key_cache(const char *name, uint length)
+KEY_CACHE *get_or_create_key_cache(const char *name, uint32_t length)
 {
   LEX_STRING key_cache_name;
   KEY_CACHE *key_cache;
@@ -3417,7 +3199,7 @@ void free_key_cache(const char *name __attribute__((unused)),
                     KEY_CACHE *key_cache)
 {
   ha_end_key_cache(key_cache);
-  my_free((char*) key_cache, MYF(0));
+  free((char*) key_cache);
 }
 
 

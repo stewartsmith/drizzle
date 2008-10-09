@@ -23,6 +23,7 @@
 #include <mysys/my_tree.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
+#include <libdrizzle/drizzle_com.h>
 
 #if defined(my_write) && !defined(MAP_TO_USE_RAID)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
@@ -42,20 +43,20 @@ typedef struct st_mi_status_info
 typedef struct st_mi_state_info
 {
   struct {				/* Fileheader */
-    uchar file_version[4];
-    uchar options[2];
-    uchar header_length[2];
-    uchar state_info_length[2];
-    uchar base_info_length[2];
-    uchar base_pos[2];
-    uchar key_parts[2];			/* Key parts */
-    uchar unique_key_parts[2];		/* Key parts + unique parts */
-    uchar keys;				/* number of keys in file */
-    uchar uniques;			/* number of UNIQUE definitions */
-    uchar language;			/* Language for indexes */
-    uchar max_block_size_index;		/* max keyblock size */
-    uchar fulltext_keys;
-    uchar not_used;                     /* To align to 8 */
+    unsigned char file_version[4];
+    unsigned char options[2];
+    unsigned char header_length[2];
+    unsigned char state_info_length[2];
+    unsigned char base_info_length[2];
+    unsigned char base_pos[2];
+    unsigned char key_parts[2];			/* Key parts */
+    unsigned char unique_key_parts[2];		/* Key parts + unique parts */
+    unsigned char keys;				/* number of keys in file */
+    unsigned char uniques;			/* number of UNIQUE definitions */
+    unsigned char language;			/* Language for indexes */
+    unsigned char max_block_size_index;		/* max keyblock size */
+    unsigned char fulltext_keys;
+    unsigned char not_used;                     /* To align to 8 */
   } header;
 
   MI_STATUS_INFO state;
@@ -80,11 +81,11 @@ typedef struct st_mi_state_info
   time_t recover_time;			/* Time for last recover */
   time_t check_time;			/* Time for last check */
   uint	sortkey;			/* sorted by this key  (not used) */
-  uint open_count;
+  uint32_t open_count;
   uint8_t changed;			/* Changed since myisamchk */
 
   /* the following isn't saved on disk */
-  uint state_diff_length;		/* Should be 0 */
+  uint32_t state_diff_length;		/* Should be 0 */
   uint	state_length;			/* Length of state header in file */
   ulong *key_info;
 } MI_STATE_INFO;
@@ -116,22 +117,22 @@ typedef struct st_mi_base_info
   ulong min_block_length;
   ulong fields,				/* fields in table */
        pack_fields;			/* packed fields in table */
-  uint rec_reflength;			/* = 2-8 */
-  uint key_reflength;			/* = 2-8 */
-  uint keys;				/* same as in state.header */
-  uint auto_key;			/* Which key-1 is a auto key */
-  uint blobs;				/* Number of blobs */
-  uint pack_bits;			/* Length of packed bits */
-  uint max_key_block_length;		/* Max block length */
-  uint max_key_length;			/* Max key length */
+  uint32_t rec_reflength;			/* = 2-8 */
+  uint32_t key_reflength;			/* = 2-8 */
+  uint32_t keys;				/* same as in state.header */
+  uint32_t auto_key;			/* Which key-1 is a auto key */
+  uint32_t blobs;				/* Number of blobs */
+  uint32_t pack_bits;			/* Length of packed bits */
+  uint32_t max_key_block_length;		/* Max block length */
+  uint32_t max_key_length;			/* Max key length */
   /* Extra allocation when using dynamic record format */
-  uint extra_alloc_bytes;
-  uint extra_alloc_procent;
+  uint32_t extra_alloc_bytes;
+  uint32_t extra_alloc_procent;
   /* Info about raid */
-  uint raid_type,raid_chunks;
+  uint32_t raid_type,raid_chunks;
   ulong raid_chunksize;
   /* The following are from the header */
-  uint key_parts,all_key_parts;
+  uint32_t key_parts,all_key_parts;
 } MI_BASE_INFO;
 
 
@@ -140,15 +141,15 @@ typedef struct st_mi_base_info
 typedef struct st_mi_blob		/* Info of record */
 {
   ulong offset;				/* Offset to blob in record */
-  uint pack_length;			/* Type of packed length */
+  uint32_t pack_length;			/* Type of packed length */
   ulong length;				/* Calc:ed for each record */
 } MI_BLOB;
 
 
 typedef struct st_mi_isam_pack {
   ulong header_length;
-  uint ref_length;
-  uchar version;
+  uint32_t ref_length;
+  unsigned char version;
 } MI_PACK;
 
 #define MAX_NONMAPPED_INSERTS 1000      
@@ -167,22 +168,22 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   char  *unique_file_name;		/* realpath() of index file */
   char  *data_file_name,		/* Resolved path names from symlinks */
         *index_file_name;
-  uchar *file_map;			/* mem-map of file if possible */
+  unsigned char *file_map;			/* mem-map of file if possible */
   KEY_CACHE *key_cache;			/* ref to the current key cache */
   MI_DECODE_TREE *decode_trees;
   uint16_t *decode_tables;
-  int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
-  int (*write_record)(struct st_myisam_info*, const uchar*);
-  int (*update_record)(struct st_myisam_info*, my_off_t, const uchar*);
+  int (*read_record)(struct st_myisam_info*, my_off_t, unsigned char*);
+  int (*write_record)(struct st_myisam_info*, const unsigned char*);
+  int (*update_record)(struct st_myisam_info*, my_off_t, const unsigned char*);
   int (*delete_record)(struct st_myisam_info*);
-  int (*read_rnd)(struct st_myisam_info*, uchar*, my_off_t, bool);
-  int (*compare_record)(struct st_myisam_info*, const uchar *);
+  int (*read_rnd)(struct st_myisam_info*, unsigned char*, my_off_t, bool);
+  int (*compare_record)(struct st_myisam_info*, const unsigned char *);
   /* Function to use for a row checksum. */
-  ha_checksum (*calc_checksum)(struct st_myisam_info*, const uchar *);
+  ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
   int (*compare_unique)(struct st_myisam_info*, MI_UNIQUEDEF *,
-			const uchar *record, my_off_t pos);
-  size_t (*file_read)(MI_INFO *, uchar *, size_t, my_off_t, myf);
-  size_t (*file_write)(MI_INFO *, const uchar *, size_t, my_off_t, myf);
+			const unsigned char *record, my_off_t pos);
+  size_t (*file_read)(MI_INFO *, unsigned char *, size_t, my_off_t, myf);
+  size_t (*file_write)(MI_INFO *, const unsigned char *, size_t, my_off_t, myf);
   invalidator_by_filename invalidator;  /* query cache invalidator */
   ulong this_process;			/* processid */
   ulong last_process;			/* For table-change-check */
@@ -192,7 +193,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   ulong max_pack_length;
   ulong state_diff_length;
   uint	rec_reflength;			/* rec_reflength in use now */
-  uint  unique_name_length;
+  uint32_t  unique_name_length;
   File	kfile;				/* Shared keyfile */
   File	data_file;			/* Shared data file */
   int	mode;				/* mode of file on open */
@@ -213,19 +214,19 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   rw_lock_t *key_root_lock;
   my_off_t mmaped_length;
-  uint     nonmmaped_inserts;           /* counter of writing in non-mmaped
+  uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
   rw_lock_t mmap_lock;
 } MYISAM_SHARE;
 
 
-typedef uint mi_bit_type;
+typedef uint32_t mi_bit_type;
 
 typedef struct st_mi_bit_buff {		/* Used for packing of record */
   mi_bit_type current_byte;
-  uint bits;
-  uchar *pos,*end,*blob_pos,*blob_end;
-  uint error;
+  uint32_t bits;
+  unsigned char *pos,*end,*blob_pos,*blob_end;
+  uint32_t error;
 } MI_BIT_BUFF;
 
 
@@ -240,15 +241,15 @@ struct st_myisam_info {
   TREE	        *bulk_insert;
   LIST in_use;                          /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
-  uchar *buff,				/* Temp area for key                */
+  unsigned char *buff,				/* Temp area for key                */
 	*lastkey,*lastkey2;		/* Last used search key             */
-  uchar *first_mbr_key;			/* Searhed spatial key              */
-  uchar	*rec_buff;			/* Tempbuff for recordpack          */
-  uchar *int_keypos,			/* Save position for next/previous  */
+  unsigned char *first_mbr_key;			/* Searhed spatial key              */
+  unsigned char	*rec_buff;			/* Tempbuff for recordpack          */
+  unsigned char *int_keypos,			/* Save position for next/previous  */
         *int_maxpos;			/*  -""-  */
-  uint  int_nod_flag;			/*  -""-  */
+  uint32_t  int_nod_flag;			/*  -""-  */
   uint32_t int_keytree_version;		/*  -""-  */
-  int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
+  int (*read_record)(struct st_myisam_info*, my_off_t, unsigned char*);
   invalidator_by_filename invalidator;  /* query cache invalidator */
   ulong this_unique;			/* uniq filenumber or thread */
   ulong last_unique;			/* last unique number */
@@ -266,14 +267,14 @@ struct st_myisam_info {
      as they are not compatible with parallel repair */
   ulong packed_length,blob_length;	/* Length of found, packed record */
   int  dfile;				/* The datafile */
-  uint opt_flag;			/* Optim. for space/speed */
-  uint update;				/* If file changed since open */
+  uint32_t opt_flag;			/* Optim. for space/speed */
+  uint32_t update;				/* If file changed since open */
   int	lastinx;			/* Last used index */
   uint	lastkey_length;			/* Length of key in lastkey */
   uint	last_rkey_length;		/* Last length in mi_rkey() */
   enum ha_rkey_function last_key_func;  /* CONTAIN, OVERLAP, etc */
-  uint  save_lastkey_length;
-  uint  pack_key_length;                /* For MYISAMMRG */
+  uint32_t  save_lastkey_length;
+  uint32_t  pack_key_length;                /* For MYISAMMRG */
   uint16_t last_used_keyseg;              /* For MyISAMMRG */
   int	errkey;				/* Got last error on this key */
   int   lock_type;			/* How database was locked */
@@ -283,7 +284,7 @@ struct st_myisam_info {
   int	save_lastinx;
   LIST	open_list;
   IO_CACHE rec_cache;			/* When cacheing records */
-  uint  preload_buff_size;              /* When preloading indexes */
+  uint32_t  preload_buff_size;              /* When preloading indexes */
   myf lock_wait;			/* is 0 or MY_DONT_WAIT */
   bool was_locked;			/* Was locked in panic */
   bool append_insert_at_end;		/* Set if concurrent insert */
@@ -295,13 +296,13 @@ struct st_myisam_info {
   index_cond_func_t index_cond_func;   /* Index condition function */
   void *index_cond_func_arg;           /* parameter for the func */
   THR_LOCK_DATA lock;
-  uchar  *rtree_recursion_state;	/* For RTREE */
+  unsigned char  *rtree_recursion_state;	/* For RTREE */
   int     rtree_recursion_depth;
 };
 
 typedef struct st_buffpek {
   my_off_t file_pos;                    /* Where we are in the sort file */
-  uchar *base,*key;                     /* Key pointers */
+  unsigned char *base,*key;                     /* Key pointers */
   ha_rows count;                        /* Number of rows in table */
   ulong mem_count;                      /* numbers of keys in memory */
   ulong max_keys;                       /* Max keys in buffert */
@@ -322,27 +323,27 @@ typedef struct st_mi_sort_param
   uint64_t notnull[MI_MAX_KEY_SEG+1];
 
   my_off_t pos,max_pos,filepos,start_recpos;
-  uint key, key_length,real_key_length,sortbuff_size;
-  uint maxbuffers, keys, find_length, sort_keys_length;
+  uint32_t key, key_length,real_key_length,sortbuff_size;
+  uint32_t maxbuffers, keys, find_length, sort_keys_length;
   bool fix_datafile, master;
   bool calc_checksum;                /* calculate table checksum */
   MI_KEYDEF *keyinfo;
   HA_KEYSEG *seg;
   SORT_INFO *sort_info;
-  uchar **sort_keys;
-  uchar *rec_buff;
+  unsigned char **sort_keys;
+  unsigned char *rec_buff;
   void *wordlist, *wordptr;
   MEM_ROOT wordroot;
-  uchar *record;
+  unsigned char *record;
   MY_TMPDIR *tmpdir;
   int (*key_cmp)(struct st_mi_sort_param *, const void *, const void *);
   int (*key_read)(struct st_mi_sort_param *,void *);
   int (*key_write)(struct st_mi_sort_param *, const void *);
   void (*lock_in_memory)(MI_CHECK *);
-  int (*write_keys)(struct st_mi_sort_param *, register uchar **,
-                     uint , struct st_buffpek *, IO_CACHE *);
+  int (*write_keys)(struct st_mi_sort_param *, register unsigned char **,
+                     uint32_t , struct st_buffpek *, IO_CACHE *);
   unsigned int (*read_to_buffer)(IO_CACHE *,struct st_buffpek *, uint);
-  int (*write_key)(struct st_mi_sort_param *, IO_CACHE *,uchar *,
+  int (*write_key)(struct st_mi_sort_param *, IO_CACHE *,unsigned char *,
                        uint, uint);
 } MI_SORT_PARAM;
 
@@ -404,15 +405,15 @@ typedef struct st_mi_sort_param
 }
 
 #define get_key_full_length(length,key) \
-{ if ((uchar) *(key) != 255) \
-    length= ((uint) (uchar) *((key)++))+1; \
+{ if ((unsigned char) *(key) != 255) \
+    length= ((uint) (unsigned char) *((key)++))+1; \
   else \
   { length=mi_uint2korr((key)+1)+3; (key)+=3; } \
 }
 
 #define get_key_full_length_rdonly(length,key) \
-{ if ((uchar) *(key) != 255) \
-    length= ((uint) (uchar) *((key)))+1; \
+{ if ((unsigned char) *(key) != 255) \
+    length= ((uint) (unsigned char) *((key)))+1; \
   else \
   { length=mi_uint2korr((key)+1)+3; } \
 }
@@ -459,9 +460,9 @@ extern pthread_mutex_t THR_LOCK_myisam;
 	/* Some extern variables */
 
 extern LIST *myisam_open_list;
-extern uchar  myisam_file_magic[], myisam_pack_file_magic[];
-extern uint  myisam_read_vec[], myisam_readnext_vec[];
-extern uint myisam_quick_table_bits;
+extern unsigned char  myisam_file_magic[], myisam_pack_file_magic[];
+extern uint32_t  myisam_read_vec[], myisam_readnext_vec[];
+extern uint32_t myisam_quick_table_bits;
 extern ulong myisam_pid;
 
 	/* This is used by _mi_calc_xxx_key_length och _mi_store_key */
@@ -473,154 +474,154 @@ typedef struct st_mi_s_param
 	n_length,
 	totlength,
 	part_of_prev_key,prev_length,pack_marker;
-  uchar *key, *prev_key,*next_key_pos;
+  unsigned char *key, *prev_key,*next_key_pos;
   bool store_not_null;
 } MI_KEY_PARAM;
 
 	/* Prototypes for intern functions */
 
-extern int _mi_read_dynamic_record(MI_INFO *info,my_off_t filepos,uchar *buf);
-extern int _mi_write_dynamic_record(MI_INFO*, const uchar*);
-extern int _mi_update_dynamic_record(MI_INFO*, my_off_t, const uchar*);
+extern int _mi_read_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
+extern int _mi_write_dynamic_record(MI_INFO*, const unsigned char*);
+extern int _mi_update_dynamic_record(MI_INFO*, my_off_t, const unsigned char*);
 extern int _mi_delete_dynamic_record(MI_INFO *info);
-extern int _mi_cmp_dynamic_record(MI_INFO *info,const uchar *record);
-extern int _mi_read_rnd_dynamic_record(MI_INFO *, uchar *,my_off_t, bool);
-extern int _mi_write_blob_record(MI_INFO*, const uchar*);
-extern int _mi_update_blob_record(MI_INFO*, my_off_t, const uchar*);
-extern int _mi_read_static_record(MI_INFO *info, my_off_t filepos,uchar *buf);
-extern int _mi_write_static_record(MI_INFO*, const uchar*);
-extern int _mi_update_static_record(MI_INFO*, my_off_t, const uchar*);
+extern int _mi_cmp_dynamic_record(MI_INFO *info,const unsigned char *record);
+extern int _mi_read_rnd_dynamic_record(MI_INFO *, unsigned char *,my_off_t, bool);
+extern int _mi_write_blob_record(MI_INFO*, const unsigned char*);
+extern int _mi_update_blob_record(MI_INFO*, my_off_t, const unsigned char*);
+extern int _mi_read_static_record(MI_INFO *info, my_off_t filepos,unsigned char *buf);
+extern int _mi_write_static_record(MI_INFO*, const unsigned char*);
+extern int _mi_update_static_record(MI_INFO*, my_off_t, const unsigned char*);
 extern int _mi_delete_static_record(MI_INFO *info);
-extern int _mi_cmp_static_record(MI_INFO *info,const uchar *record);
-extern int _mi_read_rnd_static_record(MI_INFO*, uchar *,my_off_t, bool);
-extern int _mi_ck_write(MI_INFO *info,uint keynr,uchar *key,uint length);
+extern int _mi_cmp_static_record(MI_INFO *info,const unsigned char *record);
+extern int _mi_read_rnd_static_record(MI_INFO*, unsigned char *,my_off_t, bool);
+extern int _mi_ck_write(MI_INFO *info,uint32_t keynr,unsigned char *key,uint32_t length);
 extern int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
-                                   uchar *key, uint key_length,
-                                   my_off_t *root, uint comp_flag);
-extern int _mi_enlarge_root(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key, my_off_t *root);
-extern int _mi_insert(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
-		      uchar *anc_buff,uchar *key_pos,uchar *key_buff,
-		      uchar *father_buff, uchar *father_keypos,
+                                   unsigned char *key, uint32_t key_length,
+                                   my_off_t *root, uint32_t comp_flag);
+extern int _mi_enlarge_root(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key, my_off_t *root);
+extern int _mi_insert(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
+		      unsigned char *anc_buff,unsigned char *key_pos,unsigned char *key_buff,
+		      unsigned char *father_buff, unsigned char *father_keypos,
 		      my_off_t father_page, bool insert_last);
-extern int _mi_split_page(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
-			  uchar *buff,uchar *key_buff, bool insert_last);
-extern uchar *_mi_find_half_pos(uint nod_flag,MI_KEYDEF *keyinfo,uchar *page,
-				uchar *key,uint *return_key_length,
-				uchar **after_key);
-extern int _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-				      uchar *key_pos, uchar *org_key,
-				      uchar *key_buff,
-				      uchar *key, MI_KEY_PARAM *s_temp);
-extern int _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-				   uchar *key_pos, uchar *org_key,
-				   uchar *key_buff,
-				   uchar *key, MI_KEY_PARAM *s_temp);
-extern int _mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-					uchar *key_pos, uchar *org_key,
-					uchar *prev_key,
-					uchar *key, MI_KEY_PARAM *s_temp);
-extern int _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,
-					uchar *key_pos,uchar *org_key,
-					uchar *prev_key,
-					uchar *key, MI_KEY_PARAM *s_temp);
-void _mi_store_static_key(MI_KEYDEF *keyinfo,  uchar *key_pos,
+extern int _mi_split_page(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
+			  unsigned char *buff,unsigned char *key_buff, bool insert_last);
+extern unsigned char *_mi_find_half_pos(uint32_t nod_flag,MI_KEYDEF *keyinfo,unsigned char *page,
+				unsigned char *key,uint32_t *return_key_length,
+				unsigned char **after_key);
+extern int _mi_calc_static_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
+				      unsigned char *key_pos, unsigned char *org_key,
+				      unsigned char *key_buff,
+				      unsigned char *key, MI_KEY_PARAM *s_temp);
+extern int _mi_calc_var_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
+				   unsigned char *key_pos, unsigned char *org_key,
+				   unsigned char *key_buff,
+				   unsigned char *key, MI_KEY_PARAM *s_temp);
+extern int _mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
+					unsigned char *key_pos, unsigned char *org_key,
+					unsigned char *prev_key,
+					unsigned char *key, MI_KEY_PARAM *s_temp);
+extern int _mi_calc_bin_pack_key_length(MI_KEYDEF *keyinfo,uint32_t nod_flag,
+					unsigned char *key_pos,unsigned char *org_key,
+					unsigned char *prev_key,
+					unsigned char *key, MI_KEY_PARAM *s_temp);
+void _mi_store_static_key(MI_KEYDEF *keyinfo,  unsigned char *key_pos,
 			   MI_KEY_PARAM *s_temp);
-void _mi_store_var_pack_key(MI_KEYDEF *keyinfo,  uchar *key_pos,
+void _mi_store_var_pack_key(MI_KEYDEF *keyinfo,  unsigned char *key_pos,
 			     MI_KEY_PARAM *s_temp);
 #ifdef NOT_USED
-void _mi_store_pack_key(MI_KEYDEF *keyinfo,  uchar *key_pos,
+void _mi_store_pack_key(MI_KEYDEF *keyinfo,  unsigned char *key_pos,
 			 MI_KEY_PARAM *s_temp);
 #endif
-void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo,  uchar *key_pos,
+void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo,  unsigned char *key_pos,
 			    MI_KEY_PARAM *s_temp);
 
-extern int _mi_ck_delete(MI_INFO *info,uint keynr,uchar *key,uint key_length);
+extern int _mi_ck_delete(MI_INFO *info,uint32_t keynr,unsigned char *key,uint32_t key_length);
 extern int _mi_readinfo(MI_INFO *info,int lock_flag,int check_keybuffer);
-extern int _mi_writeinfo(MI_INFO *info,uint options);
+extern int _mi_writeinfo(MI_INFO *info,uint32_t options);
 extern int _mi_test_if_changed(MI_INFO *info);
 extern int _mi_mark_file_changed(MI_INFO *info);
 extern int _mi_decrement_open_count(MI_INFO *info);
 extern int _mi_check_index(MI_INFO *info,int inx);
-extern int _mi_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,uint key_len,
-		      uint nextflag,my_off_t pos);
+extern int _mi_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,uint32_t key_len,
+		      uint32_t nextflag,my_off_t pos);
 extern int _mi_bin_search(struct st_myisam_info *info,MI_KEYDEF *keyinfo,
-			  uchar *page,uchar *key,uint key_len,uint comp_flag,
-			  uchar * *ret_pos,uchar *buff, bool *was_last_key);
-extern int _mi_seq_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *page,
-			  uchar *key,uint key_len,uint comp_flag,
-			  uchar **ret_pos,uchar *buff, bool *was_last_key);
-extern int _mi_prefix_search(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *page,
-			  uchar *key,uint key_len,uint comp_flag,
-			  uchar **ret_pos,uchar *buff, bool *was_last_key);
-extern my_off_t _mi_kpos(uint nod_flag,uchar *after_key);
-extern void _mi_kpointer(MI_INFO *info,uchar *buff,my_off_t pos);
-extern my_off_t _mi_dpos(MI_INFO *info, uint nod_flag,uchar *after_key);
-extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, uchar *ptr);
-extern void _mi_dpointer(MI_INFO *info, uchar *buff,my_off_t pos);
-extern uint _mi_get_static_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
-			       uchar *key);
-extern uint _mi_get_pack_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
-			     uchar *key);
-extern uint _mi_get_binary_pack_key(MI_KEYDEF *keyinfo, uint nod_flag,
-				    uchar **page_pos, uchar *key);
-extern uchar *_mi_get_last_key(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *keypos,
-			       uchar *lastkey,uchar *endpos,
-			       uint *return_key_length);
-extern uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
-			  uchar *key, uchar *keypos, uint *return_key_length);
-extern uint _mi_keylength(MI_KEYDEF *keyinfo,uchar *key);
-extern uint _mi_keylength_part(MI_KEYDEF *keyinfo, register uchar *key,
+			  unsigned char *page,unsigned char *key,uint32_t key_len,uint32_t comp_flag,
+			  unsigned char * *ret_pos,unsigned char *buff, bool *was_last_key);
+extern int _mi_seq_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *page,
+			  unsigned char *key,uint32_t key_len,uint32_t comp_flag,
+			  unsigned char **ret_pos,unsigned char *buff, bool *was_last_key);
+extern int _mi_prefix_search(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *page,
+			  unsigned char *key,uint32_t key_len,uint32_t comp_flag,
+			  unsigned char **ret_pos,unsigned char *buff, bool *was_last_key);
+extern my_off_t _mi_kpos(uint32_t nod_flag,unsigned char *after_key);
+extern void _mi_kpointer(MI_INFO *info,unsigned char *buff,my_off_t pos);
+extern my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag,unsigned char *after_key);
+extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, unsigned char *ptr);
+extern void _mi_dpointer(MI_INFO *info, unsigned char *buff,my_off_t pos);
+extern uint32_t _mi_get_static_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
+			       unsigned char *key);
+extern uint32_t _mi_get_pack_key(MI_KEYDEF *keyinfo,uint32_t nod_flag,unsigned char * *page,
+			     unsigned char *key);
+extern uint32_t _mi_get_binary_pack_key(MI_KEYDEF *keyinfo, uint32_t nod_flag,
+				    unsigned char **page_pos, unsigned char *key);
+extern unsigned char *_mi_get_last_key(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *keypos,
+			       unsigned char *lastkey,unsigned char *endpos,
+			       uint32_t *return_key_length);
+extern unsigned char *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
+			  unsigned char *key, unsigned char *keypos, uint32_t *return_key_length);
+extern uint32_t _mi_keylength(MI_KEYDEF *keyinfo,unsigned char *key);
+extern uint32_t _mi_keylength_part(MI_KEYDEF *keyinfo, register unsigned char *key,
 			       HA_KEYSEG *end);
-extern uchar *_mi_move_key(MI_KEYDEF *keyinfo,uchar *to,uchar *from);
-extern int _mi_search_next(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
-			   uint key_length,uint nextflag,my_off_t pos);
+extern unsigned char *_mi_move_key(MI_KEYDEF *keyinfo,unsigned char *to,unsigned char *from);
+extern int _mi_search_next(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
+			   uint32_t key_length,uint32_t nextflag,my_off_t pos);
 extern int _mi_search_first(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos);
 extern int _mi_search_last(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos);
-extern uchar *_mi_fetch_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t page,
-				int level,uchar *buff,int return_buffer);
+extern unsigned char *_mi_fetch_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t page,
+				int level,unsigned char *buff,int return_buffer);
 extern int _mi_write_keypage(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t page,
-			     int level, uchar *buff);
+			     int level, unsigned char *buff);
 extern int _mi_dispose(MI_INFO *info,MI_KEYDEF *keyinfo,my_off_t pos,
                       int level);
 extern my_off_t _mi_new(MI_INFO *info,MI_KEYDEF *keyinfo,int level);
-extern uint _mi_make_key(MI_INFO *info,uint keynr,uchar *key,
-			 const uchar *record,my_off_t filepos);
-extern uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key,
-                         uchar *old, key_part_map keypart_map,
+extern uint32_t _mi_make_key(MI_INFO *info,uint32_t keynr,unsigned char *key,
+			 const unsigned char *record,my_off_t filepos);
+extern uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key,
+                         unsigned char *old, key_part_map keypart_map,
                          HA_KEYSEG **last_used_keyseg);
-extern int _mi_read_key_record(MI_INFO *info,my_off_t filepos,uchar *buf);
-extern int _mi_read_cache(IO_CACHE *info,uchar *buff,my_off_t pos,
-			  uint length,int re_read_if_possibly);
-extern uint64_t retrieve_auto_increment(MI_INFO *info,const uchar *record);
+extern int _mi_read_key_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
+extern int _mi_read_cache(IO_CACHE *info,unsigned char *buff,my_off_t pos,
+			  uint32_t length,int re_read_if_possibly);
+extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 
-extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
+extern unsigned char *mi_alloc_rec_buff(MI_INFO *,ulong, unsigned char**);
 #define mi_get_rec_buff_ptr(info,buf)                              \
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))
 #define mi_get_rec_buff_len(info,buf)                              \
         (*((uint32_t *)(mi_get_rec_buff_ptr(info,buf))))
 
-extern ulong _mi_rec_unpack(MI_INFO *info,uchar *to,uchar *from,
+extern ulong _mi_rec_unpack(MI_INFO *info,unsigned char *to,unsigned char *from,
 			    ulong reclength);
-extern bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *packpos,
+extern bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *packpos,
                              ulong packed_length, bool with_checkum);
 extern int _mi_write_part_record(MI_INFO *info,my_off_t filepos,ulong length,
-				 my_off_t next_filepos,uchar **record,
+				 my_off_t next_filepos,unsigned char **record,
 				 ulong *reclength,int *flag);
-extern void _mi_print_key(FILE *stream,HA_KEYSEG *keyseg,const uchar *key,
-			  uint length);
+extern void _mi_print_key(FILE *stream,HA_KEYSEG *keyseg,const unsigned char *key,
+			  uint32_t length);
 extern bool _mi_read_pack_info(MI_INFO *info,bool fix_keys);
-extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,uchar *buf);
-extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, bool);
+extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,unsigned char *buf);
+extern int _mi_read_rnd_pack_record(MI_INFO*, unsigned char *,my_off_t, bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
-                               uchar *to, uchar *from, ulong reclength);
+                               unsigned char *to, unsigned char *from, ulong reclength);
 extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
 
 struct st_sort_info;
 
 
 typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
-  uchar header[MI_BLOCK_INFO_HEADER_LENGTH];
+  unsigned char header[MI_BLOCK_INFO_HEADER_LENGTH];
   ulong rec_len;
   ulong data_len;
   ulong block_len;
@@ -628,8 +629,8 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
   my_off_t filepos;
   my_off_t next_filepos;
   my_off_t prev_filepos;
-  uint second_read;
-  uint offset;
+  uint32_t second_read;
+  uint32_t offset;
 } MI_BLOCK_INFO;
 
 	/* bits in return from _mi_get_block_info */
@@ -666,49 +667,49 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
 extern "C" {
 #endif
 
-extern uint _mi_get_block_info(MI_BLOCK_INFO *,File, my_off_t);
-extern uint _mi_rec_pack(MI_INFO *info,uchar *to,const uchar *from);
-extern uint _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
-                                    MI_BLOCK_INFO *info, uchar **rec_buff_p,
+extern uint32_t _mi_get_block_info(MI_BLOCK_INFO *,File, my_off_t);
+extern uint32_t _mi_rec_pack(MI_INFO *info,unsigned char *to,const unsigned char *from);
+extern uint32_t _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
+                                    MI_BLOCK_INFO *info, unsigned char **rec_buff_p,
                                     File file, my_off_t filepos);
-extern void _my_store_blob_length(uchar *pos,uint pack_length,uint length);
+extern void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t length);
 extern void mi_report_error(int errcode, const char *file_name);
-extern size_t mi_mmap_pread(MI_INFO *info, uchar *Buffer,
+extern size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
                             size_t Count, my_off_t offset, myf MyFlags);
-extern size_t mi_mmap_pwrite(MI_INFO *info, const uchar *Buffer,
+extern size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
                              size_t Count, my_off_t offset, myf MyFlags);
-extern size_t mi_nommap_pread(MI_INFO *info, uchar *Buffer,
+extern size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
                               size_t Count, my_off_t offset, myf MyFlags);
-extern size_t mi_nommap_pwrite(MI_INFO *info, const uchar *Buffer,
+extern size_t mi_nommap_pwrite(MI_INFO *info, const unsigned char *Buffer,
                                size_t Count, my_off_t offset, myf MyFlags);
 
-uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite);
-uchar *mi_state_info_read(uchar *ptr, MI_STATE_INFO *state);
-uint mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead);
-uint mi_base_info_write(File file, MI_BASE_INFO *base);
-uchar *my_n_base_info_read(uchar *ptr, MI_BASE_INFO *base);
+uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite);
+unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
+uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead);
+uint32_t mi_base_info_write(File file, MI_BASE_INFO *base);
+unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 int mi_keyseg_write(File file, const HA_KEYSEG *keyseg);
-uchar *mi_keyseg_read(uchar *ptr, HA_KEYSEG *keyseg);
-uint mi_keydef_write(File file, MI_KEYDEF *keydef);
-uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef);
-uint mi_uniquedef_write(File file, MI_UNIQUEDEF *keydef);
-uchar *mi_uniquedef_read(uchar *ptr, MI_UNIQUEDEF *keydef);
-uint mi_recinfo_write(File file, MI_COLUMNDEF *recinfo);
-uchar *mi_recinfo_read(uchar *ptr, MI_COLUMNDEF *recinfo);
+unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
+uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef);
+unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
+uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *keydef);
+unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *keydef);
+uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo);
+unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);
-ulong _my_calc_total_blob_length(MI_INFO *info, const uchar *record);
-ha_checksum mi_checksum(MI_INFO *info, const uchar *buf);
-ha_checksum mi_static_checksum(MI_INFO *info, const uchar *buf);
-bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
+ulong _my_calc_total_blob_length(MI_INFO *info, const unsigned char *record);
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
+bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
 		     ha_checksum unique_hash, my_off_t pos);
-ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *buf);
+ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			   const uchar *record, my_off_t pos);
+			   const unsigned char *record, my_off_t pos);
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			   const uchar *record, my_off_t pos);
-int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
+			   const unsigned char *record, my_off_t pos);
+int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned char *b,
 		   bool null_are_equal);
 void mi_get_status(void* param, int concurrent_insert);
 void mi_update_status(void* param);
@@ -724,13 +725,13 @@ void mi_setup_functions(register MYISAM_SHARE *share);
 bool mi_dynmap_file(MI_INFO *info, my_off_t size);
 void mi_remap_file(MI_INFO *info, my_off_t size);
 
-int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
+int mi_check_index_cond(register MI_INFO *info, uint32_t keynr, unsigned char *record);
 
     /* Functions needed by mi_check */
 volatile int *killed_ptr(MI_CHECK *param);
-void mi_check_print_error _VARARGS((MI_CHECK *param, const char *fmt,...));
-void mi_check_print_warning _VARARGS((MI_CHECK *param, const char *fmt,...));
-void mi_check_print_info _VARARGS((MI_CHECK *param, const char *fmt,...));
+void mi_check_print_error(MI_CHECK *param, const char *fmt,...);
+void mi_check_print_warning(MI_CHECK *param, const char *fmt,...);
+void mi_check_print_info(MI_CHECK *param, const char *fmt,...);
 int flush_pending_blocks(MI_SORT_PARAM *param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
 pthread_handler_t thr_find_all_keys(void *arg);
@@ -742,9 +743,9 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, uint32_t);
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);
 /* Just for myisam legacy */
-extern size_t my_pwrite(File Filedes,const uchar *Buffer,size_t Count,
+extern size_t my_pwrite(File Filedes,const unsigned char *Buffer,size_t Count,
 		      my_off_t offset,myf MyFlags);
-extern size_t my_pread(File Filedes,uchar *Buffer,size_t Count,my_off_t offset,
+extern size_t my_pread(File Filedes,unsigned char *Buffer,size_t Count,my_off_t offset,
 		     myf MyFlags);
 
 /* Needed for handler */
@@ -752,7 +753,7 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
                         const char *message __attribute__((unused)),
                         const char *sfile __attribute__((unused)),
-                        uint sline __attribute__((unused)));
+                        uint32_t sline __attribute__((unused)));
 
 #ifdef __cplusplus
 }

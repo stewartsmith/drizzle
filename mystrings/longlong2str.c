@@ -20,7 +20,7 @@
   converts the (int64_t) integer "val" to character form and moves it to
   the destination string "dst" followed by a terminating NUL.  The
   result is normally a pointer to this NUL character, but if the radix
-  is dud the result will be NullS and nothing will be changed.
+  is dud the result will be NULL and nothing will be changed.
 
   If radix is -2..-36, val is taken to be SIGNED.
   If radix is  2.. 36, val is taken to be UNSIGNED.
@@ -78,7 +78,7 @@ char *int64_t2str(int64_t val,char *dst,int radix)
   while (uval > (uint64_t) LONG_MAX)
   {
     uint64_t quo= uval/(uint) radix;
-    uint rem= (uint) (uval- quo* (uint) radix);
+    uint32_t rem= (uint) (uval- quo* (uint) radix);
     *--p = _dig_vec_upper[rem];
     uval= quo;
   }
@@ -86,7 +86,7 @@ char *int64_t2str(int64_t val,char *dst,int radix)
   while (long_val != 0)
   {
     long quo= long_val/radix;
-    *--p = _dig_vec_upper[(uchar) (long_val - quo*radix)];
+    *--p = _dig_vec_upper[(unsigned char) (long_val - quo*radix)];
     long_val= quo;
   }
   while ((*dst++ = *p++) != 0) ;
@@ -125,7 +125,7 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   while (uval > (uint64_t) LONG_MAX)
   {
     uint64_t quo= uval/(uint) 10;
-    uint rem= (uint) (uval- quo* (uint) 10);
+    uint32_t rem= (uint) (uval- quo* (uint) 10);
     *--p = _dig_vec_upper[rem];
     uval= quo;
   }
@@ -133,7 +133,7 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   while (long_val != 0)
   {
     long quo= long_val/10;
-    *--p = _dig_vec_upper[(uchar) (long_val - quo*10)];
+    *--p = _dig_vec_upper[(unsigned char) (long_val - quo*10)];
     long_val= quo;
   }
   while ((*dst++ = *p++) != 0) ;

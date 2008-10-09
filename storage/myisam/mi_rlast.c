@@ -17,7 +17,7 @@
 
 	/* Read last row with the same key as the previous read. */
 
-int mi_rlast(MI_INFO *info, uchar *buf, int inx)
+int mi_rlast(MI_INFO *info, unsigned char *buf, int inx)
 {
   info->lastpos= HA_OFFSET_ERROR;
   info->update|= HA_STATE_NEXT_FOUND;

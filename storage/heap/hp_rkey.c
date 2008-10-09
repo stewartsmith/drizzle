@@ -15,10 +15,10 @@
 
 #include "heapdef.h"
 
-int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key, 
+int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key, 
               key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
-  uchar *pos;
+  unsigned char *pos;
   HP_SHARE *share= info->s;
   HP_KEYDEF *keyinfo= share->keydef + inx;
 
@@ -35,8 +35,8 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
 
     custom_arg.keyseg= info->s->keydef[inx].seg;
     custom_arg.key_length= info->lastkey_len= 
-      hp_rb_pack_key(keyinfo, (uchar*) info->lastkey,
-		     (uchar*) key, keypart_map);
+      hp_rb_pack_key(keyinfo, (unsigned char*) info->lastkey,
+		     (unsigned char*) key, keypart_map);
     custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;
     /* for next rkey() after deletion */
     if (find_flag == HA_READ_AFTER_KEY)
@@ -51,7 +51,7 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
       info->update= 0;
       return(my_errno= HA_ERR_KEY_NOT_FOUND);
     }
-    memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), sizeof(uchar*));
+    memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), sizeof(unsigned char*));
     info->current_ptr= pos;
   }
   else
@@ -72,7 +72,7 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
 
 	/* Quick find of record */
 
-uchar* heap_find(HP_INFO *info, int inx, const uchar *key)
+unsigned char* heap_find(HP_INFO *info, int inx, const unsigned char *key)
 {
   return hp_search(info, info->s->keydef + inx, key, 0);
 }

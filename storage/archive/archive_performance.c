@@ -21,6 +21,18 @@
 #include <string.h>
 #include <mysys/my_getopt.h>
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
+
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
 #define COMMENT_STRING "Your bases"
@@ -40,8 +52,8 @@ char test_string[BUFFER_LEN];
 
 /* prototypes */
 long int timedif(struct timeval a, struct timeval b);
-int generate_data(unsigned long long length);
-int read_test(azio_stream *reader_handle, unsigned long long rows_to_test_for);
+int generate_data(uint64_t length);
+int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
 
 int main(int argc, char *argv[])
 {
@@ -89,10 +101,10 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int generate_data(unsigned long long rows_to_test)
+int generate_data(uint64_t rows_to_test)
 {
   azio_stream writer_handle;
-  unsigned long long x;
+  uint64_t x;
   unsigned int ret;
   struct timeval start_time, end_time;
   long int timing;
@@ -140,10 +152,10 @@ int generate_data(unsigned long long rows_to_test)
   return 0;
 }
 
-int read_test(azio_stream *reader_handle, unsigned long long rows_to_test_for)
+int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
 {
-  unsigned long long read_length= 0;
-  unsigned long long count= 0;
+  uint64_t read_length= 0;
+  uint64_t count= 0;
   unsigned int ret;
   int error;
 
@@ -152,7 +164,7 @@ int read_test(azio_stream *reader_handle, unsigned long long rows_to_test_for)
   {
     if (error)
     {
-      fprintf(stderr, "Got an error while reading at row %llu\n", count);
+      fprintf(stderr, "Got an error while reading at row %"PRIu64"\n", count);
       exit(1);
     }
 

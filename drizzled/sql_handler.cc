@@ -93,14 +93,14 @@ static void mysql_ha_close_table(THD *thd, TableList *tables,
   {
     (*table_ptr)->file->ha_index_or_rnd_end();
     if (! is_locked)
-      VOID(pthread_mutex_lock(&LOCK_open));
+      pthread_mutex_lock(&LOCK_open);
     if (close_thread_table(thd, table_ptr))
     {
       /* Tell threads waiting for refresh that something has happened */
       broadcast_refresh();
     }
     if (! is_locked)
-      VOID(pthread_mutex_unlock(&LOCK_open));
+      pthread_mutex_unlock(&LOCK_open);
   }
   else if (tables->table)
   {
@@ -135,11 +135,11 @@ bool mysql_ha_close(THD *thd, TableList *tables)
   TableList    *hash_tables;
 
   if ((hash_tables= (TableList*) hash_search(&thd->handler_tables_hash,
-                                              (uchar*) tables->alias,
+                                              (unsigned char*) tables->alias,
                                               strlen(tables->alias) + 1)))
   {
     mysql_ha_close_table(thd, hash_tables, false);
-    hash_delete(&thd->handler_tables_hash, (uchar*) hash_tables);
+    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
   }
   else
   {
@@ -168,7 +168,7 @@ static TableList *mysql_ha_find(THD *thd, TableList *tables)
   TableList *hash_tables, *head= NULL, *first= tables;
 
   /* search for all handlers with matching table names */
-  for (uint i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
   {
     hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     for (tables= first; tables; tables= tables->next_local)
@@ -213,7 +213,7 @@ void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked)
     next= hash_tables->next_local;
     if (hash_tables->table)
       mysql_ha_close_table(thd, hash_tables, is_locked);
-    hash_delete(&thd->handler_tables_hash, (uchar*) hash_tables);
+    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
     hash_tables= next;
   }
 
@@ -236,7 +236,7 @@ void mysql_ha_flush(THD *thd)
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  for (uint i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
   {
     hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table && hash_tables->table->needs_reopen_or_name_lock())
@@ -263,7 +263,7 @@ void mysql_ha_cleanup(THD *thd)
 {
   TableList *hash_tables;
 
-  for (uint i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
   {
     hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table)

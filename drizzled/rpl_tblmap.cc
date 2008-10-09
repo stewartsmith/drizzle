@@ -15,8 +15,6 @@
 
 #include <drizzled/server_includes.h>
 
-#ifdef HAVE_REPLICATION
-
 #include "rpl_tblmap.h"
 
 #define MAYBE_TABLE_NAME(T) ((T) ? (T)->s->table_name.str : "<>")
@@ -94,11 +92,11 @@ int table_mapping::set_table(ulong table_id, Table* table)
     m_free= m_free->next;
   }
   else
-    hash_delete(&m_table_ids,(uchar *)e);
+    hash_delete(&m_table_ids,(unsigned char *)e);
 
   e->table_id= table_id;
   e->table= table;
-  my_hash_insert(&m_table_ids,(uchar *)e);
+  my_hash_insert(&m_table_ids,(unsigned char *)e);
 
   return(0);		// All OK
 }
@@ -108,7 +106,7 @@ int table_mapping::remove_table(ulong table_id)
   entry *e= find_entry(table_id);
   if (e)
   {
-    hash_delete(&m_table_ids,(uchar *)e);
+    hash_delete(&m_table_ids,(unsigned char *)e);
     /* we add this entry to the chain of free (free for use) entries */
     e->next= m_free;
     m_free= e;
@@ -123,7 +121,7 @@ int table_mapping::remove_table(ulong table_id)
 */
 void table_mapping::clear_tables()
 {
-  for (uint i= 0; i < m_table_ids.records; i++)
+  for (uint32_t i= 0; i < m_table_ids.records; i++)
   {
     entry *e= (entry *)hash_element(&m_table_ids, i);
     e->next= m_free;
@@ -132,5 +130,3 @@ void table_mapping::clear_tables()
   my_hash_reset(&m_table_ids);
   return;
 }
-
-#endif

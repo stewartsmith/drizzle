@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -25,7 +25,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/null.h>
 
-uchar Field_null::null[1]={1};
+unsigned char Field_null::null[1]={1};
 
 /****************************************************************************
   Field_null, a field that always return NULL

@@ -44,7 +44,7 @@ int my_getwd(char * buf, size_t size, myf MyFlags)
   char * pos;
 
   if (curr_dir[0])				/* Current pos is saved here */
-    VOID(strmake(buf,&curr_dir[0],size-1));
+    strmake(buf,&curr_dir[0],size-1);
   else
   {
 #if defined(HAVE_GETCWD)
@@ -99,7 +99,7 @@ int my_setwd(const char *dir, myf MyFlags)
     dir=FN_ROOTDIR;
 #ifdef VMS
   {
-    pos=stpcpy(buff,dir);
+    pos=my_stpcpy(buff,dir);
     if (pos[-1] != FN_LIBCHAR)
     {
       pos[0]=FN_LIBCHAR;		/* Mark as directory */
@@ -141,7 +141,7 @@ int my_setwd(const char *dir, myf MyFlags)
 int test_if_hard_path(register const char *dir_name)
 {
   if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
-    return (home_dir != NullS && test_if_hard_path(home_dir));
+    return (home_dir != NULL && test_if_hard_path(home_dir));
   if (dir_name[0] == FN_LIBCHAR)
     return (true);
 #ifdef FN_DEVCHAR

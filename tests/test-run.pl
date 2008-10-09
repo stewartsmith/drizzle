@@ -127,7 +127,6 @@ our $opt_verbose= 0;  # Verbose output, enable with --verbose
 our $exe_master_mysqld;
 our $exe_drizzle;
 our $exe_drizzleadmin;
-our $exe_drizzlebinlog;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -1233,7 +1232,6 @@ sub executable_setup () {
   $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
   $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
-  $exe_drizzlebinlog= mtr_exe_exists("$path_client_bindir/drizzlebinlog");
   $exe_drizzleadmin= mtr_exe_exists("$path_client_bindir/drizzleadmin");
   $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
 
@@ -1485,20 +1483,6 @@ sub environment_setup () {
   }
   $ENV{'DRIZZLE_IMPORT'}= $cmdline_mysqlimport;
 
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute mysqlbinlog
-  # ----------------------------------------------------
-  my $cmdline_mysqlbinlog=
-    mtr_native_path($exe_drizzlebinlog) .
-      " --no-defaults --disable-force-if-open --debug-check";
-
-  if ( $opt_debug )
-  {
-    $cmdline_mysqlbinlog .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqlbinlog.trace";
-  }
-  $ENV{'DRIZZLE_BINLOG'}= $cmdline_mysqlbinlog;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysql
@@ -2482,12 +2466,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
   }
 
-  if ( $mysql_version_id >= 50000 )
-  {
-    mtr_add_arg($args, "%s--log-bin-trust-function-creators", $prefix);
-  }
-
-  mtr_add_arg($args, "%s--default-character-set=utf8", $prefix);
   mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent
@@ -2514,8 +2492,6 @@ sub mysqld_arguments ($$$$) {
 
   my $log_base_path= "$opt_vardir/log/$mysqld->{'type'}$sidx";
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
-  mtr_add_arg($args,
-	      "%s--log-slow-queries=%s-slow.log", $prefix, $log_base_path);
 
   # Check if "extra_opt" contains --skip-log-bin
   my $skip_binlog= grep(/^--skip-log-bin/, @$extra_opt, @opt_extra_mysqld_opt);

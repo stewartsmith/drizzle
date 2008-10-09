@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -34,7 +34,7 @@
 ****************************************************************************/
 
 int Field_time::store(const char *from,
-                      uint len,
+                      uint32_t len,
                       const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME ltime;
@@ -78,7 +78,7 @@ int Field_time::store(const char *from,
 
 
 int Field_time::store_time(DRIZZLE_TIME *ltime,
-                           timestamp_type time_type __attribute__((unused)))
+                           enum enum_drizzle_timestamp_type time_type __attribute__((unused)))
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);
@@ -208,7 +208,7 @@ String *Field_time::val_str(String *val_buffer,
   DATE_FORMAT(time, "%l.%i %p")
 */
  
-bool Field_time::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Field_time::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long tmp;
   THD *thd= table ? table->in_use : current_thd;
@@ -266,7 +266,7 @@ bool Field_time::send_binary(Protocol *protocol)
 }
 
 
-int Field_time::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_time::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
   a=(int32_t) sint3korr(a_ptr);
@@ -274,9 +274,9 @@ int Field_time::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_time::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_time::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
-  to[0] = (uchar) (ptr[2] ^ 128);
+  to[0] = (unsigned char) (ptr[2] ^ 128);
   to[1] = ptr[1];
   to[2] = ptr[0];
 }

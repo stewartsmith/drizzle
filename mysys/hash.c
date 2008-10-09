@@ -29,27 +29,27 @@
 #define HIGHUSED 8
 
 typedef struct st_hash_info {
-  uint next;					/* index to next key */
-  uchar *data;					/* data for current entry */
+  uint32_t next;					/* index to next key */
+  unsigned char *data;					/* data for current entry */
 } HASH_LINK;
 
-static uint hash_mask(uint hashnr,uint buffmax,uint maxlength);
-static void movelink(HASH_LINK *array,uint pos,uint next_link,uint newlink);
-static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
+static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
+static void movelink(HASH_LINK *array,uint32_t pos,uint32_t next_link,uint32_t newlink);
+static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
                    size_t length);
 
-static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
+static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t length)
 {
   uint32_t nr1=1, nr2=4;
-  hash->charset->coll->hash_sort(hash->charset,(const uchar*) key,length,&nr1,&nr2);
+  hash->charset->coll->hash_sort(hash->charset,(const unsigned char*) key,length,&nr1,&nr2);
   return nr1;
 }
 
 bool
-_hash_init(HASH *hash,uint growth_size, const CHARSET_INFO * const charset,
+_hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
 	   uint32_t size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
-	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)
+	   void (*free_element)(void*),uint32_t flags CALLER_INFO_PROTO)
 {
   hash->records=0;
   if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
@@ -132,12 +132,12 @@ void my_hash_reset(HASH *hash)
 /* some helper functions */
 
 /*
-  This function is char* instead of uchar* as HPUX11 compiler can't
+  This function is char* instead of unsigned char* as HPUX11 compiler can't
   handle inline functions that are not defined as native types
 */
 
 static inline char*
-hash_key(const HASH *hash, const uchar *record, size_t *length,
+hash_key(const HASH *hash, const unsigned char *record, size_t *length,
          bool first)
 {
   if (hash->get_key)
@@ -148,17 +148,17 @@ hash_key(const HASH *hash, const uchar *record, size_t *length,
 
 	/* Calculate pos according to keys */
 
-static uint hash_mask(uint hashnr,uint buffmax,uint maxlength)
+static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength)
 {
   if ((hashnr & (buffmax-1)) < maxlength) return (hashnr & (buffmax-1));
   return (hashnr & ((buffmax >> 1) -1));
 }
 
-static uint hash_rec_mask(const HASH *hash, HASH_LINK *pos,
-                          uint buffmax, uint maxlength)
+static uint32_t hash_rec_mask(const HASH *hash, HASH_LINK *pos,
+                          uint32_t buffmax, uint32_t maxlength)
 {
   size_t length;
-  uchar *key= (uchar*) hash_key(hash,pos->data,&length,0);
+  unsigned char *key= (unsigned char*) hash_key(hash,pos->data,&length,0);
   return hash_mask(calc_hash(hash,key,length),buffmax,maxlength);
 }
 
@@ -169,15 +169,15 @@ static
 #if !defined(__USLC__) && !defined(__sgi)
 inline
 #endif
-unsigned int rec_hashnr(HASH *hash,const uchar *record)
+unsigned int rec_hashnr(HASH *hash,const unsigned char *record)
 {
   size_t length;
-  uchar *key= (uchar*) hash_key(hash,record,&length,0);
+  unsigned char *key= (unsigned char*) hash_key(hash,record,&length,0);
   return calc_hash(hash,key,length);
 }
 
 
-uchar* hash_search(const HASH *hash, const uchar *key, size_t length)
+unsigned char* hash_search(const HASH *hash, const unsigned char *key, size_t length)
 {
   HASH_SEARCH_STATE state;
   return hash_first(hash, key, length, &state);
@@ -190,11 +190,11 @@ uchar* hash_search(const HASH *hash, const uchar *key, size_t length)
    Assigns the number of the found record to HASH_SEARCH_STATE state
 */
 
-uchar* hash_first(const HASH *hash, const uchar *key, size_t length,
+unsigned char* hash_first(const HASH *hash, const unsigned char *key, size_t length,
                 HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
-  uint flag,idx;
+  uint32_t flag,idx;
 
   flag=1;
   if (hash->records)
@@ -225,11 +225,11 @@ uchar* hash_first(const HASH *hash, const uchar *key, size_t length,
 	/* Get next record with identical key */
 	/* Can only be called if previous calls was hash_search */
 
-uchar* hash_next(const HASH *hash, const uchar *key, size_t length,
+unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t length,
                HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
-  uint idx;
+  uint32_t idx;
 
   if (*current_record != NO_RECORD)
   {
@@ -251,7 +251,7 @@ uchar* hash_next(const HASH *hash, const uchar *key, size_t length,
 
 	/* Change link from pos to new_link */
 
-static void movelink(HASH_LINK *array,uint find,uint next_link,uint newlink)
+static void movelink(HASH_LINK *array,uint32_t find,uint32_t next_link,uint32_t newlink)
 {
   HASH_LINK *old_link;
   do
@@ -282,30 +282,30 @@ static void movelink(HASH_LINK *array,uint find,uint next_link,uint newlink)
     != 0 key of record != key
  */
 
-static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
+static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
                    size_t length)
 {
   size_t rec_keylength;
-  uchar *rec_key= (uchar*) hash_key(hash,pos->data,&rec_keylength,1);
+  unsigned char *rec_key= (unsigned char*) hash_key(hash,pos->data,&rec_keylength,1);
   return ((length && length != rec_keylength) ||
-	  my_strnncoll(hash->charset, (const uchar*) rec_key, rec_keylength,
-		       (const uchar*) key, rec_keylength));
+	  my_strnncoll(hash->charset, (const unsigned char*) rec_key, rec_keylength,
+		       (const unsigned char*) key, rec_keylength));
 }
 
 
 	/* Write a hash-key to the hash-index */
 
-bool my_hash_insert(HASH *info,const uchar *record)
+bool my_hash_insert(HASH *info,const unsigned char *record)
 {
   int flag;
   size_t idx;
-  uint halfbuff,hash_nr,first_index;
-  uchar *ptr_to_rec=NULL,*ptr_to_rec2=NULL;
+  uint32_t halfbuff,hash_nr,first_index;
+  unsigned char *ptr_to_rec=NULL,*ptr_to_rec2=NULL;
   HASH_LINK *data,*empty,*gpos=NULL,*gpos2=NULL,*pos;
 
   if (HASH_UNIQUE & info->flags)
   {
-    uchar *key= (uchar*) hash_key(info, record, &idx, 1);
+    unsigned char *key= (unsigned char*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
       return(true);				/* Duplicate entry */
   }
@@ -401,7 +401,7 @@ bool my_hash_insert(HASH *info,const uchar *record)
   pos=data+idx;
   if (pos == empty)
   {
-    pos->data=(uchar*) record;
+    pos->data=(unsigned char*) record;
     pos->next=NO_RECORD;
   }
   else
@@ -411,12 +411,12 @@ bool my_hash_insert(HASH *info,const uchar *record)
     gpos=data+hash_rec_mask(info,pos,info->blength,info->records+1);
     if (pos == gpos)
     {
-      pos->data=(uchar*) record;
+      pos->data=(unsigned char*) record;
       pos->next=(uint) (empty - data);
     }
     else
     {
-      pos->data=(uchar*) record;
+      pos->data=(unsigned char*) record;
       pos->next=NO_RECORD;
       movelink(data,(uint) (pos-data),(uint) (gpos-data),(uint) (empty-data));
     }
@@ -433,9 +433,9 @@ bool my_hash_insert(HASH *info,const uchar *record)
 ** if there is a free-function it's called for record if found
 ******************************************************************************/
 
-bool hash_delete(HASH *hash,uchar *record)
+bool hash_delete(HASH *hash,unsigned char *record)
 {
-  uint blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
+  uint32_t blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
   HASH_LINK *data,*lastpos,*gpos,*pos,*pos3,*empty;
   if (!hash->records)
     return(1);
@@ -508,9 +508,9 @@ bool hash_delete(HASH *hash,uchar *record)
   pos->next=empty_index;
 
 exit:
-  VOID(pop_dynamic(&hash->array));
+  pop_dynamic(&hash->array);
   if (hash->free)
-    (*hash->free)((uchar*) record);
+    (*hash->free)((unsigned char*) record);
   return(0);
 }
 
@@ -519,17 +519,17 @@ exit:
 	  This is much more efficent than using a delete & insert.
 	  */
 
-bool hash_update(HASH *hash, uchar *record, uchar *old_key,
+bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
                     size_t old_key_length)
 {
-  uint new_index,new_pos_index,blength,records,empty;
+  uint32_t new_index,new_pos_index,blength,records,empty;
   size_t idx;
   HASH_LINK org_link,*data,*previous,*pos;
   
   if (HASH_UNIQUE & hash->flags)
   {
     HASH_SEARCH_STATE state;
-    uchar *found, *new_key= (uchar*) hash_key(hash, record, &idx, 1);
+    unsigned char *found, *new_key= (unsigned char*) hash_key(hash, record, &idx, 1);
     if ((found= hash_first(hash, new_key, idx, &state)))
     {
       do 
@@ -618,7 +618,7 @@ bool hash_update(HASH *hash, uchar *record, uchar *old_key,
 }
 
 
-uchar *hash_element(HASH *hash,uint32_t idx)
+unsigned char *hash_element(HASH *hash,uint32_t idx)
 {
   if (idx < hash->records)
     return dynamic_element(&hash->array,idx,HASH_LINK*)->data;
@@ -631,7 +631,7 @@ uchar *hash_element(HASH *hash,uint32_t idx)
   isn't changed
 */
 
-void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record, uchar *new_row)
+void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record, unsigned char *new_row)
 {
   if (*current_record != NO_RECORD)            /* Safety */
     dynamic_element(&hash->array, *current_record, HASH_LINK*)->data= new_row;

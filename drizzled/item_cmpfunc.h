@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* compare and test functions */
@@ -108,7 +112,7 @@ public:
   Item_bool_func(THD *thd, Item_bool_func *item) :Item_int_func(thd, item) {}
   bool is_bool_func() { return 1; }
   void fix_length_and_dec() { decimals=0; max_length=1; }
-  uint decimal_precision() const { return 1; }
+  uint32_t decimal_precision() const { return 1; }
 };
 
 
@@ -230,7 +234,7 @@ protected:
   bool result_for_null_param;
 public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
-    Item_bool_func(a, my_reinterpret_cast(Item *)(b)), cache(0),
+    Item_bool_func(a, reinterpret_cast<Item *>(b)), cache(0),
     save_cache(0), result_for_null_param(UNKNOWN)
   { with_subselect= true; }
   bool fix_fields(THD *, Item **);
@@ -241,7 +245,7 @@ public:
   const char *func_name() const { return "<in_optimizer>"; }
   Item_cache **get_cache() { return &cache; }
   void keep_top_level_cache();
-  Item *transform(Item_transformer transformer, uchar *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
 };
 
 class Comp_creator
@@ -348,7 +352,7 @@ public:
   bool is_null() { return test(args[0]->is_null() || args[1]->is_null()); }
   bool is_bool_func() { return 1; }
   const CHARSET_INFO *compare_collation() { return cmp.cmp_collation.collation; }
-  uint decimal_precision() const { return 1; }
+  uint32_t decimal_precision() const { return 1; }
   void top_level_item() { abort_on_null= true; }
 
   friend class  Arg_comparator;
@@ -363,7 +367,7 @@ public:
   }
   Item *neg_transformer(THD *thd);
   virtual Item *negated_item();
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
 };
 
@@ -581,7 +585,7 @@ public:
     return this;
   }
   bool eq(const Item *item, bool binary_cmp) const;
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
 };
 
@@ -607,7 +611,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool is_bool_func() { return 1; }
   const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
-  uint decimal_precision() const { return 1; }
+  uint32_t decimal_precision() const { return 1; }
 };
 
 
@@ -647,7 +651,7 @@ public:
   int64_t val_int();
   void fix_length_and_dec();
   const char *func_name() const { return "interval"; }
-  uint decimal_precision() const { return 2; }
+  uint32_t decimal_precision() const { return 2; }
 };
 
 
@@ -685,7 +689,7 @@ public:
   void fix_length_and_dec();
   const char *func_name() const { return "ifnull"; }
   Field *tmp_table_field(Table *table);
-  uint decimal_precision() const;
+  uint32_t decimal_precision() const;
 };
 
 
@@ -705,7 +709,7 @@ public:
   enum_field_types field_type() const { return cached_field_type; }
   bool fix_fields(THD *, Item **);
   void fix_length_and_dec();
-  uint decimal_precision() const;
+  uint32_t decimal_precision() const;
   const char *func_name() const { return "if"; }
 };
 
@@ -723,7 +727,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return cached_result_type; }
   void fix_length_and_dec();
-  uint decimal_precision() const { return args[0]->decimal_precision(); }
+  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
   const char *func_name() const { return "nullif"; }
 
   virtual inline void print(String *str, enum_query_type query_type)
@@ -745,20 +749,20 @@ class in_vector :public Sql_alloc
 {
 public:
   char *base;
-  uint size;
+  uint32_t size;
   qsort2_cmp compare;
   const CHARSET_INFO *collation;
-  uint count;
-  uint used_count;
+  uint32_t count;
+  uint32_t used_count;
   in_vector() {}
-  in_vector(uint elements,uint element_length,qsort2_cmp cmp_func, 
+  in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func, 
   	    const CHARSET_INFO * const cmp_coll)
     :base((char*) sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
   virtual ~in_vector() {}
-  virtual void set(uint pos,Item *item)=0;
-  virtual uchar *get_value(Item *item)=0;
+  virtual void set(uint32_t pos,Item *item)=0;
+  virtual unsigned char *get_value(Item *item)=0;
   void sort()
   {
     my_qsort2(base,used_count,size,compare, (void *) collation);
@@ -783,11 +787,11 @@ public:
         item  Constant item to store value into. The item must be of the same
               type that create_item() returns.
   */
-  virtual void value_to_item(uint pos __attribute__((unused)),
+  virtual void value_to_item(uint32_t pos __attribute__((unused)),
                              Item *item __attribute__((unused))) { }
   
   /* Compare values number pos1 and pos2 for equality */
-  bool compare_elems(uint pos1, uint pos2)
+  bool compare_elems(uint32_t pos1, uint32_t pos2)
   {
     return test(compare(collation, base + pos1*size, base + pos2*size));
   }
@@ -799,15 +803,15 @@ class in_string :public in_vector
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmp;
 public:
-  in_string(uint elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs);
+  in_string(uint32_t elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs);
   ~in_string();
-  void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  void set(uint32_t pos,Item *item);
+  unsigned char *get_value(Item *item);
   Item* create_item()
   { 
     return new Item_string(collation);
   }
-  void value_to_item(uint pos, Item *item)
+  void value_to_item(uint32_t pos, Item *item)
   {    
     String *str=((String*) base)+pos;
     Item_string *to= (Item_string*)item;
@@ -830,9 +834,9 @@ protected:
     int64_t unsigned_flag;  // Use int64_t, not bool, to preserve alignment
   } tmp;
 public:
-  in_int64_t(uint elements);
-  void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  in_int64_t(uint32_t elements);
+  void set(uint32_t pos,Item *item);
+  unsigned char *get_value(Item *item);
   
   Item* create_item()
   { 
@@ -842,7 +846,7 @@ public:
     */
     return new Item_int((int64_t)0);
   }
-  void value_to_item(uint pos, Item *item)
+  void value_to_item(uint32_t pos, Item *item)
   {
     ((Item_int*) item)->value= ((packed_int64_t*) base)[pos].val;
     ((Item_int*) item)->unsigned_flag= (bool)
@@ -869,11 +873,11 @@ public:
   /* Cache for the left item. */
   Item *lval_cache;
 
-  in_datetime(Item *warn_item_arg, uint elements)
+  in_datetime(Item *warn_item_arg, uint32_t elements)
     :in_int64_t(elements), thd(current_thd), warn_item(warn_item_arg),
      lval_cache(0) {};
-  void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  void set(uint32_t pos,Item *item);
+  unsigned char *get_value(Item *item);
   friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
 };
 
@@ -882,14 +886,14 @@ class in_double :public in_vector
 {
   double tmp;
 public:
-  in_double(uint elements);
-  void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  in_double(uint32_t elements);
+  void set(uint32_t pos,Item *item);
+  unsigned char *get_value(Item *item);
   Item *create_item()
   { 
     return new Item_float(0.0, 0);
   }
-  void value_to_item(uint pos, Item *item)
+  void value_to_item(uint32_t pos, Item *item)
   {
     ((Item_float*)item)->value= ((double*) base)[pos];
   }
@@ -901,14 +905,14 @@ class in_decimal :public in_vector
 {
   my_decimal val;
 public:
-  in_decimal(uint elements);
-  void set(uint pos, Item *item);
-  uchar *get_value(Item *item);
+  in_decimal(uint32_t elements);
+  void set(uint32_t pos, Item *item);
+  unsigned char *get_value(Item *item);
   Item *create_item()
   { 
     return new Item_decimal(0, false);
   }
-  void value_to_item(uint pos, Item *item)
+  void value_to_item(uint32_t pos, Item *item)
   {
     my_decimal *dec= ((my_decimal *)base) + pos;
     Item_decimal *item_dec= (Item_decimal*)item;
@@ -1126,7 +1130,7 @@ class Item_func_case :public Item_func
   int first_expr_num, else_expr_num;
   enum Item_result cached_result_type, left_result_type;
   String tmp_value;
-  uint ncases;
+  uint32_t ncases;
   Item_result cmp_type;
   DTCollation cmp_collation;
   enum_field_types cached_field_type;
@@ -1157,7 +1161,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   bool fix_fields(THD *thd, Item **ref);
   void fix_length_and_dec();
-  uint decimal_precision() const;
+  uint32_t decimal_precision() const;
   table_map not_null_tables() const { return 0; }
   enum Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
@@ -1212,10 +1216,10 @@ public:
   int64_t val_int();
   bool fix_fields(THD *, Item **);
   void fix_length_and_dec();
-  uint decimal_precision() const { return 1; }
+  uint32_t decimal_precision() const { return 1; }
   void cleanup()
   {
-    uint i;
+    uint32_t i;
     Item_int_func::cleanup();
     delete array;
     array= 0;
@@ -1239,7 +1243,7 @@ public:
 class cmp_item_row :public cmp_item
 {
   cmp_item **comparators;
-  uint n;
+  uint32_t n;
 public:
   cmp_item_row(): comparators(0), n(0) {}
   ~cmp_item_row();
@@ -1257,10 +1261,10 @@ class in_row :public in_vector
 {
   cmp_item_row tmp;
 public:
-  in_row(uint elements, Item *);
+  in_row(uint32_t elements, Item *);
   ~in_row();
-  void set(uint pos,Item *item);
-  uchar *get_value(Item *item);
+  void set(uint32_t pos,Item *item);
+  unsigned char *get_value(Item *item);
   friend void Item_func_in::fix_length_and_dec();
   Item_result result_type() { return ROW_RESULT; }
 };
@@ -1432,15 +1436,15 @@ public:
                          COND **conds);
   void top_level_item() { abort_on_null=1; }
   void copy_andor_arguments(THD *thd, Item_cond *item);
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   void traverse_cond(Cond_traverser, void *arg, traverse_order order);
   void neg_arguments(THD *thd);
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
-  bool subst_argument_checker(uchar **arg __attribute__((unused)))
+  bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
-  Item *compile(Item_analyzer analyzer, uchar **arg_p,
-                Item_transformer transformer, uchar *arg_t);
+  Item *compile(Item_analyzer analyzer, unsigned char **arg_p,
+                Item_transformer transformer, unsigned char *arg_t);
 };
 
 
@@ -1535,7 +1539,7 @@ public:
   inline Item* get_const() { return const_item; }
   void add(Item *c);
   void add(Item_field *f);
-  uint members();
+  uint32_t members();
   bool contains(Field *field);
   Item_field* get_first() { return fields.head(); }
   void merge(Item_equal *item);
@@ -1549,8 +1553,8 @@ public:
   void fix_length_and_dec();
   bool fix_fields(THD *thd, Item **ref);
   void update_used_tables();
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  Item *transform(Item_transformer transformer, uchar *arg);
+  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
+  Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
   const CHARSET_INFO *compare_collation() 
   { return fields.head()->collation.collation; }
@@ -1559,7 +1563,7 @@ public:
 class COND_EQUAL: public Sql_alloc
 {
 public:
-  uint max_members;               /* max number of members the current level
+  uint32_t max_members;               /* max number of members the current level
                                      list and all lower level lists */ 
   COND_EQUAL *upper_levels;       /* multiple equalities of upper and levels */
   List<Item_equal> current_level; /* list of multiple equalities of 

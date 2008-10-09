@@ -26,7 +26,7 @@
   This function returns the field size in raw bytes based on the type
   and the encoded field data from the master's raw data.
 */
-uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
+uint32_t table_def::calc_field_size(uint32_t col, unsigned char *master_data) const
 {
   uint32_t length= 0;
 
@@ -50,9 +50,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
   }
   case DRIZZLE_TYPE_TINY:
     length= 1;
-    break;
-  case DRIZZLE_TYPE_SHORT:
-    length= 2;
     break;
   case DRIZZLE_TYPE_LONG:
     length= 4;
@@ -105,13 +102,13 @@ table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
   /*
     We only check the initial columns for the tables.
   */
-  uint const cols_to_check= min(table->s->fields, size());
+  uint32_t const cols_to_check= cmin(table->s->fields, size());
   int error= 0;
   Relay_log_info const *rli= const_cast<Relay_log_info*>(rli_arg);
 
   TABLE_SHARE const *const tsh= table->s;
 
-  for (uint col= 0 ; col < cols_to_check ; ++col)
+  for (uint32_t col= 0 ; col < cols_to_check ; ++col)
   {
     if (table->field[col]->type() != type(col))
     {

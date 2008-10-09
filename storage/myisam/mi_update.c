@@ -17,12 +17,12 @@
 
 #include "myisamdef.h"
 
-int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
+int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {
   int flag,key_changed,save_errno;
   register my_off_t pos;
-  uint i;
-  uchar old_key[MI_MAX_KEY_BUFF],*new_key;
+  uint32_t i;
+  unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
   uint64_t changed;
   MYISAM_SHARE *share= info->s;
@@ -81,8 +81,8 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     if (mi_is_key_active(share->state.key_map, i))
     {
       {
-	uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
-	uint old_length=_mi_make_key(info,i,old_key,oldrec,pos);
+	uint32_t new_length=_mi_make_key(info,i,new_key,newrec,pos);
+	uint32_t old_length=_mi_make_key(info,i,old_key,oldrec,pos);
 
         /* The above changed info->lastkey2. Inform mi_rnext_same(). */
         info->update&= ~HA_STATE_RNEXT_SAME;
@@ -153,7 +153,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     mi_update() must always pass !0 value as operation, since even if
     there is no index change there could be data change.
   */
-  VOID(_mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE);
   if (info->invalidator != 0)
   {
     (*info->invalidator)(info->filename);
@@ -175,8 +175,8 @@ err:
       if (((uint64_t) 1 << i) & changed)
       {
 	{
-	  uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
-	  uint old_length= _mi_make_key(info,i,old_key,oldrec,pos);
+	  uint32_t new_length=_mi_make_key(info,i,new_key,newrec,pos);
+	  uint32_t old_length= _mi_make_key(info,i,old_key,oldrec,pos);
 	  if ((flag++ && _mi_ck_delete(info,i,new_key,new_length)) ||
 	      _mi_ck_write(info,i,old_key,old_length))
 	    break;
@@ -193,7 +193,7 @@ err:
 		 key_changed);
 
  err_end:
-  VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
+  _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   if (save_errno == HA_ERR_KEY_NOT_FOUND)
   {
     mi_print_error(info->s, HA_ERR_CRASHED);

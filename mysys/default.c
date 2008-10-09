@@ -126,7 +126,7 @@ static char *remove_end_comment(char *ptr);
 */
 
 int my_search_option_files(const char *conf_file, int *argc, char ***argv,
-                           uint *args_used, Process_option_func func,
+                           uint32_t *args_used, Process_option_func func,
                            void *func_ctx)
 {
   const char **dirs, *forced_default_file, *forced_extra_defaults;
@@ -155,9 +155,9 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
   if (my_defaults_group_suffix && func == handle_default_option)
   {
     /* Handle --defaults-group-suffix= */
-    uint i;
+    uint32_t i;
     const char **extra_groups;
-    const uint instance_len= strlen(my_defaults_group_suffix); 
+    const uint32_t instance_len= strlen(my_defaults_group_suffix); 
     struct handle_option_ctx *ctx= (struct handle_option_ctx*) func_ctx;
     char *ptr;
     TYPELIB *group= ctx->group;
@@ -169,7 +169,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     
     for (i= 0; i < group->count; i++)
     {
-      uint len;
+      uint32_t len;
       extra_groups[i]= group->type_names[i]; /** copy group */
       
       len= strlen(extra_groups[i]);
@@ -202,7 +202,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
   }
   else if (dirname_length(conf_file))
   {
-    if ((error= search_default_file(func, func_ctx, NullS, conf_file)) < 0)
+    if ((error= search_default_file(func, func_ctx, NULL, conf_file)) < 0)
       goto err;
   }
   else
@@ -274,9 +274,9 @@ static int handle_default_option(void *in_ctx, const char *group_name,
   {
     if (!(tmp= alloc_root(ctx->alloc, strlen(option) + 1)))
       return 1;
-    if (insert_dynamic(ctx->args, (uchar*) &tmp))
+    if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
-    stpcpy(tmp, option);
+    my_stpcpy(tmp, option);
   }
 
   return 0;
@@ -372,7 +372,7 @@ int load_defaults(const char *conf_file, const char **groups,
   DYNAMIC_ARRAY args;
   TYPELIB group;
   bool found_print_defaults= 0;
-  uint args_used= 0;
+  uint32_t args_used= 0;
   int error= 0;
   MEM_ROOT alloc;
   char *ptr,**res;
@@ -387,7 +387,7 @@ int load_defaults(const char *conf_file, const char **groups,
   if (*argc >= 2 && !strcmp(argv[0][1],"--no-defaults"))
   {
     /* remove the --no-defaults argument and return only the other arguments */
-    uint i;
+    uint32_t i;
     if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
 				 (*argc + 1)*sizeof(char*))))
       goto err;
@@ -517,7 +517,7 @@ static int search_default_file(Process_option_func opt_handler,
 */
 
 static char *get_argument(const char *keyword, size_t kwlen,
-                          char *ptr, char *name, uint line)
+                          char *ptr, char *name, uint32_t line)
 {
   char *end;
 
@@ -586,9 +586,9 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   static const char include_keyword[]= "include";
   const int max_recursion_level= 10;
   FILE *fp;
-  uint line=0;
+  uint32_t line=0;
   bool found_group=0;
-  uint i;
+  uint32_t i;
   MY_DIR *search_dir;
   FILEINFO *search_file;
 
@@ -596,14 +596,14 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     return 0;					/* Ignore wrong paths */
   if (dir)
   {
-    end=convert_dirname(name, dir, NullS);
+    end=convert_dirname(name, dir, NULL);
     if (dir[0] == FN_HOMELIB)		/* Add . to filenames in home */
       *end++='.';
-    strxmov(end,config_file,ext,NullS);
+    strxmov(end,config_file,ext,NULL);
   }
   else
   {
-    stpcpy(name,config_file);
+    my_stpcpy(name,config_file);
   }
   fn_format(name,name,"","",4);
   {
@@ -722,7 +722,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
-      strmake(curr_gr, ptr, min((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
+      strmake(curr_gr, ptr, cmin((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
 
       /* signal that a new group is found */
       opt_handler(handler_ctx, curr_gr, NULL);
@@ -744,7 +744,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
     if (!value)
     {
-      strmake(stpcpy(option,"--"),ptr, (size_t) (end-ptr));
+      strmake(my_stpcpy(option,"--"),ptr, (size_t) (end-ptr));
       if (opt_handler(handler_ctx, curr_gr, option))
         goto err;
     }
@@ -770,7 +770,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 	value++;
 	value_end--;
       }
-      ptr=stpncpy(stpcpy(option,"--"),ptr,(size_t) (end-ptr));
+      ptr=my_stpncpy(my_stpcpy(option,"--"),ptr,(size_t) (end-ptr));
       *ptr++= '=';
 
       for ( ; value != value_end; value++)
@@ -877,10 +877,10 @@ void my_print_default_files(const char *conf_file)
 	  pos= my_defaults_extra_file;
 	else
 	  continue;
-	end= convert_dirname(name, pos, NullS);
+	end= convert_dirname(name, pos, NULL);
 	if (name[0] == FN_HOMELIB)	/* Add . to filenames in home */
 	  *end++='.';
-	strxmov(end, conf_file, *ext, " ", NullS);
+	strxmov(end, conf_file, *ext, " ", NULL);
 	fputs(name,stdout);
       }
     }

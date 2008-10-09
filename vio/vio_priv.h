@@ -17,7 +17,7 @@
 
 #define DONT_MAP_VIO
 #include <drizzled/global.h>
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <mysys/my_sys.h>
 #include <string.h>
 #include <violite.h>

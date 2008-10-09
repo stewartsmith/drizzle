@@ -38,10 +38,10 @@
 #define RLIM_INFINITY ((uint) 0xffffffff)
 #endif
 
-static uint set_max_open_files(uint max_file_limit)
+static uint32_t set_max_open_files(uint32_t max_file_limit)
 {
   struct rlimit rlimit;
-  uint old_cur;
+  uint32_t old_cur;
 
   if (!getrlimit(RLIMIT_NOFILE,&rlimit))
   {
@@ -65,10 +65,10 @@ static uint set_max_open_files(uint max_file_limit)
 }
 
 #else
-static int set_max_open_files(uint max_file_limit)
+static int set_max_open_files(uint32_t max_file_limit)
 {
   /* We don't know the limit. Return best guess */
-  return min(max_file_limit, OS_FILE_LIMIT);
+  return cmin(max_file_limit, OS_FILE_LIMIT);
 }
 #endif
 
@@ -84,11 +84,11 @@ static int set_max_open_files(uint max_file_limit)
     number of files available for open
 */
 
-uint my_set_max_open_files(uint files)
+uint32_t my_set_max_open_files(uint32_t files)
 {
   struct st_my_file_info *tmp;
 
-  files= set_max_open_files(min(files, OS_FILE_LIMIT));
+  files= set_max_open_files(cmin(files, OS_FILE_LIMIT));
   if (files <= MY_NFILE)
     return(files);
 
@@ -97,13 +97,13 @@ uint my_set_max_open_files(uint files)
     return(MY_NFILE);
 
   /* Copy any initialized files */
-  memcpy(tmp, my_file_info, sizeof(*tmp) * min(my_file_limit, files));
+  memcpy(tmp, my_file_info, sizeof(*tmp) * cmin(my_file_limit, files));
   /*
     The int cast is necessary since 'my_file_limits' might be greater
     than 'files'.
   */
   memset(tmp + my_file_limit, 0,
-         max((int) (files - my_file_limit), 0)*sizeof(*tmp));
+         cmax((int) (files - my_file_limit), 0)*sizeof(*tmp));
   my_free_open_file_info();			/* Free if already allocated */
   my_file_info= tmp;
   my_file_limit= files;
@@ -118,7 +118,7 @@ void my_free_open_file_info()
     /* Copy data back for my_print_open_files */
     memcpy(my_file_info_default, my_file_info,
            sizeof(*my_file_info_default)* MY_NFILE);
-    my_free((char*) my_file_info, MYF(0));
+    free((char*) my_file_info);
     my_file_info= my_file_info_default;
     my_file_limit= MY_NFILE;
   }

@@ -1,0 +1,3 @@
+select crc32('12341234');
+select crc32('a');
+select crc32('taohuoahusoahusoa haneo uhnteoahu ntoahu saonhu aoeuoa hun');

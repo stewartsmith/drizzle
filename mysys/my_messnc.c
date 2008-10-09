@@ -15,7 +15,7 @@
 
 #include "mysys_priv.h"
 
-void my_message_no_curses(uint error __attribute__((unused)),
+void my_message_no_curses(uint32_t error __attribute__((unused)),
 			 const char *str, myf MyFlags)
 {
   (void) fflush(stdout);

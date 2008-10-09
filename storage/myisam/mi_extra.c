@@ -81,7 +81,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		   my_default_record_cache_size);
       if (!(init_io_cache(&info->rec_cache,info->dfile,
-			 (uint) min(info->state->data_file_length+1,
+			 (uint) cmin(info->state->data_file_length+1,
 				    cache_size),
 			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
@@ -209,7 +209,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (mi_is_any_key_active(share->state.key_map))
     {
       MI_KEYDEF *key=share->keyinfo;
-      uint i;
+      uint32_t i;
       for (i=0 ; i < share->base.keys ; i++,key++)
       {
         if (!(key->flag & HA_NOSAME) && info->s->base.auto_key != i+1)
@@ -376,7 +376,7 @@ void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
  */
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function)
 {
-  uint  idx;
+  uint32_t  idx;
 
   for (idx= 0; idx< info->s->base.keys; idx++)
   {

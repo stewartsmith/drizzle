@@ -7,7 +7,7 @@
 DROP TABLE IF EXISTS t1, t2;
 --enable_warnings
 
-CREATE TABLE t1 (id INTEGER, grp TINYINT, id_rev INTEGER);
+CREATE TABLE t1 (id INTEGER, grp int, id_rev INTEGER);
 
 --disable_query_log
 SET @rnd_max= 2147483647;
@@ -15,9 +15,9 @@ let $1 = 1000;
 while ($1)
 {
   SET @rnd= RAND();
-  SET @id = CAST(@rnd * @rnd_max AS UNSIGNED);
+  SET @id = @rnd * @rnd_max;
   SET @id_rev= @rnd_max - @id;
-  SET @grp= CAST(127.0 * @rnd AS UNSIGNED); 
+  SET @grp= 127.0 * @rnd;
   INSERT INTO t1 (id, grp, id_rev) VALUES (@id, @grp, @id_rev); 
   dec $1;
 }

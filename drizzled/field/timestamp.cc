@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -69,9 +69,9 @@
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
 
-Field_timestamp::Field_timestamp(uchar *ptr_arg,
+Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  uint32_t len_arg __attribute__((unused)),
-                                 uchar *null_ptr_arg, uchar null_bit_arg,
+                                 unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TABLE_SHARE *share,
@@ -95,8 +95,8 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((uchar*) 0, MAX_DATETIME_WIDTH,
-             maybe_null_arg ? (uchar*) "": 0, 0,
+  :Field_str((unsigned char*) 0, MAX_DATETIME_WIDTH,
+             maybe_null_arg ? (unsigned char*) "": 0, 0,
 	     NONE, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
@@ -142,7 +142,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 
 int Field_timestamp::store(const char *from,
-                           uint len,
+                           uint32_t len,
                            const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
@@ -214,7 +214,7 @@ int Field_timestamp::store(int64_t nr,
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE), &error);
-  if (tmp == -1LL)
+  if (tmp == INT64_C(-1))
   {
     error= 2;
   }
@@ -268,8 +268,9 @@ int64_t Field_timestamp::val_int(void)
   
   thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
   
-  return time_tmp.year * 10000000000LL + time_tmp.month * 100000000LL +
-         time_tmp.day * 1000000L + time_tmp.hour * 10000L +
+  return time_tmp.year * INT64_C(10000000000) +
+         time_tmp.month * INT64_C(100000000) +
+         time_tmp.day * 1000000 + time_tmp.hour * 10000 +
          time_tmp.minute * 100 + time_tmp.second;
 }
 
@@ -346,7 +347,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 }
 
 
-bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
+bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
   THD *thd= table ? table->in_use : current_thd;
@@ -384,7 +385,7 @@ bool Field_timestamp::send_binary(Protocol *protocol)
 }
 
 
-int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -403,7 +404,7 @@ int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
 }
 
 
-void Field_timestamp::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_timestamp::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table || !table->s->db_low_byte_first)

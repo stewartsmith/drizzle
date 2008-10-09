@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @file
@@ -140,7 +144,7 @@ void insert_into_hash(hash_lex_struct *root, const char *name,
     int index2= root->iresult;
     const char *name2= (index2 < 0 ? sql_functions[-index2-1] :
 			symbols[index2]).name + len_from_begin;
-    root->first_char= (int) (uchar) name2[0];
+    root->first_char= (int) (unsigned char) name2[0];
     root->last_char= (char) root->first_char;
     tails= (hash_lex_struct*)malloc(sizeof(hash_lex_struct));
     root->char_tails= tails;
@@ -162,7 +166,7 @@ void insert_into_hash(hash_lex_struct *root, const char *name,
     end= tails + new_size - real_size;
     for (cur= tails; cur<end; cur++)
       cur->first_char= 0;
-    root->first_char= (int) (uchar) *name;
+    root->first_char= (int) (unsigned char) *name;
   }
 
   if (root->last_char<(*name))
@@ -217,10 +221,10 @@ void calc_length()
 {
   SYMBOL *cur, *end= symbols + array_elements(symbols);
   for (cur= symbols; cur < end; cur++)
-    cur->length=(uchar) strlen(cur->name);
+    cur->length=(unsigned char) strlen(cur->name);
   end= sql_functions + array_elements(sql_functions);
   for (cur= sql_functions; cur<end; cur++)
-    cur->length=(uchar) strlen(cur->name);
+    cur->length=(unsigned char) strlen(cur->name);
 }
 
 void generate_find_structs()
@@ -305,7 +309,7 @@ void print_hash_map(const char *name)
   char *cur;
   int i;
 
-  printf("static uchar %s[%d]= {\n",name,size_hash_map);
+  printf("static unsigned char %s[%d]= {\n",name,size_hash_map);
   for (i=0, cur= hash_map; i<size_hash_map; i++, cur++)
   {
     switch(i%4){
@@ -315,8 +319,8 @@ void print_hash_map(const char *name)
       else
 	printf("\'%c\', ",*cur);
       break;
-    case 2: printf("%u, ",(uint)(uchar)*cur); break;
-    case 3: printf("%u,\n",(uint)(uchar)*cur); break;
+    case 2: printf("%u, ",(uint)(unsigned char)*cur); break;
+    case 3: printf("%u,\n",(uint)(unsigned char)*cur); break;
     }
   }
   printf("};\n");
@@ -346,7 +350,7 @@ static void usage(int version)
 	 my_progname, DRIZZLE_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
   if (version)
     return;
-  puts("Copyright (C) 2001 MySQL AB, by VVA and Monty");
+  puts("Copyright (C) 2008 Sun Microsystems, Inc.");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
 and you are welcome to modify and redistribute it under the GPL license\n");
   puts("This program generates a perfect hashing function for the sql_lex.cc");
@@ -446,24 +450,24 @@ int main(int argc,char **argv)
   /* Broken up to indicate that it's not advice to you, gentle reader. */
   printf("/*\n\n  Do " "not " "edit " "this " "file " "directly!\n\n*/\n");
 
-  printf("\
-/* Copyright (C) 2001-2004 MySQL AB\n\
-\n\
-   This program is free software; you can redistribute it and/or modify\n\
-   it under the terms of the GNU General Public License as published by\n\
-   the Free Software Foundation; version 2 of the License.\n\
-\n\
-   This program is distributed in the hope that it will be useful,\n\
-   but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
-   GNU General Public License for more details.\n\
-\n\
-   You should have received a copy of the GNU General Public License\n\
-   along with this program; see the file COPYING. If not, write to the\n\
-   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston\n\
-   MA  02110-1301  USA. */\n\
-\n\
-");
+  printf("/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*- \n"
+         " *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab: \n"
+         " * \n"
+         " *  Copyright (C) 2008 Sun Microsystems \n"
+         " * \n"
+         " *  This program is free software; you can redistribute it and/or modify \n"
+         " *  it under the terms of the GNU General Public License as published by \n"
+         " *  the Free Software Foundation; version 2 of the License. \n"
+         " * \n"
+         " *  This program is distributed in the hope that it will be useful, \n"
+         " *  but WITHOUT ANY WARRANTY; without even the implied warranty of \n"
+         " *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n"
+         " *  GNU General Public License for more details. \n"
+         " * \n"
+         " *  You should have received a copy of the GNU General Public License \n"
+         " *  along with this program; if not, write to the Free Software \n"
+         " *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA \n"
+         " */\n");
 
   /* Broken up to indicate that it's not advice to you, gentle reader. */
   printf("/* Do " "not " "edit " "this " "file!  This is generated by "
@@ -485,7 +489,7 @@ int main(int argc,char **argv)
 static SYMBOL *get_hash_symbol(const char *s,\n\
                                unsigned int len,bool function)\n\
 {\n\
-  register uchar *hash_map;\n\
+  register unsigned char *hash_map;\n\
   register const char *cur_str= s;\n\
 \n\
   if (len == 0) {\n\
@@ -500,7 +504,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
     register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
-      register uchar first_char= (uchar)cur_struct;\n\
+      register unsigned char first_char= (unsigned char)cur_struct;\n\
 \n\
       if (first_char == 0)\n\
       {\n\
@@ -511,14 +515,14 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
           res= symbols+ires;\n\
         else\n\
           res= sql_functions-ires-1;\n\
-        register uint count= cur_str-s;\n\
+        register uint32_t count= cur_str-s;\n\
         return lex_casecmp(cur_str,res->name+count,len-count) ? 0 : res;\n\
       }\n\
 \n\
-      register uchar cur_char= (uchar)to_upper_lex[(uchar)*cur_str];\n\
+      register unsigned char cur_char= (unsigned char)to_upper_lex[(unsigned char)*cur_str];\n\
       if (cur_char<first_char) return 0;\n\
       cur_struct>>=8;\n\
-      if (cur_char>(uchar)cur_struct) return 0;\n\
+      if (cur_char>(unsigned char)cur_struct) return 0;\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\
@@ -534,20 +538,20 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
     register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
-      register uchar first_char= (uchar)cur_struct;\n\
+      register unsigned char first_char= (unsigned char)cur_struct;\n\
 \n\
       if (first_char==0){\n\
         register int16_t ires= (int16_t)(cur_struct>>16);\n\
         if (ires==array_elements(symbols)) return 0;\n\
         register SYMBOL *res= symbols+ires;\n\
-        register uint count= cur_str-s;\n\
+        register uint32_t count= cur_str-s;\n\
         return lex_casecmp(cur_str,res->name+count,len-count)!=0 ? 0 : res;\n\
       }\n\
 \n\
-      register uchar cur_char= (uchar)to_upper_lex[(uchar)*cur_str];\n\
+      register unsigned char cur_char= (unsigned char)to_upper_lex[(unsigned char)*cur_str];\n\
       if (cur_char<first_char) return 0;\n\
       cur_struct>>=8;\n\
-      if (cur_char>(uchar)cur_struct) return 0;\n\
+      if (cur_char>(unsigned char)cur_struct) return 0;\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\

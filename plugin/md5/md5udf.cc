@@ -14,82 +14,74 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/common_includes.h>
+#include <drizzled/item_func.h>
+#include <drizzled/item_strfunc.h>
+
 #include <openssl/md5.h>
 
-bool udf_init_md5udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
+class Item_func_md5 : public Item_str_func
 {
-  /* initid->ptr keeps state for between udf_init_foo and udf_deinit_foo */
-  initid->ptr= NULL;
+public:
+  const char *func_name() const { return "md5"; }
+  String *val_str(String*);
+  void fix_length_and_dec() {
+    max_length=32;
+    args[0]->collation.set(
+      get_charset_by_csname(args[0]->collation.collation->csname,
+                            MY_CS_BINSORT,MYF(0)), DERIVATION_COERCIBLE);
+  }
 
-  if (args->arg_count != 1)
-   {
-      strcpy(message,"MD5() requires one arguments");
-      return 1;
-   }
+};
 
-   if (args->arg_type[0] != STRING_RESULT)
-   {
-      strcpy(message,"MD5() requires a string");
-      return 1;
-   }
 
+String *Item_func_md5::val_str(String *str)
+{
+  assert(fixed == 1);
+  String * sptr= args[0]->val_str(str);
+  str->set_charset(&my_charset_bin);
+  if (sptr)
+  {
+    MD5_CTX context;
+    unsigned char digest[16];
+
+    null_value=0;
+    MD5_Init (&context);
+    MD5_Update (&context,(unsigned char *) sptr->ptr(), sptr->length());
+    MD5_Final (digest, &context);
+    if (str->alloc(32))				// Ensure that memory is free
+    {
+      null_value=1;
+      return 0;
+    }
+    snprintf((char *) str->ptr(), 33,
+	    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+	    digest[0], digest[1], digest[2], digest[3],
+	    digest[4], digest[5], digest[6], digest[7],
+	    digest[8], digest[9], digest[10], digest[11],
+	    digest[12], digest[13], digest[14], digest[15]);
+    str->length((uint) 32);
+    return str;
+  }
+  null_value=1;
   return 0;
 }
 
-char *udf_doit_md5(UDF_INIT *initid, UDF_ARGS *args, char *result,
-			   unsigned long *length, char *is_null, char *error)
+
+Item_func* create_md5udf_item(MEM_ROOT* m)
 {
-  MD5_CTX context;
-  uchar digest[16];
-
-  (void)initid;
-
-  MD5_Init(&context);
-
-  MD5_Update(&context, args->args[0], args->lengths[0]);
-
-  MD5_Final(digest, &context);
-
-  sprintf(result,
-          "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-          digest[0], digest[1], digest[2], digest[3],
-          digest[4], digest[5], digest[6], digest[7],
-          digest[8], digest[9], digest[10], digest[11],
-          digest[12], digest[13], digest[14], digest[15]);
-
-  *length= 32;
-
-  /* is_null is already zero, this is a demonstration */
-  *is_null= 0;
-
-  /* error is already zero, this is a demonstration */
-  *error= 0;
-
-  return result;
+  return  new (m) Item_func_md5();
 }
 
-void udf_deinit_md5udf(UDF_INIT *initid)
-{
-  (void)initid;
-  /* if we allocated initid->ptr, free it here */
-  return;
-}
-
+struct udf_func md5udf = {
+  { C_STRING_WITH_LEN("md5") },
+  create_md5udf_item
+};
 
 static int md5udf_plugin_init(void *p)
 {
-  udf_func *udff= (udf_func *) p;
-  static char md5str[4];
+  udf_func **f = (udf_func**) p;
 
-  strcpy(md5str, "md5");
-
-  udff->name.str= md5str;
-  udff->name.length= strlen("md5");
-  udff->type= UDFTYPE_FUNCTION;
-  udff->returns= STRING_RESULT;
-  udff->func_init= udf_init_md5udf;
-  udff->func_deinit= udf_deinit_md5udf;
-  udff->func= (Udf_func_any) udf_doit_md5;
+  *f= &md5udf;
 
   return 0;
 }

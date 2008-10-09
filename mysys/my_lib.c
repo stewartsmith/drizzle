@@ -66,7 +66,7 @@ void my_dirend(MY_DIR *buffer)
                                     ALIGN_SIZE(sizeof(MY_DIR))));
     free_root((MEM_ROOT*)((char*)buffer + ALIGN_SIZE(sizeof(MY_DIR)) + 
                           ALIGN_SIZE(sizeof(DYNAMIC_ARRAY))), MYF(0));
-    my_free((uchar*) buffer,MYF(0));
+    free((unsigned char*) buffer);
   }
   return;
 } /* my_dirend */
@@ -110,7 +110,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   if (my_init_dynamic_array(dir_entries_storage, sizeof(FILEINFO),
                             ENTRIES_START_SIZE, ENTRIES_INCREMENT))
   {
-    my_free((uchar*) buffer,MYF(0));
+    free((unsigned char*) buffer);
     goto error;
   }
   init_alloc_root(names_storage, NAMES_START_SIZE, NAMES_START_SIZE);
@@ -134,15 +134,15 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
         goto error;
       
       memset(finfo.mystat, 0, sizeof(struct stat));
-      VOID(stpcpy(tmp_file,dp->d_name));
-      VOID(stat(tmp_path, finfo.mystat));
+      my_stpcpy(tmp_file,dp->d_name);
+      stat(tmp_path, finfo.mystat);
       if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
     }
     else
       finfo.mystat= NULL;
 
-    if (push_dynamic(dir_entries_storage, (uchar*)&finfo))
+    if (push_dynamic(dir_entries_storage, (unsigned char*)&finfo))
       goto error;
   }
 
@@ -190,7 +190,7 @@ char * directory_file_name (char * dst, const char *src)
 
   if (src[0] == 0)
     src= (char*) ".";				/* Use empty as current */
-  end=stpcpy(dst, src);
+  end=my_stpcpy(dst, src);
   if (end[-1] != FN_LIBCHAR)
   {
     end[0]=FN_LIBCHAR;				/* Add last '/' */

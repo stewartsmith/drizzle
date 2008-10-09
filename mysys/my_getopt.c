@@ -29,7 +29,7 @@ typedef void (*init_func_p)(const struct my_option *option, char **variable,
 static void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
 
-static int findopt(char *optpat, uint length,
+static int findopt(char *optpat, uint32_t length,
 		   const struct my_option **opt_res,
 		   char **ffname);
 static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
@@ -52,7 +52,7 @@ static char *check_struct_option(char *cur_arg, char *key_name);
 */
 static const char *special_opt_prefix[]=
 {"skip", "disable", "enable", "maximum", "loose", 0};
-static const uint special_opt_prefix_lengths[]=
+static const uint32_t special_opt_prefix_lengths[]=
 { 4,      7,         6,        7,         5,      0};
 enum enum_special_opt
 { OPT_SKIP, OPT_DISABLE, OPT_ENABLE, OPT_MAXIMUM, OPT_LOOSE};
@@ -111,7 +111,7 @@ int handle_options(int *argc, char ***argv,
 		   const struct my_option *longopts,
                    my_get_one_option get_one_option)
 {
-  uint opt_found, argvpos= 0, length;
+  uint32_t opt_found, argvpos= 0, length;
   bool end_of_options= 0, must_be_var, set_maximum_value=false,
           option_is_loose;
   char **pos, **pos_end, *optend, *prev_found=NULL,
@@ -443,7 +443,7 @@ invalid value '%s'",
 	  opt_found= 0;
 	  for (optp= longopts; optp->id; optp++)
 	  {
-	    if (optp->id == (int) (uchar) *optend)
+	    if (optp->id == (int) (unsigned char) *optend)
 	    {
 	      /* Option recognized. Find next what to do with it */
 	      opt_found= 1;
@@ -574,7 +574,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   */
   if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
-    uint len= (uint) (ptr - cur_arg);
+    uint32_t len= (uint) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);
     strmake(key_name, cur_arg, len);
     return ++ptr;
@@ -636,7 +636,7 @@ static int setval(const struct my_option *opts, char **value, char *argument,
       break;
     case GET_STR_ALLOC:
       if ((*((char**) result_pos)))
-	my_free((*(char**) result_pos), MYF(MY_WME | MY_FAE));
+	free((*(char**) result_pos));
       if (!(*((char**) result_pos)= my_strdup(argument, MYF(MY_WME))))
 	return EXIT_OUT_OF_MEMORY;
       break;
@@ -681,11 +681,11 @@ static int setval(const struct my_option *opts, char **value, char *argument,
         ffname points to first matching option
 */
 
-static int findopt(char *optpat, uint length,
+static int findopt(char *optpat, uint32_t length,
 		   const struct my_option **opt_res,
 		   char **ffname)
 {
-  uint count;
+  uint32_t count;
   struct my_option *opt= (struct my_option *) *opt_res;
 
   for (count= 0; opt->name; opt++)
@@ -722,7 +722,7 @@ static int findopt(char *optpat, uint length,
 */
 
 bool getopt_compare_strings(register const char *s, register const char *t,
-			       uint length)
+			       uint32_t length)
 {
   char const *end= s + length;
   for (;s != end ; s++, t++)
@@ -820,13 +820,11 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
     }
     break;
   case GET_LONG:
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (int64_t) LONG_MAX)
+    if (num > (int64_t) INT32_MAX)
     {
-      num= ((int64_t) LONG_MAX);
+      num= ((int64_t) INT32_MAX);
       adjusted= true;
     }
-#endif
     break;
   default:
     assert((optp->var_type & GET_TYPE_MASK) == GET_LL);
@@ -854,7 +852,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
 /*
   function: getopt_ull
 
-  This is the same as getopt_ll, but is meant for unsigned long long
+  This is the same as getopt_ll, but is meant for uint64_t
   values.
 */
 
@@ -888,13 +886,11 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     }
     break;
   case GET_ULONG:
-#if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (uint64_t) ULONG_MAX)
+    if (num > (uint64_t) UINT32_MAX)
     {
-      num= ((uint64_t) ULONG_MAX);
+      num= ((uint64_t) UINT32_MAX);
       adjusted= true;
     }
-#endif
     break;
   default:
     assert((optp->var_type & GET_TYPE_MASK) == GET_ULL);
@@ -952,7 +948,7 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
   }
   if (optp->max_value && num > (double) optp->max_value)
     num= (double) optp->max_value;
-  return max(num, (double) optp->min_value);
+  return cmax(num, (double) optp->min_value);
 }
 
 /*
@@ -1013,7 +1009,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     */
     if ((char*) (intptr_t) value)
     {
-      my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
+      free((*(char**) variable));
       *((char**) variable)= my_strdup((char*) (intptr_t) value, MYF(MY_WME));
     }
     break;
@@ -1038,7 +1034,7 @@ static void fini_one_value(const struct my_option *option, char **variable,
 {
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_STR_ALLOC:
-    my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
+    free((*(char**) variable));
     *((char**) variable)= NULL;
     break;
   default: /* dummy default to avoid compiler warnings */
@@ -1098,7 +1094,7 @@ static void init_variables(const struct my_option *options,
 
 void my_print_help(const struct my_option *options)
 {
-  uint col, name_space= 22, comment_space= 57;
+  uint32_t col, name_space= 22, comment_space= 57;
   const char *line_end;
   const struct my_option *optp;
 
@@ -1182,7 +1178,7 @@ void my_print_help(const struct my_option *options)
 
 void my_print_variables(const struct my_option *options)
 {
-  uint name_space= 34, length, nr;
+  uint32_t name_space= 34, length, nr;
   uint64_t bit, llvalue;
   char buff[255];
   const struct my_option *optp;

@@ -22,9 +22,9 @@
 #ifndef MAIN
 
 #if defined(__FreeBSD__) || defined(__linux__)
-static bool memcpy_and_test(uchar *to, uchar *from, uint len)
+static bool memcpy_and_test(unsigned char *to, unsigned char *from, uint32_t len)
 {
-  uint i, res=1;
+  uint32_t i, res=1;
 
   for (i=0; i < len; i++)
     if ((*to++= *from++))
@@ -41,10 +41,10 @@ static bool memcpy_and_test(uchar *to, uchar *from, uint len)
 #include <net/if.h>
 #include <net/if_dl.h>
 
-bool my_gethwaddr(uchar *to)
+bool my_gethwaddr(unsigned char *to)
 {
   size_t len;
-  uchar  *buf, *next, *end, *addr;
+  unsigned char  *buf, *next, *end, *addr;
   struct if_msghdr *ifm;
   struct sockaddr_dl *sdl;
   int i, res=1, mib[6]={CTL_NET, AF_ROUTE, 0, AF_LINK, NET_RT_IFLIST, 0};
@@ -79,7 +79,7 @@ err:
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
 
-bool my_gethwaddr(uchar *to)
+bool my_gethwaddr(unsigned char *to)
 {
   int fd, res=1;
   struct ifreq ifr;
@@ -89,11 +89,11 @@ bool my_gethwaddr(uchar *to)
     goto err;
 
   memset(&ifr, 0, sizeof(ifr));
-  stpncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name) - 1);
+  my_stpncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name) - 1);
 
   do {
     if (ioctl(fd, SIOCGIFHWADDR, &ifr) >= 0)
-      res=memcpy_and_test(to, (uchar *)&ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN);
+      res=memcpy_and_test(to, (unsigned char *)&ifr.ifr_hwaddr.sa_data, ETHER_ADDR_LEN);
   } while (res && (errno == 0 || errno == ENODEV) && ifr.ifr_name[3]++ < '6');
 
   close(fd);
@@ -103,7 +103,7 @@ err:
 
 #else   /* FreeBSD elif linux */
 /* just fail */
-bool my_gethwaddr(uchar *to __attribute__((unused)))
+bool my_gethwaddr(unsigned char *to __attribute__((unused)))
 {
   return 1;
 }
@@ -112,8 +112,8 @@ bool my_gethwaddr(uchar *to __attribute__((unused)))
 #else /* MAIN */
 int main(int argc __attribute__((unused)),char **argv)
 {
-  uchar mac[6];
-  uint i;
+  unsigned char mac[6];
+  uint32_t i;
   MY_INIT(argv[0]);
   if (my_gethwaddr(mac))
   {

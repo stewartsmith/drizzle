@@ -1,3 +1,22 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Brian Aker
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #ifndef DRIZZLED_SJ_TMP_TABLE_H
 #define DRIZZLED_SJ_TMP_TABLE_H
 
@@ -25,16 +44,16 @@ public:
   {
   public:
     struct st_join_table *join_tab;
-    uint rowid_offset;
-    ushort null_byte;
-    uchar null_bit;
+    uint32_t rowid_offset;
+    uint16_t null_byte;
+    unsigned char null_bit;
   };
   TAB *tabs;
   TAB *tabs_end;
 
-  uint null_bits;
-  uint null_bytes;
-  uint rowid_len;
+  uint32_t null_bits;
+  uint32_t null_bytes;
+  uint32_t rowid_len;
 
   Table *tmp_table;
 
@@ -46,7 +65,7 @@ public:
 };
 
 Table *create_duplicate_weedout_tmp_table(THD *thd, 
-					  uint uniq_tuple_length_arg,
+					  uint32_t uniq_tuple_length_arg,
 					  SJ_TMP_TABLE *sjtbl);
 
 #endif /* DRIZZLED_SJ_TMP_TABLE_H */

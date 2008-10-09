@@ -84,6 +84,8 @@
 #include <ctype.h>
 #include <string>
 
+using namespace std;
+
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
 #endif
@@ -104,7 +106,7 @@ pthread_cond_t timer_alarm_threshold;
 static char **defaults_argv;
 
 char **primary_keys;
-unsigned long long primary_keys_number_of;
+uint64_t primary_keys_number_of;
 
 static char *host= NULL, *opt_password= NULL, *user= NULL,
   *user_supplied_query= NULL,
@@ -157,7 +159,6 @@ static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
-static char *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -172,8 +173,6 @@ uint *concurrency;
 const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
 File csv_file;
-
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
@@ -218,9 +217,9 @@ struct stats {
   long int timing;
   uint users;
   uint real_users;
-  unsigned long long rows;
+  uint64_t rows;
   long int create_timing;
-  unsigned long long create_count;
+  uint64_t create_count;
 };
 
 typedef struct thread_context thread_context;
@@ -239,17 +238,17 @@ struct conclusions {
   long int min_timing;
   uint users;
   uint real_users;
-  unsigned long long avg_rows;
+  uint64_t avg_rows;
   long int sum_of_time;
   long int std_dev;
   /* These are just for create time stats */
   long int create_avg_timing;
   long int create_max_timing;
   long int create_min_timing;
-  unsigned long long create_count;
+  uint64_t create_count;
   /* The following are not used yet */
-  unsigned long long max_rows;
-  unsigned long long min_rows;
+  uint64_t max_rows;
+  uint64_t min_rows;
 };
 
 static option_string *engine_options= NULL;
@@ -319,9 +318,6 @@ int main(int argc, char **argv)
 
   MY_INIT(argv[0]);
 
-  if (!(drizzle_thread_safe()))
-    fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
-
   load_defaults("my",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(&argc,&argv))
@@ -352,12 +348,12 @@ int main(int argc, char **argv)
 
   slap_connect(&drizzle, false);
 
-  VOID(pthread_mutex_init(&counter_mutex, NULL));
-  VOID(pthread_cond_init(&count_threshhold, NULL));
-  VOID(pthread_mutex_init(&sleeper_mutex, NULL));
-  VOID(pthread_cond_init(&sleep_threshhold, NULL));
-  VOID(pthread_mutex_init(&timer_alarm_mutex, NULL));
-  VOID(pthread_cond_init(&timer_alarm_threshold, NULL));
+  pthread_mutex_init(&counter_mutex, NULL);
+  pthread_cond_init(&count_threshhold, NULL);
+  pthread_mutex_init(&sleeper_mutex, NULL);
+  pthread_cond_init(&sleep_threshhold, NULL);
+  pthread_mutex_init(&timer_alarm_mutex, NULL);
+  pthread_cond_init(&timer_alarm_threshold, NULL);
 
 
   /* Main iterations loop */
@@ -393,25 +389,25 @@ burnin:
   if (opt_burnin)
     goto burnin;
 
-  VOID(pthread_mutex_destroy(&counter_mutex));
-  VOID(pthread_cond_destroy(&count_threshhold));
-  VOID(pthread_mutex_destroy(&sleeper_mutex));
-  VOID(pthread_cond_destroy(&sleep_threshhold));
-  VOID(pthread_mutex_destroy(&timer_alarm_mutex));
-  VOID(pthread_cond_destroy(&timer_alarm_threshold));
+  pthread_mutex_destroy(&counter_mutex);
+  pthread_cond_destroy(&count_threshhold);
+  pthread_mutex_destroy(&sleeper_mutex);
+  pthread_cond_destroy(&sleep_threshhold);
+  pthread_mutex_destroy(&timer_alarm_mutex);
+  pthread_cond_destroy(&timer_alarm_threshold);
 
   slap_close(&drizzle);
 
   /* now free all the strings we created */
   if (opt_password)
-    my_free(opt_password, MYF(0));
+    free(opt_password);
 
-  my_free(concurrency, MYF(0));
+  free(concurrency);
 
   statement_cleanup(create_statements);
   for (x= 0; x < query_statements_count; x++)
     statement_cleanup(query_statements[x]);
-  my_free(query_statements, MYF(0));
+  free(query_statements);
   statement_cleanup(pre_statements);
   statement_cleanup(post_statements);
   option_cleanup(engine_options);
@@ -419,7 +415,7 @@ burnin:
 
 #ifdef HAVE_SMEM
   if (shared_memory_base_name)
-    my_free(shared_memory_base_name, MYF(MY_ALLOW_ZERO_PTR));
+    free(shared_memory_base_name);
 #endif
   free_defaults(defaults_argv);
   my_end(my_end_arg);
@@ -433,7 +429,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   stats *head_sptr;
   stats *sptr;
   conclusions conclusion;
-  unsigned long long client_limit;
+  uint64_t client_limit;
 
   head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
@@ -506,7 +502,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   if (opt_csv_str)
     print_conclusions_csv(&conclusion);
 
-  my_free(head_sptr, MYF(0));
+  free(head_sptr);
 
 }
 
@@ -734,7 +730,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start= argument;
-      my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
@@ -902,7 +898,7 @@ build_table_string(void)
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
   ptr->length= table_string.length()+1;
   ptr->type= CREATE_TABLE_TYPE;
-  stpcpy(ptr->string, table_string.c_str());
+  my_stpcpy(ptr->string, table_string.c_str());
   return(ptr);
 }
 
@@ -972,7 +968,7 @@ build_update_string(void)
     ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
   else
     ptr->type= UPDATE_TYPE;
-  stpcpy(ptr->string, update_string.c_str());
+  my_stpcpy(ptr->string, update_string.c_str());
   return(ptr);
 }
 
@@ -1092,7 +1088,7 @@ build_insert_string(void)
     }
 
     if (num_blob_cols_size > HUGE_STRING_LENGTH)
-      my_free(blob_ptr, MYF(0));
+      free(blob_ptr);
   }
 
   insert_string.append(")", 1);
@@ -1109,7 +1105,7 @@ build_insert_string(void)
   }
   ptr->length= insert_string.length()+1;
   ptr->type= INSERT_TYPE;
-  stpcpy(ptr->string, insert_string.c_str());
+  my_stpcpy(ptr->string, insert_string.c_str());
   return(ptr);
 }
 
@@ -1195,7 +1191,7 @@ build_select_string(bool key)
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
     ptr->type= SELECT_TYPE;
-  stpcpy(ptr->string, query_string.c_str());
+  my_stpcpy(ptr->string, query_string.c_str());
   return(ptr);
 }
 
@@ -1325,7 +1321,7 @@ get_options(int *argc,char ***argv)
 
   if (auto_generate_sql)
   {
-    unsigned long long x= 0;
+    uint64_t x= 0;
     statement *ptr_statement;
 
     if (verbose >= 2)
@@ -1474,11 +1470,11 @@ get_options(int *argc,char ***argv)
       }
       tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-      my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
-      my_free(tmp_string, MYF(0));
+      free(tmp_string);
     }
     else if (create_string)
     {
@@ -1511,13 +1507,13 @@ get_options(int *argc,char ***argv)
       }
       tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-      my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+      my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
       tmp_string[sbuf.st_size]= '\0';
       my_close(data_file,MYF(0));
       if (user_supplied_query)
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
-      my_free(tmp_string, MYF(0));
+      free(tmp_string);
     }
     else if (user_supplied_query)
     {
@@ -1543,13 +1539,13 @@ get_options(int *argc,char ***argv)
     }
     tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-    my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
     if (user_supplied_pre_statements)
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
-    my_free(tmp_string, MYF(0));
+    free(tmp_string);
   }
   else if (user_supplied_pre_statements)
   {
@@ -1575,13 +1571,13 @@ get_options(int *argc,char ***argv)
     }
     tmp_string= (char *)my_malloc(sbuf.st_size + 1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-    my_read(data_file, (uchar*) tmp_string, sbuf.st_size, MYF(0));
+    my_read(data_file, (unsigned char*) tmp_string, sbuf.st_size, MYF(0));
     tmp_string[sbuf.st_size]= '\0';
     my_close(data_file,MYF(0));
     if (user_supplied_post_statements)
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);
-    my_free(tmp_string, MYF(0));
+    free(tmp_string);
   }
   else if (user_supplied_post_statements)
   {
@@ -1596,7 +1592,7 @@ get_options(int *argc,char ***argv)
     parse_option(default_engine, &engine_options, ',');
 
   if (tty_password)
-    opt_password= get_tty_password(NullS);
+    opt_password= get_tty_password(NULL);
   return(0);
 }
 
@@ -1620,7 +1616,7 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
 {
   DRIZZLE_RES *result;
   DRIZZLE_ROW row;
-  unsigned long long counter;
+  uint64_t counter;
 
 
   /*
@@ -1673,14 +1669,14 @@ generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
 static int
 drop_primary_key_list(void)
 {
-  unsigned long long counter;
+  uint64_t counter;
 
   if (primary_keys_number_of)
   {
     for (counter= 0; counter < primary_keys_number_of; counter++)
-      my_free(primary_keys[counter], MYF(0));
+      free(primary_keys[counter]);
 
-    my_free(primary_keys, MYF(0));
+    free(primary_keys);
   }
 
   return 0;
@@ -1963,14 +1959,6 @@ pthread_handler_t timer_thread(void *p)
   struct timespec abstime;
 
 
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
-
   /*
     We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
@@ -1992,7 +1980,6 @@ pthread_handler_t timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  drizzle_thread_end();
   return(0);
 }
 
@@ -2006,13 +1993,6 @@ pthread_handler_t run_task(void *p)
   DRIZZLE_ROW row;
   statement *ptr;
   thread_context *con= (thread_context *)p;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2137,9 +2117,8 @@ end:
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
 
-  my_free(con, MYF(0));
+  free(con);
 
-  drizzle_thread_end();
   return(0);
 }
 
@@ -2310,11 +2289,11 @@ print_conclusions(conclusions *con)
   printf("\tTotal time for tests: %ld.%03ld seconds\n",
          con->sum_of_time / 1000, con->sum_of_time % 1000);
   printf("\tStandard Deviation: %ld.%03ld\n", con->std_dev / 1000, con->std_dev % 1000);
-  printf("\tNumber of queries in create queries: %llu\n", con->create_count);
+  printf("\tNumber of queries in create queries: %"PRIu64"\n", con->create_count);
   printf("\tNumber of clients running queries: %u/%u\n",
          con->users, con->real_users);
   printf("\tNumber of times test was run: %u\n", iterations);
-  printf("\tAverage number of queries per client: %llu\n", con->avg_rows);
+  printf("\tAverage number of queries per client: %"PRIu64"\n", con->avg_rows);
   printf("\n");
 }
 
@@ -2356,7 +2335,8 @@ print_conclusions_csv(conclusions *con)
     snprintf(label_buffer, HUGE_STRING_LENGTH, "query");
 
   snprintf(buffer, HUGE_STRING_LENGTH,
-           "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%u,%u,%u,%llu\n",
+           "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
+           "%u,%u,%u,%"PRIu64"\n",
            con->engine ? con->engine : "", /* Storage engine we ran against */
            label_buffer, /* Load type */
            con->avg_timing / 1000, con->avg_timing % 1000, /* Time to load */
@@ -2369,7 +2349,7 @@ print_conclusions_csv(conclusions *con)
            con->real_users, /* Children used max_timing */
            con->avg_rows  /* Queries run */
            );
-  my_write(csv_file, (uchar*) buffer, (uint)strlen(buffer), MYF(0));
+  my_write(csv_file, (unsigned char*) buffer, (uint)strlen(buffer), MYF(0));
 }
 
 void
@@ -2439,10 +2419,10 @@ option_cleanup(option_string *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0));
+      free(ptr->string);
     if (ptr->option)
-      my_free(ptr->option, MYF(0));
-    my_free(ptr, MYF(0));
+      free(ptr->option);
+    free(ptr);
   }
 }
 
@@ -2457,8 +2437,8 @@ statement_cleanup(statement *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0));
-    my_free(ptr, MYF(0));
+      free(ptr->string);
+    free(ptr);
   }
 }
 
@@ -2487,10 +2467,7 @@ slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
   drizzle_create(drizzle);
 
   if (opt_compress)
-    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
-  /* We always do opt_protocol to TCP/IP */
-  drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
 
   for (x= 0; x < 10; x++)
   {

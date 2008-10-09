@@ -19,7 +19,7 @@
 #include "my_nosys.h"
 
 
-size_t my_quick_read(File Filedes,uchar *Buffer,size_t Count,myf MyFlags)
+size_t my_quick_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags)
 {
   size_t readbytes;
 
@@ -32,7 +32,7 @@ size_t my_quick_read(File Filedes,uchar *Buffer,size_t Count,myf MyFlags)
 }
 
 
-size_t my_quick_write(File Filedes,const uchar *Buffer,size_t Count)
+size_t my_quick_write(File Filedes,const unsigned char *Buffer,size_t Count)
 {
   if ((
        (size_t) write(Filedes,Buffer,Count)) != Count)

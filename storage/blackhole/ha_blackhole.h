@@ -22,8 +22,8 @@
 */
 struct st_blackhole_share {
   THR_LOCK lock;
-  uint use_count;
-  uint table_name_length;
+  uint32_t use_count;
+  uint32_t table_name_length;
   char table_name[1];
 };
 
@@ -48,16 +48,17 @@ public:
     The name of the index type that will be used for display
     don't implement this method unless you really have indexes
   */
-  const char *index_type(uint key_number);
+  const char *index_type(uint32_t key_number);
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
-    return(HA_NULL_IN_KEY | HA_CAN_FULLTEXT | HA_CAN_SQL_HANDLER |
+    return(HA_NULL_IN_KEY |
            HA_BINLOG_STMT_CAPABLE |
-           HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY |
-           HA_FILE_BASED | HA_CAN_GEOMETRY | HA_CAN_INSERT_DELAYED);
+           HA_CAN_INDEX_BLOBS | 
+           HA_AUTO_PART_KEY |
+           HA_FILE_BASED);
   }
-  uint32_t index_flags(uint inx, uint part __attribute__((unused)),
+  uint32_t index_flags(uint32_t inx, uint32_t part __attribute__((unused)),
                        bool all_parts __attribute__((unused))) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
@@ -68,27 +69,27 @@ public:
 #define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
 #define BLACKHOLE_MAX_KEY_SEG	16		/* Max segments for key */
 #define BLACKHOLE_MAX_KEY_LENGTH 1000
-  uint max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
-  uint max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
-  uint max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
-  int open(const char *name, int mode, uint test_if_locked);
+  uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
+  int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(uchar * buf);
+  int write_row(unsigned char * buf);
   int rnd_init(bool scan);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
-  int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map,
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
+  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
-  int index_read_idx_map(uchar * buf, uint idx, const uchar * key,
+  int index_read_idx_map(unsigned char * buf, uint32_t idx, const unsigned char * key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
-  int index_read_last_map(uchar * buf, const uchar * key, key_part_map keypart_map);
-  int index_next(uchar * buf);
-  int index_prev(uchar * buf);
-  int index_first(uchar * buf);
-  int index_last(uchar * buf);
-  void position(const uchar *record);
-  int info(uint flag);
+  int index_read_last_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map);
+  int index_next(unsigned char * buf);
+  int index_prev(unsigned char * buf);
+  int index_first(unsigned char * buf);
+  int index_last(unsigned char * buf);
+  void position(const unsigned char *record);
+  int info(uint32_t flag);
   int external_lock(THD *thd, int lock_type);
   int create(const char *name, Table *table_arg,
              HA_CREATE_INFO *create_info);

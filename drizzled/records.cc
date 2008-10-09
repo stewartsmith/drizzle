@@ -30,7 +30,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info);
 static int rr_from_pointers(READ_RECORD *info);
 static int rr_from_cache(READ_RECORD *info);
 static int init_rr_cache(THD *thd, READ_RECORD *info);
-static int rr_cmp(uchar *a,uchar *b);
+static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
 
@@ -54,7 +54,7 @@ static int rr_index(READ_RECORD *info);
 void init_read_record_idx(READ_RECORD *info,
                           THD *thd __attribute__((unused)),
                           Table *table,
-                          bool print_error, uint idx)
+                          bool print_error, uint32_t idx)
 {
   empty_record(table);
   memset(info, 0, sizeof(*info));
@@ -153,7 +153,7 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
   
   if (table->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE &&
       !table->sort.addon_field)
-    VOID(table->file->extra(HA_EXTRA_MMAP));
+    table->file->extra(HA_EXTRA_MMAP);
   
   if (table->sort.addon_field)
   {
@@ -233,8 +233,7 @@ void init_read_record(READ_RECORD *info,THD *thd, Table *table,
 	 !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
 	 (use_record_cache < 0 &&
 	  !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
-      VOID(table->file->extra_opt(HA_EXTRA_CACHE,
-				  thd->variables.read_buff_size));
+      table->file->extra_opt(HA_EXTRA_CACHE, thd->variables.read_buff_size);
   }
   /* 
     Do condition pushdown for UPDATE/DELETE.
@@ -256,7 +255,7 @@ void end_read_record(READ_RECORD *info)
 {                   /* free cache if used */
   if (info->cache)
   {
-    my_free_lock((char*) info->cache,MYF(0));
+    free((char*) info->cache);
     info->cache=0;
   }
   if (info->table)
@@ -430,7 +429,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info)
 static int rr_from_pointers(READ_RECORD *info)
 {
   int tmp;
-  uchar *cache_pos;
+  unsigned char *cache_pos;
 
   for (;;)
   {
@@ -482,7 +481,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 
 static int init_rr_cache(THD *thd, READ_RECORD *info)
 {
-  uint rec_cache_size;
+  uint32_t rec_cache_size;
 
   info->struct_length= 3+MAX_REFLENGTH;
   info->reclength= ALIGN_SIZE(info->table->s->reclength+1);
@@ -497,7 +496,7 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
   if (info->cache_records <= 2 ||
-      !(info->cache=(uchar*) my_malloc_lock(rec_cache_size+info->cache_records*
+      !(info->cache=(unsigned char*) my_malloc_lock(rec_cache_size+info->cache_records*
 					   info->struct_length+1,
 					   MYF(0))))
     return(1);
@@ -514,11 +513,11 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 
 static int rr_from_cache(READ_RECORD *info)
 {
-  register uint i;
+  register uint32_t i;
   uint32_t length;
   my_off_t rest_of_file;
   int16_t error;
-  uchar *position,*ref_position,*record_pos;
+  unsigned char *position,*ref_position,*record_pos;
   uint32_t record;
 
   for (;;)
@@ -583,7 +582,7 @@ static int rr_from_cache(READ_RECORD *info)
 } /* rr_from_cache */
 
 
-static int rr_cmp(uchar *a,uchar *b)
+static int rr_cmp(unsigned char *a,unsigned char *b)
 {
   if (a[0] != b[0])
     return (int) a[0] - (int) b[0];

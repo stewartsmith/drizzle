@@ -35,8 +35,11 @@
     b= dummy;                      \
   } while (0)
 
-int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_length,
-		    uchar *b, uint b_length, bool part_key,
+#define CMP_NUM(a,b) (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
+
+
+int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint32_t a_length,
+		    unsigned char *b, uint32_t b_length, bool part_key,
 		    bool skip_end_space)
 {
   if (!part_key)
@@ -47,11 +50,11 @@ int ha_compare_text(const CHARSET_INFO * const charset_info, uchar *a, uint a_le
 }
 
 
-static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
+static int compare_bin(unsigned char *a, uint32_t a_length, unsigned char *b, uint32_t b_length,
                        bool part_key, bool skip_end_space)
 {
-  uint length= min(a_length,b_length);
-  uchar *end= a+ length;
+  uint32_t length= cmin(a_length,b_length);
+  unsigned char *end= a+ length;
   int flag;
 
   while (a < end)
@@ -130,9 +133,9 @@ static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
 
 #define FCMP(A,B) ((int) (A) - (int) (B))
 
-int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
-	       register uchar *b, uint key_length, uint nextflag,
-	       uint *diff_pos)
+int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
+	       register unsigned char *b, uint32_t key_length, uint32_t nextflag,
+	       uint32_t *diff_pos)
 {
   int flag;
   int16_t s_1,s_2;
@@ -140,14 +143,14 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
   uint32_t u_1,u_2;
   float f_1,f_2;
   double d_1,d_2;
-  uint next_key_length;
-  uchar *orig_b= b;
+  uint32_t next_key_length;
+  unsigned char *orig_b= b;
 
   *diff_pos=0;
   for ( ; (int) key_length >0 ; key_length=next_key_length, keyseg++)
   {
-    uchar *end;
-    uint piks=! (keyseg->flag & HA_NO_SORT);
+    unsigned char *end;
+    uint32_t piks=! (keyseg->flag & HA_NO_SORT);
     (*diff_pos)++;
     diff_pos[1]= (uint)(b - orig_b);
 
@@ -178,7 +181,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
         continue;                               /* To next key part */
       }
     }
-    end= a+ min(keyseg->length,key_length);
+    end= a+ cmin(keyseg->length,key_length);
     next_key_length=key_length-keyseg->length;
 
     switch ((enum ha_base_keytype) keyseg->type) {
@@ -202,7 +205,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       }
       else
       {
-	uint length=(uint) (end-a), a_length=length, b_length=length;
+	uint32_t length=(uint) (end-a), a_length=length, b_length=length;
         if (piks &&
             (flag= ha_compare_text(keyseg->charset, a, a_length, b, b_length,
 				   (bool) ((nextflag & SEARCH_PREFIX) &&
@@ -233,7 +236,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       }
       else
       {
-        uint length=keyseg->length;
+        uint32_t length=keyseg->length;
         if (piks &&
 	    (flag=compare_bin(a,length,b,length,
                               (bool) ((nextflag & SEARCH_PREFIX) &&
@@ -378,7 +381,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
       if (keyseg->flag & HA_REVERSE_SORT)
       {
-        swap_variables(uchar*, a, b);
+        swap_variables(unsigned char*, a, b);
         swap_flag=1;                            /* Remember swap of a & b */
         end= a+ (int) (end-b);
       }
@@ -403,7 +406,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 	  if (*b != '-')
 	    return -1;
 	  a++; b++;
-	  swap_variables(uchar*, a, b);
+	  swap_variables(unsigned char*, a, b);
 	  swap_variables(int, alength, blength);
 	  swap_flag=1-swap_flag;
 	  alength--; blength--;
@@ -432,7 +435,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       }
 
       if (swap_flag)                            /* Restore pointers */
-        swap_variables(uchar*, a, b);
+        swap_variables(unsigned char*, a, b);
       break;
     }
     case HA_KEYTYPE_LONGLONG:
@@ -465,7 +468,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 end:
   if (!(nextflag & SEARCH_FIND))
   {
-    uint i;
+    uint32_t i;
     if (nextflag & (SEARCH_NO_FIND | SEARCH_LAST)) /* Find record after key */
       return (nextflag & (SEARCH_BIGGER | SEARCH_LAST)) ? -1 : 1;
     flag=0;
@@ -508,11 +511,11 @@ end:
     NULLs.
 */
 
-HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a)
+HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
 {
   for (; (enum ha_base_keytype) keyseg->type != HA_KEYTYPE_END; keyseg++)
   {
-    uchar *end;
+    unsigned char *end;
     if (keyseg->null_bit)
     {
       if (!*a++)
@@ -592,9 +595,16 @@ void my_handler_error_register(void)
     that every HA_ERR_xxx constant has a corresponding error message in
     handler_error_messages[] list (check mysys/ma_handler_errors.h and
     include/my_base.h).
+
+    TODO: Remove fix the handler_error_messages so that this hack isn't 
+          necessary.
   */
-  compile_time_assert(HA_ERR_FIRST + array_elements(handler_error_messages) ==
-                      HA_ERR_LAST + 1);
+#ifdef __GNUC__
+  char compile_time_assert[(HA_ERR_FIRST +
+                            array_elements(handler_error_messages) ==
+                            HA_ERR_LAST + 1) ? 1 : -1]
+      __attribute__ ((__unused__));
+#endif
   my_error_register(handler_error_messages, HA_ERR_FIRST,
                     HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
 }

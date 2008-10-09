@@ -5,7 +5,7 @@
 --disable_warnings
 drop table if exists t1,t2,t3,t11,t12;
 --enable_warnings
-CREATE TABLE t1 (a tinyint, b tinyint);
+CREATE TABLE t1 (a int, b int);
 INSERT INTO t1 VALUES (1,1);
 INSERT LOW_PRIORITY INTO t1 VALUES (1,2);
 INSERT INTO t1 VALUES (1,3);
@@ -177,7 +177,7 @@ drop table t1;
 CREATE TABLE t1 (
   `date` date ,
   `time` time ,
-  `seq` int unsigned NOT NULL auto_increment,
+  `seq` int NOT NULL auto_increment,
   PRIMARY KEY  (`seq`),
   KEY `seq` (`seq`),
   KEY `time` (`time`),

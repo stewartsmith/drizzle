@@ -218,8 +218,8 @@ int my_pthread_mutex_trylock(pthread_mutex_t *mutex);
 #define set_timespec_nsec(ABSTIME,NSEC) \
 { \
   uint64_t now= my_getsystime() + (NSEC/100); \
-  (ABSTIME).ts_sec=  (now / 10000000ULL); \
-  (ABSTIME).ts_nsec= (now % 10000000ULL * 100 + ((NSEC) % 100)); \
+  (ABSTIME).ts_sec=  (now / 10000000UL); \
+  (ABSTIME).ts_nsec= (now % 10000000UL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
 #else
@@ -236,8 +236,8 @@ int my_pthread_mutex_trylock(pthread_mutex_t *mutex);
 #define set_timespec_nsec(ABSTIME,NSEC) \
 {\
   uint64_t now= my_getsystime() + (NSEC/100); \
-  (ABSTIME).tv_sec=  (time_t) (now / 10000000ULL);                  \
-  (ABSTIME).tv_nsec= (long) (now % 10000000ULL * 100 + ((NSEC) % 100)); \
+  (ABSTIME).tv_sec=  (time_t) (now / 10000000UL);                  \
+  (ABSTIME).tv_nsec= (long) (now % 10000000UL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
 #endif /* HAVE_TIMESPEC_TS_SEC */
@@ -248,19 +248,19 @@ typedef struct st_safe_mutex_t
 {
   pthread_mutex_t global,mutex;
   const char *file;
-  uint line,count;
+  uint32_t line,count;
   pthread_t thread;
 } safe_mutex_t;
 
 int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
-                    const char *file, uint line);
-int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint line);
-int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line);
-int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint line);
+                    const char *file, uint32_t line);
+int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint32_t line);
+int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint32_t line);
+int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint32_t line);
 int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
-		   uint line);
+		   uint32_t line);
 int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
-			struct timespec *abstime, const char *file, uint line);
+			struct timespec *abstime, const char *file, uint32_t line);
 void safe_mutex_global_init(void);
 void safe_mutex_end(FILE *file);
 
@@ -272,7 +272,7 @@ void safe_mutex_end(FILE *file);
 typedef struct st_my_pthread_fastmutex_t
 {
   pthread_mutex_t mutex;
-  uint spins;
+  uint32_t spins;
 } my_pthread_fastmutex_t;
 void fastmutex_global_init(void);
 
@@ -426,7 +426,7 @@ struct st_my_thread_var
 };
 
 extern struct st_my_thread_var *_my_thread_var(void) __attribute__ ((const));
-extern uint my_thread_end_wait_time;
+extern uint32_t my_thread_end_wait_time;
 #define my_thread_var (_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
@@ -439,7 +439,7 @@ extern uint my_thread_end_wait_time;
 #define THD_LIB_NPTL  2
 #define THD_LIB_LT    4
 
-extern uint thd_lib_detected;
+extern uint32_t thd_lib_detected;
 
 /*
   thread_safe_xxx functions are for critical statistic or counters.

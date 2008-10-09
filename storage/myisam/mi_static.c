@@ -21,10 +21,10 @@
 #include "myisamdef.h"
 
 LIST	*myisam_open_list=0;
-uchar	 myisam_file_magic[]=
-{ (uchar) 254, (uchar) 254,'\007', '\001', };
-uchar	 myisam_pack_file_magic[]=
-{ (uchar) 254, (uchar) 254,'\010', '\002', };
+unsigned char	 myisam_file_magic[]=
+{ (unsigned char) 254, (unsigned char) 254,'\007', '\001', };
+unsigned char	 myisam_pack_file_magic[]=
+{ (unsigned char) 254, (unsigned char) 254,'\010', '\002', };
 char * myisam_log_filename=(char*) "myisam.log";
 File	myisam_log_file= -1;
 uint	myisam_quick_table_bits=9;
@@ -42,7 +42,7 @@ uint32_t myisam_data_pointer_size=4;
   Position is , == , >= , <= , > , <
 */
 
-uint  myisam_read_vec[]=
+uint32_t  myisam_read_vec[]=
 {
   SEARCH_FIND, SEARCH_FIND | SEARCH_BIGGER, SEARCH_FIND | SEARCH_SMALLER,
   SEARCH_NO_FIND | SEARCH_BIGGER, SEARCH_NO_FIND | SEARCH_SMALLER,
@@ -50,7 +50,7 @@ uint  myisam_read_vec[]=
   MBR_CONTAIN, MBR_INTERSECT, MBR_WITHIN, MBR_DISJOINT, MBR_EQUAL
 };
 
-uint  myisam_readnext_vec[]=
+uint32_t  myisam_readnext_vec[]=
 {
   SEARCH_BIGGER, SEARCH_BIGGER, SEARCH_SMALLER, SEARCH_BIGGER, SEARCH_SMALLER,
   SEARCH_BIGGER, SEARCH_SMALLER, SEARCH_SMALLER

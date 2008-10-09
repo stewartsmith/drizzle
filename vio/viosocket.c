@@ -25,11 +25,11 @@
 
 int vio_errno(Vio *vio __attribute__((unused)))
 {
-  return socket_errno;		/* On Win32 this mapped to WSAGetLastError() */
+  return errno;
 }
 
 
-size_t vio_read(Vio * vio, uchar* buf, size_t size)
+size_t vio_read(Vio * vio, unsigned char* buf, size_t size)
 {
   size_t r;
 
@@ -46,14 +46,14 @@ size_t vio_read(Vio * vio, uchar* buf, size_t size)
   reduce number of syscalls.
 */
 
-size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
+size_t vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
 {
   size_t rc;
 #define VIO_UNBUFFERED_READ_MIN_SIZE 2048
 
   if (vio->read_pos < vio->read_end)
   {
-    rc= min((size_t) (vio->read_end - vio->read_pos), size);
+    rc= cmin((size_t) (vio->read_end - vio->read_pos), size);
     memcpy(buf, vio->read_pos, rc);
     vio->read_pos+= rc;
     /*
@@ -64,7 +64,7 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
   }
   else if (size < VIO_UNBUFFERED_READ_MIN_SIZE)
   {
-    rc= vio_read(vio, (uchar*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
+    rc= vio_read(vio, (unsigned char*) vio->read_buffer, VIO_READ_BUFFER_SIZE);
     if (rc != 0 && rc != (size_t) -1)
     {
       if (rc > size)
@@ -84,7 +84,7 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
 }
 
 
-size_t vio_write(Vio * vio, const uchar* buf, size_t size)
+size_t vio_write(Vio * vio, const unsigned char* buf, size_t size)
 {
   size_t r;
 
@@ -167,18 +167,18 @@ int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
 bool
 vio_should_retry(Vio * vio __attribute__((unused)))
 {
-  int en = socket_errno;
-  return (en == SOCKET_EAGAIN || en == SOCKET_EINTR ||
-	  en == SOCKET_EWOULDBLOCK);
+  int en = errno;
+  return (en == EAGAIN || en == EINTR ||
+	  en == EWOULDBLOCK);
 }
 
 
 bool
 vio_was_interrupted(Vio *vio __attribute__((unused)))
 {
-  int en= socket_errno;
-  return (en == SOCKET_EAGAIN || en == SOCKET_EINTR ||
-	  en == SOCKET_EWOULDBLOCK || en == SOCKET_ETIMEDOUT);
+  int en= errno;
+  return (en == EAGAIN || en == EINTR ||
+	  en == EWOULDBLOCK || en == ETIMEDOUT);
 }
 
 

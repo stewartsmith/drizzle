@@ -253,6 +253,6 @@ enum level_symbols {
 #define isdiacrt(c)		( _is(c) & _diacrt) 
 
 /* Function prototype called by sql/field.cc */
-void ThNormalize(uchar* ptr, uint field_length, const uchar* from, uint length);
+void ThNormalize(unsigned char* ptr, uint32_t field_length, const unsigned char* from, uint32_t length);
 
 #endif  

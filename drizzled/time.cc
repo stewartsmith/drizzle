@@ -95,16 +95,16 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 	next week is week 1.
 */
 
-uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year)
+uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
 {
-  uint days;
+  uint32_t days;
   ulong daynr=calc_daynr(l_time->year,l_time->month,l_time->day);
   ulong first_daynr=calc_daynr(l_time->year,1,1);
   bool monday_first= test(week_behaviour & WEEK_MONDAY_FIRST);
   bool week_year= test(week_behaviour & WEEK_YEAR);
   bool first_weekday= test(week_behaviour & WEEK_FIRST_WEEKDAY);
 
-  uint weekday=calc_weekday(first_daynr, !monday_first);
+  uint32_t weekday=calc_weekday(first_daynr, !monday_first);
   *year=l_time->year;
 
   if (l_time->month == 1 && l_time->day <= 7-weekday)
@@ -138,11 +138,11 @@ uint calc_week(DRIZZLE_TIME *l_time, uint week_behaviour, uint *year)
 	/* Change a daynr to year, month and day */
 	/* Daynr 0 is returned as date 00.00.00 */
 
-void get_date_from_daynr(long daynr,uint *ret_year,uint *ret_month,
-			 uint *ret_day)
+void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
+			 uint32_t *ret_day)
 {
-  uint year,temp,leap_day,day_of_year,days_in_year;
-  uchar *month_pos;
+  uint32_t year,temp,leap_day,day_of_year,days_in_year;
+  unsigned char *month_pos;
 
   if (daynr <= 365L || daynr >= 3652500)
   {						/* Fix if wrong daynr */
@@ -216,13 +216,13 @@ ulong convert_month_to_period(ulong month)
     See description of str_to_datetime() for more information.
 */
 
-timestamp_type
-str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
-                          uint flags)
+enum enum_drizzle_timestamp_type
+str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+                          uint32_t flags)
 {
   int was_cut;
   THD *thd= current_thd;
-  timestamp_type ts_type;
+  enum enum_drizzle_timestamp_type ts_type;
   
   ts_type= str_to_datetime(str, length, l_time,
                            (flags | (thd->variables.sql_mode &
@@ -231,7 +231,7 @@ str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, ts_type,  NullS);
+                                 str, length, ts_type,  NULL);
   return ts_type;
 }
 
@@ -279,13 +279,13 @@ my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *in_dst_time_g
     See str_to_time() for more info.
 */
 bool
-str_to_time_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time)
+str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
 {
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
     make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, DRIZZLE_TIMESTAMP_TIME, NullS);
+                                 str, length, DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
 
@@ -348,17 +348,17 @@ void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
     1	error
 */
 
-bool parse_date_time_format(timestamp_type format_type, 
-			    const char *format, uint format_length,
+bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type, 
+			    const char *format, uint32_t format_length,
 			    DATE_TIME_FORMAT *date_time_format)
 {
-  uint offset= 0, separators= 0;
+  uint32_t offset= 0, separators= 0;
   const char *ptr= format, *format_str;
   const char *end= ptr+format_length;
-  uchar *dt_pos= date_time_format->positions;
+  unsigned char *dt_pos= date_time_format->positions;
   /* need_p is set if we are using AM/PM format */
   bool need_p= 0, allow_separator= 0;
-  ulong part_map= 0, separator_map= 0;
+  uint32_t part_map= 0, separator_map= 0;
   const char *parts[16];
 
   date_time_format->time_separator= 0;
@@ -375,7 +375,7 @@ bool parse_date_time_format(timestamp_type format_type,
   {
     if (*ptr == '%' && ptr+1 != end)
     {
-      uint position;
+      uint32_t position;
       switch (*++ptr) {
       case 'y':					// Year
       case 'Y':
@@ -428,7 +428,7 @@ bool parse_date_time_format(timestamp_type format_type,
       */
       if (part_map && position <= 2 && !(part_map & (1 | 2 | 4)))
 	offset=5;
-      part_map|= (ulong) 1 << position;
+      part_map|= UINT32_C(1) << position;
       dt_pos[position]= offset++;
       allow_separator= 1;
     }
@@ -467,10 +467,10 @@ bool parse_date_time_format(timestamp_type format_type,
     it's needed.
   */
   if ((format_type == DRIZZLE_TIMESTAMP_DATETIME &&
-       !test_all_bits(part_map, (1 | 2 | 4 | 8 | 16 | 32))) ||
+       !test_all_bits(part_map, (uint32_t) (1 | 2 | 4 | 8 | 16 | 32))) ||
       (format_type == DRIZZLE_TIMESTAMP_DATE && part_map != (1 | 2 | 4)) ||
       (format_type == DRIZZLE_TIMESTAMP_TIME &&
-       !test_all_bits(part_map, 8 | 16 | 32)) ||
+       !test_all_bits(part_map, (uint32_t) (8 | 16 | 32))) ||
       !allow_separator ||			// %option should be last
       (need_p && dt_pos[6] +1 != dt_pos[7]) ||
       (need_p ^ (dt_pos[7] != 255)))
@@ -479,7 +479,7 @@ bool parse_date_time_format(timestamp_type format_type,
   if (dt_pos[6] != 255)				// If fractional seconds
   {
     /* remove fractional seconds from later tests */
-    uint pos= dt_pos[6] -1;
+    uint32_t pos= dt_pos[6] -1;
     /* Remove separator before %f from sep map */
     separator_map= ((separator_map & ((ulong) (1 << pos)-1)) |
 		    ((separator_map & ~((ulong) (1 << pos)-1)) >> 1));
@@ -525,8 +525,8 @@ bool parse_date_time_format(timestamp_type format_type,
     */
     if (format_length == 6 && !need_p &&
 	!my_strnncoll(&my_charset_bin,
-		      (const uchar *) format, 6, 
-		      (const uchar *) format_str, 6))
+		      (const unsigned char *) format, 6, 
+		      (const unsigned char *) format_str, 6))
       return 0;
     if (separator_map == (1 | 2))
     {
@@ -548,8 +548,8 @@ bool parse_date_time_format(timestamp_type format_type,
     */
     if ((format_length == 12 && !need_p &&
 	 !my_strnncoll(&my_charset_bin, 
-		       (const uchar *) format, 12,
-		       (const uchar*) known_date_time_formats[INTERNAL_FORMAT].datetime_format,
+		       (const unsigned char *) format, 12,
+		       (const unsigned char*) known_date_time_formats[INTERNAL_FORMAT].datetime_format,
 		       12)) ||
 	(separators == 5 && separator_map == (1 | 2 | 8 | 16)))
       return 0;
@@ -572,7 +572,7 @@ bool parse_date_time_format(timestamp_type format_type,
     format_length	Length of string
 
   NOTES
-    The returned object should be freed with my_free()
+    The returned object should be freed with free()
 
   RETURN
     NULL ponter:	Error
@@ -580,8 +580,8 @@ bool parse_date_time_format(timestamp_type format_type,
 */
 
 DATE_TIME_FORMAT
-*date_time_format_make(timestamp_type format_type,
-		       const char *format_str, uint format_length)
+*date_time_format_make(enum enum_drizzle_timestamp_type format_type,
+		       const char *format_str, uint32_t format_length)
 {
   DATE_TIME_FORMAT tmp;
 
@@ -606,7 +606,7 @@ DATE_TIME_FORMAT
     format		format to copy
 
   NOTES
-    The returned object should be freed with my_free()
+    The returned object should be freed with free()
 
   RETURN
     NULL ponter:	Error
@@ -656,7 +656,7 @@ KNOWN_DATE_TIME_FORMAT known_date_time_formats[6]=
 */
 
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
-				     timestamp_type type)
+				     enum enum_drizzle_timestamp_type type)
 {
   switch (type) {
   case DRIZZLE_TIMESTAMP_DATE:
@@ -689,7 +689,7 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_time_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_time_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -698,7 +698,7 @@ void make_time(const DATE_TIME_FORMAT *format __attribute__((unused)),
 void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
                const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_date_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_date_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -707,7 +707,7 @@ void make_date(const DATE_TIME_FORMAT *format __attribute__((unused)),
 void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
                    const DRIZZLE_TIME *l_time, String *str)
 {
-  uint length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());
+  uint32_t length= (uint) my_datetime_to_str(l_time, (char*) str->ptr());
   str->length(length);
   str->set_charset(&my_charset_bin);
 }
@@ -715,7 +715,8 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 
 void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
-				  uint str_length, timestamp_type time_type,
+				  uint32_t str_length,
+                                  enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name)
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];
@@ -793,19 +794,19 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
     sec=((ltime->day-1)*3600*24L+ltime->hour*3600+ltime->minute*60+
 	 ltime->second +
 	 sign* (int64_t) (interval.day*3600*24L +
-                           interval.hour*3600LL+interval.minute*60LL+
+                           interval.hour*3600L+interval.minute*60L+
                            interval.second))+ extra_sec;
     if (microseconds < 0)
     {
-      microseconds+= 1000000LL;
+      microseconds+= 1000000L;
       sec--;
     }
-    days= sec/(3600*24LL);
-    sec-= days*3600*24LL;
+    days= sec/(3600*24L);
+    sec-= days*3600*24L;
     if (sec < 0)
     {
       days--;
-      sec+= 3600*24LL;
+      sec+= 3600*24L;
     }
     ltime->second_part= (uint) microseconds;
     ltime->second= (uint) (sec % 60);
@@ -923,13 +924,13 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
 			       (uint) l_time2->day);
   }
 
-  microseconds= ((int64_t)days*86400LL +
+  microseconds= ((int64_t)days*86400L +
                  (int64_t)(l_time1->hour*3600L +
                             l_time1->minute*60L +
                             l_time1->second) -
                  l_sign*(int64_t)(l_time2->hour*3600L +
                                    l_time2->minute*60L +
-                                   l_time2->second)) * 1000000LL +
+                                   l_time2->second)) * 1000000L +
                 (int64_t)l_time1->second_part -
                 l_sign*(int64_t)l_time2->second_part;
 

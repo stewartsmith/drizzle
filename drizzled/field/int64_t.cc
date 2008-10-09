@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -29,7 +29,7 @@
  Field type int64_t int (8 bytes)
 ****************************************************************************/
 
-int Field_int64_t::store(const char *from,uint len, const CHARSET_INFO * const cs)
+int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
 {
   int error= 0;
   char *end;
@@ -177,8 +177,8 @@ String *Field_int64_t::val_str(String *val_buffer,
 				String *val_ptr __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
-  uint length;
-  uint mlength=max(field_length+1,22*cs->mbmaxlen);
+  uint32_t length;
+  uint32_t mlength=cmax(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int64_t j;
@@ -203,7 +203,7 @@ bool Field_int64_t::send_binary(Protocol *protocol)
 }
 
 
-int Field_int64_t::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
@@ -224,7 +224,7 @@ int Field_int64_t::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_int64_t::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -265,44 +265,3 @@ void Field_int64_t::sql_type(String &res) const
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
   add_unsigned(res);
 }
-
-
-/*
-  Floating-point numbers
- */
-
-uchar *
-Field_real::pack(uchar *to, const uchar *from,
-                 uint max_length, bool low_byte_first)
-{
-  assert(max_length >= pack_length());
-#ifdef WORDS_BIGENDIAN
-  if (low_byte_first != table->s->db_low_byte_first)
-  {
-    const uchar *dptr= from + pack_length();
-    while (dptr-- > from)
-      *to++ = *dptr;
-    return(to);
-  }
-  else
-#endif
-    return(Field::pack(to, from, max_length, low_byte_first));
-}
-
-const uchar *
-Field_real::unpack(uchar *to, const uchar *from,
-                   uint param_data, bool low_byte_first)
-{
-#ifdef WORDS_BIGENDIAN
-  if (low_byte_first != table->s->db_low_byte_first)
-  {
-    const uchar *dptr= from + pack_length();
-    while (dptr-- > from)
-      *to++ = *dptr;
-    return(from + pack_length());
-  }
-  else
-#endif
-    return(Field::unpack(to, from, param_data, low_byte_first));
-}
-

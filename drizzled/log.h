@@ -1,20 +1,26 @@
-/* Copyright (C) 2005 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef DRIZZLE_SERVER_LOG_H
 #define DRIZZLE_SERVER_LOG_H
+
+#include <mysys/iocache.h>
 
 class Relay_log_info;
 
@@ -75,8 +81,8 @@ class TC_LOG_MMAP: public TC_LOG
   char logname[FN_REFLEN];
   File fd;
   my_off_t file_length;
-  uint npages, inited;
-  uchar *data;
+  uint32_t npages, inited;
+  unsigned char *data;
   struct st_page *pages, *syncing, *active, *pool, *pool_last;
   /*
     note that, e.g. LOCK_active is only used to protect
@@ -176,7 +182,7 @@ public:
             enum cache_type io_cache_type_arg);
   void init(enum_log_type log_type_arg,
             enum cache_type io_cache_type_arg);
-  void close(uint exiting);
+  void close(uint32_t exiting);
   inline bool is_open() { return log_state != LOG_CLOSED; }
   const char *generate_name(const char *log_name, const char *suffix,
                             bool strip_ext, char *buff);
@@ -193,36 +199,6 @@ public:
   volatile enum_log_state log_state;
   enum cache_type io_cache_type;
   friend class Log_event;
-};
-
-class DRIZZLE_QUERY_LOG: public DRIZZLE_LOG
-{
-public:
-  DRIZZLE_QUERY_LOG() : last_time(0) {}
-  void reopen_file();
-  bool write(time_t event_time, const char *user_host,
-             uint user_host_len, int thread_id,
-             const char *command_type, uint command_type_len,
-             const char *sql_text, uint sql_text_len);
-  bool write(THD *thd, time_t current_time, time_t query_start_arg,
-             const char *user_host, uint user_host_len,
-             uint64_t query_utime, uint64_t lock_utime, bool is_command,
-             const char *sql_text, uint sql_text_len);
-  bool open_slow_log(const char *log_name)
-  {
-    char buf[FN_REFLEN];
-    return open(generate_name(log_name, "-slow.log", 0, buf), LOG_NORMAL, 0,
-                WRITE_CACHE);
-  }
-  bool open_query_log(const char *log_name)
-  {
-    char buf[FN_REFLEN];
-    return open(generate_name(log_name, ".log", 0, buf), LOG_NORMAL, 0,
-                WRITE_CACHE);
-  }
-
-private:
-  time_t last_time;
 };
 
 class DRIZZLE_BIN_LOG: public TC_LOG, private DRIZZLE_LOG
@@ -249,8 +225,8 @@ class DRIZZLE_BIN_LOG: public TC_LOG, private DRIZZLE_LOG
   ulong max_size;
   long prepared_xids; /* for tc log - number of xids to remember */
   // current file sequence number for load data infile binary logging
-  uint file_id;
-  uint open_count;				// For replication
+  uint32_t file_id;
+  uint32_t open_count;				// For replication
   int readers_count;
   bool need_start_event;
   /*
@@ -299,7 +275,6 @@ public:
   int log_xid(THD *thd, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
-#if !defined(DRIZZLE_CLIENT)
   bool is_table_mapped(Table *table) const
   {
     return table->s->table_map_version == table_map_version();
@@ -310,7 +285,6 @@ public:
 
   int flush_and_set_pending_rows_event(THD *thd, Rows_log_event* event);
 
-#endif /* !defined(DRIZZLE_CLIENT) */
   void reset_bytes_written()
   {
     bytes_written = 0;
@@ -353,13 +327,13 @@ public:
     v stands for vector
     invoked as appendv(buf1,len1,buf2,len2,...,bufn,lenn,0)
   */
-  bool appendv(const char* buf,uint len,...);
+  bool appendv(const char* buf,uint32_t len,...);
   bool append(Log_event* ev);
 
   void make_log_name(char* buf, const char* log_ident);
   bool is_active(const char* log_file_name);
   int update_log_index(LOG_INFO* linfo, bool need_update_threads);
-  void rotate_and_purge(uint flags);
+  void rotate_and_purge(uint32_t flags);
   bool flush_and_sync();
   int purge_logs(const char *to_log, bool included,
                  bool need_mutex, bool need_update_threads,
@@ -367,7 +341,7 @@ public:
   int purge_logs_before_date(time_t purge_time);
   int purge_first_log(Relay_log_info* rli, bool included);
   bool reset_logs(THD* thd);
-  void close(uint exiting);
+  void close(uint32_t exiting);
 
   // iterating through the log index file
   int find_log_pos(LOG_INFO* linfo, const char* log_name,
@@ -375,7 +349,7 @@ public:
   int find_next_log(LOG_INFO* linfo, bool need_mutex);
   int get_current_log(LOG_INFO* linfo);
   int raw_get_current_log(LOG_INFO* linfo);
-  uint next_file_id();
+  uint32_t next_file_id();
   inline char* get_index_fname() { return index_file_name;}
   inline char* get_log_fname() { return log_file_name; }
   inline char* get_name() { return name; }
@@ -395,53 +369,9 @@ public:
   virtual bool init()= 0;
   virtual void cleanup()= 0;
 
-  virtual bool log_slow(THD *thd, time_t current_time,
-                        time_t query_start_arg, const char *user_host,
-                        uint user_host_len, uint64_t query_utime,
-                        uint64_t lock_utime, bool is_command,
-                        const char *sql_text, uint sql_text_len)= 0;
   virtual bool log_error(enum loglevel level, const char *format,
                          va_list args)= 0;
-  virtual bool log_general(THD *thd, time_t event_time, const char *user_host,
-                           uint user_host_len, int thread_id,
-                           const char *command_type, uint command_type_len,
-                           const char *sql_text, uint sql_text_len,
-                           const CHARSET_INFO * const client_cs)= 0;
   virtual ~Log_event_handler() {}
-};
-
-
-/* type of the log table */
-#define QUERY_LOG_SLOW 1
-#define QUERY_LOG_GENERAL 2
-
-class Log_to_file_event_handler: public Log_event_handler
-{
-  DRIZZLE_QUERY_LOG mysql_log;
-  DRIZZLE_QUERY_LOG mysql_slow_log;
-  bool is_initialized;
-public:
-  Log_to_file_event_handler(): is_initialized(false)
-  {}
-  virtual bool init();
-  virtual void cleanup();
-
-  virtual bool log_slow(THD *thd, time_t current_time,
-                        time_t query_start_arg, const char *user_host,
-                        uint user_host_len, uint64_t query_utime,
-                        uint64_t lock_utime, bool is_command,
-                        const char *sql_text, uint sql_text_len);
-  virtual bool log_error(enum loglevel level, const char *format,
-                         va_list args);
-  virtual bool log_general(THD *thd, time_t event_time, const char *user_host,
-                           uint user_host_len, int thread_id,
-                           const char *command_type, uint command_type_len,
-                           const char *sql_text, uint sql_text_len,
-                           const CHARSET_INFO * const client_cs);
-  void flush();
-  void init_pthread_objects();
-  DRIZZLE_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }
-  DRIZZLE_QUERY_LOG *get_mysql_log() { return &mysql_log; }
 };
 
 
@@ -450,19 +380,14 @@ class LOGGER
 {
   rw_lock_t LOCK_logger;
   /* flag to check whether logger mutex is initialized */
-  uint inited;
-
-  /* available log handlers */
-  Log_to_file_event_handler *file_log_handler;
+  uint32_t inited;
 
   /* NULL-terminated arrays of log handlers */
   Log_event_handler *error_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
-  Log_event_handler *slow_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
-  Log_event_handler *general_log_handler_list[MAX_LOG_HANDLERS_NUM + 1];
 
 public:
 
-  LOGGER() : inited(0), file_log_handler(NULL)
+  LOGGER() : inited(0)
   {}
   void lock_shared() { rw_rdlock(&LOCK_logger); }
   void lock_exclusive() { rw_wrlock(&LOCK_logger); }
@@ -483,34 +408,9 @@ public:
   void cleanup_end();
   bool error_log_print(enum loglevel level, const char *format,
                       va_list args);
-  bool slow_log_print(THD *thd, const char *query, uint query_length,
-                      uint64_t current_utime);
-  bool general_log_print(THD *thd,enum enum_server_command command,
-                         const char *format, va_list args);
-  bool general_log_write(THD *thd, enum enum_server_command command,
-                         const char *query, uint query_length);
-
   /* we use this function to setup all enabled log event handlers */
-  int set_handlers(uint error_log_printer,
-                   uint slow_log_printer,
-                   uint general_log_printer);
-  void init_error_log(uint error_log_printer);
-  void init_slow_log(uint slow_log_printer);
-  void init_general_log(uint general_log_printer);
-  void deactivate_log_handler(THD* thd, uint log_type);
-  bool activate_log_handler(THD* thd, uint log_type);
-  DRIZZLE_QUERY_LOG *get_slow_log_file_handler()
-  { 
-    if (file_log_handler)
-      return file_log_handler->get_mysql_slow_log();
-    return NULL;
-  }
-  DRIZZLE_QUERY_LOG *get_log_file_handler()
-  { 
-    if (file_log_handler)
-      return file_log_handler->get_mysql_log();
-    return NULL;
-  }
+  int set_handlers(uint32_t error_log_printer);
+  void init_error_log(uint32_t error_log_printer);
 };
 
 enum enum_binlog_format {
@@ -541,14 +441,5 @@ extern sql_print_message_func sql_print_message_handlers[];
 
 int error_log_print(enum loglevel level, const char *format,
                     va_list args);
-
-bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    uint64_t current_utime);
-
-bool general_log_print(THD *thd, enum enum_server_command command,
-                       const char *format,...);
-
-bool general_log_write(THD *thd, enum enum_server_command command,
-                       const char *query, uint query_length);
 
 #endif /* DRIZZLE_SERVER_LOG_H */

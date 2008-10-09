@@ -25,7 +25,7 @@
 #include <drizzled/global.h>
 
 #ifndef __USE_GNU
-#define __USE_GNU				/* We want to use stpcpy */
+#define __USE_GNU				/* We want to use my_stpcpy */
 #endif
 #if defined(HAVE_STRINGS_H)
 #include <strings.h>
@@ -56,7 +56,10 @@ extern "C" {
 extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
-#define strmov_overlapp(A,B) stpcpy(A,B)
+char *my_stpncpy(register char *dst, register const char *src, size_t n);
+char *my_stpcpy(register char *dst, register const char *src);
+
+#define strmov_overlapp(A,B) my_stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
@@ -87,10 +90,6 @@ extern char *strcat(char *, const char *);
 extern char *strchr(const char *, char);
 extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
-#endif
-
-#ifndef HAVE_STPNCPY
-char *stpncpy(register char *dst, register const char *src, size_t n);
 #endif
 
 #if !defined(__cplusplus)
@@ -136,7 +135,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   (DBL_DIG + 2) significant digits + sign + "." + ("e-NNN" or
   MAX_DECPT_FOR_F_FORMAT zeros for cases when |x|<1 and the 'f' format is used).
 */
-#define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + max(5, MAX_DECPT_FOR_F_FORMAT))
+#define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + cmax(5, MAX_DECPT_FOR_F_FORMAT))
   
 
 extern char *llstr(int64_t value,char *buff);
@@ -147,13 +146,8 @@ extern char *int10_to_str(long val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
-#if SIZEOF_LONG == SIZEOF_LONG_LONG
-#define int64_t2str(A,B,C) int2str((A),(B),(C),1)
-#define int64_t10_to_str(A,B,C) int10_to_str((A),(B),(C))
-#else
 extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
-#endif
 
 
 #if defined(__cplusplus)

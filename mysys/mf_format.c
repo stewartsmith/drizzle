@@ -24,7 +24,7 @@
 */
 
 char * fn_format(char * to, const char *name, const char *dir,
-		    const char *extension, uint flag)
+		    const char *extension, uint32_t flag)
 {
   char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
   const char *startpos = name;
@@ -37,13 +37,13 @@ char * fn_format(char * to, const char *name, const char *dir,
   if (length == 0 || (flag & MY_REPLACE_DIR))
   {
     /* Use given directory */
-    convert_dirname(dev,dir,NullS);		/* Fix to this OS */
+    convert_dirname(dev,dir,NULL);		/* Fix to this OS */
   }
   else if ((flag & MY_RELATIVE_PATH) && !test_if_hard_path(dev))
   {
     /* Put 'dir' before the given path */
     strmake(buff,dev,sizeof(buff)-1);
-    pos=convert_dirname(dev,dir,NullS);
+    pos=convert_dirname(dev,dir,NULL);
     strmake(pos,buff,sizeof(buff)-1- (int) (pos-dev));
   }
 
@@ -53,7 +53,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     (void) unpack_dirname(dev,dev);		/* Replace ~/.. with dir */
 
   if (!(flag & MY_APPEND_EXT) &&
-      (pos= (char*) strchr(name,FN_EXTCHAR)) != NullS)
+      (pos= (char*) strchr(name,FN_EXTCHAR)) != NULL)
   {
     if ((flag & MY_REPLACE_EXT) == 0)		/* If we should keep old ext */
     {
@@ -77,9 +77,9 @@ char * fn_format(char * to, const char *name, const char *dir,
     /* To long path, return original or NULL */
     size_t tmp_length;
     if (flag & MY_SAFE_PATH)
-      return NullS;
+      return NULL;
     tmp_length= strlength(startpos);
-    (void) strmake(to,startpos,min(tmp_length,FN_REFLEN-1));
+    (void) strmake(to,startpos,cmin(tmp_length,FN_REFLEN-1));
   }
   else
   {
@@ -88,8 +88,8 @@ char * fn_format(char * to, const char *name, const char *dir,
       memcpy(buff, name, length); /* Save name for last copy */
       name=buff;
     }
-    pos=strmake(stpcpy(to,dev),name,length);
-    (void) stpcpy(pos,ext);			/* Don't convert extension */
+    pos=strmake(my_stpcpy(to,dev),name,length);
+    (void) my_stpcpy(pos,ext);			/* Don't convert extension */
   }
   /*
     If MY_RETURN_REAL_PATH and MY_RESOLVE_SYMLINK is given, only do
@@ -100,7 +100,7 @@ char * fn_format(char * to, const char *name, const char *dir,
 				   MY_RESOLVE_LINK: 0));
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
-    stpcpy(buff,to);
+    my_stpcpy(buff,to);
     (void) my_readlink(to, buff, MYF(0));
   }
   return(to);

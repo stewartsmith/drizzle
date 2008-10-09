@@ -4,12 +4,12 @@
 
 select CAST(1-2 AS UNSIGNED);
 select CAST(CAST(1-2 AS UNSIGNED) AS SIGNED INTEGER);
-select CAST('10 ' as unsigned integer);
-select cast(-5 as unsigned) | 1, cast(-5 as unsigned) & -1;
-select cast(-5 as unsigned) -1, cast(-5 as unsigned) + 1;
+select CAST('10 ' as integer);
+select cast(-5 as) | 1, cast(-5 as) & -1;
+select cast(-5 as) -1, cast(-5 as) + 1;
 select ~5, cast(~5 as signed);
 explain extended select ~5, cast(~5 as signed);
-select cast(5 as unsigned) -6.0;
+select cast(5 as) -6.0;
 select cast(NULL as signed), cast(1/0 as signed);
 #
 # Bug #28250: Run-Time Check Failure #3 - The variable 'value' is being used 
@@ -17,7 +17,7 @@ select cast(NULL as signed), cast(1/0 as signed);
 # 
 # The following line causes Run-Time Check Failure on 
 # binaries built with Visual C++ 2005
-select cast(NULL as unsigned), cast(1/0 as unsigned); 
+select cast(NULL as), cast(1/0 as); 
 select cast("A" as binary) = "a", cast(BINARY "a" as CHAR) = "A";
 select cast("2001-1-1" as DATE), cast("2001-1-1" as DATETIME);
 select cast("1:2:3" as TIME);
@@ -35,19 +35,19 @@ select CONVERT(DATE "2004-01-22 21:45:33",BINARY(4));
 select CAST(DATE "2004-01-22 21:45:33" AS BINARY(4));
 select CAST(0xb3 as signed);
 select CAST(0x8fffffffffffffff as signed);
-select CAST(0xffffffffffffffff as unsigned);
+select CAST(0xffffffffffffffff as);
 select CAST(0xfffffffffffffffe as signed);
 select cast('-10a' as signed integer);
-select cast('a10' as unsigned integer);
+select cast('a10' as integer);
 select 10+'a';
 select 10.0+cast('a' as decimal);
 select 10E+0+'a';
 
 # out-of-range cases
-select cast('18446744073709551616' as unsigned);
+select cast('18446744073709551616' as);
 select cast('18446744073709551616' as signed);
 select cast('9223372036854775809' as signed);
-select cast('-1' as unsigned);
+select cast('-1' as);
 select cast('abc' as signed);
 select cast('1a' as signed);
 select cast('' as signed);
@@ -151,19 +151,19 @@ select timediff(cast('2004-12-30 12:00:00' as time), '12:00:00');
 select timediff(cast('1 12:00:00' as time), '12:00:00');
 
 #
-# Bug #7036: Casting from string to unsigned would cap value of result at
-# maximum signed value instead of maximum unsigned value
+# Bug #7036: Casting from string to would cap value of result at
+# maximum signed value instead of maximum value
 #
-select cast(18446744073709551615 as unsigned);
+select cast(18446744073709551615 as);
 select cast(18446744073709551615 as signed);
-select cast('18446744073709551615' as unsigned);
+select cast('18446744073709551615' as);
 select cast('18446744073709551615' as signed);
 select cast('9223372036854775807' as signed);
 
-select cast(concat('184467440','73709551615') as unsigned);
+select cast(concat('184467440','73709551615') as);
 select cast(concat('184467440','73709551615') as signed);
 
-select cast(repeat('1',20) as unsigned);
+select cast(repeat('1',20) as);
 select cast(repeat('1',20) as signed);
 
 #

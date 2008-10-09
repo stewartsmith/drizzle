@@ -63,10 +63,10 @@ int modify_defaults_file(const char *file_location, const char *option,
   struct stat file_stat;
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
-  uint nr_newlines= 0, buffer_size;
+  uint32_t nr_newlines= 0, buffer_size;
   bool in_section= false, opt_applied= 0;
-  uint reserve_extended;
-  uint new_opt_len;
+  uint32_t reserve_extended;
+  uint32_t new_opt_len;
   int reserve_occupied= 0;
 
   if (!(cnf_file= my_fopen(file_location, O_RDWR | O_BINARY, MYF(0))))
@@ -154,11 +154,11 @@ int modify_defaults_file(const char *file_location, const char *option,
       }
 
       for (; nr_newlines; nr_newlines--)
-        dst_ptr= stpcpy(dst_ptr, NEWLINE);
+        dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
 
       /* Skip the section if MY_REMOVE_SECTION was given */
       if (!in_section || remove_option != MY_REMOVE_SECTION)
-        dst_ptr= stpcpy(dst_ptr, linebuff);
+        dst_ptr= my_stpcpy(dst_ptr, linebuff);
     }
     /* Look for a section */
     if (*src_ptr == '[')
@@ -197,30 +197,30 @@ int modify_defaults_file(const char *file_location, const char *option,
   {
     /* New option still remains to apply at the end */
     if (!remove_option && *(dst_ptr - 1) != '\n')
-      dst_ptr= stpcpy(dst_ptr, NEWLINE);
+      dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
     dst_ptr= add_option(dst_ptr, option_value, option, remove_option);
     opt_applied= 1;
   }
   for (; nr_newlines; nr_newlines--)
-    dst_ptr= stpcpy(dst_ptr, NEWLINE);
+    dst_ptr= my_stpcpy(dst_ptr, NEWLINE);
 
   if (opt_applied)
   {
     /* Don't write the file if there are no changes to be made */
     if (ftruncate(fileno(cnf_file), (my_off_t) (dst_ptr - file_buffer)) ||
         my_fseek(cnf_file, 0, MY_SEEK_SET, MYF(0)) ||
-        my_fwrite(cnf_file, (uchar*) file_buffer, (size_t) (dst_ptr - file_buffer),
+        my_fwrite(cnf_file, (unsigned char*) file_buffer, (size_t) (dst_ptr - file_buffer),
                   MYF(MY_NABP)))
       goto err;
   }
   if (my_fclose(cnf_file, MYF(MY_WME)))
     return(1);
 
-  my_free(file_buffer, MYF(0));
+  free(file_buffer);
   return(0);
 
 err:
-  my_free(file_buffer, MYF(0));
+  free(file_buffer);
 malloc_err:
   my_fclose(cnf_file, MYF(0));
   return(1); /* out of resources */
@@ -232,14 +232,14 @@ static char *add_option(char *dst, const char *option_value,
 {
   if (!remove_option)
   {
-    dst= stpcpy(dst, option);
+    dst= my_stpcpy(dst, option);
     if (*option_value)
     {
       *dst++= '=';
-      dst= stpcpy(dst, option_value);
+      dst= my_stpcpy(dst, option_value);
     }
     /* add a newline */
-    dst= stpcpy(dst, NEWLINE);
+    dst= my_stpcpy(dst, NEWLINE);
   }
   return dst;
 }

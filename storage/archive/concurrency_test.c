@@ -2,7 +2,7 @@
   Just a test application for threads.
   */
 #include "azio.h"
-#include <libdrizzle/drizzle.h>
+#include <libdrizzle/libdrizzle.h>
 #include <mysys/my_getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,13 +50,13 @@ pthread_mutex_t row_lock;
 void *run_task(void *p);
 void *timer_thread(void *p);
 void scheduler(az_method use_aio);
-void create_data_file(azio_stream *write_handler, unsigned long long rows);
+void create_data_file(azio_stream *write_handler, uint64_t rows);
 unsigned int write_row(azio_stream *s);
 
 typedef struct thread_context_st thread_context_st;
 struct thread_context_st {
   unsigned int how_often_to_write;
-  unsigned long long counter;
+  uint64_t counter;
   az_method use_aio;
   azio_stream *writer;
 };
@@ -87,18 +87,15 @@ int main(int argc, char *argv[])
   if (argc > 1)
     exit(1);
 
-  if (!(drizzle_thread_safe()))
-      fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
-
   srandom(time(NULL));
 
   pthread_mutex_init(&counter_mutex, NULL);
   pthread_cond_init(&count_threshhold, NULL);
   pthread_mutex_init(&sleeper_mutex, NULL);
   pthread_cond_init(&sleep_threshhold, NULL);
-  VOID(pthread_mutex_init(&timer_alarm_mutex, NULL));
-  VOID(pthread_cond_init(&timer_alarm_threshold, NULL));
-  VOID(pthread_mutex_init(&row_lock, NULL));
+  pthread_mutex_init(&timer_alarm_mutex, NULL);
+  pthread_cond_init(&timer_alarm_threshold, NULL);
+  pthread_mutex_init(&row_lock, NULL);
 
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
     scheduler(method);
@@ -107,9 +104,9 @@ int main(int argc, char *argv[])
   (void)pthread_cond_destroy(&count_threshhold);
   (void)pthread_mutex_destroy(&sleeper_mutex);
   (void)pthread_cond_destroy(&sleep_threshhold);
-  VOID(pthread_mutex_destroy(&timer_alarm_mutex));
-  VOID(pthread_cond_destroy(&timer_alarm_threshold));
-  VOID(pthread_mutex_destroy(&row_lock));
+  pthread_mutex_destroy(&timer_alarm_mutex);
+  pthread_cond_destroy(&timer_alarm_threshold);
+  pthread_mutex_destroy(&row_lock);
 
   return 0;
 }
@@ -117,7 +114,7 @@ int main(int argc, char *argv[])
 void scheduler(az_method use_aio)
 {
   unsigned int x;
-  unsigned long long total;
+  uint64_t total;
   azio_stream writer_handle;
   thread_context_st *context;
   pthread_t mainthread;            /* Thread descriptor */
@@ -207,20 +204,13 @@ void scheduler(az_method use_aio)
   free(context);
   azclose(&writer_handle);
 
-  printf("Read %llu rows\n", total);
+  printf("Read %"PRIu64" rows\n", total);
 }
 
 void *timer_thread(void *p)
 {
   time_t *timer_length= (time_t *)p;
   struct timespec abstime;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
-            my_progname);
-    exit(1);
-  }
 
   /* 
     We lock around the initial call in case were we in a loop. This 
@@ -243,24 +233,16 @@ void *timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  drizzle_thread_end();
-
   return 0;
 }
 
 void *run_task(void *p)
 {
   thread_context_st *context= (thread_context_st *)p;
-  unsigned long long count;
+  uint64_t count;
   int ret;
   int error;
   azio_stream reader_handle;
-
-  if (drizzle_thread_init())
-  {
-    fprintf(stderr,"%s: drizzle_thread_init() failed.\n", my_progname);
-    exit(1);
-  }
 
   if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
                     context->use_aio)))
@@ -300,15 +282,13 @@ void *run_task(void *p)
   pthread_mutex_unlock(&counter_mutex);
   azclose(&reader_handle);
 
-  drizzle_thread_end();
-
   return NULL;
 }
 
-void create_data_file(azio_stream *write_handler, unsigned long long rows)
+void create_data_file(azio_stream *write_handler, uint64_t rows)
 {
   int ret;
-  unsigned long long x;
+  uint64_t x;
 
   if (!(ret= azopen(write_handler, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC|O_BINARY,
                     AZ_METHOD_BLOCK)))

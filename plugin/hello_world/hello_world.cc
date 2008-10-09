@@ -14,82 +14,48 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/common_includes.h>
+#include <drizzled/item_func.h>
+#include <drizzled/item_strfunc.h>
 
-bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
+class Item_func_hello_world : public Item_str_func
 {
-  /* this is how to fail */
-  if (args->arg_count != 0)  {
-    strncpy(message, "Too many arguments", DRIZZLE_ERRMSG_SIZE);
-    return 1;
+public:
+  const char *func_name() const { return "hello_world"; }
+  String *val_str(String* s) {
+    s->set(STRING_WITH_LEN("Hello World!"),system_charset_info);
+    return s;
+  };
+  void fix_length_and_dec() {
+    max_length=strlen("Hello World!");
   }
+};
 
-  /* initid->ptr keeps state for between udf_init_foo and udf_deinit_foo */
-  initid->ptr= NULL;
-
-  return 0;
-}
-
-char *udf_doit_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *result,
-			   unsigned long *length, char *is_null, char *error)
+Item_func* create_hello_world_udf_item(MEM_ROOT* m)
 {
-  /* We don't use these, so void them out */
-  (void)initid;
-  (void)args;
-
-  /* "result" is preallocated 255 bytes for me, if i want to use it */
-  strncpy(result, "Hello, world!", 255);
-
-  /* if set to 255 or less, MySQL treats the result as a varchar
-     if set to greater than 255, MySQL treats the result as a blob */
-  *length= strlen("Hello, world!");
-
-  /* is_null is already zero, this is a demonstration */
-  *is_null= 0;
-
-  /* error is already zero, this is a demonstration */
-  *error= 0;
-
-  return result;
+  return  new (m) Item_func_hello_world();
 }
 
-void udf_deinit_hello_world(UDF_INIT *initid)
-{
-  /* We don't use this, so void it out */
-  (void)initid;
-
-  /* if we allocated initid->ptr, free it here */
-  return;
-}
-
+static struct udf_func hello_world_udf = {
+  { C_STRING_WITH_LEN("hello_world") },
+  create_hello_world_udf_item
+};
 
 static int hello_world_plugin_init(void *p)
 {
-  udf_func *udff= (udf_func *) p;
+  udf_func **f = (udf_func**) p;
 
-  udff->name.str= (char *)"hello_world";
-  udff->name.length= strlen("hello_world");
-  udff->type= UDFTYPE_FUNCTION;
-  udff->returns= STRING_RESULT;
-  udff->func_init= udf_init_hello_world;
-  udff->func_deinit= udf_deinit_hello_world;
-  udff->func= (Udf_func_any) udf_doit_hello_world;
+  *f= &hello_world_udf;
 
   return 0;
 }
 
 static int hello_world_plugin_deinit(void *p)
 {
-  /* We don't use this, so void it out */
-  (void)p;
-
-  /* There is nothing to de-init here, but if 
-   * something is needed from the udf_func, it 
-   * can be had from p with:
-   *   udf_func *udff = (udf_func *) p;
-   */
-
+  udf_func *udff = (udf_func *) p;
+  (void)udff;
   return 0;
 }
+
 
 mysql_declare_plugin(hello_world)
 {

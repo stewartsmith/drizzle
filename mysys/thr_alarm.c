@@ -28,22 +28,34 @@
 #include <sys/select.h>				/* AIX needs this for fd_set */
 #endif
 
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  
+
+
 #ifndef ETIME
 #define ETIME ETIMEDOUT
 #endif
 
-uint thr_client_alarm;
+uint32_t thr_client_alarm;
 static int alarm_aborted=1;			/* No alarm thread */
 bool thr_alarm_inited= 0;
 volatile bool alarm_thread_running= 0;
 time_t next_alarm_expire_time= ~ (time_t) 0;
-static sig_handler process_alarm_part2(int sig);
+static RETSIGTYPE process_alarm_part2(int sig);
 
 static pthread_mutex_t LOCK_alarm;
 static pthread_cond_t COND_alarm;
 static sigset_t full_signal_set;
 static QUEUE alarm_queue;
-static uint max_used_alarms=0;
+static uint32_t max_used_alarms=0;
 pthread_t alarm_thread;
 
 #ifdef USE_ALARM_THREAD
@@ -53,22 +65,22 @@ static void *alarm_handler(void *arg);
 #define reschedule_alarms() pthread_kill(alarm_thread,THR_SERVER_ALARM)
 #endif
 
-static sig_handler thread_alarm(int sig __attribute__((unused)));
+static RETSIGTYPE thread_alarm(int sig __attribute__((unused)));
 
 static int compare_uint32_t(void *not_used __attribute__((unused)),
-			 uchar *a_ptr,uchar* b_ptr)
+			 unsigned char *a_ptr,unsigned char* b_ptr)
 {
   uint32_t a=*((uint32_t*) a_ptr),b= *((uint32_t*) b_ptr);
   return (a < b) ? -1  : (a == b) ? 0 : 1;
 }
 
-void init_thr_alarm(uint max_alarms)
+void init_thr_alarm(uint32_t max_alarms)
 {
   sigset_t s;
   alarm_aborted=0;
   next_alarm_expire_time= ~ (time_t) 0;
   init_queue(&alarm_queue,max_alarms+1,offsetof(ALARM,expire_time),0,
-	     compare_uint32_t,NullS);
+	     compare_uint32_t,NULL);
   sigfillset(&full_signal_set);			/* Neaded to block signals */
   pthread_mutex_init(&LOCK_alarm,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&COND_alarm,NULL);
@@ -94,8 +106,8 @@ void init_thr_alarm(uint max_alarms)
     pthread_attr_setstacksize(&thr_attr,8196);
 
     my_pthread_attr_setprio(&thr_attr,100);	/* Very high priority */
-    VOID(pthread_create(&alarm_thread,&thr_attr,alarm_handler,NULL));
-    VOID(pthread_attr_destroy(&thr_attr));
+    pthread_create(&alarm_thread,&thr_attr,alarm_handler,NULL);
+    pthread_attr_destroy(&thr_attr);
   }
 #elif defined(USE_ONE_SIGNAL_HAND)
   pthread_sigmask(SIG_BLOCK, &s, NULL);		/* used with sigwait() */
@@ -112,7 +124,7 @@ void init_thr_alarm(uint max_alarms)
 }
 
 
-void resize_thr_alarm(uint max_alarms)
+void resize_thr_alarm(uint32_t max_alarms)
 {
   pthread_mutex_lock(&LOCK_alarm);
   /*
@@ -144,7 +156,7 @@ void resize_thr_alarm(uint max_alarms)
     when the alarm has been given
 */
 
-bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
+bool thr_alarm(thr_alarm_t *alrm, uint32_t sec, ALARM *alarm_data)
 {
   time_t now;
 #ifndef USE_ONE_SIGNAL_HAND
@@ -204,7 +216,7 @@ bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
   alarm_data->alarmed=0;
   alarm_data->thread=    current_my_thread_var->pthread_self;
   alarm_data->thread_id= current_my_thread_var->id;
-  queue_insert(&alarm_queue,(uchar*) alarm_data);
+  queue_insert(&alarm_queue,(unsigned char*) alarm_data);
 
   /* Reschedule alarm if the current one has more than sec left */
   if (reschedule)
@@ -236,21 +248,21 @@ void thr_end_alarm(thr_alarm_t *alarmed)
 #ifndef USE_ONE_SIGNAL_HAND
   sigset_t old_mask;
 #endif
-  uint i, found=0;
+  uint32_t i, found=0;
 
 #ifndef USE_ONE_SIGNAL_HAND
   pthread_sigmask(SIG_BLOCK,&full_signal_set,&old_mask);
 #endif
   pthread_mutex_lock(&LOCK_alarm);
 
-  alarm_data= (ALARM*) ((uchar*) *alarmed - offsetof(ALARM,alarmed));
+  alarm_data= (ALARM*) ((unsigned char*) *alarmed - offsetof(ALARM,alarmed));
   for (i=0 ; i < alarm_queue.elements ; i++)
   {
     if ((ALARM*) queue_element(&alarm_queue,i) == alarm_data)
     {
       queue_remove(&alarm_queue,i),MYF(0);
       if (alarm_data->malloced)
-	my_free((uchar*) alarm_data,MYF(0));
+	free((unsigned char*) alarm_data);
       found++;
       break;
     }
@@ -277,7 +289,7 @@ void thr_end_alarm(thr_alarm_t *alarmed)
   every second.
 */
 
-sig_handler process_alarm(int sig __attribute__((unused)))
+RETSIGTYPE process_alarm(int sig __attribute__((unused)))
 {
   sigset_t old_mask;
 
@@ -287,7 +299,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 #if defined(MAIN) && !defined(__bsdi__)
     printf("thread_alarm in process_alarm\n"); fflush(stdout);
 #endif
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
     my_sigset(thr_client_alarm, process_alarm);	/* int. thread system calls */
 #endif
     return;
@@ -299,7 +311,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 #endif
   process_alarm_part2(sig);
 #ifndef USE_ALARM_THREAD
-#if defined(DONT_REMEMBER_SIGNAL) && !defined(USE_ONE_SIGNAL_HAND)
+#if !defined(HAVE_BSD_SIGNALS) && !defined(USE_ONE_SIGNAL_HAND)
   my_sigset(THR_SERVER_ALARM,process_alarm);
 #endif
   pthread_mutex_unlock(&LOCK_alarm);
@@ -309,7 +321,7 @@ sig_handler process_alarm(int sig __attribute__((unused)))
 }
 
 
-static sig_handler process_alarm_part2(int sig __attribute__((unused)))
+static RETSIGTYPE process_alarm_part2(int sig __attribute__((unused)))
 {
   ALARM *alarm_data;
 
@@ -320,7 +332,7 @@ static sig_handler process_alarm_part2(int sig __attribute__((unused)))
   {
     if (alarm_aborted)
     {
-      uint i;
+      uint32_t i;
       for (i=0 ; i < alarm_queue.elements ;)
       {
 	alarm_data=(ALARM*) queue_element(&alarm_queue,i);
@@ -448,7 +460,7 @@ void end_thr_alarm(bool free_structures)
 
 void thr_alarm_kill(my_thread_id thread_id)
 {
-  uint i;
+  uint32_t i;
   if (alarm_aborted)
     return;
   pthread_mutex_lock(&LOCK_alarm);
@@ -458,7 +470,7 @@ void thr_alarm_kill(my_thread_id thread_id)
     {
       ALARM *tmp=(ALARM*) queue_remove(&alarm_queue,i);
       tmp->expire_time=0;
-      queue_insert(&alarm_queue,(uchar*) tmp);
+      queue_insert(&alarm_queue,(unsigned char*) tmp);
       reschedule_alarms();
       break;
     }
@@ -489,12 +501,12 @@ void thr_alarm_info(ALARM_INFO *info)
 */
 
 
-static sig_handler thread_alarm(int sig)
+static RETSIGTYPE thread_alarm(int sig)
 {
 #ifdef MAIN
   printf("thread_alarm\n"); fflush(stdout);
 #endif
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,thread_alarm);		/* int. thread system calls */
 #endif
 }
@@ -578,7 +590,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
-static uint thread_count;
+static uint32_t thread_count;
 
 #ifdef HPUX10
 typedef int * fd_set_ptr;
@@ -625,7 +637,7 @@ static void *test_thread(void *arg)
       if (wait_time == 7)
       {						/* Simulate alarm-miss */
 	fd_set readFDs;
-	uint max_connection=fileno(stdin);
+	uint32_t max_connection=fileno(stdin);
 	FD_ZERO(&readFDs);
 	FD_SET(max_connection,&readFDs);
 	retry=0;
@@ -654,7 +666,7 @@ static void *test_thread(void *arg)
 		break;
 	      continue;
 	    }
-	    VOID(getchar());			/* Somebody was playing */
+	    getchar();			/* Somebody was playing */
 	  }
 	}
       }
@@ -666,18 +678,18 @@ static void *test_thread(void *arg)
   }
   pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
-  VOID(pthread_cond_signal(&COND_thread_count)); /* Tell main we are ready */
+  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
-  free((uchar*) arg);
+  free((unsigned char*) arg);
   return 0;
 }
 
 #ifdef USE_ONE_SIGNAL_HAND
-static sig_handler print_signal_warning(int sig)
+static RETSIGTYPE print_signal_warning(int sig)
 {
   printf("Warning: Got signal %d from thread %s\n",sig,my_thread_name());
   fflush(stdout);
-#ifdef DONT_REMEMBER_SIGNAL
+#ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
   if (sig == SIGALRM)
@@ -695,7 +707,7 @@ static void *signal_hand(void *arg __attribute__((unused)))
   pthread_detach_this_thread();
   init_thr_alarm(10);				/* Setup alarm handler */
   pthread_mutex_lock(&LOCK_thread_count);	/* Required by bsdi */
-  VOID(pthread_cond_signal(&COND_thread_count)); /* Tell main we are ready */
+  pthread_cond_signal(&COND_thread_count); /* Tell main we are ready */
   pthread_mutex_unlock(&LOCK_thread_count);
 
   sigemptyset(&set);				/* Catch all signals */
@@ -781,7 +793,7 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
 #ifdef NOT_USED
   sigemptyset(&set);
   sigaddset(&set, thr_client_alarm);
-  VOID(pthread_sigmask(SIG_UNBLOCK, &set, (sigset_t*) 0));
+  pthread_sigmask(SIG_UNBLOCK, &set, (sigset_t*) 0);
 #endif
 
   pthread_attr_init(&thr_attr);
@@ -790,10 +802,10 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   pthread_attr_setstacksize(&thr_attr,65536L);
 
   /* Start signal thread and wait for it to start */
-  VOID(pthread_mutex_lock(&LOCK_thread_count));
+  pthread_mutex_lock(&LOCK_thread_count);
   pthread_create(&tid,&thr_attr,signal_hand,NULL);
-  VOID(pthread_cond_wait(&COND_thread_count,&LOCK_thread_count));
-  VOID(pthread_mutex_unlock(&LOCK_thread_count));
+  pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+  pthread_mutex_unlock(&LOCK_thread_count);
 
   thr_setconcurrency(3);
   pthread_attr_setscope(&thr_attr,PTHREAD_SCOPE_PROCESS);
@@ -820,7 +832,7 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
 	 alarm_info.next_alarm_time);
   while (thread_count)
   {
-    VOID(pthread_cond_wait(&COND_thread_count,&LOCK_thread_count));
+    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
     if (thread_count == 1)
     {
       printf("Calling end_thr_alarm. This should cancel the last thread\n");

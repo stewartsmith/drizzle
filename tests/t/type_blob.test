@@ -145,10 +145,10 @@ CREATE TABLE t1 (
   t1_id bigint(21) NOT NULL auto_increment,
   _field_72 varchar(128) DEFAULT '' NOT NULL,
   _field_95 varchar(32),
-  _field_115 tinyint(4) DEFAULT '0' NOT NULL,
-  _field_122 tinyint(4) DEFAULT '0' NOT NULL,
-  _field_126 tinyint(4),
-  _field_134 tinyint(4),
+  _field_115 int(4) DEFAULT '0' NOT NULL,
+  _field_122 int(4) DEFAULT '0' NOT NULL,
+  _field_126 int(4),
+  _field_134 int(4),
   PRIMARY KEY (t1_id),
   UNIQUE _field_72 (_field_72),
   KEY _field_115 (_field_115),
@@ -175,14 +175,14 @@ INSERT INTO t2 VALUES (2,2);
 CREATE TABLE t3 (
   t3_id bigint(21) NOT NULL auto_increment,
   _field_131 varchar(128),
-  _field_133 tinyint(4) DEFAULT '0' NOT NULL,
+  _field_133 int(4) DEFAULT '0' NOT NULL,
   _field_135 datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  _field_137 tinyint(4),
+  _field_137 int(4),
   _field_139 datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   _field_140 blob,
-  _field_142 tinyint(4) DEFAULT '0' NOT NULL,
-  _field_145 tinyint(4) DEFAULT '0' NOT NULL,
-  _field_148 tinyint(4) DEFAULT '0' NOT NULL,
+  _field_142 int(4) DEFAULT '0' NOT NULL,
+  _field_145 int(4) DEFAULT '0' NOT NULL,
+  _field_148 int(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (t3_id),
   KEY _field_133 (_field_133),
   KEY _field_135 (_field_135),
@@ -209,7 +209,7 @@ INSERT INTO t4 VALUES (2,1);
 
 CREATE TABLE t5 (
   t5_id bigint(21) NOT NULL auto_increment,
-  _field_149 tinyint(4),
+  _field_149 int(4),
   _field_156 varchar(128) DEFAULT '' NOT NULL,
   _field_157 varchar(128) DEFAULT '' NOT NULL,
   _field_158 varchar(128) DEFAULT '' NOT NULL,
@@ -241,9 +241,9 @@ INSERT INTO t6 VALUES (2,2);
 
 CREATE TABLE t7 (
   t7_id bigint(21) NOT NULL auto_increment,
-  _field_143 tinyint(4),
+  _field_143 int(4),
   _field_165 varchar(32),
-  _field_166 smallint(6) DEFAULT '0' NOT NULL,
+  _field_166 int(6) DEFAULT '0' NOT NULL,
   PRIMARY KEY (t7_id),
   KEY _field_166 (_field_166)
 );
@@ -294,7 +294,7 @@ drop table t1;
 # Test of found bug when blob is first key part
 #
 
-create table t1 (foobar tinyblob not null, boggle smallint not null, key (foobar(32), boggle));
+create table t1 (foobar tinyblob not null, boggle int not null, key (foobar(32), boggle));
 insert into t1 values ('fish', 10),('bear', 20);
 select foobar, boggle from t1 where foobar = 'fish';
 select foobar, boggle from t1 where foobar = 'fish' and boggle = 10;

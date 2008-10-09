@@ -155,13 +155,13 @@ INSERT INTO t1 VALUES (1, 1, 1, 1, 'a');
 drop table t1;
 
 #
-# Test with blob + tinyint key
+# Test with blob + int key
 # (Failed for Greg Valure)
 #
 
 CREATE TABLE t1 (
   a tinytext NOT NULL,
-  b tinyint(3) unsigned NOT NULL default '0',
+  b int(3) NOT NULL default '0',
   PRIMARY KEY (a(32),b)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('a',1),('a',2);
@@ -213,7 +213,7 @@ drop table t1;
 # Test of key read with primary key (Bug #3497)
 #
 
-CREATE TABLE t1 (id int unsigned auto_increment, name char(50), primary key (id)) engine=myisam;
+CREATE TABLE t1 (id int auto_increment, name char(50), primary key (id)) engine=myisam;
 insert into t1 (name) values ('a'), ('b'),('c'),('d'),('e'),('f'),('g');
 explain select 1 from t1 where id =2;
 explain select 1 from t1 where id =2 or id=3;
@@ -226,7 +226,7 @@ drop table t1;
 # Test of problem with key read (Bug #3666)
 #
 
-CREATE TABLE t1 (numeropost mediumint(8) unsigned NOT NULL default '0', numreponse int(10) unsigned NOT NULL auto_increment, PRIMARY KEY (numeropost,numreponse), UNIQUE KEY numreponse (numreponse));
+CREATE TABLE t1 (numeropost mediumint(8) NOT NULL default '0', numreponse int(10) NOT NULL auto_increment, PRIMARY KEY (numeropost,numreponse), UNIQUE KEY numreponse (numreponse));
 INSERT INTO t1 (numeropost,numreponse) VALUES ('1','1'),('1','2'),('2','3'),('2','4');
 SELECT numeropost FROM t1 WHERE numreponse='1';
 EXPLAIN SELECT numeropost FROM t1 WHERE numreponse='1';
@@ -447,7 +447,7 @@ drop table t1;
 # Bug #20604: Test for disabled keys with aggregate functions and FORCE INDEX.
 #
 
-CREATE TABLE t1( a TINYINT, KEY(a) ) ENGINE=MyISAM;
+CREATE TABLE t1( a int, KEY(a) ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES( 1 );
 ALTER TABLE t1 DISABLE KEYS;
 EXPLAIN SELECT MAX(a) FROM t1 FORCE INDEX(a);
@@ -467,12 +467,12 @@ CREATE TABLE t1 (
 CREATE TABLE t2 (
   a INTEGER auto_increment PRIMARY KEY,
   b INTEGER NOT NULL,
-  c SMALLINT NOT NULL,
+  c int NOT NULL,
   d DATETIME NOT NULL,
-  e SMALLINT NOT NULL,
+  e int NOT NULL,
   f INTEGER NOT NULL,
   g INTEGER NOT NULL,  
-  h SMALLINT NOT NULL,
+  h int NOT NULL,
   i INTEGER NOT NULL,
   j INTEGER NOT NULL,
   UNIQUE INDEX (b),

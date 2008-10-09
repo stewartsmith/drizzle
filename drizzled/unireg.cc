@@ -28,22 +28,22 @@
 
 #define FCOMP			17		/* Bytes for a packed field */
 
-static uchar * pack_screens(List<Create_field> &create_fields,
-			    uint *info_length, uint *screens, bool small_file);
-static uint pack_keys(uchar *keybuff,uint key_count, KEY *key_info,
+static unsigned char * pack_screens(List<Create_field> &create_fields,
+			    uint32_t *info_length, uint32_t *screens, bool small_file);
+static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count, KEY *key_info,
                       ulong data_offset);
-static bool pack_header(uchar *forminfo,enum legacy_db_type table_type,
+static bool pack_header(unsigned char *forminfo,
 			List<Create_field> &create_fields,
-			uint info_length, uint screens, uint table_options,
+			uint32_t info_length, uint32_t screens, uint32_t table_options,
 			ulong data_offset, handler *file);
-static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
+static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
 			    Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
 static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
-			   uint table_options,
+			   uint32_t table_options,
 			   List<Create_field> &create_fields,
-			   uint reclength, ulong data_offset,
+			   uint32_t reclength, ulong data_offset,
                            handler *handler);
 
 /**
@@ -55,7 +55,7 @@ static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
 
 struct Pack_header_error_handler: public Internal_error_handler
 {
-  virtual bool handle_error(uint sql_errno,
+  virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
@@ -66,7 +66,7 @@ struct Pack_header_error_handler: public Internal_error_handler
 
 bool
 Pack_header_error_handler::
-handle_error(uint sql_errno,
+handle_error(uint32_t sql_errno,
              const char * /* message */,
              DRIZZLE_ERROR::enum_warning_level /* level */,
              THD * /* thd */)
@@ -99,20 +99,20 @@ bool mysql_create_frm(THD *thd, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_fields,
-		      uint keys, KEY *key_info,
+		      uint32_t keys, KEY *key_info,
 		      handler *db_file)
 {
   LEX_STRING str_db_type;
-  uint reclength, info_length, screens, key_info_length, maxlength, tmp_len;
+  uint32_t reclength, info_length, screens, key_info_length, maxlength, tmp_len;
   ulong key_buff_length;
   File file;
   ulong filepos, data_offset;
-  uchar fileinfo[64],forminfo[288],*keybuff;
+  unsigned char fileinfo[64],forminfo[288],*keybuff;
   TYPELIB formnames;
-  uchar *screen_buff;
+  unsigned char *screen_buff;
   char buff[128];
-  const uint format_section_header_size= 8;
-  uint format_section_len;
+  const uint32_t format_section_header_size= 8;
+  uint32_t format_section_len;
   Pack_header_error_handler pack_header_error_handler;
   int error;
 
@@ -129,7 +129,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 
   thd->push_internal_handler(&pack_header_error_handler);
 
-  error= pack_header(forminfo, ha_legacy_type(create_info->db_type),
+  error= pack_header(forminfo,
                      create_fields,info_length,
                      screens, create_info->table_options,
                      data_offset, db_file);
@@ -138,18 +138,18 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 
   if (error)
   {
-    my_free(screen_buff, MYF(0));
+    free(screen_buff);
     if (! pack_header_error_handler.is_handled)
       return(1);
 
     // Try again without UNIREG screens (to get more columns)
     if (!(screen_buff=pack_screens(create_fields,&info_length,&screens,1)))
       return(1);
-    if (pack_header(forminfo, ha_legacy_type(create_info->db_type),
+    if (pack_header(forminfo,
                     create_fields,info_length,
 		    screens, create_info->table_options, data_offset, db_file))
     {
-      my_free(screen_buff, MYF(0));
+      free(screen_buff);
       return(1);
     }
   }
@@ -186,7 +186,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     my_error(ER_WRONG_STRING_LENGTH, MYF(0),
              create_info->comment.str,"Table COMMENT",
              (uint) TABLE_COMMENT_MAXLEN);
-    my_free(screen_buff,MYF(0));
+    free(screen_buff);
     return(1);
   }
 
@@ -199,7 +199,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   else{
     strmake((char*) forminfo+47, create_info->comment.str ?
             create_info->comment.str : "", create_info->comment.length);
-    forminfo[46]=(uchar) create_info->comment.length;
+    forminfo[46]=(unsigned char) create_info->comment.length;
 #ifdef EXTRA_DEBUG
     /*
       EXTRA_DEBUG causes strmake() to initialize its buffer behind the
@@ -213,20 +213,20 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if ((file=create_frm(thd, file_name, db, table, reclength, fileinfo,
 		       create_info, keys, key_info)) < 0)
   {
-    my_free(screen_buff, MYF(0));
+    free(screen_buff);
     return(1);
   }
 
   key_buff_length= uint4korr(fileinfo+47);
-  keybuff=(uchar*) my_malloc(key_buff_length, MYF(0));
+  keybuff=(unsigned char*) my_malloc(key_buff_length, MYF(0));
   key_info_length= pack_keys(keybuff, keys, key_info, data_offset);
-  VOID(get_form_pos(file,fileinfo,&formnames));
+  get_form_pos(file,fileinfo,&formnames);
   if (!(filepos=make_new_entry(file,fileinfo,&formnames,"")))
     goto err;
   maxlength=(uint) next_io_size((ulong) (uint2korr(forminfo)+1000));
   int2store(forminfo+2,maxlength);
   int4store(fileinfo+10,(ulong) (filepos+maxlength));
-  fileinfo[26]= (uchar) test((create_info->max_rows == 1) &&
+  fileinfo[26]= (unsigned char) test((create_info->max_rows == 1) &&
 			     (create_info->min_rows == 1) && (keys == 0));
   int2store(fileinfo+28,key_info_length);
 
@@ -236,38 +236,38 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if (pwrite(file, fileinfo, 64, 0L) == 0 ||
       pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
     goto err;
-  VOID(my_seek(file,
+  my_seek(file,
 	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
-	       MY_SEEK_SET,MYF(0)));
+	       MY_SEEK_SET,MYF(0));
   if (make_empty_rec(thd,file,ha_legacy_type(create_info->db_type),
                      create_info->table_options,
 		     create_fields,reclength, data_offset, db_file))
     goto err;
 
   int2store(buff, create_info->connect_string.length);
-  if (my_write(file, (const uchar*)buff, 2, MYF(MY_NABP)) ||
-      my_write(file, (const uchar*)create_info->connect_string.str,
+  if (my_write(file, (const unsigned char*)buff, 2, MYF(MY_NABP)) ||
+      my_write(file, (const unsigned char*)create_info->connect_string.str,
                create_info->connect_string.length, MYF(MY_NABP)))
       goto err;
 
   int2store(buff, str_db_type.length);
-  if (my_write(file, (const uchar*)buff, 2, MYF(MY_NABP)) ||
-      my_write(file, (const uchar*)str_db_type.str,
+  if (my_write(file, (const unsigned char*)buff, 2, MYF(MY_NABP)) ||
+      my_write(file, (const unsigned char*)str_db_type.str,
                str_db_type.length, MYF(MY_NABP)))
     goto err;
 
   {
     memset(buff, 0, 6);
-    if (my_write(file, (uchar*) buff, 6, MYF_RW))
+    if (my_write(file, (unsigned char*) buff, 6, MYF_RW))
       goto err;
   }
 
-  if (forminfo[46] == (uchar)255)
+  if (forminfo[46] == (unsigned char)255)
   {
-    uchar comment_length_buff[2];
+    unsigned char comment_length_buff[2];
     int2store(comment_length_buff,create_info->comment.length);
     if (my_write(file, comment_length_buff, 2, MYF(MY_NABP)) ||
-        my_write(file, (uchar*)create_info->comment.str,
+        my_write(file, (unsigned char*)create_info->comment.str,
                   create_info->comment.length, MYF(MY_NABP)))
       goto err;
   }
@@ -276,7 +276,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   {
     /* prepare header */
     {
-      uint flags= 0;
+      uint32_t flags= 0;
 
       memset(buff, 0, format_section_header_size);
       /* length of section 2 bytes*/
@@ -286,33 +286,33 @@ bool mysql_create_frm(THD *thd, const char *file_name,
       /* 2 bytes left for future use */
     }
     /* write header */
-    if (my_write(file, (const uchar*)buff, format_section_header_size, MYF_RW))
+    if (my_write(file, (const unsigned char*)buff, format_section_header_size, MYF_RW))
       goto err;
     buff[0]= 0;
-    if (my_write(file, (const uchar*)buff, 1, MYF_RW))
+    if (my_write(file, (const unsigned char*)buff, 1, MYF_RW))
       goto err;
     /* write column info, 1 byte per column */
     {
       List_iterator<Create_field> it(create_fields);
       Create_field *field;
-      uchar column_format, write_byte;
+      unsigned char column_format, write_byte;
       while ((field=it++))
       {
-        column_format= (uchar)field->column_format();
+        column_format= (unsigned char)field->column_format();
         write_byte= (column_format << COLUMN_FORMAT_SHIFT);
         if (my_write(file, &write_byte, 1, MYF_RW))
           goto err;
       }
     }
   }
-  VOID(my_seek(file,filepos,MY_SEEK_SET,MYF(0)));
+  my_seek(file,filepos,MY_SEEK_SET,MYF(0));
   if (my_write(file, forminfo, 288, MYF_RW) ||
       my_write(file, screen_buff, info_length, MYF_RW) ||
       pack_fields(file, create_fields, data_offset))
     goto err;
 
-  my_free(screen_buff,MYF(0));
-  my_free(keybuff, MYF(0));
+  free(screen_buff);
+  free(keybuff);
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       (my_sync(file, MYF(MY_WME)) ||
@@ -341,10 +341,10 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   return(0);
 
 err:
-  my_free(screen_buff, MYF(0));
-  my_free(keybuff, MYF(0));
+  free(screen_buff);
+  free(keybuff);
 err2:
-  VOID(my_close(file,MYF(MY_WME)));
+  my_close(file,MYF(MY_WME));
 err3:
   my_delete(file_name,MYF(0));
   return(1);
@@ -375,12 +375,12 @@ int rea_create_table(THD *thd, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
-                     uint keys, KEY *key_info, handler *file)
+                     uint32_t keys, KEY *key_info, handler *file)
 {
   
 
   char frm_name[FN_REFLEN];
-  strxmov(frm_name, path, reg_ext, NullS);
+  strxmov(frm_name, path, reg_ext, NULL);
   if (mysql_create_frm(thd, frm_name, db, table_name, create_info,
                        create_fields, keys, key_info, file))
 
@@ -398,7 +398,7 @@ int rea_create_table(THD *thd, const char *path,
   return(0);
 
 err_handler:
-  VOID(file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info));
+  file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
   my_delete(frm_name, MYF(0));
   return(1);
 } /* rea_create_table */
@@ -406,15 +406,15 @@ err_handler:
 
 	/* Pack screens to a screen for save in a form-file */
 
-static uchar *pack_screens(List<Create_field> &create_fields,
-                           uint *info_length, uint *screens,
+static unsigned char *pack_screens(List<Create_field> &create_fields,
+                           uint32_t *info_length, uint32_t *screens,
                            bool small_file)
 {
-  register uint i;
-  uint row,start_row,end_row,fields_on_screen;
-  uint length,cols;
-  uchar *info,*pos,*start_screen;
-  uint fields=create_fields.elements;
+  register uint32_t i;
+  uint32_t row,start_row,end_row,fields_on_screen;
+  uint32_t length,cols;
+  unsigned char *info,*pos,*start_screen;
+  uint32_t fields=create_fields.elements;
   List_iterator<Create_field> it(create_fields);
   
 
@@ -427,7 +427,7 @@ static uchar *pack_screens(List<Create_field> &create_fields,
   while ((field=it++))
     length+=(uint) strlen(field->field_name)+1+TE_INFO_LENGTH+cols/2;
 
-  if (!(info=(uchar*) my_malloc(length,MYF(MY_WME))))
+  if (!(info=(unsigned char*) my_malloc(length,MYF(MY_WME))))
     return(0);
 
   start_screen=0;
@@ -443,15 +443,15 @@ static uchar *pack_screens(List<Create_field> &create_fields,
       {
 	length=(uint) (pos-start_screen);
 	int2store(start_screen,length);
-	start_screen[2]=(uchar) (fields_on_screen+1);
-	start_screen[3]=(uchar) (fields_on_screen);
+	start_screen[2]=(unsigned char) (fields_on_screen+1);
+	start_screen[3]=(unsigned char) (fields_on_screen);
       }
       row=start_row;
       start_screen=pos;
       pos+=4;
-      pos[0]= (uchar) start_row-2;	/* Header string */
-      pos[1]= (uchar) (cols >> 2);
-      pos[2]= (uchar) (cols >> 1) +1;
+      pos[0]= (unsigned char) start_row-2;	/* Header string */
+      pos[1]= (unsigned char) (cols >> 2);
+      pos[2]= (unsigned char) (cols >> 1) +1;
       strfill((char *) pos+3,(uint) (cols >> 1),' ');
       pos+=(cols >> 1)+4;
     }
@@ -461,19 +461,19 @@ static uchar *pack_screens(List<Create_field> &create_fields,
 
     if (!small_file)
     {
-      pos[0]=(uchar) row;
+      pos[0]=(unsigned char) row;
       pos[1]=0;
-      pos[2]=(uchar) (length+1);
-      pos=(uchar*) strmake((char*) pos+3,cfield->field_name,length)+1;
+      pos[2]=(unsigned char) (length+1);
+      pos=(unsigned char*) strmake((char*) pos+3,cfield->field_name,length)+1;
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) min(cfield->length,(uint32_t)cols-(length+2));
+    cfield->sc_length=(uint8_t) cmin(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
-  start_screen[2]=(uchar) (row-start_row+2);
-  start_screen[3]=(uchar) (row-start_row+1);
+  start_screen[2]=(unsigned char) (row-start_row+2);
+  start_screen[3]=(unsigned char) (row-start_row+1);
 
   *info_length=(uint) (pos-info);
   return(info);
@@ -482,11 +482,11 @@ static uchar *pack_screens(List<Create_field> &create_fields,
 
 	/* Pack keyinfo and keynames to keybuff for save in form-file. */
 
-static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
+static uint32_t pack_keys(unsigned char *keybuff, uint32_t key_count, KEY *keyinfo,
                       ulong data_offset)
 {
-  uint key_parts,length;
-  uchar *pos, *keyname_pos;
+  uint32_t key_parts,length;
+  unsigned char *pos, *keyname_pos;
   KEY *key,*end;
   KEY_PART_INFO *key_part,*key_part_end;
   
@@ -497,8 +497,8 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
   {
     int2store(pos, (key->flags ^ HA_NOSAME));
     int2store(pos+2,key->key_length);
-    pos[4]= (uchar) key->key_parts;
-    pos[5]= (uchar) key->algorithm;
+    pos[4]= (unsigned char) key->key_parts;
+    pos[5]= (unsigned char) key->algorithm;
     int2store(pos+6, key->block_size);
     pos+=8;
     key_parts+=key->key_parts;
@@ -507,7 +507,7 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
 	 key_part++)
 
     {
-      uint offset;
+      uint32_t offset;
       int2store(pos,key_part->fieldnr+1+FIELD_NAME_USED);
       offset= (uint) (key_part->offset+data_offset+1);
       int2store(pos+2, offset);
@@ -519,11 +519,11 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
   }
 	/* Save keynames */
   keyname_pos=pos;
-  *pos++=(uchar) NAMES_SEP_CHAR;
+  *pos++=(unsigned char) NAMES_SEP_CHAR;
   for (key=keyinfo ; key != end ; key++)
   {
-    uchar *tmp=(uchar*) stpcpy((char*) pos,key->name);
-    *tmp++= (uchar) NAMES_SEP_CHAR;
+    unsigned char *tmp=(unsigned char*) my_stpcpy((char*) pos,key->name);
+    *tmp++= (unsigned char) NAMES_SEP_CHAR;
     *tmp=0;
     pos=tmp;
   }
@@ -534,7 +534,7 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
     if (key->flags & HA_USES_COMMENT)
     {
       int2store(pos, key->comment.length);
-      uchar *tmp= (uchar*)stpncpy((char*) pos+2,key->comment.str,key->comment.length);
+      unsigned char *tmp= (unsigned char*)my_stpncpy((char*) pos+2,key->comment.str,key->comment.length);
       pos= tmp;
     }
   }
@@ -547,8 +547,8 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
   }
   else
   {
-    keybuff[0]=(uchar) key_count;
-    keybuff[1]=(uchar) key_parts;
+    keybuff[0]=(unsigned char) key_count;
+    keybuff[1]=(unsigned char) key_parts;
     keybuff[2]= keybuff[3]= 0;
   }
   length=(uint) (pos-keyname_pos);
@@ -559,14 +559,13 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
 
 /* Make formheader */
 
-static bool pack_header(uchar *forminfo,
-                        enum legacy_db_type table_type __attribute__((unused)),
+static bool pack_header(unsigned char *forminfo,
                         List<Create_field> &create_fields,
-                        uint info_length, uint screens, uint table_options,
+                        uint32_t info_length, uint32_t screens, uint32_t table_options,
                         ulong data_offset, handler *file)
 {
-  uint length,int_count,int_length,no_empty, int_parts;
-  uint time_stamp_pos,null_fields;
+  uint32_t length,int_count,int_length,no_empty, int_parts;
+  uint32_t time_stamp_pos,null_fields;
   ulong reclength, totlength, n_length, com_length, vcol_info_length;
 
 
@@ -588,7 +587,7 @@ static bool pack_header(uchar *forminfo,
   Create_field *field;
   while ((field=it++))
   {
-    uint tmp_len= system_charset_info->cset->charpos(system_charset_info,
+    uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                                      field->comment.str,
                                                      field->comment.str +
                                                      field->comment.length,
@@ -648,7 +647,7 @@ static bool pack_header(uchar *forminfo,
     field->save_interval= 0;
     if (field->interval)
     {
-      uint old_int_count=int_count;
+      uint32_t old_int_count=int_count;
 
       if (field->charset->mbminlen > 1)
       {
@@ -668,13 +667,13 @@ static bool pack_header(uchar *forminfo,
 				    (field->interval->count+1));
         field->interval->type_names[field->interval->count]= 0;
         field->interval->type_lengths=
-          (uint *) sql_alloc(sizeof(uint) * field->interval->count);
+          (uint32_t *) sql_alloc(sizeof(uint) * field->interval->count);
  
-        for (uint pos= 0; pos < field->interval->count; pos++)
+        for (uint32_t pos= 0; pos < field->interval->count; pos++)
         {
           char *dst;
           const char *src= field->save_interval->type_names[pos];
-          uint hex_length;
+          uint32_t hex_length;
           length= field->save_interval->type_lengths[pos];
           hex_length= length * 2;
           field->interval->type_lengths[pos]= hex_length;
@@ -705,7 +704,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
   /* Hack to avoid bugs with small static rows in MySQL */
-  reclength=max((ulong)file->min_record_length(table_options),reclength);
+  reclength=cmax((ulong)file->min_record_length(table_options),reclength);
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
       n_length+int_length+com_length+vcol_info_length > 65535L || 
       int_count > 255)
@@ -741,7 +740,7 @@ static bool pack_header(uchar *forminfo,
 
 	/* get each unique interval each own id */
 
-static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
+static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
 			    Create_field *last_field)
 {
   List_iterator<Create_field> it(create_fields);
@@ -772,9 +771,9 @@ static uint get_interval_id(uint *int_count,List<Create_field> &create_fields,
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset)
 {
-  register uint i;
-  uint int_count, comment_length=0, vcol_info_length=0;
-  uchar buff[MAX_FIELD_WIDTH];
+  register uint32_t i;
+  uint32_t int_count, comment_length=0, vcol_info_length=0;
+  unsigned char buff[MAX_FIELD_WIDTH];
   Create_field *field;
   
 
@@ -785,21 +784,21 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   int_count=0;
   while ((field=it++))
   {
-    uint recpos;
-    uint cur_vcol_expr_len= 0;
-    buff[0]= (uchar) field->row;
-    buff[1]= (uchar) field->col;
-    buff[2]= (uchar) field->sc_length;
+    uint32_t recpos;
+    uint32_t cur_vcol_expr_len= 0;
+    buff[0]= (unsigned char) field->row;
+    buff[1]= (unsigned char) field->col;
+    buff[2]= (unsigned char) field->sc_length;
     int2store(buff+3, field->length);
     /* The +1 is here becasue the col offset in .frm file have offset 1 */
     recpos= field->offset+1 + (uint) data_offset;
     int3store(buff+5,recpos);
     int2store(buff+8,field->pack_flag);
     int2store(buff+10,field->unireg_check);
-    buff[12]= (uchar) field->interval_id;
-    buff[13]= (uchar) field->sql_type; 
+    buff[12]= (unsigned char) field->interval_id;
+    buff[13]= (unsigned char) field->sql_type; 
     if (field->charset) 
-      buff[14]= (uchar) field->charset->number;
+      buff[14]= (unsigned char) field->charset->number;
     else
       buff[14]= 0;				// Numerical
     if (field->vcol_info)
@@ -811,7 +810,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       buff[12]= cur_vcol_expr_len= field->vcol_info->expr_str.length +
                 (uint)FRM_VCOL_HEADER_SIZE;
       vcol_info_length+= cur_vcol_expr_len+(uint)FRM_VCOL_HEADER_SIZE;
-      buff[13]= (uchar) DRIZZLE_TYPE_VIRTUAL;
+      buff[13]= (unsigned char) DRIZZLE_TYPE_VIRTUAL;
     }
     int2store(buff+15, field->comment.length);
     comment_length+= field->comment.length;
@@ -821,14 +820,14 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
   }
 
 	/* Write fieldnames */
-  buff[0]=(uchar) NAMES_SEP_CHAR;
+  buff[0]=(unsigned char) NAMES_SEP_CHAR;
   if (my_write(file, buff, 1, MYF_RW))
     return(1);
   i=0;
   it.rewind();
   while ((field=it++))
   {
-    char *pos= stpcpy((char*) buff,field->field_name);
+    char *pos= my_stpcpy((char*) buff,field->field_name);
     *pos++=NAMES_SEP_CHAR;
     if (i == create_fields.elements-1)
       *pos++=0;
@@ -850,13 +849,13 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       {
         unsigned char  sep= 0;
         unsigned char  occ[256];
-        uint           i;
+        uint32_t           i;
         unsigned char *val= NULL;
 
         memset(occ, 0, sizeof(occ));
 
         for (i=0; (val= (unsigned char*) field->interval->type_names[i]); i++)
-          for (uint j = 0; j < field->interval->type_lengths[i]; j++)
+          for (uint32_t j = 0; j < field->interval->type_lengths[i]; j++)
             occ[(unsigned int) (val[j])]= 1;
 
         if (!occ[(unsigned char)NAMES_SEP_CHAR])
@@ -865,7 +864,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
           sep= ',';
         else
         {
-          for (uint i=1; i<256; i++)
+          for (uint32_t i=1; i<256; i++)
           {
             if(!occ[i])
             {
@@ -892,7 +891,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
         tmp.append('\0');                      // End of intervall
       }
     }
-    if (my_write(file,(uchar*) tmp.ptr(),tmp.length(),MYF_RW))
+    if (my_write(file,(unsigned char*) tmp.ptr(),tmp.length(),MYF_RW))
       return(1);
   }
   if (comment_length)
@@ -902,7 +901,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
     while ((field=it++))
     {
       if (field->comment.length)
-	if (my_write(file, (uchar*) field->comment.str, field->comment.length,
+	if (my_write(file, (unsigned char*) field->comment.str, field->comment.length,
 		     MYF_RW))
 	  return(1);
     }
@@ -922,13 +921,13 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
       */
       if (field->vcol_info && field->vcol_info->expr_str.length)
       {
-        buff[0]= (uchar)1;
-        buff[1]= (uchar) field->sql_type;
-        buff[2]= (uchar) field->is_stored;
+        buff[0]= (unsigned char)1;
+        buff[1]= (unsigned char) field->sql_type;
+        buff[2]= (unsigned char) field->is_stored;
         if (my_write(file, buff, 3, MYF_RW))
           return(1);
         if (my_write(file, 
-                     (uchar*) field->vcol_info->expr_str.str, 
+                     (unsigned char*) field->vcol_info->expr_str.str, 
                      field->vcol_info->expr_str.length,
                      MYF_RW))
           return(1);
@@ -943,16 +942,16 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 
 static bool make_empty_rec(THD *thd, File file,
                            enum legacy_db_type table_type __attribute__((unused)),
-                           uint table_options,
+                           uint32_t table_options,
                            List<Create_field> &create_fields,
-                           uint reclength,
+                           uint32_t reclength,
                            ulong data_offset,
                            handler *handler)
 {
   int error= 0;
   Field::utype type;
-  uint null_count;
-  uchar *buff,*null_pos;
+  uint32_t null_count;
+  unsigned char *buff,*null_pos;
   Table table;
   TABLE_SHARE share;
   Create_field *field;
@@ -964,7 +963,7 @@ static bool make_empty_rec(THD *thd, File file,
   memset(&share, 0, sizeof(share));
   table.s= &share;
 
-  if (!(buff=(uchar*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))
+  if (!(buff=(unsigned char*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))
   {
     return(1);
   }
@@ -1049,12 +1048,12 @@ static bool make_empty_rec(THD *thd, File file,
     of 8 there are no unused bits.
   */
   if (null_count & 7)
-    *(null_pos + null_count / 8)|= ~(((uchar) 1 << (null_count & 7)) - 1);
+    *(null_pos + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
   error= my_write(file, buff, (size_t) reclength,MYF_RW) != 0;
 
 err:
-  my_free(buff, MYF(MY_FAE));
+  free(buff);
   thd->count_cuted_fields= old_count_cuted_fields;
   return(error);
 } /* make_empty_rec */

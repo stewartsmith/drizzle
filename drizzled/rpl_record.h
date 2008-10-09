@@ -1,36 +1,36 @@
-/* Copyright 2007 MySQL AB. All rights reserved.
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-#ifndef RPL_RECORD_H
-#define RPL_RECORD_H
+#ifndef DRIZZLED_RPL_RECORD_H
+#define DRIZZLED_RPL_RECORD_H
 
 #include <drizzled/rpl_reporting.h>
 
-#if !defined(DRIZZLE_CLIENT)
 size_t pack_row(Table* table, MY_BITMAP const* cols,
-                uchar *row_data, const uchar *data);
-#endif
+                unsigned char *row_data, const unsigned char *data);
 
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int unpack_row(Relay_log_info const *rli,
-               Table *table, uint const colcnt,
-               uchar const *const row_data, MY_BITMAP const *cols,
-               uchar const **const row_end, ulong *const master_reclength);
+               Table *table, uint32_t const colcnt,
+               unsigned char const *const row_data, MY_BITMAP const *cols,
+               unsigned char const **const row_end, ulong *const master_reclength);
 
 // Fill table's record[0] with default values.
-int prepare_record(Table *const, const MY_BITMAP *cols, uint width, const bool);
-#endif
+int prepare_record(Table *const, const MY_BITMAP *cols, uint32_t width, const bool);
 
-#endif
+#endif /* DRIZZLED_RPL_RECORD_H */

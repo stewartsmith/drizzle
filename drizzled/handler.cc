@@ -38,7 +38,7 @@ static handlerton *installed_htons[128];
 
 #define BITMAP_STACKBUF_SIZE (128/8)
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NullS,0}, {NullS,0} };
+KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
 /* number of entries in handlertons[] */
 uint32_t total_ha= 0;
@@ -51,7 +51,7 @@ static const LEX_STRING sys_table_aliases[]=
 {
   { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
   { C_STRING_WITH_LEN("HEAP") },      { C_STRING_WITH_LEN("MEMORY") },
-  {NullS, 0}
+  {NULL, 0}
 };
 
 const char *ha_row_type[] = {
@@ -60,12 +60,12 @@ const char *ha_row_type[] = {
 
 const char *tx_isolation_names[] =
 { "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NullS};
+  NULL};
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 			       tx_isolation_names, NULL};
 
 static TYPELIB known_extensions= {0,"known_exts", NULL, NULL};
-uint known_extensions_id= 0;
+uint32_t known_extensions_id= 0;
 
 
 
@@ -113,8 +113,8 @@ plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name)
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
   if (thd && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
-                           (const uchar *)name->str, name->length,
-                           (const uchar *)STRING_WITH_LEN("DEFAULT"), 0))
+                           (const unsigned char *)name->str, name->length,
+                           (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(thd);
 
   if ((plugin= my_plugin_lock_by_name(thd, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
@@ -135,8 +135,8 @@ redo:
   for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
   {
     if (!my_strnncoll(&my_charset_utf8_general_ci,
-                      (const uchar *)name->str, name->length,
-                      (const uchar *)table_alias->str, table_alias->length))
+                      (const unsigned char *)name->str, name->length,
+                      (const unsigned char *)table_alias->str, table_alias->length))
     {
       name= table_alias + 1;
       goto redo;
@@ -194,13 +194,6 @@ handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
       my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
     }
     return NULL;
-  }
-
-  switch (database_type) {
-  case DB_TYPE_HASH:
-    return ha_resolve_by_legacy_type(thd, DB_TYPE_HASH);
-  default:
-    break;
   }
 
   return ha_default_handlerton(thd);
@@ -310,7 +303,7 @@ static int ha_finish_errors(void)
   /* Allocate a pointer array for the error message strings. */
   if (! (errmsgs= my_error_unregister(HA_ERR_FIRST, HA_ERR_LAST)))
     return 1;
-  my_free((uchar*) errmsgs, MYF(0));
+  free((unsigned char*) errmsgs);
   return 0;
 }
 
@@ -333,7 +326,7 @@ int ha_finalize_handlerton(st_plugin_int *plugin)
   if (hton && plugin->plugin->deinit)
     (void)plugin->plugin->deinit(hton);
 
-  my_free((uchar*)hton, MYF(0));
+  free((unsigned char*)hton);
 
   return(0);
 }
@@ -374,7 +367,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     break;
   case SHOW_OPTION_YES:
     {
-      uint tmp;
+      uint32_t tmp;
       /* now check the db_type for conflict */
       if (hton->db_type <= DB_TYPE_UNKNOWN ||
           hton->db_type >= DB_TYPE_DEFAULT ||
@@ -416,16 +409,11 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     "memory" hton which will be configurable longterm. We should be able to 
     remove partition and myisammrg.
   */
-  switch (hton->db_type) {
-  case DB_TYPE_HEAP:
+  if (strcmp(plugin->plugin->name, "MEMORY") == 0)
     heap_hton= hton;
-    break;
-  case DB_TYPE_MYISAM:
+
+  if (strcmp(plugin->plugin->name, "MyISAM") == 0)
     myisam_hton= hton;
-    break;
-  default:
-    break;
-  };
 
   return(0);
 err:
@@ -966,26 +954,6 @@ int ha_commit_trans(THD *thd, bool all)
   assert(thd->transaction.stmt.ha_list == NULL ||
               trans == &thd->transaction.stmt);
 
-  if (thd->in_sub_stmt)
-  {
-    /*
-      Since we don't support nested statement transactions in 5.0,
-      we can't commit or rollback stmt transactions while we are inside
-      stored functions or triggers. So we simply do nothing now.
-      TODO: This should be fixed in later ( >= 5.1) releases.
-    */
-    if (!all)
-      return(0);
-    /*
-      We assume that all statements which commit or rollback main transaction
-      are prohibited inside of stored functions or triggers. So they should
-      bail out with error even before ha_commit_trans() call. To be 100% safe
-      let us throw error in non-debug builds.
-    */
-    assert(0);
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(2);
-  }
   if (ha_info)
   {
     bool must_2pc;
@@ -1104,19 +1072,6 @@ int ha_rollback_trans(THD *thd, bool all)
   assert(thd->transaction.stmt.ha_list == NULL ||
               trans == &thd->transaction.stmt);
 
-  if (thd->in_sub_stmt)
-  {
-    /*
-      If we are inside stored function or trigger we should not commit or
-      rollback current statement transaction. See comment in ha_commit_trans()
-      call for more information.
-    */
-    if (!all)
-      return(0);
-    assert(0);
-    my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
-  }
   if (ha_info)
   {
     for (; ha_info; ha_info= ha_info_next)
@@ -1185,7 +1140,7 @@ int ha_autocommit_or_rollback(THD *thd, int error)
     else 
     {
       (void) ha_rollback_trans(thd, 0);
-      if (thd->transaction_rollback_request && !thd->in_sub_stmt)
+      if (thd->transaction_rollback_request)
         (void) ha_rollback(thd);
     }
 
@@ -1293,7 +1248,7 @@ static bool xarecover_handlerton(THD *unused __attribute__((unused)),
         }
         // recovery mode
         if (info->commit_list ?
-            hash_search(info->commit_list, (uchar *)&x, sizeof(x)) != 0 :
+            hash_search(info->commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
             tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
         {
           hton->commit_by_xid(hton, info->list+i);
@@ -1357,7 +1312,7 @@ int ha_recover(HASH *commit_list)
   plugin_foreach(NULL, xarecover_handlerton, 
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
-  my_free((uchar*)info.list, MYF(0));
+  free((unsigned char*)info.list);
   if (info.found_foreign_xids)
     sql_print_warning(_("Found %d prepared XA transactions"), 
                       info.found_foreign_xids);
@@ -1466,8 +1421,7 @@ int ha_release_temporary_latches(THD *thd)
 int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= (thd->in_sub_stmt ? &thd->transaction.stmt :
-                                        &thd->transaction.all);
+  THD_TRANS *trans= &thd->transaction.all;
   Ha_trx_info *ha_info, *ha_info_next;
 
   trans->no_2pc=0;
@@ -1482,7 +1436,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
     assert(ht);
     assert(ht->savepoint_set != 0);
     if ((err= ht->savepoint_rollback(ht, thd,
-                                     (uchar *)(sv+1)+ht->savepoint_offset)))
+                                     (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1499,7 +1453,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
   {
     int err;
     handlerton *ht= ha_info->ht();
-    if ((err= ht->rollback(ht, thd, !thd->in_sub_stmt)))
+    if ((err= ht->rollback(ht, thd, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
@@ -1521,8 +1475,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
 int ha_savepoint(THD *thd, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= (thd->in_sub_stmt ? &thd->transaction.stmt :
-                                        &thd->transaction.all);
+  THD_TRANS *trans= &thd->transaction.all;
   Ha_trx_info *ha_info= trans->ha_list;
   for (; ha_info; ha_info= ha_info->next())
   {
@@ -1535,7 +1488,7 @@ int ha_savepoint(THD *thd, SAVEPOINT *sv)
       error=1;
       break;
     }
-    if ((err= ht->savepoint_set(ht, thd, (uchar *)(sv+1)+ht->savepoint_offset)))
+    if ((err= ht->savepoint_set(ht, thd, (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1564,7 +1517,7 @@ int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
     if (!ht->savepoint_release)
       continue;
     if ((err= ht->savepoint_release(ht, thd,
-                                    (uchar *)(sv+1) + ht->savepoint_offset)))
+                                    (unsigned char *)(sv+1) + ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
@@ -1641,7 +1594,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 
   /* Ensure that table handler get path in lower case */
   if (tmp_path != path)
-    stpcpy(tmp_path, path);
+    my_stpcpy(tmp_path, path);
 
   /*
     we only should turn into lowercase database/table part
@@ -1661,7 +1614,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
 struct Ha_delete_table_error_handler: public Internal_error_handler
 {
 public:
-  virtual bool handle_error(uint sql_errno,
+  virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
@@ -1671,7 +1624,7 @@ public:
 
 bool
 Ha_delete_table_error_handler::
-handle_error(uint sql_errno  __attribute__((unused)),
+handle_error(uint32_t sql_errno  __attribute__((unused)),
              const char *message,
              DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
              THD *thd __attribute__((unused)))
@@ -1753,7 +1706,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
     on this->table->mem_root and we will not be able to reclaim that memory 
     when the clone handler object is destroyed.
   */
-  if (!(new_handler->ref= (uchar*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
+  if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
                                            table->s->normalized_path.str,
@@ -1816,7 +1769,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from handler::clone() */
-    if (!ref && !(ref= (uchar*) alloc_root(&table->mem_root, 
+    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root, 
                                           ALIGN_SIZE(ref_length)*2)))
     {
       close();
@@ -1836,7 +1789,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
   handlers for random position
 */
 
-int handler::rnd_pos_by_record(uchar *record)
+int handler::rnd_pos_by_record(unsigned char *record)
 {
   register int error;
 
@@ -1855,7 +1808,7 @@ int handler::rnd_pos_by_record(uchar *record)
   This is never called for InnoDB tables, as these table types
   has the HA_STATS_RECORDS_IS_EXACT set.
 */
-int handler::read_first_row(uchar * buf, uint primary_key)
+int handler::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
   register int error;
 
@@ -2071,7 +2024,7 @@ int handler::update_auto_increment()
         handler::estimation_rows_to_insert was set by
         handler::ha_start_bulk_insert(); if 0 it means "unknown".
       */
-      uint nb_already_reserved_intervals=
+      uint32_t nb_already_reserved_intervals=
         thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements();
       uint64_t nb_desired_values;
       /*
@@ -2234,7 +2187,7 @@ void handler::get_auto_increment(uint64_t offset __attribute__((unused)),
   }
   else
   {
-    uchar key[MAX_KEY_LENGTH];
+    unsigned char key[MAX_KEY_LENGTH];
     key_copy(key, table->record[0],
              table->key_info + table->s->next_number_index,
              table->s->next_number_key_offset);
@@ -2278,7 +2231,7 @@ void handler::ha_release_auto_increment()
 }
 
 
-void handler::print_keydup_error(uint key_nr, const char *msg)
+void handler::print_keydup_error(uint32_t key_nr, const char *msg)
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];
@@ -2294,7 +2247,7 @@ void handler::print_keydup_error(uint key_nr, const char *msg)
   {
     /* Table is opened and defined at this point */
     key_unpack(&str,table,(uint) key_nr);
-    uint max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
+    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
     if (str.length() >= max_length)
     {
       str.length(max_length-4);
@@ -2338,7 +2291,7 @@ void handler::print_error(int error, myf errflag)
     break;
   case HA_ERR_FOUND_DUPP_KEY:
   {
-    uint key_nr=get_dup_key(error);
+    uint32_t key_nr=get_dup_key(error);
     if ((int) key_nr >= 0)
     {
       print_keydup_error(key_nr, ER(ER_DUP_ENTRY_WITH_KEY_NAME));
@@ -2349,10 +2302,10 @@ void handler::print_error(int error, myf errflag)
   }
   case HA_ERR_FOREIGN_DUPLICATE_KEY:
   {
-    uint key_nr= get_dup_key(error);
+    uint32_t key_nr= get_dup_key(error);
     if ((int) key_nr >= 0)
     {
-      uint max_length;
+      uint32_t max_length;
       /* Write the key in the error message */
       char key[MAX_KEY_LENGTH];
       String str(key,sizeof(key),system_charset_info);
@@ -2451,7 +2404,7 @@ void handler::print_error(int error, myf errflag)
   case HA_ERR_DROP_INDEX_FK:
   {
     const char *ptr= "???";
-    uint key_nr= get_dup_key(error);
+    uint32_t key_nr= get_dup_key(error);
     if ((int) key_nr >= 0)
       ptr= table->key_info[key_nr].name;
     my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
@@ -2569,32 +2522,32 @@ static bool update_frm_version(Table *table)
   if (table->s->mysql_version == DRIZZLE_VERSION_ID)
     return(0);
 
-  strxmov(path, table->s->normalized_path.str, reg_ext, NullS);
+  strxmov(path, table->s->normalized_path.str, reg_ext, NULL);
 
   if ((file= my_open(path, O_RDWR|O_BINARY, MYF(MY_WME))) >= 0)
   {
-    uchar version[4];
+    unsigned char version[4];
     char *key= table->s->table_cache_key.str;
-    uint key_length= table->s->table_cache_key.length;
+    uint32_t key_length= table->s->table_cache_key.length;
     Table *entry;
     HASH_SEARCH_STATE state;
 
     int4store(version, DRIZZLE_VERSION_ID);
 
-    if (pwrite(file, (uchar*)version, 4, 51L) == 0)
+    if (pwrite(file, (unsigned char*)version, 4, 51L) == 0)
     {
       result= false;
       goto err;
     }
 
-    for (entry=(Table*) hash_first(&open_cache,(uchar*) key,key_length, &state);
+    for (entry=(Table*) hash_first(&open_cache,(unsigned char*) key,key_length, &state);
          entry;
-         entry= (Table*) hash_next(&open_cache,(uchar*) key,key_length, &state))
+         entry= (Table*) hash_next(&open_cache,(unsigned char*) key,key_length, &state))
       entry->s->mysql_version= DRIZZLE_VERSION_ID;
   }
 err:
   if (file >= 0)
-    VOID(my_close(file,MYF(MY_WME)));
+    my_close(file,MYF(MY_WME));
   return(result);
 }
 
@@ -2604,7 +2557,7 @@ err:
   @return
     key if error because of duplicated keys
 */
-uint handler::get_dup_key(int error)
+uint32_t handler::get_dup_key(int error)
 {
   table->file->errkey  = (uint) -1;
   if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
@@ -2769,8 +2722,8 @@ int handler::ha_repair(THD* thd, HA_CHECK_OPT* check_opt)
 */
 
 int
-handler::ha_bulk_update_row(const uchar *old_data, uchar *new_data,
-                            uint *dup_key_found)
+handler::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
+                            uint32_t *dup_key_found)
 {
   mark_trx_read_write();
 
@@ -2860,7 +2813,7 @@ handler::ha_check_and_repair(THD *thd)
 */
 
 int
-handler::ha_disable_indexes(uint mode)
+handler::ha_disable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -2875,7 +2828,7 @@ handler::ha_disable_indexes(uint mode)
 */
 
 int
-handler::ha_enable_indexes(uint mode)
+handler::ha_enable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -3017,13 +2970,13 @@ int ha_enable_transaction(THD *thd, bool on)
   return(error);
 }
 
-int handler::index_next_same(uchar *buf, const uchar *key, uint keylen)
+int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
 {
   int error;
   if (!(error=index_next(buf)))
   {
     my_ptrdiff_t ptrdiff= buf - table->record[0];
-    uchar *save_record_0= NULL;
+    unsigned char *save_record_0= NULL;
     KEY *key_info= NULL;
     KEY_PART_INFO *key_part;
     KEY_PART_INFO *key_part_end= NULL;
@@ -3103,10 +3056,10 @@ int ha_create_table(THD *thd, const char *path,
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
   error= table.file->ha_create(name, &table, create_info);
-  VOID(closefrm(&table, 0));
+  closefrm(&table, 0);
   if (error)
   {
-    strxmov(name_buff, db, ".", table_name, NullS);
+    strxmov(name_buff, db, ".", table_name, NULL);
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:
@@ -3130,7 +3083,7 @@ err:
 int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
 {
   int error;
-  uchar *frmblob;
+  unsigned char *frmblob;
   size_t frmlen;
   char path[FN_REFLEN];
   HA_CREATE_INFO create_info;
@@ -3152,7 +3105,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   build_table_filename(path, FN_REFLEN-1, db, name, "", 0);
   // Save the frm file
   error= writefrm(path, frmblob, frmlen);
-  my_free(frmblob, MYF(0));
+  free(frmblob);
   if (error)
     return(2);
 
@@ -3172,7 +3125,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
 
   check_lowercase_names(table.file, path, path);
   error=table.file->ha_create(path, &table, &create_info);
-  VOID(closefrm(&table, 1));
+  closefrm(&table, 1);
 
   return(error != 0);
 }
@@ -3204,9 +3157,9 @@ int ha_init_key_cache(const char *name __attribute__((unused)),
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
     uint32_t tmp_buff_size= (uint32_t) key_cache->param_buff_size;
-    uint tmp_block_size= (uint) key_cache->param_block_size;
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t tmp_block_size= (uint) key_cache->param_block_size;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return(!init_key_cache(key_cache,
 				tmp_block_size,
@@ -3227,8 +3180,8 @@ int ha_resize_key_cache(KEY_CACHE *key_cache)
     pthread_mutex_lock(&LOCK_global_system_variables);
     long tmp_buff_size= (long) key_cache->param_buff_size;
     long tmp_block_size= (long) key_cache->param_block_size;
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return(!resize_key_cache(key_cache, tmp_block_size,
 				  tmp_buff_size,
@@ -3246,8 +3199,8 @@ int ha_change_key_cache_param(KEY_CACHE *key_cache)
   if (key_cache->key_cache_inited)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
-    uint division_limit= key_cache->param_division_limit;
-    uint age_threshold=  key_cache->param_age_threshold;
+    uint32_t division_limit= key_cache->param_division_limit;
+    uint32_t age_threshold=  key_cache->param_age_threshold;
     pthread_mutex_unlock(&LOCK_global_system_variables);
     change_key_cache_param(key_cache, division_limit, age_threshold);
   }
@@ -3288,7 +3241,7 @@ struct st_discover_args
 {
   const char *db;
   const char *name;
-  uchar **frmblob; 
+  unsigned char **frmblob; 
   size_t *frmlen;
 };
 
@@ -3307,7 +3260,7 @@ static bool discover_handlerton(THD *thd, plugin_ref plugin,
 }
 
 int ha_discover(THD *thd, const char *db, const char *name,
-		uchar **frmblob, size_t *frmlen)
+		unsigned char **frmblob, size_t *frmlen)
 {
   int error= -1; // Table does not exist in any handler
   st_discover_args args= {db, name, frmblob, frmlen};
@@ -3402,10 +3355,10 @@ int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
     Estimated cost of 'index only' scan
 */
 
-double handler::index_only_read_time(uint keynr, double records)
+double handler::index_only_read_time(uint32_t keynr, double records)
 {
   double read_time;
-  uint keys_per_block= (stats.block_size/2/
+  uint32_t keys_per_block= (stats.block_size/2/
 			(table->key_info[keynr].key_length + ref_length) + 1);
   read_time=((double) (records + keys_per_block-1) /
              (double) keys_per_block);
@@ -3449,15 +3402,15 @@ double handler::index_only_read_time(uint keynr, double records)
 */
 
 ha_rows
-handler::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                      void *seq_init_param,
-                                     uint n_ranges_arg __attribute__((unused)),
-                                     uint *bufsz, uint *flags, COST_VECT *cost)
+                                     uint32_t n_ranges_arg __attribute__((unused)),
+                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   KEY_MULTI_RANGE range;
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
-  uint n_ranges=0;
+  uint32_t n_ranges=0;
   THD *thd= current_thd;
   
   /* Default MRR implementation doesn't need buffer */
@@ -3540,8 +3493,8 @@ handler::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
     other Error or can't perform the requested scan
 */
 
-int handler::multi_range_read_info(uint keyno, uint n_ranges, uint n_rows,
-                                   uint *bufsz, uint *flags, COST_VECT *cost)
+int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_rows,
+                                   uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   *bufsz= 0; /* Default implementation doesn't need a buffer */
 
@@ -3602,7 +3555,7 @@ int handler::multi_range_read_info(uint keyno, uint n_ranges, uint n_rows,
 
 int
 handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                               uint n_ranges, uint mode,
+                               uint32_t n_ranges, uint32_t mode,
                                HANDLER_BUFFER *buf __attribute__((unused)))
 {
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
@@ -3704,10 +3657,10 @@ scan_it_again:
 
 int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
                            RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                           uint n_ranges, uint mode, HANDLER_BUFFER *buf)
+                           uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf)
 {
-  uint elem_size;
-  uint keyno;
+  uint32_t elem_size;
+  uint32_t keyno;
   Item *pushed_cond= NULL;
   handler *new_h2;
   keyno= h->active_index;
@@ -3797,7 +3750,7 @@ void DsMrr_impl::dsmrr_close()
 }
 
 
-static int rowid_cmp(void *h, uchar *a, uchar *b)
+static int rowid_cmp(void *h, unsigned char *a, unsigned char *b)
 {
   return ((handler*)h)->cmp_ref(a, b);
 }
@@ -3846,8 +3799,8 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   dsmrr_eof= test(res == HA_ERR_END_OF_FILE);
 
   /* Sort the buffer contents by rowid */
-  uint elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
-  uint n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
+  uint32_t elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
+  uint32_t n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
   
   my_qsort2(rowids_buf, n_rowids, elem_size, (qsort2_cmp)rowid_cmp,
             (void*)h);
@@ -3905,12 +3858,12 @@ end:
 /**
   DS-MRR implementation: multi_range_read_info() function
 */
-int DsMrr_impl::dsmrr_info(uint keyno, uint n_ranges, uint rows, uint *bufsz,
-                           uint *flags, COST_VECT *cost)
+int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uint32_t *bufsz,
+                           uint32_t *flags, COST_VECT *cost)
 {  
   int res;
-  uint def_flags= *flags;
-  uint def_bufsz= *bufsz;
+  uint32_t def_flags= *flags;
+  uint32_t def_bufsz= *bufsz;
 
   /* Get cost/flags/mem_usage of default MRR implementation */
   res= h->handler::multi_range_read_info(keyno, n_ranges, rows, &def_bufsz,
@@ -3932,13 +3885,13 @@ int DsMrr_impl::dsmrr_info(uint keyno, uint n_ranges, uint rows, uint *bufsz,
   DS-MRR Implementation: multi_range_read_info_const() function
 */
 
-ha_rows DsMrr_impl::dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq,
-                                 void *seq_init_param, uint n_ranges, 
-                                 uint *bufsz, uint *flags, COST_VECT *cost)
+ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
+                                 void *seq_init_param, uint32_t n_ranges, 
+                                 uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ha_rows rows;
-  uint def_flags= *flags;
-  uint def_bufsz= *bufsz;
+  uint32_t def_flags= *flags;
+  uint32_t def_bufsz= *bufsz;
   /* Get cost/flags/mem_usage of default MRR implementation */
   rows= h->handler::multi_range_read_info_const(keyno, seq, seq_init_param,
                                                 n_ranges, &def_bufsz, 
@@ -3986,7 +3939,7 @@ ha_rows DsMrr_impl::dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq,
   @retval false  No
 */
 
-bool DsMrr_impl::key_uses_partial_cols(uint keyno)
+bool DsMrr_impl::key_uses_partial_cols(uint32_t keyno)
 {
   KEY_PART_INFO *kp= table->key_info[keyno].key_part;
   KEY_PART_INFO *kp_end= kp + table->key_info[keyno].key_parts;
@@ -4022,8 +3975,8 @@ bool DsMrr_impl::key_uses_partial_cols(uint keyno)
   @retval false  DS-MRR implementation should be used
 */
 
-bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
-                                 uint *bufsz, COST_VECT *cost)
+bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
+                                 uint32_t *bufsz, COST_VECT *cost)
 {
   COST_VECT dsmrr_cost;
   bool res;
@@ -4039,7 +3992,7 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
     return true;
   }
   
-  uint add_len= table->key_info[keyno].key_length + h->ref_length; 
+  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length; 
   *bufsz -= add_len;
   if (get_disk_sweep_mrr_cost(keyno, rows, *flags, bufsz, &dsmrr_cost))
     return true;
@@ -4089,12 +4042,12 @@ static void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost
                  for even 1 rowid)
 */
 
-bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
-                                         uint *buffer_size, COST_VECT *cost)
+bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags,
+                                         uint32_t *buffer_size, COST_VECT *cost)
 {
   uint32_t max_buff_entries, elem_size;
   ha_rows rows_in_full_step, rows_in_last_step;
-  uint n_full_steps;
+  uint32_t n_full_steps;
   double index_read_cost;
 
   elem_size= h->ref_length + sizeof(void*) * (!test(flags & HA_MRR_NO_ASSOCIATION));
@@ -4123,7 +4076,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
   else
   {
     cost->zero();
-    *buffer_size= max((ulong)*buffer_size, 
+    *buffer_size= cmax((ulong)*buffer_size, 
                       (size_t)(1.2*rows_in_last_step) * elem_size + 
                       h->ref_length + table->key_info[keynr].key_length);
   }
@@ -4380,7 +4333,7 @@ int handler::compare_key2(key_range *range)
   return cmp;
 }
 
-int handler::index_read_idx_map(uchar * buf, uint index, const uchar * key,
+int handler::index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
@@ -4464,9 +4417,9 @@ TYPELIB *ha_known_exts(void)
 }
 
 
-static bool stat_print(THD *thd, const char *type, uint type_len,
-                       const char *file, uint file_len,
-                       const char *status, uint status_len)
+static bool stat_print(THD *thd, const char *type, uint32_t type_len,
+                       const char *file, uint32_t file_len,
+                       const char *status, uint32_t status_len)
 {
   Protocol *protocol= thd->protocol;
   protocol->prepare_for_resend();
@@ -4559,7 +4512,7 @@ static int write_locked_table_maps(THD *thd)
     locks[0]= thd->extra_lock;
     locks[1]= thd->lock;
     locks[2]= thd->locked_tables;
-    for (uint i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
+    for (uint32_t i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
     {
       DRIZZLE_LOCK const *const lock= locks[i];
       if (lock == NULL)
@@ -4590,11 +4543,11 @@ static int write_locked_table_maps(THD *thd)
 }
 
 
-typedef bool Log_func(THD*, Table*, bool, const uchar*, const uchar*);
+typedef bool Log_func(THD*, Table*, bool, const unsigned char*, const unsigned char*);
 
 static int binlog_log_row(Table* table,
-                          const uchar *before_record,
-                          const uchar *after_record,
+                          const unsigned char *before_record,
+                          const unsigned char *after_record,
                           Log_func *log_func)
 {
   if (table->no_replicate)
@@ -4646,9 +4599,9 @@ int handler::ha_external_lock(THD *thd, int lock_type)
 int handler::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert((uchar*) table->def_read_set.bitmap +
+  assert((unsigned char*) table->def_read_set.bitmap +
               table->s->column_bitmap_size ==
-              (uchar*) table->def_write_set.bitmap);
+              (unsigned char*) table->def_write_set.bitmap);
   assert(bitmap_is_set_all(&table->s->all_set));
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
@@ -4661,7 +4614,7 @@ int handler::ha_reset()
 }
 
 
-int handler::ha_write_row(uchar *buf)
+int handler::ha_write_row(unsigned char *buf)
 {
   int error;
   Log_func *log_func= Write_rows_log_event::binlog_row_logging_function;
@@ -4678,7 +4631,7 @@ int handler::ha_write_row(uchar *buf)
 }
 
 
-int handler::ha_update_row(const uchar *old_data, uchar *new_data)
+int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
   Log_func *log_func= Update_rows_log_event::binlog_row_logging_function;
@@ -4698,7 +4651,7 @@ int handler::ha_update_row(const uchar *old_data, uchar *new_data)
   return 0;
 }
 
-int handler::ha_delete_row(const uchar *buf)
+int handler::ha_delete_row(const unsigned char *buf)
 {
   int error;
   Log_func *log_func= Delete_rows_log_event::binlog_row_logging_function;

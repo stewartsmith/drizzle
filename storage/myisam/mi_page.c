@@ -19,15 +19,15 @@
 
 	/* Fetch a key-page in memory */
 
-uchar *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
+unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
 			 my_off_t page, int level, 
-                         uchar *buff, int return_buffer)
+                         unsigned char *buff, int return_buffer)
 {
-  uchar *tmp;
-  uint page_size;
+  unsigned char *tmp;
+  uint32_t page_size;
 
-  tmp=(uchar*) key_cache_read(info->s->key_cache,
-                             info->s->kfile, page, level, (uchar*) buff,
+  tmp=(unsigned char*) key_cache_read(info->s->key_cache,
+                             info->s->kfile, page, level, (unsigned char*) buff,
 			     (uint) keyinfo->block_length,
 			     (uint) keyinfo->block_length,
 			     return_buffer);
@@ -56,9 +56,9 @@ uchar *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
 	/* Write a key-page on disk */
 
 int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		      my_off_t page, int level, uchar *buff)
+		      my_off_t page, int level, unsigned char *buff)
 {
-  register uint length;
+  register uint32_t length;
 
 #ifndef FAST					/* Safety check */
   if (page < info->s->base.keystart ||
@@ -81,7 +81,7 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
 #endif
   return((key_cache_write(info->s->key_cache,
-                         info->s->kfile,page, level, (uchar*) buff,length,
+                         info->s->kfile,page, level, (unsigned char*) buff,length,
 			 (uint) keyinfo->block_length,
 			 (int) ((info->lock_type != F_UNLCK) ||
 				info->s->delay_key_write))));
@@ -94,7 +94,7 @@ int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, my_off_t pos,
                 int level)
 {
   my_off_t old_link;
-  uchar buff[8];
+  unsigned char buff[8];
 
   old_link= info->s->state.key_del[keyinfo->block_size_index];
   info->s->state.key_del[keyinfo->block_size_index]= pos;
@@ -113,7 +113,7 @@ int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, my_off_t pos,
 my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level)
 {
   my_off_t pos;
-  uchar buff[8];
+  unsigned char buff[8];
 
   if ((pos= info->s->state.key_del[keyinfo->block_size_index]) ==
       HA_OFFSET_ERROR)

@@ -28,7 +28,7 @@ typedef struct st_innobase_share {
   THR_LOCK lock;
   pthread_mutex_t mutex;
   char *table_name;
-  uint table_name_length,use_count;
+  uint32_t table_name_length,use_count;
 } INNOBASE_SHARE;
 
 
@@ -50,8 +50,8 @@ class ha_innobase: public handler
 	THR_LOCK_DATA	lock;
 	INNOBASE_SHARE	*share;
 
-	uchar*		upd_buff;	/* buffer used in updates */
-	uchar*		key_val_buff;	/* buffer used in converting
+	unsigned char*		upd_buff;	/* buffer used in updates */
+	unsigned char*		key_val_buff;	/* buffer used in converting
 					search key values from MySQL format
 					to Innodb format */
 	ulong		upd_and_key_val_buff_len;
@@ -67,17 +67,17 @@ class ha_innobase: public handler
 					or undefined */
 	uint		num_write_row;	/* number of write_row() calls */
 
-	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
-                                   const uchar* record);
+	uint32_t store_key_val_for_row(uint32_t keynr, char* buff, uint32_t buff_len,
+                                   const unsigned char* record);
 	int update_thd(THD* thd);
-	int change_active_index(uint keynr);
-	int general_fetch(uchar* buf, uint direction, uint match_mode);
+	int change_active_index(uint32_t keynr);
+	int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
 	int innobase_read_and_init_auto_inc(int64_t* ret);
 	ulong innobase_autoinc_lock();
 	ulong innobase_set_max_autoinc(uint64_t auto_inc);
 	ulong innobase_reset_autoinc(uint64_t auto_inc);
 	ulong innobase_get_auto_increment(uint64_t* value);
-	dict_index_t* innobase_get_index(uint keynr);
+	dict_index_t* innobase_get_index(uint32_t keynr);
 
 	/* Init values for the class: */
  public:
@@ -90,12 +90,12 @@ class ha_innobase: public handler
 	enum row_type get_row_type() const;
 
 	const char* table_type() const { return("InnoDB");}
-        const char *index_type(uint key_number __attribute__((unused)))
+        const char *index_type(uint32_t key_number __attribute__((unused)))
         { return "BTREE"; }
 	const char** bas_ext() const;
 	Table_flags table_flags() const;
-	uint32_t index_flags(uint idx __attribute__((unused)),
-                             uint part __attribute__((unused)),
+	uint32_t index_flags(uint32_t idx __attribute__((unused)),
+                             uint32_t part __attribute__((unused)),
                              bool all_parts __attribute__((unused))) const
 	{
 	  return (HA_READ_NEXT |
@@ -105,7 +105,7 @@ class ha_innobase: public handler
 		  HA_KEYREAD_ONLY | 
                   ((idx == primary_key)? 0 : HA_DO_INDEX_COND_PUSHDOWN));
 	}
-	uint max_supported_keys()	   const { return MAX_KEY; }
+	uint32_t max_supported_keys()	   const { return MAX_KEY; }
 				/* An InnoDB page must store >= 2 keys;
 				a secondary key record must also contain the
 				primary key value:
@@ -113,41 +113,41 @@ class ha_innobase: public handler
 				less than 1 / 4 of page size which is 16 kB;
 				but currently MySQL does not work with keys
 				whose size is > MAX_KEY_LENGTH */
-	uint max_supported_key_length() const { return 3500; }
-	uint max_supported_key_part_length() const;
+	uint32_t max_supported_key_length() const { return 3500; }
+	uint32_t max_supported_key_part_length() const;
 	const key_map *keys_to_use_for_scanning() { return &key_map_full; }
 
-	int open(const char *name, int mode, uint test_if_locked);
+	int open(const char *name, int mode, uint32_t test_if_locked);
 	int close(void);
 	double scan_time();
-	double read_time(uint index, uint ranges, ha_rows rows);
+	double read_time(uint32_t index, uint32_t ranges, ha_rows rows);
 
-	int write_row(uchar * buf);
-	int update_row(const uchar * old_data, uchar * new_data);
-	int delete_row(const uchar * buf);
+	int write_row(unsigned char * buf);
+	int update_row(const unsigned char * old_data, unsigned char * new_data);
+	int delete_row(const unsigned char * buf);
 	bool was_semi_consistent_read();
 	void try_semi_consistent_read(bool yes);
 	void unlock_row();
 
-	int index_init(uint index, bool sorted);
+	int index_init(uint32_t index, bool sorted);
 	int index_end();
-	int index_read(uchar * buf, const uchar * key,
-		uint key_len, enum ha_rkey_function find_flag);
-	int index_read_idx(uchar * buf, uint index, const uchar * key,
-			   uint key_len, enum ha_rkey_function find_flag);
-	int index_read_last(uchar * buf, const uchar * key, uint key_len);
-	int index_next(uchar * buf);
-	int index_next_same(uchar * buf, const uchar *key, uint keylen);
-	int index_prev(uchar * buf);
-	int index_first(uchar * buf);
-	int index_last(uchar * buf);
+	int index_read(unsigned char * buf, const unsigned char * key,
+		uint32_t key_len, enum ha_rkey_function find_flag);
+	int index_read_idx(unsigned char * buf, uint32_t index, const unsigned char * key,
+			   uint32_t key_len, enum ha_rkey_function find_flag);
+	int index_read_last(unsigned char * buf, const unsigned char * key, uint32_t key_len);
+	int index_next(unsigned char * buf);
+	int index_next_same(unsigned char * buf, const unsigned char *key, uint32_t keylen);
+	int index_prev(unsigned char * buf);
+	int index_first(unsigned char * buf);
+	int index_last(unsigned char * buf);
 
 	int rnd_init(bool scan);
 	int rnd_end();
-	int rnd_next(uchar *buf);
-	int rnd_pos(uchar * buf, uchar *pos);
+	int rnd_next(unsigned char *buf);
+	int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-	void position(const uchar *record);
+	void position(const unsigned char *record);
 	int info(uint);
 	int analyze(THD* thd,HA_CHECK_OPT* check_opt);
 	int optimize(THD* thd,HA_CHECK_OPT* check_opt);
@@ -173,8 +173,8 @@ class ha_innobase: public handler
 	int external_lock(THD *thd, int lock_type);
 	int transactional_table_lock(THD *thd, int lock_type);
 	int start_stmt(THD *thd, thr_lock_type lock_type);
-	void position(uchar *record);
-	ha_rows records_in_range(uint inx, key_range *min_key, key_range
+	void position(unsigned char *record);
+	ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range
 								*max_key);
 	ha_rows estimate_rows_upper_bound();
 
@@ -189,7 +189,7 @@ class ha_innobase: public handler
 	char* get_foreign_key_create_info();
 	int get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list);
 	bool can_switch_engines();
-	uint referenced_by_foreign_key();
+	uint32_t referenced_by_foreign_key();
 	void free_foreign_key_create_info(char* str);
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
 					enum thr_lock_type lock_type);
@@ -207,35 +207,35 @@ class ha_innobase: public handler
 	  ask handler about permission to cache table during query registration
 	*/
         bool register_query_cache_table(THD *thd, char *table_key,
-                                        uint key_length,
+                                        uint32_t key_length,
                                         qc_engine_callback *call_back,
                                         uint64_t *engine_data);
 	static char *get_mysql_bin_log_name();
 	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered() { return true; }
-	int cmp_ref(const uchar *ref1, const uchar *ref2);
+	int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	bool check_if_incompatible_data(HA_CREATE_INFO *info,
-					uint table_changes);
+					uint32_t table_changes);
 	bool check_if_supported_virtual_columns(void) { return true; }
 public:
   /**
    * Multi Range Read interface
    */
   int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                            uint n_ranges, uint mode, HANDLER_BUFFER *buf);
+                            uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf);
   int multi_range_read_next(char **range_info);
-  ha_rows multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
+  ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                       void *seq_init_param, 
-                                      uint n_ranges, uint *bufsz,
-                                      uint *flags, COST_VECT *cost);
-  int multi_range_read_info(uint keyno, uint n_ranges, uint keys,
-                            uint *bufsz, uint *flags, COST_VECT *cost);
+                                      uint32_t n_ranges, uint32_t *bufsz,
+                                      uint32_t *flags, COST_VECT *cost);
+  int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
+                            uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
   DsMrr_impl ds_mrr;
 
   int read_range_first(const key_range *start_key, const key_range *end_key,
                        bool eq_range_arg, bool sorted);
   int read_range_next();
-  Item *idx_cond_push(uint keyno, Item* idx_cond);
+  Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
 };
 
 /* Some accessor functions which the InnoDB plugin needs, but which

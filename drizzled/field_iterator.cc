@@ -187,7 +187,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
 {
   Natural_join_column *nj_col;
   bool is_created= true;
-  uint field_count=0;
+  uint32_t field_count=0;
   TableList *add_table_ref= parent_table_ref ?
                              parent_table_ref : table_ref;
 

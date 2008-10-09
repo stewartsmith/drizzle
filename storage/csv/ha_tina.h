@@ -28,7 +28,7 @@
 typedef struct st_tina_share {
   char *table_name;
   char data_file_name[FN_REFLEN];
-  uint table_name_length, use_count;
+  uint32_t table_name_length, use_count;
   /*
     Here we save the length of the file for readers. This is updated by
     inserts, updates and deletes. The var is initialized along with the
@@ -43,7 +43,7 @@ typedef struct st_tina_share {
   File tina_write_filedes;  /* File handler for readers */
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
-  uint data_file_version;   /* Version of the data file used */
+  uint32_t data_file_version;   /* Version of the data file used */
 } TINA_SHARE;
 
 struct tina_set {
@@ -59,7 +59,7 @@ class ha_tina: public handler
   off_t next_position;     /* Next position in the file scan */
   off_t local_saved_data_file_length; /* save position for reads */
   off_t temp_file_length;
-  uchar byte_buffer[IO_SIZE];
+  unsigned char byte_buffer[IO_SIZE];
   Transparent_file *file_buff;
   File data_file;                   /* File handler for readers */
   File update_temp_file;
@@ -72,9 +72,9 @@ class ha_tina: public handler
   tina_set chain_buffer[DEFAULT_CHAIN_LENGTH];
   tina_set *chain;
   tina_set *chain_ptr;
-  uchar chain_alloced;
+  unsigned char chain_alloced;
   uint32_t chain_size;
-  uint local_data_file_version;  /* Saved version of the data file used */
+  uint32_t local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
   MEM_ROOT blobroot;
 
@@ -89,12 +89,12 @@ public:
   ~ha_tina()
   {
     if (chain_alloced)
-      my_free(chain, 0);
+      free(chain);
     if (file_buff)
       delete file_buff;
   }
   const char *table_type(void) const { return "CSV"; }
-  const char *index_type(uint inx __attribute__((unused)))
+  const char *index_type(uint32_t inx __attribute__((unused)))
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -102,8 +102,8 @@ public:
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE);
   }
-  uint32_t index_flags(uint idx __attribute__((unused)),
-                       uint part __attribute__((unused)),
+  uint32_t index_flags(uint32_t idx __attribute__((unused)),
+                       uint32_t part __attribute__((unused)),
                        bool all_parts __attribute__((unused))) const
   {
     /*
@@ -112,10 +112,10 @@ public:
     */
     return 0;
   }
-  uint max_record_length() const { return HA_MAX_REC_LENGTH; }
-  uint max_keys()          const { return 0; }
-  uint max_key_parts()     const { return 0; }
-  uint max_key_length()    const { return 0; }
+  uint32_t max_record_length() const { return HA_MAX_REC_LENGTH; }
+  uint32_t max_keys()          const { return 0; }
+  uint32_t max_key_parts()     const { return 0; }
+  uint32_t max_key_length()    const { return 0; }
   /*
      Called in test_quick_select to determine if indexes should be used.
    */
@@ -129,14 +129,14 @@ public:
   */
   ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
 
-  int open(const char *name, int mode, uint open_options);
+  int open(const char *name, int mode, uint32_t open_options);
   int close(void);
-  int write_row(uchar * buf);
-  int update_row(const uchar * old_data, uchar * new_data);
-  int delete_row(const uchar * buf);
+  int write_row(unsigned char * buf);
+  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int delete_row(const unsigned char * buf);
   int rnd_init(bool scan=1);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
   bool check_and_repair(THD *thd);
   int check(THD* thd, HA_CHECK_OPT* check_opt);
   bool is_crashed() const;
@@ -144,12 +144,12 @@ public:
   int repair(THD* thd, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   bool auto_repair() const { return 1; }
-  void position(const uchar *record);
+  void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   bool check_if_incompatible_data(HA_CREATE_INFO *info,
-                                  uint table_changes);
+                                  uint32_t table_changes);
 
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
       enum thr_lock_type lock_type);
@@ -162,8 +162,8 @@ public:
   void update_status();
 
   /* The following methods were added just for TINA */
-  int encode_quote(uchar *buf);
-  int find_current_row(uchar *buf);
+  int encode_quote(unsigned char *buf);
+  int find_current_row(unsigned char *buf);
   int chain_append();
 };
 

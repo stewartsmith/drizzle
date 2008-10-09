@@ -75,7 +75,7 @@ static void prepare_record_for_error_message(int error, Table *table)
 {
   Field **field_p;
   Field *field;
-  uint keynr;
+  uint32_t keynr;
   MY_BITMAP unique_map; /* Fields in offended unique. */
   my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
   
@@ -153,7 +153,7 @@ int mysql_update(THD *thd,
                  List<Item> &fields,
                  List<Item> &values,
                  COND *conds,
-                 uint order_num, order_st *order,
+                 uint32_t order_num, order_st *order,
                  ha_rows limit,
                  enum enum_duplicates handle_duplicates __attribute__((unused)),
                  bool ignore)
@@ -165,7 +165,7 @@ int mysql_update(THD *thd,
   int		error, loc_error;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
-  uint          table_count= 0;
+  uint32_t          table_count= 0;
   ha_rows	updated, found;
   key_map	old_covering_keys;
   Table		*table;
@@ -334,7 +334,7 @@ int mysql_update(THD *thd,
 	to update
         NOTE: filesort will call table->prepare_for_position()
       */
-      uint         length= 0;
+      uint32_t         length= 0;
       SORT_FIELD  *sortorder;
       ha_rows examined_rows;
 
@@ -651,7 +651,7 @@ int mysql_update(THD *thd,
   end_read_record(&info);
   delete select;
   thd_proc_info(thd, "end");
-  VOID(table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY));
+  table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
   /*
     error < 0 means really no error at all: we processed all rows until the
@@ -731,7 +731,7 @@ abort:
     true  error
 */
 bool mysql_prepare_update(THD *thd, TableList *table_list,
-			 Item **conds, uint order_num, order_st *order)
+			 Item **conds, uint32_t order_num, order_st *order)
 {
   List<Item> all_fields;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
@@ -823,7 +823,7 @@ int mysql_multi_update_prepare(THD *thd)
     counter else junk will be assigned here, but then replaced with real
     count in open_tables()
   */
-  uint  table_count= lex->table_count;
+  uint32_t  table_count= lex->table_count;
   const bool using_lock_tables= thd->locked_tables != 0;
   bool original_multiupdate= (thd->lex->sql_command == SQLCOM_UPDATE_MULTI);
   bool need_reopen= false;
@@ -1028,8 +1028,8 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
   Item_field *item;
   List_iterator_fast<Item> field_it(*fields);
   List_iterator_fast<Item> value_it(*values);
-  uint i, max_fields;
-  uint leaf_table_count= 0;
+  uint32_t i, max_fields;
+  uint32_t leaf_table_count= 0;
   
   thd->count_cuted_fields= CHECK_FIELD_WARN;
   thd->cuted_fields=0L;
@@ -1069,7 +1069,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
 						sizeof(*tl));
       if (!tl)
 	return(1);
-      update.link_in_list((uchar*) tl, (uchar**) &tl->next_local);
+      update.link_in_list((unsigned char*) tl, (unsigned char**) &tl->next_local);
       tl->shared= table_count++;
       table->no_keyread=1;
       table->covering_keys.clear_all();
@@ -1103,7 +1103,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
   while ((item= (Item_field *) field_it++))
   {
     Item *value= value_it++;
-    uint offset= item->field->table->pos_in_table_list->shared;
+    uint32_t offset= item->field->table->pos_in_table_list->shared;
     fields_for_table[offset]->push_back(item);
     values_for_table[offset]->push_back(value);
   }
@@ -1209,7 +1209,7 @@ multi_update::initialize_tables(JOIN *join)
   for (table_ref= update_tables; table_ref; table_ref= table_ref->next_local)
   {
     Table *table=table_ref->table;
-    uint cnt= table_ref->shared;
+    uint32_t cnt= table_ref->shared;
     List<Item> temp_fields;
     order_st     group;
     TMP_TABLE_PARAM *tmp_param;
@@ -1299,7 +1299,7 @@ multi_update::~multi_update()
 
   if (tmp_tables)
   {
-    for (uint cnt = 0; cnt < table_count; cnt++)
+    for (uint32_t cnt = 0; cnt < table_count; cnt++)
     {
       if (tmp_tables[cnt])
       {
@@ -1323,7 +1323,7 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
   for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
   {
     Table *table= cur_table->table;
-    uint offset= cur_table->shared;
+    uint32_t offset= cur_table->shared;
     /*
       Check if we are using outer join and we didn't find the row
       or if we have already updated this row in the previous call to this
@@ -1419,7 +1419,7 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
        For updatable VIEW store rowid of the updated table and
        rowids of tables used in the CHECK OPTION condition.
       */
-      uint field_num= 0;
+      uint32_t field_num= 0;
       List_iterator_fast<Table> tbl_it(unupdated_check_opt_tables);
       Table *tbl= table;
       do
@@ -1456,7 +1456,7 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
 }
 
 
-void multi_update::send_error(uint errcode,const char *err)
+void multi_update::send_error(uint32_t errcode,const char *err)
 {
   /* First send error what ever it is ... */
   my_error(errcode, MYF(0), err);
@@ -1484,7 +1484,7 @@ void multi_update::abort()
          todo/fixme: do_update() is never called with the arg 1.
          should it change the signature to become argless?
       */
-      VOID(do_updates());
+      do_updates();
     }
   }
   if (thd->transaction.stmt.modified_non_trans_table)
@@ -1524,7 +1524,7 @@ int multi_update::do_updates()
   for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
   {
     bool can_compare_record;
-    uint offset= cur_table->shared;
+    uint32_t offset= cur_table->shared;
 
     table = cur_table->table;
     if (table == table_to_update)
@@ -1581,12 +1581,12 @@ int multi_update::do_updates()
       /* call rnd_pos() using rowids from temporary table */
       check_opt_it.rewind();
       Table *tbl= table;
-      uint field_num= 0;
+      uint32_t field_num= 0;
       do
       {
         if((local_error=
               tbl->file->rnd_pos(tbl->record[0],
-                                (uchar *) tmp_table->field[field_num]->ptr)))
+                                (unsigned char *) tmp_table->field[field_num]->ptr)))
           goto err;
         field_num++;
       } while((tbl= check_opt_it++));

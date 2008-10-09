@@ -21,31 +21,6 @@
   init_compiled_charsets() that only adds those that he wants
 */
 
-#ifdef HAVE_CHARSET_utf8mb3
-extern CHARSET_INFO my_charset_utf8mb3_icelandic_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_latvian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_romanian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_slovenian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_polish_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_estonian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_spanish_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_swedish_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_turkish_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_czech_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_danish_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_lithuanian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_slovak_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_spanish2_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_roman_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_persian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_esperanto_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_hungarian_uca_ci;
-extern CHARSET_INFO my_charset_utf8mb3_sinhala_uca_ci;
-#ifdef HAVE_UTF8_GENERAL_CS
-extern CHARSET_INFO my_charset_utf8mb3_general_cs;
-#endif
-#endif /* HAVE_CHARSET_utf8mb3 */
-
 #ifdef HAVE_CHARSET_utf8mb4
 extern CHARSET_INFO my_charset_utf8mb4_icelandic_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_latvian_uca_ci;
@@ -75,38 +50,6 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
 
   add_compiled_collation(&my_charset_bin);
   add_compiled_collation(&my_charset_filename);
-  
-  add_compiled_collation(&my_charset_latin1);
-  add_compiled_collation(&my_charset_latin1_bin);
-
-#ifdef HAVE_CHARSET_utf8mb3
-  add_compiled_collation(&my_charset_utf8mb3_general_ci);
-  add_compiled_collation(&my_charset_utf8mb3_bin);
-#ifdef HAVE_UTF8_GENERAL_CS
-  add_compiled_collation(&my_charset_utf8mb3_general_cs);
-#endif
-  add_compiled_collation(&my_charset_utf8mb3_unicode_ci);
-  add_compiled_collation(&my_charset_utf8mb3_icelandic_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_latvian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_romanian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_slovenian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_polish_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_estonian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_spanish_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_swedish_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_turkish_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_czech_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_danish_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_lithuanian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_slovak_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_spanish2_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_roman_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_persian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_esperanto_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_hungarian_uca_ci);
-  add_compiled_collation(&my_charset_utf8mb3_sinhala_uca_ci);
-#endif /* HAVE_CHARSET_utf8mb3 */
-
 
 #ifdef HAVE_CHARSET_utf8mb4
   add_compiled_collation(&my_charset_utf8mb4_general_ci);

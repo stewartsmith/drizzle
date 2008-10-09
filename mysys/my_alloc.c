@@ -116,7 +116,7 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
         {
           /* remove block from the list and free it */
           *prev= mem->next;
-          my_free(mem, MYF(0));
+          free(mem);
         }
         else
           prev= &mem->next;
@@ -153,15 +153,15 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
   {
     if (mem_root->error_handler)
       (*mem_root->error_handler)();
-    return((uchar*) 0);			/* purecov: inspected */
+    return((unsigned char*) 0);			/* purecov: inspected */
   }
   next->next= mem_root->used;
   next->size= length;
   mem_root->used= next;
-  return((uchar*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
+  return((unsigned char*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
 #else
   size_t get_size, block_size;
-  uchar* point;
+  unsigned char* point;
   register USED_MEM *next= 0;
   register USED_MEM **prev;
   assert(alloc_root_inited(mem_root));
@@ -186,7 +186,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
   {						/* Time to alloc new block */
     block_size= mem_root->block_size * (mem_root->block_num >> 2);
     get_size= length+ALIGN_SIZE(sizeof(USED_MEM));
-    get_size= max(get_size, block_size);
+    get_size= cmax(get_size, block_size);
 
     if (!(next = (USED_MEM*) my_malloc(get_size,MYF(MY_WME | ME_FATALERROR))))
     {
@@ -201,7 +201,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     *prev=next;
   }
 
-  point= (uchar*) ((char*) next+ (next->size-next->left));
+  point= (unsigned char*) ((char*) next+ (next->size-next->left));
   /*TODO: next part may be unneded due to mem_root->first_block_usage counter*/
   if ((next->left-= length) < mem_root->min_malloc)
   {						/* Full block */
@@ -332,13 +332,13 @@ void free_root(MEM_ROOT *root, myf MyFlags)
   {
     old=next; next= next->next ;
     if (old != root->pre_alloc)
-      my_free(old,MYF(0));
+      free(old);
   }
   for (next=root->free ; next ;)
   {
     old=next; next= next->next;
     if (old != root->pre_alloc)
-      my_free(old,MYF(0));
+      free(old);
   }
   root->used=root->free=0;
   if (root->pre_alloc)

@@ -164,25 +164,24 @@ void
 st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg) 
 {
   thd_arg->lex->current_select= fake_select_lex;
-  fake_select_lex->table_list.link_in_list((uchar *)&result_table_list,
-					   (uchar **)
+  fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
+					   (unsigned char **)
 					   &result_table_list.next_local);
   fake_select_lex->context.table_list= 
     fake_select_lex->context.first_name_resolution_table= 
     fake_select_lex->get_table_list();
-  if (!fake_select_lex->first_execution)
-  {
-    for (order_st *order= (order_st *) global_parameters->order_list.first;
-         order;
-         order= order->next)
-      order->item= &order->item_ptr;
-  }
+
+  for (order_st *order= (order_st *) global_parameters->order_list.first;
+       order;
+       order= order->next)
+    order->item= &order->item_ptr;
+
   for (order_st *order= (order_st *)global_parameters->order_list.first;
        order;
        order=order->next)
   {
     (*order->item)->walk(&Item::change_context_processor, 0,
-                         (uchar*) &fake_select_lex->context);
+                         (unsigned char*) &fake_select_lex->context);
   }
 }
 
@@ -372,12 +371,11 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     }
     else
     {
-      assert(thd->stmt_arena->is_conventional() == false);
       /*
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      table->reset_item_list(&item_list);
+      assert(1);
     }
   }
 

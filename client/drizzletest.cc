@@ -38,16 +38,17 @@
 
 #define MTEST_VERSION "3.3"
 
+#include "config.h"
+#include "client_priv.h"
+
 #include <queue>
 #include <map>
 #include <string>
 
 #include <pcrecpp.h>
 
-#include "client_priv.h"
 #include <mysys/hash.h>
 #include <stdarg.h>
-#include <vio/violite.h>
 
 #include "errname.h"
 
@@ -506,7 +507,7 @@ void do_eval(string *query_eval, const char *query,
   @param append string to be appended.
   @param ... Optional. Additional string(s) to be appended.
 
-  @note The final argument in the list must be NullS even if no additional
+  @note The final argument in the list must be NULL even if no additional
   options are passed.
 */
 
@@ -519,7 +520,7 @@ void append_os_quoted(string *str, const char *append, ...)
 
   str->append(quote_str, quote_len); /* Leading quote */
   va_start(dirty_text, append);
-  while (append != NullS)
+  while (append != NULL)
   {
     const char  *cur_pos= append;
     const char *next_pos= cur_pos;
@@ -532,7 +533,7 @@ void append_os_quoted(string *str, const char *append, ...)
       str->append(quote_str, quote_len);
       cur_pos= next_pos + 1;
     }
-    str->append(cur_pos, next_pos - cur_pos);
+    str->append(cur_pos);
     append= va_arg(dirty_text, char *);
   }
   va_end(dirty_text);
@@ -802,7 +803,7 @@ static void close_connections(void)
     drizzle_close(&next_con->drizzle);
     if (next_con->util_drizzle)
       drizzle_close(next_con->util_drizzle);
-    my_free(next_con->name, MYF(MY_ALLOW_ZERO_PTR));
+    free(next_con->name);
   }
   return;
 }
@@ -817,7 +818,7 @@ static void close_files(void)
     {
       my_fclose(cur_file->file, MYF(0));
     }
-    my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
+    free((unsigned char*) cur_file->file_name);
     cur_file->file_name= 0;
   }
   return;
@@ -847,18 +848,14 @@ static void free_used_memory(void)
   for (i= 0; i < 10; i++)
   {
     if (var_reg[i].alloced_len)
-      my_free(var_reg[i].str_val, MYF(MY_WME));
+      free(var_reg[i].str_val);
   }
   while (embedded_server_arg_count > 1)
-    my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
+    free(embedded_server_args[--embedded_server_arg_count]);
 
   free_all_replace();
-  my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_pass);
   free_defaults(default_argv);
-
-  /* Only call drizzle_server_end if drizzle_server_init has been called */
-  if (server_initialized)
-    drizzle_server_end();
 
   return;
 }
@@ -1082,7 +1079,7 @@ static void cat_file(string* ds, const char* filename)
 
   if ((fd= my_open(filename, O_RDONLY, MYF(0))) < 0)
     die("Failed to open file '%s'", filename);
-  while((len= my_read(fd, (uchar*)&buff,
+  while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
@@ -1159,7 +1156,7 @@ static int run_tool(const char *tool_path, string * result, ...)
   string ds_cmdline;
 
 
-  append_os_quoted(&ds_cmdline, tool_path);
+  append_os_quoted(&ds_cmdline, tool_path, NULL);
   ds_cmdline.append(" ");
 
   va_start(args, result);
@@ -1168,7 +1165,7 @@ static int run_tool(const char *tool_path, string * result, ...)
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
-      append_os_quoted(&ds_cmdline, arg, NullS);
+      append_os_quoted(&ds_cmdline, arg, NULL);
     else
       ds_cmdline.append(arg);
     ds_cmdline.append(" ");
@@ -1293,10 +1290,10 @@ static int compare_files2(File fd, const char* filename2)
     my_close(fd, MYF(0));
     die("Failed to open second file: '%s'", filename2);
   }
-  while((len= my_read(fd, (uchar*)&buff,
+  while((len= my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
-    if ((len2= my_read(fd2, (uchar*)&buff2,
+    if ((len2= my_read(fd2, (unsigned char*)&buff2,
                        sizeof(buff2), MYF(0))) < len)
     {
       /* File 2 was smaller */
@@ -1316,7 +1313,7 @@ static int compare_files2(File fd, const char* filename2)
       break;
     }
   }
-  if (!error && my_read(fd2, (uchar*)&buff2,
+  if (!error && my_read(fd2, (unsigned char*)&buff2,
                         sizeof(buff2), MYF(0)) > 0)
   {
     /* File 1 was smaller */
@@ -1382,7 +1379,7 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (my_write(fd, (uchar *) ds->c_str(), ds->length(),
+  if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
       my_seek(fd, 0, SEEK_SET, MYF(0)) == MY_FILEPOS_ERROR)
   {
@@ -1541,13 +1538,13 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-static uchar *get_var_key(const uchar* var, size_t *len,
+static unsigned char *get_var_key(const unsigned char* var, size_t *len,
                           bool __attribute__((unused)) t)
 {
   register char* key;
   key = ((VAR*)var)->name;
   *len = ((VAR*)var)->name_len;
-  return (uchar*)key;
+  return (unsigned char*)key;
 }
 
 
@@ -1589,10 +1586,10 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
 
 void var_free(void *v)
 {
-  my_free(((VAR*) v)->str_val, MYF(MY_WME));
-  my_free(((VAR*) v)->env_s, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
+  free(((VAR*) v)->str_val);
+  free(((VAR*) v)->env_s);
   if (((VAR*)v)->alloced)
-    my_free(v, MYF(MY_WME));
+    free(v);
 }
 
 
@@ -1604,7 +1601,7 @@ VAR* var_from_env(const char *name, const char *def_val)
     tmp = def_val;
 
   v = var_init(0, name, strlen(name), tmp, strlen(tmp));
-  my_hash_insert(&var_hash, (uchar*)v);
+  my_hash_insert(&var_hash, (unsigned char*)v);
   return v;
 }
 
@@ -1635,7 +1632,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     if (length >= MAX_VAR_NAME_LENGTH)
       die("Too long variable name: %s", save_var_name);
 
-    if (!(v = (VAR*) hash_search(&var_hash, (const uchar*) save_var_name,
+    if (!(v = (VAR*) hash_search(&var_hash, (const unsigned char*) save_var_name,
                                  length)))
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
@@ -1667,10 +1664,10 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   VAR* v;
-  if ((v = (VAR*)hash_search(&var_hash, (const uchar *) name, len)))
+  if ((v = (VAR*)hash_search(&var_hash, (const unsigned char *) name, len)))
     return v;
   v = var_init(0, name, len, "", 0);
-  my_hash_insert(&var_hash, (uchar*)v);
+  my_hash_insert(&var_hash, (unsigned char*)v);
   return v;
 }
 
@@ -1717,7 +1714,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
       die("Out of memory");
     putenv(v->env_s);
-    my_free(old_env_s, MYF(MY_ALLOW_ZERO_PTR));
+    free(old_env_s);
   }
   return;
 }
@@ -2036,7 +2033,7 @@ static int open_file(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NullS);
+    strxmov(buff, opt_basedir, name, NULL);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -2419,7 +2416,7 @@ static void do_chmod_file(struct st_command *command)
 
   /* Parse what mode to set */
   if (ds_mode.length() != 4 ||
-      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NullS)
+      str2int(ds_mode.c_str(), 8, 0, INT_MAX, &mode) == NULL)
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
@@ -3084,7 +3081,7 @@ static int do_save_master_pos(void)
     die("drizzle_store_result() retuned NULL for '%s'", query);
   if (!(row = drizzle_fetch_row(res)))
     die("empty result in show master status");
-  stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
+  my_stpncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
   drizzle_free_result(res);
   return(0);
@@ -3511,8 +3508,7 @@ static void do_close_connection(struct st_command *command)
   {
     if (con->drizzle.net.vio)
     {
-      vio_delete(con->drizzle.net.vio);
-      con->drizzle.net.vio = 0;
+      net_close(&(con->drizzle.net));
     }
   }
 
@@ -3522,7 +3518,7 @@ static void do_close_connection(struct st_command *command)
     drizzle_close(con->util_drizzle);
   con->util_drizzle= 0;
 
-  my_free(con->name, MYF(0));
+  free(con->name);
 
   /*
     When the connection is closed set name to "-closed_connection-"
@@ -3792,15 +3788,8 @@ static void do_connect(struct st_command *command)
   if (!drizzle_create(&con_slot->drizzle))
     die("Failed on drizzle_create()");
   if (opt_compress || con_compress)
-    drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
+    drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NULL);
   drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4040,7 +4029,7 @@ static int read_line(char *buf, int size)
         my_fclose(cur_file->file, MYF(0));
         cur_file->file= 0;
       }
-      my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
+      free((unsigned char*) cur_file->file_name);
       cur_file->file_name= 0;
       if (cur_file == file_stack)
       {
@@ -4076,10 +4065,10 @@ static int read_line(char *buf, int size)
         return(0);
       }
       else if ((c == '{' &&
-                (!my_strnncoll_simple(charset_info, (const uchar*) "while", 5,
-                                      (uchar*) buf, min((long)5, p - buf), 0) ||
-                 !my_strnncoll_simple(charset_info, (const uchar*) "if", 2,
-                                      (uchar*) buf, min((long)2, p - buf), 0))))
+                (!my_strnncoll_simple(charset_info, (const unsigned char*) "while", 5,
+                                      (unsigned char*) buf, cmin((long)5, p - buf), 0) ||
+                 !my_strnncoll_simple(charset_info, (const unsigned char*) "if", 2,
+                                      (unsigned char*) buf, cmin((long)2, p - buf), 0))))
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;
@@ -4379,7 +4368,7 @@ static int read_command(struct st_command** command_ptr)
   if (!(*command_ptr= command=
         (struct st_command*) my_malloc(sizeof(*command),
                                        MYF(MY_WME|MY_ZEROFILL))))
-    die(NullS);
+    die(NULL);
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -4534,7 +4523,7 @@ static void read_embedded_server_arguments(const char *name)
 
   if (!test_if_hard_path(name))
   {
-    strxmov(buff, opt_basedir, name, NullS);
+    strxmov(buff, opt_basedir, name, NULL);
     name=buff;
   }
   fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -4581,7 +4570,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NullS);
+      strxmov(buff, opt_basedir, argument, NULL);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4598,7 +4587,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     static char buff[FN_REFLEN];
     if (!test_if_hard_path(argument))
     {
-      strxmov(buff, opt_basedir, argument, NullS);
+      strxmov(buff, opt_basedir, argument, NULL);
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4609,7 +4598,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'p':
     if (argument)
     {
-      my_free(opt_pass, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_pass);
       opt_pass= my_strdup(argument, MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       tty_password= 0;
@@ -4618,7 +4607,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       tty_password= 1;
     break;
   case 't':
-    stpncpy(TMPDIR, argument, sizeof(TMPDIR));
+    my_stpncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
   case 'A':
     if (!embedded_server_arg_count)
@@ -4663,7 +4652,7 @@ static int parse_args(int argc, char **argv)
   if (argc == 1)
     opt_db= *argv;
   if (tty_password)
-    opt_pass= get_tty_password(NullS);          /* purify tested */
+    opt_pass= get_tty_password(NULL);          /* purify tested */
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -4690,7 +4679,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!test_if_hard_path(fname))
   {
-    strxmov(buff, opt_basedir, fname, NullS);
+    strxmov(buff, opt_basedir, fname, NULL);
     fname= buff;
   }
   fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
@@ -4702,7 +4691,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && my_seek(fd, 0, SEEK_END, MYF(0)) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
-  if (my_write(fd, (uchar*)str, size, MYF(MY_WME|MY_FNABP)))
+  if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
   my_close(fd, MYF(0));
 }
@@ -4854,7 +4843,7 @@ static void append_metadata(string *ds,
     ds->append("\t", 1);
     replace_append_uint(ds, field->max_length);
     ds->append("\t", 1);
-    ds->append((char*) (IS_NOT_NULL(field->flags) ?
+    ds->append((char*) ((field->flags & NOT_NULL_FLAG) ?
                         "N" : "Y"), 1);
     ds->append("\t", 1);
     replace_append_uint(ds, field->flags);
@@ -5500,15 +5489,8 @@ int main(int argc, char **argv)
   if (!( drizzle_create(&cur_con->drizzle)))
     die("Failed in drizzle_create()");
   if (opt_compress)
-    drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
-  drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_NAME,
-                  charset_info->csname);
-  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
-  drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (opt_charsets_dir)
-    drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_DIR,
-                    opt_charsets_dir);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");
@@ -5957,11 +5939,11 @@ void do_get_replace_column(struct st_command *command)
     if (!*from)
       die("Wrong number of arguments to replace_column in '%s'", command->query);
     to= get_string(&buff, &from, command);
-    my_free(replace_column[column_number-1], MY_ALLOW_ZERO_PTR);
+    free(replace_column[column_number-1]);
     replace_column[column_number-1]= my_strdup(to, MYF(MY_WME | MY_FAE));
     set_if_bigger(max_replace_column, column_number);
   }
-  my_free(start, MYF(0));
+  free(start);
   command->last_argument= command->end;
 }
 
@@ -5973,7 +5955,7 @@ void free_replace_column()
   {
     if (replace_column[i])
     {
-      my_free(replace_column[i], 0);
+      free(replace_column[i]);
       replace_column[i]= 0;
     }
   }
@@ -5990,8 +5972,8 @@ void free_replace_column()
 
 typedef struct st_pointer_array {    /* when using array-strings */
   TYPELIB typelib;        /* Pointer to strings */
-  uchar  *str;          /* Strings is here */
-  int7  *flag;          /* Flag about each var. */
+  unsigned char  *str;          /* Strings is here */
+  uint8_t *flag;          /* Flag about each var. */
   uint  array_allocs,max_count,length,max_length;
 } POINTER_ARRAY;
 
@@ -6051,7 +6033,7 @@ void do_get_replace(struct st_command *command)
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
   free_pointer_array(&to_array);
-  my_free(start, MYF(0));
+  free(start);
   command->last_argument= command->end;
   return;
 }
@@ -6062,7 +6044,7 @@ void free_replace()
 
   if (glob_replace)
   {
-    my_free(glob_replace,MYF(0));
+    free(glob_replace);
     glob_replace=0;
   }
   return;
@@ -6096,7 +6078,7 @@ void replace_strings_append(REPLACE *rep, string* ds,
   {
     /* Loop through states */
     while (!rep_pos->found)
-      rep_pos= rep_pos->next[(uchar) *from++];
+      rep_pos= rep_pos->next[(unsigned char) *from++];
 
     /* Does this state contain a string to be replaced */
     if (!(rep_str = ((REPLACE_STRING*) rep_pos))->replace_string)
@@ -6262,7 +6244,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
       reg.icase= 1;
 
     /* done parsing the statement, now place it in regex_arr */
-    if (insert_dynamic(&res->regex_arr,(uchar*) &reg))
+    if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
       die("Out of memory");
   }
   res->odd_buf_len= res->even_buf_len= 8192;
@@ -6273,7 +6255,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   return res;
 
 err:
-  my_free(res,0);
+  free(res);
   die("Error parsing replace_regex \"%s\"", expr);
   return 0;
 }
@@ -6314,7 +6296,7 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
     struct st_regex re;
     char* save_out_buf= out_buf;
 
-    get_dynamic(&r->regex_arr,(uchar*)&re,i);
+    get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
 
     if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
                      in_buf, re.icase))
@@ -6365,9 +6347,9 @@ void free_replace_regex()
   if (glob_replace_regex)
   {
     delete_dynamic(&glob_replace_regex->regex_arr);
-    my_free(glob_replace_regex->even_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(glob_replace_regex->odd_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(glob_replace_regex,MYF(0));
+    free(glob_replace_regex->even_buf);
+    free(glob_replace_regex->odd_buf);
+    free(glob_replace_regex);
     glob_replace_regex=0;
   }
 }
@@ -6532,7 +6514,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   }
   memset(is_word_end, 0, sizeof(is_word_end));
   for (i=0 ; word_end_chars[i] ; i++)
-    is_word_end[(uchar) word_end_chars[i]]=1;
+    is_word_end[(unsigned char) word_end_chars[i]]=1;
 
   if (init_sets(&sets,states))
     return(0);
@@ -6543,7 +6525,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     free_sets(&sets);
     return(0);
   }
-  VOID(make_new_set(&sets));      /* Set starting set */
+  make_new_set(&sets);      /* Set starting set */
   make_sets_invisible(&sets);      /* Hide previus sets */
   used_sets=-1;
   word_states=make_new_set(&sets);    /* Start of new word */
@@ -6551,7 +6533,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   if (!(follow=(FOLLOWS*) my_malloc((states+2)*sizeof(FOLLOWS),MYF(MY_WME))))
   {
     free_sets(&sets);
-    my_free(found_set,MYF(0));
+    free(found_set);
     return(0);
   }
 
@@ -6610,12 +6592,12 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
           follow_ptr->chr = '\v';
           break;
         default:
-          follow_ptr->chr = (uchar) *pos;
+          follow_ptr->chr = (unsigned char) *pos;
           break;
         }
       }
       else
-        follow_ptr->chr= (uchar) *pos;
+        follow_ptr->chr= (unsigned char) *pos;
       follow_ptr->table_offset=i;
       follow_ptr->len= ++len;
       follow_ptr++;
@@ -6661,7 +6643,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
       for (pos= word_end_chars ; *pos ; pos++)
-        used_chars[(int) (uchar) *pos] = 1;
+        used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
     for (chr= 0 ; chr < 256 ; chr++)
@@ -6751,7 +6733,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=0 ; i < count ; i++)
     {
       to_array[i]=to_pos;
-      to_pos=stpcpy(to_pos,to[i])+1;
+      to_pos=my_stpcpy(to_pos,to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
@@ -6773,9 +6755,9 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
           replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
-  my_free(follow,MYF(0));
+  free(follow);
   free_sets(&sets);
-  my_free(found_set,MYF(0));
+  free(found_set);
   return(replace);
 }
 
@@ -6790,7 +6772,7 @@ int init_sets(REP_SETS *sets,uint states)
   if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
                                            SET_MALLOC_HUNC,MYF(MY_WME))))
   {
-    my_free(sets->set,MYF(0));
+    free(sets->set);
     return 1;
   }
   return 0;
@@ -6822,13 +6804,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     return set;
   }
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) my_realloc((uchar*) sets->set_buffer,
+  if (!(set=(REP_SET*) my_realloc((unsigned char*) sets->set_buffer,
                                   sizeof(REP_SET)*count,
                                   MYF(MY_WME))))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) my_realloc((uchar*) sets->bit_buffer,
+  if (!(bit_buffer=(uint*) my_realloc((unsigned char*) sets->bit_buffer,
                                       (sizeof(uint)*sets->size_of_bits)*count,
                                       MYF(MY_WME))))
     return 0;
@@ -6851,8 +6833,8 @@ void free_last_set(REP_SETS *sets)
 
 void free_sets(REP_SETS *sets)
 {
-  my_free(sets->set_buffer,MYF(0));
-  my_free(sets->bit_buffer,MYF(0));
+  free(sets->set_buffer);
+  free(sets->bit_buffer);
   return;
 }
 
@@ -6975,7 +6957,7 @@ uint end_of_word(char * pos)
 int insert_pointer_name(POINTER_ARRAY *pa,char * name)
 {
   uint i,length,old_count;
-  uchar *new_pos;
+  unsigned char *new_pos;
   const char **new_array;
 
 
@@ -6986,15 +6968,15 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
                      (sizeof(char *)+sizeof(*pa->flag))*
                      (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
       return(-1);
-    if (!(pa->str= (uchar*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
+    if (!(pa->str= (unsigned char*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
                                       MYF(MY_WME))))
     {
-      my_free((char*) pa->typelib.type_names,MYF(0));
+      free((char*) pa->typelib.type_names);
       return (-1);
     }
-    pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(uchar*)+
+    pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(unsigned char*)+
                                                sizeof(*pa->flag));
-    pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
+    pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);
     pa->length=0;
     pa->max_length=PS_MALLOC-MALLOC_OVERHEAD;
     pa->array_allocs=1;
@@ -7002,7 +6984,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   length=(uint) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (uchar*) my_realloc((uchar*) pa->str,
+    if (!(new_pos= (unsigned char*) my_realloc((unsigned char*) pa->str,
                                        (uint) (pa->max_length+PS_MALLOC),
                                        MYF(MY_WME))))
       return(1);
@@ -7021,23 +7003,23 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     int len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=(const char **) my_realloc((uchar*) pa->typelib.type_names,
+    if (!(new_array=(const char **) my_realloc((unsigned char*) pa->typelib.type_names,
                                                (uint) len/
-                                               (sizeof(uchar*)+sizeof(*pa->flag))*
-                                               (sizeof(uchar*)+sizeof(*pa->flag)),
+                                               (sizeof(unsigned char*)+sizeof(*pa->flag))*
+                                               (sizeof(unsigned char*)+sizeof(*pa->flag)),
                                                MYF(MY_WME))))
       return(1);
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;
-    pa->max_count=len/(sizeof(uchar*) + sizeof(*pa->flag));
-    pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
+    pa->max_count=len/(sizeof(unsigned char*) + sizeof(*pa->flag));
+    pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);
     memcpy(pa->flag, pa->typelib.type_names+old_count,
            old_count*sizeof(*pa->flag));
   }
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
-  pa->typelib.type_names[pa->typelib.count]= NullS;  /* Put end-mark */
-  VOID(stpcpy((char*) pa->str+pa->length,name));
+  pa->typelib.type_names[pa->typelib.count]= NULL;  /* Put end-mark */
+  my_stpcpy((char*) pa->str+pa->length,name);
   pa->length+=length;
   return(0);
 } /* insert_pointer_name */
@@ -7050,9 +7032,9 @@ void free_pointer_array(POINTER_ARRAY *pa)
   if (pa->typelib.count)
   {
     pa->typelib.count=0;
-    my_free((char*) pa->typelib.type_names,MYF(0));
+    free((char*) pa->typelib.type_names);
     pa->typelib.type_names=0;
-    my_free(pa->str,MYF(0));
+    free(pa->str);
   }
 } /* free_pointer_array */
 

@@ -17,7 +17,7 @@
 
 #include "heapdef.h"
 
-int hp_rectest(register HP_INFO *info, register const uchar *old_record)
+int hp_rectest(register HP_INFO *info, register const unsigned char *old_record)
 {
 
   if (hp_process_record_data_to_chunkset(info->s, old_record, info->current_ptr, 1))

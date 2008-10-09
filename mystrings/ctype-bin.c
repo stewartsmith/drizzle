@@ -21,7 +21,7 @@
 #include "m_string.h"
 #include "m_ctype.h"
 
-static uchar ctype_bin[]=
+static unsigned char ctype_bin[]=
 {
   0,
   32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 32, 32,
@@ -45,7 +45,7 @@ static uchar ctype_bin[]=
 
 /* Dummy array for toupper / tolower / sortorder */
 
-static uchar bin_char_array[] =
+static unsigned char bin_char_array[] =
 {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -75,11 +75,11 @@ my_coll_init_8bit_bin(CHARSET_INFO *cs,
 }
 
 static int my_strnncoll_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
-                               const uchar *s, size_t slen,
-                               const uchar *t, size_t tlen,
+                               const unsigned char *s, size_t slen,
+                               const unsigned char *t, size_t tlen,
                                bool t_is_prefix)
 {
-  size_t len=min(slen,tlen);
+  size_t len=cmin(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
 }
@@ -116,8 +116,8 @@ static size_t my_lengthsp_binary(const CHARSET_INFO * const cs __attribute__((un
 */
 
 static int my_strnncollsp_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
-                                 const uchar *s, size_t slen,
-                                 const uchar *t, size_t tlen,
+                                 const unsigned char *s, size_t slen,
+                                 const unsigned char *t, size_t tlen,
                                  bool diff_if_only_endspace_difference
                                  __attribute__((unused)))
 {
@@ -126,11 +126,11 @@ static int my_strnncollsp_binary(const CHARSET_INFO * const  cs __attribute__((u
 
 
 static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
-                                 const uchar *s, size_t slen,
-                                 const uchar *t, size_t tlen,
+                                 const unsigned char *s, size_t slen,
+                                 const unsigned char *t, size_t tlen,
                                  bool t_is_prefix)
 {
-  size_t len=min(slen,tlen);
+  size_t len=cmin(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : (int)((t_is_prefix ? len : slen) - tlen);
 }
@@ -162,11 +162,11 @@ static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((u
 */
 
 static int my_strnncollsp_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
-                                   const uchar *a, size_t a_length, 
-                                   const uchar *b, size_t b_length,
+                                   const unsigned char *a, size_t a_length, 
+                                   const unsigned char *b, size_t b_length,
                                    bool diff_if_only_endspace_difference)
 {
-  const uchar *end;
+  const unsigned char *end;
   size_t length;
   int res;
 
@@ -174,7 +174,7 @@ static int my_strnncollsp_8bit_bin(const CHARSET_INFO * const  cs __attribute__(
   diff_if_only_endspace_difference= 0;
 #endif
 
-  end= a + (length= min(a_length, b_length));
+  end= a + (length= cmin(a_length, b_length));
   while (a < end)
   {
     if (*a++ != *b++)
@@ -234,8 +234,8 @@ static int my_strcasecmp_bin(const CHARSET_INFO * const  cs __attribute__((unuse
 }
 
 
-uint my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
-                      uint c __attribute__((unused)))
+uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
+                      uint32_t c __attribute__((unused)))
 {
   return 1;
 }
@@ -243,8 +243,8 @@ uint my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
 
 static int my_mb_wc_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 			my_wc_t *wc,
-			const uchar *str,
-			const uchar *end __attribute__((unused)))
+			const unsigned char *str,
+			const unsigned char *end __attribute__((unused)))
 {
   if (str >= end)
     return MY_CS_TOOSMALL;
@@ -256,8 +256,8 @@ static int my_mb_wc_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 
 static int my_wc_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 			my_wc_t wc,
-			uchar *s,
-			uchar *e __attribute__((unused)))
+			unsigned char *s,
+			unsigned char *e __attribute__((unused)))
 {
   if (s >= e)
     return MY_CS_TOOSMALL;
@@ -272,10 +272,10 @@ static int my_wc_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 
 
 static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((unused)),
-                                  const uchar *key, size_t len,
+                                  const unsigned char *key, size_t len,
                                   uint32_t *nr1, uint32_t *nr2)
 {
-  const uchar *pos = key;
+  const unsigned char *pos = key;
   
   /*
      Remove trailing spaces. We have to do this to be able to compare
@@ -283,7 +283,7 @@ static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((u
   */
   key= skip_trailing_space(key, len);
 
-  for (; pos < (uchar*) key ; pos++)
+  for (; pos < (unsigned char*) key ; pos++)
   {
     nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
 	     ((uint)*pos)) + (nr1[0] << 8);
@@ -293,14 +293,14 @@ static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((u
 
 
 static void my_hash_sort_bin(const CHARSET_INFO * const cs __attribute__((unused)),
-                             const uchar *key, size_t len,
+                             const unsigned char *key, size_t len,
                              uint32_t *nr1, uint32_t *nr2)
 {
-  const uchar *pos = key;
+  const unsigned char *pos = key;
   
   key+= len;
   
-  for (; pos < (uchar*) key ; pos++)
+  for (; pos < (unsigned char*) key ; pos++)
   {
     nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
 	     ((uint)*pos)) + (nr1[0] << 8);
@@ -350,7 +350,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
     }
     if (*wildstr == w_many)
     {					/* Found w_many */
-      uchar cmp;
+      unsigned char cmp;
       wildstr++;
       /* Remove any '%' and '_' from the wild search string */
       for (; wildstr != wildend ; wildstr++)
@@ -378,7 +378,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
       cmp=likeconv(cs,cmp);
       do
       {
-	while (str != str_end && (uchar) likeconv(cs,*str) != cmp)
+	while (str != str_end && (unsigned char) likeconv(cs,*str) != cmp)
 	  str++;
 	if (str++ == str_end)
 	  return(-1);
@@ -398,8 +398,8 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
 
 static size_t
 my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
-                     uchar * dst, size_t dstlen, uint nweights,
-                     const uchar *src, size_t srclen, uint flags)
+                     unsigned char * dst, size_t dstlen, uint32_t nweights,
+                     const unsigned char *src, size_t srclen, uint32_t flags)
 {
   set_if_smaller(srclen, dstlen);
   set_if_smaller(srclen, nweights);
@@ -411,12 +411,12 @@ my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
 
 
 static
-uint my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+uint32_t my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 		  const char *b, size_t b_length,
 		  const char *s, size_t s_length,
-		  my_match_t *match, uint nmatch)
+		  my_match_t *match, uint32_t nmatch)
 {
-  register const uchar *str, *search, *end, *search_end;
+  register const unsigned char *str, *search, *end, *search_end;
 
   if (s_length <= b_length)
   {
@@ -431,17 +431,17 @@ uint my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
       return 1;		/* Empty string is always found */
     }
 
-    str= (const uchar*) b;
-    search= (const uchar*) s;
-    end= (const uchar*) b+b_length-s_length+1;
-    search_end= (const uchar*) s + s_length;
+    str= (const unsigned char*) b;
+    search= (const unsigned char*) s;
+    end= (const unsigned char*) b+b_length-s_length+1;
+    search_end= (const unsigned char*) s + s_length;
 
 skip:
     while (str != end)
     {
       if ( (*str++) == (*search))
       {
-	register const uchar *i,*j;
+	register const unsigned char *i,*j;
 
 	i= str;
 	j= search+1;
@@ -453,7 +453,7 @@ skip:
         if (nmatch > 0)
 	{
 	  match[0].beg= 0;
-	  match[0].end= (size_t) (str- (const uchar*)b-1);
+	  match[0].end= (size_t) (str- (const unsigned char*)b-1);
 	  match[0].mb_len= match[0].end;
 
 	  if (nmatch > 1)

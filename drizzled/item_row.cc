@@ -39,7 +39,7 @@ Item_row::Item_row(List<Item> &arg):
   else
     items= 0;
   List_iterator<Item> li(arg);
-  uint i= 0;
+  uint32_t i= 0;
   Item *item;
   while ((item= li++))
   {
@@ -112,7 +112,7 @@ void Item_row::update_used_tables()
 {
   used_tables_cache= 0;
   const_item_cache= 1;
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     items[i]->update_used_tables();
     used_tables_cache|= items[i]->used_tables();
@@ -125,7 +125,7 @@ void Item_row::fix_after_pullout(st_select_lex *new_parent,
 {
   used_tables_cache= 0;
   const_item_cache= 1;
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     items[i]->fix_after_pullout(new_parent, &items[i]);
     used_tables_cache|= items[i]->used_tables();
@@ -133,7 +133,7 @@ void Item_row::fix_after_pullout(st_select_lex *new_parent,
   }
 }
 
-bool Item_row::check_cols(uint c)
+bool Item_row::check_cols(uint32_t c)
 {
   if (c != arg_count)
   {
@@ -146,7 +146,7 @@ bool Item_row::check_cols(uint c)
 void Item_row::print(String *str, enum_query_type query_type)
 {
   str->append('(');
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     if (i)
       str->append(',');
@@ -156,9 +156,9 @@ void Item_row::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_row::walk(Item_processor processor, bool walk_subquery, uchar *arg)
+bool Item_row::walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
 {
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     if (items[i]->walk(processor, walk_subquery, arg))
       return 1;
@@ -167,9 +167,9 @@ bool Item_row::walk(Item_processor processor, bool walk_subquery, uchar *arg)
 }
 
 
-Item *Item_row::transform(Item_transformer transformer, uchar *arg)
+Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
 {
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     Item *new_item= items[i]->transform(transformer, arg);
     if (!new_item)
@@ -189,6 +189,6 @@ Item *Item_row::transform(Item_transformer transformer, uchar *arg)
 
 void Item_row::bring_value()
 {
-  for (uint i= 0; i < arg_count; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
     items[i]->bring_value();
 }

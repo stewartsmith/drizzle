@@ -149,7 +149,7 @@ static void free_tree(TREE *tree, myf free_flags)
 
 void delete_tree(TREE* tree)
 {
-  free_tree(tree, MYF(0)); /* my_free() mem_root if applicable */
+  free_tree(tree, MYF(0)); /* free() mem_root if applicable */
 }
 
 void reset_tree(TREE* tree)
@@ -168,7 +168,7 @@ static void delete_tree_element(TREE *tree, TREE_ELEMENT *element)
       (*tree->free)(ELEMENT_KEY(tree,element), free_free, tree->custom_arg);
     delete_tree_element(tree,element->right);
     if (tree->with_delete)
-      my_free((char*) element,MYF(0));
+      free((char*) element);
   }
 }
 
@@ -181,7 +181,7 @@ static void delete_tree_element(TREE *tree, TREE_ELEMENT *element)
     parent[0] = & parent[-1][0]->right
 */
 
-TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size, 
+TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size, 
                           void* custom_arg)
 {
   int cmp;
@@ -206,7 +206,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
   }
   if (element == &tree->null_element)
   {
-    uint alloc_size=sizeof(TREE_ELEMENT)+key_size+tree->size_of_element;
+    uint32_t alloc_size=sizeof(TREE_ELEMENT)+key_size+tree->size_of_element;
     tree->allocated+=alloc_size;
 
     if (tree->memory_limit && tree->elements_in_tree
@@ -236,7 +236,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
       }
     }
     else
-      memcpy((uchar*) element + tree->offset_to_key, key, key_size);
+      memcpy((unsigned char*) element + tree->offset_to_key, key, key_size);
     element->count=1;			/* May give warning in purify */
     tree->elements_in_tree++;
     rb_insert(tree,parent,element);	/* rebalance tree */
@@ -253,7 +253,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
   return element;
 }
 
-int tree_delete(TREE *tree, void *key, uint key_size, void *custom_arg)
+int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg)
 {
   int cmp,remove_colour;
   TREE_ELEMENT *element,***parent, ***org_parent, *nod;
@@ -309,7 +309,7 @@ int tree_delete(TREE *tree, void *key, uint key_size, void *custom_arg)
   if (tree->free)
     (*tree->free)(ELEMENT_KEY(tree,element), free_free, tree->custom_arg);
   tree->allocated-= sizeof(TREE_ELEMENT) + tree->size_of_element + key_size;
-  my_free((uchar*) element,MYF(0));
+  free((unsigned char*) element);
   tree->elements_in_tree--;
   return 0;
 }

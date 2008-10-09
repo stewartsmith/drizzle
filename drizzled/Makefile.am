@@ -52,12 +52,12 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
+				plugin_logging.h \
 				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la
 
-LDADD = $(top_builddir)/vio/libviolt.la \
-	$(top_builddir)/libdrizzle/libsqlcommon.la \
+LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(ZLIB_LIBS) $(LIBINTL)
@@ -73,8 +73,11 @@ drizzled_LDADD = libhandler.la \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
+drizzled_LDFLAGS =
+
 noinst_HEADERS = item.h \
 		 authentication.h \
+		 logging.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -94,7 +97,6 @@ noinst_HEADERS = item.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \
-		 mysqld_suffix.h \
 		 rpl_constants.h \
 		 opt_range.h \
 		 protocol.h \
@@ -149,6 +151,7 @@ drizzled_SOURCES = \
 		   sql_db.cc \
 		   sql_lex.cc \
 		   authentication.cc \
+		   logging.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
 		   field_iterator.cc \
@@ -169,7 +172,7 @@ drizzled_SOURCES = \
 		   sql_class.cc \
 		   sql_list.cc \
 		   protocol.cc \
-		   sql_state.c \
+		   sql_state.cc \
 		   lock.cc \
 		   sql_string.cc \
 		   drizzled.cc \
@@ -217,9 +220,7 @@ drizzled_SOURCES = \
 		   sql_union.cc \
 		   sql_derived.cc \
 		   sql_client.cc \
-		   stacktrace.c \
-		   repl_failsafe.h \
-		   repl_failsafe.cc \
+		   stacktrace.cc \
 		   sql_olap.cc \
 		   tztime.cc \
 		   my_decimal.cc\

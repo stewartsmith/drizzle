@@ -26,6 +26,7 @@
 */
 #define IMPORT_VERSION "3.7"
 
+#include "config.h"
 #include <string>
 
 #include "client_priv.h"
@@ -190,7 +191,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start=argument;
-      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password=my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
@@ -201,8 +202,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       tty_password= 1;
     break;
   case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   case 'V': print_version(); exit(0);
   case 'I':
@@ -247,7 +246,7 @@ static int get_options(int *argc, char ***argv)
   current_db= *((*argv)++);
   (*argc)--;
   if (tty_password)
-    opt_password=get_tty_password(NullS);
+    opt_password=get_tty_password(NULL);
   return(0);
 }
 
@@ -260,7 +259,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
 
   fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
   if (!opt_local_file)
-    stpcpy(hard_path,filename);
+    my_stpcpy(hard_path,filename);
   else
     my_load_path(hard_path, filename, NULL); /* filename includes the path */
 
@@ -294,13 +293,13 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strchr(sql_statement, '\0');
   if (opt_replace)
-    end= stpcpy(end, " REPLACE");
+    end= my_stpcpy(end, " REPLACE");
   if (ignore)
-    end= stpcpy(end, " IGNORE");
-  end= stpcpy(stpcpy(end, " INTO TABLE "), tablename);
+    end= my_stpcpy(end, " IGNORE");
+  end= my_stpcpy(my_stpcpy(end, " INTO TABLE "), tablename);
 
   if (fields_terminated || enclosed || opt_enclosed || escaped)
-      end= stpcpy(end, " FIELDS");
+      end= my_stpcpy(end, " FIELDS");
   end= add_load_option(end, fields_terminated, " TERMINATED BY");
   end= add_load_option(end, enclosed, " ENCLOSED BY");
   end= add_load_option(end, opt_enclosed,
@@ -308,10 +307,10 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   end= add_load_option(end, escaped, " ESCAPED BY");
   end= add_load_option(end, lines_terminated, " LINES TERMINATED BY");
   if (opt_ignore_lines >= 0)
-    end= stpcpy(int64_t10_to_str(opt_ignore_lines,
-          stpcpy(end, " IGNORE "),10), " LINES");
+    end= my_stpcpy(int64_t10_to_str(opt_ignore_lines,
+          my_stpcpy(end, " IGNORE "),10), " LINES");
   if (opt_columns)
-    end= stpcpy(stpcpy(stpcpy(end, " ("), opt_columns), ")");
+    end= my_stpcpy(my_stpcpy(my_stpcpy(end, " ("), opt_columns), ")");
   *end= '\0';
 
   if (drizzle_query(drizzle, sql_statement))
@@ -363,7 +362,7 @@ static DRIZZLE *db_connect(char *host, char *database,
   if (!(drizzle= drizzle_create(NULL)))
     return 0;
   if (opt_compress)
-    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_local_file)
     drizzle_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
       (char*) &opt_local_file);
@@ -432,11 +431,11 @@ static char *add_load_option(char *ptr, const char *object,
   {
     /* Don't escape hex constants */
     if (object[0] == '0' && (object[1] == 'x' || object[1] == 'X'))
-      ptr= strxmov(ptr," ",statement," ",object,NullS);
+      ptr= strxmov(ptr," ",statement," ",object,NULL);
     else
     {
       /* char constant; escape */
-      ptr= strxmov(ptr," ",statement," '",NullS);
+      ptr= strxmov(ptr," ",statement," '",NULL);
       ptr= field_escape(ptr,object,(uint) strlen(object));
       *ptr++= '\'';
     }
@@ -482,9 +481,6 @@ static void * worker_thread(void *arg)
   char *raw_table_name= (char *)arg;
   DRIZZLE *drizzle= 0;
 
-  if (drizzle_thread_init())
-    goto error;
- 
   if (!(drizzle= db_connect(current_host,current_db,current_user,opt_password)))
   {
     goto error;
@@ -541,8 +537,8 @@ int main(int argc, char **argv)
     pthread_attr_setdetachstate(&attr,
                                 PTHREAD_CREATE_DETACHED);
 
-    VOID(pthread_mutex_init(&counter_mutex, NULL));
-    VOID(pthread_cond_init(&count_threshhold, NULL));
+    pthread_mutex_init(&counter_mutex, NULL);
+    pthread_cond_init(&count_threshhold, NULL);
 
     for (counter= 0; *argv != NULL; argv++) /* Loop through tables */
     {
@@ -581,8 +577,8 @@ int main(int argc, char **argv)
       pthread_cond_timedwait(&count_threshhold, &counter_mutex, &abstime);
     }
     pthread_mutex_unlock(&counter_mutex);
-    VOID(pthread_mutex_destroy(&counter_mutex));
-    VOID(pthread_cond_destroy(&count_threshhold));
+    pthread_mutex_destroy(&counter_mutex);
+    pthread_cond_destroy(&count_threshhold);
     pthread_attr_destroy(&attr);
   }
   else
@@ -609,7 +605,7 @@ int main(int argc, char **argv)
           exitcode= error;
     db_disconnect(current_host, drizzle);
   }
-  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
   free_defaults(argv_to_free);
   my_end(my_end_arg);
   return(exitcode);

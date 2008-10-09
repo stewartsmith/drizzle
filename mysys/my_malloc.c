@@ -25,7 +25,7 @@ void *my_malloc(size_t size, myf my_flags)
 
   if (!size)
     size=1;					/* Safety */
-  if ((point = (char*)malloc(size)) == NULL)
+  if ((point = malloc(size)) == NULL)
   {
     my_errno=errno;
     if (my_flags & MY_FAE)
@@ -39,17 +39,6 @@ void *my_malloc(size_t size, myf my_flags)
     memset(point, 0, size);
   return((void*) point);
 } /* my_malloc */
-
-
-	/* Free memory allocated with my_malloc */
-	/*ARGSUSED*/
-
-void my_no_flags_free(void* ptr)
-{
-  if (ptr)
-    free(ptr);
-  return;
-} /* my_free */
 
 
 	/* malloc and copy */

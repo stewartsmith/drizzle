@@ -52,15 +52,14 @@
 
    @return The number of bytes written at @c row_data.
  */
-#if !defined(DRIZZLE_CLIENT)
 size_t
 pack_row(Table *table, MY_BITMAP const* cols,
-         uchar *row_data, const uchar *record)
+         unsigned char *row_data, const unsigned char *record)
 {
   Field **p_field= table->field, *field;
   int const null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
-  uchar *pack_ptr = row_data + null_byte_count;
-  uchar *null_ptr = row_data;
+  unsigned char *pack_ptr = row_data + null_byte_count;
+  unsigned char *null_ptr = row_data;
   my_ptrdiff_t const rec_offset= record - table->record[0];
   my_ptrdiff_t const def_offset= table->s->default_values - table->record[0];
 
@@ -126,7 +125,6 @@ pack_row(Table *table, MY_BITMAP const* cols,
   assert(null_ptr == row_data + null_byte_count);
   return(static_cast<size_t>(pack_ptr - row_data));
 }
-#endif
 
 
 /**
@@ -162,19 +160,18 @@ pack_row(Table *table, MY_BITMAP const* cols,
    master does not have a default value (and isn't nullable)
 
  */
-#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int
 unpack_row(Relay_log_info const *rli,
-           Table *table, uint const colcnt,
-           uchar const *const row_data, MY_BITMAP const *cols,
-           uchar const **const row_end, ulong *const master_reclength)
+           Table *table, uint32_t const colcnt,
+           unsigned char const *const row_data, MY_BITMAP const *cols,
+           unsigned char const **const row_end, ulong *const master_reclength)
 {
   assert(row_data);
   size_t const master_null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
   int error= 0;
 
-  uchar const *null_ptr= row_data;
-  uchar const *pack_ptr= row_data + master_null_byte_count;
+  unsigned char const *null_ptr= row_data;
+  unsigned char const *pack_ptr= row_data + master_null_byte_count;
 
   Field **const begin_ptr = table->field;
   Field **field_ptr;
@@ -186,7 +183,7 @@ unpack_row(Relay_log_info const *rli,
   unsigned int null_mask= 1U;
   // The "current" null bits
   unsigned int null_bits= *null_ptr++;
-  uint i= 0;
+  uint32_t i= 0;
 
   /*
     Use the rli class to get the table's metadata. If tabledef is not NULL
@@ -252,7 +249,7 @@ unpack_row(Relay_log_info const *rli,
     (tabledef not NULL). If tabledef is NULL then it is assumed that
     there are no extra columns.
   */
-  uint max_cols= tabledef ? min(tabledef->size(), cols->n_bits) : 0;
+  uint32_t max_cols= tabledef ? cmin(tabledef->size(), cols->n_bits) : 0;
   for (; i < max_cols; i++)
   {
     if (bitmap_is_set(cols, i))
@@ -266,7 +263,7 @@ unpack_row(Relay_log_info const *rli,
       assert(null_mask & 0xFF); // One of the 8 LSB should be set
 
       if (!((null_bits & null_mask) && tabledef->maybe_null(i)))
-        pack_ptr+= tabledef->calc_field_size(i, (uchar *) pack_ptr);
+        pack_ptr+= tabledef->calc_field_size(i, (unsigned char *) pack_ptr);
       null_mask <<= 1;
     }
   }
@@ -319,7 +316,7 @@ unpack_row(Relay_log_info const *rli,
 */
 int prepare_record(Table *const table,
                    const MY_BITMAP *cols,
-                   uint width __attribute__((unused)),
+                   uint32_t width __attribute__((unused)),
                    const bool check)
 {
 
@@ -355,5 +352,3 @@ int prepare_record(Table *const table,
 
   return(error);
 }
-
-#endif // HAVE_REPLICATION

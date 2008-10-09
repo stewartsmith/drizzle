@@ -33,6 +33,8 @@
  *
  **/
 
+#include "config.h"
+
 #include <string>
 
 #include "client_priv.h"
@@ -44,7 +46,6 @@
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <vio/violite.h>
 #include <sys/ioctl.h>
 
 
@@ -68,8 +69,13 @@ const char *VER= "14.14";
 void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
 
+
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
+#ifdef __sun
+#undef clear
+#undef erase
+#endif
 #include <term.h>
 #else
 #if defined(HAVE_TERMIOS_H)
@@ -80,7 +86,6 @@ void sql_element_free(void *ptr);
 #elif defined(HAVE_ASM_TERMBITS_H) && (!defined __GLIBC__ || !(__GLIBC__ > 2 || __GLIBC__ == 2 && __GLIBC_MINOR__ > 0))
 #include <asm/termbits.h>    // Standard linux
 #endif
-#undef VOID
 #if defined(HAVE_TERMCAP_H)
 #include <termcap.h>
 #else
@@ -167,8 +172,7 @@ static uint my_end_arg;
 static char * opt_drizzle_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
-  *delimiter_str= 0,* current_prompt= 0,
-  *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
+  *delimiter_str= 0,* current_prompt= 0;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -193,7 +197,6 @@ static char delimiter[16]= DEFAULT_DELIMITER;
 static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 int drizzle_real_query_for_lazy(const char *buf, int length);
@@ -216,7 +219,7 @@ static int com_quit(string *str,const char*),
   com_connect(string *str,const char*), com_status(string *str,const char*),
   com_use(string *str,const char*), com_source(string *str, const char*),
   com_rehash(string *str, const char*), com_tee(string *str, const char*),
-  com_notee(string *str, const char*), com_charset(string *str,const char*),
+  com_notee(string *str, const char*),
   com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
   com_warnings(string *str, const char*), com_nowarnings(string *str, const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
@@ -279,8 +282,6 @@ static COMMANDS commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") },
   { "use",    'u', com_use,    1,
     N_("Use another database. Takes database name as argument.") },
-  { "charset",    'C', com_charset,    1,
-    N_("Switch to another charset. Might be needed for processing binlog with multi-byte charsets.") },
   { "warnings", 'W', com_warnings,  0,
     N_("Show warnings after every statement.") },
   { "nowarning", 'w', com_nowarnings, 0,
@@ -1014,10 +1015,10 @@ static uint32_t start_timer(void);
 static void end_timer(uint32_t start_time,char *buff);
 static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern sig_handler drizzle_end(int sig);
-extern sig_handler handle_sigint(int sig);
+extern RETSIGTYPE drizzle_end(int sig);
+extern RETSIGTYPE handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-static sig_handler window_resize(int sig);
+static RETSIGTYPE window_resize(int sig);
 #endif
 
 int main(int argc,char *argv[])
@@ -1044,13 +1045,13 @@ int main(int argc,char *argv[])
   prompt_counter=0;
 
   outfile[0]=0;      // no (default) outfile
-  stpcpy(pager, "stdout");  // the default, if --pager wasn't given
+  my_stpcpy(pager, "stdout");  // the default, if --pager wasn't given
   {
     char *tmp=getenv("PAGER");
     if (tmp && strlen(tmp))
     {
       default_pager_set= 1;
-      stpcpy(default_pager, tmp);
+      my_stpcpy(default_pager, tmp);
     }
   }
   if (!isatty(0) || !isatty(1))
@@ -1150,7 +1151,7 @@ int main(int argc,char *argv[])
           strncmp(link_name, "/dev/null", 10) == 0)
       {
         /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        my_free(histfile, MYF(MY_ALLOW_ZERO_PTR));
+        free(histfile);
         histfile= 0;
       }
     }
@@ -1180,7 +1181,7 @@ int main(int argc,char *argv[])
   return(0);        // Keep compiler happy
 }
 
-sig_handler drizzle_end(int sig)
+RETSIGTYPE drizzle_end(int sig)
 {
   drizzle_close(&drizzle);
   if (!status.batch && !quick && histfile)
@@ -1201,18 +1202,17 @@ sig_handler drizzle_end(int sig)
     delete glob_buffer;
   if (processed_prompt)
     delete processed_prompt;
-  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(opt_drizzle_unix_port,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(histfile,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(histfile_tmp,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_user,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  drizzle_server_end();
+  free(opt_password);
+  free(opt_drizzle_unix_port);
+  free(histfile);
+  free(histfile_tmp);
+  free(current_db);
+  free(current_host);
+  free(current_user);
+  free(full_username);
+  free(part_username);
+  free(default_prompt);
+  free(current_prompt);
   free_defaults(defaults_argv);
   my_end(my_end_arg);
   exit(status.exit_status);
@@ -1224,7 +1224,7 @@ sig_handler drizzle_end(int sig)
   If query is in process, kill query
   no query in process, terminate like previous behavior
 */
-sig_handler handle_sigint(int sig)
+RETSIGTYPE handle_sigint(int sig)
 {
   char kill_buffer[40];
   DRIZZLE *kill_drizzle= NULL;
@@ -1257,7 +1257,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig __attribute__((unused)))
+RETSIGTYPE window_resize(int sig __attribute__((unused)))
 {
   struct winsize window_size;
 
@@ -1304,8 +1304,8 @@ static struct my_option my_long_options[] =
   {"database", 'D', N_("Database to use."), (char**) &current_db,
    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
-   N_("Set the default character set."), (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("(not used)"), 0,
+   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delimiter", OPT_DELIMITER, N_("Delimiter to be used."), (char**) &delimiter_str,
    (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"execute", 'e', N_("Execute command and quit. (Disables --force and history file)"), 0,
@@ -1478,7 +1478,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case OPT_DELIMITER:
     if (argument == disabled_my_option)
     {
-      stpcpy(delimiter, DEFAULT_DELIMITER);
+      my_stpcpy(delimiter, DEFAULT_DELIMITER);
     }
     else
     {
@@ -1524,10 +1524,10 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       {
         default_pager_set= 1;
         strmake(pager, argument, sizeof(pager) - 1);
-        stpcpy(default_pager, pager);
+        my_stpcpy(default_pager, pager);
       }
       else if (default_pager_set)
-        stpcpy(pager, default_pager);
+        my_stpcpy(pager, default_pager);
       else
         opt_nopager= 1;
     }
@@ -1565,7 +1565,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start= argument;
-      my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= strdup(argument);
       while (*argument) *argument++= 'x';        // Destroy argument
       if (*start)
@@ -1618,12 +1618,12 @@ static int get_options(int argc, char **argv)
   pagpoint= getenv("PAGER");
   if (!((char*) (pagpoint)))
   {
-    stpcpy(pager, "stdout");
+    my_stpcpy(pager, "stdout");
     opt_nopager= 1;
   }
   else
-    stpcpy(pager, pagpoint);
-  stpcpy(default_pager, pager);
+    my_stpcpy(pager, pagpoint);
+  my_stpcpy(default_pager, pager);
 
   opt_max_allowed_packet= *drizzle_params->p_max_allowed_packet;
   opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
@@ -1636,8 +1636,8 @@ static int get_options(int argc, char **argv)
 
   if (status.batch) /* disable pager and outfile in this case */
   {
-    stpcpy(default_pager, "stdout");
-    stpcpy(pager, "stdout");
+    my_stpcpy(default_pager, "stdout");
+    my_stpcpy(pager, "stdout");
     opt_nopager= 1;
     default_pager_set= 0;
     opt_outfile= 0;
@@ -1645,10 +1645,6 @@ static int get_options(int argc, char **argv)
     connect_flag= 0; /* Not in interactive mode */
   }
 
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset,
-                                            MY_CS_PRIMARY, MYF(MY_WME))))
-    exit(1);
   if (argc > 1)
   {
     usage(0);
@@ -1657,11 +1653,11 @@ static int get_options(int argc, char **argv)
   if (argc == 1)
   {
     skip_updates= 0;
-    my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+    free(current_db);
     current_db= strdup(*argv);
   }
   if (tty_password)
-    opt_password= get_tty_password(NullS);
+    opt_password= get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
   if (debug_check_flag)
@@ -1690,9 +1686,9 @@ static int read_and_execute(bool interactive)
         you save the file using "Unicode UTF-8" format.
       */
       if (!line_number &&
-          (uchar) line[0] == 0xEF &&
-          (uchar) line[1] == 0xBB &&
-          (uchar) line[2] == 0xBF)
+          (unsigned char) line[0] == 0xEF &&
+          (unsigned char) line[1] == 0xBB &&
+          (unsigned char) line[2] == 0xBF)
         line+= 3;
       line_number++;
       if (!glob_buffer->empty())
@@ -1786,8 +1782,8 @@ static COMMANDS *find_command(const char *name,char cmd_char)
     if (strstr(name, "\\g") || (strstr(name, delimiter) &&
                                 !(strlen(name) >= 9 &&
                                   !my_strnncoll(charset_info,
-                                                (uchar*) name, 9,
-                                                (const uchar*) "delimiter",
+                                                (unsigned char*) name, 9,
+                                                (const unsigned char*) "delimiter",
                                                 9))))
       return((COMMANDS *) 0);
     if ((end=strcont(name," \t")))
@@ -1805,7 +1801,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
   for (uint i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
-        ((name && !my_strnncoll(charset_info,(const uchar*)name,len, (const uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
+        ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
       return(&commands[i]);
     }
@@ -1817,7 +1813,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
 static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
-  uchar inchar;
+  unsigned char inchar;
   char buff[80], *pos, *out;
   COMMANDS *com;
   bool need_space= 0;
@@ -1830,7 +1826,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     add_history(line);
   char *end_of_line=line+(uint) strlen(line);
 
-  for (pos=out=line ; (inchar= (uchar) *pos) ; pos++)
+  for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
     if (!preserve_comments)
     {
@@ -1862,7 +1858,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     {
       // Found possbile one character command like \c
 
-      if (!(inchar = (uchar) *++pos))
+      if (!(inchar = (unsigned char) *++pos))
         break;        // readline adds one '\'
       if (*in_string || inchar == 'N')  // \N is short for NULL
       {          // Don't allow commands in string
@@ -1870,7 +1866,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
         *out++= (char) inchar;
         continue;
       }
-      if ((com=find_command(NullS,(char) inchar)))
+      if ((com=find_command(NULL,(char) inchar)))
       {
         // Flush previously accepted characters
         if (out != line)
@@ -1919,8 +1915,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
     else if (!*ml_comment && !*in_string &&
              (end_of_line - pos) >= 10 &&
-             !my_strnncoll(charset_info, (uchar*) pos, 10,
-                           (const uchar*) "delimiter ", 10))
+             !my_strnncoll(charset_info, (unsigned char*) pos, 10,
+                           (const unsigned char*) "delimiter ", 10))
     {
       // Flush previously accepted characters
       if (out != line)
@@ -2218,7 +2214,7 @@ static char *new_command_generator(const char *text,int state)
 
       b = find_all_matches(&ht,text,(uint) strlen(text),&len);
       if (!b)
-        return NullS;
+        return NULL;
       e = b->pData;
     }
 
@@ -2245,7 +2241,7 @@ static char *new_command_generator(const char *text,int state)
         }
       }
     }
-    ptr= NullS;
+    ptr= NULL;
     while (e && !ptr)
     {          /* find valid entry in bucket */
       if ((uint) strlen(e->str) == b->nKeyLength)
@@ -2274,7 +2270,7 @@ static char *new_command_generator(const char *text,int state)
     if (ptr)
       return ptr;
   }
-  return NullS;
+  return NULL;
 }
 
 
@@ -2365,7 +2361,7 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
   i=0;
   while ((table_row=drizzle_fetch_row(tables)))
   {
-    if ((fields=drizzle_list_fields(&drizzle,(const char*) table_row[0],NullS)))
+    if ((fields=drizzle_list_fields(&drizzle,(const char*) table_row[0],NULL)))
     {
       num_fields=drizzle_num_fields(fields);
       if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
@@ -2412,7 +2408,7 @@ extern "C" {
     for (;;)
     {
       if (*s == (char) c) return (char*) s;
-      if (!*s++) return NullS;
+      if (!*s++) return NULL;
     }
   }
 
@@ -2420,7 +2416,7 @@ extern "C" {
   {
     register char *t;
 
-    t = NullS;
+    t = NULL;
     do if (*s == (char) c) t = (char*) s; while (*s++);
     return (char*) t;
   }
@@ -2448,7 +2444,7 @@ static void get_current_db(void)
 {
   DRIZZLE_RES *res;
 
-  my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+  free(current_db);
   current_db= NULL;
   /* In case of error below current_db will be NULL */
   if (!drizzle_query(&drizzle, "SELECT DATABASE()") &&
@@ -2522,7 +2518,7 @@ static int com_server_help(string *buffer,
         end_arg--;
       *++end_arg= '\0';
     }
-    (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NullS);
+    (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NULL);
     server_cmd= cmd_buf;
   }
 
@@ -2612,9 +2608,9 @@ com_help(string *buffer __attribute__((unused)),
     put_info(_("Note that all text commands must be first on line and end with ';'"),INFO_INFO,0,0);
   for (i = 0; commands[i].name; i++)
   {
-    end= stpcpy(buff, commands[i].name);
+    end= my_stpcpy(buff, commands[i].name);
     for (j= (int)strlen(commands[i].name); j < 10; j++)
-      end= stpcpy(end, " ");
+      end= my_stpcpy(end, " ");
     if (commands[i].func)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
                   commands[i].cmd_char, _(commands[i].doc));
@@ -2635,31 +2631,6 @@ com_clear(string *buffer,
   return 0;
 }
 
-static int
-com_charset(string *buffer __attribute__((unused)),
-            const char *line)
-{
-  char buff[256], *param;
-  const CHARSET_INFO * new_cs;
-  strmake(buff, line, sizeof(buff) - 1);
-  param= get_arg(buff, 0);
-  if (!param || !*param)
-  {
-    return put_info(_("Usage: \\C char_setname | charset charset_name"),
-                    INFO_ERROR, 0, 0);
-  }
-  new_cs= get_charset_by_csname(param, MY_CS_PRIMARY, MYF(MY_WME));
-  if (new_cs)
-  {
-    charset_info= new_cs;
-    drizzle_set_character_set(&drizzle, charset_info->csname);
-    default_charset= (char *)charset_info->csname;
-    default_charset_used= 1;
-    put_info(_("Charset changed"), INFO_INFO,0,0);
-  }
-  else put_info(_("Charset is not found"), INFO_INFO,0,0);
-  return 0;
-}
 
 /*
   Execute command
@@ -2752,7 +2723,7 @@ com_go(string *buffer,
     {
       if (!drizzle_num_rows(result) && ! quick && !column_types_flag)
       {
-        stpcpy(buff, _("Empty set"));
+        my_stpcpy(buff, _("Empty set"));
       }
       else
       {
@@ -2774,7 +2745,7 @@ com_go(string *buffer,
       }
     }
     else if (drizzle_affected_rows(&drizzle) == ~(uint64_t) 0)
-      stpcpy(buff,_("Query OK"));
+      my_stpcpy(buff,_("Query OK"));
     else
       sprintf(buff, ngettext("Query OK, %ld row affected",
                              "Query OK, %ld rows affected",
@@ -2787,11 +2758,11 @@ com_go(string *buffer,
       *pos++= ',';
       *pos++= ' ';
       pos=int10_to_str(warnings, pos, 10);
-      pos=stpcpy(pos, " warning");
+      pos=my_stpcpy(pos, " warning");
       if (warnings != 1)
         *pos++= 's';
     }
-    stpcpy(pos, time_buff);
+    my_stpcpy(pos, time_buff);
     put_info(buff,INFO_RESULT,0,0);
     if (drizzle_info(&drizzle))
       put_info(drizzle_info(&drizzle),INFO_RESULT,0,0);
@@ -2893,7 +2864,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_LONG:        return "LONG";
     case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_TYPE_NULL:        return "NULL";
-    case DRIZZLE_TYPE_SHORT:       return "SHORT";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
@@ -2907,7 +2877,7 @@ static char *fieldflags2str(uint f) {
   char *s=buf;
   *s=0;
 #define ff2s_check_flag(X)                                              \
-  if (f & X ## _FLAG) { s=stpcpy(s, # X " "); f &= ~ X ## _FLAG; }
+  if (f & X ## _FLAG) { s=my_stpcpy(s, # X " "); f &= ~ X ## _FLAG; }
   ff2s_check_flag(NOT_NULL);
   ff2s_check_flag(PRI_KEY);
   ff2s_check_flag(UNIQUE_KEY);
@@ -2989,7 +2959,7 @@ print_table_data(DRIZZLE_RES *result)
       length=max(length,field->length);
     else
       length=max(length,field->max_length);
-    if (length < 4 && !IS_NOT_NULL(field->flags))
+    if (length < 4 && !(field->flags & NOT_NULL_FLAG))
       // Room for "NULL"
       length=4;
     field->max_length=length;
@@ -3014,7 +2984,8 @@ print_table_data(DRIZZLE_RES *result)
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
                                              MAX_COLUMN_LENGTH),
                   field->name);
-      num_flag[off]= IS_NUM(field->type);
+      num_flag[off]= ((field->type <= DRIZZLE_TYPE_LONGLONG) || 
+                      (field->type == DRIZZLE_TYPE_NEWDECIMAL));
     }
     (void) tee_fputs("\n", PAGER);
     tee_puts((char*) separator.c_str(), PAGER);
@@ -3075,7 +3046,7 @@ print_table_data(DRIZZLE_RES *result)
     (void) tee_fputs("\n", PAGER);
   }
   tee_puts(separator.c_str(), PAGER);
-  my_free(num_flag, MYF(MY_ALLOW_ZERO_PTR));
+  free(num_flag);
 }
 
 /**
@@ -3103,7 +3074,7 @@ static int get_field_disp_length(DRIZZLE_FIELD *field)
   else
     length= max(length, field->max_length);
 
-  if (length < 4 && !IS_NOT_NULL(field->flags))
+  if (length < 4 && !(field->flags & NOT_NULL_FLAG))
     length= 4;        /* Room for "NULL" */
 
   return length;
@@ -3390,11 +3361,11 @@ com_pager(string *buffer __attribute__((unused)),
     {
       tee_fprintf(stdout, "Default pager wasn't set, using stdout.\n");
       opt_nopager=1;
-      stpcpy(pager, "stdout");
+      my_stpcpy(pager, "stdout");
       PAGER= stdout;
       return 0;
     }
-    stpcpy(pager, default_pager);
+    my_stpcpy(pager, default_pager);
   }
   else
   {
@@ -3403,8 +3374,8 @@ com_pager(string *buffer __attribute__((unused)),
                                 my_iscntrl(charset_info,end[-1])))
       end--;
     end[0]=0;
-    stpcpy(pager, pager_name);
-    stpcpy(default_pager, pager_name);
+    my_stpcpy(pager, pager_name);
+    my_stpcpy(default_pager, pager_name);
   }
   opt_nopager=0;
   tee_fprintf(stdout, "PAGER set to '%s'\n", pager);
@@ -3416,7 +3387,7 @@ static int
 com_nopager(string *buffer __attribute__((unused)),
             const char *line __attribute__((unused)))
 {
-  stpcpy(pager, "stdout");
+  my_stpcpy(pager, "stdout");
   opt_nopager=1;
   PAGER= stdout;
   tee_fprintf(stdout, "PAGER set to stdout\n");
@@ -3479,12 +3450,12 @@ com_connect(string *buffer, const char *line)
     tmp= get_arg(buff, 0);
     if (tmp && *tmp)
     {
-      my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
+      free(current_db);
       current_db= strdup(tmp);
       tmp= get_arg(buff, 1);
       if (tmp)
       {
-        my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
+        free(current_host);
         current_host=strdup(tmp);
       }
     }
@@ -3663,7 +3634,7 @@ com_use(string *buffer __attribute__((unused)), const char *line)
       if (drizzle_select_db(&drizzle,tmp))
         return put_error(&drizzle);
     }
-    my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
+    free(current_db);
     current_db= strdup(tmp);
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
@@ -3726,7 +3697,7 @@ char *get_arg(char *line, bool get_next_arg)
         ptr++;
   }
   if (!*ptr)
-    return NullS;
+    return NULL;
   while (my_isspace(charset_info, *ptr))
     ptr++;
   if (*ptr == '\'' || *ptr == '\"' || *ptr == '`')
@@ -3740,7 +3711,7 @@ char *get_arg(char *line, bool get_next_arg)
     if (*ptr == '\\' && ptr[1]) // escaped character
     {
       // Remove the backslash
-      stpcpy(ptr, ptr+1);
+      my_stpcpy(ptr, ptr+1);
     }
     else if ((!quoted && *ptr == ' ') || (quoted && *ptr == qtype))
     {
@@ -3749,7 +3720,7 @@ char *get_arg(char *line, bool get_next_arg)
     }
   }
   valid_arg= ptr != start;
-  return valid_arg ? start : NullS;
+  return valid_arg ? start : NULL;
 }
 
 
@@ -3770,12 +3741,11 @@ sql_connect(char *host,char *database,char *user,char *password,
                   (char*) &timeout);
   }
   if (opt_compress)
-    drizzle_options(&drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+    drizzle_options(&drizzle,DRIZZLE_OPT_COMPRESS,NULL);
   if (opt_secure_auth)
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-  drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];
@@ -3785,8 +3755,6 @@ sql_connect(char *host,char *database,char *user,char *password,
             select_limit, max_join_size);
     drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }
-  if (default_charset_used)
-    drizzle_options(&drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
   if (!drizzle_connect(&drizzle, host, user, password,
                           database, opt_drizzle_port, opt_drizzle_unix_port,
                           connect_flag | CLIENT_MULTI_STATEMENTS))
@@ -3874,12 +3842,6 @@ com_status(string *buffer __attribute__((unused)),
     }
     drizzle_free_result(result);
   }
-  else
-  {
-    /* Probably pre-4.1 server */
-    tee_fprintf(stdout, "Client characterset:\t%s\n", charset_info->csname);
-    tee_fprintf(stdout, "Server characterset:\t%s\n", drizzle.charset->csname);
-  }
 
   if (strstr(drizzle_get_host_info(&drizzle),"TCP/IP") || ! drizzle.unix_socket)
     tee_fprintf(stdout, "TCP port:\t\t%d\n", drizzle.port);
@@ -3915,7 +3877,7 @@ server_version_string(DRIZZLE *con)
     char *bufp = buf;
     DRIZZLE_RES *result;
 
-    bufp= stpncpy(buf, drizzle_get_server_info(con), sizeof buf);
+    bufp= my_stpncpy(buf, drizzle_get_server_info(con), sizeof buf);
 
     /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
     if (!drizzle_query(con, "select @@version_comment limit 1") &&
@@ -3924,7 +3886,7 @@ server_version_string(DRIZZLE *con)
       DRIZZLE_ROW cur = drizzle_fetch_row(result);
       if (cur && cur[0])
       {
-        bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NullS);
+        bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NULL);
       }
       drizzle_free_result(result);
     }
@@ -4099,21 +4061,21 @@ static void nice_time(double sec,char *buff,bool part_second)
     tmp=(uint32_t) floor(sec/(3600.0*24));
     sec-=3600.0*24*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=stpcpy(buff,tmp > 1 ? " days " : " day ");
+    buff=my_stpcpy(buff,tmp > 1 ? " days " : " day ");
   }
   if (sec >= 3600.0)
   {
     tmp=(uint32_t) floor(sec/3600.0);
     sec-=3600.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=stpcpy(buff,tmp > 1 ? " hours " : " hour ");
+    buff=my_stpcpy(buff,tmp > 1 ? " hours " : " hour ");
   }
   if (sec >= 60.0)
   {
     tmp=(uint32_t) floor(sec/60.0);
     sec-=60.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=stpcpy(buff," min ");
+    buff=my_stpcpy(buff," min ");
   }
   if (part_second)
     sprintf(buff,"%.2f sec",sec);
@@ -4134,7 +4096,7 @@ static void drizzle_end_timer(uint32_t start_time,char *buff)
   buff[0]=' ';
   buff[1]='(';
   end_timer(start_time,buff+2);
-  stpcpy(strchr(buff, '\0'),")");
+  my_stpcpy(strchr(buff, '\0'),")");
 }
 
 static const char * construct_prompt()
@@ -4325,8 +4287,8 @@ static void add_int_to_prompt(int toadd)
 
 static void init_username()
 {
-  my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
+  free(full_username);
+  free(part_username);
 
   DRIZZLE_RES *result;
   if (!drizzle_query(&drizzle,"select USER()") &&
@@ -4344,7 +4306,7 @@ static int com_prompt(string *buffer __attribute__((unused)),
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
-  my_free(current_prompt, MYF(MY_ALLOW_ZERO_PTR));
+  free(current_prompt);
   current_prompt= strdup(ptr ? ptr+1 : default_prompt);
   if (!ptr)
     tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
@@ -4356,7 +4318,7 @@ static int com_prompt(string *buffer __attribute__((unused)),
 
 /*
     strcont(str, set) if str contanies any character in the string set.
-    The result is the position of the first found character in str, or NullS
+    The result is the position of the first found character in str, or NULL
     if there isn't anything found.
 */
 

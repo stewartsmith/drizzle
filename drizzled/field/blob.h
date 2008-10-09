@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -23,15 +23,15 @@
 
 class Field_blob :public Field_longstr {
 protected:
-  uint packlength;
+  uint32_t packlength;
   String value;				// For temporaries
 public:
-  Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
+  Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TABLE_SHARE *share, uint blob_pack_length, const CHARSET_INFO * const cs);
+	     TABLE_SHARE *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
              const CHARSET_INFO * const cs)
-    :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
+    :Field_longstr((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs),
     packlength(4)
   {
@@ -39,7 +39,7 @@ public:
   }
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs, bool set_packlength)
-    :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
+    :Field_longstr((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs)
   {
     flags|= BLOB_FLAG;
@@ -53,27 +53,27 @@ public:
     }
   }
   Field_blob(uint32_t packlength_arg)
-    :Field_longstr((uchar*) 0, 0, (uchar*) "", 0, NONE, "temp", system_charset_info),
+    :Field_longstr((unsigned char*) 0, 0, (unsigned char*) "", 0, NONE, "temp", system_charset_info),
     packlength(packlength_arg) {}
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
-  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint32_t max_length);
-  int cmp(const uchar *a,const uchar *b)
+  int cmp_max(const unsigned char *, const unsigned char *, uint32_t max_length);
+  int cmp(const unsigned char *a,const unsigned char *b)
     { return cmp_max(a, b, UINT32_MAX); }
-  int cmp(const uchar *a, uint32_t a_length, const uchar *b, uint32_t b_length);
-  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=UINT32_MAX);
-  int key_cmp(const uchar *,const uchar*);
-  int key_cmp(const uchar *str, uint length);
+  int cmp(const unsigned char *a, uint32_t a_length, const unsigned char *b, uint32_t b_length);
+  int cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t max_length=UINT32_MAX);
+  int key_cmp(const unsigned char *,const unsigned char*);
+  int key_cmp(const unsigned char *str, uint32_t length);
   uint32_t key_length() const { return 0; }
-  void sort_string(uchar *buff,uint length);
+  void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const
   { return (uint32_t) (packlength+table->s->blob_ptr_size); }
 
@@ -87,19 +87,19 @@ public:
   */
   uint32_t pack_length_no_ptr() const
   { return (uint32_t) (packlength); }
-  uint row_pack_length() { return pack_length_no_ptr(); }
+  uint32_t row_pack_length() { return pack_length_no_ptr(); }
   uint32_t sort_length() const;
   virtual uint32_t max_data_length() const
   {
     return (uint32_t) (((uint64_t) 1 << (packlength*8)) -1);
   }
-  int reset(void) { memset(ptr, 0, packlength+sizeof(uchar*)); return 0; }
+  int reset(void) { memset(ptr, 0, packlength+sizeof(unsigned char*)); return 0; }
   void reset_fields() { memset(&value, 0, sizeof(value)); }
 #ifndef WORDS_BIGENDIAN
   static
 #endif
-  void store_length(uchar *i_ptr, uint i_packlength, uint32_t i_number, bool low_byte_first);
-  void store_length(uchar *i_ptr, uint i_packlength, uint32_t i_number)
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number, bool low_byte_first);
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number)
   {
     store_length(i_ptr, i_packlength, i_number, table->s->db_low_byte_first);
   }
@@ -116,81 +116,81 @@ public:
 
      @returns The length in the row plus the size of the data.
   */
-  uint32_t get_packed_size(const uchar *ptr_arg, bool low_byte_first)
+  uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first)
     {return packlength + get_length(ptr_arg, packlength, low_byte_first);}
 
-  inline uint32_t get_length(uint row_offset= 0)
+  inline uint32_t get_length(uint32_t row_offset= 0)
   { return get_length(ptr+row_offset, this->packlength, table->s->db_low_byte_first); }
-  uint32_t get_length(const uchar *ptr, uint packlength, bool low_byte_first);
-  uint32_t get_length(const uchar *ptr_arg)
+  uint32_t get_length(const unsigned char *ptr, uint32_t packlength, bool low_byte_first);
+  uint32_t get_length(const unsigned char *ptr_arg)
   { return get_length(ptr_arg, this->packlength, table->s->db_low_byte_first); }
-  void put_length(uchar *pos, uint32_t length);
-  inline void get_ptr(uchar **str)
+  void put_length(unsigned char *pos, uint32_t length);
+  inline void get_ptr(unsigned char **str)
     {
-      memcpy(str,ptr+packlength,sizeof(uchar*));
+      memcpy(str,ptr+packlength,sizeof(unsigned char*));
     }
-  inline void get_ptr(uchar **str, uint row_offset)
+  inline void get_ptr(unsigned char **str, uint32_t row_offset)
     {
       memcpy(str,ptr+packlength+row_offset,sizeof(char*));
     }
-  inline void set_ptr(uchar *length, uchar *data)
+  inline void set_ptr(unsigned char *length, unsigned char *data)
     {
       memcpy(ptr,length,packlength);
       memcpy(ptr+packlength,&data,sizeof(char*));
     }
-  void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32_t length, uchar *data)
+  void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
     {
-      uchar *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,uchar*);
+      unsigned char *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,unsigned char*);
       store_length(ptr_ofs, packlength, length);
       memcpy(ptr_ofs+packlength,&data,sizeof(char*));
     }
-  inline void set_ptr(uint32_t length, uchar *data)
+  inline void set_ptr(uint32_t length, unsigned char *data)
     {
       set_ptr_offset(0, length, data);
     }
-  uint get_key_image(uchar *buff,uint length, imagetype type);
-  void set_key_image(const uchar *buff,uint length);
+  uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
+  void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
   inline bool copy()
   {
-    uchar *tmp;
+    unsigned char *tmp;
     get_ptr(&tmp);
     if (value.copy((char*) tmp, get_length(), charset()))
     {
       Field_blob::reset();
       return 1;
     }
-    tmp=(uchar*) value.ptr();
+    tmp=(unsigned char*) value.ptr();
     memcpy(ptr+packlength,&tmp,sizeof(char*));
     return 0;
   }
-  virtual uchar *pack(uchar *to, const uchar *from,
-                      uint max_length, bool low_byte_first);
-  uchar *pack_key(uchar *to, const uchar *from,
-                  uint max_length, bool low_byte_first);
-  uchar *pack_key_from_key_image(uchar* to, const uchar *from,
-                                 uint max_length, bool low_byte_first);
-  virtual const uchar *unpack(uchar *to, const uchar *from,
-                              uint param_data, bool low_byte_first);
-  const uchar *unpack_key(uchar* to, const uchar *from,
-                          uint max_length, bool low_byte_first);
-  int pack_cmp(const uchar *a, const uchar *b, uint key_length,
+  virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
+                      uint32_t max_length, bool low_byte_first);
+  unsigned char *pack_key(unsigned char *to, const unsigned char *from,
+                  uint32_t max_length, bool low_byte_first);
+  unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
+                                 uint32_t max_length, bool low_byte_first);
+  virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from,
+                              uint32_t param_data, bool low_byte_first);
+  const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
+                          uint32_t max_length, bool low_byte_first);
+  int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,
                bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,bool insert_or_update);
-  uint packed_col_length(const uchar *col_ptr, uint length);
-  uint max_packed_col_length(uint max_length);
+  int pack_cmp(const unsigned char *b, uint32_t key_length,bool insert_or_update);
+  uint32_t packed_col_length(const unsigned char *col_ptr, uint32_t length);
+  uint32_t max_packed_col_length(uint32_t max_length);
   void free() { value.free(); }
   inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
-  uint size_of() const { return sizeof(*this); }
+  uint32_t size_of() const { return sizeof(*this); }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
-  uint is_equal(Create_field *new_field);
+  uint32_t is_equal(Create_field *new_field);
   inline bool in_read_set() { return bitmap_is_set(table->read_set, field_index); }
   inline bool in_write_set() { return bitmap_is_set(table->write_set, field_index); }
 private:
-  int do_save_field_metadata(uchar *first_byte);
+  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif

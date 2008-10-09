@@ -1,0 +1,3 @@
+DRIZZLE_PLUGIN(logging_query,[Query Logging Plugin],
+        [Logging Plugin that logs all queries.])
+DRIZZLE_PLUGIN_DYNAMIC(logging_query, [liblogging_query.la])

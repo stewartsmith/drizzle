@@ -90,15 +90,15 @@ drop table t1,t2;
 #
 
 CREATE TABLE t1 (
-  id int(10) unsigned NOT NULL auto_increment,
-  uniq_id int(10) unsigned default NULL,
+  id int(10) NOT NULL auto_increment,
+  uniq_id int(10) default NULL,
   PRIMARY KEY  (id),
   UNIQUE KEY idx1 (uniq_id)
 ) ENGINE=MyISAM;
 
 CREATE TABLE t2 (
-  id int(10) unsigned NOT NULL auto_increment,
-  uniq_id int(10) unsigned default NULL,
+  id int(10) NOT NULL auto_increment,
+  uniq_id int(10) default NULL,
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM;
 

@@ -33,7 +33,6 @@
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
 static bool interrupted= false, opt_verbose= false,tty_password= false; 
-static uint8_t opt_protocol= DRIZZLE_PROTOCOL_TCP;  
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
@@ -44,7 +43,7 @@ static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 */
 static void usage(void);
 static void print_version(void);
-extern "C" sig_handler endprog(int signal_number);
+extern "C" RETSIGTYPE endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
@@ -63,7 +62,7 @@ enum commands {
 static const char *command_names[]= {
   "shutdown",
   "ping",
-  NullS
+  NULL
 };
 
 static TYPELIB command_typelib=
@@ -118,7 +117,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument)
     {
       char *start=argument;
-      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      free(opt_password);
       opt_password= my_strdup(argument,MYF(MY_FAE));
       while (*argument) *argument++= 'x';   /* Destroy argument */
       if (*start)
@@ -182,18 +181,16 @@ int main(int argc,char *argv[])
 
   commands = argv;
   if (tty_password)
-    opt_password = get_tty_password(NullS);
+    opt_password = get_tty_password(NULL);
 
-  VOID(signal(SIGINT,endprog));			/* Here if abort */
-  VOID(signal(SIGTERM,endprog));		/* Here if abort */
+  signal(SIGINT,endprog);			/* Here if abort */
+  signal(SIGTERM,endprog);		/* Here if abort */
 
   if (opt_connect_timeout)
   {
     uint tmp=opt_connect_timeout;
     drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
-  /* force drizzleadmin to use TCP */
-  drizzle_options(&drizzle, DRIZZLE_OPT_PROTOCOL, (char*)&opt_protocol);
 
   error_flags= (myf)0;
 
@@ -220,14 +217,14 @@ int main(int argc,char *argv[])
     error=execute_commands(&drizzle,argc,commands);
     drizzle_close(&drizzle);
   }
-  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(user,MYF(MY_ALLOW_ZERO_PTR));
+  free(opt_password);
+  free(user);
   free_defaults(save_argv);
   my_end(my_end_arg);
   exit(error ? 1 : 0);
 }
 
-sig_handler endprog(int signal_number __attribute__((unused)))
+RETSIGTYPE endprog(int signal_number __attribute__((unused)))
 {
   interrupted=1;
 }
@@ -238,7 +235,7 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
 
   for (;;)
   {
-    if (drizzle_connect(drizzle,host,user,opt_password,NullS,tcp_port,NULL,0))
+    if (drizzle_connect(drizzle,host,user,opt_password,NULL,tcp_port,NULL,0))
     {
       drizzle->reconnect= 1;
       if (info)
@@ -264,9 +261,9 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
         {
           fprintf(stderr,_("Check that drizzled is running on %s"),host);
           fprintf(stderr,_(" and that the port is %d.\n"),
-          tcp_port ? tcp_port: drizzle_port);
+          tcp_port ? tcp_port: drizzle_get_default_port());
           fprintf(stderr,_("You can check this by doing 'telnet %s %d'\n"),
-                  host, tcp_port ? tcp_port: drizzle_port);
+                  host, tcp_port ? tcp_port: drizzle_get_default_port());
         }
       }
       return 1;
@@ -318,7 +315,7 @@ static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
       if (opt_verbose)
         printf(_("shutting down drizzled...\n"));
 
-      if (drizzle_shutdown(drizzle, SHUTDOWN_DEFAULT))
+      if (drizzle_shutdown(drizzle))
       {
         my_printf_error(0, _("shutdown failed; error: '%s'"), error_flags,
                         drizzle_error(drizzle));

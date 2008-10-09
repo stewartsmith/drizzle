@@ -28,7 +28,7 @@
 */
 
 typedef struct st_archive_record_buffer {
-  uchar *buffer;
+  unsigned char *buffer;
   uint32_t length;
 } archive_record_buffer;
 
@@ -36,7 +36,7 @@ typedef struct st_archive_record_buffer {
 typedef struct st_archive_share {
   char *table_name;
   char data_file_name[FN_REFLEN];
-  uint table_name_length,use_count;
+  uint32_t table_name_length,use_count;
   pthread_mutex_t mutex;
   THR_LOCK lock;
   azio_stream archive_write;     /* Archive file we are working with */
@@ -65,14 +65,14 @@ class ha_archive: public handler
   
   azio_stream archive;            /* Archive file we are working with */
   my_off_t current_position;  /* The position of the row we just read */
-  uchar byte_buffer[IO_SIZE]; /* Initial buffer for our string */
+  unsigned char byte_buffer[IO_SIZE]; /* Initial buffer for our string */
   String buffer;             /* Buffer used for blob storage */
   ha_rows scan_rows;         /* Number of rows left in scan */
   bool delayed_insert;       /* If the insert is delayed */
   bool bulk_insert;          /* If we are performing a bulk insert */
-  const uchar *current_key;
-  uint current_key_len;
-  uint current_k_offset;
+  const unsigned char *current_key;
+  uint32_t current_key_len;
+  uint32_t current_k_offset;
   archive_record_buffer *record_buffer;
   bool archive_reader_open;
 
@@ -85,19 +85,19 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint inx __attribute__((unused)))
+  const char *index_type(uint32_t inx __attribute__((unused)))
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
-    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_CAN_BIT_FIELD |
+    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE |
             HA_STATS_RECORDS_IS_EXACT |
             HA_HAS_RECORDS |
-            HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
+            HA_FILE_BASED);
   }
-  uint32_t index_flags(uint idx __attribute__((unused)),
-                       uint part __attribute__((unused)),
+  uint32_t index_flags(uint32_t idx __attribute__((unused)),
+                       uint32_t part __attribute__((unused)),
                        bool all_parts __attribute__((unused))) const
   {
     return HA_ONLY_WHOLE_INDEX;
@@ -106,34 +106,34 @@ public:
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  uint max_supported_keys()          const { return 1; }
-  uint max_supported_key_length()    const { return sizeof(uint64_t); }
-  uint max_supported_key_part_length() const { return sizeof(uint64_t); }
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
   ha_rows records() { return share->rows_recorded; }
-  int index_init(uint keynr, bool sorted);
-  virtual int index_read(uchar * buf, const uchar * key,
-			 uint key_len, enum ha_rkey_function find_flag);
-  virtual int index_read_idx(uchar * buf, uint index, const uchar * key,
-			     uint key_len, enum ha_rkey_function find_flag);
-  int index_next(uchar * buf);
-  int open(const char *name, int mode, uint test_if_locked);
+  int index_init(uint32_t keynr, bool sorted);
+  virtual int index_read(unsigned char * buf, const unsigned char * key,
+			 uint32_t key_len, enum ha_rkey_function find_flag);
+  virtual int index_read_idx(unsigned char * buf, uint32_t index, const unsigned char * key,
+			     uint32_t key_len, enum ha_rkey_function find_flag);
+  int index_next(unsigned char * buf);
+  int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(uchar * buf);
-  int real_write_row(uchar *buf, azio_stream *writer);
+  int write_row(unsigned char * buf);
+  int real_write_row(unsigned char *buf, azio_stream *writer);
   int delete_all_rows();
   int rnd_init(bool scan=1);
-  int rnd_next(uchar *buf);
-  int rnd_pos(uchar * buf, uchar *pos);
-  int get_row(azio_stream *file_to_read, uchar *buf);
-  int get_row_version2(azio_stream *file_to_read, uchar *buf);
-  int get_row_version3(azio_stream *file_to_read, uchar *buf);
+  int rnd_next(unsigned char *buf);
+  int rnd_pos(unsigned char * buf, unsigned char *pos);
+  int get_row(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
   ARCHIVE_SHARE *get_share(const char *table_name, int *rc);
   int free_share();
   int init_archive_writer();
   int init_archive_reader();
   bool auto_repair() const { return 1; } // For the moment we just do this
   int read_data_header(azio_stream *file_to_read);
-  void position(const uchar *record);
+  void position(const unsigned char *record);
   int info(uint);
   void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
@@ -150,9 +150,9 @@ public:
   bool is_crashed() const;
   int check(THD* thd, HA_CHECK_OPT* check_opt);
   bool check_and_repair(THD *thd);
-  uint32_t max_row_length(const uchar *buf);
+  uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);
-  int unpack_row(azio_stream *file_to_read, uchar *record);
-  unsigned int pack_row(uchar *record);
+  int unpack_row(azio_stream *file_to_read, unsigned char *record);
+  unsigned int pack_row(unsigned char *record);
 };
 

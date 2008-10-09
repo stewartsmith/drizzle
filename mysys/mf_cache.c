@@ -17,8 +17,9 @@
 
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
-#include "my_static.h"
-#include "mysys_err.h"
+#include <mysys/my_static.h>
+#include <mysys/mysys_err.h>
+#include <mysys/iocache.h>
 
 	/*
 	  Remove an open tempfile so that it doesn't survive
@@ -70,8 +71,8 @@ bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
   {
     return(0);
   }
-  my_free(cache->dir,	MYF(MY_ALLOW_ZERO_PTR));
-  my_free(cache->prefix,MYF(MY_ALLOW_ZERO_PTR));
+  free(cache->dir);
+  free(cache->prefix);
   return(1);
 }
 
@@ -107,12 +108,12 @@ void close_cached_file(IO_CACHE *cache)
       if (cache->file_name)
       {
 	(void) my_delete(cache->file_name,MYF(MY_WME | ME_NOINPUT));
-	my_free(cache->file_name,MYF(0));
+	free(cache->file_name);
       }
 #endif
     }
-    my_free(cache->dir,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(cache->prefix,MYF(MY_ALLOW_ZERO_PTR));
+    free(cache->dir);
+    free(cache->prefix);
   }
   return;
 }

@@ -76,9 +76,8 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 */
 
 int
-check_user(THD *thd, enum enum_server_command command,
-           const char *passwd,
-           uint passwd_len, const char *db,
+check_user(THD *thd, const char *passwd,
+           uint32_t passwd_len, const char *db,
            bool check_count)
 {
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
@@ -119,7 +118,7 @@ check_user(THD *thd, enum enum_server_command command,
   {
     pthread_mutex_lock(&LOCK_connection_count);
     bool count_ok= connection_count <= max_connections;
-    VOID(pthread_mutex_unlock(&LOCK_connection_count));
+    pthread_mutex_unlock(&LOCK_connection_count);
 
     if (!count_ok)
     {                                         // too many connections
@@ -127,17 +126,6 @@ check_user(THD *thd, enum enum_server_command command,
       return(1);
     }
   }
-
-  /*
-    Log the command before authentication checks, so that the user can
-    check the log for the tried login tried and also to detect
-    break-in attempts.
-  */
-  general_log_print(thd, command,
-                    ((char*) "%s@%s on %s"),
-                    thd->main_security_ctx.user,
-                    thd->main_security_ctx.ip,
-                    db ? db : (char*) "");
 
   /* Change database if necessary */
   if (db && db[0])
@@ -160,20 +148,20 @@ check_user(THD *thd, enum enum_server_command command,
   started with corresponding variable that is greater then 0.
 */
 
-extern "C" uchar *get_key_conn(user_conn *buff, size_t *length,
+extern "C" unsigned char *get_key_conn(user_conn *buff, size_t *length,
                                bool not_used __attribute__((unused)))
 {
   *length= buff->len;
-  return (uchar*) buff->user;
+  return (unsigned char*) buff->user;
 }
 
 
 extern "C" void free_user(struct user_conn *uc)
 {
-  my_free((char*) uc,MYF(0));
+  free((char*) uc);
 }
 
-void thd_init_client_charset(THD *thd, uint cs_number)
+void thd_init_client_charset(THD *thd, uint32_t cs_number)
 {
   /*
    Use server character set and collation if
@@ -236,15 +224,11 @@ static int check_connection(THD *thd)
   uint32_t pkt_len= 0;
   char *end;
 
-#ifdef SIGNAL_WITH_VIO_CLOSE
-  thd->set_active_vio(net->vio);
-#endif
-
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];
 
-    if (vio_peer_addr(net->vio, ip, &thd->peer_port, NI_MAXHOST))
+    if (net_peer_addr(net, ip, &thd->peer_port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.ip);
       return 1;
@@ -252,7 +236,7 @@ static int check_connection(THD *thd)
     if (!(thd->main_security_ctx.ip= my_strdup(ip,MYF(MY_WME))))
       return 1; /* The error is set by my_strdup(). */
   }
-  vio_keepalive(net->vio, true);
+  net_keepalive(net, true);
   
   uint32_t server_capabilites;
   {
@@ -266,8 +250,8 @@ static int check_connection(THD *thd)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
-    int4store((uchar*) end, thd->thread_id);
+    end= my_stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
+    int4store((unsigned char*) end, thd->thread_id);
     end+= 4;
     /*
       So as check_connection is the only entry point to authorization
@@ -293,8 +277,8 @@ static int check_connection(THD *thd)
                  SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323) + 1;
 
     /* At this point we write connection message and read reply */
-    if (net_write_command(net, (uchar) protocol_version, (uchar*) "", 0,
-                          (uchar*) buff, (size_t) (end-buff)) ||
+    if (net_write_command(net, (unsigned char) protocol_version, (unsigned char*) "", 0,
+                          (unsigned char*) buff, (size_t) (end-buff)) ||
 	(pkt_len= my_net_read(net)) == packet_error ||
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
@@ -336,11 +320,11 @@ static int check_connection(THD *thd)
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;
-  uint user_len= passwd - user - 1;
+  uint32_t user_len= passwd - user - 1;
   char *db= passwd;
   char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
   char user_buff[USERNAME_LENGTH + 1];	// buffer to store user in utf8
-  uint dummy_errors;
+  uint32_t dummy_errors;
 
   /*
     Old clients send null-terminated string as password; new clients send
@@ -352,12 +336,12 @@ static int check_connection(THD *thd)
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
-  uint passwd_len= thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
-    (uchar)(*passwd++) : strlen(passwd);
+  uint32_t passwd_len= thd->client_capabilities & CLIENT_SECURE_CONNECTION ?
+    (unsigned char)(*passwd++) : strlen(passwd);
   db= thd->client_capabilities & CLIENT_CONNECT_WITH_DB ?
     db + passwd_len + 1 : 0;
   /* strlen() can't be easily deleted without changing protocol */
-  uint db_len= db ? strlen(db) : 0;
+  uint32_t db_len= db ? strlen(db) : 0;
 
   if (passwd + passwd_len + db_len > (char *)net->read_pos + pkt_len)
   {
@@ -389,10 +373,11 @@ static int check_connection(THD *thd)
   }
 
   if (thd->main_security_ctx.user)
-    x_free(thd->main_security_ctx.user);
+    if (thd->main_security_ctx.user)
+      free(thd->main_security_ctx.user);
   if (!(thd->main_security_ctx.user= my_strdup(user, MYF(MY_WME))))
     return 1; /* The error is set by my_strdup(). */
-  return check_user(thd, COM_CONNECT, passwd, passwd_len, db, true);
+  return check_user(thd, passwd, passwd_len, db, true);
 }
 
 

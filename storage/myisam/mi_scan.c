@@ -35,7 +35,7 @@ int mi_scan_init(register MI_INFO *info)
 	   HA_ERR_END_OF_FILE = EOF.
 */
 
-int mi_scan(MI_INFO *info, uchar *buf)
+int mi_scan(MI_INFO *info, unsigned char *buf)
 {
   /* Init all but update-flag */
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);

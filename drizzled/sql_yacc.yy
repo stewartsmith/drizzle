@@ -341,7 +341,7 @@ bool setup_select_in_parentheses(LEX *lex)
   thr_lock_type lock_type;
   struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
-  timestamp_type date_time_type;
+  enum enum_drizzle_timestamp_type date_time_type;
   st_select_lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
   struct sp_cond_type *spcondtype;
@@ -754,10 +754,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHARE_SYM
 %token  SHOW
 %token  SHUTDOWN
-%token  SIGNED_SYM
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SLAVE
-%token  SMALLINT                      /* SQL-2003-R */
 %token  SNAPSHOT_SYM
 %token  SOCKET_SYM
 %token  SONAME_SYM
@@ -808,7 +806,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
 %token  TIME_SYM                      /* SQL-2003-R */
-%token  TINYINT
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
@@ -824,12 +821,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
-%token  UNINSTALL_SYM
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
 %token  UNLOCK_SYM
-%token  UNSIGNED
 %token  UNTIL_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  UPGRADE_SYM
@@ -857,10 +852,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  WHEN_SYM                      /* SQL-2003-R */
 %token  WHERE                         /* SQL-2003-R */
 %token  WITH                          /* SQL-2003-R */
-%token  WITH_CUBE_SYM                 /* INTERNAL */
 %token  WITH_ROLLUP_SYM               /* INTERNAL */
 %token  WORK_SYM                      /* SQL-2003-N */
-%token  WRAPPER_SYM
 %token  WRITE_SYM                     /* SQL-2003-N */
 %token  XOR
 %token  YEAR_MONTH_SYM
@@ -905,7 +898,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <num>
         type int_type real_type order_dir field_def
         if_exists opt_local opt_table_options table_options
-        table_option opt_if_not_exists opt_no_write_to_binlog
+        table_option opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -997,9 +990,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <symbol> keyword keyword_sp
 
 %type <charset>
-        opt_collate
-        charset_name
-        charset_name_or_default
         collation_name
         collation_name_or_default
         UNDERSCORE_CHARSET
@@ -1026,8 +1016,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
-        set lock unlock string_list field_options field_option
-        field_opt_list opt_binary table_lock_list table_lock
+        set lock unlock string_list
+        opt_binary table_lock_list table_lock
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
         opt_outer table_list table_name table_alias_ref_list table_alias_ref
@@ -1246,7 +1236,7 @@ master_file_def:
                from 0" (4 in fact), unspecified means "don't change the position
                (keep the preceding value)").
             */
-            Lex->mi.pos = max((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
+            Lex->mi.pos = cmax((uint64_t)BIN_LOG_HEADER_SIZE, Lex->mi.pos);
           }
         | RELAY_LOG_FILE_SYM EQ TEXT_STRING_sys
           {
@@ -1256,7 +1246,7 @@ master_file_def:
           {
             Lex->mi.relay_log_pos = $3;
             /* Adjust if < BIN_LOG_HEADER_SIZE (same comment as Lex->mi.pos) */
-            Lex->mi.relay_log_pos = max((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
+            Lex->mi.relay_log_pos = cmax((uint32_t)BIN_LOG_HEADER_SIZE, Lex->mi.relay_log_pos);
           }
         ;
 
@@ -1274,7 +1264,7 @@ create:
               DRIZZLE_YYABORT;
             lex->alter_info.reset();
             lex->col_list.empty();
-            lex->change=NullS;
+            lex->change=NULL;
             memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.options=$2 | $4;
             lex->create_info.db_type= ha_default_handlerton(thd);
@@ -1309,7 +1299,7 @@ create:
             lex->alter_info.flags= ALTER_ADD_INDEX;
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
-            lex->change=NullS;
+            lex->change=NULL;
           }
           '(' key_list ')' key_options
           {
@@ -1566,11 +1556,6 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
             Lex->create_info.key_block_size= $3;
           }
-        | TRANSACTIONAL_SYM opt_equal choice
-          {
-	    Lex->create_info.used_fields|= HA_CREATE_USED_TRANSACTIONAL;
-            Lex->create_info.transactional= $3;
-          }
         ;
 
 default_collation:
@@ -1818,27 +1803,12 @@ virtual_column_func:
         ;
 
 type:
-        int_type field_options 
+        int_type
         { 
           $$=$1; 
           Lex->length=(char*) 0; /* use default length */
         }
-        | real_type opt_precision field_options { $$=$1; }
-        | BIT_SYM
-          {
-            Lex->length= (char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
-        | BOOL_SYM
-          {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
-        | BOOLEAN_SYM
-          {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_TINY;
-          }
+        | real_type opt_precision { $$=$1; }
         | char '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
@@ -1883,11 +1853,11 @@ type:
             $$=DRIZZLE_TYPE_BLOB; 
             Lex->length=(char*) 0; /* use default length */
           }
-        | DECIMAL_SYM float_options field_options
+        | DECIMAL_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | NUMERIC_SYM float_options field_options
+        | NUMERIC_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | FIXED_SYM float_options field_options
+        | FIXED_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | ENUM
           {Lex->interval_list.empty();}
@@ -1896,8 +1866,7 @@ type:
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
-            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNSIGNED_FLAG |
-              UNIQUE_FLAG);
+            Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG);
           }
         ;
 
@@ -1912,8 +1881,6 @@ varchar:
 
 int_type:
           INT_SYM   { $$=DRIZZLE_TYPE_LONG; }
-        | TINYINT   { $$=DRIZZLE_TYPE_TINY; }
-        | SMALLINT  { $$=DRIZZLE_TYPE_SHORT; }
         | BIGINT    { $$=DRIZZLE_TYPE_LONGLONG; }
         ;
 
@@ -1944,21 +1911,6 @@ precision:
             lex->length=$2.str;
             lex->dec=$4.str;
           }
-        ;
-
-field_options:
-          /* empty */ {}
-        | field_opt_list {}
-        ;
-
-field_opt_list:
-          field_opt_list field_option {}
-        | field_option {}
-        ;
-
-field_option:
-          SIGNED_SYM {}
-        | UNSIGNED { Lex->type|= UNSIGNED_FLAG;}
         ;
 
 opt_len:
@@ -2049,23 +2001,6 @@ charset:
         | CHARSET {}
         ;
 
-charset_name:
-          ident_or_text
-          {
-            if (!($$=get_charset_by_csname($1.str,MY_CS_PRIMARY,MYF(0))))
-            {
-              my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        | BINARY { $$= &my_charset_bin; }
-        ;
-
-charset_name_or_default:
-          charset_name { $$=$1;   }
-        | DEFAULT    { $$=NULL; }
-        ;
-
 collation_name:
           ident_or_text
           {
@@ -2075,11 +2010,6 @@ collation_name:
               DRIZZLE_YYABORT;
             }
           }
-        ;
-
-opt_collate:
-          /* empty */ { $$=NULL; }
-        | COLLATE_SYM collation_name_or_default { $$=$2; }
         ;
 
 collation_name_or_default:
@@ -2095,18 +2025,7 @@ opt_default:
 opt_binary:
           /* empty */ { Lex->charset=NULL; }
         | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | charset charset_name opt_bin_mod { Lex->charset=$2; }
-        | BINARY opt_bin_charset { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_mod:
-          /* empty */ { }
         | BINARY { Lex->type|= BINCMP_FLAG; }
-        ;
-
-opt_bin_charset:
-          /* empty */ { Lex->charset= NULL; }
-        | charset charset_name { Lex->charset=$2; }
         ;
 
 ws_nweights:
@@ -2160,8 +2079,8 @@ ws_level_list:
 ws_level_range:
         ws_level_number '-' ws_level_number
         {
-          uint start= $1;
-          uint end= $3;
+          uint32_t start= $1;
+          uint32_t end= $3;
           for ($$= 0; start <= end; start++)
             $$|= (1 << start);
         }
@@ -2397,7 +2316,6 @@ alter:
             lex->create_info.default_table_charset= NULL;
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
-            lex->no_write_to_binlog= 0;
             lex->alter_info.build_method= $2;
           }
           alter_commands
@@ -2569,23 +2487,16 @@ alter_list_item:
             lex->name= $3->table;
             lex->alter_info.flags|= ALTER_RENAME;
           }
-        | CONVERT_SYM TO_SYM charset charset_name_or_default opt_collate
+        | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$4)
+            if (!$3)
             {
               THD *thd= YYTHD;
-              $4= thd->variables.collation_database;
-            }
-            $5= $5 ? $5 : $4;
-            if (!my_charset_same($4,$5))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $5->name, $4->csname);
-              DRIZZLE_YYABORT;
+              $3= thd->variables.collation_database;
             }
             LEX *lex= Lex;
             lex->create_info.table_charset=
-            lex->create_info.default_table_charset= $5;
+            lex->create_info.default_table_charset= $3;
             lex->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
             lex->alter_info.flags|= ALTER_CONVERT;
@@ -2750,11 +2661,10 @@ opt_checksum_type:
         ;
 
 repair:
-          REPAIR opt_no_write_to_binlog table_or_tables
+          REPAIR table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_REPAIR;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list opt_mi_repair_type
@@ -2778,11 +2688,10 @@ mi_repair_type:
         ;
 
 analyze:
-          ANALYZE_SYM opt_no_write_to_binlog table_or_tables
+          ANALYZE_SYM table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
@@ -2829,21 +2738,14 @@ mi_check_type:
         ;
 
 optimize:
-          OPTIMIZE opt_no_write_to_binlog table_or_tables
+          OPTIMIZE table_or_tables
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
-            lex->no_write_to_binlog= $2;
             lex->check_opt.init();
           }
           table_list
           {}
-        ;
-
-opt_no_write_to_binlog:
-          /* empty */ { $$= 0; }
-        | NO_WRITE_TO_BINLOG { $$= 1; }
-        | LOCAL_SYM { $$= 1; }
         ;
 
 rename:
@@ -3423,8 +3325,6 @@ simple_expr:
             if (!$$)
               DRIZZLE_YYABORT;
           }
-        | CONVERT_SYM '(' expr USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_conv_charset($3,$5); }
         | DEFAULT '(' simple_ident ')'
           {
             $$= new (YYTHD->mem_root) Item_default_value(Lex->current_context(),
@@ -3449,8 +3349,6 @@ simple_expr:
 function_call_keyword:
           CHAR_SYM '(' expr_list ')'
           { $$= new (YYTHD->mem_root) Item_func_char(*$3); }
-        | CHAR_SYM '(' expr_list USING charset_name ')'
-          { $$= new (YYTHD->mem_root) Item_func_char(*$3, $5); }
         | CURRENT_USER optional_braces
           {
             $$= new (YYTHD->mem_root) Item_func_current_user(Lex->current_context());
@@ -3690,17 +3588,8 @@ function_call_generic:
           IDENT_sys '('
           {
             udf_func *udf= 0;
-            LEX *lex= Lex;
-            if (using_udf_functions &&
-                (udf= find_udf($1.str, $1.length)) &&
-                udf->type == UDFTYPE_AGGREGATE)
-            {
-              if (lex->current_select->inc_in_sum_expr())
-              {
-                my_parse_error(ER(ER_SYNTAX_ERROR));
-                DRIZZLE_YYABORT;
-              }
-            }
+	    udf= find_udf($1.str, $1.length);
+
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
           }
@@ -3730,11 +3619,6 @@ function_call_generic:
               udf_func *udf= $<udf>3;
               if (udf)
               {
-                if (udf->type == UDFTYPE_AGGREGATE)
-                {
-                  Select->in_sum_expr--;
-                }
-
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
 	      } else {
                 /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
@@ -3930,14 +3814,6 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | CHAR_SYM opt_len opt_binary
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
-        | SIGNED_SYM
-          { $$=ITEM_CAST_SIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | SIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_SIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | UNSIGNED
-          { $$=ITEM_CAST_UNSIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | UNSIGNED INT_SYM
-          { $$=ITEM_CAST_UNSIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | TIME_SYM
@@ -4622,26 +4498,6 @@ group_list:
 
 olap_opt:
           /* empty */ {}
-        | WITH_CUBE_SYM
-          {
-            /*
-              'WITH CUBE' is reserved in the MySQL syntax, but not implemented,
-              and cause LALR(2) conflicts.
-              This syntax is not standard.
-              MySQL syntax: GROUP BY col1, col2, col3 WITH CUBE
-              SQL-2003: GROUP BY ... CUBE(col1, col2, col3)
-            */
-            LEX *lex=Lex;
-            if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
-            {
-              my_error(ER_WRONG_USAGE, MYF(0), "WITH CUBE",
-                       "global union parameters");
-              DRIZZLE_YYABORT;
-            }
-            lex->current_select->olap= CUBE_TYPE;
-            my_error(ER_NOT_SUPPORTED_YET, MYF(0), "CUBE");
-            DRIZZLE_YYABORT;
-          }
         | WITH_ROLLUP_SYM
           {
             /*
@@ -5383,10 +5239,6 @@ show_param:
           {
             Lex->sql_command = SQLCOM_SHOW_BINLOGS;
           }
-        | SLAVE HOSTS_SYM
-          {
-            Lex->sql_command = SQLCOM_SHOW_SLAVE_HOSTS;
-          }
         | BINLOG_SYM EVENTS_SYM binlog_in binlog_from
           {
             LEX *lex= Lex;
@@ -5551,12 +5403,11 @@ opt_describe_column:
 /* flush things */
 
 flush:
-          FLUSH_SYM opt_no_write_to_binlog
+          FLUSH_SYM
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_FLUSH;
             lex->type= 0;
-            lex->no_write_to_binlog= $2;
           }
           flush_options
           {}
@@ -5845,7 +5696,7 @@ text_literal:
             THD *thd= YYTHD;
             const CHARSET_INFO * const cs_con= thd->variables.collation_connection;
             const CHARSET_INFO * const cs_cli= thd->variables.character_set_client;
-            uint repertoire= thd->lex->text_string_is_7bit &&
+            uint32_t repertoire= thd->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
             if (thd->charset_is_collation_connection ||
@@ -6037,14 +5888,14 @@ table_wild:
           ident '.' '*'
           {
             SELECT_LEX *sel= Select;
-            $$ = new Item_field(Lex->current_context(), NullS, $1.str, "*");
+            $$ = new Item_field(Lex->current_context(), NULL, $1.str, "*");
             sel->with_wild++;
           }
         | ident '.' ident '.' '*'
           {
             SELECT_LEX *sel= Select;
             $$ = new Item_field(Lex->current_context(), (YYTHD->client_capabilities &
-                                CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                CLIENT_NO_SCHEMA ? NULL : $1.str),
                                 $3.str,"*");
             sel->with_wild++;
           }
@@ -6061,8 +5912,10 @@ simple_ident:
               SELECT_LEX *sel=Select;
               $$= (sel->parsing_place != IN_HAVING ||
                   sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(), NullS, NullS, $1.str) :
-                  (Item*) new Item_ref(Lex->current_context(), NullS, NullS, $1.str);
+                  (Item*) new Item_field(Lex->current_context(),
+                                         (const char *)NULL, NULL, $1.str) :
+                  (Item*) new Item_ref(Lex->current_context(),
+                                       (const char *)NULL, NULL, $1.str);
             }
           }
         | simple_ident_q { $$= $1; }
@@ -6074,8 +5927,10 @@ simple_ident_nospvar:
             SELECT_LEX *sel=Select;
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NullS, NullS, $1.str) :
-                (Item*) new Item_ref(Lex->current_context(), NullS, NullS, $1.str);
+                (Item*) new Item_field(Lex->current_context(),
+                                       (const char *)NULL, NULL, $1.str) :
+                (Item*) new Item_ref(Lex->current_context(),
+                                     (const char *)NULL, NULL, $1.str);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -6095,8 +5950,10 @@ simple_ident_q:
               }
               $$= (sel->parsing_place != IN_HAVING ||
                   sel->get_in_sum_expr() > 0) ?
-                  (Item*) new Item_field(Lex->current_context(), NullS, $1.str, $3.str) :
-                  (Item*) new Item_ref(Lex->current_context(), NullS, $1.str, $3.str);
+                  (Item*) new Item_field(Lex->current_context(),
+                                         (const char *)NULL, $1.str, $3.str) :
+                  (Item*) new Item_ref(Lex->current_context(),
+                                       (const char *)NULL, $1.str, $3.str);
             }
           }
         | '.' ident '.' ident
@@ -6111,8 +5968,9 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(), NullS, $2.str, $4.str) :
-                (Item*) new Item_ref(Lex->current_context(), NullS, $2.str, $4.str);
+                (Item*) new Item_field(Lex->current_context(), NULL, $2.str, $4.str) :
+                (Item*) new Item_ref(Lex->current_context(),
+                                     (const char *)NULL, $2.str, $4.str);
           }
         | ident '.' ident '.' ident
           {
@@ -6128,11 +5986,11 @@ simple_ident_q:
                 sel->get_in_sum_expr() > 0) ?
                 (Item*) new Item_field(Lex->current_context(),
                                        (YYTHD->client_capabilities &
-                                       CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                       CLIENT_NO_SCHEMA ? NULL : $1.str),
                                        $3.str, $5.str) :
                 (Item*) new Item_ref(Lex->current_context(),
                                      (YYTHD->client_capabilities &
-                                     CLIENT_NO_SCHEMA ? NullS : $1.str),
+                                     CLIENT_NO_SCHEMA ? NULL : $1.str),
                                      $3.str, $5.str);
           }
         ;
@@ -6184,7 +6042,7 @@ IDENT_sys:
             {
               const CHARSET_INFO * const cs= system_charset_info;
               int dummy_error;
-              uint wlen= cs->cset->well_formed_len(cs, $1.str,
+              uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
                                                    $1.str+$1.length,
                                                    $1.length, &dummy_error);
               if (wlen < $1.length)
@@ -6286,15 +6144,12 @@ keyword:
         | SAVEPOINT_SYM         {}
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
-        | SIGNED_SYM            {}
         | SOCKET_SYM            {}
         | SLAVE                 {}
         | SONAME_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
-        | UNINSTALL_SYM         {}
-        | WRAPPER_SYM           {}
         | UPGRADE_SYM           {}
         ;
 
@@ -6619,17 +6474,10 @@ option_value:
             LEX *lex=Lex;
             lex->var_list.push_back(new set_var($3, $4.var, &$4.base_name, $6));
           }
-        | NAMES_SYM charset_name_or_default opt_collate
+        | NAMES_SYM COLLATE_SYM collation_name_or_default
           {
             LEX *lex= Lex;
-            $2= $2 ? $2 : global_system_variables.character_set_client;
-            $3= $3 ? $3 : $2;
-            if (!my_charset_same($2,$3))
-            {
-              my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                       $3->name, $2->csname);
-              DRIZZLE_YYABORT;
-            }
+            $3= $3 ? $3 : global_system_variables.character_set_client;
             lex->var_list.push_back(new set_var_collation_client($3,$3,$3));
           }
         ;

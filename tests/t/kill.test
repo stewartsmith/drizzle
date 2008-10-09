@@ -52,7 +52,7 @@ kill (select count(*) from mysql.user);
 # BUG#14851: killing long running subquery processed via a temporary table.
 #
 create table t1 (id int primary key);
-create table t2 (id int unsigned not null);
+create table t2 (id int not null);
 
 connect (conn1, localhost, root,,);
 connection conn1;

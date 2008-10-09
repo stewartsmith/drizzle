@@ -29,10 +29,12 @@
 #include <drizzled/global.h>
 #include "drizzle_time.h"
 
-C_MODE_START
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern uint64_t log_10_int[20];
-extern uchar days_in_month[];
+extern unsigned char days_in_month[];
 
 /*
   Portable time_t replacement.
@@ -82,24 +84,24 @@ typedef long my_time_t;
 bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
 enum enum_drizzle_timestamp_type
-str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
-                uint flags, int *was_cut);
+str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
+                uint32_t flags, int *was_cut);
 int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
-                            uint flags, int *was_cut);
+                            uint32_t flags, int *was_cut);
 uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *);
 
 
-bool str_to_time(const char *str,uint length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str,uint32_t length, DRIZZLE_TIME *l_time,
                  int *warning);
 
 int check_time_range(DRIZZLE_TIME *my_time, int *warning);
 
-long calc_daynr(uint year,uint month,uint day);
-uint calc_days_in_year(uint year);
-uint year_2000_handling(uint year);
+long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
+uint32_t calc_days_in_year(uint32_t year);
+uint32_t year_2000_handling(uint32_t year);
 
 void init_time(void);
 
@@ -173,6 +175,8 @@ enum interval_type
   INTERVAL_MINUTE_MICROSECOND, INTERVAL_SECOND_MICROSECOND, INTERVAL_LAST
 };
 
-C_MODE_END
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _libdrizzle_my_time_h_ */

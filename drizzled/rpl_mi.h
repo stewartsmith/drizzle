@@ -1,22 +1,24 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-#ifndef RPL_MI_H
-#define RPL_MI_H
-
-#ifdef HAVE_REPLICATION
+#ifndef DRIZZLED_RPL_MI_H
+#define DRIZZLED_RPL_MI_H
 
 #include "rpl_rli.h"
 #include "rpl_reporting.h"
@@ -66,10 +68,6 @@ class Master_info : public Slave_reporting_capability
   char host[HOSTNAME_LENGTH+1];
   char user[USERNAME_LENGTH+1];
   char password[MAX_PASSWORD_LENGTH+1];
-  bool ssl; // enables use of SSL connection if true
-  char ssl_ca[FN_REFLEN], ssl_capath[FN_REFLEN], ssl_cert[FN_REFLEN];
-  char ssl_cipher[FN_REFLEN], ssl_key[FN_REFLEN];
-  bool ssl_verify_server_cert;
 
   my_off_t master_log_pos;
   File fd; // we keep the file open, so we need to remember the file pointer
@@ -81,14 +79,14 @@ class Master_info : public Slave_reporting_capability
   DRIZZLE *drizzle;
   uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
-  uint port;
-  uint connect_retry;
+  uint32_t port;
+  uint32_t connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
   uint64_t received_heartbeats;  // counter of received heartbeat events
   int events_till_disconnect;
   bool inited;
   volatile bool abort_slave;
-  volatile uint slave_running;
+  volatile uint32_t slave_running;
   volatile uint32_t slave_run_id;
   /*
      The difference in seconds between the clock of the master and the clock of
@@ -110,5 +108,4 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
 void end_master_info(Master_info* mi);
 int flush_master_info(Master_info* mi, bool flush_relay_log_cache);
 
-#endif /* HAVE_REPLICATION */
-#endif /* RPL_MI_H */
+#endif /* DRIZZLED_RPL_MI_H */

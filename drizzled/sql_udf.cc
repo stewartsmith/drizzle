@@ -21,12 +21,12 @@ static bool udf_startup= false; /* We do not lock because startup is single thre
 static MEM_ROOT mem;
 static HASH udf_hash;
 
-extern "C" uchar* get_hash_key(const uchar *buff, size_t *length,
+extern "C" unsigned char* get_hash_key(const unsigned char *buff, size_t *length,
                                bool not_used __attribute__((unused)))
 {
   udf_func *udf= (udf_func*) buff;
   *length= (uint) udf->name.length;
-  return (uchar*) udf->name.str;
+  return (unsigned char*) udf->name.str;
 }
 
 
@@ -51,7 +51,7 @@ void udf_free()
 }
 
 /* This is only called if using_udf_functions != 0 */
-udf_func *find_udf(const char *name, uint length)
+udf_func *find_udf(const char *name, uint32_t length)
 {
   udf_func *udf;
 
@@ -59,7 +59,7 @@ udf_func *find_udf(const char *name, uint length)
     return NULL;
 
   udf= (udf_func*) hash_search(&udf_hash,
-                               (uchar*) name,
+                               (unsigned char*) name,
                                length ? length : (uint) strlen(name));
 
   return (udf);
@@ -67,7 +67,7 @@ udf_func *find_udf(const char *name, uint length)
 
 static bool add_udf(udf_func *udf)
 {
-  if (my_hash_insert(&udf_hash, (uchar*) udf))
+  if (my_hash_insert(&udf_hash, (unsigned char*) udf))
     return false;
 
   using_udf_functions= 1;
@@ -77,38 +77,32 @@ static bool add_udf(udf_func *udf)
 
 int initialize_udf(st_plugin_int *plugin)
 {
-  udf_func *udff;
+  udf_func *f;
 
   if (udf_startup == false)
   {
     udf_init();
     udf_startup= true;
   }
-	  
-  /* allocate the udf_func structure */
-  udff = (udf_func *)my_malloc(sizeof(udf_func), MYF(MY_WME | MY_ZEROFILL));
-  if (udff == NULL) return 1;
-
-  plugin->data= (void *)udff;
 
   if (plugin->plugin->init)
   {
-    /* todo, if the plugin doesnt have an init, bail out */
-
-    if (plugin->plugin->init((void *)udff))
+    int r;
+    if ((r= plugin->plugin->init((void *)&f)))
     {
-      sql_print_error(_("Plugin '%s' init function returned error."),
-                      plugin->name.str);
-      goto err;
+      sql_print_error("Plugin '%s' init function returned error %d.",
+                      plugin->name.str, r);
+      return r;
     }
   }
-  
-  add_udf(udff);
+  else
+    return 1;
+
+  if(!add_udf(f))
+    return 2;
 
   return 0;
-err:
-  my_free(udff, MYF(0));
-  return 1;
+
 }
 
 int finalize_udf(st_plugin_int *plugin)
@@ -120,7 +114,7 @@ int finalize_udf(st_plugin_int *plugin)
     (void)plugin->plugin->deinit(udff);
 
   if (udff)
-    my_free(udff, MYF(0));
+    free(udff);
 
   return 0;
 }

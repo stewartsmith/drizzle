@@ -22,7 +22,7 @@ drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 --enable_warnings
 #set engine_condition_pushdown=0;
-create table t1 (id int unsigned not null auto_increment, code tinyint unsigned not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
+create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
 
 insert into t1 (code, name) values (1, 'Tim'), (1, 'Monty'), (2, 'David'), (2, 'Erik'), (3, 'Sasha'), (3, 'Jeremy'), (4, 'Matt');
 select id, code, name from t1 order by id;
@@ -43,7 +43,7 @@ drop table t1;
 CREATE TABLE t1 (
   id int(11) NOT NULL auto_increment,
   parent_id int(11) DEFAULT '0' NOT NULL,
-  level tinyint(4) DEFAULT '0' NOT NULL,
+  level int(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (id),
   KEY parent_id (parent_id),
   KEY level (level)
@@ -358,7 +358,7 @@ drop table t1;
 CREATE TABLE t1 (
   id int(11) NOT NULL auto_increment,
   parent_id int(11) DEFAULT '0' NOT NULL,
-  level tinyint(4) DEFAULT '0' NOT NULL,
+  level int(4) DEFAULT '0' NOT NULL,
   KEY (id),
   KEY parent_id (parent_id),
   KEY level (level)
@@ -451,8 +451,8 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  a int3 unsigned NOT NULL,
-  b int1 unsigned NOT NULL,
+  a int3 NOT NULL,
+  b int1 NOT NULL,
   UNIQUE (a, b)
 ) ENGINE = innodb;
  
@@ -464,7 +464,7 @@ drop table t1;
 # Test INSERT DELAYED
 #
 
-CREATE TABLE t1 (a int unsigned NOT NULL) engine=innodb;
+CREATE TABLE t1 (a int NOT NULL) engine=innodb;
 # Can't test this in 3.23
 # INSERT DELAYED INTO t1 VALUES (1);
 INSERT INTO t1 VALUES (1);
@@ -638,15 +638,15 @@ drop table t1;
 CREATE TABLE t1 (
   number bigint(20) NOT NULL default '0',
   cname char(15) NOT NULL default '',
-  carrier_id smallint(6) NOT NULL default '0',
-  privacy tinyint(4) NOT NULL default '0',
+  carrier_id int(6) NOT NULL default '0',
+  privacy int(4) NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
-  last_mod_id smallint(6) NOT NULL default '0',
+  last_mod_id int(6) NOT NULL default '0',
   last_app_date timestamp NOT NULL,
-  last_app_id smallint(6) default '-1',
-  version smallint(6) NOT NULL default '0',
+  last_app_id int(6) default '-1',
+  version int(6) NOT NULL default '0',
   assigned_scps int(11) default '0',
-  status tinyint(4) default '0'
+  status int(4) default '0'
 ) ENGINE=InnoDB;
 INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,00000000000000,-1,2,3,1);
 INSERT INTO t1 VALUES (9197722223,'berry',90,3,20020111112809,500,20020102114532,501,4,10,0);
@@ -657,15 +657,15 @@ INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,1
 CREATE TABLE t2 (
   number bigint(20) NOT NULL default '0',
   cname char(15) NOT NULL default '',
-  carrier_id smallint(6) NOT NULL default '0',
-  privacy tinyint(4) NOT NULL default '0',
+  carrier_id int(6) NOT NULL default '0',
+  privacy int(4) NOT NULL default '0',
   last_mod_date timestamp NOT NULL,
-  last_mod_id smallint(6) NOT NULL default '0',
+  last_mod_id int(6) NOT NULL default '0',
   last_app_date timestamp NOT NULL,
-  last_app_id smallint(6) default '-1',
-  version smallint(6) NOT NULL default '0',
+  last_app_id int(6) default '-1',
+  version int(6) NOT NULL default '0',
   assigned_scps int(11) default '0',
-  status tinyint(4) default '0'
+  status int(4) default '0'
 ) ENGINE=InnoDB;
 INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,00000000000000,-1,2,3,1);
 INSERT INTO t2 VALUES (9197722223,'berry',90,3,20020111112818,500,20020102114532,501,4,10,0);
@@ -685,7 +685,7 @@ drop table t1,t2;
 # this works.
 #
 
-create table t1 (id int unsigned not null auto_increment, code tinyint unsigned not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
+create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
 
 BEGIN;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -1025,9 +1025,9 @@ drop table t1,t2;
 #
 
 CREATE TABLE t1 (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `id_object` int(10) unsigned default '0',
-  `id_version` int(10) unsigned NOT NULL default '1',
+  `id` int(10) NOT NULL auto_increment,
+  `id_object` int(10) default '0',
+  `id_version` int(10) NOT NULL default '1',
   `label` varchar(100) NOT NULL default '',
   `description` text,
   PRIMARY KEY  (`id`),
@@ -1038,8 +1038,8 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES("6", "3382", "9", "Test", NULL), ("7", "102", "5", "Le Pekin (Test)", NULL),("584", "1794", "4", "Test de resto", NULL),("837", "1822", "6", "Test 3", NULL),("1119", "3524", "1", "Societe Test", NULL),("1122", "3525", "1", "Fournisseur Test", NULL);
 
 CREATE TABLE t2 (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `id_version` int(10) unsigned NOT NULL default '1',
+  `id` int(10) NOT NULL auto_increment,
+  `id_version` int(10) NOT NULL default '1',
   PRIMARY KEY  (`id`),
   KEY `id_version` (`id_version`)
 ) ENGINE=InnoDB;
@@ -1189,9 +1189,9 @@ DROP TABLE t1;
 #
 
 --disable_warnings
-CREATE TABLE t1 (a_id tinyint(4) NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+CREATE TABLE t1 (a_id int(4) NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO t1 VALUES (1),(2),(3);
-CREATE TABLE t2 (b_id tinyint(4) NOT NULL default '0',b_a tinyint(4) NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a), 
+CREATE TABLE t2 (b_id int(4) NOT NULL default '0',b_a int(4) NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a), 
                 CONSTRAINT fk_b_a FOREIGN KEY (b_a) REFERENCES t1 (a_id) ON DELETE CASCADE ON UPDATE NO ACTION) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 --enable_warnings
 INSERT INTO t2 VALUES (1,1),(2,1),(3,1),(4,2),(5,2);
@@ -1243,7 +1243,7 @@ drop table t1;
 # range optimizer problem
 #
 
-create table t1 (x bigint unsigned not null primary key) engine=innodb;
+create table t1 (x bigint not null primary key) engine=innodb;
 insert into t1(x) values (0xfffffffffffffff0),(0xfffffffffffffff1);
 select * from t1;
 select count(*) from t1 where x>0;
