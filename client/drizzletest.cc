@@ -44,6 +44,7 @@
 #include <queue>
 #include <map>
 #include <string>
+#include <vector>
 
 #include <pcrecpp.h>
 
@@ -7101,7 +7102,7 @@ void replace_append_uint(string *ds, uint val)
 
 void append_sorted(string* ds, string *ds_input)
 {
-  priority_queue<string> lines;
+  priority_queue<string, vector<string>, greater<string> > lines;
 
   if (ds_input->empty())
     return;  /* No input */
@@ -7112,7 +7113,7 @@ void append_sorted(string* ds, string *ds_input)
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
-  ds->append(ds_input->substr(0, eol_pos));
+  ds->append(ds_input->substr(0, eol_pos+1));
 
   unsigned long start_pos= eol_pos+1;
 
@@ -7121,7 +7122,7 @@ void append_sorted(string* ds, string *ds_input)
 
     eol_pos= ds_input->find_first_of('\n', start_pos);
     /* Find end of line */
-    lines.push(ds_input->substr(start_pos, eol_pos-start_pos));
+    lines.push(ds_input->substr(start_pos, eol_pos-start_pos+1));
     start_pos= eol_pos+1;
 
   } while ( eol_pos != string::npos);
