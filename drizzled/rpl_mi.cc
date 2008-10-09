@@ -15,6 +15,8 @@
 
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
+#include <iostream>
+#include <fstream>
 
 #define DEFAULT_CONNECT_RETRY 60
 
@@ -33,9 +35,7 @@ Master_info::Master_info()
   host[0] = 0; user[0] = 0; password[0] = 0;
   io_thd= NULL;
   port= DRIZZLE_PORT;
-  fd= -1,
 
-  memset(&file, 0, sizeof(file));
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&data_cond, NULL);
@@ -96,24 +96,29 @@ uint16_t Master_info::getPort()
 
 off_t Master_info::getLogPosition()
 {
-  return master_log_pos;
+  return log_pos;
 }
 
 bool Master_info::setLogPosition(off_t position)
 {
-  master_log_pos= position;
+  log_pos= position;
 
   return true;
 }
 
+void Master_info::incrementLogPosition(off_t position)
+{
+  log_pos+= position;
+}
+
 const char *Master_info::getLogName()
 {
-  return master_log_name.c_str();
+  return log_name.c_str();
 }
 
 bool Master_info::setLogName(const char *name)
 {
-  master_log_name.assign(name);
+ log_name.assign(name);
 
   return true;
 }
@@ -131,31 +136,18 @@ bool Master_info::setConnectionRetry(uint32_t retry)
 }
 
 
-void Master_info::init_master_log_pos()
+void Master_info::reset()
 {
-  master_log_name.clear();
-  master_log_pos = BIN_LOG_HEADER_SIZE;             // skip magic number
-  /* 
-    always request heartbeat unless master_heartbeat_period is set
-    explicitly zero.  Here is the default value for heartbeat period
-    if CHANGE MASTER did not specify it.  (no data loss in conversion
-    as hb period has a max)
-  */
-  heartbeat_period= (float) cmin((double)SLAVE_MAX_HEARTBEAT_PERIOD,
-                                 (slave_net_timeout/2.0));
-  assert(heartbeat_period > (float) 0.001
-         || heartbeat_period == 0);
-  return;
+  log_name.clear();
+  log_pos= 0; 
 }
 
 
 int Master_info::init_master_info(const char* master_info_fname,
                                   const char* slave_info_fname,
-                                  bool abort_if_no_master_info_file __attribute__((unused)),
                                   int thread_mask)
 {
-  int fd,error;
-  char fname[FN_REFLEN+128];
+  int error;
 
   if (inited)
   {
@@ -180,7 +172,12 @@ int Master_info::init_master_info(const char* master_info_fname,
 
   drizzle= 0;
   file_id= 1;
-  fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
+  {
+    char fname[FN_REFLEN+128];
+
+    fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
+    info_filename.assign(fname);
+  }
 
   /*
     We need a mutex while we are changing master info parameters to
@@ -188,40 +185,73 @@ int Master_info::init_master_info(const char* master_info_fname,
   */
 
   pthread_mutex_lock(&data_lock);
-  fd= -1;
 
   /* does master.info exist ? */
 
-  if (access(fname,F_OK))
+  if (access(info_filename.c_str(), F_OK))
   {
-    /* Write new Master info file here (from fname) */
+    drizzle::MasterList_Record *record;
+
+    reset();
+
+    /* Write new Master info file here (from info_filename) */
+    record= list.add_record();
+    record->set_hostname(host);
+    record->set_username(user);
+    record->set_password(password);
+    record->set_port(port);
+    record->set_connect_retry(connect_retry);
+    record->set_log_name(log_name);
+    record->set_log_position(log_pos);
+
+    fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
+    if (!list.SerializeToOstream(&output)) 
+    { 
+      assert(0);
+      return -1;
+    }
   }
   else // file exists
   {
-    /* Read Master info file here (from fname) */
+    /* Read Master info file here (from info_filename) */
+    fstream input(info_filename.c_str(), ios::in | ios::binary);
+    if (!list.ParseFromIstream(&input)) 
+    {
+      assert(0);
+      return -1;
+    }
+
+    /* We do not support multi-master just yet */
+    assert(list.record_size() == 1);
+    const drizzle::MasterList_Record record= list.record(0);
+
+    if (record.has_username())
+      user= record.username();
+    if (record.has_password())
+      password= record.password();
+    if (record.has_port())
+      port= record.port();
+    if (record.has_connect_retry())
+      connect_retry= record.connect_retry();
+    if (record.has_log_name())
+      log_name= record.log_name();
+    if (record.has_log_position())
+      log_pos= record.log_position();
   }
 
   rli.mi = this;
   if (init_relay_log_info(&rli, slave_info_fname))
     goto err;
 
-  inited = 1;
-  // now change cache READ -> WRITE - must do this before flush_master_info
-  reinit_io_cache(&file, WRITE_CACHE, 0L, 0, 1);
-  if ((error= test(flush_master_info(1))))
+  inited= 1;
+  if ((error= test(flush())))
     sql_print_error(_("Failed to flush master info file"));
   pthread_mutex_unlock(&data_lock);
   return(error);
 
 err:
-  if (fd >= 0)
-  {
-    my_close(fd, MYF(0));
-    end_io_cache(&file);
-  }
-  fd= -1;
   pthread_mutex_unlock(&data_lock);
-  return(1);
+  return 1;
 }
 
 
@@ -231,7 +261,7 @@ err:
      1 - flush master info failed
      0 - all ok
 */
-int Master_info::flush_master_info(bool flush_relay_log_cache __attribute__((unused)))
+int Master_info::flush()
 {
   /*
     Flush the relay log to disk. If we don't do it, then the relay log while
@@ -246,6 +276,26 @@ int Master_info::flush_master_info(bool flush_relay_log_cache __attribute__((unu
     the caller is responsible for setting 'flush_relay_log_cache' accordingly.
   */
 
+  /* Write Master info file here (from info_filename) */
+  assert(info_filename.length());
+  assert(list.record_size() == 1);
+  drizzle::MasterList_Record *record= list.mutable_record(0);
+
+  record->set_hostname(host);
+  record->set_username(user);
+  record->set_password(password);
+  record->set_port(port);
+  record->set_connect_retry(connect_retry);
+  record->set_log_name(log_name);
+  record->set_log_position(log_pos);
+
+  fstream output(info_filename.c_str(), ios::out | ios::trunc | ios::binary);
+  if (!list.SerializeToOstream(&output)) 
+  { 
+    assert(0);
+    return 1;
+  }
+
   return 0;
 }
 
@@ -255,12 +305,6 @@ void Master_info::end_master_info()
   if (!inited)
     return;
   end_relay_log_info(&rli);
-  if (fd >= 0)
-  {
-    end_io_cache(&file);
-    (void)my_close(fd, MYF(MY_WME));
-    fd = -1;
-  }
   inited = 0;
 
   return;

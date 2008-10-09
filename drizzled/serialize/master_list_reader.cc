@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
   drizzle::MasterList list;
 
   {
-    // Read the existing address book.
+    // Read the existing master.info file
     fstream input(argv[1], ios::in | ios::binary);
     if (!list.ParseFromIstream(&input)) 
     {

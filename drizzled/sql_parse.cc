@@ -183,10 +183,7 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_CHARSETS]=    CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_COLLATIONS]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_BINLOG_EVENTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
@@ -1203,8 +1200,6 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_FIELDS:
   case SQLCOM_SHOW_KEYS:
   case SQLCOM_SHOW_VARIABLES:
-  case SQLCOM_SHOW_CHARSETS:
-  case SQLCOM_SHOW_COLLATIONS:
   case SQLCOM_SELECT:
   {
     thd->status_var.last_query_cost= 0.0;
@@ -1256,12 +1251,6 @@ mysql_execute_command(THD *thd)
 			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
-  case SQLCOM_SHOW_BINLOG_EVENTS:
-  {
-    res = mysql_show_binlog_events(thd);
-    break;
-  }
-
   case SQLCOM_ASSIGN_TO_KEYCACHE:
   {
     assert(first_table == all_tables && first_table != 0);

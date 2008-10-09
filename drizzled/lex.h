@@ -176,7 +176,6 @@ static SYMBOL symbols[] = {
   { "ERRORS",		SYM(ERRORS)},
   { "ESCAPE",		SYM(ESCAPE_SYM)},
   { "ESCAPED",		SYM(ESCAPED)},
-  { "EVENTS",		SYM(EVENTS_SYM)},
   { "EXCLUSIVE",        SYM(EXCLUSIVE_SYM)},
   { "EXISTS",		SYM(EXISTS)},
   { "EXIT",             SYM(EXIT_SYM)},
