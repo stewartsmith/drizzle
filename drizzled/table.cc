@@ -1452,13 +1452,20 @@ bool unpack_vcol_info_from_frm(THD *thd,
 
   /* 
     Step 2: Setup thd for parsing.
+    1) make Item objects be created in the memory allocated for the Table
+       object (not TABLE_SHARE)
+    2) ensure that created Item's are not put on to thd->free_list 
+       (which is associated with the parsed statement and hence cleared after 
+       the parsing)
+    3) setup a flag in the LEX structure to allow "PARSE_VCOL_EXPR" 
+       to be parsed as a SQL command.
   */
-  Query_arena *backup_stmt_arena_ptr= thd->stmt_arena;
-  Query_arena backup_arena;
-  Query_arena vcol_arena(&table->mem_root, Query_arena::INITIALIZED);
-  thd->set_n_backup_active_arena(&vcol_arena, &backup_arena);
-  thd->stmt_arena= &vcol_arena;
-
+  MEM_ROOT **root_ptr, *old_root;
+  Item *backup_free_list= thd->free_list;
+  root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
+  old_root= *root_ptr;
+  *root_ptr= &table->mem_root;
+  thd->free_list= NULL;
   thd->lex->parse_vcol_expr= true;
 
   /* 
@@ -1489,17 +1496,17 @@ bool unpack_vcol_info_from_frm(THD *thd,
     field->vcol_info= NULL;
     goto parse_err;
   }
-  thd->stmt_arena= backup_stmt_arena_ptr;
-  thd->restore_active_arena(&vcol_arena, &backup_arena);
-  field->vcol_info->item_free_list= vcol_arena.free_list;
+  field->vcol_info->item_free_list= thd->free_list;
+  thd->free_list= backup_free_list;
+  *root_ptr= old_root;
 
   return(false);
 
 parse_err:
   thd->lex->parse_vcol_expr= false;
   thd->free_items();
-  thd->stmt_arena= backup_stmt_arena_ptr;
-  thd->restore_active_arena(&vcol_arena, &backup_arena);
+  *root_ptr= old_root;
+  thd->free_list= backup_free_list;
   return(true);
 }
 

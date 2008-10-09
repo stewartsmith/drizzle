@@ -400,7 +400,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # LIKE
-let $cols = a varchar(10), b virtual bool as (a like 'H%o');
+let $cols = a varchar(10), b virtual int as (a like 'H%o');
 let $values1 = 'Hello',default;
 let $values2 = 'MySQL',default;
 let $rows = 2;
@@ -446,7 +446,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # NOT LIKE
-let $cols = a varchar(10), b virtual bool as (a not like 'H%o');
+let $cols = a varchar(10), b virtual int as (a not like 'H%o');
 let $values1 = 'Hello',default;
 let $values2 = 'MySQL',default;
 let $rows = 2;
@@ -519,7 +519,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # STRCMP()
-let $cols = a varchar(9), b varchar(9), c virtual tinyint as (strcmp(a,b));
+let $cols = a varchar(9), b varchar(9), c virtual int as (strcmp(a,b));
 let $values1 = 'Hello','Hello', default;
 let $values2 = 'Hello','Hello1', default;
 let $rows = 2;
@@ -605,14 +605,14 @@ let $rows = 2;
 --echo #
 
 --echo # AND
-let $cols = a int, b virtual bool as (a>0 and a<2);
+let $cols = a int, b virtual int as (a>0 and a<2);
 let $values1 = -1,default;
 let $values2 = 1,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # BETWEEN ... AND ... 
-let $cols = a int, b virtual bool as (a between 0 and 2);
+let $cols = a int, b virtual int as (a between 0 and 2);
 let $values1 = -1,default;
 let $values2 = 1,default;
 let $rows = 2;
@@ -633,7 +633,7 @@ let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # <=>
-let $cols = a int, b int, c virtual bool as (a <=> b);
+let $cols = a int, b int, c virtual int as (a <=> b);
 let $values1 = 1,1,default;
 let $values2 = NULL,NULL,default;
 let $values3 = 1,NULL,default;
@@ -641,42 +641,42 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # =
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a=b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a=b);
 let $values1 = 'a','b',default;
 let $values2 = 'a','a',default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # >=
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a >= b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a >= b);
 let $values1 = 'a','b',default;
 let $values2 = 'a','a',default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # >
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a > b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a > b);
 let $values1 = 'a','b',default;
 let $values2 = 'a','a',default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # IS NOT NULL
-let $cols = a int, b virtual bool as (a is not null);
+let $cols = a int, b virtual int as (a is not null);
 let $values1 = 1,default;
 let $values2 = NULL,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # IS NULL
-let $cols = a int, b virtual bool as (a is null);
+let $cols = a int, b virtual int as (a is null);
 let $values1 = 1,default;
 let $values2 = NULL,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # <=
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a <= b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a <= b);
 let $values1 = 'b','a',default;
 let $values2 = 'b','b',default;
 let $values3 = 'b','c',default;
@@ -684,7 +684,7 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # <
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a < b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a < b);
 let $values1 = 'b','a',default;
 let $values2 = 'b','b',default;
 let $values3 = 'b','c',default;
@@ -692,14 +692,14 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # NOT BETWEEN ... AND ...
-let $cols = a int, b virtual bool as (a not between 0 and 2);
+let $cols = a int, b virtual int as (a not between 0 and 2);
 let $values1 = -1,default;
 let $values2 = 1,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # <>
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a <> b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a <> b);
 let $values1 = 'b','a',default;
 let $values2 = 'b','b',default;
 let $values3 = 'b','c',default;
@@ -707,7 +707,7 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # !=
-let $cols = a varchar(10), b varchar(10), c virtual bool as (a != b);
+let $cols = a varchar(10), b varchar(10), c virtual int as (a != b);
 let $values1 = 'b','a',default;
 let $values2 = 'b','b',default;
 let $values3 = 'b','c',default;
@@ -1013,18 +1013,16 @@ let $rows = 1;
 --echo # CAST FUNCTIONS AND OPERATORS
 --echo #
 
---echo # CAST()
-let $cols = a int, b virtual int as (cast(a as unsigned));
-let $values1 = 1,default;
-let $values2 = -1,default;
-let $rows = 2;
+#--echo # CAST()
+let $cols = a varchar(32), b virtual datetime as (cast(a as datetime));
+let $values1 = '2008-10-09',default;
+let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
---echo # Convert()
-let $cols = a int, b virtual int as (convert(a,unsigned));
-let $values1 = 1,default;
-let $values2 = -1,default;
-let $rows = 2;
+#--echo # Convert()
+let $cols = a varchar(32), b virtual datetime as (convert(a, datetime));
+let $values1 = '2008-10-09',default;
+let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo #

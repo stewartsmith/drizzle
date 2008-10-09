@@ -981,12 +981,12 @@ drop table t1;
 set sql_warnings = 0;
 # LIKE
 set sql_warnings = 1;
-create table t1 (a varchar(10), b virtual bool as (a like 'H%o'));
+create table t1 (a varchar(10), b virtual int as (a like 'H%o'));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
-  `b` VIRTUAL tinyint(1) AS (a like 'H%o')
+  `b` VIRTUAL int AS (a like 'H%o')
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
 insert into t1 values ('MySQL',default);
@@ -1096,12 +1096,12 @@ drop table t1;
 set sql_warnings = 0;
 # NOT LIKE
 set sql_warnings = 1;
-create table t1 (a varchar(10), b virtual bool as (a not like 'H%o'));
+create table t1 (a varchar(10), b virtual int as (a not like 'H%o'));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
-  `b` VIRTUAL tinyint(1) AS (a not like 'H%o')
+  `b` VIRTUAL int AS (a not like 'H%o')
 ) ENGINE=MyISAM
 insert into t1 values ('Hello',default);
 insert into t1 values ('MySQL',default);
@@ -1278,13 +1278,13 @@ drop table t1;
 set sql_warnings = 0;
 # STRCMP()
 set sql_warnings = 1;
-create table t1 (a varchar(9), b varchar(9), c virtual tinyint as (strcmp(a,b)));
+create table t1 (a varchar(9), b varchar(9), c virtual int as (strcmp(a,b)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(9),
   `b` varchar(9),
-  `c` VIRTUAL tinyint(4) AS (strcmp(a,b))
+  `c` VIRTUAL int AS (strcmp(a,b))
 ) ENGINE=MyISAM
 insert into t1 values ('Hello','Hello', default);
 insert into t1 values ('Hello','Hello1', default);
@@ -1479,12 +1479,12 @@ set sql_warnings = 0;
 #
 # AND
 set sql_warnings = 1;
-create table t1 (a int, b virtual bool as (a>0 and a<2));
+create table t1 (a int, b virtual int as (a>0 and a<2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
-  `b` VIRTUAL tinyint(1) AS (a>0 and a<2)
+  `b` VIRTUAL int AS (a>0 and a<2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
 insert into t1 values (1,default);
@@ -1496,12 +1496,12 @@ drop table t1;
 set sql_warnings = 0;
 # BETWEEN ... AND ... 
 set sql_warnings = 1;
-create table t1 (a int, b virtual bool as (a between 0 and 2));
+create table t1 (a int, b virtual int as (a between 0 and 2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
-  `b` VIRTUAL tinyint(1) AS (a between 0 and 2)
+  `b` VIRTUAL int AS (a between 0 and 2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
 insert into t1 values (1,default);
@@ -1547,13 +1547,13 @@ drop table t1;
 set sql_warnings = 0;
 # <=>
 set sql_warnings = 1;
-create table t1 (a int, b int, c virtual bool as (a <=> b));
+create table t1 (a int, b int, c virtual int as (a <=> b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
   `b` int,
-  `c` VIRTUAL tinyint(1) AS (a <=> b)
+  `c` VIRTUAL int AS (a <=> b)
 ) ENGINE=MyISAM
 insert into t1 values (1,1,default);
 insert into t1 values (NULL,NULL,default);
@@ -1567,13 +1567,13 @@ drop table t1;
 set sql_warnings = 0;
 # =
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a=b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a=b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a=b)
+  `c` VIRTUAL int AS (a=b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
 insert into t1 values ('a','a',default);
@@ -1585,13 +1585,13 @@ drop table t1;
 set sql_warnings = 0;
 # >=
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a >= b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a >= b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a >= b)
+  `c` VIRTUAL int AS (a >= b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
 insert into t1 values ('a','a',default);
@@ -1603,13 +1603,13 @@ drop table t1;
 set sql_warnings = 0;
 # >
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a > b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a > b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a > b)
+  `c` VIRTUAL int AS (a > b)
 ) ENGINE=MyISAM
 insert into t1 values ('a','b',default);
 insert into t1 values ('a','a',default);
@@ -1621,12 +1621,12 @@ drop table t1;
 set sql_warnings = 0;
 # IS NOT NULL
 set sql_warnings = 1;
-create table t1 (a int, b virtual bool as (a is not null));
+create table t1 (a int, b virtual int as (a is not null));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
-  `b` VIRTUAL tinyint(1) AS (a is not null)
+  `b` VIRTUAL int AS (a is not null)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
 insert into t1 values (NULL,default);
@@ -1638,12 +1638,12 @@ drop table t1;
 set sql_warnings = 0;
 # IS NULL
 set sql_warnings = 1;
-create table t1 (a int, b virtual bool as (a is null));
+create table t1 (a int, b virtual int as (a is null));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
-  `b` VIRTUAL tinyint(1) AS (a is null)
+  `b` VIRTUAL int AS (a is null)
 ) ENGINE=MyISAM
 insert into t1 values (1,default);
 insert into t1 values (NULL,default);
@@ -1655,13 +1655,13 @@ drop table t1;
 set sql_warnings = 0;
 # <=
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a <= b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a <= b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a <= b)
+  `c` VIRTUAL int AS (a <= b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
 insert into t1 values ('b','b',default);
@@ -1675,13 +1675,13 @@ drop table t1;
 set sql_warnings = 0;
 # <
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a < b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a < b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a < b)
+  `c` VIRTUAL int AS (a < b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
 insert into t1 values ('b','b',default);
@@ -1695,12 +1695,12 @@ drop table t1;
 set sql_warnings = 0;
 # NOT BETWEEN ... AND ...
 set sql_warnings = 1;
-create table t1 (a int, b virtual bool as (a not between 0 and 2));
+create table t1 (a int, b virtual int as (a not between 0 and 2));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int,
-  `b` VIRTUAL tinyint(1) AS (a not between 0 and 2)
+  `b` VIRTUAL int AS (a not between 0 and 2)
 ) ENGINE=MyISAM
 insert into t1 values (-1,default);
 insert into t1 values (1,default);
@@ -1712,13 +1712,13 @@ drop table t1;
 set sql_warnings = 0;
 # <>
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a <> b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a <> b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a <> b)
+  `c` VIRTUAL int AS (a <> b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
 insert into t1 values ('b','b',default);
@@ -1732,13 +1732,13 @@ drop table t1;
 set sql_warnings = 0;
 # !=
 set sql_warnings = 1;
-create table t1 (a varchar(10), b varchar(10), c virtual bool as (a != b));
+create table t1 (a varchar(10), b varchar(10), c virtual int as (a != b));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10),
   `b` varchar(10),
-  `c` VIRTUAL tinyint(1) AS (a != b)
+  `c` VIRTUAL int AS (a != b)
 ) ENGINE=MyISAM
 insert into t1 values ('b','a',default);
 insert into t1 values ('b','b',default);
@@ -2478,42 +2478,32 @@ set sql_warnings = 0;
 #
 # CAST FUNCTIONS AND OPERATORS
 #
-# CAST()
 set sql_warnings = 1;
-create table t1 (a int, b virtual int as (cast(a as unsigned)));
+create table t1 (a varchar(32), b virtual datetime as (cast(a as datetime)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` VIRTUAL int AS (cast(a as unsigned))
+  `a` varchar(32),
+  `b` VIRTUAL datetime AS (cast(a as datetime))
 ) ENGINE=MyISAM
-insert into t1 values (1,default);
-insert into t1 values (-1,default);
-Warnings:
-Warning	1264	Out of range value for column 'b' at row 1
+insert into t1 values ('2008-10-09',default);
 select * from t1;
 a	b
-1	1
--1	2147483647
+2008-10-09	2008-10-09 00:00:00
 drop table t1;
 set sql_warnings = 0;
-# Convert()
 set sql_warnings = 1;
-create table t1 (a int, b virtual int as (convert(a,unsigned)));
+create table t1 (a varchar(32), b virtual datetime as (convert(a, datetime)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int,
-  `b` VIRTUAL int AS (convert(a,unsigned))
+  `a` varchar(32),
+  `b` VIRTUAL datetime AS (convert(a, datetime))
 ) ENGINE=MyISAM
-insert into t1 values (1,default);
-insert into t1 values (-1,default);
-Warnings:
-Warning	1264	Out of range value for column 'b' at row 1
+insert into t1 values ('2008-10-09',default);
 select * from t1;
 a	b
-1	1
--1	2147483647
+2008-10-09	2008-10-09 00:00:00
 drop table t1;
 set sql_warnings = 0;
 #
