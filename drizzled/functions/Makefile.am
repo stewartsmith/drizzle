@@ -23,7 +23,9 @@ libfunctions_la_SOURCES = connection_id.cc \
 			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
-			  real.cc
+			  real.cc \
+			  signed.cc \
+			  unsigned.cc
 
 noinst_HEADERS = connection_id.h \
 		 func.h \
@@ -31,7 +33,9 @@ noinst_HEADERS = connection_id.h \
 		 num1.h \
                  numhybrid.h \
                  num_op.h \
-		 real.h
+		 real.h \
+		 signed.h \
+		 unsigned.h
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

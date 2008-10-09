@@ -37,33 +37,8 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/num_op.h>
 #include <drizzled/functions/num1.h>
 #include <drizzled/functions/real.h>
-
-
-class Item_func_signed :public Item_int_func
-{
-public:
-  Item_func_signed(Item *a) :Item_int_func(a) {}
-  const char *func_name() const { return "cast_as_signed"; }
-  int64_t val_int();
-  int64_t val_int_from_str(int *error);
-  void fix_length_and_dec()
-  { max_length=args[0]->max_length; unsigned_flag=0; }
-  virtual void print(String *str, enum_query_type query_type);
-  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
-};
-
-
-class Item_func_unsigned :public Item_func_signed
-{
-public:
-  Item_func_unsigned(Item *a) :Item_func_signed(a) {}
-  const char *func_name() const { return "cast_as_unsigned"; }
-  void fix_length_and_dec()
-  { max_length=args[0]->max_length; unsigned_flag=1; }
-  int64_t val_int();
-  virtual void print(String *str, enum_query_type query_type);
-};
-
+#include <drizzled/functions/signed.h>
+#include <drizzled/functions/unsigned.h>
 
 class Item_decimal_typecast :public Item_func
 {
