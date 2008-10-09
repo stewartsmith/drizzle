@@ -31,6 +31,7 @@ extern "C"				/* Bug in BSDI include file */
 #endif
 
 #include <drizzled/functions/func.h>
+#include <drizzled/functions/additive_op.h>
 #include <drizzled/functions/connection_id.h>
 #include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/int.h>
@@ -40,14 +41,6 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_additive_op :public Item_num_op
-{
-public:
-  Item_func_additive_op(Item *a,Item *b) :Item_num_op(a,b) {}
-  void result_precision();
-};
-
 
 class Item_func_plus :public Item_func_additive_op
 {
