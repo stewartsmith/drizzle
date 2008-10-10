@@ -746,7 +746,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name, const char **errmsg)
 {
   File file;
 
-  if ((file = my_open(log_file_name, O_RDONLY | O_BINARY | O_SHARE, 
+  if ((file = my_open(log_file_name, O_RDONLY, 
                       MYF(MY_WME))) < 0)
   {
     sql_print_error(_("Failed to open log (file '%s', errno %d)"),
@@ -860,7 +860,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
 {
   char buff[FN_REFLEN];
   File file= -1;
-  int open_flags= O_CREAT | O_BINARY;
+  int open_flags= O_CREAT;
 
   write_error= 0;
 
@@ -1123,7 +1123,7 @@ bool DRIZZLE_BIN_LOG::open_index_file(const char *index_file_name_arg,
   fn_format(index_file_name, index_file_name_arg, mysql_data_home,
             ".index", opt);
   if ((index_file_nr= my_open(index_file_name,
-                              O_RDWR | O_CREAT | O_BINARY ,
+                              O_RDWR | O_CREAT,
                               MYF(MY_WME))) < 0 ||
        my_sync(index_file_nr, MYF(MY_WME)) ||
        init_io_cache(&index_file, index_file_nr,

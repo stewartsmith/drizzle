@@ -31,10 +31,6 @@
 #endif
 #include <drizzled/util/test.h>
 
-
-#define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
-#define my_raid_delete(A,B,C) my_delete(A,B)
-
 #include "myisamdef.h"
 
 static uint32_t decode_bits;
@@ -1459,14 +1455,11 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   }
   fn_format(param->temp_filename,name,"", MI_NAME_DEXT,2+4+32);
-  new_file=my_raid_create(fn_format(param->temp_filename,
-				    param->temp_filename,"",
-				    DATA_TMP_EXT,2+4),
-			  0,param->tmpfile_createflag,
-			  share->base.raid_type,
-			  share->base.raid_chunks,
-			  share->base.raid_chunksize,
-			  MYF(0));
+  new_file=my_create(fn_format(param->temp_filename,
+                               param->temp_filename,"",
+                               DATA_TMP_EXT,2+4),	 
+                     0,param->tmpfile_createflag,
+                     MYF(0));
   if (new_file < 0)
   {
     mi_check_print_error(param,"Can't create new tempfile: '%s'",
@@ -1541,8 +1534,7 @@ err:
   {
     end_io_cache(&info->rec_cache);
     (void) my_close(new_file,MYF(MY_WME));
-    (void) my_raid_delete(param->temp_filename, share->base.raid_chunks,
-			  MYF(MY_WME));
+    (void) my_delete(param->temp_filename, MYF(MY_WME));
   }
   if (temp_buff)
   {

@@ -305,7 +305,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
   disk_buff= NULL;
 
   strxmov(path, share->normalized_path.str, reg_ext, NULL);
-  if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
+  if ((file= my_open(path, O_RDONLY, MYF(0))) < 0)
   {
     /*
       We don't try to open 5.0 unencoded name, if
@@ -342,7 +342,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
       so no need to check the old file name.
     */
     if (length == share->normalized_path.length ||
-        ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0))
+        ((file= my_open(path, O_RDONLY, MYF(0))) < 0))
       goto err_not_open;
 
     /* Unencoded 5.0 table name found */
@@ -3140,7 +3140,7 @@ bool mysql_frm_type(THD *thd __attribute__((unused)),
 
   *dbt= DB_TYPE_UNKNOWN;
 
-  if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
+  if ((file= my_open(path, O_RDONLY, MYF(0))) < 0)
     return false;
   error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
   my_close(file, MYF(MY_WME));

@@ -1374,7 +1374,7 @@ static int string_cmp(string* ds, const char *fname)
   char temp_file_path[FN_REFLEN];
 
   if ((fd= create_temp_file(temp_file_path, NULL,
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
@@ -2041,7 +2041,7 @@ static int open_file(const char *name)
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
   cur_file++;
-  if (!(cur_file->file = my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+  if (!(cur_file->file = my_fopen(buff, O_RDONLY, MYF(0))))
   {
     cur_file--;
     die("Could not open '%s' for reading", buff);
@@ -2897,7 +2897,7 @@ static void do_perl(struct st_command *command)
 
   /* Create temporary file name */
   if ((fd= create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for perl command");
   my_close(fd, MYF(0));
@@ -4533,7 +4533,7 @@ static void read_embedded_server_arguments(const char *name)
     embedded_server_arg_count=1;
     embedded_server_args[0]= (char*) "";    /* Progname */
   }
-  if (!(file=my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(MY_WME))))
+  if (!(file=my_fopen(buff, O_RDONLY, MYF(MY_WME))))
     die("Failed to open file '%s'", buff);
 
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
@@ -4576,7 +4576,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file=
-          my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+          my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
     cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
     cur_file->lineno= 1;
