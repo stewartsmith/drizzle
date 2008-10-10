@@ -1337,7 +1337,7 @@ CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no|full) @<:@default=no@:>@])],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
     [with_debug=$withval],
     [with_debug=no])
 if test "$with_debug" = "yes"
