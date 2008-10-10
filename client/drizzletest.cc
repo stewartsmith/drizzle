@@ -1374,7 +1374,7 @@ static int string_cmp(string* ds, const char *fname)
   char temp_file_path[FN_REFLEN];
 
   if ((fd= create_temp_file(temp_file_path, NULL,
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
@@ -2897,7 +2897,7 @@ static void do_perl(struct st_command *command)
 
   /* Create temporary file name */
   if ((fd= create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for perl command");
   my_close(fd, MYF(0));

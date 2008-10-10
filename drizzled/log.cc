@@ -746,7 +746,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name, const char **errmsg)
 {
   File file;
 
-  if ((file = my_open(log_file_name, O_RDONLY | O_BINARY | O_SHARE, 
+  if ((file = my_open(log_file_name, O_RDONLY | O_BINARY, 
                       MYF(MY_WME))) < 0)
   {
     sql_print_error(_("Failed to open log (file '%s', errno %d)"),

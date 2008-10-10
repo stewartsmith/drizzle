@@ -136,10 +136,6 @@ typedef int  File;    /* File descriptor */
 
 /* file create flags */
 
-#ifndef O_SHARE      /* Probably not windows */
-#define O_SHARE    0  /* Flag to my_open for shared files */
-#endif /* O_SHARE */
-
 #ifndef O_BINARY
 #define O_BINARY  0  /* Flag to my_open for binary files */
 #endif
