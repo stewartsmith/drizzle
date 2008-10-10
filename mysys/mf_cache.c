@@ -83,7 +83,7 @@ bool real_open_cached_file(IO_CACHE *cache)
   char name_buff[FN_REFLEN];
   int error=1;
   if ((cache->file=create_temp_file(name_buff, cache->dir, cache->prefix,
-				    (O_RDWR | O_BINARY | O_TRUNC |
+				    (O_RDWR | O_TRUNC |
 				     O_TEMPORARY | O_SHORT_LIVED),
 				    MYF(MY_WME))) >= 0)
   {

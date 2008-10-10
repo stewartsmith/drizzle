@@ -230,7 +230,7 @@ int archive_discover(handlerton *hton __attribute__((unused)),
   if (stat(az_file, &file_stat))
     goto err;
 
-  if (!(azopen(&frm_stream, az_file, O_RDONLY|O_BINARY, AZ_METHOD_BLOCK)))
+  if (!(azopen(&frm_stream, az_file, O_RDONLY, AZ_METHOD_BLOCK)))
   {
     if (errno == EROFS || errno == EACCES)
       return(my_errno= errno);
@@ -318,7 +318,7 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
       anything but reading... open it for write and we will generate null
       compression writes).
     */
-    if (!(azopen(&archive_tmp, share->data_file_name, O_RDONLY|O_BINARY,
+    if (!(azopen(&archive_tmp, share->data_file_name, O_RDONLY,
                  AZ_METHOD_BLOCK)))
     {
       pthread_mutex_destroy(&share->mutex);
@@ -390,7 +390,7 @@ int ha_archive::init_archive_writer()
     that is shared amoung all open tables.
   */
   if (!(azopen(&(share->archive_write), share->data_file_name, 
-               O_RDWR|O_BINARY, AZ_METHOD_BLOCK)))
+               O_RDWR, AZ_METHOD_BLOCK)))
   {
     share->crashed= true;
     return(1);
@@ -426,7 +426,7 @@ int ha_archive::init_archive_reader()
     default:
       method= AZ_METHOD_BLOCK;
     }
-    if (!(azopen(&archive, share->data_file_name, O_RDONLY|O_BINARY, 
+    if (!(azopen(&archive, share->data_file_name, O_RDONLY, 
                  method)))
     {
       share->crashed= true;
@@ -600,7 +600,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   if (!stat(name_buff, &file_stat))
   {
     my_errno= 0;
-    if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR|O_BINARY,
+    if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
                  AZ_METHOD_BLOCK)))
     {
       error= errno;
@@ -1111,7 +1111,7 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
   fn_format(writer_filename, share->table_name, "", ARN, 
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR|O_BINARY, AZ_METHOD_BLOCK)))
+  if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
     return(HA_ERR_CRASHED_ON_USAGE); 
 
   /* 

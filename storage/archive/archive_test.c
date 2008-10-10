@@ -117,7 +117,7 @@ int small_test(az_method method)
 
   unlink(TEST_FILENAME);
 
-  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_CREAT|O_RDWR|O_BINARY,
+  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_CREAT|O_RDWR,
                     method)))
   {
     printf("Could not create test file\n");
@@ -137,7 +137,7 @@ int small_test(az_method method)
                 strlen(FRM_STRING)));
 
 
-  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
+  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     method)))
   {
     printf("Could not open test file\n");
@@ -184,7 +184,7 @@ int small_test(az_method method)
 
   azclose(&reader_handle);
 
-  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
+  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     method)))
   {
     printf("Could not open test file\n");
@@ -239,7 +239,7 @@ int small_test(az_method method)
     assert(!memcmp(reader_handle.row_ptr, test_string, ret));
   }
 
-  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_RDWR|O_BINARY, method)))
+  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_RDWR, method)))
   {
     printf("Could not open file (%s) for appending\n", TEST_FILENAME);
     return 0;
@@ -294,7 +294,7 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
   int x;
 
   if (!(ret= azopen(&writer_handle, TEST_FILENAME, 
-                    O_CREAT|O_RDWR|O_TRUNC|O_BINARY,
+                    O_CREAT|O_RDWR|O_TRUNC,
                     method)))
   {
     printf("Could not create test file\n");
@@ -319,7 +319,7 @@ int size_test(uint64_t length, uint64_t rows_to_test_for,
   assert(write_length == count * BUFFER_LEN); /* Number of rows time BUFFER_LEN */
   azflush(&writer_handle,  Z_SYNC_FLUSH);
 
-  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
+  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     method)))
   {
     printf("Could not open test file\n");

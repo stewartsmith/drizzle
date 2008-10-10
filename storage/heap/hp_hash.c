@@ -17,7 +17,7 @@
 
 #include "heapdef.h"
 #include <mystrings/m_ctype.h>
-
+#include <drizzled/util/test.h>
 
 
 /*

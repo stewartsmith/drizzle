@@ -1,19 +1,17 @@
-# Copyright (C) 2000-2006 MySQL AB
+#  Copyright (C) 2008 Sun Microsystems
 # 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-#called from the top level Makefile
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 MYSQLDATAdir =$(localstatedir)
 
@@ -25,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field serialize functions .
+SUBDIRS = util field serialize functions .
 
 sbin_PROGRAMS =drizzled
 
@@ -147,7 +145,7 @@ noinst_HEADERS = item.h \
 		 order.h \
 		 filesort_info.h \
 		 field_iterator.h \
-		 common_includes.h 
+		 common_includes.h
 
 drizzled_SOURCES = \
 		   sql_db.cc \
@@ -250,12 +248,19 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
+if GCC_PCH
+PCHHEADERS =
+else
+PCHHEADERS =
+endif
+
 BUILT_MAINT_SRC = sql_yacc.cc \
 		  sql_yacc.h
 
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		lex_hash.h \
-		version.h
+		version.h \
+		$(PCHHEADERS)
 
 EXTRA_DIST = $(BUILT_MAINT_SRC) \
 	     drizzledumpslow \
@@ -291,6 +296,11 @@ probes.h: probes.d
 	mv probes.h probes.h.bak
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
+
+if GCC_PCH
+%.h.gch: %.h
+	$(CXXCOMPILE) -include config.h -c $<
+endif
 
 SUFFIXES = .d
 

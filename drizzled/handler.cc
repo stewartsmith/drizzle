@@ -2520,7 +2520,7 @@ static bool update_frm_version(Table *table)
 
   strxmov(path, table->s->normalized_path.str, reg_ext, NULL);
 
-  if ((file= my_open(path, O_RDWR|O_BINARY, MYF(MY_WME))) >= 0)
+  if ((file= my_open(path, O_RDWR, MYF(MY_WME))) >= 0)
   {
     unsigned char version[4];
     char *key= table->s->table_cache_key.str;

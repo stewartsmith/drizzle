@@ -56,7 +56,7 @@ static void my_aiowait(my_aio_result *result);
 #endif
 #include <mysys/iocache.h>
 #include <errno.h>
-
+#include <drizzled/util/test.h>
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
 #define unlock_append_buffer(info) \

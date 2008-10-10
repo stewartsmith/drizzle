@@ -53,7 +53,7 @@ int readfrm(const char *name, unsigned char **frmdata, size_t *len)
   error= 1;
   if ((file=my_open(fn_format(index_file,name,"",reg_ext,
                               MY_UNPACK_FILENAME|MY_APPEND_EXT),
-		    O_RDONLY | O_SHARE,
+		    O_RDONLY,
 		    MYF(0))) < 0)  
     goto err_end; 
   
