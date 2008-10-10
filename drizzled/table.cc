@@ -1911,7 +1911,7 @@ File create_frm(THD *thd, const char *name, const char *db,
   uint32_t i;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
-    create_flags|= O_EXCL | O_NOFOLLOW;
+    create_flags|= O_EXCL;
 
   /* Fix this when we have new .frm files;  Current limit is 4G rows (QQ) */
   if (create_info->max_rows > UINT32_MAX)

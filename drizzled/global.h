@@ -134,13 +134,6 @@ typedef int  File;    /* File descriptor */
 #include <sys/socket.h>
 #endif
 
-/* file create flags */
-
-#ifndef O_NOFOLLOW
-#define O_NOFOLLOW      0
-#endif
-
-
 
 #ifndef FN_LIBCHAR
 #define FN_LIBCHAR  '/'

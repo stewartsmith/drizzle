@@ -64,7 +64,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
   {
     strmake(to,res,FN_REFLEN-1);
     (*free)(res);
-    file=my_create(to, 0, mode | O_EXCL | O_NOFOLLOW, MyFlags);
+    file=my_create(to, 0, mode | O_EXCL, MyFlags);
   }
 #elif defined(HAVE_MKSTEMP)
   {
@@ -121,7 +121,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
       strmake(to,res,FN_REFLEN-1);
       (*free)(res);
       file=my_create(to,0,
-		     (int) (O_RDWR | O_TRUNC | O_EXCL | O_NOFOLLOW),
+		     (int) (O_RDWR | O_TRUNC | O_EXCL),
 		     MYF(MY_WME));
 
     }
