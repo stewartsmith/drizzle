@@ -136,12 +136,6 @@ typedef int  File;    /* File descriptor */
 
 /* file create flags */
 
-#ifndef O_TEMPORARY
-#define O_TEMPORARY  0
-#endif
-#ifndef O_SHORT_LIVED
-#define O_SHORT_LIVED  0
-#endif
 #ifndef O_NOFOLLOW
 #define O_NOFOLLOW      0
 #endif
