@@ -526,7 +526,14 @@ sub collect_one_test_case($$$$$$$$$) {
 
   my $tinfo= {};
   $tinfo->{'name'}= basename($suite) . ".$tname";
-  $tinfo->{'result_file'}= "$resdir/$tname.result";
+  if ( -f "$resdir/$::opt_engine/$tname.result")
+  {
+    $tinfo->{'result_file'}= "$resdir/$::opt_engine/$tname.result";
+  }
+  else
+  {
+    $tinfo->{'result_file'}= "$resdir/$tname.result";
+  }
   $tinfo->{'component_id'} = $component_id;
   push(@$cases, $tinfo);
 
@@ -622,7 +629,15 @@ sub collect_one_test_case($$$$$$$$$) {
       {
 	# Specifies the file mysqltest should compare
 	# output against
-	$tinfo->{'result_file'}= "r/$value.result";
+	if ( -f "r/$::opt_engine/$value.result")
+        {
+	  $tinfo->{'result_file'}= "r/$::opt_engine/$value.result";
+        }
+        else
+        {
+	  $tinfo->{'result_file'}= "r/$value.result";
+        }
+
 	next;
       }
 

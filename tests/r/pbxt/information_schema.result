@@ -1,0 +1,444 @@
+DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
+select * from information_schema.SCHEMATA where schema_name > 'm';
+CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH
+NULL	mysql	utf8	utf8_general_ci	NULL
+NULL	pbxt	utf8	utf8_general_ci	NULL
+NULL	test	utf8	utf8_general_ci	NULL
+select schema_name from information_schema.schemata;
+schema_name
+information_schema
+mysql
+pbxt
+test
+show databases like 't%';
+Database (t%)
+test
+show databases;
+Database
+information_schema
+mysql
+pbxt
+test
+create database mysqltest;
+create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
+create table test.t2(a int);
+create table t3(a int, KEY a_data (a));
+create table mysqltest.t4(a int);
+create table t5 (id int auto_increment primary key);
+insert into t5 values (10);
+select table_name from information_schema.TABLES
+where table_schema = "mysqltest" and table_name like "t%";
+table_name
+t1
+t4
+select * from information_schema.STATISTICS where TABLE_SCHEMA = "mysqltest";
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
+NULL	mysqltest	t1	1	mysqltest	string_data	1	b	A	NULL	NULL	NULL	YES	BTREE		
+show tables like 't%';
+Tables_in_test (t%)
+t2
+t3
+t5
+show table status;
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t2	PBXT	10	Fixed	0	19	1	#	4096	0	NULL	#	#	NULL	utf8_general_ci	NULL		
+t3	PBXT	10	Fixed	0	19	1	#	4096	0	NULL	#	#	NULL	utf8_general_ci	NULL		
+t5	PBXT	10	Fixed	1	19	2	#	20480	0	0	#	#	NULL	utf8_general_ci	NULL		
+show full columns from t3 like "a%";
+Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
+a	int	NULL	YES	MUL	NULL			
+select * from information_schema.COLUMNS where table_name="t1"
+and column_name= "a";
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
+NULL	mysqltest	t1	a	1	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	int					Default	Default
+select table_name, column_name, privileges from information_schema.columns 
+where table_schema = 'mysqltest' and table_name = 't1';
+table_name	column_name	privileges
+t1	a	
+t1	b	
+show columns from mysqltest.t1;
+Field	Type	Null	Key	Default	Extra
+a	int	YES		NULL	
+b	varchar(30)	YES	MUL	NULL	
+drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
+drop database mysqltest;
+select * from information_schema.CHARACTER_SETS
+where CHARACTER_SET_NAME like 'latin1%';
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+SHOW CHARACTER SET LIKE 'latin1%';
+Charset	Description	Default collation	Maxlen
+select * from information_schema.COLLATIONS
+where COLLATION_NAME like 'latin1%';
+COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+SHOW COLLATION LIKE 'latin1%';
+Collation	Charset	Id	Default	Compiled	Sortlen
+select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
+where COLLATION_NAME like 'latin1%';
+COLLATION_NAME	CHARACTER_SET_NAME
+select * from information_schema.table_names;
+ERROR 42S02: Unknown table 'table_names' in information_schema
+select column_type from information_schema.columns
+where table_schema="information_schema" and table_name="COLUMNS" and
+(column_name="character_set_name" or column_name="collation_name");
+column_type
+varchar(64)
+varchar(64)
+select TABLE_ROWS from information_schema.tables where 
+table_schema="information_schema" and table_name="COLUMNS";
+TABLE_ROWS
+NULL
+select table_type from information_schema.tables
+where table_schema="mysql" and table_name="user";
+table_type
+show global status like "Threads_running";
+Variable_name	Value
+Threads_running	#
+select table_schema,table_name, column_name from
+information_schema.columns 
+where data_type = 'longtext';
+table_schema	table_name	column_name
+select table_name, column_name, data_type from information_schema.columns
+where data_type = 'datetime';
+table_name	column_name	data_type
+TABLES	CREATE_TIME	datetime
+TABLES	UPDATE_TIME	datetime
+TABLES	CHECK_TIME	datetime
+SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES A
+WHERE NOT EXISTS 
+(SELECT * FROM INFORMATION_SCHEMA.COLUMNS B
+WHERE A.TABLE_SCHEMA = B.TABLE_SCHEMA
+AND A.TABLE_NAME = B.TABLE_NAME);
+COUNT(*)
+0
+create table t1
+( x_bigint BIGINT,
+x_integer INTEGER,
+x_int int,
+x_decimal DECIMAL(5,3),
+x_numeric NUMERIC(5,3),
+x_real REAL,
+x_float FLOAT,
+x_double_precision DOUBLE PRECISION );
+SELECT COLUMN_NAME, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME= 't1';
+COLUMN_NAME	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
+x_bigint	NULL	NULL
+x_integer	NULL	NULL
+x_int	NULL	NULL
+x_decimal	NULL	NULL
+x_numeric	NULL	NULL
+x_real	NULL	NULL
+x_float	NULL	NULL
+x_double_precision	NULL	NULL
+drop table t1;
+SELECT table_schema, count(*) FROM information_schema.TABLES
+WHERE table_name NOT LIKE 'ndb_%' AND table_name NOT LIKE 'falcon%' GROUP BY TABLE_SCHEMA;
+table_schema	count(*)
+information_schema	17
+pbxt	1
+show create database information_schema;
+Database	Create Database
+information_schema	CREATE DATABASE `information_schema` /*!40100 DEFAULT CHARACTER SET utf8 */
+create table t1(f1 LONGBLOB, f2 LONGTEXT);
+select column_name,data_type,CHARACTER_OCTET_LENGTH,
+CHARACTER_MAXIMUM_LENGTH
+from information_schema.columns
+where table_name='t1';
+column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
+f1	blob	4294967295	4294967295
+f2	text	4294967295	4294967295
+drop table t1;
+create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
+f5 BIGINT, f6 int, f7 int);
+select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
+from information_schema.columns
+where table_name='t1';
+column_name	NUMERIC_PRECISION	NUMERIC_SCALE
+f1	10	0
+f2	10	0
+f3	19	0
+f4	10	0
+f5	19	0
+f6	10	0
+f7	10	0
+drop table t1;
+create table t1 (a int not null, b int);
+use information_schema;
+select column_name, column_default from columns
+where table_schema='test' and table_name='t1';
+column_name	column_default
+a	NULL
+b	NULL
+use test;
+show columns from t1;
+Field	Type	Null	Key	Default	Extra
+a	int	NO		NULL	
+b	int	YES		NULL	
+drop table t1;
+alter database information_schema;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+drop database information_schema;
+ERROR 42000: Access denied for user ''@'' to database 'information_schema'
+drop table information_schema.tables;
+ERROR 42000: Access denied for user ''@'' to database 'information_schema'
+alter table information_schema.tables;
+ERROR 42000: Access denied for user ''@'' to database 'information_schema'
+use information_schema;
+create temporary table schemata(f1 char(10));
+ERROR 42000: Access denied for user ''@'' to database 'information_schema'
+use test;
+create table t1(id int);
+insert into t1(id) values (1);
+select 1 from (select 1 from test.t1) a;
+1
+1
+use information_schema;
+select 1 from (select 1 from test.t1) a;
+1
+1
+use test;
+drop table t1;
+create temporary table t1(f1 int, index(f1));
+show columns from t1;
+Field	Type	Null	Key	Default	Extra
+f1	int	YES	MUL	NULL	
+describe t1;
+Field	Type	Null	Key	Default	Extra
+f1	int	YES	MUL	NULL	
+show indexes from t1;
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
+t1	1	f1	1	f1	A	NULL	NULL	NULL	YES	BTREE		
+drop table t1;
+create table t1(f1 varbinary(32), f2 varbinary(64));
+select character_maximum_length, character_octet_length
+from information_schema.columns where table_name='t1';
+character_maximum_length	character_octet_length
+32	32
+64	64
+drop table t1;
+select column_type, group_concat(table_schema, '.', table_name), count(*) as num
+from information_schema.columns where
+table_schema='information_schema' and
+(column_type = 'varchar(7)' or column_type = 'varchar(20)'
+ or column_type = 'varchar(27)')
+group by column_type order by num;
+column_type	group_concat(table_schema, '.', table_name)	num
+varchar(20)	information_schema.PLUGINS	1
+varchar(27)	information_schema.COLUMNS	1
+create table t1(f1 char(1) not null, f2 char(9) not null);
+select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
+information_schema.columns where table_schema='test' and table_name = 't1';
+CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
+1	4
+9	36
+drop table t1;
+set @a:= '.';
+create table t1(f1 char(5));
+create table t2(f1 char(5));
+select concat(@a, table_name), @a, table_name
+from information_schema.tables where table_schema = 'test';
+concat(@a, table_name)	@a	table_name
+.t1	.	t1
+.t2	.	t2
+drop table t1,t2;
+SELECT t.table_name, c1.column_name
+FROM information_schema.tables t
+INNER JOIN
+information_schema.columns c1
+ON t.table_schema = c1.table_schema AND
+t.table_name = c1.table_name
+WHERE t.table_schema = 'information_schema' AND
+c1.ordinal_position =
+( SELECT COALESCE(MIN(c2.ordinal_position),1)
+FROM information_schema.columns c2
+WHERE c2.table_schema = t.table_schema AND
+c2.table_name = t.table_name AND
+c2.column_name LIKE '%SCHEMA%'
+        )
+AND t.table_name NOT LIKE 'falcon%';
+table_name	column_name
+CHARACTER_SETS	CHARACTER_SET_NAME
+COLLATIONS	COLLATION_NAME
+COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
+COLUMNS	TABLE_SCHEMA
+GLOBAL_STATUS	VARIABLE_NAME
+GLOBAL_VARIABLES	VARIABLE_NAME
+KEY_COLUMN_USAGE	CONSTRAINT_SCHEMA
+PLUGINS	PLUGIN_NAME
+PROCESSLIST	ID
+REFERENTIAL_CONSTRAINTS	CONSTRAINT_SCHEMA
+SCHEMATA	SCHEMA_NAME
+SESSION_STATUS	VARIABLE_NAME
+SESSION_VARIABLES	VARIABLE_NAME
+STATISTICS	TABLE_SCHEMA
+TABLES	TABLE_SCHEMA
+TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
+PBXT_STATISTICS	Record_cache_usage
+SELECT t.table_name, c1.column_name
+FROM information_schema.tables t
+INNER JOIN
+information_schema.columns c1
+ON t.table_schema = c1.table_schema AND
+t.table_name = c1.table_name
+WHERE t.table_schema = 'information_schema' AND
+c1.ordinal_position =
+( SELECT COALESCE(MIN(c2.ordinal_position),1)
+FROM information_schema.columns c2
+WHERE c2.table_schema = 'information_schema' AND
+c2.table_name = t.table_name AND
+c2.column_name LIKE '%SCHEMA%'
+        )
+AND t.table_name NOT LIKE 'falcon%';
+table_name	column_name
+CHARACTER_SETS	CHARACTER_SET_NAME
+COLLATIONS	COLLATION_NAME
+COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
+COLUMNS	TABLE_SCHEMA
+GLOBAL_STATUS	VARIABLE_NAME
+GLOBAL_VARIABLES	VARIABLE_NAME
+KEY_COLUMN_USAGE	CONSTRAINT_SCHEMA
+PLUGINS	PLUGIN_NAME
+PROCESSLIST	ID
+REFERENTIAL_CONSTRAINTS	CONSTRAINT_SCHEMA
+SCHEMATA	SCHEMA_NAME
+SESSION_STATUS	VARIABLE_NAME
+SESSION_VARIABLES	VARIABLE_NAME
+STATISTICS	TABLE_SCHEMA
+TABLES	TABLE_SCHEMA
+TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
+PBXT_STATISTICS	Record_cache_usage
+SELECT MAX(table_name) FROM information_schema.tables;
+MAX(table_name)
+TABLE_CONSTRAINTS
+SELECT table_name from information_schema.tables
+WHERE table_name=(SELECT MAX(table_name)
+FROM information_schema.tables);
+table_name
+TABLE_CONSTRAINTS
+create table t1 (f1 int);
+create table t2 (f1 int, f2 int);
+select table_name from information_schema.tables
+where table_schema = 'test' and table_name not in
+(select table_name from information_schema.columns
+where table_schema = 'test' and column_name = 'f3');
+table_name
+t1
+t2
+drop table t1,t2;
+select 1 as f1 from information_schema.tables  where "CHARACTER_SETS"=
+(select cast(table_name as char)  from information_schema.tables
+order by table_name limit 1) limit 1;
+f1
+1
+select t.table_name, group_concat(t.table_schema, '.', t.table_name),
+count(*) as num1
+from information_schema.tables t
+inner join information_schema.columns c1
+on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
+where t.table_schema = 'information_schema' AND
+t.table_name not like 'falcon%' AND
+c1.ordinal_position =
+(select isnull(c2.column_type) -
+isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
+count(*) as num
+from information_schema.columns c2 where
+c2.table_schema='information_schema' and
+(c2.column_type = 'varchar(7)' or c2.column_type = 'varchar(20)')
+group by c2.column_type order by num limit 1)
+group by t.table_name order by num1, t.table_name;
+table_name	group_concat(t.table_schema, '.', t.table_name)	num1
+CHARACTER_SETS	information_schema.CHARACTER_SETS	1
+COLLATIONS	information_schema.COLLATIONS	1
+COLLATION_CHARACTER_SET_APPLICABILITY	information_schema.COLLATION_CHARACTER_SET_APPLICABILITY	1
+COLUMNS	information_schema.COLUMNS	1
+GLOBAL_STATUS	information_schema.GLOBAL_STATUS	1
+GLOBAL_VARIABLES	information_schema.GLOBAL_VARIABLES	1
+KEY_COLUMN_USAGE	information_schema.KEY_COLUMN_USAGE	1
+PBXT_STATISTICS	information_schema.PBXT_STATISTICS	1
+PLUGINS	information_schema.PLUGINS	1
+PROCESSLIST	information_schema.PROCESSLIST	1
+REFERENTIAL_CONSTRAINTS	information_schema.REFERENTIAL_CONSTRAINTS	1
+SCHEMATA	information_schema.SCHEMATA	1
+SESSION_STATUS	information_schema.SESSION_STATUS	1
+SESSION_VARIABLES	information_schema.SESSION_VARIABLES	1
+STATISTICS	information_schema.STATISTICS	1
+TABLES	information_schema.TABLES	1
+TABLE_CONSTRAINTS	information_schema.TABLE_CONSTRAINTS	1
+alter database;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+alter database test;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+create table t1 (
+f1 varchar(50),
+f2 varchar(50) not null,
+f3 varchar(50) default '',
+f4 varchar(50) default NULL,
+f5 bigint not null,
+f6 bigint not null default 10,
+f7 datetime not null,
+f8 datetime default '2006-01-01'
+);
+select column_default from information_schema.columns where table_name= 't1';
+column_default
+NULL
+NULL
+NULL
+NULL
+NULL
+NULL
+NULL
+NULL
+show columns from t1;
+Field	Type	Null	Key	Default	Extra
+f1	varchar(50)	YES		NULL	
+f2	varchar(50)	NO		NULL	
+f3	varchar(50)	YES		NULL	
+f4	varchar(50)	YES		NULL	
+f5	bigint	NO		NULL	
+f6	bigint	NO		NULL	
+f7	datetime	NO		NULL	
+f8	datetime	YES		NULL	
+drop table t1;
+show fields from information_schema.table_names;
+ERROR 42S02: Unknown table 'table_names' in information_schema
+show keys from information_schema.table_names;
+ERROR 42S02: Unknown table 'table_names' in information_schema
+SET max_heap_table_size = DEFAULT;
+USE test;
+End of 5.0 tests.
+SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA
+WHERE SCHEMA_NAME ='information_schema';
+SCHEMA_NAME
+information_schema
+SELECT TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
+TABLE_COLLATION
+select * from information_schema.columns where table_schema = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
+select * from `information_schema`.`COLUMNS` where `TABLE_NAME` = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
+select * from `information_schema`.`KEY_COLUMN_USAGE` where `TABLE_SCHEMA` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
+select * from `information_schema`.`KEY_COLUMN_USAGE` where `TABLE_NAME` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
+select * from `information_schema`.`REFERENTIAL_CONSTRAINTS` where `CONSTRAINT_SCHEMA` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
+select * from `information_schema`.`REFERENTIAL_CONSTRAINTS` where `TABLE_NAME` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
+select * from information_schema.schemata where schema_name = NULL;
+CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH
+select * from `information_schema`.`STATISTICS` where `TABLE_SCHEMA` = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
+select * from `information_schema`.`STATISTICS` where `TABLE_NAME` = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
+select * from information_schema.tables where table_schema = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
+select * from information_schema.tables where table_catalog = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
+select * from information_schema.tables where table_name = NULL;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	VERSION	ROW_FORMAT	TABLE_ROWS	AVG_ROW_LENGTH	DATA_LENGTH	MAX_DATA_LENGTH	INDEX_LENGTH	DATA_FREE	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	CHECK_TIME	TABLE_COLLATION	CHECKSUM	CREATE_OPTIONS	TABLE_COMMENT
+select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_SCHEMA` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
+select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL;
+CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE

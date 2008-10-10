@@ -98,6 +98,7 @@ select ceil(0.000000000000000009);
 #
 
 create table t1 select round(1, 6);
+--replace_regex /ENGINE=[a-z]*/ENGINE=X/i
 show create table t1;
 select * from t1;
 drop table t1;
