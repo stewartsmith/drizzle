@@ -36,8 +36,11 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/divide.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/int_divide.h>
 #include <drizzled/functions/minus.h>
+#include <drizzled/functions/mod.h>
 #include <drizzled/functions/multiply.h>
+#include <drizzled/functions/neg.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
 #include <drizzled/functions/num1.h>
@@ -45,51 +48,6 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_int_div :public Item_int_func
-{
-public:
-  Item_func_int_div(Item *a,Item *b) :Item_int_func(a,b)
-  {}
-  int64_t val_int();
-  const char *func_name() const { return "DIV"; }
-  void fix_length_and_dec();
-
-  virtual inline void print(String *str, enum_query_type query_type)
-  {
-    print_op(str, query_type);
-  }
-
-};
-
-
-class Item_func_mod :public Item_num_op
-{
-public:
-  Item_func_mod(Item *a,Item *b) :Item_num_op(a,b) {}
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "%"; }
-  void result_precision();
-  void fix_length_and_dec();
-};
-
-
-class Item_func_neg :public Item_func_num1
-{
-public:
-  Item_func_neg(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "-"; }
-  enum Functype functype() const   { return NEG_FUNC; }
-  void fix_length_and_dec();
-  void fix_num_length_and_dec();
-  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
-};
-
 
 class Item_func_abs :public Item_func_num1
 {

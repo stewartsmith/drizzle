@@ -23,8 +23,11 @@ libfunctions_la_SOURCES = additive_op.cc \
 			  divide.cc \
 			  func.cc \
                           int.cc \
+                          int_divide.cc \
 			  minus.cc \
+			  mod.cc \
 			  multiply.cc \
+			  neg.cc \
 			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
@@ -39,8 +42,11 @@ noinst_HEADERS = additive_op.h \
 		 divide.h \
 		 func.h \
                  int.h \
+                 int_divide.h \
 		 minus.h \
+		 mod.h \
 		 multiply.h \
+		 neg.h \
 		 num1.h \
                  numhybrid.h \
                  num_op.h \
