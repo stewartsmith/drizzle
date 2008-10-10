@@ -148,8 +148,6 @@ typedef int  File;    /* File descriptor */
 #define FILE_BINARY  O_BINARY /* Flag to my_fopen for binary streams */
 #endif
 
-#define F_TO_EOF  0L  /* Param to lockf() to lock rest of file */
-
 #ifndef O_TEMPORARY
 #define O_TEMPORARY  0
 #endif
