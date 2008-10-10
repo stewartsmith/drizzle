@@ -2041,7 +2041,7 @@ static int open_file(const char *name)
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
   cur_file++;
-  if (!(cur_file->file = my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+  if (!(cur_file->file = my_fopen(buff, O_RDONLY, MYF(0))))
   {
     cur_file--;
     die("Could not open '%s' for reading", buff);
@@ -4576,7 +4576,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file=
-          my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+          my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
     cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
     cur_file->lineno= 1;
