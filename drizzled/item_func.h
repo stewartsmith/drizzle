@@ -34,61 +34,17 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/additive_op.h>
 #include <drizzled/functions/connection_id.h>
 #include <drizzled/functions/decimal_typecast.h>
+#include <drizzled/functions/divide.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/minus.h>
+#include <drizzled/functions/multiply.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
 #include <drizzled/functions/num1.h>
+#include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_plus :public Item_func_additive_op
-{
-public:
-  Item_func_plus(Item *a,Item *b) :Item_func_additive_op(a,b) {}
-  const char *func_name() const { return "+"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-};
-
-class Item_func_minus :public Item_func_additive_op
-{
-public:
-  Item_func_minus(Item *a,Item *b) :Item_func_additive_op(a,b) {}
-  const char *func_name() const { return "-"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  void fix_length_and_dec();
-};
-
-
-class Item_func_mul :public Item_num_op
-{
-public:
-  Item_func_mul(Item *a,Item *b) :Item_num_op(a,b) {}
-  const char *func_name() const { return "*"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  void result_precision();
-};
-
-
-class Item_func_div :public Item_num_op
-{
-public:
-  uint32_t prec_increment;
-  Item_func_div(Item *a,Item *b) :Item_num_op(a,b) {}
-  int64_t int_op() { assert(0); return 0; }
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "/"; }
-  void fix_length_and_dec();
-  void result_precision();
-};
-
 
 class Item_func_int_div :public Item_int_func
 {

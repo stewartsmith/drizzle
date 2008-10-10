@@ -20,11 +20,15 @@ noinst_LTLIBRARIES = 	libfunctions.la
 libfunctions_la_SOURCES = additive_op.cc \
 			  connection_id.cc \
 			  decimal_typecast.cc \
+			  divide.cc \
 			  func.cc \
                           int.cc \
+			  minus.cc \
+			  multiply.cc \
 			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
+                          plus.cc \
 			  real.cc \
 			  signed.cc \
 			  unsigned.cc
@@ -32,11 +36,15 @@ libfunctions_la_SOURCES = additive_op.cc \
 noinst_HEADERS = additive_op.h \
 		 connection_id.h \
 		 decimal_typecast.h \
+		 divide.h \
 		 func.h \
                  int.h \
+		 minus.h \
+		 multiply.h \
 		 num1.h \
                  numhybrid.h \
                  num_op.h \
+                 plus.h \
 		 real.h \
 		 signed.h \
 		 unsigned.h
