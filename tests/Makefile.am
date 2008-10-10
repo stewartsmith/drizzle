@@ -183,6 +183,10 @@ test-drizzle:
         limit \
         lock_tables_lost_commit \
         overflow \
+	order_by \
+	order_fill_sortbuf \
+	overflow \
+	pool_of_threads \
         rollback \
         select \
         subselect \
@@ -191,6 +195,8 @@ test-drizzle:
         sum_distinct \
         tablelock \
 	type_blob \
+	type_date \
+	type_datetime \
         type_newdecimal \
 	type_varchar \
         unsafe_binlog_innodb \

@@ -1,9 +1,9 @@
 drop table if exists t1,t2,t3;
 CREATE TABLE t1 (
-id int(6) DEFAULT '0' NOT NULL,
-idservice int(5),
-clee char(20) NOT NULL,
-flag char(1),
+id int DEFAULT '0' NOT NULL,
+idservice int,
+clee varchar(20) NOT NULL,
+flag varchar(1),
 KEY id (id),
 PRIMARY KEY (clee)
 );
@@ -15,10 +15,10 @@ INSERT INTO t1 VALUES (2,6,'60671515','Y');
 INSERT INTO t1 VALUES (2,7,'60671569','Y');
 INSERT INTO t1 VALUES (2,3,'dd','Y');
 CREATE TABLE t2 (
-id int(6) NOT NULL auto_increment,
+id int NOT NULL auto_increment,
 description varchar(40) NOT NULL,
 idform varchar(40),
-ordre int(6) unsigned DEFAULT '0' NOT NULL,
+ordre int DEFAULT '0' NOT NULL,
 image varchar(60),
 PRIMARY KEY (id),
 KEY id (id,ordre)
@@ -151,22 +151,22 @@ test
 drop table t1;
 CREATE TABLE t1
 (
-a          int unsigned       NOT NULL,
-b          int unsigned       NOT NULL,
-c          int unsigned       NOT NULL,
+a          int       NOT NULL,
+b          int       NOT NULL,
+c          int       NOT NULL,
 UNIQUE(a),
 INDEX(b),
 INDEX(c)
 );
 CREATE TABLE t2
 (
-c          int unsigned       NOT NULL,
-i          int unsigned       NOT NULL,
+c          int       NOT NULL,
+i          int       NOT NULL,
 INDEX(c)
 );
 CREATE TABLE t3
 (
-c          int unsigned       NOT NULL,
+c          int       NOT NULL,
 v          varchar(64),
 INDEX(c)
 );
@@ -251,7 +251,7 @@ DateOfAction	TransactionID
 1999-07-27	840
 drop table t1,t2,t3;
 CREATE TABLE t1 (
-member_id int(11) NOT NULL auto_increment,
+member_id int NOT NULL auto_increment,
 inschrijf_datum varchar(20) NOT NULL default '',
 lastchange_datum varchar(20) NOT NULL default '',
 nickname varchar(20) NOT NULL default '',
@@ -280,8 +280,6 @@ info text NOT NULL default '',
 ipnr varchar(30) NOT NULL default '',
 PRIMARY KEY  (member_id)
 ) ENGINE=MyISAM PACK_KEYS=1;
-Warnings:
-Warning	1101	BLOB/TEXT column 'info' can't have a default value
 insert into t1 (member_id) values (1),(2),(3);
 select member_id, nickname, voornaam FROM t1
 ORDER by lastchange_datum DESC LIMIT 2;
@@ -293,13 +291,13 @@ create table t1 (a int not null, b int, c varchar(10), key (a, b, c));
 insert into t1 values (1, NULL, NULL), (1, NULL, 'b'), (1, 1, NULL), (1, 1, 'b'), (1, 1, 'b'), (2, 1, 'a'), (2, 1, 'b'), (2, 2, 'a'), (2, 2, 'b'), (2, 3, 'c'),(1,3,'b');
 explain select * from t1 where (a = 1 and b is null and c = 'b') or (a > 2) order by a desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	a	a	22	NULL	11	Using where; Using index
+1	SIMPLE	t1	index	a	a	52	NULL	11	Using where; Using index
 select * from t1 where (a = 1 and b is null and c = 'b') or (a > 2) order by a desc;
 a	b	c
 1	NULL	b
 explain select * from t1 where a >= 1 and a < 3 order by a desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	4	NULL	10	Using where; Using index
+1	SIMPLE	t1	range	a	a	4	NULL	5	Using where; Using index
 select * from t1 where a >= 1 and a < 3 order by a desc;
 a	b	c
 2	3	c
@@ -333,7 +331,7 @@ a	b	c
 1	NULL	b
 explain select * from t1 where a >= 1 and a < 3 and b >0 order by a desc,b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	9	NULL	8	Using where; Using index
+1	SIMPLE	t1	range	a	a	9	NULL	5	Using where; Using index
 explain select * from t1 where a = 2 and b >0 order by a desc,b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	a	a	9	NULL	5	Using where; Using index
@@ -349,7 +347,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	a	a	9	NULL	5	Using where; Using index
 explain select * from t1 where a = 2 and b < 2 order by a desc,b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	9	NULL	2	Using where; Using index
+1	SIMPLE	t1	range	a	a	9	NULL	1	Using where; Using index
 explain select * from t1 where a = 1 order by b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	4	const	5	Using where; Using index
@@ -361,20 +359,13 @@ a	b	c
 1	1	NULL
 1	NULL	b
 1	NULL	NULL
-alter table t1 modify b int not null, modify c varchar(10) not null;
-Warnings:
-Warning	1265	Data truncated for column 'b' at row 1
-Warning	1265	Data truncated for column 'c' at row 1
-Warning	1265	Data truncated for column 'b' at row 2
-Warning	1265	Data truncated for column 'c' at row 3
+delete from t1 WHERE b IS NULL OR c IS NULL;
+alter table t1 modify b bigint not null, modify c varchar(100) not null;
 explain select * from t1 order by a, b, c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	a	20	NULL	11	Using index
+1	SIMPLE	t1	index	NULL	a	414	NULL	8	Using index
 select * from t1 order by a, b, c;
 a	b	c
-1	0	
-1	0	b
-1	1	
 1	1	b
 1	1	b
 1	3	b
@@ -385,7 +376,7 @@ a	b	c
 2	3	c
 explain select * from t1 order by a desc, b desc, c desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	a	20	NULL	11	Using index
+1	SIMPLE	t1	index	NULL	a	414	NULL	8	Using index
 select * from t1 order by a desc, b desc, c desc;
 a	b	c
 2	3	c
@@ -396,29 +387,23 @@ a	b	c
 1	3	b
 1	1	b
 1	1	b
-1	1	
-1	0	b
-1	0	
 explain select * from t1 where (a = 1 and b = 1 and c = 'b') or (a > 2) order by a desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	20	NULL	3	Using where; Using index
+1	SIMPLE	t1	range	a	a	414	NULL	3	Using where; Using index
 select * from t1 where (a = 1 and b = 1 and c = 'b') or (a > 2) order by a desc;
 a	b	c
 1	1	b
 1	1	b
 explain select * from t1 where a < 2 and b <= 1 order by a desc, b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	4	NULL	6	Using where; Using index
+1	SIMPLE	t1	range	a	a	4	NULL	3	Using where; Using index
 select * from t1 where a < 2 and b <= 1 order by a desc, b desc;
 a	b	c
 1	1	b
 1	1	b
-1	1	
-1	0	b
-1	0	
 select count(*) from t1 where a < 5 and b > 0;
 count(*)
-9
+8
 select * from t1 where a < 5 and b > 0 order by a desc,b desc;
 a	b	c
 2	3	c
@@ -429,54 +414,47 @@ a	b	c
 1	3	b
 1	1	b
 1	1	b
-1	1	
 explain select * from t1 where a between 1 and 3 and b <= 1 order by a desc, b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	8	NULL	10	Using where; Using index
+1	SIMPLE	t1	range	a	a	12	NULL	4	Using where; Using index
 select * from t1 where a between 1 and 3 and b <= 1 order by a desc, b desc;
 a	b	c
 2	1	b
 2	1	a
 1	1	b
 1	1	b
-1	1	
-1	0	b
-1	0	
 explain select * from t1 where a between 0 and 1 order by a desc, b desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	4	NULL	5	Using where; Using index
+1	SIMPLE	t1	range	a	a	4	NULL	3	Using where; Using index
 select * from t1 where a between 0 and 1 order by a desc, b desc;
 a	b	c
 1	3	b
 1	1	b
 1	1	b
-1	1	
-1	0	b
-1	0	
 drop table t1;
 CREATE TABLE t1 (
-gid int(10) unsigned NOT NULL auto_increment,
-cid smallint(5) unsigned NOT NULL default '0',
+gid int NOT NULL auto_increment,
+cid int NOT NULL default '0',
 PRIMARY KEY  (gid),
 KEY component_id (cid)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (103853,108),(103867,108),(103962,108),(104505,108),(104619,108),(104620,108);
-ALTER TABLE t1 add skr int(10) not null;
+ALTER TABLE t1 add skr int not null;
 CREATE TABLE t2 (
-gid int(10) unsigned NOT NULL default '0',
-uid smallint(5) unsigned NOT NULL default '1',
-sid tinyint(3) unsigned NOT NULL default '1',
+gid int NOT NULL default '0',
+uid int NOT NULL default '1',
+sid int NOT NULL default '1',
 PRIMARY KEY  (gid),
 KEY uid (uid),
 KEY status_id (sid)
 ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (103853,250,5),(103867,27,5),(103962,27,5),(104505,117,5),(104619,75,5),(104620,15,5);
 CREATE TABLE t3 (
-uid smallint(6) NOT NULL auto_increment,
+uid int NOT NULL auto_increment,
 PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(15),(27),(75),(117),(250);
-ALTER TABLE t3 add skr int(10) not null;
+ALTER TABLE t3 add skr int not null;
 select t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
 gid	sid	uid
 104620	5	15
@@ -496,39 +474,39 @@ gid	sid	uid
 EXPLAIN select t1.gid, t2.sid, t3.uid from t3, t2, t1 where t2.gid = t1.gid and t2.uid = t3.uid order by t1.gid, t3.uid;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	PRIMARY,uid	NULL	NULL	NULL	6	Using temporary; Using filesort
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	2	test.t2.uid	1	Using where; Using index
+1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t2.uid	1	Using index
 1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t2.gid	1	Using index
 EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t1.gid,t3.skr;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t3	ALL	PRIMARY	NULL	NULL	NULL	6	Using temporary; Using filesort
-1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.uid	1	Using where; Using index
+1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.uid	1	Using index
 EXPLAIN SELECT t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	PRIMARY,uid	NULL	NULL	NULL	6	Using temporary; Using filesort
 1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t2.gid	1	Using index
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	2	test.t2.uid	1	Using where; Using index
+1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t2.uid	1	Using index
 EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t3.skr,t1.gid;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t3	ALL	PRIMARY	NULL	NULL	NULL	6	Using temporary; Using filesort
-1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.uid	1	Using where; Using index
+1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t3.uid	1	Using index
 EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.skr = t3.uid order by t1.gid,t3.skr;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	6	Using temporary; Using filesort
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	2	test.t1.skr	1	Using index condition
+1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t1.skr	1	
 drop table t1,t2,t3;
 CREATE TABLE t1 (
 `titre` char(80) NOT NULL default '',
-`numeropost` mediumint(8) unsigned NOT NULL auto_increment,
+`numeropost` int NOT NULL auto_increment,
 `date` datetime NOT NULL default '0000-00-00 00:00:00',
 `auteur` char(35) NOT NULL default '',
-`icone` tinyint(2) unsigned NOT NULL default '0',
+`icone` int NOT NULL default '0',
 `lastauteur` char(35) NOT NULL default '',
-`nbrep` smallint(6) unsigned NOT NULL default '0',
+`nbrep` int NOT NULL default '0',
 `dest` char(35) NOT NULL default '',
-`lu` tinyint(1) unsigned NOT NULL default '0',
-`vue` mediumint(8) unsigned NOT NULL default '0',
-`ludest` tinyint(1) unsigned NOT NULL default '0',
-`ouvert` tinyint(1) unsigned NOT NULL default '1',
+`lu` int NOT NULL default '0',
+`vue` int NOT NULL default '0',
+`ludest` int NOT NULL default '0',
+`ouvert` int NOT NULL default '1',
 PRIMARY KEY  (`numeropost`),
 KEY `date` (`date`),
 KEY `dest` (`dest`,`ludest`),
@@ -537,7 +515,7 @@ KEY `auteur_2` (`auteur`,`date`),
 KEY `dest_2` (`dest`,`date`)
 ) CHECKSUM=1;
 CREATE TABLE t2 (
-`numeropost` mediumint(8) unsigned NOT NULL default '0',
+`numeropost` int NOT NULL default '0',
 `pseudo` char(35) NOT NULL default '',
 PRIMARY KEY  (`numeropost`,`pseudo`),
 KEY `pseudo` (`pseudo`)
@@ -583,17 +561,1013 @@ a	b
 5	NULL
 DROP TABLE t1;
 create table t1(id int not null auto_increment primary key, t char(12));
-explain select id,t from t1 order by id;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	1000	Using filesort
-explain select id,t from t1 force index (primary) order by id;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	1000	
+select id,t from t1 force index (primary) order by id;
+id	t
+1	1000
+2	999
+3	998
+4	997
+5	996
+6	995
+7	994
+8	993
+9	992
+10	991
+11	990
+12	989
+13	988
+14	987
+15	986
+16	985
+17	984
+18	983
+19	982
+20	981
+21	980
+22	979
+23	978
+24	977
+25	976
+26	975
+27	974
+28	973
+29	972
+30	971
+31	970
+32	969
+33	968
+34	967
+35	966
+36	965
+37	964
+38	963
+39	962
+40	961
+41	960
+42	959
+43	958
+44	957
+45	956
+46	955
+47	954
+48	953
+49	952
+50	951
+51	950
+52	949
+53	948
+54	947
+55	946
+56	945
+57	944
+58	943
+59	942
+60	941
+61	940
+62	939
+63	938
+64	937
+65	936
+66	935
+67	934
+68	933
+69	932
+70	931
+71	930
+72	929
+73	928
+74	927
+75	926
+76	925
+77	924
+78	923
+79	922
+80	921
+81	920
+82	919
+83	918
+84	917
+85	916
+86	915
+87	914
+88	913
+89	912
+90	911
+91	910
+92	909
+93	908
+94	907
+95	906
+96	905
+97	904
+98	903
+99	902
+100	901
+101	900
+102	899
+103	898
+104	897
+105	896
+106	895
+107	894
+108	893
+109	892
+110	891
+111	890
+112	889
+113	888
+114	887
+115	886
+116	885
+117	884
+118	883
+119	882
+120	881
+121	880
+122	879
+123	878
+124	877
+125	876
+126	875
+127	874
+128	873
+129	872
+130	871
+131	870
+132	869
+133	868
+134	867
+135	866
+136	865
+137	864
+138	863
+139	862
+140	861
+141	860
+142	859
+143	858
+144	857
+145	856
+146	855
+147	854
+148	853
+149	852
+150	851
+151	850
+152	849
+153	848
+154	847
+155	846
+156	845
+157	844
+158	843
+159	842
+160	841
+161	840
+162	839
+163	838
+164	837
+165	836
+166	835
+167	834
+168	833
+169	832
+170	831
+171	830
+172	829
+173	828
+174	827
+175	826
+176	825
+177	824
+178	823
+179	822
+180	821
+181	820
+182	819
+183	818
+184	817
+185	816
+186	815
+187	814
+188	813
+189	812
+190	811
+191	810
+192	809
+193	808
+194	807
+195	806
+196	805
+197	804
+198	803
+199	802
+200	801
+201	800
+202	799
+203	798
+204	797
+205	796
+206	795
+207	794
+208	793
+209	792
+210	791
+211	790
+212	789
+213	788
+214	787
+215	786
+216	785
+217	784
+218	783
+219	782
+220	781
+221	780
+222	779
+223	778
+224	777
+225	776
+226	775
+227	774
+228	773
+229	772
+230	771
+231	770
+232	769
+233	768
+234	767
+235	766
+236	765
+237	764
+238	763
+239	762
+240	761
+241	760
+242	759
+243	758
+244	757
+245	756
+246	755
+247	754
+248	753
+249	752
+250	751
+251	750
+252	749
+253	748
+254	747
+255	746
+256	745
+257	744
+258	743
+259	742
+260	741
+261	740
+262	739
+263	738
+264	737
+265	736
+266	735
+267	734
+268	733
+269	732
+270	731
+271	730
+272	729
+273	728
+274	727
+275	726
+276	725
+277	724
+278	723
+279	722
+280	721
+281	720
+282	719
+283	718
+284	717
+285	716
+286	715
+287	714
+288	713
+289	712
+290	711
+291	710
+292	709
+293	708
+294	707
+295	706
+296	705
+297	704
+298	703
+299	702
+300	701
+301	700
+302	699
+303	698
+304	697
+305	696
+306	695
+307	694
+308	693
+309	692
+310	691
+311	690
+312	689
+313	688
+314	687
+315	686
+316	685
+317	684
+318	683
+319	682
+320	681
+321	680
+322	679
+323	678
+324	677
+325	676
+326	675
+327	674
+328	673
+329	672
+330	671
+331	670
+332	669
+333	668
+334	667
+335	666
+336	665
+337	664
+338	663
+339	662
+340	661
+341	660
+342	659
+343	658
+344	657
+345	656
+346	655
+347	654
+348	653
+349	652
+350	651
+351	650
+352	649
+353	648
+354	647
+355	646
+356	645
+357	644
+358	643
+359	642
+360	641
+361	640
+362	639
+363	638
+364	637
+365	636
+366	635
+367	634
+368	633
+369	632
+370	631
+371	630
+372	629
+373	628
+374	627
+375	626
+376	625
+377	624
+378	623
+379	622
+380	621
+381	620
+382	619
+383	618
+384	617
+385	616
+386	615
+387	614
+388	613
+389	612
+390	611
+391	610
+392	609
+393	608
+394	607
+395	606
+396	605
+397	604
+398	603
+399	602
+400	601
+401	600
+402	599
+403	598
+404	597
+405	596
+406	595
+407	594
+408	593
+409	592
+410	591
+411	590
+412	589
+413	588
+414	587
+415	586
+416	585
+417	584
+418	583
+419	582
+420	581
+421	580
+422	579
+423	578
+424	577
+425	576
+426	575
+427	574
+428	573
+429	572
+430	571
+431	570
+432	569
+433	568
+434	567
+435	566
+436	565
+437	564
+438	563
+439	562
+440	561
+441	560
+442	559
+443	558
+444	557
+445	556
+446	555
+447	554
+448	553
+449	552
+450	551
+451	550
+452	549
+453	548
+454	547
+455	546
+456	545
+457	544
+458	543
+459	542
+460	541
+461	540
+462	539
+463	538
+464	537
+465	536
+466	535
+467	534
+468	533
+469	532
+470	531
+471	530
+472	529
+473	528
+474	527
+475	526
+476	525
+477	524
+478	523
+479	522
+480	521
+481	520
+482	519
+483	518
+484	517
+485	516
+486	515
+487	514
+488	513
+489	512
+490	511
+491	510
+492	509
+493	508
+494	507
+495	506
+496	505
+497	504
+498	503
+499	502
+500	501
+501	500
+502	499
+503	498
+504	497
+505	496
+506	495
+507	494
+508	493
+509	492
+510	491
+511	490
+512	489
+513	488
+514	487
+515	486
+516	485
+517	484
+518	483
+519	482
+520	481
+521	480
+522	479
+523	478
+524	477
+525	476
+526	475
+527	474
+528	473
+529	472
+530	471
+531	470
+532	469
+533	468
+534	467
+535	466
+536	465
+537	464
+538	463
+539	462
+540	461
+541	460
+542	459
+543	458
+544	457
+545	456
+546	455
+547	454
+548	453
+549	452
+550	451
+551	450
+552	449
+553	448
+554	447
+555	446
+556	445
+557	444
+558	443
+559	442
+560	441
+561	440
+562	439
+563	438
+564	437
+565	436
+566	435
+567	434
+568	433
+569	432
+570	431
+571	430
+572	429
+573	428
+574	427
+575	426
+576	425
+577	424
+578	423
+579	422
+580	421
+581	420
+582	419
+583	418
+584	417
+585	416
+586	415
+587	414
+588	413
+589	412
+590	411
+591	410
+592	409
+593	408
+594	407
+595	406
+596	405
+597	404
+598	403
+599	402
+600	401
+601	400
+602	399
+603	398
+604	397
+605	396
+606	395
+607	394
+608	393
+609	392
+610	391
+611	390
+612	389
+613	388
+614	387
+615	386
+616	385
+617	384
+618	383
+619	382
+620	381
+621	380
+622	379
+623	378
+624	377
+625	376
+626	375
+627	374
+628	373
+629	372
+630	371
+631	370
+632	369
+633	368
+634	367
+635	366
+636	365
+637	364
+638	363
+639	362
+640	361
+641	360
+642	359
+643	358
+644	357
+645	356
+646	355
+647	354
+648	353
+649	352
+650	351
+651	350
+652	349
+653	348
+654	347
+655	346
+656	345
+657	344
+658	343
+659	342
+660	341
+661	340
+662	339
+663	338
+664	337
+665	336
+666	335
+667	334
+668	333
+669	332
+670	331
+671	330
+672	329
+673	328
+674	327
+675	326
+676	325
+677	324
+678	323
+679	322
+680	321
+681	320
+682	319
+683	318
+684	317
+685	316
+686	315
+687	314
+688	313
+689	312
+690	311
+691	310
+692	309
+693	308
+694	307
+695	306
+696	305
+697	304
+698	303
+699	302
+700	301
+701	300
+702	299
+703	298
+704	297
+705	296
+706	295
+707	294
+708	293
+709	292
+710	291
+711	290
+712	289
+713	288
+714	287
+715	286
+716	285
+717	284
+718	283
+719	282
+720	281
+721	280
+722	279
+723	278
+724	277
+725	276
+726	275
+727	274
+728	273
+729	272
+730	271
+731	270
+732	269
+733	268
+734	267
+735	266
+736	265
+737	264
+738	263
+739	262
+740	261
+741	260
+742	259
+743	258
+744	257
+745	256
+746	255
+747	254
+748	253
+749	252
+750	251
+751	250
+752	249
+753	248
+754	247
+755	246
+756	245
+757	244
+758	243
+759	242
+760	241
+761	240
+762	239
+763	238
+764	237
+765	236
+766	235
+767	234
+768	233
+769	232
+770	231
+771	230
+772	229
+773	228
+774	227
+775	226
+776	225
+777	224
+778	223
+779	222
+780	221
+781	220
+782	219
+783	218
+784	217
+785	216
+786	215
+787	214
+788	213
+789	212
+790	211
+791	210
+792	209
+793	208
+794	207
+795	206
+796	205
+797	204
+798	203
+799	202
+800	201
+801	200
+802	199
+803	198
+804	197
+805	196
+806	195
+807	194
+808	193
+809	192
+810	191
+811	190
+812	189
+813	188
+814	187
+815	186
+816	185
+817	184
+818	183
+819	182
+820	181
+821	180
+822	179
+823	178
+824	177
+825	176
+826	175
+827	174
+828	173
+829	172
+830	171
+831	170
+832	169
+833	168
+834	167
+835	166
+836	165
+837	164
+838	163
+839	162
+840	161
+841	160
+842	159
+843	158
+844	157
+845	156
+846	155
+847	154
+848	153
+849	152
+850	151
+851	150
+852	149
+853	148
+854	147
+855	146
+856	145
+857	144
+858	143
+859	142
+860	141
+861	140
+862	139
+863	138
+864	137
+865	136
+866	135
+867	134
+868	133
+869	132
+870	131
+871	130
+872	129
+873	128
+874	127
+875	126
+876	125
+877	124
+878	123
+879	122
+880	121
+881	120
+882	119
+883	118
+884	117
+885	116
+886	115
+887	114
+888	113
+889	112
+890	111
+891	110
+892	109
+893	108
+894	107
+895	106
+896	105
+897	104
+898	103
+899	102
+900	101
+901	100
+902	99
+903	98
+904	97
+905	96
+906	95
+907	94
+908	93
+909	92
+910	91
+911	90
+912	89
+913	88
+914	87
+915	86
+916	85
+917	84
+918	83
+919	82
+920	81
+921	80
+922	79
+923	78
+924	77
+925	76
+926	75
+927	74
+928	73
+929	72
+930	71
+931	70
+932	69
+933	68
+934	67
+935	66
+936	65
+937	64
+938	63
+939	62
+940	61
+941	60
+942	59
+943	58
+944	57
+945	56
+946	55
+947	54
+948	53
+949	52
+950	51
+951	50
+952	49
+953	48
+954	47
+955	46
+956	45
+957	44
+958	43
+959	42
+960	41
+961	40
+962	39
+963	38
+964	37
+965	36
+966	35
+967	34
+968	33
+969	32
+970	31
+971	30
+972	29
+973	28
+974	27
+975	26
+976	25
+977	24
+978	23
+979	22
+980	21
+981	20
+982	19
+983	18
+984	17
+985	16
+986	15
+987	14
+988	13
+989	12
+990	11
+991	10
+992	9
+993	8
+994	7
+995	6
+996	5
+997	4
+998	3
+999	2
+1000	1
 drop table t1;
 CREATE TABLE t1 (
 FieldKey varchar(36) NOT NULL default '',
-LongVal bigint(20) default NULL,
-StringVal mediumtext,
+LongVal bigint default NULL,
+StringVal text,
 KEY FieldKey (FieldKey),
 KEY LongField (FieldKey,LongVal),
 KEY StringField (FieldKey,StringVal(32))
@@ -601,7 +1575,7 @@ KEY StringField (FieldKey,StringVal(32))
 INSERT INTO t1 VALUES ('0',3,'0'),('0',2,'1'),('0',1,'2'),('1',2,'1'),('1',1,'3'), ('1',0,'2'),('2',3,'0'),('2',2,'1'),('2',1,'2'),('2',3,'0'),('2',2,'1'),('2',1,'2'),('3',2,'1'),('3',1,'2'),('3','3','3');
 EXPLAIN SELECT * FROM t1 WHERE FieldKey = '1' ORDER BY LongVal;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	FieldKey,LongField,StringField	LongField	38	const	3	Using where
+1	SIMPLE	t1	ref	FieldKey,LongField,StringField	LongField	146	const	3	Using where
 SELECT * FROM t1 WHERE FieldKey = '1' ORDER BY LongVal;
 FieldKey	LongVal	StringVal
 1	0	2
@@ -609,7 +1583,7 @@ FieldKey	LongVal	StringVal
 1	2	1
 EXPLAIN SELECT * FROM t1 ignore index (FieldKey, LongField) WHERE FieldKey > '2' ORDER BY LongVal;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	StringField	StringField	38	NULL	4	Using where; Using filesort
+1	SIMPLE	t1	range	StringField	StringField	146	NULL	3	Using index condition; Using filesort
 SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY LongVal;
 FieldKey	LongVal	StringVal
 3	1	2
@@ -617,7 +1591,7 @@ FieldKey	LongVal	StringVal
 3	3	3
 EXPLAIN SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY FieldKey, LongVal;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	FieldKey,LongField,StringField	LongField	38	NULL	4	Using where
+1	SIMPLE	t1	range	FieldKey,LongField,StringField	LongField	146	NULL	3	Using where
 SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY FieldKey, LongVal;
 FieldKey	LongVal	StringVal
 3	1	2
@@ -628,7 +1602,7 @@ CREATE TABLE t1 (a INT, b INT);
 SET @id=0;
 UPDATE t1 SET a=0 ORDER BY (a=@id), b;
 DROP TABLE t1;
-CREATE TABLE t1 (  id smallint(6) unsigned NOT NULL default '0',  menu tinyint(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
+CREATE TABLE t1 (  id int NOT NULL default '0',  menu int NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (11384, 2),(11392, 2);
 SELECT id FROM t1 WHERE id <11984 AND menu =2 ORDER BY id DESC LIMIT 1 ;
 id
@@ -638,7 +1612,7 @@ create table t1(a int, b int, index(b));
 insert into t1 values (2, 1), (1, 1), (4, NULL), (3, NULL), (6, 2), (5, 2);
 explain select * from t1 where b=1 or b is null order by a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	b	b	5	const	3	Using filesort
+1	SIMPLE	t1	ALL	b	NULL	NULL	NULL	6	Using where; Using filesort
 select * from t1 where b=1 or b is null order by a;
 a	b
 1	1
@@ -647,7 +1621,7 @@ a	b
 4	NULL
 explain select * from t1 where b=2 or b is null order by a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref_or_null	b	b	5	const	4	Using filesort
+1	SIMPLE	t1	ALL	b	NULL	NULL	NULL	6	Using where; Using filesort
 select * from t1 where b=2 or b is null order by a;
 a	b
 3	NULL
@@ -755,17 +1729,17 @@ insert into t1 set a = concat(repeat('x', 19), 'aa');
 set max_sort_length=20;
 select a from t1 order by a;
 a
-xxxxxxxxxxxxxxxxxxxab
-xxxxxxxxxxxxxxxxxxxaa
 xxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxz
+xxxxxxxxxxxxxxxxxxxab
+xxxxxxxxxxxxxxxxxxxaa
 drop table t1;
 create table t1 (
 `sid` decimal(8,0) default null,
 `wnid` varchar(11) not null default '',
 key `wnid14` (`wnid`(4)),
 key `wnid` (`wnid`)
-) engine=myisam default charset=latin1;
+) engine=myisam;
 insert into t1 (`sid`, `wnid`) values
 ('10100','01019000000'),('37986','01019000000'),('37987','01019010000'),
 ('39560','01019090000'),('37989','01019000000'),('37990','01019011000'),
@@ -784,7 +1758,7 @@ insert into t1 (`sid`, `wnid`) values
 ('25295','02071491000'),('25296','02071491000'),('25297','02071499000');
 explain select * from t1 where wnid like '0101%' order by wnid;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	wnid14,wnid	wnid	13	NULL	10	Using where
+1	SIMPLE	t1	range	wnid14,wnid	wnid	46	NULL	10	Using where
 select * from t1 where wnid like '0101%' order by wnid;
 sid	wnid
 10100	01019000000
@@ -875,7 +1849,7 @@ SELECT a.a + 1 AS num FROM t1 a JOIN t1 b ON num = b.a;
 ERROR 42S22: Unknown column 'num' in 'on clause'
 DROP TABLE t1;
 CREATE TABLE bug25126 (
-val int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY
+val int NOT NULL AUTO_INCREMENT PRIMARY KEY
 );
 UPDATE bug25126 SET MissingCol = MissingCol;
 ERROR 42S22: Unknown column 'MissingCol' in 'field list'
@@ -1042,7 +2016,7 @@ a	ratio
 19	1.3333
 9	2.6667
 drop table t1;
-CREATE TABLE t1 (a INT UNSIGNED NOT NULL, b TIME);
+CREATE TABLE t1 (a INT NOT NULL, b TIME);
 INSERT INTO t1 (a) VALUES (100000), (0), (100), (1000000),(10000), (1000), (10);
 UPDATE t1 SET b = SEC_TO_TIME(a);
 SELECT a, b FROM t1 ORDER BY b DESC;
@@ -1070,66 +2044,8 @@ CREATE TABLE t2 (a INT, b INT, KEY a (a,b));
 INSERT INTO t2 VALUES (1,1),(1,2),(2,1),(2,2);
 EXPLAIN SELECT 1 FROM t1,t2 WHERE t1.b=2 AND t1.a=t2.a ORDER BY t2.b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	PRIMARY,b	b	5	const	1	
+1	SIMPLE	t1	const	PRIMARY,b	b	5	const	1	Using index
 1	SIMPLE	t2	ref	a	a	5	const	2	Using where; Using index
-DROP TABLE t1,t2;
-CREATE TABLE t1(
-id int auto_increment PRIMARY KEY, c2 int, c3 int, INDEX k2(c2), INDEX k3(c3));
-INSERT INTO t1 (c2,c3) VALUES
-(31,34),(35,38),(34,31),(32,35),(31,39),
-(11,14),(15,18),(14,11),(12,15),(11,19);
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-UPDATE t1 SET c2=20 WHERE id%100 = 0;
-SELECT COUNT(*) FROM t1;
-COUNT(*)
-40960
-CREATE TABLE t2 LIKE t1;
-INSERT INTO t2 SELECT * FROM t1 ORDER BY id;
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 20;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	k2	k3	5	NULL	111	Using where
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 4000;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	k2	k2	5	const	7341	Using where; Using filesort
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2 BETWEEN 10 AND 12 ORDER BY c3 LIMIT 20;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	k2	k3	5	NULL	73	Using where
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2 BETWEEN 20 AND 30 ORDER BY c3 LIMIT 4000;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	k2	k2	5	NULL	386	Using index condition; Using where; Using MRR; Using filesort
-SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 20;
-id	c3
-6	14
-16	14
-26	14
-36	14
-46	14
-56	14
-66	14
-76	14
-86	14
-96	14
-106	14
-116	14
-126	14
-136	14
-146	14
-156	14
-166	14
-176	14
-186	14
-196	14
 DROP TABLE t1,t2;
 CREATE TABLE t1 (
 a INT,
@@ -1145,7 +2061,7 @@ INSERT INTO t1 SELECT a +32, b +32 FROM t1;
 INSERT INTO t1 SELECT a +64, b +64 FROM t1;
 EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	NULL	ab	4	NULL	10	Using index for group-by
+1	SIMPLE	t1	range	NULL	PRIMARY	4	NULL	65	Using index for group-by
 SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
 a
 1
@@ -1278,7 +2194,7 @@ a
 128
 SELECT @tmp_tables_after = @tmp_tables_before ;
 @tmp_tables_after = @tmp_tables_before
-1
+NULL
 EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (a, ab) ORDER BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	128	Using index
@@ -1414,21 +2330,23 @@ a
 128
 SELECT @tmp_tables_after = @tmp_tables_before;
 @tmp_tables_after = @tmp_tables_before
-1
+NULL
 DROP TABLE t1;
 #
 # Bug#31590: Wrong error message on sort buffer being too small.
 #
-create table t1(a int, b tinytext);
+create table t1(a int, b text);
 insert into t1 values (1,2),(3,2);
 set session sort_buffer_size= 30000;
 Warnings:
 Warning	1292	Truncated incorrect sort_buffer_size value: '30000'
 set session max_sort_length= 2180;
 select * from t1 order by b;
-ERROR HY001: Out of sort memory; increase server sort buffer size
+a	b
+1	2
+3	2
 drop table t1;
-CREATE TABLE t2 (a varchar(32), b int(11), c float, d double, 
+CREATE TABLE t2 (a varchar(32), b int, c float, d double, 
 UNIQUE KEY a (a,b,c), KEY b (b), KEY c (c));
 CREATE TABLE t1 (a varchar(32), b char(3), UNIQUE KEY a (a,b), KEY b (b));
 CREATE TABLE t3 (a varchar(32), b char(3), UNIQUE KEY a (a,b));
@@ -1438,8 +2356,8 @@ SELECT d FROM t1, t2
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a,b	b	4	const	4	Using index condition; Using temporary; Using filesort
-1	SIMPLE	t2	ref	a,b,c	a	40	test.t1.a,const	11	Using index condition
+1	SIMPLE	t1	ref	a,b	b	15	const	4	Using index condition; Using temporary; Using filesort
+1	SIMPLE	t2	ref	a,b,c	a	136	test.t1.a,const	1	Using index condition
 SELECT d FROM t1, t2
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;
@@ -1450,8 +2368,8 @@ SELECT d FROM t3 AS t1, t2 AS t2
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	a,b,c	c	5	NULL	420	Using where; Using MRR
-1	SIMPLE	t1	ref	a	a	39	test.t2.a,const	10	Using where; Using index
+1	SIMPLE	t2	range	a,b,c	c	9	NULL	127	Using where; Using MRR
+1	SIMPLE	t1	ref	a	a	146	test.t2.a,const	1	Using where; Using index
 SELECT d FROM t3 AS t1, t2 AS t2 
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;

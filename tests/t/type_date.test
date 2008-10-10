@@ -46,7 +46,7 @@ DROP TABLE t1;
 
 CREATE TABLE t1 (
   user_id char(10),
-  summa int(11),
+  summa int,
   rdate date
 );
 INSERT INTO t1 VALUES ('aaa',100,'1998-01-01');
@@ -108,13 +108,6 @@ SELECT * FROM t3;
 
 DROP TABLE t1, t2, t3;
 
-# Test that setting YEAR to invalid string results in default value, not
-# 2000. (Bug #6067)
-CREATE TABLE t1 (y YEAR);
-INSERT INTO t1 VALUES ('abc');
-SELECT * FROM t1;
-DROP TABLE t1;
-
 #
 # Bug#21677: Wrong result when comparing a DATE and a DATETIME in BETWEEN
 #
@@ -135,6 +128,7 @@ select year(@d), month(@d), day(@d), cast(@d as date);
 select @d:=1311;
 select year(@d), month(@d), day(@d), cast(@d as date);
 create table t1 (d  date , dt datetime , ts timestamp);
+-- error 1292
 insert into t1 values (9912101,9912101,9912101);
 insert into t1 values (11111,11111,11111);
 select * from t1;
@@ -184,13 +178,10 @@ INSERT INTO t1 VALUES ('0000-00-00'),('0000-00-00');
 INSERT INTO t2 VALUES ('0000-00-00'),('0000-00-00');
 SELECT * FROM t1 WHERE a = '0000-00-00';
 SELECT * FROM t2 WHERE a = '0000-00-00';
-SET SQL_MODE=TRADITIONAL;
 EXPLAIN SELECT * FROM t1 WHERE a = '0000-00-00';
 SELECT * FROM t1 WHERE a = '0000-00-00';
 SELECT * FROM t2 WHERE a = '0000-00-00';
---error ER_TRUNCATED_WRONG_VALUE
 INSERT INTO t1 VALUES ('0000-00-00');
-SET SQL_MODE=DEFAULT;
 DROP TABLE t1,t2;
 
 #
@@ -204,13 +195,10 @@ INSERT INTO t1 VALUES ('1000-00-00'),('1000-00-00');
 INSERT INTO t2 VALUES ('1000-00-00'),('1000-00-00');
 SELECT * FROM t1 WHERE a = '1000-00-00';
 SELECT * FROM t2 WHERE a = '1000-00-00';
-SET SQL_MODE=TRADITIONAL;
 EXPLAIN SELECT * FROM t1 WHERE a = '1000-00-00';
 SELECT * FROM t1 WHERE a = '1000-00-00';
 SELECT * FROM t2 WHERE a = '1000-00-00';
---error ER_TRUNCATED_WRONG_VALUE
 INSERT INTO t1 VALUES ('1000-00-00');
-SET SQL_MODE=DEFAULT;
 DROP TABLE t1,t2;
 
 #
