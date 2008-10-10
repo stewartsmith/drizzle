@@ -1343,11 +1343,6 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS ${SAVE_CFLAGS}"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS ${SAVE_CXXFLAGS}"
-elif test "$with_debug" = "full"
-then
-  # Full debug - includes the DEBUG flag.
   CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
   CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
 else
