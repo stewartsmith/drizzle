@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  if (!(ret= azopen(&reader_handle, argv[0], O_RDONLY|O_BINARY, AZ_METHOD_BLOCK)))
+  if (!(ret= azopen(&reader_handle, argv[0], O_RDONLY, AZ_METHOD_BLOCK)))
   {
     printf("Could not open Archive file\n");
     return 0;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
       new_auto_increment_value= reader_handle.auto_increment + 1;
     }
 
-    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR|O_BINARY, 
+    if (!(ret= azopen(&writer_handle, argv[0], O_CREAT|O_RDWR, 
                       AZ_METHOD_BLOCK)))
     {
       printf("Could not open file for update: %s\n", argv[0]);
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (!(ret= azopen(&writer_handle, argv[1], O_CREAT|O_RDWR|O_BINARY,
+    if (!(ret= azopen(&writer_handle, argv[1], O_CREAT|O_RDWR,
                       AZ_METHOD_BLOCK)))
     {
       printf("Could not open file for backup: %s\n", argv[1]);
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
   {
     File frm_file;
     char *ptr;
-    frm_file= my_open(argv[1], O_CREAT|O_RDWR|O_BINARY, MYF(0));
+    frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)my_malloc(sizeof(char) * reader_handle.frm_length, MYF(0));
     azread_frm(&reader_handle, ptr);
     my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));

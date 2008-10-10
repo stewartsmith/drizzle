@@ -136,14 +136,6 @@ typedef int  File;    /* File descriptor */
 
 /* file create flags */
 
-#ifndef O_BINARY
-#define O_BINARY  0  /* Flag to my_open for binary files */
-#endif
-
-#ifndef FILE_BINARY
-#define FILE_BINARY  O_BINARY /* Flag to my_fopen for binary streams */
-#endif
-
 #ifndef O_TEMPORARY
 #define O_TEMPORARY  0
 #endif
