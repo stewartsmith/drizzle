@@ -17,6 +17,8 @@
 /* As mi_rsame but supply a position */
 
 #include "myisamdef.h"
+#include <drizzled/util/test.h>
+
 
 
 	/*

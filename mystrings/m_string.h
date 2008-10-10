@@ -142,8 +142,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);
 
-extern char *int2str(long val, char *dst, int radix, int upcase);
-extern char *int10_to_str(long val,char *dst,int radix);
+extern char *int2str(int32_t val, char *dst, int radix, int upcase);
+extern char *int10_to_str(int32_t val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);

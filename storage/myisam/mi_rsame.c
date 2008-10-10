@@ -14,6 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "myisamdef.h"
+#include <drizzled/util/test.h>
+
 
 	/*
 	** Find current row with read on position or read on key

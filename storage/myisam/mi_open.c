@@ -17,6 +17,7 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <drizzled/util/test.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 #define get_next_element(to,pos,size) \

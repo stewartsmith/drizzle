@@ -22,6 +22,7 @@
 
 #include "vio_priv.h"
 #include <sys/socket.h>
+#include <drizzled/util/test.h>
 
 int vio_errno(Vio *vio __attribute__((unused)))
 {

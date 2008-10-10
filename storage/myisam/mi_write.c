@@ -16,6 +16,8 @@
 /* Write a row to a MyISAM table */
 
 #include "myisamdef.h"
+#include <drizzled/util/test.h>
+
 
 #define MAX_POINTER_LENGTH 8
 

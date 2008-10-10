@@ -13,43 +13,18 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-noinst_LTLIBRARIES = 	libfield.la
+noinst_HEADERS = convert.h \
+                 test.h
 
-libfield_la_SOURCES = 	blob.cc \
-			date.cc \
-			datetime.cc \
-			enum.cc \
-			fdecimal.cc \
-			double.cc \
-			int64_t.cc \
-			long.cc \
-			longstr.cc \
-			null.cc \
-			num.cc \
-			fstring.cc \
-			real.cc \
-			str.cc \
-			timestamp.cc \
-			timetype.cc \
-			varstring.cc
+if GCC_PCH
+# Trick automake into producing CXXCOMPILE var. Won't be needed once we
+# have real CXX files in here
+lib_LTLIBRARIES = libutil.la
+libutil_la_SOURCES = dummy.cc
 
-noinst_HEADERS = blob.h \
-		 date.h \
-		 datetime.h \
-		 enum.h \
-		 fdecimal.h \
-		 double.h \
-		 int64_t.h \
-		 long.h \
-		 longstr.h \
-		 null.h \
-		 num.h \
-		 fstring.h \
-		 real.h \
-		 str.h \
-		 timestamp.h \
-		 timetype.h \
-		 varstring.h
-	
+BUILT_SOURCES = convert.h.gch \
+                test.h.gch
 
-DEFS= -DDRIZZLE_SERVER @DEFS@
+%.h.gch: %.h
+	$(CXXCOMPILE) -include config.h -c $<
+endif 

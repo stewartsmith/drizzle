@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/** Copyright (C) 2000-2003 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,29 +48,6 @@ eval_const_cond(COND *cond)
 }
 
 
-
-String *Item_real_func::val_str(String *str)
-{
-  assert(fixed == 1);
-  double nr= val_real();
-  if (null_value)
-    return 0; /* purecov: inspected */
-  str->set_real(nr,decimals, &my_charset_bin);
-  return str;
-}
-
-
-my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
-{
-  assert(fixed);
-  double nr= val_real();
-  if (null_value)
-    return 0; /* purecov: inspected */
-  double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
-  return decimal_value;
-}
-
-
 void Item_func::fix_num_length_and_dec()
 {
   uint32_t fl_length= 0;
@@ -87,11 +64,6 @@ void Item_func::fix_num_length_and_dec()
     max_length= float_length(NOT_FIXED_DEC);
   }
 }
-
-
-void Item_func_numhybrid::fix_num_length_and_dec()
-{}
-
 
 /**
   Set max_length/decimals of function if function is fixed point and
@@ -198,40 +170,6 @@ bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
 
 
 /**
-  Check arguments here to determine result's type for a numeric
-  function of two arguments.
-*/
-
-void Item_num_op::find_num_type(void)
-{
-  assert(arg_count == 2);
-  Item_result r0= args[0]->result_type();
-  Item_result r1= args[1]->result_type();
-
-  if (r0 == REAL_RESULT || r1 == REAL_RESULT ||
-      r0 == STRING_RESULT || r1 ==STRING_RESULT)
-  {
-    count_real_length();
-    max_length= float_length(decimals);
-    hybrid_type= REAL_RESULT;
-  }
-  else if (r0 == DECIMAL_RESULT || r1 == DECIMAL_RESULT)
-  {
-    hybrid_type= DECIMAL_RESULT;
-    result_precision();
-  }
-  else
-  {
-    assert(r0 == INT_RESULT && r1 == INT_RESULT);
-    decimals= 0;
-    hybrid_type=INT_RESULT;
-    result_precision();
-  }
-  return;
-}
-
-
-/**
   Set result type for a numeric function of one argument
   (can be also used by a numeric function of many arguments, if the result
   type depends only on the first argument)
@@ -264,159 +202,6 @@ void Item_func_num1::fix_num_length_and_dec()
 }
 
 
-void Item_func_numhybrid::fix_length_and_dec()
-{
-  fix_num_length_and_dec();
-  find_num_type();
-}
-
-
-String *Item_func_numhybrid::val_str(String *str)
-{
-  assert(fixed == 1);
-  switch (hybrid_type) {
-  case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value, *val;
-    if (!(val= decimal_op(&decimal_value)))
-      return 0;                                 // null is set
-    my_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
-    my_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
-    break;
-  }
-  case INT_RESULT:
-  {
-    int64_t nr= int_op();
-    if (null_value)
-      return 0; /* purecov: inspected */
-    str->set_int(nr, unsigned_flag, &my_charset_bin);
-    break;
-  }
-  case REAL_RESULT:
-  {
-    double nr= real_op();
-    if (null_value)
-      return 0; /* purecov: inspected */
-    str->set_real(nr,decimals,&my_charset_bin);
-    break;
-  }
-  case STRING_RESULT:
-    return str_op(&str_value);
-  default:
-    assert(0);
-  }
-  return str;
-}
-
-
-double Item_func_numhybrid::val_real()
-{
-  assert(fixed == 1);
-  switch (hybrid_type) {
-  case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value, *val;
-    double result;
-    if (!(val= decimal_op(&decimal_value)))
-      return 0.0;                               // null is set
-    my_decimal2double(E_DEC_FATAL_ERROR, val, &result);
-    return result;
-  }
-  case INT_RESULT:
-  {
-    int64_t result= int_op();
-    return unsigned_flag ? (double) ((uint64_t) result) : (double) result;
-  }
-  case REAL_RESULT:
-    return real_op();
-  case STRING_RESULT:
-  {
-    char *end_not_used;
-    int err_not_used;
-    String *res= str_op(&str_value);
-    return (res ? my_strntod(res->charset(), (char*) res->ptr(), res->length(),
-			     &end_not_used, &err_not_used) : 0.0);
-  }
-  default:
-    assert(0);
-  }
-  return 0.0;
-}
-
-
-int64_t Item_func_numhybrid::val_int()
-{
-  assert(fixed == 1);
-  switch (hybrid_type) {
-  case DECIMAL_RESULT:
-  {
-    my_decimal decimal_value, *val;
-    if (!(val= decimal_op(&decimal_value)))
-      return 0;                                 // null is set
-    int64_t result;
-    my_decimal2int(E_DEC_FATAL_ERROR, val, unsigned_flag, &result);
-    return result;
-  }
-  case INT_RESULT:
-    return int_op();
-  case REAL_RESULT:
-    return (int64_t) rint(real_op());
-  case STRING_RESULT:
-  {
-    int err_not_used;
-    String *res;
-    if (!(res= str_op(&str_value)))
-      return 0;
-
-    char *end= (char*) res->ptr() + res->length();
-    const CHARSET_INFO * const cs= str_value.charset();
-    return (*(cs->cset->strtoll10))(cs, res->ptr(), &end, &err_not_used);
-  }
-  default:
-    assert(0);
-  }
-  return 0;
-}
-
-
-my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
-{
-  my_decimal *val= decimal_value;
-  assert(fixed == 1);
-  switch (hybrid_type) {
-  case DECIMAL_RESULT:
-    val= decimal_op(decimal_value);
-    break;
-  case INT_RESULT:
-  {
-    int64_t result= int_op();
-    int2my_decimal(E_DEC_FATAL_ERROR, result, unsigned_flag, decimal_value);
-    break;
-  }
-  case REAL_RESULT:
-  {
-    double result= (double)real_op();
-    double2my_decimal(E_DEC_FATAL_ERROR, result, decimal_value);
-    break;
-  }
-  case STRING_RESULT:
-  {
-    String *res;
-    if (!(res= str_op(&str_value)))
-      return NULL;
-
-    str2my_decimal(E_DEC_FATAL_ERROR, (char*) res->ptr(),
-                   res->length(), res->charset(), decimal_value);
-    break;
-  }  
-  case ROW_RESULT:
-  default:
-    assert(0);
-  }
-  return val;
-}
-
-
 void Item_func_signed::print(String *str, enum_query_type query_type)
 {
   str->append(STRING_WITH_LEN("cast("));
@@ -424,7 +209,6 @@ void Item_func_signed::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN(" as signed)"));
 
 }
-
 
 int64_t Item_func_signed::val_int_from_str(int *error)
 {
