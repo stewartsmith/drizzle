@@ -159,7 +159,7 @@ test-drizzle:
         func_group_innodb \
         func_isnull \
         func_like \
-				func_math \
+	func_math \
 	func_compress \
         greedy_optimizer \
         group_min_max_innodb \
@@ -190,7 +190,9 @@ test-drizzle:
         subselect_innodb \
         sum_distinct \
         tablelock \
+	type_blob \
         type_newdecimal \
+	type_varchar \
         unsafe_binlog_innodb \
         update \
         variables-notembedded
