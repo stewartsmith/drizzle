@@ -305,7 +305,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
   disk_buff= NULL;
 
   strxmov(path, share->normalized_path.str, reg_ext, NULL);
-  if ((file= my_open(path, O_RDONLY, MYF(0))) < 0)
+  if ((file= open(path, O_RDONLY)) < 0)
   {
     /*
       We don't try to open 5.0 unencoded name, if
@@ -316,7 +316,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
         
       - non-encoded db or table name contain "#mysql50#" prefix.
         This kind of tables must have been opened only by the
-        my_open() above.
+        open() above.
     */
     if (strchr(share->table_name.str, '@') ||
         !strncmp(share->db.str, MYSQL50_TABLE_NAME_PREFIX,
@@ -342,7 +342,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute_
       so no need to check the old file name.
     */
     if (length == share->normalized_path.length ||
-        ((file= my_open(path, O_RDONLY, MYF(0))) < 0))
+        ((file= open(path, O_RDONLY)) < 0))
       goto err_not_open;
 
     /* Unencoded 5.0 table name found */
@@ -3140,7 +3140,7 @@ bool mysql_frm_type(THD *thd __attribute__((unused)),
 
   *dbt= DB_TYPE_UNKNOWN;
 
-  if ((file= my_open(path, O_RDONLY, MYF(0))) < 0)
+  if ((file= open(path, O_RDONLY)) < 0)
     return false;
   error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
   my_close(file, MYF(MY_WME));
