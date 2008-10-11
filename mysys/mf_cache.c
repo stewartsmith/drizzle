@@ -55,12 +55,11 @@ bool real_open_cached_file(IO_CACHE *cache)
   char name_buff[FN_REFLEN];
   int error=1;
   if ((cache->file=create_temp_file(name_buff, cache->dir, cache->prefix,
-				    (O_RDWR | O_TRUNC |
-				     O_SHORT_LIVED),
+				    (O_RDWR | O_TRUNC),
 				    MYF(MY_WME))) >= 0)
   {
     error=0;
-    my_delete(name,MYF(MY_WME | ME_NOINPUT));
+    my_delete(name_buff,MYF(MY_WME | ME_NOINPUT));
   }
   return(error);
 }
