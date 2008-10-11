@@ -427,7 +427,6 @@ THD::THD()
    rand_used(0),
    time_zone_used(0),
    in_lock_tables(0),
-   bootstrap(0),
    derived_tables_processing(false),
    m_lip(NULL)
 {

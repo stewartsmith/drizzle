@@ -1249,7 +1249,7 @@ void close_connection(THD *thd, uint32_t errcode, bool lock)
 extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
-  if (thd && ! thd->bootstrap)
+  if (thd)
   {
     statistic_increment(killed_threads, &LOCK_status);
     thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
@@ -2652,7 +2652,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name, false))
+  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
