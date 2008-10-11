@@ -144,31 +144,6 @@ static sys_var_thd_binlog_format sys_binlog_format(&vars, "binlog_format",
                                             &SV::binlog_format);
 static sys_var_thd_ulong	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
 						  &SV::bulk_insert_buff_size);
-static sys_var_character_set_sv
-sys_character_set_server(&vars, "character_set_server",
-                         &SV::collation_server, &default_charset_info, 0,
-                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-sys_var_const_str       sys_charset_system(&vars, "character_set_system",
-                                           (char *)my_charset_utf8_general_ci.name);
-static sys_var_character_set_database
-sys_character_set_database(&vars, "character_set_database",
-                           sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_character_set_client
-sys_character_set_client(&vars, "character_set_client",
-                         &SV::character_set_client,
-                         &default_charset_info,
-                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_character_set_sv
-sys_character_set_connection(&vars, "character_set_connection",
-                             &SV::collation_connection,
-                             &default_charset_info, 0,
-                             sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_character_set_sv sys_character_set_results(&vars, "character_set_results",
-                                        &SV::character_set_results,
-                                        &default_charset_info, true);
-static sys_var_character_set_sv sys_character_set_filesystem(&vars, "character_set_filesystem",
-                                        &SV::character_set_filesystem,
-                                        &character_set_filesystem);
 static sys_var_thd_ulong	sys_completion_type(&vars, "completion_type",
 					 &SV::completion_type,
 					 check_completion_type,
@@ -1727,62 +1702,6 @@ unsigned char *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
 {
   const CHARSET_INFO * const cs= ci_ptr(thd,type)[0];
   return cs ? (unsigned char*) cs->csname : (unsigned char*) NULL;
-}
-
-
-void sys_var_character_set_sv::set_default(THD *thd, enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    global_system_variables.*offset= *global_default;
-  else
-  {
-    thd->variables.*offset= global_system_variables.*offset;
-    thd->update_charset();
-  }
-}
-const CHARSET_INFO **sys_var_character_set_sv::ci_ptr(THD *thd, enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    return &(global_system_variables.*offset);
-  else
-    return &(thd->variables.*offset);
-}
-
-
-bool sys_var_character_set_client::check(THD *thd, set_var *var)
-{
-  if (sys_var_character_set_sv::check(thd, var))
-    return 1;
-  /* Currently, UCS-2 cannot be used as a client character set */
-  if (var->save_result.charset->mbminlen > 1)
-  {
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, 
-             var->save_result.charset->csname);
-    return 1;
-  }
-  return 0;
-}
-
-
-const CHARSET_INFO ** sys_var_character_set_database::ci_ptr(THD *thd,
-						       enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    return &global_system_variables.collation_database;
-  else
-    return &thd->variables.collation_database;
-}
-
-
-void sys_var_character_set_database::set_default(THD *thd, enum_var_type type)
-{
- if (type == OPT_GLOBAL)
-    global_system_variables.collation_database= default_charset_info;
-  else
-  {
-    thd->variables.collation_database= thd->db_charset;
-    thd->update_charset();
-  }
 }
 
 

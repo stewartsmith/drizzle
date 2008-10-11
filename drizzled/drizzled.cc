@@ -4294,7 +4294,6 @@ static void mysql_init_variables(void)
   charsets_dir= 0;
   default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
-  sys_charset_system.set((char*) system_charset_info->csname);
   character_set_filesystem_name= (char*) "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */

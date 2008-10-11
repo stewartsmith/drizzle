@@ -7,7 +7,7 @@ drop table if exists t1,t2;
 --enable_warnings
 
 # Set timezone to GMT-3, to make it possible to use "interval 3 hour"
-set time_zone="+03:00";
+#set time_zone="+03:00";
 
 CREATE TABLE t1 (a int, t timestamp);
 CREATE TABLE t2 (a int, t datetime);
@@ -83,12 +83,15 @@ drop table t1;
 # (for both strings and numbers)
 #
 create table t1 (ix timestamp);
+--error 1292
 insert into t1 values (0),(20030101010160),(20030101016001),(20030101240101),(20030132010101),(20031301010101),(20031200000000),(20030000000000);
 select ix+0 from t1;
 truncate table t1;
+--error 1292
 insert into t1 values ("00000000000000"),("20030101010160"),("20030101016001"),("20030101240101"),("20030132010101"),("20031301010101"),("20031200000000"),("20030000000000");
 select ix+0 from t1;
 truncate table t1;
+--error 1292
 insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
 select ix+0 from t1;
 drop table t1;
@@ -293,18 +296,6 @@ select max(t) from t1 group by a;
 drop table t1;
 
 #
-# Test for bug #7418 "TIMESTAMP not always converted to DATETIME in MAXDB
-# mode". TIMESTAMP columns should be converted DATETIME columns in MAXDB
-# mode regardless of whether a display width is given.
-#
-set sql_mode='maxdb';
-create table t1 (a timestamp, b timestamp);
-show create table t1;
-# restore default mode
-set sql_mode='';
-drop table t1;
-
-#
 # Bug#7806 - insert on duplicate key and auto-update of timestamp
 #
 create table t1 (a int auto_increment primary key, b int, c timestamp);
@@ -326,15 +317,12 @@ drop table t1;
 
 # End of 4.1 tests
 
-# Restore timezone to default
-set time_zone= @@global.time_zone;
-
 CREATE TABLE t1 (
-`id` int(11) NOT NULL auto_increment,
+`id` int NOT NULL auto_increment,
 `username` varchar(80) NOT NULL default '',
-`posted_on` timestamp NOT NULL default '0000-00-00 00:00:00',
+`posted_on` timestamp NOT NULL default now(),
 PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
+) ENGINE=MyISAM AUTO_INCREMENT=1;
 
 show fields from t1;
 select is_nullable from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
