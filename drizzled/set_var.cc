@@ -334,7 +334,6 @@ static sys_var_thd_ulong	sys_trans_prealloc_size(&vars, "transaction_prealloc_si
 						&SV::trans_prealloc_size,
 						0, fix_trans_mem_root);
 
-static sys_var_bool_ptr	sys_secure_auth(&vars, "secure_auth", &opt_secure_auth);
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
 static sys_var_long_ptr	sys_server_id(&vars, "server_id", &server_id, fix_server_id);

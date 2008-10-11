@@ -495,11 +495,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   bool error= 0;
 
   thd->command=command;
-  /*
-    Commands which always take a long time are logged into
-    the slow log only if opt_log_slow_admin_statements is set.
-  */
-  thd->enable_slow_log= true;
   thd->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   thd->set_time();
   pthread_mutex_lock(&LOCK_thread_count);
@@ -758,7 +753,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       uint32_t slave_server_id;
 
       status_var_increment(thd->status_var.com_other);
-      thd->enable_slow_log= opt_log_slow_admin_statements;
       /* TODO: The following has to be changed to an 8 byte integer */
       pos = uint4korr(packet);
       flags = uint2korr(packet + 4);
@@ -1476,12 +1470,6 @@ end_with_restore_list:
     assert(first_table == all_tables && first_table != 0);
     if (end_active_trans(thd))
       goto error;
-    /*
-      Currently CREATE INDEX or DROP INDEX cause a full table rebuild
-      and thus classify as slow administrative statements just like
-      ALTER TABLE.
-    */
-    thd->enable_slow_log= opt_log_slow_admin_statements;
 
     memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
@@ -1573,7 +1561,6 @@ end_with_restore_list:
         break;
       }
 
-      thd->enable_slow_log= opt_log_slow_admin_statements;
       res= mysql_alter_table(thd, select_lex->db, lex->name.str,
                              &create_info,
                              first_table,
@@ -1624,7 +1611,6 @@ end_with_restore_list:
   case SQLCOM_REPAIR:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_repair_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     /*
@@ -1638,7 +1624,6 @@ end_with_restore_list:
   case SQLCOM_CHECK:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res = mysql_check_table(thd, first_table, &lex->check_opt);
     select_lex->table_list.first= (unsigned char*) first_table;
     lex->query_tables=all_tables;
@@ -1647,7 +1632,6 @@ end_with_restore_list:
   case SQLCOM_ANALYZE:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_analyze_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     write_bin_log(thd, true, thd->query, thd->query_length);
@@ -1659,7 +1643,6 @@ end_with_restore_list:
   case SQLCOM_OPTIMIZE:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_optimize_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     write_bin_log(thd, true, thd->query, thd->query_length);

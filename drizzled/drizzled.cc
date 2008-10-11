@@ -280,12 +280,7 @@ handlerton *myisam_hton;
 bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
-bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
-bool opt_log_slow_admin_statements= 0;
-bool opt_log_slow_slave_statements= 0;
-bool opt_old_style_user_limits= 0;
-bool trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
   check them before each query (and possibly reset counters when hour is
@@ -3281,11 +3276,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.old_alter_table,
    (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
-   N_("Enable old-style user limits (before 5.0.3 user resources were counted "
-      "per each user+host vs. per account)"),
-   (char**) &opt_old_style_user_limits, (char**) &opt_old_style_user_limits,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -4225,7 +4215,6 @@ static void mysql_init_variables(void)
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_auth= 0;
   opt_secure_file_priv= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
