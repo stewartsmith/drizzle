@@ -16,7 +16,7 @@ drop table if exists t1,t2,t3,t4;
 CREATE TABLE t1 (
   Period int DEFAULT '0000' NOT NULL,
   Varor_period int DEFAULT '0' NOT NULL
-);
+) ENGINE=myisam;
 
 INSERT INTO t1 VALUES (9410,9412);
   
@@ -39,7 +39,7 @@ CREATE TABLE t2 (
   UNIQUE fld1 (fld1),
   KEY fld3 (fld3),
   PRIMARY KEY (auto)
-);  
+) ENGINE=myisam;  
 
 #
 # Populate table
@@ -1369,7 +1369,7 @@ create table t3 (
  price2     double(11,0),
  key (period),
  key (name)
-);
+) engine=myisam;
 
 --disable_query_log
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1001,"Iranizes",37,5987435,234724);
