@@ -1712,7 +1712,8 @@ bool mysql_create_table_no_lock(THD *thd,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count)
+                                uint32_t select_field_count,
+                                bool lock_open_lock)
 {
   char		path[FN_REFLEN];
   uint32_t          path_length;
@@ -1787,7 +1788,8 @@ bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  if (lock_open_lock)
+    pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1903,7 +1905,8 @@ bool mysql_create_table_no_lock(THD *thd,
     write_bin_log(thd, true, thd->query, thd->query_length);
   error= false;
 unlock_and_end:
-  pthread_mutex_unlock(&LOCK_open);
+  if (lock_open_lock)
+    pthread_mutex_unlock(&LOCK_open);
 
 err:
   thd->set_proc_info("After create");
@@ -1979,7 +1982,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
   result= mysql_create_table_no_lock(thd, db, table_name, create_info,
                                      alter_info,
                                      internal_tmp_table,
-                                     select_field_count);
+                                     select_field_count, true);
 
 unlock:
   if (name_lock)

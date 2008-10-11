@@ -157,6 +157,7 @@ our $opt_compress;
 our $opt_debug;
 our $opt_do_test;
 our @opt_cases;                  # The test cases names in argv
+our $opt_engine;
 
 our $opt_extern= 0;
 our $opt_socket;
@@ -485,6 +486,7 @@ sub command_line_setup () {
 
              # Extra options used when starting mysqld
              'mysqld=s'                 => \@opt_extra_mysqld_opt,
+             'engine=s'                 => \$opt_engine,
 
              # Run test on running server
              'extern'                   => \$opt_extern,
@@ -647,6 +649,11 @@ sub command_line_setup () {
   else
   {
     $mysqld_variables{'port'}= 4427;
+  }
+
+  if (!$opt_engine)
+  {
+    $opt_engine= "innodb";
   }
 
   if ( $opt_comment )
@@ -2459,6 +2466,11 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
   mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
+
+  if ($opt_engine)
+  {
+    mtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
+  }
 
   if ( $mysql_version_id >= 50036)
   {

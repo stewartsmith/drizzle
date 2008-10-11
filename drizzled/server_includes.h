@@ -180,7 +180,8 @@ bool mysql_create_table_no_lock(THD *thd, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count);
+                                bool tmp_table, uint32_t select_field_count,
+                                bool lock_open_lock);
 
 bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
