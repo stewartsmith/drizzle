@@ -17,13 +17,17 @@
 
 noinst_LTLIBRARIES = 	libfunctions.la
 
-libfunctions_la_SOURCES = additive_op.cc \
+libfunctions_la_SOURCES = abs.cc \
+			  additive_op.cc \
 			  connection_id.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
+			  exp.cc \
 			  func.cc \
                           int.cc \
                           int_divide.cc \
+			  ln.cc \
+			  log.cc \
 			  minus.cc \
 			  mod.cc \
 			  multiply.cc \
@@ -36,13 +40,18 @@ libfunctions_la_SOURCES = additive_op.cc \
 			  signed.cc \
 			  unsigned.cc
 
-noinst_HEADERS = additive_op.h \
+noinst_HEADERS = abs.h \
+		 additive_op.h \
 		 connection_id.h \
+		 dec.h \
 		 decimal_typecast.h \
 		 divide.h \
+		 exp.h \
 		 func.h \
                  int.h \
                  int_divide.h \
+		 ln.h \
+		 log.h \
 		 minus.h \
 		 mod.h \
 		 multiply.h \

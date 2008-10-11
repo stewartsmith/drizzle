@@ -44,81 +44,15 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
 #include <drizzled/functions/num1.h>
+#include <drizzled/functions/abs.h>
 #include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
+#include <drizzled/functions/dec.h>
+#include <drizzled/functions/exp.h>
+#include <drizzled/functions/ln.h>
+#include <drizzled/functions/log.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_abs :public Item_func_num1
-{
-public:
-  Item_func_abs(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "abs"; }
-  void fix_length_and_dec();
-};
-
-// A class to handle logarithmic and trigonometric functions
-
-class Item_dec_func :public Item_real_func
-{
- public:
-  Item_dec_func(Item *a) :Item_real_func(a) {}
-  Item_dec_func(Item *a,Item *b) :Item_real_func(a,b) {}
-  void fix_length_and_dec()
-  {
-    decimals=NOT_FIXED_DEC; max_length=float_length(decimals);
-    maybe_null=1;
-  }
-};
-
-class Item_func_exp :public Item_dec_func
-{
-public:
-  Item_func_exp(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "exp"; }
-};
-
-
-class Item_func_ln :public Item_dec_func
-{
-public:
-  Item_func_ln(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "ln"; }
-};
-
-
-class Item_func_log :public Item_dec_func
-{
-public:
-  Item_func_log(Item *a) :Item_dec_func(a) {}
-  Item_func_log(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "log"; }
-};
-
-
-class Item_func_log2 :public Item_dec_func
-{
-public:
-  Item_func_log2(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log2"; }
-};
-
-
-class Item_func_log10 :public Item_dec_func
-{
-public:
-  Item_func_log10(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log10"; }
-};
-
 
 class Item_func_sqrt :public Item_dec_func
 {
