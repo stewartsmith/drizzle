@@ -3903,8 +3903,6 @@ void Item::init_make_field(Send_field *tmp_field,
   tmp_field->type=              field_type_arg;
   tmp_field->length=max_length;
   tmp_field->decimals=decimals;
-  if (unsigned_flag)
-    tmp_field->flags |= UNSIGNED_FLAG;
 }
 
 void Item::make_field(Send_field *tmp_field)

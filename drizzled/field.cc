@@ -858,28 +858,12 @@ void Field::make_field(Send_field *field)
     value converted from val
 */
 int64_t Field::convert_decimal2int64_t(const my_decimal *val,
-                                         bool unsigned_flag, int *err)
+                                         bool unsigned_flag __attribute__((unused)), int *err)
 {
   int64_t i;
-  if (unsigned_flag)
-  {
-    if (val->sign())
-    {
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      i= 0;
-      *err= 1;
-    }
-    else if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
-                                           ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
-                                           val, true, &i)))
-    {
-      i= ~(int64_t) 0;
-      *err= 1;
-    }
-  }
-  else if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
-                                         ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
-                                         val, false, &i)))
+  if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
+                                      ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
+                                      val, false, &i)))
   {
     i= (val->sign() ? INT64_MIN : INT64_MAX);
     *err= 1;
@@ -1012,7 +996,7 @@ int Field_tiny::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   int64_t rnd;
   
   error= get_int(cs, from, len, &rnd, 255, -128, 127);
-  ptr[0]= unsigned_flag ? (char) (uint64_t) rnd : (char) rnd;
+  ptr[0]= (char) rnd;
   return error;
 }
 
@@ -1021,24 +1005,7 @@ int Field_tiny::store(double nr)
 {
   int error= 0;
   nr=rint(nr);
-  if (unsigned_flag)
-  {
-    if (nr < 0.0)
-    {
-      *ptr=0;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else if (nr > 255.0)
-    {
-      *ptr=(char) 255;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else
-      *ptr=(char) nr;
-  }
-  else
+
   {
     if (nr < -128.0)
     {
@@ -1063,24 +1030,6 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
 
-  if (unsigned_flag)
-  {
-    if (nr < 0 && !unsigned_val)
-    {
-      *ptr= 0;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else if ((uint64_t) nr > (uint64_t) 255)
-    {
-      *ptr= (char) 255;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else
-      *ptr=(char) nr;
-  }
-  else
   {
     if (nr < 0 && unsigned_val)
       nr= 256;                                    // Generate overflow
@@ -1105,16 +1054,14 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
 
 double Field_tiny::val_real(void)
 {
-  int tmp= unsigned_flag ? (int) ptr[0] :
-    (int) ((signed char*) ptr)[0];
+  int tmp= (int) ((signed char*) ptr)[0];
   return (double) tmp;
 }
 
 
 int64_t Field_tiny::val_int(void)
 {
-  int tmp= unsigned_flag ? (int) ptr[0] :
-    (int) ((signed char*) ptr)[0];
+  int tmp= (int) ((signed char*) ptr)[0];
   return (int64_t) tmp;
 }
 
@@ -1128,13 +1075,9 @@ String *Field_tiny::val_str(String *val_buffer,
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
 
-  if (unsigned_flag)
-    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength, 10,
-					   (long) *ptr);
-  else
-    length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength,-10,
-					   (long) *((signed char*) ptr));
-  
+  length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength,-10,
+                                             (long) *((signed char*) ptr));
+
   val_buffer->length(length);
 
   return val_buffer;
@@ -1149,17 +1092,13 @@ int Field_tiny::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   signed char a,b;
   a=(signed char) a_ptr[0]; b= (signed char) b_ptr[0];
-  if (unsigned_flag)
-    return ((unsigned char) a < (unsigned char) b) ? -1 : ((unsigned char) a > (unsigned char) b) ? 1 : 0;
+
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
 void Field_tiny::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
-  if (unsigned_flag)
-    *to= *ptr;
-  else
-    to[0] = (char) (ptr[0] ^ (unsigned char) 128);	/* Revers signbit */
+  to[0] = (char) (ptr[0] ^ (unsigned char) 128);	/* Revers signbit */
 }
 
 void Field_tiny::sql_type(String &res) const

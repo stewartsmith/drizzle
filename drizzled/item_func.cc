@@ -354,14 +354,6 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
     return NULL;
   my_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
   sign= dec->sign();
-  if (unsigned_flag)
-  {
-    if (sign)
-    {
-      my_decimal_set_zero(dec);
-      goto err;
-    }
-  }
   precision= my_decimal_length_to_precision(max_length,
                                             decimals, unsigned_flag);
   if (precision - decimals < (uint) my_decimal_intg(dec))
@@ -477,8 +469,6 @@ void Item_func_additive_op::result_precision()
 void Item_func_minus::fix_length_and_dec()
 {
   Item_num_op::fix_length_and_dec();
-  if (unsigned_flag)
-    unsigned_flag= 0;
 }
 
 
