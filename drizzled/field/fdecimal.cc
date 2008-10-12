@@ -305,7 +305,6 @@ void Field_new_decimal::sql_type(String &str) const
   const CHARSET_INFO * const cs= str.charset();
   str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
                                 "decimal(%d,%d)", precision, (int)dec));
-  add_unsigned(str);
 }
 
 

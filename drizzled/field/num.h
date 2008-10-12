@@ -31,7 +31,6 @@ public:
             const char *field_name_arg,
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
-  void add_unsigned(String &res) const;
   friend class Create_field;
   void make_field(Send_field *);
   uint32_t decimals() const { return (uint32_t) dec; }

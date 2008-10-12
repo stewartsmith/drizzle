@@ -151,12 +151,6 @@ out_of_range:
   return 1;
 }
 
-void Field_num::add_unsigned(String &res) const
-{
-  if (unsigned_flag)
-    res.append(STRING_WITH_LEN(" unsigned"));
-}
-
 /**
   Storing decimal in integer fields.
 

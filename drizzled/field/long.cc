@@ -257,6 +257,5 @@ void Field_long::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
-  add_unsigned(res);
 }
 

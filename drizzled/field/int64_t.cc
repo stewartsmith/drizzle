@@ -260,5 +260,4 @@ void Field_int64_t::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
-  add_unsigned(res);
 }

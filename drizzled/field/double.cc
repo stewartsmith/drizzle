@@ -219,6 +219,5 @@ void Field_double::sql_type(String &res) const
     res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			    "double(%d,%d)",(int) field_length,dec));
   }
-  add_unsigned(res);
 }
 

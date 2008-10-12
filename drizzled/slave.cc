@@ -1123,7 +1123,7 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
   pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
   pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
-  int4store(pos, rpl_recovery_rank);    pos+= 4;
+  int4store(pos, 0);    pos+= 4;
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
 

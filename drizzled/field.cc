@@ -1167,7 +1167,6 @@ void Field_tiny::sql_type(String &res) const
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "tinyint(%d)",(int) field_length));
-  add_unsigned(res);
 }
 
 /*
