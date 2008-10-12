@@ -45,9 +45,6 @@
     implementation, it's main use is to generate a file with
     a name that does not already exist.
 
-    When passing O_TEMPORARY flag in "mode" the file should
-    be automatically deleted
-
     The implementation using mkstemp should be considered the
     reference implementation when adding a new or modifying an
     existing one
@@ -67,7 +64,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
   {
     strmake(to,res,FN_REFLEN-1);
     (*free)(res);
-    file=my_create(to, 0, mode | O_EXCL | O_NOFOLLOW, MyFlags);
+    file=my_create(to, 0, mode | O_EXCL, MyFlags);
   }
 #elif defined(HAVE_MKSTEMP)
   {
@@ -88,8 +85,11 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     }
     my_stpcpy(convert_dirname(to,dir,NULL),prefix_buff);
     org_file=mkstemp(to);
-    if (mode & O_TEMPORARY)
+    /* TODO: This was old behavior, but really don't we want to 
+     * unlink files immediately under all circumstances?
+     * if (mode & O_TEMPORARY)
       (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
+     */
     file=my_register_filename(org_file, to, FILE_BY_MKSTEMP,
 			      EE_CANTCREATEFILE, MyFlags);
     /* If we didn't manage to register the name, remove the temp file */
@@ -121,8 +121,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
       strmake(to,res,FN_REFLEN-1);
       (*free)(res);
       file=my_create(to,0,
-		     (int) (O_RDWR | O_TRUNC | O_EXCL | O_NOFOLLOW |
-			    O_TEMPORARY | O_SHORT_LIVED),
+		     (int) (O_RDWR | O_TRUNC | O_EXCL),
 		     MYF(MY_WME));
 
     }

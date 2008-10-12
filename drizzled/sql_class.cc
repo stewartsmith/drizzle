@@ -202,14 +202,9 @@ extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   File fd = create_temp_file(filename, mysql_tmpdir, prefix,
-                             O_CREAT | O_EXCL | O_RDWR | O_TEMPORARY,
+                             O_CREAT | O_EXCL | O_RDWR,
                              MYF(MY_WME));
   if (fd >= 0) {
-    /*
-      This can be removed once the following bug is fixed:
-      Bug #28903  create_temp_file() doesn't honor O_TEMPORARY option
-                  (file not removed) (Unix)
-    */
     unlink(filename);
   }
 

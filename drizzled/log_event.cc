@@ -4029,7 +4029,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   thd->set_proc_info(proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
-		     O_WRONLY | O_EXCL | O_NOFOLLOW,
+		     O_WRONLY | O_EXCL,
 		     MYF(MY_WME))) < 0 ||
       init_io_cache(&file, fd, IO_SIZE, WRITE_CACHE, (my_off_t)0, 0,
 		    MYF(MY_WME|MY_NABP)))
@@ -4057,7 +4057,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   // fname_buf now already has .data, not .info, because we did our trick
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
-                     O_WRONLY | O_EXCL | O_NOFOLLOW,
+                     O_WRONLY | O_EXCL,
                      MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
@@ -4178,7 +4178,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
   {
     my_delete(fname, MYF(0)); // old copy may exist already
     if ((fd= my_create(fname, CREATE_MODE,
-		       O_WRONLY | O_EXCL | O_NOFOLLOW,
+		       O_WRONLY | O_EXCL,
 		       MYF(MY_WME))) < 0)
     {
       rli->report(ERROR_LEVEL, my_errno,
@@ -4187,7 +4187,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
       goto err;
     }
   }
-  else if ((fd = my_open(fname, O_WRONLY | O_APPEND | O_NOFOLLOW,
+  else if ((fd = my_open(fname, O_WRONLY | O_APPEND,
                          MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
@@ -4354,7 +4354,7 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
   Load_log_event *lev= 0;
 
   ext= slave_load_file_stem(fname, file_id, server_id, ".info");
-  if ((fd = my_open(fname, O_RDONLY | O_NOFOLLOW,
+  if ((fd = my_open(fname, O_RDONLY,
                     MYF(MY_WME))) < 0 ||
       init_io_cache(&file, fd, IO_SIZE, READ_CACHE, (my_off_t)0, 0,
 		    MYF(MY_WME|MY_NABP)))
