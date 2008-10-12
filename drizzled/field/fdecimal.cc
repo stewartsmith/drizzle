@@ -82,12 +82,8 @@ void Field_new_decimal::set_value_on_overflow(my_decimal *decimal_value,
 {
   max_my_decimal(decimal_value, precision, decimals());
   if (sign)
-  {
-    if (unsigned_flag)
-      my_decimal_set_zero(decimal_value);
-    else
-      decimal_value->sign(true);
-  }
+    decimal_value->sign(true);
+
   return;
 }
 
@@ -110,14 +106,6 @@ void Field_new_decimal::set_value_on_overflow(my_decimal *decimal_value,
 bool Field_new_decimal::store_value(const my_decimal *decimal_value)
 {
   int error= 0;
-
-  /* check that we do not try to write negative value in unsigned field */
-  if (unsigned_flag && decimal_value->sign())
-  {
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    error= 1;
-    decimal_value= &decimal_zero;
-  }
 
   if (warn_if_overflow(my_decimal2binary(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                                          decimal_value, ptr, precision, dec)))
@@ -262,8 +250,7 @@ int64_t Field_new_decimal::val_int(void)
 {
   int64_t i;
   my_decimal decimal_value;
-  my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
-                 unsigned_flag, &i);
+  my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
   return i;
 }
 
