@@ -185,7 +185,6 @@ test-drizzle:
         lock \
         limit \
         lock_tables_lost_commit \
-        overflow \
 	order_by \
 	order_fill_sortbuf \
 	overflow \
