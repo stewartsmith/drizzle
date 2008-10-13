@@ -20,6 +20,7 @@
 #include <mysys/queues.h>
 #include <mysys/my_bit.h>
 
+#include <drizzled/util/test.h>
 
 /*
   Old options is used when recreating database, from myisamchk
@@ -695,7 +696,6 @@ err:
     my_close(dfile,MYF(0));
     /* fall through */
   case 2:
-    /* QQ: Tõnu should add a call to my_raid_delete() here */
   if (! (flags & HA_DONT_TOUCH_DATA))
     my_delete_with_symlink(fn_format(filename,name,"",MI_NAME_DEXT,
                                      MY_UNPACK_FILENAME | MY_APPEND_EXT),

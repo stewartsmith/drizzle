@@ -869,8 +869,8 @@ Note	1003	select (`test`.`t1`.`a` + 1) AS `(select a+1)` from `test`.`t1`
 select (select a+1) from t1;
 (select a+1)
 2.5
-NULL
 4.5
+NULL
 drop table t1;
 CREATE TABLE t1 (a int NOT NULL default '0', PRIMARY KEY  (a));
 CREATE TABLE t2 (a int default '0', INDEX (a));

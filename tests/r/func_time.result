@@ -1,5 +1,4 @@
 drop table if exists t1,t2,t3;
-set time_zone="+03:00";
 select from_days(to_days("960101")),to_days(960201)-to_days("19960101"),to_days(date_add(curdate(), interval 1 day))-to_days(curdate()),weekday("1997-11-29");
 from_days(to_days("960101"))	to_days(960201)-to_days("19960101")	to_days(date_add(curdate(), interval 1 day))-to_days(curdate())	weekday("1997-11-29")
 1996-01-01	31	1	5
@@ -414,30 +413,6 @@ SELECT "1900-01-01 00:00:00" + INTERVAL "1:2147483647" MINUTE_SECOND;
 SELECT "1900-01-01 00:00:00" + INTERVAL "100000000:214748364700" MINUTE_SECOND;
 "1900-01-01 00:00:00" + INTERVAL "100000000:214748364700" MINUTE_SECOND
 8895-03-27 22:11:40
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<37 SECOND;
-"1900-01-01 00:00:00" + INTERVAL 1<<37 SECOND
-6255-04-08 15:04:32
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<31 MINUTE;
-"1900-01-01 00:00:00" + INTERVAL 1<<31 MINUTE
-5983-01-24 02:08:00
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<20 HOUR;
-"1900-01-01 00:00:00" + INTERVAL 1<<20 HOUR
-2019-08-15 16:00:00
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<38 SECOND;
-"1900-01-01 00:00:00" + INTERVAL 1<<38 SECOND
-NULL
-Warnings:
-Warning	1441	Datetime function: datetime field overflow
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<33 MINUTE;
-"1900-01-01 00:00:00" + INTERVAL 1<<33 MINUTE
-NULL
-Warnings:
-Warning	1441	Datetime function: datetime field overflow
-SELECT "1900-01-01 00:00:00" + INTERVAL 1<<30 HOUR;
-"1900-01-01 00:00:00" + INTERVAL 1<<30 HOUR
-NULL
-Warnings:
-Warning	1441	Datetime function: datetime field overflow
 SELECT "1900-01-01 00:00:00" + INTERVAL "1000000000:214748364700" MINUTE_SECOND;
 "1900-01-01 00:00:00" + INTERVAL "1000000000:214748364700" MINUTE_SECOND
 NULL
@@ -666,8 +641,6 @@ timestampadd(SQL_TSI_SECOND, 1, date)
 select timestampadd(SQL_TSI_FRAC_SECOND, 1, date) from t1;
 timestampadd(SQL_TSI_FRAC_SECOND, 1, date)
 2003-01-02 00:00:00.000001
-Warnings:
-Warning	1287	The syntax 'FRAC_SECOND' is deprecated and will be removed in MySQL 6.2. Please use MICROSECOND instead
 select timestampdiff(MONTH, '2001-02-01', '2001-05-01') as a;
 a
 3
@@ -701,8 +674,6 @@ a
 select timestampdiff(SQL_TSI_FRAC_SECOND, '2001-02-01 12:59:59.120000', '2001-05-01 12:58:58.119999') as a;
 a
 7689538999999
-Warnings:
-Warning	1287	The syntax 'FRAC_SECOND' is deprecated and will be removed in MySQL 6.2. Please use MICROSECOND instead
 select timestampdiff(SQL_TSI_DAY, '1986-02-01', '1986-03-01') as a1,
 timestampdiff(SQL_TSI_DAY, '1900-02-01', '1900-03-01') as a2,
 timestampdiff(SQL_TSI_DAY, '1996-02-01', '1996-03-01') as a3,
@@ -799,7 +770,7 @@ create table t1 select last_day('2000-02-05') as a,
 from_days(to_days("960101")) as b;
 describe t1;
 Field	Type	Null	Key	Default	Extra
-a	date	NO		0000-00-00	
+a	date	NO		NULL	
 b	date	YES		NULL	
 select * from t1;
 a	b
@@ -872,13 +843,6 @@ select monthname(str_to_date(null, '%m')), monthname(str_to_date(null, '%m')),
 monthname(str_to_date(1, '%m')), monthname(str_to_date(0, '%m'));
 monthname(str_to_date(null, '%m'))	monthname(str_to_date(null, '%m'))	monthname(str_to_date(1, '%m'))	monthname(str_to_date(0, '%m'))
 NULL	NULL	January	NULL
-set time_zone='-6:00';
-create table t1(a timestamp);
-insert into t1 values (19691231190001);
-select * from t1;
-a
-1969-12-31 19:00:01
-drop table t1;
 create table t1(f1 date, f2 time, f3 datetime);
 insert into t1 values ("2006-01-01", "12:01:01", "2006-01-01 12:01:01");
 insert into t1 values ("2006-01-02", "12:01:02", "2006-01-02 12:01:02");
@@ -926,11 +890,11 @@ sec_to_time(1) + 0, from_unixtime(1) + 0;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `now() - now()` double(23,6) NOT NULL DEFAULT '0.000000',
-  `curtime() - curtime()` double(23,6) NOT NULL DEFAULT '0.000000',
-  `sec_to_time(1) + 0` double(23,6) DEFAULT NULL,
-  `from_unixtime(1) + 0` double(23,6) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+  `now() - now()` double(23,6),
+  `curtime() - curtime()` double(23,6),
+  `sec_to_time(1) + 0` double(23,6),
+  `from_unixtime(1) + 0` double(23,6)
+) ENGINE=InnoDB
 drop table t1;
 SELECT SEC_TO_TIME(3300000);
 SEC_TO_TIME(3300000)
@@ -995,11 +959,6 @@ NULL
 SELECT MAKETIME(0, 0, 4294967296);
 MAKETIME(0, 0, 4294967296)
 NULL
-SELECT MAKETIME(CAST(-1 AS UNSIGNED), 0, 0);
-MAKETIME(CAST(-1 AS UNSIGNED), 0, 0)
-838:59:59
-Warnings:
-Warning	1292	Truncated incorrect time value: '18446744073709551615:00:00'
 SELECT EXTRACT(HOUR FROM '100000:02:03');
 EXTRACT(HOUR FROM '100000:02:03')
 838
@@ -1007,30 +966,18 @@ Warnings:
 Warning	1292	Truncated incorrect time value: '100000:02:03'
 CREATE TABLE t1(f1 TIME);
 INSERT INTO t1 VALUES('916:00:00 a');
-Warnings:
-Warning	1265	Data truncated for column 'f1' at row 1
-Warning	1264	Out of range value for column 'f1' at row 1
+ERROR 22007: Incorrect time value: '916:00:00 a' for column 'f1' at row 1
 SELECT * FROM t1;
 f1
-838:59:59
 DROP TABLE t1;
-SELECT SEC_TO_TIME(CAST(-1 AS UNSIGNED));
-SEC_TO_TIME(CAST(-1 AS UNSIGNED))
-838:59:59
-Warnings:
-Warning	1292	Truncated incorrect time value: '18446744073709551615'
-SET NAMES latin1;
-SET character_set_results = NULL;
 SHOW VARIABLES LIKE 'character_set_results';
 Variable_name	Value
-character_set_results	
-CREATE TABLE testBug8868 (field1 DATE, field2 VARCHAR(32) CHARACTER SET BINARY);
+CREATE TABLE testBug8868 (field1 DATE, field2 VARCHAR(32));
 INSERT INTO testBug8868 VALUES ('2006-09-04', 'abcd');
 SELECT DATE_FORMAT(field1,'%b-%e %l:%i%p') as fmtddate, field2 FROM testBug8868;
 fmtddate	field2
 Sep-4 12:00AM	abcd
 DROP TABLE testBug8868;
-SET NAMES DEFAULT;
 CREATE TABLE t1 (
 a TIMESTAMP
 );
@@ -1073,54 +1020,10 @@ timestampdiff(SQL_TSI_FRAC_SECOND, '2001-02-01 12:59:59.120000', '2001-05-01 12:
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Warning	1287	The syntax 'FRAC_SECOND' is deprecated and will be removed in MySQL 6.2. Please use MICROSECOND instead
 Note	1003	select timestampdiff(WEEK,'2001-02-01','2001-05-01') AS `a1`,timestampdiff(SECOND_FRAC,'2001-02-01 12:59:59.120000','2001-05-01 12:58:58.119999') AS `a2`
 select time_format('100:00:00', '%H %k %h %I %l');
 time_format('100:00:00', '%H %k %h %I %l')
 100 100 04 04 4
-SET GLOBAL log_bin_trust_function_creators = 1;
-create table t1 (a timestamp default '2005-05-05 01:01:01',
-b timestamp default '2005-05-05 01:01:01');
-drop function if exists t_slow_sysdate;
-create function t_slow_sysdate() returns timestamp
-begin
-do sleep(2);
-return sysdate();
-end;
-//
-insert into t1 set a = sysdate(), b = t_slow_sysdate();//
-create trigger t_before before insert on t1
-for each row begin
-set new.b = t_slow_sysdate();
-end
-//
-insert into t1 set a = sysdate();
-select a != b from t1;
-a != b
-1
-1
-drop trigger t_before;
-drop function t_slow_sysdate;
-drop table t1;
-SET GLOBAL log_bin_trust_function_creators = 0;
-create table t1 (a datetime, i int, b datetime);
-insert into t1 select sysdate(), sleep(1), sysdate() from dual;
-select a != b from t1;
-a != b
-1
-drop table t1;
-create procedure t_sysdate()
-begin
-select sysdate() into @a;
-do sleep(2);
-select sysdate() into @b;
-select @a != @b;
-end;
-//
-call t_sysdate();
-@a != @b
-1
-drop procedure t_sysdate;
 select timestampdiff(month,'2004-09-11','2004-09-11');
 timestampdiff(month,'2004-09-11','2004-09-11')
 0
@@ -1197,7 +1100,6 @@ id	day	id	day
 1	2005-06-01	3	2005-07-15
 3	2005-07-01	3	2005-07-15
 DROP TABLE t1,t2;
-set time_zone= @@global.time_zone;
 select str_to_date('10:00 PM', '%h:%i %p') + INTERVAL 10 MINUTE;
 str_to_date('10:00 PM', '%h:%i %p') + INTERVAL 10 MINUTE
 NULL
@@ -1236,21 +1138,6 @@ SELECT TIME_FORMAT(SEC_TO_TIME(a),"%H:%i:%s") FROM (SELECT 3020399 AS a UNION SE
 TIME_FORMAT(SEC_TO_TIME(a),"%H:%i:%s")
 838:59:58
 838:59:59
-set names latin1;
-create table t1 (a varchar(15) character set ascii not null);
-insert into t1 values ('070514-000000');
-select concat(a,ifnull(min(date_format(now(), '%Y-%m-%d')),' ull')) from t1;
-concat(a,ifnull(min(date_format(now(), '%Y-%m-%d')),' ull'))
-#
-set names swe7;
-select concat(a,ifnull(min(date_format(now(), '%Y-%m-%d')),' ull')) from t1;
-ERROR HY000: Illegal mix of collations (ascii_general_ci,IMPLICIT) and (swe7_swedish_ci,COERCIBLE) for operation 'concat'
-set names latin1;
-set lc_time_names=fr_FR;
-select concat(a,ifnull(min(date_format(now(), '%Y-%m-%d')),' ull')) from t1;
-ERROR HY000: Illegal mix of collations (ascii_general_ci,IMPLICIT) and (latin1_swedish_ci,COERCIBLE) for operation 'concat'
-set lc_time_names=en_US;
-drop table t1;
 select DATE_ADD('20071108181000', INTERVAL 1 DAY);
 DATE_ADD('20071108181000', INTERVAL 1 DAY)
 2007-11-09 18:10:00
@@ -1269,13 +1156,9 @@ LAST_DAY('2007-12-06 08:59:19.05') - INTERVAL 1 SECOND
 SELECT TIMESTAMPADD(FRAC_SECOND, 1, '2008-02-18');
 TIMESTAMPADD(FRAC_SECOND, 1, '2008-02-18')
 2008-02-18 00:00:00.000001
-Warnings:
-Warning	1287	The syntax 'FRAC_SECOND' is deprecated and will be removed in MySQL 6.2. Please use MICROSECOND instead
 SELECT TIMESTAMPDIFF(FRAC_SECOND, '2008-02-17', '2008-02-18');
 TIMESTAMPDIFF(FRAC_SECOND, '2008-02-17', '2008-02-18')
 86400000000
-Warnings:
-Warning	1287	The syntax 'FRAC_SECOND' is deprecated and will be removed in MySQL 6.2. Please use MICROSECOND instead
 SELECT DATE_ADD('2008-02-18', INTERVAL 1 FRAC_SECOND);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FRAC_SECOND)' at line 1
 SELECT DATE_SUB('2008-02-18', INTERVAL 1 FRAC_SECOND);

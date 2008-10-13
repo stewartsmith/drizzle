@@ -279,7 +279,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
   }
   lock_type= table_list->lock_type;
 
-  thd_proc_info(thd, "init");
+  thd->set_proc_info("init");
   thd->used_tables=0;
   values= its++;
   value_count= values->elements;
@@ -358,7 +358,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
     goto abort;
 
   error=0;
-  thd_proc_info(thd, "update");
+  thd->set_proc_info("update");
   if (duplic == DUP_REPLACE)
     table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (duplic == DUP_UPDATE)
@@ -504,7 +504,7 @@ bool mysql_insert(THD *thd,TableList *table_list,
                 thd->transaction.stmt.modified_non_trans_table);
 
   }
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
   /*
     We'll report to the client this id:
     - if the table contains an autoincrement column and we successfully
@@ -1649,7 +1649,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     if (!mysql_create_table_no_lock(thd, create_table->db,
                                     create_table->table_name,
                                     create_info, alter_info, 0,
-                                    select_field_count))
+                                    select_field_count, true))
     {
       if (create_info->table_existed &&
           !(create_info->options & HA_LEX_CREATE_TMP_TABLE))

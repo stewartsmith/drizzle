@@ -29,9 +29,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-
-#define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
-#define my_raid_delete(A,B,C) my_delete(A,B)
+#include <drizzled/util/test.h>
 
 #include "myisamdef.h"
 
@@ -1193,13 +1191,6 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 	     share->base.auto_key,
 	     llstr(share->state.auto_increment,llbuff));
     }
-    if (share->base.raid_type)
-    {
-      printf("RAID:                Type:  %u   Chunks: %u  Chunksize: %lu\n",
-	     share->base.raid_type,
-	     share->base.raid_chunks,
-	     share->base.raid_chunksize);
-    }
     if (share->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
       printf("Checksum:  %23s\n",llstr(info->state->checksum,llbuff));
 ;
@@ -1464,14 +1455,11 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   }
   fn_format(param->temp_filename,name,"", MI_NAME_DEXT,2+4+32);
-  new_file=my_raid_create(fn_format(param->temp_filename,
-				    param->temp_filename,"",
-				    DATA_TMP_EXT,2+4),
-			  0,param->tmpfile_createflag,
-			  share->base.raid_type,
-			  share->base.raid_chunks,
-			  share->base.raid_chunksize,
-			  MYF(0));
+  new_file=my_create(fn_format(param->temp_filename,
+                               param->temp_filename,"",
+                               DATA_TMP_EXT,2+4),	 
+                     0,param->tmpfile_createflag,
+                     MYF(0));
   if (new_file < 0)
   {
     mi_check_print_error(param,"Can't create new tempfile: '%s'",
@@ -1546,8 +1534,7 @@ err:
   {
     end_io_cache(&info->rec_cache);
     (void) my_close(new_file,MYF(MY_WME));
-    (void) my_raid_delete(param->temp_filename, share->base.raid_chunks,
-			  MYF(MY_WME));
+    (void) my_delete(param->temp_filename, MYF(MY_WME));
   }
   if (temp_buff)
   {

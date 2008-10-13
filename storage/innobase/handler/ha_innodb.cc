@@ -25,13 +25,11 @@ have disabled the InnoDB inlining in this file. */
     in Windows?
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
 
 #include <drizzled/common_includes.h>
 #include <mysys/mysys_err.h>
 #include "ha_innodb.h"
+#include <drizzled/innodb_plugin_extras.h>
 
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t

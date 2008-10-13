@@ -52,13 +52,10 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <drizzled/util/test.h>
 
-#ifndef USE_RAID
-#define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
-#define my_raid_delete(A,B,C) my_delete(A,B)
-#endif
 
-	/* Functions defined in this file */
+/* Functions defined in this file */
 
 static int check_k_link(MI_CHECK *param, MI_INFO *info,uint32_t nr);
 static int chk_index(MI_CHECK *param, MI_INFO *info,MI_KEYDEF *keyinfo,
@@ -1464,22 +1461,19 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_raid_create(fn_format(param->temp_filename,
-					   share->data_file_name, "",
-					   DATA_TMP_EXT, 2+4),
-				 0,param->tmpfile_createflag,
-				 share->base.raid_type,
-				 share->base.raid_chunks,
-				 share->base.raid_chunksize,
-				 MYF(0))) < 0)
+    if ((new_file=my_create(fn_format(param->temp_filename,
+                                      share->data_file_name, "",
+                                      DATA_TMP_EXT, 2+4),
+                            0,param->tmpfile_createflag,
+                            MYF(0))) < 0)
     {
       mi_check_print_error(param,"Can't create new tempfile: '%s'",
-			   param->temp_filename);
+                           param->temp_filename);
       goto err;
     }
     if (new_header_length &&
         filecopy(param,new_file,info->dfile,0L,new_header_length,
-		 "datafile-header"))
+                 "datafile-header"))
       goto err;
     info->s->state.dellink= HA_OFFSET_ERROR;
     info->rec_cache.file=new_file;
@@ -1635,8 +1629,7 @@ err:
     if (new_file >= 0)
     {
       my_close(new_file,MYF(0));
-      my_raid_delete(param->temp_filename,info->s->base.raid_chunks,
-                     MYF(MY_WME));
+      my_delete(param->temp_filename, MYF(MY_WME));
       info->rec_cache.file=-1; /* don't flush data to new_file, it's closed */
     }
     mi_mark_crashed_on_repair(info);
@@ -2089,17 +2082,14 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_raid_create(fn_format(param->temp_filename,
-					   share->data_file_name, "",
-					   DATA_TMP_EXT, 2+4),
-				 0,param->tmpfile_createflag,
-				 share->base.raid_type,
-				 share->base.raid_chunks,
-				 share->base.raid_chunksize,
-				 MYF(0))) < 0)
+    if ((new_file=my_create(fn_format(param->temp_filename,
+                                      share->data_file_name, "",
+                                      DATA_TMP_EXT, 2+4),
+                            0,param->tmpfile_createflag,
+                            MYF(0))) < 0)
     {
       mi_check_print_error(param,"Can't create new tempfile: '%s'",
-			   param->temp_filename);
+                           param->temp_filename);
       goto err;
     }
     if (new_header_length &&
@@ -2337,10 +2327,9 @@ err:
     if (new_file >= 0)
     {
       my_close(new_file,MYF(0));
-      my_raid_delete(param->temp_filename,share->base.raid_chunks,
-                     MYF(MY_WME));
+      my_delete(param->temp_filename, MYF(MY_WME));
       if (info->dfile == new_file)
-	info->dfile= -1;
+        info->dfile= -1;
     }
     mi_mark_crashed_on_repair(info);
   }
@@ -2503,15 +2492,12 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_raid_create(fn_format(param->temp_filename,
-					   share->data_file_name, "",
-					   DATA_TMP_EXT,
-					   2+4),
-				 0,param->tmpfile_createflag,
-				 share->base.raid_type,
-				 share->base.raid_chunks,
-				 share->base.raid_chunksize,
-				 MYF(0))) < 0)
+    if ((new_file=my_create(fn_format(param->temp_filename,
+                                      share->data_file_name, "",
+                                      DATA_TMP_EXT,
+                                      2+4),
+                            0,param->tmpfile_createflag,
+                            MYF(0))) < 0)
     {
       mi_check_print_error(param,"Can't create new tempfile: '%s'",
 			   param->temp_filename);
@@ -2851,10 +2837,9 @@ err:
     if (new_file >= 0)
     {
       my_close(new_file,MYF(0));
-      my_raid_delete(param->temp_filename,share->base.raid_chunks,
-                     MYF(MY_WME));
+      my_delete(param->temp_filename, MYF(MY_WME));
       if (info->dfile == new_file)
-	info->dfile= -1;
+        info->dfile= -1;
     }
     mi_mark_crashed_on_repair(info);
   }

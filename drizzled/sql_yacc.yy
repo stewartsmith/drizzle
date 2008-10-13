@@ -513,7 +513,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ERRORS
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
-%token  EVENTS_SYM
 %token  EXCLUSIVE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXIT_SYM
@@ -1075,8 +1074,7 @@ query:
           END_OF_INPUT
           {
             THD *thd= YYTHD;
-            if (!thd->bootstrap &&
-              (!(thd->lex->select_lex.options & OPTION_FOUND_COMMENT)))
+            if (!(thd->lex->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
@@ -5239,11 +5237,6 @@ show_param:
           {
             Lex->sql_command = SQLCOM_SHOW_BINLOGS;
           }
-        | BINLOG_SYM EVENTS_SYM binlog_in binlog_from
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_BINLOG_EVENTS;
-          } opt_limit_clause_init
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
             LEX *lex= Lex;
@@ -5277,20 +5270,6 @@ show_param:
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
             lex->option_type= $1;
             if (prepare_schema_table(YYTHD, lex, 0, SCH_VARIABLES))
-              DRIZZLE_YYABORT;
-          }
-        | charset show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_CHARSETS;
-            if (prepare_schema_table(YYTHD, lex, 0, SCH_CHARSETS))
-              DRIZZLE_YYABORT;
-          }
-        | COLLATION_SYM show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_COLLATIONS;
-            if (prepare_schema_table(YYTHD, lex, 0, SCH_COLLATIONS))
               DRIZZLE_YYABORT;
           }
         | CREATE DATABASE opt_if_not_exists ident
@@ -5333,16 +5312,6 @@ opt_full:
 from_or_in:
           FROM
         | IN_SYM
-        ;
-
-binlog_in:
-          /* empty */            { Lex->mi.log_file_name = 0; }
-        | IN_SYM TEXT_STRING_sys { Lex->mi.log_file_name = $2.str; }
-        ;
-
-binlog_from:
-          /* empty */        { Lex->mi.pos = 4; /* skip magic number */ }
-        | FROM ulonglong_num { Lex->mi.pos = $2; }
         ;
 
 show_wild:
@@ -6212,7 +6181,6 @@ keyword_sp:
         | ENGINE_SYM               {}
         | ERRORS                   {}
         | ESCAPE_SYM               {}
-        | EVENTS_SYM               {}
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
         | EXTENT_SIZE_SYM          {}

@@ -23,9 +23,6 @@
 #ifndef DRIZZLED_OPT_RANGE_H
 #define DRIZZLED_OPT_RANGE_H
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 typedef struct st_key_part {
   uint16_t           key,part;

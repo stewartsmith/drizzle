@@ -87,6 +87,7 @@ multiple read locks.
 # endif
 #endif  
 
+#include <drizzled/util/test.h>
 
 bool thr_lock_inited=0;
 uint32_t locks_immediate = 0L, locks_waited = 0L;

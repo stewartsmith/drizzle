@@ -19,9 +19,6 @@
 
 /* This file defines structures needed by udf functions */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface
-#endif
 
 #include "item_func.h"
 

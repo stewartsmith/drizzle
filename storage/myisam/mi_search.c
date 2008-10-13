@@ -17,6 +17,7 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <drizzled/util/test.h>
 
 static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *page,
                                 unsigned char *key, unsigned char *keypos,

@@ -22,6 +22,8 @@
 
 #include "rpl_rli.h"
 #include "rpl_reporting.h"
+#include <drizzled/serialize/serialize.h>
+#include <string>
 
 
 /*****************************************************************************
@@ -59,28 +61,32 @@
 
 class Master_info : public Slave_reporting_capability
 {
- public:
+private:
+  drizzle::MasterList list;
+  string info_filename;
+  string log_name;
+  uint16_t port;
+  uint64_t log_pos;
+
+public:
+
+  /* the variables below are needed because we can change masters on the fly */
+  string host;
+  string user;
+  string password;
+  uint32_t connect_retry;
+  THD *io_thd;
   Master_info();
   ~Master_info();
 
-  /* the variables below are needed because we can change masters on the fly */
-  char master_log_name[FN_REFLEN];
-  char host[HOSTNAME_LENGTH+1];
-  char user[USERNAME_LENGTH+1];
-  char password[MAX_PASSWORD_LENGTH+1];
-
-  my_off_t master_log_pos;
-  File fd; // we keep the file open, so we need to remember the file pointer
-  IO_CACHE file;
-
-  pthread_mutex_t data_lock,run_lock;
-  pthread_cond_t data_cond,start_cond,stop_cond;
-  THD *io_thd;
+  pthread_mutex_t data_lock;
+  pthread_mutex_t run_lock;
+  pthread_cond_t data_cond;
+  pthread_cond_t start_cond;
+  pthread_cond_t stop_cond;
   DRIZZLE *drizzle;
   uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
-  uint32_t port;
-  uint32_t connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
   uint64_t received_heartbeats;  // counter of received heartbeat events
   int events_till_disconnect;
@@ -97,15 +103,35 @@ class Master_info : public Slave_reporting_capability
      clock_of_slave - last_timestamp_executed_by_SQL_thread - clock_diff_with_master
 
   */
-  long clock_diff_with_master;
-};
+  time_t clock_diff_with_master;
+  int flush();
+  void end_master_info();
+  void reset();
 
-void init_master_log_pos(Master_info* mi);
-int init_master_info(Master_info* mi, const char* master_info_fname,
-		     const char* slave_info_fname,
-		     bool abort_if_no_master_info_file,
-		     int thread_mask);
-void end_master_info(Master_info* mi);
-int flush_master_info(Master_info* mi, bool flush_relay_log_cache);
+  int init_master_info(const char* master_info_fname,
+                       const char* slave_info_fname,
+                       int thread_mask);
+
+  bool setUsername(const char *username);
+  const char *getUsername();
+
+  bool setPassword(const char *pword);
+  const char *getPassword();
+
+  bool setHost(const char *host, uint16_t new_port);
+  const char *getHostname();
+  uint16_t getPort();
+
+  off_t getLogPosition();
+  bool setLogPosition(off_t position);
+  void incrementLogPosition(off_t position);
+
+  const char *getLogName();
+  bool setLogName(const char *name);
+
+  uint32_t getConnectionRetry();
+  bool setConnectionRetry(uint32_t log_position);
+
+};
 
 #endif /* DRIZZLED_RPL_MI_H */

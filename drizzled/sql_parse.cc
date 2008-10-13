@@ -183,10 +183,7 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_CHARSETS]=    CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_COLLATIONS]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_BINLOG_EVENTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
@@ -222,7 +219,7 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
   Vio* save_vio;
   ulong save_client_capabilities;
 
-  thd_proc_info(thd, "Execution of init_command");
+  thd->set_proc_info("Execution of init_command");
   /*
     We need to lock init_command_var because
     during execution of init_command_var query
@@ -498,11 +495,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   bool error= 0;
 
   thd->command=command;
-  /*
-    Commands which always take a long time are logged into
-    the slow log only if opt_log_slow_admin_statements is set.
-  */
-  thd->enable_slow_log= true;
   thd->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   thd->set_time();
   pthread_mutex_lock(&LOCK_thread_count);
@@ -761,7 +753,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       uint32_t slave_server_id;
 
       status_var_increment(thd->status_var.com_other);
-      thd->enable_slow_log= opt_log_slow_admin_statements;
       /* TODO: The following has to be changed to an 8 byte integer */
       pos = uint4korr(packet);
       flags = uint2korr(packet + 4);
@@ -856,9 +847,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   log_slow_statement(thd);
 
-  thd_proc_info(thd, "cleaning up");
+  thd->set_proc_info("cleaning up");
   pthread_mutex_lock(&LOCK_thread_count); // For process list
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   thd->command=COM_SLEEP;
   thd->query=0;
   thd->query_length=0;
@@ -1203,8 +1194,6 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_FIELDS:
   case SQLCOM_SHOW_KEYS:
   case SQLCOM_SHOW_VARIABLES:
-  case SQLCOM_SHOW_CHARSETS:
-  case SQLCOM_SHOW_COLLATIONS:
   case SQLCOM_SELECT:
   {
     thd->status_var.last_query_cost= 0.0;
@@ -1256,12 +1245,6 @@ mysql_execute_command(THD *thd)
 			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
-  case SQLCOM_SHOW_BINLOG_EVENTS:
-  {
-    res = mysql_show_binlog_events(thd);
-    break;
-  }
-
   case SQLCOM_ASSIGN_TO_KEYCACHE:
   {
     assert(first_table == all_tables && first_table != 0);
@@ -1487,12 +1470,6 @@ end_with_restore_list:
     assert(first_table == all_tables && first_table != 0);
     if (end_active_trans(thd))
       goto error;
-    /*
-      Currently CREATE INDEX or DROP INDEX cause a full table rebuild
-      and thus classify as slow administrative statements just like
-      ALTER TABLE.
-    */
-    thd->enable_slow_log= opt_log_slow_admin_statements;
 
     memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
@@ -1584,7 +1561,6 @@ end_with_restore_list:
         break;
       }
 
-      thd->enable_slow_log= opt_log_slow_admin_statements;
       res= mysql_alter_table(thd, select_lex->db, lex->name.str,
                              &create_info,
                              first_table,
@@ -1635,7 +1611,6 @@ end_with_restore_list:
   case SQLCOM_REPAIR:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_repair_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     /*
@@ -1649,7 +1624,6 @@ end_with_restore_list:
   case SQLCOM_CHECK:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res = mysql_check_table(thd, first_table, &lex->check_opt);
     select_lex->table_list.first= (unsigned char*) first_table;
     lex->query_tables=all_tables;
@@ -1658,7 +1632,6 @@ end_with_restore_list:
   case SQLCOM_ANALYZE:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_analyze_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     write_bin_log(thd, true, thd->query, thd->query_length);
@@ -1670,7 +1643,6 @@ end_with_restore_list:
   case SQLCOM_OPTIMIZE:
   {
     assert(first_table == all_tables && first_table != 0);
-    thd->enable_slow_log= opt_log_slow_admin_statements;
     res= mysql_optimize_table(thd, first_table, &lex->check_opt);
     /* ! we write after unlocking the table */
     write_bin_log(thd, true, thd->query, thd->query_length);
@@ -1893,7 +1865,7 @@ end_with_restore_list:
     if (add_item_to_list(thd, new Item_null()))
       goto error;
 
-    thd_proc_info(thd, "init");
+    thd->set_proc_info("init");
     if ((res= open_and_lock_tables(thd, all_tables)))
       break;
 
@@ -2396,7 +2368,7 @@ end_with_restore_list:
     my_ok(thd);
     break;
   }
-  thd_proc_info(thd, "query end");
+  thd->set_proc_info("query end");
 
   /*
     Binlog-related cleanup:
@@ -2825,7 +2797,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
       assert(thd->is_error());
     }
     lex->unit.cleanup();
-    thd_proc_info(thd, "freeing items");
+    thd->set_proc_info("freeing items");
     thd->end_statement();
     thd->cleanup_after_query();
     assert(thd->change_list.is_empty());

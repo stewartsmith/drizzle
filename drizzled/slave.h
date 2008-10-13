@@ -134,10 +134,8 @@ extern uint64_t relay_log_space_limit;
 #define DRIZZLE_SLAVE_RUN_NOT_CONNECT 1
 #define DRIZZLE_SLAVE_RUN_CONNECT     2
 
-#define RPL_LOG_NAME (rli->group_master_log_name[0] ? rli->group_master_log_name :\
- "FIRST")
-#define IO_RPL_LOG_NAME (mi->master_log_name[0] ? mi->master_log_name :\
- "FIRST")
+#define RPL_LOG_NAME (rli->group_master_log_name.length() ? rli->group_master_log_name.c_str() : "FIRST")
+#define IO_RPL_LOG_NAME (mi->getLogName() ? mi->getLogName() : "FIRST")
 
 /*
   If the following is set, if first gives an error, second will be

@@ -45,7 +45,7 @@
 my_off_t my_seek(File fd, my_off_t pos, int whence,
 		 myf MyFlags __attribute__((unused)))
 {
-  register os_off_t newpos= -1;
+  register off_t newpos= -1;
   assert(pos != MY_FILEPOS_ERROR);		/* safety check */
 
   /*
@@ -62,7 +62,7 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
   else
 #endif
     newpos= lseek(fd, pos, whence);
-  if (newpos == (os_off_t) -1)
+  if (newpos == (off_t) -1)
   {
     my_errno=errno;
     return(MY_FILEPOS_ERROR);
@@ -76,14 +76,14 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
 
 my_off_t my_tell(File fd, myf MyFlags __attribute__((unused)))
 {
-  os_off_t pos;
+  off_t pos;
   assert(fd >= 0);
 #ifdef HAVE_TELL
   pos=tell(fd);
 #else
   pos=lseek(fd, 0L, MY_SEEK_CUR);
 #endif
-  if (pos == (os_off_t) -1)
+  if (pos == (off_t) -1)
     my_errno=errno;
   return((my_off_t) pos);
 } /* my_tell */

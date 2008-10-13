@@ -24,9 +24,6 @@
   classes to use when handling where clause
 */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 /* PREV_BITS only used in sql_select.cc */
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))

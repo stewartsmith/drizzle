@@ -1400,13 +1400,12 @@ public:
     it returned an error on master, and this is OK on the slave.
   */
   bool       is_slave_error;
-  bool       bootstrap, cleanup_done;
+  bool       cleanup_done;
   
   /**  is set if some thread specific value(s) used in a statement. */
   bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
   bool       charset_is_character_set_filesystem;
-  bool       enable_slow_log;   /* enable slow log for current statement */
   bool	     abort_on_warning;
   bool 	     got_warning;       /* Set on call to push_warning() */
   bool	     no_warnings_for_error; /* no warnings on call to my_error() */
@@ -1521,7 +1520,7 @@ public:
     safe_mutex_assert_owner(mutex);
     mysys_var->current_mutex = mutex;
     mysys_var->current_cond = cond;
-    thd_proc_info(this, msg);
+    this->set_proc_info(msg);
     return old_msg;
   }
   inline void exit_cond(const char* old_msg)
@@ -1536,7 +1535,7 @@ public:
     pthread_mutex_lock(&mysys_var->mutex);
     mysys_var->current_mutex = 0;
     mysys_var->current_cond = 0;
-    thd_proc_info(this, old_msg);
+    this->set_proc_info(old_msg);
     pthread_mutex_unlock(&mysys_var->mutex);
   }
   inline time_t query_start() { query_start_used=1; return start_time; }

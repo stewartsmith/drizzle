@@ -159,8 +159,11 @@ test-drizzle:
         func_group_innodb \
         func_isnull \
         func_like \
-				func_math \
+	func_math \
 	func_compress \
+	func_sapdb \
+	func_time \
+	func_weight_string \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \
@@ -183,6 +186,10 @@ test-drizzle:
         limit \
         lock_tables_lost_commit \
         overflow \
+	order_by \
+	order_fill_sortbuf \
+	overflow \
+	pool_of_threads \
         rollback \
         select \
         subselect \
@@ -190,7 +197,16 @@ test-drizzle:
         subselect_innodb \
         sum_distinct \
         tablelock \
+	type_blob \
+	type_date \
+	type_datetime \
+	type_float \
         type_newdecimal \
+	type_ranges \
+	type_time \
+	type_timestamp \
+	type_uint \
+	type_varchar \
         unsafe_binlog_innodb \
         update \
         variables-notembedded

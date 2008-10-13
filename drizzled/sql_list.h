@@ -21,10 +21,6 @@
 #define INCLUDES_DRIZZLE_SQL_LIST_H
 
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
 #include <utility>
 #include <algorithm>
 

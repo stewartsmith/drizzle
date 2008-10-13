@@ -30,17 +30,6 @@ class Item;
 #define DRIZZLE_THD void*
 #endif
 
-
-#ifndef _m_string_h
-/* This definition must match the one given in m_string.h */
-struct st_mysql_lex_string
-{
-  char *str;
-  unsigned int length;
-};
-#endif /* _m_string_h */
-typedef struct st_mysql_lex_string DRIZZLE_LEX_STRING;
-
 #define DRIZZLE_XIDDATASIZE 128
 /**
   struct st_mysql_xid is binary compatible with the XID structure as
@@ -440,7 +429,6 @@ int thd_in_lock_tables(const DRIZZLE_THD thd);
 int thd_tablespace_op(const DRIZZLE_THD thd);
 int64_t thd_test_options(const DRIZZLE_THD thd, int64_t test_options);
 int thd_sql_command(const DRIZZLE_THD thd);
-const char *thd_proc_info(DRIZZLE_THD thd, const char *info);
 void **thd_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton);
 int thd_tx_isolation(const DRIZZLE_THD thd);
 /* Increments the row counter, see THD::row_count */
@@ -515,23 +503,6 @@ char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size);
   @see thd_alloc()
 */
 void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size);
-
-/**
-  Create a LEX_STRING in this connection's local memory pool
-
-  @param thd      user thread connection handle
-  @param lex_str  pointer to LEX_STRING object to be initialized
-  @param str      initializer to be copied into lex_str
-  @param size     length of str, in bytes
-  @param allocate_lex_string  flag: if TRUE, allocate new LEX_STRING object,
-                              instead of using lex_str value
-  @return  NULL on failure, or pointer to the LEX_STRING object
-
-  @see thd_alloc()
-*/
-DRIZZLE_LEX_STRING *thd_make_lex_string(DRIZZLE_THD thd, DRIZZLE_LEX_STRING *lex_str,
-                                      const char *str, unsigned int size,
-                                      int allocate_lex_string);
 
 /**
   Get the XID for this connection's transaction

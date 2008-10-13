@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     else
       printf("Performing read() test\n");
 
-    if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
+    if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     method)))
     {
       printf("Could not open test file\n");
@@ -116,7 +116,7 @@ int generate_data(uint64_t rows_to_test)
     return 0;
   }
 
-  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC|O_BINARY,
+  if (!(ret= azopen(&writer_handle, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC,
                     AZ_METHOD_BLOCK)))
   {
     printf("Could not create test file\n");

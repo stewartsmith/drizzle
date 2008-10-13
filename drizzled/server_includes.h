@@ -180,7 +180,8 @@ bool mysql_create_table_no_lock(THD *thd, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count);
+                                bool tmp_table, uint32_t select_field_count,
+                                bool lock_open_lock);
 
 bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
@@ -679,10 +680,7 @@ extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
-extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
-extern bool opt_log_slow_admin_statements;
-extern bool opt_log_slow_slave_statements;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern uint32_t opt_crash_binlog_innodb;

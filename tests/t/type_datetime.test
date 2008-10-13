@@ -24,6 +24,7 @@ select * from t1;
 
 # Test some wrong dates
 truncate table t1;
+--error 1292
 insert into t1 values("2003-0303 12:13:14");
 select * from t1;
 drop table t1;
@@ -64,7 +65,7 @@ drop table t1;
 
 CREATE TABLE `t1` (
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
-  `numfacture` int(6) NOT NULL default '0',
+  `numfacture` int NOT NULL default '0',
   `expedition` datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY  (`numfacture`),
   KEY `date` (`date`),
@@ -88,15 +89,18 @@ drop table t1;
 # warnings (for both strings and numbers)
 #
 create table t1 (t datetime);
+--error 1292
 insert into t1 values (20030102030460),(20030102036301),(20030102240401),
                       (20030132030401),(20031302030401),(100001202030401);
 select * from t1;
 delete from t1;
+--error 1292
 insert into t1 values
   ("2003-01-02 03:04:60"),("2003-01-02 03:63:01"),("2003-01-02 24:04:01"),
   ("2003-01-32 03:04:01"),("2003-13-02 03:04:01"), ("10000-12-02 03:04:00");
 select * from t1;
 delete from t1;
+--error 1292
 insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
 select * from t1 order by t;
 drop table t1;
@@ -127,9 +131,6 @@ select cast('2006-12-05 22:10:10' as datetime) + 0;
 CREATE TABLE t1(a DATETIME NOT NULL);
 INSERT INTO t1 VALUES ('20060606155555');
 SELECT a FROM t1 WHERE a=(SELECT MAX(a) FROM t1) AND (a="20060606155555");
-PREPARE s FROM 'SELECT a FROM t1 WHERE a=(SELECT MAX(a) FROM t1) AND (a="20060606155555")';
-EXECUTE s;
-DROP PREPARE s;
 DROP TABLE t1;
 
 
@@ -146,12 +147,10 @@ SELECT CAST(CAST('10:11:12.098700' AS TIME) AS DECIMAL(20,6));
 # Test of storing datetime into date fields
 #
 
-set @org_mode=@@sql_mode;
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
 show create table t1;
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-set @@sql_mode='ansi,traditional';
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
@@ -163,40 +162,7 @@ drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 --error ER_INVALID_DEFAULT
 create table t1 (t time default '916:00:00 a');
-set @@sql_mode= @org_mode;
 
-
-#
-# Bug#27590: Wrong DATE/DATETIME comparison.  
-#
-## The following sub test will fail (difference to expected result) if the
-## select curdate() < now(), f1 < now(), cast(f1 as date) < now() from t1;
-## runs exact at midnight ('00:00:00').
-## ( Bug#29290 type_datetime.test failure in 5.1 )
-## Therefore we sleep a bit if we are too close to midnight.
-## The complete test itself needs around 1 second.
-## Therefore a time_distance to midnight of 5 seconds should be sufficient.
-if (`SELECT CURTIME() > SEC_TO_TIME(24 * 3600 - 5)`)
-{
-   # We are here when CURTIME() is between '23:59:56' and '23:59:59'.
-   # So a sleep time of 5 seconds brings us between '00:00:01' and '00:00:04'.
-   --real_sleep 5
-}
-create table t1 (f1 date, f2 datetime, f3 timestamp);
-insert into t1(f1) values(curdate());
-select curdate() < now(), f1 < now(), cast(f1 as date) < now() from t1;
-delete from t1;
-insert into t1 values('2001-01-01','2001-01-01 01:01:01','2001-01-01 01:01:01');
-insert into t1 values('2001-02-05','2001-02-05 00:00:00','2001-02-05 01:01:01');
-insert into t1 values('2001-03-10','2001-03-09 01:01:01','2001-03-10 01:01:01');
-insert into t1 values('2001-04-15','2001-04-15 00:00:00','2001-04-15 00:00:00');
-insert into t1 values('2001-05-20','2001-05-20 01:01:01','2001-05-20 01:01:01');
-select f1, f3 from t1 where f1 >= '2001-02-05 00:00:00' and f3 <= '2001-04-15';
-select f1, f3 from t1 where f1 >= '2001-2-5 0:0:0' and f2 <= '2001-4-15';
-select f1, f2 from t1 where if(1, f1, 0) >= f2;
-select 1 from dual where cast('2001-1-1 2:3:4' as date) = cast('2001-01-01' as datetime);
-select f1, f2, f1 > f2, f1 = f2, f1 < f2 from t1;
-drop table t1;
 
 #
 # Bug#16377: Wrong DATE/DATETIME comparison in BETWEEN function.
@@ -214,7 +180,6 @@ select f1, f2, f3 from t1 where cast(f1 as datetime) between f2 and
 select f2 from t1 where '2001-04-10 12:34:56' between f2 and '01-05-01';
 select f2, f3 from t1 where '01-03-10' between f2 and f3;
 select f2 from t1 where DATE(f2) between "2001-4-15" AND "01-4-15";
-SELECT 1 from dual where NOW() BETWEEN CURRENT_DATE() - INTERVAL 1 DAY AND CURRENT_DATE();
 drop table t1;
 
 #
@@ -244,26 +209,8 @@ select greatest(cast('01-01-01' as date), '01-01-02');
 select least(cast('01-01-01' as date), '01-01-02') + 0;
 select greatest(cast('01-01-01' as date), '01-01-02') + 0;
 select least(cast('01-01-01' as datetime), '01-01-02') + 0;
-select cast(least(cast('01-01-01' as datetime), '01-01-02') as signed);
 select cast(least(cast('01-01-01' as datetime), '01-01-02') as decimal(16,2));
---disable_warnings
-DROP PROCEDURE IF EXISTS test27759 ;
---enable_warnings
-DELIMITER |;
-CREATE PROCEDURE test27759()
-BEGIN
-declare v_a date default '2007-4-10';
-declare v_b date default '2007-4-11';
-declare v_c datetime default '2004-4-9 0:0:0';
-select v_a as a,v_b as b,
-       least( v_a, v_b ) as a_then_b,
-       least( v_b, v_a ) as b_then_a,
-       least( v_c, v_a ) as c_then_a;
-END;|
-DELIMITER ;|
-call test27759();
-drop procedure test27759;
-
+#
 #
 # Bug#28208: Wrong result of a non-const STRING function with a const
 #            DATETIME function.
@@ -354,8 +301,8 @@ drop table t1;
 #
 # Bug #32694: NOT NULL table field in a subquery produces invalid results
 #
-create table t1 (id int(10) not null, cur_date datetime not null);
-create table t2 (id int(10) not null, cur_date date not null);
+create table t1 (id int not null, cur_date datetime not null);
+create table t2 (id int not null, cur_date date not null);
 insert into t1 (id, cur_date) values (1, '2007-04-25 18:30:22');
 insert into t2 (id, cur_date) values (1, '2007-04-25');
 
@@ -386,7 +333,6 @@ select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
 select * from t2
 where id in (select id from t2 as x1 where (t2.cur_date is null));
-set @@optimizer_switch='';
 drop table t1,t2;
 
 --echo End of 5.0 tests
@@ -394,12 +340,10 @@ drop table t1,t2;
 # Test of storing datetime into date fields
 #
 
-set @org_mode=@@sql_mode;
 create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '1962-03-03');
 show create table t1;
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
-set @@sql_mode='ansi,traditional';
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 set dt='2007-03-23 13:49:38',da=dt;
 # Test error handling
@@ -411,4 +355,3 @@ drop table t1;
 create table t1 (da date default '1962-03-32 23:33:34', dt datetime default '1962-03-03');
 --error 1067
 create table t1 (t time default '916:00:00 a');
-set @@sql_mode= @org_mode;

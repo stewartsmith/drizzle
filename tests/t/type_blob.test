@@ -14,13 +14,13 @@ drop table if exists t1,t2,t3,t4,t5,t6,t7;
 # Check syntax for creating BLOB/TEXT
 #
 
-CREATE TABLE t1 (a blob, b text, c blob(250), d text(70000), e text(70000000));
+CREATE TABLE t1 (a blob, b text, c blob, d text, e text);
 show columns from t1;
 # PS doesn't give errors on prepare yet
-CREATE TABLE t2 (a char(255), b varbinary(70000), c varchar(70000000));
-CREATE TABLE t4 (c varchar(65530) character set utf8 not null);
+CREATE TABLE t2 (a varchar(255), b blob, c blob);
+CREATE TABLE t4 (c varchar(16383) not null);
 show columns from t2;
-create table t3 (a long, b long byte);
+create table t3 (a int, b int);
 show create TABLE t3;
 show create TABLE t4;
 drop table t1,t2,t3,t4;
@@ -29,13 +29,11 @@ drop table t1,t2,t3,t4;
 # Check errors with blob
 #
 
---error 1074
-CREATE TABLE t1 (a char(257) default "hello");
---error 1074
-CREATE TABLE t2 (a char(256));
+CREATE TABLE t1 (a blob default "hello");
+CREATE TABLE t2 (a varchar(256));
+drop table t1,t2;
 --error 1074
 CREATE TABLE t1 (a varchar(70000) default "hello");
---error 1101
 CREATE TABLE t2 (a blob default "hello");
 
 # Safety to be able to continue with other tests if above fails
@@ -47,7 +45,7 @@ drop table if exists t1,t2;
 # test of full join with blob
 #
 
-create table t1 (nr int(5) not null auto_increment,b blob,str char(10), primary key (nr));
+create table t1 (nr int not null auto_increment,b blob,str char(10), primary key (nr));
 insert into t1 values (null,"a","A");
 insert into t1 values (null,"bbb","BBB");
 insert into t1 values (null,"ccc","CCC");
@@ -67,9 +65,9 @@ select * from t1;
 drop table t1;
 
 #
-# test of blob, text, char and varbinary
+# test of blob, text, and char
 #
-create table t1 (t text,c char(10),b blob, d varbinary(10));
+create table t1 (t text,c varchar(10),b blob, d blob);
 insert into t1 values (NULL,NULL,NULL,NULL);
 insert into t1 values ("","","","");
 insert into t1 values ("hello","hello","hello","hello");
@@ -142,13 +140,13 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  t1_id bigint(21) NOT NULL auto_increment,
+  t1_id bigint NOT NULL auto_increment,
   _field_72 varchar(128) DEFAULT '' NOT NULL,
   _field_95 varchar(32),
-  _field_115 int(4) DEFAULT '0' NOT NULL,
-  _field_122 int(4) DEFAULT '0' NOT NULL,
-  _field_126 int(4),
-  _field_134 int(4),
+  _field_115 int DEFAULT '0' NOT NULL,
+  _field_122 int DEFAULT '0' NOT NULL,
+  _field_126 int,
+  _field_134 int,
   PRIMARY KEY (t1_id),
   UNIQUE _field_72 (_field_72),
   KEY _field_115 (_field_115),
@@ -162,8 +160,8 @@ INSERT INTO t1 VALUES (3,'guest','d41d8cd98f00b204e9800998ecf8427e',1,0,NULL,NUL
 
 
 CREATE TABLE t2 (
-  seq_0_id bigint(21) DEFAULT '0' NOT NULL,
-  seq_1_id bigint(21) DEFAULT '0' NOT NULL,
+  seq_0_id bigint DEFAULT '0' NOT NULL,
+  seq_1_id bigint DEFAULT '0' NOT NULL,
   PRIMARY KEY (seq_0_id,seq_1_id)
 );
 
@@ -173,16 +171,16 @@ INSERT INTO t2 VALUES (2,1);
 INSERT INTO t2 VALUES (2,2);
 
 CREATE TABLE t3 (
-  t3_id bigint(21) NOT NULL auto_increment,
+  t3_id bigint NOT NULL auto_increment,
   _field_131 varchar(128),
-  _field_133 int(4) DEFAULT '0' NOT NULL,
+  _field_133 int DEFAULT '0' NOT NULL,
   _field_135 datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  _field_137 int(4),
+  _field_137 int,
   _field_139 datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   _field_140 blob,
-  _field_142 int(4) DEFAULT '0' NOT NULL,
-  _field_145 int(4) DEFAULT '0' NOT NULL,
-  _field_148 int(4) DEFAULT '0' NOT NULL,
+  _field_142 int DEFAULT '0' NOT NULL,
+  _field_145 int DEFAULT '0' NOT NULL,
+  _field_148 int DEFAULT '0' NOT NULL,
   PRIMARY KEY (t3_id),
   KEY _field_133 (_field_133),
   KEY _field_135 (_field_135),
@@ -198,8 +196,8 @@ INSERT INTO t3 VALUES (2,'test job 2',0,'0000-00-00 00:00:00',0,'1999-02-26 21:0
 
 
 CREATE TABLE t4 (
-  seq_0_id bigint(21) DEFAULT '0' NOT NULL,
-  seq_1_id bigint(21) DEFAULT '0' NOT NULL,
+  seq_0_id bigint DEFAULT '0' NOT NULL,
+  seq_1_id bigint DEFAULT '0' NOT NULL,
   PRIMARY KEY (seq_0_id,seq_1_id)
 );
 
@@ -208,8 +206,8 @@ INSERT INTO t4 VALUES (1,1);
 INSERT INTO t4 VALUES (2,1);
 
 CREATE TABLE t5 (
-  t5_id bigint(21) NOT NULL auto_increment,
-  _field_149 int(4),
+  t5_id bigint NOT NULL auto_increment,
+  _field_149 int,
   _field_156 varchar(128) DEFAULT '' NOT NULL,
   _field_157 varchar(128) DEFAULT '' NOT NULL,
   _field_158 varchar(128) DEFAULT '' NOT NULL,
@@ -230,8 +228,8 @@ INSERT INTO t5 VALUES (1,0,'tomato','','','','','');
 INSERT INTO t5 VALUES (2,0,'cilantro','','','','','');
 
 CREATE TABLE t6 (
-  seq_0_id bigint(21) DEFAULT '0' NOT NULL,
-  seq_1_id bigint(21) DEFAULT '0' NOT NULL,
+  seq_0_id bigint DEFAULT '0' NOT NULL,
+  seq_1_id bigint DEFAULT '0' NOT NULL,
   PRIMARY KEY (seq_0_id,seq_1_id)
 );
 
@@ -240,10 +238,10 @@ INSERT INTO t6 VALUES (1,2);
 INSERT INTO t6 VALUES (2,2);
 
 CREATE TABLE t7 (
-  t7_id bigint(21) NOT NULL auto_increment,
-  _field_143 int(4),
+  t7_id bigint NOT NULL auto_increment,
+  _field_143 int,
   _field_165 varchar(32),
-  _field_166 int(6) DEFAULT '0' NOT NULL,
+  _field_166 int DEFAULT '0' NOT NULL,
   PRIMARY KEY (t7_id),
   KEY _field_166 (_field_166)
 );
@@ -280,7 +278,7 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-       f1 int(11) DEFAULT '0' NOT NULL,
+       f1 int DEFAULT '0' NOT NULL,
        f2 varchar(16) DEFAULT '' NOT NULL,
        f5 text,
        KEY index_name (f1,f2,f5(16))
@@ -298,33 +296,6 @@ create table t1 (foobar tinyblob not null, boggle int not null, key (foobar(32),
 insert into t1 values ('fish', 10),('bear', 20);
 select foobar, boggle from t1 where foobar = 'fish';
 select foobar, boggle from t1 where foobar = 'fish' and boggle = 10;
-drop table t1;
-
-#
-# Bug when blob is updated
-#
-
-create table t1 (id integer auto_increment unique,imagem LONGBLOB not null default '');
-insert into t1 (id) values (1);
-# We have to clean up the path in the results for safe comparison
-eval select
-  charset(load_file('../std_data_ln/words.dat')),
-  collation(load_file('../std_data_ln/words.dat')),
-  coercibility(load_file('../std_data_ln/words.dat'));
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval explain extended select
-  charset(load_file('$MYSQLTEST_VARDIR/std_data_ln/words.dat')),
-  collation(load_file('$MYSQLTEST_VARDIR/std_data_ln/words.dat')),
-  coercibility(load_file('$MYSQLTEST_VARDIR/std_data_ln/words.dat'));
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval update t1 set imagem=load_file('$MYSQLTEST_VARDIR/std_data_ln/words.dat') where id=1;
-select if(imagem is null, "ERROR", "OK"),length(imagem) from t1 where id = 1;
-drop table t1;
---replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-eval create table t1 select load_file('$MYSQLTEST_VARDIR/std_data_ln/words.dat') l;
-# We mask out the Privileges column because it differs for embedded server
---replace_column 8 #
-show full fields from t1;
 drop table t1;
 
 #
@@ -388,7 +359,7 @@ explain select * from t1 where txt='Chevy' or txt is NULL order by txt;
 select * from t1 where txt='Chevy' or txt is NULL order by txt;
 drop table t1;
 
-CREATE TABLE t1 ( i int(11) NOT NULL default '0',    c text NOT NULL, d varchar(1) NOT NULL DEFAULT ' ', PRIMARY KEY  (i), KEY (c(1),d));
+CREATE TABLE t1 ( i int NOT NULL default '0',    c text NOT NULL, d varchar(1) NOT NULL DEFAULT ' ', PRIMARY KEY  (i), KEY (c(1),d));
 INSERT t1 (i, c) VALUES (1,''),(2,''),(3,'asdfh'),(4,'');
 select max(i) from t1 where c = '';
 drop table t1;
@@ -405,20 +376,17 @@ show create table t1;
 drop table t1;
 
 #
-# Test that blob's and varbinary are sorted according to length
+# Test that blobs are sorted according to length
 #
 
 CREATE table t1 (a blob);
 insert into t1 values ('b'),('a\0'),('a'),('a '),('aa'),(NULL);
 select hex(a) from t1 order by a;
 select hex(concat(a,'\0')) as b from t1 order by concat(a,'\0');
-alter table t1 modify a varbinary(5);
+alter table t1 modify a blob;
 select hex(a) from t1 order by a;
 select hex(concat(a,'\0')) as b from t1 order by concat(a,'\0');
 alter table t1 modify a char(5);
-select hex(a) from t1 order by a;
-select hex(concat(a,'\0')) as b from t1 order by concat(a,'\0');
-alter table t1 modify a binary(5);
 select hex(a) from t1 order by a;
 select hex(concat(a,'\0')) as b from t1 order by concat(a,'\0');
 drop table t1;
@@ -431,16 +399,13 @@ show create table t1;
 insert into t1 values (default);
 select * from t1;
 drop table t1;
-set @@sql_mode='TRADITIONAL';
---error ER_BLOB_CANT_HAVE_DEFAULT
 create table t1 (a text default '');
-set @@sql_mode='';
 
 #
 # Bug #32282: TEXT silently truncates when value is exactly 65536 bytes
 #
 
-CREATE TABLE t (c TEXT CHARSET ASCII);
+CREATE TABLE t (c TEXT);
 INSERT INTO t (c) VALUES (REPEAT('1',65537));
 INSERT INTO t (c) VALUES (REPEAT('2',65536));
 INSERT INTO t (c) VALUES (REPEAT('3',65535));

@@ -69,7 +69,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   uint32_t new_opt_len;
   int reserve_occupied= 0;
 
-  if (!(cnf_file= my_fopen(file_location, O_RDWR | O_BINARY, MYF(0))))
+  if (!(cnf_file= my_fopen(file_location, O_RDWR, MYF(0))))
     return(2);
 
   if (fstat(fileno(cnf_file), &file_stat))

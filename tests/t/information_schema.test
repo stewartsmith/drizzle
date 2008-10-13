@@ -55,7 +55,6 @@ drop database mysqltest;
 
 select * from information_schema.CHARACTER_SETS
 where CHARACTER_SET_NAME like 'latin1%';
-SHOW CHARACTER SET LIKE 'latin1%';
 
 # Test for information_schema.COLLATIONS &
 # SHOW COLLATION
@@ -63,8 +62,6 @@ SHOW CHARACTER SET LIKE 'latin1%';
 --replace_column 5 #
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
---replace_column 5 #
-SHOW COLLATION LIKE 'latin1%';
 
 select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
 where COLLATION_NAME like 'latin1%';

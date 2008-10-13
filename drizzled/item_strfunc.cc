@@ -1407,7 +1407,7 @@ String *Item_func_format::val_str(String *str)
     nr= my_double_round(nr, (int64_t) dec, false, false);
     /* Here default_charset() is right as this is not an automatic conversion */
     str->set_real(nr, dec, default_charset());
-    if (isnan(nr))
+    if (std::isnan(nr))
       return str;
     str_length=str->length();
     if (nr < 0)

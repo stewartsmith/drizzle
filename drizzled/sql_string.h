@@ -22,9 +22,6 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			31

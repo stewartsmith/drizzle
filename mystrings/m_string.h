@@ -39,6 +39,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <limits.h>
+#include <ctype.h>
 
 /*  This is needed for the definitions of memcpy... on solaris */
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
@@ -141,8 +142,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);
 
-extern char *int2str(long val, char *dst, int radix, int upcase);
-extern char *int10_to_str(long val,char *dst,int radix);
+extern char *int2str(int32_t val, char *dst, int radix, int upcase);
+extern char *int10_to_str(int32_t val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
@@ -172,73 +173,22 @@ typedef struct st_mysql_lex_string LEX_STRING;
 #define USTRING_WITH_LEN(X) ((unsigned char*) X), ((size_t) (sizeof(X) - 1))
 #define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
 
-/* SPACE_INT is a word that contains only spaces */
-#if SIZEOF_INT == 4
-#define SPACE_INT 0x20202020
-#elif SIZEOF_INT == 8
-#define SPACE_INT 0x2020202020202020
-#else
-#error define the appropriate constant for a word full of spaces
-#endif
-
 /**
   Skip trailing space.
-
-  On most systems reading memory in larger chunks (ideally equal to the size of
-  the chinks that the machine physically reads from memory) causes fewer memory
-  access loops and hence increased performance.
-  This is why the 'int' type is used : it's closest to that (according to how
-  it's defined in C).
-  So when we determine the amount of whitespace at the end of a string we do
-  the following :
-    1. We divide the string into 3 zones :
-      a) from the start of the string (__start) to the first multiple
-        of sizeof(int)  (__start_words)
-      b) from the end of the string (__end) to the last multiple of sizeof(int)
-        (__end_words)
-      c) a zone that is aligned to sizeof(int) and can be safely accessed
-        through an int *
-    2. We start comparing backwards from (c) char-by-char. If all we find is
-       space then we continue
-    3. If there are elements in zone (b) we compare them as unsigned ints to a
-       int mask (SPACE_INT) consisting of all spaces
-    4. Finally we compare the remaining part (a) of the string char by char.
-       This covers for the last non-space unsigned int from 3. (if any)
-
-   This algorithm works well for relatively larger strings, but it will slow
-   the things down for smaller strings (because of the additional calculations
-   and checks compared to the naive method). Thus the barrier of length 20
-   is added.
 
    @param     ptr   pointer to the input string
    @param     len   the length of the string
    @return          the last non-space character
 */
 
-static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,size_t len)
+static inline const unsigned char *
+skip_trailing_space(const unsigned char *ptr,size_t len)
 {
   const unsigned char *end= ptr + len;
 
-  if (len > 20)
-  {
-    const unsigned char *end_words= (const unsigned char *)(intptr_t)
-      (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
-    const unsigned char *start_words= (const unsigned char *)(intptr_t)
-       ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
-
-    assert(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
-    if (end_words > ptr)
-    {
-      while (end > end_words && end[-1] == 0x20)
-        end--;
-      if (end[-1] == 0x20 && start_words < end_words)
-        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT)
-          end -= SIZEOF_INT;
-    }
-  }
-  while (end > ptr && end[-1] == 0x20)
-    end--;
-  return (end);
+  while (end > ptr && isspace(*--end))
+    continue;
+  return end+1;
 }
 
 #endif

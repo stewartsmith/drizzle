@@ -159,9 +159,5 @@ static void make_ftype(register char * to, register int flag)
   else    
     *to++= 'r';
 
-#if FILE_BINARY            /* If we have binary-files */  
-  if (flag & FILE_BINARY)    
-    *to++='b';
-#endif  
   *to='\0';
 } /* make_ftype */

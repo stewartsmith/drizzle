@@ -20,6 +20,8 @@
 #include <drizzled/sql_show.h>
 #include <mysys/my_dir.h>
 #include <libdrizzle/gettext.h>
+#include <drizzled/util/convert.h>
+#include <string>
 
 inline const char *
 str_or_nil(const char *str)
@@ -653,8 +655,9 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
                       HA_CREATE_INFO *create_info_arg)
 {
   List<Item> field_list;
-  char tmp[MAX_FIELD_WIDTH], *for_str, buff[128], def_value_buf[MAX_FIELD_WIDTH];
+  char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
   const char *alias;
+  std::string buff;
   String type(tmp, sizeof(tmp), system_charset_info);
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
@@ -842,13 +845,11 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
           (key_part->length !=
            table->field[key_part->fieldnr-1]->key_length()))
       {
-        char *end;
-        buff[0] = '(';
-        end= int10_to_str((long) key_part->length /
-                          key_part->field->charset()->mbmaxlen,
-                          buff + 1,10);
-        *end++ = ')';
-        packet->append(buff,(uint) (end-buff));
+        buff= "(";
+        buff= to_string(buff, (int32_t) key_part->length /
+                              key_part->field->charset()->mbmaxlen);
+        buff += ")";
+        packet->append(buff.c_str(), buff.length());
       }
     }
     packet->append(')');
@@ -898,34 +899,30 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
 
     if (create_info.auto_increment_value > 1)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
-      end= int64_t10_to_str(create_info.auto_increment_value, buff,10);
-      packet->append(buff, (uint) (end - buff));
+      buff= to_string(create_info.auto_increment_value);
+      packet->append(buff.c_str(), buff.length());
     }
 
     if (share->min_rows)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      end= int64_t10_to_str(share->min_rows, buff, 10);
-      packet->append(buff, (uint) (end- buff));
+      buff= to_string(share->min_rows);
+      packet->append(buff.c_str(), buff.length());
     }
 
     if (share->max_rows && !table_list->schema_table)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      end= int64_t10_to_str(share->max_rows, buff, 10);
-      packet->append(buff, (uint) (end - buff));
+      buff= to_string(share->max_rows);
+      packet->append(buff.c_str(), buff.length());
     }
 
     if (share->avg_row_length)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      end= int64_t10_to_str(share->avg_row_length, buff,10);
-      packet->append(buff, (uint) (end - buff));
+      buff= to_string(share->avg_row_length);
+      packet->append(buff.c_str(), buff.length());
     }
 
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
@@ -954,17 +951,15 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     }
     if (table->s->key_block_size)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      end= int64_t10_to_str(table->s->key_block_size, buff, 10);
-      packet->append(buff, (uint) (end - buff));
+      buff= to_string(table->s->key_block_size);
+      packet->append(buff.c_str(), buff.length());
     }
     if (share->block_size)
     {
-      char *end;
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
-      end= int64_t10_to_str(share->block_size, buff,10);
-      packet->append(buff, (uint) (end - buff));
+      buff= to_string(share->block_size);
+      packet->append(buff.c_str(), buff.length());
     }
     table->file->append_create_info(packet);
     if (share->comment.length)

@@ -30,8 +30,10 @@ PROTOC = protoc
 bin_PROGRAMS = \
 	       table_reader \
 	       table_writer \
-               binlog_writer \
+               master_list_reader \
+               master_list_writer \
                binlog_reader \
+               binlog_writer \
 	       schema_reader
 
 check_PROGRAMS = length
@@ -40,10 +42,12 @@ noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
 			  table.pb.cc \
+			  master_list.pb.cc \
 			  binary_log.pb.cc \
 			  schema.pb.cc
 
 noinst_HEADERS = table.pb.h \
+		 master_list.pb.h \
 		 schema.pb.h \
 		 binary_log.pb.h \
 		 binlog_encoding.h \
@@ -66,10 +70,16 @@ table_reader_CXXFLAGS =
 table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS =
 
+master_list_writer_SOURCES =  master_list_writer.cc
+master_list_writer_CXXFLAGS =
+
+master_list_reader_SOURCES =  master_list_reader.cc
+master_list_reader_CXXFLAGS =
+
 length_SOURCES = length.cc
 length_CXXFLAGS = -fexceptions
 
-EXTRA_DIST = schema.proto table.proto binary_log.proto
+EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
 		schema.pb.cc \

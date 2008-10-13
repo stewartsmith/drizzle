@@ -19,9 +19,6 @@
 
 /* Classes to support the SET command */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 /****************************************************************************
   Variables that are changable runtime are declared using the
@@ -717,50 +714,6 @@ public:
   virtual const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type)= 0;
 };
 
-class sys_var_character_set_sv :public sys_var_character_set
-{
-  const CHARSET_INFO *SV::*offset;
-  const CHARSET_INFO **global_default;
-public:
-  sys_var_character_set_sv(sys_var_chain *chain, const char *name_arg,
-			   const CHARSET_INFO *SV::*offset_arg,
-			   const CHARSET_INFO **global_default_arg,
-                           bool is_nullable= 0,
-                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    : sys_var_character_set(name_arg, is_nullable, binlog_status_arg),
-    offset(offset_arg), global_default(global_default_arg)
-  { chain_sys_var(chain); }
-  void set_default(THD *thd, enum_var_type type);
-  const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
-};
-
-
-class sys_var_character_set_client: public sys_var_character_set_sv
-{
-public:
-  sys_var_character_set_client(sys_var_chain *chain, const char *name_arg,
-                               const CHARSET_INFO *SV::*offset_arg,
-                               const CHARSET_INFO **global_default_arg,
-                               Binlog_status_enum binlog_status_arg)
-    : sys_var_character_set_sv(chain, name_arg, offset_arg, global_default_arg,
-                               0, binlog_status_arg)
-  { }
-  bool check(THD *thd, set_var *var);
-};
-
-
-class sys_var_character_set_database :public sys_var_character_set
-{
-public:
-  sys_var_character_set_database(sys_var_chain *chain, const char *name_arg,
-                                 Binlog_status_enum binlog_status_arg=
-                                   NOT_IN_BINLOG)
-    : sys_var_character_set(name_arg, 0, binlog_status_arg)
-  { chain_sys_var(chain); }
-  void set_default(THD *thd, enum_var_type type);
-  const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
-};
-
 class sys_var_collation_sv :public sys_var_collation
 {
   const CHARSET_INFO *SV::*offset;
@@ -1284,7 +1237,6 @@ int sql_set_variables(THD *thd, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 void fix_delay_key_write(THD *thd, enum_var_type type);
 void fix_slave_exec_mode(enum_var_type type);
-extern sys_var_const_str sys_charset_system;
 extern sys_var_str sys_init_connect;
 extern sys_var_str sys_init_slave;
 extern sys_var_thd_time_zone sys_time_zone;

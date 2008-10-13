@@ -20,9 +20,6 @@
 
 /* compare and test functions */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;

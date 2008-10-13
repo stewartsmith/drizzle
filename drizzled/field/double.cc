@@ -18,9 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/double.h>
@@ -222,6 +219,5 @@ void Field_double::sql_type(String &res) const
     res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			    "double(%d,%d)",(int) field_length,dec));
   }
-  add_unsigned(res);
 }
 

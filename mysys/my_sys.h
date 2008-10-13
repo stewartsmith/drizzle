@@ -31,6 +31,8 @@
 #include <mysys/typelib.h>
 #include <mysys/aio_result.h>
 
+#include <mysys/my_alloc.h>
+
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
@@ -46,7 +48,6 @@
 #define MY_WAIT_IF_FULL 32	/* Wait and try again if disk full error */
 #define MY_IGNORE_BADFD 32      /* my_sync: ignore 'bad descriptor' errors */
 #define MY_SYNC_DIR     1024    /* my_create/delete/rename: sync directory */
-#define MY_RAID         64      /* Support for RAID */
 #define MY_FULL_IO     512      /* For my_read - loop intil I/O is complete */
 #define MY_DONT_CHECK_FILESIZE 128 /* Option to init_io_cache() */
 #define MY_LINK_WARNING 32	/* my_redel() gives warning if links */
@@ -515,17 +516,6 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define clear_alloc_root(A) do { (A)->free= (A)->used= (A)->pre_alloc= 0; (A)->min_malloc=0;} while(0)
-extern void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
-			    size_t pre_alloc_size);
-extern void *alloc_root(MEM_ROOT *mem_root, size_t Size);
-extern void *multi_alloc_root(MEM_ROOT *mem_root, ...);
-extern void free_root(MEM_ROOT *root, myf MyFLAGS);
-extern void set_prealloc_root(MEM_ROOT *root, char *ptr);
-extern void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
-                                size_t prealloc_size);
-extern char *strdup_root(MEM_ROOT *root,const char *str);
-extern char *strmake_root(MEM_ROOT *root,const char *str,size_t len);
-extern void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
 extern int get_defaults_options(int argc, char **argv,
                                 char **defaults, char **extra_defaults,
                                 char **group_suffix);

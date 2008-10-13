@@ -14,9 +14,9 @@ drop table if exists t1,t2,t3,t4;
 --enable_warnings
 
 CREATE TABLE t1 (
-  Period smallint(4) zerofill DEFAULT '0000' NOT NULL,
-  Varor_period smallint(4) DEFAULT '0' NOT NULL
-);
+  Period int DEFAULT '0000' NOT NULL,
+  Varor_period int DEFAULT '0' NOT NULL
+) ENGINE=myisam;
 
 INSERT INTO t1 VALUES (9410,9412);
   
@@ -30,8 +30,8 @@ select t1.* from t1;
 
 CREATE TABLE t2 (
   auto int not null auto_increment,
-  fld1 int(6) zerofill DEFAULT '000000' NOT NULL,
-  companynr tinyint(2) zerofill DEFAULT '00' NOT NULL,
+  fld1 int DEFAULT '000000' NOT NULL,
+  companynr int DEFAULT '00' NOT NULL,
   fld3 char(30) DEFAULT '' NOT NULL,
   fld4 char(35) DEFAULT '' NOT NULL,
   fld5 char(35) DEFAULT '' NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE t2 (
   UNIQUE fld1 (fld1),
   KEY fld3 (fld3),
   PRIMARY KEY (auto)
-);  
+) ENGINE=myisam;  
 
 #
 # Populate table
@@ -1369,7 +1369,7 @@ create table t3 (
  price2     double(11,0),
  key (period),
  key (name)
-);
+) engine=myisam;
 
 --disable_query_log
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1001,"Iranizes",37,5987435,234724);
@@ -1497,7 +1497,7 @@ select t2.fld1,fld3,period,price,price2 from t2,t3 where t2.fld1>= 18201 and t2.
 #
 
 create table t4 (
-  companynr tinyint(2) zerofill NOT NULL default '00',
+  companynr int NOT NULL default '00',
   companyname char(30) NOT NULL default '',
   PRIMARY KEY (companynr),
   UNIQUE KEY companyname(companyname)
@@ -1643,7 +1643,7 @@ select t2.fld3,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 grou
 # Group with extra not group fields.
 #
 
-select companynr|0,companyname from t4 group by 1;
+select companynr,companyname from t4 group by 1;
 select t2.companynr,companyname,count(*) from t2,t4 where t2.companynr=t4.companynr group by t2.companynr order by companyname;
 select t2.fld1,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 group by t3.name;
 
@@ -1769,31 +1769,31 @@ drop table t4, t3, t2, t1;
 
 
 CREATE TABLE t1 (
-  cont_nr int(11) NOT NULL auto_increment,
-  ver_nr int(11) NOT NULL default '0',
-  aufnr int(11) NOT NULL default '0',
+  cont_nr int NOT NULL auto_increment,
+  ver_nr int NOT NULL default '0',
+  aufnr int NOT NULL default '0',
   username varchar(50) NOT NULL default '',
-  hdl_nr int(11) NOT NULL default '0',
+  hdl_nr int NOT NULL default '0',
   eintrag date NOT NULL default '0000-00-00',
   st_klasse varchar(40) NOT NULL default '',
   st_wert varchar(40) NOT NULL default '',
   st_zusatz varchar(40) NOT NULL default '',
   st_bemerkung varchar(255) NOT NULL default '',
   kunden_art varchar(40) NOT NULL default '',
-  mcbs_knr int(11) default NULL,
-  mcbs_aufnr int(11) NOT NULL default '0',
+  mcbs_knr int default NULL,
+  mcbs_aufnr int NOT NULL default '0',
   schufa_status char(1) default '?',
   bemerkung text,
   wirknetz text,
-  wf_igz int(11) NOT NULL default '0',
+  wf_igz int NOT NULL default '0',
   tarifcode varchar(80) default NULL,
   recycle char(1) default NULL,
   sim varchar(30) default NULL,
   mcbs_tpl varchar(30) default NULL,
-  emp_nr int(11) NOT NULL default '0',
-  laufzeit int(11) default NULL,
+  emp_nr int NOT NULL default '0',
+  laufzeit int default NULL,
   hdl_name varchar(30) default NULL,
-  prov_hdl_nr int(11) NOT NULL default '0',
+  prov_hdl_nr int NOT NULL default '0',
   auto_wirknetz varchar(50) default NULL,
   auto_billing varchar(50) default NULL,
   touch timestamp NOT NULL,

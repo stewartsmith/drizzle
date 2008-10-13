@@ -13,9 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
 
 #include <drizzled/server_includes.h>
 #include "tzfile.h"
@@ -1047,8 +1044,7 @@ public:
     1 - Error
 */
 bool
-my_tz_init(THD *thd, const char *default_tzname,
-           bool bootstrap __attribute__((unused)))
+my_tz_init(THD *thd, const char *default_tzname)
 {
   if (default_tzname)
   {

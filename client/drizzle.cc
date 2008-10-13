@@ -610,10 +610,6 @@ static COMMANDS commands[] = {
   { "QUARTER", 0, 0, 0, ""},
   { "QUERY", 0, 0, 0, ""},
   { "QUICK", 0, 0, 0, ""},
-  { "RAID0", 0, 0, 0, ""},
-  { "RAID_CHUNKS", 0, 0, 0, ""},
-  { "RAID_CHUNKSIZE", 0, 0, 0, ""},
-  { "RAID_TYPE", 0, 0, 0, ""},
   { "READ", 0, 0, 0, ""},
   { "READS", 0, 0, 0, ""},
   { "REAL", 0, 0, 0, ""},
@@ -3508,7 +3504,7 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
   end[0]=0;
   unpack_filename(source_name,source_name);
   /* open file name */
-  if (!(sql_file = my_fopen(source_name, O_RDONLY | O_BINARY,MYF(0))))
+  if (!(sql_file = my_fopen(source_name, O_RDONLY,MYF(0))))
   {
     char buff[FN_REFLEN+60];
     sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);

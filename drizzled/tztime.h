@@ -18,9 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class interface */
-#endif
 
 /**
   This class represents abstract time zone and provides 
@@ -63,6 +60,6 @@ extern Time_zone * my_tz_UTC;
 extern Time_zone * my_tz_SYSTEM;
 extern Time_zone * my_tz_OFFSET0;
 extern Time_zone * my_tz_find(THD *thd, const String *name);
-extern bool     my_tz_init(THD *org_thd, const char *default_tzname, bool bootstrap);
+extern bool     my_tz_init(THD *org_thd, const char *default_tzname);
 extern void        my_tz_free();
 extern my_time_t   sec_since_epoch_TIME(DRIZZLE_TIME *t);

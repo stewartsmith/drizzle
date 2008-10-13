@@ -18,9 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
@@ -75,16 +72,10 @@ int Field_real::truncate(double *nr, double max_value)
   int error= 1;
   double res= *nr;
   
-  if (isnan(res))
+  if (std::isnan(res))
   {
     res= 0;
     set_null();
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    goto end;
-  }
-  else if (unsigned_flag && res < 0)
-  {
-    res= 0;
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     goto end;
   }
@@ -100,7 +91,7 @@ int Field_real::truncate(double *nr, double max_value)
     max_value-= 1.0 / log_10[dec];
 
     /* Check for infinity so we don't get NaN in calculations */
-    if (!isinf(res))
+    if (!(std::isinf(res)))
     {
       double tmp= rint((res - floor(res)) * log_10[dec]) / log_10[dec];
       res= floor(res) + tmp;

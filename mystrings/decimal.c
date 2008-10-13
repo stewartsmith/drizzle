@@ -104,6 +104,7 @@
 #include <storage/myisam/myisampack.h>
 #include <mystrings/decimal.h>
 
+#include <drizzled/util/test.h>
 /*
   Internally decimal numbers are stored base 10^9 (see DIG_BASE below)
   So one variable of type decimal_digit_t is limited:

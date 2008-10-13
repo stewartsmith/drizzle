@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef drizzled_item_h
+#define drizzled_item_h
+
 class Protocol;
 struct TableList;
 void item_init(void);			/* Init item functions */
@@ -2564,3 +2567,5 @@ extern Cached_item *new_Cached_item(THD *thd, Item *item,
                                     bool use_result_field);
 extern void resolve_const_item(THD *thd, Item **ref, Item *cmp_item);
 extern bool field_is_equal_to_item(Field *field,Item *item);
+
+#endif

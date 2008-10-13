@@ -524,7 +524,7 @@ sub mtr_print_thick_line () {
 }
 
 sub mtr_print_header () {
-  print "\n";
+  print "DEFAULT STORAGE ENGINE: $::opt_engine\n";
   if ( $::opt_timer )
   {
     print "TEST                           RESULT         TIME (ms)\n";

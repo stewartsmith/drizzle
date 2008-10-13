@@ -28,7 +28,7 @@ AC_SUBST(SAVE_CXXLDFLAGS)
 AC_SUBST(CXXLDFLAGS)
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(-Wall -Werror)
+AM_INIT_AUTOMAKE(-Wall -Wno-portability -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -299,8 +299,9 @@ dnl       Need for all of this?
 case "$target_os" in
   *solaris*)
   dnl Do we need both of these? 
-  CXXFLAGS="${CXXFLAGS} -D_C99FEATURES"
+  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  AC_DEFINE([__EXTENSIONS__],[1],[Turn on needed extensions on Solaris])
   ;;
 esac
 
@@ -812,7 +813,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-DRIZZLE_SYS_LARGEFILE
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
 
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T
@@ -928,20 +930,6 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-# AC_CHECK_SIZEOF return 0 when it does not find the size of a
-# type. We want a error instead.
-AC_CHECK_SIZEOF(char, 1)
-if test "$ac_cv_sizeof_char" -eq 0
-then
-  AC_MSG_ERROR([No size for char type.])
-fi
-AC_CHECK_SIZEOF(char*, 4)
-AC_CHECK_SIZEOF(short, 2)
-AC_CHECK_SIZEOF(int, 4)
-if test "$ac_cv_sizeof_int" -eq 0
-then
-  AC_MSG_ERROR("No size for int type.")
-fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0
@@ -955,23 +943,6 @@ dnl
 
 DRIZZLE_CHECK_TIME_T
 
-
-# do we need #pragma interface/#pragma implementation ?
-# yes if it's gcc 2.x, and not icc pretending to be gcc, and not cygwin
-AC_MSG_CHECKING(the need for @%:@pragma interface/implementation)
-# instead of trying to match SYSTEM_TYPE and CC_VERSION (that doesn't
-# follow any standard), we'll use well-defined preprocessor macros:
-AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
-#if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
-#error USE_PRAGMA_IMPLEMENTATION
-#endif
-]])],[
-  AC_MSG_RESULT(no)
-],[
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(USE_PRAGMA_IMPLEMENTATION,[1],[pragma implementation is a good idea])
-  AC_DEFINE(USE_PRAGMA_INTERFACE,[1],[pragma interface is a good idea])
-])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
@@ -1344,20 +1315,21 @@ else
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
-# AC_HEADER_ASSERT
+# AX_HEADER_ASSERT
 # ----------------
 # Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
+AC_DEFUN([AX_HEADER_ASSERT],
 [
   AC_MSG_CHECKING([whether to enable assertions])
   AC_ARG_ENABLE([assert],
-    [  --disable-assert        turn off assertions],
-    [AC_MSG_RESULT([no])
-     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
-    [AC_MSG_RESULT(yes)])
-])])
+    [AS_HELP_STRING([--disable-assert],
+       [Turn off assertions])],
+    [ac_cv_assert="no"],
+    [ac_cv_assert="yes"])
+  AC_MSG_RESULT([$ac_cv_assert])
+])
 
-AC_HEADER_ASSERT
+AX_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
@@ -1371,8 +1343,8 @@ AC_ARG_WITH([debug],
 if test "$with_debug" = "yes"
 then
   # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS ${SAVE_CFLAGS}"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS ${SAVE_CXXFLAGS}"
+  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
 else
   # Optimized version. No debug
   CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
@@ -1497,6 +1469,9 @@ case $SYSTEM_TYPE in
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
+dnl GCC Precompiled Header Support
+AM_CONDITIONAL([GCC_PCH],[test "x$GCC" = "xyes"])
+
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
  vio/Makefile po/Makefile.in dnl
@@ -1504,6 +1479,8 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/serialize/Makefile dnl
+ drizzled/functions/Makefile dnl
+ drizzled/util/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
@@ -1517,3 +1494,25 @@ AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > st
 AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT
+
+echo "---"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION"
+echo ""
+echo "   * Installation prefix:       $prefix"
+echo "   * System type:               $SYSTEM_TYPE"
+echo "   * Host CPU:                  $host_cpu"
+echo "   * C Compiler:                $CC_VERSION"
+echo "   * C++ Compiler:              $CXX"
+echo "   * Build auth_pam:            $ac_cv_header_security_pam_appl_h"
+echo "   * Assertions enabled:        $ac_cv_assert"
+echo "   * Debug enabled:             $with_debug"
+echo "   * Profiling enabled:         $ac_profiling"
+echo "   * Coverage enabled:          $ac_coverage"
+echo "   * Warnings as failure:       $ac_warn_fail"
+echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
+echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
+echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
+echo "   * C++ cmath location:        $ac_cv_cxx_cmath"
+echo "   * C++ cmath namespace:       $ac_cv_cxx_cmath_namespace"
+echo ""
+echo "---"

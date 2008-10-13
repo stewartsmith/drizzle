@@ -24,12 +24,7 @@ t
 12:30:35
 36:30:31
 insert into t1 values("10.22.22"),(1234567),(123456789),(123456789.10),("10 22:22"),("12.45a");
-Warnings:
-Warning	1265	Data truncated for column 't' at row 1
-Warning	1264	Out of range value for column 't' at row 2
-Warning	1264	Out of range value for column 't' at row 3
-Warning	1264	Out of range value for column 't' at row 4
-Warning	1265	Data truncated for column 't' at row 6
+ERROR 22007: Incorrect time value: '10.22.22' for column 't' at row 1
 select * from t1;
 t
 10:22:33
@@ -51,12 +46,6 @@ t
 12:30:00
 12:30:35
 36:30:31
-00:00:10
-00:00:00
-838:59:59
-838:59:59
-262:22:00
-00:00:12
 drop table t1;
 create table t1 (t time);
 insert into t1 values ('09:00:00'),('13:00:00'),('19:38:34'), ('13:00:00'),('09:00:00'),('09:00:00'),('13:00:00'),('13:00:00'),('13:00:00'),('09:00:00');
@@ -117,7 +106,7 @@ select 1 from t1 where cast('100:00:00' as time) between f1 and f2;
 drop table t1;
 CREATE TABLE  t1 (
 f2 date NOT NULL,
-f3 int(11) unsigned NOT NULL default '0',
+f3 int NOT NULL default '0',
 PRIMARY KEY  (f3, f2)
 );
 insert into t1 values('2007-07-01', 1);

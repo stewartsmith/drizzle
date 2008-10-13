@@ -17,6 +17,7 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <drizzled/util/test.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 #define get_next_element(to,pos,size) \
@@ -96,11 +97,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.key_cache= multi_key_cache_search((unsigned char*) name_buff,
                                                  strlen(name_buff));
 
-    if ((kfile=my_open(name_buff,(open_mode=O_RDWR) | O_SHARE,MYF(0))) < 0)
+    if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
 	  mode != O_RDONLY ||
-	  (kfile=my_open(name_buff,(open_mode=O_RDONLY) | O_SHARE,MYF(0))) < 0)
+	  (kfile=my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
 	goto err;
     }
     share->mode=open_mode;
@@ -860,9 +861,11 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
   mi_int2store(ptr,base->max_key_length);		ptr +=2;
   mi_int2store(ptr,base->extra_alloc_bytes);		ptr +=2;
   *ptr++= base->extra_alloc_procent;
-  *ptr++= base->raid_type;
-  mi_int2store(ptr,base->raid_chunks);			ptr +=2;
-  mi_int4store(ptr,base->raid_chunksize);		ptr +=4;
+  /* old raid info  slots */
+  *ptr++= 0;
+  mi_int2store(ptr,UINT16_C(0));			ptr +=2;
+  mi_int4store(ptr,UINT32_C(0));         		ptr +=4;
+
   memset(ptr, 0, 6);					ptr +=6; /* extra */
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
@@ -894,15 +897,9 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   base->max_key_length = mi_uint2korr(ptr);		ptr +=2;
   base->extra_alloc_bytes = mi_uint2korr(ptr);		ptr +=2;
   base->extra_alloc_procent = *ptr++;
-  base->raid_type= *ptr++;
-  base->raid_chunks= mi_uint2korr(ptr);			ptr +=2;
-  base->raid_chunksize= mi_uint4korr(ptr);		ptr +=4;
-  /* TO BE REMOVED: Fix for old RAID files */
-  if (base->raid_type == 0)
-  {
-    base->raid_chunks=0;
-    base->raid_chunksize=0;
-  }
+
+  /* advance past raid_type (1) raid_chunks (2) and raid_chunksize (4) */
+  ptr+= 7; 
 
   ptr+=6;
   return ptr;
@@ -1043,7 +1040,7 @@ unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 }
 
 /**************************************************************************
-Open data file with or without RAID
+Open data file
 We can't use dup() here as the data file descriptors need to have different
 active seek-positions.
 
@@ -1054,7 +1051,7 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
                      File file_to_dup __attribute__((unused)))
 {
-    info->dfile=my_open(share->data_file_name, share->mode | O_SHARE,
+    info->dfile=my_open(share->data_file_name, share->mode,
 			MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
@@ -1062,7 +1059,7 @@ int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
 
 int mi_open_keyfile(MYISAM_SHARE *share)
 {
-  if ((share->kfile=my_open(share->unique_file_name, share->mode | O_SHARE,
+  if ((share->kfile=my_open(share->unique_file_name, share->mode,
                             MYF(MY_WME))) < 0)
     return 1;
   return 0;

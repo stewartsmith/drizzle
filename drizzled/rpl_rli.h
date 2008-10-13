@@ -20,6 +20,7 @@
 #ifndef RPL_RLI_H
 #define RPL_RLI_H
 
+#include <string>
 #include "rpl_tblmap.h"
 #include "rpl_reporting.h"
 #include "rpl_utility.h"
@@ -152,9 +153,9 @@ public:
     happen when, for example, the relay log gets rotated because of
     max_binlog_size.
   */
-  char group_relay_log_name[FN_REFLEN];
+  std::string group_relay_log_name;
   uint64_t group_relay_log_pos;
-  char event_relay_log_name[FN_REFLEN];
+  std::string event_relay_log_name;
   uint64_t event_relay_log_pos;
   uint64_t future_event_relay_log_pos;
 
@@ -169,7 +170,7 @@ public:
      binlog the log_pos that comes with each event is the position of the
      beginning of the group.
   */
-  char group_master_log_name[FN_REFLEN];
+  std::string group_master_log_name;
   volatile my_off_t group_master_log_pos;
 
   /*
