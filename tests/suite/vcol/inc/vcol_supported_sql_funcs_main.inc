@@ -24,7 +24,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # ACOS()
-let $cols = a double, b virtual double as (acos(a));
+let $cols = a double, b virtual double as (format(acos(a),6));
 let $values1 = 1, default;
 let $values2 = 1.0001,default;
 let $values3 = 0,default;
@@ -32,29 +32,29 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # ASIN()
-let $cols = a double, b virtual double as (asin(a));
+let $cols = a double, b virtual double as (format(asin(a),6));
 let $values1 = 0.2, default;
 let $values2 = 1.0001,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo #ATAN
-let $cols = a double, b double, c virtual double as (atan(a,b));
+let $cols = a double, b double, c virtual double as (format(atan(a,b),6));
 let $values1 = -2,2,default;
-let $values2 = PI(),0,default;
+let $values2 = format(PI(),6),0,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
-let $cols = a double, c virtual double as (atan(a));
+let $cols = a double, c virtual double as (format(atan(a),6));
 let $values1 = -2,default;
-let $values2 = PI(),default;
+let $values2 = format(PI(),6),default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # ATAN2
-let $cols = a double, b double, c virtual double as (atan2(a,b));
+let $cols = a double, b double, c virtual double as (format(atan2(a,b),6));
 let $values1 = -2,2,default;
-let $values2 = PI(),0,default;
+let $values2 = format(PI(),6),0,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
@@ -75,22 +75,22 @@ let $rows = 4;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # COS()
-let $cols = a double, b virtual double as (cos(a));
-let $values1 = PI(),default;
+let $cols = a double, b virtual double as (format(cos(a),6));
+let $values1 = format(PI(),6),default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # COT()
-let $cols = a double, b virtual double as (cot(a));
+let $cols = a double, b virtual double as (format(cot(a),6));
 let $values1 = 12,default;
 let $values2 = 0,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # DEGREES()
-let $cols = a double, b virtual double as (degrees(a));
-let $values1 = PI(),default;
-let $values2 = PI()/2,default;
+let $cols = a double, b virtual double as (format(degrees(a),6));
+let $values1 = format(PI(),6),default;
+let $values2 = format(PI()/2,6),default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
@@ -101,7 +101,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # EXP()
-let $cols = a double, b virtual double as (exp(a));
+let $cols = a double, b virtual double as (format(exp(a),6));
 let $values1 = 2,default;
 let $values2 = -2,default;
 let $values3 = 0,default;
@@ -116,35 +116,35 @@ let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # LN()
-let $cols = a double, b virtual double as (ln(a));
+let $cols = a double, b virtual double as (format(ln(a),6));
 let $values1 = 2,default;
 let $values2 = -2,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # LOG()
-let $cols = a double, b double, c virtual double as (log(a,b));
+let $cols = a double, b double, c virtual double as (format(log(a,b),6));
 let $values1 = 2,65536,default;
 let $values2 = 10,100,default;
 let $values3 = 1,100,default;
 let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
-let $cols = a double, b virtual double as (log(a));
+let $cols = a double, b virtual double as (format(log(a),6));
 let $values1 = 2,default;
 let $values2 = -2,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # LOG2()
-let $cols = a double, b virtual double as (log2(a));
+let $cols = a double, b virtual double as (format(log2(a),6));
 let $values1 = 65536,default;
 let $values2 = -100,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # LOG10()
-let $cols = a double, b virtual double as (log10(a));
+let $cols = a double, b virtual double as (format(log10(a),6));
 let $values1 = 2,default;
 let $values2 = 100,default;
 let $values3 = -100,default;
@@ -158,14 +158,14 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # MOD()
-let $cols = a double, b virtual int as (mod(a,10));
+let $cols = a int, b virtual int as (mod(a,10));
 let $values1 = 1,default;
 let $values2 = 11,default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # %
-let $cols = a double, b virtual int as (a % 10);
+let $cols = a int, b virtual int as (a % 10);
 let $values1 = 1,default;
 let $values2 = 11,default;
 let $rows = 2;
@@ -178,7 +178,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # PI()
-let $cols = a double, b virtual double as (PI()*a*a);
+let $cols = a double, b virtual double as (format(PI()*a*a,6));
 let $values1 = 1,default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
@@ -197,7 +197,7 @@ let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # RADIANS()
-let $cols = a double, b virtual double as (radians(a));
+let $cols = a double, b virtual double as (format(radians(a),6));
 let $values1 = 90,default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
@@ -226,13 +226,13 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # SIN()
-let $cols = a double, b virtual double as (sin(a));
-let $values1 = PI(),default;
+let $cols = a double, b virtual double as (format(sin(a),6));
+let $values1 = format(PI()/2,6),default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # SQRT()
-let $cols = a double, b virtual double as (sqrt(a));
+let $cols = a double, b virtual double as (format(sqrt(a),6));
 let $values1 = 4,default;
 let $values2 = 20,default;
 let $values3 = -16,default;
@@ -240,9 +240,9 @@ let $rows = 3;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # TAN()
-let $cols = a double, b virtual double as (tan(a));
-let $values1 = PI(),default;
-let $values2 = PI()+1,default;
+let $cols = a double, b virtual double as (format(tan(a),6));
+let $values1 = format(PI(),6),default;
+let $values2 = format(PI()+1,6),default;
 let $rows = 2;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 

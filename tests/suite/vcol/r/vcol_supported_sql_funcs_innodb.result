@@ -21,12 +21,12 @@ drop table t1;
 set sql_warnings = 0;
 # ACOS()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (acos(a)));
+create table t1 (a double, b virtual double as (format(acos(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (acos(a))
+  `b` VIRTUAL double AS (format(acos(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (1, default);
 insert into t1 values (1.0001,default);
@@ -35,76 +35,76 @@ select * from t1;
 a	b
 1	0
 1.0001	NULL
-0	1.5707963267948966
+0	1.570796
 drop table t1;
 set sql_warnings = 0;
 # ASIN()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (asin(a)));
+create table t1 (a double, b virtual double as (format(asin(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (asin(a))
+  `b` VIRTUAL double AS (format(asin(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (0.2, default);
 insert into t1 values (1.0001,default);
 select * from t1;
 a	b
-0.2	0.20135792079033082
+0.2	0.201358
 1.0001	NULL
 drop table t1;
 set sql_warnings = 0;
 #ATAN
 set sql_warnings = 1;
-create table t1 (a double, b double, c virtual double as (atan(a,b)));
+create table t1 (a double, b double, c virtual double as (format(atan(a,b),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
   `b` double,
-  `c` VIRTUAL double AS (atan(a,b))
+  `c` VIRTUAL double AS (format(atan(a,b),6))
 ) ENGINE=InnoDB
 insert into t1 values (-2,2,default);
-insert into t1 values (PI(),0,default);
+insert into t1 values (format(PI(),6),0,default);
 select * from t1;
 a	b	c
--2	2	-0.7853981633974483
-3.141592653589793	0	1.5707963267948966
+-2	2	-0.785398
+3.141593	0	1.570796
 drop table t1;
 set sql_warnings = 0;
 set sql_warnings = 1;
-create table t1 (a double, c virtual double as (atan(a)));
+create table t1 (a double, c virtual double as (format(atan(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `c` VIRTUAL double AS (atan(a))
+  `c` VIRTUAL double AS (format(atan(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (-2,default);
-insert into t1 values (PI(),default);
+insert into t1 values (format(PI(),6),default);
 select * from t1;
 a	c
--2	-1.1071487177940904
-3.141592653589793	1.2626272556789118
+-2	-1.107149
+3.141593	1.262627
 drop table t1;
 set sql_warnings = 0;
 # ATAN2
 set sql_warnings = 1;
-create table t1 (a double, b double, c virtual double as (atan2(a,b)));
+create table t1 (a double, b double, c virtual double as (format(atan2(a,b),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
   `b` double,
-  `c` VIRTUAL double AS (atan2(a,b))
+  `c` VIRTUAL double AS (format(atan2(a,b),6))
 ) ENGINE=InnoDB
 insert into t1 values (-2,2,default);
-insert into t1 values (PI(),0,default);
+insert into t1 values (format(PI(),6),0,default);
 select * from t1;
 a	b	c
--2	2	-0.7853981633974483
-3.141592653589793	0	1.5707963267948966
+-2	2	-0.785398
+3.141593	0	1.570796
 drop table t1;
 set sql_warnings = 0;
 # CEIL()
@@ -149,27 +149,27 @@ drop table t1;
 set sql_warnings = 0;
 # COS()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (cos(a)));
+create table t1 (a double, b virtual double as (format(cos(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (cos(a))
+  `b` VIRTUAL double AS (format(cos(a),6))
 ) ENGINE=InnoDB
-insert into t1 values (PI(),default);
+insert into t1 values (format(PI(),6),default);
 select * from t1;
 a	b
-3.141592653589793	-1
+3.141593	-1
 drop table t1;
 set sql_warnings = 0;
 # COT()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (cot(a)));
+create table t1 (a double, b virtual double as (format(cot(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (cot(a))
+  `b` VIRTUAL double AS (format(cot(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (12,default);
 insert into t1 values (0,default);
@@ -177,7 +177,7 @@ Warnings:
 Error	1365	Division by 0
 select * from t1;
 a	b
-12	-1.5726734063976893
+12	-1.572673
 0	NULL
 Warnings:
 Error	1365	Division by 0
@@ -185,19 +185,19 @@ drop table t1;
 set sql_warnings = 0;
 # DEGREES()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (degrees(a)));
+create table t1 (a double, b virtual double as (format(degrees(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (degrees(a))
+  `b` VIRTUAL double AS (format(degrees(a),6))
 ) ENGINE=InnoDB
-insert into t1 values (PI(),default);
-insert into t1 values (PI()/2,default);
+insert into t1 values (format(PI(),6),default);
+insert into t1 values (format(PI()/2,6),default);
 select * from t1;
 a	b
-3.141592653589793	180
-1.5707963267948966	90
+3.141593	180.00002
+1.570796	89.999981
 drop table t1;
 set sql_warnings = 0;
 # /
@@ -217,20 +217,20 @@ drop table t1;
 set sql_warnings = 0;
 # EXP()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (exp(a)));
+create table t1 (a double, b virtual double as (format(exp(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (exp(a))
+  `b` VIRTUAL double AS (format(exp(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (2,default);
 insert into t1 values (-2,default);
 insert into t1 values (0,default);
 select * from t1;
 a	b
-2	7.38905609893065
--2	0.1353352832366127
+2	7.389056
+-2	0.135335
 0	1
 drop table t1;
 set sql_warnings = 0;
@@ -253,12 +253,12 @@ drop table t1;
 set sql_warnings = 0;
 # LN()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (ln(a)));
+create table t1 (a double, b virtual double as (format(ln(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (ln(a))
+  `b` VIRTUAL double AS (format(ln(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (2,default);
 insert into t1 values (-2,default);
@@ -266,7 +266,7 @@ Warnings:
 Error	1365	Division by 0
 select * from t1;
 a	b
-2	0.6931471805599453
+2	0.693147
 -2	NULL
 Warnings:
 Error	1365	Division by 0
@@ -274,13 +274,13 @@ drop table t1;
 set sql_warnings = 0;
 # LOG()
 set sql_warnings = 1;
-create table t1 (a double, b double, c virtual double as (log(a,b)));
+create table t1 (a double, b double, c virtual double as (format(log(a,b),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
   `b` double,
-  `c` VIRTUAL double AS (log(a,b))
+  `c` VIRTUAL double AS (format(log(a,b),6))
 ) ENGINE=InnoDB
 insert into t1 values (2,65536,default);
 insert into t1 values (10,100,default);
@@ -297,12 +297,12 @@ Error	1365	Division by 0
 drop table t1;
 set sql_warnings = 0;
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (log(a)));
+create table t1 (a double, b virtual double as (format(log(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (log(a))
+  `b` VIRTUAL double AS (format(log(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (2,default);
 insert into t1 values (-2,default);
@@ -310,7 +310,7 @@ Warnings:
 Error	1365	Division by 0
 select * from t1;
 a	b
-2	0.6931471805599453
+2	0.693147
 -2	NULL
 Warnings:
 Error	1365	Division by 0
@@ -318,12 +318,12 @@ drop table t1;
 set sql_warnings = 0;
 # LOG2()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (log2(a)));
+create table t1 (a double, b virtual double as (format(log2(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (log2(a))
+  `b` VIRTUAL double AS (format(log2(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (65536,default);
 insert into t1 values (-100,default);
@@ -339,12 +339,12 @@ drop table t1;
 set sql_warnings = 0;
 # LOG10()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (log10(a)));
+create table t1 (a double, b virtual double as (format(log10(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (log10(a))
+  `b` VIRTUAL double AS (format(log10(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (2,default);
 insert into t1 values (100,default);
@@ -353,7 +353,7 @@ Warnings:
 Error	1365	Division by 0
 select * from t1;
 a	b
-2	0.3010299956639812
+2	0.30103
 100	2
 -100	NULL
 Warnings:
@@ -377,11 +377,11 @@ drop table t1;
 set sql_warnings = 0;
 # MOD()
 set sql_warnings = 1;
-create table t1 (a double, b virtual int as (mod(a,10)));
+create table t1 (a int, b virtual int as (mod(a,10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` int,
   `b` VIRTUAL int AS (mod(a,10))
 ) ENGINE=InnoDB
 insert into t1 values (1,default);
@@ -394,11 +394,11 @@ drop table t1;
 set sql_warnings = 0;
 # %
 set sql_warnings = 1;
-create table t1 (a double, b virtual int as (a % 10));
+create table t1 (a int, b virtual int as (a % 10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` double,
+  `a` int,
   `b` VIRTUAL int AS (a % 10)
 ) ENGINE=InnoDB
 insert into t1 values (1,default);
@@ -426,17 +426,17 @@ drop table t1;
 set sql_warnings = 0;
 # PI()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (PI()*a*a));
+create table t1 (a double, b virtual double as (format(PI()*a*a,6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (PI()*a*a)
+  `b` VIRTUAL double AS (format(PI()*a*a,6))
 ) ENGINE=InnoDB
 insert into t1 values (1,default);
 select * from t1;
 a	b
-1	3.141592653589793
+1	3.141593
 drop table t1;
 set sql_warnings = 0;
 # +
@@ -474,17 +474,17 @@ drop table t1;
 set sql_warnings = 0;
 # RADIANS()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (radians(a)));
+create table t1 (a double, b virtual double as (format(radians(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (radians(a))
+  `b` VIRTUAL double AS (format(radians(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (90,default);
 select * from t1;
 a	b
-90	1.5707963267948966
+90	1.570796
 drop table t1;
 set sql_warnings = 0;
 # ROUND()
@@ -546,31 +546,27 @@ drop table t1;
 set sql_warnings = 0;
 # SIN()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (sin(a)));
+create table t1 (a double, b virtual double as (format(sin(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (sin(a))
+  `b` VIRTUAL double AS (format(sin(a),6))
 ) ENGINE=InnoDB
-insert into t1 values (PI(),default);
-Warnings:
-Warning	1292	Incorrect datetime value: '3.141592653589793'
+insert into t1 values (format(PI()/2,6),default);
 select * from t1;
 a	b
-3.141592653589793	NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '3.141592653589793'
+1.570796	1
 drop table t1;
 set sql_warnings = 0;
 # SQRT()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (sqrt(a)));
+create table t1 (a double, b virtual double as (format(sqrt(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (sqrt(a))
+  `b` VIRTUAL double AS (format(sqrt(a),6))
 ) ENGINE=InnoDB
 insert into t1 values (4,default);
 insert into t1 values (20,default);
@@ -578,25 +574,25 @@ insert into t1 values (-16,default);
 select * from t1;
 a	b
 4	2
-20	4.47213595499958
+20	4.472136
 -16	NULL
 drop table t1;
 set sql_warnings = 0;
 # TAN()
 set sql_warnings = 1;
-create table t1 (a double, b virtual double as (tan(a)));
+create table t1 (a double, b virtual double as (format(tan(a),6)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` double,
-  `b` VIRTUAL double AS (tan(a))
+  `b` VIRTUAL double AS (format(tan(a),6))
 ) ENGINE=InnoDB
-insert into t1 values (PI(),default);
-insert into t1 values (PI()+1,default);
+insert into t1 values (format(PI(),6),default);
+insert into t1 values (format(PI()+1,6),default);
 select * from t1;
 a	b
-3.141592653589793	-1.2246063538223773e-16
-4.141592653589793	1.5574077246549018
+3.141593	0
+4.141593	1.557409
 drop table t1;
 set sql_warnings = 0;
 # *
