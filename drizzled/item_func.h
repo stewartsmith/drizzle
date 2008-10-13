@@ -48,66 +48,27 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/dec.h>
+#include <drizzled/functions/int_val.h>
 #include <drizzled/functions/acos.h>
 #include <drizzled/functions/asin.h>
 #include <drizzled/functions/atan.h>
+#include <drizzled/functions/ceiling.h>
+#include <drizzled/functions/cos.h>
 #include <drizzled/functions/exp.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/log.h>
 #include <drizzled/functions/pow.h>
+#include <drizzled/functions/sin.h>
 #include <drizzled/functions/sqrt.h>
 #include <drizzled/functions/signed.h>
+#include <drizzled/functions/tan.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_cos :public Item_dec_func
-{
-public:
-  Item_func_cos(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "cos"; }
-};
-
-class Item_func_sin :public Item_dec_func
-{
-public:
-  Item_func_sin(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "sin"; }
-};
-
-class Item_func_tan :public Item_dec_func
-{
-public:
-  Item_func_tan(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "tan"; }
-};
 
 class Item_func_integer :public Item_int_func
 {
 public:
   inline Item_func_integer(Item *a) :Item_int_func(a) {}
   void fix_length_and_dec();
-};
-
-
-class Item_func_int_val :public Item_func_num1
-{
-public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
-};
-
-
-class Item_func_ceiling :public Item_func_int_val
-{
-public:
-  Item_func_ceiling(Item *a) :Item_func_int_val(a) {}
-  const char *func_name() const { return "ceiling"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
 };
 
 

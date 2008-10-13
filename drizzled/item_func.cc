@@ -150,34 +150,6 @@ Item *Item_func::get_tmp_table_item(THD *thd)
   return copy_or_same(thd);
 }
 
-double Item_func_cos::val_real()
-{
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return cos(value);
-}
-
-double Item_func_sin::val_real()
-{
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return sin(value);
-}
-
-double Item_func_tan::val_real()
-{
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return fix_result(tan(value));
-}
-
-
 // Shift-functions, same as << and >> in C/C++
 
 
@@ -231,97 +203,6 @@ void Item_func_integer::fix_length_and_dec()
   set_if_smaller(max_length,tmp);
   decimals=0;
 }
-
-void Item_func_int_val::fix_num_length_and_dec()
-{
-  max_length= args[0]->max_length - (args[0]->decimals ?
-                                     args[0]->decimals + 1 :
-                                     0) + 2;
-  uint32_t tmp= float_length(decimals);
-  set_if_smaller(max_length,tmp);
-  decimals= 0;
-}
-
-
-void Item_func_int_val::find_num_type()
-{
-  switch(hybrid_type= args[0]->result_type())
-  {
-  case STRING_RESULT:
-  case REAL_RESULT:
-    hybrid_type= REAL_RESULT;
-    max_length= float_length(decimals);
-    break;
-  case INT_RESULT:
-  case DECIMAL_RESULT:
-    /*
-      -2 because in most high position can't be used any digit for int64_t
-      and one position for increasing value during operation
-    */
-    if ((args[0]->max_length - args[0]->decimals) >=
-        (DECIMAL_LONGLONG_DIGITS - 2))
-    {
-      hybrid_type= DECIMAL_RESULT;
-    }
-    else
-    {
-      unsigned_flag= args[0]->unsigned_flag;
-      hybrid_type= INT_RESULT;
-    }
-    break;
-  default:
-    assert(0);
-  }
-  return;
-}
-
-
-int64_t Item_func_ceiling::int_op()
-{
-  int64_t result;
-  switch (args[0]->result_type()) {
-  case INT_RESULT:
-    result= args[0]->val_int();
-    null_value= args[0]->null_value;
-    break;
-  case DECIMAL_RESULT:
-  {
-    my_decimal dec_buf, *dec;
-    if ((dec= Item_func_ceiling::decimal_op(&dec_buf)))
-      my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
-    else
-      result= 0;
-    break;
-  }
-  default:
-    result= (int64_t)Item_func_ceiling::real_op();
-  };
-  return result;
-}
-
-
-double Item_func_ceiling::real_op()
-{
-  /*
-    the volatile's for BUG #3051 to calm optimizer down (because of gcc's
-    bug)
-  */
-  volatile double value= args[0]->val_real();
-  null_value= args[0]->null_value;
-  return ceil(value);
-}
-
-
-my_decimal *Item_func_ceiling::decimal_op(my_decimal *decimal_value)
-{
-  my_decimal val, *value= args[0]->val_decimal(&val);
-  if (!(null_value= (args[0]->null_value ||
-                     my_decimal_ceiling(E_DEC_FATAL_ERROR, value,
-                                        decimal_value) > 1)))
-    return decimal_value;
-  return 0;
-}
-
 
 int64_t Item_func_floor::int_op()
 {
