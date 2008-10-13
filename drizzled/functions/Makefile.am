@@ -18,6 +18,9 @@
 noinst_LTLIBRARIES = 	libfunctions.la
 
 libfunctions_la_SOURCES = abs.cc \
+			  acos.cc \
+			  asin.cc \
+			  atan.cc \
 			  additive_op.cc \
 			  connection_id.cc \
 			  decimal_typecast.cc \
@@ -36,11 +39,16 @@ libfunctions_la_SOURCES = abs.cc \
                           numhybrid.cc \
                           num_op.cc \
                           plus.cc \
+                          pow.cc \
 			  real.cc \
 			  signed.cc \
+			  sqrt.cc \
 			  unsigned.cc
 
 noinst_HEADERS = abs.h \
+		 acos.h \
+		 asin.h \
+		 atan.h \
 		 additive_op.h \
 		 connection_id.h \
 		 dec.h \
@@ -60,8 +68,10 @@ noinst_HEADERS = abs.h \
                  numhybrid.h \
                  num_op.h \
                  plus.h \
+                 pow.h \
 		 real.h \
 		 signed.h \
+		 sqrt.h \
 		 unsigned.h
 	
 

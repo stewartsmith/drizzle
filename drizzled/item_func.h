@@ -48,54 +48,16 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/dec.h>
+#include <drizzled/functions/acos.h>
+#include <drizzled/functions/asin.h>
+#include <drizzled/functions/atan.h>
 #include <drizzled/functions/exp.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/log.h>
+#include <drizzled/functions/pow.h>
+#include <drizzled/functions/sqrt.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_sqrt :public Item_dec_func
-{
-public:
-  Item_func_sqrt(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "sqrt"; }
-};
-
-
-class Item_func_pow :public Item_dec_func
-{
-public:
-  Item_func_pow(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "pow"; }
-};
-
-
-class Item_func_acos :public Item_dec_func
-{
-public:
-  Item_func_acos(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "acos"; }
-};
-
-class Item_func_asin :public Item_dec_func
-{
-public:
-  Item_func_asin(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "asin"; }
-};
-
-class Item_func_atan :public Item_dec_func
-{
-public:
-  Item_func_atan(Item *a) :Item_dec_func(a) {}
-  Item_func_atan(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "atan"; }
-};
 
 class Item_func_cos :public Item_dec_func
 {
