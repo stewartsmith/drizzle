@@ -37,6 +37,8 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/divide.h>
 #include <drizzled/functions/int.h>
 #include <drizzled/functions/int_divide.h>
+#include <drizzled/functions/length.h>
+#include <drizzled/functions/min_max.h>
 #include <drizzled/functions/minus.h>
 #include <drizzled/functions/mod.h>
 #include <drizzled/functions/multiply.h>
@@ -55,11 +57,15 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/ceiling.h>
 #include <drizzled/functions/cos.h>
 #include <drizzled/functions/exp.h>
+#include <drizzled/functions/floor.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/log.h>
 #include <drizzled/functions/pow.h>
+#include <drizzled/functions/rand.h>
+#include <drizzled/functions/round.h>
 #include <drizzled/functions/sin.h>
 #include <drizzled/functions/sqrt.h>
+#include <drizzled/functions/sign.h>
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/tan.h>
 #include <drizzled/functions/unsigned.h>
@@ -70,61 +76,6 @@ public:
   inline Item_func_integer(Item *a) :Item_int_func(a) {}
   void fix_length_and_dec();
 };
-
-class Item_func_floor :public Item_func_int_val
-{
-public:
-  Item_func_floor(Item *a) :Item_func_int_val(a) {}
-  const char *func_name() const { return "floor"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
-};
-
-/* This handles round and truncate */
-
-class Item_func_round :public Item_func_num1
-{
-  bool truncate;
-public:
-  Item_func_round(Item *a, Item *b, bool trunc_arg)
-    :Item_func_num1(a,b), truncate(trunc_arg) {}
-  const char *func_name() const { return truncate ? "truncate" : "round"; }
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  void fix_length_and_dec();
-};
-
-
-class Item_func_rand :public Item_real_func
-{
-  struct rand_struct *rand;
-public:
-  Item_func_rand(Item *a) :Item_real_func(a), rand(0) {}
-  Item_func_rand()	  :Item_real_func() {}
-  double val_real();
-  const char *func_name() const { return "rand"; }
-  bool const_item() const { return 0; }
-  void update_used_tables();
-  bool fix_fields(THD *thd, Item **ref);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-private:
-  void seed_random (Item * val);  
-};
-
-
-class Item_func_sign :public Item_int_func
-{
-public:
-  Item_func_sign(Item *a) :Item_int_func(a) {}
-  const char *func_name() const { return "sign"; }
-  int64_t val_int();
-};
-
 
 class Item_func_units :public Item_real_func
 {
@@ -137,48 +88,6 @@ public:
   const char *func_name() const { return name; }
   void fix_length_and_dec()
   { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
-};
-
-
-class Item_func_min_max :public Item_func
-{
-  Item_result cmp_type;
-  String tmp_value;
-  int cmp_sign;
-  /* TRUE <=> arguments should be compared in the DATETIME context. */
-  bool compare_as_dates;
-  /* An item used for issuing warnings while string to DATETIME conversion. */
-  Item *datetime_item;
-  THD *thd;
-protected:
-  enum_field_types cached_field_type;
-public:
-  Item_func_min_max(List<Item> &list,int cmp_sign_arg) :Item_func(list),
-    cmp_type(INT_RESULT), cmp_sign(cmp_sign_arg), compare_as_dates(false),
-    datetime_item(0) {}
-  double val_real();
-  int64_t val_int();
-  String *val_str(String *);
-  my_decimal *val_decimal(my_decimal *);
-  void fix_length_and_dec();
-  enum Item_result result_type () const { return cmp_type; }
-  bool result_as_int64_t() { return compare_as_dates; };
-  uint32_t cmp_datetimes(uint64_t *value);
-  enum_field_types field_type() const { return cached_field_type; }
-};
-
-class Item_func_min :public Item_func_min_max
-{
-public:
-  Item_func_min(List<Item> &list) :Item_func_min_max(list,1) {}
-  const char *func_name() const { return "least"; }
-};
-
-class Item_func_max :public Item_func_min_max
-{
-public:
-  Item_func_max(List<Item> &list) :Item_func_min_max(list,-1) {}
-  const char *func_name() const { return "greatest"; }
 };
 
 
@@ -210,17 +119,6 @@ public:
     /* The item could be a NULL constant. */
     null_value= args[0]->is_null();
   }
-};
-
-
-class Item_func_length :public Item_int_func
-{
-  String value;
-public:
-  Item_func_length(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "length"; }
-  void fix_length_and_dec() { max_length=10; }
 };
 
 class Item_func_bit_length :public Item_func_length
