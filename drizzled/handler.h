@@ -48,7 +48,7 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
-#define HA_MAX_ALTER_FLAGS 39
+#define HA_MAX_ALTER_FLAGS 40
 typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 #define HA_ADD_INDEX                  (0)
@@ -85,6 +85,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_RENAME_TABLE               (36)
 #define HA_ALTER_STORAGE_ENGINE       (37)
 #define HA_RECREATE                   (38)
+#define HA_ALTER_STORED_VCOL          (39)
 /* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
 
 /* Return values for check_if_supported_alter */
@@ -1800,6 +1801,8 @@ public:
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
      return(HA_ALTER_NOT_SUPPORTED);
+   else if ((*alter_flags & HA_ALTER_STORED_VCOL).is_set())
+     return(HA_ALTER_NOT_SUPPORTED);
    else
      return(HA_ALTER_SUPPORTED_WAIT_LOCK);
  }
@@ -1900,6 +1903,12 @@ public:
   {
     return HA_ERR_WRONG_COMMAND;
   }
+  /*
+    This procedure defines if the storage engine supports virtual columns.
+    Default false means "not supported".
+  */
+  virtual bool check_if_supported_virtual_columns(void) 
+  { return false; }
 
 protected:
   /* Service methods for use by storage engines. */
