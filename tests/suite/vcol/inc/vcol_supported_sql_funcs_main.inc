@@ -227,7 +227,7 @@ let $rows = 3;
 
 --echo # SIN()
 let $cols = a double, b virtual double as (format(sin(a),6));
-let $values1 = format(PI(),6),default;
+let $values1 = format(PI()/2,6),default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 

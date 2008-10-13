@@ -553,14 +553,10 @@ t1	CREATE TABLE `t1` (
   `a` double,
   `b` VIRTUAL double AS (format(sin(a),6))
 ) ENGINE=MyISAM
-insert into t1 values (format(PI(),6),default);
-Warnings:
-Warning	1292	Incorrect datetime value: '3.141593'
+insert into t1 values (format(PI()/2,6),default);
 select * from t1;
 a	b
-3.141593	NULL
-Warnings:
-Warning	1292	Incorrect datetime value: '3.141593'
+1.570796	1
 drop table t1;
 set sql_warnings = 0;
 # SQRT()
