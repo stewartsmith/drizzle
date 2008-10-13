@@ -179,6 +179,7 @@ test-drizzle:
         join_nested \
         join_outer \
         join_outer_innodb \
+	key \
         key_diff \
         key_primary \
         keywords \
