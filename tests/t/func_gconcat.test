@@ -78,8 +78,8 @@ drop table t1;
 
 # Test variable length
 
-create table t1 ( URL_ID int(11), URL varchar(80));
-create table t2 ( REQ_ID int(11), URL_ID int(11));
+create table t1 ( URL_ID int, URL varchar(80));
+create table t2 ( REQ_ID int, URL_ID int);
 insert into t1 values (4,'www.host.com'), (5,'www.google.com'),(5,'www.help.com');
 insert into t2 values (1,4), (5,4), (5,5);
 # Make this order independent
@@ -131,9 +131,9 @@ drop table t1, t2;
 # Problem with GROUP BY (Bug #2695)
 #
 
-CREATE TABLE t1 (id1 int(4) NOT NULL, id2 int(4) NOT NULL);
+CREATE TABLE t1 (id1 int NOT NULL, id2 int NOT NULL);
 INSERT INTO t1 VALUES (1, 1),(1, 2),(1, 3),(1, 4),(1, 5),(2, 1),(2, 2),(2, 3);
-CREATE TABLE t2 (id1 int(4) NOT NULL);
+CREATE TABLE t2 (id1 int NOT NULL);
 INSERT INTO t2 VALUES (1),(2),(3),(4),(5);
 SELECT t1.id1, GROUP_CONCAT(t1.id2 ORDER BY t1.id2 ASC) AS concat_id FROM t1, t2 WHERE t1.id1 = t2.id1 AND t1.id1=1 GROUP BY t1.id1;
 SELECT t1.id1, GROUP_CONCAT(t1.id2 ORDER BY t1.id2 ASC) AS concat_id FROM t1, t2 WHERE t1.id1 = t2.id1 GROUP BY t1.id1;
@@ -267,17 +267,12 @@ drop table t1;
 #
 # Bug#10201
 #
-create table t1 (a varchar(255) character set cp1250 collate cp1250_general_ci,
-                 b varchar(255) character set koi8r);
+create table t1 (a varchar(255), b varchar(255) );
 insert into t1 values ('xxx','yyy');
 select collation(a) from t1;
 select collation(group_concat(a)) from t1;
 create table t2 select group_concat(a) as a from t1;
 show create table t2;
-select collation(group_concat(a,_koi8r'test')) from t1;
---error 1267
-select collation(group_concat(a,_koi8r 0xC1C2)) from t1;
---error 1267
 select collation(group_concat(a,b)) from t1;
 drop table t1;
 drop table t2;
@@ -286,11 +281,11 @@ drop table t2;
 # Bug #12829
 # Cannot convert the charset of a GROUP_CONCAT result
 #
-CREATE TABLE t1 (a CHAR(10) CHARACTER SET cp850);
-INSERT INTO t1 VALUES ('À');
-SELECT a FROM t1;
-SELECT GROUP_CONCAT(a) FROM t1;
-DROP TABLE t1;
+#CREATE TABLE t1 (a VARCHAR(10));
+#INSERT INTO t1 VALUES ('À');
+#SELECT a FROM t1;
+#SELECT GROUP_CONCAT(a) FROM t1;
+#DROP TABLE t1;
 
 #
 # bug #7769: group_concat returning null is checked in having
@@ -333,9 +328,9 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  aID int(5) NOT NULL auto_increment,
-  sometitle varchar(255) NOT NULL default '',
-  bID int(5) NOT NULL,
+  aID int NOT NULL auto_increment,
+  sometitle varchar(155) NOT NULL default '',
+  bID int NOT NULL,
   PRIMARY KEY  (aID),
   UNIQUE KEY sometitle (sometitle)
 );
@@ -343,8 +338,8 @@ INSERT INTO t1 SET sometitle = 'title1', bID = 1;
 INSERT INTO t1 SET sometitle = 'title2', bID = 1;
 
 CREATE TABLE t2 (
-  bID int(5) NOT NULL auto_increment,
-  somename varchar(255) NOT NULL default '',
+  bID int NOT NULL auto_increment,
+  somename varchar(155) NOT NULL default '',
   PRIMARY KEY  (bID),
   UNIQUE KEY somename (somename)
 );
@@ -411,28 +406,17 @@ drop table t1;
 # returns BLOB": add a test case, the bug can not be repeated any more.
 #
 
-set names latin1;
 create table t1 (a char, b char);
 insert into t1 values ('a', 'a'), ('a', 'b'), ('b', 'a'), ('b', 'b');
 create table t2 select group_concat(b) as a from t1 where a = 'a';
 create table t3 (select group_concat(a) as a from t1 where a = 'a') union
                 (select group_concat(b) as a from t1 where a = 'b');
-select charset(a) from t2;
-select charset(a) from t3;
 drop table t1, t2, t3;
-set names default;
-
-#
-# Bug#18281 group_concat changes charset to binary
-#
-create table t1 (c1 varchar(10), c2 int);
-select charset(group_concat(c1 order by c2)) from t1;
-drop table t1;
 
 #
 # Bug #16712: group_concat returns odd string instead of intended result
 #
-CREATE TABLE t1 (a INT(10), b LONGTEXT, PRIMARY KEY (a));
+CREATE TABLE t1 (a INT, b LONGTEXT, PRIMARY KEY (a));
 
 SET GROUP_CONCAT_MAX_LEN = 20000000;
 
@@ -461,10 +445,9 @@ DROP TABLE t1;
 #
 # Bug#23451 GROUP_CONCAT truncates a multibyte utf8 character
 #
-set names utf8;
 create table t1
 (
-  x text character set utf8 not null,
+  x text not null,
   y integer not null
 );
 insert into t1 values (repeat('a', 1022), 0), (repeat(_utf8 0xc3b7, 4), 0);
@@ -480,7 +463,6 @@ while ($1)
 }
 drop table t1;
 set group_concat_max_len=1024;
-set names latin1;
 
 #
 # Bug#14169 type of group_concat() result changed to blob if tmp_table was used
@@ -550,40 +532,11 @@ DROP TABLE t1, t2, t3;
 # Bug#29850: Wrong charset of the GROUP_CONCAT result when the select employs
 #            a temporary table.
 #
-set names latin1;
-create table t1 (id int, name varchar(20)) DEFAULT CHARSET=utf8;
-insert into t1 (id, name) values (1, "óra");
-insert into t1 (id, name) values (2, "óra");
-select b.id, group_concat(b.name) from t1 a, t1 b group by b.id;
-drop table t1;
-
-#
-# Bug #31154: group_concat() and bit fields;
-#
-create table t1(a bit not null default 0);
-insert into t1 values (), (), ();
-select group_concat(distinct a) from t1;
-select group_concat(distinct a order by a) from t1;
-drop table t1;
-
-create table t1(a bit(2) not null);
-insert into t1 values (1), (0), (0), (3), (1);
-select group_concat(distinct a) from t1;
-select group_concat(distinct a order by a) from t1;
-select group_concat(distinct a order by a desc) from t1;
-drop table t1;
-
-create table t1(a bit(2), b varchar(10), c bit);
-insert into t1 values (1, 'a', 0), (0, 'b', 1), (0, 'c', 0), (3, 'd', 1),
-(1, 'e', 1), (3, 'f', 1), (0, 'g', 1);
-select group_concat(distinct a, c) from t1;
-select group_concat(distinct a, c order by a) from t1;
-select group_concat(distinct a, c) from t1;
-select group_concat(distinct a, c order by a, c) from t1;
-select group_concat(distinct a, c order by a desc, c desc) from t1;
-
-drop table t1;
-
+#create table t1 (id int, name varchar(20));
+#insert into t1 (id, name) values (1, "óra");
+#insert into t1 (id, name) values (2, "óra");
+#select b.id, group_concat(b.name) from t1 a, t1 b group by b.id;
+#drop table t1;
 
 #
 # Bug#30897 GROUP_CONCAT returns extra comma on empty fields

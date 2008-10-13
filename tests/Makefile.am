@@ -155,13 +155,24 @@ test-drizzle:
 	drizzleslap \
         endspace \
         flush2 \
+	func_compress \
+	func_concat \
+	func_crc32 \
+	func_date_add \
+	func_default \
         func_equal \
+	func_gconcat \
+        func_group \
         func_group_innodb \
+	func_if \
+	func_in \
         func_isnull \
         func_like \
 	func_math \
-	func_compress \
+	func_misc \
+	func_op \
 	func_sapdb \
+	func_str \
 	func_time \
 	func_weight_string \
         greedy_optimizer \
