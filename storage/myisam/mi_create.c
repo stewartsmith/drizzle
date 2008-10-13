@@ -170,7 +170,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   if (flags & HA_CREATE_TMP_TABLE)
   {
     options|= HA_OPTION_TMP_TABLE;
-    create_mode|= O_EXCL | O_NOFOLLOW;
+    create_mode|= O_EXCL;
   }
   if (flags & HA_CREATE_CHECKSUM || (options & HA_OPTION_CHECKSUM))
   {

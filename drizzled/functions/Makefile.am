@@ -15,17 +15,52 @@
 
 noinst_LTLIBRARIES = 	libfunctions.la
 
-libfunctions_la_SOURCES = func.cc \
+libfunctions_la_SOURCES = abs.cc \
+			  additive_op.cc \
+			  connection_id.cc \
+			  decimal_typecast.cc \
+			  divide.cc \
+			  exp.cc \
+			  func.cc \
                           int.cc \
+                          int_divide.cc \
+			  ln.cc \
+			  log.cc \
+			  minus.cc \
+			  mod.cc \
+			  multiply.cc \
+			  neg.cc \
+			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
-                          real.cc
+                          plus.cc \
+			  real.cc \
+			  signed.cc \
+			  unsigned.cc
 
-noinst_HEADERS = func.h \
+noinst_HEADERS = abs.h \
+		 additive_op.h \
+		 connection_id.h \
+		 dec.h \
+		 decimal_typecast.h \
+		 divide.h \
+		 exp.h \
+		 func.h \
                  int.h \
+                 int_divide.h \
+		 ln.h \
+		 log.h \
+		 minus.h \
+		 mod.h \
+		 multiply.h \
+		 neg.h \
+		 num1.h \
                  numhybrid.h \
                  num_op.h \
-                 real.h
+                 plus.h \
+		 real.h \
+		 signed.h \
+		 unsigned.h
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

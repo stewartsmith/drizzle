@@ -31,257 +31,28 @@ extern "C"				/* Bug in BSDI include file */
 #endif
 
 #include <drizzled/functions/func.h>
+#include <drizzled/functions/additive_op.h>
+#include <drizzled/functions/connection_id.h>
+#include <drizzled/functions/decimal_typecast.h>
+#include <drizzled/functions/divide.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/int_divide.h>
+#include <drizzled/functions/minus.h>
+#include <drizzled/functions/mod.h>
+#include <drizzled/functions/multiply.h>
+#include <drizzled/functions/neg.h>
 #include <drizzled/functions/numhybrid.h>
 #include <drizzled/functions/num_op.h>
+#include <drizzled/functions/num1.h>
+#include <drizzled/functions/abs.h>
+#include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
-
-
-/* function where type of result detected by first argument */
-class Item_func_num1: public Item_func_numhybrid
-{
-public:
-  Item_func_num1(Item *a) :Item_func_numhybrid(a) {}
-  Item_func_num1(Item *a, Item *b) :Item_func_numhybrid(a, b) {}
-
-  void fix_num_length_and_dec();
-  void find_num_type();
-  String *str_op(String *str __attribute__((unused)))
-  { assert(0); return 0; }
-};
-
-
-class Item_func_connection_id :public Item_int_func
-{
-  int64_t value;
-
-public:
-  Item_func_connection_id() {}
-  const char *func_name() const { return "connection_id"; }
-  void fix_length_and_dec();
-  bool fix_fields(THD *thd, Item **ref);
-  int64_t val_int() { assert(fixed == 1); return value; }
-};
-
-
-class Item_func_signed :public Item_int_func
-{
-public:
-  Item_func_signed(Item *a) :Item_int_func(a) {}
-  const char *func_name() const { return "cast_as_signed"; }
-  int64_t val_int();
-  int64_t val_int_from_str(int *error);
-  void fix_length_and_dec()
-  { max_length=args[0]->max_length; unsigned_flag=0; }
-  virtual void print(String *str, enum_query_type query_type);
-  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
-};
-
-
-class Item_func_unsigned :public Item_func_signed
-{
-public:
-  Item_func_unsigned(Item *a) :Item_func_signed(a) {}
-  const char *func_name() const { return "cast_as_unsigned"; }
-  void fix_length_and_dec()
-  { max_length=args[0]->max_length; unsigned_flag=1; }
-  int64_t val_int();
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-class Item_decimal_typecast :public Item_func
-{
-  my_decimal decimal_value;
-public:
-  Item_decimal_typecast(Item *a, int len, int dec) :Item_func(a)
-  {
-    decimals= dec;
-    max_length= my_decimal_precision_to_length(len, dec, unsigned_flag);
-  }
-  String *val_str(String *str);
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal*);
-  enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
-  void fix_length_and_dec() {};
-  const char *func_name() const { return "decimal_typecast"; }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-class Item_func_additive_op :public Item_num_op
-{
-public:
-  Item_func_additive_op(Item *a,Item *b) :Item_num_op(a,b) {}
-  void result_precision();
-};
-
-
-class Item_func_plus :public Item_func_additive_op
-{
-public:
-  Item_func_plus(Item *a,Item *b) :Item_func_additive_op(a,b) {}
-  const char *func_name() const { return "+"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-};
-
-class Item_func_minus :public Item_func_additive_op
-{
-public:
-  Item_func_minus(Item *a,Item *b) :Item_func_additive_op(a,b) {}
-  const char *func_name() const { return "-"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  void fix_length_and_dec();
-};
-
-
-class Item_func_mul :public Item_num_op
-{
-public:
-  Item_func_mul(Item *a,Item *b) :Item_num_op(a,b) {}
-  const char *func_name() const { return "*"; }
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  void result_precision();
-};
-
-
-class Item_func_div :public Item_num_op
-{
-public:
-  uint32_t prec_increment;
-  Item_func_div(Item *a,Item *b) :Item_num_op(a,b) {}
-  int64_t int_op() { assert(0); return 0; }
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "/"; }
-  void fix_length_and_dec();
-  void result_precision();
-};
-
-
-class Item_func_int_div :public Item_int_func
-{
-public:
-  Item_func_int_div(Item *a,Item *b) :Item_int_func(a,b)
-  {}
-  int64_t val_int();
-  const char *func_name() const { return "DIV"; }
-  void fix_length_and_dec();
-
-  virtual inline void print(String *str, enum_query_type query_type)
-  {
-    print_op(str, query_type);
-  }
-
-};
-
-
-class Item_func_mod :public Item_num_op
-{
-public:
-  Item_func_mod(Item *a,Item *b) :Item_num_op(a,b) {}
-  int64_t int_op();
-  double real_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "%"; }
-  void result_precision();
-  void fix_length_and_dec();
-};
-
-
-class Item_func_neg :public Item_func_num1
-{
-public:
-  Item_func_neg(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "-"; }
-  enum Functype functype() const   { return NEG_FUNC; }
-  void fix_length_and_dec();
-  void fix_num_length_and_dec();
-  uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
-};
-
-
-class Item_func_abs :public Item_func_num1
-{
-public:
-  Item_func_abs(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "abs"; }
-  void fix_length_and_dec();
-};
-
-// A class to handle logarithmic and trigonometric functions
-
-class Item_dec_func :public Item_real_func
-{
- public:
-  Item_dec_func(Item *a) :Item_real_func(a) {}
-  Item_dec_func(Item *a,Item *b) :Item_real_func(a,b) {}
-  void fix_length_and_dec()
-  {
-    decimals=NOT_FIXED_DEC; max_length=float_length(decimals);
-    maybe_null=1;
-  }
-};
-
-class Item_func_exp :public Item_dec_func
-{
-public:
-  Item_func_exp(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "exp"; }
-};
-
-
-class Item_func_ln :public Item_dec_func
-{
-public:
-  Item_func_ln(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "ln"; }
-};
-
-
-class Item_func_log :public Item_dec_func
-{
-public:
-  Item_func_log(Item *a) :Item_dec_func(a) {}
-  Item_func_log(Item *a,Item *b) :Item_dec_func(a,b) {}
-  double val_real();
-  const char *func_name() const { return "log"; }
-};
-
-
-class Item_func_log2 :public Item_dec_func
-{
-public:
-  Item_func_log2(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log2"; }
-};
-
-
-class Item_func_log10 :public Item_dec_func
-{
-public:
-  Item_func_log10(Item *a) :Item_dec_func(a) {}
-  double val_real();
-  const char *func_name() const { return "log10"; }
-};
-
+#include <drizzled/functions/dec.h>
+#include <drizzled/functions/exp.h>
+#include <drizzled/functions/ln.h>
+#include <drizzled/functions/log.h>
+#include <drizzled/functions/signed.h>
+#include <drizzled/functions/unsigned.h>
 
 class Item_func_sqrt :public Item_dec_func
 {
@@ -375,6 +146,8 @@ public:
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 
@@ -386,6 +159,8 @@ public:
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 /* This handles round and truncate */
@@ -415,6 +190,8 @@ public:
   bool const_item() const { return 0; }
   void update_used_tables();
   bool fix_fields(THD *thd, Item **ref);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 private:
   void seed_random (Item * val);  
 };
@@ -697,6 +474,8 @@ public:
       max_length= args[0]->max_length;
   }
   bool fix_fields(THD *thd, Item **ref);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -710,6 +489,8 @@ public:
   const char *func_name() const { return "benchmark"; }
   void fix_length_and_dec() { max_length=1; maybe_null=0; }
   virtual void print(String *str, enum_query_type query_type);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 /* replication functions */
@@ -723,6 +504,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "master_pos_wait"; }
   void fix_length_and_dec() { max_length=21; maybe_null=1;}
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -780,6 +563,7 @@ public:
   }
   void save_org_in_field(Field *field) { (void)save_in_field(field, 1, 0); }
   bool register_field_in_read_map(unsigned char *arg);
+  bool register_field_in_bitmap(unsigned char *arg);
 };
 
 
@@ -891,6 +675,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "is_free_lock"; }
   void fix_length_and_dec() { decimals=0; max_length=1; maybe_null=1;}
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 class Item_func_is_used_lock :public Item_int_func
@@ -901,6 +687,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "is_used_lock"; }
   void fix_length_and_dec() { decimals=0; max_length=10; maybe_null=1;}
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 /* For type casts */
@@ -920,6 +708,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "row_count"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 
@@ -938,6 +728,8 @@ public:
   int64_t val_int();
   const char *func_name() const { return "found_rows"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
 #endif /* DRIZZLE_SERVER_ITEM_FUNC_H */

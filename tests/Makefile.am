@@ -186,7 +186,6 @@ test-drizzle:
         lock \
         limit \
         lock_tables_lost_commit \
-        overflow \
 	order_by \
 	order_fill_sortbuf \
 	overflow \
@@ -211,3 +210,6 @@ test-drizzle:
         unsafe_binlog_innodb \
         update \
         variables-notembedded
+	  $(PERL) -I$(top_srcdir)/tests/lib \
+		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+		--suite=vcol

@@ -77,6 +77,7 @@ drizzled_LDFLAGS =
 noinst_HEADERS = item.h \
 		 authentication.h \
 		 logging.h \
+                 key_map.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -87,6 +88,7 @@ noinst_HEADERS = item.h \
 		 item_row.h \
 		 server_includes.h \
 		 sql_bitmap.h \
+		 table_map_iterator.h \
 		 sql_class.h \
 		 sql_lex.h \
 		 sql_list.h \
@@ -154,7 +156,9 @@ drizzled_SOURCES = \
 		   logging.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
+                   table_map_iterator.cc \
 		   field_iterator.cc \
+                   key_map.cc \
 		   item.cc \
 		   item_sum.cc \
 		   item_buff.cc \

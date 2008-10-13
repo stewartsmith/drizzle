@@ -2850,7 +2850,8 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs)
+                       List<String> *interval_list, const CHARSET_INFO * const cs,
+                       virtual_column_info *vcol_info)
 {
   register Create_field *new_field;
   LEX  *lex= thd->lex;
@@ -2921,7 +2922,8 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
   if (!(new_field= new Create_field()) ||
       new_field->init(thd, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format))
+                      interval_list, cs, 0, column_format,
+                      vcol_info))
     return(1);
 
   lex->alter_info.create_list.push_back(new_field);
