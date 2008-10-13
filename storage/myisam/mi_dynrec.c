@@ -31,6 +31,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <drizzled/util/test.h>
 
 /* Enough for comparing if number is zero */
 static char zero_string[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};

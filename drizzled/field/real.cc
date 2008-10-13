@@ -79,12 +79,6 @@ int Field_real::truncate(double *nr, double max_value)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     goto end;
   }
-  else if (unsigned_flag && res < 0)
-  {
-    res= 0;
-    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    goto end;
-  }
 
   if (!not_fixed)
   {

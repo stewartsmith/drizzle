@@ -17,6 +17,7 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <drizzled/util/test.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 #define get_next_element(to,pos,size) \
@@ -96,11 +97,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.key_cache= multi_key_cache_search((unsigned char*) name_buff,
                                                  strlen(name_buff));
 
-    if ((kfile=my_open(name_buff,(open_mode=O_RDWR) | O_SHARE,MYF(0))) < 0)
+    if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
 	  mode != O_RDONLY ||
-	  (kfile=my_open(name_buff,(open_mode=O_RDONLY) | O_SHARE,MYF(0))) < 0)
+	  (kfile=my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
 	goto err;
     }
     share->mode=open_mode;
@@ -1050,7 +1051,7 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
                      File file_to_dup __attribute__((unused)))
 {
-    info->dfile=my_open(share->data_file_name, share->mode | O_SHARE,
+    info->dfile=my_open(share->data_file_name, share->mode,
 			MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
@@ -1058,7 +1059,7 @@ int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
 
 int mi_open_keyfile(MYISAM_SHARE *share)
 {
-  if ((share->kfile=my_open(share->unique_file_name, share->mode | O_SHARE,
+  if ((share->kfile=my_open(share->unique_file_name, share->mode,
                             MYF(MY_WME))) < 0)
     return 1;
   return 0;

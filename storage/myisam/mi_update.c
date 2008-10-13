@@ -16,6 +16,7 @@
 /* Update an old row in a MyISAM table */
 
 #include "myisamdef.h"
+#include <drizzled/util/test.h>
 
 int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {

@@ -63,26 +63,27 @@ class Master_info : public Slave_reporting_capability
 {
 private:
   drizzle::MasterList list;
+  std::string info_filename;
+  std::string log_name;
+  uint16_t port;
+  uint64_t log_pos;
 
 public:
 
   /* the variables below are needed because we can change masters on the fly */
-  string master_log_name;
-  string host;
-  string user;
-  string password;
-  uint16_t port;
+  std::string host;
+  std::string user;
+  std::string password;
   uint32_t connect_retry;
-  off_t master_log_pos;
   THD *io_thd;
   Master_info();
   ~Master_info();
 
-  File fd; // we keep the file open, so we need to remember the file pointer
-  IO_CACHE file;
-
-  pthread_mutex_t data_lock,run_lock;
-  pthread_cond_t data_cond,start_cond,stop_cond;
+  pthread_mutex_t data_lock;
+  pthread_mutex_t run_lock;
+  pthread_cond_t data_cond;
+  pthread_cond_t start_cond;
+  pthread_cond_t stop_cond;
   DRIZZLE *drizzle;
   uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
@@ -102,14 +103,13 @@ public:
      clock_of_slave - last_timestamp_executed_by_SQL_thread - clock_diff_with_master
 
   */
-  long clock_diff_with_master;
-  int flush_master_info(bool flush_relay_log_cache);
+  time_t clock_diff_with_master;
+  int flush();
   void end_master_info();
-  void init_master_log_pos();
+  void reset();
 
   int init_master_info(const char* master_info_fname,
                        const char* slave_info_fname,
-                       bool abort_if_no_master_info_file,
                        int thread_mask);
 
   bool setUsername(const char *username);
@@ -124,6 +124,7 @@ public:
 
   off_t getLogPosition();
   bool setLogPosition(off_t position);
+  void incrementLogPosition(off_t position);
 
   const char *getLogName();
   bool setLogName(const char *name);

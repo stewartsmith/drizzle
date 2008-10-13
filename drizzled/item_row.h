@@ -81,4 +81,6 @@ public:
   bool check_cols(uint32_t c);
   bool null_inside() { return with_null; };
   void bring_value();
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };

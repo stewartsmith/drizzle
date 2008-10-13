@@ -44,6 +44,7 @@
 #include <queue>
 #include <map>
 #include <string>
+#include <vector>
 
 #include <pcrecpp.h>
 
@@ -227,7 +228,7 @@ enum enum_commands {
   Q_DISPLAY_VERTICAL_RESULTS, Q_DISPLAY_HORIZONTAL_RESULTS,
   Q_QUERY_VERTICAL, Q_QUERY_HORIZONTAL, Q_SORTED_RESULT,
   Q_START_TIMER, Q_END_TIMER,
-  Q_CHARACTER_SET, Q_DISABLE_PS_PROTOCOL, Q_ENABLE_PS_PROTOCOL,
+  Q_CHARACTER_SET,
   Q_DISABLE_RECONNECT, Q_ENABLE_RECONNECT,
   Q_IF,
   Q_DISABLE_PARSING, Q_ENABLE_PARSING,
@@ -1374,7 +1375,7 @@ static int string_cmp(string* ds, const char *fname)
   char temp_file_path[FN_REFLEN];
 
   if ((fd= create_temp_file(temp_file_path, NULL,
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
@@ -2041,7 +2042,7 @@ static int open_file(const char *name)
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
   cur_file++;
-  if (!(cur_file->file = my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+  if (!(cur_file->file = my_fopen(buff, O_RDONLY, MYF(0))))
   {
     cur_file--;
     die("Could not open '%s' for reading", buff);
@@ -2897,7 +2898,7 @@ static void do_perl(struct st_command *command)
 
   /* Create temporary file name */
   if ((fd= create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
-                            "tmp", O_CREAT | O_SHARE | O_RDWR,
+                            "tmp", O_CREAT | O_RDWR,
                             MYF(MY_WME))) < 0)
     die("Failed to create temporary file for perl command");
   my_close(fd, MYF(0));
@@ -4533,7 +4534,7 @@ static void read_embedded_server_arguments(const char *name)
     embedded_server_arg_count=1;
     embedded_server_args[0]= (char*) "";    /* Progname */
   }
-  if (!(file=my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(MY_WME))))
+  if (!(file=my_fopen(buff, O_RDONLY, MYF(MY_WME))))
     die("Failed to open file '%s'", buff);
 
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
@@ -4576,7 +4577,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file=
-          my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
+          my_fopen(buff, O_RDONLY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
     cur_file->file_name= my_strdup(buff, MYF(MY_FAE));
     cur_file->lineno= 1;
@@ -6401,7 +6402,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     return 1;
   }
   strcpy(new_buf, new_str);
-  buf_p= &new_buf;
+  *buf_p= new_buf;
 
   return 0;
 }
@@ -7101,7 +7102,7 @@ void replace_append_uint(string *ds, uint val)
 
 void append_sorted(string* ds, string *ds_input)
 {
-  priority_queue<string> lines;
+  priority_queue<string, vector<string>, greater<string> > lines;
 
   if (ds_input->empty())
     return;  /* No input */
@@ -7112,7 +7113,7 @@ void append_sorted(string* ds, string *ds_input)
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
-  ds->append(ds_input->substr(0, eol_pos));
+  ds->append(ds_input->substr(0, eol_pos+1));
 
   unsigned long start_pos= eol_pos+1;
 
@@ -7121,7 +7122,7 @@ void append_sorted(string* ds, string *ds_input)
 
     eol_pos= ds_input->find_first_of('\n', start_pos);
     /* Find end of line */
-    lines.push(ds_input->substr(start_pos, eol_pos-start_pos));
+    lines.push(ds_input->substr(start_pos, eol_pos-start_pos+1));
     start_pos= eol_pos+1;
 
   } while ( eol_pos != string::npos);

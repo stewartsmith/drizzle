@@ -239,7 +239,7 @@ int32_t init_slave()
     goto err;
   }
 
-  if (active_mi->init_master_info(master_info_file, relay_log_info_file, 1, (SLAVE_IO | SLAVE_SQL)))
+  if (active_mi->init_master_info(master_info_file, relay_log_info_file, (SLAVE_IO | SLAVE_SQL)))
   {
     sql_print_error(_("Failed to initialize the master info structure"));
     goto err;
@@ -1083,7 +1083,7 @@ static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((unuse
                      " to the relay log, SHOW SLAVE STATUS may be"
                      " inaccurate"));
       rli->relay_log.harvest_bytes_written(&rli->log_space_total);
-      if (mi->flush_master_info(1))
+      if (mi->flush())
         sql_print_error(_("Failed to flush master info file"));
       delete ev;
     }
@@ -1123,7 +1123,7 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
   pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
   pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
-  int4store(pos, rpl_recovery_rank);    pos+= 4;
+  int4store(pos, 0);    pos+= 4;
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
 
@@ -1225,7 +1225,7 @@ bool show_master_info(THD* thd, Master_info* mi)
     protocol->store((uint32_t) mi->getPort());
     protocol->store(mi->getConnectionRetry());
     protocol->store(mi->getLogName(), &my_charset_bin);
-    protocol->store((uint64_t) mi->master_log_pos);
+    protocol->store((uint64_t) mi->getLogPosition());
     protocol->store(mi->rli.group_relay_log_name.c_str() +
                     dirname_length(mi->rli.group_relay_log_name.c_str()),
                     &my_charset_bin);
@@ -1358,7 +1358,6 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
   thd->variables.max_allowed_packet= global_system_variables.max_allowed_packet
     + MAX_LOG_EVENT_HEADER;  /* note, incr over the global not session var */
   thd->slave_thread = 1;
-  thd->enable_slow_log= opt_log_slow_slave_statements;
   set_slave_thread_options(thd);
   thd->client_capabilities = CLIENT_LOCAL_FILES;
   pthread_mutex_lock(&LOCK_thread_count);
@@ -1425,7 +1424,7 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
   *suppress_warnings= false;
 
   // TODO if big log files: Change next to int8store()
-  int4store(buf, (uint32_t) mi->master_log_pos);
+  int4store(buf, (uint32_t) mi->getLogPosition());
   int2store(buf + 4, binlog_flags);
   int4store(buf + 6, server_id);
   len = (uint32_t) strlen(logname);
@@ -1783,7 +1782,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
         */
         if (rli->trans_retries < slave_trans_retries)
         {
-          if (rli->mi->init_master_info(0, 0, 0, SLAVE_SQL))
+          if (rli->mi->init_master_info(0, 0, SLAVE_SQL))
             sql_print_error(_("Failed to initialize the master info structure"));
           else if (init_relay_log_pos(rli,
                                       rli->group_relay_log_name.c_str(),
@@ -1889,7 +1888,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
   {
     char buf[256], llbuff[22];
     snprintf(buf, sizeof(buf), _(messages[SLAVE_RECON_MSG_FAILED]),
-             IO_RPL_LOG_NAME, llstr(mi->master_log_pos, llbuff));
+             IO_RPL_LOG_NAME, llstr(mi->getLogPosition(), llbuff));
     /*
       Raise a warining during registering on master/requesting dump.
       Log a message reading event.
@@ -1973,9 +1972,9 @@ pthread_handler_t handle_slave_io(void *arg)
   {
     sql_print_information(_("Slave I/O thread: connected to master '%s@%s:%d',"
                             "replication started in log '%s' at position %s"),
-                          mi->getUsername(), mi->getHostname(), mi->port,
+                          mi->getUsername(), mi->getHostname(), mi->getPort(),
 			  IO_RPL_LOG_NAME,
-			  llstr(mi->master_log_pos,llbuff));
+			  llstr(mi->getLogPosition(), llbuff));
   /*
     Adding MAX_LOG_EVENT_HEADER_LEN to the max_packet_size on the I/O
     thread, since a replication event can become this much larger than
@@ -2110,7 +2109,7 @@ requesting master dump")) ||
       {
         goto err;
       }
-      if (mi->flush_master_info(1))
+      if (mi->flush())
       {
         sql_print_error(_("Failed to flush master info file"));
         goto err;
@@ -2144,7 +2143,7 @@ err:
 // print the current replication position
   sql_print_information(_("Slave I/O thread exiting, read up to log '%s', "
                           "position %s"),
-                        IO_RPL_LOG_NAME, llstr(mi->master_log_pos,llbuff));
+                        IO_RPL_LOG_NAME, llstr(mi->getLogPosition(), llbuff));
   pthread_mutex_lock(&LOCK_thread_count);
   thd->query = thd->db = 0; // extra safety
   thd->query_length= thd->db_length= 0;
@@ -2690,7 +2689,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
   }
 
   pthread_mutex_lock(&mi->data_lock);
-  ev->log_pos= mi->master_log_pos; /* 3.23 events don't contain log_pos */
+  ev->log_pos= mi->getLogPosition(); /* 3.23 events don't contain log_pos */
   switch (ev->get_type_code()) {
   case STOP_EVENT:
     ignore_event= 1;
@@ -2719,7 +2718,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
     ev->log_pos+= inc_pos;
     int32_t error = process_io_create_file(mi,(Create_file_log_event*)ev);
     delete ev;
-    mi->master_log_pos += inc_pos;
+    mi->incrementLogPosition(inc_pos);
     pthread_mutex_unlock(&mi->data_lock);
     free((char*)tmp_buf);
     return(error);
@@ -2745,7 +2744,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
     rli->relay_log.harvest_bytes_written(&rli->log_space_total);
   }
   delete ev;
-  mi->master_log_pos+= inc_pos;
+  mi->incrementLogPosition(inc_pos);
   pthread_mutex_unlock(&mi->data_lock);
   return(0);
 }
@@ -2799,7 +2798,7 @@ static int32_t queue_binlog_ver_3_event(Master_info *mi, const char *buf,
   }
   rli->relay_log.harvest_bytes_written(&rli->log_space_total);
   delete ev;
-  mi->master_log_pos+= inc_pos;
+  mi->incrementLogPosition(inc_pos);
 err:
   pthread_mutex_unlock(&mi->data_lock);
   return(0);
@@ -2952,7 +2951,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
        TODO: handling `when' for SHOW SLAVE STATUS' snds behind
     */
     if ((mi->setLogName(hb.get_log_ident()) && mi->getLogName() != NULL)
-        || mi->master_log_pos != hb.log_pos)
+        || mi->getLogPosition() != hb.log_pos)
     {
       /* missed events of heartbeat from the past */
       error= ER_SLAVE_HEARTBEAT_FAILURE;
@@ -3009,7 +3008,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
         buf[EVENT_TYPE_OFFSET]!=ROTATE_EVENT &&
         buf[EVENT_TYPE_OFFSET]!=STOP_EVENT)
     {
-      mi->master_log_pos+= inc_pos;
+      mi->incrementLogPosition(inc_pos);
       memcpy(rli->ign_master_log_name_end, mi->getLogName(), FN_REFLEN);
       assert(rli->ign_master_log_name_end[0]);
       rli->ign_master_log_pos_end= mi->getLogPosition();
@@ -3021,7 +3020,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
     /* write the event to the relay log */
     if (likely(!(rli->relay_log.appendv(buf,event_len,0))))
     {
-      mi->master_log_pos+= inc_pos;
+      mi->incrementLogPosition(inc_pos);
       rli->relay_log.harvest_bytes_written(&rli->log_space_total);
     }
     else

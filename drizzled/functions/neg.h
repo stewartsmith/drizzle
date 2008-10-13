@@ -35,6 +35,8 @@ public:
   void fix_length_and_dec();
   void fix_num_length_and_dec();
   uint32_t decimal_precision() const { return args[0]->decimal_precision(); }
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
 };
 
 #endif /* DRIZZLED_FUNCTIONS_NEG_H */

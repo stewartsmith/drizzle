@@ -280,12 +280,7 @@ handlerton *myisam_hton;
 bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
-bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
-bool opt_log_slow_admin_statements= 0;
-bool opt_log_slow_slave_statements= 0;
-bool opt_old_style_user_limits= 0;
-bool trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
   check them before each query (and possibly reset counters when hour is
@@ -1249,7 +1244,7 @@ void close_connection(THD *thd, uint32_t errcode, bool lock)
 extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
-  if (thd && ! thd->bootstrap)
+  if (thd)
   {
     statistic_increment(killed_threads, &LOCK_status);
     thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
@@ -1976,10 +1971,7 @@ SHOW_VAR com_status_vars[]= {
   {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
   {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SELECT]), SHOW_LONG_STATUS},
   {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_binlog_events",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_BINLOG_EVENTS]), SHOW_LONG_STATUS},
   {"show_binlogs",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_BINLOGS]), SHOW_LONG_STATUS},
-  {"show_charsets",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CHARSETS]), SHOW_LONG_STATUS},
-  {"show_collations",      (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_COLLATIONS]), SHOW_LONG_STATUS},
   {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
@@ -2655,7 +2647,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name, false))
+  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
@@ -3284,11 +3276,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.old_alter_table,
    (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
-   N_("Enable old-style user limits (before 5.0.3 user resources were counted "
-      "per each user+host vs. per account)"),
-   (char**) &opt_old_style_user_limits, (char**) &opt_old_style_user_limits,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -4228,7 +4215,6 @@ static void mysql_init_variables(void)
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_auth= 0;
   opt_secure_file_priv= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
@@ -4308,7 +4294,6 @@ static void mysql_init_variables(void)
   charsets_dir= 0;
   default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
-  sys_charset_system.set((char*) system_charset_info->csname);
   character_set_filesystem_name= (char*) "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */

@@ -132,6 +132,9 @@ static int check_insert_fields(THD *thd, TableList *table_list,
                        table->timestamp_field->field_index);
       }
     }
+    /* Mark all virtual columns for write*/
+    if (table->vfield)
+      table->mark_virtual_columns();
   }
 
   return 0;
@@ -1646,7 +1649,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     if (!mysql_create_table_no_lock(thd, create_table->db,
                                     create_table->table_name,
                                     create_info, alter_info, 0,
-                                    select_field_count))
+                                    select_field_count, true))
     {
       if (create_info->table_existed &&
           !(create_info->options & HA_LEX_CREATE_TMP_TABLE))

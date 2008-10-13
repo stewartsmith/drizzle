@@ -513,7 +513,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ERRORS
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
-%token  EVENTS_SYM
 %token  EXCLUSIVE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXIT_SYM
@@ -679,6 +678,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_SYM
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
+%token  PARSE_VCOL_EXPR_SYM
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
 %token  PLUGINS_SYM
@@ -777,6 +777,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  STD_SYM
 %token  STOP_SYM
 %token  STORAGE_SYM
+%token  STORED_SYM
 %token  STRAIGHT_JOIN
 %token  STRING_SYM
 %token  SUBDATE_SYM
@@ -842,6 +843,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
 %token  VAR_SAMP_SYM
+%token  VIRTUAL_SYM
 %token  WAIT_SYM
 %token  WARNINGS
 %token  WEEK_SYM
@@ -893,7 +895,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         text_string opt_gconcat_separator
 
 %type <num>
-        type int_type real_type order_dir
+        type int_type real_type order_dir field_def
         if_exists opt_local opt_table_options table_options
         table_option opt_if_not_exists
         opt_temporary all_or_any opt_distinct
@@ -1033,6 +1035,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_field_or_var_spec fields_or_vars opt_load_data_set_spec
         binlog_base64_event
         init_key_options key_options key_opts key_opt key_using_alg
+        parse_vcol_expr vcol_opt_attribute vcol_opt_attribute_list
+        vcol_attribute
 END_OF_INPUT
 
 %type <index_hint> index_hint_type
@@ -1070,8 +1074,7 @@ query:
           END_OF_INPUT
           {
             THD *thd= YYTHD;
-            if (!thd->bootstrap &&
-              (!(thd->lex->select_lex.options & OPTION_FOUND_COMMENT)))
+            if (!(thd->lex->select_lex.options & OPTION_FOUND_COMMENT))
             {
               my_message(ER_EMPTY_QUERY, ER(ER_EMPTY_QUERY), MYF(0));
               DRIZZLE_YYABORT;
@@ -1109,6 +1112,7 @@ statement:
         | lock
         | optimize
         | keycache
+        | parse_vcol_expr
         | purge
         | release
         | rename
@@ -1710,8 +1714,9 @@ field_spec:
             lex->comment=null_lex_str;
             lex->charset=NULL;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+            lex->vcol_info= NULL;
           }
-          type opt_attribute
+          field_def
           {
             LEX *lex=Lex;
             if (add_field_to_list(lex->thd, &$1, (enum enum_field_types) $3,
@@ -1719,8 +1724,79 @@ field_spec:
                                   lex->column_format,
                                   lex->default_value, lex->on_update_value, 
                                   &lex->comment,
-                                  lex->change,&lex->interval_list,lex->charset))
+                                  lex->change,&lex->interval_list,lex->charset,
+                                  lex->vcol_info))
               DRIZZLE_YYABORT;
+          }
+        ;
+field_def:
+          type opt_attribute {}
+        | VIRTUAL_SYM type AS '(' virtual_column_func ')' vcol_opt_attribute
+          {
+            $$=DRIZZLE_TYPE_VIRTUAL;
+            Lex->vcol_info->set_field_type((enum enum_field_types) $2);
+          }
+        ;
+
+vcol_opt_attribute:
+          /* empty */ {}
+        | vcol_opt_attribute_list {}
+        ;
+
+vcol_opt_attribute_list:
+          vcol_opt_attribute_list vcol_attribute {}
+        | vcol_attribute
+        ;
+
+vcol_attribute:
+          UNIQUE_SYM
+          {
+            LEX *lex=Lex;
+            lex->type|= UNIQUE_FLAG; 
+            lex->alter_info.flags|= ALTER_ADD_INDEX;
+          }
+        | UNIQUE_SYM KEY_SYM
+          {
+            LEX *lex=Lex;
+            lex->type|= UNIQUE_KEY_FLAG; 
+            lex->alter_info.flags|= ALTER_ADD_INDEX; 
+          }
+        | COMMENT_SYM TEXT_STRING_sys { Lex->comment= $2; }
+        | STORED_SYM
+          {
+            Lex->vcol_info->set_field_stored(true);
+          }
+        ;
+
+parse_vcol_expr:
+          PARSE_VCOL_EXPR_SYM '(' virtual_column_func ')'
+          {
+            /* 
+              "PARSE_VCOL_EXPR" can only be used by the SQL server
+              when reading a '*.frm' file.
+              Prevent the end user from invoking this command.
+            */
+            if (not Lex->parse_vcol_expr)
+            {
+              my_message(ER_SYNTAX_ERROR, ER(ER_SYNTAX_ERROR), MYF(0));
+              DRIZZLE_YYABORT;
+            }
+          }
+        ;
+
+virtual_column_func:
+          remember_name expr remember_end
+          {
+            Lex->vcol_info= new virtual_column_info();
+            if (not Lex->vcol_info)
+            {
+              my_error(ER_OUTOFMEMORY, MYF(0), sizeof(virtual_column_info));
+              DRIZZLE_YYABORT;
+            }
+            uint expr_len= (uint)($3 - $1) - 1;
+            Lex->vcol_info->expr_str.str= (char* ) sql_memdup($1 + 1, expr_len);
+            Lex->vcol_info->expr_str.length= expr_len;
+            Lex->vcol_info->expr_item= $2;
           }
         ;
 
@@ -2325,8 +2401,9 @@ alter_list_item:
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+            lex->vcol_info= NULL;
           }
-          type opt_attribute
+          field_def
           {
             LEX *lex=Lex;
             if (add_field_to_list(lex->thd,&$3,
@@ -2335,7 +2412,8 @@ alter_list_item:
                                   lex->column_format,
                                   lex->default_value, lex->on_update_value,
                                   &lex->comment,
-                                  $3.str, &lex->interval_list, lex->charset))
+                                  $3.str, &lex->interval_list, lex->charset,
+                                  lex->vcol_info))
               DRIZZLE_YYABORT;
           }
           opt_place
@@ -5159,11 +5237,6 @@ show_param:
           {
             Lex->sql_command = SQLCOM_SHOW_BINLOGS;
           }
-        | BINLOG_SYM EVENTS_SYM binlog_in binlog_from
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_BINLOG_EVENTS;
-          } opt_limit_clause_init
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
             LEX *lex= Lex;
@@ -5197,20 +5270,6 @@ show_param:
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
             lex->option_type= $1;
             if (prepare_schema_table(YYTHD, lex, 0, SCH_VARIABLES))
-              DRIZZLE_YYABORT;
-          }
-        | charset show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_CHARSETS;
-            if (prepare_schema_table(YYTHD, lex, 0, SCH_CHARSETS))
-              DRIZZLE_YYABORT;
-          }
-        | COLLATION_SYM show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_COLLATIONS;
-            if (prepare_schema_table(YYTHD, lex, 0, SCH_COLLATIONS))
               DRIZZLE_YYABORT;
           }
         | CREATE DATABASE opt_if_not_exists ident
@@ -5253,16 +5312,6 @@ opt_full:
 from_or_in:
           FROM
         | IN_SYM
-        ;
-
-binlog_in:
-          /* empty */            { Lex->mi.log_file_name = 0; }
-        | IN_SYM TEXT_STRING_sys { Lex->mi.log_file_name = $2.str; }
-        ;
-
-binlog_from:
-          /* empty */        { Lex->mi.pos = 4; /* skip magic number */ }
-        | FROM ulonglong_num { Lex->mi.pos = $2; }
         ;
 
 show_wild:
@@ -6132,7 +6181,6 @@ keyword_sp:
         | ENGINE_SYM               {}
         | ERRORS                   {}
         | ESCAPE_SYM               {}
-        | EVENTS_SYM               {}
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
         | EXTENT_SIZE_SYM          {}

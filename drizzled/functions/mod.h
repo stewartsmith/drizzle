@@ -33,6 +33,9 @@ public:
   const char *func_name() const { return "%"; }
   void result_precision();
   void fix_length_and_dec();
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return false; }
+
 };
 
 #endif /* DRIZZLED_FUNCTIONS_MOD_H */

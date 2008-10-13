@@ -72,8 +72,9 @@ enum enum_sql_command {
   SQLCOM_SHOW_KEYS, SQLCOM_SHOW_VARIABLES, SQLCOM_SHOW_STATUS,
   SQLCOM_SHOW_ENGINE_LOGS, SQLCOM_SHOW_ENGINE_STATUS, SQLCOM_SHOW_ENGINE_MUTEX,
   SQLCOM_SHOW_PROCESSLIST, SQLCOM_SHOW_MASTER_STAT, SQLCOM_SHOW_SLAVE_STAT,
-  SQLCOM_SHOW_CREATE, SQLCOM_SHOW_CHARSETS,
-  SQLCOM_SHOW_COLLATIONS, SQLCOM_SHOW_CREATE_DB, SQLCOM_SHOW_TABLE_STATUS,
+  SQLCOM_SHOW_CREATE,
+  SQLCOM_SHOW_CREATE_DB,
+  SQLCOM_SHOW_TABLE_STATUS,
   SQLCOM_LOAD,SQLCOM_SET_OPTION,SQLCOM_LOCK_TABLES,SQLCOM_UNLOCK_TABLES,
   SQLCOM_CHANGE_DB, SQLCOM_CREATE_DB, SQLCOM_DROP_DB, SQLCOM_ALTER_DB,
   SQLCOM_REPAIR, SQLCOM_REPLACE, SQLCOM_REPLACE_SELECT,
@@ -88,8 +89,9 @@ enum enum_sql_command {
   SQLCOM_RESET, SQLCOM_PURGE, SQLCOM_PURGE_BEFORE, SQLCOM_SHOW_BINLOGS,
   SQLCOM_SHOW_OPEN_TABLES,
   SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
-  SQLCOM_SHOW_BINLOG_EVENTS,
-  SQLCOM_SHOW_WARNS, SQLCOM_EMPTY_QUERY, SQLCOM_SHOW_ERRORS,
+  SQLCOM_SHOW_WARNS,
+  SQLCOM_EMPTY_QUERY,
+  SQLCOM_SHOW_ERRORS,
   SQLCOM_CHECKSUM,
   SQLCOM_BINLOG_BASE64_EVENT,
   SQLCOM_SHOW_PLUGINS,
@@ -1382,6 +1384,7 @@ typedef struct st_lex : public Query_tables_list
   XID *xid;
   unsigned char* yacc_yyss, *yacc_yyvs;
   THD *thd;
+  virtual_column_info *vcol_info;
 
   /* maintain a list of used plugins for this LEX */
   DYNAMIC_ARRAY plugins;
@@ -1444,6 +1447,14 @@ typedef struct st_lex : public Query_tables_list
     syntax error back.
   */
   bool expr_allows_subselect;
+  /*
+    A special command "PARSE_VCOL_EXPR" is defined for the parser 
+    to translate an expression statement of a virtual column \
+    (stored in the *.frm file as a string) into an Item object.
+    The following flag is used to prevent other applications to use 
+    this command.
+  */
+  bool parse_vcol_expr;
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;

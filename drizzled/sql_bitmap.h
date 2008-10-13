@@ -26,7 +26,10 @@
   also be able to use 32 or 64 bits bitmaps very efficiently
 */
 
+/// TODO: OMG FIX THIS
+
 #include <mysys/my_bitmap.h>
+#include <drizzled/util/test.h>
 
 template <uint32_t default_width> class Bitmap
 {

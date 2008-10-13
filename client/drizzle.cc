@@ -2863,6 +2863,7 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
+    case DRIZZLE_TYPE_VIRTUAL:     return "VIRTUAL";
     default:                     return "?-unknown-?";
   }
 }
@@ -3503,7 +3504,7 @@ static int com_source(string *buffer __attribute__((unused)), const char *line)
   end[0]=0;
   unpack_filename(source_name,source_name);
   /* open file name */
-  if (!(sql_file = my_fopen(source_name, O_RDONLY | O_BINARY,MYF(0))))
+  if (!(sql_file = my_fopen(source_name, O_RDONLY,MYF(0))))
   {
     char buff[FN_REFLEN+60];
     sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);

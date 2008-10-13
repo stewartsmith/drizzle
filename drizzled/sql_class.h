@@ -214,6 +214,8 @@ public:
   */
   virtual Key *clone(MEM_ROOT *mem_root) const
   { return new (mem_root) Foreign_key(*this, mem_root); }
+  /* Used to validate foreign key options */
+  bool validate(List<Create_field> &table_fields);
 };
 
 typedef struct st_mysql_lock
@@ -1398,13 +1400,12 @@ public:
     it returned an error on master, and this is OK on the slave.
   */
   bool       is_slave_error;
-  bool       bootstrap, cleanup_done;
+  bool       cleanup_done;
   
   /**  is set if some thread specific value(s) used in a statement. */
   bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
   bool       charset_is_character_set_filesystem;
-  bool       enable_slow_log;   /* enable slow log for current statement */
   bool	     abort_on_warning;
   bool 	     got_warning;       /* Set on call to push_warning() */
   bool	     no_warnings_for_error; /* no warnings on call to my_error() */

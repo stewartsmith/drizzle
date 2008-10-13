@@ -30,6 +30,7 @@
 #include <mysys/my_bit.h>
 #include <drizzled/drizzled_error_messages.h>
 #include <libdrizzle/gettext.h>
+#include <drizzled/util/test.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",
@@ -11391,6 +11392,7 @@ join_read_system(JOIN_TAB *tab)
       empty_record(table);			// Make empty record
       return -1;
     }
+    update_virtual_fields_marked_for_write(table);
     store_record(table,record[1]);
   }
   else if (!table->status)			// Only happens with left join
@@ -11439,6 +11441,7 @@ join_read_const(JOIN_TAB *tab)
 	return table->report_error(error);
       return -1;
     }
+    update_virtual_fields_marked_for_write(table);
     store_record(table,record[1]);
   }
   else if (!(table->status & ~STATUS_NULL_ROW))	// Only happens with left join
@@ -11547,6 +11550,7 @@ join_read_always_key(JOIN_TAB *tab)
       return table->report_error(error);
     return -1; /* purecov: inspected */
   }
+  update_virtual_fields_marked_for_write(table);
   return 0;
 }
 
@@ -11633,6 +11637,7 @@ join_read_next_same(READ_RECORD *info)
     table->status= STATUS_GARBAGE;
     return -1;
   }
+  update_virtual_fields_marked_for_write(table);
   return 0;
 }
 
@@ -11652,6 +11657,7 @@ join_read_prev_same(READ_RECORD *info)
     table->status=STATUS_NOT_FOUND;
     error= -1;
   }
+  update_virtual_fields_marked_for_write(table);
   return error;
 }
 
@@ -11732,6 +11738,8 @@ join_read_first(JOIN_TAB *tab)
       table->report_error(error);
     return -1;
   }
+  if (not error)
+    update_virtual_fields_marked_for_write(tab->table);
   return 0;
 }
 
@@ -11751,7 +11759,8 @@ join_read_next_different(READ_RECORD *info)
 
       if ((error=info->file->index_next(info->record)))
         return info->table->report_error(error);
-      
+      if (not error)
+        update_virtual_fields_marked_for_write(tab->table);
     } while (!key_cmp(tab->table->key_info[tab->index].key_part, 
                       tab->insideout_buf, key->key_length));
     tab->insideout_match_tab->found_match= 0;
@@ -11768,6 +11777,8 @@ join_read_next(READ_RECORD *info)
   int error;
   if ((error=info->file->index_next(info->record)))
     return info->table->report_error(error);
+  if (not error)
+    update_virtual_fields_marked_for_write(info->table);
   return 0;
 }
 
@@ -11793,6 +11804,8 @@ join_read_last(JOIN_TAB *tab)
     table->file->ha_index_init(tab->index, 1);
   if ((error= tab->table->file->index_last(tab->table->record[0])))
     return table->report_error(error);
+  if (not error)
+    update_virtual_fields_marked_for_write(tab->table);
   return 0;
 }
 
@@ -11803,6 +11816,8 @@ join_read_prev(READ_RECORD *info)
   int error;
   if ((error= info->file->index_prev(info->record)))
     return info->table->report_error(error);
+  if (not error)
+    update_virtual_fields_marked_for_write(info->table);
   return 0;
 }
 

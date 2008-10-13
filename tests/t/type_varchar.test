@@ -3,22 +3,12 @@ drop table if exists t1, t2;
 --enable_warnings
 
 create table t1 (v varchar(30), c char(3), e enum('abc','def','ghi'), t text);
-copy_file $DRIZZLE_TEST_DIR/std_data/vchar.frm $MYSQLTEST_VARDIR/master-data/test/vchar.frm;
-truncate table vchar;
 show create table t1;
-show create table vchar;
 insert into t1 values ('abc', 'de', 'ghi', 'jkl');
 insert into t1 values ('abc ', 'de ', 'ghi', 'jkl ');
 insert into t1 values ('abc    ', 'd  ', 'ghi', 'jkl    ');
-insert into vchar values ('abc', 'de', 'ghi', 'jkl');
-insert into vchar values ('abc ', 'de ', 'ghi', 'jkl ');
-insert into vchar values ('abc    ', 'd  ', 'ghi', 'jkl    ');
 select length(v),length(c),length(e),length(t) from t1;
-select length(v),length(c),length(e),length(t) from vchar;
-alter table vchar add i int;
-show create table vchar;
-select length(v),length(c),length(e),length(t) from vchar;
-drop table t1, vchar;
+drop table t1;
 create table t1 (v varchar(20));
 insert into t1 values('a ');
 select v='a' from t1;
@@ -122,7 +112,7 @@ drop table t1, t2;
 #
 # Bug #10543: convert varchar with index to text
 #
-create table t1 (f1 varchar(65500));
+create table t1 (f1 varchar(6500));
 create index index1 on t1(f1(10));
 show create table t1;
 alter table t1 modify f1 varchar(255);
@@ -158,25 +148,22 @@ drop table if exists t1, t2, t3;
 --enable_warnings
 
 create table t3 (
-  id int(11),
-  en varchar(255) character set utf8,
-  cz varchar(255) character set utf8
+  id int,
+  en varchar(255),
+  cz varchar(255)
 );
-remove_file $MYSQLTEST_VARDIR/master-data/test/t3.frm;
-copy_file $DRIZZLE_TEST_DIR/std_data/14897.frm $MYSQLTEST_VARDIR/master-data/test/t3.frm;
-truncate table t3;
 insert into t3 (id, en, cz) values 
 (1,'en string 1','cz string 1'),
 (2,'en string 2','cz string 2'),
 (3,'en string 3','cz string 3');
 
 create table t1 ( 
-  id int(11),
-  name_id int(11)
+  id int,
+  name_id int
 );
 insert into t1 (id, name_id) values (1,1), (2,3), (3,3);
 
-create table t2 (id int(11));
+create table t2 (id int);
 insert into t2 (id) values (1), (2), (3);
 
 # max_length is different for varchar fields in ps-protocol and we can't 
@@ -192,9 +179,8 @@ drop table t1, t2, t3;
 #
 # Bug #11927: Warnings shown for CAST( chr as signed) but not (chr + 0)
 #
-CREATE TABLE t1 (a CHAR(2));
+CREATE TABLE t1 (a varchar(2));
 INSERT INTO t1 VALUES (10), (50), (30), ('1a'), (60), ('t');
 SELECT a,(a + 0) FROM t1 ORDER BY a;
 SELECT a,(a DIV 2) FROM t1 ORDER BY a;
-SELECT a,CAST(a AS SIGNED) FROM t1 ORDER BY a;
 DROP TABLE t1;

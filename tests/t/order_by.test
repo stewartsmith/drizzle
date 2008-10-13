@@ -7,10 +7,10 @@ drop table if exists t1,t2,t3;
 --enable_warnings
 
 CREATE TABLE t1 (
-  id int(6) DEFAULT '0' NOT NULL,
-  idservice int(5),
-  clee char(20) NOT NULL,
-  flag char(1),
+  id int DEFAULT '0' NOT NULL,
+  idservice int,
+  clee varchar(20) NOT NULL,
+  flag varchar(1),
   KEY id (id),
   PRIMARY KEY (clee)
 );
@@ -25,10 +25,10 @@ INSERT INTO t1 VALUES (2,7,'60671569','Y');
 INSERT INTO t1 VALUES (2,3,'dd','Y');
 
 CREATE TABLE t2 (
-  id int(6) NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   description varchar(40) NOT NULL,
   idform varchar(40),
-  ordre int(6) DEFAULT '0' NOT NULL,
+  ordre int DEFAULT '0' NOT NULL,
   image varchar(60),
   PRIMARY KEY (id),
   KEY id (id,ordre)
@@ -192,7 +192,7 @@ drop table t1,t2,t3;
 #bug reported by Wouter de Jong
 
 CREATE TABLE t1 (
-  member_id int(11) NOT NULL auto_increment,
+  member_id int NOT NULL auto_increment,
   inschrijf_datum varchar(20) NOT NULL default '',
   lastchange_datum varchar(20) NOT NULL default '',
   nickname varchar(20) NOT NULL default '',
@@ -255,7 +255,8 @@ select * from t1 where a = 1 order by b desc;
 # Test things when we don't have NULL keys
 #
 
-alter table t1 modify b int not null, modify c varchar(10) not null;
+delete from t1 WHERE b IS NULL OR c IS NULL;
+alter table t1 modify b bigint not null, modify c varchar(100) not null;
 explain select * from t1 order by a, b, c;
 select * from t1 order by a, b, c;
 explain select * from t1 order by a desc, b desc, c desc;
@@ -278,18 +279,18 @@ drop table t1;
 
 
 CREATE TABLE t1 (
-  gid int(10) NOT NULL auto_increment,
-  cid int(5) NOT NULL default '0',
+  gid int NOT NULL auto_increment,
+  cid int NOT NULL default '0',
   PRIMARY KEY  (gid),
   KEY component_id (cid)
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (103853,108),(103867,108),(103962,108),(104505,108),(104619,108),(104620,108);
-ALTER TABLE t1 add skr int(10) not null;
+ALTER TABLE t1 add skr int not null;
 
 CREATE TABLE t2 (
-  gid int(10) NOT NULL default '0',
-  uid int(5) NOT NULL default '1',
-  sid int(3) NOT NULL default '1',
+  gid int NOT NULL default '0',
+  uid int NOT NULL default '1',
+  sid int NOT NULL default '1',
   PRIMARY KEY  (gid),
   KEY uid (uid),
   KEY status_id (sid)
@@ -297,23 +298,23 @@ CREATE TABLE t2 (
 INSERT INTO t2 VALUES (103853,250,5),(103867,27,5),(103962,27,5),(104505,117,5),(104619,75,5),(104620,15,5);
 
 CREATE TABLE t3 (
-  uid int(6) NOT NULL auto_increment,
+  uid int NOT NULL auto_increment,
   PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
 INSERT INTO t3 VALUES (1),(15),(27),(75),(117),(250);
-ALTER TABLE t3 add skr int(10) not null;
+ALTER TABLE t3 add skr int not null;
 
 select t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
 select t1.gid, t2.sid, t3.uid from t3, t2, t1 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
 
 # The following ORDER BY can be optimimized
-EXPLAIN select t1.gid, t2.sid, t3.uid from t3, t2, t1 where t2.gid = t1.gid and t2.uid = t3.uid order by t1.gid, t3.uid;
-EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t1.gid,t3.skr;
+select t1.gid, t2.sid, t3.uid from t3, t2, t1 where t2.gid = t1.gid and t2.uid = t3.uid order by t1.gid, t3.uid;
+SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t1.gid,t3.skr;
 
 # The following ORDER BY can't be optimimized
-EXPLAIN SELECT t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
-EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t3.skr,t1.gid;
-EXPLAIN SELECT t1.gid, t3.uid from t1, t3 where t1.skr = t3.uid order by t1.gid,t3.skr;
+SELECT t1.gid, t2.sid, t3.uid from t2, t1, t3 where t2.gid = t1.gid and t2.uid = t3.uid order by t3.uid, t1.gid;
+SELECT t1.gid, t3.uid from t1, t3 where t1.gid = t3.uid order by t3.skr,t1.gid;
+SELECT t1.gid, t3.uid from t1, t3 where t1.skr = t3.uid order by t1.gid,t3.skr;
 drop table t1,t2,t3;
 
 #
@@ -322,17 +323,17 @@ drop table t1,t2,t3;
 
 CREATE TABLE t1 (
   `titre` char(80) NOT NULL default '',
-  `numeropost` mediumint(8) NOT NULL auto_increment,
+  `numeropost` int NOT NULL auto_increment,
   `date` datetime NOT NULL default '0000-00-00 00:00:00',
   `auteur` char(35) NOT NULL default '',
-  `icone` int(2) NOT NULL default '0',
+  `icone` int NOT NULL default '0',
   `lastauteur` char(35) NOT NULL default '',
-  `nbrep` int(6) NOT NULL default '0',
+  `nbrep` int NOT NULL default '0',
   `dest` char(35) NOT NULL default '',
-  `lu` int(1) NOT NULL default '0',
-  `vue` mediumint(8) NOT NULL default '0',
-  `ludest` int(1) NOT NULL default '0',
-  `ouvert` int(1) NOT NULL default '1',
+  `lu` int NOT NULL default '0',
+  `vue` int NOT NULL default '0',
+  `ludest` int NOT NULL default '0',
+  `ouvert` int NOT NULL default '1',
   PRIMARY KEY  (`numeropost`),
   KEY `date` (`date`),
   KEY `dest` (`dest`,`ludest`),
@@ -342,7 +343,7 @@ CREATE TABLE t1 (
 ) CHECKSUM=1;
 
 CREATE TABLE t2 (
-  `numeropost` mediumint(8) NOT NULL default '0',
+  `numeropost` int NOT NULL default '0',
   `pseudo` char(35) NOT NULL default '',
   PRIMARY KEY  (`numeropost`,`pseudo`),
   KEY `pseudo` (`pseudo`)
@@ -382,8 +383,7 @@ while ($1)
   dec $1;
  }
 enable_query_log;
-explain select id,t from t1 order by id;
-explain select id,t from t1 force index (primary) order by id;
+select id,t from t1 force index (primary) order by id;
 drop table t1;
 
 #
@@ -391,18 +391,15 @@ drop table t1;
 #
 CREATE TABLE t1 (
   FieldKey varchar(36) NOT NULL default '',
-  LongVal bigint(20) default NULL,
-  StringVal mediumtext,
+  LongVal bigint default NULL,
+  StringVal text,
   KEY FieldKey (FieldKey),
   KEY LongField (FieldKey,LongVal),
   KEY StringField (FieldKey,StringVal(32))
 );
 INSERT INTO t1 VALUES ('0',3,'0'),('0',2,'1'),('0',1,'2'),('1',2,'1'),('1',1,'3'), ('1',0,'2'),('2',3,'0'),('2',2,'1'),('2',1,'2'),('2',3,'0'),('2',2,'1'),('2',1,'2'),('3',2,'1'),('3',1,'2'),('3','3','3');
-EXPLAIN SELECT * FROM t1 WHERE FieldKey = '1' ORDER BY LongVal;
 SELECT * FROM t1 WHERE FieldKey = '1' ORDER BY LongVal;
-EXPLAIN SELECT * FROM t1 ignore index (FieldKey, LongField) WHERE FieldKey > '2' ORDER BY LongVal;
 SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY LongVal;
-EXPLAIN SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY FieldKey, LongVal;
 SELECT * FROM t1 WHERE FieldKey > '2' ORDER BY FieldKey, LongVal;
 DROP TABLE t1;
 #
@@ -417,7 +414,7 @@ DROP TABLE t1;
 # Bug when doing an order by on a 1 byte string (Bug #2147)
 #
 
-CREATE TABLE t1 (  id int(6) NOT NULL default '0',  menu int(4) NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
+CREATE TABLE t1 (  id int NOT NULL default '0',  menu int NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (11384, 2),(11392, 2);
 SELECT id FROM t1 WHERE id <11984 AND menu =2 ORDER BY id DESC LIMIT 1 ;
 drop table t1;
@@ -523,7 +520,7 @@ create table t1 (
   `wnid` varchar(11) not null default '',
   key `wnid14` (`wnid`(4)),
   key `wnid` (`wnid`)
-) engine=myisam default charset=latin1;
+) engine=myisam;
 
 insert into t1 (`sid`, `wnid`) values
 ('10100','01019000000'),('37986','01019000000'),('37987','01019010000'),
@@ -736,49 +733,11 @@ INSERT INTO t1 VALUES (1,1),(2,2);
 CREATE TABLE t2 (a INT, b INT, KEY a (a,b));
 INSERT INTO t2 VALUES (1,1),(1,2),(2,1),(2,2);
 
-EXPLAIN SELECT 1 FROM t1,t2 WHERE t1.b=2 AND t1.a=t2.a ORDER BY t2.b;
+SELECT 1 FROM t1,t2 WHERE t1.b=2 AND t1.a=t2.a ORDER BY t2.b;
 
 DROP TABLE t1,t2;
 
 # End of 5.0
-
-#
-# Bug #28404: query with ORDER BY and ref access
-#
-
-CREATE TABLE t1(
-  id int auto_increment PRIMARY KEY, c2 int, c3 int, INDEX k2(c2), INDEX k3(c3));
-
-INSERT INTO t1 (c2,c3) VALUES
- (31,34),(35,38),(34,31),(32,35),(31,39),
- (11,14),(15,18),(14,11),(12,15),(11,19);
-
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-INSERT INTO t1 (c2,c3) SELECT c2,c3 FROM t1;
-UPDATE t1 SET c2=20 WHERE id%100 = 0;
-SELECT COUNT(*) FROM t1;
-
-CREATE TABLE t2 LIKE t1;
-INSERT INTO t2 SELECT * FROM t1 ORDER BY id;
-
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 20;
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 4000;
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2 BETWEEN 10 AND 12 ORDER BY c3 LIMIT 20;
-EXPLAIN SELECT id,c3 FROM t2 WHERE c2 BETWEEN 20 AND 30 ORDER BY c3 LIMIT 4000;
-
-SELECT id,c3 FROM t2 WHERE c2=11 ORDER BY c3 LIMIT 20;
-
-DROP TABLE t1,t2;
 
 # 
 # Bug #30665: Inconsistent optimization of IGNORE INDEX FOR {ORDER BY|GROUP BY}
@@ -796,42 +755,11 @@ INSERT INTO t1 SELECT a +16, b +16 FROM t1;
 INSERT INTO t1 SELECT a +32, b +32 FROM t1;
 INSERT INTO t1 SELECT a +64, b +64 FROM t1;
 
-EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
-
---disable_query_log
---let $q = `show status like 'Created_tmp_tables';`
-eval set @tmp_tables_before = 
-  CAST(REPLACE('$q', 'Created_tmp_tables', '') AS UNSIGNED);
---enable_query_log
-
 SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
-
-# this query creates one temporary table in itself, which we are not
-# interested in.
-
---disable_query_log
---let $q = `show status like 'Created_tmp_tables';`
-eval set @tmp_tables_after = 
-  CAST(REPLACE('$q', 'Created_tmp_tables', '') AS UNSIGNED);
---enable_query_log
 
 SELECT @tmp_tables_after = @tmp_tables_before ;
 
-EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (a, ab) ORDER BY a;
-
---disable_query_log
---let $q = `show status like 'Created_tmp_tables';`
-eval set @tmp_tables_before = 
-  CAST(REPLACE('$q', 'Created_tmp_tables', '') AS UNSIGNED);
---enable_query_log
-
 SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (a, ab) ORDER BY a;
-
---disable_query_log
---let $q = `show status like 'Created_tmp_tables';`
-eval set @tmp_tables_after = 
-  CAST(REPLACE('$q', 'Created_tmp_tables', '') AS UNSIGNED);
---enable_query_log
 
 SELECT @tmp_tables_after = @tmp_tables_before;
 
@@ -839,11 +767,10 @@ DROP TABLE t1;
 --echo #
 --echo # Bug#31590: Wrong error message on sort buffer being too small.
 --echo #
-create table t1(a int, b tinytext);
+create table t1(a int, b text);
 insert into t1 values (1,2),(3,2);
 set session sort_buffer_size= 30000;
 set session max_sort_length= 2180;
---error 1038
 select * from t1 order by b;
 drop table t1;
 
@@ -851,7 +778,7 @@ drop table t1;
 # Bug #35206: select query result different if the key is indexed or not
 #
 
-CREATE TABLE t2 (a varchar(32), b int(11), c float, d double, 
+CREATE TABLE t2 (a varchar(32), b int, c float, d double, 
   UNIQUE KEY a (a,b,c), KEY b (b), KEY c (c));
 
 CREATE TABLE t1 (a varchar(32), b char(3), UNIQUE KEY a (a,b), KEY b (b));
@@ -1292,18 +1219,10 @@ INSERT INTO t2 (a, b, c, d) VALUES
 
 INSERT INTO t3 SELECT * FROM t1;
 
-EXPLAIN
-SELECT d FROM t1, t2
-WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
-ORDER BY t2.c LIMIT 1;
 SELECT d FROM t1, t2
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;
 
-EXPLAIN
-SELECT d FROM t3 AS t1, t2 AS t2 
-WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
-ORDER BY t2.c LIMIT 1;
 SELECT d FROM t3 AS t1, t2 AS t2 
 WHERE t2.b=14 AND t2.a=t1.a AND 5.1<t2.c AND t1.b='DE'
 ORDER BY t2.c LIMIT 1;

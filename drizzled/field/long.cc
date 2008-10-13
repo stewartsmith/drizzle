@@ -33,7 +33,7 @@ int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   int64_t rnd;
   
   error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
-  store_tmp= unsigned_flag ? (long) (uint64_t) rnd : (long) rnd;
+  store_tmp= (long) rnd;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -51,37 +51,20 @@ int Field_long::store(double nr)
   int error= 0;
   int32_t res;
   nr=rint(nr);
-  if (unsigned_flag)
+
+  if (nr < (double) INT32_MIN)
   {
-    if (nr < 0)
-    {
-      res=0;
-      error= 1;
-    }
-    else if (nr > (double) UINT32_MAX)
-    {
-      res= INT32_MAX;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else
-      res=(int32_t) (uint32_t) nr;
+    res=(int32_t) INT32_MIN;
+    error= 1;
+  }
+  else if (nr > (double) INT32_MAX)
+  {
+    res=(int32_t) INT32_MAX;
+    error= 1;
   }
   else
-  {
-    if (nr < (double) INT32_MIN)
-    {
-      res=(int32_t) INT32_MIN;
-      error= 1;
-    }
-    else if (nr > (double) INT32_MAX)
-    {
-      res=(int32_t) INT32_MAX;
-      error= 1;
-    }
-    else
-      res=(int32_t) (int64_t) nr;
-  }
+    res=(int32_t) (int64_t) nr;
+
   if (error)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
@@ -102,38 +85,21 @@ int Field_long::store(int64_t nr, bool unsigned_val)
   int error= 0;
   int32_t res;
 
-  if (unsigned_flag)
+  if (nr < 0 && unsigned_val)
+    nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
+  if (nr < (int64_t) INT32_MIN) 
   {
-    if (nr < 0 && !unsigned_val)
-    {
-      res=0;
-      error= 1;
-    }
-    else if (nr > INT32_MAX)
-    {
-      res= INT32_MAX;
-      error= 1;
-    }
-    else
-      res=(int32_t) (uint32_t) nr;
+    res=(int32_t) INT32_MIN;
+    error= 1;
+  }
+  else if (nr > (int64_t) INT32_MAX)
+  {
+    res=(int32_t) INT32_MAX;
+    error= 1;
   }
   else
-  {
-    if (nr < 0 && unsigned_val)
-      nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
-    if (nr < (int64_t) INT32_MIN) 
-    {
-      res=(int32_t) INT32_MIN;
-      error= 1;
-    }
-    else if (nr > (int64_t) INT32_MAX)
-    {
-      res=(int32_t) INT32_MAX;
-      error= 1;
-    }
-    else
-      res=(int32_t) nr;
-  }
+    res=(int32_t) nr;
+
   if (error)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
@@ -158,7 +124,7 @@ double Field_long::val_real(void)
   else
 #endif
     longget(j,ptr);
-  return unsigned_flag ? (double) (uint32_t) j : (double) j;
+  return (double) j;
 }
 
 int64_t Field_long::val_int(void)
@@ -172,7 +138,7 @@ int64_t Field_long::val_int(void)
   else
 #endif
     longget(j,ptr);
-  return unsigned_flag ? (int64_t) (uint32_t) j : (int64_t) j;
+  return (int64_t) j;
 }
 
 String *Field_long::val_str(String *val_buffer,
@@ -191,10 +157,7 @@ String *Field_long::val_str(String *val_buffer,
 #endif
     longget(j,ptr);
 
-  if (unsigned_flag)
-    length=cs->cset->long10_to_str(cs,to,mlength, 10,(long) (uint32_t)j);
-  else
-    length=cs->cset->long10_to_str(cs,to,mlength,-10,(long) j);
+  length=cs->cset->long10_to_str(cs,to,mlength,-10,(long) j);
   val_buffer->length(length);
 
   return val_buffer;
@@ -221,8 +184,7 @@ int Field_long::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
     longget(a,a_ptr);
     longget(b,b_ptr);
   }
-  if (unsigned_flag)
-    return ((uint32_t) a < (uint32_t) b) ? -1 : ((uint32_t) a > (uint32_t) b) ? 1 : 0;
+
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
@@ -231,10 +193,7 @@ void Field_long::sort_string(unsigned char *to,uint32_t length __attribute__((un
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
   {
-    if (unsigned_flag)
-      to[0] = ptr[0];
-    else
-      to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
+    to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
     to[1]   = ptr[1];
     to[2]   = ptr[2];
     to[3]   = ptr[3];
@@ -242,10 +201,7 @@ void Field_long::sort_string(unsigned char *to,uint32_t length __attribute__((un
   else
 #endif
   {
-    if (unsigned_flag)
-      to[0] = ptr[3];
-    else
-      to[0] = (char) (ptr[3] ^ 128);		/* Revers signbit */
+    to[0] = (char) (ptr[3] ^ 128);		/* Revers signbit */
     to[1]   = ptr[2];
     to[2]   = ptr[1];
     to[3]   = ptr[0];
@@ -257,6 +213,5 @@ void Field_long::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
-  add_unsigned(res);
 }
 

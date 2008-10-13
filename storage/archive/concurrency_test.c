@@ -244,7 +244,7 @@ void *run_task(void *p)
   int error;
   azio_stream reader_handle;
 
-  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY|O_BINARY,
+  if (!(ret= azopen(&reader_handle, TEST_FILENAME, O_RDONLY,
                     context->use_aio)))
   {
     printf("Could not open test file\n");
@@ -290,7 +290,7 @@ void create_data_file(azio_stream *write_handler, uint64_t rows)
   int ret;
   uint64_t x;
 
-  if (!(ret= azopen(write_handler, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC|O_BINARY,
+  if (!(ret= azopen(write_handler, TEST_FILENAME, O_CREAT|O_RDWR|O_TRUNC,
                     AZ_METHOD_BLOCK)))
   {
     printf("Could not create test file\n");

@@ -2,8 +2,6 @@
 drop table if exists t1;
 --enable_warnings
 
-set names latin1;
-
 #
 # If it's BLOB or BINARY or VARBINARY, then output = input.
 #
@@ -94,7 +92,6 @@ select 1 as weight_string, 2 as reverse;
 # Check that collation derivation is copied from the argument
 #
 select coercibility(weight_string('test'));
-select coercibility(weight_string('test' collate latin1_swedish_ci));
 
 #
 # Bug#33663 Character sets: weight_string function,

@@ -21,34 +21,6 @@
 #include <mysys/mysys_err.h>
 #include <mysys/iocache.h>
 
-	/*
-	  Remove an open tempfile so that it doesn't survive
-	  if we crash;	If the operating system doesn't support
-	  this, just remember the file name for later removal
-	*/
-
-static bool cache_remove_open_tmp(IO_CACHE *cache __attribute__((unused)),
-				     const char *name)
-{
-#if O_TEMPORARY == 0
-#if !defined(CANT_DELETE_OPEN_FILES)
-  /* The following should always succeed */
-  (void) my_delete(name,MYF(MY_WME | ME_NOINPUT));
-#else
-  int length;
-  if (!(cache->file_name=
-	(char*) my_malloc((length=strlen(name)+1),MYF(MY_WME))))
-  {
-    my_close(cache->file,MYF(0));
-    cache->file = -1;
-    errno=my_errno=ENOMEM;
-    return 1;
-  }
-  memcpy(cache->file_name,name,length);
-#endif
-#endif /* O_TEMPORARY == 0 */
-  return 0;
-}
 
 	/*
 	** Open tempfile cached by IO_CACHE
@@ -83,12 +55,11 @@ bool real_open_cached_file(IO_CACHE *cache)
   char name_buff[FN_REFLEN];
   int error=1;
   if ((cache->file=create_temp_file(name_buff, cache->dir, cache->prefix,
-				    (O_RDWR | O_BINARY | O_TRUNC |
-				     O_TEMPORARY | O_SHORT_LIVED),
+				    (O_RDWR | O_TRUNC),
 				    MYF(MY_WME))) >= 0)
   {
     error=0;
-    cache_remove_open_tmp(cache, name_buff);
+    my_delete(name_buff,MYF(MY_WME | ME_NOINPUT));
   }
   return(error);
 }

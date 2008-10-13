@@ -8,9 +8,9 @@ drop table if exists t1,t2;
 --enable_warnings
 
 CREATE TABLE `t1` (
-  `id` int(11) NOT NULL default '0',
-  `id2` int(11) NOT NULL default '0',
-  `id3` int(11) NOT NULL default '0');
+  `id` int NOT NULL default '0',
+  `id2` int NOT NULL default '0',
+  `id3` int NOT NULL default '0');
 let $1=4000;
 disable_query_log;
 while ($1)

@@ -638,28 +638,6 @@ void Log_event::pack_info(Protocol *protocol)
 
 
 /**
-  Only called by SHOW BINLOG EVENTS
-*/
-int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
-{
-  const char *p= strrchr(log_name, FN_LIBCHAR);
-  const char *event_type;
-  if (p)
-    log_name = p + 1;
-
-  protocol->prepare_for_resend();
-  protocol->store(log_name, &my_charset_bin);
-  protocol->store((uint64_t) pos);
-  event_type = get_type_str();
-  protocol->store(event_type, strlen(event_type), &my_charset_bin);
-  protocol->store((uint32_t) server_id);
-  protocol->store((uint64_t) log_pos);
-  pack_info(protocol);
-  return protocol->write();
-}
-
-
-/**
   init_show_field_list() prepares the column names and types for the
   output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
   EVENTS.
@@ -4051,7 +4029,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   thd->set_proc_info(proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
-		     O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
+		     O_WRONLY | O_EXCL,
 		     MYF(MY_WME))) < 0 ||
       init_io_cache(&file, fd, IO_SIZE, WRITE_CACHE, (my_off_t)0, 0,
 		    MYF(MY_WME|MY_NABP)))
@@ -4079,7 +4057,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   // fname_buf now already has .data, not .info, because we did our trick
   my_delete(fname_buf, MYF(0)); // old copy may exist already
   if ((fd= my_create(fname_buf, CREATE_MODE,
-                     O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
+                     O_WRONLY | O_EXCL,
                      MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
@@ -4200,7 +4178,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
   {
     my_delete(fname, MYF(0)); // old copy may exist already
     if ((fd= my_create(fname, CREATE_MODE,
-		       O_WRONLY | O_BINARY | O_EXCL | O_NOFOLLOW,
+		       O_WRONLY | O_EXCL,
 		       MYF(MY_WME))) < 0)
     {
       rli->report(ERROR_LEVEL, my_errno,
@@ -4209,7 +4187,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
       goto err;
     }
   }
-  else if ((fd = my_open(fname, O_WRONLY | O_APPEND | O_BINARY | O_NOFOLLOW,
+  else if ((fd = my_open(fname, O_WRONLY | O_APPEND,
                          MYF(MY_WME))) < 0)
   {
     rli->report(ERROR_LEVEL, my_errno,
@@ -4376,7 +4354,7 @@ int Execute_load_log_event::do_apply_event(Relay_log_info const *rli)
   Load_log_event *lev= 0;
 
   ext= slave_load_file_stem(fname, file_id, server_id, ".info");
-  if ((fd = my_open(fname, O_RDONLY | O_BINARY | O_NOFOLLOW,
+  if ((fd = my_open(fname, O_RDONLY,
                     MYF(MY_WME))) < 0 ||
       init_io_cache(&file, fd, IO_SIZE, READ_CACHE, (my_off_t)0, 0,
 		    MYF(MY_WME|MY_NABP)))

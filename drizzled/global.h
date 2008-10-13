@@ -121,26 +121,9 @@ typedef unsigned int uint;
 extern char _dig_vec_upper[];
 extern char _dig_vec_lower[];
 
-#if defined(__cplusplus)
-template <class T>
-inline bool test(const T a)
-{
-  return a ? true : false;
-}
-template <class T, class U>
-inline bool test_all_bits(const T a, const U b)
-{
-  return ((a & b) == b);
-}
-#else
-#define test(a)    ((a) ? 1 : 0)
-#define test_all_bits(a,b) (((a) & (b)) == (b))
-#endif
-
 #define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
 
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
-#define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
 #define array_elements(A) ((size_t) (sizeof(A)/sizeof(A[0])))
 
 /* Some types that is different between systems */
@@ -150,33 +133,6 @@ typedef int  File;    /* File descriptor */
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-
-/* file create flags */
-
-#ifndef O_SHARE      /* Probably not windows */
-#define O_SHARE    0  /* Flag to my_open for shared files */
-#endif /* O_SHARE */
-
-#ifndef O_BINARY
-#define O_BINARY  0  /* Flag to my_open for binary files */
-#endif
-
-#ifndef FILE_BINARY
-#define FILE_BINARY  O_BINARY /* Flag to my_fopen for binary streams */
-#endif
-
-#define F_TO_EOF  0L  /* Param to lockf() to lock rest of file */
-
-#ifndef O_TEMPORARY
-#define O_TEMPORARY  0
-#endif
-#ifndef O_SHORT_LIVED
-#define O_SHORT_LIVED  0
-#endif
-#ifndef O_NOFOLLOW
-#define O_NOFOLLOW      0
-#endif
-
 
 
 #ifndef FN_LIBCHAR

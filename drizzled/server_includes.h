@@ -180,7 +180,8 @@ bool mysql_create_table_no_lock(THD *thd, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count);
+                                bool tmp_table, uint32_t select_field_count,
+                                bool lock_open_lock);
 
 bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
@@ -281,6 +282,8 @@ find_field_in_table(THD *thd, Table *table, const char *name, uint32_t length,
                     bool allow_rowid, uint32_t *cached_field_index_ptr);
 Field *
 find_field_in_table_sef(Table *table, const char *name);
+int update_virtual_fields_marked_for_write(Table *table,
+                                           bool ignore_stored=true);
 
 /* sql_do.cc */
 bool mysql_do(THD *thd, List<Item> &values);
@@ -331,13 +334,15 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types t
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
-		       const CHARSET_INFO * const cs);
+		       const CHARSET_INFO * const cs,
+		       virtual_column_info *vcol_info);
 Create_field * new_create_field(THD *thd, char *field_name, enum_field_types type,
 				char *length, char *decimals,
 				uint32_t type_modifier, 
 				Item *default_value, Item *on_update_value,
 				LEX_STRING *comment, char *change, 
-				List<String> *interval_list, CHARSET_INFO *cs);
+				List<String> *interval_list, CHARSET_INFO *cs,
+				virtual_column_info *vcol_info);
 void store_position_for_column(const char *name);
 bool add_to_list(THD *thd, SQL_LIST &list,Item *group,bool asc);
 bool push_new_name_resolution_context(THD *thd,
@@ -675,10 +680,7 @@ extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
-extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
-extern bool opt_log_slow_admin_statements;
-extern bool opt_log_slow_slave_statements;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern uint32_t opt_crash_binlog_innodb;

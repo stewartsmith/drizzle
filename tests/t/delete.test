@@ -114,14 +114,18 @@ insert into t11 values (0, 10),(1, 11),(2, 12);
 insert into t12 values (33, 10),(0, 11),(2, 12);
 insert into t2 values (1, 21),(2, 12),(3, 23);
 select * from t11;
+--sorted_result
 select * from t12;
 select * from t2;
 -- error 1242
 delete t11.*, t12.* from t11,t12 where t11.a = t12.a and t11.b <> (select b from t2 where t11.a < t2.a);
 select * from t11;
+--sorted_result
 select * from t12;
+# PBXT: for some reason this returns 2 warnings instead of 1
 delete ignore t11.*, t12.* from t11,t12 where t11.a = t12.a and t11.b <> (select b from t2 where t11.a < t2.a);
 select * from t11;
+--sorted_result
 select * from t12;
 insert into t11 values (2, 12);
 -- error 1242
@@ -167,6 +171,11 @@ drop table t1;
 # Bug#17711: DELETE doesn't use index when ORDER BY, LIMIT and
 #            non-restricting WHERE is present.
 #
+# PBXT is different here. @a = 2 instead of 1. I think the
+# reason is because an index is not used, as done with
+# InnoDB. This may be due to lack of cluster index. If the
+# delete below is based on a secondary index then the
+# index is not used
 create table t1(f1 int primary key);
 insert into t1 values (4),(3),(1),(2);
 delete from t1 where (@a:= f1) order by f1 limit 1;

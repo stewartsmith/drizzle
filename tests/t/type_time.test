@@ -11,6 +11,7 @@ insert into t1 values("10:22:33"),("12:34:56.78"),(10),(1234),(123456.78),(12345
 insert t1 values (30),(1230),("1230"),("12:30"),("12:30:35"),("1 12:30:31.32");
 select * from t1;
 # Test wrong values
+--error 1292
 insert into t1 values("10.22.22"),(1234567),(123456789),(123456789.10),("10 22:22"),("12.45a");
 select * from t1;
 drop table t1;
@@ -68,7 +69,7 @@ drop table t1;
 #
 CREATE TABLE  t1 (
   f2 date NOT NULL,
-  f3 int(11) NOT NULL default '0',
+  f3 int NOT NULL default '0',
   PRIMARY KEY  (f3, f2)
 );
 insert into t1 values('2007-07-01', 1);

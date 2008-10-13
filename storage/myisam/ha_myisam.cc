@@ -23,6 +23,7 @@
 #include "ha_myisam.h"
 #include "myisamdef.h"
 #include <drizzled/drizzled_error_messages.h>
+#include <drizzled/util/test.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -209,7 +210,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   record= table_arg->record[0];
   recpos= 0;
   recinfo_pos= recinfo;
-  while (recpos < (uint) share->reclength)
+  while (recpos < (uint) share->stored_rec_length)
   {
     Field **field, *found= 0;
     minpos= share->reclength;

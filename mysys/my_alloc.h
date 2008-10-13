@@ -20,6 +20,10 @@
 #ifndef _my_alloc_h
 #define _my_alloc_h
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define ALLOC_MAX_BLOCK_TO_DROP			4096
 #define ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP	10
 
@@ -48,4 +52,20 @@ typedef struct st_mem_root
 
   void (*error_handler)(void);
 } MEM_ROOT;
+
+void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
+                     size_t pre_alloc_size);
+void *alloc_root(MEM_ROOT *mem_root, size_t Size);
+void *multi_alloc_root(MEM_ROOT *mem_root, ...);
+void free_root(MEM_ROOT *root, myf MyFLAGS);
+void set_prealloc_root(MEM_ROOT *root, char *ptr);
+void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
+                         size_t prealloc_size);
+char *strdup_root(MEM_ROOT *root,const char *str);
+char *strmake_root(MEM_ROOT *root,const char *str,size_t len);
+void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
+
+#if defined(__cplusplus)
+}
+#endif
 #endif
