@@ -36,6 +36,9 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/divide.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/bit_count.h>
+#include <drizzled/functions/bit_length.h>
+#include <drizzled/functions/find_in_set.h>
 #include <drizzled/functions/int_divide.h>
 #include <drizzled/functions/length.h>
 #include <drizzled/functions/min_max.h>
@@ -52,6 +55,7 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/dec.h>
 #include <drizzled/functions/int_val.h>
 #include <drizzled/functions/acos.h>
+#include <drizzled/functions/ascii.h>
 #include <drizzled/functions/asin.h>
 #include <drizzled/functions/atan.h>
 #include <drizzled/functions/ceiling.h>
@@ -60,6 +64,7 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/floor.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/log.h>
+#include <drizzled/functions/ord.h>
 #include <drizzled/functions/pow.h>
 #include <drizzled/functions/rand.h>
 #include <drizzled/functions/round.h>
@@ -121,15 +126,6 @@ public:
   }
 };
 
-class Item_func_bit_length :public Item_func_length
-{
-public:
-  Item_func_bit_length(Item *a) :Item_func_length(a) {}
-  int64_t val_int()
-    { assert(fixed == 1); return Item_func_length::val_int()*8; }
-  const char *func_name() const { return "bit_length"; }
-};
-
 class Item_func_char_length :public Item_int_func
 {
   String value;
@@ -177,38 +173,6 @@ public:
 };
 
 
-class Item_func_ascii :public Item_int_func
-{
-  String value;
-public:
-  Item_func_ascii(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "ascii"; }
-  void fix_length_and_dec() { max_length=3; }
-};
-
-class Item_func_ord :public Item_int_func
-{
-  String value;
-public:
-  Item_func_ord(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "ord"; }
-};
-
-class Item_func_find_in_set :public Item_int_func
-{
-  String value,value2;
-  uint32_t enum_value;
-  uint64_t enum_bit;
-  DTCollation cmp_collation;
-public:
-  Item_func_find_in_set(Item *a,Item *b) :Item_int_func(a,b),enum_value(0) {}
-  int64_t val_int();
-  const char *func_name() const { return "find_in_set"; }
-  void fix_length_and_dec();
-};
-
 /* Base class for all bit functions: '~', '|', '^', '&', '>>', '<<' */
 
 class Item_func_bit: public Item_int_func
@@ -238,15 +202,6 @@ public:
   Item_func_bit_and(Item *a, Item *b) :Item_func_bit(a, b) {}
   int64_t val_int();
   const char *func_name() const { return "&"; }
-};
-
-class Item_func_bit_count :public Item_int_func
-{
-public:
-  Item_func_bit_count(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "bit_count"; }
-  void fix_length_and_dec() { max_length=2; }
 };
 
 class Item_func_shift_left :public Item_func_bit

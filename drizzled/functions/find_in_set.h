@@ -17,17 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_FIND_IN_SET_H
+#define DRIZZLED_FUNCTIONS_FIND_IN_SET_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_find_in_set :public Item_int_func
 {
+  String value,value2;
+  uint32_t enum_value;
+  uint64_t enum_bit;
+  DTCollation cmp_collation;
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_find_in_set(Item *a,Item *b) :Item_int_func(a,b),enum_value(0) {}
+  int64_t val_int();
+  const char *func_name() const { return "find_in_set"; }
+  void fix_length_and_dec();
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_FIND_IN_SET_H */

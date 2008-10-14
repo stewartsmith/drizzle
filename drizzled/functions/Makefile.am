@@ -17,15 +17,18 @@ noinst_LTLIBRARIES = 	libfunctions.la
 
 libfunctions_la_SOURCES = abs.cc \
 			  acos.cc \
+			  ascii.cc \
 			  asin.cc \
 			  atan.cc \
 			  additive_op.cc \
+			  bit_count.cc \
 			  ceiling.cc \
 			  connection_id.cc \
 			  cos.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
 			  exp.cc \
+			  find_in_set.cc \
 			  floor.cc \
 			  func.cc \
                           int.cc \
@@ -42,6 +45,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
+                          ord.cc \
                           plus.cc \
                           pow.cc \
 			  rand.cc \
@@ -56,9 +60,12 @@ libfunctions_la_SOURCES = abs.cc \
 
 noinst_HEADERS = abs.h \
 		 acos.h \
+		 ascii.h \
 		 asin.h \
 		 atan.h \
 		 additive_op.h \
+		 bit_count.h \
+		 bit_length.h \
 		 ceiling.h \
 		 connection_id.h \
 		 cos.h \
@@ -66,6 +73,7 @@ noinst_HEADERS = abs.h \
 		 decimal_typecast.h \
 		 divide.h \
 		 exp.h \
+		 find_in_set.h \
 		 floor.h \
 		 func.h \
                  int.h \
@@ -82,6 +90,7 @@ noinst_HEADERS = abs.h \
 		 num1.h \
                  numhybrid.h \
                  num_op.h \
+                 ord.h \
                  plus.h \
                  pow.h \
 		 real.h \
