@@ -36,9 +36,9 @@ template <uint32_t default_width> class Bitmap
   MY_BITMAP map;
   uint32_t buffer[(default_width+31)/32];
 public:
-  Bitmap() { init(); }
-  Bitmap(const Bitmap& from) { *this=from; }
-  explicit Bitmap(uint32_t prefix_to_set) { init(prefix_to_set); }
+  Bitmap() : map(0) { init(); }
+  Bitmap(const Bitmap& from) : map(0) { *this=from; }
+  explicit Bitmap(uint32_t prefix_to_set) : map(0) { init(prefix_to_set); }
   void init() { bitmap_init(&map, buffer, default_width, 0); }
   void init(uint32_t prefix_to_set) { init(); set_prefix(prefix_to_set); }
   uint32_t length() const { return default_width; }
@@ -164,8 +164,8 @@ template <> class Bitmap<64>
 {
   uint64_t map;
 public:
-  Bitmap<64>() { map= 0; }
-  explicit Bitmap<64>(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
+  Bitmap<64>() : map(0) { }
+  explicit Bitmap<64>(uint32_t prefix_to_set) : map(0) { set_prefix(prefix_to_set); }
   void init() { }
   void init(uint32_t prefix_to_set) { set_prefix(prefix_to_set); }
   uint32_t length() const { return 64; }
