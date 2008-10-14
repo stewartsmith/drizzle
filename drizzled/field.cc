@@ -1042,128 +1042,6 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
 }
 
 
-/****************************************************************************
-** tiny int
-****************************************************************************/
-
-int Field_tiny::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
-{
-  int error;
-  int64_t rnd;
-  
-  error= get_int(cs, from, len, &rnd, 255, -128, 127);
-  ptr[0]= (char) rnd;
-  return error;
-}
-
-
-int Field_tiny::store(double nr)
-{
-  int error= 0;
-  nr=rint(nr);
-
-  {
-    if (nr < -128.0)
-    {
-      *ptr= (char) -128;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else if (nr > 127.0)
-    {
-      *ptr=127;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else
-      *ptr=(char) (int) nr;
-  }
-  return error;
-}
-
-
-int Field_tiny::store(int64_t nr, bool unsigned_val)
-{
-  int error= 0;
-
-  {
-    if (nr < 0 && unsigned_val)
-      nr= 256;                                    // Generate overflow
-    if (nr < -128)
-    {
-      *ptr= (char) -128;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else if (nr > 127)
-    {
-      *ptr=127;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-    else
-      *ptr=(char) nr;
-  }
-  return error;
-}
-
-
-double Field_tiny::val_real(void)
-{
-  int tmp= (int) ((signed char*) ptr)[0];
-  return (double) tmp;
-}
-
-
-int64_t Field_tiny::val_int(void)
-{
-  int tmp= (int) ((signed char*) ptr)[0];
-  return (int64_t) tmp;
-}
-
-
-String *Field_tiny::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
-{
-  const CHARSET_INFO * const cs= &my_charset_bin;
-  uint32_t length;
-  uint32_t mlength=cmax(field_length+1,5*cs->mbmaxlen);
-  val_buffer->alloc(mlength);
-  char *to=(char*) val_buffer->ptr();
-
-  length= (uint32_t) cs->cset->long10_to_str(cs,to,mlength,-10,
-                                             (long) *((signed char*) ptr));
-
-  val_buffer->length(length);
-
-  return val_buffer;
-}
-
-bool Field_tiny::send_binary(Protocol *protocol)
-{
-  return protocol->store_tiny((int64_t) (int8_t) ptr[0]);
-}
-
-int Field_tiny::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
-{
-  signed char a,b;
-  a=(signed char) a_ptr[0]; b= (signed char) b_ptr[0];
-
-  return (a < b) ? -1 : (a > b) ? 1 : 0;
-}
-
-void Field_tiny::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
-{
-  to[0] = (char) (ptr[0] ^ (unsigned char) 128);	/* Revers signbit */
-}
-
-void Field_tiny::sql_type(String &res) const
-{
-  const CHARSET_INFO * const cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			  "tinyint(%d)",(int) field_length));
-}
-
 /*
   Report "not well formed" or "cannot convert" error
   after storing a character string info a field.
@@ -1766,10 +1644,7 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
 			    false,
 			    f_is_dec(pack_flag)== 0);
   case DRIZZLE_TYPE_TINY:
-    return new Field_tiny(ptr,field_length,null_pos,null_bit,
-			  unireg_check, field_name,
-                          false,
-			  f_is_dec(pack_flag) == 0);
+    assert(0);
   case DRIZZLE_TYPE_LONG:
     return new Field_long(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,

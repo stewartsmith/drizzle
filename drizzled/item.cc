@@ -4103,8 +4103,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_TINY:
-    field= new Field_tiny((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name, 0, unsigned_flag);
+    assert(0);
     break;
   case DRIZZLE_TYPE_LONG:
     field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
