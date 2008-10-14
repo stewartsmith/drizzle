@@ -27,12 +27,6 @@ select count(distinct a),count(distinct grp) from t1;
 insert into t1 values (null,null,'');
 select count(distinct a),count(distinct grp) from t1;
 
-select sum(all a),count(all a),avg(all a),std(all a),variance(all a),bit_or(all a),bit_and(all a),min(all a),max(all a),min(all c),max(all c) from t1;
-select grp, sum(a),count(a),avg(a),std(a),variance(a),bit_or(a),bit_and(a),min(a),max(a),min(c),max(c) from t1 group by grp;
---disable_warnings
-select grp, sum(a)+count(a)+avg(a)+std(a)+variance(a)+bit_or(a)+bit_and(a)+min(a)+max(a)+min(c)+max(c) as sum from t1 group by grp;
---enable_warnings
-
 create table t2 (grp int, a bigint, c char(10));
 insert into t2 select grp,max(a)+max(grp),max(c) from t1 group by grp;
 
@@ -46,9 +40,9 @@ drop table t1,t2;
 # Problem with std()
 #
 
-CREATE TABLE t1 (id int(11),value1 float(10,2));
+CREATE TABLE t1 (id int,value1 float(10,2));
 INSERT INTO t1 VALUES (1,0.00),(1,1.00), (1,2.00), (2,10.00), (2,11.00), (2,12.00); 
-CREATE TABLE t2 (id int(11),name char(20)); 
+CREATE TABLE t2 (id int,name char(20)); 
 INSERT INTO t2 VALUES (1,'Set One'),(2,'Set Two'); 
 select id, avg(value1), std(value1), variance(value1) from t1 group by id;
 select name, avg(value1), std(value1), variance(value1) from t1, t2 where t1.id = t2.id group by t1.id;
@@ -73,7 +67,7 @@ drop table t1,t2;
 #
 # test of count
 #
-create table t1 (a int(6) primary key, c char(10), b text);
+create table t1 (a int primary key, c char(10), b text);
 INSERT INTO t1 VALUES (1,'1','1');
 INSERT INTO t1 VALUES (2,'2','2');
 INSERT INTO t1 VALUES (4,'4','4');
@@ -145,37 +139,6 @@ select max(t2.a1) from t2 left outer join t1 on t2.a2=10 where t2.a2=10;
 select max(t2.a1) from t1 left outer join t2 on t1.a2=t2.a1 and 1=0 where t2.a1='AAA';
 select max(t1.a2),max(t2.a1) from t1 left outer join t2 on t1.a1=10;
 drop table t1,t2;
-
-#
-# Test of group function and NULL values
-#
-
-CREATE TABLE t1 (a int, b int);
-select count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1;
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-insert into t1 values (1,null);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-insert into t1 values (1,null);
-insert into t1 values (2,null);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-insert into t1 values (2,1);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-insert into t1 values (3,1);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b), bit_xor(b) from t1 group by a;
-explain extended select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b), bit_xor(b) from t1 group by a;
-drop table t1;
-
-#
-# Bug #1972: test for bit_and(), bit_or() and negative values
-# 
-create table t1 (col int);
-insert into t1 values (-1), (-2), (-3);
-select bit_and(col), bit_or(col) from t1;
-select SQL_BIG_RESULT bit_and(col), bit_or(col) from t1 group by col;
-drop table t1;
 
 #
 # Bug #3376: avg() and an empty table
@@ -398,10 +361,8 @@ drop table t1;
 #
 # Bug #6658 MAX(column) returns incorrect coercibility
 #
-create table t1 (a char character set latin2);
+create table t1 (a char);
 insert into t1 values ('a'),('b');
-select charset(max(a)), coercibility(max(a)),
-       charset(min(a)), coercibility(min(a)) from t1;
 show create table t1;
 create table t2 select max(a),min(a) from t1;
 show create table t2;
@@ -463,26 +424,14 @@ DROP TABLE t1;
 #
  
 CREATE TABLE t1 (
-  id int(10) NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   val enum('one','two','three') NOT NULL default 'one',
   PRIMARY KEY  (id)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM;
  
 INSERT INTO t1 VALUES
 (1,'one'),(2,'two'),(3,'three'),(4,'one'),(5,'two');
  
-select val, count(*) from t1 group by val;
-drop table t1;
-
-CREATE TABLE t1 (
-  id int(10) NOT NULL auto_increment,
-  val set('one','two','three') NOT NULL default 'one',
-  PRIMARY KEY  (id)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-INSERT INTO t1 VALUES
-(1,'one'),(2,'two'),(3,'three'),(4,'one'),(5,'two');
-
 select val, count(*) from t1 group by val;
 drop table t1;
 
@@ -563,14 +512,6 @@ SELECT MAX(b) FROM t1;
 EXPLAIN SELECT MAX(b) FROM t1;
 DROP TABLE t1;
 
-CREATE TABLE t1 (id int , b varchar(512), INDEX(b(250))) COLLATE latin1_bin;
-INSERT INTO t1 VALUES
-  (1,CONCAT(REPEAT('_', 250), "qq")), (1,CONCAT(REPEAT('_', 250), "zz")),
-  (1,CONCAT(REPEAT('_', 250), "aa")), (1,CONCAT(REPEAT('_', 250), "ff"));
-
-SELECT MAX(b) FROM t1;
-EXPLAIN SELECT MAX(b) FROM t1;
-DROP TABLE t1;
 #
 # Bug #16792  query with subselect, join, and group not returning proper values
 #
@@ -580,7 +521,7 @@ INSERT INTO t1 VALUES (1,1),(1,2),(2,3);
 SELECT (SELECT COUNT(DISTINCT t1.b)) FROM t1 GROUP BY t1.a;
 SELECT (SELECT COUNT(DISTINCT 12)) FROM t1 GROUP BY t1.a;
 # an attempt to test all aggregate function with no table.
-SELECT AVG(2), BIT_AND(2), BIT_OR(2), BIT_XOR(2), COUNT(*), COUNT(12),
+SELECT AVG(2), COUNT(*), COUNT(12),
        COUNT(DISTINCT 12), MIN(2),MAX(2),STD(2), VARIANCE(2),SUM(2),
        GROUP_CONCAT(2),GROUP_CONCAT(DISTINCT 2);
 DROP TABLE t1;
@@ -593,15 +534,15 @@ DROP TABLE t1;
 create table t2 (ff double);
 insert into t2 values (2.2);
 select cast(sum(distinct ff) as decimal(5,2)) from t2;
-select cast(sum(distinct ff) as signed) from t2;
+select sum(distinct ff) from t2;
 select cast(variance(ff) as decimal(10,3)) from t2;
 select cast(min(ff) as decimal(5,2)) from t2;
 
 create table t1 (df decimal(5,1));
 insert into t1 values(1.1);
 insert into t1 values(2.2);
-select cast(sum(distinct df) as signed) from t1;
-select cast(min(df) as signed) from t1;
+select sum(distinct df) from t1;
+select min(df) from t1;
 select 1e8 * sum(distinct df) from t1;
 select 1e8 * min(df) from t1;
 
@@ -616,7 +557,7 @@ drop table t1, t2, t3;
 # BUG#3190, WL#1639: Standard Deviation STDDEV - 2 different calculations
 #
 
-CREATE TABLE t1 (id int(11),value1 float(10,2));
+CREATE TABLE t1 (id int,value1 float(10,2));
 INSERT INTO t1 VALUES (1,0.00),(1,1.00), (1,2.00), (2,10.00), (2,11.00), (2,12.00), (2,13.00);
 select id, stddev_pop(value1), var_pop(value1), stddev_samp(value1), var_samp(value1) from t1 group by id;
 DROP TABLE t1;
@@ -687,7 +628,7 @@ INSERT INTO t1 VALUES (1,1), (2,2);
 CREATE TABLE t2 (a INT PRIMARY KEY, b INT);
 INSERT INTO t2 VALUES (1,1), (3,3);
 
-SELECT SQL_NO_CACHE 
+SELECT 
   (SELECT SUM(c.a) FROM t1 ttt, t2 ccc 
    WHERE ttt.a = ccc.b AND ttt.a = t.a GROUP BY ttt.a) AS minid   
 FROM t1 t, t2 c WHERE t.a = c.b;

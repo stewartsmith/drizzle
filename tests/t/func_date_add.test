@@ -7,10 +7,10 @@ drop table if exists t1;
 --enable_warnings
 
 CREATE TABLE t1 (
-  visitor_id int(10) DEFAULT '0' NOT NULL,
-  group_id int(10) DEFAULT '0' NOT NULL,
-  hits int(10) DEFAULT '0' NOT NULL,
-  sessions int(10) DEFAULT '0' NOT NULL,
+  visitor_id int DEFAULT '0' NOT NULL,
+  group_id int DEFAULT '0' NOT NULL,
+  hits int DEFAULT '0' NOT NULL,
+  sessions int DEFAULT '0' NOT NULL,
   ts timestamp,
   PRIMARY KEY (visitor_id,group_id)
 )/*! engine=MyISAM */;
@@ -45,7 +45,6 @@ drop table t1;
 # Bug #10627: Invalid date turned to NULL from date_sub/date_add in
 # traditional mode
 #
-set sql_mode='traditional';
 create table t1 (d date);
 --error S22008
 insert into t1 (d) select date_sub('2000-01-01', INTERVAL 2001 YEAR);
@@ -54,10 +53,11 @@ insert into t1 (d) select date_add('2000-01-01',interval 8000 year);
 # No warnings/errors from the next two
 insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));
-set sql_mode='';
 # These will all work now, and we'll end up with some NULL entries in the
 # table and some warnings.
+--error 1441
 insert into t1 (d) select date_sub('2000-01-01', INTERVAL 2001 YEAR);
+--error 1441
 insert into t1 (d) select date_add('2000-01-01',interval 8000 year);
 insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));
