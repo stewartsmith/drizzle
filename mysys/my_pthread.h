@@ -41,8 +41,6 @@ extern "C" {
 #endif
 
 #define pthread_key(T,V) pthread_key_t V
-#define my_pthread_getspecific_ptr(T,V) my_pthread_getspecific(T,(V))
-#define my_pthread_setspecific_ptr(T,V) pthread_setspecific(T,(void*) (V))
 #define pthread_detach_this_thread()
 #define pthread_handler_t EXTERNC void *
 typedef void *(* pthread_handler)(void *);

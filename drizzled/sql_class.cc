@@ -896,8 +896,8 @@ bool THD::store_globals()
   */
   assert(thread_stack);
 
-  if (my_pthread_setspecific_ptr(THR_THD,  this) ||
-      my_pthread_setspecific_ptr(THR_MALLOC, &mem_root))
+  if (pthread_setspecific(THR_THD,  this) ||
+      pthread_setspecific(THR_MALLOC, &mem_root))
     return 1;
   mysys_var=my_thread_var;
   /*
