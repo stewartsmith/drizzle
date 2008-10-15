@@ -101,7 +101,7 @@ static bool init_pipe(int pipe_fds[])
 
 thd_scheduler::thd_scheduler()
   : logged_in(false), io_event(NULL), thread_attached(false)
-{  
+{
   dbug_explain_buf[0]= 0;
 }
 
@@ -111,6 +111,13 @@ thd_scheduler::~thd_scheduler()
   free(io_event);
 }
 
+
+thd_scheduler::thd_scheduler(const thd_scheduler&)
+  : logged_in(false), io_event(NULL), thread_attached(false)
+{}
+
+void thd_scheduler::operator=(const thd_scheduler&)
+{}
 
 bool thd_scheduler::init(THD *parent_thd)
 {

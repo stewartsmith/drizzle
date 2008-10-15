@@ -1393,6 +1393,24 @@ AC_ARG_ENABLE([strict-aliasing],
     [ac_warn_strict_aliasing="$enableval"],
     [ac_warn_strict_aliasing="no"])
 
+AC_ARG_ENABLE([cast-warnings],
+    [AS_HELP_STRING([--enable-cast-warnings],
+       [Enable warnings about use of old C-style casts @<:@default=off@:>@])],
+    [ac_warn_cast="$enableval"],
+    [ac_warn_cast="no"])
+
+AC_ARG_ENABLE([effective-style],
+    [AS_HELP_STRING([--enable-effective-style],
+       [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
+    [ac_warn_effc="$enableval"],
+    [ac_warn_effc="no"])
+
+AC_ARG_ENABLE([go-crazy],
+    [AS_HELP_STRING([--enable-go-crazy],
+       [Enables extra little warnings that might be too much @<:@default=off@:>@])],
+    [ac_warn_go_crazy="$enableval"],
+    [ac_warn_go_crazy="no"])
+
 
 if test "$GCC" = "yes"
 then
@@ -1441,9 +1459,24 @@ then
     W_FAIL="-Werror"
   fi
 
+  if test "$ac_warn_cast" = "yes"
+  then
+    W_CAST="-Wold-style-cast"
+  fi
+
+  if test "$ac_warn_effc" = "yes"
+  then
+    W_EFFC="-Weffc++"
+  fi
+
+  if test "$ac_warn_gocrazy" = "yes"
+  then
+    W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
+  fi
+
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
-  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
   AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
   AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
