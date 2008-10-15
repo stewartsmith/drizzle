@@ -3027,7 +3027,7 @@ void DRIZZLE_BIN_LOG::close(uint32_t exiting)
     {
       my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
       unsigned char flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
-      pwrite(log_file.file, &flags, 1, offset);
+      assert(pwrite(log_file.file, &flags, 1, offset)==1);
     }
 
     /* this will cleanup IO_CACHE, sync and close the file */
