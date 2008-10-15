@@ -40,7 +40,7 @@ extern "C" {
 
   @see thd_alloc()
 */
-LEX_STRING *thd_make_lex_string(DRIZZLE_THD thd, LEX_STRING *lex_str,
+LEX_STRING *thd_make_lex_string(THD *thd, LEX_STRING *lex_str,
                                 const char *str, unsigned int size,
                                 int allocate_lex_string);
 

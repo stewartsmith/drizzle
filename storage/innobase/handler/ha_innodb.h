@@ -244,8 +244,8 @@ the definitions are bracketed with #ifdef INNODB_COMPATIBILITY_HOOKS */
 #endif
 
 extern "C" {
-struct charset_info_st *thd_charset(DRIZZLE_THD thd);
-char **thd_query(DRIZZLE_THD thd);
+struct charset_info_st *thd_charset(THD *thd);
+char **thd_query(THD *thd);
 
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
@@ -263,7 +263,7 @@ uint64_t mysql_bin_log_file_pos(void);
   @retval 0 the user thread is not a replication slave thread
   @retval 1 the user thread is a replication slave thread
 */
-int thd_slave_thread(const DRIZZLE_THD thd);
+int thd_slave_thread(const THD *thd);
 
 /**
   Check if a user thread is running a non-transactional update
@@ -271,19 +271,19 @@ int thd_slave_thread(const DRIZZLE_THD thd);
   @retval 0 the user thread is not running a non-transactional update
   @retval 1 the user thread is running a non-transactional update
 */
-int thd_non_transactional_update(const DRIZZLE_THD thd);
+int thd_non_transactional_update(const THD *thd);
 
 /**
   Get the user thread's binary logging format
   @param thd  user thread
   @return Value to be used as index into the binlog_format_names array
 */
-int thd_binlog_format(const DRIZZLE_THD thd);
+int thd_binlog_format(const THD *thd);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
   @param  thd   Thread handle
   @param  all   TRUE <=> rollback main transaction.
 */
-void thd_mark_transaction_to_rollback(DRIZZLE_THD thd, bool all);
+void thd_mark_transaction_to_rollback(THD *thd, bool all);
 }
