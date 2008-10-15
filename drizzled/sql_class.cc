@@ -2776,7 +2776,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
       char warn_buf[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
                ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
-      sql_print_warning(warn_buf);
+      sql_print_warning("%s",warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
     }
   }
