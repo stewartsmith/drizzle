@@ -3027,7 +3027,7 @@ void DRIZZLE_BIN_LOG::close(uint32_t exiting)
     {
       my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
       unsigned char flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
-      pwrite(log_file.file, &flags, 1, offset);
+      assert(pwrite(log_file.file, &flags, 1, offset)==1);
     }
 
     /* this will cleanup IO_CACHE, sync and close the file */
@@ -3152,11 +3152,15 @@ bool flush_error_log()
       size_t bytes;
       unsigned char buf[IO_SIZE];
 
-      freopen(err_temp,"a+",stderr);
+      if(freopen(err_temp,"a+",stderr)==NULL)
+        return 1;
       (void) my_delete(err_renamed, MYF(0));
       my_rename(log_error_file,err_renamed,MYF(0));
-      if (freopen(log_error_file,"a+",stdout))
-        freopen(log_error_file,"a+",stderr);
+      if (freopen(log_error_file,"a+",stdout)==NULL)
+        return 1;
+      else
+        if(freopen(log_error_file,"a+",stderr)==NULL)
+          return 1;
 
       if ((fd = my_open(err_temp, O_RDONLY, MYF(0))) >= 0)
       {

@@ -6361,7 +6361,7 @@ bool mysql_rm_tmp_tables(void)
     my_dirend(dirp);
   }
   delete thd;
-  my_pthread_setspecific_ptr(THR_THD,  0);
+  pthread_setspecific(THR_THD,  0);
   return(0);
 }
 
