@@ -105,16 +105,6 @@ int sigwait(sigset_t *setp, int *sigp);		/* Use our implemention */
 #define my_sigset(A,B) signal((A),(B))
 #endif
 
-#ifndef my_pthread_setprio
-#if defined(HAVE_PTHREAD_SETPRIO_NP)		/* FSU threads */
-#define my_pthread_setprio(A,B) pthread_setprio_np((A),(B))
-#elif defined(HAVE_PTHREAD_SETPRIO)
-#define my_pthread_setprio(A,B) pthread_setprio((A),(B))
-#else
-extern void my_pthread_setprio(pthread_t thread_id,int prior);
-#endif
-#endif
-
 #ifndef my_pthread_attr_setprio
 #ifdef HAVE_PTHREAD_ATTR_SETPRIO
 #define my_pthread_attr_setprio(A,B) pthread_attr_setprio((A),(B))
