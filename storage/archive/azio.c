@@ -984,8 +984,7 @@ int azwrite_frm(azio_stream *s, char *blob, unsigned int length)
   s->frm_length= length;
   s->start+= length;
 
-  if(pwrite(s->file, (unsigned char*) blob, s->frm_length, s->frm_start_pos)
-     != s->frm_length)
+  if (pwrite(s->file, (unsigned char*) blob, s->frm_length, s->frm_start_pos) != (ssize_t)s->frm_length)
     return 1;
 
   write_header(s);
@@ -998,7 +997,7 @@ int azread_frm(azio_stream *s, char *blob)
 {
   ssize_t r= pread(s->file, (unsigned char*) blob,
                    s->frm_length, s->frm_start_pos);
-  if(r!=s->frm_length)
+  if (r != (ssize_t)s->frm_length)
     return r;
 
   return 0;
@@ -1022,7 +1021,7 @@ int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
 
   ssize_t r= pwrite(s->file, (unsigned char*) blob,
                     s->comment_length, s->comment_start_pos);
-  if(r!=s->comment_length)
+  if (r != (ssize_t)s->comment_length)
     return r;
 
   write_header(s);
@@ -1035,7 +1034,7 @@ int azread_comment(azio_stream *s, char *blob)
 {
   ssize_t r= pread(s->file, (unsigned char*) blob,
                    s->comment_length, s->comment_start_pos);
-  if(r!=s->comment_length)
+  if (r != (ssize_t)s->comment_length)
     return r;
 
   return 0;
