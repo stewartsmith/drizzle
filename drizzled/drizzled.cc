@@ -2306,8 +2306,11 @@ static int init_server_components()
       opt_error_log= 1;				// Too long file name
     else
     {
-      if (freopen(log_error_file, "a+", stdout))
-        freopen(log_error_file, "a+", stderr);
+      if (freopen(log_error_file, "a+", stdout)==NULL)
+        sql_print_error(_("Unable to reopen stdout"));
+      else
+        if(freopen(log_error_file, "a+", stderr)==NULL)
+          sql_print_error(_("Unable to reopen stderr"));
     }
   }
 
