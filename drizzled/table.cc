@@ -2008,7 +2008,7 @@ ulong make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 
   int2store(fileinfo+8,names+1);
   int2store(fileinfo+4,n_length+length);
-  (void)ftruncate(file, newpos);/* Append file with '\0' */
+  assert(ftruncate(file, newpos)==0);/* Append file with '\0' */
   return(newpos);
 } /* make_new_entry */
 
