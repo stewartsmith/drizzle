@@ -192,7 +192,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
   return(error);
 
 err:
-  sql_print_error(msg);
+  sql_print_error("%s",msg);
   end_io_cache(&rli->info_file);
   if (info_fd >= 0)
     my_close(info_fd, MYF(0));

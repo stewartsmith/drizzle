@@ -3035,7 +3035,6 @@ void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs
   case DRIZZLE_TYPE_NEWDECIMAL:
     field_length= ((Field_new_decimal*) field)->precision;
     break;
-  case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     field_length= field->max_display_length() - 1;
@@ -3860,7 +3859,6 @@ Table *create_schema_table(THD *thd, TableList *table_list)
   for (; fields_info->field_name; fields_info++)
   {
     switch (fields_info->field_type) {
-    case DRIZZLE_TYPE_TINY:
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
       if (!(item= new Item_return_int(fields_info->field_name,

@@ -470,7 +470,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
       run_query(drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
-      system(pre_system);
+      assert(system(pre_system)!=-1);
 
     /*
       Pre statements are always run after all other logic so they can
@@ -485,7 +485,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
       run_statements(drizzle, post_statements);
 
     if (post_system)
-      system(post_system);
+      assert(system(post_system)!=-1);
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)

@@ -1,5 +1,5 @@
 drop table if exists t1, t2;
-create table t1 (grp int, a bigint unsigned, c char(10) not null, d char(10) not null);
+create table t1 (grp int, a bigint, c char(10) not null, d char(10) not null);
 insert into t1 values (1,1,"a","a");
 insert into t1 values (2,2,"b","a");
 insert into t1 values (2,3,"c","b");
@@ -18,7 +18,7 @@ explain extended select grp,group_concat(c) from t1 group by grp;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	9	100.00	Using filesort
 Warnings:
-Note	1003	select "test"."t1"."grp" AS "grp",group_concat("test"."t1"."c" separator ',') AS "group_concat(c)" from "test"."t1" group by "test"."t1"."grp"
+Note	1003	select `test`.`t1`.`grp` AS `grp`,group_concat(`test`.`t1`.`c` separator ',') AS `group_concat(c)` from `test`.`t1` group by `test`.`t1`.`grp`
 select grp,group_concat(a,c) from t1 group by grp;
 grp	group_concat(a,c)
 1	1a
@@ -88,7 +88,7 @@ explain extended select grp,group_concat(distinct c order by c desc) from t1 gro
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	9	100.00	Using filesort
 Warnings:
-Note	1003	select "test"."t1"."grp" AS "grp",group_concat(distinct "test"."t1"."c" order by "test"."t1"."c" DESC separator ',') AS "group_concat(distinct c order by c desc)" from "test"."t1" group by "test"."t1"."grp"
+Note	1003	select `test`.`t1`.`grp` AS `grp`,group_concat(distinct `test`.`t1`.`c` order by `test`.`t1`.`c` DESC separator ',') AS `group_concat(distinct c order by c desc)` from `test`.`t1` group by `test`.`t1`.`grp`
 select grp,group_concat(c order by c separator ",") from t1 group by grp;
 grp	group_concat(c order by c separator ",")
 1	a
@@ -108,7 +108,7 @@ explain extended select grp,group_concat(distinct c order by c separator ",") fr
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	9	100.00	Using filesort
 Warnings:
-Note	1003	select "test"."t1"."grp" AS "grp",group_concat(distinct "test"."t1"."c" order by "test"."t1"."c" ASC separator ',') AS "group_concat(distinct c order by c separator "","")" from "test"."t1" group by "test"."t1"."grp"
+Note	1003	select `test`.`t1`.`grp` AS `grp`,group_concat(distinct `test`.`t1`.`c` order by `test`.`t1`.`c` ASC separator ',') AS `group_concat(distinct c order by c separator ",")` from `test`.`t1` group by `test`.`t1`.`grp`
 select grp,group_concat(distinct c order by c desc separator ",") from t1 group by grp;
 grp	group_concat(distinct c order by c desc separator ",")
 1	a
@@ -163,8 +163,8 @@ ERROR HY000: Invalid use of group function
 select grp,group_concat(c order by 2) from t1 group by grp;
 ERROR 42S22: Unknown column '2' in 'order clause'
 drop table t1;
-create table t1 ( URL_ID int(11), URL varchar(80));
-create table t2 ( REQ_ID int(11), URL_ID int(11));
+create table t1 ( URL_ID int, URL varchar(80));
+create table t2 ( REQ_ID int, URL_ID int);
 insert into t1 values (4,'www.host.com'), (5,'www.google.com'),(5,'www.help.com');
 insert into t2 values (1,4), (5,4), (5,5);
 select REQ_ID, Group_Concat(URL) as URL from t1, t2 where
@@ -224,9 +224,9 @@ select  group_concat(a1 order by (t1.a)) from t1;
 group_concat(a1 order by (t1.a))
 b,a,c
 drop table t1, t2;
-CREATE TABLE t1 (id1 tinyint(4) NOT NULL, id2 tinyint(4) NOT NULL);
+CREATE TABLE t1 (id1 int NOT NULL, id2 int NOT NULL);
 INSERT INTO t1 VALUES (1, 1),(1, 2),(1, 3),(1, 4),(1, 5),(2, 1),(2, 2),(2, 3);
-CREATE TABLE t2 (id1 tinyint(4) NOT NULL);
+CREATE TABLE t2 (id1 int NOT NULL);
 INSERT INTO t2 VALUES (1),(2),(3),(4),(5);
 SELECT t1.id1, GROUP_CONCAT(t1.id2 ORDER BY t1.id2 ASC) AS concat_id FROM t1, t2 WHERE t1.id1 = t2.id1 AND t1.id1=1 GROUP BY t1.id1;
 id1	concat_id
@@ -446,39 +446,25 @@ group_concat(distinct b order by b)
 Warnings:
 Warning	1260	2 line(s) were cut by GROUP_CONCAT()
 drop table t1;
-create table t1 (a varchar(255) character set cp1250 collate cp1250_general_ci,
-b varchar(255) character set koi8r);
+create table t1 (a varchar(255), b varchar(255) );
 insert into t1 values ('xxx','yyy');
 select collation(a) from t1;
 collation(a)
-cp1250_general_ci
+utf8_general_ci
 select collation(group_concat(a)) from t1;
 collation(group_concat(a))
-cp1250_general_ci
+utf8_general_ci
 create table t2 select group_concat(a) as a from t1;
 show create table t2;
 Table	Create Table
-t2	CREATE TABLE "t2" (
-  "a" varchar(400) CHARACTER SET cp1250
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-select collation(group_concat(a,_koi8r'test')) from t1;
-collation(group_concat(a,_koi8r'test'))
-cp1250_general_ci
-select collation(group_concat(a,_koi8r 0xC1C2)) from t1;
-ERROR HY000: Illegal mix of collations (cp1250_general_ci,IMPLICIT) and (koi8r_general_ci,COERCIBLE) for operation 'group_concat'
+t2	CREATE TABLE `t2` (
+  `a` varchar(100)
+) ENGINE=InnoDB
 select collation(group_concat(a,b)) from t1;
-ERROR HY000: Illegal mix of collations (cp1250_general_ci,IMPLICIT) and (koi8r_general_ci,IMPLICIT) for operation 'group_concat'
+collation(group_concat(a,b))
+utf8_general_ci
 drop table t1;
 drop table t2;
-CREATE TABLE t1 (a CHAR(10) CHARACTER SET cp850);
-INSERT INTO t1 VALUES ('À');
-SELECT a FROM t1;
-a
-À
-SELECT GROUP_CONCAT(a) FROM t1;
-GROUP_CONCAT(a)
-À
-DROP TABLE t1;
 CREATE TABLE t1 (id int);
 SELECT GROUP_CONCAT(id) AS gc FROM t1 HAVING gc IS NULL;
 gc
@@ -535,17 +521,17 @@ ABW
 ABW
 drop table t1;
 CREATE TABLE t1 (
-aID smallint(5) unsigned NOT NULL auto_increment,
-sometitle varchar(255) NOT NULL default '',
-bID smallint(5) unsigned NOT NULL,
+aID int NOT NULL auto_increment,
+sometitle varchar(155) NOT NULL default '',
+bID int NOT NULL,
 PRIMARY KEY  (aID),
 UNIQUE KEY sometitle (sometitle)
 );
 INSERT INTO t1 SET sometitle = 'title1', bID = 1;
 INSERT INTO t1 SET sometitle = 'title2', bID = 1;
 CREATE TABLE t2 (
-bID smallint(5) unsigned NOT NULL auto_increment,
-somename varchar(255) NOT NULL default '',
+bID int NOT NULL auto_increment,
+somename varchar(155) NOT NULL default '',
 PRIMARY KEY  (bID),
 UNIQUE KEY somename (somename)
 );
@@ -609,37 +595,23 @@ count(distinct (f1+1))
 1
 3
 drop table t1;
-create table t1 (f1 int unsigned, f2 varchar(255));
+create table t1 (f1 int, f2 varchar(255));
 insert into t1 values (1,repeat('a',255)),(2,repeat('b',255));
 select f2,group_concat(f1) from t1 group by f2;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	test	t1	t1	f2	f2	253	255	255	Y	0	0	8
-def					group_concat(f1)	253	400	1	Y	128	0	63
+def	test	t1	t1	f2	f2	10	1020	255	Y	0	0	45
+def					group_concat(f1)	10	400	1	Y	128	0	63
 f2	group_concat(f1)
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	1
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb	2
 drop table t1;
-set names latin1;
 create table t1 (a char, b char);
 insert into t1 values ('a', 'a'), ('a', 'b'), ('b', 'a'), ('b', 'b');
 create table t2 select group_concat(b) as a from t1 where a = 'a';
 create table t3 (select group_concat(a) as a from t1 where a = 'a') union
 (select group_concat(b) as a from t1 where a = 'b');
-select charset(a) from t2;
-charset(a)
-latin1
-select charset(a) from t3;
-charset(a)
-latin1
-latin1
 drop table t1, t2, t3;
-set names default;
-create table t1 (c1 varchar(10), c2 int);
-select charset(group_concat(c1 order by c2)) from t1;
-charset(group_concat(c1 order by c2))
-latin1
-drop table t1;
-CREATE TABLE t1 (a INT(10), b LONGTEXT, PRIMARY KEY (a));
+CREATE TABLE t1 (a INT, b LONGTEXT, PRIMARY KEY (a));
 SET GROUP_CONCAT_MAX_LEN = 20000000;
 INSERT INTO t1 VALUES (1,REPEAT(CONCAT('A',CAST(CHAR(0) AS BINARY),'B'), 40000));
 INSERT INTO t1 SELECT a + 1, b FROM t1;
@@ -661,10 +633,9 @@ GROUP_CONCAT(a)	x
 2	1,2
 1	2,3
 DROP TABLE t1;
-set names utf8;
 create table t1
 (
-x text character set utf8 not null,
+x text not null,
 y integer not null
 );
 insert into t1 values (repeat('a', 1022), 0), (repeat(_utf8 0xc3b7, 4), 0);
@@ -720,13 +691,12 @@ select @@group_concat_max_len, length(@x), char_length(@x), right(@x,12), right(
 1023	1023	1023	aaaaaaaaaaa,	61616161612C
 drop table t1;
 set group_concat_max_len=1024;
-set names latin1;
-create table t1 (f1 int unsigned, f2 varchar(255));
+create table t1 (f1 int, f2 varchar(255));
 insert into t1 values (1,repeat('a',255)),(2,repeat('b',255));
 select f2,group_concat(f1) from t1 group by f2;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	test	t1	t1	f2	f2	253	255	255	Y	0	0	8
-def					group_concat(f1)	252	1024	1	Y	128	0	63
+def	test	t1	t1	f2	f2	10	1020	255	Y	0	0	45
+def					group_concat(f1)	255	1024	1	Y	128	0	63
 f2	group_concat(f1)
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	1
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb	2
@@ -811,55 +781,6 @@ LENGTH( GROUP_CONCAT( a ) )
 65533
 SET group_concat_max_len= DEFAULT;
 DROP TABLE t1, t2, t3;
-set names latin1;
-create table t1 (id int, name varchar(20)) DEFAULT CHARSET=utf8;
-insert into t1 (id, name) values (1, "óra");
-insert into t1 (id, name) values (2, "óra");
-select b.id, group_concat(b.name) from t1 a, t1 b group by b.id;
-id	group_concat(b.name)
-1	óra,óra
-2	óra,óra
-drop table t1;
-create table t1(a bit not null default 0);
-insert into t1 values (), (), ();
-select group_concat(distinct a) from t1;
-group_concat(distinct a)
-0
-select group_concat(distinct a order by a) from t1;
-group_concat(distinct a order by a)
-0
-drop table t1;
-create table t1(a bit(2) not null);
-insert into t1 values (1), (0), (0), (3), (1);
-select group_concat(distinct a) from t1;
-group_concat(distinct a)
-1,0,3
-select group_concat(distinct a order by a) from t1;
-group_concat(distinct a order by a)
-0,1,3
-select group_concat(distinct a order by a desc) from t1;
-group_concat(distinct a order by a desc)
-3,1,0
-drop table t1;
-create table t1(a bit(2), b varchar(10), c bit);
-insert into t1 values (1, 'a', 0), (0, 'b', 1), (0, 'c', 0), (3, 'd', 1),
-(1, 'e', 1), (3, 'f', 1), (0, 'g', 1);
-select group_concat(distinct a, c) from t1;
-group_concat(distinct a, c)
-10,01,00,31,11
-select group_concat(distinct a, c order by a) from t1;
-group_concat(distinct a, c order by a)
-00,01,11,10,31
-select group_concat(distinct a, c) from t1;
-group_concat(distinct a, c)
-10,01,00,31,11
-select group_concat(distinct a, c order by a, c) from t1;
-group_concat(distinct a, c order by a, c)
-00,01,10,11,31
-select group_concat(distinct a, c order by a desc, c desc) from t1;
-group_concat(distinct a, c order by a desc, c desc)
-31,11,10,01,00
-drop table t1;
 create table t1 (f1 char(20));
 insert into t1 values (''),('');
 select group_concat(distinct f1) from t1;

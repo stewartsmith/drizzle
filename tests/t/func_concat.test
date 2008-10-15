@@ -30,7 +30,7 @@ drop table t1;
 # Bug #5540: a problem with double type
 #
 
-create table t1 (a char(4), b double, c date, d int(4));
+create table t1 (a char(4), b double, c date, d int);
 insert into t1 values ('AAAA', 105, '2003-03-01', 1);
 select * from t1 where concat(A,C,B,D) = 'AAAA2003-03-011051';
 drop table t1;
@@ -64,7 +64,7 @@ select concat((select x from (select 'a' as x) as t1 ),
 #
 # Bug#15962: CONCAT() in UNION may lead to a data trucation.
 #
-create table t1(f1 varchar(6)) charset=utf8;
+create table t1(f1 varchar(6));
 insert into t1 values ("123456");
 select concat(f1, 2) a from t1 union select 'x' a from t1;
 drop table t1;

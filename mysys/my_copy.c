@@ -94,7 +94,8 @@ int my_copy(const char *from, const char *to, myf MyFlags)
     if (MyFlags & MY_HOLD_ORIGINAL_MODES && !new_file_stat)
 	return(0);			/* File copyed but not stat */
     chmod(to, stat_buff.st_mode & 07777); /* Copy modes */
-    chown(to, stat_buff.st_uid,stat_buff.st_gid); /* Copy ownership */
+    if(chown(to, stat_buff.st_uid,stat_buff.st_gid)!=0)
+        return 0;
     if (MyFlags & MY_COPYTIME)
     {
       struct utimbuf timep;

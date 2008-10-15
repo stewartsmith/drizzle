@@ -1,9 +1,9 @@
 drop table if exists t1;
 CREATE TABLE t1 (
-visitor_id int(10) unsigned DEFAULT '0' NOT NULL,
-group_id int(10) unsigned DEFAULT '0' NOT NULL,
-hits int(10) unsigned DEFAULT '0' NOT NULL,
-sessions int(10) unsigned DEFAULT '0' NOT NULL,
+visitor_id int DEFAULT '0' NOT NULL,
+group_id int DEFAULT '0' NOT NULL,
+hits int DEFAULT '0' NOT NULL,
+sessions int DEFAULT '0' NOT NULL,
 ts timestamp,
 PRIMARY KEY (visitor_id,group_id)
 )/*! engine=MyISAM */;
@@ -45,7 +45,6 @@ visitor_id	mts
 465931136	2000-03-18 16:09:53
 1092858576	2000-03-19 01:34:45
 drop table t1;
-set sql_mode='traditional';
 create table t1 (d date);
 insert into t1 (d) select date_sub('2000-01-01', INTERVAL 2001 YEAR);
 ERROR 22008: Datetime function: datetime field overflow
@@ -53,19 +52,14 @@ insert into t1 (d) select date_add('2000-01-01',interval 8000 year);
 ERROR 22008: Datetime function: datetime field overflow
 insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));
-set sql_mode='';
 insert into t1 (d) select date_sub('2000-01-01', INTERVAL 2001 YEAR);
-Warnings:
-Warning	1441	Datetime function: datetime field overflow
+ERROR 22008: Datetime function: datetime field overflow
 insert into t1 (d) select date_add('2000-01-01',interval 8000 year);
-Warnings:
-Warning	1441	Datetime function: datetime field overflow
+ERROR 22008: Datetime function: datetime field overflow
 insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));
 select * from t1;
 d
-NULL
-NULL
 NULL
 NULL
 NULL
@@ -87,11 +81,11 @@ CAST('2006-09-26' AS DATE) + INTERVAL 1 WEEK
 create table t1 (a int, b varchar(10));
 insert into t1 values (1, '2001-01-01'),(2, '2002-02-02');
 select '2007-01-01' + interval a day from t1;
-'2007-01-01' + interval a day
+'2007-01-01' + interval a day 
 2007-01-02
 2007-01-03
 select b + interval a day from t1;
-b + interval a day
+b + interval a day 
 2001-01-02
 2002-02-04
 drop table t1;

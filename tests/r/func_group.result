@@ -4,7 +4,7 @@ set div_precision_increment= 5;
 show variables like 'div_precision_increment';
 Variable_name	Value
 div_precision_increment	5
-create table t1 (grp int, a bigint unsigned, c char(10) not null);
+create table t1 (grp int, a bigint, c char(10) not null);
 insert into t1 values (1,1,"a");
 insert into t1 values (2,2,"b");
 insert into t1 values (2,3,"c");
@@ -47,22 +47,7 @@ insert into t1 values (null,null,'');
 select count(distinct a),count(distinct grp) from t1;
 count(distinct a)	count(distinct grp)
 6	3
-select sum(all a),count(all a),avg(all a),std(all a),variance(all a),bit_or(all a),bit_and(all a),min(all a),max(all a),min(all c),max(all c) from t1;
-sum(all a)	count(all a)	avg(all a)	std(all a)	variance(all a)	bit_or(all a)	bit_and(all a)	min(all a)	max(all a)	min(all c)	max(all c)
-21	6	3.50000	1.70783	2.91667	7	0	1	6		E
-select grp, sum(a),count(a),avg(a),std(a),variance(a),bit_or(a),bit_and(a),min(a),max(a),min(c),max(c) from t1 group by grp;
-grp	sum(a)	count(a)	avg(a)	std(a)	variance(a)	bit_or(a)	bit_and(a)	min(a)	max(a)	min(c)	max(c)
-NULL	NULL	0	NULL	NULL	NULL	0	18446744073709551615	NULL	NULL		
-1	1	1	1.00000	0.00000	0.00000	1	1	1	1	a	a
-2	5	2	2.50000	0.50000	0.25000	3	2	2	3	b	c
-3	15	3	5.00000	0.81650	0.66667	7	4	4	6	C	E
-select grp, sum(a)+count(a)+avg(a)+std(a)+variance(a)+bit_or(a)+bit_and(a)+min(a)+max(a)+min(c)+max(c) as sum from t1 group by grp;
-grp	sum
-NULL	NULL
-1	7
-2	20.25
-3	45.48316324759439
-create table t2 (grp int, a bigint unsigned, c char(10));
+create table t2 (grp int, a bigint, c char(10));
 insert into t2 select grp,max(a)+max(grp),max(c) from t1 group by grp;
 replace into t2 select grp, a, c from t1 limit 2,1;
 select * from t2;
@@ -73,9 +58,9 @@ NULL	NULL
 3	9	E
 2	3	c
 drop table t1,t2;
-CREATE TABLE t1 (id int(11),value1 float(10,2));
+CREATE TABLE t1 (id int,value1 float(10,2));
 INSERT INTO t1 VALUES (1,0.00),(1,1.00), (1,2.00), (2,10.00), (2,11.00), (2,12.00);
-CREATE TABLE t2 (id int(11),name char(20));
+CREATE TABLE t2 (id int,name char(20));
 INSERT INTO t2 VALUES (1,'Set One'),(2,'Set Two');
 select id, avg(value1), std(value1), variance(value1) from t1 group by id;
 id	avg(value1)	std(value1)	variance(value1)
@@ -116,7 +101,7 @@ id	avg(rating+0.0e0)
 2	NULL
 3	2
 drop table t1,t2;
-create table t1 (a smallint(6) primary key, c char(10), b text);
+create table t1 (a int primary key, c char(10), b text);
 INSERT INTO t1 VALUES (1,'1','1');
 INSERT INTO t1 VALUES (2,'2','2');
 INSERT INTO t1 VALUES (4,'4','4');
@@ -246,63 +231,6 @@ select max(t1.a2),max(t2.a1) from t1 left outer join t2 on t1.a1=10;
 max(t1.a2)	max(t2.a1)
 zzz	BBB
 drop table t1,t2;
-CREATE TABLE t1 (a int, b int);
-select count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1;
-count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-insert into t1 values (1,null);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-insert into t1 values (1,null);
-insert into t1 values (2,null);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-2	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-2	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-insert into t1 values (2,1);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-2	1	1	1.00000	0.00000	1	1	1	1
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-2	1	1	1.00000	0.00000	1	1	1	1
-insert into t1 values (3,1);
-select a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0
-2	1	1	1.00000	0.00000	1	1	1	1
-3	1	1	1.00000	0.00000	1	1	1	1
-select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b), bit_xor(b) from t1 group by a;
-a	count(b)	sum(b)	avg(b)	std(b)	min(b)	max(b)	bit_and(b)	bit_or(b)	bit_xor(b)
-1	0	NULL	NULL	NULL	NULL	NULL	18446744073709551615	0	0
-2	1	1	1.00000	0.00000	1	1	1	1	1
-3	1	1	1.00000	0.00000	1	1	1	1	1
-explain extended select SQL_BIG_RESULT a,count(b), sum(b), avg(b), std(b), min(b), max(b), bit_and(b), bit_or(b), bit_xor(b) from t1 group by a;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	5	100.00	Using filesort
-Warnings:
-Note	1003	select sql_big_result "test"."t1"."a" AS "a",count("test"."t1"."b") AS "count(b)",sum("test"."t1"."b") AS "sum(b)",avg("test"."t1"."b") AS "avg(b)",std("test"."t1"."b") AS "std(b)",min("test"."t1"."b") AS "min(b)",max("test"."t1"."b") AS "max(b)",bit_and("test"."t1"."b") AS "bit_and(b)",bit_or("test"."t1"."b") AS "bit_or(b)",bit_xor("test"."t1"."b") AS "bit_xor(b)" from "test"."t1" group by "test"."t1"."a"
-drop table t1;
-create table t1 (col int);
-insert into t1 values (-1), (-2), (-3);
-select bit_and(col), bit_or(col) from t1;
-bit_and(col)	bit_or(col)
-18446744073709551612	18446744073709551615
-select SQL_BIG_RESULT bit_and(col), bit_or(col) from t1 group by col;
-bit_and(col)	bit_or(col)
-18446744073709551613	18446744073709551613
-18446744073709551614	18446744073709551614
-18446744073709551615	18446744073709551615
-drop table t1;
 create table t1 (a int);
 select avg(2) from t1;
 avg(2)
@@ -310,7 +238,7 @@ NULL
 drop table t1;
 create table t1(
 a1 char(3) primary key,
-a2 smallint,
+a2 int,
 a3 char(3),
 a4 real,
 a5 date,
@@ -351,29 +279,29 @@ insert into t2 values('AAA','AAA','AA','AME');
 select * from t1;
 a1	a2	a3	a4	a5
 AME	0	SEA	0.1	1942-02-19
-HBR	1	SEA	0.085	1948-03-05
-BOT	2	SEA	0.085	1951-11-29
-BMC	3	SEA	0.085	1958-09-08
-TWU	0	LAX	0.08	1969-10-05
 BDL	0	DEN	0.08	1960-11-27
+BMC	3	SEA	0.085	1958-09-08
+BOT	2	SEA	0.085	1951-11-29
 DTX	1	NYC	0.08	1961-05-04
-PLS	1	WDC	0.075	1949-01-02
-ZAJ	2	CHI	0.075	1960-06-15
-VVV	2	MIN	0.075	1959-06-28
 GTM	3	DAL	0.07	1977-09-23
-SSJ	NULL	CHI	NULL	1974-03-19
+HBR	1	SEA	0.085	1948-03-05
 KKK	3	ATL	NULL	NULL
-XXX	NULL	MIN	NULL	NULL
+PLS	1	WDC	0.075	1949-01-02
+SSJ	NULL	CHI	NULL	1974-03-19
+TWU	0	LAX	0.08	1969-10-05
+VVV	2	MIN	0.075	1959-06-28
 WWW	1	LED	NULL	NULL
+XXX	NULL	MIN	NULL	NULL
+ZAJ	2	CHI	0.075	1960-06-15
 select * from t2;
 a1	a2	a3	a4
-TKF	Seattle	WA	AME
-LCC	Los Angeles	CA	TWU
-DEN	Denver	CO	BDL
-SDC	San Diego	CA	TWU
-NOL	New Orleans	LA	GTM
-LAK	Los Angeles	CA	TWU
 AAA	AAA	AA	AME
+DEN	Denver	CO	BDL
+LAK	Los Angeles	CA	TWU
+LCC	Los Angeles	CA	TWU
+NOL	New Orleans	LA	GTM
+SDC	San Diego	CA	TWU
+TKF	Seattle	WA	AME
 explain 
 select min(a1) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -601,57 +529,57 @@ AME	AME
 explain 
 select min(a1) from t1 where a1 > 'KKK' or a1 < 'XXX';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	PRIMARY	PRIMARY	3	NULL	15	Using where; Using index
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	0	NULL	7	Using where; Using index
 explain 
 select min(a1) from t1 where a1 != 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	PRIMARY	PRIMARY	3	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	PRIMARY	PRIMARY	14	NULL	15	Using where; Using index
 explain
 select max(a3) from t1 where a2 < 2 and a3 < 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	k1	k1	3	NULL	6	Using where; Using index
+1	SIMPLE	t1	range	k1	k1	5	NULL	6	Using where; Using index
 explain
 select max(t1.a3), min(t2.a2) from t1, t2 where t1.a2 = 2 and t1.a3 < 'MIN' and t2.a3 > 'CA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	k1	k1	7	NULL	1	Using where; Using index
-1	SIMPLE	t2	range	k1	k1	3	NULL	4	Using where; Using index; Using join buffer
+1	SIMPLE	t1	range	k1	k1	20	NULL	1	Using where; Using index
+1	SIMPLE	t2	range	k1	k1	11	NULL	3	Using where; Using index; Using join buffer
 explain
 select min(a4 - 0.01) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	12	NULL	15	Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	
 explain
 select max(a4 + 0.01) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	12	NULL	15	Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	
 explain
 select min(a3) from t1 where (a2 +1 ) is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	7	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using where
 explain
 select min(a3) from t1 where (a2 + 1) = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	7	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using where
 explain
 select min(a3) from t1 where 2 = (a2 + 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	7	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using where
 explain
 select min(a2) from t1 where a2 < 2 * a2 - 8;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	7	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using where
 explain
 select min(a1) from t1  where a1 between a3 and 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
+1	SIMPLE	t1	index	PRIMARY	PRIMARY	14	NULL	15	Using where
 explain
 select min(a4) from t1  where (a4 + 0.01) between 0.07 and 0.08;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	12	NULL	15	Using where; Using index
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using where
 explain
 select concat(min(t1.a1),min(t2.a4)) from t1, t2 where t2.a4 <> 'AME';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	k2	k2	4	NULL	6	Using where; Using index
-1	SIMPLE	t1	index	NULL	PRIMARY	3	NULL	15	Using index; Using join buffer
+1	SIMPLE	t2	index	k2	PRIMARY	14	NULL	7	Using where
+1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using index; Using join buffer
 drop table t1, t2;
 create table t1 (a char(10));
 insert into t1 values ('a'),('b'),('c');
@@ -659,31 +587,27 @@ select coercibility(max(a)) from t1;
 coercibility(max(a))
 2
 drop table t1;
-create table t1 (a char character set latin2);
+create table t1 (a char);
 insert into t1 values ('a'),('b');
-select charset(max(a)), coercibility(max(a)),
-charset(min(a)), coercibility(min(a)) from t1;
-charset(max(a))	coercibility(max(a))	charset(min(a))	coercibility(min(a))
-latin2	2	latin2	2
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" char(1) CHARACTER SET latin2
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `a` varchar(1)
+) ENGINE=InnoDB
 create table t2 select max(a),min(a) from t1;
 show create table t2;
 Table	Create Table
-t2	CREATE TABLE "t2" (
-  "max(a)" char(1) CHARACTER SET latin2,
-  "min(a)" char(1) CHARACTER SET latin2
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t2	CREATE TABLE `t2` (
+  `max(a)` varchar(1),
+  `min(a)` varchar(1)
+) ENGINE=InnoDB
 drop table t2;
 create table t2 select concat(a) from t1;
 show create table t2;
 Table	Create Table
-t2	CREATE TABLE "t2" (
-  "concat(a)" varchar(1) CHARACTER SET latin2
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t2	CREATE TABLE `t2` (
+  `concat(a)` varchar(1)
+) ENGINE=InnoDB
 drop table t2,t1;
 create table t1 (a int);
 insert into t1 values (1);
@@ -736,23 +660,10 @@ MIN(a)
 NULL
 DROP TABLE t1;
 CREATE TABLE t1 (
-id int(10) unsigned NOT NULL auto_increment,
+id int NOT NULL auto_increment,
 val enum('one','two','three') NOT NULL default 'one',
 PRIMARY KEY  (id)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-INSERT INTO t1 VALUES
-(1,'one'),(2,'two'),(3,'three'),(4,'one'),(5,'two');
-select val, count(*) from t1 group by val;
-val	count(*)
-one	2
-two	2
-three	1
-drop table t1;
-CREATE TABLE t1 (
-id int(10) unsigned NOT NULL auto_increment,
-val set('one','two','three') NOT NULL default 'one',
-PRIMARY KEY  (id)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM;
 INSERT INTO t1 VALUES
 (1,'one'),(2,'two'),(3,'three'),(4,'one'),(5,'two');
 select val, count(*) from t1 group by val;
@@ -766,9 +677,9 @@ insert into t1 values (1, NOW()), (2, NOW());
 create table t2 select MAX(b) from t1 group by a;
 show create table t2;
 Table	Create Table
-t2	CREATE TABLE "t2" (
-  "MAX(b)" datetime
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t2	CREATE TABLE `t2` (
+  `MAX(b)` datetime
+) ENGINE=InnoDB
 drop table t1, t2;
 create table t1(f1 datetime);
 insert into t1 values (now());
@@ -780,7 +691,7 @@ drop table t2;
 create table t2 select f2 from (select now() f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Key	Default	Extra
-f2	datetime	NO		NULL	
+f2	datetime	YES		NULL	
 drop table t2, t1;
 CREATE TABLE t1(
 id int PRIMARY KEY,
@@ -832,17 +743,6 @@ EXPLAIN SELECT MAX(b) FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	
 DROP TABLE t1;
-CREATE TABLE t1 (id int , b varchar(512), INDEX(b(250))) COLLATE latin1_bin;
-INSERT INTO t1 VALUES
-(1,CONCAT(REPEAT('_', 250), "qq")), (1,CONCAT(REPEAT('_', 250), "zz")),
-(1,CONCAT(REPEAT('_', 250), "aa")), (1,CONCAT(REPEAT('_', 250), "ff"));
-SELECT MAX(b) FROM t1;
-MAX(b)
-__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________zz
-EXPLAIN SELECT MAX(b) FROM t1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	
-DROP TABLE t1;
 CREATE TABLE t1 (a INT, b INT);
 INSERT INTO t1 VALUES (1,1),(1,2),(2,3);
 SELECT (SELECT COUNT(DISTINCT t1.b)) FROM t1 GROUP BY t1.a;
@@ -853,20 +753,20 @@ SELECT (SELECT COUNT(DISTINCT 12)) FROM t1 GROUP BY t1.a;
 (SELECT COUNT(DISTINCT 12))
 1
 1
-SELECT AVG(2), BIT_AND(2), BIT_OR(2), BIT_XOR(2), COUNT(*), COUNT(12),
+SELECT AVG(2), COUNT(*), COUNT(12),
 COUNT(DISTINCT 12), MIN(2),MAX(2),STD(2), VARIANCE(2),SUM(2),
 GROUP_CONCAT(2),GROUP_CONCAT(DISTINCT 2);
-AVG(2)	BIT_AND(2)	BIT_OR(2)	BIT_XOR(2)	COUNT(*)	COUNT(12)	COUNT(DISTINCT 12)	MIN(2)	MAX(2)	STD(2)	VARIANCE(2)	SUM(2)	GROUP_CONCAT(2)	GROUP_CONCAT(DISTINCT 2)
-2.00000	2	2	2	1	1	1	2	2	0.00000	0.00000	2	2	2
+AVG(2)	COUNT(*)	COUNT(12)	COUNT(DISTINCT 12)	MIN(2)	MAX(2)	STD(2)	VARIANCE(2)	SUM(2)	GROUP_CONCAT(2)	GROUP_CONCAT(DISTINCT 2)
+2.00000	1	1	1	2	2	0.00000	0.00000	2	2	2
 DROP TABLE t1;
 create table t2 (ff double);
 insert into t2 values (2.2);
 select cast(sum(distinct ff) as decimal(5,2)) from t2;
 cast(sum(distinct ff) as decimal(5,2))
 2.20
-select cast(sum(distinct ff) as signed) from t2;
-cast(sum(distinct ff) as signed)
-2
+select sum(distinct ff) from t2;
+sum(distinct ff)
+2.2
 select cast(variance(ff) as decimal(10,3)) from t2;
 cast(variance(ff) as decimal(10,3))
 0.000
@@ -876,12 +776,12 @@ cast(min(ff) as decimal(5,2))
 create table t1 (df decimal(5,1));
 insert into t1 values(1.1);
 insert into t1 values(2.2);
-select cast(sum(distinct df) as signed) from t1;
-cast(sum(distinct df) as signed)
-3
-select cast(min(df) as signed) from t1;
-cast(min(df) as signed)
-0
+select sum(distinct df) from t1;
+sum(distinct df)
+3.3
+select min(df) from t1;
+min(df)
+1.1
 select 1e8 * sum(distinct df) from t1;
 1e8 * sum(distinct df)
 330000000
@@ -894,7 +794,7 @@ select cast(min(ifl) as decimal(5,2)) from t3;
 cast(min(ifl) as decimal(5,2))
 1.00
 drop table t1, t2, t3;
-CREATE TABLE t1 (id int(11),value1 float(10,2));
+CREATE TABLE t1 (id int,value1 float(10,2));
 INSERT INTO t1 VALUES (1,0.00),(1,1.00), (1,2.00), (2,10.00), (2,11.00), (2,12.00), (2,13.00);
 select id, stddev_pop(value1), var_pop(value1), stddev_samp(value1), var_samp(value1) from t1 group by id;
 id	stddev_pop(value1)	var_pop(value1)	stddev_samp(value1)	var_samp(value1)
@@ -995,28 +895,28 @@ CREATE TABLE t1 (a INT PRIMARY KEY, b INT);
 INSERT INTO t1 VALUES (1,1), (2,2);
 CREATE TABLE t2 (a INT PRIMARY KEY, b INT);
 INSERT INTO t2 VALUES (1,1), (3,3);
-SELECT SQL_NO_CACHE 
+SELECT 
 (SELECT SUM(c.a) FROM t1 ttt, t2 ccc 
 WHERE ttt.a = ccc.b AND ttt.a = t.a GROUP BY ttt.a) AS minid   
 FROM t1 t, t2 c WHERE t.a = c.b;
 minid
-1
+NULL
 DROP TABLE t1,t2;
 create table t1 select variance(0);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "variance(0)" double(8,4)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `variance(0)` double(8,4)
+) ENGINE=InnoDB
 drop table t1;
 create table t1 select stddev(0);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "stddev(0)" double(8,4)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `stddev(0)` double(8,4)
+) ENGINE=InnoDB
 drop table t1;
-create table bug22555 (i smallint primary key auto_increment, s1 smallint, s2 smallint, e decimal(30,10), o double);
+create table bug22555 (i int primary key auto_increment, s1 int, s2 int, e decimal(30,10), o double);
 insert into bug22555 (s1, s2, e, o) values (53, 78, 11.4276528, 6.828112), (17, 78, 5.916793, 1.8502951), (18, 76, 2.679231, 9.17975591), (31, 62, 6.07831, 0.1), (19, 41, 5.37463, 15.1), (83, 73, 14.567426, 7.959222), (92, 53, 6.10151, 13.1856852), (7, 12, 13.92272, 3.442007), (92, 35, 11.95358909, 6.01376678), (38, 84, 2.572, 7.904571);
 select std(s1/s2) from bug22555 group by i;
 std(s1/s2)
@@ -1055,7 +955,7 @@ std(o)
 0
 0
 drop table bug22555;
-create table bug22555 (i smallint, s1 smallint, s2 smallint, o1 double, o2 double, e1 decimal, e2 decimal);
+create table bug22555 (i int, s1 int, s2 int, o1 double, o2 double, e1 decimal, e2 decimal);
 insert into bug22555 values (1,53,78,53,78,53,78),(2,17,78,17,78,17,78),(3,18,76,18,76,18,76);
 select i, count(*) from bug22555 group by i;
 i	count(*)
@@ -1239,7 +1139,7 @@ round(std(e1/e2), 17)
 0.21325763586649340
 set @@div_precision_increment=@saved_div_precision_increment;
 drop table bug22555;
-create table bug22555 (s smallint, o double, e decimal);
+create table bug22555 (s int, o double, e decimal);
 insert into bug22555 values (1,1,1),(2,2,2),(3,3,3),(6,6,6),(7,7,7);
 select var_samp(s), var_pop(s) from bug22555;
 var_samp(s)	var_pop(s)
@@ -1251,7 +1151,7 @@ select var_samp(e), var_pop(e) from bug22555;
 var_samp(e)	var_pop(e)
 6.7000	5.3600
 drop table bug22555;
-create table bug22555 (s smallint, o double, e decimal);
+create table bug22555 (s int, o double, e decimal);
 insert into bug22555 values (null,null,null),(null,null,null);
 select var_samp(s) as 'null', var_pop(s) as 'null' from bug22555;
 null	null
@@ -1329,7 +1229,7 @@ CREATE TABLE t2( a INT, b INT, c INT, KEY(a, b) );
 INSERT INTO t2 ( a, b, c ) VALUES ( 1, NULL, 2 ), ( 1, 3, 4 ), ( 1, 4, 4 );
 EXPLAIN SELECT MIN(b), MIN(c) FROM t2 WHERE a = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	a	a	5	const	2	
+1	SIMPLE	t2	ref	a	a	5	const	1	
 SELECT MIN(b), MIN(c) FROM t2 WHERE a = 1;
 MIN(b)	MIN(c)
 3	2
