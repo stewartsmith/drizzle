@@ -15,9 +15,13 @@
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
+
 #include <authentication.h>
 #include <logging.h>
 #include <errmsg.h>
+#include <configvar.h>
+#include <qcache.h>
+
 #include <drizzled/drizzled_error_messages.h>
 
 #define REPORT_TO_LOG  1

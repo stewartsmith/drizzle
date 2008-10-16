@@ -51,7 +51,7 @@ int qcache_finalizer(st_plugin_int *plugin)
    So we will take all the additional paramters of qcache_do1,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
- */
+*/
 typedef struct qcache_do1_parms_st
 {
   void *parm1;
@@ -70,30 +70,31 @@ static bool qcache_do1_iterate (THD *thd, plugin_ref plugin, void *p)
     if (l->qcache_func1(thd, parms->parm1, parms->parm2))
     {
       sql_print_error("Qcache plugin '%s' do1() failed",
-		      plugin->name.str);
+		      (char *)plugin_name(plugin));
 
       return true;
+    }
   }
   return false;
 }
 
 /* This is the qcache_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do1 (THD *thd, void *parm1, void *parm2)
-{
-  qcache_do1_parms_t parms;
-  bool foreach_rv;
+  bool qcache_do1 (THD *thd, void *parm1, void *parm2)
+  {
+    qcache_do1_parms_t parms;
+    bool foreach_rv;
 
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm1= parm1;
-  parms.parm2= parm2;
+    /* marshall the parameters so they will fit into the foreach */
+    parms.parm1= parm1;
+    parms.parm2= parm2;
 
-  /* call qcache_do1_iterate
-     once for each loaded qcache plugin */
-  foreach_rv= plugin_foreach(thd,
-			     qcache_do1_iterate,
-			     DRIZZLE_QCACHE_PLUGIN,
-			     (void *) &parms));
+    /* call qcache_do1_iterate
+       once for each loaded qcache plugin */
+    foreach_rv= plugin_foreach(thd,
+			       qcache_do1_iterate,
+			       DRIZZLE_QCACHE_PLUGIN,
+			       (void *) &parms);
   return foreach_rv;
 }
 
@@ -103,7 +104,7 @@ bool qcache_do1 (THD *thd, void *parm1, void *parm2)
    So we will take all the additional paramters of qcache_do2,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
- */
+*/
 typedef struct qcache_do2_parms_st
 {
   void *parm3;
@@ -122,29 +123,30 @@ static bool qcache_do2_iterate (THD *thd, plugin_ref plugin, void *p)
     if (l->qcache_func1(thd, parms->parm3, parms->parm4))
     {
       sql_print_error("Qcache plugin '%s' do2() failed",
-		      plugin->name.str);
+		      (char *)plugin_name(plugin));
 
       return true;
+    }
   }
   return false;
 }
 
 /* This is the qcache_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do2 (THD *thd, void *parm3, void *parm4)
-{
-  qcache_do2_parms_t parms;
-  bool foreach_rv;
+  bool qcache_do2 (THD *thd, void *parm3, void *parm4)
+  {
+    qcache_do2_parms_t parms;
+    bool foreach_rv;
 
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm3= parm3;
-  parms.parm4= parm4;
+    /* marshall the parameters so they will fit into the foreach */
+    parms.parm3= parm3;
+    parms.parm4= parm4;
 
-  /* call qcache_do2_iterate
-     once for each loaded qcache plugin */
-  foreach_rv= plugin_foreach(thd,
-			     qcache_do2_iterate,
-			     DRIZZLE_QCACHE_PLUGIN,
-			     (void *) &parms));
+    /* call qcache_do2_iterate
+       once for each loaded qcache plugin */
+    foreach_rv= plugin_foreach(thd,
+			       qcache_do2_iterate,
+			       DRIZZLE_QCACHE_PLUGIN,
+			       (void *) &parms);
   return foreach_rv;
 }

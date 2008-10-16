@@ -51,7 +51,7 @@ int configvar_finalizer(st_plugin_int *plugin)
    So we will take all the additional paramters of configvar_do1,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
- */
+*/
 typedef struct configvar_do1_parms_st
 {
   void *parm1;
@@ -70,9 +70,10 @@ static bool configvar_do1_iterate (THD *thd, plugin_ref plugin, void *p)
     if (l->configvar_func1(thd, parms->parm1, parms->parm2))
     {
       sql_print_error("Configvar plugin '%s' do1() failed",
-		      plugin->name.str);
+		      (char *)plugin_name(plugin));
 
       return true;
+    }
   }
   return false;
 }
@@ -83,7 +84,7 @@ bool configvar_do1 (THD *thd, void *parm1, void *parm2)
 {
   configvar_do1_parms_t parms;
   bool foreach_rv;
-
+  
   /* marshall the parameters so they will fit into the foreach */
   parms.parm1= parm1;
   parms.parm2= parm2;
@@ -93,8 +94,8 @@ bool configvar_do1 (THD *thd, void *parm1, void *parm2)
   foreach_rv= plugin_foreach(thd,
 			     configvar_do1_iterate,
 			     DRIZZLE_CONFIGVAR_PLUGIN,
-			     (void *) &parms));
-  return foreach_rv;
+			     (void *) &parms);
+return foreach_rv;
 }
 
 /* The plugin_foreach() iterator requires that we
@@ -103,7 +104,7 @@ bool configvar_do1 (THD *thd, void *parm1, void *parm2)
    So we will take all the additional paramters of configvar_do2,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
- */
+*/
 typedef struct configvar_do2_parms_st
 {
   void *parm3;
@@ -122,29 +123,30 @@ static bool configvar_do2_iterate (THD *thd, plugin_ref plugin, void *p)
     if (l->configvar_func1(thd, parms->parm3, parms->parm4))
     {
       sql_print_error("Configvar plugin '%s' do2() failed",
-		      plugin->name.str);
+		      (char *)plugin_name(plugin));
 
       return true;
+    }
   }
   return false;
 }
 
 /* This is the configvar_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool configvar_do2 (THD *thd, void *parm3, void *parm4)
-{
-  configvar_do2_parms_t parms;
-  bool foreach_rv;
+  bool configvar_do2 (THD *thd, void *parm3, void *parm4)
+  {
+    configvar_do2_parms_t parms;
+    bool foreach_rv;
 
-  /* marshall the parameters so they will fit into the foreach */
-  parms.parm3= parm3;
-  parms.parm4= parm4;
+    /* marshall the parameters so they will fit into the foreach */
+    parms.parm3= parm3;
+    parms.parm4= parm4;
 
-  /* call configvar_do2_iterate
-     once for each loaded configvar plugin */
-  foreach_rv= plugin_foreach(thd,
-			     configvar_do2_iterate,
-			     DRIZZLE_CONFIGVAR_PLUGIN,
-			     (void *) &parms));
+    /* call configvar_do2_iterate
+       once for each loaded configvar plugin */
+    foreach_rv= plugin_foreach(thd,
+			       configvar_do2_iterate,
+			       DRIZZLE_CONFIGVAR_PLUGIN,
+			       (void *) &parms);
   return foreach_rv;
 }
