@@ -57,6 +57,29 @@ const LEX_STRING command_name[]={
 };
 
 
+/* stolen from mysys/my_getsystime 
+   until the THD has a good utime "now" we can use
+   will have to use this instead */
+
+#include <sys/time.h>
+static uint64_t get_microtime()
+{
+#if defined(HAVE_GETHRTIME)
+  return gethrtime()/1000;
+#else
+  uint64_t newtime;
+  struct timeval t;
+  /*
+    The following loop is here because gettimeofday may fail on some systems
+  */
+  while (gettimeofday(&t, NULL) != 0)
+  {}
+  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
+  return newtime;
+#endif  /* defined(HAVE_GETHRTIME) */
+}
+
+
 bool logging_query_func_pre (THD *thd)
 {
   char msgbuf[MAX_MSG_LEN];
@@ -72,15 +95,15 @@ bool logging_query_func_pre (THD *thd)
     here is some time stuff from class THD
       uint64_t connect_utime;
       uint64_t start_utime;
-      uint64_t time_after_lock;
-      uint64_t current_utime();
+      uint64_t utime_after_lock;
+      uint64_t current_utime();  cant get to because of namemangling
   */
 
   /* todo, the THD should have a "utime command completed" inside
      itself, so be more accurate, and so plugins dont have to keep
      calling current_utime, which can be slow */
 
-  uint64_t t_mark= thd->current_utime();
+  uint64_t t_mark= get_microtime();
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -117,7 +140,7 @@ bool logging_query_func_post (THD *thd)
   /* todo, the THD should have a "utime command completed" inside
      itself, so be more accurate, and so plugins dont have to keep
      calling current_utime, which can be slow */
-  uint64_t t_mark= thd->current_utime();
+  uint64_t t_mark= get_microtime();
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
@@ -129,7 +152,7 @@ bool logging_query_func_post (THD *thd)
 	     (unsigned long) thd->query_id,
 	     t_mark - thd->connect_utime,
 	     t_mark - thd->start_utime,
-	     t_mark - thd->time_after_lock,
+	     t_mark - thd->utime_after_lock,
 	     (uint32_t)command_name[thd->command].length,
 	     command_name[thd->command].str,
 	     (unsigned long) thd->sent_row_count,
