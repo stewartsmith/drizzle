@@ -1,4 +1,6 @@
 /*
+ -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
   Sections of this where taken/modified from mod_auth_path for Apache 
 */
 
