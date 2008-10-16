@@ -9,13 +9,16 @@
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
 
-bool errmsg_stderr_func (THD *thd, int priority, const char *format, va_list ap)
+#define MAX_MSG_LEN 8192
+
+bool errmsg_stderr_func (THD *thd __attribute__((unused)),
+			 int priority __attribute__((unused)),
+			 const char *format, va_list ap)
 {
   char msgbuf[MAX_MSG_LEN];
   int prv, wrv;
 
-  if (priority > 0)
-    prv = vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
+  prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
   if (prv < 0) return true;
 
   /* a single write has a OS level thread lock

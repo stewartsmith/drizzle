@@ -17,7 +17,9 @@
 #include <mysys/my_getopt.h>
 #include <authentication.h>
 #include <logging.h>
+#include <errmsg.h>
 #include <drizzled/drizzled_error_messages.h>
+
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 
