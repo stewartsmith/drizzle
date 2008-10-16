@@ -53,13 +53,15 @@ typedef struct st_mysql_xid DRIZZLE_XID;
 #define DRIZZLE_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
 #define DRIZZLE_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
 #define DRIZZLE_UDF_PLUGIN             3  /* User-Defined Function */
-#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate function */
+#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate Function */
 #define DRIZZLE_AUDIT_PLUGIN           5  /* Audit */
 #define DRIZZLE_LOGGER_PLUGIN          6  /* Query Logging */
 #define DRIZZLE_ERRMSG_PLUGIN          7  /* Error Messages */
 #define DRIZZLE_AUTH_PLUGIN            8  /* Authorization */
+#define DRIZZLE_CONFIG_PLUGIN          9  /* Configuration */
+#define DRIZZLE_QCACHE_PLUGIN         10  /* Query Cache */
 
-#define DRIZZLE_MAX_PLUGIN_TYPE_NUM    9  /* The number of plugin types */
+#define DRIZZLE_MAX_PLUGIN_TYPE_NUM   11  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
