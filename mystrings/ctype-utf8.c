@@ -28,34 +28,14 @@
 
 
 #define MY_UTF8MB3_GENERAL_CI MY_UTF8MB3 "_general_ci"
-#define MY_UTF8MB3_GENERAL_CS MY_UTF8MB3 "_general_cs"
 #define MY_UTF8MB3_BIN        MY_UTF8MB3 "_bin"
 #define MY_UTF8MB4_GENERAL_CI MY_UTF8MB4 "_general_ci"
-#define MY_UTF8MB4_GENERAL_CS MY_UTF8MB4 "_general_cs"
 #define MY_UTF8MB4_BIN        MY_UTF8MB4 "_bin"
 
 
-#ifdef HAVE_CHARSET_utf8mb3
-#define HAVE_UNIDATA
-#endif
-
-#ifdef HAVE_CHARSET_ucs2
-#define HAVE_UNIDATA
-#endif
-
-#ifdef HAVE_CHARSET_utf8mb4
-#define HAVE_UNIDATA
-#endif
-
-#ifdef HAVE_CHARSET_utf16
-#define HAVE_UNIDATA
-#endif
-
-#ifdef HAVE_CHARSET_utf32
-#define HAVE_UNIDATA
-#endif
-
-#ifdef HAVE_UNIDATA
+#if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_ucs2) || \
+    defined(HAVE_CHARSET_utf8mb4) || defined(HAVE_CHARSET_utf16) || \
+    defined(HAVE_CHARSET_utf32)
 
 #include <mystrings/my_uctype.h>
 
@@ -3763,6 +3743,8 @@ CHARSET_INFO my_charset_utf8mb3_bin=
 };
 
 #ifdef HAVE_UTF8_GENERAL_CS
+
+#define MY_UTF8MB3_GENERAL_CS MY_UTF8MB3 "_general_cs"
 
 /*
  * These functions bacically do the same as their original, except
