@@ -242,7 +242,6 @@ static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
-static double long_query_time;
 
 static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 
@@ -3581,12 +3580,6 @@ struct my_option my_long_options[] =
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
-  {"long_query_time", OPT_LONG_QUERY_TIME,
-   N_("Log all queries that have taken more than long_query_time seconds to "
-      "execute to file. The argument will be treated as a decimal value with "
-      "microsecond precission."),
-   (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
-   REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
@@ -4729,10 +4722,6 @@ static void get_options(int *argc,char **argv)
 
   /* Set global variables based on startup options */
   myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);
-
-  /* long_query_time is in microseconds */
-  global_system_variables.long_query_time= max_system_variables.long_query_time=
-    (int64_t) (long_query_time * 1000000.0);
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

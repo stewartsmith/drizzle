@@ -262,7 +262,6 @@ struct system_variables
   uint64_t myisam_max_sort_file_size;
   uint64_t max_heap_table_size;
   uint64_t tmp_table_size;
-  uint64_t long_query_time;
   ha_rows select_limit;
   ha_rows max_join_size;
   ulong auto_increment_increment, auto_increment_offset;
@@ -295,8 +294,6 @@ struct system_variables
   /* A bitmap for switching optimizations on/off */
   ulong optimizer_switch;
   ulong preload_buff_size;
-  ulong profiling_history_size;
-  ulong query_cache_type;
   ulong read_buff_size;
   ulong read_rnd_buff_size;
   ulong div_precincrement;
