@@ -101,7 +101,7 @@ public:
   inline const CHARSET_INFO *charset() const { return str_charset; }
   inline uint32_t length() const { return str_length;}
   inline uint32_t alloced_length() const { return Alloced_length;}
-  inline const char& operator [] (uint32_t i) const { return Ptr[i]; }
+  inline char& operator [] (uint32_t i) const { return Ptr[i]; }
   inline void length(uint32_t len) { str_length=len ; }
   inline bool is_empty() { return (str_length == 0); }
   inline void mark_as_const() { Alloced_length= 0;}

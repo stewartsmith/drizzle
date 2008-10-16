@@ -47,12 +47,6 @@ typedef struct revtinfo
   uint32_t rt_type;    // Type of period 0 - Normal period. 1 - Spring time-gap
 } REVT_INFO;
 
-#ifdef TZNAME_MAX
-#define MY_TZNAME_MAX	TZNAME_MAX
-#endif
-#ifndef TZNAME_MAX
-#define MY_TZNAME_MAX	255
-#endif
 
 /*
   Structure which fully describes time zone which is
