@@ -48,9 +48,6 @@ uint32_t table_def::calc_field_size(uint32_t col, unsigned char *master_data) co
     length= m_field_metadata[col] & 0x00ff;
     break;
   }
-  case DRIZZLE_TYPE_TINY:
-    length= 1;
-    break;
   case DRIZZLE_TYPE_LONG:
     length= 4;
     break;

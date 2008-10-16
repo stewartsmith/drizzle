@@ -741,7 +741,7 @@ static bool check_io_slave_killed(THD *thd, Master_info *mi, const char *info)
   if (io_slave_killed(thd, mi))
   {
     if (info && global_system_variables.log_warnings)
-      sql_print_information(info);
+      sql_print_information("%s",info);
     return true;
   }
   return false;
@@ -1013,9 +1013,9 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
 err:
   if (err_msg.length() != 0)
   {
-    sql_print_error(err_msg.ptr());
+    sql_print_error("%s",err_msg.ptr());
     assert(err_code != 0);
-    mi->report(ERROR_LEVEL, err_code, err_msg.ptr());
+    mi->report(ERROR_LEVEL, err_code, "%s",err_msg.ptr());
     return(1);
   }
 
@@ -1901,13 +1901,13 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
     }
     else
     {
-      sql_print_information(buf);
+      sql_print_information("%s",buf);
     }
   }
   if (safe_reconnect(thd, drizzle, mi, 1) || io_slave_killed(thd, mi))
   {
     if (global_system_variables.log_warnings)
-      sql_print_information(_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
+      sql_print_information("%s",_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
     return 1;
   }
   return 0;
@@ -2353,7 +2353,7 @@ pthread_handler_t handle_slave_sql(void *arg)
 
           if (last_errno == 0)
           {
-            rli->report(ERROR_LEVEL, thd->main_da.sql_errno(), errmsg);
+            rli->report(ERROR_LEVEL, thd->main_da.sql_errno(), "%s", errmsg);
           }
           else if (last_errno != thd->main_da.sql_errno())
           {

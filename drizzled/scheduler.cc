@@ -425,7 +425,7 @@ static void libevent_post_kill_notification(THD *)
     later.
   */
   char c= 0;
-  write(thd_kill_pipe[1], &c, sizeof(c));
+  assert(write(thd_kill_pipe[1], &c, sizeof(c))==sizeof(c));
 }
 
 
@@ -604,7 +604,7 @@ static void libevent_thd_add(THD* thd)
   /* queue for libevent */
   thds_need_adding= list_add(thds_need_adding, &thd->scheduler.list);
   /* notify libevent */
-  write(thd_add_pipe[1], &c, sizeof(c));
+  assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
   pthread_mutex_unlock(&LOCK_thd_add);
 }
 
@@ -622,7 +622,7 @@ static void libevent_end()
   {
     /* wake up the event loop */
     char c= 0;
-    write(thd_add_pipe[1], &c, sizeof(c));
+    assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
 
     pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
   }

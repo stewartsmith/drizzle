@@ -509,7 +509,7 @@ ut_copy_file(
 			? (size_t) len
 			: sizeof buf;
 		size_t	size = fread(buf, 1, maxs, src);
-		fwrite(buf, 1, size, dest);
+		assert(fwrite(buf, 1, size, dest)==size);
 		len -= (long) size;
 		if (size < maxs) {
 			break;

@@ -139,7 +139,6 @@ uint64_t my_micro_time()
     Value in microseconds from some undefined point in time
 */
 
-#define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
 
 uint64_t my_micro_time_and_time(time_t *time_arg)
 {
@@ -148,6 +147,9 @@ uint64_t my_micro_time_and_time(time_t *time_arg)
     Solaris has a very slow time() call. We optimize this by using the very
     fast gethrtime() call and only calling time() every 1/2 second
   */
+
+#define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
+
   static hrtime_t prev_gethrtime= 0;
   static time_t cur_time= 0;
   hrtime_t cur_gethrtime;
