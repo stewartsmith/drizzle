@@ -94,9 +94,13 @@ bool logging_query_func_pre (THD *thd)
   /*
     here is some time stuff from class THD
       uint64_t connect_utime;
+        todo, looks like this isnt being set
+	we could store the time this plugin was loaded
+	but that would just be a dumb workaround
       uint64_t start_utime;
       uint64_t utime_after_lock;
-      uint64_t current_utime();  cant get to because of namemangling
+      uint64_t current_utime();
+        todo, cant get to because of namemangling
   */
 
   /* todo, the THD should have a "utime command completed" inside
