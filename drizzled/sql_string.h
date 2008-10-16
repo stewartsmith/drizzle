@@ -50,7 +50,7 @@ size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
 
 class String
 {
-  const char *Ptr;
+  char *Ptr;
   uint32_t str_length,Alloced_length;
   bool alloced;
   const CHARSET_INFO *str_charset;
@@ -68,25 +68,23 @@ public:
   }
 
   String(const char *str, const CHARSET_INFO * const cs) :
-    Ptr(str), str_length(0), Alloced_length(0),
+    Ptr((char *)str), str_length(0), Alloced_length(0),
     alloced(false), str_charset(cs)
   {
     str_length= strlen(str);
   }
 
   String(const char *str,uint32_t len, const CHARSET_INFO * const cs) :
-    str_length(len), Alloced_length(0), alloced(false),
-    Ptr(str), str_charset(cs)
+    Ptr((char *)str), str_length(len), Alloced_length(0),
+    alloced(false), str_charset(cs)
   {
   }
 
-  String(const String &str)
-    str_length(str.Ptr), Alloced_length(0), alloced(false),
-    Ptr(str), str_charset(cs)
+  String(const String &str) :
+    Ptr(str.Ptr), str_length(str.str_length),
+    Alloced_length(str.Alloced_length),
+    alloced(false), str_charset(str.str_charset)
   {
-    Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0;
-    str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
@@ -103,7 +101,7 @@ public:
   inline const CHARSET_INFO *charset() const { return str_charset; }
   inline uint32_t length() const { return str_length;}
   inline uint32_t alloced_length() const { return Alloced_length;}
-  inline char& operator [] (uint32_t i) const { return Ptr[i]; }
+  inline const char& operator [] (uint32_t i) const { return Ptr[i]; }
   inline void length(uint32_t len) { str_length=len ; }
   inline bool is_empty() { return (str_length == 0); }
   inline void mark_as_const() { Alloced_length= 0;}

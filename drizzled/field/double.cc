@@ -171,8 +171,6 @@ int Field_double::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-#define DBL_EXP_DIG (sizeof(double)*8-DBL_MANT_DIG)
-
 /* The following should work for IEEE */
 
 void Field_double::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
