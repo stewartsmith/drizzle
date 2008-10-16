@@ -35,8 +35,6 @@
 #include "m_string.h"
 #include "m_ctype.h"
 
-#define MY_UCA_NPAGES 256
-#define MY_UCA_NCHARS 256
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
 

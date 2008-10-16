@@ -33,9 +33,6 @@ sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
 */
 const LEX_STRING null_lex_str= {NULL, 0};
 
-/* Longest standard keyword name */
-
-#define TOCK_NAME_LENGTH 24
 
 /*
   The following data is based on the latin1 character set, and is only

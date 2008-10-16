@@ -59,7 +59,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 
-#define HANDLER_TABLES_HASH_SIZE 120
 
 /**
   Close a HANDLER table.

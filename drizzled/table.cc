@@ -3968,7 +3968,6 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
 #define STRING_TOTAL_LENGTH_TO_PACK_ROWS 128
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
-#define MIN_STRING_LENGTH_TO_PACK_ROWS   10
 
 Table *
 create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,

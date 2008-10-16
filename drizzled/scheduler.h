@@ -60,9 +60,11 @@ public:
   struct event* io_event;
   LIST list;
   bool thread_attached;  /* Indicates if THD is attached to the OS thread */
-  
+
   thd_scheduler();
   ~thd_scheduler();
+  thd_scheduler(const thd_scheduler&);
+  void operator=(const thd_scheduler&);
   bool init(THD* parent_thd);
   bool thread_attach();
   void thread_detach();

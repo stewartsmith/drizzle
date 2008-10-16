@@ -234,8 +234,3 @@ void my_decimal_trim(uint32_t *precision, uint32_t *scale)
     return;
   }
 }
-
-
-/* routines for debugging print */
-#define DIG_PER_DEC1 9
-#define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)

@@ -5,7 +5,7 @@
 die() { echo "$@"; exit 1; }
 
 # LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
-LIBTOOLIZE_FLAGS=" --automake --copy --force"
+LIBTOOLIZE_FLAGS=" --automake --copy"
 # ACLOCAL=${ACLOCAL:-aclocal}
 ACLOCAL_FLAGS="-I m4"
 # AUTOHEADER=${AUTOHEADER:-autoheader}

@@ -63,9 +63,6 @@ const char *VER= "14.14";
 /* Buffer to hold 'version' and 'version_comment' */
 #define MAX_SERVER_VERSION_LENGTH     128
 
-/* Array of options to pass to libdrizzled */
-#define MAX_SERVER_ARGS               64
-
 void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
 

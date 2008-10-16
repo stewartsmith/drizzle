@@ -33,17 +33,6 @@
 
 #define log_cs	&my_charset_utf8_general_ci
 
-#define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
-
-
-/*
-  Size of buffer for printing a double in format %.<PREC>g
-
-  optional '-' + optional zero + '.'  + PREC digits + 'e' + sign +
-  exponent digits + '\0'
-*/
-#define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
-
 
 static const char *HA_ERR(int i)
 {

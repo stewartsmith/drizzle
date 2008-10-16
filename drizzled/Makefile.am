@@ -53,14 +53,14 @@ dist_drizzledinclude_HEADERS =	error.h \
 				plugin_logging.h \
 				plugin_authentication.h
 
-noinst_LTLIBRARIES = libhandler.la
+noinst_LTLIBRARIES = libhandler.la libyacc.la
 
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
 	$(ZLIB_LIBS) $(LIBINTL)
 
-drizzled_LDADD = libhandler.la \
+drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
@@ -184,7 +184,6 @@ drizzled_SOURCES = \
 		   scheduler.cc \
 		   sql_parse.cc \
 		   set_var.cc \
-		   sql_yacc.yy \
 		   sql_base.cc \
 		   table.cc \
 		   sql_select.cc \
@@ -235,6 +234,11 @@ drizzled_SOURCES = \
 		   sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
+libyacc_la_SOURCES = sql_yacc.yy
+# Code output from YAC contains GOBS of unused macros, and I can't
+# figure out how to turn it off.
+libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
+
 
 if HAVE_DTRACE
 drizzled_SOURCES += probes.d
