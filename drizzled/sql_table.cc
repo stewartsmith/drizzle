@@ -1670,43 +1670,6 @@ static bool prepare_blob_field(THD *thd __attribute__((unused)),
 
 
 /*
-  Preparation of Create_field for SP function return values.
-  Based on code used in the inner loop of mysql_prepare_create_table()
-  above.
-
-  SYNOPSIS
-    sp_prepare_create_field()
-    thd			Thread object
-    sql_field		Field to prepare
-
-  DESCRIPTION
-    Prepares the field structures for field creation.
-
-*/
-
-void sp_prepare_create_field(THD *thd, Create_field *sql_field)
-{
-  if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
-  {
-    uint32_t field_length, dummy;
-    /* DRIZZLE_TYPE_ENUM */
-    {
-      calculate_interval_lengths(sql_field->charset,
-                                 sql_field->interval,
-                                 &field_length, &dummy);
-      sql_field->length= field_length;
-    }
-    set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
-  }
-
-  sql_field->create_length_to_internal_length();
-  assert(sql_field->def == 0);
-  /* Can't go wrong as sql_field->def is not defined */
-  (void) prepare_blob_field(thd, sql_field);
-}
-
-
-/*
   Create a table
 
   SYNOPSIS

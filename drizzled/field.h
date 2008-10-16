@@ -767,15 +767,8 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK			120	// Bits used for packing
 #define FIELDFLAG_INTERVAL		256     // mangled with decimals!
-#define FIELDFLAG_BITFIELD		512	// mangled with decimals!
 #define FIELDFLAG_BLOB			1024	// mangled with decimals!
-#define FIELDFLAG_GEOM			2048    // mangled with decimals!
 
-#define FIELDFLAG_TREAT_BIT_AS_CHAR     4096    /* use Field_bit_as_char */
-
-#define FIELDFLAG_LEFT_FULLSCREEN	8192
-#define FIELDFLAG_RIGHT_FULLSCREEN	16384
-#define FIELDFLAG_FORMAT_NUMBER		16384	// predit: ###,,## in output
 #define FIELDFLAG_NO_DEFAULT		16384   /* sql */
 #define FIELDFLAG_SUM			((uint32_t) 32768)// predit: +#fieldflag
 #define FIELDFLAG_MAYBE_NULL		((uint32_t) 32768)// sql
@@ -783,8 +776,6 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define FIELDFLAG_PACK_SHIFT		3
 #define FIELDFLAG_DEC_SHIFT		8
 #define FIELDFLAG_MAX_DEC		31
-#define FIELDFLAG_NUM_SCREEN_TYPE	0x7F01
-#define FIELDFLAG_ALFA_SCREEN_TYPE	0x7800
 
 #define MTYP_TYPENR(type) (type & 127)	/* Remove bits from type */
 
@@ -797,13 +788,11 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define f_is_alpha(x)		(!f_is_num(x))
 #define f_is_binary(x)          ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
 #define f_is_enum(x)            (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == FIELDFLAG_INTERVAL)
-#define f_is_bitfield(x)        (((x) & (FIELDFLAG_BITFIELD | FIELDFLAG_NUMBER)) == FIELDFLAG_BITFIELD)
 #define f_is_blob(x)		(((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == FIELDFLAG_BLOB)
 #define f_is_equ(x)		((x) & (1+2+FIELDFLAG_PACK+31*256))
-#define f_settype(x)		(((int) x) << FIELDFLAG_PACK_SHIFT)
+#define f_settype(x)   (((int) x) << FIELDFLAG_PACK_SHIFT)
 #define f_maybe_null(x)		(x & FIELDFLAG_MAYBE_NULL)
 #define f_no_default(x)		(x & FIELDFLAG_NO_DEFAULT)
-#define f_bit_as_char(x)        ((x) & FIELDFLAG_TREAT_BIT_AS_CHAR)
 #define f_is_hex_escape(x)      ((x) & FIELDFLAG_HEX_ESCAPE)
 
 bool
