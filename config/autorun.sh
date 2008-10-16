@@ -8,7 +8,9 @@ die() { echo "$@"; exit 1; }
 ACLOCAL_FLAGS="-I m4"
 # AUTOHEADER=${AUTOHEADER:-autoheader}
 # AUTOMAKE=${AUTOMAKE:-automake}
-AUTOMAKE_FLAGS="--add-missing --copy --force"
+# --add-missing instructs automake to install missing auxiliary files
+# --copy tells it to make copies and not symlinks
+AUTOMAKE_FLAGS="--add-missing --copy"
 # AUTOCONF=${AUTOCONF:-autoconf}
 
 ARGV0=$0
@@ -82,9 +84,6 @@ fi
 
 run $ACLOCAL $ACLOCAL_FLAGS || die "Can't execute aclocal"
 run $AUTOHEADER || die "Can't execute autoheader"
-
-# --add-missing instructs automake to install missing auxiliary files
-# and --force to overwrite them if they already exist
 run $AUTOMAKE $AUTOMAKE_FLAGS  || die "Can't execute automake"
 run $AUTOCONF || die "Can't execute autoconf"
 echo -n "Automade with: "
