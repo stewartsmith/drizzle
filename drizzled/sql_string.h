@@ -55,36 +55,36 @@ class String
   bool alloced;
   const CHARSET_INFO *str_charset;
 public:
-  String() :
-    Ptr(NULL), str_length(0), Alloced_length(0),
-    alloced(false), str_charset(&my_charset_bin)
-  {}
-
-  String(uint32_t length_arg) :
-    Ptr(NULL), str_length(0), Alloced_length(0),
-    alloced(false), str_charset(&my_charset_bin)
-  {
-    (void) real_alloc(length_arg);
+  String()
+  { 
+    Ptr=0; str_length=Alloced_length=0; alloced=0; 
+    str_charset= &my_charset_bin; 
   }
-
-  String(const char *str, const CHARSET_INFO * const cs) :
-    Ptr((char *)str), str_length(0), Alloced_length(0),
-    alloced(false), str_charset(cs)
-  {
-    str_length= strlen(str);
+  String(uint32_t length_arg)
+  { 
+    alloced=0; Alloced_length=0; (void) real_alloc(length_arg); 
+    str_charset= &my_charset_bin;
   }
-
-  String(const char *str,uint32_t len, const CHARSET_INFO * const cs) :
-    Ptr((char *)str), str_length(len), Alloced_length(0),
-    alloced(false), str_charset(cs)
-  {
+  String(const char *str, const CHARSET_INFO * const cs)
+  { 
+    Ptr=(char*) str; str_length=(uint) strlen(str); Alloced_length=0; alloced=0;
+    str_charset=cs;
   }
-
-  String(const String &str) :
-    Ptr(str.Ptr), str_length(str.str_length),
-    Alloced_length(str.Alloced_length),
-    alloced(false), str_charset(str.str_charset)
-  {
+  String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
+  { 
+    Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
+    str_charset=cs;
+  }
+  String(char *str,uint32_t len, const CHARSET_INFO * const cs)
+  { 
+    Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
+    str_charset=cs;
+  }
+  String(const String &str)
+  { 
+    Ptr=str.Ptr ; str_length=str.str_length ;
+    Alloced_length=str.Alloced_length; alloced=0; 
+    str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
