@@ -90,7 +90,8 @@ int my_copystat(const char *from, const char *to, int MyFlags)
     if (MyFlags & MY_LINK_WARNING)
       my_error(EE_LINK_WARNING,MYF(ME_BELL+ME_WAITTANG),from,statbuf.st_nlink);
   }
-  chown(to, statbuf.st_uid, statbuf.st_gid);	/* Copy ownership */
+  if(chown(to, statbuf.st_uid, statbuf.st_gid)!=0)
+    return 1;
 
 #ifndef __ZTC__
   if (MyFlags & MY_COPYTIME)

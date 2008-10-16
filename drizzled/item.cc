@@ -4102,10 +4102,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
                                  Field::NONE, name, decimals, 0,
                                  unsigned_flag);
     break;
-  case DRIZZLE_TYPE_TINY:
-    field= new Field_tiny((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name, 0, unsigned_flag);
-    break;
   case DRIZZLE_TYPE_LONG:
     field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
@@ -4669,14 +4665,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     String *res;
     if ((res=val_str(buffer)))
       result= protocol->store(res->ptr(),res->length(),res->charset());
-    break;
-  }
-  case DRIZZLE_TYPE_TINY:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= protocol->store_tiny(nr);
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -6356,7 +6344,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_NEWDECIMAL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_TINY:
     return 4;
   case DRIZZLE_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;

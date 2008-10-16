@@ -353,7 +353,7 @@ struct st_my_thread_var *_my_thread_var(void)
   if (!tmp)
   {
     my_thread_init();
-    tmp=my_pthread_getspecific(struct st_my_thread_var*,THR_KEY_mysys);
+    tmp=(struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
   }
 #endif
   return tmp;

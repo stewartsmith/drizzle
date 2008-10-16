@@ -108,7 +108,8 @@ static int logging_query_plugin_init(void *p)
     return 0;
   }
 
-  fd= open(logging_query_filename, O_WRONLY | O_APPEND | O_CREAT);
+  fd= open(logging_query_filename, O_WRONLY | O_APPEND | O_CREAT,
+           S_IRUSR|S_IWUSR);
   if (fd < 0) 
   {
     fprintf(stderr, "fail open fn=%s er=%s\n",

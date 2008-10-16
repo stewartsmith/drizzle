@@ -1274,7 +1274,7 @@ innobase_print_identifier(
 	}
 
 	if (q == EOF) {
-		fwrite(s, 1, namelen, f);
+                assert(fwrite(s, 1, namelen, f)==namelen);
 	} else {
 		const char*	e = s + namelen;
 		putc(q, f);
