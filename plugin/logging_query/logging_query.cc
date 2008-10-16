@@ -68,12 +68,29 @@ bool logging_query_func_pre (THD *thd)
 
   assert(thd != NULL);
 
+  /*
+    here is some time stuff from class THD
+      uint64_t connect_utime;
+      uint64_t start_utime;
+      uint64_t time_after_lock;
+      uint64_t current_utime();
+  */
+
+  /* todo, the THD should have a "utime command completed" inside
+     itself, so be more accurate, and so plugins dont have to keep
+     calling current_utime, which can be slow */
+
+  uint64_t t_mark= thd->current_utime();
+
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
-	     "log bgn thread_id=%ld query_id=%ld command=%.*s"
+	     "log bgn thread_id=%ld query_id=%ld"
+	     " t_connect=%lld"
+	     " command=%.*s"
 	     " db=\"%.*s\" query=\"%.*s\"\n",
 	     (unsigned long) thd->thread_id,
 	     (unsigned long) thd->query_id,
+	     t_mark - thd->connect_utime,
 	     (uint32_t)command_name[thd->command].length,
 	     command_name[thd->command].str,
 	     thd->db_length, thd->db,
@@ -97,12 +114,22 @@ bool logging_query_func_post (THD *thd)
 
   assert(thd != NULL);
 
+  /* todo, the THD should have a "utime command completed" inside
+     itself, so be more accurate, and so plugins dont have to keep
+     calling current_utime, which can be slow */
+  uint64_t t_mark= thd->current_utime();
+
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
-	     "log end thread_id=%ld query_id=%ld command=%.*s"
-	     " rows.sent=%ld rows.exam=%u\n",
+	     "log end thread_id=%ld query_id=%ld"
+	     " t_connect=%lld t_start=%lld t_lock=%lld"
+	     " command=%.*s"
+	     " rows_sent=%ld rows_examined=%u\n",
 	     (unsigned long) thd->thread_id, 
 	     (unsigned long) thd->query_id,
+	     t_mark - thd->connect_utime,
+	     t_mark - thd->start_utime,
+	     t_mark - thd->time_after_lock,
 	     (uint32_t)command_name[thd->command].length,
 	     command_name[thd->command].str,
 	     (unsigned long) thd->sent_row_count,
