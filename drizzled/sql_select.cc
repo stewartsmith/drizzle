@@ -390,7 +390,6 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
   return res;
 }
 
-#define MAGIC_IN_WHERE_TOP_LEVEL 10
 /**
   Function to setup clauses without sum functions.
 */

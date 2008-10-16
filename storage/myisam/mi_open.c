@@ -20,12 +20,6 @@
 #include <drizzled/util/test.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
-#define get_next_element(to,pos,size) \
-  do {                                \
-    memcpy(to, pos, size);            \
-    pos+=size;                        \
-  } while (0)
-
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \

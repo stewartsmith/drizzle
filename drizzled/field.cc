@@ -25,8 +25,6 @@
 #include <errno.h>
 #include <drizzled/drizzled_error_messages.h>
 
-// Maximum allowed exponent value for converting string to decimal
-#define MAX_EXPONENT 1024
 
 /*****************************************************************************
   Instansiate templates and static variables

@@ -33,8 +33,6 @@ static const char *reserved_names[]=
   NULL
 };
 
-#define MAX_RESERVED_NAME_LENGTH 6
-
 
 /*
   Looks up a null-terminated string in a list,

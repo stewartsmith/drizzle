@@ -7,9 +7,6 @@
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 
-#define BUFFER_LEN 1024
-#define ARCHIVE_ROW_HEADER_SIZE 4
-
 #define SHOW_VERSION "0.1"
 
 static void get_options(int *argc,char * * *argv);

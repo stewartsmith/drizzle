@@ -312,7 +312,6 @@
 #define TEST_PRINT_CACHED_TABLES 1
 #define TEST_NO_KEY_GROUP	 2
 #define TEST_MIT_THREAD		4
-#define TEST_BLOCKING		8
 #define TEST_KEEP_TMP_TABLES	16
 #define TEST_READCHECK		64	/**< Force use of readcheck */
 #define TEST_NO_EXTRA		128

@@ -94,10 +94,6 @@ uint32_t locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
-/* The following constants are only for debug output */
-#define MAX_THREADS 100
-#define MAX_LOCKS   100
-
 
 LIST *thr_lock_thread_list;			/* List of threads in use */
 ulong max_write_lock_count= ~(ulong) 0L;
@@ -124,6 +120,9 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 }
 
 #ifdef EXTRA_DEBUG
+
+#define MAX_THREADS 100
+#define MAX_LOCKS   100
 #define MAX_FOUND_ERRORS	10		/* Report 10 first errors */
 static uint32_t found_errors=0;
 

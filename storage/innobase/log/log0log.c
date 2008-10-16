@@ -102,16 +102,19 @@ the previous */
 /* Extra margin, in addition to one log file, used in archiving */
 #define LOG_ARCHIVE_EXTRA_MARGIN	(4 * UNIV_PAGE_SIZE)
 
+#ifdef UNIV_LOG_ARCHIVE
 /* This parameter controls asynchronous writing to the archive */
 #define LOG_ARCHIVE_RATIO_ASYNC		16
-
-/* Codes used in unlocking flush latches */
-#define LOG_UNLOCK_NONE_FLUSHED_LOCK	1
-#define LOG_UNLOCK_FLUSH_LOCK		2
 
 /* States of an archiving operation */
 #define	LOG_ARCHIVE_READ	1
 #define	LOG_ARCHIVE_WRITE	2
+
+#endif /* UNIV_LOG_ARCHIVE */
+
+/* Codes used in unlocking flush latches */
+#define LOG_UNLOCK_NONE_FLUSHED_LOCK	1
+#define LOG_UNLOCK_FLUSH_LOCK		2
 
 /**********************************************************
 Completes a checkpoint write i/o to a log file. */
