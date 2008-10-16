@@ -6,12 +6,10 @@ Index page routines
 Created 2/2/1994 Heikki Tuuri
 *******************************************************/
 
-#define THIS_MODULE
 #include "page0page.h"
 #ifdef UNIV_NONINL
 #include "page0page.ic"
 #endif
-#undef THIS_MODULE
 
 #include "page0cur.h"
 #include "lock0lock.h"
