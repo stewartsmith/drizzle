@@ -18,6 +18,8 @@
 #include <iostream>
 #include <fstream>
 
+using namespace std;
+
 #define DEFAULT_CONNECT_RETRY 60
 
 // Defined in slave.cc

@@ -222,6 +222,8 @@ flush status;
 delete from t1 order by a limit 1;
 show status like 'handler_read%';
 
+# PBXT: this select returns a different result to
+# innodb because the 2 updates above change different rows
 select * from t1;
 update t1 set a=a+10,b=1 order by a limit 3;
 update t1 set a=a+11,b=2 order by a limit 3;
@@ -364,6 +366,9 @@ insert into t2(a) select a from t2;
 update t2 set a=id;
 insert into t1 select * from t2;
 
+# PBXT: Rows changed are different here between InnoDB and PBXT
+# because PBXT does not update the rows that are not modified!
+# InnoDB seems to do this....
 # Check that the number of matched rows is correct when the temporary
 # table is small enough to not be converted to MyISAM
 select count(*) from t1 join t2 on (t1.a=t2.a);

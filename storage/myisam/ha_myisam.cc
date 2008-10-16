@@ -67,7 +67,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
   if (!thd->vio_ok())
   {
-    sql_print_error(msgbuf);
+    sql_print_error("%s",msgbuf);
     return;
   }
 
@@ -210,7 +210,7 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   record= table_arg->record[0];
   recpos= 0;
   recinfo_pos= recinfo;
-  while (recpos < (uint) share->reclength)
+  while (recpos < (uint) share->stored_rec_length)
   {
     Field **field, *found= 0;
     minpos= share->reclength;

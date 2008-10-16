@@ -102,7 +102,6 @@ static bool init_pipe(int pipe_fds[])
 thd_scheduler::thd_scheduler()
   : logged_in(false), io_event(NULL), thread_attached(false)
 {  
-  dbug_explain_buf[0]= 0;
 }
 
 
@@ -148,7 +147,7 @@ bool thd_scheduler::thread_attach()
   my_errno= 0;
   thd->mysys_var->abort= 0;
   thread_attached= true;
-  swap_dbug_explain();
+
   return false;
 }
 
@@ -164,21 +163,7 @@ void thd_scheduler::thread_detach()
     THD* thd = (THD*)list.data;
     thd->mysys_var= NULL;
     thread_attached= false;
-    swap_dbug_explain();
   }
-}
-
-
-/*
-  Swap the THD's dbug explain_buffer with the OS thread's dbug explain buffer.
-
-  This is used to preserve the SESSION DEBUG variable, which is mapped to the OS 
-  thread during a command, but each command is handled by a different thread.
-*/
-void thd_scheduler::swap_dbug_explain()
-{
-  char buffer[sizeof(dbug_explain_buf)];
-  memcpy(dbug_explain_buf, buffer, sizeof(buffer));
 }
 
 /**
@@ -418,7 +403,7 @@ static void libevent_post_kill_notification(THD *)
     later.
   */
   char c= 0;
-  write(thd_kill_pipe[1], &c, sizeof(c));
+  assert(write(thd_kill_pipe[1], &c, sizeof(c))==sizeof(c));
 }
 
 
@@ -597,7 +582,7 @@ static void libevent_thd_add(THD* thd)
   /* queue for libevent */
   thds_need_adding= list_add(thds_need_adding, &thd->scheduler.list);
   /* notify libevent */
-  write(thd_add_pipe[1], &c, sizeof(c));
+  assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
   pthread_mutex_unlock(&LOCK_thd_add);
 }
 
@@ -615,7 +600,7 @@ static void libevent_end()
   {
     /* wake up the event loop */
     char c= 0;
-    write(thd_add_pipe[1], &c, sizeof(c));
+    assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
 
     pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
   }

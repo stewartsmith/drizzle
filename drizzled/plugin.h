@@ -17,18 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _my_plugin_h
-#define _my_plugin_h
+#ifndef DRIZZLED_PLUGIN_H
+#define DRIZZLED_PLUGIN_H
 
 #include <drizzled/global.h>
 
-#ifdef __cplusplus
 class THD;
 class Item;
-#define DRIZZLE_THD THD*
-#else
-#define DRIZZLE_THD void*
-#endif
 
 #define DRIZZLE_XIDDATASIZE 128
 /**
@@ -114,7 +109,7 @@ struct st_mysql_show_var {
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(DRIZZLE_THD, struct st_mysql_show_var*, char *);
+typedef int (*mysql_show_var_func)(THD *, struct st_mysql_show_var *, char *);
 
 struct st_show_var_func_container {
   mysql_show_var_func func;
@@ -163,7 +158,7 @@ struct st_mysql_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(DRIZZLE_THD thd,
+typedef int (*mysql_var_check_func)(THD *thd,
                                     struct st_mysql_sys_var *var,
                                     void *save, struct st_mysql_value *value);
 
@@ -181,7 +176,7 @@ typedef int (*mysql_var_check_func)(DRIZZLE_THD thd,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(DRIZZLE_THD thd,
+typedef void (*mysql_var_update_func)(THD *thd,
                                       struct st_mysql_sys_var *var,
                                       void *var_ptr, const void *save);
 
@@ -233,7 +228,7 @@ typedef void (*mysql_var_update_func)(DRIZZLE_THD thd,
 } DRIZZLE_SYSVAR_NAME(name)
 
 #define DECLARE_THDVAR_FUNC(type) \
-  type *(*resolve)(DRIZZLE_THD thd, int offset)
+  type *(*resolve)(THD *thd, int offset)
 
 #define DECLARE_DRIZZLE_THDVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
@@ -426,14 +421,14 @@ struct st_mysql_value
 extern "C" {
 #endif
 
-int thd_in_lock_tables(const DRIZZLE_THD thd);
-int thd_tablespace_op(const DRIZZLE_THD thd);
-int64_t thd_test_options(const DRIZZLE_THD thd, int64_t test_options);
-int thd_sql_command(const DRIZZLE_THD thd);
-void **thd_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton);
-int thd_tx_isolation(const DRIZZLE_THD thd);
+int thd_in_lock_tables(const THD *thd);
+int thd_tablespace_op(const THD *thd);
+int64_t thd_test_options(const THD *thd, int64_t test_options);
+int thd_sql_command(const THD *thd);
+void **thd_ha_data(const THD *thd, const struct handlerton *hton);
+int thd_tx_isolation(const THD *thd);
 /* Increments the row counter, see THD::row_count */
-void thd_inc_row_count(DRIZZLE_THD thd);
+void thd_inc_row_count(THD *thd);
 
 /**
   Create a temporary file.
@@ -463,7 +458,7 @@ int mysql_tmpfile(const char *prefix);
   @retval 0  the connection is active
   @retval 1  the connection has been killed
 */
-int thd_killed(const DRIZZLE_THD thd);
+int thd_killed(const THD *thd);
 
 
 /**
@@ -472,7 +467,7 @@ int thd_killed(const DRIZZLE_THD thd);
   @param thd  user thread connection handle
   @return  thread id
 */
-unsigned long thd_get_thread_id(const DRIZZLE_THD thd);
+unsigned long thd_get_thread_id(const THD *thd);
 
 
 /**
@@ -487,23 +482,23 @@ unsigned long thd_get_thread_id(const DRIZZLE_THD thd);
 
   @see alloc_root()
 */
-void *thd_alloc(DRIZZLE_THD thd, unsigned int size);
+void *thd_alloc(THD *thd, unsigned int size);
 /**
   @see thd_alloc()
 */
-void *thd_calloc(DRIZZLE_THD thd, unsigned int size);
+void *thd_calloc(THD *thd, unsigned int size);
 /**
   @see thd_alloc()
 */
-char *thd_strdup(DRIZZLE_THD thd, const char *str);
+char *thd_strdup(THD *thd, const char *str);
 /**
   @see thd_alloc()
 */
-char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size);
+char *thd_strmake(THD *thd, const char *str, unsigned int size);
 /**
   @see thd_alloc()
 */
-void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size);
+void *thd_memdup(THD *thd, const void* str, unsigned int size);
 
 /**
   Get the XID for this connection's transaction
@@ -511,7 +506,7 @@ void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size);
   @param thd  user thread connection handle
   @param xid  location where identifier is stored
 */
-void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid);
+void thd_get_xid(const THD *thd, DRIZZLE_XID *xid);
 
 /**
   Invalidate the query cache for a given table.
@@ -521,7 +516,7 @@ void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid);
   @param key_length  length of key in bytes, including the NUL bytes
   @param using_trx   flag: TRUE if using transactions, FALSE otherwise
 */
-void mysql_query_cache_invalidate4(DRIZZLE_THD thd,
+void mysql_query_cache_invalidate4(THD *thd,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
 
@@ -535,7 +530,7 @@ void mysql_query_cache_invalidate4(DRIZZLE_THD thd,
 */
 inline
 void *
-thd_get_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton)
+thd_get_ha_data(const THD *thd, const struct handlerton *hton)
 {
   return *thd_ha_data(thd, hton);
 }
@@ -545,12 +540,12 @@ thd_get_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton)
 */
 inline
 void
-thd_set_ha_data(const DRIZZLE_THD thd, const struct handlerton *hton,
+thd_set_ha_data(const THD *thd, const struct handlerton *hton,
                 const void *ha_data)
 {
   *thd_ha_data(thd, hton)= (void*) ha_data;
 }
 #endif
 
-#endif
+#endif /* _my_plugin_h */
 

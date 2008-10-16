@@ -242,7 +242,6 @@ static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
-static double long_query_time;
 
 static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 
@@ -280,12 +279,7 @@ handlerton *myisam_hton;
 bool opt_readonly;
 bool use_temp_pool;
 bool relay_log_purge;
-bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
-bool opt_log_slow_admin_statements= 0;
-bool opt_log_slow_slave_statements= 0;
-bool opt_old_style_user_limits= 0;
-bool trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
   check them before each query (and possibly reset counters when hour is
@@ -1249,7 +1243,7 @@ void close_connection(THD *thd, uint32_t errcode, bool lock)
 extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
-  if (thd && ! thd->bootstrap)
+  if (thd)
   {
     statistic_increment(killed_threads, &LOCK_status);
     thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
@@ -2311,8 +2305,11 @@ static int init_server_components()
       opt_error_log= 1;				// Too long file name
     else
     {
-      if (freopen(log_error_file, "a+", stdout))
-        freopen(log_error_file, "a+", stderr);
+      if (freopen(log_error_file, "a+", stdout)==NULL)
+        sql_print_error(_("Unable to reopen stdout"));
+      else
+        if(freopen(log_error_file, "a+", stderr)==NULL)
+          sql_print_error(_("Unable to reopen stderr"));
     }
   }
 
@@ -2652,7 +2649,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name, false))
+  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
@@ -3156,7 +3153,7 @@ struct my_option my_long_options[] =
    N_("Push supported query conditions to the storage engine."),
    (char**) &global_system_variables.engine_condition_pushdown,
    (char**) &global_system_variables.engine_condition_pushdown,
-   0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
+   0, GET_BOOL, NO_ARG, false, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
@@ -3281,11 +3278,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.old_alter_table,
    (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
-   N_("Enable old-style user limits (before 5.0.3 user resources were counted "
-      "per each user+host vs. per account)"),
-   (char**) &opt_old_style_user_limits, (char**) &opt_old_style_user_limits,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -3588,12 +3580,6 @@ struct my_option my_long_options[] =
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
-  {"long_query_time", OPT_LONG_QUERY_TIME,
-   N_("Log all queries that have taken more than long_query_time seconds to "
-      "execute to file. The argument will be treated as a decimal value with "
-      "microsecond precission."),
-   (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
-   REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
@@ -4225,7 +4211,6 @@ static void mysql_init_variables(void)
   opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
-  opt_secure_auth= 0;
   opt_secure_file_priv= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
@@ -4305,7 +4290,6 @@ static void mysql_init_variables(void)
   charsets_dir= 0;
   default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
-  sys_charset_system.set((char*) system_charset_info->csname);
   character_set_filesystem_name= (char*) "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
@@ -4738,10 +4722,6 @@ static void get_options(int *argc,char **argv)
 
   /* Set global variables based on startup options */
   myisam_block_size=(uint) 1 << my_bit_log2(opt_myisam_block_size);
-
-  /* long_query_time is in microseconds */
-  global_system_variables.long_query_time= max_system_variables.long_query_time=
-    (int64_t) (long_query_time * 1000000.0);
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

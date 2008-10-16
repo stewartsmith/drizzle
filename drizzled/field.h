@@ -45,6 +45,57 @@ inline uint32_t get_set_pack_length(int elements)
   return len > 4 ? 8 : len;
 }
 
+class virtual_column_info: public Sql_alloc
+{
+public:
+  Item *expr_item;
+  LEX_STRING expr_str;
+  Item *item_free_list;
+  virtual_column_info() 
+  : expr_item(0), item_free_list(0),
+    field_type(DRIZZLE_TYPE_VIRTUAL),
+    is_stored(false), data_inited(false)
+  {
+    expr_str.str= NULL;
+    expr_str.length= 0;
+  };
+  ~virtual_column_info() {}
+  enum_field_types get_real_type()
+  {
+    assert(data_inited);
+    return data_inited ? field_type : DRIZZLE_TYPE_VIRTUAL;
+  }
+  void set_field_type(enum_field_types fld_type)
+  {
+    /* Calling this function can only be done once. */
+    assert(not data_inited);
+    data_inited= true;
+    field_type= fld_type;
+  }
+  bool get_field_stored()
+  {
+    assert(data_inited);
+    return data_inited ? is_stored : true;
+  }
+  void set_field_stored(bool stored)
+  {
+    is_stored= stored;
+  }
+private:
+  /*
+    The following data is only updated by the parser and read
+    when a Create_field object is created/initialized.
+  */
+  enum_field_types field_type;   /* Real field type*/
+  bool is_stored;             /* Indication that the field is 
+                                    phisically stored in the database*/
+  /*
+    This flag is used to prevent other applications from
+    reading and using incorrect data.
+  */
+  bool data_inited; 
+};
+
 class Field
 {
   Field(const Item &);				/* Prevent use of these */
@@ -97,6 +148,15 @@ public:
 
    */
   bool is_created_from_null_item;
+
+  /* Virtual column data */
+  virtual_column_info *vcol_info;
+  /*
+    Indication that the field is phycically stored in tables 
+    rather than just generated on SQL queries.
+    As of now, false can only be set for generated-only virtual columns.
+  */
+  bool is_stored;
 
   Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
         unsigned char null_bit_arg, utype unireg_check_arg,
@@ -574,6 +634,16 @@ public:
 
   uint8_t row,col,sc_length,interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
+
+  /* Virtual column expression statement */
+  virtual_column_info *vcol_info;
+  /*
+    Indication that the field is phycically stored in tables 
+    rather than just generated on SQL queries.
+    As of now, FALSE can only be set for generated-only virtual columns.
+  */
+  bool is_stored;
+
   Create_field() :after(0) {}
   Create_field(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */
@@ -597,7 +667,8 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, const CHARSET_INFO * const cs,
             uint32_t uint_geom_type,
-            enum column_format_type column_format);
+            enum column_format_type column_format,
+            virtual_column_info *vcol_info);
 };
 
 
@@ -696,15 +767,8 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK			120	// Bits used for packing
 #define FIELDFLAG_INTERVAL		256     // mangled with decimals!
-#define FIELDFLAG_BITFIELD		512	// mangled with decimals!
 #define FIELDFLAG_BLOB			1024	// mangled with decimals!
-#define FIELDFLAG_GEOM			2048    // mangled with decimals!
 
-#define FIELDFLAG_TREAT_BIT_AS_CHAR     4096    /* use Field_bit_as_char */
-
-#define FIELDFLAG_LEFT_FULLSCREEN	8192
-#define FIELDFLAG_RIGHT_FULLSCREEN	16384
-#define FIELDFLAG_FORMAT_NUMBER		16384	// predit: ###,,## in output
 #define FIELDFLAG_NO_DEFAULT		16384   /* sql */
 #define FIELDFLAG_SUM			((uint32_t) 32768)// predit: +#fieldflag
 #define FIELDFLAG_MAYBE_NULL		((uint32_t) 32768)// sql
@@ -712,8 +776,6 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define FIELDFLAG_PACK_SHIFT		3
 #define FIELDFLAG_DEC_SHIFT		8
 #define FIELDFLAG_MAX_DEC		31
-#define FIELDFLAG_NUM_SCREEN_TYPE	0x7F01
-#define FIELDFLAG_ALFA_SCREEN_TYPE	0x7800
 
 #define MTYP_TYPENR(type) (type & 127)	/* Remove bits from type */
 
@@ -726,13 +788,11 @@ test_if_important_data(const CHARSET_INFO * const cs,
 #define f_is_alpha(x)		(!f_is_num(x))
 #define f_is_binary(x)          ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
 #define f_is_enum(x)            (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == FIELDFLAG_INTERVAL)
-#define f_is_bitfield(x)        (((x) & (FIELDFLAG_BITFIELD | FIELDFLAG_NUMBER)) == FIELDFLAG_BITFIELD)
 #define f_is_blob(x)		(((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == FIELDFLAG_BLOB)
 #define f_is_equ(x)		((x) & (1+2+FIELDFLAG_PACK+31*256))
-#define f_settype(x)		(((int) x) << FIELDFLAG_PACK_SHIFT)
+#define f_settype(x)   (((int) x) << FIELDFLAG_PACK_SHIFT)
 #define f_maybe_null(x)		(x & FIELDFLAG_MAYBE_NULL)
 #define f_no_default(x)		(x & FIELDFLAG_NO_DEFAULT)
-#define f_bit_as_char(x)        ((x) & FIELDFLAG_TREAT_BIT_AS_CHAR)
 #define f_is_hex_escape(x)      ((x) & FIELDFLAG_HEX_ESCAPE)
 
 bool
@@ -741,49 +801,3 @@ check_string_copy_error(Field_str *field,
                         const char *cannot_convert_error_pos,
                         const char *end,
                         const CHARSET_INFO * const cs);
-
-
-class Field_tiny :public Field_num {
-public:
-  Field_tiny(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-	     unsigned char null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
-    {}
-  enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
-  enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
-  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
-  int store(double nr);
-  int store(int64_t nr, bool unsigned_val);
-  int reset(void) { ptr[0]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const unsigned char *,const unsigned char *);
-  void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const { return 1; }
-  void sql_type(String &str) const;
-  uint32_t max_display_length() { return 4; }
-
-  virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length __attribute__((unused)),
-                      bool low_byte_first __attribute__((unused)))
-  {
-    *to= *from;
-    return to + 1;
-  }
-
-  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data __attribute__((unused)),
-                              bool low_byte_first __attribute__((unused)))
-  {
-    *to= *from;
-    return from + 1;
-  }
-};

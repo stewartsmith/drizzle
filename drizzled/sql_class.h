@@ -214,6 +214,8 @@ public:
   */
   virtual Key *clone(MEM_ROOT *mem_root) const
   { return new (mem_root) Foreign_key(*this, mem_root); }
+  /* Used to validate foreign key options */
+  bool validate(List<Create_field> &table_fields);
 };
 
 typedef struct st_mysql_lock
@@ -260,7 +262,6 @@ struct system_variables
   uint64_t myisam_max_sort_file_size;
   uint64_t max_heap_table_size;
   uint64_t tmp_table_size;
-  uint64_t long_query_time;
   ha_rows select_limit;
   ha_rows max_join_size;
   ulong auto_increment_increment, auto_increment_offset;
@@ -293,8 +294,6 @@ struct system_variables
   /* A bitmap for switching optimizations on/off */
   ulong optimizer_switch;
   ulong preload_buff_size;
-  ulong profiling_history_size;
-  ulong query_cache_type;
   ulong read_buff_size;
   ulong read_rnd_buff_size;
   ulong div_precincrement;
@@ -1398,13 +1397,12 @@ public:
     it returned an error on master, and this is OK on the slave.
   */
   bool       is_slave_error;
-  bool       bootstrap, cleanup_done;
+  bool       cleanup_done;
   
   /**  is set if some thread specific value(s) used in a statement. */
   bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
   bool       charset_is_character_set_filesystem;
-  bool       enable_slow_log;   /* enable slow log for current statement */
   bool	     abort_on_warning;
   bool 	     got_warning;       /* Set on call to push_warning() */
   bool	     no_warnings_for_error; /* no warnings on call to my_error() */

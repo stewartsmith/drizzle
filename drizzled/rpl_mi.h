@@ -63,17 +63,17 @@ class Master_info : public Slave_reporting_capability
 {
 private:
   drizzle::MasterList list;
-  string info_filename;
-  string log_name;
+  std::string info_filename;
+  std::string log_name;
   uint16_t port;
   uint64_t log_pos;
 
 public:
 
   /* the variables below are needed because we can change masters on the fly */
-  string host;
-  string user;
-  string password;
+  std::string host;
+  std::string user;
+  std::string password;
   uint32_t connect_retry;
   THD *io_thd;
   Master_info();

@@ -138,7 +138,7 @@ static int send_file(THD *thd)
     (void) my_close(fd, MYF(0));
   if (errmsg)
   {
-    sql_print_error(errmsg);
+    sql_print_error("%s",errmsg);
   }
   return(error);
 }

@@ -184,8 +184,6 @@ static bool sec_to_time(int64_t seconds, bool unsigned_flag, DRIZZLE_TIME *ltime
   
   if (seconds < 0)
   {
-    if (unsigned_flag)
-      goto overflow;
     ltime->neg= 1;
     if (seconds < -3020399)
       goto overflow;
@@ -2818,12 +2816,8 @@ String *Item_func_maketime::val_str(String *str)
 
   /* Check for integer overflows */
   if (hour < 0)
-  {
-    if (args[0]->unsigned_flag)
-      overflow= 1;
-    else
-      ltime.neg= 1;
-  }
+    ltime.neg= 1;
+
   if (-hour > UINT_MAX || hour > UINT_MAX)
     overflow= 1;
 

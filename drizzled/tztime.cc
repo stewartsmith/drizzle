@@ -1044,8 +1044,7 @@ public:
     1 - Error
 */
 bool
-my_tz_init(THD *thd, const char *default_tzname,
-           bool bootstrap __attribute__((unused)))
+my_tz_init(THD *thd, const char *default_tzname)
 {
   if (default_tzname)
   {

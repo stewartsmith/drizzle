@@ -1,8 +1,8 @@
 drop table if exists t1,t2,t3,t4;
 CREATE TABLE t1 (
-Period smallint(4) unsigned zerofill DEFAULT '0000' NOT NULL,
-Varor_period smallint(4) unsigned DEFAULT '0' NOT NULL
-);
+Period int DEFAULT '0000' NOT NULL,
+Varor_period int DEFAULT '0' NOT NULL
+) ENGINE=myisam;
 INSERT INTO t1 VALUES (9410,9412);
 select period from t1;
 period
@@ -15,8 +15,8 @@ Period	Varor_period
 9410	9412
 CREATE TABLE t2 (
 auto int not null auto_increment,
-fld1 int(6) unsigned zerofill DEFAULT '000000' NOT NULL,
-companynr tinyint(2) unsigned zerofill DEFAULT '00' NOT NULL,
+fld1 int DEFAULT '000000' NOT NULL,
+companynr int DEFAULT '00' NOT NULL,
 fld3 char(30) DEFAULT '' NOT NULL,
 fld4 char(35) DEFAULT '' NOT NULL,
 fld5 char(35) DEFAULT '' NOT NULL,
@@ -24,7 +24,7 @@ fld6 char(4) DEFAULT '' NOT NULL,
 UNIQUE fld1 (fld1),
 KEY fld3 (fld3),
 PRIMARY KEY (auto)
-);
+) ENGINE=myisam;
 select t2.fld3 from t2 where companynr = 58 and fld3 like "%imaginable%";
 fld3
 imaginable
@@ -128,7 +128,7 @@ select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 fld3
 explain select t2.fld3 from t2 where fld3 = 'honeysuckle';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
+1	SIMPLE	t2	ref	fld3	fld3	122	const	1	Using where; Using index
 explain select fld3 from t2 ignore index (fld3) where fld3 = 'honeysuckle';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
@@ -137,10 +137,10 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
 explain select fld3 from t2 use index (fld3) where fld3 = 'honeysuckle';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
+1	SIMPLE	t2	ref	fld3	fld3	122	const	1	Using where; Using index
 explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
+1	SIMPLE	t2	ref	fld3	fld3	122	const	1	Using where; Using index
 explain select fld3 from t2 ignore index (fld3,not_used);
 ERROR 42000: Key 'not_used' doesn't exist in table 't2'
 explain select fld3 from t2 use index (not_used);
@@ -151,12 +151,12 @@ honeysuckle
 honoring
 explain select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	fld3	fld3	30	NULL	2	Using where; Using index
+1	SIMPLE	t2	range	fld3	fld3	122	NULL	2	Using where; Using index
 select fld1,fld3 from t2 where fld3="Colombo" or fld3 = "nondecreasing" order by fld3;
 fld1	fld3
 148504	Colombo
-068305	Colombo
-000000	nondecreasing
+68305	Colombo
+0	nondecreasing
 select fld1,fld3 from t2 where companynr = 37 and fld3 = 'appendixes';
 fld1	fld3
 232605	appendixes
@@ -183,19 +183,19 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	range	fld1	fld1	4	NULL	4	Using where; Using index
 select fld1,fld3 from t2 where companynr = 37 and fld3 like 'f%';
 fld1	fld3
-012001	flanking
-013602	foldout
-013606	fingerings
-018007	fanatic
-018017	featherweight
-018054	fetters
-018103	flint
-018104	flopping
-036002	funereal
-038017	fetched
-038205	firearm
-058004	Fenton
-088303	feminine
+12001	flanking
+13602	foldout
+13606	fingerings
+18007	fanatic
+18017	featherweight
+18054	fetters
+18103	flint
+18104	flopping
+36002	funereal
+38017	fetched
+38205	firearm
+58004	Fenton
+88303	feminine
 186002	freakish
 188007	flurried
 188505	fitting
@@ -235,7 +235,7 @@ fld1	fld3
 250505	bomb
 select distinct companynr from t2;
 companynr
-00
+0
 37
 36
 50
@@ -249,7 +249,7 @@ companynr
 68
 select distinct companynr from t2 order by companynr;
 companynr
-00
+0
 29
 34
 36
@@ -274,7 +274,7 @@ companynr
 36
 34
 29
-00
+0
 select distinct t2.fld3,period from t2,t1 where companynr=37 and fld3 like "O%";
 fld3	period
 obliterates	9410
@@ -487,7 +487,7 @@ price     double(11,0),
 price2     double(11,0),
 key (period),
 key (name)
-);
+) engine=myisam;
 create temporary table tmp engine = myisam select * from t3;
 insert into t3 select * from tmp;
 insert into tmp select * from t3;
@@ -598,7 +598,7 @@ fld3
 explain select t3.t2nr,fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by t3.t2nr,fld3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	fld1	NULL	NULL	NULL	1199	Using where; Using temporary; Using filesort
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t2.fld1	1	Using where; Using index
+1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t2.fld1	1	Using index
 explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	period	NULL	NULL	NULL	41810	Using temporary; Using filesort
@@ -1279,19 +1279,19 @@ Weissmuller	1002	28357832	8723648
 Wotan	1002	28357832	8723648
 select t2.fld1,fld3,period,price,price2 from t2,t3 where t2.fld1>= 18201 and t2.fld1 <= 18811 and t2.fld1=t3.t2nr and period = 1001 and t2.companynr = 37;
 fld1	fld3	period	price	price2
-018201	relaxing	1001	5987435	234724
-018601	vacuuming	1001	5987435	234724
-018801	inch	1001	5987435	234724
-018811	repetitions	1001	5987435	234724
+18201	relaxing	1001	5987435	234724
+18601	vacuuming	1001	5987435	234724
+18801	inch	1001	5987435	234724
+18811	repetitions	1001	5987435	234724
 create table t4 (
-companynr tinyint(2) unsigned zerofill NOT NULL default '00',
+companynr int NOT NULL default '00',
 companyname char(30) NOT NULL default '',
 PRIMARY KEY (companynr),
 UNIQUE KEY companyname(companyname)
 ) ENGINE=MyISAM MAX_ROWS=50 PACK_KEYS=1 COMMENT='companynames';
 select STRAIGHT_JOIN t2.companynr,companyname from t4,t2 where t2.companynr=t4.companynr group by t2.companynr;
 companynr	companyname
-00	Unknown
+0	Unknown
 29	company 1
 34	company 2
 36	company 3
@@ -1305,7 +1305,7 @@ companynr	companyname
 68	company 10
 select SQL_SMALL_RESULT t2.companynr,companyname from t4,t2 where t2.companynr=t4.companynr group by t2.companynr;
 companynr	companyname
-00	Unknown
+0	Unknown
 29	company 1
 34	company 2
 36	company 3
@@ -1357,7 +1357,7 @@ count(*)
 explain select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1200	
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	Using where; Not exists
+1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	4	test.t2.companynr	1	Using where; Not exists
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t4	ALL	NULL	NULL	NULL	NULL	12	
@@ -1377,15 +1377,15 @@ delete from t2 where fld1=999999;
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
+1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	4	test.t2.companynr	1	
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
+1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	4	test.t2.companynr	1	
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 and t4.companynr > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
+1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	4	test.t2.companynr	1	
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
@@ -1428,20 +1428,20 @@ companynr	companynr
 41	40
 explain select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	index	NULL	PRIMARY	1	NULL	12	Using index; Using temporary
+1	SIMPLE	t4	index	NULL	PRIMARY	4	NULL	12	Using index; Using temporary
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where; Using join buffer
 select t2.fld1,t2.companynr,fld3,period from t3,t2 where t2.fld1 = 38208 and t2.fld1=t3.t2nr and period = 1008 or t2.fld1 = 38008 and t2.fld1 =t3.t2nr and period = 1008;
 fld1	companynr	fld3	period
-038008	37	reporters	1008
-038208	37	Selfridge	1008
+38008	37	reporters	1008
+38208	37	Selfridge	1008
 select t2.fld1,t2.companynr,fld3,period from t3,t2 where (t2.fld1 = 38208 or t2.fld1 = 38008) and t2.fld1=t3.t2nr and period>=1008 and period<=1009;
 fld1	companynr	fld3	period
-038008	37	reporters	1008
-038208	37	Selfridge	1008
+38008	37	reporters	1008
+38208	37	Selfridge	1008
 select t2.fld1,t2.companynr,fld3,period from t3,t2 where (t3.t2nr = 38208 or t3.t2nr = 38008) and t2.fld1=t3.t2nr and period>=1008 and period<=1009;
 fld1	companynr	fld3	period
-038008	37	reporters	1008
-038208	37	Selfridge	1008
+38008	37	reporters	1008
+38208	37	Selfridge	1008
 select period from t1 where (((period > 0) or period < 10000 or (period = 1900)) and (period=1900 and period <= 1901) or (period=1903 and (period=1903)) and period>=1902) or ((period=1904 or period=1905) or (period=1906 or period>1907)) or (period=1908 and period = 1909);
 period
 9410
@@ -1479,7 +1479,7 @@ count(*)
 1
 select companynr,count(*),sum(fld1) from t2 group by companynr;
 companynr	count(*)	sum(fld1)
-00	82	10355753
+0	82	10355753
 29	95	14473298
 34	70	17788966
 36	215	22786296
@@ -1508,7 +1508,7 @@ Warnings:
 Note	1003	select count(0) AS `count(*)`,min(`test`.`t2`.`fld4`) AS `min(fld4)`,max(`test`.`t2`.`fld4`) AS `max(fld4)`,sum(`test`.`t2`.`fld1`) AS `sum(fld1)`,avg(`test`.`t2`.`fld1`) AS `avg(fld1)`,std(`test`.`t2`.`fld1`) AS `std(fld1)`,variance(`test`.`t2`.`fld1`) AS `variance(fld1)` from `test`.`t2` where ((`test`.`t2`.`companynr` = 34) and (`test`.`t2`.`fld4` <> ''))
 select companynr,count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 group by companynr limit 3;
 companynr	count(*)	min(fld4)	max(fld4)	sum(fld1)	avg(fld1)	std(fld1)	variance(fld1)
-00	82	Anthony	windmills	10355753	126289.6707	115550.9757	13352027981.7087
+0	82	Anthony	windmills	10355753	126289.6707	115550.9757	13352027981.7087
 29	95	abut	wetness	14473298	152350.5053	8368.5480	70032594.9026
 34	70	absentee	vest	17788966	254128.0857	3272.5940	10709871.3069
 select companynr,t2nr,count(price),sum(price),min(price),max(price),avg(price) from t3 where companynr = 37 group by companynr,t2nr limit 10;
@@ -1563,7 +1563,7 @@ count(distinct fld1)
 1199
 select companynr,count(distinct fld1) from t2 group by companynr;
 companynr	count(distinct fld1)
-00	82
+0	82
 29	95
 34	70
 36	215
@@ -1577,7 +1577,7 @@ companynr	count(distinct fld1)
 68	12
 select companynr,count(*) from t2 group by companynr;
 companynr	count(*)
-00	82
+0	82
 29	95
 34	70
 36	215
@@ -1591,7 +1591,7 @@ companynr	count(*)
 68	12
 select companynr,count(distinct concat(fld1,repeat(65,1000))) from t2 group by companynr;
 companynr	count(distinct concat(fld1,repeat(65,1000)))
-00	82
+0	82
 29	95
 34	70
 36	215
@@ -1605,7 +1605,7 @@ companynr	count(distinct concat(fld1,repeat(65,1000)))
 68	12
 select companynr,count(distinct concat(fld1,repeat(65,200))) from t2 group by companynr;
 companynr	count(distinct concat(fld1,repeat(65,200)))
-00	82
+0	82
 29	95
 34	70
 36	215
@@ -1619,7 +1619,7 @@ companynr	count(distinct concat(fld1,repeat(65,200)))
 68	12
 select companynr,count(distinct floor(fld1/100)) from t2 group by companynr;
 companynr	count(distinct floor(fld1/100))
-00	47
+0	47
 29	35
 34	14
 36	69
@@ -1633,7 +1633,7 @@ companynr	count(distinct floor(fld1/100))
 68	1
 select companynr,count(distinct concat(repeat(65,1000),floor(fld1/100))) from t2 group by companynr;
 companynr	count(distinct concat(repeat(65,1000),floor(fld1/100)))
-00	47
+0	47
 29	35
 34	14
 36	69
@@ -1672,8 +1672,8 @@ violinist	4181
 select t2.fld3,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 group by t3.name;
 fld3	count(*)
 spates	4181
-select companynr|0,companyname from t4 group by 1;
-companynr|0	companyname
+select companynr,companyname from t4 group by 1;
+companynr	companyname
 0	Unknown
 29	company 1
 34	company 2
@@ -1699,7 +1699,7 @@ companynr	companyname	count(*)
 53	company 7	4
 58	company 8	23
 65	company 9	10
-00	Unknown	82
+0	Unknown	82
 select t2.fld1,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 group by t3.name;
 fld1	count(*)
 158402	4181
@@ -1723,7 +1723,7 @@ companynr	count(*)
 37	588
 36	215
 29	95
-00	82
+0	82
 34	70
 41	52
 40	37
@@ -1742,93 +1742,93 @@ companynr	count(*)
 53	4
 select t2.fld4,t2.fld1,count(price),sum(price),min(price),max(price),avg(price) from t3,t2 where t3.companynr = 37 and t2.fld1 = t3.t2nr group by fld1,t2.fld4;
 fld4	fld1	count(price)	sum(price)	min(price)	max(price)	avg(price)
-teethe	000001	1	5987435	5987435	5987435	5987435.0000
-dreaded	011401	1	5987435	5987435	5987435	5987435.0000
-scholastics	011402	1	28357832	28357832	28357832	28357832.0000
-audiology	011403	1	39654943	39654943	39654943	39654943.0000
-wallet	011501	1	5987435	5987435	5987435	5987435.0000
-parters	011701	1	5987435	5987435	5987435	5987435.0000
-eschew	011702	1	28357832	28357832	28357832	28357832.0000
-quitter	011703	1	39654943	39654943	39654943	39654943.0000
-neat	012001	1	5987435	5987435	5987435	5987435.0000
-Steinberg	012003	1	39654943	39654943	39654943	39654943.0000
-balled	012301	1	5987435	5987435	5987435	5987435.0000
-persist	012302	1	28357832	28357832	28357832	28357832.0000
-attainments	012303	1	39654943	39654943	39654943	39654943.0000
-capably	012501	1	5987435	5987435	5987435	5987435.0000
-impulsive	012602	1	28357832	28357832	28357832	28357832.0000
-starlet	012603	1	39654943	39654943	39654943	39654943.0000
-featherweight	012701	1	5987435	5987435	5987435	5987435.0000
-pessimist	012702	1	28357832	28357832	28357832	28357832.0000
-daughter	012703	1	39654943	39654943	39654943	39654943.0000
-lawgiver	013601	1	5987435	5987435	5987435	5987435.0000
-stated	013602	1	28357832	28357832	28357832	28357832.0000
-readable	013603	1	39654943	39654943	39654943	39654943.0000
-testicle	013801	1	5987435	5987435	5987435	5987435.0000
-Parsifal	013802	1	28357832	28357832	28357832	28357832.0000
-leavings	013803	1	39654943	39654943	39654943	39654943.0000
-squeaking	013901	1	5987435	5987435	5987435	5987435.0000
-contrasted	016001	1	5987435	5987435	5987435	5987435.0000
-leftover	016201	1	5987435	5987435	5987435	5987435.0000
-whiteners	016202	1	28357832	28357832	28357832	28357832.0000
-erases	016301	1	5987435	5987435	5987435	5987435.0000
-Punjab	016302	1	28357832	28357832	28357832	28357832.0000
-Merritt	016303	1	39654943	39654943	39654943	39654943.0000
-sweetish	018001	1	5987435	5987435	5987435	5987435.0000
-dogging	018002	1	28357832	28357832	28357832	28357832.0000
-scornfully	018003	1	39654943	39654943	39654943	39654943.0000
-fetters	018012	1	28357832	28357832	28357832	28357832.0000
-bivalves	018013	1	39654943	39654943	39654943	39654943.0000
-skulking	018021	1	5987435	5987435	5987435	5987435.0000
-flint	018022	1	28357832	28357832	28357832	28357832.0000
-flopping	018023	1	39654943	39654943	39654943	39654943.0000
-Judas	018032	1	28357832	28357832	28357832	28357832.0000
-vacuuming	018033	1	39654943	39654943	39654943	39654943.0000
-medical	018041	1	5987435	5987435	5987435	5987435.0000
-bloodbath	018042	1	28357832	28357832	28357832	28357832.0000
-subschema	018043	1	39654943	39654943	39654943	39654943.0000
-interdependent	018051	1	5987435	5987435	5987435	5987435.0000
-Graves	018052	1	28357832	28357832	28357832	28357832.0000
-neonatal	018053	1	39654943	39654943	39654943	39654943.0000
-sorters	018061	1	5987435	5987435	5987435	5987435.0000
-epistle	018062	1	28357832	28357832	28357832	28357832.0000
-Conley	018101	1	5987435	5987435	5987435	5987435.0000
-lectured	018102	1	28357832	28357832	28357832	28357832.0000
-Abraham	018103	1	39654943	39654943	39654943	39654943.0000
-cage	018201	1	5987435	5987435	5987435	5987435.0000
-hushes	018202	1	28357832	28357832	28357832	28357832.0000
-Simla	018402	1	28357832	28357832	28357832	28357832.0000
-reporters	018403	1	39654943	39654943	39654943	39654943.0000
-coexist	018601	1	5987435	5987435	5987435	5987435.0000
-Beebe	018602	1	28357832	28357832	28357832	28357832.0000
-Taoism	018603	1	39654943	39654943	39654943	39654943.0000
-Connally	018801	1	5987435	5987435	5987435	5987435.0000
-fetched	018802	1	28357832	28357832	28357832	28357832.0000
-checkpoints	018803	1	39654943	39654943	39654943	39654943.0000
-gritty	018811	1	5987435	5987435	5987435	5987435.0000
-firearm	018812	1	28357832	28357832	28357832	28357832.0000
-minima	019101	1	5987435	5987435	5987435	5987435.0000
-Selfridge	019102	1	28357832	28357832	28357832	28357832.0000
-disable	019103	1	39654943	39654943	39654943	39654943.0000
-witchcraft	019201	1	5987435	5987435	5987435	5987435.0000
-betroth	030501	1	5987435	5987435	5987435	5987435.0000
-Manhattanize	030502	1	28357832	28357832	28357832	28357832.0000
-imprint	030503	1	39654943	39654943	39654943	39654943.0000
-swelling	031901	1	5987435	5987435	5987435	5987435.0000
-interrelationships	036001	1	5987435	5987435	5987435	5987435.0000
-riser	036002	1	28357832	28357832	28357832	28357832.0000
-bee	038001	1	5987435	5987435	5987435	5987435.0000
-kanji	038002	1	28357832	28357832	28357832	28357832.0000
-dental	038003	1	39654943	39654943	39654943	39654943.0000
-railway	038011	1	5987435	5987435	5987435	5987435.0000
-validate	038012	1	28357832	28357832	28357832	28357832.0000
-normalizes	038013	1	39654943	39654943	39654943	39654943.0000
-Kline	038101	1	5987435	5987435	5987435	5987435.0000
-Anatole	038102	1	28357832	28357832	28357832	28357832.0000
-partridges	038103	1	39654943	39654943	39654943	39654943.0000
-recruited	038201	1	5987435	5987435	5987435	5987435.0000
-dimensions	038202	1	28357832	28357832	28357832	28357832.0000
-Chicana	038203	1	39654943	39654943	39654943	39654943.0000
+teethe	1	1	5987435	5987435	5987435	5987435.0000
+dreaded	11401	1	5987435	5987435	5987435	5987435.0000
+scholastics	11402	1	28357832	28357832	28357832	28357832.0000
+audiology	11403	1	39654943	39654943	39654943	39654943.0000
+wallet	11501	1	5987435	5987435	5987435	5987435.0000
+parters	11701	1	5987435	5987435	5987435	5987435.0000
+eschew	11702	1	28357832	28357832	28357832	28357832.0000
+quitter	11703	1	39654943	39654943	39654943	39654943.0000
+neat	12001	1	5987435	5987435	5987435	5987435.0000
+Steinberg	12003	1	39654943	39654943	39654943	39654943.0000
+balled	12301	1	5987435	5987435	5987435	5987435.0000
+persist	12302	1	28357832	28357832	28357832	28357832.0000
+attainments	12303	1	39654943	39654943	39654943	39654943.0000
+capably	12501	1	5987435	5987435	5987435	5987435.0000
+impulsive	12602	1	28357832	28357832	28357832	28357832.0000
+starlet	12603	1	39654943	39654943	39654943	39654943.0000
+featherweight	12701	1	5987435	5987435	5987435	5987435.0000
+pessimist	12702	1	28357832	28357832	28357832	28357832.0000
+daughter	12703	1	39654943	39654943	39654943	39654943.0000
+lawgiver	13601	1	5987435	5987435	5987435	5987435.0000
+stated	13602	1	28357832	28357832	28357832	28357832.0000
+readable	13603	1	39654943	39654943	39654943	39654943.0000
+testicle	13801	1	5987435	5987435	5987435	5987435.0000
+Parsifal	13802	1	28357832	28357832	28357832	28357832.0000
+leavings	13803	1	39654943	39654943	39654943	39654943.0000
+squeaking	13901	1	5987435	5987435	5987435	5987435.0000
+contrasted	16001	1	5987435	5987435	5987435	5987435.0000
+leftover	16201	1	5987435	5987435	5987435	5987435.0000
+whiteners	16202	1	28357832	28357832	28357832	28357832.0000
+erases	16301	1	5987435	5987435	5987435	5987435.0000
+Punjab	16302	1	28357832	28357832	28357832	28357832.0000
+Merritt	16303	1	39654943	39654943	39654943	39654943.0000
+sweetish	18001	1	5987435	5987435	5987435	5987435.0000
+dogging	18002	1	28357832	28357832	28357832	28357832.0000
+scornfully	18003	1	39654943	39654943	39654943	39654943.0000
+fetters	18012	1	28357832	28357832	28357832	28357832.0000
+bivalves	18013	1	39654943	39654943	39654943	39654943.0000
+skulking	18021	1	5987435	5987435	5987435	5987435.0000
+flint	18022	1	28357832	28357832	28357832	28357832.0000
+flopping	18023	1	39654943	39654943	39654943	39654943.0000
+Judas	18032	1	28357832	28357832	28357832	28357832.0000
+vacuuming	18033	1	39654943	39654943	39654943	39654943.0000
+medical	18041	1	5987435	5987435	5987435	5987435.0000
+bloodbath	18042	1	28357832	28357832	28357832	28357832.0000
+subschema	18043	1	39654943	39654943	39654943	39654943.0000
+interdependent	18051	1	5987435	5987435	5987435	5987435.0000
+Graves	18052	1	28357832	28357832	28357832	28357832.0000
+neonatal	18053	1	39654943	39654943	39654943	39654943.0000
+sorters	18061	1	5987435	5987435	5987435	5987435.0000
+epistle	18062	1	28357832	28357832	28357832	28357832.0000
+Conley	18101	1	5987435	5987435	5987435	5987435.0000
+lectured	18102	1	28357832	28357832	28357832	28357832.0000
+Abraham	18103	1	39654943	39654943	39654943	39654943.0000
+cage	18201	1	5987435	5987435	5987435	5987435.0000
+hushes	18202	1	28357832	28357832	28357832	28357832.0000
+Simla	18402	1	28357832	28357832	28357832	28357832.0000
+reporters	18403	1	39654943	39654943	39654943	39654943.0000
+coexist	18601	1	5987435	5987435	5987435	5987435.0000
+Beebe	18602	1	28357832	28357832	28357832	28357832.0000
+Taoism	18603	1	39654943	39654943	39654943	39654943.0000
+Connally	18801	1	5987435	5987435	5987435	5987435.0000
+fetched	18802	1	28357832	28357832	28357832	28357832.0000
+checkpoints	18803	1	39654943	39654943	39654943	39654943.0000
+gritty	18811	1	5987435	5987435	5987435	5987435.0000
+firearm	18812	1	28357832	28357832	28357832	28357832.0000
+minima	19101	1	5987435	5987435	5987435	5987435.0000
+Selfridge	19102	1	28357832	28357832	28357832	28357832.0000
+disable	19103	1	39654943	39654943	39654943	39654943.0000
+witchcraft	19201	1	5987435	5987435	5987435	5987435.0000
+betroth	30501	1	5987435	5987435	5987435	5987435.0000
+Manhattanize	30502	1	28357832	28357832	28357832	28357832.0000
+imprint	30503	1	39654943	39654943	39654943	39654943.0000
+swelling	31901	1	5987435	5987435	5987435	5987435.0000
+interrelationships	36001	1	5987435	5987435	5987435	5987435.0000
+riser	36002	1	28357832	28357832	28357832	28357832.0000
+bee	38001	1	5987435	5987435	5987435	5987435.0000
+kanji	38002	1	28357832	28357832	28357832	28357832.0000
+dental	38003	1	39654943	39654943	39654943	39654943.0000
+railway	38011	1	5987435	5987435	5987435	5987435.0000
+validate	38012	1	28357832	28357832	28357832	28357832.0000
+normalizes	38013	1	39654943	39654943	39654943	39654943.0000
+Kline	38101	1	5987435	5987435	5987435	5987435.0000
+Anatole	38102	1	28357832	28357832	28357832	28357832.0000
+partridges	38103	1	39654943	39654943	39654943	39654943.0000
+recruited	38201	1	5987435	5987435	5987435	5987435.0000
+dimensions	38202	1	28357832	28357832	28357832	28357832.0000
+Chicana	38203	1	39654943	39654943	39654943	39654943.0000
 select t3.companynr,fld3,sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 group by companynr,fld3;
 companynr	fld3	sum(price)
 512	boat	786542
@@ -1843,7 +1843,7 @@ companynr	fld3	sum(price)
 512	skies	786542
 select t2.companynr,count(*),min(fld3),max(fld3),sum(price),avg(price) from t2,t3 where t3.companynr >= 30 and t3.companynr <= 58 and t3.t2nr = t2.fld1 and 1+1=2 group by t2.companynr;
 companynr	count(*)	min(fld3)	max(fld3)	sum(price)	avg(price)
-00	1	Omaha	Omaha	5987435	5987435.0000
+0	1	Omaha	Omaha	5987435	5987435.0000
 36	1	dubbed	dubbed	28357832	28357832.0000
 37	83	Abraham	Wotan	1908978016	22999735.1325
 50	2	scribbled	tapestry	68012775	34006387.5000
@@ -1941,7 +1941,7 @@ sum(price)
 234298
 select t2.fld1,sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and t3.t2nr = 38008 and t2.fld1 = 38008 or t2.fld1 = t3.t2nr and t3.t2nr = 38008 and t2.fld1 = 38008 or t3.t2nr = t2.fld1 and t2.fld1 = 38008 group by t2.fld1;
 fld1	sum(price)
-038008	234298
+38008	234298
 explain select fld3 from t2 where 1>2 or 2>3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
@@ -1958,14 +1958,14 @@ companynr	fld1
 34	250502
 select companynr,count(*) as count,sum(fld1) as sum from t2 group by companynr having count > 40 and sum/count >= 120000;
 companynr	count	sum
-00	82	10355753
+0	82	10355753
 29	95	14473298
 34	70	17788966
 37	588	83602098
 41	52	12816335
 select companynr from t2 group by companynr having count(*) > 40 and sum(fld1)/count(*) >= 120000 ;
 companynr
-00
+0
 29
 34
 37
@@ -2067,20 +2067,20 @@ show tables from test like "t?";
 Tables_in_test (t?)
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int(11)	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int(6) unsigned zerofill	NULL	NO	UNI	000000		#	
-companynr	tinyint(2) unsigned zerofill	NULL	NO		00		#	
-fld3	char(30)	latin1_swedish_ci	NO	MUL			#	
-fld4	char(35)	latin1_swedish_ci	NO				#	
-fld5	char(35)	latin1_swedish_ci	NO				#	
-fld6	char(4)	latin1_swedish_ci	NO				#	
+auto	int	NULL	NO	PRI	NULL	auto_increment	#	
+fld1	int	NULL	NO	UNI	NULL		#	
+companynr	int	NULL	NO		NULL		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
+fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
+fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
+fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
 show full columns from t2 from test like 'f%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int(6) unsigned zerofill	NULL	NO	UNI	000000		#	
-fld3	char(30)	latin1_swedish_ci	NO	MUL			#	
-fld4	char(35)	latin1_swedish_ci	NO				#	
-fld5	char(35)	latin1_swedish_ci	NO				#	
-fld6	char(4)	latin1_swedish_ci	NO				#	
+fld1	int	NULL	NO	UNI	NULL		#	
+fld3	varchar(30)	utf8_general_ci	NO	MUL	NULL		#	
+fld4	varchar(35)	utf8_general_ci	NO		NULL		#	
+fld5	varchar(35)	utf8_general_ci	NO		NULL		#	
+fld6	varchar(4)	utf8_general_ci	NO		NULL		#	
 show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 show keys from t2;
@@ -2090,31 +2090,31 @@ t2	0	fld1	1	fld1	A	1199	NULL	NULL		BTREE
 t2	1	fld3	1	fld3	A	NULL	NULL	NULL		BTREE		
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
-cont_nr int(11) NOT NULL auto_increment,
-ver_nr int(11) NOT NULL default '0',
-aufnr int(11) NOT NULL default '0',
+cont_nr int NOT NULL auto_increment,
+ver_nr int NOT NULL default '0',
+aufnr int NOT NULL default '0',
 username varchar(50) NOT NULL default '',
-hdl_nr int(11) NOT NULL default '0',
+hdl_nr int NOT NULL default '0',
 eintrag date NOT NULL default '0000-00-00',
 st_klasse varchar(40) NOT NULL default '',
 st_wert varchar(40) NOT NULL default '',
 st_zusatz varchar(40) NOT NULL default '',
 st_bemerkung varchar(255) NOT NULL default '',
 kunden_art varchar(40) NOT NULL default '',
-mcbs_knr int(11) default NULL,
-mcbs_aufnr int(11) NOT NULL default '0',
+mcbs_knr int default NULL,
+mcbs_aufnr int NOT NULL default '0',
 schufa_status char(1) default '?',
 bemerkung text,
 wirknetz text,
-wf_igz int(11) NOT NULL default '0',
+wf_igz int NOT NULL default '0',
 tarifcode varchar(80) default NULL,
 recycle char(1) default NULL,
 sim varchar(30) default NULL,
 mcbs_tpl varchar(30) default NULL,
-emp_nr int(11) NOT NULL default '0',
-laufzeit int(11) default NULL,
+emp_nr int NOT NULL default '0',
+laufzeit int default NULL,
 hdl_name varchar(30) default NULL,
-prov_hdl_nr int(11) NOT NULL default '0',
+prov_hdl_nr int NOT NULL default '0',
 auto_wirknetz varchar(50) default NULL,
 auto_billing varchar(50) default NULL,
 touch timestamp NOT NULL,

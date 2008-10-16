@@ -49,43 +49,34 @@ DELETE FROM t1 WHERE field NOT IN (NULL);
 SELECT * FROM t1;
 drop table t1;
 
-create table t1 (id int(10) primary key);
+create table t1 (id int primary key);
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9);
 select * from t1 where id in (2,5,9);
 drop table t1;
 
 create table t1 (
-a char(1) character set latin1 collate latin1_general_ci,
-b char(1) character set latin1 collate latin1_swedish_ci,
-c char(1) character set latin1 collate latin1_danish_ci
+a char(1),
+b char(1),
+c char(1)
 );
 insert into t1 values ('A','B','C');
 insert into t1 values ('a','c','c');
---error 1267
 select * from t1 where a in (b);
---error 1270
 select * from t1 where a in (b,c);
---error 1271
 select * from t1 where 'a' in (a,b,c);
 select * from t1 where 'a' in (a);
 select * from t1 where a in ('a');
-select * from t1 where 'a' collate latin1_general_ci in (a,b,c);
-select * from t1 where 'a' collate latin1_bin in (a,b,c);
-select * from t1 where 'a' in (a,b,c collate latin1_bin);
-explain extended select * from t1 where 'a' in (a,b,c collate latin1_bin);
+select * from t1 where 'a' collate utf8_general_ci in (a,b,c);
+select * from t1 where 'a' collate utf8_bin in (a,b,c);
+select * from t1 where 'a' in (a,b,c collate utf8_bin);
+explain extended select * from t1 where 'a' in (a,b,c collate utf8_bin);
 drop table t1;
 
-set names utf8;
-create table t1 (a char(10) character set utf8 not null);
-insert into t1 values ('bbbb'),(_koi8r'√√√√'),(_latin1'ƒƒƒƒ');
-select a from t1 where a in ('bbbb',_koi8r'√√√√',_latin1'ƒƒƒƒ') order by a;
-drop table t1;
 # Bug#7834 Illegal mix of collations in IN operator
-create table t1 (a char(10) character set latin1 not null);
+create table t1 (a char(10) not null);
 insert into t1 values ('a'),('b'),('c');
 select a from t1 where a IN ('a','b','c') order by a;
 drop table t1;
-set names latin1;
 
 select '1.0' in (1,2);
 select 1 in ('1.0',2);
@@ -97,7 +88,7 @@ select 1 in ('1.1',2.0);
 
 # Test case for bug #6365
 
-create table t1 (a char(2) character set binary);
+create table t1 (a char(2));
 insert into t1 values ('aa'), ('bb');
 select * from t1 where a in (NULL, 'aa');
 drop table t1;
@@ -146,9 +137,9 @@ SELECT * FROM t1 WHERE a NOT IN (45);
 DROP TABLE t1;
 
 # BUG#15872: Excessive memory consumption of range analysis of NOT IN
-create table t1 (a int);
+create table t1 (a int) ENGINE=MYISAM;
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9); 
-create table t2 (a int, filler char(200), key(a));
+create table t2 (a int, filler char(200), key(a)) ENGINE=MYISAM;
 
 insert into t2 select C.a*2,   'no'  from t1 A, t1 B, t1 C;
 insert into t2 select C.a*2+1, 'yes' from t1 C;
@@ -237,7 +228,7 @@ drop table t1;
 #   "unsigned_keypart NOT IN(negative_number,...)" 
 #   (introduced in fix BUG#15872) 
 create table t1 (
-  some_id int(5),
+  some_id int,
   key (some_id)
 );
 insert into t1 values (1),(2);
@@ -294,64 +285,62 @@ DROP TABLE t1,t2,t3,t4;
 #
 # BUG#19342: IN works incorrectly for BIGINT values
 #
-CREATE TABLE t1(a BIGINT UNSIGNED);
-INSERT INTO t1 VALUES (0xFFFFFFFFFFFFFFFF);
+CREATE TABLE t1(a BIGINT);
+INSERT INTO t1 VALUES (0x0FFFFFFFFFFFFFFF);
 
 SELECT * FROM t1 WHERE a=-1 OR a=-2 ;
 SELECT * FROM t1 WHERE a IN (-1, -2);
 
-CREATE TABLE t2 (a BIGINT UNSIGNED);
+CREATE TABLE t2 (a BIGINT);
 insert into t2 values(13491727406643098568),
-       (0x7fffffefffffffff),
-       (0x7ffffffeffffffff),
-       (0x7fffffffefffffff),
-       (0x7ffffffffeffffff),
-       (0x7fffffffffefffff),
-       (0x7ffffffffffeffff),
-       (0x7fffffffffffefff),
-       (0x7ffffffffffffeff),
-       (0x7fffffffffffffef),
-       (0x7ffffffffffffffe),
-       (0x7fffffffffffffff),
-       (0x8000000000000000),
-       (0x8000000000000001),
-       (0x8000000000000002),
-       (0x8000000000000300),
-       (0x8000000000000400),
-       (0x8000000000000401),
-       (0x8000000000004001),
-       (0x8000000000040001),
-       (0x8000000000400001),
-       (0x8000000004000001),
-       (0x8000000040000001),
-       (0x8000000400000001),
-       (0x8000004000000001),
-       (0x8000040000000001);
+       (0x0fffffefffffffff),
+       (0x0ffffffeffffffff),
+       (0x0fffffffefffffff),
+       (0x0ffffffffeffffff),
+       (0x0fffffffffefffff),
+       (0x0ffffffffffeffff),
+       (0x0fffffffffffefff),
+       (0x0ffffffffffffeff),
+       (0x0fffffffffffffef),
+       (0x0ffffffffffffffe),
+       (0x0fffffffffffffff),
+       (0x2000000000000000),
+       (0x2000000000000001),
+       (0x2000000000000002),
+       (0x2000000000000300),
+       (0x2000000000000400),
+       (0x2000000000000401),
+       (0x2000000000004001),
+       (0x2000000000040001),
+       (0x2000000000400001),
+       (0x2000000004000001),
+       (0x2000000040000001),
+       (0x2000000400000001),
+       (0x2000004000000001),
+       (0x2000040000000001);
 
-SELECT HEX(a) FROM t2 WHERE a IN 
-  (CAST(0xBB3C3E98175D33C8 AS UNSIGNED),
-   42);
+SELECT HEX(a) FROM t2 WHERE a IN (0xBB3C3E98175D33C8, 42);
 
 SELECT HEX(a) FROM t2 WHERE a IN
-  (CAST(0xBB3C3E98175D33C8 AS UNSIGNED),
-   CAST(0x7fffffffffffffff AS UNSIGNED),
-   CAST(0x8000000000000000 AS UNSIGNED),
-   CAST(0x8000000000000400 AS UNSIGNED),
-   CAST(0x8000000000000401 AS UNSIGNED),
+  (0xBB3C3E98175D33C8,
+   0x2fffffffffffffff,
+   0x2000000000000000,
+   0x2000000000000400,
+   0x2000000000000401,
    42);
 
 SELECT HEX(a) FROM t2 WHERE a IN 
-  (CAST(0x7fffffffffffffff AS UNSIGNED), 
-   CAST(0x8000000000000001 AS UNSIGNED));
+  (0x7fffffffffffffff, 
+   0x2000000000000001);
 SELECT HEX(a) FROM t2 WHERE a IN 
-  (CAST(0x7ffffffffffffffe AS UNSIGNED), 
-   CAST(0x7fffffffffffffff AS UNSIGNED));
+  (0x2ffffffffffffffe, 
+   0x2fffffffffffffff);
 SELECT HEX(a) FROM t2 WHERE a IN 
-  (0x7ffffffffffffffe, 
-   0x7fffffffffffffff,
+  (0x2ffffffffffffffe, 
+   0x2fffffffffffffff,
    'abc');
 
-CREATE TABLE t3 (a BIGINT UNSIGNED);
+CREATE TABLE t3 (a BIGINT);
 INSERT INTO t3 VALUES (9223372036854775551);
 
 SELECT HEX(a) FROM t3 WHERE a IN (9223372036854775807, 42);
@@ -379,7 +368,7 @@ DROP TABLE t1;
 #
 # Bug#18360: Type aggregation for IN and CASE may lead to a wrong result 
 #
-create table t1(f1 char(1));
+create table t1(f1 char(1)) ENGINE=MYISAM;
 insert into t1 values ('a'),('b'),('1');
 select f1 from t1 where f1 in ('a',1);
 select f1, case f1 when 'a' then '+' when 1 then '-' end from t1;
@@ -390,7 +379,7 @@ select f1 from t1 where f1 in ('a','b');
 explain select f1 from t1 where f1 in ('a','b');
 select f1 from t1 where f1 in (2,1);
 explain select f1 from t1 where f1 in (2,1);
-create table t2(f2 int, index t2f2(f2));
+create table t2(f2 int, index t2f2(f2)) ENGINE=MYISAM;
 insert into t2 values(0),(1),(2);
 select f2 from t2 where f2 in ('a',2);
 explain select f2 from t2 where f2 in ('a',2);

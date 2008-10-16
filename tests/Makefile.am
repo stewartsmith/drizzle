@@ -155,12 +155,26 @@ test-drizzle:
 	drizzleslap \
         endspace \
         flush2 \
+	func_compress \
+	func_concat \
+	func_crc32 \
+	func_date_add \
+	func_default \
         func_equal \
+	func_gconcat \
+        func_group \
         func_group_innodb \
+	func_if \
+	func_in \
         func_isnull \
         func_like \
 	func_math \
-	func_compress \
+	func_misc \
+	func_op \
+	func_sapdb \
+	func_str \
+	func_time \
+	func_weight_string \
         greedy_optimizer \
         group_min_max_innodb \
         heap_auto_increment \
@@ -176,13 +190,17 @@ test-drizzle:
         join_nested \
         join_outer \
         join_outer_innodb \
+	key \
         key_diff \
         key_primary \
         keywords \
         lock \
         limit \
         lock_tables_lost_commit \
-        overflow \
+	order_by \
+	order_fill_sortbuf \
+	overflow \
+	pool_of_threads \
         rollback \
         select \
         subselect \
@@ -191,8 +209,18 @@ test-drizzle:
         sum_distinct \
         tablelock \
 	type_blob \
+	type_date \
+	type_datetime \
+	type_float \
         type_newdecimal \
+	type_ranges \
+	type_time \
+	type_timestamp \
+	type_uint \
 	type_varchar \
         unsafe_binlog_innodb \
         update \
         variables-notembedded
+	  $(PERL) -I$(top_srcdir)/tests/lib \
+		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+		--suite=vcol

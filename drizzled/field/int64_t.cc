@@ -32,7 +32,7 @@ int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * con
   char *end;
   uint64_t tmp;
 
-  tmp= cs->cset->strntoull10rnd(cs,from,len,unsigned_flag,&end,&error);
+  tmp= cs->cset->strntoull10rnd(cs, from, len, false, &end,&error);
   if (error == MY_ERRNO_ERANGE)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
@@ -61,36 +61,20 @@ int Field_int64_t::store(double nr)
   int64_t res;
 
   nr= rint(nr);
-  if (unsigned_flag)
+
+  if (nr <= (double) INT64_MIN)
   {
-    if (nr < 0)
-    {
-      res=0;
-      error= 1;
-    }
-    else if (nr >= (double) UINT64_MAX)
-    {
-      res= ~(int64_t) 0;
-      error= 1;
-    }
-    else
-      res=(int64_t) (uint64_t) nr;
+    res= INT64_MIN;
+    error= (nr < (double) INT64_MIN);
+  }
+  else if (nr >= (double) (uint64_t) INT64_MAX)
+  {
+    res= INT64_MAX;
+    error= (nr > (double) INT64_MAX);
   }
   else
-  {
-    if (nr <= (double) INT64_MIN)
-    {
-      res= INT64_MIN;
-      error= (nr < (double) INT64_MIN);
-    }
-    else if (nr >= (double) (uint64_t) INT64_MAX)
-    {
-      res= INT64_MAX;
-      error= (nr > (double) INT64_MAX);
-    }
-    else
-      res=(int64_t) nr;
-  }
+    res=(int64_t) nr;
+
   if (error)
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
@@ -106,23 +90,9 @@ int Field_int64_t::store(double nr)
 }
 
 
-int Field_int64_t::store(int64_t nr, bool unsigned_val)
+int Field_int64_t::store(int64_t nr, bool unsigned_val __attribute__((unused)))
 {
   int error= 0;
-
-  if (nr < 0)                                   // Only possible error
-  {
-    /*
-      if field is unsigned and value is signed (< 0) or
-      if field is signed and value is unsigned we have an overflow
-    */
-    if (unsigned_flag != unsigned_val)
-    {
-      nr= unsigned_flag ? (uint64_t) 0 : (uint64_t) INT64_MAX;
-      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-      error= 1;
-    }
-  }
 
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -148,11 +118,6 @@ double Field_int64_t::val_real(void)
 #endif
     int64_tget(j,ptr);
   /* The following is open coded to avoid a bug in gcc 3.3 */
-  if (unsigned_flag)
-  {
-    uint64_t tmp= (uint64_t) j;
-    return uint64_t2double(tmp);
-  }
   return (double) j;
 }
 
@@ -186,8 +151,7 @@ String *Field_int64_t::val_str(String *val_buffer,
 #endif
     int64_tget(j,ptr);
 
-  length=(uint) (cs->cset->int64_t10_to_str)(cs,to,mlength,
-					unsigned_flag ? 10 : -10, j);
+  length=(uint) (cs->cset->int64_t10_to_str)(cs,to,mlength, -10, j);
   val_buffer->length(length);
 
   return val_buffer;
@@ -196,7 +160,7 @@ String *Field_int64_t::val_str(String *val_buffer,
 
 bool Field_int64_t::send_binary(Protocol *protocol)
 {
-  return protocol->store_int64_t(Field_int64_t::val_int(), unsigned_flag);
+  return protocol->store_int64_t(Field_int64_t::val_int(), false);
 }
 
 
@@ -215,9 +179,6 @@ int Field_int64_t::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
     int64_tget(a,a_ptr);
     int64_tget(b,b_ptr);
   }
-  if (unsigned_flag)
-    return ((uint64_t) a < (uint64_t) b) ? -1 :
-    ((uint64_t) a > (uint64_t) b) ? 1 : 0;
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
@@ -226,10 +187,7 @@ void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__(
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
   {
-    if (unsigned_flag)
-      to[0] = ptr[0];
-    else
-      to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
+    to[0] = (char) (ptr[0] ^ 128);		/* Revers signbit */
     to[1]   = ptr[1];
     to[2]   = ptr[2];
     to[3]   = ptr[3];
@@ -241,10 +199,7 @@ void Field_int64_t::sort_string(unsigned char *to,uint32_t length __attribute__(
   else
 #endif
   {
-    if (unsigned_flag)
-      to[0] = ptr[7];
-    else
-      to[0] = (char) (ptr[7] ^ 128);		/* Revers signbit */
+    to[0] = (char) (ptr[7] ^ 128);		/* Revers signbit */
     to[1]   = ptr[6];
     to[2]   = ptr[5];
     to[3]   = ptr[4];
@@ -260,5 +215,4 @@ void Field_int64_t::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
-  add_unsigned(res);
 }

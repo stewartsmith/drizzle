@@ -32,10 +32,8 @@ Field_num::Field_num(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *nul
                      uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg),
-  dec(dec_arg),decimal_precision(zero_arg),unsigned_flag(unsigned_arg)
+  dec(dec_arg),decimal_precision(zero_arg), unsigned_flag(unsigned_arg)
 {
-  if (unsigned_flag)
-    flags|=UNSIGNED_FLAG;
 }
 
 
@@ -110,37 +108,24 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
 */
 
 bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
-                        int64_t *rnd, uint64_t unsigned_max,
+                        int64_t *rnd, uint64_t unsigned_max __attribute__((unused)),
                         int64_t signed_min, int64_t signed_max)
 {
   char *end;
   int error;
 
-  *rnd= (int64_t) cs->cset->strntoull10rnd(cs, from, len,
-                                            unsigned_flag, &end,
-                                            &error);
-  if (unsigned_flag)
+  *rnd= (int64_t) cs->cset->strntoull10rnd(cs, from, len, false, &end, &error);
+  if (*rnd < signed_min)
   {
+    *rnd= signed_min;
+    goto out_of_range;
+  }
+  else if (*rnd > signed_max)
+  {
+    *rnd= signed_max;
+    goto out_of_range;
+  }
 
-    if ((((uint64_t) *rnd > unsigned_max) && (*rnd= (int64_t) unsigned_max)) ||
-        error == MY_ERRNO_ERANGE)
-    {
-      goto out_of_range;
-    }
-  }
-  else
-  {
-    if (*rnd < signed_min)
-    {
-      *rnd= signed_min;
-      goto out_of_range;
-    }
-    else if (*rnd > signed_max)
-    {
-      *rnd= signed_max;
-      goto out_of_range;
-    }
-  }
   if (table->in_use->count_cuted_fields &&
       check_int(cs, from, len, end, error))
     return 1;
@@ -149,12 +134,6 @@ bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_
 out_of_range:
   set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   return 1;
-}
-
-void Field_num::add_unsigned(String &res) const
-{
-  if (unsigned_flag)
-    res.append(STRING_WITH_LEN(" unsigned"));
 }
 
 /**
@@ -174,8 +153,8 @@ void Field_num::add_unsigned(String &res) const
 int Field_num::store_decimal(const my_decimal *val)
 {
   int err= 0;
-  int64_t i= convert_decimal2int64_t(val, unsigned_flag, &err);
-  return test(err | store(i, unsigned_flag));
+  int64_t i= convert_decimal2int64_t(val, false, &err);
+  return test(err | store(i, false));
 }
 
 /**
@@ -196,7 +175,7 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 {
   assert(result_type() == INT_RESULT);
   int64_t nr= val_int();
-  int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
+  int2my_decimal(E_DEC_FATAL_ERROR, nr, false, decimal_value);
   return decimal_value;
 }
 
@@ -217,8 +196,7 @@ bool Field_num::eq_def(Field *field)
     return 0;
   Field_num *from_num= (Field_num*) field;
 
-  if (unsigned_flag != from_num->unsigned_flag ||
-      dec != from_num->dec)
+  if (dec != from_num->dec)
     return 0;
   return 1;
 }

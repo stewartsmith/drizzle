@@ -1,5 +1,12 @@
 #
 # Check that we haven't any strange new tables or databases
 #
+# PBXT drop the pbxt database if it exits
+--disable_warnings
+--disable_query_log
+drop database if exists pbxt;
+--enable_query_log
+--enable_warnings
+
 show databases;
 show tables in mysql;

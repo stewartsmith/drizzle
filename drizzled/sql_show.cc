@@ -715,9 +715,25 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     else
       type.set_charset(system_charset_info);
 
+    if (field->vcol_info)
+    {
+      packet->append(STRING_WITH_LEN("VIRTUAL "));
+    }
+
     field->sql_type(type);
     packet->append(type.ptr(), type.length(), system_charset_info);
 
+    if (field->vcol_info)
+    {
+      packet->append(STRING_WITH_LEN(" AS ("));
+      packet->append(field->vcol_info->expr_str.str,
+                     field->vcol_info->expr_str.length,
+                     system_charset_info);
+      packet->append(STRING_WITH_LEN(")"));
+      if (field->is_stored)
+        packet->append(STRING_WITH_LEN(" STORED"));
+    }
+    
     if (field->has_charset())
     {
       if (field->charset() != share->table_charset)
@@ -764,7 +780,8 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
           packet->append(STRING_WITH_LEN(" DYNAMIC */"));
       }
     }
-    if (get_field_default_value(thd, table->timestamp_field,
+    if (!field->vcol_info &&
+        get_field_default_value(thd, table->timestamp_field,
                                 field, &def_value, 1))
     {
       packet->append(STRING_WITH_LEN(" DEFAULT "));
@@ -3018,7 +3035,6 @@ void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs
   case DRIZZLE_TYPE_NEWDECIMAL:
     field_length= ((Field_new_decimal*) field)->precision;
     break;
-  case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     field_length= field->max_display_length() - 1;
@@ -3170,7 +3186,8 @@ static int get_schema_column_record(THD *thd, TableList *tables,
         field->unireg_check != Field::TIMESTAMP_DN_FIELD)
       table->field[16]->store(STRING_WITH_LEN("on update CURRENT_TIMESTAMP"),
                               cs);
-
+    if (field->vcol_info)
+          table->field[16]->store(STRING_WITH_LEN("VIRTUAL"), cs);
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
       enum column_format_type column_format= (enum column_format_type)
@@ -3842,7 +3859,6 @@ Table *create_schema_table(THD *thd, TableList *table_list)
   for (; fields_info->field_name; fields_info++)
   {
     switch (fields_info->field_type) {
-    case DRIZZLE_TYPE_TINY:
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
       if (!(item= new Item_return_int(fields_info->field_name,

@@ -301,6 +301,7 @@ static int rr_quick(READ_RECORD *info)
       break;
     }
   }
+  update_virtual_fields_marked_for_write(info->table);
   return tmp;
 }
 
@@ -373,6 +374,8 @@ int rr_sequential(READ_RECORD *info)
       break;
     }
   }
+  if (!tmp)
+    update_virtual_fields_marked_for_write(info->table);
   return tmp;
 }
 

@@ -946,7 +946,7 @@ void Item_sum_distinct::fix_length_and_dec()
     calculations. The range of int64 is enough to hold sum 2^32 distinct
     integers each <= 2^32.
   */
-  if (table_field_type >= DRIZZLE_TYPE_TINY && table_field_type <= DRIZZLE_TYPE_LONG)
+  if (table_field_type == DRIZZLE_TYPE_LONG)
   {
     val.traits= Hybrid_type_traits_fast_decimal::instance();
     break;
@@ -1579,8 +1579,6 @@ double Item_sum_hybrid::val_real()
 			     &end_not_used, &err_not_used) : 0.0);
   }
   case INT_RESULT:
-    if (unsigned_flag)
-      return uint64_t2double(sum_int);
     return (double) sum_int;
   case DECIMAL_RESULT:
     my_decimal2double(E_DEC_FATAL_ERROR, &sum_dec, &sum);

@@ -184,6 +184,58 @@ bool foreign_key_prefix(Key *a, Key *b)
 }
 
 
+/*
+  Check if the foreign key options are compatible with columns
+  on which the FK is created.
+
+  RETURN
+    0   Key valid
+    1   Key invalid
+*/
+bool Foreign_key::validate(List<Create_field> &table_fields)
+{
+  Create_field  *sql_field;
+  Key_part_spec *column;
+  List_iterator<Key_part_spec> cols(columns);
+  List_iterator<Create_field> it(table_fields);
+  while ((column= cols++))
+  {
+    it.rewind();
+    while ((sql_field= it++) &&
+           my_strcasecmp(system_charset_info,
+                         column->field_name.str,
+                         sql_field->field_name)) {}
+    if (!sql_field)
+    {
+      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
+      return true;
+    }
+    if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
+    {
+      if (delete_opt == FK_OPTION_SET_NULL)
+      {
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+                 "ON DELETE SET NULL");
+        return true;
+      }
+      if (update_opt == FK_OPTION_SET_NULL)
+      {
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+                 "ON UPDATE SET NULL");
+        return true;
+      }
+      if (update_opt == FK_OPTION_CASCADE)
+      {
+        my_error(ER_WRONG_FK_OPTION_FOR_VIRTUAL_COLUMN, MYF(0), 
+                 "ON UPDATE CASCADE");
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
 /****************************************************************************
 ** Thread specific functions
 ****************************************************************************/
@@ -202,14 +254,9 @@ extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   File fd = create_temp_file(filename, mysql_tmpdir, prefix,
-                             O_CREAT | O_EXCL | O_RDWR | O_TEMPORARY,
+                             O_CREAT | O_EXCL | O_RDWR,
                              MYF(MY_WME));
   if (fd >= 0) {
-    /*
-      This can be removed once the following bug is fixed:
-      Bug #28903  create_temp_file() doesn't honor O_TEMPORARY option
-                  (file not removed) (Unix)
-    */
     unlink(filename);
   }
 
@@ -427,7 +474,6 @@ THD::THD()
    rand_used(0),
    time_zone_used(0),
    in_lock_tables(0),
-   bootstrap(0),
    derived_tables_processing(false),
    m_lip(NULL)
 {
@@ -551,25 +597,25 @@ void THD::pop_internal_handler()
 }
 
 extern "C"
-void *thd_alloc(DRIZZLE_THD thd, unsigned int size)
+void *thd_alloc(THD *thd, unsigned int size)
 {
   return thd->alloc(size);
 }
 
 extern "C"
-void *thd_calloc(DRIZZLE_THD thd, unsigned int size)
+void *thd_calloc(THD *thd, unsigned int size)
 {
   return thd->calloc(size);
 }
 
 extern "C"
-char *thd_strdup(DRIZZLE_THD thd, const char *str)
+char *thd_strdup(THD *thd, const char *str)
 {
   return thd->strdup(str);
 }
 
 extern "C"
-char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size)
+char *thd_strmake(THD *thd, const char *str, unsigned int size)
 {
   return thd->strmake(str, size);
 }
@@ -584,13 +630,13 @@ LEX_STRING *thd_make_lex_string(THD *thd, LEX_STRING *lex_str,
 }
 
 extern "C"
-void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size)
+void *thd_memdup(THD *thd, const void* str, unsigned int size)
 {
   return thd->memdup(str, size);
 }
 
 extern "C"
-void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid)
+void thd_get_xid(const THD *thd, DRIZZLE_XID *xid)
 {
   *xid = *(DRIZZLE_XID *) &thd->transaction.xid_state.xid;
 }
@@ -850,8 +896,8 @@ bool THD::store_globals()
   */
   assert(thread_stack);
 
-  if (my_pthread_setspecific_ptr(THR_THD,  this) ||
-      my_pthread_setspecific_ptr(THR_MALLOC, &mem_root))
+  if (pthread_setspecific(THR_THD,  this) ||
+      pthread_setspecific(THR_MALLOC, &mem_root))
     return 1;
   mysys_var=my_thread_var;
   /*
@@ -2180,7 +2226,7 @@ void THD::restore_backup_open_tables_state(Open_tables_state *backup)
   @retval 0 the user thread is active
   @retval 1 the user thread has been killed
 */
-extern "C" int thd_killed(const DRIZZLE_THD thd)
+extern "C" int thd_killed(const THD *thd)
 {
   return(thd->killed);
 }
@@ -2190,39 +2236,39 @@ extern "C" int thd_killed(const DRIZZLE_THD thd)
   @param thd user thread
   @return thread id
 */
-extern "C" unsigned long thd_get_thread_id(const DRIZZLE_THD thd)
+extern "C" unsigned long thd_get_thread_id(const THD *thd)
 {
   return((unsigned long)thd->thread_id);
 }
 
 
 #ifdef INNODB_COMPATIBILITY_HOOKS
-extern "C" const struct charset_info_st *thd_charset(DRIZZLE_THD thd)
+extern "C" const struct charset_info_st *thd_charset(THD *thd)
 {
   return(thd->charset());
 }
 
-extern "C" char **thd_query(DRIZZLE_THD thd)
+extern "C" char **thd_query(THD *thd)
 {
   return(&thd->query);
 }
 
-extern "C" int thd_slave_thread(const DRIZZLE_THD thd)
+extern "C" int thd_slave_thread(const THD *thd)
 {
   return(thd->slave_thread);
 }
 
-extern "C" int thd_non_transactional_update(const DRIZZLE_THD thd)
+extern "C" int thd_non_transactional_update(const THD *thd)
 {
   return(thd->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int thd_binlog_format(const DRIZZLE_THD thd)
+extern "C" int thd_binlog_format(const THD *thd)
 {
   return (int) thd->variables.binlog_format;
 }
 
-extern "C" void thd_mark_transaction_to_rollback(DRIZZLE_THD thd, bool all)
+extern "C" void thd_mark_transaction_to_rollback(THD *thd, bool all)
 {
   mark_transaction_to_rollback(thd, all);
 }
@@ -2730,7 +2776,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
       char warn_buf[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
                ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
-      sql_print_warning(warn_buf);
+      sql_print_warning("%s",warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
     }
   }

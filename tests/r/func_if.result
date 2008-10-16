@@ -1,8 +1,8 @@
 drop table if exists t1;
-select IF(0,"ERROR","this"),IF(1,"is","ERROR"),IF(NULL,"ERROR","a"),IF(1,2,3)|0,IF(1,2.0,3.0)+0 ;
-IF(0,"ERROR","this")	IF(1,"is","ERROR")	IF(NULL,"ERROR","a")	IF(1,2,3)|0	IF(1,2.0,3.0)+0
-this	is	a	2	2.0
-CREATE TABLE t1 (st varchar(255) NOT NULL, u int(11) NOT NULL) ENGINE=MyISAM;
+select IF(0,"ERROR","this"),IF(1,"is","ERROR"),IF(NULL,"ERROR","a"),IF(1,2.0,3.0)+0 ;
+IF(0,"ERROR","this")	IF(1,"is","ERROR")	IF(NULL,"ERROR","a")	IF(1,2.0,3.0)+0
+this	is	a	2.0
+CREATE TABLE t1 (st varchar(255) NOT NULL, u int NOT NULL) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('a',1),('A',1),('aa',1),('AA',1),('a',1),('aaa',0),('BBB',0);
 select if(1,st,st) s from t1 order by s;
 s
@@ -43,7 +43,7 @@ explain extended select if(u=1,st,binary st) s from t1 where st like "%a%" order
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	7	100.00	Using where; Using filesort
 Warnings:
-Note	1003	select if(("test"."t1"."u" = 1),"test"."t1"."st",cast("test"."t1"."st" as char charset binary)) AS "s" from "test"."t1" where ("test"."t1"."st" like '%a%') order by if(("test"."t1"."u" = 1),"test"."t1"."st",cast("test"."t1"."st" as char charset binary))
+Note	1003	select if((`test`.`t1`.`u` = 1),`test`.`t1`.`st`,cast(`test`.`t1`.`st` as char charset binary)) AS `s` from `test`.`t1` where (`test`.`t1`.`st` like '%a%') order by if((`test`.`t1`.`u` = 1),`test`.`t1`.`st`,cast(`test`.`t1`.`st` as char charset binary))
 select nullif(u, 1) from t1;
 nullif(u, 1)
 NULL
@@ -57,7 +57,7 @@ explain extended select nullif(u, 1) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	7	100.00	
 Warnings:
-Note	1003	select nullif("test"."t1"."u",1) AS "nullif(u, 1)" from "test"."t1"
+Note	1003	select nullif(`test`.`t1`.`u`,1) AS `nullif(u, 1)` from `test`.`t1`
 drop table t1;
 select nullif(1,'test');
 nullif(1,'test')
@@ -92,8 +92,8 @@ SELECT NULLIF(5,5) IS NULL, NULLIF(5,5) IS NOT NULL;
 NULLIF(5,5) IS NULL	NULLIF(5,5) IS NOT NULL
 1	0
 CREATE TABLE `t1` (
-`id` int(11) NOT NULL ,
-`date` int(10) default NULL,
+`id` int NOT NULL ,
+`date` int default NULL,
 `text` varchar(32) NOT NULL
 );
 INSERT INTO t1 VALUES (1,1110000000,'Day 1'),(2,1111000000,'Day 2'),(3,1112000000,'Day 3');

@@ -666,7 +666,23 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   Table *table= (Table *) arg;
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
+  if (field->vcol_info && field->vcol_info->expr_item)
+    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map, 
+                                             1, arg);
   return 0;
+}
+
+/*
+  Mark field in bitmap supplied as *arg
+
+*/
+
+bool Item_field::register_field_in_bitmap(unsigned char *arg)
+{
+  MY_BITMAP *bitmap= (MY_BITMAP *) arg;
+  assert(bitmap);
+  bitmap_set_bit(bitmap, field->field_index);
+  return false;
 }
 
 
@@ -3903,8 +3919,6 @@ void Item::init_make_field(Send_field *tmp_field,
   tmp_field->type=              field_type_arg;
   tmp_field->length=max_length;
   tmp_field->decimals=decimals;
-  if (unsigned_flag)
-    tmp_field->flags |= UNSIGNED_FLAG;
 }
 
 void Item::make_field(Send_field *tmp_field)
@@ -4087,10 +4101,6 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __a
     field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
                                  Field::NONE, name, decimals, 0,
                                  unsigned_flag);
-    break;
-  case DRIZZLE_TYPE_TINY:
-    field= new Field_tiny((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
     field= new Field_long((unsigned char*) 0, max_length, null_ptr, 0, Field::NONE,
@@ -4655,14 +4665,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     String *res;
     if ((res=val_str(buffer)))
       result= protocol->store(res->ptr(),res->length(),res->charset());
-    break;
-  }
-  case DRIZZLE_TYPE_TINY:
-  {
-    int64_t nr;
-    nr= val_int();
-    if (!null_value)
-      result= protocol->store_tiny(nr);
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -6342,7 +6344,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_NEWDECIMAL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_TINY:
     return 4;
   case DRIZZLE_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;

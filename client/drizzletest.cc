@@ -44,6 +44,7 @@
 #include <queue>
 #include <map>
 #include <string>
+#include <vector>
 
 #include <pcrecpp.h>
 
@@ -227,7 +228,7 @@ enum enum_commands {
   Q_DISPLAY_VERTICAL_RESULTS, Q_DISPLAY_HORIZONTAL_RESULTS,
   Q_QUERY_VERTICAL, Q_QUERY_HORIZONTAL, Q_SORTED_RESULT,
   Q_START_TIMER, Q_END_TIMER,
-  Q_CHARACTER_SET, Q_DISABLE_PS_PROTOCOL, Q_ENABLE_PS_PROTOCOL,
+  Q_CHARACTER_SET,
   Q_DISABLE_RECONNECT, Q_ENABLE_RECONNECT,
   Q_IF,
   Q_DISABLE_PARSING, Q_ENABLE_PARSING,
@@ -1454,7 +1455,7 @@ static void check_result(string* ds)
     ds->erase(); /* Don't create a .log file */
 
     show_diff(NULL, result_file_name, reject_file);
-    die(mess);
+    die("%s",mess);
     break;
   }
   default: /* impossible */
@@ -6401,7 +6402,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     return 1;
   }
   strcpy(new_buf, new_str);
-  buf_p= &new_buf;
+  *buf_p= new_buf;
 
   return 0;
 }
@@ -7101,7 +7102,7 @@ void replace_append_uint(string *ds, uint val)
 
 void append_sorted(string* ds, string *ds_input)
 {
-  priority_queue<string> lines;
+  priority_queue<string, vector<string>, greater<string> > lines;
 
   if (ds_input->empty())
     return;  /* No input */
@@ -7112,7 +7113,7 @@ void append_sorted(string* ds, string *ds_input)
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
-  ds->append(ds_input->substr(0, eol_pos));
+  ds->append(ds_input->substr(0, eol_pos+1));
 
   unsigned long start_pos= eol_pos+1;
 
@@ -7121,7 +7122,7 @@ void append_sorted(string* ds, string *ds_input)
 
     eol_pos= ds_input->find_first_of('\n', start_pos);
     /* Find end of line */
-    lines.push(ds_input->substr(start_pos, eol_pos-start_pos));
+    lines.push(ds_input->substr(start_pos, eol_pos-start_pos+1));
     start_pos= eol_pos+1;
 
   } while ( eol_pos != string::npos);

@@ -839,7 +839,8 @@ int prepare_create_field(Create_field *sql_field,
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   }
-  if (!(sql_field->flags & NOT_NULL_FLAG))
+  if (!(sql_field->flags & NOT_NULL_FLAG) ||
+      (sql_field->vcol_info)) /* Make virtual columns always allow NULL values */
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
     sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
@@ -1093,6 +1094,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             null_fields--;
 	  sql_field->flags=		dup_field->flags;
           sql_field->interval=          dup_field->interval;
+          sql_field->vcol_info=         dup_field->vcol_info;
+          sql_field->is_stored=      dup_field->is_stored;
 	  it2.remove();			// Remove first (create) definition
 	  select_field_pos--;
 	  break;
@@ -1124,7 +1127,23 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
-    record_offset+= sql_field->pack_length;
+    /*
+          For now skip fields that are not physically stored in the database
+          (virtual fields) and update their offset later 
+          (see the next loop).
+        */
+    if (sql_field->is_stored)
+      record_offset+= sql_field->pack_length;
+  }
+  /* Update virtual fields' offset */
+  it.rewind();
+  while ((sql_field=it++))
+  {
+    if (not sql_field->is_stored)
+    {
+      sql_field->offset= record_offset;
+      record_offset+= sql_field->pack_length;
+    }
   }
   if (timestamps_with_niladic > 1)
   {
@@ -1171,6 +1190,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key->type == Key::FOREIGN_KEY)
     {
       fk_key_count++;
+      if (((Foreign_key *)key)->validate(alter_info->create_list))
+        return true;
       Foreign_key *fk_key= (Foreign_key*) key;
       if (fk_key->ref_columns.elements &&
 	  fk_key->ref_columns.elements != fk_key->columns.elements)
@@ -1360,6 +1381,17 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	    return(true);
 	  }
 	}
+        if (not sql_field->is_stored)
+        {
+          /* Key fields must always be physically stored. */
+          my_error(ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN, MYF(0));
+          return(true);
+        }
+        if (key->type == Key::PRIMARY && sql_field->vcol_info)
+        {
+          my_error(ER_PRIMARY_KEY_BASED_ON_VIRTUAL_COLUMN, MYF(0));
+          return(true);
+        }
 	if (!(sql_field->flags & NOT_NULL_FLAG))
 	{
 	  if (key->type == Key::PRIMARY)
@@ -1638,43 +1670,6 @@ static bool prepare_blob_field(THD *thd __attribute__((unused)),
 
 
 /*
-  Preparation of Create_field for SP function return values.
-  Based on code used in the inner loop of mysql_prepare_create_table()
-  above.
-
-  SYNOPSIS
-    sp_prepare_create_field()
-    thd			Thread object
-    sql_field		Field to prepare
-
-  DESCRIPTION
-    Prepares the field structures for field creation.
-
-*/
-
-void sp_prepare_create_field(THD *thd, Create_field *sql_field)
-{
-  if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
-  {
-    uint32_t field_length, dummy;
-    /* DRIZZLE_TYPE_ENUM */
-    {
-      calculate_interval_lengths(sql_field->charset,
-                                 sql_field->interval,
-                                 &field_length, &dummy);
-      sql_field->length= field_length;
-    }
-    set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
-  }
-
-  sql_field->create_length_to_internal_length();
-  assert(sql_field->def == 0);
-  /* Can't go wrong as sql_field->def is not defined */
-  (void) prepare_blob_field(thd, sql_field);
-}
-
-
-/*
   Create a table
 
   SYNOPSIS
@@ -1712,7 +1707,8 @@ bool mysql_create_table_no_lock(THD *thd,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count)
+                                uint32_t select_field_count,
+                                bool lock_open_lock)
 {
   char		path[FN_REFLEN];
   uint32_t          path_length;
@@ -1787,7 +1783,8 @@ bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  if (lock_open_lock)
+    pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1903,7 +1900,8 @@ bool mysql_create_table_no_lock(THD *thd,
     write_bin_log(thd, true, thd->query, thd->query_length);
   error= false;
 unlock_and_end:
-  pthread_mutex_unlock(&LOCK_open);
+  if (lock_open_lock)
+    pthread_mutex_unlock(&LOCK_open);
 
 err:
   thd->set_proc_info("After create");
@@ -1979,7 +1977,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
   result= mysql_create_table_no_lock(thd, db, table_name, create_info,
                                      alter_info,
                                      internal_tmp_table,
-                                     select_field_count);
+                                     select_field_count, true);
 
 unlock:
   if (name_lock)
@@ -2666,7 +2664,7 @@ send_result_message:
           const char *err_msg= thd->main_da.message();
           if (!thd->vio_ok())
           {
-            sql_print_error(err_msg);
+            sql_print_error("%s",err_msg);
           }
           else
           {
@@ -3406,6 +3404,14 @@ compare_tables(THD *thd,
       if (!(table_changes_local= field->is_equal(new_field)))
         *alter_flags|= HA_ALTER_COLUMN_TYPE;
 
+      /*
+        Check if the altered column is a stored virtual field.
+        TODO: Mark such a column with an alter flag only if
+        the expression functions are not equal. 
+      */
+      if (field->is_stored && field->vcol_info)
+        *alter_flags|= HA_ALTER_STORED_VCOL;
+
       /* Check if field was renamed */
       field->flags&= ~FIELD_IS_RENAMED;
       if (my_strcasecmp(system_charset_info,
@@ -4043,6 +4049,13 @@ mysql_prepare_alter_table(THD *thd, Table *table,
     if (def)
     {						// Field is changed
       def->field=field;
+      if (field->is_stored != def->is_stored)
+      {
+        my_error(ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN,
+                 MYF(0),
+                 "Changing the STORED status");
+        goto err;
+      }
       if (!def->after)
 	{
 	new_create_list.push_back(def);
@@ -4260,6 +4273,9 @@ mysql_prepare_alter_table(THD *thd, Table *table,
     Key *key;
     while ((key=key_it++))			// Add new keys
     {
+      if (key->type == Key::FOREIGN_KEY &&
+          ((Foreign_key *)key)->validate(new_create_list))
+        goto err;
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
       if (key->name.str &&
@@ -5212,6 +5228,7 @@ copy_data_between_tables(Table *from,Table *to,
       copy_ptr->do_copy(copy_ptr);
     }
     prev_insert_id= to->file->next_insert_id;
+    update_virtual_fields_marked_for_write(to, false);
     error=to->file->ha_write_row(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)

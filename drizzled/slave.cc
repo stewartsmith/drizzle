@@ -741,7 +741,7 @@ static bool check_io_slave_killed(THD *thd, Master_info *mi, const char *info)
   if (io_slave_killed(thd, mi))
   {
     if (info && global_system_variables.log_warnings)
-      sql_print_information(info);
+      sql_print_information("%s",info);
     return true;
   }
   return false;
@@ -1013,9 +1013,9 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
 err:
   if (err_msg.length() != 0)
   {
-    sql_print_error(err_msg.ptr());
+    sql_print_error("%s",err_msg.ptr());
     assert(err_code != 0);
-    mi->report(ERROR_LEVEL, err_code, err_msg.ptr());
+    mi->report(ERROR_LEVEL, err_code, "%s",err_msg.ptr());
     return(1);
   }
 
@@ -1123,7 +1123,7 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
   pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
   pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
-  int4store(pos, rpl_recovery_rank);    pos+= 4;
+  int4store(pos, 0);    pos+= 4;
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
 
@@ -1358,7 +1358,6 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
   thd->variables.max_allowed_packet= global_system_variables.max_allowed_packet
     + MAX_LOG_EVENT_HEADER;  /* note, incr over the global not session var */
   thd->slave_thread = 1;
-  thd->enable_slow_log= opt_log_slow_slave_statements;
   set_slave_thread_options(thd);
   thd->client_capabilities = CLIENT_LOCAL_FILES;
   pthread_mutex_lock(&LOCK_thread_count);
@@ -1902,13 +1901,13 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
     }
     else
     {
-      sql_print_information(buf);
+      sql_print_information("%s",buf);
     }
   }
   if (safe_reconnect(thd, drizzle, mi, 1) || io_slave_killed(thd, mi))
   {
     if (global_system_variables.log_warnings)
-      sql_print_information(_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
+      sql_print_information("%s",_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
     return 1;
   }
   return 0;
@@ -2354,7 +2353,7 @@ pthread_handler_t handle_slave_sql(void *arg)
 
           if (last_errno == 0)
           {
-            rli->report(ERROR_LEVEL, thd->main_da.sql_errno(), errmsg);
+            rli->report(ERROR_LEVEL, thd->main_da.sql_errno(), "%s", errmsg);
           }
           else if (last_errno != thd->main_da.sql_errno())
           {

@@ -30,7 +30,6 @@ extern "C" {
 #endif
 #include <mysys/my_handler.h>
 #include <mysys/iocache.h>
-#include <drizzled/plugin.h>
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY
