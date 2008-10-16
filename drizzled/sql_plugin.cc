@@ -42,7 +42,10 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("UDA") },
   { C_STRING_WITH_LEN("AUDIT") },
   { C_STRING_WITH_LEN("LOGGER") },
-  { C_STRING_WITH_LEN("AUTH") }
+  { C_STRING_WITH_LEN("ERRMSG") },
+  { C_STRING_WITH_LEN("AUTH") },
+  { C_STRING_WITH_LEN("CONFIG") },
+  { C_STRING_WITH_LEN("QCACHE") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
@@ -65,6 +68,7 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   logging_initializer,  /* Logger */
+  errmsg_initializer,  /* Error Messages */
   authentication_initializer  /* Auth */
 };
 
@@ -77,6 +81,7 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   logging_finalizer,  /* Logger */
+  errmsg_finalizer,  /* Logger */
   authentication_finalizer  /* Auth */
 };
 

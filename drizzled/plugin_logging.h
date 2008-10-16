@@ -1,5 +1,5 @@
 /*
-  Definitions required for Logging plugin 
+  Definitions required for Query Logging plugin 
 */
 
 #ifndef DRIZZLED_PLUGIN_LOGGING_H
