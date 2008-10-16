@@ -1,6 +1,13 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
 
+typedef struct errmsg_parms_st
+{
+  int priority;
+  const char *format;
+  va_list ap;
+} errmsg_parms_t;
+
 int errmsg_initializer(st_plugin_int *plugin)
 {
   errmsg_t *p;
@@ -51,14 +58,14 @@ int errmsg_finalizer(st_plugin_int *plugin)
   return 0;
 }
 
-static bool errmsg_iterate (THD *thd, plugin_ref plugin,
-			    void *stuff __attribute__ ((__unused__)))
+static bool errmsg_iterate (THD *thd, plugin_ref plugin, void *p)
 {
   errmsg_t *l= plugin_data(plugin, errmsg_t *);
+  errmsg_parms_t *parms= (errmsg_parms_t *) p;
 
-  if (l && l->errmsg_pre)
+  if (l && l->errmsg_func)
   {
-    if (l->errmsg_pre(thd))
+    if (l->errmsg_func(thd, parms->priority, parms->format, parms->ap))
       return true;
   }
   return false;
@@ -66,13 +73,25 @@ static bool errmsg_iterate (THD *thd, plugin_ref plugin,
 
 void errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap)
 {
+  errmsg_parms_t parms;
+
+  parms.priority= priority;
+  parms.format= format;
+  parms.ap= ap;
+
+  if (plugin_foreach(thd, errmsg_iterate, DRIZZLE_LOGGER_PLUGIN,
+		     (void *) &parms))
+  {
+    sql_print_error("Errmsg plugin had an error.");
+  }
+  return;
 }
 
-void errmsg_pre_do (THD *thd)
+void errmsg_printf (THD *thd, int priority, const char *format, ...)
 {
-  if (plugin_foreach(thd, errmsg_pre_iterate, DRIZZLE_LOGGER_PLUGIN, NULL))
-  {
-    sql_print_error("Errmsg plugin pre had an error.");
-  }
+  va_list args;
+  va_start(args, format);
+  errmsg_vprintf(thd, priority, format, args);
+  va_end(args);
   return;
 }
