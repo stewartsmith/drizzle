@@ -79,7 +79,7 @@ void errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap)
   parms.format= format;
   parms.ap= ap;
 
-  if (plugin_foreach(thd, errmsg_iterate, DRIZZLE_LOGGER_PLUGIN,
+  if (plugin_foreach(thd, errmsg_iterate, DRIZZLE_ERRMSG_PLUGIN,
 		     (void *) &parms))
   {
     sql_print_error("Errmsg plugin had an error.");
