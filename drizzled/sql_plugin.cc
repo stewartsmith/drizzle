@@ -44,7 +44,7 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("LOGGER") },
   { C_STRING_WITH_LEN("ERRMSG") },
   { C_STRING_WITH_LEN("AUTH") },
-  { C_STRING_WITH_LEN("CONFIG") },
+  { C_STRING_WITH_LEN("CONFIGVAR") },
   { C_STRING_WITH_LEN("QCACHE") }
 };
 
@@ -69,7 +69,9 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* Audit */
   logging_initializer,  /* Logger */
   errmsg_initializer,  /* Error Messages */
-  authentication_initializer  /* Auth */
+  authentication_initializer,  /* Auth */
+  configvar_initializer,
+  qcache_initializer
 };
 
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
@@ -82,7 +84,9 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* Audit */
   logging_finalizer,  /* Logger */
   errmsg_finalizer,  /* Logger */
-  authentication_finalizer  /* Auth */
+  authentication_finalizer,  /* Auth */
+  configvar_finalizer,
+  qcache_finalizer
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";

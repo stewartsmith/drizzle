@@ -58,7 +58,7 @@ typedef struct st_mysql_xid DRIZZLE_XID;
 #define DRIZZLE_LOGGER_PLUGIN          6  /* Query Logging */
 #define DRIZZLE_ERRMSG_PLUGIN          7  /* Error Messages */
 #define DRIZZLE_AUTH_PLUGIN            8  /* Authorization */
-#define DRIZZLE_CONFIG_PLUGIN          9  /* Configuration */
+#define DRIZZLE_CONFIGVAR_PLUGIN       9  /* Configuration */
 #define DRIZZLE_QCACHE_PLUGIN         10  /* Query Cache */
 
 #define DRIZZLE_MAX_PLUGIN_TYPE_NUM   11  /* The number of plugin types */
