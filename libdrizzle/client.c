@@ -76,7 +76,6 @@
 #include <sys/un.h>
 
 #include <errno.h>
-#define SOCKET_ERROR -1
 
 
 #include <drizzled/version.h>

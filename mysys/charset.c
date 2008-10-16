@@ -116,7 +116,6 @@ static bool init_state_maps(CHARSET_INFO *cs)
 }
 
 
-#define MY_MAX_ALLOWED_BUF 1024*1024
 #define MY_CHARSET_INDEX "Index.xml"
 
 const char *charsets_dir= NULL;

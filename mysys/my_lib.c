@@ -22,10 +22,8 @@
 #include	"mysys_err.h"
 #if defined(HAVE_DIRENT_H)
 # include <dirent.h>
-# define NAMLEN(dirent) strlen((dirent)->d_name)
 #else
 # define dirent direct
-# define NAMLEN(dirent) (dirent)->d_namlen
 # if defined(HAVE_SYS_NDIR_H)
 #  include <sys/ndir.h>
 # endif

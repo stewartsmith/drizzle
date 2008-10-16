@@ -164,10 +164,6 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
 }
 
 
-/* Character to use as version identifier for version 4.1 */
-
-#define PVERSION41_CHAR '*'
-
 
 /*
     Convert given octet sequence to asciiz string of hex characters;

@@ -44,12 +44,7 @@
 */
 
 
-#define update_statistics(A)
-#define thd_increment_bytes_sent(N)
-
-#define TEST_BLOCKING        8
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
-#define MIN_COMPRESS_LENGTH		50	/* Don't compress small bl. */
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
@@ -593,7 +588,6 @@ net_real_write(NET *net,const unsigned char *packet, size_t len)
       break;
     }
     pos+=length;
-    update_statistics(thd_increment_bytes_sent(length));
   }
 end:
   if ((net->compress) && (packet != NULL))
@@ -696,7 +690,6 @@ my_real_read(NET *net, size_t *complen)
       }
       remain -= (uint32_t) length;
       pos+= length;
-      update_statistics(thd_increment_bytes_received(length));
     }
     if (i == 0)
     {                    /* First parts is packet length */
