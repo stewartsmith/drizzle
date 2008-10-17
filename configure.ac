@@ -36,6 +36,51 @@ DOT_FRM_VERSION=6
 SHARED_LIB_MAJOR_VERSION=1
 SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
 
+##############################################################################
+# The below section needs to be done before AC_PROG_CC
+##############################################################################
+
+if test "x${CFLAGS-}" = x ; then
+  cflags_is_set=no
+else
+  cflags_is_set=yes
+fi
+
+if test "x${CPPFLAGS-}" = x ; then
+  cppflags_is_set=no
+else
+  cppflags_is_set=yes
+fi
+
+if test "x${LDFLAGS-}" = x ; then
+  ldflags_is_set=no
+else
+  ldflags_is_set=yes
+fi
+
+################ End of section to be done before AC_PROG_CC #################
+
+dnl Checks for programs.
+AC_PROG_CC
+ifdef([AC_PROG_CC_C99],[
+  dnl TODO: Need to fix this to use c99 instead of gnu99
+  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+  C99_SUPPORT_HACK=""
+],[C99_SUPPORT_HACK="-std=gnu99"])
+AC_USE_SYSTEM_EXTENSIONS
+AC_PROG_CXX
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
+then
+  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+fi
+AC_PROG_CPP
+AM_PROG_CC_C_O
+
+AC_CXX_STL_HASH
+AC_CXX_CSTDINT
+AC_CXX_CINTTYPES
+AC_CXX_CMATH
 
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
 dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
@@ -185,50 +230,6 @@ AM_SANITY_CHECK
 # This is needed is SUBDIRS is set
 AC_PROG_MAKE_SET
 
-##############################################################################
-# The below section needs to be done before AC_PROG_CC
-##############################################################################
-
-if test "x${CFLAGS-}" = x ; then
-  cflags_is_set=no
-else
-  cflags_is_set=yes
-fi
-
-if test "x${CPPFLAGS-}" = x ; then
-  cppflags_is_set=no
-else
-  cppflags_is_set=yes
-fi
-
-if test "x${LDFLAGS-}" = x ; then
-  ldflags_is_set=no
-else
-  ldflags_is_set=yes
-fi
-
-################ End of section to be done before AC_PROG_CC #################
-
-dnl Checks for programs.
-AC_PROG_CC
-ifdef([AC_PROG_CC_C99],[
-  dnl TODO: Need to fix this to use c99 instead of gnu99
-  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
-  C99_SUPPORT_HACK=""
-],[C99_SUPPORT_HACK="-std=gnu99"])
-AC_PROG_CXX
-AC_CXX_HEADER_STDCXX_98
-if test "$ac_cv_cxx_stdcxx_98" = "no"
-then
-  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
-fi
-AC_PROG_CPP
-AM_PROG_CC_C_O
-
-AC_CXX_STL_HASH
-AC_CXX_CSTDINT
-AC_CXX_CINTTYPES
-AC_CXX_CMATH
 
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in
@@ -301,7 +302,6 @@ case "$target_os" in
   dnl Do we need both of these? 
   CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
-  AC_DEFINE([__EXTENSIONS__],[1],[Turn on needed extensions on Solaris])
   ;;
 esac
 
