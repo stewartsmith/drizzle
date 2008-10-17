@@ -28,9 +28,9 @@
 static char* logging_query_filename= NULL;
 static bool logging_query_enable= true;
 static ulong logging_query_enable_time= 0;
-static ulong logging_query_thresh_slow= 0;
-static ulong logging_query_thresh_bigret= 0;
-static ulong logging_query_thresh_bigexa= 0;
+static ulong logging_query_threshold_slow= 0;
+static ulong logging_query_threshold_big_resultset= 0;
+static ulong logging_query_threshold_big_examined= 0;
 
 static int fd= -1;
 
@@ -226,8 +226,8 @@ static DRIZZLE_SYSVAR_ULONG(
   0 /* blksiz */);
 
 static DRIZZLE_SYSVAR_ULONG(
-  thresh_slow,
-  logging_query_thresh_slow,
+  threshhold_slow,
+  logging_query_threshold_slow,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging slow queries, in microseconds"),
   NULL, /* check func */
@@ -238,8 +238,8 @@ static DRIZZLE_SYSVAR_ULONG(
   0 /* blksiz */);
 
 static DRIZZLE_SYSVAR_ULONG(
-  thresh_bigret,
-  logging_query_thresh_bigret,
+  threshold_big_resultset,
+  logging_query_threshold_big_resultset,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging big queries, for rows returned"),
   NULL, /* check func */
@@ -250,8 +250,8 @@ static DRIZZLE_SYSVAR_ULONG(
   0 /* blksiz */);
 
 static DRIZZLE_SYSVAR_ULONG(
-  thresh_bigexa,
-  logging_query_thresh_bigexa,
+  threshhold_big_examined,
+  logging_query_threshold_big_examined,
   PLUGIN_VAR_OPCMDARG,
   N_("Threshold for logging big queries, for rows examined"),
   NULL, /* check func */
@@ -265,9 +265,9 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
   DRIZZLE_SYSVAR(filename),
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(enable_time),
-  DRIZZLE_SYSVAR(thresh_slow),
-  DRIZZLE_SYSVAR(thresh_bigret),
-  DRIZZLE_SYSVAR(thresh_bigexa),
+  DRIZZLE_SYSVAR(threshold_slow),
+  DRIZZLE_SYSVAR(threshold_big_resultset),
+  DRIZZLE_SYSVAR(threshold_big_examined),
   NULL
 };
 
