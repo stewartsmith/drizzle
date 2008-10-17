@@ -50,8 +50,6 @@
 
 #include "rpl_tblmap.h"
 
-#define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
-
 #define MAX_SLAVE_RETRY_PAUSE 5
 bool use_slave_mask = 0;
 MY_BITMAP slave_error_mask;

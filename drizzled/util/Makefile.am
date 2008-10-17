@@ -25,6 +25,7 @@ libutil_la_SOURCES = dummy.cc
 BUILT_SOURCES = convert.h.gch \
                 test.h.gch
 
+# Headers are always going to have unused macros... the prototection macro.
 %.h.gch: %.h
-	$(CXXCOMPILE) -include config.h -c $<
+	$(CXXCOMPILE) -Wno-unused-macros -include config.h -c $<
 endif 

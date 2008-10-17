@@ -48,7 +48,6 @@ char *my_defaults_extra_file=0;
 const char *default_directories[MAX_DEFAULT_DIRS + 1];
 
 static const char *f_extensions[]= { ".cnf", 0 };
-#define NEWLINE "\n"
 
 static int handle_default_option(void *in_ctx, const char *group_name,
                                  const char *option);

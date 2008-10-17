@@ -111,6 +111,13 @@ thd_scheduler::~thd_scheduler()
 }
 
 
+thd_scheduler::thd_scheduler(const thd_scheduler&)
+  : logged_in(false), io_event(NULL), thread_attached(false)
+{}
+
+void thd_scheduler::operator=(const thd_scheduler&)
+{}
+
 bool thd_scheduler::init(THD *parent_thd)
 {
   io_event=
