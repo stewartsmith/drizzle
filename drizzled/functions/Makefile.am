@@ -21,9 +21,12 @@ libfunctions_la_SOURCES = abs.cc \
 			  asin.cc \
 			  atan.cc \
 			  additive_op.cc \
+			  bit.cc \
 			  bit_count.cc \
+			  char_length.cc \
 			  ceiling.cc \
 			  connection_id.cc \
+			  coercibility.cc \
 			  cos.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
@@ -36,6 +39,7 @@ libfunctions_la_SOURCES = abs.cc \
                           int_val.cc \
 			  length.cc \
 			  ln.cc \
+			  locate.cc \
 			  log.cc \
 			  min_max.cc \
 			  minus.cc \
@@ -56,6 +60,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  sin.cc \
 			  sqrt.cc \
 			  tan.cc \
+			  units.cc \
 			  unsigned.cc
 
 noinst_HEADERS = abs.h \
@@ -64,9 +69,12 @@ noinst_HEADERS = abs.h \
 		 asin.h \
 		 atan.h \
 		 additive_op.h \
+		 bit.h \
 		 bit_count.h \
 		 bit_length.h \
 		 ceiling.h \
+		 char_length.h \
+		 coercibility.h \
 		 connection_id.h \
 		 cos.h \
 		 dec.h \
@@ -81,6 +89,7 @@ noinst_HEADERS = abs.h \
                  int_val.h \
 		 length.h \
 		 ln.h \
+		 locate.h \
 		 log.h \
 		 min_max.h \
 		 minus.h \

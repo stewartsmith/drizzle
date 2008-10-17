@@ -182,17 +182,6 @@ int64_t Item_func_shift_right::val_int()
   return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0);
 }
 
-
-int64_t Item_func_bit_neg::val_int()
-{
-  assert(fixed == 1);
-  uint64_t res= (uint64_t) args[0]->val_int();
-  if ((null_value=args[0]->null_value))
-    return 0;
-  return ~res;
-}
-
-
 // Conversion functions
 
 void Item_func_integer::fix_length_and_dec()
@@ -202,103 +191,6 @@ void Item_func_integer::fix_length_and_dec()
   set_if_smaller(max_length,tmp);
   decimals=0;
 }
-
-double Item_func_units::val_real()
-{
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0;
-  return value*mul+add;
-}
-
-
-int64_t Item_func_char_length::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  return (int64_t) res->numchars();
-}
-
-
-int64_t Item_func_coercibility::val_int()
-{
-  assert(fixed == 1);
-  null_value= 0;
-  return (int64_t) args[0]->collation.derivation;
-}
-
-
-void Item_func_locate::fix_length_and_dec()
-{
-  max_length= MY_INT32_NUM_DECIMAL_DIGITS;
-  agg_arg_charsets(cmp_collation, args, 2, MY_COLL_CMP_CONV, 1);
-}
-
-
-int64_t Item_func_locate::val_int()
-{
-  assert(fixed == 1);
-  String *a=args[0]->val_str(&value1);
-  String *b=args[1]->val_str(&value2);
-  if (!a || !b)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  /* must be int64_t to avoid truncation */
-  int64_t start=  0; 
-  int64_t start0= 0;
-  my_match_t match;
-
-  if (arg_count == 3)
-  {
-    start0= start= args[2]->val_int() - 1;
-
-    if ((start < 0) || (start > a->length()))
-      return 0;
-
-    /* start is now sufficiently valid to pass to charpos function */
-    start= a->charpos((int) start);
-
-    if (start + b->length() > a->length())
-      return 0;
-  }
-
-  if (!b->length())				// Found empty string at start
-    return start + 1;
-  
-  if (!cmp_collation.collation->coll->instr(cmp_collation.collation,
-                                            a->ptr()+start,
-                                            (uint) (a->length()-start),
-                                            b->ptr(), b->length(),
-                                            &match, 1))
-    return 0;
-  return (int64_t) match.mb_len + start0 + 1;
-}
-
-
-void Item_func_locate::print(String *str, enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("locate("));
-  args[1]->print(str, query_type);
-  str->append(',');
-  args[0]->print(str, query_type);
-  if (arg_count == 3)
-  {
-    str->append(',');
-    args[2]->print(str, query_type);
-  }
-  str->append(')');
-}
-
 
 int64_t Item_func_field::val_int()
 {
@@ -1666,16 +1558,6 @@ Item_func_get_system_var::fix_fields(THD *thd, Item **ref)
 bool Item_func_get_system_var::is_written_to_binlog()
 {
   return var->is_written_to_binlog(var_type);
-}
-
-int64_t Item_func_bit_xor::val_int()
-{
-  assert(fixed == 1);
-  uint64_t arg1= (uint64_t) args[0]->val_int();
-  uint64_t arg2= (uint64_t) args[1]->val_int();
-  if ((null_value= (args[0]->null_value || args[1]->null_value)))
-    return 0;
-  return (int64_t) (arg1 ^ arg2);
 }
 
 
