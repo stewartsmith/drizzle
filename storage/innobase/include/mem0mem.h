@@ -50,7 +50,8 @@ create. The standard size is the maximum (payload) size of the blocks used for
 allocations of small buffers. */
 
 #define MEM_BLOCK_START_SIZE		64
-#define MEM_BLOCK_STANDARD_SIZE		8000
+#define MEM_BLOCK_STANDARD_SIZE		\
+	(UNIV_PAGE_SIZE >= 16384 ? 8000 : MEM_MAX_ALLOC_IN_BUF)
 
 /* If a memory heap is allowed to grow into the buffer pool, the following
 is the maximum size for a single allocated buffer: */
@@ -58,7 +59,7 @@ is the maximum size for a single allocated buffer: */
 
 /**********************************************************************
 Initializes the memory system. */
-
+UNIV_INTERN
 void
 mem_init(
 /*=====*/
@@ -68,28 +69,20 @@ Use this macro instead of the corresponding function! Macro for memory
 heap creation. */
 
 #define mem_heap_create(N)	mem_heap_create_func(\
-		(N), NULL, MEM_HEAP_DYNAMIC, __FILE__, __LINE__)
+		(N), MEM_HEAP_DYNAMIC, __FILE__, __LINE__)
 /******************************************************************
 Use this macro instead of the corresponding function! Macro for memory
 heap creation. */
 
 #define mem_heap_create_in_buffer(N)	mem_heap_create_func(\
-		(N), NULL, MEM_HEAP_BUFFER, __FILE__, __LINE__)
+		(N), MEM_HEAP_BUFFER, __FILE__, __LINE__)
 /******************************************************************
 Use this macro instead of the corresponding function! Macro for memory
 heap creation. */
 
 #define mem_heap_create_in_btr_search(N)	mem_heap_create_func(\
-		(N), NULL, MEM_HEAP_BTR_SEARCH | MEM_HEAP_BUFFER,\
+		(N), MEM_HEAP_BTR_SEARCH | MEM_HEAP_BUFFER,\
 		__FILE__, __LINE__)
-/******************************************************************
-Use this macro instead of the corresponding function! Macro for fast
-memory heap creation. An initial block of memory B is given by the
-caller, N is its size, and this memory block is not freed by
-mem_heap_free. See the parameter comment in mem_heap_create_func below. */
-
-#define mem_heap_fast_create(N, B)	mem_heap_create_func(\
-		(N), (B), MEM_HEAP_DYNAMIC, __FILE__, __LINE__)
 
 /******************************************************************
 Use this macro instead of the corresponding function! Macro for memory
@@ -111,19 +104,7 @@ mem_heap_create_func(
 	ulint		n,		/* in: desired start block size,
 					this means that a single user buffer
 					of size n will fit in the block,
-					0 creates a default size block;
-					if init_block is not NULL, n tells
-					its size in bytes */
-	void*		init_block,	/* in: if very fast creation is
-					wanted, the caller can reserve some
-					memory from its stack, for example,
-					and pass it as the the initial block
-					to the heap: then no OS call of malloc
-					is needed at the creation. CAUTION:
-					the caller must make sure the initial
-					block is not unintentionally erased
-					(if allocated in the stack), before
-					the memory heap is explicitly freed. */
+					0 creates a default size block */
 	ulint		type,		/* in: heap type */
 	const char*	file_name,	/* in: file name where created */
 	ulint		line);		/* in: line where created */
@@ -138,6 +119,17 @@ mem_heap_free_func(
 	mem_heap_t*	heap,		/* in, own: heap to be freed */
 	const char*	file_name,	/* in: file name where freed */
 	ulint		line);		/* in: line where freed */
+/*******************************************************************
+Allocates and zero-fills n bytes of memory from a memory heap. */
+UNIV_INLINE
+void*
+mem_heap_zalloc(
+/*============*/
+				/* out: allocated, zero-filled storage */
+	mem_heap_t*	heap,	/* in: memory heap */
+	ulint		n);	/* in: number of bytes; if the heap is allowed
+				to grow into the buffer pool, this must be
+				<= MEM_MAX_ALLOC_IN_BUF */
 /*******************************************************************
 Allocates n bytes of memory from a memory heap. */
 UNIV_INLINE
@@ -206,13 +198,10 @@ mem_heap_get_size(
 Use this macro instead of the corresponding function!
 Macro for memory buffer allocation */
 
-#define mem_alloc(N)	mem_alloc_func((N), __FILE__, __LINE__)
-/******************************************************************
-Use this macro instead of the corresponding function!
-Macro for memory buffer allocation */
+#define mem_zalloc(N)	memset(mem_alloc(N), 0, (N));
 
-#define mem_alloc_noninline(N)	  mem_alloc_func_noninline(\
-					  (N), __FILE__, __LINE__)
+#define mem_alloc(N)	mem_alloc_func((N), NULL, __FILE__, __LINE__)
+#define mem_alloc2(N,S)	mem_alloc_func((N), (S), __FILE__, __LINE__)
 /*******************************************************************
 NOTE: Use the corresponding macro instead of this function.
 Allocates a single buffer of memory from the dynamic memory of
@@ -223,24 +212,12 @@ void*
 mem_alloc_func(
 /*===========*/
 					/* out, own: free storage */
-	ulint		n,		/* in: desired number of bytes */
+	ulint		n,		/* in: requested size in bytes */
+	ulint*		size,		/* out: allocated size in bytes,
+					or NULL */
 	const char*	file_name,	/* in: file name where created */
-	ulint		line		/* in: line where created */
-);
-/*******************************************************************
-NOTE: Use the corresponding macro instead of this function.
-Allocates a single buffer of memory from the dynamic memory of
-the C compiler. Is like malloc of C. The buffer must be freed
-with mem_free. */
+	ulint		line);		/* in: line where created */
 
-void*
-mem_alloc_func_noninline(
-/*=====================*/
-					/* out, own: free storage */
-	ulint		n,		/* in: desired number of bytes */
-	const char*	file_name,	/* in: file name where created */
-	ulint		line		/* in: line where created */
-	);
 /******************************************************************
 Use this macro instead of the corresponding function!
 Macro for memory buffer freeing */
@@ -281,7 +258,7 @@ mem_strdupl(
 
 /**************************************************************************
 Duplicates a NUL-terminated string, allocated from a memory heap. */
-
+UNIV_INTERN
 char*
 mem_heap_strdup(
 /*============*/
@@ -302,7 +279,7 @@ mem_heap_strdupl(
 
 /**************************************************************************
 Concatenate two strings and return the result, using a memory heap. */
-
+UNIV_INTERN
 char*
 mem_heap_strcat(
 /*============*/
@@ -313,7 +290,7 @@ mem_heap_strcat(
 
 /**************************************************************************
 Duplicate a block of data, allocated from a memory heap. */
-
+UNIV_INTERN
 void*
 mem_heap_dup(
 /*=========*/
@@ -324,7 +301,7 @@ mem_heap_dup(
 
 /**************************************************************************
 Concatenate two memory blocks and return the result, using a memory heap. */
-
+UNIV_INTERN
 void*
 mem_heap_cat(
 /*=========*/
@@ -340,7 +317,7 @@ A simple (s)printf replacement that dynamically allocates the space for the
 formatted string from the given heap. This supports a very limited set of
 the printf syntax: types 's' and 'u' and length modifier 'l' (which is
 required for the 'u' type). */
-
+UNIV_INTERN
 char*
 mem_heap_printf(
 /*============*/
@@ -353,7 +330,7 @@ mem_heap_printf(
 /**********************************************************************
 Goes through the list of all allocated mem blocks, checks their magic
 numbers, and reports possible corruption. */
-
+UNIV_INTERN
 void
 mem_validate_all_blocks(void);
 /*=========================*/
@@ -377,18 +354,19 @@ struct mem_block_info_struct {
 	ulint	len;	/* physical length of this block in bytes */
 	ulint	type;	/* type of heap: MEM_HEAP_DYNAMIC, or
 			MEM_HEAP_BUF possibly ORed to MEM_HEAP_BTR_SEARCH */
-	ibool	init_block; /* TRUE if this is the first block used in fast
-			creation of a heap: the memory will be freed
-			by the creator, not by mem_heap_free */
 	ulint	free;	/* offset in bytes of the first free position for
 			user data in the block */
 	ulint	start;	/* the value of the struct field 'free' at the
 			creation of the block */
-	byte*	free_block;
+	void*	free_block;
 			/* if the MEM_HEAP_BTR_SEARCH bit is set in type,
 			and this is the heap root, this can contain an
 			allocated buffer frame, which can be appended as a
 			free block to the heap, if we need more space;
+			otherwise, this is NULL */
+	void*	buf_block;
+			/* if this block has been allocated from the buffer
+			pool, this contains the buf_block_t handle;
 			otherwise, this is NULL */
 #ifdef MEM_PERIODIC_CHECK
 	UT_LIST_NODE_T(mem_block_t) mem_block_list;

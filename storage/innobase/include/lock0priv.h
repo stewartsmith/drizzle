@@ -67,32 +67,21 @@ struct lock_struct {
 Gets the type of a lock. */
 UNIV_INLINE
 ulint
-lock_get_type(
-/*==========*/
+lock_get_type_low(
+/*==============*/
 				/* out: LOCK_TABLE or LOCK_REC */
 	const lock_t*	lock);	/* in: lock */
-
-/**************************************************************************
-Looks for a set bit in a record lock bitmap. Returns ULINT_UNDEFINED,
-if none found. */
-
-ulint
-lock_rec_find_set_bit(
-/*==================*/
-			/* out: bit index == heap number of the record, or
-			ULINT_UNDEFINED if none found */
-	lock_t*	lock);	/* in: record lock with at least one bit set */
 
 /*************************************************************************
 Gets the previous record lock set on a record. */
 
-lock_t*
+const lock_t*
 lock_rec_get_prev(
 /*==============*/
-			/* out: previous lock on the same record, NULL if
-			none exists */
-	lock_t*	in_lock,/* in: record lock */
-	ulint	heap_no);/* in: heap number of the record */
+				/* out: previous lock on the same
+				record, NULL if none exists */
+	const lock_t*	in_lock,/* in: record lock */
+	ulint		heap_no);/* in: heap number of the record */
 
 #ifndef UNIV_NONINL
 #include "lock0priv.ic"

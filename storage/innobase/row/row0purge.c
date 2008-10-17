@@ -29,7 +29,7 @@ Created 3/14/1997 Heikki Tuuri
 
 /************************************************************************
 Creates a purge node to a query graph. */
-
+UNIV_INTERN
 purge_node_t*
 row_purge_node_create(
 /*==================*/
@@ -102,7 +102,7 @@ row_purge_remove_clust_if_poss_low(
 	rec_t*		rec;
 	mem_heap_t*	heap		= NULL;
 	ulint		offsets_[REC_OFFS_NORMAL_SIZE];
-	*offsets_ = (sizeof offsets_) / sizeof *offsets_;
+	rec_offs_init(offsets_);
 
 	index = dict_table_get_first_index(node->table);
 
@@ -227,7 +227,7 @@ row_purge_remove_sec_if_poss_low(
 		/* Not found */
 
 		/* fputs("PURGE:........sec entry not found\n", stderr); */
-		/* dtuple_print(entry); */
+		/* dtuple_print(stderr, entry); */
 
 		btr_pcur_close(&pcur);
 		mtr_commit(&mtr);
@@ -266,13 +266,8 @@ row_purge_remove_sec_if_poss_low(
 			ut_ad(mode == BTR_MODIFY_TREE);
 			btr_cur_pessimistic_delete(&err, FALSE, btr_cur,
 						   FALSE, &mtr);
-			if (err == DB_SUCCESS) {
-				success = TRUE;
-			} else if (err == DB_OUT_OF_FILE_SPACE) {
-				success = FALSE;
-			} else {
-				ut_error;
-			}
+			success = err == DB_SUCCESS;
+			ut_a(success || err == DB_OUT_OF_FILE_SPACE);
 		}
 	}
 
@@ -342,8 +337,8 @@ row_purge_del_mark(
 		index = node->index;
 
 		/* Build the index entry */
-		entry = row_build_index_entry(node->row, index, heap);
-
+		entry = row_build_index_entry(node->row, NULL, index, heap);
+		ut_a(entry);
 		row_purge_remove_sec_if_poss(node, index, entry);
 
 		node->index = dict_table_get_next_index(node->index);
@@ -366,14 +361,10 @@ row_purge_upd_exist_or_extern(
 	mem_heap_t*	heap;
 	dtuple_t*	entry;
 	dict_index_t*	index;
-	upd_field_t*	ufield;
 	ibool		is_insert;
 	ulint		rseg_id;
 	ulint		page_no;
 	ulint		offset;
-	ulint		internal_offset;
-	byte*		data_field;
-	ulint		data_field_len;
 	ulint		i;
 	mtr_t		mtr;
 
@@ -392,8 +383,9 @@ row_purge_upd_exist_or_extern(
 		if (row_upd_changes_ord_field_binary(NULL, node->index,
 						     node->update)) {
 			/* Build the older version of the index entry */
-			entry = row_build_index_entry(node->row, index, heap);
-
+			entry = row_build_index_entry(node->row, NULL,
+						      index, heap);
+			ut_a(entry);
 			row_purge_remove_sec_if_poss(node, index, entry);
 		}
 
@@ -406,16 +398,23 @@ skip_secondaries:
 	/* Free possible externally stored fields */
 	for (i = 0; i < upd_get_n_fields(node->update); i++) {
 
-		ufield = upd_get_nth_field(node->update, i);
+		const upd_field_t*	ufield
+			= upd_get_nth_field(node->update, i);
 
-		if (ufield->extern_storage) {
+		if (dfield_is_ext(&ufield->new_val)) {
+			buf_block_t*	block;
+			ulint		internal_offset;
+			byte*		data_field;
+
 			/* We use the fact that new_val points to
 			node->undo_rec and get thus the offset of
-			dfield data inside the unod record. Then we
+			dfield data inside the undo record. Then we
 			can calculate from node->roll_ptr the file
 			address of the new_val data */
 
-			internal_offset = ((byte*)ufield->new_val.data)
+			internal_offset
+				= ((const byte*)
+				   dfield_get_data(&ufield->new_val))
 				- node->undo_rec;
 
 			ut_a(internal_offset < UNIV_PAGE_SIZE);
@@ -446,19 +445,20 @@ skip_secondaries:
 			/* We assume in purge of externally stored fields
 			that the space id of the undo log record is 0! */
 
-			data_field = buf_page_get(0, page_no, RW_X_LATCH, &mtr)
+			block = buf_page_get(0, 0, page_no, RW_X_LATCH, &mtr);
+#ifdef UNIV_SYNC_DEBUG
+			buf_block_dbg_add_level(block, SYNC_TRX_UNDO_PAGE);
+#endif /* UNIV_SYNC_DEBUG */
+			data_field = buf_block_get_frame(block)
 				+ offset + internal_offset;
 
-#ifdef UNIV_SYNC_DEBUG
-			buf_page_dbg_add_level(buf_frame_align(data_field),
-					       SYNC_TRX_UNDO_PAGE);
-#endif /* UNIV_SYNC_DEBUG */
-
-			data_field_len = ufield->new_val.len;
-
-			btr_free_externally_stored_field(index, data_field,
-							 data_field_len,
-							 FALSE, &mtr);
+			ut_a(dfield_get_len(&ufield->new_val)
+			     >= BTR_EXTERN_FIELD_REF_SIZE);
+			btr_free_externally_stored_field(
+				index,
+				data_field + dfield_get_len(&ufield->new_val)
+				- BTR_EXTERN_FIELD_REF_SIZE,
+				NULL, NULL, NULL, 0, FALSE, &mtr);
 			mtr_commit(&mtr);
 		}
 	}
@@ -528,9 +528,8 @@ row_purge_parse_undo_rec(
 
 	if (node->table == NULL) {
 		/* The table has been dropped: no need to do purge */
-
+err_exit:
 		row_mysql_unfreeze_data_dictionary(trx);
-
 		return(FALSE);
 	}
 
@@ -539,9 +538,7 @@ row_purge_parse_undo_rec(
 
 		node->table = NULL;
 
-		row_mysql_unfreeze_data_dictionary(trx);
-
-		return(FALSE);
+		goto err_exit;
 	}
 
 	clust_index = dict_table_get_first_index(node->table);
@@ -549,9 +546,7 @@ row_purge_parse_undo_rec(
 	if (clust_index == NULL) {
 		/* The table was corrupt in the data dictionary */
 
-		row_mysql_unfreeze_data_dictionary(trx);
-
-		return(FALSE);
+		goto err_exit;
 	}
 
 	ptr = trx_undo_rec_get_row_ref(ptr, clust_index, &(node->ref),
@@ -565,7 +560,7 @@ row_purge_parse_undo_rec(
 
 	if (!(cmpl_info & UPD_NODE_NO_ORD_CHANGE)) {
 		ptr = trx_undo_rec_get_partial_row(ptr, clust_index,
-						   &(node->row), node->heap);
+						   &node->row, node->heap);
 	}
 
 	return(TRUE);
@@ -649,7 +644,7 @@ row_purge(
 /***************************************************************
 Does the purge operation for a single undo log record. This is a high-level
 function used in an SQL execution graph. */
-
+UNIV_INTERN
 que_thr_t*
 row_purge_step(
 /*===========*/

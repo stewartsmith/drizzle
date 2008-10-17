@@ -15,22 +15,34 @@
 
 # Process this file with automake to create Makefile.in
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
-AM_CPPFLAGS =		${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/storage/innobase/include
+MYSQLDATAdir=		$(localstatedir)
+MYSQLSHAREdir=		$(pkgdatadir)
+MYSQLBASEdir=		$(prefix)
+MYSQLLIBdir=		$(pkglibdir)
+pkgplugindir=		$(pkglibdir)/plugin
+AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
+			-I$(top_srcdir)/include -I$(top_builddir)/include \
+			-I$(top_srcdir)/regex \
+			-I$(top_srcdir)/storage/innobase/include \
+			-I$(top_srcdir)/sql
 
-DEFS =			@DEFS@
+if BUILDING_DRIZZLE
+DRIZZLE="-DBUILD_DRIZZLE"
+HANDLER_DIR=drizzle
+else
+HANDLER_DIR=handler
+endif
 
 
-noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
+DEFS=			@DEFS@ ${DRIZZLE}
+
+
+noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/btr0cur.h include/btr0cur.ic		\
 			include/btr0pcur.h include/btr0pcur.ic		\
 			include/btr0sea.h include/btr0sea.ic		\
-			include/btr0types.h include/buf0buf.h		\
+			include/btr0types.h include/buf0buddy.h		\
+			include/buf0buddy.ic include/buf0buf.h		\
 			include/buf0buf.ic include/buf0flu.h		\
 			include/buf0flu.ic include/buf0lru.h		\
 			include/buf0lru.ic include/buf0rea.h		\
@@ -50,7 +62,10 @@ noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
 			include/fsp0fsp.ic include/fut0fut.h		\
 			include/fut0fut.ic include/fut0lst.h		\
 			include/fut0lst.ic include/ha0ha.h		\
-			include/ha0ha.ic include/hash0hash.h		\
+			include/ha0ha.ic				\
+			include/ha0storage.h				\
+			include/ha0storage.ic				\
+			include/hash0hash.h				\
 			include/hash0hash.ic include/ibuf0ibuf.h	\
 			include/ibuf0ibuf.ic include/ibuf0types.h	\
 			include/lock0iter.h				\
@@ -65,12 +80,15 @@ noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
 			include/mem0pool.h include/mem0pool.ic		\
 			include/mtr0log.h include/mtr0log.ic		\
 			include/mtr0mtr.h include/mtr0mtr.ic		\
-			include/mtr0types.h include/os0file.h		\
+			include/mtr0types.h				\
+			include/mysql_addons.h				\
+			include/os0file.h				\
 			include/os0proc.h include/os0proc.ic		\
 			include/os0sync.h include/os0sync.ic		\
 			include/os0thread.h include/os0thread.ic	\
 			include/page0cur.h include/page0cur.ic		\
 			include/page0page.h include/page0page.ic	\
+			include/page0zip.h include/page0zip.ic		\
 			include/page0types.h include/pars0grm.h		\
 			include/pars0opt.h include/pars0opt.ic		\
 			include/pars0pars.h include/pars0pars.ic	\
@@ -81,7 +99,9 @@ noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
 			include/read0types.h include/rem0cmp.h		\
 			include/rem0cmp.ic include/rem0rec.h		\
 			include/rem0rec.ic include/rem0types.h		\
+			include/row0ext.h include/row0ext.ic		\
 			include/row0ins.h include/row0ins.ic		\
+			include/row0merge.h				\
 			include/row0mysql.h include/row0mysql.ic	\
 			include/row0purge.h include/row0purge.ic	\
 			include/row0row.h include/row0row.ic		\
@@ -98,6 +118,7 @@ noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
 			include/sync0rw.ic include/sync0sync.h		\
 			include/sync0sync.ic include/sync0types.h	\
 			include/thr0loc.h include/thr0loc.ic		\
+			include/trx0i_s.h				\
 			include/trx0purge.h include/trx0purge.ic	\
 			include/trx0rec.h include/trx0rec.ic		\
 			include/trx0roll.h include/trx0roll.ic		\
@@ -116,50 +137,69 @@ noinst_HEADERS = include/btr0btr.h include/btr0btr.ic			\
 			include/ut0ut.ic include/ut0vec.h		\
 			include/ut0vec.ic include/ut0list.h		\
 			include/ut0list.ic include/ut0wqueue.h		\
-			include/ha_prototypes.h handler/ha_innodb.h
+			include/ha_prototypes.h				\
+			$(HANDLER_DIR)/ha_innodb.h			\
+			include/handler0alter.h				\
+			$(HANDLER_DIR)/i_s.h
 
-EXTRA_LIBRARIES =	libinnobase.a
-noinst_LIBRARIES =	@plugin_innobase_static_target@
-libinnobase_a_SOURCES =	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
-			btr/btr0sea.c buf/buf0buf.c buf/buf0flu.c	\
+noinst_LTLIBRARIES=	libinnobase.la
+libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
+			btr/btr0sea.c buf/buf0buddy.c			\
+			buf/buf0buf.c buf/buf0flu.c			\
 			buf/buf0lru.c buf/buf0rea.c data/data0data.c	\
 			data/data0type.c dict/dict0boot.c		\
 			dict/dict0crea.c dict/dict0dict.c		\
 			dict/dict0load.c dict/dict0mem.c dyn/dyn0dyn.c	\
 			eval/eval0eval.c eval/eval0proc.c		\
 			fil/fil0fil.c fsp/fsp0fsp.c fut/fut0fut.c	\
-			fut/fut0lst.c ha/ha0ha.c ha/hash0hash.c		\
+			fut/fut0lst.c ha/ha0ha.c			\
+			ha/ha0storage.c					\
+			ha/hash0hash.c					\
 			ibuf/ibuf0ibuf.c lock/lock0iter.c		\
 			lock/lock0lock.c				\
 			log/log0log.c log/log0recv.c mach/mach0data.c	\
 			mem/mem0mem.c mem/mem0pool.c mtr/mtr0log.c	\
 			mtr/mtr0mtr.c os/os0file.c os/os0proc.c		\
 			os/os0sync.c os/os0thread.c page/page0cur.c	\
-			page/page0page.c pars/lexyy.c pars/pars0grm.c	\
+			page/page0page.c page/page0zip.c		\
+			pars/lexyy.c pars/pars0grm.c			\
 			pars/pars0opt.c pars/pars0pars.c		\
 			pars/pars0sym.c que/que0que.c read/read0read.c	\
-			rem/rem0cmp.c rem/rem0rec.c row/row0ins.c	\
+			rem/rem0cmp.c rem/rem0rec.c row/row0ext.c	\
+			row/row0ins.c row/row0merge.c			\
 			row/row0mysql.c row/row0purge.c row/row0row.c	\
 			row/row0sel.c row/row0uins.c row/row0umod.c	\
 			row/row0undo.c row/row0upd.c row/row0vers.c	\
 			srv/srv0que.c srv/srv0srv.c srv/srv0start.c	\
 			sync/sync0arr.c sync/sync0rw.c			\
-			sync/sync0sync.c thr/thr0loc.c trx/trx0purge.c	\
+			sync/sync0sync.c thr/thr0loc.c			\
+			trx/trx0i_s.c					\
+			trx/trx0purge.c					\
 			trx/trx0rec.c trx/trx0roll.c trx/trx0rseg.c	\
 			trx/trx0sys.c trx/trx0trx.c trx/trx0undo.c	\
 			usr/usr0sess.c ut/ut0byte.c ut/ut0dbg.c		\
 			ut/ut0list.c ut/ut0mem.c ut/ut0rnd.c		\
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c		\
-			handler/ha_innodb.cc
+			$(HANDLER_DIR)/ha_innodb.cc			\
+			$(HANDLER_DIR)/handler0alter.cc			\
+			$(HANDLER_DIR)/i_s.cc				\
+			$(HANDLER_DIR)/mysql_addons.cc
 
-EXTRA_LTLIBRARIES =	ha_innodb.la
-pkglib_LTLIBRARIES =	@plugin_innobase_shared_target@
+libinnobase_a_CXXFLAGS=	$(AM_CXXFLAGS)
+libinnobase_a_CFLAGS=	$(AM_CFLAGS)  -Wno-unused-macros
 
-ha_innodb_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
-ha_innodb_la_CFLAGS  =	$(AM_CFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
-ha_innodb_la_SOURCES =	$(libinnobase_a_SOURCES)
+EXTRA_LTLIBRARIES=	ha_innodb.la
+pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
-EXTRA_DIST =		plug.in \
+ha_innodb_la_LDFLAGS=	-module -rpath $(pkgplugindir)
+ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_innodb_la_CFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
+			libinnobase.la
+
+EXTRA_DIST=		CMakeLists.txt plug.in \
 			pars/make_bison.sh pars/make_flex.sh \
 			pars/pars0grm.y pars/pars0lex.l
+
+# Don't update the files from bitkeeper
+%::SCCS/s.%

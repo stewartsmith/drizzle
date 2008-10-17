@@ -19,7 +19,7 @@ Created 12/29/1997 Heikki Tuuri
 Free the buffer from global dynamic memory for a value of a que_node,
 if it has been allocated in the above function. The freeing for pushed
 column values is done in sel_col_prefetch_buf_free. */
-
+UNIV_INTERN
 void
 eval_node_free_val_buf(
 /*===================*/
@@ -62,7 +62,7 @@ void
 eval_node_copy_and_alloc_val(
 /*=========================*/
 	que_node_t*	node,	/* in: query graph node */
-	byte*		str,	/* in: binary string */
+	const byte*	str,	/* in: binary string */
 	ulint		len);	/* in: string length or UNIV_SQL_NULL */
 /*********************************************************************
 Copies a query node value to another node. */
@@ -82,7 +82,7 @@ eval_node_get_ibool_val(
 	que_node_t*	node);	/* in: query graph node */
 /*********************************************************************
 Evaluates a comparison node. */
-
+UNIV_INTERN
 ibool
 eval_cmp(
 /*=====*/

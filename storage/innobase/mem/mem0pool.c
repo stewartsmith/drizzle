@@ -94,17 +94,17 @@ struct mem_pool_struct{
 };
 
 /* The common memory pool */
-mem_pool_t*	mem_comm_pool	= NULL;
+UNIV_INTERN mem_pool_t*	mem_comm_pool	= NULL;
 
 /* We use this counter to check that the mem pool mutex does not leak;
 this is to track a strange assertion failure reported at
 mysql@lists.mysql.com */
 
-ulint		mem_n_threads_inside		= 0;
+UNIV_INTERN ulint	mem_n_threads_inside		= 0;
 
 /************************************************************************
 Reserves the mem pool mutex. */
-
+UNIV_INTERN
 void
 mem_pool_mutex_enter(void)
 /*======================*/
@@ -114,7 +114,7 @@ mem_pool_mutex_enter(void)
 
 /************************************************************************
 Releases the mem pool mutex. */
-
+UNIV_INTERN
 void
 mem_pool_mutex_exit(void)
 /*=====================*/
@@ -180,7 +180,7 @@ mem_area_set_free(
 
 /************************************************************************
 Creates a memory pool. */
-
+UNIV_INTERN
 mem_pool_t*
 mem_pool_create(
 /*============*/
@@ -261,7 +261,7 @@ mem_pool_fill_free_list(
 
 	ut_ad(mutex_own(&(pool->mutex)));
 
-	if (i >= 63) {
+	if (UNIV_UNLIKELY(i >= 63)) {
 		/* We come here when we have run out of space in the
 		memory pool: */
 
@@ -293,7 +293,7 @@ mem_pool_fill_free_list(
 		area = UT_LIST_GET_FIRST(pool->free_list[i + 1]);
 	}
 
-	if (UT_LIST_GET_LEN(pool->free_list[i + 1]) == 0) {
+	if (UNIV_UNLIKELY(UT_LIST_GET_LEN(pool->free_list[i + 1]) == 0)) {
 		mem_analyze_corruption(area);
 
 		ut_error;
@@ -319,20 +319,24 @@ mem_pool_fill_free_list(
 /************************************************************************
 Allocates memory from a pool. NOTE: This low-level function should only be
 used in mem0mem.*! */
-
+UNIV_INTERN
 void*
 mem_area_alloc(
 /*===========*/
 				/* out, own: allocated memory buffer */
-	ulint		size,	/* in: allocated size in bytes; for optimum
+	ulint*		psize,	/* in: requested size in bytes; for optimum
 				space usage, the size should be a power of 2
-				minus MEM_AREA_EXTRA_SIZE */
+				minus MEM_AREA_EXTRA_SIZE;
+				out: allocated size in bytes (greater than
+				or equal to the requested size) */
 	mem_pool_t*	pool)	/* in: memory pool */
 {
 	mem_area_t*	area;
+	ulint		size;
 	ulint		n;
 	ibool		ret;
 
+	size = *psize;
 	n = ut_2_log(ut_max(size + MEM_AREA_EXTRA_SIZE, MEM_AREA_MIN_SIZE));
 
 	mutex_enter(&(pool->mutex));
@@ -403,8 +407,9 @@ mem_area_alloc(
 	mutex_exit(&(pool->mutex));
 
 	ut_ad(mem_pool_validate(pool));
-	UNIV_MEM_ALLOC(MEM_AREA_EXTRA_SIZE + (byte*)area,
-		       ut_2_exp(n) - MEM_AREA_EXTRA_SIZE);
+
+	*psize = ut_2_exp(n) - MEM_AREA_EXTRA_SIZE;
+	UNIV_MEM_ALLOC(MEM_AREA_EXTRA_SIZE + (byte*)area, *psize);
 
 	return((void*)(MEM_AREA_EXTRA_SIZE + ((byte*)area)));
 }
@@ -451,7 +456,7 @@ mem_area_get_buddy(
 
 /************************************************************************
 Frees memory to a pool. */
-
+UNIV_INTERN
 void
 mem_area_free(
 /*==========*/
@@ -506,7 +511,7 @@ mem_area_free(
 
 		next_size = mem_area_get_size(
 			(mem_area_t*)(((byte*)area) + size));
-		if (ut_2_power_up(next_size) != next_size) {
+		if (UNIV_UNLIKELY(!next_size || !ut_is_2pow(next_size))) {
 			fprintf(stderr,
 				"InnoDB: Error: Memory area size %lu,"
 				" next area size %lu not a power of 2!\n"
@@ -574,7 +579,7 @@ mem_area_free(
 
 /************************************************************************
 Validates a memory pool. */
-
+UNIV_INTERN
 ibool
 mem_pool_validate(
 /*==============*/
@@ -620,7 +625,7 @@ mem_pool_validate(
 
 /************************************************************************
 Prints info of a memory pool. */
-
+UNIV_INTERN
 void
 mem_pool_print_info(
 /*================*/
@@ -653,7 +658,7 @@ mem_pool_print_info(
 
 /************************************************************************
 Returns the amount of reserved memory. */
-
+UNIV_INTERN
 ulint
 mem_pool_get_reserved(
 /*==================*/

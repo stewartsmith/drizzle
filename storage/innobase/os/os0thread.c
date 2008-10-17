@@ -20,7 +20,7 @@ Created 9/8/1995 Heikki Tuuri
 
 /*******************************************************************
 Compares two thread ids for equality. */
-
+UNIV_INTERN
 ibool
 os_thread_eq(
 /*=========*/
@@ -46,7 +46,7 @@ os_thread_eq(
 /********************************************************************
 Converts an OS thread id to a ulint. It is NOT guaranteed that the ulint is
 unique for the thread though! */
-
+UNIV_INTERN
 ulint
 os_thread_pf(
 /*=========*/
@@ -66,7 +66,7 @@ os_thread_pf(
 Returns the thread identifier of current thread. Currently the thread
 identifier in Unix is the thread handle itself. Note that in HP-UX
 pthread_t is a struct of 3 fields. */
-
+UNIV_INTERN
 os_thread_id_t
 os_thread_get_curr_id(void)
 /*=======================*/
@@ -82,7 +82,7 @@ os_thread_get_curr_id(void)
 Creates a new thread of execution. The execution starts from
 the function given. The start function takes a void* parameter
 and returns an ulint. */
-
+UNIV_INTERN
 os_thread_t
 os_thread_create(
 /*=============*/
@@ -152,6 +152,16 @@ os_thread_create(
 		exit(1);
 	}
 #endif
+#ifdef __NETWARE__
+	ret = pthread_attr_setstacksize(&attr,
+					(size_t) NW_THD_STACKSIZE);
+	if (ret) {
+		fprintf(stderr,
+			"InnoDB: Error: pthread_attr_setstacksize"
+			" returned %d\n", ret);
+		exit(1);
+	}
+#endif
 	os_mutex_enter(os_sync_mutex);
 	os_thread_count++;
 	os_mutex_exit(os_sync_mutex);
@@ -171,6 +181,7 @@ os_thread_create(
 	pthread_attr_destroy(&attr);
 #endif
 	if (srv_set_thread_priorities) {
+
                   struct sched_param tmp_sched_param;
 
                   memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
@@ -188,7 +199,7 @@ os_thread_create(
 
 /*********************************************************************
 Exits the current thread. */
-
+UNIV_INTERN
 void
 os_thread_exit(
 /*===========*/
@@ -210,18 +221,9 @@ os_thread_exit(
 #endif
 }
 
-#ifdef HAVE_PTHREAD_JOIN
-int
-os_thread_join(
-/*===========*/
-  os_thread_id_t  thread_id)	/* in: id of the thread to join */
-{
-	return(pthread_join(thread_id, NULL));
-}
-#endif
 /*********************************************************************
 Returns handle to the current thread. */
-
+UNIV_INTERN
 os_thread_t
 os_thread_get_curr(void)
 /*====================*/
@@ -235,7 +237,7 @@ os_thread_get_curr(void)
 
 /*********************************************************************
 Advises the os to give up remainder of the thread's time slice. */
-
+UNIV_INTERN
 void
 os_thread_yield(void)
 /*=================*/
@@ -255,7 +257,7 @@ os_thread_yield(void)
 
 /*********************************************************************
 The thread sleeps at least the time given in microseconds. */
-
+UNIV_INTERN
 void
 os_thread_sleep(
 /*============*/
@@ -263,6 +265,8 @@ os_thread_sleep(
 {
 #ifdef __WIN__
 	Sleep((DWORD) tm / 1000);
+#elif defined(__NETWARE__)
+	delay(tm / 1000);
 #else
 	struct timeval	t;
 
@@ -275,7 +279,7 @@ os_thread_sleep(
 
 /**********************************************************************
 Sets a thread priority. */
-
+UNIV_INTERN
 void
 os_thread_set_priority(
 /*===================*/
@@ -304,7 +308,7 @@ os_thread_set_priority(
 
 /**********************************************************************
 Gets a thread priority. */
-
+UNIV_INTERN
 ulint
 os_thread_get_priority(
 /*===================*/
@@ -336,7 +340,7 @@ os_thread_get_priority(
 
 /**********************************************************************
 Gets the last operating system error code for the calling thread. */
-
+UNIV_INTERN
 ulint
 os_thread_get_last_error(void)
 /*==========================*/

@@ -25,7 +25,7 @@ Created 1/8/1996 Heikki Tuuri
 
 /**************************************************************************
 Creates a table memory object. */
-
+UNIV_INTERN
 dict_table_t*
 dict_mem_table_create(
 /*==================*/
@@ -42,62 +42,29 @@ dict_mem_table_create(
 	mem_heap_t*	heap;
 
 	ut_ad(name);
-	ut_ad(!(flags & ~DICT_TF_COMPACT));
+	ut_a(!(flags & (~0 << DICT_TF_BITS)));
 
 	heap = mem_heap_create(DICT_HEAP_SIZE);
 
-	table = mem_heap_alloc(heap, sizeof(dict_table_t));
+	table = mem_heap_zalloc(heap, sizeof(dict_table_t));
 
 	table->heap = heap;
 
 	table->flags = (unsigned int) flags;
 	table->name = mem_heap_strdup(heap, name);
-	table->dir_path_of_temp_table = NULL;
 	table->space = (unsigned int) space;
-	table->ibd_file_missing = FALSE;
-	table->tablespace_discarded = FALSE;
-	table->n_def = 0;
 	table->n_cols = (unsigned int) (n_cols + DATA_N_SYS_COLS);
-
-	table->n_mysql_handles_opened = 0;
-	table->n_foreign_key_checks_running = 0;
-
-	table->cached = FALSE;
 
 	table->cols = mem_heap_alloc(heap, (n_cols + DATA_N_SYS_COLS)
 				     * sizeof(dict_col_t));
-	table->col_names = NULL;
-	UT_LIST_INIT(table->indexes);
 
 	table->auto_inc_lock = mem_heap_alloc(heap, lock_get_size());
 
-	table->query_cache_inv_trx_id = ut_dulint_zero;
-
-	UT_LIST_INIT(table->locks);
-	UT_LIST_INIT(table->foreign_list);
-	UT_LIST_INIT(table->referenced_list);
-
-#ifdef UNIV_DEBUG
-	table->does_not_fit_in_memory = FALSE;
-#endif /* UNIV_DEBUG */
-
-	table->stat_initialized = FALSE;
-
-	table->stat_modified_counter = 0;
-
-	table->big_rows = 0;
-
 	mutex_create(&table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
-
-	table->autoinc_inited = FALSE;
 
 	/* The actual increment value will be set by MySQL, we simply
 	default to 1 here.*/
 	table->autoinc_increment = 1;
-
-	/* The number of transactions that are either waiting on the
-	AUTOINC lock or have been granted the lock. */
-	table->n_waiting_or_granted_auto_inc_locks = 0;
 
 #ifdef UNIV_DEBUG
 	table->magic_n = DICT_TABLE_MAGIC_N;
@@ -107,7 +74,7 @@ dict_mem_table_create(
 
 /********************************************************************
 Free a table memory object. */
-
+UNIV_INTERN
 void
 dict_mem_table_free(
 /*================*/
@@ -170,7 +137,7 @@ dict_add_col_name(
 
 /**************************************************************************
 Adds a column definition to a table. */
-
+UNIV_INTERN
 void
 dict_mem_table_add_col(
 /*===================*/
@@ -198,8 +165,7 @@ dict_mem_table_add_col(
 		}
 		if (UNIV_LIKELY(i) && UNIV_UNLIKELY(!table->col_names)) {
 			/* All preceding column names are empty. */
-			char* s = mem_heap_alloc(heap, table->n_def);
-			memset(s, 0, table->n_def);
+			char* s = mem_heap_zalloc(heap, table->n_def);
 			table->col_names = s;
 		}
 
@@ -207,7 +173,7 @@ dict_mem_table_add_col(
 						     i, name, heap);
 	}
 
-	col = (dict_col_t*) dict_table_get_nth_col(table, i);
+	col = dict_table_get_nth_col(table, i);
 
 	col->ind = (unsigned int) i;
 	col->ord_part = 0;
@@ -224,7 +190,7 @@ dict_mem_table_add_col(
 
 /**************************************************************************
 Creates an index memory object. */
-
+UNIV_INTERN
 dict_index_t*
 dict_mem_index_create(
 /*==================*/
@@ -244,26 +210,19 @@ dict_mem_index_create(
 	ut_ad(table_name && index_name);
 
 	heap = mem_heap_create(DICT_HEAP_SIZE);
-	index = mem_heap_alloc(heap, sizeof(dict_index_t));
+	index = mem_heap_zalloc(heap, sizeof(dict_index_t));
 
 	index->heap = heap;
 
 	index->type = type;
 	index->space = (unsigned int) space;
-	index->page = 0;
 	index->name = mem_heap_strdup(heap, index_name);
 	index->table_name = table_name;
-	index->table = NULL;
-	index->n_def = index->n_nullable = 0;
 	index->n_fields = (unsigned int) n_fields;
 	index->fields = mem_heap_alloc(heap, 1 + n_fields
 				       * sizeof(dict_field_t));
 	/* The '1 +' above prevents allocation
 	of an empty mem block */
-	index->stat_n_diff_key_vals = NULL;
-
-	index->cached = FALSE;
-	memset(&index->lock, 0, sizeof index->lock);
 #ifdef UNIV_DEBUG
 	index->magic_n = DICT_INDEX_MAGIC_N;
 #endif /* UNIV_DEBUG */
@@ -272,7 +231,7 @@ dict_mem_index_create(
 
 /**************************************************************************
 Creates and initializes a foreign constraint memory object. */
-
+UNIV_INTERN
 dict_foreign_t*
 dict_mem_foreign_create(void)
 /*=========================*/
@@ -283,25 +242,9 @@ dict_mem_foreign_create(void)
 
 	heap = mem_heap_create(100);
 
-	foreign = mem_heap_alloc(heap, sizeof(dict_foreign_t));
+	foreign = mem_heap_zalloc(heap, sizeof(dict_foreign_t));
 
 	foreign->heap = heap;
-
-	foreign->id = NULL;
-
-	foreign->type = 0;
-	foreign->foreign_table_name = NULL;
-	foreign->foreign_table = NULL;
-	foreign->foreign_col_names = NULL;
-
-	foreign->referenced_table_name = NULL;
-	foreign->referenced_table = NULL;
-	foreign->referenced_col_names = NULL;
-
-	foreign->n_fields = 0;
-
-	foreign->foreign_index = NULL;
-	foreign->referenced_index = NULL;
 
 	return(foreign);
 }
@@ -310,7 +253,7 @@ dict_mem_foreign_create(void)
 Adds a field definition to an index. NOTE: does not take a copy
 of the column name if the field is a column. The memory occupied
 by the column name may be released only after publishing the index. */
-
+UNIV_INTERN
 void
 dict_mem_index_add_field(
 /*=====================*/
@@ -335,7 +278,7 @@ dict_mem_index_add_field(
 
 /**************************************************************************
 Frees an index memory object. */
-
+UNIV_INTERN
 void
 dict_mem_index_free(
 /*================*/

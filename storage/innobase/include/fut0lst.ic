@@ -37,8 +37,7 @@ flst_write_addr(
 	mtr_t*		mtr)	/* in: mini-transaction handle */
 {
 	ut_ad(faddr && mtr);
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(faddr),
-				MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, faddr, MTR_MEMO_PAGE_X_FIX));
 
 	mlog_write_ulint(faddr + FIL_ADDR_PAGE, addr.page, MLOG_4BYTES, mtr);
 	mlog_write_ulint(faddr + FIL_ADDR_BYTE, addr.boffset,
@@ -51,9 +50,9 @@ UNIV_INLINE
 fil_addr_t
 flst_read_addr(
 /*===========*/
-				/* out: file address */
-	fil_faddr_t*	faddr,	/* in: pointer to file faddress */
-	mtr_t*		mtr)	/* in: mini-transaction handle */
+					/* out: file address */
+	const fil_faddr_t*	faddr,	/* in: pointer to file faddress */
+	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	fil_addr_t	addr;
 
@@ -74,8 +73,8 @@ flst_init(
 	flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(base),
-				MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, base, MTR_MEMO_PAGE_X_FIX));
+
 	mlog_write_ulint(base + FLST_LEN, 0, MLOG_4BYTES, mtr);
 	flst_write_addr(base + FLST_FIRST, fil_addr_null, mtr);
 	flst_write_addr(base + FLST_LAST, fil_addr_null, mtr);
@@ -88,7 +87,7 @@ ulint
 flst_get_len(
 /*=========*/
 					/* out: length */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	return(mtr_read_ulint(base + FLST_LEN, MLOG_4BYTES, mtr));
@@ -101,7 +100,7 @@ fil_addr_t
 flst_get_first(
 /*===========*/
 					/* out: file address */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	return(flst_read_addr(base + FLST_FIRST, mtr));
@@ -114,7 +113,7 @@ fil_addr_t
 flst_get_last(
 /*==========*/
 					/* out: file address */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	return(flst_read_addr(base + FLST_LAST, mtr));
@@ -126,9 +125,9 @@ UNIV_INLINE
 fil_addr_t
 flst_get_next_addr(
 /*===============*/
-				/* out: file address */
-	flst_node_t*	node,	/* in: pointer to node */
-	mtr_t*		mtr)	/* in: mini-transaction handle */
+					/* out: file address */
+	const flst_node_t*	node,	/* in: pointer to node */
+	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	return(flst_read_addr(node + FLST_NEXT, mtr));
 }
@@ -139,9 +138,9 @@ UNIV_INLINE
 fil_addr_t
 flst_get_prev_addr(
 /*===============*/
-				/* out: file address */
-	flst_node_t*	node,	/* in: pointer to node */
-	mtr_t*		mtr)	/* in: mini-transaction handle */
+					/* out: file address */
+	const flst_node_t*	node,	/* in: pointer to node */
+	mtr_t*			mtr)	/* in: mini-transaction handle */
 {
 	return(flst_read_addr(node + FLST_PREV, mtr));
 }

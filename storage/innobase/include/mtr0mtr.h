@@ -130,8 +130,18 @@ flag value must give the length also! */
 						/* copy compact record list end
 						to a new created index page */
 #define MLOG_COMP_PAGE_REORGANIZE ((byte)46)	/* reorganize an index page */
-
-#define MLOG_BIGGEST_TYPE	((byte)46)	/* biggest value (used in
+#define MLOG_FILE_CREATE2	((byte)47)	/* log record about creating
+						an .ibd file, with format */
+#define MLOG_ZIP_WRITE_NODE_PTR	((byte)48)	/* write the node pointer of
+						a record on a compressed
+						non-leaf B-tree page */
+#define MLOG_ZIP_WRITE_BLOB_PTR	((byte)49)	/* write the BLOB pointer
+						of an externally stored column
+						on a compressed page */
+#define MLOG_ZIP_WRITE_HEADER	((byte)50)	/* write to compressed page
+						header */
+#define MLOG_ZIP_PAGE_COMPRESS	((byte)51)	/* compress an index page */
+#define MLOG_BIGGEST_TYPE	((byte)51)	/* biggest value (used in
 						asserts) */
 
 /*******************************************************************
@@ -145,18 +155,8 @@ mtr_start(
 			the mtr handle */
 	mtr_t*	mtr);	/* in: memory buffer for the mtr buffer */
 /*******************************************************************
-Starts a mini-transaction and creates a mini-transaction handle
-and buffer in the memory buffer given by the caller. */
-
-mtr_t*
-mtr_start_noninline(
-/*================*/
-			/* out: mtr buffer which also acts as
-			the mtr handle */
-	mtr_t*	mtr);	/* in: memory buffer for the mtr buffer */
-/*******************************************************************
 Commits a mini-transaction. */
-
+UNIV_INTERN
 void
 mtr_commit(
 /*=======*/
@@ -173,7 +173,7 @@ mtr_set_savepoint(
 Releases the latches stored in an mtr memo down to a savepoint.
 NOTE! The mtr must not have made changes to buffer pages after the
 savepoint, as these can be handled only by mtr_commit. */
-
+UNIV_INTERN
 void
 mtr_rollback_to_savepoint(
 /*======================*/
@@ -208,23 +208,23 @@ mtr_set_log_mode(
 	ulint	mode);	/* in: logging mode: MTR_LOG_NONE, ... */
 /************************************************************
 Reads 1 - 4 bytes from a file page buffered in the buffer pool. */
-
+UNIV_INTERN
 ulint
 mtr_read_ulint(
 /*===========*/
-			/* out: value read */
-	byte*	ptr,	/* in: pointer from where to read */
-	ulint	type,	/* in: MLOG_1BYTE, MLOG_2BYTES, MLOG_4BYTES */
-	mtr_t*	mtr);	/* in: mini-transaction handle */
+				/* out: value read */
+	const byte*	ptr,	/* in: pointer from where to read */
+	ulint		type,	/* in: MLOG_1BYTE, MLOG_2BYTES, MLOG_4BYTES */
+	mtr_t*		mtr);	/* in: mini-transaction handle */
 /************************************************************
 Reads 8 bytes from a file page buffered in the buffer pool. */
-
+UNIV_INTERN
 dulint
 mtr_read_dulint(
 /*============*/
-			/* out: value read */
-	byte*	ptr,	/* in: pointer from where to read */
-	mtr_t*	mtr);	/* in: mini-transaction handle */
+				/* out: value read */
+	const byte*	ptr,	/* in: pointer from where to read */
+	mtr_t*		mtr);	/* in: mini-transaction handle */
 /*************************************************************************
 This macro locks an rw-lock in s-mode. */
 #define mtr_s_lock(B, MTR)	mtr_s_lock_func((B), __FILE__, __LINE__,\
@@ -258,7 +258,7 @@ mtr_x_lock_func(
 
 /*******************************************************
 Releases an object in the memo stack. */
-
+UNIV_INTERN
 void
 mtr_memo_release(
 /*=============*/
@@ -272,13 +272,24 @@ UNIV_INLINE
 ibool
 mtr_memo_contains(
 /*==============*/
-			/* out: TRUE if contains */
-	mtr_t*	mtr,	/* in: mtr */
-	void*	object,	/* in: object to search */
-	ulint	type);	/* in: type of object */
+				/* out: TRUE if contains */
+	mtr_t*		mtr,	/* in: mtr */
+	const void*	object,	/* in: object to search */
+	ulint		type);	/* in: type of object */
+
+/**************************************************************
+Checks if memo contains the given page. */
+UNIV_INTERN
+ibool
+mtr_memo_contains_page(
+/*===================*/
+				/* out: TRUE if contains */
+	mtr_t*		mtr,	/* in: mtr */
+	const byte*	ptr,	/* in: pointer to buffer frame */
+	ulint		type);	/* in: type of object */
 /*************************************************************
 Prints info of an mtr handle. */
-
+UNIV_INTERN
 void
 mtr_print(
 /*======*/
@@ -316,7 +327,9 @@ struct mtr_memo_slot_struct{
 
 /* Mini-transaction handle and buffer */
 struct mtr_struct{
+#ifdef UNIV_DEBUG
 	ulint		state;	/* MTR_ACTIVE, MTR_COMMITTING, MTR_COMMITTED */
+#endif
 	dyn_array_t	memo;	/* memo stack for locks etc. */
 	dyn_array_t	log;	/* mini-transaction log */
 	ibool		modifications;
@@ -327,9 +340,9 @@ struct mtr_struct{
 				have been written to the mtr log */
 	ulint		log_mode; /* specifies which operations should be
 				logged; default value MTR_LOG_ALL */
-	dulint		start_lsn;/* start lsn of the possible log entry for
+	ib_uint64_t	start_lsn;/* start lsn of the possible log entry for
 				this mtr */
-	dulint		end_lsn;/* end lsn of the possible log entry for
+	ib_uint64_t	end_lsn;/* end lsn of the possible log entry for
 				this mtr */
 	ulint		magic_n;
 };

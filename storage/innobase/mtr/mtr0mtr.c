@@ -17,20 +17,6 @@ Created 11/26/1995 Heikki Tuuri
 #include "mtr0log.h"
 #include "log0log.h"
 
-/*******************************************************************
-Starts a mini-transaction and creates a mini-transaction handle
-and buffer in the memory buffer given by the caller. */
-
-mtr_t*
-mtr_start_noninline(
-/*================*/
-			/* out: mtr buffer which also acts as
-			the mtr handle */
-	mtr_t*	mtr)	/* in: memory buffer for the mtr buffer */
-{
-	return(mtr_start(mtr));
-}
-
 /*********************************************************************
 Releases the item in the slot given. */
 UNIV_INLINE
@@ -54,16 +40,13 @@ mtr_memo_slot_release(
 		} else if (type == MTR_MEMO_S_LOCK) {
 			rw_lock_s_unlock((rw_lock_t*)object);
 #ifdef UNIV_DEBUG
-		} else if (type == MTR_MEMO_X_LOCK) {
-			rw_lock_x_unlock((rw_lock_t*)object);
-		} else {
+		} else if (type != MTR_MEMO_X_LOCK) {
 			ut_ad(type == MTR_MEMO_MODIFY);
 			ut_ad(mtr_memo_contains(mtr, object,
 						MTR_MEMO_PAGE_X_FIX));
-#else
+#endif /* UNIV_DEBUG */
 		} else {
 			rw_lock_x_unlock((rw_lock_t*)object);
-#endif
 		}
 	}
 
@@ -164,19 +147,23 @@ mtr_log_reserve_and_write(
 
 /*******************************************************************
 Commits a mini-transaction. */
-
+UNIV_INTERN
 void
 mtr_commit(
 /*=======*/
 	mtr_t*	mtr)	/* in: mini-transaction */
 {
+	ibool		write_log;
+
 	ut_ad(mtr);
 	ut_ad(mtr->magic_n == MTR_MAGIC_N);
 	ut_ad(mtr->state == MTR_ACTIVE);
 #ifdef UNIV_DEBUG
 	mtr->state = MTR_COMMITTING;
 #endif
-	if (mtr->modifications) {
+	write_log = mtr->modifications && mtr->n_log_recs;
+
+	if (write_log) {
 		mtr_log_reserve_and_write(mtr);
 	}
 
@@ -190,7 +177,7 @@ mtr_commit(
 
 	mtr_memo_pop_all(mtr);
 
-	if (mtr->modifications) {
+	if (write_log) {
 		log_release();
 	}
 
@@ -205,7 +192,7 @@ mtr_commit(
 Releases the latches stored in an mtr memo down to a savepoint.
 NOTE! The mtr must not have made changes to buffer pages after the
 savepoint, as these can be handled only by mtr_commit. */
-
+UNIV_INTERN
 void
 mtr_rollback_to_savepoint(
 /*======================*/
@@ -237,7 +224,7 @@ mtr_rollback_to_savepoint(
 
 /*******************************************************
 Releases an object in the memo stack. */
-
+UNIV_INTERN
 void
 mtr_memo_release(
 /*=============*/
@@ -273,21 +260,19 @@ mtr_memo_release(
 
 /************************************************************
 Reads 1 - 4 bytes from a file page buffered in the buffer pool. */
-
+UNIV_INTERN
 ulint
 mtr_read_ulint(
 /*===========*/
 				/* out: value read */
-	byte*		ptr,	/* in: pointer from where to read */
+	const byte*	ptr,	/* in: pointer from where to read */
 	ulint		type,	/* in: MLOG_1BYTE, MLOG_2BYTES, MLOG_4BYTES */
 	mtr_t*		mtr __attribute__((unused)))
 				/* in: mini-transaction handle */
 {
 	ut_ad(mtr->state == MTR_ACTIVE);
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(ptr),
-				MTR_MEMO_PAGE_S_FIX)
-	      || mtr_memo_contains(mtr, buf_block_align(ptr),
-				   MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, ptr, MTR_MEMO_PAGE_S_FIX)
+	      || mtr_memo_contains_page(mtr, ptr, MTR_MEMO_PAGE_X_FIX));
 	if (type == MLOG_1BYTE) {
 		return(mach_read_from_1(ptr));
 	} else if (type == MLOG_2BYTES) {
@@ -300,28 +285,44 @@ mtr_read_ulint(
 
 /************************************************************
 Reads 8 bytes from a file page buffered in the buffer pool. */
-
+UNIV_INTERN
 dulint
 mtr_read_dulint(
 /*============*/
 				/* out: value read */
-	byte*		ptr,	/* in: pointer from where to read */
+	const byte*	ptr,	/* in: pointer from where to read */
 	mtr_t*		mtr __attribute__((unused)))
 				/* in: mini-transaction handle */
 {
 	ut_ad(mtr->state == MTR_ACTIVE);
-	ut_ad(ptr && mtr);
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(ptr),
-				MTR_MEMO_PAGE_S_FIX)
-	      || mtr_memo_contains(mtr, buf_block_align(ptr),
-				   MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, ptr, MTR_MEMO_PAGE_S_FIX)
+	      || mtr_memo_contains_page(mtr, ptr, MTR_MEMO_PAGE_X_FIX));
 	return(mach_read_from_8(ptr));
 }
 
 #ifdef UNIV_DEBUG
+/**************************************************************
+Checks if memo contains the given page. */
+UNIV_INTERN
+ibool
+mtr_memo_contains_page(
+/*===================*/
+				/* out: TRUE if contains */
+	mtr_t*		mtr,	/* in: mtr */
+	const byte*	ptr,	/* in: pointer to buffer frame */
+	ulint		type)	/* in: type of object */
+{
+	ibool	ret;
+
+	buf_pool_mutex_enter();
+	ret = mtr_memo_contains(mtr, buf_block_align(ptr), type);
+	buf_pool_mutex_exit();
+	return(ret);
+}
+
 /*************************************************************
 Prints info of an mtr handle. */
-
+UNIV_INTERN
 void
 mtr_print(
 /*======*/

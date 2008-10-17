@@ -12,8 +12,8 @@ Created 1/16/1996 Heikki Tuuri
 #include "univ.i"
 
 extern ulint	data_mysql_default_charset_coll;
-#define DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL 8
-#define DATA_DRIZZLE_BINARY_CHARSET_COLL 63
+#define DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL 8
+#define DATA_MYSQL_BINARY_CHARSET_COLL 63
 
 /* SQL data type struct */
 typedef struct dtype_struct		dtype_t;
@@ -25,7 +25,7 @@ typedef struct dtype_struct		dtype_t;
 				that the MySQL format for this, DATA_BINARY,
 				DATA_VARMYSQL, is also affected by whether the
 				'precise type' contains
-				DATA_DRIZZLE_TRUE_VARCHAR */
+				DATA_MYSQL_TRUE_VARCHAR */
 #define DATA_CHAR	2	/* fixed length character of the
 				latin1_swedish_ci charset-collation */
 #define DATA_FIXBINARY	3	/* binary string of fixed length */
@@ -103,9 +103,9 @@ columns, and for them the precise type is usually not used at all.
 				for InnoDB's own system tables */
 #define DATA_ERROR	111	/* another relic from pre-MySQL time */
 
-#define DATA_DRIZZLE_TYPE_MASK 255 /* AND with this mask to extract the MySQL
+#define DATA_MYSQL_TYPE_MASK 255 /* AND with this mask to extract the MySQL
 				 type from the precise type */
-#define DATA_DRIZZLE_TRUE_VARCHAR 10 /* MySQL type code for the >= 5.0.3 format true VARCHAR */
+#define DATA_MYSQL_TRUE_VARCHAR 10 /* Drizzle type code for true VARCHAR */
 
 /* Precise data types for system columns and the length of those columns;
 NOTE: the values must run from 0 up in the order given! All codes must
@@ -120,6 +120,8 @@ be less than 256 */
 #define DATA_ROLL_PTR_LEN 7
 
 #define	DATA_N_SYS_COLS 3	/* number of system columns defined above */
+
+#define DATA_SYS_PRTYPE_MASK 0xF /* mask to extract the above from prtype */
 
 /* Flags ORed to the precise data type */
 #define DATA_NOT_NULL	256	/* this is ORed to the precise type when
@@ -156,12 +158,12 @@ dtype_get_mysql_type(
 /*=================*/
 				/* out: MySQL type code; this is NOT an InnoDB
 				type code! */
-	dtype_t*	type);	/* in: type struct */
+	const dtype_t*	type);	/* in: type struct */
 /*************************************************************************
 Determine how many bytes the first n characters of the given string occupy.
 If the string is shorter than n characters, returns the number of bytes
 the characters in the string occupy. */
-
+UNIV_INTERN
 ulint
 dtype_get_at_most_n_mbchars(
 /*========================*/
@@ -181,7 +183,7 @@ dtype_get_at_most_n_mbchars(
 /*************************************************************************
 Checks if a data main type is a string type. Also a BLOB is considered a
 string type. */
-
+UNIV_INTERN
 ibool
 dtype_is_string_type(
 /*=================*/
@@ -191,7 +193,7 @@ dtype_is_string_type(
 Checks if a type is a binary string type. Note that for tables created with
 < 4.0.14, we do not know if a DATA_BLOB column is a BLOB or a TEXT column. For
 those DATA_BLOB columns this function currently returns FALSE. */
-
+UNIV_INTERN
 ibool
 dtype_is_binary_string_type(
 /*========================*/
@@ -203,7 +205,7 @@ Checks if a type is a non-binary string type. That is, dtype_is_string_type is
 TRUE and dtype_is_binary_string_type is FALSE. Note that for tables created
 with < 4.0.14, we do not know if a DATA_BLOB column is a BLOB or a TEXT column.
 For those DATA_BLOB columns this function currently returns TRUE. */
-
+UNIV_INTERN
 ibool
 dtype_is_non_binary_string_type(
 /*============================*/
@@ -234,14 +236,14 @@ UNIV_INLINE
 ulint
 dtype_get_mtype(
 /*============*/
-	dtype_t*	type);
+	const dtype_t*	type);
 /*************************************************************************
 Gets the precise data type. */
 UNIV_INLINE
 ulint
 dtype_get_prtype(
 /*=============*/
-	dtype_t*	type);
+	const dtype_t*	type);
 /*************************************************************************
 Compute the mbminlen and mbmaxlen members of a data type structure. */
 UNIV_INLINE
@@ -256,13 +258,6 @@ dtype_get_mblen(
 				multi-byte character */
 /*************************************************************************
 Gets the MySQL charset-collation code for MySQL string types. */
-
-ulint
-dtype_get_charset_coll_noninline(
-/*=============================*/
-	ulint	prtype);/* in: precise data type */
-/*************************************************************************
-Gets the MySQL charset-collation code for MySQL string types. */
 UNIV_INLINE
 ulint
 dtype_get_charset_coll(
@@ -271,7 +266,7 @@ dtype_get_charset_coll(
 /*************************************************************************
 Forms a precise type from the < 4.1.2 format precise type plus the
 charset-collation code. */
-
+UNIV_INTERN
 ulint
 dtype_form_prtype(
 /*==============*/
@@ -279,12 +274,22 @@ dtype_form_prtype(
 				DATA_BINARY_TYPE etc. */
 	ulint	charset_coll);	/* in: MySQL charset-collation code */
 /*************************************************************************
+Determines if a MySQL string type is a subset of UTF-8.  This function
+may return false negatives, in case further character-set collation
+codes are introduced in MySQL later. */
+UNIV_INLINE
+ibool
+dtype_is_utf8(
+/*==========*/
+			/* out: TRUE if a subset of UTF-8 */
+	ulint	prtype);/* in: precise data type */
+/*************************************************************************
 Gets the type length. */
 UNIV_INLINE
 ulint
 dtype_get_len(
 /*==========*/
-	dtype_t*	type);
+	const dtype_t*	type);
 /*************************************************************************
 Gets the minimum length of a character, in bytes. */
 UNIV_INLINE
@@ -365,7 +370,7 @@ void
 dtype_read_for_order_and_null_size(
 /*===============================*/
 	dtype_t*	type,	/* in: type struct */
-	byte*		buf);	/* in: buffer for the stored order info */
+	const byte*	buf);	/* in: buffer for the stored order info */
 /**************************************************************************
 Stores for a type the information which determines its alphabetical ordering
 and the storage size of an SQL NULL value. This is the >= 4.1.x storage
@@ -377,7 +382,7 @@ dtype_new_store_for_order_and_null_size(
 	byte*		buf,	/* in: buffer for
 				DATA_NEW_ORDER_NULL_TYPE_BUF_SIZE
 				bytes where we store the info */
-	dtype_t*	type,	/* in: type struct */
+	const dtype_t*	type,	/* in: type struct */
 	ulint		prefix_len);/* in: prefix length to
 				replace type->len, or 0 */
 /**************************************************************************
@@ -389,23 +394,23 @@ void
 dtype_new_read_for_order_and_null_size(
 /*===================================*/
 	dtype_t*	type,	/* in: type struct */
-	byte*		buf);	/* in: buffer for stored type order info */
+	const byte*	buf);	/* in: buffer for stored type order info */
 
 /*************************************************************************
 Validates a data type structure. */
-
+UNIV_INTERN
 ibool
 dtype_validate(
 /*===========*/
 				/* out: TRUE if ok */
-	dtype_t*	type);	/* in: type struct to validate */
+	const dtype_t*	type);	/* in: type struct to validate */
 /*************************************************************************
 Prints a data type structure. */
-
+UNIV_INTERN
 void
 dtype_print(
 /*========*/
-	dtype_t*	type);	/* in: type */
+	const dtype_t*	type);	/* in: type */
 
 /* Structure for an SQL data type.
 If you add fields to this structure, be sure to initialize them everywhere.

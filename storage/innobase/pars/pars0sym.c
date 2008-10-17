@@ -15,7 +15,10 @@ Created 12/15/1997 Heikki Tuuri
 #include "mem0mem.h"
 #include "data0type.h"
 #include "data0data.h"
-#include "pars0grm.h"
+#ifndef PARS0GRM_H
+# define PARS0GRM_H
+# include "pars0grm.h"
+#endif
 #include "pars0pars.h"
 #include "que0que.h"
 #include "eval0eval.h"
@@ -23,7 +26,7 @@ Created 12/15/1997 Heikki Tuuri
 
 /**********************************************************************
 Creates a symbol table for a single stored procedure or query. */
-
+UNIV_INTERN
 sym_tab_t*
 sym_tab_create(
 /*===========*/
@@ -46,7 +49,7 @@ sym_tab_create(
 Frees the memory allocated dynamically AFTER parsing phase for variables
 etc. in the symbol table. Does not free the mem heap where the table was
 originally created. Frees also SQL explicit cursor definitions. */
-
+UNIV_INTERN
 void
 sym_tab_free_private(
 /*=================*/
@@ -82,7 +85,7 @@ sym_tab_free_private(
 
 /**********************************************************************
 Adds an integer literal to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_int_lit(
 /*================*/
@@ -102,7 +105,7 @@ sym_tab_add_int_lit(
 
 	node->indirection = NULL;
 
-	dtype_set(&(node->common.val.type), DATA_INT, 0, 4);
+	dtype_set(dfield_get_type(&node->common.val), DATA_INT, 0, 4);
 
 	data = mem_heap_alloc(sym_tab->heap, 4);
 	mach_write_to_4(data, val);
@@ -122,7 +125,7 @@ sym_tab_add_int_lit(
 
 /**********************************************************************
 Adds a string literal to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_str_lit(
 /*================*/
@@ -144,7 +147,8 @@ sym_tab_add_str_lit(
 
 	node->indirection = NULL;
 
-	dtype_set(&(node->common.val.type), DATA_VARCHAR, DATA_ENGLISH, 0);
+	dtype_set(dfield_get_type(&node->common.val),
+		  DATA_VARCHAR, DATA_ENGLISH, 0);
 
 	if (len) {
 		data = mem_heap_alloc(sym_tab->heap, len);
@@ -168,7 +172,7 @@ sym_tab_add_str_lit(
 
 /**********************************************************************
 Add a bound literal to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_bound_lit(
 /*==================*/
@@ -226,7 +230,8 @@ sym_tab_add_bound_lit(
 		ut_error;
 	}
 
-	dtype_set(&(node->common.val.type), blit->type, blit->prtype, len);
+	dtype_set(dfield_get_type(&node->common.val),
+		  blit->type, blit->prtype, len);
 
 	dfield_set_data(&(node->common.val), blit->address, blit->length);
 
@@ -243,7 +248,7 @@ sym_tab_add_bound_lit(
 
 /**********************************************************************
 Adds an SQL null literal to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_null_lit(
 /*=================*/
@@ -261,9 +266,9 @@ sym_tab_add_null_lit(
 
 	node->indirection = NULL;
 
-	node->common.val.type.mtype = DATA_ERROR;
+	dfield_get_type(&node->common.val)->mtype = DATA_ERROR;
 
-	dfield_set_data(&(node->common.val), NULL, UNIV_SQL_NULL);
+	dfield_set_null(&node->common.val);
 
 	node->common.val_buf_size = 0;
 	node->prefetch_buf = NULL;
@@ -278,7 +283,7 @@ sym_tab_add_null_lit(
 
 /**********************************************************************
 Adds an identifier to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_id(
 /*===========*/
@@ -301,7 +306,7 @@ sym_tab_add_id(
 
 	UT_LIST_ADD_LAST(sym_list, sym_tab->sym_list, node);
 
-	dfield_set_data(&(node->common.val), NULL, UNIV_SQL_NULL);
+	dfield_set_null(&node->common.val);
 
 	node->common.val_buf_size = 0;
 	node->prefetch_buf = NULL;
@@ -314,7 +319,7 @@ sym_tab_add_id(
 
 /**********************************************************************
 Add a bound identifier to a symbol table. */
-
+UNIV_INTERN
 sym_node_t*
 sym_tab_add_bound_id(
 /*===========*/
@@ -340,7 +345,7 @@ sym_tab_add_bound_id(
 
 	UT_LIST_ADD_LAST(sym_list, sym_tab->sym_list, node);
 
-	dfield_set_data(&(node->common.val), NULL, UNIV_SQL_NULL);
+	dfield_set_null(&node->common.val);
 
 	node->common.val_buf_size = 0;
 	node->prefetch_buf = NULL;
