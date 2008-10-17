@@ -4,6 +4,8 @@
 
 die() { echo "$@"; exit 1; }
 
+# LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
+LIBTOOLIZE_FLAGS=" --automake --copy"
 # ACLOCAL=${ACLOCAL:-aclocal}
 ACLOCAL_FLAGS="-I m4"
 # AUTOHEADER=${AUTOHEADER:-autoheader}
@@ -29,6 +31,20 @@ if test -d ".bzr" ; then
   bzr log --short > ChangeLog || touch ChangeLog
 else
   touch ChangeLog
+fi
+
+if test x$LIBTOOLIZE = x; then
+  if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=glibtoolize
+  elif test \! "x`which libtoolize-1.5 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=libtoolize-1.5
+  elif test \! "x`which libtoolize 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=libtoolize
+  elif test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=glibtoolize
+  else
+    echo "libtoolize 1.5.x wasn't found, exiting"; exit 1
+  fi
 fi
 
 if test x$ACLOCAL = x; then
@@ -81,6 +97,9 @@ if test x$AUTOHEADER = x; then
   fi
 fi
 
+
+# --force means overwrite ltmain.sh script if it already exists 
+run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Can't execute libtoolize"
 
 run $ACLOCAL $ACLOCAL_FLAGS || die "Can't execute aclocal"
 run $AUTOHEADER || die "Can't execute autoheader"
