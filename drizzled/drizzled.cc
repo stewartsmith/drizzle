@@ -69,9 +69,6 @@
 extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
-#ifndef __GNU_LIBRARY__
-#define __GNU_LIBRARY__				// Skip warnings in getopt.h
-#endif
 #include <mysys/my_getopt.h>
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
