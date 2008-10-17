@@ -1029,7 +1029,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         table_to_table_list table_to_table opt_table_list opt_as
         single_multi table_wild_list table_wild_one opt_wild
         union_clause union_list
-        precision subselect_start charset
+        precision subselect_start
         subselect_end select_var_list select_var_list_init opt_len
         opt_extended_describe
         statement
@@ -1993,11 +1993,6 @@ now_or_signed_literal:
           { $$= new Item_func_now_local(); }
         | signed_literal
           { $$=$1; }
-        ;
-
-charset:
-          CHAR_SYM SET {}
-        | CHARSET {}
         ;
 
 collation_name:

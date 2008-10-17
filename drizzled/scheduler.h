@@ -45,8 +45,6 @@ public:
 
 enum scheduler_types
 {
-  SCHEDULER_ONE_THREAD_PER_CONNECTION=0,
-  SCHEDULER_NO_THREADS,
   SCHEDULER_POOL_OF_THREADS
 };
 
@@ -63,9 +61,6 @@ public:
   LIST list;
   bool thread_attached;  /* Indicates if THD is attached to the OS thread */
   
-  char dbug_explain_buf[256];
-  void swap_dbug_explain();
-
   thd_scheduler();
   ~thd_scheduler();
   bool init(THD* parent_thd);
