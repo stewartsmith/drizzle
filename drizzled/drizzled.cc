@@ -3153,7 +3153,7 @@ struct my_option my_long_options[] =
    N_("Push supported query conditions to the storage engine."),
    (char**) &global_system_variables.engine_condition_pushdown,
    (char**) &global_system_variables.engine_condition_pushdown,
-   0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
+   0, GET_BOOL, NO_ARG, false, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
