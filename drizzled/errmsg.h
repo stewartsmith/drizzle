@@ -1,7 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
  */
 
 #ifndef DRIZZLED_ERRMSG_H
@@ -30,7 +28,7 @@
 int errmsg_initializer(st_plugin_int *plugin);
 int errmsg_finalizer(st_plugin_int *plugin);
 
-void errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap);
-void errmsg_printf (THD *thd, int priority, const char *format, ...);
+bool errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap);
+bool errmsg_printf (THD *thd, int priority, const char *format, ...);
 
 #endif /* DRIZZLED_ERRMSG_H */

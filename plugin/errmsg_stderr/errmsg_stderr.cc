@@ -1,7 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
  */
 
 /* need to define DRIZZLE_SERVER to get inside the THD */
@@ -74,12 +72,12 @@ mysql_declare_plugin(errmsg_stderr)
   "errmsg_stderr",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",
-  "Error Messages to stderr",
+  N_("Error Messages to stderr"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
   errmsg_stderr_plugin_deinit,
-  NULL,   /* status variables */
-  NULL,  /* system variables */
+  NULL, /* status variables */
+  NULL, /* system variables */
   NULL
 }
 mysql_declare_plugin_end;

@@ -1,7 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
  */
 
 #ifndef DRIZZLED_LOGGING_H
@@ -31,7 +29,7 @@ int logging_finalizer(st_plugin_int *plugin);
  * pull everything it needs out of the thd.  If need to add
  * parameters, look at how errmsg.h and errmsg.cc do it. */
 
-void logging_pre_do (THD *thd);
-void logging_post_do (THD *thd);
+bool logging_pre_do (THD *thd);
+bool logging_post_do (THD *thd);
 
 #endif /* DRIZZLED_LOGGING_H */

@@ -1,7 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
  */
 
 #include <drizzled/server_includes.h>
@@ -36,7 +34,9 @@ int qcache_initializer(st_plugin_int *plugin)
   {
     if (plugin->plugin->init((void *)p))
     {
-      sql_print_error("Qcache plugin '%s' init() failed",
+      /* TRANSLATORS: The leading word "qcache" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("qcache plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -56,7 +56,9 @@ int qcache_finalizer(st_plugin_int *plugin)
   {
     if (plugin->plugin->deinit((void *)p))
     {
-      sql_print_error("Qcache plugin '%s' deinit() failed",
+      /* TRANSLATORS: The leading word "qcache" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("qcache plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -90,9 +92,10 @@ static bool qcache_do1_iterate (THD *thd, plugin_ref plugin, void *p)
   {
     if (l->qcache_func1(thd, parms->parm1, parms->parm2))
     {
-      sql_print_error("Qcache plugin '%s' do1() failed",
+      /* TRANSLATORS: The leading word "qcache" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("qcache plugin '%s' do1() failed"),
 		      (char *)plugin_name(plugin));
-
       return true;
     }
   }
@@ -101,21 +104,21 @@ static bool qcache_do1_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-  bool qcache_do1 (THD *thd, void *parm1, void *parm2)
-  {
-    qcache_do1_parms_t parms;
-    bool foreach_rv;
+bool qcache_do1 (THD *thd, void *parm1, void *parm2)
+{
+  qcache_do1_parms_t parms;
+  bool foreach_rv;
 
-    /* marshall the parameters so they will fit into the foreach */
-    parms.parm1= parm1;
-    parms.parm2= parm2;
+  /* marshall the parameters so they will fit into the foreach */
+  parms.parm1= parm1;
+  parms.parm2= parm2;
 
-    /* call qcache_do1_iterate
-       once for each loaded qcache plugin */
-    foreach_rv= plugin_foreach(thd,
-			       qcache_do1_iterate,
-			       DRIZZLE_QCACHE_PLUGIN,
-			       (void *) &parms);
+  /* call qcache_do1_iterate
+     once for each loaded qcache plugin */
+  foreach_rv= plugin_foreach(thd,
+                             qcache_do1_iterate,
+                             DRIZZLE_QCACHE_PLUGIN,
+                             (void *) &parms);
   return foreach_rv;
 }
 
@@ -141,9 +144,11 @@ static bool qcache_do2_iterate (THD *thd, plugin_ref plugin, void *p)
   /* call this loaded qcache plugin's qcache_func1 function pointer */
   if (l && l->qcache_func1)
   {
-    if (l->qcache_func1(thd, parms->parm3, parms->parm4))
+    if (l->qcache_func2(thd, parms->parm3, parms->parm4))
     {
-      sql_print_error("Qcache plugin '%s' do2() failed",
+      /* TRANSLATORS: The leading word "qcache" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("qcache plugin '%s' qcache_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;
@@ -154,20 +159,20 @@ static bool qcache_do2_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-  bool qcache_do2 (THD *thd, void *parm3, void *parm4)
-  {
-    qcache_do2_parms_t parms;
-    bool foreach_rv;
+bool qcache_do2 (THD *thd, void *parm3, void *parm4)
+{
+  qcache_do2_parms_t parms;
+  bool foreach_rv;
 
-    /* marshall the parameters so they will fit into the foreach */
-    parms.parm3= parm3;
-    parms.parm4= parm4;
+  /* marshall the parameters so they will fit into the foreach */
+  parms.parm3= parm3;
+  parms.parm4= parm4;
 
-    /* call qcache_do2_iterate
-       once for each loaded qcache plugin */
-    foreach_rv= plugin_foreach(thd,
-			       qcache_do2_iterate,
-			       DRIZZLE_QCACHE_PLUGIN,
-			       (void *) &parms);
+  /* call qcache_do2_iterate
+     once for each loaded qcache plugin */
+  foreach_rv= plugin_foreach(thd,
+                             qcache_do2_iterate,
+                             DRIZZLE_QCACHE_PLUGIN,
+                             (void *) &parms);
   return foreach_rv;
 }

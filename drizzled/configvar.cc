@@ -1,7 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,7 +34,9 @@ int configvar_initializer(st_plugin_int *plugin)
   {
     if (plugin->plugin->init((void *)p))
     {
-      sql_print_error("Configvar plugin '%s' init() failed",
+      /* TRANSLATORS: The leading word "configvar" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("configvar plugin '%s' init() failed"),
 		      plugin->name.str);
       goto err;
     }
@@ -55,7 +56,9 @@ int configvar_finalizer(st_plugin_int *plugin)
   {
     if (plugin->plugin->deinit((void *)p))
     {
-      sql_print_error("Configvar plugin '%s' deinit() failed",
+      /* TRANSLATORS: The leading word "configvar" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("configvar plugin '%s' deinit() failed"),
 		      plugin->name.str);
     }
   }
@@ -89,9 +92,10 @@ static bool configvar_do1_iterate (THD *thd, plugin_ref plugin, void *p)
   {
     if (l->configvar_func1(thd, parms->parm1, parms->parm2))
     {
-      sql_print_error("Configvar plugin '%s' do1() failed",
+      /* TRANSLATORS: The leading word "configvar" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("configvar plugin '%s' configvar_func1() failed"),
 		      (char *)plugin_name(plugin));
-
       return true;
     }
   }
@@ -115,7 +119,7 @@ bool configvar_do1 (THD *thd, void *parm1, void *parm2)
 			     configvar_do1_iterate,
 			     DRIZZLE_CONFIGVAR_PLUGIN,
 			     (void *) &parms);
-return foreach_rv;
+  return foreach_rv;
 }
 
 /* The plugin_foreach() iterator requires that we
@@ -138,11 +142,13 @@ static bool configvar_do2_iterate (THD *thd, plugin_ref plugin, void *p)
   configvar_do2_parms_t *parms= (configvar_do2_parms_t *) p;
 
   /* call this loaded configvar plugin's configvar_func1 function pointer */
-  if (l && l->configvar_func1)
+  if (l && l->configvar_func2)
   {
-    if (l->configvar_func1(thd, parms->parm3, parms->parm4))
+    if (l->configvar_func2(thd, parms->parm3, parms->parm4))
     {
-      sql_print_error("Configvar plugin '%s' do2() failed",
+      /* TRANSLATORS: The leading word "configvar" is the name
+         of the plugin api, and so should not be translated. */
+      sql_print_error(_("configvar plugin '%s' configvar_func2() failed"),
 		      (char *)plugin_name(plugin));
 
       return true;
@@ -153,20 +159,20 @@ static bool configvar_do2_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the configvar_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-  bool configvar_do2 (THD *thd, void *parm3, void *parm4)
-  {
-    configvar_do2_parms_t parms;
-    bool foreach_rv;
+bool configvar_do2 (THD *thd, void *parm3, void *parm4)
+{
+  configvar_do2_parms_t parms;
+  bool foreach_rv;
 
-    /* marshall the parameters so they will fit into the foreach */
-    parms.parm3= parm3;
-    parms.parm4= parm4;
+  /* marshall the parameters so they will fit into the foreach */
+  parms.parm3= parm3;
+  parms.parm4= parm4;
 
-    /* call configvar_do2_iterate
-       once for each loaded configvar plugin */
-    foreach_rv= plugin_foreach(thd,
-			       configvar_do2_iterate,
-			       DRIZZLE_CONFIGVAR_PLUGIN,
-			       (void *) &parms);
+  /* call configvar_do2_iterate
+     once for each loaded configvar plugin */
+  foreach_rv= plugin_foreach(thd,
+			     configvar_do2_iterate,
+			     DRIZZLE_CONFIGVAR_PLUGIN,
+			     (void *) &parms);
   return foreach_rv;
 }
