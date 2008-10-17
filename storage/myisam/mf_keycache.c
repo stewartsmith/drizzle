@@ -143,7 +143,6 @@
 /* types of condition variables */
 #define  COND_FOR_REQUESTED 0
 #define  COND_FOR_SAVED     1
-#define  COND_FOR_READERS   2
 
 typedef pthread_cond_t KEYCACHE_CONDVAR;
 
@@ -220,10 +219,6 @@ static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
                                      (uint32_t) (f)) & (keycache->hash_entries-1))
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
-#define BLOCK_NUMBER(b)                                                       \
-  ((uint) (((char*)(b)-(char *) keycache->block_root)/sizeof(BLOCK_LINK)))
-#define HASH_LINK_NUMBER(h)                                                   \
-  ((uint) (((char*)(h)-(char *) keycache->hash_link_root)/sizeof(HASH_LINK)))
 
 #ifdef KEYCACHE_TIMEOUT
 static int keycache_pthread_cond_wait(pthread_cond_t *cond,
@@ -3772,6 +3767,22 @@ int reset_key_cache_counters(const char *name __attribute__((unused)),
 
 #if defined(KEYCACHE_TIMEOUT)
 
+
+static inline
+unsigned int hash_link_number(HASH_LINK *hash_link, KEY_CACHE *keycache)
+{
+  return ((unsigned int) (((char*)hash_link-(char *) keycache->hash_link_root)/
+		  sizeof(HASH_LINK)));
+}
+
+static inline
+unsigned int block_number(BLOCK_LINK *block, KEY_CACHE *keycache)
+{
+  return ((unsigned int) (((char*)block-(char *)keycache->block_root)/
+		  sizeof(BLOCK_LINK)));
+}
+
+
 #define KEYCACHE_DUMP_FILE  "keycache_dump.txt"
 #define MAX_QUEUE_LEN  100
 
@@ -3813,9 +3824,9 @@ static void keycache_dump(KEY_CACHE *keycache)
       thread=thread->next;
       hash_link= (HASH_LINK *) thread->opt_info;
       fprintf(keycache_dump_file,
-        "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
-        thread->id, (uint) HASH_LINK_NUMBER(hash_link),
-        (uint) hash_link->file,(uint32_t) hash_link->diskpos);
+	      "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
+	      thread->id, (uint) hash_link_number(hash_link, keycache),
+	      (uint) hash_link->file,(uint32_t) hash_link->diskpos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }
@@ -3827,9 +3838,10 @@ static void keycache_dump(KEY_CACHE *keycache)
     block= &keycache->block_root[i];
     hash_link= block->hash_link;
     fprintf(keycache_dump_file,
-            "block:%u hash_link:%d status:%x #requests=%u waiting_for_readers:%d\n",
-            i, (int) (hash_link ? HASH_LINK_NUMBER(hash_link) : -1),
-            block->status, block->requests, block->condvar ? 1 : 0);
+	    "block:%u hash_link:%d status:%x #requests=%u "
+	    "waiting_for_readers:%d\n",
+	    i, (int) (hash_link ? hash_link_number(hash_link, keycache) : -1),
+	    block->status, block->requests, block->condvar ? 1 : 0);
     for (j=0 ; j < 2; j++)
     {
       KEYCACHE_WQUEUE *wqueue=&block->wqueue[j];
@@ -3857,7 +3869,7 @@ static void keycache_dump(KEY_CACHE *keycache)
     {
       block= block->next_used;
       fprintf(keycache_dump_file,
-              "block:%u, ", BLOCK_NUMBER(block));
+	      "block:%u, ", block_number(block, keycache));
     }
     while (block != keycache->used_last);
   }

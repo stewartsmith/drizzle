@@ -41,28 +41,6 @@ struct my_cs_file_section_st
   const char *str;
 };
 
-#define _CS_MISC	1
-#define _CS_ID		2
-#define _CS_CSNAME	3
-#define _CS_FAMILY	4
-#define _CS_ORDER	5
-#define _CS_COLNAME	6
-#define _CS_FLAG	7
-#define _CS_CHARSET	8
-#define _CS_COLLATION	9
-#define _CS_UPPERMAP	10
-#define _CS_LOWERMAP	11
-#define _CS_UNIMAP	12
-#define _CS_COLLMAP	13
-#define _CS_CTYPEMAP	14
-#define _CS_PRIMARY_ID	15
-#define _CS_BINARY_ID	16
-#define _CS_CSDESCRIPT	17
-#define _CS_RESET	18
-#define	_CS_DIFF1	19
-#define	_CS_DIFF2	20
-#define	_CS_DIFF3	21
-
 
 #define MY_CS_CSDESCR_SIZE	64
 #define MY_CS_TAILORING_SIZE	1024

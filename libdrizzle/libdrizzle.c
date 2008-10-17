@@ -78,14 +78,6 @@ uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 unsigned int drizzle_port=0;
 
 #include <errno.h>
-#define SOCKET_ERROR -1
-
-/*
-  If allowed through some configuration, then this needs to
-  be changed
-*/
-#define MAX_LONG_DATA_LENGTH 8192
-#define unsigned_field(A) ((A)->flags & UNSIGNED_FLAG)
 
 
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
