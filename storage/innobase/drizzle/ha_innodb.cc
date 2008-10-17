@@ -113,7 +113,6 @@ static int64_t index_cond_func_innodb(void *arg);
 }
 #endif
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 struct handlerton* innodb_hton_ptr;
 
@@ -127,10 +126,6 @@ bool
 innodb_plugin_init(void);
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
-#else /* DRIZZLE_DYNAMIC_PLUGIN */
-/* This must be a global variable in the statically linked InnoDB. */
-struct handlerton* innodb_hton_ptr = NULL;
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -1671,7 +1666,6 @@ innobase_init(
 
         handlerton *innobase_hton= (handlerton *)p;
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
 		sql_print_error("InnoDB plugin init failed.");
 		return -1;
@@ -1681,7 +1675,6 @@ innobase_init(
 		/* Patch the statically linked handlerton and variables */
 		innobase_hton = innodb_hton_ptr;
 	}
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
         innodb_hton_ptr = innobase_hton;
 
@@ -1965,12 +1958,10 @@ innobase_init(
 	pthread_mutex_init(&commit_cond_m, MY_MUTEX_INIT_FAST);
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
 	if (innobase_hton != p) {
 		innobase_hton = reinterpret_cast<handlerton*>(p);
 		*innobase_hton = *innodb_hton_ptr;
 	}
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -9244,7 +9235,6 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
 struct st_mysql_sys_var
 {
 	DRIZZLE_PLUGIN_VAR_HEADER;
@@ -9364,7 +9354,6 @@ innodb_plugin_init(void)
 
 	return(true);
 }
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
 
 mysql_declare_plugin(innobase)
 {
