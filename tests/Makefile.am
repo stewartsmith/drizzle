@@ -142,18 +142,25 @@ test-drizzle:
         bench_count_distinct \
 	bigint \
 	bulk_replace \
+	comment_column \
 	comment_column2 \
+	comment_index \
 	comment_table \
 	comments \
+	commit_1innodb \
+	compare \
 	consistent_snapshot \
+	constraints \
         count_distinct \
         count_distinct2 \
         count_distinct3 \
 	create_select_tmp \
         ctype_filename \
+	date_formats \
         delete \
         distinct \
 	drizzleslap \
+	empty_table \
         endspace \
         flush2 \
 	func_compress \
@@ -210,6 +217,9 @@ test-drizzle:
         range \
 	replace \
         rollback \
+	round \
+	row \
+	rowid_order_innodb \
         select \
         subselect \
         subselect3 \
