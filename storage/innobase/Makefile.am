@@ -27,14 +27,16 @@ AM_CPPFLAGS=		-I$(top_srcdir) -I$(top_builddir) \
 			-I$(top_srcdir)/sql
 
 if BUILDING_DRIZZLE
-DRIZZLE="-DBUILD_DRIZZLE"
+EXTRA_DEFS="-DBUILD_DRIZZLE"
+DYNAMIC_PLUGIN="-DDRIZZLE_DYNAMIC_PLUGIN"
 HANDLER_DIR=drizzle
 else
+DYNAMIC_PLUGIN="-DMYSQL_DYNAMIC_PLUGIN"
 HANDLER_DIR=handler
 endif
 
 
-DEFS=			@DEFS@ ${DRIZZLE}
+DEFS=			@DEFS@ ${EXTRA_DEFS}
 
 
 noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
@@ -185,15 +187,14 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			$(HANDLER_DIR)/i_s.cc				\
 			$(HANDLER_DIR)/mysql_addons.cc
 
-libinnobase_a_CXXFLAGS=	$(AM_CXXFLAGS)
-libinnobase_a_CFLAGS=	$(AM_CFLAGS)  -Wno-unused-macros
+libinnobase_la_CFLAGS=	$(AM_CFLAGS)  -Wno-unused-macros
 
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
 
 ha_innodb_la_LDFLAGS=	-module -rpath $(pkgplugindir)
-ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_innodb_la_CFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_innodb_la_CFLAGS=    ${AM_CFLAGS} ${DYNAMIC_PLUGIN}
+ha_innodb_la_CXXFLAGS=  ${AM_CXXFLAGS} ${DYNAMIC_PLUGIN}
 ha_innodb_la_LIBADD=	@plugin_innobase_shared_target@ \
 			libinnobase.la
 
