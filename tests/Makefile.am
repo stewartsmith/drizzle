@@ -207,6 +207,12 @@ test-drizzle:
         lock \
         limit \
         lock_tables_lost_commit \
+	main.myisam-blob \
+	main.myisam-system \
+	main.myisam_mrr \
+	main.mysql \
+	mysqldump-compat \
+	mysqldump-max \
 	order_by \
 	order_fill_sortbuf \
 	overflow \

@@ -83,7 +83,7 @@ static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_hex_blob=0, opt_order_by_primary=0, opt_ignore=0,
                 opt_complete_insert= 0, opt_drop_database= 0,
                 opt_replace_into= 0,
-                opt_routines=0, opt_tz_utc=1,
+                opt_routines=0,
                 opt_slave_apply= 0, 
                 opt_include_master_host_port= 0,
                 opt_events= 0,
@@ -379,10 +379,6 @@ static struct my_option my_long_options[] =
   {"routines", 'R', "Dump stored routines (functions and procedures).",
      (char**) &opt_routines, (char**) &opt_routines, 0, GET_BOOL,
      NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-charset", OPT_SET_CHARSET,
-   "Add 'SET NAMES default_character_set' to the output.",
-   (char**) &opt_set_charset, (char**) &opt_set_charset, 0, GET_BOOL, NO_ARG, 1,
-   0, 0, 0, 0, 0},
   {"set-variable", 'O',
    "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -414,9 +410,6 @@ static struct my_option my_long_options[] =
    (char**) &path, (char**) &path, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"tz-utc", OPT_TZ_UTC,
-    "SET TIME_ZONE='+00:00' at top of dump to allow dumping of TIMESTAMP data when a server has data in different time zones or data is being moved between servers with different time zones.",
-    (char**) &opt_tz_utc, (char**) &opt_tz_utc, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.",
    (char**) &current_user, (char**) &current_user, 0, GET_STR, REQUIRED_ARG,
@@ -560,12 +553,6 @@ static void write_header(FILE *sql_file, char *db_name)
 "\n/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;"
 "\n/*!40101 SET NAMES %s */;\n",default_charset);
 
-    if (opt_tz_utc)
-    {
-      fprintf(sql_file, "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n");
-      fprintf(sql_file, "/*!40103 SET TIME_ZONE='+00:00' */;\n");
-    }
-
     if (!path)
     {
       fprintf(md_result_file,"\
@@ -587,9 +574,6 @@ static void write_footer(FILE *sql_file)
   }
   else if (!opt_compact)
   {
-    if (opt_tz_utc)
-      fprintf(sql_file,"/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n");
-
     if (!path)
     {
       fprintf(md_result_file,"\
@@ -597,11 +581,7 @@ static void write_footer(FILE *sql_file)
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n");
     }
     if (opt_set_charset)
-      fprintf(sql_file,
-"/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
-    fprintf(sql_file,
-            "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n");
-    fputs("\n", sql_file);
+      fprintf(sql_file, "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n");
     if (opt_comments)
     {
       if (opt_dump_date)
@@ -1055,9 +1035,6 @@ static void maybe_exit(int error)
 
 static int connect_to_db(char *host, char *user,char *passwd)
 {
-  char buff[20+FN_REFLEN];
-
-
   verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
   drizzle_create(&drizzle_connection);
   if (opt_compress)
@@ -1069,24 +1046,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
     DB_error(&drizzle_connection, "when trying to connect");
     return(1);
   }
-  if (drizzle_get_server_version(&drizzle_connection) < 40100)
-  {
-    /* Don't dump SET NAMES with a pre-4.1 server (bug#7997).  */
-    opt_set_charset= 0;
 
-    /* Don't switch charsets for 4.1 and earlier.  (bug#34192). */
-    server_supports_switching_charsets= false;
-  } 
-  /*
-    set time_zone to UTC to allow dumping date types between servers with
-    different time zone settings
-  */
-  if (opt_tz_utc)
-  {
-    snprintf(buff, sizeof(buff), "/*!40103 SET TIME_ZONE='+00:00' */");
-    if (drizzle_query_with_error_report(drizzle, 0, buff))
-      return(1);
-  }
   return(0);
 } /* connect_to_db */
 
