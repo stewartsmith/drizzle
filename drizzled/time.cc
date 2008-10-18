@@ -182,9 +182,9 @@ void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
 
 	/* Functions to handle periods */
 
-ulong convert_period_to_month(ulong period)
+uint32_t convert_period_to_month(uint32_t period)
 {
-  ulong a,b;
+  uint32_t a,b;
   if (period == 0)
     return 0L;
   if ((a=period/100) < YY_PART_YEAR)
@@ -196,9 +196,9 @@ ulong convert_period_to_month(ulong period)
 }
 
 
-ulong convert_month_to_period(ulong month)
+uint32_t convert_month_to_period(uint32_t month)
 {
-  ulong year;
+  uint32_t year;
   if (month == 0L)
     return 0L;
   if ((year=month/12) < 100)
