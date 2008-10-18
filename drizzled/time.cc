@@ -99,8 +99,8 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
 {
   uint32_t days;
-  ulong daynr=calc_daynr(l_time->year,l_time->month,l_time->day);
-  ulong first_daynr=calc_daynr(l_time->year,1,1);
+  uint32_t daynr= calc_daynr(l_time->year,l_time->month,l_time->day);
+  uint32_t first_daynr= calc_daynr(l_time->year,1,1);
   bool monday_first= test(week_behaviour & WEEK_MONDAY_FIRST);
   bool week_year= test(week_behaviour & WEEK_YEAR);
   bool first_weekday= test(week_behaviour & WEEK_FIRST_WEEKDAY);
@@ -445,7 +445,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
       separators++;
       /* Store in separator_map which parts are punct characters */
       if (my_ispunct(&my_charset_utf8_general_ci, *ptr))
-	separator_map|= (ulong) 1 << (offset-1);
+	separator_map|= 1 << (offset-1);
       else if (!my_isspace(&my_charset_utf8_general_ci, *ptr))
 	return 1;
     }
@@ -482,8 +482,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     /* remove fractional seconds from later tests */
     uint32_t pos= dt_pos[6] -1;
     /* Remove separator before %f from sep map */
-    separator_map= ((separator_map & ((ulong) (1 << pos)-1)) |
-		    ((separator_map & ~((ulong) (1 << pos)-1)) >> 1));
+    separator_map= ((separator_map & ((1 << pos)-1)) |
+		    ((separator_map & ~((1 << pos)-1)) >> 1));
     if (part_map & 64)			      
     {
       separators--;				// There is always a separator
@@ -508,8 +508,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   */
   offset= dt_pos[6] <= 3 ? 3 : 6;
   /* Remove separator before %p from sep map */
-  separator_map= ((separator_map & ((ulong) (1 << offset)-1)) |
-		  ((separator_map & ~((ulong) (1 << offset)-1)) >> 1));
+  separator_map= ((separator_map & ((1 << offset)-1)) |
+		  ((separator_map & ~((1 << offset)-1)) >> 1));
 
   format_str= 0;
   switch (format_type) {
@@ -617,7 +617,7 @@ DATE_TIME_FORMAT
 DATE_TIME_FORMAT *date_time_format_copy(THD *thd, DATE_TIME_FORMAT *format)
 {
   DATE_TIME_FORMAT *new_format;
-  ulong length= sizeof(*format) + format->format.length + 1;
+  uint32_t length= sizeof(*format) + format->format.length + 1;
 
   if (thd)
     new_format= (DATE_TIME_FORMAT *) thd->alloc(length);
@@ -744,7 +744,7 @@ void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level le
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                        type_str, str.c_ptr(), field_name,
-                       (ulong) thd->row_count);
+                       (uint32_t) thd->row_count);
   else
   {
     if (time_type > DRIZZLE_TIMESTAMP_ERROR)
@@ -826,13 +826,13 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
     period= (calc_daynr(ltime->year,ltime->month,ltime->day) +
              sign * (long) interval.day);
     /* Daynumber from year 0 to 9999-12-31 */
-    if ((ulong) period > MAX_DAY_NUMBER)
+    if (period > MAX_DAY_NUMBER)
       goto invalid_date;
     get_date_from_daynr((long) period,&ltime->year,&ltime->month,&ltime->day);
     break;
   case INTERVAL_YEAR:
     ltime->year+= sign * (long) interval.year;
-    if ((ulong) ltime->year >= 10000L)
+    if (ltime->year >= 10000L)
       goto invalid_date;
     if (ltime->month == 2 && ltime->day == 29 &&
 	calc_days_in_year(ltime->year) != 366)
@@ -843,7 +843,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   case INTERVAL_MONTH:
     period= (ltime->year*12 + sign * (long) interval.year*12 +
 	     ltime->month-1 + sign * (long) interval.month);
-    if ((ulong) period >= 120000L)
+    if (period >= 120000L)
       goto invalid_date;
     ltime->year= (uint) (period / 12);
     ltime->month= (uint) (period % 12L)+1;
