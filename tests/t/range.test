@@ -313,14 +313,14 @@ create table t1 (
   name char(1) not null,
   uid int not null,
   primary key (id),
-  index uid_index (uid));
+  index uid_index (uid)) ENGINE=Myisam;
   
 create table t2 (
   id int not null auto_increment,
   name char(1) not null,
   uid int not null,
   primary key (id),
-  index uid_index (uid));
+  index uid_index (uid)) engine=myisam;
   
 insert into t1(id, uid, name) values(1, 0, ' ');
 insert into t1(uid, name) values(0, ' ');
