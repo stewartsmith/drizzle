@@ -140,6 +140,7 @@ test-drizzle:
         1st \
         alter_table \
         bench_count_distinct \
+	bigint \
 	bulk_replace \
 	comment_column2 \
 	comment_table \
@@ -177,8 +178,10 @@ test-drizzle:
 	func_weight_string \
         greedy_optimizer \
         group_min_max_innodb \
+	heap \
         heap_auto_increment \
         heap_btree \
+	heap_hash \
         heap_var \
         information_schema \
         innodb-lock \
@@ -200,7 +203,12 @@ test-drizzle:
 	order_by \
 	order_fill_sortbuf \
 	overflow \
+	parser \
+	parser_bug21114_innodb \
+	parser_precedence \
 	pool_of_threads \
+        range \
+	replace \
         rollback \
         select \
         subselect \

@@ -1,7 +1,3 @@
-# Windows fails because it disconnects on too-large packets instead of just
-# swallowing them and returning an error
---source include/not_windows.inc
-
 #
 # Check protocol handling
 #
