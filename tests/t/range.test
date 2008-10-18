@@ -953,7 +953,7 @@ DROP TABLE t1;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 
-create table t2 (a int, b int, filler char(100));
+create table t2 (a int, b int, filler char(100)) ENGINE=myisam;
 insert into t2 select A.a + 10 * (B.a + 10 * C.a), 10, 'filler' from t1 A,
 t1 B, t1 C where A.a < 5;
 
