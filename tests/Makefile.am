@@ -210,7 +210,6 @@ test-drizzle:
 	main.myisam-blob \
 	main.myisam-system \
 	main.myisam_mrr \
-	main.mysql \
 	mysqldump-compat \
 	mysqldump-max \
 	order_by \
