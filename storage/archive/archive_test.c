@@ -31,8 +31,6 @@
 # endif
 #endif  
 
-#define ARCHIVE_ROW_HEADER_SIZE 4
-
 #define COMMENT_STRING "Your bases"
 #define FRM_STRING "My bases"
 #define TEST_FILENAME "test.az"

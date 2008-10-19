@@ -889,7 +889,7 @@ static bool get_interval_info(const char *str,uint32_t length, const CHARSET_INF
 int64_t Item_func_period_add::val_int()
 {
   assert(fixed == 1);
-  ulong period=(ulong) args[0]->val_int();
+  uint32_t period= args[0]->val_int();
   int months=(int) args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value) ||
@@ -904,8 +904,8 @@ int64_t Item_func_period_add::val_int()
 int64_t Item_func_period_diff::val_int()
 {
   assert(fixed == 1);
-  ulong period1=(ulong) args[0]->val_int();
-  ulong period2=(ulong) args[1]->val_int();
+  uint32_t period1= args[0]->val_int();
+  uint32_t period2= args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0; /* purecov: inspected */

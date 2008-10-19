@@ -829,8 +829,8 @@ int closefrm(Table *table, bool free_share);
 int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
-ulong convert_period_to_month(ulong period);
-ulong convert_month_to_period(ulong month);
+uint32_t convert_period_to_month(uint32_t period);
+uint32_t convert_month_to_period(uint32_t month);
 void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
 			 uint32_t *day);
 my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *not_exist);

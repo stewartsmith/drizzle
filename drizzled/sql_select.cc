@@ -390,7 +390,6 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
   return res;
 }
 
-#define MAGIC_IN_WHERE_TOP_LEVEL 10
 /**
   Function to setup clauses without sum functions.
 */
@@ -12058,22 +12057,6 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
   {
     copy_fields(&join->tmp_table_param);
     copy_funcs(join->tmp_table_param.items_to_copy);
-#ifdef TO_BE_DELETED
-    if (!table->uniques)			// If not unique handling
-    {
-      /* Copy null values from group to row */
-      order_st   *group;
-      for (group=table->group ; group ; group=group->next)
-      {
-	Item *item= *group->item;
-	if (item->maybe_null)
-	{
-	  Field *field=item->get_tmp_table_field();
-	  field->ptr[-1]= (unsigned char) (field->is_null() ? 1 : 0);
-	}
-      }
-    }
-#endif
     if (!join->having || join->having->val_int())
     {
       int error;

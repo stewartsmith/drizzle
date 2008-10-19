@@ -95,13 +95,7 @@ static unsigned int global_version;
 /* The file extension */
 #define ARZ ".ARZ"               // The data file
 #define ARN ".ARN"               // Files used during an optimize call
-#define ARM ".ARM"               // Meta file (deprecated)
 
-/*
-  unsigned char + unsigned char
-*/
-#define DATA_BUFFER_SIZE 2       // Size of the data used in the data file
-#define ARCHIVE_CHECK_HEADER 254 // The number we use to determine corruption
 
 /* Static declarations for handerton */
 static handler *archive_create_handler(handlerton *hton, 

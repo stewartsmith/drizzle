@@ -120,7 +120,7 @@ a	b
 1	2
 1	1
 drop table t1;
-create table t1 (id int unsigned not null, primary key (id)) engine=HEAP;
+create table t1 (id int not null, primary key (id)) engine=HEAP;
 insert into t1 values(1);
 select max(id) from t1;
 max(id)
@@ -169,7 +169,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	btn	NULL	NULL	NULL	14	Using where
 explain select * from t1 where btn="a" and new_col="a";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	btn	btn	15	const,const	2	Using where
+1	SIMPLE	t1	ref	btn	btn	48	const,const	2	Using where
 drop table t1;
 CREATE TABLE t1 (
 a int default NULL,
@@ -218,7 +218,7 @@ SELECT * from t1;
 a
 DROP TABLE t1;
 CREATE TABLE `job_titles` (
-`job_title_id` int unsigned NOT NULL default '0',
+`job_title_id` int NOT NULL default '0',
 `job_title` char(18) NOT NULL default '',
 PRIMARY KEY  (`job_title_id`),
 UNIQUE KEY `job_title_id` (`job_title_id`,`job_title`)
@@ -233,7 +233,7 @@ SELECT * FROM t1 WHERE B is not null;
 a	B
 1	1
 DROP TABLE t1;
-CREATE TABLE t1 (pseudo char(35) PRIMARY KEY, date int unsigned NOT NULL) ENGINE=HEAP;
+CREATE TABLE t1 (pseudo char(35) PRIMARY KEY, date int NOT NULL) ENGINE=HEAP;
 INSERT INTO t1 VALUES ('massecot',1101106491),('altec',1101106492),('stitch+',1101106304),('Seb Corgan',1101106305),('beerfilou',1101106263),('flaker',1101106529),('joce8',5),('M4vrick',1101106418),('gabay008',1101106525),('Vamp irX',1101106291),('ZoomZip',1101106546),('rip666',1101106502),('CBP ',1101106397),('guezpard',1101106496);
 DELETE FROM t1 WHERE date<1101106546;
 SELECT * FROM t1;
@@ -263,51 +263,51 @@ concat('*',v,'*',c,'*',t,'*')
 *+         *+         *+                    *
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 create table t2 like t1;
 show create table t2;
 Table	Create Table
-t2	CREATE TABLE "t2" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t2	CREATE TABLE `t2` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 create table t3 select * from t1;
 show create table t3;
 Table	Create Table
-t3	CREATE TABLE "t3" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t3	CREATE TABLE `t3` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 alter table t1 modify t varchar(50);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50)
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50)
+) ENGINE=MEMORY
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
@@ -316,14 +316,14 @@ drop table t1,t2,t3;
 create table t1 (v varchar(10), c char(10), t varchar(50), key(v), key(c), key(t(10)));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50),
-  KEY "v" ("v"),
-  KEY "c" ("c"),
-  KEY "t" ("t"(10))
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50),
+  KEY `v` (`v`),
+  KEY `c` (`c`),
+  KEY `t` (`t`())
+) ENGINE=MEMORY
 select count(*) from t1;
 count(*)
 270
@@ -366,22 +366,22 @@ count(*)
 9
 explain select count(*) from t1 where v='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	10	Using where
+1	SIMPLE	t1	ref	v	v	43	const	10	Using where
 explain select count(*) from t1 where c='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	c	c	13	const	10	Using where
+1	SIMPLE	t1	ref	c	c	43	const	10	Using where
 explain select count(*) from t1 where t='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	t	t	13	const	10	Using where
+1	SIMPLE	t1	ref	t	t	43	const	10	Using where
 explain select count(*) from t1 where v like 'a%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	v	NULL	NULL	NULL	271	Using where
 explain select count(*) from t1 where v between 'a' and 'a ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	10	Using where
+1	SIMPLE	t1	ref	v	v	43	const	10	Using where
 explain select count(*) from t1 where v between 'a' and 'a ' and v between 'a  ' and 'b\n';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	10	Using where
+1	SIMPLE	t1	ref	v	v	43	const	10	Using where
 alter table t1 add unique(v);
 ERROR 23000: Duplicate entry '{ ' for key 'v_2'
 select concat('*',v,'*',c,'*',t,'*') as qq from t1 where v='a' order by length(concat('*',v,'*',c,'*',t,'*'));
@@ -398,7 +398,7 @@ qq
 *a         *a         *a         *
 explain select * from t1 where v='a';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	10	Using where
+1	SIMPLE	t1	ref	v	v	43	const	10	Using where
 select v,count(*) from t1 group by v limit 10;
 v	count(*)
 a	1
@@ -483,18 +483,6 @@ f	10
 g	10
 h	10
 i	10
-select sql_big_result c,count(t) from t1 group by c limit 10;
-c	count(t)
-a	1
-a         	10
-b   	10
-c      	10
-d  	10
-e     	10
-f        	10
-g  	10
-h     	10
-i 	10
 select t,count(*) from t1 group by t limit 10;
 t	count(*)
 a	1
@@ -551,14 +539,14 @@ drop table t1;
 create table t1 (v varchar(10), c char(10), t varchar(50), key using btree (v), key using btree (c), key using btree (t(10)));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50),
-  KEY "v" ("v") USING BTREE,
-  KEY "c" ("c") USING BTREE,
-  KEY "t" ("t"(10)) USING BTREE
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50),
+  KEY `v` (`v`) USING BTREE,
+  KEY `c` (`c`) USING BTREE,
+  KEY `t` (`t`()) USING BTREE
+) ENGINE=MEMORY
 select count(*) from t1;
 count(*)
 270
@@ -589,22 +577,22 @@ count(*)
 10
 explain select count(*) from t1 where v='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	#	Using where
+1	SIMPLE	t1	ref	v	v	43	const	#	Using where
 explain select count(*) from t1 where c='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	c	c	13	const	#	Using where
+1	SIMPLE	t1	ref	c	c	43	const	#	Using where
 explain select count(*) from t1 where t='a  ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	t	t	13	const	#	Using where
+1	SIMPLE	t1	ref	t	t	43	const	#	Using where
 explain select count(*) from t1 where v like 'a%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	v	v	13	NULL	#	Using where
+1	SIMPLE	t1	range	v	v	43	NULL	#	Using where
 explain select count(*) from t1 where v between 'a' and 'a ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	#	Using where
+1	SIMPLE	t1	ref	v	v	43	const	#	Using where
 explain select count(*) from t1 where v between 'a' and 'a ' and v between 'a  ' and 'b\n';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	#	Using where
+1	SIMPLE	t1	ref	v	v	43	const	#	Using where
 alter table t1 add unique(v);
 ERROR 23000: Duplicate entry '{ ' for key 'v_2'
 select concat('*',v,'*',c,'*',t,'*') as qq from t1 where v='a' order by length(concat('*',v,'*',c,'*',t,'*'));
@@ -621,7 +609,7 @@ qq
 *a         *a         *a         *
 explain select * from t1 where v='a';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	v	v	13	const	#	Using where
+1	SIMPLE	t1	ref	v	v	43	const	#	Using where
 drop table t1;
 create table t1 (a char(10), unique using btree (a)) engine=heap;
 insert into t1 values ('a');
@@ -642,29 +630,29 @@ drop table t1;
 create table t1 (v varchar(10), c char(10), t varchar(50), key(v(5)), key(c(5)), key(t(5)));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(10),
-  "c" varchar(10),
-  "t" varchar(50),
-  KEY "v" ("v"(5)),
-  KEY "c" ("c"(5)),
-  KEY "t" ("t"(5))
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
+t1	CREATE TABLE `t1` (
+  `v` varchar(10),
+  `c` varchar(10),
+  `t` varchar(50),
+  KEY `v` (`v`()),
+  KEY `c` (`c`()),
+  KEY `t` (`t`())
+) ENGINE=MEMORY
 drop table t1;
-create table t1 (v varchar(65530), key(v(10)));
+create table t1 (v varchar(16383), key(v(10)));
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "v" varchar(65530),
-  KEY "v" ("v"(10))
-) ENGINE=MEMORY DEFAULT CHARSET=latin1
-insert into t1 values(repeat('a',65530));
-select length(v) from t1 where v=repeat('a',65530);
+t1	CREATE TABLE `t1` (
+  `v` varchar(16383),
+  KEY `v` (`v`())
+) ENGINE=MEMORY
+insert into t1 values(repeat('a',16383));
+select length(v) from t1 where v=repeat('a',16383);
 length(v)
-65530
+16383
 drop table t1;
 set storage_engine=InnoDB;
-create table t1 (a bigint unsigned auto_increment primary key, b int,
+create table t1 (a bigint auto_increment primary key, b int,
 key (b, a)) engine=heap;
 insert t1 (b) values (1),(1),(1),(1),(1),(1),(1),(1);
 select * from t1;
@@ -714,8 +702,8 @@ create table t1 (c char(10)) engine=memory;
 create table t2 (c varchar(10)) engine=memory;
 show table status like 't_';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	10	Fixed	0	12	0	#	0	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
-t2	MEMORY	10	Fixed	0	12	0	#	0	0	NULL	NULL	NULL	NULL	latin1_swedish_ci	NULL		
+t1	MEMORY	10	Fixed	0	42	0	#	0	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
+t2	MEMORY	10	Fixed	0	42	0	#	0	0	NULL	NULL	NULL	NULL	utf8_general_ci	NULL		
 drop table t1, t2;
 CREATE TABLE t1(a VARCHAR(1), b VARCHAR(2), c VARCHAR(256),
 KEY(a), KEY(b), KEY(c)) ENGINE=MEMORY;

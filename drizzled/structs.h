@@ -263,8 +263,14 @@ public:
     interval_max=    (val == UINT64_MAX) ? val : start + val * incr;
   }
   Discrete_interval(uint64_t start, uint64_t val, uint64_t incr) :
-    next(NULL) { replace(start, val, incr); };
-  Discrete_interval() : next(NULL) { replace(0, 0, 0); };
+    interval_min(start), interval_values(val),
+    interval_max((val == UINT64_MAX) ? val : start + val * incr),
+    next(NULL)
+  {};
+  Discrete_interval() :
+    interval_min(0), interval_values(0),
+    interval_max(0), next(NULL)
+  {};
   uint64_t minimum() const { return interval_min;    };
   uint64_t values()  const { return interval_values; };
   uint64_t maximum() const { return interval_max;    };
@@ -316,15 +322,20 @@ private:
     }
   }
 public:
-  Discrete_intervals_list() : head(NULL), current(NULL), elements(0) {};
-  Discrete_intervals_list(const Discrete_intervals_list& from)
+  Discrete_intervals_list() :
+    head(NULL), tail(NULL),
+    current(NULL), elements(0) {};
+  Discrete_intervals_list(const Discrete_intervals_list& from) :
+    head(NULL), tail(NULL),
+    current(NULL), elements(0)
   {
     copy_(from);
   }
-  void operator=(const Discrete_intervals_list& from)
+  Discrete_intervals_list& operator=(const Discrete_intervals_list& from)
   {
     empty();
     copy_(from);
+    return *this;
   }
   void empty_no_free()
   {

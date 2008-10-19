@@ -23,14 +23,6 @@
   Published with a permission.
 */
 
-/* needed to have access to 64 bit file functions */
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-
-#ifndef __sun
-#define _XOPEN_SOURCE 500 /* needed to include getopt.h on some platforms. */
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

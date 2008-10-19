@@ -6358,18 +6358,6 @@ void free_replace_regex()
 
 
 /*
-  auxiluary macro used by reg_replace
-  makes sure the result buffer has sufficient length
-*/
-#define SECURE_REG_BUF   if (buf_len < need_buf_len)                    \
-  {                                                                     \
-    int off= res_p - buf;                                               \
-    buf= (char*)my_realloc(buf,need_buf_len,MYF(MY_WME+MY_FAE));        \
-    res_p= buf + off;                                                   \
-    buf_len= need_buf_len;                                              \
-  }                                                                     \
-                                                                        \
-/*
   Performs a regex substitution
 
   IN:

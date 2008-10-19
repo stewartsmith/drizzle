@@ -32,8 +32,6 @@
 # endif
 #endif
 
-#define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
-
 /**
   return true if the table was created explicitly.
 */

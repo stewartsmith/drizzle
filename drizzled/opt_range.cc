@@ -106,11 +106,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 
-#ifndef EXTRA_DEBUG
-#define test_rb_tree(A,B) {}
-#define test_use_count(A) {}
-#endif
-
 /*
   Convert double value to #rows. Currently this does floor(), and we
   might consider using round() instead.
@@ -5537,7 +5532,9 @@ SEL_ARG::tree_delete(SEL_ARG *key)
     return(0);				// Maybe root later
   if (remove_color == BLACK)
     root=rb_delete_fixup(root,nod,fix_par);
+#ifdef EXTRA_DEBUG
   test_rb_tree(root,root->parent);
+#endif /* EXTRA_DEBUG */
 
   root->use_count=this->use_count;		// Fix root counters
   root->elements=this->elements-1;
@@ -5634,7 +5631,10 @@ SEL_ARG::rb_insert(SEL_ARG *leaf)
     }
   }
   root->color=BLACK;
+#ifdef EXTRA_DEBUG
   test_rb_tree(root,root->parent);
+#endif /* EXTRA_DEBUG */
+
   return root;
 }
 

@@ -30,7 +30,6 @@ subselect_notembedded  : Bug#35803, Bug#33506 2008-Apr-03 subselect_notembedded 
 archive_aio_posix: Something is up in crashed table
 archive_bitfield: Something is up in crashed table
 auto_increment: Duplicate key on primary error (possible test fix)
-bigint: Strict mode prevents this. Need to fix test.
 bool: Fix test
 check: Bug in check table (same as archive issue)
 client_xml: Fix client to not try to load via socket

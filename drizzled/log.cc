@@ -37,12 +37,7 @@
 #include <libdrizzle/gettext.h>
 
 /* max size of the log message */
-#define MAX_LOG_BUFFER_SIZE 1024
-#define MAX_USER_HOST_SIZE 512
-#define MAX_TIME_SIZE 32
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
-
-#define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
 
 LOGGER logger;
 
@@ -508,8 +503,6 @@ static int binlog_prepare(handlerton *hton __attribute__((unused)),
   */
   return 0;
 }
-
-#define YESNO(X) ((X) ? "yes" : "no")
 
 /**
   This function is called once after each statement.

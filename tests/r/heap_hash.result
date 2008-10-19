@@ -120,7 +120,7 @@ a	b
 1	2
 1	1
 drop table t1;
-create table t1 (id int unsigned not null, primary key  using HASH (id)) engine=HEAP;
+create table t1 (id int not null, primary key  using HASH (id)) engine=HEAP;
 insert into t1 values(1);
 select max(id) from t1;
 max(id)
@@ -169,7 +169,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	btn	NULL	NULL	NULL	14	Using where
 explain select * from t1 where btn="a" and new_col="a";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	btn	btn	11	const,const	2	Using where
+1	SIMPLE	t1	ref	btn	btn	48	const,const	2	Using where
 drop table t1;
 CREATE TABLE t1 (
 a int default NULL,
@@ -220,67 +220,67 @@ insert into t1 values ('aaag', 'prefill-hash=3',0);
 insert into t1 values ('aaah', 'prefill-hash=6',0);
 explain select * from t1 where a='aaaa';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaab';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaac';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaad';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 insert into t1 select * from t1;
 flush tables;
 explain select * from t1 where a='aaaa';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaab';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaac';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaad';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 flush tables;
 explain select * from t1 where a='aaaa';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaab';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaac';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaad';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 create table t2 as select * from t1;
 delete from t1;
 insert into t1 select * from t2;
 explain select * from t1 where a='aaaa';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaab';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaac';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 explain select * from t1 where a='aaad';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	8	const	2	Using where
+1	SIMPLE	t1	ref	a	a	34	const	2	Using where
 drop table t1, t2;
 create table t1 (
-id int unsigned not null primary key auto_increment, 
+id int not null primary key auto_increment, 
 name varchar(20) not null,
 index heap_idx(name),
 index btree_idx using btree(name)
 ) engine=heap;
 create table t2 (
-id int unsigned not null primary key auto_increment, 
+id int not null primary key auto_increment, 
 name varchar(20) not null,
 index btree_idx using btree(name),
 index heap_idx(name)
@@ -291,28 +291,28 @@ insert into t1 (name) values ('Matt'), ('Lilu'), ('Corbin'), ('Carly'),
 insert into t2 select * from t1;
 explain select * from t1 where name='matt';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	82	const	1	Using where
 explain select * from t2 where name='matt';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	82	const	1	Using where
 explain select * from t1 where name='Lilu';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	82	const	1	Using where
 explain select * from t2 where name='Lilu';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	82	const	1	Using where
 explain select * from t1 where name='Phil';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	82	const	1	Using where
 explain select * from t2 where name='Phil';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	82	const	1	Using where
 explain select * from t1 where name='Lilu';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t1	ref	heap_idx,btree_idx	btree_idx	82	const	1	Using where
 explain select * from t2 where name='Lilu';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	22	const	1	Using where
+1	SIMPLE	t2	ref	btree_idx,heap_idx	btree_idx	82	const	1	Using where
 insert into t1 (name) select name from t2;
 insert into t1 (name) select name from t2;
 insert into t1 (name) select name from t2;
@@ -325,16 +325,16 @@ count(*)
 7
 explain select * from t1 ignore index (btree_idx) where name='matt';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx	heap_idx	22	const	7	Using where
+1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	id	NULL	91	NULL	NULL		HASH		
-t1	1	heap_idx	1	name	NULL	13	NULL	NULL		HASH		
+t1	1	heap_idx	1	name	NULL	10	NULL	NULL		HASH		
 t1	1	btree_idx	1	name	A	NULL	NULL	NULL		BTREE		
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	id	NULL	91	NULL	NULL		HASH		
-t1	1	heap_idx	1	name	NULL	13	NULL	NULL		HASH		
+t1	1	heap_idx	1	name	NULL	10	NULL	NULL		HASH		
 t1	1	btree_idx	1	name	A	NULL	NULL	NULL		BTREE		
 create table t3
 (
@@ -353,8 +353,8 @@ t3	1	a	1	a	NULL	NULL	NULL	NULL		HASH
 t3	1	a	2	b	NULL	13	NULL	NULL		HASH		
 explain select * from t1 ignore key(btree_idx), t3 where t1.name='matt' and t3.a = concat('',t1.name) and t3.b=t1.name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	heap_idx	heap_idx	22	const	7	Using where
-1	SIMPLE	t3	ref	a	a	44	func,const	7	Using where
+1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
+1	SIMPLE	t3	ref	a	a	164	func,const	7	Using where
 drop table t1, t2, t3;
 create temporary table t1 ( a int, index (a) ) engine=memory;
 insert into t1 values (1),(2),(3),(4),(5);
@@ -367,15 +367,15 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	a	a	5	NULL	4	Using where
 drop table t1;
 End of 4.1 tests
-CREATE TABLE t1(col1 VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL, 
-col2 VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL, 
+CREATE TABLE t1(col1 VARCHAR(32) COLLATE utf8_bin NOT NULL, 
+col2 VARCHAR(32) COLLATE utf8_bin NOT NULL, 
 UNIQUE KEY key1 USING HASH (col1, col2)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES('A', 'A');
 INSERT INTO t1 VALUES('A ', 'A ');
 ERROR 23000: Duplicate entry 'A -A ' for key 'key1'
 DROP TABLE t1;
-CREATE TABLE t1(col1 VARCHAR(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL, 
-col2 VARCHAR(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL, 
+CREATE TABLE t1(col1 VARCHAR(32) COLLATE utf8_bin NOT NULL, 
+col2 VARCHAR(32) COLLATE utf8_bin NOT NULL, 
 UNIQUE KEY key1 USING HASH (col1, col2)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES('A', 'A');
 INSERT INTO t1 VALUES('A ', 'A ');

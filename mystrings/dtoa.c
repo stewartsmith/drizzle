@@ -528,15 +528,6 @@ double my_atof(const char *nptr)
   file.
 */
 
-/*
-  #define Honor_FLT_ROUNDS if FLT_ROUNDS can assume the values 2 or 3
-       and dtoa should round accordingly.
-  #define Check_FLT_ROUNDS if FLT_ROUNDS can assume the values 2 or 3
-       and Honor_FLT_ROUNDS is not #defined.
-
-  TODO: check if we can get rid of the above two
-*/
-
 typedef int32_t Long;
 typedef uint32_t ULong;
 typedef int64_t LLong;
@@ -591,14 +582,6 @@ typedef union { double d; ULong L[2]; } U;
 #define Flt_Rounds 1
 #endif
 #endif /*Flt_Rounds*/
-
-#ifdef Honor_FLT_ROUNDS
-#define Rounding rounding
-#undef Check_FLT_ROUNDS
-#define Check_FLT_ROUNDS
-#else
-#define Rounding Flt_Rounds
-#endif
 
 #define rounded_product(a,b) a*= b
 #define rounded_quotient(a,b) a/= b
@@ -1331,9 +1314,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #ifdef SET_INEXACT
   int inexact, oldinexact;
 #endif
-#ifdef Honor_FLT_ROUNDS
-  int rounding;
-#endif
   Stack_alloc alloc;
 
   c= 0;
@@ -1491,9 +1471,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
   }
   bd0= 0;
   if (nd <= DBL_DIG
-#ifndef Honor_FLT_ROUNDS
-    && Flt_Rounds == 1
-#endif
       )
   {
     if (!e)
@@ -1502,14 +1479,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     {
       if (e <= Ten_pmax)
       {
-#ifdef Honor_FLT_ROUNDS
-        /* round correctly FLT_ROUNDS = 2 or 3 */
-        if (sign)
-        {
-          rv= -rv;
-          sign= 0;
-        }
-#endif
         /* rv = */ rounded_product(dval(rv), tens[e]);
         goto ret;
       }
@@ -1520,14 +1489,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
           A fancier test would sometimes let us do
           this for larger i values.
         */
-#ifdef Honor_FLT_ROUNDS
-        /* round correctly FLT_ROUNDS = 2 or 3 */
-        if (sign)
-        {
-          rv= -rv;
-          sign= 0;
-        }
-#endif
         e-= i;
         dval(rv)*= tens[i];
         /* rv = */ rounded_product(dval(rv), tens[e]);
@@ -1537,14 +1498,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #ifndef Inaccurate_Divide
     else if (e >= -Ten_pmax)
     {
-#ifdef Honor_FLT_ROUNDS
-      /* round correctly FLT_ROUNDS = 2 or 3 */
-      if (sign)
-      {
-        rv= -rv;
-        sign= 0;
-      }
-#endif
       /* rv = */ rounded_quotient(dval(rv), tens[-e]);
       goto ret;
     }
@@ -1558,16 +1511,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     oldinexact= get_inexact();
 #endif
   scale= 0;
-#ifdef Honor_FLT_ROUNDS
-  if ((rounding= Flt_Rounds) >= 2)
-  {
-    if (sign)
-      rounding= rounding == 2 ? 0 : 2;
-    else
-      if (rounding != 2)
-        rounding= 0;
-  }
-#endif
 
   /* Get starting approximation = rv * 10**e1 */
 
@@ -1582,22 +1525,8 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
  ovfl:
         *error= EOVERFLOW;
         /* Can't trust HUGE_VAL */
-#ifdef Honor_FLT_ROUNDS
-        switch (rounding)
-        {
-        case 0: /* toward 0 */
-        case 3: /* toward -infinity */
-          word0(rv)= Big0;
-          word1(rv)= Big1;
-          break;
-        default:
-          word0(rv)= Exp_mask;
-          word1(rv)= 0;
-        }
-#else /*Honor_FLT_ROUNDS*/
         word0(rv)= Exp_mask;
         word1(rv)= 0;
-#endif /*Honor_FLT_ROUNDS*/
 #ifdef SET_INEXACT
         /* set overflow bit */
         dval(rv0)= 1e300;
@@ -1693,10 +1622,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     else
       bd2-= bbe;
     bs2= bb2;
-#ifdef Honor_FLT_ROUNDS
-    if (rounding != 1)
-      bs2++;
-#endif
     j= bbe - scale;
     i= j + bbbits - 1;  /* logb(rv) */
     if (i < Emin)  /* denormal */
@@ -1734,72 +1659,6 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     dsign= delta->sign;
     delta->sign= 0;
     i= cmp(delta, bs);
-#ifdef Honor_FLT_ROUNDS
-    if (rounding != 1)
-    {
-      if (i < 0)
-      {
-        /* Error is less than an ulp */
-        if (!delta->x[0] && delta->wds <= 1)
-        {
-          /* exact */
-#ifdef SET_INEXACT
-          inexact= 0;
-#endif
-          break;
-        }
-        if (rounding)
-        {
-          if (dsign)
-          {
-            adj= 1.;
-            goto apply_adj;
-          }
-        }
-        else if (!dsign)
-        {
-          adj= -1.;
-          if (!word1(rv) && !(word0(rv) & Frac_mask))
-          {
-            y= word0(rv) & Exp_mask;
-            if (!scale || y > 2*P*Exp_msk1)
-            {
-              delta= lshift(delta,Log2P);
-              if (cmp(delta, bs) <= 0)
-              adj= -0.5;
-            }
-          }
- apply_adj:
-          if (scale && (y= word0(rv) & Exp_mask) <= 2 * P * Exp_msk1)
-            word0(adj)+= (2 * P + 1) * Exp_msk1 - y;
-          dval(rv)+= adj * ulp(dval(rv));
-        }
-        break;
-      }
-      adj= ratio(delta, bs);
-      if (adj < 1.)
-        adj= 1.;
-      if (adj <= 0x7ffffffe)
-      {
-        /* adj = rounding ? ceil(adj) : floor(adj); */
-        y= adj;
-        if (y != adj)
-        {
-          if (!((rounding >> 1) ^ dsign))
-            y++;
-          adj= y;
-        }
-      }
-      if (scale && (y= word0(rv) & Exp_mask) <= 2 * P * Exp_msk1)
-        word0(adj)+= (2 * P + 1) * Exp_msk1 - y;
-      adj*= ulp(dval(rv));
-      if (dsign)
-        dval(rv)+= adj;
-      else
-        dval(rv)-= adj;
-      goto cont;
-    }
-#endif /*Honor_FLT_ROUNDS*/
 
     if (i < 0)
     {
@@ -1906,20 +1765,8 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     {
       aadj*= 0.5;
       aadj1= dsign ? aadj : -aadj;
-#ifdef Check_FLT_ROUNDS
-      switch (Rounding)
-      {
-      case 2: /* towards +infinity */
-        aadj1-= 0.5;
-        break;
-      case 0: /* towards 0 */
-      case 3: /* towards -infinity */
-        aadj1+= 0.5;
-      }
-#else
       if (Flt_Rounds == 0)
         aadj1+= 0.5;
-#endif /*Check_FLT_ROUNDS*/
     }
     y= word0(rv) & Exp_mask;
 
@@ -2146,9 +1993,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
           4,5 ==> similar to 2 and 3, respectively, but (in
                 round-nearest mode) with the tests of mode 0 to
                 possibly return a shorter string that rounds to d.
-                With IEEE arithmetic and compilation with
-                -DHonor_FLT_ROUNDS, modes 4 and 5 behave the same
-                as modes 2 and 3 when FLT_ROUNDS != 1.
           6-9 ==> Debugging modes similar to mode - 4:  don't try
                 fast floating-point estimate (if applicable).
 
@@ -2167,9 +2011,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   Bigint *b, *b1, *delta, *mlo = NULL, *mhi, *S;
   double d2, ds, eps;
   char *s, *s0;
-#ifdef Honor_FLT_ROUNDS
-  int rounding;
-#endif
   Stack_alloc alloc;
   
   alloc.begin= alloc.free= buf;
@@ -2198,16 +2039,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     return res;
   }
   
-#ifdef Honor_FLT_ROUNDS
-  if ((rounding= Flt_Rounds) >= 2)
-  {
-    if (*sign)
-      rounding= rounding == 2 ? 0 : 2;
-    else
-      if (rounding != 2)
-        rounding= 0;
-  }
-#endif
 
   b= d2b(dval(d), &be, &bbits, &alloc);
   if ((i= (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1))))
@@ -2291,11 +2122,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   if (mode < 0 || mode > 9)
     mode= 0;
 
-#ifdef Check_FLT_ROUNDS
-  try_quick= Rounding == 1;
-#else
   try_quick= 1;
-#endif
 
   if (mode > 5)
   {
@@ -2329,11 +2156,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       i= 1;
   }
   s= s0= dtoa_alloc(i, &alloc);
-
-#ifdef Honor_FLT_ROUNDS
-  if (mode > 1 && rounding != 1)
-    leftright= 0;
-#endif
 
   if (ilim >= 0 && ilim <= Quick_max && try_quick)
   {
@@ -2464,14 +2286,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     {
       L= (Long)(dval(d) / ds);
       dval(d)-= L*ds;
-#ifdef Check_FLT_ROUNDS
-      /* If FLT_ROUNDS == 2, L will usually be high by 1 */
-      if (dval(d) < 0)
-      {
-        L--;
-        dval(d)+= ds;
-      }
-#endif
       *s++= '0' + (int)L;
       if (!dval(d))
       {
@@ -2479,15 +2293,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       }
       if (i == ilim)
       {
-#ifdef Honor_FLT_ROUNDS
-        if (mode > 1)
-        {
-          switch (rounding) {
-          case 0: goto ret1;
-          case 2: goto bump_up;
-          }
-        }
-#endif
         dval(d)+= dval(d);
         if (dval(d) > ds || (dval(d) == ds && L & 1))
         {
@@ -2549,9 +2354,6 @@ bump_up:
 
   spec_case= 0;
   if ((mode < 2 || leftright)
-#ifdef Honor_FLT_ROUNDS
-      && rounding == 1
-#endif
      )
   {
     if (!word1(d) && !(word0(d) & Bndry_mask) &&
@@ -2645,9 +2447,6 @@ one_digit:
       j1= delta->sign ? 1 : cmp(b, delta);
       Bfree(delta, &alloc);
       if (j1 == 0 && mode != 1 && !(word1(d) & 1)
-#ifdef Honor_FLT_ROUNDS
-          && rounding >= 1
-#endif
          )
       {
         if (dig == '9')
@@ -2663,13 +2462,6 @@ one_digit:
         {
           goto accept_dig;
         }
-#ifdef Honor_FLT_ROUNDS
-        if (mode > 1)
-          switch (rounding) {
-          case 0: goto accept_dig;
-          case 2: goto keep_dig;
-          }
-#endif /*Honor_FLT_ROUNDS*/
         if (j1 > 0)
         {
           b= lshift(b, 1, &alloc);
@@ -2684,10 +2476,6 @@ accept_dig:
       }
       if (j1 > 0)
       {
-#ifdef Honor_FLT_ROUNDS
-        if (!rounding)
-          goto accept_dig;
-#endif
         if (dig == '9')
         { /* possible if i == 1 */
 round_9_up:
@@ -2697,9 +2485,6 @@ round_9_up:
         *s++= dig + 1;
         goto ret;
       }
-#ifdef Honor_FLT_ROUNDS
-keep_dig:
-#endif
       *s++= dig;
       if (i == ilim)
         break;
@@ -2728,12 +2513,6 @@ keep_dig:
 
   /* Round off last digit */
 
-#ifdef Honor_FLT_ROUNDS
-  switch (rounding) {
-  case 0: goto trimzeros;
-  case 2: goto roundoff;
-  }
-#endif
   b= lshift(b, 1, &alloc);
   j= cmp(b, S);
   if (j > 0 || (j == 0 && dig & 1))
@@ -2750,9 +2529,6 @@ roundoff:
   }
   else
   {
-#ifdef Honor_FLT_ROUNDS
-trimzeros:
-#endif
     while (*--s == '0');
     s++;
   }
