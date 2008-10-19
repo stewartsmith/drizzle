@@ -1,9 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Query Logging plugin 
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,13 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_CONFIGVAR_H
+#define DRIZZLED_CONFIGVAR_H
 
-typedef struct logging_st
-{
-  bool (*logging_pre)(THD *thd);
-  bool (*logging_post)(THD *thd);
-} logging_t;
+#include <drizzled/plugin_configvar.h>
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+int configvar_initializer (st_plugin_int *plugin);
+int configvar_finalizer (st_plugin_int *plugin);
+
+/* todo, fill in this API */
+/* these are the functions called by the rest of the drizzle server
+   to do whatever this plugin does. */
+bool configvar_do1 (THD *thd, void *parm1, void *parm2);
+bool configvar_do2 (THD *thd, void *parm3, void *parm4);
+
+#endif /* DRIZZLED_CONFIGVAR_H */

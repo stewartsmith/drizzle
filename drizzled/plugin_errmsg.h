@@ -2,7 +2,7 @@
  -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Query Logging plugin 
+ *  Definitions required for Error Message plugin 
 
  *  Copyright (C) 2008 Mark Atwood
  *
@@ -20,13 +20,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_PLUGIN_ERRMSG_H
+#define DRIZZLED_PLUGIN_ERRMSG_H
 
-typedef struct logging_st
+#include <stdarg.h>
+
+typedef struct errmsg_st
 {
-  bool (*logging_pre)(THD *thd);
-  bool (*logging_post)(THD *thd);
-} logging_t;
+  bool (*errmsg_func)(THD *thd, int priority, const char *format, va_list ap);
+} errmsg_t;
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+#endif /* DRIZZLED_PLUGIN_ERRMSG_H */

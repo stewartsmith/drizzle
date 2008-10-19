@@ -2,7 +2,7 @@
  -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 
- *  Definitions required for Query Logging plugin 
+ *  Definitions required for Configuration Variables plugin 
 
  *  Copyright (C) 2008 Mark Atwood
  *
@@ -20,13 +20,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_PLUGIN_CONFIGVAR_H
+#define DRIZZLED_PLUGIN_CONFIGVAR_H
 
-typedef struct logging_st
+typedef struct configvar_st
 {
-  bool (*logging_pre)(THD *thd);
-  bool (*logging_post)(THD *thd);
-} logging_t;
+  /* todo, define this api */
+  /* this is the API that a configvar plugin must implement.
+     it should implement each of these function pointers.
+     if a function returns bool true, that means it failed.
+     if a function pointer is NULL, that's ok.
+  */
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+  bool (*configvar_func1)(THD *thd, void *parm1, void *parm2);
+  bool (*configvar_func2)(THD *thd, void *parm3, void *parm4);
+} configvar_t;
+
+#endif /* DRIZZLED_PLUGIN_CONFIGVAR_H */

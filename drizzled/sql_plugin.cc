@@ -15,9 +15,15 @@
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
+
 #include <authentication.h>
 #include <logging.h>
+#include <errmsg.h>
+#include <configvar.h>
+#include <qcache.h>
+
 #include <drizzled/drizzled_error_messages.h>
+
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 
@@ -42,7 +48,10 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("UDA") },
   { C_STRING_WITH_LEN("AUDIT") },
   { C_STRING_WITH_LEN("LOGGER") },
-  { C_STRING_WITH_LEN("AUTH") }
+  { C_STRING_WITH_LEN("ERRMSG") },
+  { C_STRING_WITH_LEN("AUTH") },
+  { C_STRING_WITH_LEN("CONFIGVAR") },
+  { C_STRING_WITH_LEN("QCACHE") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
@@ -65,7 +74,10 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   logging_initializer,  /* Logger */
-  authentication_initializer  /* Auth */
+  errmsg_initializer,  /* Error Messages */
+  authentication_initializer,  /* Auth */
+  configvar_initializer,
+  qcache_initializer
 };
 
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
@@ -77,7 +89,10 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   logging_finalizer,  /* Logger */
-  authentication_finalizer  /* Auth */
+  errmsg_finalizer,  /* Logger */
+  authentication_finalizer,  /* Auth */
+  configvar_finalizer,
+  qcache_finalizer
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";

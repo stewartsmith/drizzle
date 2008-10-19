@@ -1,9 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Query Logging plugin 
-
+ *
  *  Copyright (C) 2008 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,13 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_ERRMSG_H
+#define DRIZZLED_ERRMSG_H
 
-typedef struct logging_st
-{
-  bool (*logging_pre)(THD *thd);
-  bool (*logging_post)(THD *thd);
-} logging_t;
+#include <drizzled/plugin_errmsg.h>
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+// need stdarg for va_list
+#include <stdarg.h>
+
+int errmsg_initializer(st_plugin_int *plugin);
+int errmsg_finalizer(st_plugin_int *plugin);
+
+bool errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap);
+bool errmsg_printf (THD *thd, int priority, const char *format, ...);
+
+#endif /* DRIZZLED_ERRMSG_H */
