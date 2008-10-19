@@ -192,7 +192,6 @@ test-drizzle:
         heap_var \
         information_schema \
 	innodb_autoinc_lock_mode_zero \
-	innodb_mrr \
 	innodb_mysql \
 	innodb_notembedded \
 	innodb_trx_weight \
@@ -200,7 +199,6 @@ test-drizzle:
         innodb-semi-consistent \
         innodb_timeout_rollback \
         insert \
-	insert_notembedded \
 	insert_select \
 	insert_update \
         join \
