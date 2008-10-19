@@ -191,10 +191,18 @@ test-drizzle:
 	heap_hash \
         heap_var \
         information_schema \
+	innodb_autoinc_lock_mode_zero \
+	innodb_mrr \
+	innodb_mysql \
+	innodb_notembedded \
+	innodb_trx_weight \
         innodb-lock \
         innodb-semi-consistent \
         innodb_timeout_rollback \
         insert \
+	insert_notembedded \
+	insert_select \
+	insert_update \
         join \
         join_crash \
         join_nested \

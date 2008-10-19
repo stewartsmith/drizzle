@@ -51,7 +51,7 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
-  ulong mean_rec_length;		/* physical reclength */
+  uint64_t mean_rec_length;		/* physical reclength */
 } KEYFILE_INFO;
 
 
@@ -136,7 +136,10 @@ typedef struct st_read_record {			/* Parameter to read_record */
 
 
 typedef struct {
-  ulong year,month,day,hour;
+  uint32_t year;
+  uint32_t month;
+  uint32_t day;
+  uint32_t hour;
   uint64_t minute,second,second_part;
   bool neg;
 } INTERVAL;
