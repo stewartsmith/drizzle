@@ -209,7 +209,6 @@ test-drizzle:
         lock_tables_lost_commit \
 	main.myisam-blob \
 	main.myisam-system \
-	main.myisam_mrr \
 	mysqldump-compat \
 	mysqldump-max \
 	order_by \
