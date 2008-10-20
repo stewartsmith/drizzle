@@ -387,14 +387,6 @@ sys_var_thd_bit sys_autocommit(&vars, "autocommit", 0,
                                set_option_autocommit,
                                OPTION_NOT_AUTOCOMMIT,
                                1);
-static sys_var_thd_bit	sys_big_tables(&vars, "big_tables", 0,
-				       set_option_bit,
-				       OPTION_BIG_TABLES);
-#ifndef TO_BE_DELETED	/* Alias for big_tables */
-static sys_var_thd_bit	sys_sql_big_tables(&vars, "sql_big_tables", 0,
-					   set_option_bit,
-					   OPTION_BIG_TABLES);
-#endif
 static sys_var_thd_bit	sys_big_selects(&vars, "sql_big_selects", 0,
 					set_option_bit,
 					OPTION_BIG_SELECTS);

@@ -544,34 +544,6 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: DRIZZLE_CHECK_BIG_TABLES
-dnl Sets BIG_TABLES if --with-big-tables is used
-dnl ---------------------------------------------------------------------------
-AC_DEFUN([DRIZZLE_CHECK_BIG_TABLES], [
-  AC_ARG_WITH([big-tables],
-  AS_HELP_STRING([--with-big-tables],
-              [Support tables with more than 4 G rows even on 32 bit platforms]),
-              [bigtables="$withval"],
-              [bigtables=no])
-  AC_MSG_CHECKING([for big tables support])
-
-  case "$bigtables" in
-    yes )
-      AC_DEFINE([BIG_TABLES], [1], [Support big tables])
-      AC_MSG_RESULT([yes])
-      ;;
-    * )
-      AC_MSG_RESULT([no])
-      ;;
-  esac
-
-])
-dnl ---------------------------------------------------------------------------
-dnl END OF DRIZZLE_CHECK_BIG_TABLES SECTION
-dnl ---------------------------------------------------------------------------
-
-
-dnl ---------------------------------------------------------------------------
 dnl Macro: DRIZZLE_CHECK_MAX_INDEXES
 dnl Sets MAX_INDEXES
 dnl ---------------------------------------------------------------------------

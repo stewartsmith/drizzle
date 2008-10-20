@@ -235,7 +235,6 @@ A	4
 B	4
 a	1
 b	1
-SET SQL_BIG_TABLES=1;
 SELECT a FROM t1 GROUP BY a;
 a
 NULL
@@ -274,7 +273,6 @@ A	4
 B	4
 a	1
 b	1
-SET SQL_BIG_TABLES=0;
 drop table t1;
 CREATE TABLE t1 (
 `a` char(193) default NULL,
@@ -388,7 +386,6 @@ a	count(*)
 NULL	9
 	3
 b	1
-set option sql_big_tables=1;
 select a,count(*) from t1 group by a;
 a	count(*)
 NULL	9
@@ -819,10 +816,6 @@ CASE WHEN AVG(a)>=0 THEN 'Positive' ELSE 'Negative' END
 Positive
 Positive
 Positive
-Warnings:
-Error	1366	Incorrect decimal value: '' for column '' at row 4294967295
-Error	1366	Incorrect decimal value: '' for column '' at row 4294967295
-Error	1366	Incorrect decimal value: '' for column '' at row 4294967295
 SELECT a + 1 FROM t1 GROUP BY a;
 a + 1
 2
