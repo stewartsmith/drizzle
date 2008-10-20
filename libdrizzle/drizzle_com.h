@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
@@ -30,21 +30,21 @@
 #include <stdint.h>
 
 /*
-   This is included in the server and in the client.
-   Options for select set by the yacc parser (stored in lex->options).
+  This is included in the server and in the client.
+  Options for select set by the yacc parser (stored in lex->options).
 
-   XXX:
-   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
-   options list are written into binlog. These options can NOT change their
-   values, or it will break replication between version.
+  XXX:
+  log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
+  options list are written into binlog. These options can NOT change their
+  values, or it will break replication between version.
 
-   context is encoded as following:
-   SELECT - SELECT_LEX_NODE::options
-   THD    - THD::options
-   intern - neither. used only as
-            func(..., select_node->options | thd->options | OPTION_XXX, ...)
+  context is encoded as following:
+  SELECT - SELECT_LEX_NODE::options
+  THD    - THD::options
+  intern - neither. used only as
+  func(..., select_node->options | thd->options | OPTION_XXX, ...)
 
-   TODO: separate three contexts above, move them to separate bitfields.
+  TODO: separate three contexts above, move them to separate bitfields.
 */
 
 #define SELECT_DISTINCT         (UINT64_C(1) << 0)     // SELECT, user
@@ -75,10 +75,10 @@
 #define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
 
 /** The following can be set when importing tables in a 'wrong order'
-   to suppress foreign key checks */
+    to suppress foreign key checks */
 #define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user, binlog
 /** The following speeds up inserts to InnoDB tables by suppressing unique
-   key checks in some cases */
+    key checks in some cases */
 #define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user, binlog
 #define SELECT_NO_UNLOCK                (UINT64_C(1) << 28) // SELECT, intern
 #define OPTION_SCHEMA_TABLE             (UINT64_C(1) << 29) // SELECT, intern
@@ -87,8 +87,8 @@
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
 /**
-  Force the used temporary table to be a MyISAM table (because we will use
-  fulltext functions when reading from it.
+   Force the used temporary table to be a MyISAM table (because we will use
+   fulltext functions when reading from it.
 */
 #define TMP_TABLE_FORCE_MYISAM          (UINT64_C(1) << 32)
 #define OPTION_PROFILING                (UINT64_C(1) << 33)
@@ -100,8 +100,8 @@
 #define OPTION_ALLOW_BATCH              (UINT64_C(1) << 33) // THD, intern (slave)
 
 /**
-  Maximum length of time zone name that we support
-  (Time zone name is char(64) in db). mysqlbinlog needs it.
+   Maximum length of time zone name that we support
+   (Time zone name is char(64) in db). mysqlbinlog needs it.
 */
 #define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
 
@@ -171,69 +171,69 @@ enum enum_server_command
 #define SCRAMBLED_PASSWORD_CHAR_LENGTH_323 (SCRAMBLE_LENGTH_323*2)
 
 
-#define NOT_NULL_FLAG	1		/* Field can't be NULL */
-#define PRI_KEY_FLAG	2		/* Field is part of a primary key */
-#define UNIQUE_KEY_FLAG 4		/* Field is part of a unique key */
-#define MULTIPLE_KEY_FLAG 8		/* Field is part of a key */
-#define BLOB_FLAG	16		/* Field is a blob */
-#define UNSIGNED_FLAG	32		/* Field is unsigned */
-#define DECIMAL_FLAG	64		/* Field is zerofill */
-#define BINARY_FLAG	128		/* Field is binary   */
+#define NOT_NULL_FLAG  1    /* Field can't be NULL */
+#define PRI_KEY_FLAG  2    /* Field is part of a primary key */
+#define UNIQUE_KEY_FLAG 4    /* Field is part of a unique key */
+#define MULTIPLE_KEY_FLAG 8    /* Field is part of a key */
+#define BLOB_FLAG  16    /* Field is a blob */
+#define UNSIGNED_FLAG  32    /* Field is unsigned */
+#define DECIMAL_FLAG  64    /* Field is zerofill */
+#define BINARY_FLAG  128    /* Field is binary   */
 
 /* The following are only sent to new clients */
-#define ENUM_FLAG	256		/* field is an enum */
-#define AUTO_INCREMENT_FLAG 512		/* field is a autoincrement field */
-#define TIMESTAMP_FLAG	1024		/* Field is a timestamp */
-#define SET_FLAG	2048		/* field is a set */
-#define NO_DEFAULT_VALUE_FLAG 4096	/* Field doesn't have default value */
+#define ENUM_FLAG  256    /* field is an enum */
+#define AUTO_INCREMENT_FLAG 512    /* field is a autoincrement field */
+#define TIMESTAMP_FLAG  1024    /* Field is a timestamp */
+#define SET_FLAG  2048    /* field is a set */
+#define NO_DEFAULT_VALUE_FLAG 4096  /* Field doesn't have default value */
 #define ON_UPDATE_NOW_FLAG 8192         /* Field is set to NOW on UPDATE */
-#define NUM_FLAG	32768		/* Field is num (for clients) */
-#define PART_KEY_FLAG	16384		/* Intern; Part of some key */
-#define GROUP_FLAG	32768		/* Intern: Group field */
-#define UNIQUE_FLAG	65536		/* Intern: Used by sql_yacc */
-#define BINCMP_FLAG	131072		/* Intern: Used by sql_yacc */
+#define NUM_FLAG  32768    /* Field is num (for clients) */
+#define PART_KEY_FLAG  16384    /* Intern; Part of some key */
+#define GROUP_FLAG  32768    /* Intern: Group field */
+#define UNIQUE_FLAG  65536    /* Intern: Used by sql_yacc */
+#define BINCMP_FLAG  131072    /* Intern: Used by sql_yacc */
 #define GET_FIXED_FIELDS_FLAG (1 << 18) /* Used to get fields in item tree */
 #define FIELD_IN_PART_FUNC_FLAG (1 << 19)/* Field part of partition func */
-#define FIELD_IN_ADD_INDEX (1<< 20)	/* Intern: Field used in ADD INDEX */
+#define FIELD_IN_ADD_INDEX (1<< 20)  /* Intern: Field used in ADD INDEX */
 #define FIELD_IS_RENAMED (1<< 21)       /* Intern: Field is being renamed */
 #define FIELD_STORAGE_FLAGS 22          /* Storage type: bit 22, 23 and 24 */
 #define COLUMN_FORMAT_FLAGS 25          /* Column format: bit 25, 26 and 27 */
 
-#define REFRESH_GRANT		1	/* Refresh grant tables */
-#define REFRESH_LOG		2	/* Start on new log file */
-#define REFRESH_TABLES		4	/* close all tables */
-#define REFRESH_HOSTS		8	/* Flush host cache */
-#define REFRESH_STATUS		16	/* Flush status variables */
-#define REFRESH_THREADS		32	/* Flush thread cache */
+#define REFRESH_GRANT    1  /* Refresh grant tables */
+#define REFRESH_LOG    2  /* Start on new log file */
+#define REFRESH_TABLES    4  /* close all tables */
+#define REFRESH_HOSTS    8  /* Flush host cache */
+#define REFRESH_STATUS    16  /* Flush status variables */
+#define REFRESH_THREADS    32  /* Flush thread cache */
 #define REFRESH_SLAVE           64      /* Reset master info and restart slave
-					   thread */
+                                           thread */
 #define REFRESH_MASTER          128     /* Remove all bin logs in the index
-					   and truncate the index */
+                                           and truncate the index */
 
 /* The following can't be set with mysql_refresh() */
-#define REFRESH_READ_LOCK	16384	/* Lock tables for read */
-#define REFRESH_FAST		32768	/* Intern flag */
+#define REFRESH_READ_LOCK  16384  /* Lock tables for read */
+#define REFRESH_FAST    32768  /* Intern flag */
 
 /* RESET (remove all queries) from query cache */
-#define REFRESH_QUERY_CACHE	65536
+#define REFRESH_QUERY_CACHE  65536
 #define REFRESH_QUERY_CACHE_FREE 0x20000L /* pack query cache */
-#define REFRESH_DES_KEY_FILE	0x40000L
-#define REFRESH_USER_RESOURCES	0x80000L
+#define REFRESH_DES_KEY_FILE  0x40000L
+#define REFRESH_USER_RESOURCES  0x80000L
 
-#define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
-#define CLIENT_FOUND_ROWS	2	/* Found instead of affected rows */
-#define CLIENT_LONG_FLAG	4	/* Get all column flags */
-#define CLIENT_CONNECT_WITH_DB	8	/* One can specify db on connect */
-#define CLIENT_NO_SCHEMA	16	/* Don't allow database.table.column */
-#define CLIENT_COMPRESS		32	/* Can use compression protocol */
-#define CLIENT_ODBC		64	/* Odbc client */
-#define CLIENT_LOCAL_FILES	128	/* Can use LOAD DATA LOCAL */
-#define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
-#define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
-#define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
-#define CLIENT_SSL              2048	/* Switch to SSL after handshake */
+#define CLIENT_LONG_PASSWORD  1  /* new more secure passwords */
+#define CLIENT_FOUND_ROWS  2  /* Found instead of affected rows */
+#define CLIENT_LONG_FLAG  4  /* Get all column flags */
+#define CLIENT_CONNECT_WITH_DB  8  /* One can specify db on connect */
+#define CLIENT_NO_SCHEMA  16  /* Don't allow database.table.column */
+#define CLIENT_COMPRESS    32  /* Can use compression protocol */
+#define CLIENT_ODBC    64  /* Odbc client */
+#define CLIENT_LOCAL_FILES  128  /* Can use LOAD DATA LOCAL */
+#define CLIENT_IGNORE_SPACE  256  /* Ignore spaces before '(' */
+#define UNUSED_CLIENT_PROTOCOL_41  512  /* New 4.1 protocol */
+#define CLIENT_INTERACTIVE  1024  /* This is an interactive client */
+#define CLIENT_SSL              2048  /* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
-#define CLIENT_TRANSACTIONS	8192	/* Client knows about transactions */
+#define CLIENT_TRANSACTIONS  8192  /* Client knows about transactions */
 #define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
 #define CLIENT_SECURE_CONNECTION 32768  /* New 4.1 authentication */
 #define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
@@ -243,23 +243,23 @@ enum enum_server_command
 #define CLIENT_REMEMBER_OPTIONS (1UL << 31)
 
 /* Gather all possible capabilites (flags) supported by the server */
-#define CLIENT_ALL_FLAGS  (CLIENT_LONG_PASSWORD | \
-                           CLIENT_FOUND_ROWS | \
-                           CLIENT_LONG_FLAG | \
-                           CLIENT_CONNECT_WITH_DB | \
-                           CLIENT_NO_SCHEMA | \
-                           CLIENT_COMPRESS | \
-                           CLIENT_ODBC | \
-                           CLIENT_LOCAL_FILES | \
-                           CLIENT_IGNORE_SPACE | \
-                           CLIENT_INTERACTIVE | \
-                           CLIENT_SSL | \
-                           CLIENT_IGNORE_SIGPIPE | \
-                           CLIENT_TRANSACTIONS | \
-                           CLIENT_RESERVED | \
-                           CLIENT_SECURE_CONNECTION | \
-                           CLIENT_MULTI_STATEMENTS | \
-                           CLIENT_MULTI_RESULTS | \
+#define CLIENT_ALL_FLAGS  (CLIENT_LONG_PASSWORD |       \
+                           CLIENT_FOUND_ROWS |          \
+                           CLIENT_LONG_FLAG |           \
+                           CLIENT_CONNECT_WITH_DB |     \
+                           CLIENT_NO_SCHEMA |           \
+                           CLIENT_COMPRESS |            \
+                           CLIENT_ODBC |                \
+                           CLIENT_LOCAL_FILES |         \
+                           CLIENT_IGNORE_SPACE |        \
+                           CLIENT_INTERACTIVE |         \
+                           CLIENT_SSL |                 \
+                           CLIENT_IGNORE_SIGPIPE |      \
+                           CLIENT_TRANSACTIONS |        \
+                           CLIENT_RESERVED |            \
+                           CLIENT_SECURE_CONNECTION |   \
+                           CLIENT_MULTI_STATEMENTS |    \
+                           CLIENT_MULTI_RESULTS |          \
                            CLIENT_SSL_VERIFY_SERVER_CERT | \
                            CLIENT_REMEMBER_OPTIONS)
 
@@ -268,12 +268,12 @@ enum enum_server_command
   If any of the optional flags is supported by the build it will be switched
   on before sending to the client during the connection handshake.
 */
-#define CLIENT_BASIC_FLAGS (((CLIENT_ALL_FLAGS & ~CLIENT_SSL) \
-                                               & ~CLIENT_COMPRESS) \
-                                               & ~CLIENT_SSL_VERIFY_SERVER_CERT)
+#define CLIENT_BASIC_FLAGS (((CLIENT_ALL_FLAGS & ~CLIENT_SSL)      \
+                             & ~CLIENT_COMPRESS)                        \
+                            & ~CLIENT_SSL_VERIFY_SERVER_CERT)
 
-#define SERVER_STATUS_IN_TRANS     1	/* Transaction has started */
-#define SERVER_STATUS_AUTOCOMMIT   2	/* Server in auto_commit mode */
+#define SERVER_STATUS_IN_TRANS     1  /* Transaction has started */
+#define SERVER_STATUS_AUTOCOMMIT   2  /* Server in auto_commit mode */
 #define SERVER_MORE_RESULTS_EXISTS 8    /* Multi query - next query exists */
 #define SERVER_QUERY_NO_GOOD_INDEX_USED 16
 #define SERVER_QUERY_NO_INDEX_USED      32
@@ -297,14 +297,14 @@ enum enum_server_command
 */
 #define SERVER_QUERY_WAS_SLOW           1024
 
-#define DRIZZLE_ERRMSG_SIZE	512
-#define NET_READ_TIMEOUT	30		/* Timeout on read */
-#define NET_WRITE_TIMEOUT	60		/* Timeout on write */
-#define NET_WAIT_TIMEOUT	8*60*60		/* Wait for new query */
+#define DRIZZLE_ERRMSG_SIZE  512
+#define NET_READ_TIMEOUT  30    /* Timeout on read */
+#define NET_WRITE_TIMEOUT  60    /* Timeout on write */
+#define NET_WAIT_TIMEOUT  8*60*60    /* Wait for new query */
 
 #define ONLY_KILL_QUERY         1
 
-struct st_vio;					/* Only C */
+struct st_vio;          /* Only C */
 typedef struct st_vio Vio;
 
 #define MAX_TINYINT_WIDTH       3       /* Max width for a TINY w.o. sign */
@@ -312,8 +312,8 @@ typedef struct st_vio Vio;
 #define MAX_MEDIUMINT_WIDTH     8       /* Max width for a INT24 w.o. sign */
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
-#define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
-#define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
+#define MAX_CHAR_WIDTH    255  /* Max length for a CHAR colum */
+#define MAX_BLOB_WIDTH    16777216  /* Default width for blob */
 
 #define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
 
@@ -323,7 +323,7 @@ typedef struct st_vio Vio;
 #define packet_error (~(uint32_t) 0)
 
 
-/* Shutdown/kill enums and constants */ 
+/* Shutdown/kill enums and constants */
 
 /* Bits for THD::killable. */
 #define DRIZZLE_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
@@ -340,10 +340,11 @@ enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_DATETIME,
                         DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-			                  DRIZZLE_TYPE_VIRTUAL=252,
-                        DRIZZLE_TYPE_NEWDECIMAL=253,
-                        DRIZZLE_TYPE_ENUM=254,
-                        DRIZZLE_TYPE_BLOB=255
+                        DRIZZLE_TYPE_VIRTUAL,
+                        DRIZZLE_TYPE_NEWDECIMAL,
+                        DRIZZLE_TYPE_ENUM,
+                        DRIZZLE_TYPE_BLOB,
+                        DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
 
@@ -379,24 +380,24 @@ extern "C" {
 }
 #endif
 
-  /* The following is for user defined functions */
+/* The following is for user defined functions */
 
 enum Item_result {STRING_RESULT=0, REAL_RESULT, INT_RESULT, ROW_RESULT,
                   DECIMAL_RESULT};
 
 typedef struct st_udf_args
 {
-  unsigned int arg_count;		/* Number of arguments */
-  enum Item_result *arg_type;		/* Pointer to item_results */
-  char **args;				/* Pointer to argument */
-  unsigned long *lengths;		/* Length of string arguments */
-  char *maybe_null;			/* Set to 1 for all maybe_null args */
+  unsigned int arg_count;    /* Number of arguments */
+  enum Item_result *arg_type;    /* Pointer to item_results */
+  char **args;        /* Pointer to argument */
+  unsigned long *lengths;    /* Length of string arguments */
+  char *maybe_null;      /* Set to 1 for all maybe_null args */
   char **attributes;                    /* Pointer to attribute name */
   unsigned long *attribute_lengths;     /* Length of attribute arguments */
   void *extension;
 } UDF_ARGS;
 
-  /* This holds information about the result */
+/* This holds information about the result */
 
 typedef struct st_udf_init
 {
@@ -407,16 +408,16 @@ typedef struct st_udf_init
   bool const_item;          /* 1 if function always returns the same value */
   void *extension;
 } UDF_INIT;
-/* 
-  TODO: add a notion for determinism of the UDF. 
+/*
+  TODO: add a notion for determinism of the UDF.
   See Item_udf_func::update_used_tables ()
 */
 
-  /* Constants when using compression */
-#define NET_HEADER_SIZE 4		/* standard header size */
-#define COMP_HEADER_SIZE 3		/* compression header extra size */
+/* Constants when using compression */
+#define NET_HEADER_SIZE 4    /* standard header size */
+#define COMP_HEADER_SIZE 3    /* compression header extra size */
 
-  /* Prototypes to password functions */
+/* Prototypes to password functions */
 
 #ifdef __cplusplus
 extern "C" {
@@ -457,74 +458,74 @@ extern "C" {
 
 /* Optimized store functions for Intel x86 */
 #if defined(__i386__)
-#define sint2korr(A)	(*((int16_t *) (A)))
-#define sint3korr(A)	((int32_t) ((((unsigned char) (A)[2]) & 128) ? \
-				  (((uint32_t) 255L << 24) | \
-				   (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				   (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				   ((uint32_t) (unsigned char) (A)[0])) : \
-				  (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				  (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				  ((uint32_t) (unsigned char) (A)[0])))
-#define sint4korr(A)	(*((long *) (A)))
-#define uint2korr(A)	(*((uint16_t *) (A)))
+#define sint2korr(A)  (*((int16_t *) (A)))
+#define sint3korr(A)  ((int32_t) ((((unsigned char) (A)[2]) & 128) ?  \
+                                    (((uint32_t) 255L << 24) |          \
+                                     (((uint32_t) (unsigned char) (A)[2]) << 16) | \
+                                     (((uint32_t) (unsigned char) (A)[1]) << 8) | \
+                                     ((uint32_t) (unsigned char) (A)[0])) : \
+                                    (((uint32_t) (unsigned char) (A)[2]) << 16) | \
+                                    (((uint32_t) (unsigned char) (A)[1]) << 8) | \
+                                    ((uint32_t) (unsigned char) (A)[0])))
+#define sint4korr(A)  (*((long *) (A)))
+#define uint2korr(A)  (*((uint16_t *) (A)))
 #if defined(HAVE_purify)
-#define uint3korr(A)	(uint32_t) (((uint32_t) ((unsigned char) (A)[0])) +\
-				  (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				  (((uint32_t) ((unsigned char) (A)[2])) << 16))
+#define uint3korr(A)  (uint32_t) (((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16))
 #else
 /*
-   ATTENTION !
-   
-    Please, note, uint3korr reads 4 bytes (not 3) !
-    It means, that you have to provide enough allocated space !
-*/
-#define uint3korr(A)	(long) (*((unsigned int *) (A)) & 0xFFFFFF)
-#endif /* HAVE_purify */
-#define uint4korr(A)	(*((uint32_t *) (A)))
-#define uint5korr(A)	((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) +\
-				    (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
-				    (((uint32_t) ((unsigned char) (A)[3])) << 24)) +\
-				    (((uint64_t) ((unsigned char) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
-                                     (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
-                                     (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
-                                     (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
-                         (((uint64_t) ((unsigned char) (A)[4])) << 32) +       \
-                         (((uint64_t) ((unsigned char) (A)[5])) << 40))
-#define uint8korr(A)	(*((uint64_t *) (A)))
-#define sint8korr(A)	(*((int64_t *) (A)))
-#define int2store(T,A)	*((uint16_t*) (T))= (uint16_t) (A)
-#define int3store(T,A)  do { *(T)=  (unsigned char) ((A));\
-                            *(T+1)=(unsigned char) (((uint32_t) (A) >> 8));\
-                            *(T+2)=(unsigned char) (((A) >> 16)); } while (0)
-#define int4store(T,A)	*((long *) (T))= (long) (A)
-#define int5store(T,A)  do { *(T)= (unsigned char)((A));\
-                             *((T)+1)=(unsigned char) (((A) >> 8));\
-                             *((T)+2)=(unsigned char) (((A) >> 16));\
-                             *((T)+3)=(unsigned char) (((A) >> 24)); \
-                             *((T)+4)=(unsigned char) (((A) >> 32)); } while(0)
-#define int6store(T,A)  do { *(T)=    (unsigned char)((A));          \
-                             *((T)+1)=(unsigned char) (((A) >> 8));  \
-                             *((T)+2)=(unsigned char) (((A) >> 16)); \
-                             *((T)+3)=(unsigned char) (((A) >> 24)); \
-                             *((T)+4)=(unsigned char) (((A) >> 32)); \
-                             *((T)+5)=(unsigned char) (((A) >> 40)); } while(0)
-#define int8store(T,A)	*((uint64_t *) (T))= (uint64_t) (A)
+  ATTENTION !
 
-typedef union {
-  double v;
-  long m[2];
-} doubleget_union;
-#define doubleget(V,M)	\
-do { doubleget_union _tmp; \
-     _tmp.m[0] = *((long*)(M)); \
-     _tmp.m[1] = *(((long*) (M))+1); \
-     (V) = _tmp.v; } while(0)
+  Please, note, uint3korr reads 4 bytes (not 3) !
+  It means, that you have to provide enough allocated space !
+*/
+#define uint3korr(A)  (long) (*((unsigned int *) (A)) & 0xFFFFFF)
+#endif /* HAVE_purify */
+#define uint4korr(A)  (*((uint32_t *) (A)))
+#define uint5korr(A)  ((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16) + \
+                                    (((uint32_t) ((unsigned char) (A)[3])) << 24)) + \
+                         (((uint64_t) ((unsigned char) (A)[4])) << 32))
+#define uint6korr(A)  ((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
+                                    (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
+                                    (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
+                                    (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
+                         (((uint64_t) ((unsigned char) (A)[4])) << 32) + \
+                         (((uint64_t) ((unsigned char) (A)[5])) << 40))
+#define uint8korr(A)  (*((uint64_t *) (A)))
+#define sint8korr(A)  (*((int64_t *) (A)))
+#define int2store(T,A)  *((uint16_t*) (T))= (uint16_t) (A)
+#define int3store(T,A)  do { *(T)=  (unsigned char) ((A));              \
+    *(T+1)=(unsigned char) (((uint32_t) (A) >> 8));                     \
+    *(T+2)=(unsigned char) (((A) >> 16)); } while (0)
+#define int4store(T,A)  *((long *) (T))= (long) (A)
+#define int5store(T,A)  do { *(T)= (unsigned char)((A));                \
+    *((T)+1)=(unsigned char) (((A) >> 8));                              \
+    *((T)+2)=(unsigned char) (((A) >> 16));                             \
+    *((T)+3)=(unsigned char) (((A) >> 24));                             \
+    *((T)+4)=(unsigned char) (((A) >> 32)); } while(0)
+#define int6store(T,A)  do { *(T)=    (unsigned char)((A));          \
+    *((T)+1)=(unsigned char) (((A) >> 8));                           \
+    *((T)+2)=(unsigned char) (((A) >> 16));                          \
+    *((T)+3)=(unsigned char) (((A) >> 24));                          \
+    *((T)+4)=(unsigned char) (((A) >> 32));                             \
+    *((T)+5)=(unsigned char) (((A) >> 40)); } while(0)
+#define int8store(T,A)  *((uint64_t *) (T))= (uint64_t) (A)
+
+  typedef union {
+    double v;
+    long m[2];
+  } doubleget_union;
+#define doubleget(V,M)     \
+  do { doubleget_union _tmp;    \
+    _tmp.m[0] = *((long*)(M));       \
+    _tmp.m[1] = *(((long*) (M))+1);  \
+    (V) = _tmp.v; } while(0)
 #define doublestore(T,V) do { *((long *) T) = ((doubleget_union *)&V)->m[0]; \
-			     *(((long *) T)+1) = ((doubleget_union *)&V)->m[1]; \
-                         } while (0)
+    *(((long *) T)+1) = ((doubleget_union *)&V)->m[1];                  \
+  } while (0)
 #define float4get(V,M)   do { *((float *) &(V)) = *((float*) (M)); } while(0)
 #define float8get(V,M)   doubleget((V),(M))
 #define float4store(V,M) memcpy(V, (&M), sizeof(float))
@@ -537,134 +538,134 @@ do { doubleget_union _tmp; \
   We're here if it's not a IA-32 architecture (Win32 and UNIX IA-32 defines
   were done before)
 */
-#define sint2korr(A)	(int16_t) (((int16_t) ((unsigned char) (A)[0])) +\
-				 ((int16_t) ((int16_t) (A)[1]) << 8))
-#define sint3korr(A)	((int32_t) ((((unsigned char) (A)[2]) & 128) ? \
-				  (((uint32_t) 255L << 24) | \
-				   (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				   (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				   ((uint32_t) (unsigned char) (A)[0])) : \
-				  (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				  (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				  ((uint32_t) (unsigned char) (A)[0])))
-#define sint4korr(A)	(int32_t) (((int32_t) ((unsigned char) (A)[0])) +\
-				(((int32_t) ((unsigned char) (A)[1]) << 8)) +\
-				(((int32_t) ((unsigned char) (A)[2]) << 16)) +\
-				(((int32_t) ((int16_t) (A)[3]) << 24)))
-#define sint8korr(A)	(int64_t) uint8korr(A)
-#define uint2korr(A)	(uint16_t) (((uint16_t) ((unsigned char) (A)[0])) +\
-				  ((uint16_t) ((unsigned char) (A)[1]) << 8))
-#define uint3korr(A)	(uint32_t) (((uint32_t) ((unsigned char) (A)[0])) +\
-				  (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				  (((uint32_t) ((unsigned char) (A)[2])) << 16))
-#define uint4korr(A)	(uint32_t) (((uint32_t) ((unsigned char) (A)[0])) +\
-				  (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				  (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
-				  (((uint32_t) ((unsigned char) (A)[3])) << 24))
-#define uint5korr(A)	((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) +\
-				    (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
-				    (((uint32_t) ((unsigned char) (A)[3])) << 24)) +\
-				    (((uint64_t) ((unsigned char) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
-                                     (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
-                                     (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
-                                     (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
-                         (((uint64_t) ((unsigned char) (A)[4])) << 32) +       \
+#define sint2korr(A)  (int16_t) (((int16_t) ((unsigned char) (A)[0])) + \
+                                   ((int16_t) ((int16_t) (A)[1]) << 8))
+#define sint3korr(A)  ((int32_t) ((((unsigned char) (A)[2]) & 128) ?  \
+                                    (((uint32_t) 255L << 24) |          \
+                                     (((uint32_t) (unsigned char) (A)[2]) << 16) | \
+                                     (((uint32_t) (unsigned char) (A)[1]) << 8) | \
+                                     ((uint32_t) (unsigned char) (A)[0])) : \
+                                    (((uint32_t) (unsigned char) (A)[2]) << 16) | \
+                                    (((uint32_t) (unsigned char) (A)[1]) << 8) | \
+                                    ((uint32_t) (unsigned char) (A)[0])))
+#define sint4korr(A)  (int32_t) (((int32_t) ((unsigned char) (A)[0])) + \
+                                   (((int32_t) ((unsigned char) (A)[1]) << 8)) + \
+                                   (((int32_t) ((unsigned char) (A)[2]) << 16)) + \
+                                   (((int32_t) ((int16_t) (A)[3]) << 24)))
+#define sint8korr(A)  (int64_t) uint8korr(A)
+#define uint2korr(A)  (uint16_t) (((uint16_t) ((unsigned char) (A)[0])) + \
+                                    ((uint16_t) ((unsigned char) (A)[1]) << 8))
+#define uint3korr(A)  (uint32_t) (((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16))
+#define uint4korr(A)  (uint32_t) (((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16) + \
+                                    (((uint32_t) ((unsigned char) (A)[3])) << 24))
+#define uint5korr(A)  ((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16) + \
+                                    (((uint32_t) ((unsigned char) (A)[3])) << 24)) + \
+                         (((uint64_t) ((unsigned char) (A)[4])) << 32))
+#define uint6korr(A)  ((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
+                                    (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
+                                    (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
+                                    (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
+                         (((uint64_t) ((unsigned char) (A)[4])) << 32) + \
                          (((uint64_t) ((unsigned char) (A)[5])) << 40))
-#define uint8korr(A)	((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) +\
-				    (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
-				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
-				    (((uint32_t) ((unsigned char) (A)[3])) << 24)) +\
-			(((uint64_t) (((uint32_t) ((unsigned char) (A)[4])) +\
-				    (((uint32_t) ((unsigned char) (A)[5])) << 8) +\
-				    (((uint32_t) ((unsigned char) (A)[6])) << 16) +\
-				    (((uint32_t) ((unsigned char) (A)[7])) << 24))) <<\
-				    32))
-#define int2store(T,A)       do { uint32_t def_temp= (uint32_t) (A) ;\
-                                  *((unsigned char*) (T))=  (unsigned char)(def_temp); \
-                                   *((unsigned char*) (T)+1)=(unsigned char)((def_temp >> 8)); \
-                             } while(0)
-#define int3store(T,A)       do { /*lint -save -e734 */\
-                                  *((unsigned char*)(T))=(unsigned char) ((A));\
-                                  *((unsigned char*) (T)+1)=(unsigned char) (((A) >> 8));\
-                                  *((unsigned char*)(T)+2)=(unsigned char) (((A) >> 16)); \
-                                  /*lint -restore */} while(0)
-#define int4store(T,A)       do { *((char *)(T))=(char) ((A));\
-                                  *(((char *)(T))+1)=(char) (((A) >> 8));\
-                                  *(((char *)(T))+2)=(char) (((A) >> 16));\
-                                  *(((char *)(T))+3)=(char) (((A) >> 24)); } while(0)
-#define int5store(T,A)       do { *((char *)(T))=     (char)((A));  \
-                                  *(((char *)(T))+1)= (char)(((A) >> 8)); \
-                                  *(((char *)(T))+2)= (char)(((A) >> 16)); \
-                                  *(((char *)(T))+3)= (char)(((A) >> 24)); \
-                                  *(((char *)(T))+4)= (char)(((A) >> 32)); \
-		                } while(0)
-#define int6store(T,A)       do { *((char *)(T))=     (char)((A)); \
-                                  *(((char *)(T))+1)= (char)(((A) >> 8)); \
-                                  *(((char *)(T))+2)= (char)(((A) >> 16)); \
-                                  *(((char *)(T))+3)= (char)(((A) >> 24)); \
-                                  *(((char *)(T))+4)= (char)(((A) >> 32)); \
-                                  *(((char *)(T))+5)= (char)(((A) >> 40)); \
-                                } while(0)
+#define uint8korr(A)  ((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) + \
+                                    (((uint32_t) ((unsigned char) (A)[1])) << 8) + \
+                                    (((uint32_t) ((unsigned char) (A)[2])) << 16) + \
+                                    (((uint32_t) ((unsigned char) (A)[3])) << 24)) + \
+                         (((uint64_t) (((uint32_t) ((unsigned char) (A)[4])) + \
+                                       (((uint32_t) ((unsigned char) (A)[5])) << 8) + \
+                                       (((uint32_t) ((unsigned char) (A)[6])) << 16) + \
+                                       (((uint32_t) ((unsigned char) (A)[7])) << 24))) << \
+                          32))
+#define int2store(T,A)       do { uint32_t def_temp= (uint32_t) (A) ;   \
+    *((unsigned char*) (T))=  (unsigned char)(def_temp);                \
+    *((unsigned char*) (T)+1)=(unsigned char)((def_temp >> 8));         \
+  } while(0)
+#define int3store(T,A)       do { /*lint -save -e734 */                 \
+    *((unsigned char*)(T))=(unsigned char) ((A));                       \
+    *((unsigned char*) (T)+1)=(unsigned char) (((A) >> 8));             \
+    *((unsigned char*)(T)+2)=(unsigned char) (((A) >> 16));             \
+    /*lint -restore */} while(0)
+#define int4store(T,A)       do { *((char *)(T))=(char) ((A));          \
+    *(((char *)(T))+1)=(char) (((A) >> 8));                             \
+    *(((char *)(T))+2)=(char) (((A) >> 16));                            \
+    *(((char *)(T))+3)=(char) (((A) >> 24)); } while(0)
+#define int5store(T,A)       do { *((char *)(T))=     (char)((A));      \
+    *(((char *)(T))+1)= (char)(((A) >> 8));                             \
+    *(((char *)(T))+2)= (char)(((A) >> 16));                            \
+    *(((char *)(T))+3)= (char)(((A) >> 24));                            \
+    *(((char *)(T))+4)= (char)(((A) >> 32));                            \
+  } while(0)
+#define int6store(T,A)       do { *((char *)(T))=     (char)((A));      \
+    *(((char *)(T))+1)= (char)(((A) >> 8));                             \
+    *(((char *)(T))+2)= (char)(((A) >> 16));                            \
+    *(((char *)(T))+3)= (char)(((A) >> 24));                            \
+    *(((char *)(T))+4)= (char)(((A) >> 32));                            \
+    *(((char *)(T))+5)= (char)(((A) >> 40));                            \
+  } while(0)
 #define int8store(T,A)       do { uint32_t def_temp= (uint32_t) (A), def_temp2= (uint32_t) ((A) >> 32); \
-                                  int4store((T),def_temp); \
-                                  int4store((T+4),def_temp2); } while(0)
+    int4store((T),def_temp);                                            \
+    int4store((T+4),def_temp2); } while(0)
 #ifdef WORDS_BIGENDIAN
-#define float4store(T,A) do { *(T)= ((unsigned char *) &A)[3];\
-                              *((T)+1)=(char) ((unsigned char *) &A)[2];\
-                              *((T)+2)=(char) ((unsigned char *) &A)[1];\
-                              *((T)+3)=(char) ((unsigned char *) &A)[0]; } while(0)
+#define float4store(T,A) do { *(T)= ((unsigned char *) &A)[3];          \
+    *((T)+1)=(char) ((unsigned char *) &A)[2];                          \
+    *((T)+2)=(char) ((unsigned char *) &A)[1];                          \
+    *((T)+3)=(char) ((unsigned char *) &A)[0]; } while(0)
 
-#define float4get(V,M)   do { float def_temp;\
-                              ((unsigned char*) &def_temp)[0]=(M)[3];\
-                              ((unsigned char*) &def_temp)[1]=(M)[2];\
-                              ((unsigned char*) &def_temp)[2]=(M)[1];\
-                              ((unsigned char*) &def_temp)[3]=(M)[0];\
-                              (V)=def_temp; } while(0)
-#define float8store(T,V) do { *(T)= ((unsigned char *) &V)[7];\
-                              *((T)+1)=(char) ((unsigned char *) &V)[6];\
-                              *((T)+2)=(char) ((unsigned char *) &V)[5];\
-                              *((T)+3)=(char) ((unsigned char *) &V)[4];\
-                              *((T)+4)=(char) ((unsigned char *) &V)[3];\
-                              *((T)+5)=(char) ((unsigned char *) &V)[2];\
-                              *((T)+6)=(char) ((unsigned char *) &V)[1];\
-                              *((T)+7)=(char) ((unsigned char *) &V)[0]; } while(0)
+#define float4get(V,M)   do { float def_temp;                           \
+    ((unsigned char*) &def_temp)[0]=(M)[3];                             \
+    ((unsigned char*) &def_temp)[1]=(M)[2];                             \
+    ((unsigned char*) &def_temp)[2]=(M)[1];                             \
+    ((unsigned char*) &def_temp)[3]=(M)[0];                             \
+    (V)=def_temp; } while(0)
+#define float8store(T,V) do { *(T)= ((unsigned char *) &V)[7];          \
+    *((T)+1)=(char) ((unsigned char *) &V)[6];                          \
+    *((T)+2)=(char) ((unsigned char *) &V)[5];                          \
+    *((T)+3)=(char) ((unsigned char *) &V)[4];                          \
+    *((T)+4)=(char) ((unsigned char *) &V)[3];                          \
+    *((T)+5)=(char) ((unsigned char *) &V)[2];                          \
+    *((T)+6)=(char) ((unsigned char *) &V)[1];                          \
+    *((T)+7)=(char) ((unsigned char *) &V)[0]; } while(0)
 
-#define float8get(V,M)   do { double def_temp;\
-                              ((unsigned char*) &def_temp)[0]=(M)[7];\
-                              ((unsigned char*) &def_temp)[1]=(M)[6];\
-                              ((unsigned char*) &def_temp)[2]=(M)[5];\
-                              ((unsigned char*) &def_temp)[3]=(M)[4];\
-                              ((unsigned char*) &def_temp)[4]=(M)[3];\
-                              ((unsigned char*) &def_temp)[5]=(M)[2];\
-                              ((unsigned char*) &def_temp)[6]=(M)[1];\
-                              ((unsigned char*) &def_temp)[7]=(M)[0];\
-                              (V) = def_temp; } while(0)
+#define float8get(V,M)   do { double def_temp;                          \
+    ((unsigned char*) &def_temp)[0]=(M)[7];                             \
+    ((unsigned char*) &def_temp)[1]=(M)[6];                             \
+    ((unsigned char*) &def_temp)[2]=(M)[5];                             \
+    ((unsigned char*) &def_temp)[3]=(M)[4];                             \
+    ((unsigned char*) &def_temp)[4]=(M)[3];                             \
+    ((unsigned char*) &def_temp)[5]=(M)[2];                             \
+    ((unsigned char*) &def_temp)[6]=(M)[1];                             \
+    ((unsigned char*) &def_temp)[7]=(M)[0];                             \
+    (V) = def_temp; } while(0)
 #else
 #define float4get(V,M)   memcpy(&V, (M), sizeof(float))
 #define float4store(V,M) memcpy(V, (&M), sizeof(float))
 
 #if defined(__FLOAT_WORD_ORDER) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN)
-#define doublestore(T,V) do { *(((char*)T)+0)=(char) ((unsigned char *) &V)[4];\
-                              *(((char*)T)+1)=(char) ((unsigned char *) &V)[5];\
-                              *(((char*)T)+2)=(char) ((unsigned char *) &V)[6];\
-                              *(((char*)T)+3)=(char) ((unsigned char *) &V)[7];\
-                              *(((char*)T)+4)=(char) ((unsigned char *) &V)[0];\
-                              *(((char*)T)+5)=(char) ((unsigned char *) &V)[1];\
-                              *(((char*)T)+6)=(char) ((unsigned char *) &V)[2];\
-                              *(((char*)T)+7)=(char) ((unsigned char *) &V)[3]; }\
-                         while(0)
-#define doubleget(V,M)   do { double def_temp;\
-                              ((unsigned char*) &def_temp)[0]=(M)[4];\
-                              ((unsigned char*) &def_temp)[1]=(M)[5];\
-                              ((unsigned char*) &def_temp)[2]=(M)[6];\
-                              ((unsigned char*) &def_temp)[3]=(M)[7];\
-                              ((unsigned char*) &def_temp)[4]=(M)[0];\
-                              ((unsigned char*) &def_temp)[5]=(M)[1];\
-                              ((unsigned char*) &def_temp)[6]=(M)[2];\
-                              ((unsigned char*) &def_temp)[7]=(M)[3];\
-                              (V) = def_temp; } while(0)
+#define doublestore(T,V) do { *(((char*)T)+0)=(char) ((unsigned char *) &V)[4]; \
+    *(((char*)T)+1)=(char) ((unsigned char *) &V)[5];                   \
+    *(((char*)T)+2)=(char) ((unsigned char *) &V)[6];                   \
+    *(((char*)T)+3)=(char) ((unsigned char *) &V)[7];                   \
+    *(((char*)T)+4)=(char) ((unsigned char *) &V)[0];                   \
+    *(((char*)T)+5)=(char) ((unsigned char *) &V)[1];                   \
+    *(((char*)T)+6)=(char) ((unsigned char *) &V)[2];                   \
+    *(((char*)T)+7)=(char) ((unsigned char *) &V)[3]; }                 \
+  while(0)
+#define doubleget(V,M)   do { double def_temp;                          \
+    ((unsigned char*) &def_temp)[0]=(M)[4];                             \
+    ((unsigned char*) &def_temp)[1]=(M)[5];                             \
+    ((unsigned char*) &def_temp)[2]=(M)[6];                             \
+    ((unsigned char*) &def_temp)[3]=(M)[7];                             \
+    ((unsigned char*) &def_temp)[4]=(M)[0];                             \
+    ((unsigned char*) &def_temp)[5]=(M)[1];                             \
+    ((unsigned char*) &def_temp)[6]=(M)[2];                             \
+    ((unsigned char*) &def_temp)[7]=(M)[3];                             \
+    (V) = def_temp; } while(0)
 #endif /* __FLOAT_WORD_ORDER */
 
 #define float8get(V,M)   doubleget((V),(M))
@@ -677,10 +678,10 @@ do { doubleget_union _tmp; \
   Macro for reading 32-bit integer from network byte order (big-endian)
   from unaligned memory location.
 */
-#define int4net(A)        (int32_t) (((uint32_t) ((unsigned char) (A)[3]))        |\
-				  (((uint32_t) ((unsigned char) (A)[2])) << 8)  |\
-				  (((uint32_t) ((unsigned char) (A)[1])) << 16) |\
-				  (((uint32_t) ((unsigned char) (A)[0])) << 24))
+#define int4net(A)        (int32_t) (((uint32_t) ((unsigned char) (A)[3]))        | \
+                                     (((uint32_t) ((unsigned char) (A)[2])) << 8)  | \
+                                     (((uint32_t) ((unsigned char) (A)[1])) << 16) | \
+                                     (((uint32_t) ((unsigned char) (A)[0])) << 24))
 /*
   Define-funktions for reading and storing in machine format from/to
   short/long to/from some place in memory V should be a (not
@@ -689,51 +690,51 @@ do { doubleget_union _tmp; \
 
 #ifdef WORDS_BIGENDIAN
 
-#define ushortget(V,M)  do { V = (uint16_t) (((uint16_t) ((unsigned char) (M)[1]))+\
-                                 ((uint16_t) ((uint16_t) (M)[0]) << 8)); } while(0)
-#define shortget(V,M)   do { V = (short) (((short) ((unsigned char) (M)[1]))+\
-                                 ((short) ((short) (M)[0]) << 8)); } while(0)
-#define longget(V,M)    do { int32_t def_temp;\
-                             ((unsigned char*) &def_temp)[0]=(M)[0];\
-                             ((unsigned char*) &def_temp)[1]=(M)[1];\
-                             ((unsigned char*) &def_temp)[2]=(M)[2];\
-                             ((unsigned char*) &def_temp)[3]=(M)[3];\
-                             (V)=def_temp; } while(0)
-#define ulongget(V,M)   do { uint32_t def_temp;\
-                            ((unsigned char*) &def_temp)[0]=(M)[0];\
-                            ((unsigned char*) &def_temp)[1]=(M)[1];\
-                            ((unsigned char*) &def_temp)[2]=(M)[2];\
-                            ((unsigned char*) &def_temp)[3]=(M)[3];\
-                            (V)=def_temp; } while(0)
-#define shortstore(T,A) do { uint32_t def_temp=(uint32_t) (A) ;\
-                             *(((char*)T)+1)=(char)(def_temp); \
-                             *(((char*)T)+0)=(char)(def_temp >> 8); } while(0)
-#define longstore(T,A)  do { *(((char*)T)+3)=((A));\
-                             *(((char*)T)+2)=(((A) >> 8));\
-                             *(((char*)T)+1)=(((A) >> 16));\
-                             *(((char*)T)+0)=(((A) >> 24)); } while(0)
+#define ushortget(V,M)  do { V = (uint16_t) (((uint16_t) ((unsigned char) (M)[1]))+ \
+                                             ((uint16_t) ((uint16_t) (M)[0]) << 8)); } while(0)
+#define shortget(V,M)   do { V = (short) (((short) ((unsigned char) (M)[1]))+ \
+                                          ((short) ((short) (M)[0]) << 8)); } while(0)
+#define longget(V,M)    do { int32_t def_temp;                          \
+    ((unsigned char*) &def_temp)[0]=(M)[0];                             \
+    ((unsigned char*) &def_temp)[1]=(M)[1];                             \
+    ((unsigned char*) &def_temp)[2]=(M)[2];                             \
+    ((unsigned char*) &def_temp)[3]=(M)[3];                             \
+    (V)=def_temp; } while(0)
+#define ulongget(V,M)   do { uint32_t def_temp;                         \
+    ((unsigned char*) &def_temp)[0]=(M)[0];                             \
+    ((unsigned char*) &def_temp)[1]=(M)[1];                             \
+    ((unsigned char*) &def_temp)[2]=(M)[2];                             \
+    ((unsigned char*) &def_temp)[3]=(M)[3];                             \
+    (V)=def_temp; } while(0)
+#define shortstore(T,A) do { uint32_t def_temp=(uint32_t) (A) ; \
+    *(((char*)T)+1)=(char)(def_temp);                                   \
+    *(((char*)T)+0)=(char)(def_temp >> 8); } while(0)
+#define longstore(T,A)  do { *(((char*)T)+3)=((A));             \
+    *(((char*)T)+2)=(((A) >> 8));                               \
+    *(((char*)T)+1)=(((A) >> 16));                                      \
+    *(((char*)T)+0)=(((A) >> 24)); } while(0)
 
 #define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #define floatstore(T, V)   memcpy((T), (&V), sizeof(float))
-#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doubleget(V, M)    memcpy(&V, (M), sizeof(double))
 #define doublestore(T, V)  memcpy((T), &V, sizeof(double))
 #define int64_tget(V, M)   memcpy(&V, (M), sizeof(uint64_t))
 #define int64_tstore(T, V) memcpy((T), &V, sizeof(uint64_t))
 
 #else
 
-#define ushortget(V,M)	do { V = uint2korr(M); } while(0)
-#define shortget(V,M)	do { V = sint2korr(M); } while(0)
-#define longget(V,M)	do { V = sint4korr(M); } while(0)
+#define ushortget(V,M)  do { V = uint2korr(M); } while(0)
+#define shortget(V,M)  do { V = sint2korr(M); } while(0)
+#define longget(V,M)  do { V = sint4korr(M); } while(0)
 #define ulongget(V,M)   do { V = uint4korr(M); } while(0)
 #define shortstore(T,V) int2store(T,V)
-#define longstore(T,V)	int4store(T,V)
+#define longstore(T,V)  int4store(T,V)
 #ifndef floatstore
 #define floatstore(T,V)   memcpy((T), (&V), sizeof(float))
 #define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #endif
 #ifndef doubleget
-#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doubleget(V, M)   memcpy(&V, (M), sizeof(double))
 #define doublestore(T,V)  memcpy((T), &V, sizeof(double))
 #endif /* doubleget */
 #define int64_tget(V,M)   memcpy(&V, (M), sizeof(uint64_t))
