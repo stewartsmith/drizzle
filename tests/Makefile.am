@@ -141,6 +141,7 @@ test-drizzle:
         alter_table \
         bench_count_distinct \
 	bigint \
+	binlog_index \
 	bulk_replace \
 	comment_column \
 	comment_column2 \
@@ -184,7 +185,9 @@ test-drizzle:
 	func_time \
 	func_weight_string \
         greedy_optimizer \
+	group_by \
         group_min_max_innodb \
+	having \
 	heap \
         heap_auto_increment \
         heap_btree \
@@ -230,11 +233,13 @@ test-drizzle:
 	round \
 	row \
 	rowid_order_innodb \
+	schema \
         select \
         subselect \
         subselect3 \
         subselect_innodb \
         sum_distinct \
+	synchronization \
         tablelock \
 	type_blob \
 	type_date \
