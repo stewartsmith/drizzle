@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
@@ -340,10 +340,11 @@ enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_DATETIME,
                         DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-			                  DRIZZLE_TYPE_VIRTUAL=252,
-                        DRIZZLE_TYPE_NEWDECIMAL=253,
-                        DRIZZLE_TYPE_ENUM=254,
-                        DRIZZLE_TYPE_BLOB=255
+			                  DRIZZLE_TYPE_VIRTUAL,
+                        DRIZZLE_TYPE_NEWDECIMAL,
+                        DRIZZLE_TYPE_ENUM,
+                        DRIZZLE_TYPE_BLOB,
+                        DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
 
