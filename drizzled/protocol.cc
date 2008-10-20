@@ -25,8 +25,8 @@
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-static void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err);
-static void write_eof_packet(THD *thd, NET *net,
+static void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err);
+static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
 
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
@@ -115,7 +115,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
+void net_send_error(Session *session, uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -124,14 +124,14 @@ void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
     It's one case when we can push an error even though there
     is an OK or EOF already.
   */
-  thd->main_da.can_overwrite_status= true;
+  session->main_da.can_overwrite_status= true;
 
   /* Abort multi-result sets */
-  thd->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
+  session->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
 
-  net_send_error_packet(thd, sql_errno, err);
+  net_send_error_packet(session, sql_errno, err);
 
-  thd->main_da.can_overwrite_status= false;
+  session->main_da.can_overwrite_status= false;
 }
 
 /**
@@ -142,25 +142,25 @@ void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
   - 0               : Marker (1 byte)
   - affected_rows	: Stored in 1-9 bytes
   - id		: Stored in 1-9 bytes
-  - server_status	: Copy of thd->server_status;  Can be used by client
+  - server_status	: Copy of session->server_status;  Can be used by client
   to check if we are inside an transaction.
   New in 4.0 protocol
   - warning_count	: Stored in 2 bytes; New in 4.1 protocol
   - message		: Stored as packed length (1-9 bytes) + message.
   Is not stored if no message.
 
-  @param thd		   Thread handler
+  @param session		   Thread handler
   @param affected_rows	   Number of rows changed by statement
   @param id		   Auto_increment id for first row (if used)
   @param message	   Message to send to the client (Used by mysql_status)
 */
 
 static void
-net_send_ok(THD *thd,
+net_send_ok(Session *session,
             uint32_t server_status, uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
-  NET *net= &thd->net;
+  NET *net= &session->net;
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
 
   if (! net->vio)	// hack for re-parsing queries
@@ -180,14 +180,14 @@ net_send_ok(THD *thd,
   int2store(pos, tmp);
   pos+= 2;
 
-  thd->main_da.can_overwrite_status= true;
+  session->main_da.can_overwrite_status= true;
 
   if (message && message[0])
     pos= net_store_data(pos, (unsigned char*) message, strlen(message));
   my_net_write(net, buff, (size_t) (pos-buff));
   net_flush(net);
 
-  thd->main_da.can_overwrite_status= false;
+  session->main_da.can_overwrite_status= false;
 }
 
 /**
@@ -204,22 +204,22 @@ net_send_ok(THD *thd,
   we don't want to report the warning count until all data is sent to the
   client.
 
-  @param thd		Thread handler
+  @param session		Thread handler
   @param no_flush	Set to 1 if there will be more data to the client,
                     like in send_fields().
 */    
 
 static void
-net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
+net_send_eof(Session *session, uint32_t server_status, uint32_t total_warn_count)
 {
-  NET *net= &thd->net;
+  NET *net= &session->net;
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net->vio != 0)
   {
-    thd->main_da.can_overwrite_status= true;
-    write_eof_packet(thd, net, server_status, total_warn_count);
+    session->main_da.can_overwrite_status= true;
+    write_eof_packet(session, net, server_status, total_warn_count);
     net_flush(net);
-    thd->main_da.can_overwrite_status= false;
+    session->main_da.can_overwrite_status= false;
   }
 }
 
@@ -229,7 +229,7 @@ net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
   write it to the network output buffer.
 */
 
-static void write_eof_packet(THD *thd, NET *net,
+static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status,
                              uint32_t total_warn_count)
 {
@@ -246,15 +246,15 @@ static void write_eof_packet(THD *thd, NET *net,
     because if 'is_fatal_error' is set the server is not going to execute
     other queries (see the if test in dispatch_command / COM_QUERY)
   */
-  if (thd->is_fatal_error)
+  if (session->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
   my_net_write(net, buff, 5);
 }
 
-void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err)
+void net_send_error_packet(Session *session, uint32_t sql_errno, const char *err)
 {
-  NET *net= &thd->net;
+  NET *net= &session->net;
   uint32_t length;
   /*
     buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
@@ -308,7 +308,7 @@ static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t leng
 /**
   Send the status of the current statement execution over network.
 
-  @param  thd   in fact, carries two parameters, NET for the transport and
+  @param  session   in fact, carries two parameters, NET for the transport and
                 Diagnostics_area as the source of status information.
 
   In MySQL, there are two types of SQL statements: those that return
@@ -355,44 +355,44 @@ static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t leng
           Diagnostics_area::is_sent is set for debugging purposes only.
 */
 
-void net_end_statement(THD *thd)
+void net_end_statement(Session *session)
 {
-  assert(! thd->main_da.is_sent);
+  assert(! session->main_da.is_sent);
 
   /* Can not be true, but do not take chances in production. */
-  if (thd->main_da.is_sent)
+  if (session->main_da.is_sent)
     return;
 
-  switch (thd->main_da.status()) {
+  switch (session->main_da.status()) {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    net_send_error(thd,
-                   thd->main_da.sql_errno(),
-                   thd->main_da.message());
+    net_send_error(session,
+                   session->main_da.sql_errno(),
+                   session->main_da.message());
     break;
   case Diagnostics_area::DA_EOF:
-    net_send_eof(thd,
-                 thd->main_da.server_status(),
-                 thd->main_da.total_warn_count());
+    net_send_eof(session,
+                 session->main_da.server_status(),
+                 session->main_da.total_warn_count());
     break;
   case Diagnostics_area::DA_OK:
-    net_send_ok(thd,
-                thd->main_da.server_status(),
-                thd->main_da.total_warn_count(),
-                thd->main_da.affected_rows(),
-                thd->main_da.last_insert_id(),
-                thd->main_da.message());
+    net_send_ok(session,
+                session->main_da.server_status(),
+                session->main_da.total_warn_count(),
+                session->main_da.affected_rows(),
+                session->main_da.last_insert_id(),
+                session->main_da.message());
     break;
   case Diagnostics_area::DA_DISABLED:
     break;
   case Diagnostics_area::DA_EMPTY:
   default:
     assert(0);
-    net_send_ok(thd, thd->server_status, thd->total_warn_count,
+    net_send_ok(session, session->server_status, session->total_warn_count,
                 0, 0, NULL);
     break;
   }
-  thd->main_da.is_sent= true;
+  session->main_da.is_sent= true;
 }
 
 
@@ -433,11 +433,11 @@ unsigned char *net_store_data(unsigned char *to,int64_t from)
   Default Protocol functions
 *****************************************************************************/
 
-void Protocol::init(THD *thd_arg)
+void Protocol::init(Session *session_arg)
 {
-  thd=thd_arg;
-  packet= &thd->packet;
-  convert= &thd->convert_buffer;
+  session=session_arg;
+  packet= &session->packet;
+  convert= &session->convert_buffer;
 }
 
 /**
@@ -446,15 +446,15 @@ void Protocol::init(THD *thd_arg)
   for the error.
 */
 
-void Protocol::end_partial_result_set(THD *thd)
+void Protocol::end_partial_result_set(Session *session)
 {
-  net_send_eof(thd, thd->server_status, 0 /* no warnings, we're inside SP */);
+  net_send_eof(session, session->server_status, 0 /* no warnings, we're inside SP */);
 }
 
 
 bool Protocol::flush()
 {
-  return net_flush(&thd->net);
+  return net_flush(&session->net);
 }
 
 
@@ -463,7 +463,7 @@ bool Protocol::flush()
 
   Sum fields has table name empty and field_name.
 
-  @param THD		Thread data object
+  @param Session		Thread data object
   @param list	        List of items to send to client
   @param flag	        Bit mask with the following functions:
                         - 1 send number of rows
@@ -482,14 +482,14 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
-  Protocol_text prot(thd);
+  Protocol_text prot(session);
   String *local_packet= prot.storage_packet();
-  const CHARSET_INFO * const thd_charset= thd->variables.character_set_results;
+  const CHARSET_INFO * const session_charset= session->variables.character_set_results;
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
     unsigned char *pos= net_store_length(buff, list->elements);
-    (void) my_net_write(&thd->net, buff, (size_t) (pos-buff));
+    (void) my_net_write(&session->net, buff, (size_t) (pos-buff));
   }
 
   while ((item=it++))
@@ -502,24 +502,24 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
     prot.prepare_for_resend();
 
 
-    if (prot.store(STRING_WITH_LEN("def"), cs, thd_charset) ||
+    if (prot.store(STRING_WITH_LEN("def"), cs, session_charset) ||
         prot.store(field.db_name, (uint) strlen(field.db_name),
-                   cs, thd_charset) ||
+                   cs, session_charset) ||
         prot.store(field.table_name, (uint) strlen(field.table_name),
-                   cs, thd_charset) ||
+                   cs, session_charset) ||
         prot.store(field.org_table_name, (uint) strlen(field.org_table_name),
-                   cs, thd_charset) ||
+                   cs, session_charset) ||
         prot.store(field.col_name, (uint) strlen(field.col_name),
-                   cs, thd_charset) ||
+                   cs, session_charset) ||
         prot.store(field.org_col_name, (uint) strlen(field.org_col_name),
-                   cs, thd_charset) ||
+                   cs, session_charset) ||
         local_packet->realloc(local_packet->length()+12))
       goto err;
 
     /* Store fixed length fields */
     pos= (char*) local_packet->ptr()+local_packet->length();
     *pos++= 12;				// Length of packed fields
-    if (item->collation.collation == &my_charset_bin || thd_charset == NULL)
+    if (item->collation.collation == &my_charset_bin || session_charset == NULL)
     {
       /* No conversion */
       int2store(pos, field.charsetnr);
@@ -529,7 +529,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
     {
       /* With conversion */
       uint32_t max_char_len;
-      int2store(pos, thd_charset->number);
+      int2store(pos, session_charset->number);
       /*
         For TEXT/BLOB columns, field_length describes the maximum data
         length in bytes. There is no limit to the number of characters
@@ -541,7 +541,7 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
         of characters here is limited by the column definition.
       */
       max_char_len= field.length / item->collation.collation->mbmaxlen;
-      int4store(pos+2, max_char_len * thd_charset->mbmaxlen);
+      int4store(pos+2, max_char_len * session_charset->mbmaxlen);
     }
     pos[6]= field.type;
     int2store(pos+7,field.flags);
@@ -560,11 +560,11 @@ bool Protocol::send_fields(List<Item> *list, uint32_t flags)
   if (flags & SEND_EOF)
   {
     /*
-      Mark the end of meta-data result set, and store thd->server_status,
+      Mark the end of meta-data result set, and store session->server_status,
       to show that there is no cursor.
       Send no warning information, as it will be sent at statement end.
     */
-    write_eof_packet(thd, &thd->net, thd->server_status, thd->total_warn_count);
+    write_eof_packet(session, &session->net, session->server_status, session->total_warn_count);
   }
   return(prepare_for_send(list));
 
@@ -577,7 +577,7 @@ err:
 
 bool Protocol::write()
 {
-  return(my_net_write(&thd->net, (unsigned char*) packet->ptr(),
+  return(my_net_write(&session->net, (unsigned char*) packet->ptr(),
                            packet->length()));
 }
 
@@ -683,7 +683,7 @@ bool Protocol_text::store(const char *from, size_t length,
 bool Protocol_text::store(const char *from, size_t length,
                           const CHARSET_INFO * const fromcs)
 {
-  const CHARSET_INFO * const tocs= this->thd->variables.character_set_results;
+  const CHARSET_INFO * const tocs= this->session->variables.character_set_results;
   return store_string_aux(from, length, fromcs, tocs);
 }
 
@@ -735,14 +735,14 @@ bool Protocol_text::store_decimal(const my_decimal *d)
 
 bool Protocol_text::store(float from, uint32_t decimals, String *buffer)
 {
-  buffer->set_real((double) from, decimals, thd->charset());
+  buffer->set_real((double) from, decimals, session->charset());
   return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
 }
 
 
 bool Protocol_text::store(double from, uint32_t decimals, String *buffer)
 {
-  buffer->set_real(from, decimals, thd->charset());
+  buffer->set_real(from, decimals, session->charset());
   return net_store_data((unsigned char*) buffer->ptr(), buffer->length());
 }
 
@@ -753,7 +753,7 @@ bool Protocol_text::store(Field *field)
     return store_null();
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
-  const CHARSET_INFO * const tocs= this->thd->variables.character_set_results;
+  const CHARSET_INFO * const tocs= this->session->variables.character_set_results;
 
   field->val_str(&str);
 

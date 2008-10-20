@@ -25,8 +25,8 @@ drop table if exists t1, t2, t3,t4;
 # Signed number as rowid
 create table t1 (
   pk1 int not NULL,
-  key1 int(11),
-  key2 int(11),
+  key1 int,
+  key2 int,
   PRIMARY KEY  (pk1),
   KEY key1 (key1),
   KEY key2 (key2)
@@ -43,15 +43,15 @@ drop table t1;
 # Unsigned numbers as rowids
 create table t1 (
   pk1 int not NULL,
-  key1 int(11),
-  key2 int(11),
+  key1 int,
+  key2 int,
   PRIMARY KEY  (pk1),
   KEY key1 (key1),
   KEY key2 (key2)
 );
 insert into t1 values (0, 1, 1),
-  (0xFFFFFFFF, 1, 1),
-  (0xFFFFFFFE, 1, 1),
+  (0x00FFFFFF, 1, 1),
+  (0x00FFFFFE, 1, 1),
   (1, 1, 1),
   (2, 1, 1);
 select * from t1 force index(key1, key2) where key1 < 3 or key2 < 3;
@@ -60,12 +60,12 @@ drop table t1;
 # Case-insensitive char(N)
 create table t1 (
   pk1 char(4) not NULL,
-  key1 int(11),
-  key2 int(11),
+  key1 int,
+  key2 int,
   PRIMARY KEY  (pk1),
   KEY key1 (key1),
   KEY key2 (key2)
-) collate latin2_general_ci;
+) collate utf8_general_ci;
 insert into t1 values ('a1', 1, 1),
   ('b2', 1, 1),
   ('A3', 1, 1),
@@ -76,17 +76,17 @@ drop table t1;
 # Multi-part PK
 create table t1 (
   pk1 int not NULL,
-  pk2 char(4) not NULL collate latin1_german1_ci,
-  pk3 char(4) not NULL collate latin1_bin,
-  key1 int(11),
-  key2 int(11),
+  pk2 char(4) not NULL,
+  pk3 char(4) not NULL collate utf8_bin,
+  key1 int,
+  key2 int,
   PRIMARY KEY  (pk1,pk2,pk3),
   KEY key1 (key1),
   KEY key2 (key2)
 );
 insert into t1 values
   (1, 'u', 'u',        1, 1),
-  (1, 'u', char(0xEC), 1, 1),
+  (1, 'u', 'b', 1, 1),
   (1, 'u', 'x',        1, 1);
 insert ignore into t1 select pk1, char(0xEC), pk3, key1, key2  from t1;
 insert ignore into t1 select pk1, 'x', pk3, key1, key2  from t1 where pk2='u';
@@ -105,8 +105,8 @@ drop table t1;
 create table t1  (
   pk1 varchar(8) NOT NULL default '',
   pk2 varchar(4) NOT NULL default '',
-  key1 int(11),
-  key2 int(11),
+  key1 int,
+  key2 int,
   primary key(pk1, pk2),
   KEY key1 (key1),
   KEY key2 (key2)

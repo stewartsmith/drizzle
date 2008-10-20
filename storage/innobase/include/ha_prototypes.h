@@ -45,10 +45,10 @@ differently than other threads. Also used in
 srv_conc_force_exit_innodb(). */
 
 ibool
-thd_is_replication_slave_thread(
+session_is_replication_slave_thread(
 /*============================*/
-			/* out: true if thd is the replication thread */
-	void*	thd);	/* in: thread handle (THD*) */
+			/* out: true if session is the replication thread */
+	void*	session);	/* in: thread handle (THD*) */
 
 /**********************************************************************
 Returns true if the transaction this thread is processing has edited
@@ -57,11 +57,11 @@ which transaction to rollback in case of a deadlock - we try to avoid
 rolling back transactions that have edited non-transactional tables. */
 
 ibool
-thd_has_edited_nontrans_tables(
+session_has_edited_nontrans_tables(
 /*===========================*/
 			/* out: true if non-transactional tables have
 			been edited */
-	void*	thd);	/* in: thread handle (THD*) */
+	void*	session);	/* in: thread handle (THD*) */
 
 #endif
 #endif

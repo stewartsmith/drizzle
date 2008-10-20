@@ -3604,13 +3604,13 @@ shortcut_fails_too_big_rec:
 	    && prebuilt->select_lock_type != LOCK_NONE
 	    && trx->mysql_query_str != NULL
 	    && *trx->mysql_query_str != NULL
-	    && trx->mysql_thd != NULL) {
+	    && trx->mysql_session != NULL) {
 
 		/* Scan the MySQL query string; check if SELECT is the first
 		word there */
 
 		if (dict_str_starts_with_keyword(
-			    trx->mysql_thd, *trx->mysql_query_str, "SELECT")) {
+			    trx->mysql_session, *trx->mysql_query_str, "SELECT")) {
 			/* It is a plain locking SELECT and the isolation
 			level is low: do not lock gaps */
 

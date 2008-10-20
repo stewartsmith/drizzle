@@ -421,7 +421,7 @@ typedef struct st_mi_check_param
   
   ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
   ulong rec_per_key_part[MI_MAX_KEY_SEG*HA_MAX_POSSIBLE_KEY];
-  void *thd;
+  void *session;
   const char *db_name, *table_name;
   const char *op_name;
   enum_mi_stats_method stats_method;

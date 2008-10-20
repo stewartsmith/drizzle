@@ -41,7 +41,7 @@ SELECT CHAR(30) = '', '' = CHAR(30);
 #
 #Bug #21159: Optimizer: wrong result after AND with different data types
 #
-create table t1 (a int(1),b binary(1));
+create table t1 (a int,b varbinary(1));
 insert into t1 values (0x01,0x01);
 select * from t1 where a=b;
 select * from t1 where a=b and b=0x01;
@@ -52,7 +52,7 @@ drop table if exists t1;
 # in version 5
 #
 
-CREATE TABLE  t1 (b int(2) zerofill, c int(2) zerofill);
+CREATE TABLE  t1 (b int, c int);
 INSERT INTO t1 (b,c) VALUES (1,2), (1,1), (2,2);
 
 SELECT CONCAT(b,c), CONCAT(b,c) = '0101' FROM t1;

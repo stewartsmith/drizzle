@@ -35,4 +35,4 @@ struct udf_func
 void udf_init(void),udf_free(void);
 udf_func *find_udf(const char *name, uint32_t len=0);
 void free_udf(udf_func *udf);
-int mysql_create_function(THD *thd,udf_func *udf);
+int mysql_create_function(Session *session,udf_func *udf);

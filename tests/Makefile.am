@@ -141,19 +141,27 @@ test-drizzle:
         alter_table \
         bench_count_distinct \
 	bigint \
+	binlog_index \
 	bulk_replace \
+	comment_column \
 	comment_column2 \
+	comment_index \
 	comment_table \
 	comments \
+	commit_1innodb \
+	compare \
 	consistent_snapshot \
+	constraints \
         count_distinct \
         count_distinct2 \
         count_distinct3 \
 	create_select_tmp \
         ctype_filename \
+	date_formats \
         delete \
         distinct \
 	drizzleslap \
+	empty_table \
         endspace \
         flush2 \
 	func_compress \
@@ -177,17 +185,25 @@ test-drizzle:
 	func_time \
 	func_weight_string \
         greedy_optimizer \
+	group_by \
         group_min_max_innodb \
+	having \
 	heap \
         heap_auto_increment \
         heap_btree \
 	heap_hash \
         heap_var \
         information_schema \
+	innodb_autoinc_lock_mode_zero \
+	innodb_mysql \
+	innodb_notembedded \
+	innodb_trx_weight \
         innodb-lock \
         innodb-semi-consistent \
         innodb_timeout_rollback \
         insert \
+	insert_select \
+	insert_update \
         join \
         join_crash \
         join_nested \
@@ -197,9 +213,14 @@ test-drizzle:
         key_diff \
         key_primary \
         keywords \
+	kill \
         lock \
         limit \
         lock_tables_lost_commit \
+	main.myisam-blob \
+	main.myisam-system \
+	mysqldump-compat \
+	mysqldump-max \
 	order_by \
 	order_fill_sortbuf \
 	overflow \
@@ -210,11 +231,16 @@ test-drizzle:
         range \
 	replace \
         rollback \
+	round \
+	row \
+	rowid_order_innodb \
+	schema \
         select \
         subselect \
         subselect3 \
         subselect_innodb \
         sum_distinct \
+	synchronization \
         tablelock \
 	type_blob \
 	type_date \

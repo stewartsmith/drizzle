@@ -32,9 +32,9 @@ void Item_func_rand::seed_random(Item *arg)
              (uint32_t) (tmp*0x10000001L));
 }
 
-bool Item_func_rand::fix_fields(THD *thd,Item **ref)
+bool Item_func_rand::fix_fields(Session *session,Item **ref)
 {
-  if (Item_real_func::fix_fields(thd, ref))
+  if (Item_real_func::fix_fields(session, ref))
     return true;
   used_tables_cache|= RAND_TABLE_BIT;
   if (arg_count)
@@ -44,7 +44,7 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
       as it will be replicated in the query as such.
     */
     if (!rand && !(rand= (struct rand_struct*)
-                   thd->alloc(sizeof(*rand))))
+                   session->alloc(sizeof(*rand))))
       return true;
 
     if (args[0]->const_item())
@@ -57,13 +57,13 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
       Once events are forwarded rather than recreated,
       the following can be skipped if inside the slave thread
     */
-    if (!thd->rand_used)
+    if (!session->rand_used)
     {
-      thd->rand_used= 1;
-      thd->rand_saved_seed1= thd->rand.seed1;
-      thd->rand_saved_seed2= thd->rand.seed2;
+      session->rand_used= 1;
+      session->rand_saved_seed1= session->rand.seed1;
+      session->rand_saved_seed2= session->rand.seed2;
     }
-    rand= &thd->rand;
+    rand= &session->rand;
   }
   return false;
 }

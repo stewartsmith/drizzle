@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#define DRIZZLE_SERVER 1 /* for thd variable max_allowed_packet */
+#define DRIZZLE_SERVER 1 /* for session variable max_allowed_packet */
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
@@ -46,7 +46,7 @@ String *Item_func_uncompress::val_str(String *str)
   /* If length is less than 4 bytes, data is corrupt */
   if (res->length() <= 4)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_ZLIB_Z_DATA_ERROR,
 			ER(ER_ZLIB_Z_DATA_ERROR));
     goto err;
@@ -54,12 +54,12 @@ String *Item_func_uncompress::val_str(String *str)
 
   /* Size of uncompressed data is stored as first 4 bytes of field */
   new_size= uint4korr(res->ptr()) & 0x3FFFFFFF;
-  if (new_size > current_thd->variables.max_allowed_packet)
+  if (new_size > current_session->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
 			ER_TOO_BIG_FOR_UNCOMPRESS,
 			ER(ER_TOO_BIG_FOR_UNCOMPRESS),
-                        current_thd->variables.max_allowed_packet);
+                        current_session->variables.max_allowed_packet);
     goto err;
   }
   if (buffer.realloc((uint32_t)new_size))
@@ -74,7 +74,7 @@ String *Item_func_uncompress::val_str(String *str)
 
   code= ((err == Z_BUF_ERROR) ? ER_ZLIB_Z_BUF_ERROR :
 	 ((err == Z_MEM_ERROR) ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_DATA_ERROR));
-  push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
+  push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
 
 err:
   null_value= 1;

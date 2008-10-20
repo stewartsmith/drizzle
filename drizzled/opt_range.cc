@@ -634,7 +634,7 @@ public:
 class RANGE_OPT_PARAM
 {
 public:
-  THD	*thd;   /* Current thread handle */
+  Session	*session;   /* Current thread handle */
   Table *table; /* Table being analyzed */
   COND *cond;   /* Used inside get_mm_tree(). */
   table_map prev_tables;
@@ -1058,7 +1058,7 @@ QUICK_SELECT_I::QUICK_SELECT_I()
    used_key_parts(0)
 {}
 
-QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, Table *table, uint32_t key_nr,
+QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t key_nr,
                                        bool no_alloc, MEM_ROOT *parent_alloc,
                                        bool *create_error)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
@@ -1072,15 +1072,15 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, Table *table, uint32_t key_nr,
   key_part_info= head->key_info[index].key_part;
   my_init_dynamic_array(&ranges, sizeof(QUICK_RANGE*), 16, 16);
 
-  /* 'thd' is not accessible in QUICK_RANGE_SELECT::reset(). */
-  mrr_buf_size= thd->variables.read_rnd_buff_size;
+  /* 'session' is not accessible in QUICK_RANGE_SELECT::reset(). */
+  mrr_buf_size= session->variables.read_rnd_buff_size;
   mrr_buf_desc= NULL;
 
   if (!no_alloc && !parent_alloc)
   {
     // Allocates everything through the internal memroot
-    init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
-    thd->mem_root= &alloc;
+    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    session->mem_root= &alloc;
   }
   else
     memset(&alloc, 0, sizeof(alloc));
@@ -1132,7 +1132,7 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
       }
       if (free_file)
       {
-        file->ha_external_lock(current_thd, F_UNLCK);
+        file->ha_external_lock(current_session, F_UNLCK);
         file->close();
         delete file;
       }
@@ -1148,14 +1148,14 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
 }
 
 
-QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(THD *thd_param,
+QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(Session *session_param,
                                                    Table *table)
-  :pk_quick_select(NULL), thd(thd_param)
+  :pk_quick_select(NULL), session(session_param)
 {
   index= MAX_KEY;
   head= table;
   memset(&read_record, 0, sizeof(read_record));
-  init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
+  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   return;
 }
 
@@ -1198,18 +1198,18 @@ QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
 }
 
 
-QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(THD *thd_param,
+QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
                                                        Table *table,
                                                        bool retrieve_full_rows,
                                                        MEM_ROOT *parent_alloc)
-  : cpk_quick(NULL), thd(thd_param), need_to_fetch_row(retrieve_full_rows),
+  : cpk_quick(NULL), session(session_param), need_to_fetch_row(retrieve_full_rows),
     scans_inited(false)
 {
   index= MAX_KEY;
   head= table;
   record= head->record[0];
   if (!parent_alloc)
-    init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
+    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   else
     memset(&alloc, 0, sizeof(MEM_ROOT));
   last_rowid= (unsigned char*) alloc_root(parent_alloc? parent_alloc : &alloc,
@@ -1259,7 +1259,7 @@ int QUICK_ROR_INTERSECT_SELECT::init()
 int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
   handler *save_file= file, *org_file;
-  THD *thd;
+  Session *session;
 
   in_ror_merged_scan= 1;
   if (reuse_handler)
@@ -1279,8 +1279,8 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
     return(0);
   }
 
-  thd= head->in_use;
-  if (!(file= head->file->clone(thd->mem_root)))
+  session= head->in_use;
+  if (!(file= head->file->clone(session->mem_root)))
   {
     /* 
       Manually set the error flag. Note: there seems to be quite a few
@@ -1296,12 +1296,12 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
-  if (file->ha_external_lock(thd, F_RDLCK))
+  if (file->ha_external_lock(session, F_RDLCK))
     goto failure;
 
   if (init() || reset())
   {
-    file->ha_external_lock(thd, F_UNLCK);
+    file->ha_external_lock(session, F_UNLCK);
     file->close();
     goto failure;
   }
@@ -1437,16 +1437,16 @@ QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
 }
 
 
-QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(THD *thd_param,
+QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
                                                Table *table)
-  : thd(thd_param), scans_inited(false)
+  : session(session_param), scans_inited(false)
 {
   index= MAX_KEY;
   head= table;
   rowid_length= table->file->ref_length;
   record= head->record[0];
-  init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
-  thd_param->mem_root= &alloc;
+  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+  session_param->mem_root= &alloc;
 }
 
 
@@ -2080,7 +2080,7 @@ static int fill_used_fields_bitmap(PARAM *param)
 
   SYNOPSIS
     SQL_SELECT::test_quick_select()
-      thd               Current thread
+      session               Current thread
       keys_to_use       Keys to use for range retrieval
       prev_tables       Tables assumed to be already read when the scan is
                         performed (but not read at the moment of this call)
@@ -2141,7 +2141,7 @@ static int fill_used_fields_bitmap(PARAM *param)
     1 if found usable ranges and quick select has been successfully created.
 */
 
-int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
+int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
 				  table_map prev_tables,
 				  ha_rows limit, bool force_quick_range, 
                                   bool ordered_output)
@@ -2175,11 +2175,11 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     KEY *key_info;
     PARAM param;
 
-    if (check_stack_overrun(thd, 2*STACK_MIN_SIZE, NULL))
+    if (check_stack_overrun(session, 2*STACK_MIN_SIZE, NULL))
       return(0);                           // Fatal error flag is set
 
     /* set up parameter that is passed to all functions */
-    param.thd= thd;
+    param.session= session;
     param.baseflag= head->file->ha_table_flags();
     param.prev_tables=prev_tables | const_tables;
     param.read_tables=read_tables;
@@ -2187,26 +2187,26 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     param.table=head;
     param.keys=0;
     param.mem_root= &alloc;
-    param.old_root= thd->mem_root;
+    param.old_root= session->mem_root;
     param.needed_reg= &needed_reg;
     param.imerge_cost_buff_size= 0;
     param.using_real_indexes= true;
     param.remove_jump_scans= true;
     param.force_default_mrr= ordered_output;
 
-    thd->no_errors=1;				// Don't warn about NULL
-    init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
+    session->no_errors=1;				// Don't warn about NULL
+    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
     if (!(param.key_parts= (KEY_PART*) alloc_root(&alloc,
                                                   sizeof(KEY_PART)*
                                                   head->s->key_parts)) ||
         fill_used_fields_bitmap(&param))
     {
-      thd->no_errors=0;
+      session->no_errors=0;
       free_root(&alloc,MYF(0));			// Return memory & allocator
       return(0);				// Can't use range
     }
     key_parts= param.key_parts;
-    thd->mem_root= &alloc;
+    session->mem_root= &alloc;
 
     /*
       Make an array with description of all key parts of all table keys.
@@ -2315,7 +2315,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
           objects are not allowed so don't use ROR-intersection for
           table deletes.
         */
-        if ((thd->lex->sql_command != SQLCOM_DELETE))
+        if ((session->lex->sql_command != SQLCOM_DELETE))
         {
           /*
             Get best non-covering ROR-intersection plan and prepare data for
@@ -2358,7 +2358,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
       }
     }
 
-    thd->mem_root= param.old_root;
+    session->mem_root= param.old_root;
 
     /* If we got a read plan, create a quick select from it. */
     if (best_trp)
@@ -2373,8 +2373,8 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
 
   free_mem:
     free_root(&alloc,MYF(0));			// Return memory & allocator
-    thd->mem_root= param.old_root;
-    thd->no_errors=0;
+    session->mem_root= param.old_root;
+    session->no_errors=0;
   }
 
   /*
@@ -2540,7 +2540,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   /* Calculate cost(rowid_to_row_scan) */
   {
     COST_VECT sweep_cost;
-    JOIN *join= param->thd->lex->select_lex.join;
+    JOIN *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -2553,7 +2553,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   unique_calc_buff_size=
     Unique::get_cost_calc_buff_size((ulong)non_cpk_scan_records,
                                     param->table->file->ref_length,
-                                    param->thd->variables.sortbuff_size);
+                                    param->session->variables.sortbuff_size);
   if (param->imerge_cost_buff_size < unique_calc_buff_size)
   {
     if (!(param->imerge_cost_buff= (uint*)alloc_root(param->mem_root,
@@ -2565,7 +2565,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   imerge_cost +=
     Unique::get_use_cost(param->imerge_cost_buff, (uint)non_cpk_scan_records,
                          param->table->file->ref_length,
-                         param->thd->variables.sortbuff_size);
+                         param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
     if ((imerge_trp= new (param->mem_root)TRP_INDEX_MERGE))
@@ -2581,7 +2581,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   }
 
 build_ror_index_merge:
-  if (!all_scans_ror_able || param->thd->lex->sql_command == SQLCOM_DELETE)
+  if (!all_scans_ror_able || param->session->lex->sql_command == SQLCOM_DELETE)
     return(imerge_trp);
 
   /* Ok, it is possible to build a ROR-union, try it. */
@@ -2656,7 +2656,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     COST_VECT sweep_cost;
-    JOIN *join= param->thd->lex->select_lex.join;
+    JOIN *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
@@ -3124,7 +3124,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (!info->is_covering)
   {
     COST_VECT sweep_cost;
-    JOIN *join= info->param->thd->lex->select_lex.join;
+    JOIN *join= info->param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -3598,7 +3598,7 @@ QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param,
   QUICK_INDEX_MERGE_SELECT *quick_imerge;
   QUICK_RANGE_SELECT *quick;
   /* index_merge always retrieves full rows, ignore retrieve_full_rows */
-  if (!(quick_imerge= new QUICK_INDEX_MERGE_SELECT(param->thd, param->table)))
+  if (!(quick_imerge= new QUICK_INDEX_MERGE_SELECT(param->session, param->table)))
     return NULL;
 
   quick_imerge->records= records;
@@ -3627,7 +3627,7 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
   MEM_ROOT *alloc;
 
   if ((quick_intrsect=
-         new QUICK_ROR_INTERSECT_SELECT(param->thd, param->table,
+         new QUICK_ROR_INTERSECT_SELECT(param->session, param->table,
                                         (retrieve_full_rows? (!is_covering) :
                                          false),
                                         parent_alloc)))
@@ -3679,7 +3679,7 @@ QUICK_SELECT_I *TRP_ROR_UNION::make_quick(PARAM *param,
     It is impossible to construct a ROR-union that will not retrieve full
     rows, ignore retrieve_full_rows parameter.
   */
-  if ((quick_roru= new QUICK_ROR_UNION_SELECT(param->thd, param->table)))
+  if ((quick_roru= new QUICK_ROR_UNION_SELECT(param->session, param->table)))
   {
     for (scan= first_ror; scan != last_ror; scan++)
     {
@@ -3835,17 +3835,17 @@ static SEL_TREE *get_func_mm_tree(RANGE_OPT_PARAM *param, Item_func *cond_func,
         */
 #define NOT_IN_IGNORE_THRESHOLD 1000
         MEM_ROOT *tmp_root= param->mem_root;
-        param->thd->mem_root= param->old_root;
+        param->session->mem_root= param->old_root;
         /* 
           Create one Item_type constant object. We'll need it as
           get_mm_parts only accepts constant values wrapped in Item_Type
           objects.
           We create the Item on param->mem_root which points to
-          per-statement mem_root (while thd->mem_root is currently pointing
+          per-statement mem_root (while session->mem_root is currently pointing
           to mem_root local to range optimizer).
         */
         Item *value_item= func->array->create_item();
-        param->thd->mem_root= tmp_root;
+        param->session->mem_root= tmp_root;
 
         if (func->array->count > NOT_IN_IGNORE_THRESHOLD || !value_item)
           break;
@@ -4101,7 +4101,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
       while ((item=li++))
       {
 	SEL_TREE *new_tree=get_mm_tree(param,item);
-	if (param->thd->is_fatal_error || 
+	if (param->session->is_fatal_error || 
             param->alloced_sel_args > SEL_ARG::MAX_SEL_ARGS)
 	  return(0);	// out of memory
 	tree=tree_and(param,tree,new_tree);
@@ -4133,15 +4133,15 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
   {
     /*
       During the cond->val_int() evaluation we can come across a subselect 
-      item which may allocate memory on the thd->mem_root and assumes 
+      item which may allocate memory on the session->mem_root and assumes 
       all the memory allocated has the same life span as the subselect 
       item itself. So we have to restore the thread's mem_root here.
     */
     MEM_ROOT *tmp_root= param->mem_root;
-    param->thd->mem_root= param->old_root;
+    param->session->mem_root= param->old_root;
     tree= cond->val_int() ? new(tmp_root) SEL_TREE(SEL_TREE::ALWAYS) :
                             new(tmp_root) SEL_TREE(SEL_TREE::IMPOSSIBLE);
-    param->thd->mem_root= tmp_root;
+    param->session->mem_root= tmp_root;
     return(tree);
   }
 
@@ -4319,9 +4319,9 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
     the argument can be any, e.g. a subselect. The subselect
     items, in turn, assume that all the memory allocated during
     the evaluation has the same life span as the item itself.
-    TODO: opt_range.cc should not reset thd->mem_root at all.
+    TODO: opt_range.cc should not reset session->mem_root at all.
   */
-  param->thd->mem_root= param->old_root;
+  param->session->mem_root= param->old_root;
   if (!value)					// IS NULL or IS NOT NULL
   {
     if (field->table->maybe_null)		// Can't use a key on this
@@ -4607,7 +4607,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   }
 
 end:
-  param->thd->mem_root= alloc;
+  param->session->mem_root= alloc;
   return(tree);
 }
 
@@ -6200,10 +6200,10 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
       !(pk_is_clustered && keynr == param->table->s->primary_key))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
   
-  if (current_thd->lex->sql_command != SQLCOM_SELECT)
+  if (current_session->lex->sql_command != SQLCOM_SELECT)
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
-  *bufsize= param->thd->variables.read_rnd_buff_size;
+  *bufsize= param->session->variables.read_rnd_buff_size;
   rows= file->multi_range_read_info_const(keynr, &seq_if, (void*)&seq, 0,
                                           bufsize, mrr_flags, cost);
   if (rows != HA_POS_ERROR)
@@ -6330,7 +6330,7 @@ static bool is_key_scan_ror(PARAM *param, uint32_t keynr, uint8_t nparts)
   NOTES
     The caller must call QUICK_SELECT::init for returned quick select.
 
-    CAUTION! This function may change thd->mem_root to a MEM_ROOT which will be
+    CAUTION! This function may change session->mem_root to a MEM_ROOT which will be
     deallocated when the returned quick select is deleted.
 
   RETURN
@@ -6345,7 +6345,7 @@ get_quick_select(PARAM *param,uint32_t idx,SEL_ARG *key_tree, uint32_t mrr_flags
   QUICK_RANGE_SELECT *quick;
   bool create_err= false;
 
-  quick=new QUICK_RANGE_SELECT(param->thd, param->table,
+  quick=new QUICK_RANGE_SELECT(param->session, param->table,
                                param->real_keynr[idx],
                                test(parent_alloc), NULL, &create_err);
 
@@ -6583,7 +6583,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
 
   SYNOPSIS
     get_quick_select_for_ref()
-      thd      Thread handle
+      session      Thread handle
       table    Table to access
       ref      ref[_or_null] scan parameters
       records  Estimate of number of records (needed only to construct
@@ -6597,7 +6597,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
     NULL on error.
 */
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                              TABLE_REF *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
@@ -6609,16 +6609,16 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
   bool create_err= false;
   COST_VECT cost;
 
-  old_root= thd->mem_root;
-  /* The following call may change thd->mem_root */
-  quick= new QUICK_RANGE_SELECT(thd, table, ref->key, 0, 0, &create_err);
+  old_root= session->mem_root;
+  /* The following call may change session->mem_root */
+  quick= new QUICK_RANGE_SELECT(session, table, ref->key, 0, 0, &create_err);
   /* save mem_root set by QUICK_RANGE_SELECT constructor */
-  alloc= thd->mem_root;
+  alloc= session->mem_root;
   /*
-    return back default mem_root (thd->mem_root) changed by
+    return back default mem_root (session->mem_root) changed by
     QUICK_RANGE_SELECT constructor
   */
-  thd->mem_root= old_root;
+  session->mem_root= old_root;
 
   if (!quick || create_err)
     return 0;			/* no ranges found */
@@ -6626,7 +6626,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
     goto err;
   quick->records= records;
 
-  if ((cp_buffer_from_ref(thd, ref) && thd->is_fatal_error) ||
+  if ((cp_buffer_from_ref(session, ref) && session->is_fatal_error) ||
       !(range= new(alloc) QUICK_RANGE()))
     goto err;                                   // out of memory
 
@@ -6678,10 +6678,10 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
   /* Call multi_range_read_info() to get the MRR flags and buffer size */
   quick->mrr_flags= HA_MRR_NO_ASSOCIATION | 
                     (table->key_read ? HA_MRR_INDEX_ONLY : 0);
-  if (thd->lex->sql_command != SQLCOM_SELECT)
+  if (session->lex->sql_command != SQLCOM_SELECT)
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
-  quick->mrr_buf_size= thd->variables.read_rnd_buff_size;
+  quick->mrr_buf_size= session->variables.read_rnd_buff_size;
   if (table->file->multi_range_read_info(quick->index, 1, (uint)records,
                                          &quick->mrr_buf_size,
                                          &quick->mrr_flags, &cost))
@@ -6735,7 +6735,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
 
   unique= new Unique(refpos_order_cmp, (void *)file,
                      file->ref_length,
-                     thd->variables.sortbuff_size);
+                     session->variables.sortbuff_size);
   if (!unique)
     return(1);
   for (;;)
@@ -6763,7 +6763,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
       break;
     }
 
-    if (thd->killed)
+    if (session->killed)
       return(1);
 
     /* skip row if it will be retrieved by clustered PK scan */
@@ -6784,7 +6784,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   /* index_merge currently doesn't support "using index" at all */
   file->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
-  init_read_record(&read_record, thd, head, (SQL_SELECT*) 0, 1, 1);
+  init_read_record(&read_record, session, head, (SQL_SELECT*) 0, 1, 1);
   return(result);
 }
 
@@ -7686,7 +7686,7 @@ static inline SEL_ARG * get_index_range_tree(uint32_t index, SEL_TREE* range_tre
 static bool get_constant_key_infix(KEY *index_info, SEL_ARG *index_range_tree,
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
-                       KEY_PART_INFO *last_part, THD *thd,
+                       KEY_PART_INFO *last_part, Session *session,
                        unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part);
 static bool
@@ -7832,8 +7832,8 @@ cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
 static TRP_GROUP_MIN_MAX *
 get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 {
-  THD *thd= param->thd;
-  JOIN *join= thd->lex->current_select->join;
+  Session *session= param->session;
+  JOIN *join= session->lex->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
@@ -8094,7 +8094,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                                                         &dummy);
         if (!get_constant_key_infix(cur_index_info, index_range_tree,
                                     first_non_group_part, min_max_arg_part,
-                                    last_part, thd, key_infix, &key_infix_len,
+                                    last_part, session, key_infix, &key_infix_len,
                                     &first_non_infix_part))
           goto next_index;
       }
@@ -8367,7 +8367,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
     first_non_group_part   [in]  First index part after group attribute parts
     min_max_arg_part       [in]  The keypart of the MIN/MAX argument if any
     last_part              [in]  Last keypart of the index
-    thd                    [in]  Current thread
+    session                    [in]  Current thread
     key_infix              [out] Infix of constants to be used for index lookup
     key_infix_len          [out] Lenghth of the infix
     first_non_infix_part   [out] The first keypart after the infix (if any)
@@ -8394,7 +8394,7 @@ get_constant_key_infix(KEY *index_info __attribute__((unused)),
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
                        KEY_PART_INFO *last_part,
-                       THD *thd __attribute__((unused)),
+                       Session *session __attribute__((unused)),
                        unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part)
 {
@@ -8691,7 +8691,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param,
   QUICK_GROUP_MIN_MAX_SELECT *quick;
 
   quick= new QUICK_GROUP_MIN_MAX_SELECT(param->table,
-                                        param->thd->lex->current_select->join,
+                                        param->session->lex->current_select->join,
                                         have_min, have_max, min_max_arg_part,
                                         group_prefix_len, group_key_parts,
                                         used_key_parts, index_info, index,
@@ -8819,8 +8819,8 @@ QUICK_GROUP_MIN_MAX_SELECT(Table *table, JOIN *join_arg, bool have_min_arg,
   assert(!parent_alloc);
   if (!parent_alloc)
   {
-    init_sql_alloc(&alloc, join->thd->variables.range_alloc_block_size, 0);
-    join->thd->mem_root= &alloc;
+    init_sql_alloc(&alloc, join->session->variables.range_alloc_block_size, 0);
+    join->session->mem_root= &alloc;
   }
   else
     memset(&alloc, 0, sizeof(MEM_ROOT));  // ensure that it's not used

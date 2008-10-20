@@ -92,7 +92,7 @@ class Master_info;
   mi->rli does not either.
 
   In Master_info: run_lock, data_lock
-  run_lock protects all information about the run state: slave_running, thd
+  run_lock protects all information about the run state: slave_running, session
   and the existence of the I/O thread to stop/start it, you need this mutex).
   data_lock protects some moving members of the struct: counters (log name,
   position) and relay log (DRIZZLE_BIN_LOG object).
@@ -167,20 +167,20 @@ int32_t start_slave_thread(pthread_handler h_func, pthread_mutex_t* start_lock,
                        bool high_priority);
 
 /* If fd is -1, dump to NET */
-int32_t mysql_table_dump(THD* thd, const char* db,
+int32_t mysql_table_dump(Session* session, const char* db,
 		     const char* tbl_name, int32_t fd = -1);
 
 /* retrieve table from master and copy to slave*/
-int32_t fetch_master_table(THD* thd, const char* db_name, const char* table_name,
+int32_t fetch_master_table(Session* session, const char* db_name, const char* table_name,
 		       Master_info* mi, DRIZZLE *drizzle, bool overwrite);
 
-bool show_master_info(THD* thd, Master_info* mi);
-bool show_binlog_info(THD* thd);
+bool show_master_info(Session* session, Master_info* mi);
+bool show_binlog_info(Session* session);
 bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report= true);
-bool rpl_master_erroneous_autoinc(THD* thd);
+bool rpl_master_erroneous_autoinc(Session* session);
 
 const char *print_slave_db_safe(const char *db);
-int32_t check_expected_error(THD* thd, Relay_log_info const *rli, int32_t error_code);
+int32_t check_expected_error(Session* session, Relay_log_info const *rli, int32_t error_code);
 void skip_load_data_infile(NET* net);
 
 void end_slave(); /* clean up */
@@ -194,11 +194,11 @@ int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,uint64_t pos,
 		       bool need_data_lock, const char** errmsg,
                        bool look_for_description_event);
 
-int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
+int32_t purge_relay_logs(Relay_log_info* rli, Session *session, bool just_reset,
 		     const char** errmsg);
-void set_slave_thread_options(THD* thd);
+void set_slave_thread_options(Session* session);
 void rotate_relay_log(Master_info* mi);
-int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
+int32_t apply_event_and_update_pos(Log_event* ev, Session* session, Relay_log_info* rli,
                                bool skip);
 
 pthread_handler_t handle_slave_io(void *arg);
@@ -220,7 +220,7 @@ extern bool master_ssl;
 extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
        
-extern I_List<THD> threads;
+extern I_List<Session> threads;
 
 /* masks for start/stop operations on io and sql slave threads */
 #define SLAVE_IO  1

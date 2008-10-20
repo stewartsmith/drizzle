@@ -33,10 +33,6 @@ auto_increment: Duplicate key on primary error (possible test fix)
 bool: Fix test
 check: Bug in check table (same as archive issue)
 client_xml: Fix client to not try to load via socket
-comment_column: Strict mode fix for partial comments (aka fix test)
-comment_index: Strict mode fix for partial comments (aka fix test)
-comment_table: Strict mode fix for partial comments (aka fix test)
-commit_1innodb: sql_mode issue
 connect: Fix test to not use unix socket
 create: strict mode failure
 csv: Bad test
@@ -55,4 +51,3 @@ analyze: check bug
 func_test: remove old style || 
 init_connect: bug in not executing sql on connect from variable
 init_file: Unknown init bug
-innodb_mysql: Foreign Key issue

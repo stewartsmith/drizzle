@@ -51,6 +51,9 @@ drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
 				plugin_logging.h \
+				plugin_errmsg.h \
+				plugin_configvar.h \
+				plugin_qcache.h \
 				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la libyacc.la
@@ -77,6 +80,9 @@ drizzled_LDFLAGS =
 noinst_HEADERS = item.h \
 		 authentication.h \
 		 logging.h \
+		 errmsg.h \
+		 configvar.h \
+		 qcache.h \
                  key_map.h \
 		 item_func.h \
 		 item_sum.h \
@@ -154,6 +160,9 @@ drizzled_SOURCES = \
 		   sql_lex.cc \
 		   authentication.cc \
 		   logging.cc \
+		   errmsg.cc \
+		   configvar.cc \
+		   qcache.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
                    table_map_iterator.cc \

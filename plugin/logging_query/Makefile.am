@@ -1,13 +1,8 @@
-# drizzle/plugin/logging_noop/Makefile.am
 
-MYSQLDATAdir =          $(localstatedir)
-MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-pkgplugindir =		$(pkglibdir)/plugin
+pkgplugindir = $(pkglibdir)/plugin
 
-EXTRA_LTLIBRARIES =	liblogging_query.la
+EXTRA_LTLIBRARIES = liblogging_query.la
 pkgplugin_LTLIBRARIES =	@plugin_logging_query_shared_target@
-liblogging_query_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-liblogging_query_la_CPPFLAGS=	$(GLOBAL_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
-liblogging_query_la_SOURCES =	logging_query.cc
+liblogging_query_la_LDFLAGS = -module -rpath $(pkgplugindir)
+liblogging_query_la_CPPFLAGS = $(GLOBAL_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+liblogging_query_la_SOURCES = logging_query.cc

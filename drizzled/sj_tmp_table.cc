@@ -25,7 +25,7 @@
   SYNOPSIS
 
   create_duplicate_weedout_tmp_table()
-  thd
+  session
   uniq_tuple_length_arg
   SJ_TMP_TABLE
 
@@ -52,7 +52,7 @@
   NULL on error
 */
 
-Table *create_duplicate_weedout_tmp_table(THD *thd,
+Table *create_duplicate_weedout_tmp_table(Session *session,
                                           uint32_t uniq_tuple_length_arg,
                                           SJ_TMP_TABLE *sjtbl)
 {
@@ -77,7 +77,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   /*
     STEP 1: Get temporary table name
   */
-  statistic_increment(thd->status_var.created_tmp_tables, &LOCK_status);
+  statistic_increment(session->status_var.created_tmp_tables, &LOCK_status);
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
     temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
@@ -88,7 +88,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   {
     /* if we run out of slots or we are not using tempool */
     sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
-            thd->thread_id, thd->tmp_table++);
+            session->thread_id, session->tmp_table++);
   }
   fn_format(path, path, mysql_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
@@ -124,8 +124,8 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   memset(reg_field, 0, sizeof(Field*)*2);
 
   table->mem_root= own_root;
-  mem_root_save= thd->mem_root;
-  thd->mem_root= &table->mem_root;
+  mem_root_save= session->mem_root;
+  session->mem_root= &table->mem_root;
 
   table->field=reg_field;
   table->alias= "weedout-tmp";
@@ -134,13 +134,13 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   table->map=1;
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
-  table->in_use= thd;
+  table->in_use= session;
   table->quick_keys.init();
   table->covering_keys.init();
   table->keys_in_use_for_query.init();
 
   table->s= share;
-  init_tmp_table_share(thd, share, "", 0, tmpname, tmpname);
+  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
@@ -261,13 +261,13 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   //param->recinfo=recinfo;
   //store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
+  if (session->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
-                                 cmin(thd->variables.tmp_table_size,
-                                      thd->variables.max_heap_table_size) :
-                                 thd->variables.tmp_table_size) /
+                                 cmin(session->variables.tmp_table_size,
+                                      session->variables.max_heap_table_size) :
+                                 session->variables.tmp_table_size) /
                                 share->reclength);
   set_if_bigger(share->max_rows,1);    // For dummy start options
 
@@ -294,7 +294,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
       key_part_info->key_type = FIELDFLAG_BINARY;
       if (!using_unique_constraint)
       {
-        if (!(key_field= field->new_key_field(thd->mem_root, table,
+        if (!(key_field= field->new_key_field(session->mem_root, table,
                                               group_buff,
                                               field->null_ptr,
                                               field->null_bit)))
@@ -305,7 +305,7 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
     }
   }
 
-  if (thd->is_fatal_error)        // If end of memory
+  if (session->is_fatal_error)        // If end of memory
     goto err;
   share->db_record_offset= 1;
   if (share->db_type() == myisam_hton)
@@ -319,12 +319,12 @@ Table *create_duplicate_weedout_tmp_table(THD *thd,
   if (table->open_tmp_table())
     goto err;
 
-  thd->mem_root= mem_root_save;
+  session->mem_root= mem_root_save;
   return(table);
 
 err:
-  thd->mem_root= mem_root_save;
-  table->free_tmp_table(thd);                    /* purecov: inspected */
+  session->mem_root= mem_root_save;
+  table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
   return(NULL);        /* purecov: inspected */

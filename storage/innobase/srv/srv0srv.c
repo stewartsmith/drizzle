@@ -988,8 +988,8 @@ srv_conc_enter_innodb(
 	srv_conc_slot_t*	slot	  = NULL;
 	ulint			i;
 
-	if (trx->mysql_thd != NULL
-	    && thd_is_replication_slave_thread(trx->mysql_thd)) {
+	if (trx->mysql_session != NULL
+	    && session_is_replication_slave_thread(trx->mysql_session)) {
 
 		/* TODO Do something more interesting (based on a config
 		parameter). Some users what to give the replication
@@ -1174,8 +1174,8 @@ srv_conc_force_exit_innodb(
 		return;
 	}
 
-	if (trx->mysql_thd != NULL
-	    && thd_is_replication_slave_thread(trx->mysql_thd)) {
+	if (trx->mysql_session != NULL
+	    && session_is_replication_slave_thread(trx->mysql_session)) {
 
 		return;
 	}

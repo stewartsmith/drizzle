@@ -47,12 +47,12 @@ ulong sync_binlog_counter= 0;
 static bool test_if_number(const char *str,
 			   long *res, bool allow_wildcards);
 static int binlog_init(void *p);
-static int binlog_close_connection(handlerton *hton, THD *thd);
-static int binlog_savepoint_set(handlerton *hton, THD *thd, void *sv);
-static int binlog_savepoint_rollback(handlerton *hton, THD *thd, void *sv);
-static int binlog_commit(handlerton *hton, THD *thd, bool all);
-static int binlog_rollback(handlerton *hton, THD *thd, bool all);
-static int binlog_prepare(handlerton *hton, THD *thd, bool all);
+static int binlog_close_connection(handlerton *hton, Session *session);
+static int binlog_savepoint_set(handlerton *hton, Session *session, void *sv);
+static int binlog_savepoint_rollback(handlerton *hton, Session *session, void *sv);
+static int binlog_commit(handlerton *hton, Session *session, bool all);
+static int binlog_rollback(handlerton *hton, Session *session, bool all);
+static int binlog_prepare(handlerton *hton, Session *session, bool all);
 
 
 sql_print_message_func sql_print_message_handlers[3] =
@@ -267,7 +267,7 @@ void LOGGER::init_base()
 }
 
 
-bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
+bool LOGGER::flush_logs(Session *session __attribute__((unused)))
 {
   int rc= 0;
 
@@ -310,7 +310,7 @@ int LOGGER::set_handlers(uint32_t error_log_printer)
   SYNPOSIS
     binlog_trans_log_savepos()
 
-    thd      The thread to take the binlog data from
+    session      The thread to take the binlog data from
     pos      Pointer to variable where the position will be stored
 
   DESCRIPTION
@@ -320,13 +320,13 @@ int LOGGER::set_handlers(uint32_t error_log_printer)
  */
 
 static void
-binlog_trans_log_savepos(THD *thd, my_off_t *pos)
+binlog_trans_log_savepos(Session *session, my_off_t *pos)
 {
   assert(pos != NULL);
-  if (thd_get_ha_data(thd, binlog_hton) == NULL)
-    thd->binlog_setup_trx_data();
+  if (session_get_ha_data(session, binlog_hton) == NULL)
+    session->binlog_setup_trx_data();
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
   assert(mysql_bin_log.is_open());
   *pos= trx_data->position();
   return;
@@ -339,7 +339,7 @@ binlog_trans_log_savepos(THD *thd, my_off_t *pos)
   SYNPOSIS
     binlog_trans_log_truncate()
 
-    thd      The thread to take the binlog data from
+    session      The thread to take the binlog data from
     pos      Position to truncate to
 
   DESCRIPTION
@@ -349,14 +349,14 @@ binlog_trans_log_savepos(THD *thd, my_off_t *pos)
 
  */
 static void
-binlog_trans_log_truncate(THD *thd, my_off_t pos)
+binlog_trans_log_truncate(Session *session, my_off_t pos)
 {
-  assert(thd_get_ha_data(thd, binlog_hton) != NULL);
+  assert(session_get_ha_data(session, binlog_hton) != NULL);
   /* Only true if binlog_trans_log_savepos() wasn't called before */
   assert(pos != ~(my_off_t) 0);
 
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
   trx_data->truncate(pos);
   return;
 }
@@ -385,12 +385,12 @@ int binlog_init(void *p)
 }
 
 static int binlog_close_connection(handlerton *hton __attribute__((unused)),
-                                   THD *thd)
+                                   Session *session)
 {
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
   assert(trx_data->empty());
-  thd_set_ha_data(thd, binlog_hton, NULL);
+  session_set_ha_data(session, binlog_hton, NULL);
   trx_data->~binlog_trx_data();
   free((unsigned char*)trx_data);
   return 0;
@@ -402,7 +402,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
   SYNOPSIS
     binlog_end_trans()
 
-    thd      The thread whose transaction should be ended
+    session      The thread whose transaction should be ended
     trx_data Pointer to the transaction data to use
     end_ev   The end event to use, or NULL
     all      True if the entire transaction should be ended, false if
@@ -420,7 +420,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
     'all' is false), or reset completely (if 'all' is true).
  */
 static int
-binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
+binlog_end_trans(Session *session, binlog_trx_data *trx_data,
                  Log_event *end_ev, bool all)
 {
   int error=0;
@@ -444,9 +444,9 @@ binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
       were, we would have to ensure that we're not ending a statement
       inside a stored function.
      */
-    thd->binlog_flush_pending_rows_event(true);
+    session->binlog_flush_pending_rows_event(true);
 
-    error= mysql_bin_log.write(thd, &trx_data->trans_log, end_ev);
+    error= mysql_bin_log.write(session, &trx_data->trans_log, end_ev);
     trx_data->reset();
 
     /*
@@ -470,12 +470,12 @@ binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
       If rolling back a statement in a transaction, we truncate the
       transaction cache to remove the statement.
      */
-    if (all || !(thd->options & (OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT)))
+    if (all || !(session->options & (OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT)))
     {
       trx_data->reset();
 
-      assert(!thd->binlog_get_pending_rows_event());
-      thd->clear_binlog_table_maps();
+      assert(!session->binlog_get_pending_rows_event());
+      session->clear_binlog_table_maps();
     }
     else                                        // ...statement
       trx_data->truncate(trx_data->before_stmt_pos);
@@ -492,7 +492,7 @@ binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
 }
 
 static int binlog_prepare(handlerton *hton __attribute__((unused)),
-                          THD *thd __attribute__((unused)),
+                          Session *session __attribute__((unused)),
                           bool all __attribute__((unused)))
 {
   /*
@@ -511,17 +511,17 @@ static int binlog_prepare(handlerton *hton __attribute__((unused)),
   binlog file on commits.
 
   @param hton  The binlog handlerton.
-  @param thd   The client thread that executes the transaction.
+  @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction commit, and
                @false otherwise.
 
   @see handlerton::commit
 */
 static int binlog_commit(handlerton *hton __attribute__((unused)),
-                         THD *thd, bool all)
+                         Session *session, bool all)
 {
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
   if (trx_data->empty())
   {
@@ -589,12 +589,12 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
     Otherwise, we accumulate the statement
   */
   uint64_t const in_transaction=
-    thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
-  if ((in_transaction && (all || (!trx_data->at_least_one_stmt && thd->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
+    session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
+  if ((in_transaction && (all || (!trx_data->at_least_one_stmt && session->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
-    Query_log_event qev(thd, STRING_WITH_LEN("COMMIT"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
-    int error= binlog_end_trans(thd, trx_data, &qev, all);
+    Query_log_event qev(session, STRING_WITH_LEN("COMMIT"), true, false);
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
+    int error= binlog_end_trans(session, trx_data, &qev, all);
     return(error);
   }
   return(0);
@@ -609,27 +609,27 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
   non-transactional tables, nothing needs to be logged.
 
   @param hton  The binlog handlerton.
-  @param thd   The client thread that executes the transaction.
+  @param session   The client thread that executes the transaction.
   @param all   This is @c true if this is a real transaction rollback, and
                @false otherwise.
 
   @see handlerton::rollback
 */
 static int binlog_rollback(handlerton *hton __attribute__((unused)),
-                           THD *thd, bool all)
+                           Session *session, bool all)
 {
   int error=0;
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
   if (trx_data->empty()) {
     trx_data->reset();
     return(0);
   }
 
-  if ((all && thd->transaction.all.modified_non_trans_table) ||
-      (!all && thd->transaction.stmt.modified_non_trans_table) ||
-      (thd->options & OPTION_KEEP_LOG))
+  if ((all && session->transaction.all.modified_non_trans_table) ||
+      (!all && session->transaction.stmt.modified_non_trans_table) ||
+      (session->options & OPTION_KEEP_LOG))
   {
     /*
       We write the transaction cache with a rollback last if we have
@@ -639,19 +639,19 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
       transactional table in that statement as well, which needs to be
       rolled back on the slave.
     */
-    Query_log_event qev(thd, STRING_WITH_LEN("ROLLBACK"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
-    error= binlog_end_trans(thd, trx_data, &qev, all);
+    Query_log_event qev(session, STRING_WITH_LEN("ROLLBACK"), true, false);
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
+    error= binlog_end_trans(session, trx_data, &qev, all);
   }
-  else if ((all && !thd->transaction.all.modified_non_trans_table) ||
-           (!all && !thd->transaction.stmt.modified_non_trans_table))
+  else if ((all && !session->transaction.all.modified_non_trans_table) ||
+           (!all && !session->transaction.stmt.modified_non_trans_table))
   {
     /*
       If we have modified only transactional tables, we can truncate
       the transaction cache without writing anything to the binary
       log.
      */
-    error= binlog_end_trans(thd, trx_data, 0, all);
+    error= binlog_end_trans(session, trx_data, 0, all);
   }
   return(error);
 }
@@ -681,34 +681,34 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
 */
 
 static int binlog_savepoint_set(handlerton *hton __attribute__((unused)),
-                                THD *thd, void *sv)
+                                Session *session, void *sv)
 {
-  binlog_trans_log_savepos(thd, (my_off_t*) sv);
+  binlog_trans_log_savepos(session, (my_off_t*) sv);
   /* Write it to the binary log */
   
   int const error=
-    thd->binlog_query(THD::STMT_QUERY_TYPE,
-                      thd->query, thd->query_length, true, false);
+    session->binlog_query(Session::STMT_QUERY_TYPE,
+                      session->query, session->query_length, true, false);
   return(error);
 }
 
 static int binlog_savepoint_rollback(handlerton *hton __attribute__((unused)),
-                                     THD *thd, void *sv)
+                                     Session *session, void *sv)
 {
   /*
     Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
     non-transactional table. Otherwise, truncate the binlog cache starting
     from the SAVEPOINT command.
   */
-  if (unlikely(thd->transaction.all.modified_non_trans_table || 
-               (thd->options & OPTION_KEEP_LOG)))
+  if (unlikely(session->transaction.all.modified_non_trans_table || 
+               (session->options & OPTION_KEEP_LOG)))
   {
     int error=
-      thd->binlog_query(THD::STMT_QUERY_TYPE,
-                        thd->query, thd->query_length, true, false);
+      session->binlog_query(Session::STMT_QUERY_TYPE,
+                        session->query, session->query_length, true, false);
     return(error);
   }
-  binlog_trans_log_truncate(thd, *(my_off_t*)sv);
+  binlog_trans_log_truncate(session, *(my_off_t*)sv);
   return(0);
 }
 
@@ -1482,7 +1482,7 @@ err:
 
   The new index file will only contain this file.
 
-  @param thd		Thread
+  @param session		Thread
 
   @note
     If not called from slave thread, write start event to new log
@@ -1493,7 +1493,7 @@ err:
     1   error
 */
 
-bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
+bool DRIZZLE_BIN_LOG::reset_logs(Session* session)
 {
   LOG_INFO linfo;
   bool error=0;
@@ -1508,7 +1508,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
 
   /*
     The following mutex is needed to ensure that no threads call
-    'delete thd' as we would then risk missing a 'rollback' from this
+    'delete session' as we would then risk missing a 'rollback' from this
     thread. If the transaction involved MyISAM tables, it should go
     into binlog even on rollback.
   */
@@ -1533,7 +1533,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     {
       if (my_errno == ENOENT) 
       {
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             linfo.log_file_name);
         sql_print_information(_("Failed to delete file '%s'"),
@@ -1543,7 +1543,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
       }
       else
       {
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             _("a problem with deleting %s; "
                             "consider examining correspondence "
@@ -1564,7 +1564,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
   {
     if (my_errno == ENOENT) 
     {
-      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                           index_file_name);
       sql_print_information(_("Failed to delete file '%s'"),
@@ -1574,7 +1574,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
     }
     else
     {
-      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_BINLOG_PURGE_FATAL_ERR,
                           "a problem with deleting %s; "
                           "consider examining correspondence "
@@ -1585,7 +1585,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
       goto err;
     }
   }
-  if (!thd->slave_thread)
+  if (!session->slave_thread)
     need_start_event=1;
   if (!open_index_file(index_file_name, 0))
     open(save_name, log_type, 0, io_cache_type, no_auto_events, max_size, 0);
@@ -1779,7 +1779,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
           It's not fatal if we can't stat a log file that does not exist;
           If we could not stat, we won't delete.
         */     
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
         sql_print_information(_("Failed to execute stat() on file '%s'"),
@@ -1791,7 +1791,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
         /*
           Other than ENOENT are fatal
         */
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             _("a problem with getting info on being purged %s; "
                             "consider examining correspondence "
@@ -1813,7 +1813,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
       {
         if (my_errno == ENOENT) 
         {
-          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
           sql_print_information(_("Failed to delete file '%s'"),
@@ -1822,7 +1822,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
         }
         else
         {
-          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
                               _("a problem with deleting %s; "
                               "consider examining correspondence "
@@ -1862,7 +1862,7 @@ err:
   Remove all logs before the given file date from disk and from the
   index file.
 
-  @param thd		Thread pointer
+  @param session		Thread pointer
   @param before_date	Delete all log files before given date.
 
   @note
@@ -1903,7 +1903,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         /*
           It's not fatal if we can't stat a log file that does not exist.
         */     
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
 	sql_print_information(_("Failed to execute stat() on file '%s'"),
@@ -1915,7 +1915,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         /*
           Other than ENOENT are fatal
         */
-        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             _("a problem with getting info on being purged %s; "
                             "consider examining correspondence "
@@ -1935,7 +1935,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         if (my_errno == ENOENT) 
         {
           /* It's not fatal even if we can't delete a log file */
-          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
           sql_print_information(_("Failed to delete file '%s'"),
@@ -1944,7 +1944,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         }
         else
         {
-          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+          push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
                               _("a problem with deleting %s; "
                               "consider examining correspondence "
@@ -2195,25 +2195,25 @@ bool DRIZZLE_BIN_LOG::flush_and_sync()
   return err;
 }
 
-void DRIZZLE_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
+void DRIZZLE_BIN_LOG::start_union_events(Session *session, query_id_t query_id_param)
 {
-  assert(!thd->binlog_evt_union.do_union);
-  thd->binlog_evt_union.do_union= true;
-  thd->binlog_evt_union.unioned_events= false;
-  thd->binlog_evt_union.unioned_events_trans= false;
-  thd->binlog_evt_union.first_query_id= query_id_param;
+  assert(!session->binlog_evt_union.do_union);
+  session->binlog_evt_union.do_union= true;
+  session->binlog_evt_union.unioned_events= false;
+  session->binlog_evt_union.unioned_events_trans= false;
+  session->binlog_evt_union.first_query_id= query_id_param;
 }
 
-void DRIZZLE_BIN_LOG::stop_union_events(THD *thd)
+void DRIZZLE_BIN_LOG::stop_union_events(Session *session)
 {
-  assert(thd->binlog_evt_union.do_union);
-  thd->binlog_evt_union.do_union= false;
+  assert(session->binlog_evt_union.do_union);
+  session->binlog_evt_union.do_union= false;
 }
 
-bool DRIZZLE_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
+bool DRIZZLE_BIN_LOG::is_query_in_union(Session *session, query_id_t query_id_param)
 {
-  return (thd->binlog_evt_union.do_union && 
-          query_id_param >= thd->binlog_evt_union.first_query_id);
+  return (session->binlog_evt_union.do_union && 
+          query_id_param >= session->binlog_evt_union.first_query_id);
 }
 
 
@@ -2222,10 +2222,10 @@ bool DRIZZLE_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
   binlog_hton, which has internal linkage.
 */
 
-int THD::binlog_setup_trx_data()
+int Session::binlog_setup_trx_data()
 {
   binlog_trx_data *trx_data=
-    (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
 
   if (trx_data)
     return(0);                             // Already set up
@@ -2238,9 +2238,9 @@ int THD::binlog_setup_trx_data()
     free((unsigned char*)trx_data);
     return(1);                      // Didn't manage to set it up
   }
-  thd_set_ha_data(this, binlog_hton, trx_data);
+  session_set_ha_data(this, binlog_hton, trx_data);
 
-  trx_data= new (thd_get_ha_data(this, binlog_hton)) binlog_trx_data;
+  trx_data= new (session_get_ha_data(this, binlog_hton)) binlog_trx_data;
 
   return(0);
 }
@@ -2267,16 +2267,16 @@ int THD::binlog_setup_trx_data()
       We only update the saved position if the old one was undefined,
       the reason is that there are some cases (e.g., for CREATE-SELECT)
       where the position is saved twice (e.g., both in
-      select_create::prepare() and THD::binlog_write_table_map()) , but
+      select_create::prepare() and Session::binlog_write_table_map()) , but
       we should use the first. This means that calls to this function
       can be used to start the statement before the first table map
       event, to include some extra events.
  */
 
 void
-THD::binlog_start_trans_and_stmt()
+Session::binlog_start_trans_and_stmt()
 {
-  binlog_trx_data *trx_data= (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+  binlog_trx_data *trx_data= (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
 
   if (trx_data == NULL ||
       trx_data->before_stmt_pos == MY_OFF_T_UNDEF)
@@ -2299,9 +2299,9 @@ THD::binlog_start_trans_and_stmt()
   return;
 }
 
-void THD::binlog_set_stmt_begin() {
+void Session::binlog_set_stmt_begin() {
   binlog_trx_data *trx_data=
-    (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
 
   /*
     The call to binlog_trans_log_savepos() might create the trx_data
@@ -2311,7 +2311,7 @@ void THD::binlog_set_stmt_begin() {
   */
   my_off_t pos= 0;
   binlog_trans_log_savepos(this, &pos);
-  trx_data= (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+  trx_data= (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
   trx_data->before_stmt_pos= pos;
 }
 
@@ -2320,7 +2320,7 @@ void THD::binlog_set_stmt_begin() {
   Write a table map to the binary log.
  */
 
-int THD::binlog_write_table_map(Table *table, bool is_trans)
+int Session::binlog_write_table_map(Table *table, bool is_trans)
 {
   int error;
 
@@ -2346,10 +2346,10 @@ int THD::binlog_write_table_map(Table *table, bool is_trans)
 }
 
 Rows_log_event*
-THD::binlog_get_pending_rows_event() const
+Session::binlog_get_pending_rows_event() const
 {
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
   /*
     This is less than ideal, but here's the story: If there is no
     trx_data, prepare_pending_rows_event() has never been called
@@ -2360,13 +2360,13 @@ THD::binlog_get_pending_rows_event() const
 }
 
 void
-THD::binlog_set_pending_rows_event(Rows_log_event* ev)
+Session::binlog_set_pending_rows_event(Rows_log_event* ev)
 {
-  if (thd_get_ha_data(this, binlog_hton) == NULL)
+  if (session_get_ha_data(this, binlog_hton) == NULL)
     binlog_setup_trx_data();
 
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(this, binlog_hton);
 
   assert(trx_data);
   trx_data->set_pending(ev);
@@ -2379,7 +2379,7 @@ THD::binlog_set_pending_rows_event(Rows_log_event* ev)
   event.
 */
 int
-DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
+DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *session,
                                                 Rows_log_event* event)
 {
   assert(mysql_bin_log.is_open());
@@ -2387,7 +2387,7 @@ DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
   int error= 0;
 
   binlog_trx_data *const trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
 
   assert(trx_data);
 
@@ -2452,7 +2452,7 @@ DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
     pthread_mutex_unlock(&LOCK_log);
   }
 
-  thd->binlog_set_pending_rows_event(event);
+  session->binlog_set_pending_rows_event(event);
 
   return(error);
 }
@@ -2463,17 +2463,17 @@ DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
 
 bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
 {
-  THD *thd= event_info->thd;
+  Session *session= event_info->session;
   bool error= 1;
 
-  if (thd->binlog_evt_union.do_union)
+  if (session->binlog_evt_union.do_union)
   {
     /*
       In Stored function; Remember that function call caused an update.
       We will log the function call to the binary log on function exit
     */
-    thd->binlog_evt_union.unioned_events= true;
-    thd->binlog_evt_union.unioned_events_trans |= event_info->cache_stmt;
+    session->binlog_evt_union.unioned_events= true;
+    session->binlog_evt_union.unioned_events_trans |= event_info->cache_stmt;
     return(0);
   }
 
@@ -2488,7 +2488,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
     this will close all tables on the slave.
   */
   bool const end_stmt= false;
-  thd->binlog_flush_pending_rows_event(end_stmt);
+  session->binlog_flush_pending_rows_event(end_stmt);
 
   pthread_mutex_lock(&LOCK_log);
 
@@ -2506,7 +2506,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       binlog_[wild_]{do|ignore}_table?" (WL#1049)"
     */
     const char *local_db= event_info->get_db();
-    if ((thd && !(thd->options & OPTION_BIN_LOG)) ||
+    if ((session && !(session->options & OPTION_BIN_LOG)) ||
 	(!binlog_filter->db_ok(local_db)))
     {
       pthread_mutex_unlock(&LOCK_log);
@@ -2522,19 +2522,19 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
      trans/non-trans table types the best possible in binlogging)
       - or if the event asks for it (cache_stmt == TRUE).
     */
-    if (opt_using_transactions && thd)
+    if (opt_using_transactions && session)
     {
-      if (thd->binlog_setup_trx_data())
+      if (session->binlog_setup_trx_data())
         goto err;
 
       binlog_trx_data *const trx_data=
-        (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+        (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
       IO_CACHE *trans_log= &trx_data->trans_log;
       my_off_t trans_log_pos= my_b_tell(trans_log);
       if (event_info->get_cache_stmt() || trans_log_pos != 0)
       {
         if (trans_log_pos == 0)
-          thd->binlog_start_trans_and_stmt();
+          session->binlog_start_trans_and_stmt();
         file= trans_log;
       }
       /*
@@ -2559,43 +2559,43 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       If row-based binlogging, Insert_id, Rand and other kind of "setting
       context" events are not needed.
     */
-    if (thd)
+    if (session)
     {
-      if (!thd->current_stmt_binlog_row_based)
+      if (!session->current_stmt_binlog_row_based)
       {
-        if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
+        if (session->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
         {
-          Intvar_log_event e(thd,(unsigned char) LAST_INSERT_ID_EVENT,
-                             thd->first_successful_insert_id_in_prev_stmt_for_binlog);
+          Intvar_log_event e(session,(unsigned char) LAST_INSERT_ID_EVENT,
+                             session->first_successful_insert_id_in_prev_stmt_for_binlog);
           if (e.write(file))
             goto err;
         }
-        if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
+        if (session->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
         {
           /*
             If the auto_increment was second in a table's index (possible with
             MyISAM or BDB) (table->next_number_keypart != 0), such event is
             in fact not necessary. We could avoid logging it.
           */
-          Intvar_log_event e(thd, (unsigned char) INSERT_ID_EVENT,
-                             thd->auto_inc_intervals_in_cur_stmt_for_binlog.
+          Intvar_log_event e(session, (unsigned char) INSERT_ID_EVENT,
+                             session->auto_inc_intervals_in_cur_stmt_for_binlog.
                              minimum());
           if (e.write(file))
             goto err;
         }
-        if (thd->rand_used)
+        if (session->rand_used)
         {
-          Rand_log_event e(thd,thd->rand_saved_seed1,thd->rand_saved_seed2);
+          Rand_log_event e(session,session->rand_saved_seed1,session->rand_saved_seed2);
           if (e.write(file))
             goto err;
         }
-        if (thd->user_var_events.elements)
+        if (session->user_var_events.elements)
         {
-          for (uint32_t i= 0; i < thd->user_var_events.elements; i++)
+          for (uint32_t i= 0; i < session->user_var_events.elements; i++)
           {
             BINLOG_USER_VAR_EVENT *user_var_event;
-            get_dynamic(&thd->user_var_events,(unsigned char*) &user_var_event, i);
-            User_var_log_event e(thd, user_var_event->user_var_event->name.str,
+            get_dynamic(&session->user_var_events,(unsigned char*) &user_var_event, i);
+            User_var_log_event e(session, user_var_event->user_var_event->name.str,
                                  user_var_event->user_var_event->name.length,
                                  user_var_event->value,
                                  user_var_event->length,
@@ -2827,7 +2827,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
   was updated in a transaction which was rolled back. This is to ensure
   that the same updates are run on the slave.
 
-  @param thd
+  @param session
   @param cache		The cache to copy to the binlog
   @param commit_event   The commit event to print after writing the
                         contents of the cache.
@@ -2840,7 +2840,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
     'cache' needs to be reinitialized after this functions returns.
 */
 
-bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
+bool DRIZZLE_BIN_LOG::write(Session *session, IO_CACHE *cache, Log_event *commit_event)
 {
   pthread_mutex_lock(&LOCK_log);
 
@@ -2861,7 +2861,7 @@ bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
         transaction is either a BEGIN..COMMIT block or a single
         statement in autocommit mode.
       */
-      Query_log_event qinfo(thd, STRING_WITH_LEN("BEGIN"), true, false);
+      Query_log_event qinfo(session, STRING_WITH_LEN("BEGIN"), true, false);
       /*
         Imagine this is rollback due to net timeout, after all
         statements of the transaction succeeded. Then we want a
@@ -2871,7 +2871,7 @@ bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
         generated event, and as this event is generated late it would
         lead to false alarms.
 
-        This is safer than thd->clear_error() against kills at shutdown.
+        This is safer than session->clear_error() against kills at shutdown.
       */
       qinfo.error_code= 0;
       /*
@@ -2936,21 +2936,21 @@ err:
 /**
   Wait until we get a signal that the relay log has been updated
 
-  @param[in] thd   a THD struct
+  @param[in] session   a Session struct
   @note
     LOCK_log must be taken before calling this function.
     It will be released at the end of the function.
 */
 
-void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
+void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* session)
 {
   const char *old_msg;
-  old_msg= thd->enter_cond(&update_cond, &LOCK_log,
+  old_msg= session->enter_cond(&update_cond, &LOCK_log,
                            "Slave has read all relay log; " 
                            "waiting for the slave I/O "
                            "thread to update it" );
   pthread_cond_wait(&update_cond, &LOCK_log);
-  thd->exit_cond(old_msg);
+  session->exit_cond(old_msg);
   return;
 }
 
@@ -2960,7 +2960,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
   Applies to master only.
      
   NOTES
-  @param[in] thd        a THD struct
+  @param[in] session        a Session struct
   @param[in] timeout    a pointer to a timespec;
                         NULL means to wait w/o timeout.
   @retval    0          if got signalled on update
@@ -2971,12 +2971,12 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
     LOCK_log is released by the caller.
 */
 
-int DRIZZLE_BIN_LOG::wait_for_update_bin_log(THD* thd,
+int DRIZZLE_BIN_LOG::wait_for_update_bin_log(Session* session,
                                            const struct timespec *timeout)
 {
   int ret= 0;
-  const char* old_msg = thd->get_proc_info();
-  old_msg= thd->enter_cond(&update_cond, &LOCK_log,
+  const char* old_msg = session->get_proc_info();
+  old_msg= session->enter_cond(&update_cond, &LOCK_log,
                            "Master has sent all binlog to slave; "
                            "waiting for binlog to be updated");
   if (!timeout)
@@ -3525,7 +3525,7 @@ int TC_LOG_MMAP::overflow()
     to the position in memory where xid was logged to.
 */
 
-int TC_LOG_MMAP::log_xid(THD *thd __attribute__((unused)), my_xid xid)
+int TC_LOG_MMAP::log_xid(Session *session __attribute__((unused)), my_xid xid)
 {
   int err;
   PAGE *p;
@@ -3883,16 +3883,16 @@ void TC_LOG_BINLOG::close()
   @retval
     1    success
 */
-int TC_LOG_BINLOG::log_xid(THD *thd, my_xid xid)
+int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
 {
-  Xid_log_event xle(thd, xid);
+  Xid_log_event xle(session, xid);
   binlog_trx_data *trx_data=
-    (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
+    (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
   /*
     We always commit the entire transaction when writing an XID. Also
     note that the return value is inverted.
    */
-  return(!binlog_end_trans(thd, trx_data, &xle, true));
+  return(!binlog_end_trans(session, trx_data, &xle, true));
 }
 
 void TC_LOG_BINLOG::unlog(ulong cookie __attribute__((unused)),

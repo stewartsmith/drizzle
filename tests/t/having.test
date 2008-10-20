@@ -18,22 +18,22 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  raw_id int(10) NOT NULL default '0',
-  chr_start int(10) NOT NULL default '0',
-  chr_end int(10) NOT NULL default '0',
-  raw_start int(10) NOT NULL default '0',
-  raw_end int(10) NOT NULL default '0',
-  raw_ori int(2) NOT NULL default '0'
+  raw_id int NOT NULL default '0',
+  chr_start int NOT NULL default '0',
+  chr_end int NOT NULL default '0',
+  raw_start int NOT NULL default '0',
+  raw_end int NOT NULL default '0',
+  raw_ori int NOT NULL default '0'
 );
 
 INSERT INTO t1 VALUES (469713,1,164123,1,164123,1),(317330,164124,317193,101,153170,1),(469434,317194,375620,101,58527,1),(591816,375621,484273,1,108653,1),(591807,484274,534671,91,50488,1),(318885,534672,649362,101,114791,1),(318728,649363,775520,102,126259,1),(336829,775521,813997,101,38577,1),(317740,813998,953227,101,139330,1),(1,813998,953227,101,139330,1);
 
 CREATE TABLE t2 (
-  id int(10) NOT NULL default '0',
-  contig_id int(10) NOT NULL default '0',
-  seq_start int(10) NOT NULL default '0',
-  seq_end int(10) NOT NULL default '0',
-  strand int(2) NOT NULL default '0',
+  id int NOT NULL default '0',
+  contig_id int NOT NULL default '0',
+  seq_start int NOT NULL default '0',
+  seq_end int NOT NULL default '0',
+  strand int NOT NULL default '0',
   KEY id (id)
 );
 INSERT INTO t2 VALUES (133195,469713,61327,61384,1),(133196,469713,64113,64387,1),(133197,1,1,1,0),(133197,1,1,1,-2);
@@ -57,7 +57,7 @@ drop table t1,t2;
 # Test problem with having and MAX() IS NOT NULL
 #
 
-CREATE TABLE t1 (Fld1 int(11) default NULL,Fld2 int(11) default NULL);
+CREATE TABLE t1 (Fld1 int default NULL,Fld2 int default NULL);
 INSERT INTO t1 VALUES (1,10),(1,20),(2,NULL),(2,NULL),(3,50);
 select Fld1, max(Fld2) as q from t1 group by Fld1 having q is not null;
 select Fld1, max(Fld2) from t1 group by Fld1 having max(Fld2) is not null;
@@ -82,12 +82,12 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  `id` bigint(20) NOT NULL default '0',
+  `id` bigint NOT NULL default '0',
   `description` text
 ) ENGINE=MyISAM;
 
 CREATE TABLE t2 (
-  `id` bigint(20) NOT NULL default '0',
+  `id` bigint NOT NULL default '0',
   `description` varchar(20)
 ) ENGINE=MyISAM;
 
@@ -95,8 +95,8 @@ INSERT INTO t1  VALUES (1, 'test');
 INSERT INTO t2 VALUES (1, 'test');
 
 CREATE TABLE t3 (
-  `id`       bigint(20) NOT NULL default '0',
-  `order_id` bigint(20) NOT NULL default '0'
+  `id`       bigint NOT NULL default '0',
+  `order_id` bigint NOT NULL default '0'
 ) ENGINE=MyISAM;
 
 select
@@ -364,11 +364,10 @@ select * from t1 a, t1 b group by a.s1 having s1 is null;
 
 drop table t1;
 
-create table t1 (s1 char character set latin1 collate latin1_german1_ci);
+create table t1 (s1 char);
 insert into t1 values ('b'),('y');
 
-select s1,count(s1) from t1
-group by s1 collate latin1_swedish_ci having s1 = 'y';
+select s1,count(s1) from t1 group by s1 having s1 = 'y';
 # ANSI requires: 1 row, with count(s1) = 2
 # MySQL returns: 1 row, with count(s1) = 1
 

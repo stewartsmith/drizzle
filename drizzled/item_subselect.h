@@ -36,7 +36,7 @@ class Item_subselect :public Item_result_field
   bool value_assigned; /* value already assigned to subselect */
 public:
   /* thread handler, will be assigned in fix_fields only */
-  THD *thd;
+  Session *session;
   /* substitution instead of subselect in case of optimization */
   Item *substitution;
   /* unit of subquery */
@@ -98,7 +98,7 @@ public:
     update_null_value();
     return null_value;
   }
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   virtual bool exec();
   virtual void fix_length_and_dec();
   table_map used_tables() const;
@@ -106,7 +106,7 @@ public:
   bool const_item() const;
   inline table_map get_used_tables_cache() { return used_tables_cache; }
   inline bool get_const_item_cache() { return const_item_cache; }
-  Item *get_tmp_table_item(THD *thd);
+  Item *get_tmp_table_item(Session *session);
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
   virtual bool have_guarded_conds() { return false; }
@@ -140,10 +140,10 @@ public:
 
   friend class select_result_interceptor;
   friend class Item_in_optimizer;
-  friend bool Item_field::fix_fields(THD *, Item **);
-  friend int  Item_field::fix_outer_field(THD *, Field **, Item **);
-  friend bool Item_ref::fix_fields(THD *, Item **);
-  friend void mark_select_range_as_dependent(THD*,
+  friend bool Item_field::fix_fields(Session *, Item **);
+  friend int  Item_field::fix_outer_field(Session *, Field **, Item **);
+  friend bool Item_ref::fix_fields(Session *, Item **);
+  friend void mark_select_range_as_dependent(Session*,
                                              st_select_lex*, st_select_lex*,
                                              Field*, Item*, Item_ident*);
 };
@@ -206,7 +206,7 @@ protected:
   bool max;
   bool was_values;  // Set if we have found at least one row
 public:
-  Item_maxmin_subselect(THD *thd, Item_subselect *parent,
+  Item_maxmin_subselect(Session *session, Item_subselect *parent,
 			st_select_lex *select_lex, bool max);
   virtual void print(String *str, enum_query_type query_type);
   void cleanup();
@@ -351,7 +351,7 @@ public:
   inline bool is_top_level_item() { return abort_on_null; }
   bool test_limit(st_select_lex_unit *unit);
   virtual void print(String *str, enum_query_type query_type);
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   bool setup_engine();
   bool init_left_expr_cache();
   bool is_expensive_processor(unsigned char *arg);
@@ -386,7 +386,7 @@ class subselect_engine: public Sql_alloc
 {
 protected:
   select_result_interceptor *result; /* results storage class */
-  THD *thd; /* pointer to current THD */
+  Session *session; /* pointer to current Session */
   Item_subselect *item; /* item, that use this engine */
   enum Item_result res_type; /* type of results */
   enum_field_types res_field_type; /* column type of the results */
@@ -398,7 +398,7 @@ public:
                          INDEXSUBQUERY_ENGINE, HASH_SJ_ENGINE};
 
   subselect_engine(Item_subselect *si, select_result_interceptor *res)
-    :thd(0)
+    :session(0)
   {
     result= res;
     item= si;
@@ -410,11 +410,11 @@ public:
   virtual void cleanup()= 0;
 
   /*
-    Also sets "thd" for subselect_engine::result.
+    Also sets "session" for subselect_engine::result.
     Should be called before prepare().
   */
-  void set_thd(THD *thd_arg);
-  THD * get_thd() { return thd; }
+  void set_session(Session *session_arg);
+  Session * get_session() { return session; }
   virtual int prepare()= 0;
   virtual void fix_length_and_dec(Item_cache** row)= 0;
   /*
@@ -549,12 +549,12 @@ protected:
   bool null_keypart; /* TRUE <=> constructed search tuple has a NULL */
 public:
 
-  // constructor can assign THD because it will be called after JOIN::prepare
-  subselect_uniquesubquery_engine(THD *thd_arg, st_join_table *tab_arg,
+  // constructor can assign Session because it will be called after JOIN::prepare
+  subselect_uniquesubquery_engine(Session *session_arg, st_join_table *tab_arg,
 				  Item_subselect *subs, Item *where)
     :subselect_engine(subs, 0), tab(tab_arg), cond(where)
   {
-    set_thd(thd_arg);
+    set_session(session_arg);
   }
   void cleanup();
   int prepare();
@@ -610,11 +610,11 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
   Item *having;
 public:
 
-  // constructor can assign THD because it will be called after JOIN::prepare
-  subselect_indexsubquery_engine(THD *thd_arg, st_join_table *tab_arg,
+  // constructor can assign Session because it will be called after JOIN::prepare
+  subselect_indexsubquery_engine(Session *session_arg, st_join_table *tab_arg,
 				 Item_subselect *subs, Item *where,
                                  Item *having_arg, bool chk_null)
-    :subselect_uniquesubquery_engine(thd_arg, tab_arg, subs, where),
+    :subselect_uniquesubquery_engine(session_arg, tab_arg, subs, where),
      check_null(chk_null),
      having(having_arg)
   {}
@@ -663,9 +663,9 @@ protected:
   TMP_TABLE_PARAM *tmp_param;
 
 public:
-  subselect_hash_sj_engine(THD *thd, Item_subselect *in_predicate,
+  subselect_hash_sj_engine(Session *session, Item_subselect *in_predicate,
                                subselect_single_select_engine *old_engine)
-    :subselect_uniquesubquery_engine(thd, NULL, in_predicate, NULL),
+    :subselect_uniquesubquery_engine(session, NULL, in_predicate, NULL),
     is_materialized(false), materialize_engine(old_engine),
     materialize_join(NULL), tmp_param(NULL)
   {}

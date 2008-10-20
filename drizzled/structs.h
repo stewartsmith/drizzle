@@ -51,7 +51,7 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
-  ulong mean_rec_length;		/* physical reclength */
+  uint64_t mean_rec_length;		/* physical reclength */
 } KEYFILE_INFO;
 
 
@@ -111,7 +111,7 @@ typedef struct st_reginfo {		/* Extra info about reg */
 
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
-class THD;
+class Session;
 class handler;
 struct st_join_table;
 
@@ -120,7 +120,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   handler *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
-  THD *thd;
+  Session *session;
   SQL_SELECT *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
@@ -136,7 +136,10 @@ typedef struct st_read_record {			/* Parameter to read_record */
 
 
 typedef struct {
-  ulong year,month,day,hour;
+  uint32_t year;
+  uint32_t month;
+  uint32_t day;
+  uint32_t hour;
   uint64_t minute,second,second_part;
   bool neg;
 } INTERVAL;
@@ -153,7 +156,7 @@ enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
 
 extern const char *show_comp_option_name[];
 
-typedef int *(*update_var)(THD *, struct st_mysql_show_var *);
+typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
 
 typedef struct	st_lex_user {
   LEX_STRING user, host, password;
@@ -245,7 +248,7 @@ typedef struct  user_conn {
   { auto_inc_interval_min + k * increment,
     0 <= k <= (auto_inc_interval_values-1) }
   Where "increment" is maintained separately by the user of this class (and is
-  currently only thd->variables.auto_increment_increment).
+  currently only session->variables.auto_increment_increment).
   It mustn't derive from Sql_alloc, because SET INSERT_ID needs to
   allocate memory which must stay allocated for use by the next statement.
 */
