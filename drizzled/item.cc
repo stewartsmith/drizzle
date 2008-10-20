@@ -382,7 +382,7 @@ Item::Item():
   cmp_context= (Item_result)-1;
 
   /* Put item in free list so that we can free all items at end */
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   next= thd->free_list;
   thd->free_list= this;
   /*
@@ -407,7 +407,7 @@ Item::Item():
   Used for duplicating lists in processing queries with temporary
   tables.
 */
-Item::Item(THD *thd, Item *item):
+Item::Item(Session *thd, Item *item):
   is_expensive_cache(-1),
   rsize(0),
   str_value(item->str_value),
@@ -446,7 +446,7 @@ void Item::print_item_w_name(String *str, enum_query_type query_type)
 
   if (name)
   {
-    THD *thd= current_thd;
+    Session *thd= current_thd;
     str->append(STRING_WITH_LEN(" AS "));
     append_identifier(thd, str, name, (uint) strlen(name));
   }
@@ -500,8 +500,8 @@ void Item::rename(char *new_name)
 
   This function is designed to ease transformation of Item trees.
   Re-execution note: every such transformation is registered for
-  rollback by THD::change_item_tree() and is rolled back at the end
-  of execution by THD::rollback_item_tree_changes().
+  rollback by Session::change_item_tree() and is rolled back at the end
+  of execution by Session::rollback_item_tree_changes().
 
   Therefore:
   - this function can not be used at prepared statement prepare
@@ -519,7 +519,7 @@ void Item::rename(char *new_name)
   @param arg            opaque argument passed to the functor
 
   @return
-    Returns pointer to the new subtree root.  THD::change_item_tree()
+    Returns pointer to the new subtree root.  Session::change_item_tree()
     should be called for it if transformation took place, i.e. if a
     pointer to newly allocated item is returned.
 */
@@ -548,7 +548,7 @@ Item_ident::Item_ident(Name_resolution_context *context_arg,
   Constructor used by Item_field & Item_*_ref (see Item comment)
 */
 
-Item_ident::Item_ident(THD *thd, Item_ident *item)
+Item_ident::Item_ident(Session *thd, Item_ident *item)
   :Item(thd, item),
    orig_db_name(item->orig_db_name),
    orig_table_name(item->orig_table_name), 
@@ -970,7 +970,7 @@ int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 {
   int res;
   Table *table= field->table;
-  THD *thd= table->in_use;
+  Session *thd= table->in_use;
   enum_check_fields tmp= thd->count_cuted_fields;
   ulong sql_mode= thd->variables.sql_mode;
   thd->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
@@ -1023,7 +1023,7 @@ public:
     thd->fatal_error() may be called if we are out of memory
 */
 
-void Item::split_sum_func2(THD *thd, Item **ref_pointer_array,
+void Item::split_sum_func2(Session *thd, Item **ref_pointer_array,
                            List<Item> &fields, Item **ref, 
                            bool skip_registered)
 {
@@ -1311,7 +1311,7 @@ bool agg_item_collations_for_comparison(DTCollation &c, const char *fname,
   @code
     collect(A,B,C) ::= collect(collect(A,B),C)
   @endcode
-  Since this function calls THD::change_item_tree() on the passed Item **
+  Since this function calls Session::change_item_tree() on the passed Item **
   pointers, it is necessary to pass the original Item **'s, not copies.
   Otherwise their values will not be properly restored (see BUG#20769).
   If the items are not consecutive (eg. args[2] and args[5]), use the
@@ -1344,7 +1344,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
     safe_args[1]= args[item_sep];
   }
 
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   bool res= false;
   uint32_t i;
 
@@ -1433,7 +1433,7 @@ Item_field::Item_field(Field *f)
   Item_field (this is important in prepared statements).
 */
 
-Item_field::Item_field(THD *thd __attribute__((unused)),
+Item_field::Item_field(Session *thd __attribute__((unused)),
                        Name_resolution_context *context_arg,
                        Field *f)
   :Item_ident(context_arg, f->table->s->db.str, *f->table_name, f->field_name),
@@ -1461,7 +1461,7 @@ Item_field::Item_field(Name_resolution_context *context_arg,
   Constructor need to process subselect with temporary tables (see Item)
 */
 
-Item_field::Item_field(THD *thd, Item_field *item)
+Item_field::Item_field(Session *thd, Item_field *item)
   :Item_ident(thd, item),
    field(item->field),
    result_field(item->result_field),
@@ -1532,7 +1532,7 @@ const char *Item_ident::full_name() const
 void Item_ident::print(String *str,
                        enum_query_type query_type __attribute__((unused)))
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   char d_name_buff[MAX_ALIAS_NAME], t_name_buff[MAX_ALIAS_NAME];
   const char *d_name= db_name, *t_name= table_name;
   if (lower_case_table_names== 1 ||
@@ -1760,7 +1760,7 @@ void Item_field::fix_after_pullout(st_select_lex *new_parent,
 }
 
 
-Item *Item_field::get_tmp_table_item(THD *thd)
+Item *Item_field::get_tmp_table_item(Session *thd)
 {
   Item_field *new_item= new Item_field(thd, this);
   if (new_item)
@@ -2005,7 +2005,7 @@ void Item_string::print(String *str, enum_query_type query_type)
   }
   else
   {
-    THD *thd= current_thd;
+    Session *thd= current_thd;
     LEX_STRING utf8_lex_str;
 
     thd->convert_string(&utf8_lex_str,
@@ -2320,7 +2320,7 @@ bool Item_param::set_longdata(const char *str, ulong length)
     1 Out of memory
 */
 
-bool Item_param::set_from_user_var(THD *thd, const user_var_entry *entry)
+bool Item_param::set_from_user_var(Session *thd, const user_var_entry *entry)
 {
   if (entry && entry->value)
   {
@@ -2678,7 +2678,7 @@ const String *Item_param::query_val_str(String* str) const
   connection.
 */
 
-bool Item_param::convert_str_value(THD *thd)
+bool Item_param::convert_str_value(Session *thd)
 {
   bool rc= false;
   if (state == STRING_VALUE || state == LONG_DATA_VALUE)
@@ -2838,7 +2838,7 @@ my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
 */
 
 /* ARGSUSED */
-bool Item::fix_fields(THD *thd __attribute__((unused)),
+bool Item::fix_fields(Session *thd __attribute__((unused)),
                       Item **ref __attribute__((unused)))
 {
 
@@ -2911,7 +2911,7 @@ bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
                          substitution)
 */
 
-static void mark_as_dependent(THD *thd, SELECT_LEX *last, SELECT_LEX *current,
+static void mark_as_dependent(Session *thd, SELECT_LEX *last, SELECT_LEX *current,
                               Item_ident *resolved_item,
                               Item_ident *mark_item)
 {
@@ -2957,7 +2957,7 @@ static void mark_as_dependent(THD *thd, SELECT_LEX *last, SELECT_LEX *current,
     resolved identifier.
 */
 
-void mark_select_range_as_dependent(THD *thd,
+void mark_select_range_as_dependent(Session *thd,
                                     SELECT_LEX *last_select,
                                     SELECT_LEX *current_sel,
                                     Field *found_field, Item *found_item,
@@ -3144,7 +3144,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 */
 
 static Item**
-resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
+resolve_ref_in_select_and_group(Session *thd, Item_ident *ref, SELECT_LEX *select)
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;
@@ -3245,7 +3245,7 @@ resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
 */
 
 int
-Item_field::fix_outer_field(THD *thd, Field **from_field, Item **reference)
+Item_field::fix_outer_field(Session *thd, Field **from_field, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   bool field_found= (*from_field != not_found_field);
@@ -3539,7 +3539,7 @@ Item_field::fix_outer_field(THD *thd, Field **from_field, Item **reference)
     false on success
 */
 
-bool Item_field::fix_fields(THD *thd, Item **reference)
+bool Item_field::fix_fields(Session *thd, Item **reference)
 {
   assert(fixed == 0);
   Field *from_field= (Field *)not_found_field;
@@ -3982,7 +3982,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
                                        str->length(), &well_formed_error);
   if (wlen < str->length())
   {
-    THD *thd= current_thd;
+    Session *thd= current_thd;
     char hexbuf[7];
     enum DRIZZLE_ERROR::enum_warning_level level;
     uint32_t diff= str->length() - wlen;
@@ -4732,7 +4732,7 @@ void Item_field::update_null_value()
     need to set no_errors to prevent warnings about type conversion
     popping up.
   */
-  THD *thd= field->table->in_use;
+  Session *thd= field->table->in_use;
   int no_errors;
 
   no_errors= thd->no_errors;
@@ -4882,7 +4882,7 @@ Item_ref::Item_ref(Name_resolution_context *context_arg,
     false on success
 */
 
-bool Item_ref::fix_fields(THD *thd, Item **reference)
+bool Item_ref::fix_fields(Session *thd, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   assert(fixed == 0);
@@ -5147,7 +5147,7 @@ void Item_ref::print(String *str, enum_query_type query_type)
     if ((*ref)->type() != Item::CACHE_ITEM && ref_type() != VIEW_REF &&
         !table_name && name && alias_name_used)
     {
-      THD *thd= current_thd;
+      Session *thd= current_thd;
       append_identifier(thd, str, name, (uint) strlen(name));
     }
     else
@@ -5329,7 +5329,7 @@ void Item_ref::make_field(Send_field *field)
 }
 
 
-Item *Item_ref::get_tmp_table_item(THD *thd)
+Item *Item_ref::get_tmp_table_item(Session *thd)
 {
   if (!result_field)
     return (*ref)->get_tmp_table_item(thd);
@@ -5419,7 +5419,7 @@ bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
     true    Error
 */
 
-bool Item_direct_view_ref::fix_fields(THD *thd, Item **reference)
+bool Item_direct_view_ref::fix_fields(Session *thd, Item **reference)
 {
   /* view fild reference must be defined */
   assert(*ref);
@@ -5443,7 +5443,7 @@ bool Item_direct_view_ref::fix_fields(THD *thd, Item **reference)
     true    Error
 */
 
-bool Item_outer_ref::fix_fields(THD *thd, Item **reference)
+bool Item_outer_ref::fix_fields(Session *thd, Item **reference)
 {
   bool err;
   /* outer_ref->check_cols() will be made in Item_direct_ref::fix_fields */
@@ -5515,7 +5515,7 @@ bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_default_value::fix_fields(THD *thd,
+bool Item_default_value::fix_fields(Session *thd,
                                     Item **items __attribute__((unused)))
 {
   Item *real_arg;
@@ -5614,7 +5614,7 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
     return 0;
 
   /*
-    THD::change_item_tree() should be called only if the tree was
+    Session::change_item_tree() should be called only if the tree was
     really transformed, i.e. when a new item has been created.
     Otherwise we'll be allocating a lot of unnecessary memory for
     change records at each execution.
@@ -5632,7 +5632,7 @@ bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_insert_value::fix_fields(THD *thd,
+bool Item_insert_value::fix_fields(Session *thd,
                                    Item **items __attribute__((unused)))
 {
   assert(fixed == 0);
@@ -5715,7 +5715,7 @@ Item_result item_cmp_type(Item_result a,Item_result b)
 }
 
 
-void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
+void resolve_const_item(Session *thd, Item **ref, Item *comp_item)
 {
   Item *item= *ref;
   Item *new_item= NULL;
@@ -6049,7 +6049,7 @@ int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 bool Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   return (!(values= 
 	    (Item_cache **) thd->calloc(sizeof(Item_cache *)*item_count)));
 }
@@ -6131,7 +6131,7 @@ void Item_cache_row::bring_value()
 }
 
 
-Item_type_holder::Item_type_holder(THD *thd, Item *item)
+Item_type_holder::Item_type_holder(Session *thd, Item *item)
   :Item(thd, item), enum_set_typelib(0), fld_type(get_real_type(item))
 {
   assert(item->fixed);
@@ -6236,7 +6236,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
     false  OK
 */
 
-bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
+bool Item_type_holder::join_types(Session *thd __attribute__((unused)),
                                   Item *item)
 {
   uint32_t max_length_orig= max_length;
@@ -6468,7 +6468,7 @@ void Item_result_field::cleanup()
     do nothing
 */
 
-void dummy_error_processor(THD *thd __attribute__((unused)),
+void dummy_error_processor(Session *thd __attribute__((unused)),
                            void *data __attribute__((unused)))
 {}
 

@@ -49,7 +49,7 @@ This file contains the implementation of error and warnings related
   This is used to in group_concat() to register how many warnings we actually
   got after the query has been executed.
 */
-void DRIZZLE_ERROR::set_msg(THD *thd, const char *msg_arg)
+void DRIZZLE_ERROR::set_msg(Session *thd, const char *msg_arg)
 {
   msg= strdup_root(&thd->warn_root, msg_arg);
 }
@@ -68,7 +68,7 @@ void DRIZZLE_ERROR::set_msg(THD *thd, const char *msg_arg)
     in which case push_warnings() has already called this function.
 */  
 
-void drizzle_reset_errors(THD *thd, bool force)
+void drizzle_reset_errors(Session *thd, bool force)
 {
   if (thd->query_id != thd->warn_id || force)
   {
@@ -98,7 +98,7 @@ void drizzle_reset_errors(THD *thd, bool force)
     pointer on DRIZZLE_ERROR object
 */
 
-DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level, 
+DRIZZLE_ERROR *push_warning(Session *thd, DRIZZLE_ERROR::enum_warning_level level, 
                           uint32_t code, const char *msg)
 {
   DRIZZLE_ERROR *err= 0;
@@ -120,7 +120,7 @@ DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
 
     thd->no_warnings_for_error= 1;
 
-    thd->killed= THD::KILL_BAD_DATA;
+    thd->killed= Session::KILL_BAD_DATA;
     my_message(code, msg, MYF(0));
 
     thd->no_warnings_for_error= no_warnings_for_error;
@@ -153,7 +153,7 @@ DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
     msg			Clear error message
 */
 
-void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+void push_warning_printf(Session *thd, DRIZZLE_ERROR::enum_warning_level level,
 			 uint32_t code, const char *format, ...)
 {
   va_list args;
@@ -191,7 +191,7 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(THD *thd, uint32_t levels_to_show)
+bool mysqld_show_warnings(Session *thd, uint32_t levels_to_show)
 {  
   List<Item> field_list;
 

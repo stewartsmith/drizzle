@@ -291,7 +291,7 @@ public:
     if (arg_count)
       max_length= args[0]->max_length;
   }
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *thd, Item **ref);
   bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
@@ -368,7 +368,7 @@ public:
   bool check(bool use_result_field);
   bool update();
   enum Item_result result_type () const { return cached_result_type; }
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *thd, Item **ref);
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
   void print_as_stmt(String *str, enum_query_type query_type);
@@ -437,7 +437,7 @@ public:
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *decimal_buffer);
   /* fix_fields() binds variable name with its entry structure */
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *thd, Item **ref);
   virtual void print(String *str, enum_query_type query_type);
   void set_null_value(const CHARSET_INFO * const cs);
   void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
@@ -455,7 +455,7 @@ public:
   Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
                            LEX_STRING *component_arg, const char *name_arg,
                            size_t name_len_arg);
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *thd, Item **ref);
   /*
     Stubs for pure virtual methods. Should never be called: this
     item is always substituted with a constant in fix_fields().

@@ -47,12 +47,12 @@ ulong sync_binlog_counter= 0;
 static bool test_if_number(const char *str,
 			   long *res, bool allow_wildcards);
 static int binlog_init(void *p);
-static int binlog_close_connection(handlerton *hton, THD *thd);
-static int binlog_savepoint_set(handlerton *hton, THD *thd, void *sv);
-static int binlog_savepoint_rollback(handlerton *hton, THD *thd, void *sv);
-static int binlog_commit(handlerton *hton, THD *thd, bool all);
-static int binlog_rollback(handlerton *hton, THD *thd, bool all);
-static int binlog_prepare(handlerton *hton, THD *thd, bool all);
+static int binlog_close_connection(handlerton *hton, Session *thd);
+static int binlog_savepoint_set(handlerton *hton, Session *thd, void *sv);
+static int binlog_savepoint_rollback(handlerton *hton, Session *thd, void *sv);
+static int binlog_commit(handlerton *hton, Session *thd, bool all);
+static int binlog_rollback(handlerton *hton, Session *thd, bool all);
+static int binlog_prepare(handlerton *hton, Session *thd, bool all);
 
 
 sql_print_message_func sql_print_message_handlers[3] =
@@ -267,7 +267,7 @@ void LOGGER::init_base()
 }
 
 
-bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
+bool LOGGER::flush_logs(Session *thd __attribute__((unused)))
 {
   int rc= 0;
 
@@ -320,7 +320,7 @@ int LOGGER::set_handlers(uint32_t error_log_printer)
  */
 
 static void
-binlog_trans_log_savepos(THD *thd, my_off_t *pos)
+binlog_trans_log_savepos(Session *thd, my_off_t *pos)
 {
   assert(pos != NULL);
   if (thd_get_ha_data(thd, binlog_hton) == NULL)
@@ -349,7 +349,7 @@ binlog_trans_log_savepos(THD *thd, my_off_t *pos)
 
  */
 static void
-binlog_trans_log_truncate(THD *thd, my_off_t pos)
+binlog_trans_log_truncate(Session *thd, my_off_t pos)
 {
   assert(thd_get_ha_data(thd, binlog_hton) != NULL);
   /* Only true if binlog_trans_log_savepos() wasn't called before */
@@ -385,7 +385,7 @@ int binlog_init(void *p)
 }
 
 static int binlog_close_connection(handlerton *hton __attribute__((unused)),
-                                   THD *thd)
+                                   Session *thd)
 {
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
@@ -420,7 +420,7 @@ static int binlog_close_connection(handlerton *hton __attribute__((unused)),
     'all' is false), or reset completely (if 'all' is true).
  */
 static int
-binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
+binlog_end_trans(Session *thd, binlog_trx_data *trx_data,
                  Log_event *end_ev, bool all)
 {
   int error=0;
@@ -492,7 +492,7 @@ binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
 }
 
 static int binlog_prepare(handlerton *hton __attribute__((unused)),
-                          THD *thd __attribute__((unused)),
+                          Session *thd __attribute__((unused)),
                           bool all __attribute__((unused)))
 {
   /*
@@ -518,7 +518,7 @@ static int binlog_prepare(handlerton *hton __attribute__((unused)),
   @see handlerton::commit
 */
 static int binlog_commit(handlerton *hton __attribute__((unused)),
-                         THD *thd, bool all)
+                         Session *thd, bool all)
 {
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) thd_get_ha_data(thd, binlog_hton);
@@ -593,7 +593,7 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
   if ((in_transaction && (all || (!trx_data->at_least_one_stmt && thd->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
     Query_log_event qev(thd, STRING_WITH_LEN("COMMIT"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
     int error= binlog_end_trans(thd, trx_data, &qev, all);
     return(error);
   }
@@ -616,7 +616,7 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
   @see handlerton::rollback
 */
 static int binlog_rollback(handlerton *hton __attribute__((unused)),
-                           THD *thd, bool all)
+                           Session *thd, bool all)
 {
   int error=0;
   binlog_trx_data *const trx_data=
@@ -640,7 +640,7 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
       rolled back on the slave.
     */
     Query_log_event qev(thd, STRING_WITH_LEN("ROLLBACK"), true, false);
-    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(Session, IO_CACHE)
     error= binlog_end_trans(thd, trx_data, &qev, all);
   }
   else if ((all && !thd->transaction.all.modified_non_trans_table) ||
@@ -681,19 +681,19 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
 */
 
 static int binlog_savepoint_set(handlerton *hton __attribute__((unused)),
-                                THD *thd, void *sv)
+                                Session *thd, void *sv)
 {
   binlog_trans_log_savepos(thd, (my_off_t*) sv);
   /* Write it to the binary log */
   
   int const error=
-    thd->binlog_query(THD::STMT_QUERY_TYPE,
+    thd->binlog_query(Session::STMT_QUERY_TYPE,
                       thd->query, thd->query_length, true, false);
   return(error);
 }
 
 static int binlog_savepoint_rollback(handlerton *hton __attribute__((unused)),
-                                     THD *thd, void *sv)
+                                     Session *thd, void *sv)
 {
   /*
     Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
@@ -704,7 +704,7 @@ static int binlog_savepoint_rollback(handlerton *hton __attribute__((unused)),
                (thd->options & OPTION_KEEP_LOG)))
   {
     int error=
-      thd->binlog_query(THD::STMT_QUERY_TYPE,
+      thd->binlog_query(Session::STMT_QUERY_TYPE,
                         thd->query, thd->query_length, true, false);
     return(error);
   }
@@ -1493,7 +1493,7 @@ err:
     1   error
 */
 
-bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
+bool DRIZZLE_BIN_LOG::reset_logs(Session* thd)
 {
   LOG_INFO linfo;
   bool error=0;
@@ -2195,7 +2195,7 @@ bool DRIZZLE_BIN_LOG::flush_and_sync()
   return err;
 }
 
-void DRIZZLE_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
+void DRIZZLE_BIN_LOG::start_union_events(Session *thd, query_id_t query_id_param)
 {
   assert(!thd->binlog_evt_union.do_union);
   thd->binlog_evt_union.do_union= true;
@@ -2204,13 +2204,13 @@ void DRIZZLE_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
   thd->binlog_evt_union.first_query_id= query_id_param;
 }
 
-void DRIZZLE_BIN_LOG::stop_union_events(THD *thd)
+void DRIZZLE_BIN_LOG::stop_union_events(Session *thd)
 {
   assert(thd->binlog_evt_union.do_union);
   thd->binlog_evt_union.do_union= false;
 }
 
-bool DRIZZLE_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
+bool DRIZZLE_BIN_LOG::is_query_in_union(Session *thd, query_id_t query_id_param)
 {
   return (thd->binlog_evt_union.do_union && 
           query_id_param >= thd->binlog_evt_union.first_query_id);
@@ -2222,7 +2222,7 @@ bool DRIZZLE_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
   binlog_hton, which has internal linkage.
 */
 
-int THD::binlog_setup_trx_data()
+int Session::binlog_setup_trx_data()
 {
   binlog_trx_data *trx_data=
     (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
@@ -2267,14 +2267,14 @@ int THD::binlog_setup_trx_data()
       We only update the saved position if the old one was undefined,
       the reason is that there are some cases (e.g., for CREATE-SELECT)
       where the position is saved twice (e.g., both in
-      select_create::prepare() and THD::binlog_write_table_map()) , but
+      select_create::prepare() and Session::binlog_write_table_map()) , but
       we should use the first. This means that calls to this function
       can be used to start the statement before the first table map
       event, to include some extra events.
  */
 
 void
-THD::binlog_start_trans_and_stmt()
+Session::binlog_start_trans_and_stmt()
 {
   binlog_trx_data *trx_data= (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
 
@@ -2299,7 +2299,7 @@ THD::binlog_start_trans_and_stmt()
   return;
 }
 
-void THD::binlog_set_stmt_begin() {
+void Session::binlog_set_stmt_begin() {
   binlog_trx_data *trx_data=
     (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
 
@@ -2320,7 +2320,7 @@ void THD::binlog_set_stmt_begin() {
   Write a table map to the binary log.
  */
 
-int THD::binlog_write_table_map(Table *table, bool is_trans)
+int Session::binlog_write_table_map(Table *table, bool is_trans)
 {
   int error;
 
@@ -2346,7 +2346,7 @@ int THD::binlog_write_table_map(Table *table, bool is_trans)
 }
 
 Rows_log_event*
-THD::binlog_get_pending_rows_event() const
+Session::binlog_get_pending_rows_event() const
 {
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) thd_get_ha_data(this, binlog_hton);
@@ -2360,7 +2360,7 @@ THD::binlog_get_pending_rows_event() const
 }
 
 void
-THD::binlog_set_pending_rows_event(Rows_log_event* ev)
+Session::binlog_set_pending_rows_event(Rows_log_event* ev)
 {
   if (thd_get_ha_data(this, binlog_hton) == NULL)
     binlog_setup_trx_data();
@@ -2379,7 +2379,7 @@ THD::binlog_set_pending_rows_event(Rows_log_event* ev)
   event.
 */
 int
-DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
+DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *thd,
                                                 Rows_log_event* event)
 {
   assert(mysql_bin_log.is_open());
@@ -2463,7 +2463,7 @@ DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
 
 bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
 {
-  THD *thd= event_info->thd;
+  Session *thd= event_info->thd;
   bool error= 1;
 
   if (thd->binlog_evt_union.do_union)
@@ -2840,7 +2840,7 @@ int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
     'cache' needs to be reinitialized after this functions returns.
 */
 
-bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
+bool DRIZZLE_BIN_LOG::write(Session *thd, IO_CACHE *cache, Log_event *commit_event)
 {
   pthread_mutex_lock(&LOCK_log);
 
@@ -2936,13 +2936,13 @@ err:
 /**
   Wait until we get a signal that the relay log has been updated
 
-  @param[in] thd   a THD struct
+  @param[in] thd   a Session struct
   @note
     LOCK_log must be taken before calling this function.
     It will be released at the end of the function.
 */
 
-void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
+void DRIZZLE_BIN_LOG::wait_for_update_relay_log(Session* thd)
 {
   const char *old_msg;
   old_msg= thd->enter_cond(&update_cond, &LOCK_log,
@@ -2960,7 +2960,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
   Applies to master only.
      
   NOTES
-  @param[in] thd        a THD struct
+  @param[in] thd        a Session struct
   @param[in] timeout    a pointer to a timespec;
                         NULL means to wait w/o timeout.
   @retval    0          if got signalled on update
@@ -2971,7 +2971,7 @@ void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
     LOCK_log is released by the caller.
 */
 
-int DRIZZLE_BIN_LOG::wait_for_update_bin_log(THD* thd,
+int DRIZZLE_BIN_LOG::wait_for_update_bin_log(Session* thd,
                                            const struct timespec *timeout)
 {
   int ret= 0;
@@ -3525,7 +3525,7 @@ int TC_LOG_MMAP::overflow()
     to the position in memory where xid was logged to.
 */
 
-int TC_LOG_MMAP::log_xid(THD *thd __attribute__((unused)), my_xid xid)
+int TC_LOG_MMAP::log_xid(Session *thd __attribute__((unused)), my_xid xid)
 {
   int err;
   PAGE *p;
@@ -3883,7 +3883,7 @@ void TC_LOG_BINLOG::close()
   @retval
     1    success
 */
-int TC_LOG_BINLOG::log_xid(THD *thd, my_xid xid)
+int TC_LOG_BINLOG::log_xid(Session *thd, my_xid xid)
 {
   Xid_log_event xle(thd, xid);
   binlog_trx_data *trx_data=

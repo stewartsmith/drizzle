@@ -37,7 +37,7 @@ int Field_datetime::store(const char *from,
   int error;
   uint64_t tmp= 0;
   enum enum_drizzle_timestamp_type func_res;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
 
   func_res= str_to_datetime(from, len, &time_tmp,
                             (TIME_FUZZY_DATE |
@@ -88,7 +88,7 @@ int Field_datetime::store(int64_t nr,
   DRIZZLE_TIME not_used;
   int error;
   int64_t initial_nr= nr;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
                                          (thd->variables.sql_mode &

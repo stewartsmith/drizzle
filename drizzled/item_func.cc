@@ -137,13 +137,13 @@ void Item_func::count_real_length()
 
 void Item_func::signal_divide_by_null()
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
 
 
-Item *Item_func::get_tmp_table_item(THD *thd)
+Item *Item_func::get_tmp_table_item(Session *thd)
 {
   if (!with_sum_func && !const_item() && functype() != SUSERVAR_FUNC)
     return new Item_field(result_field);
@@ -512,7 +512,7 @@ public:
   bool locked;
   pthread_cond_t cond;
   my_thread_id thread_id;
-  void set_thread(THD *thd) { thread_id= thd->thread_id; }
+  void set_thread(Session *thd) { thread_id= thd->thread_id; }
 
   User_level_lock(const unsigned char *key_arg,uint32_t length, ulong id) 
     :key_length(length),count(1),locked(1), thread_id(id)
@@ -589,7 +589,7 @@ void item_user_lock_release(User_level_lock *ull)
 int64_t Item_master_pos_wait::val_int()
 {
   assert(fixed == 1);
-  THD* thd = current_thd;
+  Session* thd = current_thd;
   String *log_name = args[0]->val_str(&value);
   int event_count= 0;
 
@@ -619,7 +619,7 @@ void debug_sync_point(const char* lock_name, uint32_t lock_timeout)
 
 int64_t Item_func_last_insert_id::val_int()
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   assert(fixed == 1);
   if (arg_count)
   {
@@ -640,7 +640,7 @@ int64_t Item_func_last_insert_id::val_int()
 }
 
 
-bool Item_func_last_insert_id::fix_fields(THD *thd, Item **ref)
+bool Item_func_last_insert_id::fix_fields(Session *thd, Item **ref)
 {
   return Item_int_func::fix_fields(thd, ref);
 }
@@ -654,7 +654,7 @@ int64_t Item_func_benchmark::val_int()
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
   my_decimal tmp_decimal;
-  THD *thd=current_thd;
+  Session *thd=current_thd;
   uint64_t loop_count;
 
   loop_count= (uint64_t) args[0]->val_int();
@@ -762,7 +762,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
   SELECT @a:= ).
 */
 
-bool Item_func_set_user_var::fix_fields(THD *thd, Item **ref)
+bool Item_func_set_user_var::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
   /* fix_fields will call Item_func_set_user_var::fix_length_and_dec */
@@ -1463,7 +1463,7 @@ int64_t Item_func_get_user_var::val_int()
 
 */
 
-int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
+int get_var_with_binlog(Session *thd, enum_sql_command sql_command,
                         LEX_STRING &name, user_var_entry **out_entry)
 {
   BINLOG_USER_VAR_EVENT *user_var_event;
@@ -1579,7 +1579,7 @@ err:
 
 void Item_func_get_user_var::fix_length_and_dec()
 {
-  THD *thd=current_thd;
+  Session *thd=current_thd;
   int error;
   maybe_null=1;
   decimals=NOT_FIXED_DEC;
@@ -1667,7 +1667,7 @@ bool Item_func_get_user_var::eq(const Item *item,
 }
 
 
-bool Item_user_var_as_out_param::fix_fields(THD *thd, Item **ref)
+bool Item_user_var_as_out_param::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
   if (Item::fix_fields(thd, ref) ||
@@ -1748,7 +1748,7 @@ Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
 
 
 bool
-Item_func_get_system_var::fix_fields(THD *thd, Item **ref)
+Item_func_get_system_var::fix_fields(Session *thd, Item **ref)
 {
   Item *item;
 
@@ -1803,7 +1803,7 @@ int64_t Item_func_bit_xor::val_int()
 */
 
 
-Item *get_system_var(THD *thd, enum_var_type var_type, LEX_STRING name,
+Item *get_system_var(Session *thd, enum_var_type var_type, LEX_STRING name,
 		     LEX_STRING component)
 {
   sys_var *var;
@@ -1896,7 +1896,7 @@ int64_t Item_func_is_used_lock::val_int()
 int64_t Item_func_row_count::val_int()
 {
   assert(fixed == 1);
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   return thd->row_count_func;
 }
@@ -1904,7 +1904,7 @@ int64_t Item_func_row_count::val_int()
 int64_t Item_func_found_rows::val_int()
 {
   assert(fixed == 1);
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   return thd->found_rows();
 }

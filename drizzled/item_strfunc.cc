@@ -46,7 +46,7 @@ String my_empty_string("",default_charset_info);
 
 
 
-bool Item_str_func::fix_fields(THD *thd, Item **ref)
+bool Item_str_func::fix_fields(Session *thd, Item **ref)
 {
   bool res= Item_func::fix_fields(thd, ref);
   /*
@@ -1276,7 +1276,7 @@ Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs
 String *Item_func_database::val_str(String *str)
 {
   assert(fixed == 1);
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   if (thd->db == NULL)
   {
     null_value= 1;
@@ -1317,7 +1317,7 @@ bool Item_func_user::init(const char *user, const char *host)
 }
 
 
-bool Item_func_user::fix_fields(THD *thd, Item **ref)
+bool Item_func_user::fix_fields(Session *thd, Item **ref)
 {
   return (Item_func_sysconst::fix_fields(thd, ref) ||
           init(thd->main_security_ctx.user,
@@ -1325,7 +1325,7 @@ bool Item_func_user::fix_fields(THD *thd, Item **ref)
 }
 
 
-bool Item_func_current_user::fix_fields(THD *thd, Item **ref)
+bool Item_func_current_user::fix_fields(Session *thd, Item **ref)
 {
   if (Item_func_sysconst::fix_fields(thd, ref))
     return true;
@@ -1509,7 +1509,7 @@ String *Item_func_elt::val_str(String *str)
 }
 
 
-void Item_func_make_set::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_func_make_set::split_sum_func(Session *thd, Item **ref_pointer_array,
 					List<Item> &fields)
 {
   item->split_sum_func2(thd, ref_pointer_array, fields, &item, true);
@@ -1603,7 +1603,7 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
     return 0;
 
   /*
-    THD::change_item_tree() should be called only if the tree was
+    Session::change_item_tree() should be called only if the tree was
     really transformed, i.e. when a new item has been created.
     Otherwise we'll be allocating a lot of unnecessary memory for
     change records at each execution.
@@ -2540,7 +2540,7 @@ String *Item_func_uuid::val_str(String *str)
 {
   assert(fixed == 1);
   char *s;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   pthread_mutex_lock(&LOCK_uuid_generator);
   if (! uuid_time) /* first UUID() call. initializing data */

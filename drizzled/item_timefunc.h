@@ -612,7 +612,7 @@ public:
 
 class Item_func_from_unixtime :public Item_date_func
 {
-  THD *thd;
+  Session *thd;
  public:
   Item_func_from_unixtime(Item *a) :Item_date_func(a) {}
   int64_t val_int();

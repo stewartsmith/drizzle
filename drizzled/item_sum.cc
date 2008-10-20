@@ -46,7 +46,7 @@
     FALSE  otherwise
 */
  
-bool Item_sum::init_sum_func_check(THD *thd)
+bool Item_sum::init_sum_func_check(Session *thd)
 {
   if (!thd->lex->allow_sum_func)
   {
@@ -117,7 +117,7 @@ bool Item_sum::init_sum_func_check(THD *thd)
     FALSE  otherwise
 */
  
-bool Item_sum::check_sum_func(THD *thd, Item **ref)
+bool Item_sum::check_sum_func(Session *thd, Item **ref)
 {
   bool invalid= false;
   nesting_map allow_sum_func= thd->lex->allow_sum_func;
@@ -286,7 +286,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
     TRUE   otherwise
 */  
 
-bool Item_sum::register_sum_func(THD *thd, Item **ref)
+bool Item_sum::register_sum_func(Session *thd, Item **ref)
 {
   SELECT_LEX *sl;
   nesting_map allow_sum_func= thd->lex->allow_sum_func;
@@ -374,7 +374,7 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   Constructor used in processing select with temporary tebles.
 */
 
-Item_sum::Item_sum(THD *thd, Item_sum *item):
+Item_sum::Item_sum(Session *thd, Item_sum *item):
   Item_result_field(thd, item), arg_count(item->arg_count),
   aggr_sel(item->aggr_sel),
   nest_level(item->nest_level), aggr_level(item->aggr_level),
@@ -439,7 +439,7 @@ void Item_sum::fix_num_length_and_dec()
   max_length=float_length(decimals);
 }
 
-Item *Item_sum::get_tmp_table_item(THD *thd)
+Item *Item_sum::get_tmp_table_item(Session *thd)
 {
   Item_sum* sum_item= (Item_sum *) copy_or_same(thd);
   if (sum_item && sum_item->result_field)	   // If not a const sum func
@@ -559,7 +559,7 @@ my_decimal *Item_sum_int::val_decimal(my_decimal *decimal_value)
 
 
 bool
-Item_sum_num::fix_fields(THD *thd, Item **ref)
+Item_sum_num::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
 
@@ -588,7 +588,7 @@ Item_sum_num::fix_fields(THD *thd, Item **ref)
 }
 
 
-Item_sum_hybrid::Item_sum_hybrid(THD *thd, Item_sum_hybrid *item)
+Item_sum_hybrid::Item_sum_hybrid(Session *thd, Item_sum_hybrid *item)
   :Item_sum(thd, item), value(item->value), hybrid_type(item->hybrid_type),
   hybrid_field_type(item->hybrid_field_type), cmp_sign(item->cmp_sign),
   was_values(item->was_values)
@@ -618,7 +618,7 @@ Item_sum_hybrid::Item_sum_hybrid(THD *thd, Item_sum_hybrid *item)
 }
 
 bool
-Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
+Item_sum_hybrid::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
 
@@ -719,7 +719,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   @todo
   check if the following assignments are really needed
 */
-Item_sum_sum::Item_sum_sum(THD *thd, Item_sum_sum *item) 
+Item_sum_sum::Item_sum_sum(Session *thd, Item_sum_sum *item) 
   :Item_sum_num(thd, item), hybrid_type(item->hybrid_type),
    curr_dec_buff(item->curr_dec_buff)
 {
@@ -733,7 +733,7 @@ Item_sum_sum::Item_sum_sum(THD *thd, Item_sum_sum *item)
     sum= item->sum;
 }
 
-Item *Item_sum_sum::copy_or_same(THD* thd)
+Item *Item_sum_sum::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_sum(thd, this);
 }
@@ -884,7 +884,7 @@ Item_sum_distinct::Item_sum_distinct(Item *item_arg)
 }
 
 
-Item_sum_distinct::Item_sum_distinct(THD *thd, Item_sum_distinct *original)
+Item_sum_distinct::Item_sum_distinct(Session *thd, Item_sum_distinct *original)
   :Item_sum_num(thd, original), val(original->val), tree(0),
   table_field_type(original->table_field_type)
 {
@@ -970,7 +970,7 @@ void Item_sum_distinct::fix_length_and_dec()
   @todo
   check that the case of CHAR(0) works OK
 */
-bool Item_sum_distinct::setup(THD *thd)
+bool Item_sum_distinct::setup(Session *thd)
 {
   List<Create_field> field_list;
   Create_field field_def;                              /* field definition */
@@ -1148,7 +1148,7 @@ Item_sum_avg_distinct::calculate_val_and_count()
 }
 
 
-Item *Item_sum_count::copy_or_same(THD* thd)
+Item *Item_sum_count::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_count(thd, this);
 }
@@ -1207,7 +1207,7 @@ void Item_sum_avg::fix_length_and_dec()
 }
 
 
-Item *Item_sum_avg::copy_or_same(THD* thd)
+Item *Item_sum_avg::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_avg(thd, this);
 }
@@ -1312,7 +1312,7 @@ double Item_sum_std::val_real()
   return sqrt(nr);
 }
 
-Item *Item_sum_std::copy_or_same(THD* thd)
+Item *Item_sum_std::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_std(thd, this);
 }
@@ -1366,7 +1366,7 @@ static double variance_fp_recurrence_result(double s, uint64_t count, bool is_sa
 }
 
 
-Item_sum_variance::Item_sum_variance(THD *thd, Item_sum_variance *item):
+Item_sum_variance::Item_sum_variance(Session *thd, Item_sum_variance *item):
   Item_sum_num(thd, item), hybrid_type(item->hybrid_type),
     count(item->count), sample(item->sample),
     prec_increment(item->prec_increment)
@@ -1412,7 +1412,7 @@ void Item_sum_variance::fix_length_and_dec()
 }
 
 
-Item *Item_sum_variance::copy_or_same(THD* thd)
+Item *Item_sum_variance::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_variance(thd, this);
 }
@@ -1692,7 +1692,7 @@ void Item_sum_hybrid::no_rows_in_result()
 }
 
 
-Item *Item_sum_min::copy_or_same(THD* thd)
+Item *Item_sum_min::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_min(thd, this);
 }
@@ -1756,7 +1756,7 @@ bool Item_sum_min::add()
 }
 
 
-Item *Item_sum_max::copy_or_same(THD* thd)
+Item *Item_sum_max::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_max(thd, this);
 }
@@ -1834,7 +1834,7 @@ void Item_sum_bit::clear()
   bits= reset_bits;
 }
 
-Item *Item_sum_or::copy_or_same(THD* thd)
+Item *Item_sum_or::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_or(thd, this);
 }
@@ -1848,7 +1848,7 @@ bool Item_sum_or::add()
   return 0;
 }
 
-Item *Item_sum_xor::copy_or_same(THD* thd)
+Item *Item_sum_xor::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_xor(thd, this);
 }
@@ -1862,7 +1862,7 @@ bool Item_sum_xor::add()
   return 0;
 }
 
-Item *Item_sum_and::copy_or_same(THD* thd)
+Item *Item_sum_and::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_sum_and(thd, this);
 }
@@ -2528,7 +2528,7 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 }
 
 
-bool Item_sum_count_distinct::setup(THD *thd)
+bool Item_sum_count_distinct::setup(Session *thd)
 {
   List<Item> list;
   SELECT_LEX *select_lex= thd->lex->current_select;
@@ -2640,7 +2640,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
 }
 
 
-Item *Item_sum_count_distinct::copy_or_same(THD* thd) 
+Item *Item_sum_count_distinct::copy_or_same(Session* thd) 
 {
   return new (thd->mem_root) Item_sum_count_distinct(thd, this);
 }
@@ -2958,7 +2958,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 }
 
 
-Item_func_group_concat::Item_func_group_concat(THD *thd,
+Item_func_group_concat::Item_func_group_concat(Session *thd,
                                                Item_func_group_concat *item)
   :Item_sum(thd, item),
   tmp_table_param(item->tmp_table_param),
@@ -3007,7 +3007,7 @@ void Item_func_group_concat::cleanup()
     tmp_table_param= 0;
     if (table)
     {
-      THD *thd= table->in_use;
+      Session *thd= table->in_use;
       table->free_tmp_table(thd);
       table= 0;
       if (tree)
@@ -3034,7 +3034,7 @@ void Item_func_group_concat::cleanup()
 }
 
 
-Item *Item_func_group_concat::copy_or_same(THD* thd)
+Item *Item_func_group_concat::copy_or_same(Session* thd)
 {
   return new (thd->mem_root) Item_func_group_concat(thd, this);
 }
@@ -3103,7 +3103,7 @@ bool Item_func_group_concat::add()
 
 
 bool
-Item_func_group_concat::fix_fields(THD *thd, Item **ref)
+Item_func_group_concat::fix_fields(Session *thd, Item **ref)
 {
   uint32_t i;                       /* for loop variable */
   assert(fixed == 0);
@@ -3166,7 +3166,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
 }
 
 
-bool Item_func_group_concat::setup(THD *thd)
+bool Item_func_group_concat::setup(Session *thd)
 {
   List<Item> list;
   SELECT_LEX *select_lex= thd->lex->current_select;

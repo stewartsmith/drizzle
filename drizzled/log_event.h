@@ -547,7 +547,7 @@ enum Int_event_type
 
 class String;
 class DRIZZLE_BIN_LOG;
-class THD;
+class Session;
 
 class Format_description_log_event;
 class Relay_log_info;
@@ -785,10 +785,10 @@ public:
   */
   ulong slave_exec_mode;
 
-  THD* thd;
+  Session* thd;
 
   Log_event();
-  Log_event(THD* thd_arg, uint16_t flags_arg, bool cache_stmt);
+  Log_event(Session* thd_arg, uint16_t flags_arg, bool cache_stmt);
   /*
     read_log_event() functions read an event from a binlog or relay
     log; used by SHOW BINLOG EVENTS, the binlog_dump thread on the
@@ -854,7 +854,7 @@ public:
   { return 0; }
   inline time_t get_time()
   {
-    THD *tmp_thd;
+    Session *tmp_thd;
     if (when)
       return when;
     if (thd)
@@ -1452,9 +1452,9 @@ public:
   uint32_t charset_database_number;
 
 
-  Query_log_event(THD* thd_arg, const char* query_arg, ulong query_length,
+  Query_log_event(Session* thd_arg, const char* query_arg, ulong query_length,
                   bool using_trans, bool suppress_use,
-                  THD::killed_state killed_err_arg= THD::KILLED_NO_VALUE);
+                  Session::killed_state killed_err_arg= Session::KILLED_NO_VALUE);
   const char* get_db() { return db; }
   void pack_info(Protocol* protocol);
 
@@ -1551,7 +1551,7 @@ public:
   std::string master_log;
   uint16_t master_port;
 
-  Slave_log_event(THD* thd_arg, Relay_log_info* rli);
+  Slave_log_event(Session* thd_arg, Relay_log_info* rli);
   void pack_info(Protocol* protocol);
 
   Slave_log_event(const char* buf, uint32_t event_len);
@@ -1815,7 +1815,7 @@ public:
   String field_lens_buf;
   String fields_buf;
 
-  Load_log_event(THD* thd, sql_exchange* ex, const char* db_arg,
+  Load_log_event(Session* thd, sql_exchange* ex, const char* db_arg,
 		 const char* table_name_arg,
 		 List<Item>& fields_arg, enum enum_duplicates handle_dup, bool ignore,
 		 bool using_trans);
@@ -2050,7 +2050,7 @@ public:
   uint64_t val;
   unsigned char type;
 
-  Intvar_log_event(THD* thd_arg,unsigned char type_arg, uint64_t val_arg)
+  Intvar_log_event(Session* thd_arg,unsigned char type_arg, uint64_t val_arg)
     :Log_event(thd_arg,0,0),val(val_arg),type(type_arg)
   {}
   void pack_info(Protocol* protocol);
@@ -2115,7 +2115,7 @@ class Rand_log_event: public Log_event
   uint64_t seed1;
   uint64_t seed2;
 
-  Rand_log_event(THD* thd_arg, uint64_t seed1_arg, uint64_t seed2_arg)
+  Rand_log_event(Session* thd_arg, uint64_t seed1_arg, uint64_t seed2_arg)
     :Log_event(thd_arg,0,0),seed1(seed1_arg),seed2(seed2_arg)
   {}
   void pack_info(Protocol* protocol);
@@ -2147,7 +2147,7 @@ class Xid_log_event: public Log_event
  public:
    my_xid xid;
 
-  Xid_log_event(THD* thd_arg, my_xid x): Log_event(thd_arg,0,0), xid(x) {}
+  Xid_log_event(Session* thd_arg, my_xid x): Log_event(thd_arg,0,0), xid(x) {}
   void pack_info(Protocol* protocol);
 
   Xid_log_event(const char* buf,
@@ -2182,7 +2182,7 @@ public:
   Item_result type;
   uint32_t charset_number;
   bool is_null;
-  User_var_log_event(THD* thd_arg __attribute__((unused)),
+  User_var_log_event(Session* thd_arg __attribute__((unused)),
                      char *name_arg, uint32_t name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
 		     uint32_t charset_number_arg)
@@ -2348,7 +2348,7 @@ public:
   uint32_t file_id;
   bool inited_from_old;
 
-  Create_file_log_event(THD* thd, sql_exchange* ex, const char* db_arg,
+  Create_file_log_event(Session* thd, sql_exchange* ex, const char* db_arg,
 			const char* table_name_arg,
 			List<Item>& fields_arg,
 			enum enum_duplicates handle_dup, bool ignore,
@@ -2412,7 +2412,7 @@ public:
   */
   const char* db;
 
-  Append_block_log_event(THD* thd, const char* db_arg, unsigned char* block_arg,
+  Append_block_log_event(Session* thd, const char* db_arg, unsigned char* block_arg,
 			 uint32_t block_len_arg, bool using_trans);
   void pack_info(Protocol* protocol);
   virtual int get_create_or_append() const;
@@ -2444,7 +2444,7 @@ public:
   uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-  Delete_file_log_event(THD* thd, const char* db_arg, bool using_trans);
+  Delete_file_log_event(Session* thd, const char* db_arg, bool using_trans);
   void pack_info(Protocol* protocol);
 
   Delete_file_log_event(const char* buf, uint32_t event_len,
@@ -2473,7 +2473,7 @@ public:
   uint32_t file_id;
   const char* db; /* see comment in Append_block_log_event */
 
-  Execute_load_log_event(THD* thd, const char* db_arg, bool using_trans);
+  Execute_load_log_event(Session* thd, const char* db_arg, bool using_trans);
   void pack_info(Protocol* protocol);
 
   Execute_load_log_event(const char* buf, uint32_t event_len,
@@ -2503,10 +2503,10 @@ private:
 class Begin_load_query_log_event: public Append_block_log_event
 {
 public:
-  Begin_load_query_log_event(THD* thd_arg, const char *db_arg,
+  Begin_load_query_log_event(Session* thd_arg, const char *db_arg,
                              unsigned char* block_arg, uint32_t block_len_arg,
                              bool using_trans);
-  Begin_load_query_log_event(THD* thd);
+  Begin_load_query_log_event(Session* thd);
   int get_create_or_append() const;
   Begin_load_query_log_event(const char* buf, uint32_t event_len,
                              const Format_description_log_event
@@ -2548,13 +2548,13 @@ public:
   */
   enum_load_dup_handling dup_handling;
 
-  Execute_load_query_log_event(THD* thd, const char* query_arg,
+  Execute_load_query_log_event(Session* thd, const char* query_arg,
                                ulong query_length, uint32_t fn_pos_start_arg,
                                uint32_t fn_pos_end_arg,
                                enum_load_dup_handling dup_handling_arg,
                                bool using_trans, bool suppress_use,
-                               THD::killed_state
-                               killed_err_arg= THD::KILLED_NO_VALUE);
+                               Session::killed_state
+                               killed_err_arg= Session::KILLED_NO_VALUE);
   void pack_info(Protocol* protocol);
   Execute_load_query_log_event(const char* buf, uint32_t event_len,
                                const Format_description_log_event
@@ -2865,7 +2865,7 @@ public:
   void clear_flags(flag_set flag) { m_flags &= ~flag; }
   flag_set get_flags(flag_set flag) const { return m_flags & flag; }
 
-  Table_map_log_event(THD *thd, Table *tbl, ulong tid, 
+  Table_map_log_event(Session *thd, Table *tbl, ulong tid, 
 		      bool is_transactional, uint16_t flags);
   Table_map_log_event(const char *buf, uint32_t event_len, 
                       const Format_description_log_event *description_event);
@@ -3016,7 +3016,7 @@ protected:
      The constructors are protected since you're supposed to inherit
      this class, not create instances of this class.
   */
-  Rows_log_event(THD*, Table*, ulong table_id, 
+  Rows_log_event(Session*, Table*, ulong table_id, 
 		 MY_BITMAP const *cols, bool is_transactional);
   Rows_log_event(const char *row_data, uint32_t event_len, 
 		 Log_event_type event_type,
@@ -3146,15 +3146,15 @@ class Write_rows_log_event : public Rows_log_event
 public:
   enum 
   {
-    /* Support interface to THD::binlog_prepare_pending_rows_event */
+    /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = WRITE_ROWS_EVENT
   };
 
-  Write_rows_log_event(THD*, Table*, ulong table_id, 
+  Write_rows_log_event(Session*, Table*, ulong table_id, 
 		       bool is_transactional);
   Write_rows_log_event(const char *buf, uint32_t event_len, 
                        const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(THD *thd, Table *table,
+  static bool binlog_row_logging_function(Session *thd, Table *table,
                                           bool is_transactional,
                                           const unsigned char *before_record
                                           __attribute__((unused)),
@@ -3189,11 +3189,11 @@ class Update_rows_log_event : public Rows_log_event
 public:
   enum 
   {
-    /* Support interface to THD::binlog_prepare_pending_rows_event */
+    /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = UPDATE_ROWS_EVENT
   };
 
-  Update_rows_log_event(THD*, Table*, ulong table_id,
+  Update_rows_log_event(Session*, Table*, ulong table_id,
                         bool is_transactional);
 
   void init(MY_BITMAP const *cols);
@@ -3203,7 +3203,7 @@ public:
   Update_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
 
-  static bool binlog_row_logging_function(THD *thd, Table *table,
+  static bool binlog_row_logging_function(Session *thd, Table *table,
                                           bool is_transactional,
                                           const unsigned char *before_record,
                                           const unsigned char *after_record)
@@ -3250,15 +3250,15 @@ class Delete_rows_log_event : public Rows_log_event
 public:
   enum 
   {
-    /* Support interface to THD::binlog_prepare_pending_rows_event */
+    /* Support interface to Session::binlog_prepare_pending_rows_event */
     TYPE_CODE = DELETE_ROWS_EVENT
   };
 
-  Delete_rows_log_event(THD*, Table*, ulong, 
+  Delete_rows_log_event(Session*, Table*, ulong, 
 			bool is_transactional);
   Delete_rows_log_event(const char *buf, uint32_t event_len, 
 			const Format_description_log_event *description_event);
-  static bool binlog_row_logging_function(THD *thd, Table *table,
+  static bool binlog_row_logging_function(Session *thd, Table *table,
                                           bool is_transactional,
                                           const unsigned char *before_record,
                                           const unsigned char *after_record
@@ -3314,7 +3314,7 @@ protected:
 */
 class Incident_log_event : public Log_event {
 public:
-  Incident_log_event(THD *thd_arg, Incident incident)
+  Incident_log_event(Session *thd_arg, Incident incident)
     : Log_event(thd_arg, 0, false), m_incident(incident)
   {
     m_message.str= NULL;                    /* Just as a precaution */
@@ -3322,7 +3322,7 @@ public:
     return;
   }
 
-  Incident_log_event(THD *thd_arg, Incident incident, LEX_STRING const msg)
+  Incident_log_event(Session *thd_arg, Incident incident, LEX_STRING const msg)
     : Log_event(thd_arg, 0, false), m_incident(incident)
   {
     m_message= msg;

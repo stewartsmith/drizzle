@@ -418,7 +418,7 @@ public:
   Table    *tmp_table;
   /// used to store 2 possible tmp table of SELECT
   Table    *exec_tmp_table1, *exec_tmp_table2;
-  THD	   *thd;
+  Session	   *thd;
   Item_sum  **sum_funcs, ***sum_funcs_end;
   /** second copy of sumfuncs (for queries with 2 temporary tables */
   Item_sum  **sum_funcs2, ***sum_funcs_end2;
@@ -516,14 +516,14 @@ public:
   JOIN_TAB *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
-  JOIN(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
+  JOIN(Session *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
     :fields_list(fields_arg), sj_subselects(thd_arg->mem_root, 4)
   {
     init(thd_arg, fields_arg, select_options_arg, result_arg);
   }
 
-  void init(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
+  void init(Session *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
   {
     join_tab= join_tab_save= 0;
@@ -648,20 +648,20 @@ void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
-Table *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
+Table *create_tmp_table(Session *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
-void free_tmp_table(THD *thd, Table *entry);
+void free_tmp_table(Session *thd, Table *entry);
 void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param, 
                        List<Item> &fields, bool reset_with_sum_func);
-bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
+bool setup_copy_fields(Session *thd, TMP_TABLE_PARAM *param,
 		       Item **ref_pointer_array,
 		       List<Item> &new_list1, List<Item> &new_list2,
 		       uint32_t elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-Field* create_tmp_field_from_field(THD *thd, Field* org_field,
+Field* create_tmp_field_from_field(Session *thd, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length);
                                                                       
@@ -679,7 +679,7 @@ class store_key :public Sql_alloc
 public:
   bool null_key; /* true <=> the value of the key has a null part */
   enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
-  store_key(THD *thd, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
+  store_key(Session *thd, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
     :null_key(0), null_ptr(null), err(0)
   {
     if (field_arg->type() == DRIZZLE_TYPE_BLOB)
@@ -709,7 +709,7 @@ public:
   enum store_key_result copy()
   {
     enum store_key_result result;
-    THD *thd= to_field->table->in_use;
+    Session *thd= to_field->table->in_use;
     enum_check_fields saved_count_cuted_fields= thd->count_cuted_fields;
 
     thd->count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -735,7 +735,7 @@ class store_key_field: public store_key
   Copy_field copy_field;
   const char *field_name;
  public:
-  store_key_field(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_field(Session *thd, Field *to_field_arg, unsigned char *ptr,
                   unsigned char *null_ptr_arg,
 		  uint32_t length, Field *from_field, const char *name_arg)
     :store_key(thd, to_field_arg,ptr,
@@ -764,7 +764,7 @@ class store_key_item :public store_key
  protected:
   Item *item;
 public:
-  store_key_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_item(Session *thd, Field *to_field_arg, unsigned char *ptr,
                  unsigned char *null_ptr_arg, uint32_t length, Item *item_arg)
     :store_key(thd, to_field_arg, ptr,
 	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
@@ -786,7 +786,7 @@ class store_key_const_item :public store_key_item
 {
   bool inited;
 public:
-  store_key_const_item(THD *thd, Field *to_field_arg, unsigned char *ptr,
+  store_key_const_item(Session *thd, Field *to_field_arg, unsigned char *ptr,
 		       unsigned char *null_ptr_arg, uint32_t length,
 		       Item *item_arg)
     :store_key_item(thd, to_field_arg,ptr,
@@ -814,8 +814,8 @@ protected:
   }
 };
 
-bool cp_buffer_from_ref(THD *thd, TABLE_REF *ref);
+bool cp_buffer_from_ref(Session *thd, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);
 int safe_index_read(JOIN_TAB *tab);
-COND *remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value);
+COND *remove_eq_conds(Session *thd, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);

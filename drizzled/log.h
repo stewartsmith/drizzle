@@ -39,7 +39,7 @@ class TC_LOG
 
   virtual int open(const char *opt_name)=0;
   virtual void close()=0;
-  virtual int log_xid(THD *thd, my_xid xid)=0;
+  virtual int log_xid(Session *thd, my_xid xid)=0;
   virtual void unlog(ulong cookie, my_xid xid)=0;
 };
 
@@ -50,7 +50,7 @@ public:
   int open(const char *opt_name __attribute__((unused)))
   { return 0; }
   void close(void)                          { }
-  int log_xid(THD *thd __attribute__((unused)),
+  int log_xid(Session *thd __attribute__((unused)),
               my_xid xid __attribute__((unused)))         { return 1; }
   void unlog(ulong cookie __attribute__((unused)),
              my_xid xid __attribute__((unused)))  { }
@@ -97,7 +97,7 @@ class TC_LOG_MMAP: public TC_LOG
   TC_LOG_MMAP(): inited(0) {}
   int open(const char *opt_name);
   void close();
-  int log_xid(THD *thd, my_xid xid);
+  int log_xid(Session *thd, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover();
 
@@ -272,7 +272,7 @@ public:
 
   int open(const char *opt_name);
   void close();
-  int log_xid(THD *thd, my_xid xid);
+  int log_xid(Session *thd, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
   bool is_table_mapped(Table *table) const
@@ -283,7 +283,7 @@ public:
   uint64_t table_map_version() const { return m_table_map_version; }
   void update_table_map_version() { ++m_table_map_version; }
 
-  int flush_and_set_pending_rows_event(THD *thd, Rows_log_event* event);
+  int flush_and_set_pending_rows_event(Session *thd, Rows_log_event* event);
 
   void reset_bytes_written()
   {
@@ -297,8 +297,8 @@ public:
   }
   void set_max_size(ulong max_size_arg);
   void signal_update();
-  void wait_for_update_relay_log(THD* thd);
-  int  wait_for_update_bin_log(THD* thd, const struct timespec * timeout);
+  void wait_for_update_relay_log(Session* thd);
+  int  wait_for_update_bin_log(Session* thd, const struct timespec * timeout);
   void set_need_start_event() { need_start_event = 1; }
   void init(bool no_auto_events_arg, ulong max_size);
   void init_pthread_objects();
@@ -315,13 +315,13 @@ public:
   void new_file();
 
   bool write(Log_event* event_info); // binary log write
-  bool write(THD *thd, IO_CACHE *cache, Log_event *commit_event);
+  bool write(Session *thd, IO_CACHE *cache, Log_event *commit_event);
 
   int  write_cache(IO_CACHE *cache, bool lock_log, bool flush_and_sync);
 
-  void start_union_events(THD *thd, query_id_t query_id_param);
-  void stop_union_events(THD *thd);
-  bool is_query_in_union(THD *thd, query_id_t query_id_param);
+  void start_union_events(Session *thd, query_id_t query_id_param);
+  void stop_union_events(Session *thd);
+  bool is_query_in_union(Session *thd, query_id_t query_id_param);
 
   /*
     v stands for vector
@@ -340,7 +340,7 @@ public:
                  uint64_t *decrease_log_space);
   int purge_logs_before_date(time_t purge_time);
   int purge_first_log(Relay_log_info* rli, bool included);
-  bool reset_logs(THD* thd);
+  bool reset_logs(Session* thd);
   void close(uint32_t exiting);
 
   // iterating through the log index file
@@ -392,7 +392,7 @@ public:
   void lock_shared() { rw_rdlock(&LOCK_logger); }
   void lock_exclusive() { rw_wrlock(&LOCK_logger); }
   void unlock() { rw_unlock(&LOCK_logger); }
-  bool log_command(THD *thd, enum enum_server_command command);
+  bool log_command(Session *thd, enum enum_server_command command);
 
   /*
     We want to initialize all log mutexes as soon as possible,
@@ -401,7 +401,7 @@ public:
     this function.
   */
   void init_base();
-  bool flush_logs(THD *thd);
+  bool flush_logs(Session *thd);
   /* Perform basic logger cleanup. this will leave e.g. error log open. */
   void cleanup_base();
   /* Free memory. Nothing could be logged after this function is called */

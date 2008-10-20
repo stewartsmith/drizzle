@@ -57,7 +57,7 @@ inline bool check_and_unset_keyword(const char *dbug_str)
 inline bool
 check_and_unset_inject_value(int value)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   if (thd->error_inject_value == (uint)value)
   {
     thd->error_inject_value= 0;
@@ -94,7 +94,7 @@ check_and_unset_inject_value(int value)
   code is removed.
 
   Sometimes it is necessary to perform error inject actions as a serie
-  of events. In this case one can use one variable on the THD object.
+  of events. In this case one can use one variable on the Session object.
   Thus one sets this value by using e.g. SET_ERROR_INJECT_VALUE(100).
   Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
   ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same

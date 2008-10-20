@@ -29,7 +29,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info);
 static int rr_unpack_from_buffer(READ_RECORD *info);
 static int rr_from_pointers(READ_RECORD *info);
 static int rr_from_cache(READ_RECORD *info);
-static int init_rr_cache(THD *thd, READ_RECORD *info);
+static int init_rr_cache(Session *thd, READ_RECORD *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
@@ -52,7 +52,7 @@ static int rr_index(READ_RECORD *info);
 */
 
 void init_read_record_idx(READ_RECORD *info,
-                          THD *thd __attribute__((unused)),
+                          Session *thd __attribute__((unused)),
                           Table *table,
                           bool print_error, uint32_t idx)
 {
@@ -139,7 +139,7 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info,THD *thd, Table *table,
+void init_read_record(READ_RECORD *info,Session *thd, Table *table,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_error)
 {
@@ -479,7 +479,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 }
 	/* cacheing of records from a database */
 
-static int init_rr_cache(THD *thd, READ_RECORD *info)
+static int init_rr_cache(Session *thd, READ_RECORD *info)
 {
   uint32_t rec_cache_size;
 

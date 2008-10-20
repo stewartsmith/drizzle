@@ -28,7 +28,7 @@
 int errmsg_initializer(st_plugin_int *plugin);
 int errmsg_finalizer(st_plugin_int *plugin);
 
-bool errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap);
-bool errmsg_printf (THD *thd, int priority, const char *format, ...);
+bool errmsg_vprintf (Session *thd, int priority, const char *format, va_list ap);
+bool errmsg_printf (Session *thd, int priority, const char *format, ...);
 
 #endif /* DRIZZLED_ERRMSG_H */

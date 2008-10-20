@@ -31,7 +31,7 @@ public:
   Item_func_connection_id() {}
   const char *func_name() const { return "connection_id"; }
   void fix_length_and_dec();
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *thd, Item **ref);
   int64_t val_int() { assert(fixed == 1); return value; }
   bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }

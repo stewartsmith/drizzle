@@ -27,7 +27,7 @@
   Create right type of Cached_item for an item.
 */
 
-Cached_item *new_Cached_item(THD *thd, Item *item, bool use_result_field)
+Cached_item *new_Cached_item(Session *thd, Item *item, bool use_result_field)
 {
   if (item->real_item()->type() == Item::FIELD_ITEM &&
       !(((Item_field *) (item->real_item()))->field->flags & BLOB_FLAG))
@@ -62,7 +62,7 @@ Cached_item::~Cached_item() {}
     Return true if values have changed
 */
 
-Cached_item_str::Cached_item_str(THD *thd, Item *arg)
+Cached_item_str::Cached_item_str(Session *thd, Item *arg)
   :item(arg), value(cmin(arg->max_length, (uint32_t)thd->variables.max_sort_length))
 {}
 

@@ -204,7 +204,7 @@ public:
   volatile uint32_t slave_run_id;		/* Incremented on slave start */
   pthread_mutex_t log_space_lock;
   pthread_cond_t log_space_cond;
-  THD * sql_thd;
+  Session * sql_thd;
   int32_t events_till_abort;
 
   /* if not set, the value of other members of the structure are undefined */
@@ -289,7 +289,7 @@ public:
   void inc_group_relay_log_pos(uint64_t log_pos,
 			       bool skip_lock=0);
 
-  int32_t wait_for_pos(THD* thd, String* log_name, int64_t log_pos, 
+  int32_t wait_for_pos(Session* thd, String* log_name, int64_t log_pos, 
 		   int64_t timeout);
   void close_temporary_tables();
 
@@ -314,7 +314,7 @@ public:
     return (td);
   }
 
-  void cleanup_context(THD *, bool);
+  void cleanup_context(Session *, bool);
   void clear_tables_to_lock();
 
   /*

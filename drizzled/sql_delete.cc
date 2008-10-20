@@ -30,7 +30,7 @@
   end of dispatch_command().
 */
 
-bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
+bool mysql_delete(Session *thd, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows limit, uint64_t options,
                   bool reset_auto_increment)
 {
@@ -45,7 +45,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
   SELECT_LEX   *select_lex= &thd->lex->select_lex;
-  THD::killed_state killed_status= THD::NOT_KILLED;
+  Session::killed_state killed_status= Session::NOT_KILLED;
   
 
   if (open_and_lock_tables(thd, table_list))
@@ -276,7 +276,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
       table->file->unlock_row();  // Row failed selection, release lock on it
   }
   killed_status= thd->killed;
-  if (killed_status != THD::NOT_KILLED || thd->is_error())
+  if (killed_status != Session::NOT_KILLED || thd->is_error())
     error= 1;					// Aborted
   if (will_batch && (loc_error= table->file->end_bulk_delete()))
   {
@@ -325,7 +325,7 @@ cleanup:
         statement-based; otherwise, 'ha_delete_row()' was used to
         delete specific rows which we might log row-based.
       */
-      int log_result= thd->binlog_query(THD::ROW_QUERY_TYPE,
+      int log_result= thd->binlog_query(Session::ROW_QUERY_TYPE,
                                         thd->query, thd->query_length,
                                         transactional_table, false, killed_status);
 
@@ -367,7 +367,7 @@ err:
     false OK
     true  error
 */
-int mysql_prepare_delete(THD *thd, TableList *table_list, Item **conds)
+int mysql_prepare_delete(Session *thd, TableList *table_list, Item **conds)
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   
@@ -434,7 +434,7 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
     true  Error
 */
 
-int mysql_multi_delete_prepare(THD *thd)
+int mysql_multi_delete_prepare(Session *thd)
 {
   LEX *lex= thd->lex;
   TableList *aux_tables= (TableList *)lex->auxiliary_table_list.first;
@@ -695,7 +695,7 @@ void multi_delete::abort()
     */
     if (mysql_bin_log.is_open())
     {
-      thd->binlog_query(THD::ROW_QUERY_TYPE,
+      thd->binlog_query(Session::ROW_QUERY_TYPE,
                         thd->query, thd->query_length,
                         transactional_tables, false);
     }
@@ -784,7 +784,7 @@ int multi_delete::do_deletes()
 
 bool multi_delete::send_eof()
 {
-  THD::killed_state killed_status= THD::NOT_KILLED;
+  Session::killed_state killed_status= Session::NOT_KILLED;
   thd->set_proc_info("deleting from reference tables");
 
   /* Does deletes for the last n - 1 tables, returns 0 if ok */
@@ -792,7 +792,7 @@ bool multi_delete::send_eof()
 
   /* compute a total error to know if something failed */
   local_error= local_error || error;
-  killed_status= (local_error == 0)? THD::NOT_KILLED : thd->killed;
+  killed_status= (local_error == 0)? Session::NOT_KILLED : thd->killed;
   /* reset used flags */
   thd->set_proc_info("end");
 
@@ -802,7 +802,7 @@ bool multi_delete::send_eof()
     {
       if (local_error == 0)
         thd->clear_error();
-      if (thd->binlog_query(THD::ROW_QUERY_TYPE,
+      if (thd->binlog_query(Session::ROW_QUERY_TYPE,
                             thd->query, thd->query_length,
                             transactional_tables, false, killed_status) &&
           !normal_tables)
@@ -841,7 +841,7 @@ bool multi_delete::send_eof()
   - If we want to have a name lock on the table on exit without errors.
 */
 
-bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok)
+bool mysql_truncate(Session *thd, TableList *table_list, bool dont_send_ok)
 {
   HA_CREATE_INFO create_info;
   char path[FN_REFLEN];

@@ -20,7 +20,7 @@ void Field_iterator_table::set_table(Table *table)
 }
 
 
-Item *Field_iterator_table::create_item(THD *thd)
+Item *Field_iterator_table::create_item(Session *thd)
 {
   SELECT_LEX *select= thd->lex->current_select;
 

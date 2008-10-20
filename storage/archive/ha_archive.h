@@ -134,19 +134,19 @@ public:
   int info(uint);
   void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
-  int optimize(THD* thd, HA_CHECK_OPT* check_opt);
-  int repair(THD* thd, HA_CHECK_OPT* check_opt);
+  int optimize(Session* thd, HA_CHECK_OPT* check_opt);
+  int repair(Session* thd, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   enum row_type get_row_type() const 
   { 
     return ROW_TYPE_COMPRESSED;
   }
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *thd, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
   bool is_crashed() const;
-  int check(THD* thd, HA_CHECK_OPT* check_opt);
-  bool check_and_repair(THD *thd);
+  int check(Session* thd, HA_CHECK_OPT* check_opt);
+  bool check_and_repair(Session *thd);
   uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);
   int unpack_row(azio_stream *file_to_read, unsigned char *record);

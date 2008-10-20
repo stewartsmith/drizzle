@@ -28,7 +28,7 @@
   rli->description_event_for_exec.
 */
 
-void mysql_client_binlog_statement(THD* thd)
+void mysql_client_binlog_statement(Session* thd)
 {
   size_t coded_len= thd->lex->comment.length + 1;
   size_t decoded_len= base64_needed_decoded_length(coded_len);

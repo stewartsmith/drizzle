@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* need to define DRIZZLE_SERVER to get inside the THD */
+/* need to define DRIZZLE_SERVER to get inside the Session */
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_errmsg.h>
@@ -29,7 +29,7 @@
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-bool errmsg_stderr_func (THD *thd __attribute__((unused)),
+bool errmsg_stderr_func (Session *thd __attribute__((unused)),
 			 int priority __attribute__((unused)),
 			 const char *format, va_list ap)
 {

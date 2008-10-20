@@ -483,7 +483,7 @@ err:
                 before reaching the desired log/position
  */
 
-int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
+int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
                                     int64_t log_pos,
                                     int64_t timeout)
 {
@@ -720,7 +720,7 @@ void Relay_log_info::close_temporary_tables()
     Assumes to have a run lock on rli and that no slave thread are running.
 */
 
-int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
+int32_t purge_relay_logs(Relay_log_info* rli, Session *thd, bool just_reset,
                      const char** errmsg)
 {
   int32_t error=0;
@@ -940,7 +940,7 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
   }
 }
 
-void Relay_log_info::cleanup_context(THD *thd, bool error)
+void Relay_log_info::cleanup_context(Session *thd, bool error)
 {
   assert(sql_thd == thd);
   /*

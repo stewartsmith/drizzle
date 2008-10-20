@@ -121,14 +121,14 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-int ha_blackhole::external_lock(THD *thd __attribute__((unused)),
+int ha_blackhole::external_lock(Session *thd __attribute__((unused)),
                                 int lock_type __attribute__((unused)))
 {
   return(0);
 }
 
 
-THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
+THR_LOCK_DATA **ha_blackhole::store_lock(Session *thd,
                                          THR_LOCK_DATA **to,
                                          enum thr_lock_type lock_type)
 {

@@ -56,7 +56,7 @@ const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
 };
 
-static void unlock_locked_tables(THD *thd)
+static void unlock_locked_tables(Session *thd)
 {
   if (thd->locked_tables)
   {
@@ -67,7 +67,7 @@ static void unlock_locked_tables(THD *thd)
 }
 
 
-bool end_active_trans(THD *thd)
+bool end_active_trans(Session *thd)
 {
   int error= 0;
 
@@ -93,7 +93,7 @@ bool end_active_trans(THD *thd)
 }
 
 
-bool begin_trans(THD *thd)
+bool begin_trans(Session *thd)
 {
   int error= 0;
   if (thd->locked_tables)
@@ -118,14 +118,14 @@ bool begin_trans(THD *thd)
 /**
   Returns true if all tables should be ignored.
 */
-inline bool all_tables_not_ok(THD *thd, TableList *tables)
+inline bool all_tables_not_ok(Session *thd, TableList *tables)
 {
   return rpl_filter->is_on() && tables &&
          !rpl_filter->tables_ok(thd->db, tables);
 }
 
 
-static bool some_non_temp_table_to_be_updated(THD *thd, TableList *tables)
+static bool some_non_temp_table_to_be_updated(Session *thd, TableList *tables)
 {
   for (TableList *table= tables; table; table= table->next_global)
   {
@@ -213,7 +213,7 @@ bool is_update_query(enum enum_sql_command command)
   return (sql_command_flags[command] & CF_CHANGES_DATA) != 0;
 }
 
-void execute_init_command(THD *thd, sys_var_str *init_command_var,
+void execute_init_command(Session *thd, sys_var_str *init_command_var,
 			  rw_lock_t *var_mutex)
 {
   Vio* save_vio;
@@ -252,7 +252,7 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
     0   OK
 */
 
-int end_trans(THD *thd, enum enum_mysql_completiontype completion)
+int end_trans(Session *thd, enum enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   int res= 0;
@@ -305,7 +305,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
   if (res < 0)
     my_error(thd->killed_errno(), MYF(0));
   else if ((res == 0) && do_release)
-    thd->killed= THD::KILL_CONNECTION;
+    thd->killed= Session::KILL_CONNECTION;
 
   return(res);
 }
@@ -323,7 +323,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
     1  request of thread shutdown (see dispatch_command() description)
 */
 
-bool do_command(THD *thd)
+bool do_command(Session *thd)
 {
   bool return_value;
   char *packet= 0;
@@ -422,7 +422,7 @@ out:
     @retval false The statement isn't updating any relevant tables.
 */
 
-static bool deny_updates_if_read_only_option(THD *thd,
+static bool deny_updates_if_read_only_option(Session *thd,
                                                 TableList *all_tables)
 {
   if (!opt_readonly)
@@ -488,7 +488,7 @@ static bool deny_updates_if_read_only_option(THD *thd,
     1   request of thread shutdown, i. e. if command is
         COM_QUIT/COM_SHUTDOWN
 */
-bool dispatch_command(enum enum_server_command command, THD *thd,
+bool dispatch_command(enum enum_server_command command, Session *thd,
 		      char* packet, uint32_t packet_length)
 {
   NET *net= &thd->net;
@@ -833,9 +833,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     if (! thd->main_da.is_set())
       thd->send_kill_message();
   }
-  if (thd->killed == THD::KILL_QUERY || thd->killed == THD::KILL_BAD_DATA)
+  if (thd->killed == Session::KILL_QUERY || thd->killed == Session::KILL_BAD_DATA)
   {
-    thd->killed= THD::NOT_KILLED;
+    thd->killed= Session::NOT_KILLED;
     thd->mysys_var->abort= 0;
   }
 
@@ -861,7 +861,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 }
 
 
-void log_slow_statement(THD *thd)
+void log_slow_statement(Session *thd)
 {
   logging_post_do(thd);
 
@@ -895,7 +895,7 @@ void log_slow_statement(THD *thd)
                       in this version of the server.
 */
 
-int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
+int prepare_schema_table(Session *thd, LEX *lex, Table_ident *table_ident,
                          enum enum_schema_tables schema_table_idx)
 {
   SELECT_LEX *schema_select_lex= NULL;
@@ -969,7 +969,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   Read query from packet and store in thd->query.
   Used in COM_QUERY and COM_STMT_PREPARE.
 
-    Sets the following THD variables:
+    Sets the following Session variables:
   - query
   - query_length
 
@@ -979,7 +979,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
     true  error;  In this case thd->fatal_error is set
 */
 
-bool alloc_query(THD *thd, const char *packet, uint32_t packet_length)
+bool alloc_query(Session *thd, const char *packet, uint32_t packet_length)
 {
   /* Remove garbage at start and end of query */
   while (packet_length > 0 && my_isspace(thd->charset(), packet[0]))
@@ -1010,7 +1010,7 @@ bool alloc_query(THD *thd, const char *packet, uint32_t packet_length)
   return false;
 }
 
-static void reset_one_shot_variables(THD *thd) 
+static void reset_one_shot_variables(Session *thd) 
 {
   thd->variables.character_set_client=
     global_system_variables.character_set_client;
@@ -1059,7 +1059,7 @@ static void reset_one_shot_variables(THD *thd)
 */
 
 int
-mysql_execute_command(THD *thd)
+mysql_execute_command(Session *thd)
 {
   int res= false;
   bool need_start_waiting= false; // have protection against global read lock
@@ -2409,7 +2409,7 @@ finish:
   return(res || thd->is_error());
 }
 
-bool execute_sqlcom_select(THD *thd, TableList *all_tables)
+bool execute_sqlcom_select(Session *thd, TableList *all_tables)
 {
   LEX	*lex= thd->lex;
   select_result *result=lex->result;
@@ -2479,7 +2479,7 @@ bool execute_sqlcom_select(THD *thd, TableList *all_tables)
     corresponding exec. (Thus we only have to check in fix_fields.)
   - Passing to check_stack_overrun() prevents the compiler from removing it.
 */
-bool check_stack_overrun(THD *thd, long margin,
+bool check_stack_overrun(Session *thd, long margin,
 			 unsigned char *buf __attribute__((unused)))
 {
   long stack_used;
@@ -2528,26 +2528,26 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 
 /**
- Reset THD part responsible for command processing state.
+ Reset Session part responsible for command processing state.
 
    This needs to be called before execution of every statement
    (prepared or conventional).
    It is not called by substatements of routines.
 
   @todo
-   Make it a method of THD and align its name with the rest of
+   Make it a method of Session and align its name with the rest of
    reset/end/start/init methods.
   @todo
-   Call it after we use THD for queries, not before.
+   Call it after we use Session for queries, not before.
 */
 
-void mysql_reset_thd_for_next_command(THD *thd)
+void mysql_reset_thd_for_next_command(Session *thd)
 {
   thd->free_list= 0;
   thd->select_number= 1;
   /*
     Those two lines below are theoretically unneeded as
-    THD::cleanup_after_query() should take care of this already.
+    Session::cleanup_after_query() should take care of this already.
   */
   thd->auto_inc_intervals_in_cur_stmt_for_binlog.empty();
   thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
@@ -2609,7 +2609,7 @@ bool
 mysql_new_select(LEX *lex, bool move_down)
 {
   SELECT_LEX *select_lex;
-  THD *thd= lex->thd;
+  Session *thd= lex->thd;
 
   if (!(select_lex= new (thd->mem_root) SELECT_LEX()))
     return(1);
@@ -2684,7 +2684,7 @@ mysql_new_select(LEX *lex, bool move_down)
 
 void create_select_for_variable(const char *var_name)
 {
-  THD *thd;
+  Session *thd;
   LEX *lex;
   LEX_STRING tmp, null_lex_string;
   Item *var;
@@ -2739,7 +2739,7 @@ void mysql_init_multi_delete(LEX *lex)
                                the next query in the query text.
 */
 
-void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
+void mysql_parse(Session *thd, const char *inBuf, uint32_t length,
                  const char ** found_semicolon)
 {
   /*
@@ -2817,7 +2817,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
     1	can be ignored
 */
 
-bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint32_t length)
+bool mysql_test_parse_for_slave(Session *thd, char *inBuf, uint32_t length)
 {
   LEX *lex= thd->lex;
   bool error= 0;
@@ -2843,7 +2843,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint32_t length)
     Return 0 if ok
 */
 
-bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
+bool add_field_to_list(Session *thd, LEX_STRING *field_name, enum_field_types type,
 		       char *length, char *decimals,
 		       uint32_t type_modifier,
                        enum column_format_type column_format,
@@ -2940,7 +2940,7 @@ void store_position_for_column(const char *name)
 }
 
 bool
-add_proc_to_list(THD* thd, Item *item)
+add_proc_to_list(Session* thd, Item *item)
 {
   order_st *order;
   Item	**item_ptr;
@@ -2960,7 +2960,7 @@ add_proc_to_list(THD* thd, Item *item)
   save order by and tables in own lists.
 */
 
-bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
+bool add_to_list(Session *thd, SQL_LIST &list,Item *item,bool asc)
 {
   order_st *order;
   if (!(order = (order_st *) thd->alloc(sizeof(order_st))))
@@ -2995,7 +2995,7 @@ bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
     \#	Pointer to TableList element added to the total table list
 */
 
-TableList *st_select_lex::add_table_to_list(THD *thd,
+TableList *st_select_lex::add_table_to_list(Session *thd,
 					     Table_ident *table,
 					     LEX_STRING *alias,
 					     uint32_t table_options,
@@ -3156,7 +3156,7 @@ TableList *st_select_lex::add_table_to_list(THD *thd,
     1   otherwise
 */
 
-bool st_select_lex::init_nested_join(THD *thd)
+bool st_select_lex::init_nested_join(Session *thd)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -3192,7 +3192,7 @@ bool st_select_lex::init_nested_join(THD *thd)
     - 0, otherwise
 */
 
-TableList *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
+TableList *st_select_lex::end_nested_join(Session *thd __attribute__((unused)))
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -3233,7 +3233,7 @@ TableList *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
     \#  Pointer to TableList element created for the new nested join
 */
 
-TableList *st_select_lex::nest_last_join(THD *thd)
+TableList *st_select_lex::nest_last_join(Session *thd)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -3392,7 +3392,7 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     0     on success
 */
 
-bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
+bool st_select_lex_unit::add_fake_select_lex(Session *thd_arg)
 {
   SELECT_LEX *first_sl= first_select();
   assert(!fake_select_lex);
@@ -3449,7 +3449,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
 */
 
 bool
-push_new_name_resolution_context(THD *thd,
+push_new_name_resolution_context(Session *thd,
                                  TableList *left_op, TableList *right_op)
 {
   Name_resolution_context *on_context;
@@ -3558,7 +3558,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; thd->killed is set or thd->is_error() is true
 */
 
-bool reload_cache(THD *thd, ulong options, TableList *tables,
+bool reload_cache(Session *thd, ulong options, TableList *tables,
                           bool *write_to_binlog)
 {
   bool result=0;
@@ -3682,13 +3682,13 @@ bool reload_cache(THD *thd, ulong options, TableList *tables,
 */
 
 static unsigned int
-kill_one_thread(THD *thd __attribute__((unused)),
+kill_one_thread(Session *thd __attribute__((unused)),
                 ulong id, bool only_kill_query)
 {
-  THD *tmp;
+  Session *tmp;
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
     if (tmp->command == COM_DAEMON)
@@ -3702,7 +3702,7 @@ kill_one_thread(THD *thd __attribute__((unused)),
   pthread_mutex_unlock(&LOCK_thread_count);
   if (tmp)
   {
-    tmp->awake(only_kill_query ? THD::KILL_QUERY : THD::KILL_CONNECTION);
+    tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
     error=0;
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
@@ -3720,7 +3720,7 @@ kill_one_thread(THD *thd __attribute__((unused)),
     only_kill_query     Should it kill the query or the connection
 */
 
-void sql_kill(THD *thd, ulong id, bool only_kill_query)
+void sql_kill(Session *thd, ulong id, bool only_kill_query)
 {
   uint32_t error;
   if (!(error= kill_one_thread(thd, id, only_kill_query)))
@@ -3732,7 +3732,7 @@ void sql_kill(THD *thd, ulong id, bool only_kill_query)
 
 /** If pointer is not a null pointer, append filename to it. */
 
-bool append_file_to_dir(THD *thd, const char **filename_ptr,
+bool append_file_to_dir(Session *thd, const char **filename_ptr,
                         const char *table_name)
 {
   char buff[FN_REFLEN],*ptr, *end;
@@ -3768,7 +3768,7 @@ bool append_file_to_dir(THD *thd, const char **filename_ptr,
 
 bool check_simple_select()
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   LEX *lex= thd->lex;
   if (lex->current_select != &lex->select_lex)
   {
@@ -3862,7 +3862,7 @@ Item * all_any_subquery_creator(Item *left_expr,
     true  Error
 */
 
-bool multi_update_precheck(THD *thd,
+bool multi_update_precheck(Session *thd,
                            TableList *tables __attribute__((unused)))
 {
   const char *msg= 0;
@@ -3899,7 +3899,7 @@ bool multi_update_precheck(THD *thd,
     true  error
 */
 
-bool multi_delete_precheck(THD *thd,
+bool multi_delete_precheck(Session *thd,
                            TableList *tables __attribute__((unused)))
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
@@ -4027,7 +4027,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     true  Error
 */
 
-bool update_precheck(THD *thd, TableList *tables __attribute__((unused)))
+bool update_precheck(Session *thd, TableList *tables __attribute__((unused)))
 {
   if (thd->lex->select_lex.item_list.elements != thd->lex->value_list.elements)
   {
@@ -4050,7 +4050,7 @@ bool update_precheck(THD *thd, TableList *tables __attribute__((unused)))
     true   error
 */
 
-bool insert_precheck(THD *thd, TableList *tables __attribute__((unused)))
+bool insert_precheck(Session *thd, TableList *tables __attribute__((unused)))
 {
   LEX *lex= thd->lex;
 
@@ -4080,7 +4080,7 @@ bool insert_precheck(THD *thd, TableList *tables __attribute__((unused)))
     true   Error
 */
 
-bool create_table_precheck(THD *thd __attribute__((unused)),
+bool create_table_precheck(Session *thd __attribute__((unused)),
                            TableList *tables __attribute__((unused)),
                            TableList *create_table)
 {
@@ -4108,7 +4108,7 @@ bool create_table_precheck(THD *thd __attribute__((unused)),
     negated expression
 */
 
-Item *negate_expression(THD *thd, Item *expr)
+Item *negate_expression(Session *thd, Item *expr)
 {
   Item *negated;
   if (expr->type() == Item::FUNC_ITEM &&
@@ -4289,7 +4289,7 @@ extern int MYSQLparse(void *thd); // from sql_yacc.cc
     @retval true on parsing error.
 */
 
-bool parse_sql(THD *thd, Lex_input_stream *lip)
+bool parse_sql(Session *thd, Lex_input_stream *lip)
 {
   assert(thd->m_lip == NULL);
 

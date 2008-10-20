@@ -76,7 +76,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 */
 
 int
-check_user(THD *thd, const char *passwd,
+check_user(Session *thd, const char *passwd,
            uint32_t passwd_len, const char *db,
            bool check_count)
 {
@@ -161,7 +161,7 @@ extern "C" void free_user(struct user_conn *uc)
   free((char*) uc);
 }
 
-void thd_init_client_charset(THD *thd, uint32_t cs_number)
+void thd_init_client_charset(Session *thd, uint32_t cs_number)
 {
   /*
    Use server character set and collation if
@@ -218,7 +218,7 @@ bool init_new_connection_handler_thread()
    > 0  error code (not sent to user)
 */
 
-static int check_connection(THD *thd)
+static int check_connection(Session *thd)
 {
   NET *net= &thd->net;
   uint32_t pkt_len= 0;
@@ -394,7 +394,7 @@ static int check_connection(THD *thd)
         In this case we will close the connection and increment status
 */
 
-bool setup_connection_thread_globals(THD *thd)
+bool setup_connection_thread_globals(Session *thd)
 {
   if (thd->store_globals())
   {
@@ -423,7 +423,7 @@ bool setup_connection_thread_globals(THD *thd)
 */
 
 
-bool login_connection(THD *thd)
+bool login_connection(Session *thd)
 {
   NET *net= &thd->net;
   int error;
@@ -456,7 +456,7 @@ bool login_connection(THD *thd)
     This mainly updates status variables
 */
 
-void end_connection(THD *thd)
+void end_connection(Session *thd)
 {
   NET *net= &thd->net;
   plugin_thdvar_cleanup(thd);
@@ -484,10 +484,10 @@ void end_connection(THD *thd)
 
 
 /*
-  Initialize THD to handle queries
+  Initialize Session to handle queries
 */
 
-void prepare_new_connection_state(THD* thd)
+void prepare_new_connection_state(Session* thd)
 {
   Security_context *sctx= thd->security_ctx;
 
@@ -513,7 +513,7 @@ void prepare_new_connection_state(THD* thd)
     execute_init_command(thd, &sys_init_connect, &LOCK_sys_init_connect);
     if (thd->is_error())
     {
-      thd->killed= THD::KILL_CONNECTION;
+      thd->killed= Session::KILL_CONNECTION;
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         thd->thread_id,(thd->db ? thd->db : "unconnected"),
                         sctx->user ? sctx->user : "unauthenticated",
@@ -532,12 +532,12 @@ void prepare_new_connection_state(THD* thd)
 
   SYNOPSIS
     handle_one_connection()
-    arg		Connection object (THD)
+    arg		Connection object (Session)
 
   IMPLEMENTATION
     This function (normally) does the following:
     - Initialize thread
-    - Initialize THD to be used with this thread
+    - Initialize Session to be used with this thread
     - Authenticate user
     - Execute all queries sent on the connection
     - Take connection down
@@ -546,7 +546,7 @@ void prepare_new_connection_state(THD* thd)
 
 pthread_handler_t handle_one_connection(void *arg)
 {
-  THD *thd= (THD*) arg;
+  Session *thd= (Session*) arg;
   uint32_t launch_time= (uint32_t) ((thd->thr_create_utime= my_micro_time()) -
                               thd->connect_utime);
 
@@ -582,7 +582,7 @@ pthread_handler_t handle_one_connection(void *arg)
     prepare_new_connection_state(thd);
 
     while (!net->error && net->vio != 0 &&
-           !(thd->killed == THD::KILL_CONNECTION))
+           !(thd->killed == Session::KILL_CONNECTION))
     {
       if (do_command(thd))
 	break;

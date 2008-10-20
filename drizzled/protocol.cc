@@ -25,8 +25,8 @@
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-static void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err);
-static void write_eof_packet(THD *thd, NET *net,
+static void net_send_error_packet(Session *thd, uint32_t sql_errno, const char *err);
+static void write_eof_packet(Session *thd, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
 
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
@@ -115,7 +115,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
   critical that every error that can be intercepted is issued in one
   place only, my_message_sql.
 */
-void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
+void net_send_error(Session *thd, uint32_t sql_errno, const char *err)
 {
   assert(sql_errno);
   assert(err && err[0]);
@@ -156,7 +156,7 @@ void net_send_error(THD *thd, uint32_t sql_errno, const char *err)
 */
 
 static void
-net_send_ok(THD *thd,
+net_send_ok(Session *thd,
             uint32_t server_status, uint32_t total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
@@ -210,7 +210,7 @@ net_send_ok(THD *thd,
 */    
 
 static void
-net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
+net_send_eof(Session *thd, uint32_t server_status, uint32_t total_warn_count)
 {
   NET *net= &thd->net;
   /* Set to true if no active vio, to work well in case of --init-file */
@@ -229,7 +229,7 @@ net_send_eof(THD *thd, uint32_t server_status, uint32_t total_warn_count)
   write it to the network output buffer.
 */
 
-static void write_eof_packet(THD *thd, NET *net,
+static void write_eof_packet(Session *thd, NET *net,
                              uint32_t server_status,
                              uint32_t total_warn_count)
 {
@@ -252,7 +252,7 @@ static void write_eof_packet(THD *thd, NET *net,
   my_net_write(net, buff, 5);
 }
 
-void net_send_error_packet(THD *thd, uint32_t sql_errno, const char *err)
+void net_send_error_packet(Session *thd, uint32_t sql_errno, const char *err)
 {
   NET *net= &thd->net;
   uint32_t length;
@@ -355,7 +355,7 @@ static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t leng
           Diagnostics_area::is_sent is set for debugging purposes only.
 */
 
-void net_end_statement(THD *thd)
+void net_end_statement(Session *thd)
 {
   assert(! thd->main_da.is_sent);
 
@@ -433,7 +433,7 @@ unsigned char *net_store_data(unsigned char *to,int64_t from)
   Default Protocol functions
 *****************************************************************************/
 
-void Protocol::init(THD *thd_arg)
+void Protocol::init(Session *thd_arg)
 {
   thd=thd_arg;
   packet= &thd->packet;
@@ -446,7 +446,7 @@ void Protocol::init(THD *thd_arg)
   for the error.
 */
 
-void Protocol::end_partial_result_set(THD *thd)
+void Protocol::end_partial_result_set(Session *thd)
 {
   net_send_eof(thd, thd->server_status, 0 /* no warnings, we're inside SP */);
 }
@@ -463,7 +463,7 @@ bool Protocol::flush()
 
   Sum fields has table name empty and field_name.
 
-  @param THD		Thread data object
+  @param Session		Thread data object
   @param list	        List of items to send to client
   @param flag	        Bit mask with the following functions:
                         - 1 send number of rows

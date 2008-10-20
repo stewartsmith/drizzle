@@ -52,7 +52,7 @@
   NULL on error
 */
 
-Table *create_duplicate_weedout_tmp_table(THD *thd,
+Table *create_duplicate_weedout_tmp_table(Session *thd,
                                           uint32_t uniq_tuple_length_arg,
                                           SJ_TMP_TABLE *sjtbl)
 {

@@ -137,11 +137,11 @@ public:
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  bool check_and_repair(THD *thd);
-  int check(THD* thd, HA_CHECK_OPT* check_opt);
+  bool check_and_repair(Session *thd);
+  int check(Session* thd, HA_CHECK_OPT* check_opt);
   bool is_crashed() const;
   int rnd_end();
-  int repair(THD* thd, HA_CHECK_OPT* check_opt);
+  int repair(Session* thd, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   bool auto_repair() const { return 1; }
   void position(const unsigned char *record);
@@ -151,7 +151,7 @@ public:
   bool check_if_incompatible_data(HA_CREATE_INFO *info,
                                   uint32_t table_changes);
 
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *thd, THR_LOCK_DATA **to,
       enum thr_lock_type lock_type);
 
   /*

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* need to define DRIZZLE_SERVER to get inside the THD */
+/* need to define DRIZZLE_SERVER to get inside the Session */
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
@@ -59,7 +59,7 @@ const LEX_STRING command_name[]={
 
 
 /* stolen from mysys/my_getsystime 
-   until the THD has a good utime "now" we can use
+   until the Session has a good utime "now" we can use
    will have to use this instead */
 
 #include <sys/time.h>
@@ -82,12 +82,12 @@ static uint64_t get_microtime()
 /* we could just not have a pre entrypoint at all,
    and have logging_pre == NULL
    but we have this here for the sake of being an example */
-bool logging_query_func_pre (THD *thd __attribute__((unused)))
+bool logging_query_func_pre (Session *thd __attribute__((unused)))
 {
   return false;
 }
 
-bool logging_query_func_post (THD *thd)
+bool logging_query_func_post (Session *thd)
 {
   char msgbuf[MAX_MSG_LEN];
   int msgbuf_len= 0;
@@ -98,7 +98,7 @@ bool logging_query_func_post (THD *thd)
   assert(thd != NULL);
 
   /*
-    here is some time stuff from class THD
+    here is some time stuff from class Session
       uint64_t connect_utime;
         todo, looks like this isnt being set
 	we could store the time this plugin was loaded
@@ -109,7 +109,7 @@ bool logging_query_func_post (THD *thd)
         todo, cant get to because of namemangling
   */
 
-  /* todo, the THD should have a "utime command completed" inside
+  /* todo, the Session should have a "utime command completed" inside
      itself, so be more accurate, and so plugins dont have to keep
      calling current_utime, which can be slow */
   uint64_t t_mark= get_microtime();

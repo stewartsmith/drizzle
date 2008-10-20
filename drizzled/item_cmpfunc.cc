@@ -24,7 +24,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 
-static bool convert_constant_item(THD *, Item_field *, Item **);
+static bool convert_constant_item(Session *, Item_field *, Item **);
 
 static Item_result item_store_type(Item_result a, Item *item,
                                    bool unsigned_flag)
@@ -378,7 +378,7 @@ int64_t Item_func_nop_all::val_int()
     1  Item was replaced with an integer version of the item
 */
 
-static bool convert_constant_item(THD *thd, Item_field *field_item,
+static bool convert_constant_item(Session *thd, Item_field *field_item,
                                   Item **item)
 {
   Field *field= field_item->field;
@@ -426,7 +426,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
 void Item_bool_func2::fix_length_and_dec()
 {
   max_length= 1;				     // Function returns 0 or 1
-  THD *thd;
+  Session *thd;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -628,7 +628,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
 */
 
 static uint64_t
-get_date_from_str(THD *thd, String *str, enum enum_drizzle_timestamp_type warn_type,
+get_date_from_str(Session *thd, String *str, enum enum_drizzle_timestamp_type warn_type,
                   char *warn_name, bool *error_arg)
 {
   uint64_t value= 0;
@@ -734,7 +734,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
         (str_arg->type() != Item::FUNC_ITEM ||
         ((Item_func*)str_arg)->functype() != Item_func::GUSERVAR_FUNC))
     {
-      THD *thd= current_thd;
+      Session *thd= current_thd;
       uint64_t value;
       bool error;
       String tmp, *str_val= 0;
@@ -781,7 +781,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
 */
 
 uint64_t
-get_time_value(THD *thd __attribute__((unused)),
+get_time_value(Session *thd __attribute__((unused)),
                Item ***item_arg, Item **cache_arg,
                Item *warn_item __attribute__((unused)),
                bool *is_null)
@@ -924,7 +924,7 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
 */
 
 uint64_t
-get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
+get_datetime_value(Session *thd, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
   uint64_t value= 0;
@@ -1443,7 +1443,7 @@ int64_t Item_func_truth::val_int()
 }
 
 
-bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((unused)))
+bool Item_in_optimizer::fix_left(Session *thd, Item **ref __attribute__((unused)))
 {
   if ((!args[0]->fixed && args[0]->fix_fields(thd, args)) ||
       (!cache && !(cache= Item_cache::get_cache(args[0]))))
@@ -1477,7 +1477,7 @@ bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((unused)))
 }
 
 
-bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
+bool Item_in_optimizer::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
   if (fix_left(thd, ref))
@@ -1632,7 +1632,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, unsigned char *
   if (!new_item)
     return 0;
   /*
-    THD::change_item_tree() should be called only if the tree was
+    Session::change_item_tree() should be called only if the tree was
     really transformed, i.e. when a new item has been created.
     Otherwise we'll be allocating a lot of unnecessary memory for
     change records at each execution.
@@ -1946,7 +1946,7 @@ int64_t Item_func_interval::val_int()
     1   got error
 */
 
-bool Item_func_between::fix_fields(THD *thd, Item **ref)
+bool Item_func_between::fix_fields(Session *thd, Item **ref)
 {
   if (Item_func_opt_neg::fix_fields(thd, ref))
     return 1;
@@ -1973,7 +1973,7 @@ void Item_func_between::fix_length_and_dec()
   bool datetime_found= false;
   int time_items_found= 0;
   compare_as_dates= true;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   /*
     As some compare functions are generated after sql_yacc,
@@ -2312,7 +2312,7 @@ Item_func_ifnull::str_op(String *str)
 */
 
 bool
-Item_func_if::fix_fields(THD *thd, Item **ref)
+Item_func_if::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
   args[0]->top_level_item();
@@ -2665,7 +2665,7 @@ my_decimal *Item_func_case::val_decimal(my_decimal *decimal_value)
 }
 
 
-bool Item_func_case::fix_fields(THD *thd, Item **ref)
+bool Item_func_case::fix_fields(Session *thd, Item **ref)
 {
   /*
     buff should match stack usage from
@@ -3485,7 +3485,7 @@ bool Item_func_in::nulls_in_row()
 */
 
 bool
-Item_func_in::fix_fields(THD *thd, Item **ref)
+Item_func_in::fix_fields(Session *thd, Item **ref)
 {
   Item **arg, **arg_end;
 
@@ -3517,7 +3517,7 @@ void Item_func_in::fix_length_and_dec()
 {
   Item **arg, **arg_end;
   bool const_itm= 1;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   bool datetime_found= false;
   /* true <=> arguments values will be compared as DATETIMEs. */
   bool compare_as_datetime= false;
@@ -3850,7 +3850,7 @@ int64_t Item_func_bit_and::val_int()
   return (int64_t) (arg1 & arg2);
 }
 
-Item_cond::Item_cond(THD *thd, Item_cond *item)
+Item_cond::Item_cond(Session *thd, Item_cond *item)
   :Item_bool_func(thd, item),
    abort_on_null(item->abort_on_null),
    and_tables_cache(item->and_tables_cache)
@@ -3861,7 +3861,7 @@ Item_cond::Item_cond(THD *thd, Item_cond *item)
 }
 
 
-void Item_cond::copy_andor_arguments(THD *thd, Item_cond *item)
+void Item_cond::copy_andor_arguments(Session *thd, Item_cond *item)
 {
   List_iterator_fast<Item> li(item->list);
   while (Item *it= li++)
@@ -3870,7 +3870,7 @@ void Item_cond::copy_andor_arguments(THD *thd, Item_cond *item)
 
 
 bool
-Item_cond::fix_fields(THD *thd, Item **ref __attribute__((unused)))
+Item_cond::fix_fields(Session *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   List_iterator<Item> li(list);
@@ -4019,7 +4019,7 @@ Item *Item_cond::transform(Item_transformer transformer, unsigned char *arg)
       return 0;
 
     /*
-      THD::change_item_tree() should be called only if the tree was
+      Session::change_item_tree() should be called only if the tree was
       really transformed, i.e. when a new item has been created.
       Otherwise we'll be allocating a lot of unnecessary memory for
       change records at each execution.
@@ -4118,7 +4118,7 @@ void Item_cond::traverse_cond(Cond_traverser traverser,
     that have or refer (HAVING) to a SUM expression.
 */
 
-void Item_cond::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_cond::split_sum_func(Session *thd, Item **ref_pointer_array,
                                List<Item> &fields)
 {
   List_iterator<Item> li(list);
@@ -4169,7 +4169,7 @@ void Item_cond::print(String *str, enum_query_type query_type)
 }
 
 
-void Item_cond::neg_arguments(THD *thd)
+void Item_cond::neg_arguments(Session *thd)
 {
   List_iterator<Item> li(list);
   Item *item;
@@ -4399,7 +4399,7 @@ Item_func::optimize_type Item_func_like::select_optimize() const
 }
 
 
-bool Item_func_like::fix_fields(THD *thd, Item **ref)
+bool Item_func_like::fix_fields(Session *thd, Item **ref)
 {
   assert(fixed == 0);
   if (Item_bool_func2::fix_fields(thd, ref) ||
@@ -4790,13 +4790,13 @@ int64_t Item_cond_xor::val_int()
     NULL if we cannot apply NOT transformation (see Item::neg_transformer()).
 */
 
-Item *Item_func_not::neg_transformer(THD *thd __attribute__((unused)))	/* NOT(x)  ->  x */
+Item *Item_func_not::neg_transformer(Session *thd __attribute__((unused)))	/* NOT(x)  ->  x */
 {
   return args[0];
 }
 
 
-Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((unused)))
+Item *Item_bool_rowready_func2::neg_transformer(Session *thd __attribute__((unused)))
 {
   Item *item= negated_item();
   return item;
@@ -4806,7 +4806,7 @@ Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((unused))
 /**
   a IS NULL  ->  a IS NOT NULL.
 */
-Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((unused)))
+Item *Item_func_isnull::neg_transformer(Session *thd __attribute__((unused)))
 {
   Item *item= new Item_func_isnotnull(args[0]);
   return item;
@@ -4816,14 +4816,14 @@ Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((unused)))
 /**
   a IS NOT NULL  ->  a IS NULL.
 */
-Item *Item_func_isnotnull::neg_transformer(THD *thd __attribute__((unused)))
+Item *Item_func_isnotnull::neg_transformer(Session *thd __attribute__((unused)))
 {
   Item *item= new Item_func_isnull(args[0]);
   return item;
 }
 
 
-Item *Item_cond_and::neg_transformer(THD *thd)	/* NOT(a AND b AND ...)  -> */
+Item *Item_cond_and::neg_transformer(Session *thd)	/* NOT(a AND b AND ...)  -> */
 					/* NOT a OR NOT b OR ... */
 {
   neg_arguments(thd);
@@ -4832,7 +4832,7 @@ Item *Item_cond_and::neg_transformer(THD *thd)	/* NOT(a AND b AND ...)  -> */
 }
 
 
-Item *Item_cond_or::neg_transformer(THD *thd)	/* NOT(a OR b OR ...)  -> */
+Item *Item_cond_or::neg_transformer(Session *thd)	/* NOT(a OR b OR ...)  -> */
 					/* NOT a AND NOT b AND ... */
 {
   neg_arguments(thd);
@@ -4841,7 +4841,7 @@ Item *Item_cond_or::neg_transformer(THD *thd)	/* NOT(a OR b OR ...)  -> */
 }
 
 
-Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((unused)))
+Item *Item_func_nop_all::neg_transformer(Session *thd __attribute__((unused)))
 {
   /* "NOT (e $cmp$ ANY (SELECT ...)) -> e $rev_cmp$" ALL (SELECT ...) */
   Item_func_not_all *new_item= new Item_func_not_all(args[0]);
@@ -4852,7 +4852,7 @@ Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((unused)))
   return new_item;
 }
 
-Item *Item_func_not_all::neg_transformer(THD *thd __attribute__((unused)))
+Item *Item_func_not_all::neg_transformer(Session *thd __attribute__((unused)))
 {
   /* "NOT (e $cmp$ ALL (SELECT ...)) -> e $rev_cmp$" ANY (SELECT ...) */
   Item_func_nop_all *new_item= new Item_func_nop_all(args[0]);
@@ -5092,7 +5092,7 @@ void Item_equal::update_const()
   }
 }
 
-bool Item_equal::fix_fields(THD *thd __attribute__((unused)), Item **ref __attribute__((unused)))
+bool Item_equal::fix_fields(Session *thd __attribute__((unused)), Item **ref __attribute__((unused)))
 {
   List_iterator_fast<Item_field> li(fields);
   Item *item;
@@ -5179,7 +5179,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
       return 0;
 
     /*
-      THD::change_item_tree() should be called only if the tree was
+      Session::change_item_tree() should be called only if the tree was
       really transformed, i.e. when a new item has been created.
       Otherwise we'll be allocating a lot of unnecessary memory for
       change records at each execution.

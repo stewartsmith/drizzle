@@ -1038,7 +1038,7 @@ public:
     1 - Error
 */
 bool
-my_tz_init(THD *thd, const char *default_tzname)
+my_tz_init(Session *thd, const char *default_tzname)
 {
   if (default_tzname)
   {
@@ -1156,7 +1156,7 @@ str_to_offset(const char *str, uint32_t length, long *offset)
 
 */
 Time_zone *
-my_tz_find(THD *thd __attribute__((unused)),
+my_tz_find(Session *thd __attribute__((unused)),
            const String *name __attribute__((unused)))
 {
   return NULL;

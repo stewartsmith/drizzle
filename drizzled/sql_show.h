@@ -22,7 +22,7 @@
 
 /* Forward declarations */
 class String;
-class THD;
+class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
@@ -33,14 +33,14 @@ enum find_files_result {
   FIND_FILES_DIR
 };
 
-find_files_result find_files(THD *thd, List<LEX_STRING> *files, const char *db,
+find_files_result find_files(Session *thd, List<LEX_STRING> *files, const char *db,
                              const char *path, const char *wild, bool dir);
 
 
-int store_create_info(THD *thd, TableList *table_list, String *packet,
+int store_create_info(Session *thd, TableList *table_list, String *packet,
                       HA_CREATE_INFO  *create_info_arg);
-bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
+bool store_db_create_info(Session *thd, const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info);
-bool schema_table_store_record(THD *thd, Table *table);
+bool schema_table_store_record(Session *thd, Table *table);
 
 #endif /* SQL_SHOW_H */

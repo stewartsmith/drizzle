@@ -21,7 +21,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
-bool mysql_union(THD *thd,
+bool mysql_union(Session *thd,
                  LEX *lex __attribute__((unused)),
                  select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
@@ -113,7 +113,7 @@ bool select_union::flush()
 */
 
 bool
-select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
+select_union::create_result_table(Session *thd_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
                                   const char *table_alias,
                                   bool bit_fields_as_long)
@@ -161,7 +161,7 @@ void select_union::cleanup()
 */
 
 void
-st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg) 
+st_select_lex_unit::init_prepare_fake_select_lex(Session *thd_arg) 
 {
   thd_arg->lex->current_select= fake_select_lex;
   fake_select_lex->table_list.link_in_list((unsigned char *)&result_table_list,
@@ -186,7 +186,7 @@ st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg)
 }
 
 
-bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
+bool st_select_lex_unit::prepare(Session *thd_arg, select_result *sel_result,
                                  uint32_t additional_options)
 {
   SELECT_LEX *lex_select_save= thd_arg->lex->current_select;

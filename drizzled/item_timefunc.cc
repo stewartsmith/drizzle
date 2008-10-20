@@ -608,7 +608,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
   uint32_t weekday;
   ulong length;
   const char *ptr, *end;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   MY_LOCALE *locale= thd->variables.lc_time_names;
 
   str->length(0);
@@ -1022,7 +1022,7 @@ String* Item_func_monthname::val_str(String* str)
   assert(fixed == 1);
   const char *month_name;
   uint32_t   month= (uint) val_int();
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   if (null_value || !month)
   {
@@ -1162,7 +1162,7 @@ String* Item_func_dayname::val_str(String* str)
   assert(fixed == 1);
   uint32_t weekday=(uint) val_int();		// Always Item_func_daynr()
   const char *day_name;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
 
   if (null_value)
     return (String*) 0;
@@ -1505,7 +1505,7 @@ String *Item_func_curdate::val_str(String *str)
 */
 void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
                                              (my_time_t)thd->query_start());
   thd->time_zone_used= 1;
@@ -1562,7 +1562,7 @@ void Item_func_curtime::fix_length_and_dec()
 */
 void Item_func_curtime_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
                                              (my_time_t)thd->query_start());
   thd->time_zone_used= 1;
@@ -1611,7 +1611,7 @@ void Item_func_now::fix_length_and_dec()
 */
 void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
                                              (my_time_t)thd->query_start());
   thd->time_zone_used= 1;
@@ -1654,7 +1654,7 @@ int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((u
 */
 void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
   thd->time_zone_used= 1;
 }
@@ -1750,7 +1750,7 @@ int64_t Item_func_sec_to_time::val_int()
 
 void Item_func_date_format::fix_length_and_dec()
 {
-  THD* thd= current_thd;
+  Session* thd= current_thd;
   /*
     Must use this_item() in case it's a local SP variable
     (for ->max_length and ->str_value)

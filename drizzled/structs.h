@@ -111,7 +111,7 @@ typedef struct st_reginfo {		/* Extra info about reg */
 
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
-class THD;
+class Session;
 class handler;
 struct st_join_table;
 
@@ -120,7 +120,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   handler *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
-  THD *thd;
+  Session *thd;
   SQL_SELECT *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
@@ -156,7 +156,7 @@ enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
 
 extern const char *show_comp_option_name[];
 
-typedef int *(*update_var)(THD *, struct st_mysql_show_var *);
+typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
 
 typedef struct	st_lex_user {
   LEX_STRING user, host, password;

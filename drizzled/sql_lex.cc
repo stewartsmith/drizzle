@@ -108,7 +108,7 @@ st_parsing_options::reset()
   allows_derived= true;
 }
 
-Lex_input_stream::Lex_input_stream(THD *thd,
+Lex_input_stream::Lex_input_stream(Session *thd,
                                    const char* buffer,
                                    unsigned int length)
 : m_thd(thd),
@@ -155,7 +155,7 @@ Lex_input_stream::~Lex_input_stream()
                     buffer.
 */
 
-void Lex_input_stream::body_utf8_start(THD *thd, const char *begin_ptr)
+void Lex_input_stream::body_utf8_start(Session *thd, const char *begin_ptr)
 {
   assert(begin_ptr);
   assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
@@ -238,7 +238,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   operation.
 */
 
-void Lex_input_stream::body_utf8_append_literal(THD *thd,
+void Lex_input_stream::body_utf8_append_literal(Session *thd,
                                                 const LEX_STRING *txt,
                                                 const CHARSET_INFO * const txt_cs,
                                                 const char *end_ptr)
@@ -277,7 +277,7 @@ void Lex_input_stream::body_utf8_append_literal(THD *thd,
   (We already do too much here)
 */
 
-void lex_start(THD *thd)
+void lex_start(Session *thd)
 {
   LEX *lex= thd->lex;
 
@@ -700,7 +700,7 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 
 int MYSQLlex(void *arg, void *yythd)
 {
-  THD *thd= (THD *)yythd;
+  Session *thd= (Session *)yythd;
   Lex_input_stream *lip= thd->m_lip;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
@@ -759,7 +759,7 @@ int lex_one_token(void *arg, void *yythd)
   int	tokval, result_state;
   unsigned int length;
   enum my_lex_states state;
-  THD *thd= (THD *)yythd;
+  Session *thd= (Session *)yythd;
   Lex_input_stream *lip= thd->m_lip;
   LEX *lex= thd->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
@@ -1440,7 +1440,7 @@ int lex_one_token(void *arg, void *yythd)
   statements and stored procedures and is compensated by always
   supplying a copy of Alter_info to these functions.
 
-  @return You need to use check the error in THD for out
+  @return You need to use check the error in Session for out
   of memory condition after calling this function.
 */
 
@@ -1815,7 +1815,7 @@ bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint32_t st_select_lex_node::get_in_sum_expr()           { return 0; }
 TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
+TableList *st_select_lex_node::add_table_to_list (Session *thd __attribute__((unused)),
                                                    Table_ident *table __attribute__((unused)),
 						  LEX_STRING *alias __attribute__((unused)),
 						  uint32_t table_join_options __attribute__((unused)),
@@ -1857,20 +1857,20 @@ st_select_lex* st_select_lex_unit::outer_select()
 }
 
 
-bool st_select_lex::add_order_to_list(THD *thd, Item *item, bool asc)
+bool st_select_lex::add_order_to_list(Session *thd, Item *item, bool asc)
 {
   return add_to_list(thd, order_list, item, asc);
 }
 
 
-bool st_select_lex::add_item_to_list(THD *thd __attribute__((unused)),
+bool st_select_lex::add_item_to_list(Session *thd __attribute__((unused)),
                                      Item *item)
 {
   return(item_list.push_back(item));
 }
 
 
-bool st_select_lex::add_group_to_list(THD *thd, Item *item, bool asc)
+bool st_select_lex::add_group_to_list(Session *thd, Item *item, bool asc)
 {
   return add_to_list(thd, group_list, item, asc);
 }
@@ -1924,7 +1924,7 @@ uint32_t st_select_lex::get_table_join_options()
 }
 
 
-bool st_select_lex::setup_ref_array(THD *thd, uint32_t order_group_num)
+bool st_select_lex::setup_ref_array(Session *thd, uint32_t order_group_num)
 {
   if (ref_pointer_array)
     return 0;
@@ -1994,7 +1994,7 @@ void st_select_lex::print_order(String *str,
 }
  
 
-void st_select_lex::print_limit(THD *thd __attribute__((unused)),
+void st_select_lex::print_limit(Session *thd __attribute__((unused)),
                                 String *str,
                                 enum_query_type query_type)
 {
@@ -2035,7 +2035,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
 }
 
 /**
-  @brief Restore the LEX and THD in case of a parse error.
+  @brief Restore the LEX and Session in case of a parse error.
 
   This is a clean up call that is invoked by the Bison generated
   parser before returning an error from MYSQLparse. If your
@@ -2046,7 +2046,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((unused)),
   to implement the clean up.
 */
 
-void st_lex::cleanup_lex_after_parse_error(THD *thd __attribute__((unused)))
+void st_lex::cleanup_lex_after_parse_error(Session *thd __attribute__((unused)))
 {
 }
 
@@ -2124,7 +2124,7 @@ void Query_tables_list::destroy_query_tables_list()
 
   NOTE
     LEX object initialized with this constructor can be used as part of
-    THD object for which one can safely call open_tables(), lock_tables()
+    Session object for which one can safely call open_tables(), lock_tables()
     and close_thread_tables() functions. But it is not yet ready for
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
@@ -2593,7 +2593,7 @@ bool st_lex::table_or_sp_used()
 
 */
 
-static void fix_prepare_info_in_table_list(THD *thd, TableList *tbl)
+static void fix_prepare_info_in_table_list(Session *thd, TableList *tbl)
 {
   for (; tbl; tbl= tbl->next_local)
   {
@@ -2650,7 +2650,7 @@ void st_select_lex::set_index_hint_type(enum index_hint_type type_arg,
       thd         current thread.
 */
 
-void st_select_lex::alloc_index_hints (THD *thd)
+void st_select_lex::alloc_index_hints (Session *thd)
 { 
   index_hints= new (thd->mem_root) List<Index_hint>(); 
 }
@@ -2670,7 +2670,7 @@ void st_select_lex::alloc_index_hints (THD *thd)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool st_select_lex::add_index_hint (THD *thd, char *str, uint32_t length)
+bool st_select_lex::add_index_hint (Session *thd, char *str, uint32_t length)
 {
   return index_hints->push_front (new (thd->mem_root) 
                                  Index_hint(current_index_hint_type,

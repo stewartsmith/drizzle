@@ -54,7 +54,7 @@
 bool use_slave_mask = 0;
 MY_BITMAP slave_error_mask;
 
-typedef bool (*CHECK_KILLED_FUNC)(THD*,void*);
+typedef bool (*CHECK_KILLED_FUNC)(Session*,void*);
 
 char* slave_load_tmpdir = 0;
 Master_info *active_mi= 0;
@@ -125,30 +125,30 @@ static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
 };
  
 
-typedef enum { SLAVE_THD_IO, SLAVE_THD_SQL} SLAVE_THD_TYPE;
+typedef enum { SLAVE_Session_IO, SLAVE_Session_SQL} SLAVE_Session_TYPE;
 
 static int32_t process_io_rotate(Master_info* mi, Rotate_log_event* rev);
 static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* cev);
 static bool wait_for_relay_log_space(Relay_log_info* rli);
-static inline bool io_slave_killed(THD* thd,Master_info* mi);
-static inline bool sql_slave_killed(THD* thd,Relay_log_info* rli);
-static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type);
-static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi);
-static int32_t safe_reconnect(THD* thd, DRIZZLE *drizzle, Master_info* mi,
+static inline bool io_slave_killed(Session* thd,Master_info* mi);
+static inline bool sql_slave_killed(Session* thd,Relay_log_info* rli);
+static int32_t init_slave_thread(Session* thd, SLAVE_Session_TYPE thd_type);
+static int32_t safe_connect(Session* thd, DRIZZLE *drizzle, Master_info* mi);
+static int32_t safe_reconnect(Session* thd, DRIZZLE *drizzle, Master_info* mi,
                           bool suppress_warnings);
-static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
+static int32_t connect_to_master(Session* thd, DRIZZLE *drizzle, Master_info* mi,
                              bool reconnect, bool suppress_warnings);
-static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed,
+static int32_t safe_sleep(Session* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed,
                       void* thread_killed_arg);
 static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi);
 static Log_event* next_event(Relay_log_info* rli);
 static int32_t queue_event(Master_info* mi,const char* buf,uint32_t event_len);
-static int32_t terminate_slave_thread(THD *thd,
+static int32_t terminate_slave_thread(Session *thd,
                                   pthread_mutex_t* term_lock,
                                   pthread_cond_t* term_cond,
                                   volatile uint32_t *slave_running,
                                   bool skip_lock);
-static bool check_io_slave_killed(THD *thd, Master_info *mi, const char *info);
+static bool check_io_slave_killed(Session *thd, Master_info *mi, const char *info);
 
 /*
   Find out which replications threads are running
@@ -370,7 +370,7 @@ int32_t terminate_slave_threads(Master_info* mi,int32_t thread_mask,bool skip_lo
    @retval 0 All OK
  */
 static int32_t
-terminate_slave_thread(THD *thd,
+terminate_slave_thread(Session *thd,
                        pthread_mutex_t* term_lock,
                        pthread_cond_t* term_cond,
                        volatile uint32_t *slave_running,
@@ -390,7 +390,7 @@ terminate_slave_thread(THD *thd,
     return(ER_SLAVE_NOT_RUNNING);
   }
   assert(thd != 0);
-  THD_CHECK_SENTRY(thd);
+  Session_CHECK_SENTRY(thd);
 
   /*
     Is is critical to test if the slave is running. Otherwise, we might
@@ -409,7 +409,7 @@ terminate_slave_thread(THD *thd,
     int32_t err= pthread_kill(thd->real_id, thr_client_alarm);
     assert(err != EINVAL);
 #endif
-    thd->awake(THD::NOT_KILLED);
+    thd->awake(Session::NOT_KILLED);
     pthread_mutex_unlock(&thd->LOCK_delete);
 
     /*
@@ -480,7 +480,7 @@ int32_t start_slave_thread(pthread_handler h_func, pthread_mutex_t *start_lock,
   }
   if (start_cond && cond_lock) // caller has cond_lock
   {
-    THD* thd = current_thd;
+    Session* thd = current_thd;
     while (start_id == *slave_run_id)
     {
       const char* old_msg = thd->enter_cond(start_cond,cond_lock,
@@ -591,7 +591,7 @@ void end_slave()
 }
 
 
-static bool io_slave_killed(THD* thd, Master_info* mi)
+static bool io_slave_killed(Session* thd, Master_info* mi)
 {
   assert(mi->io_thd == thd);
   assert(mi->slave_running); // tracking buffer overrun
@@ -599,7 +599,7 @@ static bool io_slave_killed(THD* thd, Master_info* mi)
 }
 
 
-static bool sql_slave_killed(THD* thd, Relay_log_info* rli)
+static bool sql_slave_killed(Session* thd, Relay_log_info* rli)
 {
   assert(rli->sql_thd == thd);
   assert(rli->slave_running == 1);// tracking buffer overrun
@@ -734,7 +734,7 @@ int32_t init_floatvar_from_file(float* var, IO_CACHE* f, float default_val)
   return(1);
 }
 
-static bool check_io_slave_killed(THD *thd, Master_info *mi, const char *info)
+static bool check_io_slave_killed(Session *thd, Master_info *mi, const char *info)
 {
   if (io_slave_killed(thd, mi))
   {
@@ -1026,7 +1026,7 @@ static bool wait_for_relay_log_space(Relay_log_info* rli)
   bool slave_killed=0;
   Master_info* mi = rli->mi;
   const char *save_proc_info;
-  THD* thd = mi->io_thd;
+  Session* thd = mi->io_thd;
 
   pthread_mutex_lock(&rli->log_space_lock);
   save_proc_info= thd->enter_cond(&rli->log_space_cond,
@@ -1055,7 +1055,7 @@ static bool wait_for_relay_log_space(Relay_log_info* rli)
     ignored events' end position for the use of the slave SQL thread, by
     calling this function. Only that thread can call it (see assertion).
  */
-static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((unused)),
+static void write_ignored_events_info_to_relay_log(Session *thd __attribute__((unused)),
                                                    Master_info *mi)
 {
   Relay_log_info *rli= &mi->rli;
@@ -1145,7 +1145,7 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
 }
 
 
-bool show_master_info(THD* thd, Master_info* mi)
+bool show_master_info(Session* thd, Master_info* mi)
 {
   // TODO: fix this for multi-master
   List<Item> field_list;
@@ -1316,7 +1316,7 @@ bool show_master_info(THD* thd, Master_info* mi)
 }
 
 
-void set_slave_thread_options(THD* thd)
+void set_slave_thread_options(Session* thd)
 {
   /*
      It's nonsense to constrain the slave threads with max_join_size; if a
@@ -1341,10 +1341,10 @@ void set_slave_thread_options(THD* thd)
   init_slave_thread()
 */
 
-static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
+static int32_t init_slave_thread(Session* thd, SLAVE_Session_TYPE thd_type)
 {
   int32_t simulate_error= 0;
-  thd->system_thread = (thd_type == SLAVE_THD_SQL) ?
+  thd->system_thread = (thd_type == SLAVE_Session_SQL) ?
     SYSTEM_THREAD_SLAVE_SQL : SYSTEM_THREAD_SLAVE_IO;
   thd->security_ctx->skip_grants();
   my_net_init(&thd->net, 0);
@@ -1362,8 +1362,8 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
   thd->thread_id= thd->variables.pseudo_thread_id= thread_id++;
   pthread_mutex_unlock(&LOCK_thread_count);
 
- simulate_error|= (1 << SLAVE_THD_IO);
- simulate_error|= (1 << SLAVE_THD_SQL);
+ simulate_error|= (1 << SLAVE_Session_IO);
+ simulate_error|= (1 << SLAVE_Session_SQL);
   if (init_thr_lock() || thd->store_globals() || simulate_error & (1<< thd_type))
   {
     thd->cleanup();
@@ -1371,7 +1371,7 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
   }
   lex_start(thd);
 
-  if (thd_type == SLAVE_THD_SQL)
+  if (thd_type == SLAVE_Session_SQL)
     thd->set_proc_info("Waiting for the next event in relay log");
   else
     thd->set_proc_info("Waiting for master update");
@@ -1381,7 +1381,7 @@ static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type)
 }
 
 
-static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed,
+static int32_t safe_sleep(Session* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed,
                       void* thread_killed_arg)
 {
   int32_t nap_time;
@@ -1508,7 +1508,7 @@ static uint32_t read_event(DRIZZLE *drizzle,
 }
 
 
-int32_t check_expected_error(THD* thd __attribute__((unused)),
+int32_t check_expected_error(Session* thd __attribute__((unused)),
                          Relay_log_info const *rli __attribute__((unused)),
                          int32_t expected_error)
 {
@@ -1532,7 +1532,7 @@ int32_t check_expected_error(THD* thd __attribute__((unused)),
   that the error is temporary by pushing a warning with the error code
   ER_GET_TEMPORARY_ERRMSG, if the originating error is temporary.
 */
-static int32_t has_temporary_error(THD *thd)
+static int32_t has_temporary_error(Session *thd)
 {
   if (thd->is_fatal_error)
     return(0);
@@ -1544,7 +1544,7 @@ static int32_t has_temporary_error(THD *thd)
   }
 
   /*
-    If there is no message in THD, we can't say if it's a temporary
+    If there is no message in Session, we can't say if it's a temporary
     error or not. This is currently the case for Incident_log_event,
     which sets no message. Return FALSE.
   */
@@ -1590,7 +1590,7 @@ static int32_t has_temporary_error(THD *thd)
   @retval 2 No error calling ev->apply_event(), but error calling
   ev->update_pos().
 */
-int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
+int32_t apply_event_and_update_pos(Log_event* ev, Session* thd, Relay_log_info* rli,
                                bool skip)
 {
   int32_t exec_res= 0;
@@ -1694,7 +1694,7 @@ int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
 
   @retval 1 The event was not applied.
 */
-static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
+static int32_t exec_relay_log_event(Session* thd, Relay_log_info* rli)
 {
   /*
      We acquire this mutex since we need it for all operations except
@@ -1864,7 +1864,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
   @retval        1                   There was an error.
 */
 
-static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
+static int32_t try_to_reconnect(Session *thd, DRIZZLE *drizzle, Master_info *mi,
                                 uint32_t *retry_count, bool suppress_warnings,
                                 const char *messages[SLAVE_RECON_MSG_MAX])
 {
@@ -1916,7 +1916,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
 
 pthread_handler_t handle_slave_io(void *arg)
 {
-  THD *thd; // needs to be first for thread_stack
+  Session *thd; // needs to be first for thread_stack
   DRIZZLE *drizzle;
   Master_info *mi = (Master_info*)arg;
   Relay_log_info *rli= &mi->rli;
@@ -1936,13 +1936,13 @@ pthread_handler_t handle_slave_io(void *arg)
 
   mi->events_till_disconnect = disconnect_slave_event_count;
 
-  thd= new THD;
-  THD_CHECK_SENTRY(thd);
+  thd= new Session;
+  Session_CHECK_SENTRY(thd);
   mi->io_thd = thd;
 
   pthread_detach_this_thread();
   thd->thread_stack= (char*) &thd; // remember where our stack is
-  if (init_slave_thread(thd, SLAVE_THD_IO))
+  if (init_slave_thread(thd, SLAVE_Session_IO))
   {
     pthread_cond_broadcast(&mi->start_cond);
     pthread_mutex_unlock(&mi->run_lock);
@@ -2150,7 +2150,7 @@ err:
   {
     /*
       Here we need to clear the active VIO before closing the
-      connection with the master.  The reason is that THD::awake()
+      connection with the master.  The reason is that Session::awake()
       might be called from terminate_slave_thread() because somebody
       issued a STOP SLAVE.  If that happends, the close_active_vio()
       can be called in the middle of closing the VIO associated with
@@ -2170,7 +2170,7 @@ err:
   net_end(&thd->net); // destructor will not free it, because net.vio is 0
   close_thread_tables(thd);
   pthread_mutex_lock(&LOCK_thread_count);
-  THD_CHECK_SENTRY(thd);
+  Session_CHECK_SENTRY(thd);
   delete thd;
   pthread_mutex_unlock(&LOCK_thread_count);
   mi->abort_slave= 0;
@@ -2193,7 +2193,7 @@ err:
 
 pthread_handler_t handle_slave_sql(void *arg)
 {
-  THD *thd;                     /* needs to be first for thread_stack */
+  Session *thd;                     /* needs to be first for thread_stack */
   char llbuff[22],llbuff1[22];
 
   Relay_log_info* rli = &((Master_info*)arg)->rli;
@@ -2207,7 +2207,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   errmsg= 0;
   rli->events_till_abort = abort_slave_event_count;
 
-  thd = new THD;
+  thd = new Session;
   thd->thread_stack = (char*)&thd; // remember where our stack is
   rli->sql_thd= thd;
   
@@ -2216,7 +2216,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   rli->slave_running = 1;
 
   pthread_detach_this_thread();
-  if (init_slave_thread(thd, SLAVE_THD_SQL))
+  if (init_slave_thread(thd, SLAVE_Session_SQL))
   {
     /*
       TODO: this is currently broken - slave start and change master
@@ -2272,7 +2272,7 @@ pthread_handler_t handle_slave_sql(void *arg)
                     errmsg);
     goto err;
   }
-  THD_CHECK_SENTRY(thd);
+  Session_CHECK_SENTRY(thd);
   assert(rli->event_relay_log_pos >= BIN_LOG_HEADER_SIZE);
   /*
     Wonder if this is correct. I (Guilhem) wonder if my_b_tell() returns the
@@ -2332,7 +2332,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   {
     thd->set_proc_info(_("Reading event from the relay log"));
     assert(rli->sql_thd == thd);
-    THD_CHECK_SENTRY(thd);
+    Session_CHECK_SENTRY(thd);
     if (exec_relay_log_event(thd,rli))
     {
       // do not scare the user if SQL thread was simply killed or stopped
@@ -2442,10 +2442,10 @@ pthread_handler_t handle_slave_sql(void *arg)
   assert(thd->net.buff != 0);
   net_end(&thd->net); // destructor will not free it, because we are weird
   assert(rli->sql_thd == thd);
-  THD_CHECK_SENTRY(thd);
+  Session_CHECK_SENTRY(thd);
   rli->sql_thd= 0;
   pthread_mutex_lock(&LOCK_thread_count);
-  THD_CHECK_SENTRY(thd);
+  Session_CHECK_SENTRY(thd);
   delete thd;
   pthread_mutex_unlock(&LOCK_thread_count);
  /*
@@ -2471,7 +2471,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
   int32_t error = 1;
   uint32_t num_bytes;
   bool cev_not_written;
-  THD *thd = mi->io_thd;
+  Session *thd = mi->io_thd;
   NET *net = &mi->drizzle->net;
 
   if (unlikely(!cev->is_valid()))
@@ -3084,7 +3084,7 @@ void end_relay_log_info(Relay_log_info* rli)
     #   Error
 */
 
-static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
+static int32_t safe_connect(Session* thd, DRIZZLE *drizzle, Master_info* mi)
 {
   return(connect_to_master(thd, drizzle, mi, 0, 0));
 }
@@ -3099,7 +3099,7 @@ static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
     master_retry_count times
 */
 
-static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
+static int32_t connect_to_master(Session* thd, DRIZZLE *drizzle, Master_info* mi,
                                  bool reconnect, bool suppress_warnings)
 {
   int32_t slave_was_killed;
@@ -3173,7 +3173,7 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
     master_retry_count times
 */
 
-static int32_t safe_reconnect(THD* thd, DRIZZLE *drizzle, Master_info* mi,
+static int32_t safe_reconnect(Session* thd, DRIZZLE *drizzle, Master_info* mi,
                           bool suppress_warnings)
 {
   return(connect_to_master(thd, drizzle, mi, 1, suppress_warnings));
@@ -3249,7 +3249,7 @@ static Log_event* next_event(Relay_log_info* rli)
   IO_CACHE* cur_log = rli->cur_log;
   pthread_mutex_t *log_lock = rli->relay_log.get_log_lock();
   const char* errmsg=0;
-  THD* thd = rli->sql_thd;
+  Session* thd = rli->sql_thd;
 
   assert(thd != 0);
 
@@ -3710,7 +3710,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
 
    Detect buggy master to work around.
  */
-bool rpl_master_erroneous_autoinc(THD *thd)
+bool rpl_master_erroneous_autoinc(Session *thd)
 {
   if (active_mi && active_mi->rli.sql_thd == thd)
   {

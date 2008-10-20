@@ -69,7 +69,7 @@ static int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-static bool authenticate(THD *thd, const char *password)
+static bool authenticate(Session *thd, const char *password)
 {
   int retval;
   auth_pam_userinfo userinfo= { NULL, NULL };

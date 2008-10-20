@@ -55,7 +55,7 @@ void Item_row::illegal_method_call(const char *method __attribute__((unused)))
   return;
 }
 
-bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((unused)))
+bool Item_row::fix_fields(Session *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   null_value= 0;
@@ -99,7 +99,7 @@ void Item_row::cleanup()
 }
 
 
-void Item_row::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_row::split_sum_func(Session *thd, Item **ref_pointer_array,
                               List<Item> &fields)
 {
   Item **arg, **arg_end;
@@ -176,7 +176,7 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
       return 0;
 
     /*
-      THD::change_item_tree() should be called only if the tree was
+      Session::change_item_tree() should be called only if the tree was
       really transformed, i.e. when a new item has been created.
       Otherwise we'll be allocating a lot of unnecessary memory for
       change records at each execution.

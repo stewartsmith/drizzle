@@ -29,7 +29,7 @@ int logging_finalizer(st_plugin_int *plugin);
  * pull everything it needs out of the thd.  If need to add
  * parameters, look at how errmsg.h and errmsg.cc do it. */
 
-bool logging_pre_do (THD *thd);
-bool logging_post_do (THD *thd);
+bool logging_pre_do (Session *thd);
+bool logging_post_do (Session *thd);
 
 #endif /* DRIZZLED_LOGGING_H */

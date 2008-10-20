@@ -243,7 +243,7 @@ public:
   uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
   void set_underlying_merge();
-  bool setup_underlying(THD *thd);
+  bool setup_underlying(Session *thd);
   void cleanup_items();
   /*
     If you change placeholder(), please check the condition in
@@ -253,7 +253,7 @@ public:
   {
     return derived || schema_table || (create && !table->getDBStat()) || !table;
   }
-  void print(THD *thd, String *str, enum_query_type query_type);
+  void print(Session *thd, String *str, enum_query_type query_type);
   bool set_insert_values(MEM_ROOT *mem_root);
   TableList *find_underlying_table(Table *table);
   TableList *first_leaf_for_name_resolution();
@@ -266,7 +266,7 @@ public:
     Cleanup for re-execution in a prepared statement or a stored
     procedure.
   */
-  void reinit_before_use(THD *thd);
+  void reinit_before_use(Session *thd);
   Item_subselect *containing_subselect();
 
   /* 

@@ -35,7 +35,7 @@
     false Items are OK
 */
 
-static bool check_fields(THD *thd, List<Item> &items)
+static bool check_fields(Session *thd, List<Item> &items)
 {
   List_iterator<Item> it(items);
   Item *item;
@@ -148,7 +148,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     1  - error
 */
 
-int mysql_update(THD *thd,
+int mysql_update(Session *thd,
                  TableList *table_list,
                  List<Item> &fields,
                  List<Item> &values,
@@ -175,7 +175,7 @@ int mysql_update(THD *thd,
   bool          need_reopen;
   uint64_t     id;
   List<Item> all_fields;
-  THD::killed_state killed_status= THD::NOT_KILLED;
+  Session::killed_state killed_status= Session::NOT_KILLED;
   
   for ( ; ; )
   {
@@ -619,7 +619,7 @@ int mysql_update(THD *thd,
   */
   killed_status= thd->killed; // get the status of the volatile
   // simulated killing after the loop must be ineffective for binlogging
-  error= (killed_status == THD::NOT_KILLED)?  error : 1;
+  error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
   if (error &&
       will_batch &&
@@ -668,7 +668,7 @@ int mysql_update(THD *thd,
     {
       if (error < 0)
         thd->clear_error();
-      if (thd->binlog_query(THD::ROW_QUERY_TYPE,
+      if (thd->binlog_query(Session::ROW_QUERY_TYPE,
                             thd->query, thd->query_length,
                             transactional_table, false, killed_status) &&
           transactional_table)
@@ -730,7 +730,7 @@ abort:
     false OK
     true  error
 */
-bool mysql_prepare_update(THD *thd, TableList *table_list,
+bool mysql_prepare_update(Session *thd, TableList *table_list,
 			 Item **conds, uint32_t order_num, order_st *order)
 {
   List<Item> all_fields;
@@ -810,7 +810,7 @@ static table_map get_table_map(List<Item> *items)
     true  Error
 */
 
-int mysql_multi_update_prepare(THD *thd)
+int mysql_multi_update_prepare(Session *thd)
 {
   LEX *lex= thd->lex;
   TableList *table_list= lex->query_tables;
@@ -960,7 +960,7 @@ reopen_tables:
   Setup multi-update handling and call SELECT to do the join
 */
 
-bool mysql_multi_update(THD *thd,
+bool mysql_multi_update(Session *thd,
                         TableList *table_list,
                         List<Item> *fields,
                         List<Item> *values,
@@ -1152,7 +1152,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
     1		Safe to update
 */
 
-static bool safe_update_on_fly(THD *thd, JOIN_TAB *join_tab,
+static bool safe_update_on_fly(Session *thd, JOIN_TAB *join_tab,
                                TableList *table_ref, TableList *all_tables)
 {
   Table *table= join_tab->table;
@@ -1496,11 +1496,11 @@ void multi_update::abort()
     if (mysql_bin_log.is_open())
     {
       /*
-        THD::killed status might not have been set ON at time of an error
+        Session::killed status might not have been set ON at time of an error
         got caught and if happens later the killed error is written
         into repl event.
       */
-      thd->binlog_query(THD::ROW_QUERY_TYPE,
+      thd->binlog_query(Session::ROW_QUERY_TYPE,
                         thd->query, thd->query_length,
                         transactional_tables, false);
     }
@@ -1668,7 +1668,7 @@ bool multi_update::send_eof()
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   uint64_t id;
-  THD::killed_state killed_status= THD::NOT_KILLED;
+  Session::killed_state killed_status= Session::NOT_KILLED;
   
   thd->set_proc_info("updating reference tables");
 
@@ -1681,7 +1681,7 @@ bool multi_update::send_eof()
     if local_error is not set ON until after do_updates() then
     later carried out killing should not affect binlogging.
   */
-  killed_status= (local_error == 0)? THD::NOT_KILLED : thd->killed;
+  killed_status= (local_error == 0)? Session::NOT_KILLED : thd->killed;
   thd->set_proc_info("end");
 
   /*
@@ -1701,7 +1701,7 @@ bool multi_update::send_eof()
     {
       if (local_error == 0)
         thd->clear_error();
-      if (thd->binlog_query(THD::ROW_QUERY_TYPE,
+      if (thd->binlog_query(Session::ROW_QUERY_TYPE,
                             thd->query, thd->query_length,
                             transactional_tables, false, killed_status) &&
           trans_safe)

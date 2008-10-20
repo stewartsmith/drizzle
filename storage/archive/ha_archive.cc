@@ -101,7 +101,7 @@ static unsigned int global_version;
 static handler *archive_create_handler(handlerton *hton, 
                                        TABLE_SHARE *table, 
                                        MEM_ROOT *mem_root);
-int archive_discover(handlerton *hton, THD* thd, const char *db, 
+int archive_discover(handlerton *hton, Session* thd, const char *db, 
                      const char *name,
                      unsigned char **frmblob, 
                      size_t *frmlen);
@@ -208,7 +208,7 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
 }
 
 int archive_discover(handlerton *hton __attribute__((unused)),
-                     THD* thd __attribute__((unused)),
+                     Session* thd __attribute__((unused)),
                      const char *db,
                      const char *name,
                      unsigned char **frmblob,
@@ -1069,7 +1069,7 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
+int ha_archive::repair(Session* thd, HA_CHECK_OPT* check_opt)
 {
   check_opt->flags= T_EXTEND;
   int rc= optimize(thd, check_opt);
@@ -1085,7 +1085,7 @@ int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely. 
 */
-int ha_archive::optimize(THD* thd __attribute__((unused)),
+int ha_archive::optimize(Session* thd __attribute__((unused)),
                          HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
@@ -1189,7 +1189,7 @@ error:
 /* 
   Below is an example of how to setup row level locking.
 */
-THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
+THR_LOCK_DATA **ha_archive::store_lock(Session *thd,
                                        THR_LOCK_DATA **to,
                                        enum thr_lock_type lock_type)
 {
@@ -1355,7 +1355,7 @@ bool ha_archive::is_crashed() const
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(THD* thd,
+int ha_archive::check(Session* thd,
                       HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
@@ -1400,7 +1400,7 @@ int ha_archive::check(THD* thd,
 /*
   Check and repair the table if needed.
 */
-bool ha_archive::check_and_repair(THD *thd) 
+bool ha_archive::check_and_repair(Session *thd) 
 {
   HA_CHECK_OPT check_opt;
 

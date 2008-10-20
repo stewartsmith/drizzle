@@ -34,17 +34,17 @@ static int copy_data_between_tables(Table *from,Table *to,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
 
-static bool prepare_blob_field(THD *thd, Create_field *sql_field);
-static bool check_engine(THD *, const char *, HA_CREATE_INFO *);
+static bool prepare_blob_field(Session *thd, Create_field *sql_field);
+static bool check_engine(Session *, const char *, HA_CREATE_INFO *);
 static int
-mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
+mysql_prepare_create_table(Session *thd, HA_CREATE_INFO *create_info,
                            Alter_info *alter_info,
                            bool tmp_table,
                                uint32_t *db_options,
                                handler *file, KEY **key_info_buffer,
                                uint32_t *key_count, int select_field_count);
 static bool
-mysql_prepare_alter_table(THD *thd, Table *table,
+mysql_prepare_alter_table(Session *thd, Table *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info);
 
@@ -202,7 +202,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
     path length
 */
 
-uint32_t build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
+uint32_t build_tmptable_filename(Session* thd, char *buff, size_t bufflen)
 {
 
   char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
@@ -236,14 +236,14 @@ uint32_t build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
     file
 */
 
-void write_bin_log(THD *thd, bool clear_error,
+void write_bin_log(Session *thd, bool clear_error,
                    char const *query, ulong query_length)
 {
   if (mysql_bin_log.is_open())
   {
     if (clear_error)
       thd->clear_error();
-    thd->binlog_query(THD::STMT_QUERY_TYPE,
+    thd->binlog_query(Session::STMT_QUERY_TYPE,
                       query, query_length, false, false);
   }
 }
@@ -273,7 +273,7 @@ void write_bin_log(THD *thd, bool clear_error,
 
 */
 
-bool mysql_rm_table(THD *thd,TableList *tables, bool if_exists, bool drop_temporary)
+bool mysql_rm_table(Session *thd,TableList *tables, bool if_exists, bool drop_temporary)
 {
   bool error, need_start_waiting= false;
 
@@ -338,7 +338,7 @@ bool mysql_rm_table(THD *thd,TableList *tables, bool if_exists, bool drop_tempor
    -1	Thread was killed
 */
 
-int mysql_rm_table_part2(THD *thd, TableList *tables, bool if_exists,
+int mysql_rm_table_part2(Session *thd, TableList *tables, bool if_exists,
                          bool drop_temporary, bool drop_view,
                          bool dont_log_query)
 {
@@ -874,7 +874,7 @@ int prepare_create_field(Create_field *sql_field,
 */
 
 static int
-mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
+mysql_prepare_create_table(Session *thd, HA_CREATE_INFO *create_info,
                            Alter_info *alter_info,
                            bool tmp_table,
                                uint32_t *db_options,
@@ -1611,7 +1611,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     apply it to the table.
 */
 
-static void set_table_default_charset(THD *thd,
+static void set_table_default_charset(Session *thd,
 				      HA_CREATE_INFO *create_info, char *db)
 {
   /*
@@ -1643,7 +1643,7 @@ static void set_table_default_charset(THD *thd,
         In this case the error is given
 */
 
-static bool prepare_blob_field(THD *thd __attribute__((unused)),
+static bool prepare_blob_field(Session *thd __attribute__((unused)),
                                Create_field *sql_field)
 {
 
@@ -1702,7 +1702,7 @@ static bool prepare_blob_field(THD *thd __attribute__((unused)),
     true  error
 */
 
-bool mysql_create_table_no_lock(THD *thd,
+bool mysql_create_table_no_lock(Session *thd,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
@@ -1922,7 +1922,7 @@ warn:
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 
-bool mysql_create_table(THD *thd, const char *db, const char *table_name,
+bool mysql_create_table(Session *thd, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
@@ -2064,7 +2064,7 @@ mysql_rename_table(handlerton *base, const char *old_db,
                    const char *old_name, const char *new_db,
                    const char *new_name, uint32_t flags)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   char from[FN_REFLEN], to[FN_REFLEN], lc_from[FN_REFLEN], lc_to[FN_REFLEN];
   char *from_base= from, *to_base= to;
   char tmp_name[NAME_LEN+1];
@@ -2137,7 +2137,7 @@ mysql_rename_table(handlerton *base, const char *old_db,
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
-void wait_while_table_is_used(THD *thd, Table *table,
+void wait_while_table_is_used(Session *thd, Table *table,
                               enum ha_extra_function function)
 {
 
@@ -2171,7 +2171,7 @@ void wait_while_table_is_used(THD *thd, Table *table,
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
-void close_cached_table(THD *thd, Table *table)
+void close_cached_table(Session *thd, Table *table)
 {
 
   wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
@@ -2189,7 +2189,7 @@ void close_cached_table(THD *thd, Table *table)
   return;
 }
 
-static int send_check_errmsg(THD *thd, TableList* table,
+static int send_check_errmsg(Session *thd, TableList* table,
 			     const char* operator_name, const char* errmsg)
 
 {
@@ -2206,7 +2206,7 @@ static int send_check_errmsg(THD *thd, TableList* table,
 }
 
 
-static int prepare_for_repair(THD *thd, TableList *table_list,
+static int prepare_for_repair(Session *thd, TableList *table_list,
 			      HA_CHECK_OPT *check_opt)
 {
   int error= 0;
@@ -2354,16 +2354,16 @@ end:
     true  Message should be sent by caller 
           (admin operation or network communication failed)
 */
-static bool mysql_admin_table(THD* thd, TableList* tables,
+static bool mysql_admin_table(Session* thd, TableList* tables,
                               HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
                               bool no_warnings_for_error,
                               uint32_t extra_open_options,
-                              int (*prepare_func)(THD *, TableList *,
+                              int (*prepare_func)(Session *, TableList *,
                                                   HA_CHECK_OPT *),
-                              int (handler::*operator_func)(THD *,
+                              int (handler::*operator_func)(Session *,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
@@ -2756,7 +2756,7 @@ err:
 }
 
 
-bool mysql_repair_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
+bool mysql_repair_table(Session* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(thd, tables, check_opt,
 				"repair", TL_WRITE, 1,
@@ -2767,7 +2767,7 @@ bool mysql_repair_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 }
 
 
-bool mysql_optimize_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
+bool mysql_optimize_table(Session* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(thd, tables, check_opt,
 				"optimize", TL_WRITE, 1,0,0,0,
@@ -2788,7 +2788,7 @@ bool mysql_optimize_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
    true  error
 */
 
-bool mysql_assign_to_keycache(THD* thd, TableList* tables,
+bool mysql_assign_to_keycache(Session* thd, TableList* tables,
 			     LEX_STRING *key_cache_name)
 {
   HA_CHECK_OPT check_opt;
@@ -2835,7 +2835,7 @@ bool mysql_assign_to_keycache(THD* thd, TableList* tables,
     0	  ok
 */
 
-int reassign_keycache_tables(THD *thd __attribute__((unused)),
+int reassign_keycache_tables(Session *thd __attribute__((unused)),
                              KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache)
 {
@@ -2859,7 +2859,7 @@ int reassign_keycache_tables(THD *thd __attribute__((unused)),
     @retval       0                        success
     @retval       1                        error
 */
-bool mysql_create_like_schema_frm(THD* thd, TableList* schema_table,
+bool mysql_create_like_schema_frm(Session* thd, TableList* schema_table,
                                   char *dst_path, HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO local_create_info;
@@ -2907,7 +2907,7 @@ bool mysql_create_like_schema_frm(THD* thd, TableList* schema_table,
     true  error
 */
 
-bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
+bool mysql_create_like_table(Session* thd, TableList* table, TableList* src_table,
                              HA_CREATE_INFO *create_info)
 {
   Table *name_lock= 0;
@@ -3103,7 +3103,7 @@ err:
 }
 
 
-bool mysql_analyze_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
+bool mysql_analyze_table(Session* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
@@ -3113,7 +3113,7 @@ bool mysql_analyze_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 }
 
 
-bool mysql_check_table(THD* thd, TableList* tables,HA_CHECK_OPT* check_opt)
+bool mysql_check_table(Session* thd, TableList* tables,HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
@@ -3126,7 +3126,7 @@ bool mysql_check_table(THD* thd, TableList* tables,HA_CHECK_OPT* check_opt)
 
 /* table_list should contain just one table */
 static int
-mysql_discard_or_import_tablespace(THD *thd,
+mysql_discard_or_import_tablespace(Session *thd,
                                    TableList *table_list,
                                    enum tablespace_op_type tablespace_op)
 {
@@ -3252,7 +3252,7 @@ void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
 
 static
 bool
-compare_tables(THD *thd,
+compare_tables(Session *thd,
                Table *table,
                Alter_info *alter_info,
                            HA_CREATE_INFO *create_info,
@@ -3290,7 +3290,7 @@ compare_tables(THD *thd,
       destroy the copy.
     */
     Alter_info tmp_alter_info(*alter_info, thd->mem_root);
-    THD *thd= table->in_use;
+    Session *thd= table->in_use;
     uint32_t db_options= 0; /* not used */
     /* Create the prepared information. */
     if (mysql_prepare_create_table(thd, create_info,
@@ -3651,7 +3651,7 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   return(error);
 }
 
-int create_temporary_table(THD *thd,
+int create_temporary_table(Session *thd,
                            Table *table,
                            char *new_db,
                            char *tmp_name,
@@ -3743,7 +3743,7 @@ int create_temporary_table(THD *thd,
     The temporary table is created without storing it in any storage engine
     and is opened only to get the table struct and frm file reference.
 */
-Table *create_altered_table(THD *thd,
+Table *create_altered_table(Session *thd,
                             Table *table,
                             char *new_db,
                             HA_CREATE_INFO *create_info,
@@ -3805,7 +3805,7 @@ Table *create_altered_table(THD *thd,
     operation directly, on-line without mysql having to copy
     the table.
 */
-int mysql_fast_or_online_alter_table(THD *thd,
+int mysql_fast_or_online_alter_table(Session *thd,
                                      Table *table,
                                      Table *altered_table,
                                      HA_CREATE_INFO *create_info,
@@ -3963,7 +3963,7 @@ int mysql_fast_or_online_alter_table(THD *thd,
 */
 
 static bool
-mysql_prepare_alter_table(THD *thd, Table *table,
+mysql_prepare_alter_table(Session *thd, Table *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info)
 {
@@ -4373,7 +4373,7 @@ err:
     true   Error
 */
 
-bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
+bool mysql_alter_table(Session *thd,char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TableList *table_list,
                        Alter_info *alter_info,
@@ -5102,7 +5102,7 @@ copy_data_between_tables(Table *from,Table *to,
   int error;
   Copy_field *copy,*copy_end;
   ulong found_count,delete_count;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   uint32_t length= 0;
   SORT_FIELD *sortorder;
   READ_RECORD info;
@@ -5310,7 +5310,7 @@ copy_data_between_tables(Table *from,Table *to,
  RETURN
     Like mysql_alter_table().
 */
-bool mysql_recreate_table(THD *thd, TableList *table_list)
+bool mysql_recreate_table(Session *thd, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
@@ -5333,7 +5333,7 @@ bool mysql_recreate_table(THD *thd, TableList *table_list)
 }
 
 
-bool mysql_checksum_table(THD *thd, TableList *tables,
+bool mysql_checksum_table(Session *thd, TableList *tables,
                           HA_CHECK_OPT *check_opt)
 {
   TableList *table;
@@ -5449,7 +5449,7 @@ bool mysql_checksum_table(THD *thd, TableList *tables,
   return(true);
 }
 
-static bool check_engine(THD *thd, const char *table_name,
+static bool check_engine(Session *thd, const char *table_name,
                          HA_CREATE_INFO *create_info)
 {
   handlerton **new_engine= &create_info->db_type;

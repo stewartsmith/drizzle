@@ -27,21 +27,21 @@ public:
   enum_warning_level level;
   char *msg;
   
-  DRIZZLE_ERROR(THD *thd, uint32_t code_arg, enum_warning_level level_arg,
+  DRIZZLE_ERROR(Session *thd, uint32_t code_arg, enum_warning_level level_arg,
 	      const char *msg_arg)
     :code(code_arg), level(level_arg)
   {
     if (msg_arg)
       set_msg(thd, msg_arg);
   }
-  void set_msg(THD *thd, const char *msg_arg);
+  void set_msg(Session *thd, const char *msg_arg);
 };
 
-DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+DRIZZLE_ERROR *push_warning(Session *thd, DRIZZLE_ERROR::enum_warning_level level,
                           uint32_t code, const char *msg);
-void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+void push_warning_printf(Session *thd, DRIZZLE_ERROR::enum_warning_level level,
 			 uint32_t code, const char *format, ...);
-void drizzle_reset_errors(THD *thd, bool force);
-bool mysqld_show_warnings(THD *thd, uint32_t levels_to_show);
+void drizzle_reset_errors(Session *thd, bool force);
+bool mysqld_show_warnings(Session *thd, uint32_t levels_to_show);
 
 extern const LEX_STRING warning_level_names[];

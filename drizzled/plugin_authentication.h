@@ -29,7 +29,7 @@
 
 typedef struct authentication_st
 {
-  bool (*authenticate)(THD *thd, const char *password);
+  bool (*authenticate)(Session *thd, const char *password);
 } authentication_st;
 
 #endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

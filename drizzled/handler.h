@@ -351,7 +351,7 @@ typedef uint64_t my_xid; // this line is the same as in log_event.h
 #define COMPATIBLE_DATA_YES 0
 #define COMPATIBLE_DATA_NO  1
 
-typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
+typedef bool (*qc_engine_callback)(Session *thd, char *table_key,
                                       uint32_t key_length,
                                       uint64_t *engine_data);
 
@@ -442,7 +442,7 @@ class Table;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
-typedef bool (stat_print_fn)(THD *thd, const char *type, uint32_t type_len,
+typedef bool (stat_print_fn)(Session *thd, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
@@ -499,18 +499,18 @@ struct handlerton
      this storage area - set it to something, so that MySQL would know
      this storage engine was accessed in this connection
    */
-   int  (*close_connection)(handlerton *hton, THD *thd);
+   int  (*close_connection)(handlerton *hton, Session *thd);
    /*
      sv points to an uninitialized storage area of requested size
      (see savepoint_offset description)
    */
-   int  (*savepoint_set)(handlerton *hton, THD *thd, void *sv);
+   int  (*savepoint_set)(handlerton *hton, Session *thd, void *sv);
    /*
      sv points to a storage area, that was earlier passed
      to the savepoint_set call
    */
-   int  (*savepoint_rollback)(handlerton *hton, THD *thd, void *sv);
-   int  (*savepoint_release)(handlerton *hton, THD *thd, void *sv);
+   int  (*savepoint_rollback)(handlerton *hton, Session *thd, void *sv);
+   int  (*savepoint_release)(handlerton *hton, Session *thd, void *sv);
    /*
      'all' is true if it's a real commit, that makes persistent changes
      'all' is false if it's not in fact a commit but an end of the
@@ -518,31 +518,31 @@ struct handlerton
      NOTE 'all' is also false in auto-commit mode where 'end of statement'
      and 'real commit' mean the same event.
    */
-   int  (*commit)(handlerton *hton, THD *thd, bool all);
-   int  (*rollback)(handlerton *hton, THD *thd, bool all);
-   int  (*prepare)(handlerton *hton, THD *thd, bool all);
+   int  (*commit)(handlerton *hton, Session *thd, bool all);
+   int  (*rollback)(handlerton *hton, Session *thd, bool all);
+   int  (*prepare)(handlerton *hton, Session *thd, bool all);
    int  (*recover)(handlerton *hton, XID *xid_list, uint32_t len);
    int  (*commit_by_xid)(handlerton *hton, XID *xid);
    int  (*rollback_by_xid)(handlerton *hton, XID *xid);
-   void *(*create_cursor_read_view)(handlerton *hton, THD *thd);
-   void (*set_cursor_read_view)(handlerton *hton, THD *thd, void *read_view);
-   void (*close_cursor_read_view)(handlerton *hton, THD *thd, void *read_view);
+   void *(*create_cursor_read_view)(handlerton *hton, Session *thd);
+   void (*set_cursor_read_view)(handlerton *hton, Session *thd, void *read_view);
+   void (*close_cursor_read_view)(handlerton *hton, Session *thd, void *read_view);
    handler *(*create)(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
    void (*drop_database)(handlerton *hton, char* path);
-   int (*start_consistent_snapshot)(handlerton *hton, THD *thd);
+   int (*start_consistent_snapshot)(handlerton *hton, Session *thd);
    bool (*flush_logs)(handlerton *hton);
-   bool (*show_status)(handlerton *hton, THD *thd, stat_print_fn *print, enum ha_stat_type stat);
-   int (*fill_files_table)(handlerton *hton, THD *thd,
+   bool (*show_status)(handlerton *hton, Session *thd, stat_print_fn *print, enum ha_stat_type stat);
+   int (*fill_files_table)(handlerton *hton, Session *thd,
                            TableList *tables,
                            class Item *cond);
    uint32_t flags;                                /* global handler flags */
-   int (*release_temporary_latches)(handlerton *hton, THD *thd);
+   int (*release_temporary_latches)(handlerton *hton, Session *thd);
 
-   int (*discover)(handlerton *hton, THD* thd, const char *db, 
+   int (*discover)(handlerton *hton, Session* thd, const char *db, 
                    const char *name,
                    unsigned char **frmblob, 
                    size_t *frmlen);
-   int (*table_exists_in_engine)(handlerton *hton, THD* thd, const char *db,
+   int (*table_exists_in_engine)(handlerton *hton, Session* thd, const char *db,
                                  const char *name);
    uint32_t license; /* Flag for Engine License */
    void *data; /* Location for engines to keep personal structures */
@@ -563,7 +563,7 @@ struct handlerton
 
 class Ha_trx_info;
 
-struct THD_TRANS
+struct Session_TRANS
 {
   /* true is not all entries in the ht[] support 2pc */
   bool        no_2pc;
@@ -573,9 +573,9 @@ struct THD_TRANS
     The purpose of this flag is to keep track of non-transactional
     tables that were modified in scope of:
     - transaction, when the variable is a member of
-    THD::transaction.all
+    Session::transaction.all
     - top-level statement or sub-statement, when the variable is a
-    member of THD::transaction.stmt
+    member of Session::transaction.stmt
     This member has the following life cycle:
     * stmt.modified_non_trans_table is used to keep track of
     modified non-transactional tables of top-level statements. At
@@ -624,7 +624,7 @@ class Ha_trx_info
 {
 public:
   /** Register this storage engine in the given transaction context. */
-  void register_ha(THD_TRANS *trans, handlerton *ht_arg)
+  void register_ha(Session_TRANS *trans, handlerton *ht_arg)
   {
     assert(m_flags == 0);
     assert(m_ht == NULL);
@@ -1155,7 +1155,7 @@ public:
     insert id for the current row (*autogenerated*; if not
     autogenerated, it's 0).
     At first successful insertion, this variable is stored into
-    THD::first_successful_insert_id_in_cur_stmt.
+    Session::first_successful_insert_id_in_cur_stmt.
   */
   uint64_t insert_id_for_cur_row;
   /**
@@ -1231,7 +1231,7 @@ public:
     interface, see the (private) functions write_row(), update_row(),
     and delete_row() below.
   */
-  int ha_external_lock(THD *thd, int lock_type);
+  int ha_external_lock(Session *thd, int lock_type);
   int ha_write_row(unsigned char * buf);
   int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
   int ha_delete_row(const unsigned char * buf);
@@ -1239,8 +1239,8 @@ public:
 
   int ha_check_for_upgrade(HA_CHECK_OPT *check_opt);
   /** to be actually called to get 'check()' functionality*/
-  int ha_check(THD *thd, HA_CHECK_OPT *check_opt);
-  int ha_repair(THD* thd, HA_CHECK_OPT* check_opt);
+  int ha_check(Session *thd, HA_CHECK_OPT *check_opt);
+  int ha_repair(Session* thd, HA_CHECK_OPT* check_opt);
   void ha_start_bulk_insert(ha_rows rows)
   {
     estimation_rows_to_insert= rows;
@@ -1255,9 +1255,9 @@ public:
                          uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_optimize(THD* thd, HA_CHECK_OPT* check_opt);
-  int ha_analyze(THD* thd, HA_CHECK_OPT* check_opt);
-  bool ha_check_and_repair(THD *thd);
+  int ha_optimize(Session* thd, HA_CHECK_OPT* check_opt);
+  int ha_analyze(Session* thd, HA_CHECK_OPT* check_opt);
+  bool ha_check_and_repair(Session *thd);
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
@@ -1511,7 +1511,7 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(THD *thd __attribute__((unused)),
+  virtual int start_stmt(Session *thd __attribute__((unused)),
                          thr_lock_type lock_type __attribute__((unused)))
   {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
@@ -1540,7 +1540,7 @@ public:
 
   virtual void update_create_info(HA_CREATE_INFO *create_info __attribute__((unused))) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(THD* thd __attribute__((unused)),
+  virtual int assign_to_keycache(Session* thd __attribute__((unused)),
                                  HA_CHECK_OPT* check_opt __attribute__((unused)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
@@ -1567,7 +1567,7 @@ public:
   /** used in ALTER Table; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
-  virtual int get_foreign_key_list(THD *thd __attribute__((unused)),
+  virtual int get_foreign_key_list(Session *thd __attribute__((unused)),
                                    List<FOREIGN_KEY_INFO> *f_key_list __attribute__((unused)))
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
@@ -1658,7 +1658,7 @@ public:
     than lock_count() claimed. This can happen when the MERGE children
     are not attached when this is called from another thread.
   */
-  virtual THR_LOCK_DATA **store_lock(THD *thd,
+  virtual THR_LOCK_DATA **store_lock(Session *thd,
                                      THR_LOCK_DATA **to,
                                      enum thr_lock_type lock_type)=0;
 
@@ -1697,7 +1697,7 @@ public:
   */
 
   virtual bool
-    register_query_cache_table(THD *thd __attribute__((unused)),
+    register_query_cache_table(Session *thd __attribute__((unused)),
                                char *table_key __attribute__((unused)),
                                uint32_t key_length __attribute__((unused)),
                                qc_engine_callback *engine_callback,
@@ -1819,7 +1819,7 @@ public:
    @retval   0      OK
    @retval   error  error code passed from storage engine
  */
- virtual int alter_table_phase1(THD *thd __attribute__((unused)),
+ virtual int alter_table_phase1(Session *thd __attribute__((unused)),
                                 Table *altered_table __attribute__((unused)),
                                 HA_CREATE_INFO *create_info __attribute__((unused)),
                                 HA_ALTER_INFO *alter_info __attribute__((unused)),
@@ -1845,7 +1845,7 @@ public:
       this call is to be wrapped with a DDL lock. This is currently NOT
       supported.
  */
- virtual int alter_table_phase2(THD *thd  __attribute__((unused)),
+ virtual int alter_table_phase2(Session *thd  __attribute__((unused)),
                                 Table *altered_table  __attribute__((unused)),
                                 HA_CREATE_INFO *create_info __attribute__((unused)),
                                 HA_ALTER_INFO *alter_info __attribute__((unused)),
@@ -1860,7 +1860,7 @@ public:
     @param    thd               The thread handle
     @param    table             The altered table, re-opened
  */
- virtual int alter_table_phase3(THD *thd __attribute__((unused)),
+ virtual int alter_table_phase3(Session *thd __attribute__((unused)),
                                 Table *table __attribute__((unused)))
  {
    return HA_ERR_UNSUPPORTED;
@@ -1897,7 +1897,7 @@ public:
                                       lock conflict with NOWAIT option
     @retval HA_ERR_LOCK_DEADLOCK      Deadlock detected
   */
-  virtual int lock_table(THD *thd         __attribute__((unused)),
+  virtual int lock_table(Session *thd         __attribute__((unused)),
                          int lock_type    __attribute__((unused)),
                          int lock_timeout __attribute__((unused)))
   {
@@ -1913,8 +1913,8 @@ public:
 protected:
   /* Service methods for use by storage engines. */
   void ha_statistic_increment(ulong SSV::*offset) const;
-  void **ha_data(THD *) const;
-  THD *ha_thd(void) const;
+  void **ha_data(Session *) const;
+  Session *ha_thd(void) const;
 
   /**
     Default rename_table() and delete_table() rename/delete files with a
@@ -1999,7 +1999,7 @@ private:
     @return  non-0 in case of failure, 0 in case of success.
     When lock_type is F_UNLCK, the return value is ignored.
   */
-  virtual int external_lock(THD *thd __attribute__((unused)),
+  virtual int external_lock(Session *thd __attribute__((unused)),
                             int lock_type __attribute__((unused)))
   {
     return 0;
@@ -2008,7 +2008,7 @@ private:
   /** admin commands - called from mysql_admin_table */
   virtual int check_for_upgrade(HA_CHECK_OPT *check_opt __attribute__((unused)))
   { return 0; }
-  virtual int check(THD* thd __attribute__((unused)),
+  virtual int check(Session* thd __attribute__((unused)),
                     HA_CHECK_OPT* check_opt __attribute__((unused)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
@@ -2017,7 +2017,7 @@ private:
      to specify CHECK option to use to call check()
      upon the table.
   */
-  virtual int repair(THD* thd __attribute__((unused)),
+  virtual int repair(Session* thd __attribute__((unused)),
                      HA_CHECK_OPT* check_opt __attribute__((unused)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual void start_bulk_insert(ha_rows rows __attribute__((unused)))
@@ -2068,13 +2068,13 @@ private:
   */
   virtual int reset_auto_increment(uint64_t value __attribute__((unused)))
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int optimize(THD* thd __attribute__((unused)),
+  virtual int optimize(Session* thd __attribute__((unused)),
                        HA_CHECK_OPT* check_opt __attribute__((unused)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual int analyze(THD* thd __attribute__((unused)),
+  virtual int analyze(Session* thd __attribute__((unused)),
                       HA_CHECK_OPT* check_opt __attribute__((unused)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual bool check_and_repair(THD *thd __attribute__((unused)))
+  virtual bool check_and_repair(Session *thd __attribute__((unused)))
   { return true; }
   virtual int disable_indexes(uint32_t mode __attribute__((unused)))
   { return HA_ERR_WRONG_COMMAND; }
@@ -2175,13 +2175,13 @@ extern uint32_t total_ha, total_ha_2pc;
 #define ha_rollback(thd) (ha_rollback_trans((thd), true))
 
 /* lookups */
-handlerton *ha_default_handlerton(THD *thd);
-plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name);
-plugin_ref ha_lock_engine(THD *thd, handlerton *hton);
-handlerton *ha_resolve_by_legacy_type(THD *thd, enum legacy_db_type db_type);
+handlerton *ha_default_handlerton(Session *thd);
+plugin_ref ha_resolve_by_name(Session *thd, const LEX_STRING *name);
+plugin_ref ha_lock_engine(Session *thd, handlerton *hton);
+handlerton *ha_resolve_by_legacy_type(Session *thd, enum legacy_db_type db_type);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          handlerton *db_type);
-handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
+handlerton *ha_checktype(Session *thd, enum legacy_db_type database_type,
                           bool no_substitute, bool report_error);
 
 
@@ -2214,26 +2214,26 @@ int ha_initialize_handlerton(st_plugin_int *plugin);
 int ha_finalize_handlerton(st_plugin_int *plugin);
 
 TYPELIB *ha_known_exts(void);
-void ha_close_connection(THD* thd);
+void ha_close_connection(Session* thd);
 bool ha_flush_logs(handlerton *db_type);
 void ha_drop_database(char* path);
-int ha_create_table(THD *thd, const char *path,
+int ha_create_table(Session *thd, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
                     bool update_create_info);
-int ha_delete_table(THD *thd, handlerton *db_type, const char *path,
+int ha_delete_table(Session *thd, handlerton *db_type, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
 /* statistics and info */
-bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat);
+bool ha_show_status(Session *thd, handlerton *db_type, enum ha_stat_type stat);
 
 /* discovery */
-int ha_create_table_from_engine(THD* thd, const char *db, const char *name);
-int ha_discover(THD* thd, const char* dbname, const char* name,
+int ha_create_table_from_engine(Session* thd, const char *db, const char *name);
+int ha_discover(Session* thd, const char* dbname, const char* name,
                 unsigned char** frmblob, size_t* frmlen);
-int ha_find_files(THD *thd,const char *db,const char *path,
+int ha_find_files(Session *thd,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-int ha_table_exists_in_engine(THD* thd, const char* db, const char* name);
+int ha_table_exists_in_engine(Session* thd, const char* db, const char* name);
 
 /* key cache */
 extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);
@@ -2243,28 +2243,28 @@ int ha_change_key_cache(KEY_CACHE *old_key_cache, KEY_CACHE *new_key_cache);
 int ha_end_key_cache(KEY_CACHE *key_cache);
 
 /* report to InnoDB that control passes to the client */
-int ha_release_temporary_latches(THD *thd);
+int ha_release_temporary_latches(Session *thd);
 
 /* transactions: interface to handlerton functions */
-int ha_start_consistent_snapshot(THD *thd);
+int ha_start_consistent_snapshot(Session *thd);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
-int ha_commit_one_phase(THD *thd, bool all);
-int ha_rollback_trans(THD *thd, bool all);
-int ha_prepare(THD *thd);
+int ha_commit_one_phase(Session *thd, bool all);
+int ha_rollback_trans(Session *thd, bool all);
+int ha_prepare(Session *thd);
 int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call handlerton functions directly */
-int ha_commit_trans(THD *thd, bool all);
-int ha_autocommit_or_rollback(THD *thd, int error);
-int ha_enable_transaction(THD *thd, bool on);
+int ha_commit_trans(Session *thd, bool all);
+int ha_autocommit_or_rollback(Session *thd, int error);
+int ha_enable_transaction(Session *thd, bool on);
 
 /* savepoints */
-int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv);
-int ha_savepoint(THD *thd, SAVEPOINT *sv);
-int ha_release_savepoint(THD *thd, SAVEPOINT *sv);
+int ha_rollback_to_savepoint(Session *thd, SAVEPOINT *sv);
+int ha_savepoint(Session *thd, SAVEPOINT *sv);
+int ha_release_savepoint(Session *thd, SAVEPOINT *sv);
 
 /* these are called by storage engines */
-void trans_register_ha(THD *thd, bool all, handlerton *ht);
+void trans_register_ha(Session *thd, bool all, handlerton *ht);
 
 /*
   Storage engine has to assume the transaction will end up with 2pc if

@@ -634,7 +634,7 @@ public:
 class RANGE_OPT_PARAM
 {
 public:
-  THD	*thd;   /* Current thread handle */
+  Session	*thd;   /* Current thread handle */
   Table *table; /* Table being analyzed */
   COND *cond;   /* Used inside get_mm_tree(). */
   table_map prev_tables;
@@ -1058,7 +1058,7 @@ QUICK_SELECT_I::QUICK_SELECT_I()
    used_key_parts(0)
 {}
 
-QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, Table *table, uint32_t key_nr,
+QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *thd, Table *table, uint32_t key_nr,
                                        bool no_alloc, MEM_ROOT *parent_alloc,
                                        bool *create_error)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
@@ -1148,7 +1148,7 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
 }
 
 
-QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(THD *thd_param,
+QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(Session *thd_param,
                                                    Table *table)
   :pk_quick_select(NULL), thd(thd_param)
 {
@@ -1198,7 +1198,7 @@ QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
 }
 
 
-QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(THD *thd_param,
+QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *thd_param,
                                                        Table *table,
                                                        bool retrieve_full_rows,
                                                        MEM_ROOT *parent_alloc)
@@ -1259,7 +1259,7 @@ int QUICK_ROR_INTERSECT_SELECT::init()
 int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
   handler *save_file= file, *org_file;
-  THD *thd;
+  Session *thd;
 
   in_ror_merged_scan= 1;
   if (reuse_handler)
@@ -1437,7 +1437,7 @@ QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
 }
 
 
-QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(THD *thd_param,
+QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *thd_param,
                                                Table *table)
   : thd(thd_param), scans_inited(false)
 {
@@ -2141,7 +2141,7 @@ static int fill_used_fields_bitmap(PARAM *param)
     1 if found usable ranges and quick select has been successfully created.
 */
 
-int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
+int SQL_SELECT::test_quick_select(Session *thd, key_map keys_to_use,
 				  table_map prev_tables,
 				  ha_rows limit, bool force_quick_range, 
                                   bool ordered_output)
@@ -6597,7 +6597,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
     NULL on error.
 */
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *thd, Table *table,
                                              TABLE_REF *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
@@ -7686,7 +7686,7 @@ static inline SEL_ARG * get_index_range_tree(uint32_t index, SEL_TREE* range_tre
 static bool get_constant_key_infix(KEY *index_info, SEL_ARG *index_range_tree,
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
-                       KEY_PART_INFO *last_part, THD *thd,
+                       KEY_PART_INFO *last_part, Session *thd,
                        unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part);
 static bool
@@ -7832,7 +7832,7 @@ cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
 static TRP_GROUP_MIN_MAX *
 get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 {
-  THD *thd= param->thd;
+  Session *thd= param->thd;
   JOIN *join= thd->lex->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
@@ -8394,7 +8394,7 @@ get_constant_key_infix(KEY *index_info __attribute__((unused)),
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
                        KEY_PART_INFO *last_part,
-                       THD *thd __attribute__((unused)),
+                       Session *thd __attribute__((unused)),
                        unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part)
 {

@@ -308,7 +308,7 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
   return(0);
 }
 
-bool ha_tina::check_and_repair(THD *thd)
+bool ha_tina::check_and_repair(Session *thd)
 {
   HA_CHECK_OPT check_opt;
 
@@ -1269,7 +1269,7 @@ error:
          rows (after the first bad one) as well.
 */
 
-int ha_tina::repair(THD* thd,
+int ha_tina::repair(Session* thd,
                     HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   char repaired_fname[FN_REFLEN];
@@ -1415,7 +1415,7 @@ int ha_tina::delete_all_rows()
   Called by the database to lock the table. Keep in mind that this
   is an internal lock.
 */
-THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_tina::store_lock(Session *thd __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -1467,7 +1467,7 @@ int ha_tina::create(const char *name, Table *table_arg,
   return(0);
 }
 
-int ha_tina::check(THD* thd,
+int ha_tina::check(Session* thd,
                    HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;

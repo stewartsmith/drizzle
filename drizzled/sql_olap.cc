@@ -38,7 +38,7 @@
 
 static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new_fields)
 {
-  THD	*thd=current_thd;
+  Session	*thd=current_thd;
   Item *item, *new_item;
   Item_null *constant= new Item_null("ALL");
 

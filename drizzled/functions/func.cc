@@ -56,7 +56,7 @@ Item_func::Item_func(List<Item> &list)
   set_arguments(list);
 }
 
-Item_func::Item_func(THD *thd, Item_func *item)
+Item_func::Item_func(Session *thd, Item_func *item)
   :Item_result_field(thd, item),
    allowed_arg_cols(item->allowed_arg_cols),
    arg_count(item->arg_count),
@@ -112,7 +112,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
+Item_func::fix_fields(Session *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   Item **arg,**arg_end;
@@ -264,7 +264,7 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
         return 0;
 
       /*
-        THD::change_item_tree() should be called only if the tree was
+        Session::change_item_tree() should be called only if the tree was
         really transformed, i.e. when a new item has been created.
         Otherwise we'll be allocating a lot of unnecessary memory for
         change records at each execution.
@@ -328,7 +328,7 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
    See comments in Item_cmp_func::split_sum_func()
 */
 
-void Item_func::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_func::split_sum_func(Session *thd, Item **ref_pointer_array,
                                List<Item> &fields)
 {
   Item **arg, **arg_end;

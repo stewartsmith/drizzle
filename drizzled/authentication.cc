@@ -24,7 +24,7 @@
 
 static bool are_plugins_loaded= false;
 
-static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
+static bool authenticate_by(Session *thd, plugin_ref plugin, void* p_data)
 {
   const char *password= (const char *)p_data;
   authentication_st *auth= plugin_data(plugin, authentication_st *);
@@ -40,7 +40,7 @@ static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
   return false;
 }
 
-bool authenticate_user(THD *thd, const char *password)
+bool authenticate_user(Session *thd, const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)

@@ -208,7 +208,7 @@ String *Field_time::val_str(String *val_buffer,
 bool Field_time::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long tmp;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   if (!(fuzzydate & TIME_FUZZY_DATE))
   {
     push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,

@@ -40,7 +40,7 @@ static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_f
 			    Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
-static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
+static bool make_empty_rec(Session *thd, int file, enum legacy_db_type table_type,
 			   uint32_t table_options,
 			   List<Create_field> &create_fields,
 			   uint32_t reclength, ulong data_offset,
@@ -58,7 +58,7 @@ struct Pack_header_error_handler: public Internal_error_handler
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
-                            THD *thd);
+                            Session *thd);
   bool is_handled;
   Pack_header_error_handler() :is_handled(false) {}
 };
@@ -69,7 +69,7 @@ Pack_header_error_handler::
 handle_error(uint32_t sql_errno,
              const char * /* message */,
              DRIZZLE_ERROR::enum_warning_level /* level */,
-             THD * /* thd */)
+             Session * /* thd */)
 {
   is_handled= (sql_errno == ER_TOO_MANY_FIELDS);
   return is_handled;
@@ -95,7 +95,7 @@ handle_error(uint32_t sql_errno,
     1  error
 */
 
-bool mysql_create_frm(THD *thd, const char *file_name,
+bool mysql_create_frm(Session *thd, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_fields,
@@ -371,7 +371,7 @@ err3:
     1  error
 */
 
-int rea_create_table(THD *thd, const char *path,
+int rea_create_table(Session *thd, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
@@ -940,7 +940,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 
 /* save an empty record on start of formfile */
 
-static bool make_empty_rec(THD *thd, File file,
+static bool make_empty_rec(Session *thd, File file,
                            enum legacy_db_type table_type __attribute__((unused)),
                            uint32_t table_options,
                            List<Create_field> &create_fields,

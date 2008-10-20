@@ -24,7 +24,7 @@
 
   The problem here is that mysql_parse calls free_item to free all the
   items allocated at the end of every query. The workaround would to
-  keep two item lists per THD - normal free_list and handler_items.
+  keep two item lists per Session - normal free_list and handler_items.
   The second is to be freeed only on thread end. mysql_ha_open should
   then do { handler_items=concat(handler_items, free_list); free_list=0; }
 
@@ -72,7 +72,7 @@
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-static void mysql_ha_close_table(THD *thd, TableList *tables,
+static void mysql_ha_close_table(Session *thd, TableList *tables,
                                  bool is_locked)
 {
   Table **table_ptr;
@@ -129,7 +129,7 @@ static void mysql_ha_close_table(THD *thd, TableList *tables,
     true  error
 */
 
-bool mysql_ha_close(THD *thd, TableList *tables)
+bool mysql_ha_close(Session *thd, TableList *tables)
 {
   TableList    *hash_tables;
 
@@ -162,7 +162,7 @@ bool mysql_ha_close(THD *thd, TableList *tables)
           table was matched.
 */
 
-static TableList *mysql_ha_find(THD *thd, TableList *tables)
+static TableList *mysql_ha_find(Session *thd, TableList *tables)
 {
   TableList *hash_tables, *head= NULL, *first= tables;
 
@@ -199,7 +199,7 @@ static TableList *mysql_ha_find(THD *thd, TableList *tables)
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked)
+void mysql_ha_rm_tables(Session *thd, TableList *tables, bool is_locked)
 {
   TableList *hash_tables, *next;
 
@@ -229,7 +229,7 @@ void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked)
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_flush(THD *thd)
+void mysql_ha_flush(Session *thd)
 {
   TableList *hash_tables;
 
@@ -258,7 +258,7 @@ void mysql_ha_flush(THD *thd)
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_cleanup(THD *thd)
+void mysql_ha_cleanup(Session *thd)
 {
   TableList *hash_tables;
 

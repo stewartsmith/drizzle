@@ -222,7 +222,7 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
                           uint32_t flags)
 {
   int was_cut;
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   enum enum_drizzle_timestamp_type ts_type;
   
   ts_type= str_to_datetime(str, length, l_time,
@@ -254,7 +254,7 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
      0 - t contains datetime value which is out of TIMESTAMP range.
      
 */
-my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
+my_time_t TIME_to_timestamp(Session *thd, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
 {
   my_time_t timestamp;
 
@@ -592,7 +592,7 @@ DATE_TIME_FORMAT
   {
     tmp.format.str=    (char*) format_str;
     tmp.format.length= format_length;
-    return date_time_format_copy((THD *)0, &tmp);
+    return date_time_format_copy((Session *)0, &tmp);
   }
   return 0;
 }
@@ -614,7 +614,7 @@ DATE_TIME_FORMAT
     new object
 */
 
-DATE_TIME_FORMAT *date_time_format_copy(THD *thd, DATE_TIME_FORMAT *format)
+DATE_TIME_FORMAT *date_time_format_copy(Session *thd, DATE_TIME_FORMAT *format)
 {
   DATE_TIME_FORMAT *new_format;
   uint32_t length= sizeof(*format) + format->format.length + 1;
@@ -714,7 +714,7 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+void make_truncated_value_warning(Session *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint32_t str_length,
                                   enum enum_drizzle_timestamp_type time_type,

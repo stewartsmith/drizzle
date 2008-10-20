@@ -149,7 +149,7 @@ Item_subselect::select_transformer(JOIN *join __attribute__((unused)))
 }
 
 
-bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
+bool Item_subselect::fix_fields(Session *thd_param, Item **ref)
 {
   char const *save_where= thd_param->where;
   uint8_t uncacheable;
@@ -343,7 +343,7 @@ bool Item_subselect::const_item() const
   return const_item_cache;
 }
 
-Item *Item_subselect::get_tmp_table_item(THD *thd_arg)
+Item *Item_subselect::get_tmp_table_item(Session *thd_arg)
 {
   if (!with_sum_func && !const_item())
     return new Item_field(result_field);
@@ -397,7 +397,7 @@ Item_singlerow_subselect::invalidate_and_restore_select_lex()
   return(result);
 }
 
-Item_maxmin_subselect::Item_maxmin_subselect(THD *thd_param,
+Item_maxmin_subselect::Item_maxmin_subselect(Session *thd_param,
                                              Item_subselect *parent,
 					     st_select_lex *select_lex,
 					     bool max_arg)
@@ -1695,7 +1695,7 @@ void Item_in_subselect::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_in_subselect::fix_fields(THD *thd_arg, Item **ref)
+bool Item_in_subselect::fix_fields(Session *thd_arg, Item **ref)
 {
   bool result = 0;
 
@@ -1884,7 +1884,7 @@ void Item_allany_subselect::print(String *str, enum_query_type query_type)
 }
 
 
-void subselect_engine::set_thd(THD *thd_arg)
+void subselect_engine::set_thd(Session *thd_arg)
 {
   thd= thd_arg;
   if (result)

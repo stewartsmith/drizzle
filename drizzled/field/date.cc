@@ -54,7 +54,7 @@ int Field_newdate::store(const char *from,
   long tmp;
   DRIZZLE_TIME l_time;
   int error;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   enum enum_drizzle_timestamp_type ret;
   if ((ret= str_to_datetime(from, len, &l_time,
                             (TIME_FUZZY_DATE |
@@ -103,7 +103,7 @@ int Field_newdate::store(int64_t nr,
   DRIZZLE_TIME l_time;
   int64_t tmp;
   int error;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   if (number_to_datetime(nr, &l_time,
                          (TIME_FUZZY_DATE |
                           (thd->variables.sql_mode &

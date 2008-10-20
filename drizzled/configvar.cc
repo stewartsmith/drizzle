@@ -82,7 +82,7 @@ typedef struct configvar_do1_parms_st
 } configvar_do1_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded configvar plugin */
-static bool configvar_do1_iterate (THD *thd, plugin_ref plugin, void *p)
+static bool configvar_do1_iterate (Session *thd, plugin_ref plugin, void *p)
 {
   configvar_t *l= plugin_data(plugin, configvar_t *);
   configvar_do1_parms_t *parms= (configvar_do1_parms_t *) p;
@@ -104,7 +104,7 @@ static bool configvar_do1_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the configvar_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-bool configvar_do1 (THD *thd, void *parm1, void *parm2)
+bool configvar_do1 (Session *thd, void *parm1, void *parm2)
 {
   configvar_do1_parms_t parms;
   bool foreach_rv;
@@ -136,7 +136,7 @@ typedef struct configvar_do2_parms_st
 } configvar_do2_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded configvar plugin */
-static bool configvar_do2_iterate (THD *thd, plugin_ref plugin, void *p)
+static bool configvar_do2_iterate (Session *thd, plugin_ref plugin, void *p)
 {
   configvar_t *l= plugin_data(plugin, configvar_t *);
   configvar_do2_parms_t *parms= (configvar_do2_parms_t *) p;
@@ -159,7 +159,7 @@ static bool configvar_do2_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the configvar_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool configvar_do2 (THD *thd, void *parm3, void *parm4)
+bool configvar_do2 (Session *thd, void *parm3, void *parm4)
 {
   configvar_do2_parms_t parms;
   bool foreach_rv;

@@ -94,7 +94,7 @@ public:
   int info(uint);
   int extra(enum ha_extra_function operation);
   int reset();
-  int external_lock(THD *thd, int lock_type);
+  int external_lock(Session *thd, int lock_type);
   int delete_all_rows(void);
   int disable_indexes(uint32_t mode);
   int enable_indexes(uint32_t mode);
@@ -106,7 +106,7 @@ public:
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   void update_create_info(HA_CREATE_INFO *create_info);
 
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *thd, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
   {

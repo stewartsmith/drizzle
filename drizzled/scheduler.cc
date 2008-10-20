@@ -28,9 +28,9 @@
  */
 
 static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(THD *thd __attribute__((unused))) {}
+static void post_kill_dummy(Session *thd __attribute__((unused))) {}
 static void end_dummy(void) {}
-static bool end_thread_dummy(THD *thd __attribute__((unused)),
+static bool end_thread_dummy(Session *thd __attribute__((unused)),
                              bool cache_thread __attribute__((unused)))
 { return 0; }
 
@@ -69,10 +69,10 @@ static LIST *thds_waiting_for_io; /* list of thds with added events */
 
 pthread_handler_t libevent_thread_proc(void *arg);
 static void libevent_end();
-static bool libevent_needs_immediate_processing(THD *thd);
-static void libevent_connection_close(THD *thd);
-static bool libevent_should_close_connection(THD* thd);
-static void libevent_thd_add(THD* thd);
+static bool libevent_needs_immediate_processing(Session *thd);
+static void libevent_connection_close(Session *thd);
+static bool libevent_should_close_connection(Session* thd);
+static void libevent_thd_add(Session* thd);
 void libevent_io_callback(int Fd, short Operation, void *ctx);
 void libevent_add_thd_callback(int Fd, short Operation, void *ctx);
 void libevent_kill_thd_callback(int Fd, short Operation, void *ctx);
@@ -95,8 +95,8 @@ static bool init_pipe(int pipe_fds[])
 
 
 /*
-  thd_scheduler keeps the link between THD and events.
-  It's embedded in the THD class.
+  thd_scheduler keeps the link between Session and events.
+  It's embedded in the Session class.
 */
 
 thd_scheduler::thd_scheduler()
@@ -118,7 +118,7 @@ thd_scheduler::thd_scheduler(const thd_scheduler&)
 void thd_scheduler::operator=(const thd_scheduler&)
 {}
 
-bool thd_scheduler::init(THD *parent_thd)
+bool thd_scheduler::init(Session *parent_thd)
 {
   io_event=
     (struct event*)my_malloc(sizeof(*io_event),MYF(MY_ZEROFILL|MY_WME));
@@ -145,7 +145,7 @@ bool thd_scheduler::init(THD *parent_thd)
 bool thd_scheduler::thread_attach()
 {
   assert(!thread_attached);
-  THD* thd = (THD*)list.data;
+  Session* thd = (Session*)list.data;
   if (libevent_should_close_connection(thd) ||
       setup_connection_thread_globals(thd))
   {
@@ -167,7 +167,7 @@ void thd_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    THD* thd = (THD*)list.data;
+    Session* thd = (Session*)list.data;
     thd->mysys_var= NULL;
     thread_attached= false;
   }
@@ -267,7 +267,7 @@ static bool libevent_init(void)
 void libevent_io_callback(int, short, void *ctx)
 {    
   safe_mutex_assert_owner(&LOCK_event_loop);
-  THD *thd= (THD*)ctx;
+  Session *thd= (Session*)ctx;
   thds_waiting_for_io= list_delete(thds_waiting_for_io, &thd->scheduler.list);
   thds_need_processing= list_add(thds_need_processing, &thd->scheduler.list);
 }
@@ -291,9 +291,9 @@ void libevent_kill_thd_callback(int Fd, short, void*)
   LIST* list= thds_waiting_for_io;
   while (list)
   {
-    THD *thd= (THD*)list->data;
+    Session *thd= (Session*)list->data;
     list= list_rest(list);
-    if (thd->killed == THD::KILL_CONNECTION)
+    if (thd->killed == Session::KILL_CONNECTION)
     {
       /*
         Delete from libevent and add to the processing queue.
@@ -330,7 +330,7 @@ void libevent_add_thd_callback(int Fd, short, void *)
   while (thds_need_adding)
   {
     /* pop the first thd off the list */
-    THD* thd= (THD*)thds_need_adding->data;
+    Session* thd= (Session*)thds_need_adding->data;
     thds_need_adding= list_delete(thds_need_adding, thds_need_adding);
 
     pthread_mutex_unlock(&LOCK_thd_add);
@@ -371,7 +371,7 @@ void libevent_add_thd_callback(int Fd, short, void *)
     LOCK_thread_count is locked on entry. This function MUST unlock it!
 */
 
-static void libevent_add_connection(THD *thd)
+static void libevent_add_connection(Session *thd)
 {
   if (thd->scheduler.init(thd))
   {
@@ -391,22 +391,22 @@ static void libevent_add_connection(THD *thd)
 /**
   @brief Signal a waiting connection it's time to die.
  
-  @details This function will signal libevent the THD should be killed.
-    Either the global LOCK_thd_count or the THD's LOCK_delete must be locked
+  @details This function will signal libevent the Session should be killed.
+    Either the global LOCK_thd_count or the Session's LOCK_delete must be locked
     upon entry.
  
   @param[in]  thd The connection to kill
 */
 
-static void libevent_post_kill_notification(THD *)
+static void libevent_post_kill_notification(Session *)
 {
   /*
-    Note, we just wake up libevent with an event that a THD should be killed,
+    Note, we just wake up libevent with an event that a Session should be killed,
     It will search its list of thds for thd->killed ==  KILL_CONNECTION to
-    find the THDs it should kill.
+    find the Sessions it should kill.
     
     So we don't actually tell it which one and we don't actually use the
-    THD being passed to us, but that's just a design detail that could change
+    Session being passed to us, but that's just a design detail that could change
     later.
   */
   char c= 0;
@@ -418,9 +418,9 @@ static void libevent_post_kill_notification(THD *)
   Close and delete a connection.
 */
 
-static void libevent_connection_close(THD *thd)
+static void libevent_connection_close(Session *thd)
 {
-  thd->killed= THD::KILL_CONNECTION;          // Avoid error messages
+  thd->killed= Session::KILL_CONNECTION;          // Avoid error messages
 
   if (net_get_sd(&(thd->net)) >= 0)                  // not already closed
   {
@@ -436,13 +436,13 @@ static void libevent_connection_close(THD *thd)
 
 
 /*
-  Returns true if we should close and delete a THD connection.
+  Returns true if we should close and delete a Session connection.
 */
 
-static bool libevent_should_close_connection(THD* thd)
+static bool libevent_should_close_connection(Session* thd)
 {
   return net_should_close(&(thd->net)) ||
-         thd->killed == THD::KILL_CONNECTION;
+         thd->killed == Session::KILL_CONNECTION;
 }
 
 
@@ -472,7 +472,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   
   for (;;)
   {
-    THD *thd= NULL;
+    Session *thd= NULL;
     (void) pthread_mutex_lock(&LOCK_event_loop);
     
     /* get thd(s) to process */
@@ -488,7 +488,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
     }
     
     /* pop the first thd off the list */
-    thd= (THD*)thds_need_processing->data;
+    thd= (Session*)thds_need_processing->data;
     thds_need_processing= list_delete(thds_need_processing,
                                       thds_need_processing);
     
@@ -551,7 +551,7 @@ thread_exit:
   instead it's queued for libevent processing or closed,
 */
 
-static bool libevent_needs_immediate_processing(THD *thd)
+static bool libevent_needs_immediate_processing(Session *thd)
 {
   if (libevent_should_close_connection(thd))
   {
@@ -574,15 +574,15 @@ static bool libevent_needs_immediate_processing(THD *thd)
 
 
 /*
-  Adds a THD to queued for libevent processing.
+  Adds a Session to queued for libevent processing.
   
   This call does not actually register the event with libevent.
-  Instead, it places the THD onto a queue and signals libevent by writing
+  Instead, it places the Session onto a queue and signals libevent by writing
   a byte into thd_add_pipe, which will cause our libevent_add_thd_callback to
-  be invoked which will find the THD on the queue and add it to libevent.
+  be invoked which will find the Session on the queue and add it to libevent.
 */
 
-static void libevent_thd_add(THD* thd)
+static void libevent_thd_add(Session* thd)
 {
   char c=0;
   pthread_mutex_lock(&LOCK_thd_add);

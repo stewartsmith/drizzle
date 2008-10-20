@@ -149,13 +149,13 @@ static unsigned char* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
                                bool not_used __attribute__((unused)));
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
-static int innobase_close_connection(handlerton *hton, THD* thd);
-static int innobase_commit(handlerton *hton, THD* thd, bool all);
-static int innobase_rollback(handlerton *hton, THD* thd, bool all);
-static int innobase_rollback_to_savepoint(handlerton *hton, THD* thd, 
+static int innobase_close_connection(handlerton *hton, Session* thd);
+static int innobase_commit(handlerton *hton, Session* thd, bool all);
+static int innobase_rollback(handlerton *hton, Session* thd, bool all);
+static int innobase_rollback_to_savepoint(handlerton *hton, Session* thd, 
            void *savepoint);
-static int innobase_savepoint(handlerton *hton, THD* thd, void *savepoint);
-static int innobase_release_savepoint(handlerton *hton, THD* thd, 
+static int innobase_savepoint(handlerton *hton, Session* thd, void *savepoint);
+static int innobase_release_savepoint(handlerton *hton, Session* thd, 
            void *savepoint);
 static handler *innobase_create_handler(handlerton *hton,
                                         TABLE_SHARE *table,
@@ -164,12 +164,12 @@ static handler *innobase_create_handler(handlerton *hton,
 static const char innobase_hton_name[]= "InnoDB";
 
 
-static DRIZZLE_THDVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
+static DRIZZLE_SessionVAR_BOOL(support_xa, PLUGIN_VAR_OPCMDARG,
   "Enable InnoDB support for the XA two-phase commit",
   /* check_func */ NULL, /* update_func */ NULL,
   /* default */ TRUE);
 
-static DRIZZLE_THDVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
+static DRIZZLE_SessionVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
   "Enable InnoDB locking in LOCK TABLES",
   /* check_func */ NULL, /* update_func */ NULL,
   /* default */ TRUE);
@@ -189,7 +189,7 @@ innobase_xa_prepare(
 /*================*/
 			/* out: 0 or error number */
 	handlerton* hton,
-	THD*	thd,	/* in: handle to the MySQL thread of the user
+	Session*	thd,	/* in: handle to the MySQL thread of the user
 			whose XA transaction should be prepared */
 	bool	all);	/* in: TRUE - commit transaction
 			FALSE - the current SQL statement ended */
@@ -235,7 +235,7 @@ innobase_create_cursor_view(
 /*========================*/
 				/* out: pointer to cursor view or NULL */
 	handlerton*	hton,	/* in: innobase hton */
-	THD*		thd);	/* in: user thread handle */
+	Session*		thd);	/* in: user thread handle */
 /***********************************************************************
 Set the given consistent cursor view to a transaction which is created
 if the corresponding MySQL thread still lacks one. If the given
@@ -246,7 +246,7 @@ void
 innobase_set_cursor_view(
 /*=====================*/
 	handlerton* hton,
-	THD*	thd,	/* in: user thread handle */
+	Session*	thd,	/* in: user thread handle */
 	void*	curview);/* in: Consistent cursor view to be set */
 /***********************************************************************
 Close the given consistent cursor view of a transaction and restore
@@ -257,7 +257,7 @@ void
 innobase_close_cursor_view(
 /*=======================*/
 	handlerton* hton,
-	THD*	thd,	/* in: user thread handle */
+	Session*	thd,	/* in: user thread handle */
 	void*	curview);/* in: Consistent read view to be closed */
 /*********************************************************************
 Removes all tables in the named database inside InnoDB. */
@@ -283,7 +283,7 @@ innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
 	handlerton* hton, /* in: Innodb handlerton */ 
-	THD*	thd);	/* in: MySQL thread handle of the user for whom
+	Session*	thd);	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 /********************************************************************
 Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
@@ -303,10 +303,10 @@ bool
 innodb_show_status(
 /*===============*/
 	handlerton*	hton,	/* in: the innodb handlerton */
-	THD*	thd,	/* in: the MySQL query thread of the caller */
+	Session*	thd,	/* in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print);
 static
-bool innobase_show_status(handlerton *hton, THD* thd, 
+bool innobase_show_status(handlerton *hton, Session* thd, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type);
 
@@ -421,9 +421,9 @@ ibool
 thd_is_replication_slave_thread(
 /*============================*/
 			/* out: true if thd is the replication thread */
-	void*	thd)	/* in: thread handle (THD*) */
+	void*	thd)	/* in: thread handle (Session*) */
 {
-	return((ibool) thd_slave_thread((THD*) thd));
+	return((ibool) thd_slave_thread((Session*) thd));
 }
 
 /**********************************************************************
@@ -493,9 +493,9 @@ thd_has_edited_nontrans_tables(
 /*===========================*/
 			/* out: true if non-transactional tables have
 			been edited */
-	void*	thd)	/* in: thread handle (THD*) */
+	void*	thd)	/* in: thread handle (Session*) */
 {
-	return((ibool) thd_non_transactional_update((THD*) thd));
+	return((ibool) thd_non_transactional_update((Session*) thd));
 }
 
 /************************************************************************
@@ -505,7 +505,7 @@ trx_t*&
 thd_to_trx(
 /*=======*/
 			/* out: reference to transaction pointer */
-	THD*	thd)	/* in: MySQL thread */
+	Session*	thd)	/* in: MySQL thread */
 {
 	return(*(trx_t**) thd_ha_data(thd, innodb_hton_ptr));
 }
@@ -520,7 +520,7 @@ innobase_release_temporary_latches(
 /*===============================*/
 				/* out: 0 */
         handlerton*	hton __attribute__((unused)),	/* in: handlerton */
-	THD*		thd)	/* in: MySQL thread */
+	Session*		thd)	/* in: MySQL thread */
 {
 	trx_t*	trx;
 
@@ -566,7 +566,7 @@ convert_error_code_to_mysql(
 /*========================*/
 			/* out: MySQL error code */
 	int	error,	/* in: InnoDB error code */
-	THD*	thd)	/* in: user thread handle or NULL */
+	Session*	thd)	/* in: user thread handle or NULL */
 {
 	if (error == DB_SUCCESS) {
 
@@ -710,7 +710,7 @@ innobase_mysql_end_print_arbitrary_thd(void)
 }
 
 /*****************************************************************
-Prints info of a THD object (== user session thread) to the given file.
+Prints info of a Session object (== user session thread) to the given file.
 NOTE that /mysql/innobase/trx/trx0trx.c must contain the prototype for
 this function! */
 extern "C"
@@ -718,7 +718,7 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/* in: output stream */
-	void*	input_thd __attribute__((unused)),	/* in: pointer to a MySQL THD object */
+	void*	input_thd __attribute__((unused)),	/* in: pointer to a MySQL Session object */
 	uint	max_query_len __attribute__((unused)))	/* in: max query length to print, or 0 to
 				   use the default max length */
 {
@@ -834,7 +834,7 @@ innobase_get_charset(
 				/* out: connection character set */
 	void*	mysql_thd)	/* in: MySQL thread handle */
 {
-	return(thd_charset((THD*) mysql_thd));
+	return(thd_charset((Session*) mysql_thd));
 }
 
 /*************************************************************************
@@ -897,7 +897,7 @@ trx_t*
 check_trx_exists(
 /*=============*/
 			/* out: InnoDB transaction handle */
-	THD*	thd)	/* in: user thread handle */
+	Session*	thd)	/* in: user thread handle */
 {
 	trx_t*&	trx = thd_to_trx(thd);
 
@@ -912,7 +912,7 @@ check_trx_exists(
 
 		/* Update the info whether we should skip XA steps that eat
 		CPU time */
-		trx->support_xa = THDVAR(thd, support_xa);
+		trx->support_xa = SessionVAR(thd, support_xa);
 	} else {
 		if (trx->magic_n != TRX_MAGIC_N) {
 			mem_analyze_corruption(trx);
@@ -971,7 +971,7 @@ int
 ha_innobase::update_thd(
 /*====================*/
 			/* out: 0 or error code */
-	THD*	thd)	/* in: thd to use the handle */
+	Session*	thd)	/* in: thd to use the handle */
 {
 	trx_t*		trx;
 
@@ -997,7 +997,7 @@ void
 innobase_register_stmt(
 /*===================*/
         handlerton*	hton,	/* in: Innobase hton */
-	THD*	thd)	/* in: MySQL thd (connection) object */
+	Session*	thd)	/* in: MySQL thd (connection) object */
 {
 	/* Register the statement */
 	trans_register_ha(thd, FALSE, hton);
@@ -1015,7 +1015,7 @@ void
 innobase_register_trx_and_stmt(
 /*===========================*/
         handlerton *hton, /* in: Innobase handlerton */
-	THD*	thd)	/* in: MySQL thd (connection) object */
+	Session*	thd)	/* in: MySQL thd (connection) object */
 {
 	/* NOTE that actually innobase_register_stmt() registers also
 	the transaction in the AUTOCOMMIT=1 mode. */
@@ -1098,7 +1098,7 @@ innobase_query_caching_of_table_permitted(
 				note that the value FALSE does not mean
 				we should invalidate the query cache:
 				invalidation is called explicitly */
-	THD*	thd,		/* in: thd of the user who is trying to
+	Session*	thd,		/* in: thd of the user who is trying to
 				store a result to the query cache or
 				retrieve it */
 	char*	full_name,	/* in: concatenation of database name,
@@ -1218,7 +1218,7 @@ innobase_invalidate_query_cache(
 
 	/* Argument TRUE below means we are using transactions */
 #ifdef HAVE_QUERY_CACHE
-	mysql_query_cache_invalidate4((THD*) trx->mysql_thd,
+	mysql_query_cache_invalidate4((Session*) trx->mysql_thd,
 				      (const char*) full_name,
 				      (uint32_t) full_name_len,
 				      TRUE);
@@ -1269,7 +1269,7 @@ innobase_print_identifier(
 
 		q = '"';
 	} else {
-		q = get_quote_char_for_identifier((THD*) trx->mysql_thd,
+		q = get_quote_char_for_identifier((Session*) trx->mysql_thd,
 						s, (int) namelen);
 	}
 
@@ -1300,7 +1300,7 @@ trx_is_interrupted(
 			/* out: TRUE if interrupted */
 	trx_t*	trx)	/* in: transaction */
 {
-	return(trx && trx->mysql_thd && thd_killed((THD*) trx->mysql_thd));
+	return(trx && trx->mysql_thd && thd_killed((Session*) trx->mysql_thd));
 }
 
 /******************************************************************
@@ -1714,7 +1714,7 @@ innobase_start_trx_and_assign_read_view(
 /*====================================*/
 			/* out: 0 */
         handlerton *hton, /* in: Innodb handlerton */ 
-	THD*	thd)	/* in: MySQL thread handle of the user for whom
+	Session*	thd)	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 {
 	trx_t*	trx;
@@ -1756,7 +1756,7 @@ innobase_commit(
 /*============*/
 			/* out: 0 */
         handlerton *hton __attribute__((unused)), /* in: Innodb handlerton */ 
-	THD* 	thd,	/* in: MySQL thread handle of the user for whom
+	Session* 	thd,	/* in: MySQL thread handle of the user for whom
 			the transaction should be committed */
 	bool	all)	/* in:	TRUE - commit transaction
 				FALSE - the current SQL statement ended */
@@ -1766,7 +1766,7 @@ innobase_commit(
 	trx = check_trx_exists(thd);
 
 	/* Update the info whether we should skip XA steps that eat CPU time */
-	trx->support_xa = THDVAR(thd, support_xa);
+	trx->support_xa = SessionVAR(thd, support_xa);
 
 	/* Since we will reserve the kernel mutex, we have to release
 	the search system latch first to obey the latching order. */
@@ -1880,7 +1880,7 @@ innobase_rollback(
 /*==============*/
 			/* out: 0 or error number */
         handlerton *hton __attribute__((unused)), /* in: Innodb handlerton */ 
-	THD*	thd,	/* in: handle to the MySQL thread of the user
+	Session*	thd,	/* in: handle to the MySQL thread of the user
 			whose transaction should be rolled back */
 	bool	all)	/* in:	TRUE - commit transaction
 				FALSE - the current SQL statement ended */
@@ -1891,7 +1891,7 @@ innobase_rollback(
 	trx = check_trx_exists(thd);
 
 	/* Update the info whether we should skip XA steps that eat CPU time */
-	trx->support_xa = THDVAR(thd, support_xa);
+	trx->support_xa = SessionVAR(thd, support_xa);
 
 	/* Release a possible FIFO ticket and search latch. Since we will
 	reserve the kernel mutex, we have to release the search system latch
@@ -1954,7 +1954,7 @@ innobase_rollback_to_savepoint(
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
         handlerton *hton __attribute__((unused)),       /* in: Innodb handlerton */ 
-	THD*	thd,		/* in: handle to the MySQL thread of the user
+	Session*	thd,		/* in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
 	void*	savepoint)	/* in: savepoint data */
 {
@@ -1989,7 +1989,7 @@ innobase_release_savepoint(
 				/* out: 0 if success, HA_ERR_NO_SAVEPOINT if
 				no savepoint with the given name */
         handlerton*	hton __attribute__((unused)),	/* in: handlerton for Innodb */
-	THD*	thd,		/* in: handle to the MySQL thread of the user
+	Session*	thd,		/* in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
 	void*	savepoint)	/* in: savepoint data */
 {
@@ -2016,7 +2016,7 @@ innobase_savepoint(
 /*===============*/
 				/* out: always 0, that is, always succeeds */
 	handlerton*	hton __attribute__((unused)),   /* in: handle to the Innodb handlerton */
-	THD*	thd,		/* in: handle to the MySQL thread */
+	Session*	thd,		/* in: handle to the MySQL thread */
 	void*	savepoint)	/* in: savepoint data */
 {
 	int	error = 0;
@@ -2053,14 +2053,14 @@ innobase_savepoint(
 }
 
 /*********************************************************************
-Frees a possible InnoDB trx object associated with the current THD. */
+Frees a possible InnoDB trx object associated with the current Session. */
 static
 int
 innobase_close_connection(
 /*======================*/
 			/* out: 0 or error number */
         handlerton*	hton __attribute__((unused)),	/* in:  innobase handlerton */
-	THD*	thd)	/* in: handle to the MySQL thread of the user
+	Session*	thd)	/* in: handle to the MySQL thread of the user
 			whose resources should be free'd */
 {
 	trx_t*	trx;
@@ -2209,7 +2209,7 @@ ha_innobase::open(
 {
 	dict_table_t*	ib_table;
 	char		norm_name[1000];
-	THD*		thd;
+	Session*		thd;
 
 	UT_NOT_USED(mode);
 	UT_NOT_USED(test_if_locked);
@@ -2375,7 +2375,7 @@ ha_innobase::close(void)
 /*====================*/
 				/* out: 0 */
 {
-	THD*	thd;
+	Session*	thd;
 
 	thd = current_thd;  // avoid calling current_thd twice, it may be slow
 	if (thd != NULL) {
@@ -2886,7 +2886,7 @@ void
 build_template(
 /*===========*/
 	row_prebuilt_t*	prebuilt,	/* in/out: prebuilt struct */
-	THD*		thd __attribute__((unused)),		/* in: current user thread, used
+	Session*		thd __attribute__((unused)),		/* in: current user thread, used
 					only if templ_type is
 					ROW_DRIZZLE_REC_FIELDS */
 	Table*		table,		/* in: MySQL table */
@@ -3473,7 +3473,7 @@ calc_row_difference(
 	unsigned char*		upd_buff,	/* in: buffer to use */
 	ulint		buff_len,	/* in: buffer length */
 	row_prebuilt_t*	prebuilt,	/* in: InnoDB prebuilt struct */
-	THD*		thd __attribute__((unused)))		/* in: user thread */
+	Session*		thd __attribute__((unused)))		/* in: user thread */
 {
 	unsigned char*		original_upd_buff = upd_buff;
 	Field*		field;
@@ -4796,7 +4796,7 @@ ha_innobase::create(
 	uint		i;
 	char		name2[FN_REFLEN];
 	char		norm_name[FN_REFLEN];
-	THD*		thd = ha_thd();
+	Session*		thd = ha_thd();
 	ib_longlong	auto_inc_value;
 	ulint		flags;
 
@@ -5054,7 +5054,7 @@ ha_innobase::delete_table(
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
-	THD	*thd = ha_thd();
+	Session	*thd = ha_thd();
 	char	norm_name[1000];
 
 	/* Get the transaction associated with the current thd, or create one
@@ -5140,7 +5140,7 @@ innobase_drop_database(
 	char*	ptr;
 	int	error;
 	char*	namebuf;
-	THD*	thd		= current_thd;
+	Session*	thd		= current_thd;
 
 	/* Get the transaction associated with the current thd, or create one
 	if not yet created */
@@ -5218,7 +5218,7 @@ ha_innobase::rename_table(
 	trx_t*	trx;
 	char	norm_from[1000];
 	char	norm_to[1000];
-	THD*	thd		= ha_thd();
+	Session*	thd		= ha_thd();
 
 	/* Get the transaction associated with the current thd, or create one
 	if not yet created */
@@ -5705,7 +5705,7 @@ int
 ha_innobase::analyze(
 /*=================*/
 					/* out: returns always 0 (success) */
-	THD*		thd __attribute__((unused)),		/* in: connection thread handle */
+	Session*		thd __attribute__((unused)),		/* in: connection thread handle */
 	HA_CHECK_OPT*	check_opt __attribute__((unused)))	/* in: currently ignored */
 {
 	/* Simply call ::info() with all the flags */
@@ -5721,7 +5721,7 @@ the table in MySQL. */
 int
 ha_innobase::optimize(
 /*==================*/
-	THD*		thd __attribute__((unused)),		/* in: connection thread handle */
+	Session*		thd __attribute__((unused)),		/* in: connection thread handle */
 	HA_CHECK_OPT*	check_opt __attribute__((unused)))	/* in: currently ignored */
 {
 	return(HA_ADMIN_TRY_ALTER);
@@ -5737,7 +5737,7 @@ ha_innobase::check(
 /*===============*/
 					/* out: HA_ADMIN_CORRUPT or
 					HA_ADMIN_OK */
-	THD*		thd,		/* in: user thread handle */
+	Session*		thd,		/* in: user thread handle */
 	HA_CHECK_OPT*	check_opt __attribute__((unused)))	/* in: check options, currently
 					ignored */
 {
@@ -5902,7 +5902,7 @@ ha_innobase::get_foreign_key_create_info(void)
 
 
 int
-ha_innobase::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list)
+ha_innobase::get_foreign_key_list(Session *thd, List<FOREIGN_KEY_INFO> *f_key_list)
 {
   dict_foreign_t* foreign;
 
@@ -6186,7 +6186,7 @@ int
 ha_innobase::start_stmt(
 /*====================*/
 				/* out: 0 or error code */
-	THD*		thd,	/* in: handle to the user thread */
+	Session*		thd,	/* in: handle to the user thread */
 	thr_lock_type	lock_type)
 {
 	trx_t*		trx;
@@ -6277,7 +6277,7 @@ innobase_map_isolation_level(
 As MySQL will execute an external lock for every new table it uses when it
 starts to process an SQL statement (an exception is when MySQL calls
 start_stmt for the handle) we can use this function to store the pointer to
-the THD in the handle. We will also use this function to communicate
+the Session in the handle. We will also use this function to communicate
 to InnoDB that a new SQL statement has started and that we must store a
 savepoint to our transaction handle, so that we are able to roll back
 the SQL statement in case of an error. */
@@ -6286,7 +6286,7 @@ int
 ha_innobase::external_lock(
 /*=======================*/
 				/* out: 0 */
-	THD*	thd,		/* in: handle to the user thread */
+	Session*	thd,		/* in: handle to the user thread */
 	int	lock_type)	/* in: lock type */
 {
 	trx_t*		trx;
@@ -6377,7 +6377,7 @@ ha_innobase::external_lock(
 		if (prebuilt->select_lock_type != LOCK_NONE) {
 
 			if (thd_sql_command(thd) == SQLCOM_LOCK_TABLES
-			    && THDVAR(thd, table_locks)
+			    && SessionVAR(thd, table_locks)
 			    && thd_test_options(thd, OPTION_NOT_AUTOCOMMIT)
 			    && thd_in_lock_tables(thd)) {
 
@@ -6446,7 +6446,7 @@ int
 ha_innobase::transactional_table_lock(
 /*==================================*/
 				/* out: error code */
-	THD*	thd,		/* in: handle to the user thread */
+	Session*	thd,		/* in: handle to the user thread */
 	int	lock_type)	/* in: lock type */
 {
 	trx_t*		trx;
@@ -6504,7 +6504,7 @@ ha_innobase::transactional_table_lock(
 		trx->active_trans = 1;
 	}
 
-	if (THDVAR(thd, table_locks) && thd_in_lock_tables(thd)) {
+	if (SessionVAR(thd, table_locks) && thd_in_lock_tables(thd)) {
 		ulint	error = DB_SUCCESS;
 
 		error = row_lock_table_for_mysql(prebuilt, NULL, 0);
@@ -6551,7 +6551,7 @@ bool
 innodb_show_status(
 /*===============*/
 	handlerton*	hton __attribute__((unused)),	/* in: the innodb handlerton */
-	THD*	thd,	/* in: the MySQL query thread of the caller */
+	Session*	thd,	/* in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print)
 {
 	trx_t*			trx;
@@ -6636,7 +6636,7 @@ bool
 innodb_mutex_show_status(
 /*=====================*/
 	handlerton*	hton __attribute__((unused)),	/* in: the innodb handlerton */
-	THD*		thd,		/* in: the MySQL query thread of the
+	Session*		thd,		/* in: the MySQL query thread of the
 					caller */
 	stat_print_fn*	stat_print)
 {
@@ -6730,7 +6730,7 @@ innodb_mutex_show_status(
 }
 
 static
-bool innobase_show_status(handlerton *hton, THD* thd, 
+bool innobase_show_status(handlerton *hton, Session* thd, 
                           stat_print_fn* stat_print,
                           enum ha_stat_type stat_type)
 {
@@ -6821,7 +6821,7 @@ ha_innobase::store_lock(
 /*====================*/
 						/* out: pointer to the next
 						element in the 'to' array */
-	THD*			thd,		/* in: user thread handle */
+	Session*			thd,		/* in: user thread handle */
 	THR_LOCK_DATA**		to,		/* in: pointer to an array
 						of pointers to lock structs;
 						pointer to the 'lock' field
@@ -7380,7 +7380,7 @@ ha_innobase::register_query_cache_table(
 /*====================================*/
 					/* out: TRUE if query caching
 					of the table is permitted */
-	THD*		thd,		/* in: user thread handle */
+	Session*		thd,		/* in: user thread handle */
 	char*		table_key,	/* in: concatenation of database name,
 					the null character '\0',
 					and the table name */
@@ -7496,7 +7496,7 @@ innobase_xa_prepare(
 /*================*/
 			/* out: 0 or error number */
         handlerton *hton __attribute__((unused)),
-	THD*	thd,	/* in: handle to the MySQL thread of the user
+	Session*	thd,	/* in: handle to the MySQL thread of the user
 			whose XA transaction should be prepared */
 	bool	all)	/* in: TRUE - commit transaction
 			FALSE - the current SQL statement ended */
@@ -7530,7 +7530,7 @@ innobase_xa_prepare(
 		trx->active_trans = 2;
 	}
 
-	if (!THDVAR(thd, support_xa)) {
+	if (!SessionVAR(thd, support_xa)) {
 
 		return(0);
 	}
@@ -7659,7 +7659,7 @@ innobase_create_cursor_view(
 /*========================*/
                           /* out: pointer to cursor view or NULL */
         handlerton *hton __attribute__((unused)), /* in: innobase hton */
-	THD* thd)	  /* in: user thread handle */
+	Session* thd)	  /* in: user thread handle */
 {
 	return(read_cursor_view_create_for_mysql(check_trx_exists(thd)));
 }
@@ -7673,7 +7673,7 @@ void
 innobase_close_cursor_view(
 /*=======================*/
         handlerton *hton __attribute__((unused)),
-	THD*	thd,	/* in: user thread handle */
+	Session*	thd,	/* in: user thread handle */
 	void*	curview)/* in: Consistent read view to be closed */
 {
 	read_cursor_view_close_for_mysql(check_trx_exists(thd),
@@ -7690,7 +7690,7 @@ void
 innobase_set_cursor_view(
 /*=====================*/
         handlerton *hton __attribute__((unused)),
-	THD*	thd,	/* in: user thread handle */
+	Session*	thd,	/* in: user thread handle */
 	void*	curview)/* in: Consistent cursor view to be set */
 {
 	read_cursor_set_for_mysql(check_trx_exists(thd),
@@ -7726,7 +7726,7 @@ bool ha_innobase::check_if_incompatible_data(
 
 /* TODO: Fix the cast below!!! */
 
-static int show_innodb_vars(THD *thd __attribute__((unused)),
+static int show_innodb_vars(Session *thd __attribute__((unused)),
                             SHOW_VAR *var, char *buff __attribute__((unused)))
 {
   innodb_export_status();

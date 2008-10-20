@@ -32,7 +32,7 @@ void Item_func_rand::seed_random(Item *arg)
              (uint32_t) (tmp*0x10000001L));
 }
 
-bool Item_func_rand::fix_fields(THD *thd,Item **ref)
+bool Item_func_rand::fix_fields(Session *thd,Item **ref)
 {
   if (Item_real_func::fix_fields(thd, ref))
     return true;

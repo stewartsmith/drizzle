@@ -105,7 +105,7 @@ static const char *HA_ERR(int i)
 
 */
 static void inline slave_rows_error_report(enum loglevel level, int ha_error,
-                                           Relay_log_info const *rli, THD *thd,
+                                           Relay_log_info const *rli, Session *thd,
                                            Table *table, const char * type,
                                            const char *log_name, ulong pos)
 {
@@ -220,7 +220,7 @@ uint32_t debug_not_change_ts_if_art_event= 1; // bug#29309 simulation
   pretty_print_str()
 */
 
-static void clear_all_errors(THD *thd, Relay_log_info *rli)
+static void clear_all_errors(Session *thd, Relay_log_info *rli)
 {
   thd->is_slave_error = 0;
   thd->clear_error();
@@ -469,7 +469,7 @@ const char* Log_event::get_type_str()
   Log_event::Log_event()
 */
 
-Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
+Log_event::Log_event(Session* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
   server_id=	thd->server_id;
@@ -480,9 +480,9 @@ Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
 
 /**
   This minimal constructor is for when you are not even sure that there
-  is a valid THD. For example in the server when we are shutting down or
+  is a valid Session. For example in the server when we are shutting down or
   flushing logs after receiving a SIGHUP (then we must write a Rotate to
-  the binlog but we have no THD, so we need this minimal constructor).
+  the binlog but we have no Session, so we need this minimal constructor).
 */
 
 Log_event::Log_event()
@@ -836,7 +836,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
   const char *error= 0;
   Log_event *res=  0;
 #ifndef max_allowed_packet
-  THD *thd=current_thd;
+  Session *thd=current_thd;
   uint32_t max_allowed_packet= thd ? thd->variables.max_allowed_packet : ~(ulong)0;
 #endif
 
@@ -1286,19 +1286,19 @@ Query_log_event::Query_log_event()
       query_length      - size of the  `query_arg' array
       using_trans       - there is a modified transactional table
       suppress_use      - suppress the generation of 'USE' statements
-      killed_status_arg - an optional with default to THD::KILLED_NO_VALUE
+      killed_status_arg - an optional with default to Session::KILLED_NO_VALUE
                           if the value is different from the default, the arg
                           is set to the current thd->killed value.
                           A caller might need to masquerade thd->killed with
-                          THD::NOT_KILLED.
+                          Session::NOT_KILLED.
   DESCRIPTION
   Creates an event for binlogging
   The value for local `killed_status' can be supplied by caller.
 */
-Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
+Query_log_event::Query_log_event(Session* thd_arg, const char* query_arg,
 				 ulong query_length, bool using_trans,
 				 bool suppress_use,
-                                 THD::killed_state killed_status_arg)
+                                 Session::killed_state killed_status_arg)
   :Log_event(thd_arg,
              (thd_arg->thread_specific_used ? LOG_EVENT_THREAD_SPECIFIC_F :
               0) |
@@ -1318,11 +1318,11 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
 {
   time_t end_time;
 
-  if (killed_status_arg == THD::KILLED_NO_VALUE)
+  if (killed_status_arg == Session::KILLED_NO_VALUE)
     killed_status_arg= thd_arg->killed;
 
   error_code=
-    (killed_status_arg == THD::NOT_KILLED) ?
+    (killed_status_arg == Session::NOT_KILLED) ?
     (thd_arg->is_error() ? thd_arg->main_da.sql_errno() : 0) :
     (thd_arg->killed_errno());
   
@@ -1806,7 +1806,7 @@ compare_errors:
  	     ignored_error_code(actual_error))
     {
       clear_all_errors(thd, const_cast<Relay_log_info*>(rli));
-      thd->killed= THD::NOT_KILLED;
+      thd->killed= Session::NOT_KILLED;
     }
     /*
       Other cases: mostly we expected no error and get one.
@@ -1865,8 +1865,8 @@ end:
   /*
     As a disk space optimization, future masters will not log an event for
     LAST_INSERT_ID() if that function returned 0 (and thus they will be able
-    to replace the THD::stmt_depends_on_first_successful_insert_id_in_prev_stmt
-    variable by (THD->first_successful_insert_id_in_prev_stmt > 0) ; with the
+    to replace the Session::stmt_depends_on_first_successful_insert_id_in_prev_stmt
+    variable by (Session->first_successful_insert_id_in_prev_stmt > 0) ; with the
     resetting below we are ready to support that.
   */
   thd->first_successful_insert_id_in_prev_stmt_for_binlog= 0;
@@ -2600,7 +2600,7 @@ bool Load_log_event::write_data_body(IO_CACHE* file)
   Load_log_event::Load_log_event()
 */
 
-Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
+Load_log_event::Load_log_event(Session *thd_arg, sql_exchange *ex,
 			       const char *db_arg, const char *table_name_arg,
 			       List<Item> &fields_arg,
 			       enum enum_duplicates handle_dup,
@@ -3754,7 +3754,7 @@ void Slave_log_event::pack_info(Protocol *protocol)
   @todo
   re-write this better without holding both locks at the same time
 */
-Slave_log_event::Slave_log_event(THD* thd_arg,
+Slave_log_event::Slave_log_event(Session* thd_arg,
 				 Relay_log_info* rli)
   :Log_event(thd_arg, 0, 0) , mem_pool(0), master_host(0)
 {
@@ -3870,7 +3870,7 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
 */
 
 Create_file_log_event::
-Create_file_log_event(THD* thd_arg, sql_exchange* ex,
+Create_file_log_event(Session* thd_arg, sql_exchange* ex,
 		      const char* db_arg, const char* table_name_arg,
 		      List<Item>& fields_arg, enum enum_duplicates handle_dup,
                       bool ignore,
@@ -4081,7 +4081,7 @@ err:
   Append_block_log_event ctor
 */
 
-Append_block_log_event::Append_block_log_event(THD *thd_arg,
+Append_block_log_event::Append_block_log_event(Session *thd_arg,
                                                const char *db_arg,
 					       unsigned char *block_arg,
 					       uint32_t block_len_arg,
@@ -4209,7 +4209,7 @@ err:
   Delete_file_log_event ctor
 */
 
-Delete_file_log_event::Delete_file_log_event(THD *thd_arg, const char* db_arg,
+Delete_file_log_event::Delete_file_log_event(Session *thd_arg, const char* db_arg,
 					     bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
 {
@@ -4279,7 +4279,7 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   Execute_load_log_event ctor
 */
 
-Execute_load_log_event::Execute_load_log_event(THD *thd_arg,
+Execute_load_log_event::Execute_load_log_event(Session *thd_arg,
                                                const char* db_arg,
 					       bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
@@ -4426,7 +4426,7 @@ err:
 **************************************************************************/
 
 Begin_load_query_log_event::
-Begin_load_query_log_event(THD* thd_arg, const char* db_arg, unsigned char* block_arg,
+Begin_load_query_log_event(Session* thd_arg, const char* db_arg, unsigned char* block_arg,
                            uint32_t block_len_arg, bool using_trans)
   :Append_block_log_event(thd_arg, db_arg, block_arg, block_len_arg,
                           using_trans)
@@ -4466,12 +4466,12 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 
 
 Execute_load_query_log_event::
-Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
+Execute_load_query_log_event(Session *thd_arg, const char* query_arg,
                              ulong query_length_arg, uint32_t fn_pos_start_arg,
                              uint32_t fn_pos_end_arg,
                              enum_load_dup_handling dup_handling_arg,
                              bool using_trans, bool suppress_use,
-                             THD::killed_state killed_err_arg):
+                             Session::killed_state killed_err_arg):
   Query_log_event(thd_arg, query_arg, query_length_arg, using_trans,
                   suppress_use, killed_err_arg),
   file_id(thd_arg->file_id), fn_pos_start(fn_pos_start_arg),
@@ -4697,7 +4697,7 @@ const char *sql_ex_info::init(const char *buf, const char *buf_end,
 	Rows_log_event member functions
 **************************************************************************/
 
-Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
+Rows_log_event::Rows_log_event(Session *thd_arg, Table *tbl_arg, ulong tid,
                                MY_BITMAP const *cols, bool is_transactional)
   : Log_event(thd_arg, 0, is_transactional),
     m_row_count(0),
@@ -5176,7 +5176,7 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
     while (error == 0 && m_curr_row < m_rows_end)
     {
       /* in_use can have been set to NULL in close_tables_for_reopen */
-      THD* old_thd= table->in_use;
+      Session* old_thd= table->in_use;
       if (!table->in_use)
         table->in_use= thd;
 
@@ -5532,7 +5532,7 @@ int Table_map_log_event::save_field_metadata()
   Mats says tbl->s lives longer than this event so it's ok to copy pointers
   (tbl->s->db etc) and not pointer content.
  */
-Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
+Table_map_log_event::Table_map_log_event(Session *thd, Table *tbl, ulong tid,
                                          bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
   : Log_event(thd, 0, true),
@@ -5939,7 +5939,7 @@ void Table_map_log_event::pack_info(Protocol *protocol)
 /*
   Constructor used to build an event for writing to the binary log.
  */
-Write_rows_log_event::Write_rows_log_event(THD *thd_arg, Table *tbl_arg,
+Write_rows_log_event::Write_rows_log_event(Session *thd_arg, Table *tbl_arg,
                                            ulong tid_arg,
                                            bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid_arg, tbl_arg->write_set, is_transactional)
@@ -6605,7 +6605,7 @@ err:
   Constructor used to build an event for writing to the binary log.
  */
 
-Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, Table *tbl_arg,
+Delete_rows_log_event::Delete_rows_log_event(Session *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
@@ -6681,7 +6681,7 @@ int Delete_rows_log_event::do_exec_row(const Relay_log_info *const rli)
 /*
   Constructor used to build an event for writing to the binary log.
  */
-Update_rows_log_event::Update_rows_log_event(THD *thd_arg, Table *tbl_arg,
+Update_rows_log_event::Update_rows_log_event(Session *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
 : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)

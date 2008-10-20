@@ -66,26 +66,26 @@ public:
   /*
     Either this method, or we need to make cache public
     Arg must be set from mysql_load() since constructor does not see
-    either the table or THD value
+    either the table or Session value
   */
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
+static int read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
+static int read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
 			  bool ignore_check_option_errors);
 
-static bool write_execute_load_query_log_event(THD *thd,
+static bool write_execute_load_query_log_event(Session *thd,
 					       bool duplicates, bool ignore,
 					       bool transactional_table,
-                                               THD::killed_state killed_status);
+                                               Session::killed_state killed_status);
 
 /*
   Execute LOAD DATA query
@@ -108,7 +108,7 @@ static bool write_execute_load_query_log_event(THD *thd,
     true - error / false - success
 */
 
-int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
+int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,
@@ -131,7 +131,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
   char *tdb= thd->db ? thd->db : db;		// Result is never null
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  THD::killed_state killed_status= THD::NOT_KILLED;
+  Session::killed_state killed_status= Session::NOT_KILLED;
 
   if (escaped->length() > 1 || enclosed->length() > 1)
   {
@@ -377,7 +377,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? THD::NOT_KILLED : thd->killed;
+  killed_status= (error == 0)? Session::NOT_KILLED : thd->killed;
   if (error)
   {
     if (read_file_from_client)
@@ -476,10 +476,10 @@ err:
 
 
 /* Not a very useful function; just to avoid duplication of code */
-static bool write_execute_load_query_log_event(THD *thd,
+static bool write_execute_load_query_log_event(Session *thd,
 					       bool duplicates, bool ignore,
 					       bool transactional_table,
-                                               THD::killed_state killed_err_arg)
+                                               Session::killed_state killed_err_arg)
 {
   Execute_load_query_log_event
     e(thd, thd->query, thd->query_length,
@@ -498,7 +498,7 @@ static bool write_execute_load_query_log_event(THD *thd,
 ****************************************************************************/
 
 static int
-read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
+read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
@@ -614,7 +614,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
 
 
 static int
-read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
+read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,
@@ -744,7 +744,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
           /*
             QQ: We probably should not throw warning for each field.
             But how about intention to always have the same number
-            of warnings in THD::cuted_fields (and get rid of cuted_fields
+            of warnings in Session::cuted_fields (and get rid of cuted_fields
             in the end ?)
           */
           thd->cuted_fields++;

@@ -419,7 +419,7 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(THD *thd __attribute__((unused)),
+int ha_heap::external_lock(Session *thd __attribute__((unused)),
                            int lock_type __attribute__((unused)))
 {
   return 0;					// No external locking
@@ -533,7 +533,7 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(THD *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_heap::store_lock(Session *thd __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {

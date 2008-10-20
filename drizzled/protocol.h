@@ -19,14 +19,14 @@
 
 
 class i_string;
-class THD;
+class Session;
 typedef struct st_drizzle_field DRIZZLE_FIELD;
 typedef struct st_drizzle_rows DRIZZLE_ROWS;
 
 class Protocol
 {
 protected:
-  THD	 *thd;
+  Session	 *thd;
   String *packet;
   String *convert;
   uint32_t field_pos;
@@ -38,9 +38,9 @@ protected:
                         const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
 public:
   Protocol() {}
-  Protocol(THD *thd_arg) { init(thd_arg); }
+  Protocol(Session *thd_arg) { init(thd_arg); }
   virtual ~Protocol() {}
-  void init(THD* thd_arg);
+  void init(Session* thd_arg);
 
   enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
   virtual bool send_fields(List<Item> *list, uint32_t flags);
@@ -67,7 +67,7 @@ public:
     return 0;
   }
   virtual bool flush();
-  virtual void end_partial_result_set(THD *thd);
+  virtual void end_partial_result_set(Session *thd);
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;
@@ -104,7 +104,7 @@ class Protocol_text :public Protocol
 {
 public:
   Protocol_text() {}
-  Protocol_text(THD *thd_arg) :Protocol(thd_arg) {}
+  Protocol_text(Session *thd_arg) :Protocol(thd_arg) {}
   virtual void prepare_for_resend();
   virtual bool store_null();
   virtual bool store_tiny(int64_t from);
@@ -124,9 +124,9 @@ public:
   virtual enum enum_protocol_type type() { return PROTOCOL_TEXT; };
 };
 
-void send_warning(THD *thd, uint32_t sql_errno, const char *err=0);
-void net_send_error(THD *thd, uint32_t sql_errno=0, const char *err=0);
-void net_end_statement(THD *thd);
+void send_warning(Session *thd, uint32_t sql_errno, const char *err=0);
+void net_send_error(Session *thd, uint32_t sql_errno=0, const char *err=0);
+void net_end_statement(Session *thd);
 unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_t length);
 unsigned char *net_store_data(unsigned char *to,int32_t from);
 unsigned char *net_store_data(unsigned char *to,int64_t from);

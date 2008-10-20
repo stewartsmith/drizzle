@@ -36,12 +36,12 @@ const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NULL};
 static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
-static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
+static long mysql_rm_known_files(Session *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint32_t level, 
                                  TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
-static void mysql_change_db_impl(THD *thd,
+static void mysql_change_db_impl(Session *thd,
                                  LEX_STRING *new_db_name,
                                  const CHARSET_INFO * const new_db_charset);
 
@@ -133,7 +133,7 @@ unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
   Helper function to write a query to binlog used by mysql_rm_db()
 */
 
-static inline void write_to_binlog(THD *thd, char *query, uint32_t q_len,
+static inline void write_to_binlog(Session *thd, char *query, uint32_t q_len,
                                    char *db, uint32_t db_len)
 {
   Query_log_event qinfo(thd, query, q_len, 0, 0);
@@ -334,7 +334,7 @@ void del_dbopt(const char *path)
   1	Could not create file or write to it.  Error sent through my_error()
 */
 
-static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE_INFO *create)
+static bool write_db_opt(Session *thd, const char *path, const char *name, HA_CREATE_INFO *create)
 {
   bool error= true;
   drizzle::Schema db;
@@ -374,7 +374,7 @@ static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE
 
 */
 
-bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
+bool load_db_opt(Session *thd, const char *path, HA_CREATE_INFO *create)
 {
   bool error=1;
   drizzle::Schema db;
@@ -453,7 +453,7 @@ err1:
     true    Failed to retrieve options
 */
 
-bool load_db_opt_by_name(THD *thd, const char *db_name,
+bool load_db_opt_by_name(Session *thd, const char *db_name,
                          HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
@@ -479,7 +479,7 @@ bool load_db_opt_by_name(THD *thd, const char *db_name,
     set, even if the database does not exist.
 */
 
-const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(Session *thd, const char *db_name)
 {
   HA_CREATE_INFO db_info;
 
@@ -524,7 +524,7 @@ const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
 
 */
 
-int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent)
+int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool silent)
 {
   char	 path[FN_REFLEN+16];
   char	 tmp_query[FN_REFLEN+16];
@@ -674,7 +674,7 @@ exit2:
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_alter_db(Session *thd, const char *db, HA_CREATE_INFO *create_info)
 {
   char path[FN_REFLEN+16];
   long result=1;
@@ -760,7 +760,7 @@ exit2:
     ERROR Error
 */
 
-bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
+bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
 {
   long deleted=0;
   int error= false;
@@ -930,7 +930,7 @@ exit2:
   thd MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
+static long mysql_rm_known_files(Session *thd, MY_DIR *dirp, const char *db,
 				 const char *org_path, uint32_t level,
                                  TableList **dropped_tables)
 {
@@ -1092,16 +1092,16 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(THD *thd,
+static void mysql_change_db_impl(Session *thd,
                                  LEX_STRING *new_db_name,
                                  const CHARSET_INFO * const new_db_charset)
 {
-  /* 1. Change current database in THD. */
+  /* 1. Change current database in Session. */
 
   if (new_db_name == NULL)
   {
     /*
-      THD::set_db() does all the job -- it frees previous database name and
+      Session::set_db() does all the job -- it frees previous database name and
       sets the new one.
     */
 
@@ -1110,7 +1110,7 @@ static void mysql_change_db_impl(THD *thd,
   else if (new_db_name == &INFORMATION_SCHEMA_NAME)
   {
     /*
-      Here we must use THD::set_db(), because we want to copy
+      Here we must use Session::set_db(), because we want to copy
       INFORMATION_SCHEMA_NAME constant.
     */
 
@@ -1119,8 +1119,8 @@ static void mysql_change_db_impl(THD *thd,
   else
   {
     /*
-      Here we already have a copy of database name to be used in THD. So,
-      we just call THD::reset_db(). Since THD::reset_db() does not releases
+      Here we already have a copy of database name to be used in Session. So,
+      we just call Session::reset_db(). Since Session::reset_db() does not releases
       the previous database name, we should do it explicitly.
     */
 
@@ -1153,7 +1153,7 @@ static void mysql_change_db_impl(THD *thd,
                                   "length" is set to 0.
 */
 
-static void backup_current_db_name(THD *thd,
+static void backup_current_db_name(Session *thd,
                                    LEX_STRING *saved_db_name)
 {
   if (!thd->db)
@@ -1224,7 +1224,7 @@ cmp_db_names(const char *db1_name,
                           @@collation_server, but the operation will fail;
 
                         - user privileges will not be checked
-                          (THD::db_access however is updated);
+                          (Session::db_access however is updated);
 
                           TODO: is this really the intention?
                                 (see sp-security.test).
@@ -1237,7 +1237,7 @@ cmp_db_names(const char *db1_name,
   @details The function checks that the database name corresponds to a
   valid and existent database, checks access rights and changes the current
   database with database attributes (@@collation_database session variable,
-  THD::db_access).
+  Session::db_access).
 
   This function is not the only way to switch the database that is
   currently employed. When the replication slave thread switches the
@@ -1257,7 +1257,7 @@ cmp_db_names(const char *db1_name,
     @retval true  Error
 */
 
-bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
@@ -1367,8 +1367,8 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
   }
 
   /*
-    NOTE: in mysql_change_db_impl() new_db_file_name is assigned to THD
-    attributes and will be freed in THD::~THD().
+    NOTE: in mysql_change_db_impl() new_db_file_name is assigned to Session
+    attributes and will be freed in Session::~Session().
   */
 
   db_default_cl= get_default_db_collation(thd, new_db_file_name.str);
@@ -1399,7 +1399,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
                                   the function suceeded)
 */
 
-bool mysql_opt_change_db(THD *thd,
+bool mysql_opt_change_db(Session *thd,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,

@@ -73,7 +73,7 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
   return(0);
 }
 
-static int send_file(THD *thd)
+static int send_file(Session *thd)
 {
   NET* net = &thd->net;
   int fd = -1, error = 1;
@@ -167,10 +167,10 @@ static int send_file(THD *thd)
 
 void adjust_linfo_offsets(my_off_t purge_offset)
 {
-  THD *tmp;
+  Session *tmp;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
 
   while ((tmp=it++))
   {
@@ -197,11 +197,11 @@ void adjust_linfo_offsets(my_off_t purge_offset)
 bool log_in_use(const char* log_name)
 {
   int log_name_len = strlen(log_name) + 1;
-  THD *tmp;
+  Session *tmp;
   bool result = 0;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
 
   while ((tmp=it++))
   {
@@ -220,7 +220,7 @@ bool log_in_use(const char* log_name)
   return result;
 }
 
-bool purge_error_message(THD* thd, int res)
+bool purge_error_message(Session* thd, int res)
 {
   uint32_t errmsg= 0;
 
@@ -247,7 +247,7 @@ bool purge_error_message(THD* thd, int res)
 }
 
 
-bool purge_master_logs(THD* thd, const char* to_log)
+bool purge_master_logs(Session* thd, const char* to_log)
 {
   char search_file_name[FN_REFLEN];
   if (!mysql_bin_log.is_open())
@@ -263,7 +263,7 @@ bool purge_master_logs(THD* thd, const char* to_log)
 }
 
 
-bool purge_master_logs_before_date(THD* thd, time_t purge_time)
+bool purge_master_logs_before_date(Session* thd, time_t purge_time)
 {
   if (!mysql_bin_log.is_open())
   {
@@ -308,12 +308,12 @@ Increase max_allowed_packet on master";
   An auxiliary function for calling in mysql_binlog_send
   to initialize the heartbeat timeout in waiting for a binlogged event.
 
-  @param[in]    thd  THD to access a user variable
+  @param[in]    thd  Session to access a user variable
 
   @return        heartbeat period an uint64_t of nanoseconds
                  or zero if heartbeat was not demanded by slave
 */ 
-static uint64_t get_heartbeat_period(THD * thd)
+static uint64_t get_heartbeat_period(Session * thd)
 {
   bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
@@ -326,7 +326,7 @@ static uint64_t get_heartbeat_period(THD * thd)
 /*
   Function prepares and sends repliation heartbeat event.
 
-  @param net                net object of THD
+  @param net                net object of Session
   @param packet             buffer to store the heartbeat instance
   @param event_coordinates  binlog file name and position of the last
                             real event master sent from binlog
@@ -375,7 +375,7 @@ static int send_heartbeat_event(NET* net, String* packet,
   TODO: Clean up loop to only have one call to send_file()
 */
 
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
+void mysql_binlog_send(Session* thd, char* log_ident, my_off_t pos,
 		       uint16_t flags)
 {
   LOG_INFO linfo;
@@ -830,7 +830,7 @@ err:
   return;
 }
 
-int start_slave(THD* thd , Master_info* mi,  bool net_report)
+int start_slave(Session* thd , Master_info* mi,  bool net_report)
 {
   int slave_errno= 0;
   int thread_mask;
@@ -951,7 +951,7 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
 }
 
 
-int stop_slave(THD* thd, Master_info* mi, bool net_report )
+int stop_slave(Session* thd, Master_info* mi, bool net_report )
 {
   int slave_errno;
   if (!thd)
@@ -1013,7 +1013,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
 */
 
 
-int reset_slave(THD *thd, Master_info* mi)
+int reset_slave(Session *thd, Master_info* mi)
 {
   struct stat stat_area;
   char fname[FN_REFLEN];
@@ -1092,8 +1092,8 @@ err:
 void kill_zombie_dump_threads(uint32_t slave_server_id)
 {
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
-  THD *tmp;
+  I_List_iterator<Session> it(threads);
+  Session *tmp;
 
   while ((tmp=it++))
   {
@@ -1112,13 +1112,13 @@ void kill_zombie_dump_threads(uint32_t slave_server_id)
       it will be slow because it will iterate through the list
       again. We just to do kill the thread ourselves.
     */
-    tmp->awake(THD::KILL_QUERY);
+    tmp->awake(Session::KILL_QUERY);
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
 }
 
 
-bool change_master(THD* thd, Master_info* mi)
+bool change_master(Session* thd, Master_info* mi)
 {
   int thread_mask;
   const char* errmsg= 0;
@@ -1298,7 +1298,7 @@ bool change_master(THD* thd, Master_info* mi)
   return(false);
 }
 
-int reset_master(THD* thd)
+int reset_master(Session* thd)
 {
   if (!mysql_bin_log.is_open())
   {
@@ -1327,7 +1327,7 @@ int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
 }
 
 
-bool show_binlog_info(THD* thd)
+bool show_binlog_info(Session* thd)
 {
   Protocol *protocol= thd->protocol;
   List<Item> field_list;
@@ -1371,7 +1371,7 @@ bool show_binlog_info(THD* thd)
     true  error
 */
 
-bool show_binlogs(THD* thd)
+bool show_binlogs(Session* thd)
 {
   IO_CACHE *index_file;
   LOG_INFO cur;
@@ -1501,8 +1501,8 @@ public:
   sys_var_slave_skip_counter(sys_var_chain *chain, const char *name_arg)
     :sys_var(name_arg)
   { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var);
-  bool update(THD *thd, set_var *var);
+  bool check(Session *thd, set_var *var);
+  bool update(Session *thd, set_var *var);
   bool check_type(enum_var_type type) { return type != OPT_GLOBAL; }
   /*
     We can't retrieve the value of this, so we don't have to define
@@ -1516,10 +1516,10 @@ public:
   sys_var_sync_binlog_period(sys_var_chain *chain, const char *name_arg,
                              ulong *value_ptr)
     :sys_var_long_ptr(chain, name_arg,value_ptr) {}
-  bool update(THD *thd, set_var *var);
+  bool update(Session *thd, set_var *var);
 };
 
-static void fix_slave_net_timeout(THD *thd,
+static void fix_slave_net_timeout(Session *thd,
                                   enum_var_type type __attribute__((unused)))
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1546,10 +1546,10 @@ static sys_var_long_ptr	sys_slave_trans_retries(&vars, "slave_transaction_retrie
 static sys_var_sync_binlog_period sys_sync_binlog_period(&vars, "sync_binlog", &sync_binlog_period);
 static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_counter");
 
-static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff);
+static int show_slave_skip_errors(Session *thd, SHOW_VAR *var, char *buff);
 
 
-static int show_slave_skip_errors(THD *thd __attribute__((unused)),
+static int show_slave_skip_errors(Session *thd __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type=SHOW_CHAR;
@@ -1601,7 +1601,7 @@ static SHOW_VAR fixed_vars[]= {
   {"slave_skip_errors",       (char*) &show_slave_skip_errors_cont,      SHOW_FUNC},
 };
 
-bool sys_var_slave_skip_counter::check(THD *thd __attribute__((unused)),
+bool sys_var_slave_skip_counter::check(Session *thd __attribute__((unused)),
                                        set_var *var)
 {
   int result= 0;
@@ -1619,7 +1619,7 @@ bool sys_var_slave_skip_counter::check(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
+bool sys_var_slave_skip_counter::update(Session *thd __attribute__((unused)),
                                         set_var *var)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1641,7 +1641,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_sync_binlog_period::update(THD *thd __attribute__((unused)),
+bool sys_var_sync_binlog_period::update(Session *thd __attribute__((unused)),
                                         set_var *var)
 {
   sync_binlog_period= (uint32_t) var->save_result.uint64_t_value;

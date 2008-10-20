@@ -92,7 +92,7 @@ typedef struct errmsg_parms_st
 
 
 /* This gets called by plugin_foreach once for each loaded errmsg plugin */
-static bool errmsg_iterate (THD *thd, plugin_ref plugin, void *p)
+static bool errmsg_iterate (Session *thd, plugin_ref plugin, void *p)
 {
   errmsg_t *l= plugin_data(plugin, errmsg_t *);
   errmsg_parms_t *parms= (errmsg_parms_t *) p;
@@ -115,7 +115,7 @@ static bool errmsg_iterate (THD *thd, plugin_ref plugin, void *p)
   return false;
 }
 
-bool errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap)
+bool errmsg_vprintf (Session *thd, int priority, const char *format, va_list ap)
 {
   bool foreach_rv;
   errmsg_parms_t parms;
@@ -134,7 +134,7 @@ bool errmsg_vprintf (THD *thd, int priority, const char *format, va_list ap)
   return foreach_rv;
 }
 
-bool errmsg_printf (THD *thd, int priority, const char *format, ...)
+bool errmsg_printf (Session *thd, int priority, const char *format, ...)
 {
   bool rv;
   va_list args;

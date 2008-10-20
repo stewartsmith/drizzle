@@ -56,7 +56,7 @@ static handler *myisam_create_handler(handlerton *hton,
 static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 			       const char *fmt, va_list args)
 {
-  THD* thd = (THD*)param->thd;
+  Session* thd = (Session*)param->thd;
   Protocol *protocol= thd->protocol;
   uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
@@ -391,7 +391,7 @@ extern "C" {
 volatile int *killed_ptr(MI_CHECK *param)
 {
   /* In theory Unsafe conversion, but should be ok for now */
-  return (int*) &(((THD *)(param->thd))->killed);
+  return (int*) &(((Session *)(param->thd))->killed);
 }
 
 void mi_check_print_error(MI_CHECK *param, const char *fmt,...)
@@ -440,10 +440,10 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...)
 void _mi_report_crashed(MI_INFO *file, const char *message,
                         const char *sfile, uint32_t sline)
 {
-  THD *cur_thd;
+  Session *cur_thd;
   LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
-  if ((cur_thd= (THD*) file->in_use.data))
+  if ((cur_thd= (Session*) file->in_use.data))
     sql_print_error("Got an error from thread_id=%lu, %s:%d", cur_thd->thread_id,
                     sfile, sline);
   else
@@ -615,7 +615,7 @@ int ha_myisam::write_row(unsigned char *buf)
   return mi_write(file,buf);
 }
 
-int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
+int ha_myisam::check(Session* thd, HA_CHECK_OPT* check_opt)
 {
   if (!file) return HA_ADMIN_INTERNAL_ERROR;
   int error;
@@ -708,7 +708,7 @@ int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
   two threads may do an analyze at the same time!
 */
 
-int ha_myisam::analyze(THD *thd,
+int ha_myisam::analyze(Session *thd,
                        HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int error=0;
@@ -741,7 +741,7 @@ int ha_myisam::analyze(THD *thd,
 }
 
 
-int ha_myisam::repair(THD* thd, HA_CHECK_OPT *check_opt)
+int ha_myisam::repair(Session* thd, HA_CHECK_OPT *check_opt)
 {
   int error;
   MI_CHECK param;
@@ -790,7 +790,7 @@ int ha_myisam::repair(THD* thd, HA_CHECK_OPT *check_opt)
   return error;
 }
 
-int ha_myisam::optimize(THD* thd, HA_CHECK_OPT *check_opt)
+int ha_myisam::optimize(Session* thd, HA_CHECK_OPT *check_opt)
 {
   int error;
   if (!file) return HA_ADMIN_INTERNAL_ERROR;
@@ -813,7 +813,7 @@ int ha_myisam::optimize(THD* thd, HA_CHECK_OPT *check_opt)
 }
 
 
-int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
+int ha_myisam::repair(Session *thd, MI_CHECK &param, bool do_optimize)
 {
   int error=0;
   uint32_t local_testflag=param.testflag;
@@ -970,7 +970,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   Assign table indexes to a specific key cache.
 */
 
-int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
+int ha_myisam::assign_to_keycache(Session* thd, HA_CHECK_OPT *check_opt)
 {
   KEY_CACHE *new_key_cache= check_opt->key_cache;
   const char *errmsg= 0;
@@ -1105,7 +1105,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
   }
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
-    THD *thd=current_thd;
+    Session *thd=current_thd;
     MI_CHECK param;
     const char *save_proc_info= thd->get_proc_info();
     thd->set_proc_info("Creating index");
@@ -1182,7 +1182,7 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   ulong size= cmin(thd->variables.read_buff_size,
                   (ulong) (table->s->avg_row_length*rows));
 
@@ -1234,7 +1234,7 @@ int ha_myisam::end_bulk_insert()
 }
 
 
-bool ha_myisam::check_and_repair(THD *thd)
+bool ha_myisam::check_and_repair(Session *thd)
 {
   int error=0;
   int marked_crashed;
@@ -1580,7 +1580,7 @@ int ha_myisam::delete_table(const char *name)
 }
 
 
-int ha_myisam::external_lock(THD *thd, int lock_type)
+int ha_myisam::external_lock(Session *thd, int lock_type)
 {
   file->in_use.data= thd;
   return mi_lock_database(file, !table->s->tmp_table ?
@@ -1588,7 +1588,7 @@ int ha_myisam::external_lock(THD *thd, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-THR_LOCK_DATA **ha_myisam::store_lock(THD *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_myisam::store_lock(Session *thd __attribute__((unused)),
 				      THR_LOCK_DATA **to,
 				      enum thr_lock_type lock_type)
 {

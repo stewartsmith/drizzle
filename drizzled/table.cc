@@ -32,7 +32,7 @@ LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
 
 void open_table_error(TABLE_SHARE *share, int error, int db_errno,
                       myf errortype, int errarg);
-static int open_binary_frm(THD *thd, TABLE_SHARE *share,
+static int open_binary_frm(Session *thd, TABLE_SHARE *share,
                            unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint32_t types, char **names);
@@ -189,7 +189,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
     use key_length= 0 as neither table_cache_key or key_length will be used).
 */
 
-void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(Session *thd, TABLE_SHARE *share, const char *key,
                           uint32_t key_length, const char *table_name,
                           const char *path)
 {
@@ -294,7 +294,7 @@ void free_table_share(TABLE_SHARE *share)
    6    Unknown .frm version
 */
 
-int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute__((unused)))
+int open_table_def(Session *thd, TABLE_SHARE *share, uint32_t db_flags  __attribute__((unused)))
 {
   int error, table_type;
   bool error_given;
@@ -410,7 +410,7 @@ err_not_open:
   Read data from a binary .frm file from MySQL 3.23 - 5.0 into TABLE_SHARE
 */
 
-static int open_binary_frm(THD *thd, TABLE_SHARE *share, unsigned char *head,
+static int open_binary_frm(Session *thd, TABLE_SHARE *share, unsigned char *head,
                            File file)
 {
   int error, errarg= 0;
@@ -1282,7 +1282,7 @@ static void clear_field_flag(Table *table)
     false                Ok, a partition field array was created
 */
 
-bool fix_fields_vcol_func(THD *thd,
+bool fix_fields_vcol_func(Session *thd,
                           Item* func_expr,
                           Table *table,
                           const char *field_name)
@@ -1413,7 +1413,7 @@ end:
     true            Failure
     false           Success
 */
-bool unpack_vcol_info_from_frm(THD *thd,
+bool unpack_vcol_info_from_frm(Session *thd,
                                Table *table,
                                Field *field,
                                LEX_STRING *vcol_expr,
@@ -1541,7 +1541,7 @@ parse_err:
    7    Table definition has changed in engine
 */
 
-int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
+int open_table_from_share(Session *thd, TABLE_SHARE *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode)
 {
@@ -2271,7 +2271,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 	/* Create a .frm file */
 
-File create_frm(THD *thd, const char *name, const char *db,
+File create_frm(Session *thd, const char *name, const char *db,
                 const char *table, uint32_t reclength, unsigned char *fileinfo,
   		HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info)
 {
@@ -2760,7 +2760,7 @@ Table::table_check_intact(const uint32_t table_f_count,
   DESCRIPTION
     Create Item_field object for each column in the table and
     initialize it with the corresponding Field. New items are
-    created in the current THD memory root.
+    created in the current Session memory root.
 
   RETURN VALUE
     0                    success
@@ -3308,7 +3308,7 @@ void Table::mark_virtual_columns(void)
     TableList::reinit_before_use()
 */
 
-void TableList::reinit_before_use(THD *thd)
+void TableList::reinit_before_use(Session *thd)
 {
   /*
     Reset old pointers to TABLEs: they are not valid since the tables
@@ -3547,7 +3547,7 @@ size_t Table::max_row_length(const unsigned char *data)
   true       table
 */
 
-bool mysql_frm_type(THD *thd __attribute__((unused)),
+bool mysql_frm_type(Session *thd __attribute__((unused)),
                     char *path, enum legacy_db_type *dbt)
 {
   File file;
@@ -3584,7 +3584,7 @@ bool mysql_frm_type(THD *thd __attribute__((unused)),
 
 
 /* Prototypes */
-void free_tmp_table(THD *thd, Table *entry);
+void free_tmp_table(Session *thd, Table *entry);
 
 /**
   Create field for temporary table from given field.
@@ -3608,7 +3608,7 @@ void free_tmp_table(THD *thd, Table *entry);
     new_created field
 */
 
-Field *create_tmp_field_from_field(THD *thd, Field *org_field,
+Field *create_tmp_field_from_field(Session *thd, Field *org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length)
 {
@@ -3670,7 +3670,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_created field
 */
 
-static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
+static Field *create_tmp_field_from_item(Session *thd __attribute__((unused)),
                                          Item *item, Table *table,
                                          Item ***copy_func, bool modify_item,
                                          uint32_t convert_blob_length)
@@ -3794,7 +3794,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
     new_created field
 */
 
-Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
+Field *create_tmp_field_for_schema(Session *thd __attribute__((unused)),
                                    Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
@@ -3844,7 +3844,7 @@ Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
     new_created field
 */
 
-Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
+Field *create_tmp_field(Session *thd, Table *table,Item *item, Item::Type type,
                         Item ***copy_func, Field **from_field,
                         Field **default_field,
                         bool group, bool modify_item,
@@ -3950,7 +3950,7 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
   corresponding Item_field items, pointing at the fields in the
   temporary table, unless this was prohibited by true
   value of argument save_sum_fields. The Item_field objects
-  are created in THD memory root.
+  are created in Session memory root.
 
   @param thd                  thread handle
   @param param                a description used as input to create the table
@@ -3970,7 +3970,7 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
 #define RATIO_TO_PACK_ROWS	       2
 
 Table *
-create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
+create_tmp_table(Session *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
@@ -4083,7 +4083,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);				/* purecov: inspected */
   }
-  /* Copy_field belongs to TMP_TABLE_PARAM, allocate it in THD mem_root */
+  /* Copy_field belongs to TMP_TABLE_PARAM, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (thd->mem_root) Copy_field[field_count]))
   {
     if (temp_pool_slot != MY_BIT_NONE)
@@ -4654,7 +4654,7 @@ err:
     The sole purpose of this Table object is to use the power of Field
     class to read/write data to/from table->record[0]. Then one can store
     the record in any container (RB tree, hash, etc).
-    The table is created in THD mem_root, so are the table's fields.
+    The table is created in Session mem_root, so are the table's fields.
     Consequently, if you don't BLOB fields, you don't need to free it.
 
   @param thd         connection handle
@@ -4664,7 +4664,7 @@ err:
     0 if out of memory, Table object in case of success
 */
 
-Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
+Table *create_virtual_tmp_table(Session *thd, List<Create_field> &field_list)
 {
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
@@ -4922,7 +4922,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 }
 
 
-void Table::free_tmp_table(THD *thd)
+void Table::free_tmp_table(Session *thd)
 {
   MEM_ROOT own_root= mem_root;
   const char *save_proc_info;
@@ -4960,7 +4960,7 @@ void Table::free_tmp_table(THD *thd)
   to this.
 */
 
-bool create_myisam_from_heap(THD *thd, Table *table,
+bool create_myisam_from_heap(Session *thd, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo, 
 			     int error, bool ignore_last_dupp_key_error)

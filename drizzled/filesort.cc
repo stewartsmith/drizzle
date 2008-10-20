@@ -45,9 +45,9 @@ static int merge_index(SORTPARAM *param,unsigned char *sort_buffer,
 static bool save_index(SORTPARAM *param,unsigned char **sort_keys, uint32_t count, 
                        filesort_info_st *table_sort);
 static uint32_t suffix_length(uint32_t string_length);
-static uint32_t sortlength(THD *thd, SORT_FIELD *sortorder, uint32_t s_length,
+static uint32_t sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
 		       bool *multi_byte_charset);
-static SORT_ADDON_FIELD *get_addon_fields(THD *thd, Field **ptabfield,
+static SORT_ADDON_FIELD *get_addon_fields(Session *thd, Field **ptabfield,
                                           uint32_t sortlength, uint32_t *plength);
 static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
                                 unsigned char *buff);
@@ -87,7 +87,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
+ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
@@ -444,8 +444,8 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   unsigned char *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
   Table *sort_form;
-  THD *thd= current_thd;
-  volatile THD::killed_state *killed= &thd->killed;
+  Session *thd= current_thd;
+  volatile Session::killed_state *killed= &thd->killed;
   handler *file;
   MY_BITMAP *save_read_set, *save_write_set;
 
@@ -1118,14 +1118,14 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   QUEUE queue;
   qsort2_cmp cmp;
   void *first_cmp_arg;
-  volatile THD::killed_state *killed= &current_thd->killed;
-  THD::killed_state not_killable;
+  volatile Session::killed_state *killed= &current_thd->killed;
+  Session::killed_state not_killable;
 
   status_var_increment(current_thd->status_var.filesort_merge_passes);
   if (param->not_killable)
   {
     killed= &not_killable;
-    not_killable= THD::NOT_KILLED;
+    not_killable= Session::NOT_KILLED;
   }
 
   error=0;
@@ -1352,7 +1352,7 @@ static uint32_t suffix_length(uint32_t string_length)
 */
 
 static uint32_t
-sortlength(THD *thd, SORT_FIELD *sortorder, uint32_t s_length,
+sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
            bool *multi_byte_charset)
 {
   register uint32_t length;
@@ -1457,7 +1457,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint32_t s_length,
 */
 
 static SORT_ADDON_FIELD *
-get_addon_fields(THD *thd, Field **ptabfield, uint32_t sortlength, uint32_t *plength)
+get_addon_fields(Session *thd, Field **ptabfield, uint32_t sortlength, uint32_t *plength)
 {
   Field **pfield;
   Field *field;

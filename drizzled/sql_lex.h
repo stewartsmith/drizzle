@@ -195,7 +195,7 @@ public:
     key_name.length= length;
   }
 
-  void print(THD *thd, String *str);
+  void print(Session *thd, String *str);
 }; 
 
 /* 
@@ -374,7 +374,7 @@ public:
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
   virtual uint32_t get_table_join_options();
-  virtual TableList *add_table_to_list(THD *thd, Table_ident *table,
+  virtual TableList *add_table_to_list(Session *thd, Table_ident *table,
                                         LEX_STRING *alias,
                                         uint32_t table_options,
                                         thr_lock_type flags= TL_UNLOCK,
@@ -394,7 +394,7 @@ typedef class st_select_lex_node SELECT_LEX_NODE;
    SELECT_LEX_UNIT - unit of selects (UNION, INTERSECT, ...) group 
    SELECT_LEXs
 */
-class THD;
+class Session;
 class select_result;
 class JOIN;
 class select_union;
@@ -440,7 +440,7 @@ public:
   /* not NULL if unit used in subselect, point to subselect item */
   Item_subselect *item;
   /* thread handler */
-  THD *thd;
+  Session *thd;
   /*
     SELECT_LEX for hidden SELECT in onion which process global
     ORDER BY and LIMIT
@@ -466,7 +466,7 @@ public:
   void exclude_tree();
 
   /* UNION methods */
-  bool prepare(THD *thd, select_result *result, uint32_t additional_options);
+  bool prepare(Session *thd, select_result *result, uint32_t additional_options);
   bool exec();
   bool cleanup();
   inline void unclean() { cleaned= 0; }
@@ -474,15 +474,15 @@ public:
 
   void print(String *str, enum_query_type query_type);
 
-  bool add_fake_select_lex(THD *thd);
-  void init_prepare_fake_select_lex(THD *thd);
+  bool add_fake_select_lex(Session *thd);
+  void init_prepare_fake_select_lex(Session *thd);
   bool change_result(select_result_interceptor *result,
                      select_result_interceptor *old_result);
   void set_limit(st_select_lex *values);
-  void set_thd(THD *thd_arg) { thd= thd_arg; }
+  void set_thd(Session *thd_arg) { thd= thd_arg; }
   inline bool is_union (); 
 
-  friend void lex_start(THD *thd);
+  friend void lex_start(Session *thd);
   friend int subselect_union_engine::exec();
 
   List<Item> *get_unit_column_types();
@@ -642,19 +642,19 @@ public:
   bool inc_in_sum_expr();
   uint32_t get_in_sum_expr();
 
-  bool add_item_to_list(THD *thd, Item *item);
-  bool add_group_to_list(THD *thd, Item *item, bool asc);
-  bool add_order_to_list(THD *thd, Item *item, bool asc);
-  TableList* add_table_to_list(THD *thd, Table_ident *table,
+  bool add_item_to_list(Session *thd, Item *item);
+  bool add_group_to_list(Session *thd, Item *item, bool asc);
+  bool add_order_to_list(Session *thd, Item *item, bool asc);
+  TableList* add_table_to_list(Session *thd, Table_ident *table,
 				LEX_STRING *alias,
 				uint32_t table_options,
 				thr_lock_type flags= TL_UNLOCK,
 				List<Index_hint> *hints= 0,
                                 LEX_STRING *option= 0);
   TableList* get_table_list();
-  bool init_nested_join(THD *thd);
-  TableList *end_nested_join(THD *thd);
-  TableList *nest_last_join(THD *thd);
+  bool init_nested_join(Session *thd);
+  TableList *end_nested_join(Session *thd);
+  TableList *nest_last_join(Session *thd);
   void add_joined_table(TableList *table);
   TableList *convert_right_join();
   List<Item>* get_item_list();
@@ -675,20 +675,20 @@ public:
   void cut_subtree() { slave= 0; }
   bool test_limit();
 
-  friend void lex_start(THD *thd);
+  friend void lex_start(Session *thd);
   st_select_lex() : n_sum_items(0), n_child_sum_items(0) {}
   void make_empty_select()
   {
     init_query();
     init_select();
   }
-  bool setup_ref_array(THD *thd, uint32_t order_group_num);
-  void print(THD *thd, String *str, enum_query_type query_type);
+  bool setup_ref_array(Session *thd, uint32_t order_group_num);
+  void print(Session *thd, String *str, enum_query_type query_type);
   static void print_order(String *str,
                           order_st *order,
                           enum_query_type query_type);
-  void print_limit(THD *thd, String *str, enum_query_type query_type);
-  void fix_prepare_information(THD *thd, Item **conds, Item **having_conds);
+  void print_limit(Session *thd, String *str, enum_query_type query_type);
+  void fix_prepare_information(Session *thd, Item **conds, Item **having_conds);
   /*
     Destroy the used execution plan (JOIN) of this subtree (this
     SELECT_LEX and all nested SELECT_LEXes and SELECT_LEX_UNITs).
@@ -706,10 +706,10 @@ public:
    Add a index hint to the tagged list of hints. The type and clause of the
    hint will be the current ones (set by set_index_hint()) 
   */
-  bool add_index_hint (THD *thd, char *str, uint32_t length);
+  bool add_index_hint (Session *thd, char *str, uint32_t length);
 
   /* make a list to hold index hints */
-  void alloc_index_hints (THD *thd);
+  void alloc_index_hints (Session *thd);
   /* read and clear the index hints */
   List<Index_hint>* pop_index_hints(void) 
   {
@@ -1001,7 +1001,7 @@ enum enum_comment_state
 class Lex_input_stream
 {
 public:
-  Lex_input_stream(THD *thd, const char* buff, unsigned int length);
+  Lex_input_stream(Session *thd, const char* buff, unsigned int length);
   ~Lex_input_stream();
 
   /**
@@ -1229,16 +1229,16 @@ public:
     return m_body_utf8_ptr - m_body_utf8;
   }
 
-  void body_utf8_start(THD *thd, const char *begin_ptr);
+  void body_utf8_start(Session *thd, const char *begin_ptr);
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(THD *thd,
+  void body_utf8_append_literal(Session *thd,
                                 const LEX_STRING *txt,
                                 const CHARSET_INFO * const txt_cs,
                                 const char *end_ptr);
 
   /** Current thread. */
-  THD *m_thd;
+  Session *m_thd;
 
   /** Current line number. */
   uint32_t yylineno;
@@ -1361,7 +1361,7 @@ public:
 };
 
 
-/* The state of the lex parsing. This is saved in the THD struct */
+/* The state of the lex parsing. This is saved in the Session struct */
 
 typedef struct st_lex : public Query_tables_list
 {
@@ -1383,7 +1383,7 @@ typedef struct st_lex : public Query_tables_list
   LEX_STRING comment, ident;
   XID *xid;
   unsigned char* yacc_yyss, *yacc_yyvs;
-  THD *thd;
+  Session *thd;
   virtual_column_info *vcol_info;
 
   /* maintain a list of used plugins for this LEX */
@@ -1559,9 +1559,9 @@ typedef struct st_lex : public Query_tables_list
     return context_stack.head();
   }
   /*
-    Restore the LEX and THD in case of a parse error.
+    Restore the LEX and Session in case of a parse error.
   */
-  static void cleanup_lex_after_parse_error(THD *thd);
+  static void cleanup_lex_after_parse_error(Session *thd);
 
   void reset_n_backup_query_tables_list(Query_tables_list *backup);
   void restore_backup_query_tables_list(Query_tables_list *backup);
@@ -1611,7 +1611,7 @@ struct st_lex_local: public st_lex
 
 extern void lex_init(void);
 extern void lex_free(void);
-extern void lex_start(THD *thd);
+extern void lex_start(Session *thd);
 extern void lex_end(LEX *lex);
 
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);

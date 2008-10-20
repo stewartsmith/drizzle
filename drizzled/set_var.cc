@@ -83,38 +83,38 @@ TYPELIB slave_exec_mode_typelib=
   slave_exec_mode_names, (unsigned int *) slave_exec_mode_names_len
 };
 
-static bool sys_update_init_connect(THD*, set_var*);
-static void sys_default_init_connect(THD*, enum_var_type type);
-static bool sys_update_init_slave(THD*, set_var*);
-static void sys_default_init_slave(THD*, enum_var_type type);
-static bool set_option_bit(THD *thd, set_var *var);
-static bool set_option_autocommit(THD *thd, set_var *var);
-static int  check_log_update(THD *thd, set_var *var);
-static int  check_pseudo_thread_id(THD *thd, set_var *var);
-static void fix_low_priority_updates(THD *thd, enum_var_type type);
-static int check_tx_isolation(THD *thd, set_var *var);
-static void fix_tx_isolation(THD *thd, enum_var_type type);
-static int check_completion_type(THD *thd, set_var *var);
-static void fix_completion_type(THD *thd, enum_var_type type);
-static void fix_net_read_timeout(THD *thd, enum_var_type type);
-static void fix_net_write_timeout(THD *thd, enum_var_type type);
-static void fix_net_retry_count(THD *thd, enum_var_type type);
-static void fix_max_join_size(THD *thd, enum_var_type type);
-static void fix_myisam_max_sort_file_size(THD *thd, enum_var_type type);
-static void fix_max_binlog_size(THD *thd, enum_var_type type);
-static void fix_max_relay_log_size(THD *thd, enum_var_type type);
-static void fix_max_connections(THD *thd, enum_var_type type);
-static void fix_thd_mem_root(THD *thd, enum_var_type type);
-static void fix_trans_mem_root(THD *thd, enum_var_type type);
-static void fix_server_id(THD *thd, enum_var_type type);
-static uint64_t fix_unsigned(THD *, uint64_t, const struct my_option *);
-static bool get_unsigned(THD *thd, set_var *var);
-bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
+static bool sys_update_init_connect(Session*, set_var*);
+static void sys_default_init_connect(Session*, enum_var_type type);
+static bool sys_update_init_slave(Session*, set_var*);
+static void sys_default_init_slave(Session*, enum_var_type type);
+static bool set_option_bit(Session *thd, set_var *var);
+static bool set_option_autocommit(Session *thd, set_var *var);
+static int  check_log_update(Session *thd, set_var *var);
+static int  check_pseudo_thread_id(Session *thd, set_var *var);
+static void fix_low_priority_updates(Session *thd, enum_var_type type);
+static int check_tx_isolation(Session *thd, set_var *var);
+static void fix_tx_isolation(Session *thd, enum_var_type type);
+static int check_completion_type(Session *thd, set_var *var);
+static void fix_completion_type(Session *thd, enum_var_type type);
+static void fix_net_read_timeout(Session *thd, enum_var_type type);
+static void fix_net_write_timeout(Session *thd, enum_var_type type);
+static void fix_net_retry_count(Session *thd, enum_var_type type);
+static void fix_max_join_size(Session *thd, enum_var_type type);
+static void fix_myisam_max_sort_file_size(Session *thd, enum_var_type type);
+static void fix_max_binlog_size(Session *thd, enum_var_type type);
+static void fix_max_relay_log_size(Session *thd, enum_var_type type);
+static void fix_max_connections(Session *thd, enum_var_type type);
+static void fix_thd_mem_root(Session *thd, enum_var_type type);
+static void fix_trans_mem_root(Session *thd, enum_var_type type);
+static void fix_server_id(Session *thd, enum_var_type type);
+static uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
+static bool get_unsigned(Session *thd, set_var *var);
+bool throw_bounds_warning(Session *thd, bool fixed, bool unsignd,
                           const char *name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
-static unsigned char *get_error_count(THD *thd);
-static unsigned char *get_warning_count(THD *thd);
-static unsigned char *get_tmpdir(THD *thd);
+static unsigned char *get_error_count(Session *thd);
+static unsigned char *get_warning_count(Session *thd);
+static unsigned char *get_tmpdir(Session *thd);
 
 /*
   Variable definition list
@@ -381,7 +381,7 @@ static sys_var_thd_date_time_format sys_datetime_format(&vars, "datetime_format"
 						 &SV::datetime_format,
 						 DRIZZLE_TIMESTAMP_DATETIME);
 
-/* Variables that are bits in THD */
+/* Variables that are bits in Session */
 
 sys_var_thd_bit sys_autocommit(&vars, "autocommit", 0,
                                set_option_autocommit,
@@ -487,7 +487,7 @@ static sys_var_const_str_ptr    sys_repl_report_host(&vars, "report_host", &repo
 static sys_var_const_str_ptr    sys_repl_report_user(&vars, "report_user", &report_user);
 static sys_var_const_str_ptr    sys_repl_report_password(&vars, "report_password", &report_password);
 
-static unsigned char *slave_get_report_port(THD *thd)
+static unsigned char *slave_get_report_port(Session *thd)
 {
   thd->sys_var_tmp.long_value= report_port;
   return (unsigned char*) &thd->sys_var_tmp.long_value;
@@ -528,13 +528,13 @@ static SHOW_VAR fixed_vars[]= {
 };
 
 
-bool sys_var::check(THD *thd __attribute__((unused)), set_var *var)
+bool sys_var::check(Session *thd __attribute__((unused)), set_var *var)
 {
   var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
-bool sys_var_str::check(THD *thd, set_var *var)
+bool sys_var_str::check(Session *thd, set_var *var)
 {
   int res;
   if (!check_func)
@@ -582,27 +582,27 @@ bool update_sys_var_str(sys_var_str *var_str, rw_lock_t *var_mutex,
 }
 
 
-static bool sys_update_init_connect(THD *thd __attribute__((unused)), set_var *var)
+static bool sys_update_init_connect(Session *thd __attribute__((unused)), set_var *var)
 {
   return update_sys_var_str(&sys_init_connect, &LOCK_sys_init_connect, var);
 }
 
 
-static void sys_default_init_connect(THD* thd __attribute__((unused)),
+static void sys_default_init_connect(Session* thd __attribute__((unused)),
                                      enum_var_type type __attribute__((unused)))
 {
   update_sys_var_str(&sys_init_connect, &LOCK_sys_init_connect, 0);
 }
 
 
-static bool sys_update_init_slave(THD *thd __attribute__((unused)),
+static bool sys_update_init_slave(Session *thd __attribute__((unused)),
                                   set_var *var)
 {
   return update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, var);
 }
 
 
-static void sys_default_init_slave(THD* thd __attribute__((unused)),
+static void sys_default_init_slave(Session* thd __attribute__((unused)),
                                    enum_var_type type __attribute__((unused)))
 {
   update_sys_var_str(&sys_init_slave, &LOCK_sys_init_slave, 0);
@@ -614,7 +614,7 @@ static void sys_default_init_slave(THD* thd __attribute__((unused)),
   used lock type.
 */
 
-static void fix_low_priority_updates(THD *thd, enum_var_type type)
+static void fix_low_priority_updates(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     thr_upgraded_concurrent_insert_lock= 
@@ -627,7 +627,7 @@ static void fix_low_priority_updates(THD *thd, enum_var_type type)
 
 
 static void
-fix_myisam_max_sort_file_size(THD *thd __attribute__((unused)),
+fix_myisam_max_sort_file_size(Session *thd __attribute__((unused)),
                               enum_var_type type __attribute__((unused)))
 {
   myisam_max_temp_length=
@@ -638,7 +638,7 @@ fix_myisam_max_sort_file_size(THD *thd __attribute__((unused)),
   Set the OPTION_BIG_SELECTS flag if max_join_size == HA_POS_ERROR.
 */
 
-static void fix_max_join_size(THD *thd, enum_var_type type)
+static void fix_max_join_size(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
   {
@@ -654,7 +654,7 @@ static void fix_max_join_size(THD *thd, enum_var_type type)
   Can't change the 'next' tx_isolation while we are already in
   a transaction
 */
-static int check_tx_isolation(THD *thd, set_var *var)
+static int check_tx_isolation(Session *thd, set_var *var)
 {
   if (var->type == OPT_DEFAULT && (thd->server_status & SERVER_STATUS_IN_TRANS))
   {
@@ -668,17 +668,17 @@ static int check_tx_isolation(THD *thd, set_var *var)
   If one doesn't use the SESSION modifier, the isolation level
   is only active for the next command.
 */
-static void fix_tx_isolation(THD *thd, enum_var_type type)
+static void fix_tx_isolation(Session *thd, enum_var_type type)
 {
   if (type == OPT_SESSION)
     thd->session_tx_isolation= ((enum_tx_isolation)
 				thd->variables.tx_isolation);
 }
 
-static void fix_completion_type(THD *thd __attribute__((unused)),
+static void fix_completion_type(Session *thd __attribute__((unused)),
 				enum_var_type type __attribute__((unused))) {}
 
-static int check_completion_type(THD *thd __attribute__((unused)),
+static int check_completion_type(Session *thd __attribute__((unused)),
                                  set_var *var)
 {
   int64_t val= var->value->val_int();
@@ -696,27 +696,27 @@ static int check_completion_type(THD *thd __attribute__((unused)),
   If we are changing the thread variable, we have to copy it to NET too
 */
 
-static void fix_net_read_timeout(THD *thd, enum_var_type type)
+static void fix_net_read_timeout(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
     my_net_set_read_timeout(&thd->net, thd->variables.net_read_timeout);
 }
 
 
-static void fix_net_write_timeout(THD *thd, enum_var_type type)
+static void fix_net_write_timeout(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
     my_net_set_write_timeout(&thd->net, thd->variables.net_write_timeout);
 }
 
-static void fix_net_retry_count(THD *thd, enum_var_type type)
+static void fix_net_retry_count(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
     thd->net.retry_count=thd->variables.net_retry_count;
 }
 
 
-extern void fix_delay_key_write(THD *thd __attribute__((unused)),
+extern void fix_delay_key_write(Session *thd __attribute__((unused)),
                                 enum_var_type type __attribute__((unused)))
 {
   switch ((enum_delay_key_write) delay_key_write_options) {
@@ -733,14 +733,14 @@ extern void fix_delay_key_write(THD *thd __attribute__((unused)),
   }
 }
 
-bool sys_var_set::update(THD *thd __attribute__((unused)),
+bool sys_var_set::update(Session *thd __attribute__((unused)),
                          set_var *var)
 {
   *value= var->save_result.ulong_value;
   return 0;
 }
 
-unsigned char *sys_var_set::value_ptr(THD *thd,
+unsigned char *sys_var_set::value_ptr(Session *thd,
                               enum_var_type type __attribute__((unused)),
                               LEX_STRING *base __attribute__((unused)))
 {
@@ -765,14 +765,14 @@ unsigned char *sys_var_set::value_ptr(THD *thd,
   return (unsigned char*) thd->strmake(tmp.ptr(), length);
 }
 
-void sys_var_set_slave_mode::set_default(THD *thd __attribute__((unused)),
+void sys_var_set_slave_mode::set_default(Session *thd __attribute__((unused)),
                                          enum_var_type type __attribute__((unused)))
 {
   slave_exec_mode_options= 0;
   bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
 }
 
-bool sys_var_set_slave_mode::check(THD *thd, set_var *var)
+bool sys_var_set_slave_mode::check(Session *thd, set_var *var)
 {
   bool rc=  sys_var_set::check(thd, var);
   if (!rc &&
@@ -785,7 +785,7 @@ bool sys_var_set_slave_mode::check(THD *thd, set_var *var)
   return rc;
 }
 
-bool sys_var_set_slave_mode::update(THD *thd, set_var *var)
+bool sys_var_set_slave_mode::update(Session *thd, set_var *var)
 {
   bool rc;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -812,7 +812,7 @@ bool sys_var_thd_binlog_format::is_readonly() const
   /*
     Under certain circumstances, the variable is read-only (unchangeable):
   */
-  THD *thd= current_thd;
+  Session *thd= current_thd;
   /*
     If RBR and open temporary tables, their CREATE TABLE may not be in the
     binlog, so we can't toggle to SBR in this connection.
@@ -835,14 +835,14 @@ bool sys_var_thd_binlog_format::is_readonly() const
 }
 
 
-void fix_binlog_format_after_update(THD *thd,
+void fix_binlog_format_after_update(Session *thd,
                                     enum_var_type type __attribute__((unused)))
 {
   thd->reset_current_stmt_binlog_row_based();
 }
 
 
-static void fix_max_binlog_size(THD *thd __attribute__((unused)),
+static void fix_max_binlog_size(Session *thd __attribute__((unused)),
                                 enum_var_type type __attribute__((unused)))
 {
   mysql_bin_log.set_max_size(max_binlog_size);
@@ -851,7 +851,7 @@ static void fix_max_binlog_size(THD *thd __attribute__((unused)),
   return;
 }
 
-static void fix_max_relay_log_size(THD *thd __attribute__((unused)),
+static void fix_max_relay_log_size(Session *thd __attribute__((unused)),
                                    enum_var_type type __attribute__((unused)))
 {
   active_mi->rli.relay_log.set_max_size(max_relay_log_size ?
@@ -859,14 +859,14 @@ static void fix_max_relay_log_size(THD *thd __attribute__((unused)),
   return;
 }
 
-static void fix_max_connections(THD *thd __attribute__((unused)),
+static void fix_max_connections(Session *thd __attribute__((unused)),
                                 enum_var_type type __attribute__((unused)))
 {
   resize_thr_alarm(max_connections +  10);
 }
 
 
-static void fix_thd_mem_root(THD *thd, enum_var_type type)
+static void fix_thd_mem_root(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
     reset_root_defaults(thd->mem_root,
@@ -875,7 +875,7 @@ static void fix_thd_mem_root(THD *thd, enum_var_type type)
 }
 
 
-static void fix_trans_mem_root(THD *thd, enum_var_type type)
+static void fix_trans_mem_root(Session *thd, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
     reset_root_defaults(&thd->transaction.mem_root,
@@ -884,7 +884,7 @@ static void fix_trans_mem_root(THD *thd, enum_var_type type)
 }
 
 
-static void fix_server_id(THD *thd __attribute__((unused)),
+static void fix_server_id(Session *thd __attribute__((unused)),
                           enum_var_type type __attribute__((unused)))
 {
   server_id_supplied = 1;
@@ -892,7 +892,7 @@ static void fix_server_id(THD *thd __attribute__((unused)),
 }
 
 
-bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
+bool throw_bounds_warning(Session *thd, bool fixed, bool unsignd,
                           const char *name, int64_t val)
 {
   if (fixed)
@@ -911,7 +911,7 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
   return false;
 }
 
-static uint64_t fix_unsigned(THD *thd, uint64_t num,
+static uint64_t fix_unsigned(Session *thd, uint64_t num,
                               const struct my_option *option_limits)
 {
   bool fixed= false;
@@ -921,7 +921,7 @@ static uint64_t fix_unsigned(THD *thd, uint64_t num,
   return out;
 }
 
-static bool get_unsigned(THD *thd __attribute__((unused)), set_var *var)
+static bool get_unsigned(Session *thd __attribute__((unused)), set_var *var)
 {
   if (var->value->unsigned_flag)
     var->save_result.uint64_t_value= (uint64_t) var->value->val_int();
@@ -942,12 +942,12 @@ sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, ulong *value_ptr_ar
 {}
 
 
-bool sys_var_long_ptr_global::check(THD *thd, set_var *var)
+bool sys_var_long_ptr_global::check(Session *thd, set_var *var)
 {
   return get_unsigned(thd, var);
 }
 
-bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
+bool sys_var_long_ptr_global::update(Session *thd, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(guard);
@@ -969,7 +969,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_long_ptr_global::set_default(THD *thd __attribute__((unused)), enum_var_type type __attribute__((unused)))
+void sys_var_long_ptr_global::set_default(Session *thd __attribute__((unused)), enum_var_type type __attribute__((unused)))
 {
   bool not_used;
   pthread_mutex_lock(guard);
@@ -979,7 +979,7 @@ void sys_var_long_ptr_global::set_default(THD *thd __attribute__((unused)), enum
 }
 
 
-bool sys_var_uint64_t_ptr::update(THD *thd, set_var *var)
+bool sys_var_uint64_t_ptr::update(Session *thd, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -992,7 +992,7 @@ bool sys_var_uint64_t_ptr::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_uint64_t_ptr::set_default(THD *thd __attribute__((unused)),
+void sys_var_uint64_t_ptr::set_default(Session *thd __attribute__((unused)),
                                         enum_var_type type __attribute__((unused)))
 {
   bool not_used;
@@ -1003,27 +1003,27 @@ void sys_var_uint64_t_ptr::set_default(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_bool_ptr::update(THD *thd __attribute__((unused)), set_var *var)
+bool sys_var_bool_ptr::update(Session *thd __attribute__((unused)), set_var *var)
 {
   *value= (bool) var->save_result.ulong_value;
   return 0;
 }
 
 
-void sys_var_bool_ptr::set_default(THD *thd __attribute__((unused)), enum_var_type type __attribute__((unused)))
+void sys_var_bool_ptr::set_default(Session *thd __attribute__((unused)), enum_var_type type __attribute__((unused)))
 {
   *value= (bool) option_limits->def_value;
 }
 
 
-bool sys_var_enum::update(THD *thd __attribute__((unused)), set_var *var)
+bool sys_var_enum::update(Session *thd __attribute__((unused)), set_var *var)
 {
   *value= (uint) var->save_result.ulong_value;
   return 0;
 }
 
 
-unsigned char *sys_var_enum::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_enum::value_ptr(Session *thd __attribute__((unused)),
                                enum_var_type type __attribute__((unused)),
                                LEX_STRING *base __attribute__((unused)))
 {
@@ -1031,20 +1031,20 @@ unsigned char *sys_var_enum::value_ptr(THD *thd __attribute__((unused)),
 }
 
 
-unsigned char *sys_var_enum_const::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_enum_const::value_ptr(Session *thd __attribute__((unused)),
                                      enum_var_type type __attribute__((unused)),
                                      LEX_STRING *base __attribute__((unused)))
 {
   return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
 }
 
-bool sys_var_thd_ulong::check(THD *thd, set_var *var)
+bool sys_var_thd_ulong::check(Session *thd, set_var *var)
 {
   return (get_unsigned(thd, var) ||
           (check_func && (*check_func)(thd, var)));
 }
 
-bool sys_var_thd_ulong::update(THD *thd, set_var *var)
+bool sys_var_thd_ulong::update(Session *thd, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
   
@@ -1072,7 +1072,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
  }
 
 
- void sys_var_thd_ulong::set_default(THD *thd, enum_var_type type)
+ void sys_var_thd_ulong::set_default(Session *thd, enum_var_type type)
  {
    if (type == OPT_GLOBAL)
    {
@@ -1087,7 +1087,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
  }
 
 
-unsigned char *sys_var_thd_ulong::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_ulong::value_ptr(Session *thd, enum_var_type type,
                                     LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1096,7 +1096,7 @@ unsigned char *sys_var_thd_ulong::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var_thd_ha_rows::update(THD *thd, set_var *var)
+bool sys_var_thd_ha_rows::update(Session *thd, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
 
@@ -1119,7 +1119,7 @@ bool sys_var_thd_ha_rows::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_thd_ha_rows::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_ha_rows::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
@@ -1136,7 +1136,7 @@ void sys_var_thd_ha_rows::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_thd_ha_rows::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_ha_rows::value_ptr(Session *thd, enum_var_type type,
                                       LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1144,12 +1144,12 @@ unsigned char *sys_var_thd_ha_rows::value_ptr(THD *thd, enum_var_type type,
   return (unsigned char*) &(thd->variables.*offset);
 }
 
-bool sys_var_thd_uint64_t::check(THD *thd, set_var *var)
+bool sys_var_thd_uint64_t::check(Session *thd, set_var *var)
 {
   return get_unsigned(thd, var);
 }
 
-bool sys_var_thd_uint64_t::update(THD *thd,  set_var *var)
+bool sys_var_thd_uint64_t::update(Session *thd,  set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
 
@@ -1171,7 +1171,7 @@ bool sys_var_thd_uint64_t::update(THD *thd,  set_var *var)
 }
 
 
-void sys_var_thd_uint64_t::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_uint64_t::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
@@ -1187,7 +1187,7 @@ void sys_var_thd_uint64_t::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_uint64_t::value_ptr(Session *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1196,7 +1196,7 @@ unsigned char *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var_thd_bool::update(THD *thd,  set_var *var)
+bool sys_var_thd_bool::update(Session *thd,  set_var *var)
 {
   if (var->type == OPT_GLOBAL)
     global_system_variables.*offset= (bool) var->save_result.ulong_value;
@@ -1206,7 +1206,7 @@ bool sys_var_thd_bool::update(THD *thd,  set_var *var)
 }
 
 
-void sys_var_thd_bool::set_default(THD *thd,  enum_var_type type)
+void sys_var_thd_bool::set_default(Session *thd,  enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= (bool) option_limits->def_value;
@@ -1215,7 +1215,7 @@ void sys_var_thd_bool::set_default(THD *thd,  enum_var_type type)
 }
 
 
-unsigned char *sys_var_thd_bool::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_bool::value_ptr(Session *thd, enum_var_type type,
                                    LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1224,7 +1224,7 @@ unsigned char *sys_var_thd_bool::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var::check_enum(THD *thd __attribute__((unused)),
+bool sys_var::check_enum(Session *thd __attribute__((unused)),
                          set_var *var, const TYPELIB *enum_names)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -1261,7 +1261,7 @@ err:
 }
 
 
-bool sys_var::check_set(THD *thd __attribute__((unused)),
+bool sys_var::check_set(Session *thd __attribute__((unused)),
                         set_var *var, TYPELIB *enum_names)
 {
   bool not_used;
@@ -1336,7 +1336,7 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
+Item *sys_var::item(Session *thd, enum_var_type var_type, LEX_STRING *base)
 {
   if (check_type(var_type))
   {
@@ -1441,7 +1441,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
 }
 
 
-bool sys_var_thd_enum::update(THD *thd, set_var *var)
+bool sys_var_thd_enum::update(Session *thd, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
     global_system_variables.*offset= var->save_result.ulong_value;
@@ -1451,7 +1451,7 @@ bool sys_var_thd_enum::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_thd_enum::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_enum::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= (ulong) option_limits->def_value;
@@ -1460,7 +1460,7 @@ void sys_var_thd_enum::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_thd_enum::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_enum::value_ptr(Session *thd, enum_var_type type,
                                    LEX_STRING *base __attribute__((unused)))
 {
   ulong tmp= ((type == OPT_GLOBAL) ?
@@ -1469,20 +1469,20 @@ unsigned char *sys_var_thd_enum::value_ptr(THD *thd, enum_var_type type,
   return (unsigned char*) enum_names->type_names[tmp];
 }
 
-bool sys_var_thd_bit::check(THD *thd, set_var *var)
+bool sys_var_thd_bit::check(Session *thd, set_var *var)
 {
   return (check_enum(thd, var, &bool_typelib) ||
           (check_func && (*check_func)(thd, var)));
 }
 
-bool sys_var_thd_bit::update(THD *thd, set_var *var)
+bool sys_var_thd_bit::update(Session *thd, set_var *var)
 {
   int res= (*update_func)(thd, var);
   return res;
 }
 
 
-unsigned char *sys_var_thd_bit::value_ptr(THD *thd,
+unsigned char *sys_var_thd_bit::value_ptr(Session *thd,
                                   enum_var_type type __attribute__((unused)),
                                   LEX_STRING *base __attribute__((unused)))
 {
@@ -1498,7 +1498,7 @@ unsigned char *sys_var_thd_bit::value_ptr(THD *thd,
 
 /** Update a date_time format variable based on given value. */
 
-void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
+void sys_var_thd_date_time_format::update2(Session *thd, enum_var_type type,
 					   DATE_TIME_FORMAT *new_value)
 {
   DATE_TIME_FORMAT *old;
@@ -1520,11 +1520,11 @@ void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var_thd_date_time_format::update(THD *thd, set_var *var)
+bool sys_var_thd_date_time_format::update(Session *thd, set_var *var)
 {
   DATE_TIME_FORMAT *new_value;
   /* We must make a copy of the last value to get it into normal memory */
-  new_value= date_time_format_copy((THD*) 0,
+  new_value= date_time_format_copy((Session*) 0,
 				   var->save_result.date_time_format);
   if (!new_value)
     return 1;					// Out of memory
@@ -1533,7 +1533,7 @@ bool sys_var_thd_date_time_format::update(THD *thd, set_var *var)
 }
 
 
-bool sys_var_thd_date_time_format::check(THD *thd, set_var *var)
+bool sys_var_thd_date_time_format::check(Session *thd, set_var *var)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   String str(buff,sizeof(buff), system_charset_info), *res;
@@ -1559,7 +1559,7 @@ bool sys_var_thd_date_time_format::check(THD *thd, set_var *var)
 }
 
 
-void sys_var_thd_date_time_format::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_date_time_format::set_default(Session *thd, enum_var_type type)
 {
   DATE_TIME_FORMAT *res= 0;
 
@@ -1572,7 +1572,7 @@ void sys_var_thd_date_time_format::set_default(THD *thd, enum_var_type type)
   else
   {
     /* Make copy with malloc */
-    res= date_time_format_copy((THD *) 0, global_system_variables.*offset);
+    res= date_time_format_copy((Session *) 0, global_system_variables.*offset);
   }
 
   if (res)					// Should always be true
@@ -1580,7 +1580,7 @@ void sys_var_thd_date_time_format::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_thd_date_time_format::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_date_time_format::value_ptr(Session *thd, enum_var_type type,
                                                LEX_STRING *base __attribute__((unused)))
 {
   if (type == OPT_GLOBAL)
@@ -1605,7 +1605,7 @@ typedef struct old_names_map_st
   const char *new_name;
 } my_old_conv;
 
-bool sys_var_collation::check(THD *thd __attribute__((unused)),
+bool sys_var_collation::check(Session *thd __attribute__((unused)),
                               set_var *var)
 {
   const CHARSET_INFO *tmp;
@@ -1640,7 +1640,7 @@ bool sys_var_collation::check(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_character_set::check(THD *thd __attribute__((unused)),
+bool sys_var_character_set::check(Session *thd __attribute__((unused)),
                                   set_var *var)
 {
   const CHARSET_INFO *tmp;
@@ -1679,7 +1679,7 @@ bool sys_var_character_set::check(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_character_set::update(THD *thd, set_var *var)
+bool sys_var_character_set::update(Session *thd, set_var *var)
 {
   ci_ptr(thd,var->type)[0]= var->save_result.charset;
   thd->update_charset();
@@ -1687,7 +1687,7 @@ bool sys_var_character_set::update(THD *thd, set_var *var)
 }
 
 
-unsigned char *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_character_set::value_ptr(Session *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   const CHARSET_INFO * const cs= ci_ptr(thd,type)[0];
@@ -1695,7 +1695,7 @@ unsigned char *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var_collation_sv::update(THD *thd, set_var *var)
+bool sys_var_collation_sv::update(Session *thd, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
     global_system_variables.*offset= var->save_result.charset;
@@ -1708,7 +1708,7 @@ bool sys_var_collation_sv::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_collation_sv::set_default(THD *thd, enum_var_type type)
+void sys_var_collation_sv::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= *global_default;
@@ -1720,7 +1720,7 @@ void sys_var_collation_sv::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_collation_sv::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_collation_sv::value_ptr(Session *thd, enum_var_type type,
                                        LEX_STRING *base __attribute__((unused)))
 {
   const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
@@ -1743,7 +1743,7 @@ KEY_CACHE *get_key_cache(LEX_STRING *cache_name)
 }
 
 
-unsigned char *sys_var_key_cache_param::value_ptr(THD *thd __attribute__((unused)),
+unsigned char *sys_var_key_cache_param::value_ptr(Session *thd __attribute__((unused)),
                                           enum_var_type type __attribute__((unused)),
                                           LEX_STRING *base __attribute__((unused)))
 {
@@ -1754,7 +1754,7 @@ unsigned char *sys_var_key_cache_param::value_ptr(THD *thd __attribute__((unused
 }
 
 
-bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
+bool sys_var_key_buffer_size::update(Session *thd, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
   LEX_STRING *base_name= &var->base;
@@ -1847,7 +1847,7 @@ end:
   This should be changed so that we wait until the previous
   assignment is done and then do the new assign
 */
-bool sys_var_key_cache_long::update(THD *thd, set_var *var)
+bool sys_var_key_cache_long::update(Session *thd, set_var *var)
 {
   ulong tmp= (ulong) var->value->val_int();
   LEX_STRING *base_name= &var->base;
@@ -1896,7 +1896,7 @@ end:
 }
 
 
-bool sys_var_log_state::update(THD *thd __attribute__((unused)), set_var *var)
+bool sys_var_log_state::update(Session *thd __attribute__((unused)), set_var *var)
 {
   bool res;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -1908,13 +1908,13 @@ bool sys_var_log_state::update(THD *thd __attribute__((unused)), set_var *var)
   return res;
 }
 
-void sys_var_log_state::set_default(THD *thd __attribute__((unused)),
+void sys_var_log_state::set_default(Session *thd __attribute__((unused)),
                                     enum_var_type type __attribute__((unused)))
 {
 }
 
 
-bool update_sys_var_str_path(THD *thd __attribute__((unused)),
+bool update_sys_var_str_path(Session *thd __attribute__((unused)),
                              sys_var_str *var_str,
                              set_var *var, const char *log_ext,
                              bool log_state, uint32_t log_type)
@@ -1963,7 +1963,7 @@ err:
 }
 
 
-bool sys_var_log_output::update(THD *thd __attribute__((unused)),
+bool sys_var_log_output::update(Session *thd __attribute__((unused)),
                                 set_var *var)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -1975,7 +1975,7 @@ bool sys_var_log_output::update(THD *thd __attribute__((unused)),
 }
 
 
-void sys_var_log_output::set_default(THD *thd __attribute__((unused)),
+void sys_var_log_output::set_default(Session *thd __attribute__((unused)),
                                      enum_var_type type __attribute__((unused)))
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -1986,7 +1986,7 @@ void sys_var_log_output::set_default(THD *thd __attribute__((unused)),
 }
 
 
-unsigned char *sys_var_log_output::value_ptr(THD *thd,
+unsigned char *sys_var_log_output::value_ptr(Session *thd,
                                      enum_var_type type __attribute__((unused)),
                                      LEX_STRING *base __attribute__((unused)))
 {
@@ -2016,7 +2016,7 @@ unsigned char *sys_var_log_output::value_ptr(THD *thd,
   Functions to handle SET NAMES and SET CHARACTER SET
 *****************************************************************************/
 
-int set_var_collation_client::check(THD *thd __attribute__((unused)))
+int set_var_collation_client::check(Session *thd __attribute__((unused)))
 {
   /* Currently, UCS-2 cannot be used as a client character set */
   if (character_set_client->mbminlen > 1)
@@ -2028,7 +2028,7 @@ int set_var_collation_client::check(THD *thd __attribute__((unused)))
   return 0;
 }
 
-int set_var_collation_client::update(THD *thd)
+int set_var_collation_client::update(Session *thd)
 {
   thd->variables.character_set_client= character_set_client;
   thd->variables.character_set_results= character_set_results;
@@ -2040,21 +2040,21 @@ int set_var_collation_client::update(THD *thd)
 
 /****************************************************************************/
 
-bool sys_var_timestamp::update(THD *thd,  set_var *var)
+bool sys_var_timestamp::update(Session *thd,  set_var *var)
 {
   thd->set_time((time_t) var->save_result.uint64_t_value);
   return 0;
 }
 
 
-void sys_var_timestamp::set_default(THD *thd,
+void sys_var_timestamp::set_default(Session *thd,
                                     enum_var_type type __attribute__((unused)))
 {
   thd->user_time=0;
 }
 
 
-unsigned char *sys_var_timestamp::value_ptr(THD *thd,
+unsigned char *sys_var_timestamp::value_ptr(Session *thd,
                                     enum_var_type type __attribute__((unused)),
                                     LEX_STRING *base __attribute__((unused)))
 {
@@ -2063,7 +2063,7 @@ unsigned char *sys_var_timestamp::value_ptr(THD *thd,
 }
 
 
-bool sys_var_last_insert_id::update(THD *thd, set_var *var)
+bool sys_var_last_insert_id::update(Session *thd, set_var *var)
 {
   thd->first_successful_insert_id_in_prev_stmt=
     var->save_result.uint64_t_value;
@@ -2071,7 +2071,7 @@ bool sys_var_last_insert_id::update(THD *thd, set_var *var)
 }
 
 
-unsigned char *sys_var_last_insert_id::value_ptr(THD *thd,
+unsigned char *sys_var_last_insert_id::value_ptr(Session *thd,
                                          enum_var_type type __attribute__((unused)),
                                          LEX_STRING *base __attribute__((unused)))
 {
@@ -2085,14 +2085,14 @@ unsigned char *sys_var_last_insert_id::value_ptr(THD *thd,
 }
 
 
-bool sys_var_insert_id::update(THD *thd, set_var *var)
+bool sys_var_insert_id::update(Session *thd, set_var *var)
 {
   thd->force_one_auto_inc_interval(var->save_result.uint64_t_value);
   return 0;
 }
 
 
-unsigned char *sys_var_insert_id::value_ptr(THD *thd,
+unsigned char *sys_var_insert_id::value_ptr(Session *thd,
                                     enum_var_type type __attribute__((unused)),
                                     LEX_STRING *base __attribute__((unused)))
 {
@@ -2102,20 +2102,20 @@ unsigned char *sys_var_insert_id::value_ptr(THD *thd,
 }
 
 
-bool sys_var_rand_seed1::update(THD *thd, set_var *var)
+bool sys_var_rand_seed1::update(Session *thd, set_var *var)
 {
   thd->rand.seed1= (ulong) var->save_result.uint64_t_value;
   return 0;
 }
 
-bool sys_var_rand_seed2::update(THD *thd, set_var *var)
+bool sys_var_rand_seed2::update(Session *thd, set_var *var)
 {
   thd->rand.seed2= (ulong) var->save_result.uint64_t_value;
   return 0;
 }
 
 
-bool sys_var_thd_time_zone::check(THD *thd, set_var *var)
+bool sys_var_thd_time_zone::check(Session *thd, set_var *var)
 {
   char buff[MAX_TIME_ZONE_NAME_LENGTH];
   String str(buff, sizeof(buff), &my_charset_utf8_general_ci);
@@ -2130,7 +2130,7 @@ bool sys_var_thd_time_zone::check(THD *thd, set_var *var)
 }
 
 
-bool sys_var_thd_time_zone::update(THD *thd, set_var *var)
+bool sys_var_thd_time_zone::update(Session *thd, set_var *var)
 {
   /* We are using Time_zone object found during check() phase. */
   if (var->type == OPT_GLOBAL)
@@ -2145,7 +2145,7 @@ bool sys_var_thd_time_zone::update(THD *thd, set_var *var)
 }
 
 
-unsigned char *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_time_zone::value_ptr(Session *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   /* 
@@ -2170,7 +2170,7 @@ unsigned char *sys_var_thd_time_zone::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-void sys_var_thd_time_zone::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_time_zone::set_default(Session *thd, enum_var_type type)
 {
  pthread_mutex_lock(&LOCK_global_system_variables);
  if (type == OPT_GLOBAL)
@@ -2193,7 +2193,7 @@ void sys_var_thd_time_zone::set_default(THD *thd, enum_var_type type)
 }
 
 
-bool sys_var_max_user_conn::check(THD *thd, set_var *var)
+bool sys_var_max_user_conn::check(Session *thd, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
     return sys_var_thd::check(thd, var);
@@ -2208,7 +2208,7 @@ bool sys_var_max_user_conn::check(THD *thd, set_var *var)
   }
 }
 
-bool sys_var_max_user_conn::update(THD *thd __attribute__((unused)),
+bool sys_var_max_user_conn::update(Session *thd __attribute__((unused)),
                                    set_var *var)
 {
   assert(var->type == OPT_GLOBAL);
@@ -2219,7 +2219,7 @@ bool sys_var_max_user_conn::update(THD *thd __attribute__((unused)),
 }
 
 
-void sys_var_max_user_conn::set_default(THD *thd __attribute__((unused)),
+void sys_var_max_user_conn::set_default(Session *thd __attribute__((unused)),
                                         enum_var_type type __attribute__((unused)))
 {
   assert(type == OPT_GLOBAL);
@@ -2229,7 +2229,7 @@ void sys_var_max_user_conn::set_default(THD *thd __attribute__((unused)),
 }
 
 
-unsigned char *sys_var_max_user_conn::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_max_user_conn::value_ptr(Session *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
   if (type != OPT_GLOBAL &&
@@ -2239,7 +2239,7 @@ unsigned char *sys_var_max_user_conn::value_ptr(THD *thd, enum_var_type type,
 }
 
 
-bool sys_var_thd_lc_time_names::check(THD *thd __attribute__((unused)),
+bool sys_var_thd_lc_time_names::check(Session *thd __attribute__((unused)),
                                       set_var *var)
 {
   MY_LOCALE *locale_match;
@@ -2277,7 +2277,7 @@ bool sys_var_thd_lc_time_names::check(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_thd_lc_time_names::update(THD *thd, set_var *var)
+bool sys_var_thd_lc_time_names::update(Session *thd, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
     global_system_variables.lc_time_names= var->save_result.locale_value;
@@ -2287,7 +2287,7 @@ bool sys_var_thd_lc_time_names::update(THD *thd, set_var *var)
 }
 
 
-unsigned char *sys_var_thd_lc_time_names::value_ptr(THD *thd,
+unsigned char *sys_var_thd_lc_time_names::value_ptr(Session *thd,
                                             enum_var_type type,
                                             LEX_STRING *base __attribute__((unused)))
 {
@@ -2297,7 +2297,7 @@ unsigned char *sys_var_thd_lc_time_names::value_ptr(THD *thd,
 }
 
 
-void sys_var_thd_lc_time_names::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_lc_time_names::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -2314,7 +2314,7 @@ void sys_var_thd_lc_time_names::set_default(THD *thd, enum_var_type type)
     This is used for handling long_query_time
 */
 
-bool sys_var_microseconds::update(THD *thd, set_var *var)
+bool sys_var_microseconds::update(Session *thd, set_var *var)
 {
   double num= var->value->val_real();
   int64_t microseconds;
@@ -2335,7 +2335,7 @@ bool sys_var_microseconds::update(THD *thd, set_var *var)
 }
 
 
-void sys_var_microseconds::set_default(THD *thd, enum_var_type type)
+void sys_var_microseconds::set_default(Session *thd, enum_var_type type)
 {
   int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
@@ -2349,7 +2349,7 @@ void sys_var_microseconds::set_default(THD *thd, enum_var_type type)
 }
 
 
-unsigned char *sys_var_microseconds::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_microseconds::value_ptr(Session *thd, enum_var_type type,
                                           LEX_STRING *base __attribute__((unused)))
 {
   thd->tmp_double_value= (double) ((type == OPT_GLOBAL) ?
@@ -2363,7 +2363,7 @@ unsigned char *sys_var_microseconds::value_ptr(THD *thd, enum_var_type type,
   Functions to update thd->options bits
 */
 
-static bool set_option_bit(THD *thd, set_var *var)
+static bool set_option_bit(Session *thd, set_var *var)
 {
   sys_var_thd_bit *sys_var= ((sys_var_thd_bit*) var->var);
   if ((var->save_result.ulong_value != 0) == sys_var->reverse)
@@ -2374,7 +2374,7 @@ static bool set_option_bit(THD *thd, set_var *var)
 }
 
 
-static bool set_option_autocommit(THD *thd, set_var *var)
+static bool set_option_autocommit(Session *thd, set_var *var)
 {
   /* The test is negative as the flag we use is NOT autocommit */
 
@@ -2405,21 +2405,21 @@ static bool set_option_autocommit(THD *thd, set_var *var)
   return 0;
 }
 
-static int check_log_update(THD *thd __attribute__((unused)),
+static int check_log_update(Session *thd __attribute__((unused)),
                             set_var *var __attribute__((unused)))
 {
   return 0;
 }
 
 
-static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
+static int check_pseudo_thread_id(Session *thd __attribute__((unused)),
                                   set_var *var)
 {
   var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
-static unsigned char *get_warning_count(THD *thd)
+static unsigned char *get_warning_count(Session *thd)
 {
   thd->sys_var_tmp.long_value=
     (thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
@@ -2428,7 +2428,7 @@ static unsigned char *get_warning_count(THD *thd)
   return (unsigned char*) &thd->sys_var_tmp.long_value;
 }
 
-static unsigned char *get_error_count(THD *thd)
+static unsigned char *get_error_count(Session *thd)
 {
   thd->sys_var_tmp.long_value= 
     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
@@ -2450,7 +2450,7 @@ static unsigned char *get_error_count(THD *thd)
   @retval
     ptr		pointer to NUL-terminated string
 */
-static unsigned char *get_tmpdir(THD *thd __attribute__((unused)))
+static unsigned char *get_tmpdir(Session *thd __attribute__((unused)))
 {
   if (opt_mysql_tmpdir)
     return (unsigned char *)opt_mysql_tmpdir;
@@ -2590,7 +2590,7 @@ static int show_cmp(SHOW_VAR *a, SHOW_VAR *b)
     NULL        FAILURE
 */
 
-SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted)
+SHOW_VAR* enumerate_sys_vars(Session *thd, bool sorted)
 {
   int count= system_variable_hash.records, i;
   int fixed_count= fixed_show_vars.elements;
@@ -2731,7 +2731,7 @@ sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error)
   This should ensure that in all normal cases none all or variables are
   updated.
 
-  @param THD		Thread id
+  @param Session		Thread id
   @param var_list       List of variables to update
 
   @retval
@@ -2742,7 +2742,7 @@ sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error)
     -1  ERROR, message not sent
 */
 
-int sql_set_variables(THD *thd, List<set_var_base> *var_list)
+int sql_set_variables(Session *thd, List<set_var_base> *var_list)
 {
   int error;
   List_iterator_fast<set_var_base> it(*var_list);
@@ -2799,7 +2799,7 @@ bool not_all_support_one_shot(List<set_var_base> *var_list)
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/
 
-int set_var::check(THD *thd)
+int set_var::check(Session *thd)
 {
   if (var->is_readonly())
   {
@@ -2846,7 +2846,7 @@ int set_var::check(THD *thd)
   Consider set_var::check() method if there is a need to return
   an error due to logics.
 */
-int set_var::update(THD *thd)
+int set_var::update(Session *thd)
 {
   if (!value)
     var->set_default(thd, type);
@@ -2862,7 +2862,7 @@ int set_var::update(THD *thd)
   Functions to handle SET @user_variable=const_expr
 *****************************************************************************/
 
-int set_var_user::check(THD *thd)
+int set_var_user::check(Session *thd)
 {
   /*
     Item_func_set_user_var can't substitute something else on its place =>
@@ -2873,7 +2873,7 @@ int set_var_user::check(THD *thd)
 }
 
 
-int set_var_user::update(THD *thd __attribute__((unused)))
+int set_var_user::update(Session *thd __attribute__((unused)))
 {
   if (user_var_item->update())
   {
@@ -2890,7 +2890,7 @@ int set_var_user::update(THD *thd __attribute__((unused)))
 
 /* Based upon sys_var::check_enum() */
 
-bool sys_var_thd_storage_engine::check(THD *thd, set_var *var)
+bool sys_var_thd_storage_engine::check(Session *thd, set_var *var)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
@@ -2920,7 +2920,7 @@ err:
 }
 
 
-unsigned char *sys_var_thd_storage_engine::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_storage_engine::value_ptr(Session *thd, enum_var_type type,
                                              LEX_STRING *base __attribute__((unused)))
 {
   unsigned char* result;
@@ -2938,7 +2938,7 @@ unsigned char *sys_var_thd_storage_engine::value_ptr(THD *thd, enum_var_type typ
 }
 
 
-void sys_var_thd_storage_engine::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_storage_engine::set_default(Session *thd, enum_var_type type)
 {
   plugin_ref old_value, new_value, *value;
   if (type == OPT_GLOBAL)
@@ -2958,7 +2958,7 @@ void sys_var_thd_storage_engine::set_default(THD *thd, enum_var_type type)
 }
 
 
-bool sys_var_thd_storage_engine::update(THD *thd, set_var *var)
+bool sys_var_thd_storage_engine::update(Session *thd, set_var *var)
 {
   plugin_ref *value= &(global_system_variables.*offset), old_value;
    if (var->type != OPT_GLOBAL)
@@ -2974,7 +2974,7 @@ bool sys_var_thd_storage_engine::update(THD *thd, set_var *var)
 
 bool
 sys_var_thd_optimizer_switch::
-symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
+symbolic_mode_representation(Session *thd, uint64_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
   String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
@@ -3002,7 +3002,7 @@ symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 }
 
 
-unsigned char *sys_var_thd_optimizer_switch::value_ptr(THD *thd, enum_var_type type,
+unsigned char *sys_var_thd_optimizer_switch::value_ptr(Session *thd, enum_var_type type,
                                                LEX_STRING *base __attribute__((unused)))
 {
   LEX_STRING opts;
@@ -3013,7 +3013,7 @@ unsigned char *sys_var_thd_optimizer_switch::value_ptr(THD *thd, enum_var_type t
 }
 
 
-void sys_var_thd_optimizer_switch::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_optimizer_switch::set_default(Session *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= 0;
@@ -3125,7 +3125,7 @@ bool process_key_caches(process_key_cache_t func)
 }
 
 
-bool sys_var_opt_readonly::update(THD *thd, set_var *var)
+bool sys_var_opt_readonly::update(Session *thd, set_var *var)
 {
   bool result;
 

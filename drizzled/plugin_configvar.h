@@ -32,8 +32,8 @@ typedef struct configvar_st
      if a function pointer is NULL, that's ok.
   */
 
-  bool (*configvar_func1)(THD *thd, void *parm1, void *parm2);
-  bool (*configvar_func2)(THD *thd, void *parm3, void *parm4);
+  bool (*configvar_func1)(Session *thd, void *parm1, void *parm2);
+  bool (*configvar_func2)(Session *thd, void *parm3, void *parm4);
 } configvar_t;
 
 #endif /* DRIZZLED_PLUGIN_CONFIGVAR_H */

@@ -147,7 +147,7 @@ int Field_timestamp::store(const char *from,
   int error;
   bool have_smth_to_conv;
   bool in_dst_time_gap;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   have_smth_to_conv= (str_to_datetime(from, len, &l_time, 1, &error) >
@@ -206,7 +206,7 @@ int Field_timestamp::store(int64_t nr,
   my_time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
@@ -250,7 +250,7 @@ int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
   DRIZZLE_TIME time_tmp;
-  THD  *thd= table ? table->in_use : current_thd;
+  Session  *thd= table ? table->in_use : current_thd;
 
   thd->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
@@ -276,7 +276,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 {
   uint32_t temp, temp2;
   DRIZZLE_TIME time_tmp;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   char *to;
 
   val_buffer->alloc(field_length+1);
@@ -347,7 +347,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   thd->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
@@ -430,7 +430,7 @@ void Field_timestamp::sql_type(String &res) const
 
 void Field_timestamp::set_time()
 {
-  THD *thd= table ? table->in_use : current_thd;
+  Session *thd= table ? table->in_use : current_thd;
   long tmp= (long) thd->query_start();
   set_notnull();
   store_timestamp(tmp);

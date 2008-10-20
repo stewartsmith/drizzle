@@ -69,7 +69,7 @@ int logging_finalizer(st_plugin_int *plugin)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_pre_iterate (THD *thd, plugin_ref plugin,
+static bool logging_pre_iterate (Session *thd, plugin_ref plugin,
 				 void *p __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
@@ -91,7 +91,7 @@ static bool logging_pre_iterate (THD *thd, plugin_ref plugin,
 
 /* This is the logging_pre_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_pre_do (THD *thd)
+bool logging_pre_do (Session *thd)
 {
   bool foreach_rv;
 
@@ -103,7 +103,7 @@ bool logging_pre_do (THD *thd)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_post_iterate (THD *thd, plugin_ref plugin, 
+static bool logging_post_iterate (Session *thd, plugin_ref plugin, 
 				  void *p __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
@@ -124,7 +124,7 @@ static bool logging_post_iterate (THD *thd, plugin_ref plugin,
 
 /* This is the logging_pre_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_post_do (THD *thd)
+bool logging_post_do (Session *thd)
 {
   bool foreach_rv;
 

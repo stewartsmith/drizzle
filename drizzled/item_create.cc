@@ -39,7 +39,7 @@
 class Create_native_func : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with no arguments.
@@ -48,7 +48,7 @@ public:
     @param item_list The function parameters, none of which are named
     @return An item representing the function call
   */
-  virtual Item *create_native(THD *thd, LEX_STRING name,
+  virtual Item *create_native(Session *thd, LEX_STRING name,
                               List<Item> *item_list) = 0;
 
 protected:
@@ -66,14 +66,14 @@ protected:
 class Create_func_arg0 : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with no arguments.
     @param thd The current thread
     @return An item representing the function call
   */
-  virtual Item *create(THD *thd) = 0;
+  virtual Item *create(Session *thd) = 0;
 
 protected:
   /** Constructor. */
@@ -90,7 +90,7 @@ protected:
 class Create_func_arg1 : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with one argument.
@@ -98,7 +98,7 @@ public:
     @param arg1 The first argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(THD *thd, Item *arg1) = 0;
+  virtual Item *create(Session *thd, Item *arg1) = 0;
 
 protected:
   /** Constructor. */
@@ -115,7 +115,7 @@ protected:
 class Create_func_arg2 : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with two arguments.
@@ -124,7 +124,7 @@ public:
     @param arg2 The second argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2) = 0;
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2) = 0;
 
 protected:
   /** Constructor. */
@@ -141,7 +141,7 @@ protected:
 class Create_func_arg3 : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with three arguments.
@@ -151,7 +151,7 @@ public:
     @param arg3 The third argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3) = 0;
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3) = 0;
 
 protected:
   /** Constructor. */
@@ -174,7 +174,7 @@ protected:
 class Create_func_abs : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_abs s_singleton;
 
@@ -187,7 +187,7 @@ protected:
 class Create_func_acos : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_acos s_singleton;
 
@@ -200,7 +200,7 @@ protected:
 class Create_func_addtime : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_addtime s_singleton;
 
@@ -213,7 +213,7 @@ protected:
 class Create_func_asin : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_asin s_singleton;
 
@@ -226,7 +226,7 @@ protected:
 class Create_func_atan : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_atan s_singleton;
 
@@ -239,7 +239,7 @@ protected:
 class Create_func_benchmark : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_benchmark s_singleton;
 
@@ -252,7 +252,7 @@ protected:
 class Create_func_bin : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_bin s_singleton;
 
@@ -265,7 +265,7 @@ protected:
 class Create_func_bit_count : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_bit_count s_singleton;
 
@@ -278,7 +278,7 @@ protected:
 class Create_func_bit_length : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_bit_length s_singleton;
 
@@ -291,7 +291,7 @@ protected:
 class Create_func_ceiling : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_ceiling s_singleton;
 
@@ -304,7 +304,7 @@ protected:
 class Create_func_char_length : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_char_length s_singleton;
 
@@ -317,7 +317,7 @@ protected:
 class Create_func_coercibility : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_coercibility s_singleton;
 
@@ -330,7 +330,7 @@ protected:
 class Create_func_concat : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_concat s_singleton;
 
@@ -343,7 +343,7 @@ protected:
 class Create_func_concat_ws : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_concat_ws s_singleton;
 
@@ -356,7 +356,7 @@ protected:
 class Create_func_connection_id : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_connection_id s_singleton;
 
@@ -369,7 +369,7 @@ protected:
 class Create_func_conv : public Create_func_arg3
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_conv s_singleton;
 
@@ -382,7 +382,7 @@ protected:
 class Create_func_cos : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_cos s_singleton;
 
@@ -395,7 +395,7 @@ protected:
 class Create_func_cot : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_cot s_singleton;
 
@@ -407,7 +407,7 @@ protected:
 class Create_func_date_format : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_date_format s_singleton;
 
@@ -420,7 +420,7 @@ protected:
 class Create_func_datediff : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_datediff s_singleton;
 
@@ -433,7 +433,7 @@ protected:
 class Create_func_dayname : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_dayname s_singleton;
 
@@ -446,7 +446,7 @@ protected:
 class Create_func_dayofmonth : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_dayofmonth s_singleton;
 
@@ -459,7 +459,7 @@ protected:
 class Create_func_dayofweek : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_dayofweek s_singleton;
 
@@ -472,7 +472,7 @@ protected:
 class Create_func_dayofyear : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_dayofyear s_singleton;
 
@@ -485,7 +485,7 @@ protected:
 class Create_func_decode : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_decode s_singleton;
 
@@ -498,7 +498,7 @@ protected:
 class Create_func_degrees : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_degrees s_singleton;
 
@@ -511,7 +511,7 @@ protected:
 class Create_func_elt : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_elt s_singleton;
 
@@ -524,7 +524,7 @@ protected:
 class Create_func_exp : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_exp s_singleton;
 
@@ -537,7 +537,7 @@ protected:
 class Create_func_export_set : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_export_set s_singleton;
 
@@ -550,7 +550,7 @@ protected:
 class Create_func_field : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_field s_singleton;
 
@@ -563,7 +563,7 @@ protected:
 class Create_func_find_in_set : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_find_in_set s_singleton;
 
@@ -576,7 +576,7 @@ protected:
 class Create_func_floor : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_floor s_singleton;
 
@@ -589,7 +589,7 @@ protected:
 class Create_func_format : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_format s_singleton;
 
@@ -602,7 +602,7 @@ protected:
 class Create_func_found_rows : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_found_rows s_singleton;
 
@@ -615,7 +615,7 @@ protected:
 class Create_func_from_days : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_from_days s_singleton;
 
@@ -628,7 +628,7 @@ protected:
 class Create_func_from_unixtime : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_from_unixtime s_singleton;
 
@@ -641,7 +641,7 @@ protected:
 class Create_func_greatest : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_greatest s_singleton;
 
@@ -654,7 +654,7 @@ protected:
 class Create_func_hex : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_hex s_singleton;
 
@@ -667,7 +667,7 @@ protected:
 class Create_func_ifnull : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_ifnull s_singleton;
 
@@ -680,7 +680,7 @@ protected:
 class Create_func_instr : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_instr s_singleton;
 
@@ -693,7 +693,7 @@ protected:
 class Create_func_isnull : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_isnull s_singleton;
 
@@ -706,7 +706,7 @@ protected:
 class Create_func_last_day : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_last_day s_singleton;
 
@@ -719,7 +719,7 @@ protected:
 class Create_func_last_insert_id : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_last_insert_id s_singleton;
 
@@ -732,7 +732,7 @@ protected:
 class Create_func_lcase : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_lcase s_singleton;
 
@@ -745,7 +745,7 @@ protected:
 class Create_func_least : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_least s_singleton;
 
@@ -758,7 +758,7 @@ protected:
 class Create_func_length : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_length s_singleton;
 
@@ -771,7 +771,7 @@ protected:
 class Create_func_ln : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_ln s_singleton;
 
@@ -784,7 +784,7 @@ protected:
 class Create_func_load_file : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_load_file s_singleton;
 
@@ -797,7 +797,7 @@ protected:
 class Create_func_locate : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_locate s_singleton;
 
@@ -810,7 +810,7 @@ protected:
 class Create_func_log : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_log s_singleton;
 
@@ -823,7 +823,7 @@ protected:
 class Create_func_log10 : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_log10 s_singleton;
 
@@ -836,7 +836,7 @@ protected:
 class Create_func_log2 : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_log2 s_singleton;
 
@@ -849,7 +849,7 @@ protected:
 class Create_func_lpad : public Create_func_arg3
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_lpad s_singleton;
 
@@ -862,7 +862,7 @@ protected:
 class Create_func_ltrim : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_ltrim s_singleton;
 
@@ -875,7 +875,7 @@ protected:
 class Create_func_makedate : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_makedate s_singleton;
 
@@ -888,7 +888,7 @@ protected:
 class Create_func_maketime : public Create_func_arg3
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_maketime s_singleton;
 
@@ -901,7 +901,7 @@ protected:
 class Create_func_make_set : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_make_set s_singleton;
 
@@ -914,7 +914,7 @@ protected:
 class Create_func_master_pos_wait : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_master_pos_wait s_singleton;
 
@@ -926,7 +926,7 @@ protected:
 class Create_func_monthname : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_monthname s_singleton;
 
@@ -939,7 +939,7 @@ protected:
 class Create_func_name_const : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_name_const s_singleton;
 
@@ -952,7 +952,7 @@ protected:
 class Create_func_nullif : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_nullif s_singleton;
 
@@ -965,7 +965,7 @@ protected:
 class Create_func_oct : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_oct s_singleton;
 
@@ -978,7 +978,7 @@ protected:
 class Create_func_ord : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_ord s_singleton;
 
@@ -991,7 +991,7 @@ protected:
 class Create_func_period_add : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_period_add s_singleton;
 
@@ -1004,7 +1004,7 @@ protected:
 class Create_func_period_diff : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_period_diff s_singleton;
 
@@ -1017,7 +1017,7 @@ protected:
 class Create_func_pi : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_pi s_singleton;
 
@@ -1030,7 +1030,7 @@ protected:
 class Create_func_pow : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_pow s_singleton;
 
@@ -1043,7 +1043,7 @@ protected:
 class Create_func_quote : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_quote s_singleton;
 
@@ -1056,7 +1056,7 @@ protected:
 class Create_func_radians : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_radians s_singleton;
 
@@ -1069,7 +1069,7 @@ protected:
 class Create_func_rand : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_rand s_singleton;
 
@@ -1082,7 +1082,7 @@ protected:
 class Create_func_round : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_round s_singleton;
 
@@ -1095,7 +1095,7 @@ protected:
 class Create_func_row_count : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_row_count s_singleton;
 
@@ -1108,7 +1108,7 @@ protected:
 class Create_func_rpad : public Create_func_arg3
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_rpad s_singleton;
 
@@ -1121,7 +1121,7 @@ protected:
 class Create_func_rtrim : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_rtrim s_singleton;
 
@@ -1134,7 +1134,7 @@ protected:
 class Create_func_sec_to_time : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_sec_to_time s_singleton;
 
@@ -1147,7 +1147,7 @@ protected:
 class Create_func_sign : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_sign s_singleton;
 
@@ -1160,7 +1160,7 @@ protected:
 class Create_func_sin : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_sin s_singleton;
 
@@ -1173,7 +1173,7 @@ protected:
 class Create_func_space : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_space s_singleton;
 
@@ -1186,7 +1186,7 @@ protected:
 class Create_func_sqrt : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_sqrt s_singleton;
 
@@ -1199,7 +1199,7 @@ protected:
 class Create_func_str_to_date : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_str_to_date s_singleton;
 
@@ -1212,7 +1212,7 @@ protected:
 class Create_func_strcmp : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_strcmp s_singleton;
 
@@ -1225,7 +1225,7 @@ protected:
 class Create_func_substr_index : public Create_func_arg3
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_substr_index s_singleton;
 
@@ -1238,7 +1238,7 @@ protected:
 class Create_func_subtime : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_subtime s_singleton;
 
@@ -1251,7 +1251,7 @@ protected:
 class Create_func_tan : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_tan s_singleton;
 
@@ -1264,7 +1264,7 @@ protected:
 class Create_func_time_format : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_time_format s_singleton;
 
@@ -1277,7 +1277,7 @@ protected:
 class Create_func_time_to_sec : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_time_to_sec s_singleton;
 
@@ -1290,7 +1290,7 @@ protected:
 class Create_func_timediff : public Create_func_arg2
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
+  virtual Item *create(Session *thd, Item *arg1, Item *arg2);
 
   static Create_func_timediff s_singleton;
 
@@ -1303,7 +1303,7 @@ protected:
 class Create_func_to_days : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_to_days s_singleton;
 
@@ -1316,7 +1316,7 @@ protected:
 class Create_func_ucase : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_ucase s_singleton;
 
@@ -1329,7 +1329,7 @@ protected:
 class Create_func_unhex : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_unhex s_singleton;
 
@@ -1342,7 +1342,7 @@ protected:
 class Create_func_unix_timestamp : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_unix_timestamp s_singleton;
 
@@ -1355,7 +1355,7 @@ protected:
 class Create_func_uuid : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_uuid s_singleton;
 
@@ -1368,7 +1368,7 @@ protected:
 class Create_func_version : public Create_func_arg0
 {
 public:
-  virtual Item *create(THD *thd);
+  virtual Item *create(Session *thd);
 
   static Create_func_version s_singleton;
 
@@ -1381,7 +1381,7 @@ protected:
 class Create_func_weekday : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_weekday s_singleton;
 
@@ -1394,7 +1394,7 @@ protected:
 class Create_func_weekofyear : public Create_func_arg1
 {
 public:
-  virtual Item *create(THD *thd, Item *arg1);
+  virtual Item *create(Session *thd, Item *arg1);
 
   static Create_func_weekofyear s_singleton;
 
@@ -1407,7 +1407,7 @@ protected:
 class Create_func_year_week : public Create_native_func
 {
 public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create_native(Session *thd, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_year_week s_singleton;
 
@@ -1450,7 +1450,7 @@ static bool has_named_parameters(List<Item> *params)
 Create_udf_func Create_udf_func::s_singleton;
 
 Item*
-Create_udf_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_udf_func::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   udf_func *udf= find_udf(name.str, name.length);
   assert(udf);
@@ -1459,7 +1459,7 @@ Create_udf_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 
 
 Item*
-Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
+Create_udf_func::create(Session *thd, udf_func *udf, List<Item> *item_list)
 {
   Item_func *func= NULL;
   int arg_count= 0;
@@ -1478,7 +1478,7 @@ Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
 
 
 Item*
-Create_native_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_native_func::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   if (has_named_parameters(item_list))
   {
@@ -1491,7 +1491,7 @@ Create_native_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 
 
 Item*
-Create_func_arg0::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_func_arg0::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   int arg_count= 0;
 
@@ -1509,7 +1509,7 @@ Create_func_arg0::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 
 
 Item*
-Create_func_arg1::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_func_arg1::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   int arg_count= 0;
 
@@ -1535,7 +1535,7 @@ Create_func_arg1::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 
 
 Item*
-Create_func_arg2::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_func_arg2::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   int arg_count= 0;
 
@@ -1563,7 +1563,7 @@ Create_func_arg2::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 
 
 Item*
-Create_func_arg3::create(THD *thd, LEX_STRING name, List<Item> *item_list)
+Create_func_arg3::create(Session *thd, LEX_STRING name, List<Item> *item_list)
 {
   int arg_count= 0;
 
@@ -1595,7 +1595,7 @@ Create_func_arg3::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 Create_func_abs Create_func_abs::s_singleton;
 
 Item*
-Create_func_abs::create(THD *thd, Item *arg1)
+Create_func_abs::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_abs(arg1);
 }
@@ -1604,7 +1604,7 @@ Create_func_abs::create(THD *thd, Item *arg1)
 Create_func_acos Create_func_acos::s_singleton;
 
 Item*
-Create_func_acos::create(THD *thd, Item *arg1)
+Create_func_acos::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_acos(arg1);
 }
@@ -1613,7 +1613,7 @@ Create_func_acos::create(THD *thd, Item *arg1)
 Create_func_addtime Create_func_addtime::s_singleton;
 
 Item*
-Create_func_addtime::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_addtime::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_add_time(arg1, arg2, 0, 0);
 }
@@ -1622,7 +1622,7 @@ Create_func_addtime::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_asin Create_func_asin::s_singleton;
 
 Item*
-Create_func_asin::create(THD *thd, Item *arg1)
+Create_func_asin::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_asin(arg1);
 }
@@ -1631,7 +1631,7 @@ Create_func_asin::create(THD *thd, Item *arg1)
 Create_func_atan Create_func_atan::s_singleton;
 
 Item*
-Create_func_atan::create_native(THD *thd, LEX_STRING name,
+Create_func_atan::create_native(Session *thd, LEX_STRING name,
                                 List<Item> *item_list)
 {
   Item* func= NULL;
@@ -1668,7 +1668,7 @@ Create_func_atan::create_native(THD *thd, LEX_STRING name,
 Create_func_benchmark Create_func_benchmark::s_singleton;
 
 Item*
-Create_func_benchmark::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_benchmark::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_benchmark(arg1, arg2);
 }
@@ -1677,7 +1677,7 @@ Create_func_benchmark::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_bin Create_func_bin::s_singleton;
 
 Item*
-Create_func_bin::create(THD *thd, Item *arg1)
+Create_func_bin::create(Session *thd, Item *arg1)
 {
   Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
   Item *i2= new (thd->mem_root) Item_int((int32_t) 2,1);
@@ -1688,7 +1688,7 @@ Create_func_bin::create(THD *thd, Item *arg1)
 Create_func_bit_count Create_func_bit_count::s_singleton;
 
 Item*
-Create_func_bit_count::create(THD *thd, Item *arg1)
+Create_func_bit_count::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_bit_count(arg1);
 }
@@ -1697,7 +1697,7 @@ Create_func_bit_count::create(THD *thd, Item *arg1)
 Create_func_bit_length Create_func_bit_length::s_singleton;
 
 Item*
-Create_func_bit_length::create(THD *thd, Item *arg1)
+Create_func_bit_length::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_bit_length(arg1);
 }
@@ -1706,7 +1706,7 @@ Create_func_bit_length::create(THD *thd, Item *arg1)
 Create_func_ceiling Create_func_ceiling::s_singleton;
 
 Item*
-Create_func_ceiling::create(THD *thd, Item *arg1)
+Create_func_ceiling::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_ceiling(arg1);
 }
@@ -1715,7 +1715,7 @@ Create_func_ceiling::create(THD *thd, Item *arg1)
 Create_func_char_length Create_func_char_length::s_singleton;
 
 Item*
-Create_func_char_length::create(THD *thd, Item *arg1)
+Create_func_char_length::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_char_length(arg1);
 }
@@ -1724,7 +1724,7 @@ Create_func_char_length::create(THD *thd, Item *arg1)
 Create_func_coercibility Create_func_coercibility::s_singleton;
 
 Item*
-Create_func_coercibility::create(THD *thd, Item *arg1)
+Create_func_coercibility::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_coercibility(arg1);
 }
@@ -1733,7 +1733,7 @@ Create_func_coercibility::create(THD *thd, Item *arg1)
 Create_func_concat Create_func_concat::s_singleton;
 
 Item*
-Create_func_concat::create_native(THD *thd, LEX_STRING name,
+Create_func_concat::create_native(Session *thd, LEX_STRING name,
                                   List<Item> *item_list)
 {
   int arg_count= 0;
@@ -1754,7 +1754,7 @@ Create_func_concat::create_native(THD *thd, LEX_STRING name,
 Create_func_concat_ws Create_func_concat_ws::s_singleton;
 
 Item*
-Create_func_concat_ws::create_native(THD *thd, LEX_STRING name,
+Create_func_concat_ws::create_native(Session *thd, LEX_STRING name,
                                      List<Item> *item_list)
 {
   int arg_count= 0;
@@ -1776,7 +1776,7 @@ Create_func_concat_ws::create_native(THD *thd, LEX_STRING name,
 Create_func_connection_id Create_func_connection_id::s_singleton;
 
 Item*
-Create_func_connection_id::create(THD *thd)
+Create_func_connection_id::create(Session *thd)
 {
   return new (thd->mem_root) Item_func_connection_id();
 }
@@ -1785,7 +1785,7 @@ Create_func_connection_id::create(THD *thd)
 Create_func_conv Create_func_conv::s_singleton;
 
 Item*
-Create_func_conv::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
+Create_func_conv::create(Session *thd, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (thd->mem_root) Item_func_conv(arg1, arg2, arg3);
 }
@@ -1794,7 +1794,7 @@ Create_func_conv::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 Create_func_cos Create_func_cos::s_singleton;
 
 Item*
-Create_func_cos::create(THD *thd, Item *arg1)
+Create_func_cos::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_cos(arg1);
 }
@@ -1803,7 +1803,7 @@ Create_func_cos::create(THD *thd, Item *arg1)
 Create_func_cot Create_func_cot::s_singleton;
 
 Item*
-Create_func_cot::create(THD *thd, Item *arg1)
+Create_func_cot::create(Session *thd, Item *arg1)
 {
   Item *i1= new (thd->mem_root) Item_int((char*) "1", 1, 1);
   Item *i2= new (thd->mem_root) Item_func_tan(arg1);
@@ -1813,7 +1813,7 @@ Create_func_cot::create(THD *thd, Item *arg1)
 Create_func_date_format Create_func_date_format::s_singleton;
 
 Item*
-Create_func_date_format::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_date_format::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_date_format(arg1, arg2, 0);
 }
@@ -1822,7 +1822,7 @@ Create_func_date_format::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_datediff Create_func_datediff::s_singleton;
 
 Item*
-Create_func_datediff::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_datediff::create(Session *thd, Item *arg1, Item *arg2)
 {
   Item *i1= new (thd->mem_root) Item_func_to_days(arg1);
   Item *i2= new (thd->mem_root) Item_func_to_days(arg2);
@@ -1834,7 +1834,7 @@ Create_func_datediff::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_dayname Create_func_dayname::s_singleton;
 
 Item*
-Create_func_dayname::create(THD *thd, Item *arg1)
+Create_func_dayname::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_dayname(arg1);
 }
@@ -1843,7 +1843,7 @@ Create_func_dayname::create(THD *thd, Item *arg1)
 Create_func_dayofmonth Create_func_dayofmonth::s_singleton;
 
 Item*
-Create_func_dayofmonth::create(THD *thd, Item *arg1)
+Create_func_dayofmonth::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_dayofmonth(arg1);
 }
@@ -1852,7 +1852,7 @@ Create_func_dayofmonth::create(THD *thd, Item *arg1)
 Create_func_dayofweek Create_func_dayofweek::s_singleton;
 
 Item*
-Create_func_dayofweek::create(THD *thd, Item *arg1)
+Create_func_dayofweek::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_weekday(arg1, 1);
 }
@@ -1861,7 +1861,7 @@ Create_func_dayofweek::create(THD *thd, Item *arg1)
 Create_func_dayofyear Create_func_dayofyear::s_singleton;
 
 Item*
-Create_func_dayofyear::create(THD *thd, Item *arg1)
+Create_func_dayofyear::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_dayofyear(arg1);
 }
@@ -1870,7 +1870,7 @@ Create_func_dayofyear::create(THD *thd, Item *arg1)
 Create_func_degrees Create_func_degrees::s_singleton;
 
 Item*
-Create_func_degrees::create(THD *thd, Item *arg1)
+Create_func_degrees::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_units((char*) "degrees", arg1,
                                              180/M_PI, 0.0);
@@ -1880,7 +1880,7 @@ Create_func_degrees::create(THD *thd, Item *arg1)
 Create_func_elt Create_func_elt::s_singleton;
 
 Item*
-Create_func_elt::create_native(THD *thd, LEX_STRING name,
+Create_func_elt::create_native(Session *thd, LEX_STRING name,
                                List<Item> *item_list)
 {
   int arg_count= 0;
@@ -1901,7 +1901,7 @@ Create_func_elt::create_native(THD *thd, LEX_STRING name,
 Create_func_exp Create_func_exp::s_singleton;
 
 Item*
-Create_func_exp::create(THD *thd, Item *arg1)
+Create_func_exp::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_exp(arg1);
 }
@@ -1910,7 +1910,7 @@ Create_func_exp::create(THD *thd, Item *arg1)
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
-Create_func_export_set::create_native(THD *thd, LEX_STRING name,
+Create_func_export_set::create_native(Session *thd, LEX_STRING name,
                                       List<Item> *item_list)
 {
   Item *func= NULL;
@@ -1963,7 +1963,7 @@ Create_func_export_set::create_native(THD *thd, LEX_STRING name,
 Create_func_field Create_func_field::s_singleton;
 
 Item*
-Create_func_field::create_native(THD *thd, LEX_STRING name,
+Create_func_field::create_native(Session *thd, LEX_STRING name,
                                  List<Item> *item_list)
 {
   int arg_count= 0;
@@ -1984,7 +1984,7 @@ Create_func_field::create_native(THD *thd, LEX_STRING name,
 Create_func_find_in_set Create_func_find_in_set::s_singleton;
 
 Item*
-Create_func_find_in_set::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_find_in_set::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_find_in_set(arg1, arg2);
 }
@@ -1993,7 +1993,7 @@ Create_func_find_in_set::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_floor Create_func_floor::s_singleton;
 
 Item*
-Create_func_floor::create(THD *thd, Item *arg1)
+Create_func_floor::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_floor(arg1);
 }
@@ -2002,7 +2002,7 @@ Create_func_floor::create(THD *thd, Item *arg1)
 Create_func_format Create_func_format::s_singleton;
 
 Item*
-Create_func_format::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_format::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_format(arg1, arg2);
 }
@@ -2011,7 +2011,7 @@ Create_func_format::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_found_rows Create_func_found_rows::s_singleton;
 
 Item*
-Create_func_found_rows::create(THD *thd)
+Create_func_found_rows::create(Session *thd)
 {
   thd->lex->set_stmt_unsafe();
   return new (thd->mem_root) Item_func_found_rows();
@@ -2021,7 +2021,7 @@ Create_func_found_rows::create(THD *thd)
 Create_func_from_days Create_func_from_days::s_singleton;
 
 Item*
-Create_func_from_days::create(THD *thd, Item *arg1)
+Create_func_from_days::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_from_days(arg1);
 }
@@ -2030,7 +2030,7 @@ Create_func_from_days::create(THD *thd, Item *arg1)
 Create_func_from_unixtime Create_func_from_unixtime::s_singleton;
 
 Item*
-Create_func_from_unixtime::create_native(THD *thd, LEX_STRING name,
+Create_func_from_unixtime::create_native(Session *thd, LEX_STRING name,
                                          List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2068,7 +2068,7 @@ Create_func_from_unixtime::create_native(THD *thd, LEX_STRING name,
 Create_func_greatest Create_func_greatest::s_singleton;
 
 Item*
-Create_func_greatest::create_native(THD *thd, LEX_STRING name,
+Create_func_greatest::create_native(Session *thd, LEX_STRING name,
                                     List<Item> *item_list)
 {
   int arg_count= 0;
@@ -2089,7 +2089,7 @@ Create_func_greatest::create_native(THD *thd, LEX_STRING name,
 Create_func_hex Create_func_hex::s_singleton;
 
 Item*
-Create_func_hex::create(THD *thd, Item *arg1)
+Create_func_hex::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_hex(arg1);
 }
@@ -2098,7 +2098,7 @@ Create_func_hex::create(THD *thd, Item *arg1)
 Create_func_ifnull Create_func_ifnull::s_singleton;
 
 Item*
-Create_func_ifnull::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_ifnull::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_ifnull(arg1, arg2);
 }
@@ -2107,7 +2107,7 @@ Create_func_ifnull::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_instr Create_func_instr::s_singleton;
 
 Item*
-Create_func_instr::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_instr::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_locate(arg1, arg2);
 }
@@ -2116,7 +2116,7 @@ Create_func_instr::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_isnull Create_func_isnull::s_singleton;
 
 Item*
-Create_func_isnull::create(THD *thd, Item *arg1)
+Create_func_isnull::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_isnull(arg1);
 }
@@ -2125,7 +2125,7 @@ Create_func_isnull::create(THD *thd, Item *arg1)
 Create_func_last_day Create_func_last_day::s_singleton;
 
 Item*
-Create_func_last_day::create(THD *thd, Item *arg1)
+Create_func_last_day::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_last_day(arg1);
 }
@@ -2134,7 +2134,7 @@ Create_func_last_day::create(THD *thd, Item *arg1)
 Create_func_last_insert_id Create_func_last_insert_id::s_singleton;
 
 Item*
-Create_func_last_insert_id::create_native(THD *thd, LEX_STRING name,
+Create_func_last_insert_id::create_native(Session *thd, LEX_STRING name,
                                           List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2169,7 +2169,7 @@ Create_func_last_insert_id::create_native(THD *thd, LEX_STRING name,
 Create_func_lcase Create_func_lcase::s_singleton;
 
 Item*
-Create_func_lcase::create(THD *thd, Item *arg1)
+Create_func_lcase::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_lcase(arg1);
 }
@@ -2178,7 +2178,7 @@ Create_func_lcase::create(THD *thd, Item *arg1)
 Create_func_least Create_func_least::s_singleton;
 
 Item*
-Create_func_least::create_native(THD *thd, LEX_STRING name,
+Create_func_least::create_native(Session *thd, LEX_STRING name,
                                  List<Item> *item_list)
 {
   int arg_count= 0;
@@ -2199,7 +2199,7 @@ Create_func_least::create_native(THD *thd, LEX_STRING name,
 Create_func_length Create_func_length::s_singleton;
 
 Item*
-Create_func_length::create(THD *thd, Item *arg1)
+Create_func_length::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_length(arg1);
 }
@@ -2208,7 +2208,7 @@ Create_func_length::create(THD *thd, Item *arg1)
 Create_func_ln Create_func_ln::s_singleton;
 
 Item*
-Create_func_ln::create(THD *thd, Item *arg1)
+Create_func_ln::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_ln(arg1);
 }
@@ -2217,7 +2217,7 @@ Create_func_ln::create(THD *thd, Item *arg1)
 Create_func_load_file Create_func_load_file::s_singleton;
 
 Item*
-Create_func_load_file::create(THD *thd, Item *arg1)
+Create_func_load_file::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_load_file(arg1);
 }
@@ -2226,7 +2226,7 @@ Create_func_load_file::create(THD *thd, Item *arg1)
 Create_func_locate Create_func_locate::s_singleton;
 
 Item*
-Create_func_locate::create_native(THD *thd, LEX_STRING name,
+Create_func_locate::create_native(Session *thd, LEX_STRING name,
                                   List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2267,7 +2267,7 @@ Create_func_locate::create_native(THD *thd, LEX_STRING name,
 Create_func_log Create_func_log::s_singleton;
 
 Item*
-Create_func_log::create_native(THD *thd, LEX_STRING name,
+Create_func_log::create_native(Session *thd, LEX_STRING name,
                                List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2304,7 +2304,7 @@ Create_func_log::create_native(THD *thd, LEX_STRING name,
 Create_func_log10 Create_func_log10::s_singleton;
 
 Item*
-Create_func_log10::create(THD *thd, Item *arg1)
+Create_func_log10::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_log10(arg1);
 }
@@ -2313,7 +2313,7 @@ Create_func_log10::create(THD *thd, Item *arg1)
 Create_func_log2 Create_func_log2::s_singleton;
 
 Item*
-Create_func_log2::create(THD *thd, Item *arg1)
+Create_func_log2::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_log2(arg1);
 }
@@ -2322,7 +2322,7 @@ Create_func_log2::create(THD *thd, Item *arg1)
 Create_func_lpad Create_func_lpad::s_singleton;
 
 Item*
-Create_func_lpad::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
+Create_func_lpad::create(Session *thd, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (thd->mem_root) Item_func_lpad(arg1, arg2, arg3);
 }
@@ -2331,7 +2331,7 @@ Create_func_lpad::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 Create_func_ltrim Create_func_ltrim::s_singleton;
 
 Item*
-Create_func_ltrim::create(THD *thd, Item *arg1)
+Create_func_ltrim::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_ltrim(arg1);
 }
@@ -2340,7 +2340,7 @@ Create_func_ltrim::create(THD *thd, Item *arg1)
 Create_func_makedate Create_func_makedate::s_singleton;
 
 Item*
-Create_func_makedate::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_makedate::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_makedate(arg1, arg2);
 }
@@ -2349,7 +2349,7 @@ Create_func_makedate::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_maketime Create_func_maketime::s_singleton;
 
 Item*
-Create_func_maketime::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
+Create_func_maketime::create(Session *thd, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (thd->mem_root) Item_func_maketime(arg1, arg2, arg3);
 }
@@ -2358,7 +2358,7 @@ Create_func_maketime::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 Create_func_make_set Create_func_make_set::s_singleton;
 
 Item*
-Create_func_make_set::create_native(THD *thd, LEX_STRING name,
+Create_func_make_set::create_native(Session *thd, LEX_STRING name,
                                     List<Item> *item_list)
 {
   int arg_count= 0;
@@ -2380,7 +2380,7 @@ Create_func_make_set::create_native(THD *thd, LEX_STRING name,
 Create_func_master_pos_wait Create_func_master_pos_wait::s_singleton;
 
 Item*
-Create_func_master_pos_wait::create_native(THD *thd, LEX_STRING name,
+Create_func_master_pos_wait::create_native(Session *thd, LEX_STRING name,
                                            List<Item> *item_list)
 
 {
@@ -2420,7 +2420,7 @@ Create_func_master_pos_wait::create_native(THD *thd, LEX_STRING name,
 Create_func_monthname Create_func_monthname::s_singleton;
 
 Item*
-Create_func_monthname::create(THD *thd, Item *arg1)
+Create_func_monthname::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_monthname(arg1);
 }
@@ -2429,7 +2429,7 @@ Create_func_monthname::create(THD *thd, Item *arg1)
 Create_func_nullif Create_func_nullif::s_singleton;
 
 Item*
-Create_func_nullif::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_nullif::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_nullif(arg1, arg2);
 }
@@ -2438,7 +2438,7 @@ Create_func_nullif::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_oct Create_func_oct::s_singleton;
 
 Item*
-Create_func_oct::create(THD *thd, Item *arg1)
+Create_func_oct::create(Session *thd, Item *arg1)
 {
   Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
   Item *i8= new (thd->mem_root) Item_int((int32_t) 8,1);
@@ -2449,7 +2449,7 @@ Create_func_oct::create(THD *thd, Item *arg1)
 Create_func_ord Create_func_ord::s_singleton;
 
 Item*
-Create_func_ord::create(THD *thd, Item *arg1)
+Create_func_ord::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_ord(arg1);
 }
@@ -2458,7 +2458,7 @@ Create_func_ord::create(THD *thd, Item *arg1)
 Create_func_period_add Create_func_period_add::s_singleton;
 
 Item*
-Create_func_period_add::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_period_add::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_period_add(arg1, arg2);
 }
@@ -2467,7 +2467,7 @@ Create_func_period_add::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_period_diff Create_func_period_diff::s_singleton;
 
 Item*
-Create_func_period_diff::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_period_diff::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_period_diff(arg1, arg2);
 }
@@ -2476,7 +2476,7 @@ Create_func_period_diff::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_pi Create_func_pi::s_singleton;
 
 Item*
-Create_func_pi::create(THD *thd)
+Create_func_pi::create(Session *thd)
 {
   return new (thd->mem_root) Item_static_float_func("pi()", M_PI, 6, 8);
 }
@@ -2485,7 +2485,7 @@ Create_func_pi::create(THD *thd)
 Create_func_pow Create_func_pow::s_singleton;
 
 Item*
-Create_func_pow::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_pow::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_pow(arg1, arg2);
 }
@@ -2494,7 +2494,7 @@ Create_func_pow::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_quote Create_func_quote::s_singleton;
 
 Item*
-Create_func_quote::create(THD *thd, Item *arg1)
+Create_func_quote::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_quote(arg1);
 }
@@ -2503,7 +2503,7 @@ Create_func_quote::create(THD *thd, Item *arg1)
 Create_func_radians Create_func_radians::s_singleton;
 
 Item*
-Create_func_radians::create(THD *thd, Item *arg1)
+Create_func_radians::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_units((char*) "radians", arg1,
                                              M_PI/180, 0.0);
@@ -2513,7 +2513,7 @@ Create_func_radians::create(THD *thd, Item *arg1)
 Create_func_rand Create_func_rand::s_singleton;
 
 Item*
-Create_func_rand::create_native(THD *thd, LEX_STRING name,
+Create_func_rand::create_native(Session *thd, LEX_STRING name,
                                 List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2548,7 +2548,7 @@ Create_func_rand::create_native(THD *thd, LEX_STRING name,
 Create_func_round Create_func_round::s_singleton;
 
 Item*
-Create_func_round::create_native(THD *thd, LEX_STRING name,
+Create_func_round::create_native(Session *thd, LEX_STRING name,
                                  List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2586,7 +2586,7 @@ Create_func_round::create_native(THD *thd, LEX_STRING name,
 Create_func_row_count Create_func_row_count::s_singleton;
 
 Item*
-Create_func_row_count::create(THD *thd)
+Create_func_row_count::create(Session *thd)
 {
   thd->lex->set_stmt_unsafe();
   return new (thd->mem_root) Item_func_row_count();
@@ -2596,7 +2596,7 @@ Create_func_row_count::create(THD *thd)
 Create_func_rpad Create_func_rpad::s_singleton;
 
 Item*
-Create_func_rpad::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
+Create_func_rpad::create(Session *thd, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (thd->mem_root) Item_func_rpad(arg1, arg2, arg3);
 }
@@ -2605,7 +2605,7 @@ Create_func_rpad::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 Create_func_rtrim Create_func_rtrim::s_singleton;
 
 Item*
-Create_func_rtrim::create(THD *thd, Item *arg1)
+Create_func_rtrim::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_rtrim(arg1);
 }
@@ -2614,7 +2614,7 @@ Create_func_rtrim::create(THD *thd, Item *arg1)
 Create_func_sec_to_time Create_func_sec_to_time::s_singleton;
 
 Item*
-Create_func_sec_to_time::create(THD *thd, Item *arg1)
+Create_func_sec_to_time::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_sec_to_time(arg1);
 }
@@ -2623,7 +2623,7 @@ Create_func_sec_to_time::create(THD *thd, Item *arg1)
 Create_func_sign Create_func_sign::s_singleton;
 
 Item*
-Create_func_sign::create(THD *thd, Item *arg1)
+Create_func_sign::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_sign(arg1);
 }
@@ -2632,7 +2632,7 @@ Create_func_sign::create(THD *thd, Item *arg1)
 Create_func_sin Create_func_sin::s_singleton;
 
 Item*
-Create_func_sin::create(THD *thd, Item *arg1)
+Create_func_sin::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_sin(arg1);
 }
@@ -2641,7 +2641,7 @@ Create_func_sin::create(THD *thd, Item *arg1)
 Create_func_space Create_func_space::s_singleton;
 
 Item*
-Create_func_space::create(THD *thd, Item *arg1)
+Create_func_space::create(Session *thd, Item *arg1)
 {
   /**
     TODO: Fix Bug#23637
@@ -2669,7 +2669,7 @@ Create_func_space::create(THD *thd, Item *arg1)
 Create_func_sqrt Create_func_sqrt::s_singleton;
 
 Item*
-Create_func_sqrt::create(THD *thd, Item *arg1)
+Create_func_sqrt::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_sqrt(arg1);
 }
@@ -2678,7 +2678,7 @@ Create_func_sqrt::create(THD *thd, Item *arg1)
 Create_func_str_to_date Create_func_str_to_date::s_singleton;
 
 Item*
-Create_func_str_to_date::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_str_to_date::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_str_to_date(arg1, arg2);
 }
@@ -2687,7 +2687,7 @@ Create_func_str_to_date::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_strcmp Create_func_strcmp::s_singleton;
 
 Item*
-Create_func_strcmp::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_strcmp::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_strcmp(arg1, arg2);
 }
@@ -2696,7 +2696,7 @@ Create_func_strcmp::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_substr_index Create_func_substr_index::s_singleton;
 
 Item*
-Create_func_substr_index::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
+Create_func_substr_index::create(Session *thd, Item *arg1, Item *arg2, Item *arg3)
 {
   return new (thd->mem_root) Item_func_substr_index(arg1, arg2, arg3);
 }
@@ -2705,7 +2705,7 @@ Create_func_substr_index::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 Create_func_subtime Create_func_subtime::s_singleton;
 
 Item*
-Create_func_subtime::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_subtime::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_add_time(arg1, arg2, 0, 1);
 }
@@ -2714,7 +2714,7 @@ Create_func_subtime::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_tan Create_func_tan::s_singleton;
 
 Item*
-Create_func_tan::create(THD *thd, Item *arg1)
+Create_func_tan::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_tan(arg1);
 }
@@ -2723,7 +2723,7 @@ Create_func_tan::create(THD *thd, Item *arg1)
 Create_func_time_format Create_func_time_format::s_singleton;
 
 Item*
-Create_func_time_format::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_time_format::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_date_format(arg1, arg2, 1);
 }
@@ -2732,7 +2732,7 @@ Create_func_time_format::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_time_to_sec Create_func_time_to_sec::s_singleton;
 
 Item*
-Create_func_time_to_sec::create(THD *thd, Item *arg1)
+Create_func_time_to_sec::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_time_to_sec(arg1);
 }
@@ -2741,7 +2741,7 @@ Create_func_time_to_sec::create(THD *thd, Item *arg1)
 Create_func_timediff Create_func_timediff::s_singleton;
 
 Item*
-Create_func_timediff::create(THD *thd, Item *arg1, Item *arg2)
+Create_func_timediff::create(Session *thd, Item *arg1, Item *arg2)
 {
   return new (thd->mem_root) Item_func_timediff(arg1, arg2);
 }
@@ -2750,7 +2750,7 @@ Create_func_timediff::create(THD *thd, Item *arg1, Item *arg2)
 Create_func_to_days Create_func_to_days::s_singleton;
 
 Item*
-Create_func_to_days::create(THD *thd, Item *arg1)
+Create_func_to_days::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_to_days(arg1);
 }
@@ -2759,7 +2759,7 @@ Create_func_to_days::create(THD *thd, Item *arg1)
 Create_func_ucase Create_func_ucase::s_singleton;
 
 Item*
-Create_func_ucase::create(THD *thd, Item *arg1)
+Create_func_ucase::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_ucase(arg1);
 }
@@ -2768,7 +2768,7 @@ Create_func_ucase::create(THD *thd, Item *arg1)
 Create_func_unhex Create_func_unhex::s_singleton;
 
 Item*
-Create_func_unhex::create(THD *thd, Item *arg1)
+Create_func_unhex::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_unhex(arg1);
 }
@@ -2777,7 +2777,7 @@ Create_func_unhex::create(THD *thd, Item *arg1)
 Create_func_unix_timestamp Create_func_unix_timestamp::s_singleton;
 
 Item*
-Create_func_unix_timestamp::create_native(THD *thd, LEX_STRING name,
+Create_func_unix_timestamp::create_native(Session *thd, LEX_STRING name,
                                           List<Item> *item_list)
 {
   Item *func= NULL;
@@ -2812,7 +2812,7 @@ Create_func_unix_timestamp::create_native(THD *thd, LEX_STRING name,
 Create_func_uuid Create_func_uuid::s_singleton;
 
 Item*
-Create_func_uuid::create(THD *thd)
+Create_func_uuid::create(Session *thd)
 {
   thd->lex->set_stmt_unsafe();
   return new (thd->mem_root) Item_func_uuid();
@@ -2822,7 +2822,7 @@ Create_func_uuid::create(THD *thd)
 Create_func_version Create_func_version::s_singleton;
 
 Item*
-Create_func_version::create(THD *thd)
+Create_func_version::create(Session *thd)
 {
   return new (thd->mem_root) Item_static_string_func("version()",
                                                      server_version,
@@ -2835,7 +2835,7 @@ Create_func_version::create(THD *thd)
 Create_func_weekday Create_func_weekday::s_singleton;
 
 Item*
-Create_func_weekday::create(THD *thd, Item *arg1)
+Create_func_weekday::create(Session *thd, Item *arg1)
 {
   return new (thd->mem_root) Item_func_weekday(arg1, 0);
 }
@@ -2844,7 +2844,7 @@ Create_func_weekday::create(THD *thd, Item *arg1)
 Create_func_weekofyear Create_func_weekofyear::s_singleton;
 
 Item*
-Create_func_weekofyear::create(THD *thd, Item *arg1)
+Create_func_weekofyear::create(Session *thd, Item *arg1)
 {
   Item *i1= new (thd->mem_root) Item_int((char*) "0", 3, 1);
   return new (thd->mem_root) Item_func_week(arg1, i1);
@@ -2854,7 +2854,7 @@ Create_func_weekofyear::create(THD *thd, Item *arg1)
 Create_func_year_week Create_func_year_week::s_singleton;
 
 Item*
-Create_func_year_week::create_native(THD *thd, LEX_STRING name,
+Create_func_year_week::create_native(Session *thd, LEX_STRING name,
                                      List<Item> *item_list)
 {
   Item *func= NULL;
@@ -3064,7 +3064,7 @@ void item_create_cleanup()
 }
 
 Create_func *
-find_native_function_builder(THD *thd __attribute__((unused)),
+find_native_function_builder(Session *thd __attribute__((unused)),
                              LEX_STRING name)
 {
   Native_func_registry *func;
@@ -3085,7 +3085,7 @@ find_native_function_builder(THD *thd __attribute__((unused)),
 
 
 Item*
-create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs)
+create_func_char_cast(Session *thd, Item *a, int len, const CHARSET_INFO * const cs)
 {
   const CHARSET_INFO * const real_cs= (cs ? cs : thd->variables.collation_connection);
   return new (thd->mem_root) Item_char_typecast(a, len, real_cs);
@@ -3093,7 +3093,7 @@ create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs)
 
 
 Item *
-create_func_cast(THD *thd, Item *a, Cast_target cast_type,
+create_func_cast(Session *thd, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
                  const CHARSET_INFO * const cs)
 {

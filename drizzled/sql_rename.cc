@@ -19,7 +19,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
-static TableList *rename_tables(THD *thd, TableList *table_list,
+static TableList *rename_tables(Session *thd, TableList *table_list,
 				 bool skip_error);
 
 static TableList *reverse_table_list(TableList *table_list);
@@ -29,7 +29,7 @@ static TableList *reverse_table_list(TableList *table_list);
   second entry is the new name.
 */
 
-bool mysql_rename_tables(THD *thd, TableList *table_list, bool silent)
+bool mysql_rename_tables(Session *thd, TableList *table_list, bool silent)
 {
   bool error= 1;
   TableList *ren_table= 0;
@@ -151,7 +151,7 @@ static TableList *reverse_table_list(TableList *table_list)
 */
 
 bool
-do_rename(THD *thd, TableList *ren_table, char *new_db, char *new_table_name,
+do_rename(Session *thd, TableList *ren_table, char *new_db, char *new_table_name,
           char *new_table_alias, bool skip_error)
 {
   int rc= 1;
@@ -215,7 +215,7 @@ do_rename(THD *thd, TableList *ren_table, char *new_db, char *new_table_name,
 */
 
 static TableList *
-rename_tables(THD *thd, TableList *table_list, bool skip_error)
+rename_tables(Session *thd, TableList *table_list, bool skip_error)
 {
   TableList *ren_table, *new_table;
 

@@ -61,7 +61,7 @@
     -1          Error
 */
 
-static int check_insert_fields(THD *thd, TableList *table_list,
+static int check_insert_fields(Session *thd, TableList *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
                                table_map *map __attribute__((unused)))
@@ -160,7 +160,7 @@ static int check_insert_fields(THD *thd, TableList *table_list,
     -1          Error
 */
 
-static int check_update_fields(THD *thd, TableList *insert_table_list,
+static int check_update_fields(Session *thd, TableList *insert_table_list,
                                List<Item> &update_fields,
                                table_map *map __attribute__((unused)))
 {
@@ -205,7 +205,7 @@ static int check_update_fields(THD *thd, TableList *insert_table_list,
 */
 
 static
-void upgrade_lock_type(THD *thd __attribute__((unused)),
+void upgrade_lock_type(Session *thd __attribute__((unused)),
                        thr_lock_type *lock_type,
                        enum_duplicates duplic,
                        bool is_multi_insert __attribute__((unused)))
@@ -227,7 +227,7 @@ void upgrade_lock_type(THD *thd __attribute__((unused)),
   end of dispatch_command().
 */
 
-bool mysql_insert(THD *thd,TableList *table_list,
+bool mysql_insert(Session *thd,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -487,11 +487,11 @@ bool mysql_insert(THD *thd,TableList *table_list,
 	routines did not result in any error due to the KILLED.  In
 	such case the flag is ignored for constructing binlog event.
 	*/
-	assert(thd->killed != THD::KILL_BAD_DATA || error > 0);
-	if (thd->binlog_query(THD::ROW_QUERY_TYPE,
+	assert(thd->killed != Session::KILL_BAD_DATA || error > 0);
+	if (thd->binlog_query(Session::ROW_QUERY_TYPE,
 			      thd->query, thd->query_length,
 			      transactional_table, false,
-			      (error>0) ? thd->killed : THD::NOT_KILLED) &&
+			      (error>0) ? thd->killed : Session::NOT_KILLED) &&
 	    transactional_table)
         {
 	  error=1;
@@ -582,7 +582,7 @@ abort:
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
+static bool mysql_prepare_insert_check_table(Session *thd, TableList *table_list,
                                              List<Item> &fields __attribute__((unused)),
                                              bool select_insert)
 {
@@ -637,7 +637,7 @@ static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
     true  error
 */
 
-bool mysql_prepare_insert(THD *thd, TableList *table_list,
+bool mysql_prepare_insert(Session *thd, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
@@ -788,7 +788,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 */
 
 
-int write_record(THD *thd, Table *table,COPY_INFO *info)
+int write_record(Session *thd, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
@@ -925,7 +925,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
             like a regular UPDATE statement: it should not affect the value of a
             next SELECT LAST_INSERT_ID() or mysql_insert_id().
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
-            handled separately by THD::arg_of_last_insert_id_function.
+            handled separately by Session::arg_of_last_insert_id_function.
           */
           insert_id_for_cur_row= table->file->insert_id_for_cur_row= 0;
           info->copied++;
@@ -1034,7 +1034,7 @@ before_err:
   Check that all fields with arn't null_fields are used
 ******************************************************************************/
 
-int check_that_all_fields_are_given_values(THD *thd, Table *entry,
+int check_that_all_fields_are_given_values(Session *thd, Table *entry,
                                            TableList *table_list)
 {
   int err= 0;
@@ -1081,7 +1081,7 @@ int check_that_all_fields_are_given_values(THD *thd, Table *entry,
     true  Error
 */
 
-bool mysql_insert_select_prepare(THD *thd)
+bool mysql_insert_select_prepare(Session *thd)
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
@@ -1405,7 +1405,7 @@ bool select_insert::send_eof()
   bool const trans_table= table->file->has_transactions();
   uint64_t id;
   bool changed;
-  THD::killed_state killed_status= thd->killed;
+  Session::killed_state killed_status= thd->killed;
   
   error= table->file->ha_end_bulk_insert();
   table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -1433,7 +1433,7 @@ bool select_insert::send_eof()
   {
     if (!error)
       thd->clear_error();
-    thd->binlog_query(THD::ROW_QUERY_TYPE,
+    thd->binlog_query(Session::ROW_QUERY_TYPE,
                       thd->query, thd->query_length,
                       trans_table, false, killed_status);
   }
@@ -1498,7 +1498,7 @@ void select_insert::abort() {
     if (thd->transaction.stmt.modified_non_trans_table)
     {
         if (mysql_bin_log.is_open())
-          thd->binlog_query(THD::ROW_QUERY_TYPE, thd->query, thd->query_length,
+          thd->binlog_query(Session::ROW_QUERY_TYPE, thd->query, thd->query_length,
                             transactional_table, false);
         if (!thd->current_stmt_binlog_row_based && !can_rollback_data())
           thd->transaction.all.modified_non_trans_table= true;
@@ -1535,7 +1535,7 @@ void select_insert::abort() {
       lock         out    Pointer to the DRIZZLE_LOCK object for table created
                           (or open temporary table) will be returned in this
                           parameter. Since this table is not included in
-                          THD::lock caller is responsible for explicitly
+                          Session::lock caller is responsible for explicitly
                           unlocking this table.
       hooks
 
@@ -1558,7 +1558,7 @@ void select_insert::abort() {
     0         Error
 */
 
-static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
+static Table *create_table_from_items(Session *thd, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
@@ -1753,7 +1753,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   private:
     virtual int do_postlock(Table **tables, uint32_t count)
     {
-      THD *thd= const_cast<THD*>(ptr->get_thd());
+      Session *thd= const_cast<Session*>(ptr->get_thd());
       if (int error= decide_logging_format(thd, &all_tables))
         return error;
 
@@ -1873,7 +1873,7 @@ select_create::binlog_show_create_table(Table **tables, uint32_t count)
   result= store_create_info(thd, &tmp_table_list, &query, create_info);
   assert(result == 0); /* store_create_info() always return 0 */
 
-  thd->binlog_query(THD::STMT_QUERY_TYPE,
+  thd->binlog_query(Session::STMT_QUERY_TYPE,
                     query.ptr(), query.length(),
                     /* is_trans */ true,
                     /* suppress_use */ false);

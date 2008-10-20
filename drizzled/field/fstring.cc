@@ -193,7 +193,7 @@ void Field_string::sort_string(unsigned char *to,uint32_t length)
 
 void Field_string::sql_type(String &res) const
 {
-  THD *thd= table->in_use;
+  Session *thd= table->in_use;
   const CHARSET_INFO * const cs= res.charset();
   uint32_t length;
 

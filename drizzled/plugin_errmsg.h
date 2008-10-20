@@ -27,7 +27,7 @@
 
 typedef struct errmsg_st
 {
-  bool (*errmsg_func)(THD *thd, int priority, const char *format, va_list ap);
+  bool (*errmsg_func)(Session *thd, int priority, const char *format, va_list ap);
 } errmsg_t;
 
 #endif /* DRIZZLED_PLUGIN_ERRMSG_H */

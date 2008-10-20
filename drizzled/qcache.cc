@@ -82,7 +82,7 @@ typedef struct qcache_do1_parms_st
 } qcache_do1_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded qcache plugin */
-static bool qcache_do1_iterate (THD *thd, plugin_ref plugin, void *p)
+static bool qcache_do1_iterate (Session *thd, plugin_ref plugin, void *p)
 {
   qcache_t *l= plugin_data(plugin, qcache_t *);
   qcache_do1_parms_t *parms= (qcache_do1_parms_t *) p;
@@ -104,7 +104,7 @@ static bool qcache_do1_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do1 (THD *thd, void *parm1, void *parm2)
+bool qcache_do1 (Session *thd, void *parm1, void *parm2)
 {
   qcache_do1_parms_t parms;
   bool foreach_rv;
@@ -136,7 +136,7 @@ typedef struct qcache_do2_parms_st
 } qcache_do2_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded qcache plugin */
-static bool qcache_do2_iterate (THD *thd, plugin_ref plugin, void *p)
+static bool qcache_do2_iterate (Session *thd, plugin_ref plugin, void *p)
 {
   qcache_t *l= plugin_data(plugin, qcache_t *);
   qcache_do2_parms_t *parms= (qcache_do2_parms_t *) p;
@@ -159,7 +159,7 @@ static bool qcache_do2_iterate (THD *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do2 (THD *thd, void *parm3, void *parm4)
+bool qcache_do2 (Session *thd, void *parm3, void *parm4)
 {
   qcache_do2_parms_t parms;
   bool foreach_rv;

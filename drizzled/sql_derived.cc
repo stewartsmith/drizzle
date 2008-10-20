@@ -33,7 +33,7 @@
     true   Error
 */
 bool
-mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TableList*))
+mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
 {
   bool res= false;
   if (lex->derived_tables)
@@ -92,7 +92,7 @@ out:
     true   Error
 */
 
-bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((unused)),
+bool mysql_derived_prepare(Session *thd, LEX *lex __attribute__((unused)),
                            TableList *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
@@ -197,7 +197,7 @@ exit:
     true   Error
 */
 
-bool mysql_derived_filling(THD *thd, LEX *lex, TableList *orig_table_list)
+bool mysql_derived_filling(Session *thd, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
   SELECT_LEX_UNIT *unit= orig_table_list->derived;

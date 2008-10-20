@@ -45,7 +45,7 @@ class ha_myisam: public handler
   uint64_t int_table_flags;
   char    *data_file_name, *index_file_name;
   bool can_enable_indexes;
-  int repair(THD *thd, MI_CHECK &param, bool optimize);
+  int repair(Session *thd, MI_CHECK &param, bool optimize);
 
  public:
   ha_myisam(handlerton *hton, TABLE_SHARE *table_arg);
@@ -95,7 +95,7 @@ class ha_myisam: public handler
   int extra(enum ha_extra_function operation);
   int extra_opt(enum ha_extra_function operation, uint32_t cache_size);
   int reset(void);
-  int external_lock(THD *thd, int lock_type);
+  int external_lock(Session *thd, int lock_type);
   int delete_all_rows(void);
   int disable_indexes(uint32_t mode);
   int enable_indexes(uint32_t mode);
@@ -105,7 +105,7 @@ class ha_myisam: public handler
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
-  THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+  THR_LOCK_DATA **store_lock(Session *thd, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
@@ -113,17 +113,17 @@ class ha_myisam: public handler
                                   uint64_t *nb_reserved_values);
   int rename_table(const char * from, const char * to);
   int delete_table(const char *name);
-  int check(THD* thd, HA_CHECK_OPT* check_opt);
-  int analyze(THD* thd,HA_CHECK_OPT* check_opt);
-  int repair(THD* thd, HA_CHECK_OPT* check_opt);
-  bool check_and_repair(THD *thd);
+  int check(Session* thd, HA_CHECK_OPT* check_opt);
+  int analyze(Session* thd,HA_CHECK_OPT* check_opt);
+  int repair(Session* thd, HA_CHECK_OPT* check_opt);
+  bool check_and_repair(Session *thd);
   bool is_crashed() const;
   bool auto_repair() const { return myisam_recover_options != 0; }
-  int optimize(THD* thd, HA_CHECK_OPT* check_opt);
-  int assign_to_keycache(THD* thd, HA_CHECK_OPT* check_opt);
+  int optimize(Session* thd, HA_CHECK_OPT* check_opt);
+  int assign_to_keycache(Session* thd, HA_CHECK_OPT* check_opt);
   bool check_if_incompatible_data(HA_CREATE_INFO *info, uint32_t table_changes);
 #ifdef HAVE_QUERY_CACHE
-  bool register_query_cache_table(THD *thd, char *table_key,
+  bool register_query_cache_table(Session *thd, char *table_key,
                                      uint32_t key_length,
                                      qc_engine_callback
                                      *engine_callback,

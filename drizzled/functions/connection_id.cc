@@ -28,7 +28,7 @@ void Item_func_connection_id::fix_length_and_dec()
 }
 
 
-bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
+bool Item_func_connection_id::fix_fields(Session *thd, Item **ref)
 {
   if (Item_int_func::fix_fields(thd, ref))
     return true;
