@@ -213,6 +213,7 @@ test-drizzle:
         key_diff \
         key_primary \
         keywords \
+	kill \
         lock \
         limit \
         lock_tables_lost_commit \
