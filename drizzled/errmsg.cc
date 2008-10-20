@@ -78,7 +78,7 @@ int errmsg_finalizer(st_plugin_int *plugin)
 
 /* The plugin_foreach() iterator requires that we
    convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the thd.
+   into just one single void ptr, plus the session.
    So we will take all the additional paramters of errmsg_vprintf,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
@@ -92,14 +92,14 @@ typedef struct errmsg_parms_st
 
 
 /* This gets called by plugin_foreach once for each loaded errmsg plugin */
-static bool errmsg_iterate (Session *thd, plugin_ref plugin, void *p)
+static bool errmsg_iterate (Session *session, plugin_ref plugin, void *p)
 {
   errmsg_t *l= plugin_data(plugin, errmsg_t *);
   errmsg_parms_t *parms= (errmsg_parms_t *) p;
 
   if (l && l->errmsg_func)
   {
-    if (l->errmsg_func(thd, parms->priority, parms->format, parms->ap))
+    if (l->errmsg_func(session, parms->priority, parms->format, parms->ap))
     {
       /* we're doing the errmsg plugin api,
 	 so we can't trust the errmsg api to emit our error messages
@@ -115,7 +115,7 @@ static bool errmsg_iterate (Session *thd, plugin_ref plugin, void *p)
   return false;
 }
 
-bool errmsg_vprintf (Session *thd, int priority, const char *format, va_list ap)
+bool errmsg_vprintf (Session *session, int priority, const char *format, va_list ap)
 {
   bool foreach_rv;
   errmsg_parms_t parms;
@@ -127,19 +127,19 @@ bool errmsg_vprintf (Session *thd, int priority, const char *format, va_list ap)
 
   /* call errmsg_iterate
      once for each loaded errmsg plugin */
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
 			     errmsg_iterate,
 			     DRIZZLE_ERRMSG_PLUGIN,
 			     (void *) &parms);
   return foreach_rv;
 }
 
-bool errmsg_printf (Session *thd, int priority, const char *format, ...)
+bool errmsg_printf (Session *session, int priority, const char *format, ...)
 {
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= errmsg_vprintf(thd, priority, format, args);
+  rv= errmsg_vprintf(session, priority, format, args);
   va_end(args);
   return rv;
 }

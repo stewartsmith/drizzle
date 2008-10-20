@@ -38,7 +38,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
   bool res= false;
   if (lex->derived_tables)
   {
-    lex->thd->derived_tables_processing= true;
+    lex->session->derived_tables_processing= true;
     for (SELECT_LEX *sl= lex->all_selects_list;
 	 sl;
 	 sl= sl->next_select_in_list())
@@ -47,7 +47,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
 	   cursor;
 	   cursor= cursor->next_local)
       {
-	if ((res= (*processor)(lex->thd, lex, cursor)))
+	if ((res= (*processor)(lex->session, lex, cursor)))
 	  goto out;
       }
       if (lex->describe)
@@ -62,7 +62,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(Session*, LEX*, TableList*))
     }
   }
 out:
-  lex->thd->derived_tables_processing= false;
+  lex->session->derived_tables_processing= false;
   return res;
 }
 
@@ -72,7 +72,7 @@ out:
 
   SYNOPSIS
     mysql_derived_prepare()
-    thd			Thread handle
+    session			Thread handle
     lex                 LEX for this thread
     orig_table_list     TableList for the upper SELECT
 
@@ -84,7 +84,7 @@ out:
     This function is called before any command containing derived table
     is executed.
 
-    Derived tables is stored in thd->derived_tables and freed in
+    Derived tables is stored in session->derived_tables and freed in
     close_thread_tables()
 
   RETURN
@@ -92,7 +92,7 @@ out:
     true   Error
 */
 
-bool mysql_derived_prepare(Session *thd, LEX *lex __attribute__((unused)),
+bool mysql_derived_prepare(Session *session, LEX *lex __attribute__((unused)),
                            TableList *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
@@ -112,10 +112,10 @@ bool mysql_derived_prepare(Session *thd, LEX *lex __attribute__((unused)),
       return(true); // out of memory
 
     // st_select_lex_unit::prepare correctly work for single select
-    if ((res= unit->prepare(thd, derived_result, 0)))
+    if ((res= unit->prepare(session, derived_result, 0)))
       goto exit;
 
-    create_options= (first_select->options | thd->options |
+    create_options= (first_select->options | session->options |
                      TMP_TABLE_ALL_COLUMNS);
     /*
       Temp table is created so that it hounours if UNION without ALL is to be 
@@ -127,7 +127,7 @@ bool mysql_derived_prepare(Session *thd, LEX *lex __attribute__((unused)),
       !unit->union_distinct->next_select() (i.e. it is union and last distinct
       SELECT is last SELECT of UNION).
     */
-    if ((res= derived_result->create_result_table(thd, &unit->types, false,
+    if ((res= derived_result->create_result_table(session, &unit->types, false,
                                                   create_options,
                                                   orig_table_list->alias,
                                                   false)))
@@ -144,12 +144,12 @@ exit:
     if (res)
     {
       if (table)
-	  table->free_tmp_table(thd);
+	  table->free_tmp_table(session);
       delete derived_result;
     }
     else
     {
-      if (!thd->fill_derived_tables())
+      if (!session->fill_derived_tables())
       {
 	delete derived_result;
 	derived_result= NULL;
@@ -165,8 +165,8 @@ exit:
       // Force read of table stats in the optimizer
       table->file->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
-      table->next= thd->derived_tables;
-      thd->derived_tables= table;
+      table->next= session->derived_tables;
+      session->derived_tables= table;
     }
   }
 
@@ -179,7 +179,7 @@ exit:
 
   SYNOPSIS
     mysql_derived_filling()
-    thd			Thread handle
+    session			Thread handle
     lex                 LEX for this thread
     unit                node that contains all SELECT's for derived tables
     orig_table_list     TableList for the upper SELECT
@@ -197,7 +197,7 @@ exit:
     true   Error
 */
 
-bool mysql_derived_filling(Session *thd, LEX *lex, TableList *orig_table_list)
+bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_list)
 {
   Table *table= orig_table_list->table;
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
@@ -221,7 +221,7 @@ bool mysql_derived_filling(Session *thd, LEX *lex, TableList *orig_table_list)
 	first_select->options&= ~OPTION_FOUND_ROWS;
 
       lex->current_select= first_select;
-      res= mysql_select(thd, &first_select->ref_pointer_array,
+      res= mysql_select(session, &first_select->ref_pointer_array,
 			(TableList*) first_select->table_list.first,
 			first_select->with_wild,
 			first_select->item_list, first_select->where,
@@ -230,7 +230,7 @@ bool mysql_derived_filling(Session *thd, LEX *lex, TableList *orig_table_list)
 			(order_st *) first_select->order_list.first,
 			(order_st *) first_select->group_list.first,
 			first_select->having, (order_st*) NULL,
-			(first_select->options | thd->options |
+			(first_select->options | session->options |
 			 SELECT_NO_UNLOCK),
 			derived_result, unit, first_select);
     }

@@ -19,7 +19,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
-static TableList *rename_tables(Session *thd, TableList *table_list,
+static TableList *rename_tables(Session *session, TableList *table_list,
 				 bool skip_error);
 
 static TableList *reverse_table_list(TableList *table_list);
@@ -29,7 +29,7 @@ static TableList *reverse_table_list(TableList *table_list);
   second entry is the new name.
 */
 
-bool mysql_rename_tables(Session *thd, TableList *table_list, bool silent)
+bool mysql_rename_tables(Session *session, TableList *table_list, bool silent)
 {
   bool error= 1;
   TableList *ren_table= 0;
@@ -38,27 +38,27 @@ bool mysql_rename_tables(Session *thd, TableList *table_list, bool silent)
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-  if (thd->locked_tables || thd->active_transaction())
+  if (session->locked_tables || session->active_transaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
                ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return(1);
   }
 
-  mysql_ha_rm_tables(thd, table_list, false);
+  mysql_ha_rm_tables(session, table_list, false);
 
-  if (wait_if_global_read_lock(thd,0,1))
+  if (wait_if_global_read_lock(session,0,1))
     return(1);
 
   pthread_mutex_lock(&LOCK_open);
-  if (lock_table_names_exclusively(thd, table_list))
+  if (lock_table_names_exclusively(session, table_list))
   {
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
 
   error=0;
-  if ((ren_table=rename_tables(thd,table_list,0)))
+  if ((ren_table=rename_tables(session,table_list,0)))
   {
     /* Rename didn't succeed;  rename back the tables in reverse order */
     TableList *table;
@@ -72,7 +72,7 @@ bool mysql_rename_tables(Session *thd, TableList *table_list, bool silent)
 	 table= table->next_local->next_local) ;
     table= table->next_local->next_local;		// Skip error table
     /* Revert to old names */
-    rename_tables(thd, table, 1);
+    rename_tables(session, table, 1);
 
     /* Revert the table list (for prepared statements) */
     table_list= reverse_table_list(table_list);
@@ -91,16 +91,16 @@ bool mysql_rename_tables(Session *thd, TableList *table_list, bool silent)
   /* Lets hope this doesn't fail as the result will be messy */ 
   if (!silent && !error)
   {
-    write_bin_log(thd, true, thd->query, thd->query_length);
-    my_ok(thd);
+    write_bin_log(session, true, session->query, session->query_length);
+    my_ok(session);
   }
 
   pthread_mutex_lock(&LOCK_open);
-  unlock_table_names(thd, table_list, (TableList*) 0);
+  unlock_table_names(session, table_list, (TableList*) 0);
   pthread_mutex_unlock(&LOCK_open);
 
 err:
-  start_waiting_global_read_lock(thd);
+  start_waiting_global_read_lock(session);
   return(error);
 }
 
@@ -135,7 +135,7 @@ static TableList *reverse_table_list(TableList *table_list)
 
   SYNPOSIS
     do_rename()
-      thd               Thread handle
+      session               Thread handle
       ren_table         A table/view to be renamed
       new_db            The database to which the table to be moved to
       new_table_name    The new table/view name
@@ -151,7 +151,7 @@ static TableList *reverse_table_list(TableList *table_list)
 */
 
 bool
-do_rename(Session *thd, TableList *ren_table, char *new_db, char *new_table_name,
+do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_name,
           char *new_table_alias, bool skip_error)
 {
   int rc= 1;
@@ -181,7 +181,7 @@ do_rename(Session *thd, TableList *ren_table, char *new_db, char *new_table_name
   build_table_filename(name, sizeof(name),
                        ren_table->db, old_alias, reg_ext, 0);
 
-  rc= mysql_rename_table(ha_resolve_by_legacy_type(thd, table_type),
+  rc= mysql_rename_table(ha_resolve_by_legacy_type(session, table_type),
                                ren_table->db, old_alias,
                                new_db, new_alias, 0);
   if (rc && !skip_error)
@@ -200,7 +200,7 @@ do_rename(Session *thd, TableList *ren_table, char *new_db, char *new_table_name
 
   SYNPOSIS
     rename_tables()
-      thd               Thread handle
+      session               Thread handle
       table_list        List of tables to rename
       skip_error        Whether to skip errors
 
@@ -215,14 +215,14 @@ do_rename(Session *thd, TableList *ren_table, char *new_db, char *new_table_name
 */
 
 static TableList *
-rename_tables(Session *thd, TableList *table_list, bool skip_error)
+rename_tables(Session *session, TableList *table_list, bool skip_error)
 {
   TableList *ren_table, *new_table;
 
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (do_rename(thd, ren_table, new_table->db, new_table->table_name,
+    if (do_rename(session, ren_table, new_table->db, new_table->table_name,
                   new_table->alias, skip_error))
       return(ren_table);
   }

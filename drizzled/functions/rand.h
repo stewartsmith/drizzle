@@ -32,7 +32,7 @@ public:
   const char *func_name() const { return "rand"; }
   bool const_item() const { return 0; }
   void update_used_tables();
-  bool fix_fields(Session *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 private:

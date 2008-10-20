@@ -40,7 +40,7 @@ int Field_string::store(const char *from,uint32_t length, const CHARSET_INFO * c
   const char *from_end_pos;
 
   /* See the comment for Field_long::store(int64_t) */
-  assert(table->in_use == current_thd);
+  assert(table->in_use == current_session);
 
   copy_length= well_formed_copy_nchars(field_charset,
                                        (char*) ptr, field_length,
@@ -91,7 +91,7 @@ double Field_string::val_real(void)
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DOUBLE", tmp.c_ptr());
@@ -116,7 +116,7 @@ int64_t Field_string::val_int(void)
     char buf[LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "INTEGER", tmp.c_ptr());
@@ -129,7 +129,7 @@ String *Field_string::val_str(String *val_buffer __attribute__((unused)),
 			      String *val_ptr)
 {
   /* See the comment for Field_long::store(int64_t) */
-  assert(table->in_use == current_thd);
+  assert(table->in_use == current_session);
   uint32_t length;
 
   length= field_charset->cset->lengthsp(field_charset, (const char*) ptr, field_length);
@@ -149,7 +149,7 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
     const CHARSET_INFO * const cs= charset();
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DECIMAL", tmp.c_ptr());
@@ -193,14 +193,14 @@ void Field_string::sort_string(unsigned char *to,uint32_t length)
 
 void Field_string::sql_type(String &res) const
 {
-  Session *thd= table->in_use;
+  Session *session= table->in_use;
   const CHARSET_INFO * const cs= res.charset();
   uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
                              ((type() == DRIZZLE_TYPE_VARCHAR &&
-                               !thd->variables.new_mode) ?
+                               !session->variables.new_mode) ?
                               (has_charset() ? "varchar" : "varbinary") :
 			      (has_charset() ? "char" : "binary")),
                              (int) field_length / charset()->mbmaxlen);

@@ -256,14 +256,14 @@ class user_var_entry;
 class Security_context;
 
 extern pthread_key(Session*, THR_Session);
-inline Session *_current_thd(void)
+inline Session *_current_session(void)
 {
   return (Session *)pthread_getspecific(THR_Session);
 }
-#define current_thd _current_thd()
+#define current_session _current_session()
 
-extern "C" void set_thd_proc_info(Session *thd, const char *info);
-extern "C" const char *get_thd_proc_info(Session *thd);
+extern "C" void set_session_proc_info(Session *session, const char *info);
+extern "C" const char *get_session_proc_info(Session *session);
 
 /*
   External variables
@@ -286,7 +286,7 @@ extern ulong server_id;
 extern my_decimal decimal_zero;
 
 /** @TODO Find a good header to put this guy... */
-void close_thread_tables(Session *thd);
+void close_thread_tables(Session *session);
 
 #include <drizzled/sql_parse.h>
 
@@ -308,8 +308,8 @@ bool fn_format_relative_to_data_home(char * to, const char *name,
  * InnoDB?  Or does the InnoDB plugin already fix this stuff?
  */
 #if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-bool check_global_access(Session *thd, ulong want_access);
-int get_quote_char_for_identifier(Session *thd, const char *name, uint32_t length);
+bool check_global_access(Session *session, ulong want_access);
+int get_quote_char_for_identifier(Session *session, const char *name, uint32_t length);
 extern struct system_variables global_system_variables;
 extern uint32_t mysql_data_home_len;
 extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],

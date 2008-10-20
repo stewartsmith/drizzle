@@ -120,7 +120,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   handler *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
-  Session *thd;
+  Session *session;
   SQL_SELECT *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
@@ -248,7 +248,7 @@ typedef struct  user_conn {
   { auto_inc_interval_min + k * increment,
     0 <= k <= (auto_inc_interval_values-1) }
   Where "increment" is maintained separately by the user of this class (and is
-  currently only thd->variables.auto_increment_increment).
+  currently only session->variables.auto_increment_increment).
   It mustn't derive from Sql_alloc, because SET INSERT_ID needs to
   allocate memory which must stay allocated for use by the next statement.
 */

@@ -1017,7 +1017,7 @@ public:
 
   SYNOPSIS
     my_tz_init()
-      thd            - current thread object
+      session            - current thread object
       default_tzname - default time zone or 0 if none.
       bootstrap      - indicates whenever we are in bootstrap mode
 
@@ -1038,7 +1038,7 @@ public:
     1 - Error
 */
 bool
-my_tz_init(Session *thd, const char *default_tzname)
+my_tz_init(Session *session, const char *default_tzname)
 {
   if (default_tzname)
   {
@@ -1048,7 +1048,7 @@ my_tz_init(Session *thd, const char *default_tzname)
       most of them once more, but this is OK for system tables open
       for READ.
     */
-    if (!(global_system_variables.time_zone= my_tz_find(thd, &tmp_tzname2)))
+    if (!(global_system_variables.time_zone= my_tz_find(session, &tmp_tzname2)))
     {
       sql_print_error(_("Fatal error: Illegal or unknown default time zone '%s'"),
                       default_tzname);
@@ -1156,7 +1156,7 @@ str_to_offset(const char *str, uint32_t length, long *offset)
 
 */
 Time_zone *
-my_tz_find(Session *thd __attribute__((unused)),
+my_tz_find(Session *session __attribute__((unused)),
            const String *name __attribute__((unused)))
 {
   return NULL;

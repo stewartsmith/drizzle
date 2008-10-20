@@ -121,14 +121,14 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-int ha_blackhole::external_lock(Session *thd __attribute__((unused)),
+int ha_blackhole::external_lock(Session *session __attribute__((unused)),
                                 int lock_type __attribute__((unused)))
 {
   return(0);
 }
 
 
-THR_LOCK_DATA **ha_blackhole::store_lock(Session *thd,
+THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
                                          THR_LOCK_DATA **to,
                                          enum thr_lock_type lock_type)
 {
@@ -142,8 +142,8 @@ THR_LOCK_DATA **ha_blackhole::store_lock(Session *thd,
     */
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !thd_in_lock_tables(thd)
-        && !thd_tablespace_op(thd))
+         lock_type <= TL_WRITE) && !session_in_lock_tables(session)
+        && !session_tablespace_op(session))
       lock_type = TL_WRITE_ALLOW_WRITE;
 
     /*
@@ -154,7 +154,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(Session *thd,
       concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT && !thd_in_lock_tables(thd))
+    if (lock_type == TL_READ_NO_INSERT && !session_in_lock_tables(session))
       lock_type = TL_READ;
 
     lock.type= lock_type;

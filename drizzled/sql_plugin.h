@@ -127,22 +127,22 @@ extern bool plugin_is_ready(const LEX_STRING *name, int type);
 #define my_plugin_lock_by_name_ci(A,B,C) plugin_lock_by_name(A,B,C ORIG_CALLER_INFO)
 #define my_plugin_lock(A,B) plugin_lock(A,B CALLER_INFO)
 #define my_plugin_lock_ci(A,B) plugin_lock(A,B ORIG_CALLER_INFO)
-extern plugin_ref plugin_lock(Session *thd, plugin_ref *ptr CALLER_INFO_PROTO);
-extern plugin_ref plugin_lock_by_name(Session *thd, const LEX_STRING *name,
+extern plugin_ref plugin_lock(Session *session, plugin_ref *ptr CALLER_INFO_PROTO);
+extern plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name,
                                       int type CALLER_INFO_PROTO);
-extern void plugin_unlock(Session *thd, plugin_ref plugin);
-extern void plugin_unlock_list(Session *thd, plugin_ref *list, uint32_t count);
-extern bool mysql_install_plugin(Session *thd, const LEX_STRING *name,
+extern void plugin_unlock(Session *session, plugin_ref plugin);
+extern void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count);
+extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
-extern bool mysql_uninstall_plugin(Session *thd, const LEX_STRING *name);
+extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
 extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
-extern void plugin_thdvar_init(Session *thd);
-extern void plugin_thdvar_cleanup(Session *thd);
+extern void plugin_sessionvar_init(Session *session);
+extern void plugin_sessionvar_cleanup(Session *session);
 
-typedef bool (plugin_foreach_func)(Session *thd,
+typedef bool (plugin_foreach_func)(Session *session,
                                    plugin_ref plugin,
                                    void *arg);
 #define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
-extern bool plugin_foreach_with_mask(Session *thd, plugin_foreach_func *func,
+extern bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
                                      int type, uint32_t state_mask, void *arg);
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

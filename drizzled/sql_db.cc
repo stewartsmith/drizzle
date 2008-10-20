@@ -36,12 +36,12 @@ const char *del_exts[]= {".frm", ".BAK", ".TMD",".opt", NULL};
 static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
-static long mysql_rm_known_files(Session *thd, MY_DIR *dirp,
+static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
 				 const char *db, const char *path, uint32_t level, 
                                  TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
-static void mysql_change_db_impl(Session *thd,
+static void mysql_change_db_impl(Session *session,
                                  LEX_STRING *new_db_name,
                                  const CHARSET_INFO * const new_db_charset);
 
@@ -133,10 +133,10 @@ unsigned char* dboptions_get_key(my_dbopt_t *opt, size_t *length,
   Helper function to write a query to binlog used by mysql_rm_db()
 */
 
-static inline void write_to_binlog(Session *thd, char *query, uint32_t q_len,
+static inline void write_to_binlog(Session *session, char *query, uint32_t q_len,
                                    char *db, uint32_t db_len)
 {
-  Query_log_event qinfo(thd, query, q_len, 0, 0);
+  Query_log_event qinfo(session, query, q_len, 0, 0);
   qinfo.error_code= 0;
   qinfo.db= db;
   qinfo.db_len= db_len;
@@ -334,7 +334,7 @@ void del_dbopt(const char *path)
   1	Could not create file or write to it.  Error sent through my_error()
 */
 
-static bool write_db_opt(Session *thd, const char *path, const char *name, HA_CREATE_INFO *create)
+static bool write_db_opt(Session *session, const char *path, const char *name, HA_CREATE_INFO *create)
 {
   bool error= true;
   drizzle::Schema db;
@@ -342,7 +342,7 @@ static bool write_db_opt(Session *thd, const char *path, const char *name, HA_CR
   assert(name);
 
   if (!create->default_table_charset)
-    create->default_table_charset= thd->variables.collation_server;
+    create->default_table_charset= session->variables.collation_server;
 
   if (put_dbopt(path, create))
     return 1;
@@ -374,14 +374,14 @@ static bool write_db_opt(Session *thd, const char *path, const char *name, HA_CR
 
 */
 
-bool load_db_opt(Session *thd, const char *path, HA_CREATE_INFO *create)
+bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
 {
   bool error=1;
   drizzle::Schema db;
   string buffer;
 
   memset(create, 0, sizeof(*create));
-  create->default_table_charset= thd->variables.collation_server;
+  create->default_table_charset= session->variables.collation_server;
 
   /* Check if options for this database are already in the hash */
   if (!get_dbopt(path, create))
@@ -453,7 +453,7 @@ err1:
     true    Failed to retrieve options
 */
 
-bool load_db_opt_by_name(Session *thd, const char *db_name,
+bool load_db_opt_by_name(Session *session, const char *db_name,
                          HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
@@ -465,28 +465,28 @@ bool load_db_opt_by_name(Session *thd, const char *db_name,
   (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
                               db_name, "", MY_DB_OPT_FILE, 0);
 
-  return load_db_opt(thd, db_opt_path, db_create_info);
+  return load_db_opt(session, db_opt_path, db_create_info);
 }
 
 
 /**
   Return default database collation.
 
-  @param thd     Thread context.
+  @param session     Thread context.
   @param db_name Database name.
 
   @return CHARSET_INFO object. The operation always return valid character
     set, even if the database does not exist.
 */
 
-const CHARSET_INFO *get_default_db_collation(Session *thd, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name)
 {
   HA_CREATE_INFO db_info;
 
-  if (thd->db != NULL && strcmp(db_name, thd->db) == 0)
-    return thd->db_charset;
+  if (session->db != NULL && strcmp(db_name, session->db) == 0)
+    return session->db_charset;
 
-  load_db_opt_by_name(thd, db_name, &db_info);
+  load_db_opt_by_name(session, db_name, &db_info);
 
   /*
     NOTE: even if load_db_opt_by_name() fails,
@@ -505,7 +505,7 @@ const CHARSET_INFO *get_default_db_collation(Session *thd, const char *db_name)
 
   SYNOPSIS
   mysql_create_db()
-  thd		Thread handler
+  session		Thread handler
   db		Name of database to create
 		Function assumes that this is already validated.
   create_info	Database create options (like character set)
@@ -524,7 +524,7 @@ const CHARSET_INFO *get_default_db_collation(Session *thd, const char *db_name)
 
 */
 
-int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool silent)
+int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, bool silent)
 {
   char	 path[FN_REFLEN+16];
   char	 tmp_query[FN_REFLEN+16];
@@ -553,7 +553,7 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(thd, 0, 1))
+  if (wait_if_global_read_lock(session, 0, 1))
   {
     error= -1;
     goto exit2;
@@ -573,10 +573,10 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
       error= -1;
       goto exit;
     }
-    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
     if (!silent)
-      my_ok(thd);
+      my_ok(session);
     error= 0;
     goto exit;
   }
@@ -597,7 +597,7 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
 
   path[path_len-1]= FN_LIBCHAR;
   strmake(path+path_len, MY_DB_OPT_FILE, sizeof(path)-path_len-1);
-  if (write_db_opt(thd, path, db, create_info))
+  if (write_db_opt(session, path, db, create_info))
   {
     /*
       Could not create options file.
@@ -621,7 +621,7 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
     char *query;
     uint32_t query_length;
 
-    if (!thd->query)				// Only in replication
+    if (!session->query)				// Only in replication
     {
       query= 	     tmp_query;
       query_length= (uint) (strxmov(tmp_query,"create database `",
@@ -629,13 +629,13 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
     }
     else
     {
-      query= 	    thd->query;
-      query_length= thd->query_length;
+      query= 	    session->query;
+      query_length= session->query_length;
     }
 
     if (mysql_bin_log.is_open())
     {
-      Query_log_event qinfo(thd, query, query_length, 0, 
+      Query_log_event qinfo(session, query, query_length, 0, 
 			    /* suppress_use */ true);
 
       /*
@@ -661,12 +661,12 @@ int mysql_create_db(Session *thd, char *db, HA_CREATE_INFO *create_info, bool si
       /* These DDL methods and logging protected with LOCK_mysql_create_db */
       mysql_bin_log.write(&qinfo);
     }
-    my_ok(thd, result);
+    my_ok(session, result);
   }
 
 exit:
   pthread_mutex_unlock(&LOCK_mysql_create_db);
-  start_waiting_global_read_lock(thd);
+  start_waiting_global_read_lock(session);
 exit2:
   return(error);
 }
@@ -674,7 +674,7 @@ exit2:
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *thd, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
   char path[FN_REFLEN+16];
   long result=1;
@@ -692,7 +692,7 @@ bool mysql_alter_db(Session *thd, const char *db, HA_CREATE_INFO *create_info)
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((error=wait_if_global_read_lock(thd,0,1)))
+  if ((error=wait_if_global_read_lock(session,0,1)))
     goto exit2;
 
   pthread_mutex_lock(&LOCK_mysql_create_db);
@@ -703,22 +703,22 @@ bool mysql_alter_db(Session *thd, const char *db, HA_CREATE_INFO *create_info)
      "table name to file name" encoding.
   */
   build_table_filename(path, sizeof(path), db, "", MY_DB_OPT_FILE, 0);
-  if ((error=write_db_opt(thd, path, db, create_info)))
+  if ((error=write_db_opt(session, path, db, create_info)))
     goto exit;
 
   /* Change options if current database is being altered. */
 
-  if (thd->db && !strcmp(thd->db,db))
+  if (session->db && !strcmp(session->db,db))
   {
-    thd->db_charset= create_info->default_table_charset ?
+    session->db_charset= create_info->default_table_charset ?
 		     create_info->default_table_charset :
-		     thd->variables.collation_server;
-    thd->variables.collation_database= thd->db_charset;
+		     session->variables.collation_server;
+    session->variables.collation_database= session->db_charset;
   }
 
   if (mysql_bin_log.is_open())
   {
-    Query_log_event qinfo(thd, thd->query, thd->query_length, 0,
+    Query_log_event qinfo(session, session->query, session->query_length, 0,
 			  /* suppress_use */ true);
 
     /*
@@ -729,15 +729,15 @@ bool mysql_alter_db(Session *thd, const char *db, HA_CREATE_INFO *create_info)
     qinfo.db     = db;
     qinfo.db_len = strlen(db);
 
-    thd->clear_error();
+    session->clear_error();
     /* These DDL methods and logging protected with LOCK_mysql_create_db */
     mysql_bin_log.write(&qinfo);
   }
-  my_ok(thd, result);
+  my_ok(session, result);
 
 exit:
   pthread_mutex_unlock(&LOCK_mysql_create_db);
-  start_waiting_global_read_lock(thd);
+  start_waiting_global_read_lock(session);
 exit2:
   return(error);
 }
@@ -748,7 +748,7 @@ exit2:
 
   SYNOPSIS
     mysql_rm_db()
-    thd			Thread handle
+    session			Thread handle
     db			Database name in the case given by user
 		        It's already validated and set to lower case
                         (if needed) when we come here
@@ -760,7 +760,7 @@ exit2:
     ERROR Error
 */
 
-bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
+bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 {
   long deleted=0;
   int error= false;
@@ -787,7 +787,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if (wait_if_global_read_lock(thd, 0, 1))
+  if (wait_if_global_read_lock(session, 0, 1))
   {
     error= -1;
     goto exit2;
@@ -800,7 +800,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
     row-based replication. The flag will be reset at the end of the
     statement.
   */
-  thd->clear_current_stmt_binlog_row_based();
+  session->clear_current_stmt_binlog_row_based();
 
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
   my_stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
@@ -817,7 +817,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
       goto exit;
     }
     else
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS), db);
   }
   else
@@ -828,7 +828,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
 
     
     error= -1;
-    if ((deleted= mysql_rm_known_files(thd, dirp, db, path, 0,
+    if ((deleted= mysql_rm_known_files(session, dirp, db, path, 0,
                                        &dropped_tables)) >= 0)
     {
       ha_drop_database(path);
@@ -839,7 +839,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
   {
     const char *query;
     uint32_t query_length;
-    if (!thd->query)
+    if (!session->query)
     {
       /* The client used the old obsolete mysql_drop_db() call */
       query= path;
@@ -848,12 +848,12 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
     }
     else
     {
-      query =thd->query;
-      query_length= thd->query_length;
+      query =session->query;
+      query_length= session->query_length;
     }
     if (mysql_bin_log.is_open())
     {
-      Query_log_event qinfo(thd, query, query_length, 0, 
+      Query_log_event qinfo(session, query, query_length, 0, 
 			    /* suppress_use */ true);
       /*
         Write should use the database being created as the "current
@@ -863,14 +863,14 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
       qinfo.db     = db;
       qinfo.db_len = strlen(db);
 
-      thd->clear_error();
+      session->clear_error();
       /* These DDL methods and logging protected with LOCK_mysql_create_db */
       mysql_bin_log.write(&qinfo);
     }
-    thd->clear_error();
-    thd->server_status|= SERVER_STATUS_DB_DROPPED;
-    my_ok(thd, (uint32_t) deleted);
-    thd->server_status&= ~SERVER_STATUS_DB_DROPPED;
+    session->clear_error();
+    session->server_status|= SERVER_STATUS_DB_DROPPED;
+    my_ok(session, (uint32_t) deleted);
+    session->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
   else if (mysql_bin_log.is_open())
   {
@@ -878,7 +878,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
     TableList *tbl;
     uint32_t db_len;
 
-    if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
+    if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
     query_pos= query_data_start= my_stpcpy(query,"drop table ");
     query_end= query + MAX_DROP_TABLE_Q_LEN;
@@ -893,7 +893,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_mysql_create_db */
-        write_to_binlog(thd, query, query_pos -1 - query, db, db_len);
+        write_to_binlog(session, query, query_pos -1 - query, db, db_len);
         query_pos= query_data_start;
       }
 
@@ -906,7 +906,7 @@ bool mysql_rm_db(Session *thd,char *db,bool if_exists, bool silent)
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_mysql_create_db */
-      write_to_binlog(thd, query, query_pos -1 - query, db, db_len);
+      write_to_binlog(session, query, query_pos -1 - query, db, db_len);
     }
   }
 
@@ -914,23 +914,23 @@ exit:
   /*
     If this database was the client's selected database, we silently
     change the client's selected database to nothing (to have an empty
-    SELECT DATABASE() in the future). For this we free() thd->db and set
+    SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (thd->db && !strcmp(thd->db, db))
-    mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
+  if (session->db && !strcmp(session->db, db))
+    mysql_change_db_impl(session, NULL, session->variables.collation_server);
   pthread_mutex_unlock(&LOCK_mysql_create_db);
-  start_waiting_global_read_lock(thd);
+  start_waiting_global_read_lock(session);
 exit2:
   return(error);
 }
 
 /*
   Removes files with known extensions plus.
-  thd MUST be set when calling this function!
+  session MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(Session *thd, MY_DIR *dirp, const char *db,
+static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
 				 const char *org_path, uint32_t level,
                                  TableList **dropped_tables)
 {
@@ -942,7 +942,7 @@ static long mysql_rm_known_files(Session *thd, MY_DIR *dirp, const char *db,
   tot_list_next= &tot_list;
 
   for (uint32_t idx=0 ;
-       idx < (uint) dirp->number_off_files && !thd->killed ;
+       idx < (uint) dirp->number_off_files && !session->killed ;
        idx++)
   {
     FILEINFO *file=dirp->dir_entry+idx;
@@ -968,7 +968,7 @@ static long mysql_rm_known_files(Session *thd, MY_DIR *dirp, const char *db,
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
       TableList *table_list=(TableList*)
-                              thd->calloc(sizeof(*table_list) + 
+                              session->calloc(sizeof(*table_list) + 
                                           strlen(db) + 1 +
                                           MYSQL50_TABLE_NAME_PREFIX_LENGTH + 
                                           strlen(file->name) + 1);
@@ -996,8 +996,8 @@ static long mysql_rm_known_files(Session *thd, MY_DIR *dirp, const char *db,
       }
     }
   }
-  if (thd->killed ||
-      (tot_list && mysql_rm_table_part2(thd, tot_list, 1, 0, 1, 1)))
+  if (session->killed ||
+      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1, 1)))
     goto err;
 
   my_dirend(dirp);  
@@ -1084,7 +1084,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 /**
   @brief Internal implementation: switch current database to a valid one.
 
-  @param thd            Thread context.
+  @param session            Thread context.
   @param new_db_name    Name of the database to switch to. The function will
                         take ownership of the name (the caller must not free
                         the allocated memory). If the name is NULL, we're
@@ -1092,7 +1092,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(Session *thd,
+static void mysql_change_db_impl(Session *session,
                                  LEX_STRING *new_db_name,
                                  const CHARSET_INFO * const new_db_charset)
 {
@@ -1105,7 +1105,7 @@ static void mysql_change_db_impl(Session *thd,
       sets the new one.
     */
 
-    thd->set_db(NULL, 0);
+    session->set_db(NULL, 0);
   }
   else if (new_db_name == &INFORMATION_SCHEMA_NAME)
   {
@@ -1114,7 +1114,7 @@ static void mysql_change_db_impl(Session *thd,
       INFORMATION_SCHEMA_NAME constant.
     */
 
-    thd->set_db(INFORMATION_SCHEMA_NAME.str, INFORMATION_SCHEMA_NAME.length);
+    session->set_db(INFORMATION_SCHEMA_NAME.str, INFORMATION_SCHEMA_NAME.length);
   }
   else
   {
@@ -1124,16 +1124,16 @@ static void mysql_change_db_impl(Session *thd,
       the previous database name, we should do it explicitly.
     */
 
-    if (thd->db)
-      free(thd->db);
+    if (session->db)
+      free(session->db);
 
-    thd->reset_db(new_db_name->str, new_db_name->length);
+    session->reset_db(new_db_name->str, new_db_name->length);
   }
 
   /* 3. Update db-charset environment variables. */
 
-  thd->db_charset= new_db_charset;
-  thd->variables.collation_database= new_db_charset;
+  session->db_charset= new_db_charset;
+  session->variables.collation_database= new_db_charset;
 }
 
 
@@ -1141,7 +1141,7 @@ static void mysql_change_db_impl(Session *thd,
 /**
   Backup the current database name before switch.
 
-  @param[in]      thd             thread handle
+  @param[in]      session             thread handle
   @param[in, out] saved_db_name   IN: "str" points to a buffer where to store
                                   the old database name, "length" contains the
                                   buffer size
@@ -1153,10 +1153,10 @@ static void mysql_change_db_impl(Session *thd,
                                   "length" is set to 0.
 */
 
-static void backup_current_db_name(Session *thd,
+static void backup_current_db_name(Session *session,
                                    LEX_STRING *saved_db_name)
 {
-  if (!thd->db)
+  if (!session->db)
   {
     /* No current (default) database selected. */
 
@@ -1165,8 +1165,8 @@ static void backup_current_db_name(Session *thd,
   }
   else
   {
-    strmake(saved_db_name->str, thd->db, saved_db_name->length - 1);
-    saved_db_name->length= thd->db_length;
+    strmake(saved_db_name->str, session->db, saved_db_name->length - 1);
+    saved_db_name->length= session->db_length;
   }
 }
 
@@ -1198,7 +1198,7 @@ cmp_db_names(const char *db1_name,
 /**
   @brief Change the current database and its attributes unconditionally.
 
-  @param thd          thread handle
+  @param session          thread handle
   @param new_db_name  database name
   @param force_switch if force_switch is false, then the operation will fail if
 
@@ -1241,7 +1241,7 @@ cmp_db_names(const char *db1_name,
 
   This function is not the only way to switch the database that is
   currently employed. When the replication slave thread switches the
-  database before executing a query, it calls thd->set_db directly.
+  database before executing a query, it calls session->set_db directly.
   However, if the query, in turn, uses a stored routine, the stored routine
   will use this function, even if it's run on the slave.
 
@@ -1257,7 +1257,7 @@ cmp_db_names(const char *db1_name,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
@@ -1277,7 +1277,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
         new_db_name->length == 0.
       */
 
-      mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
+      mysql_change_db_impl(session, NULL, session->variables.collation_server);
 
       return(false);
     }
@@ -1294,7 +1294,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
   {
     /* Switch the current database to INFORMATION_SCHEMA. */
 
-    mysql_change_db_impl(thd, &INFORMATION_SCHEMA_NAME, system_charset_info);
+    mysql_change_db_impl(session, &INFORMATION_SCHEMA_NAME, system_charset_info);
 
     return(false);
   }
@@ -1328,7 +1328,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
     free(new_db_file_name.str);
 
     if (force_switch)
-      mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
+      mysql_change_db_impl(session, NULL, session->variables.collation_server);
 
     return(true);
   }
@@ -1339,7 +1339,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
     {
       /* Throw a warning and free new_db_file_name. */
 
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
                           new_db_file_name.str);
 
@@ -1347,7 +1347,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
 
       /* Change db to NULL. */
 
-      mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
+      mysql_change_db_impl(session, NULL, session->variables.collation_server);
 
       /* The operation succeed. */
 
@@ -1371,9 +1371,9 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
     attributes and will be freed in Session::~Session().
   */
 
-  db_default_cl= get_default_db_collation(thd, new_db_file_name.str);
+  db_default_cl= get_default_db_collation(session, new_db_file_name.str);
 
-  mysql_change_db_impl(thd, &new_db_file_name, db_default_cl);
+  mysql_change_db_impl(session, &new_db_file_name, db_default_cl);
 
   return(false);
 }
@@ -1382,7 +1382,7 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
 /**
   Change the current database and its attributes if needed.
 
-  @param          thd             thread handle
+  @param          session             thread handle
   @param          new_db_name     database name
   @param[in, out] saved_db_name   IN: "str" points to a buffer where to store
                                   the old database name, "length" contains the
@@ -1399,20 +1399,20 @@ bool mysql_change_db(Session *thd, const LEX_STRING *new_db_name, bool force_swi
                                   the function suceeded)
 */
 
-bool mysql_opt_change_db(Session *thd,
+bool mysql_opt_change_db(Session *session,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,
                          bool *cur_db_changed)
 {
-  *cur_db_changed= !cmp_db_names(thd->db, new_db_name->str);
+  *cur_db_changed= !cmp_db_names(session->db, new_db_name->str);
 
   if (!*cur_db_changed)
     return false;
 
-  backup_current_db_name(thd, saved_db_name);
+  backup_current_db_name(session, saved_db_name);
 
-  return mysql_change_db(thd, new_db_name, force_switch);
+  return mysql_change_db(session, new_db_name, force_switch);
 }
 
 

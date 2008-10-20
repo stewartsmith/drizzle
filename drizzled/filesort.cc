@@ -45,9 +45,9 @@ static int merge_index(SORTPARAM *param,unsigned char *sort_buffer,
 static bool save_index(SORTPARAM *param,unsigned char **sort_keys, uint32_t count, 
                        filesort_info_st *table_sort);
 static uint32_t suffix_length(uint32_t string_length);
-static uint32_t sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
+static uint32_t sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
 		       bool *multi_byte_charset);
-static SORT_ADDON_FIELD *get_addon_fields(Session *thd, Field **ptabfield,
+static SORT_ADDON_FIELD *get_addon_fields(Session *session, Field **ptabfield,
                                           uint32_t sortlength, uint32_t *plength);
 static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
                                 unsigned char *buff);
@@ -63,7 +63,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
   The result set is stored in table->io_cache or
   table->record_pointers.
 
-  @param thd           Current thread
+  @param session           Current thread
   @param table		Table to sort
   @param sortorder	How to sort the table
   @param s_length	Number of elements in sortorder
@@ -87,7 +87,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
+ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
@@ -111,7 +111,7 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
    Release InnoDB's adaptive hash index latch (if holding) before
    running a sort.
   */
-  ha_release_temporary_latches(thd);
+  ha_release_temporary_latches(session);
 
   /* 
     Don't use table->sort in filesort as it is also used by 
@@ -127,7 +127,7 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
   buffpek=0;
   error= 1;
   memset(&param, 0, sizeof(param));
-  param.sort_length= sortlength(thd, sortorder, s_length, &multi_byte_charset);
+  param.sort_length= sortlength(session, sortorder, s_length, &multi_byte_charset);
   param.ref_length= table->file->ref_length;
   param.addon_field= 0;
   param.addon_length= 0;
@@ -137,7 +137,7 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
       Get the descriptors of all fields whose values are appended 
       to sorted fields and get its total length in param.spack_length.
     */
-    param.addon_field= get_addon_fields(thd, table->field, 
+    param.addon_field= get_addon_fields(session, table->field, 
                                         param.sort_length,
                                         &param.addon_length);
   }
@@ -167,11 +167,11 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
 
   if (select && select->quick)
   {
-    status_var_increment(thd->status_var.filesort_range_count);
+    status_var_increment(session->status_var.filesort_range_count);
   }
   else
   {
-    status_var_increment(thd->status_var.filesort_scan_count);
+    status_var_increment(session->status_var.filesort_scan_count);
   }
 #ifdef CAN_TRUST_RANGE
   if (select && select->quick && select->quick->records > 0L)
@@ -197,7 +197,7 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
       !(param.tmp_buffer= (char*) my_malloc(param.sort_length,MYF(MY_WME))))
     goto err;
 
-  memavl= thd->variables.sortbuff_size;
+  memavl= session->variables.sortbuff_size;
   min_sort_memory= cmax((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
@@ -312,7 +312,7 @@ ha_rows filesort(Session *thd, Table *table, SORT_FIELD *sortorder, uint32_t s_l
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
                MYF(ME_ERROR+ME_WAITTANG));
   else
-    statistic_add(thd->status_var.filesort_rows,
+    statistic_add(session->status_var.filesort_rows,
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
@@ -444,8 +444,8 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   unsigned char *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
   Table *sort_form;
-  Session *thd= current_thd;
-  volatile Session::killed_state *killed= &thd->killed;
+  Session *session= current_session;
+  volatile Session::killed_state *killed= &session->killed;
   handler *file;
   MY_BITMAP *save_read_set, *save_write_set;
 
@@ -467,7 +467,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
     next_pos=(unsigned char*) 0;			/* Find records in sequence */
     file->ha_rnd_init(1);
     file->extra_opt(HA_EXTRA_CACHE,
-		    current_thd->variables.read_buff_size);
+		    current_session->variables.read_buff_size);
   }
 
   READ_RECORD read_record_info;
@@ -475,7 +475,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   {
     if (select->quick->reset())
       return(HA_POS_ERROR);
-    init_read_record(&read_record_info, current_thd, select->quick->head,
+    init_read_record(&read_record_info, current_session, select->quick->head,
                      select, 1, 1);
   }
 
@@ -557,7 +557,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
     else
       file->unlock_row();
     /* It does not make sense to read more keys in case of a fatal error */
-    if (thd->is_error())
+    if (session->is_error())
       break;
   }
   if (quick_select)
@@ -575,7 +575,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
       file->ha_rnd_end();
   }
 
-  if (thd->is_error())
+  if (session->is_error())
     return(HA_POS_ERROR);
   
   /* Signal we should use orignal column read and write maps */
@@ -1118,10 +1118,10 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   QUEUE queue;
   qsort2_cmp cmp;
   void *first_cmp_arg;
-  volatile Session::killed_state *killed= &current_thd->killed;
+  volatile Session::killed_state *killed= &current_session->killed;
   Session::killed_state not_killable;
 
-  status_var_increment(current_thd->status_var.filesort_merge_passes);
+  status_var_increment(current_session->status_var.filesort_merge_passes);
   if (param->not_killable)
   {
     killed= &not_killable;
@@ -1336,7 +1336,7 @@ static uint32_t suffix_length(uint32_t string_length)
 /**
   Calculate length of sort key.
 
-  @param thd			  Thread handler
+  @param session			  Thread handler
   @param sortorder		  Order of items to sort
   @param s_length	          Number of items to sort
   @param[out] multi_byte_charset Set to 1 if we are using multi-byte charset
@@ -1352,7 +1352,7 @@ static uint32_t suffix_length(uint32_t string_length)
 */
 
 static uint32_t
-sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
+sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
            bool *multi_byte_charset)
 {
   register uint32_t length;
@@ -1386,7 +1386,7 @@ sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
       switch (sortorder->result_type) {
       case STRING_RESULT:
 	sortorder->length=sortorder->item->max_length;
-        set_if_smaller(sortorder->length, thd->variables.max_sort_length);
+        set_if_smaller(sortorder->length, session->variables.max_sort_length);
 	if (use_strnxfrm((cs=sortorder->item->collation.collation)))
 	{ 
           sortorder->length= cs->coll->strnxfrmlen(cs, sortorder->length);
@@ -1421,7 +1421,7 @@ sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
       if (sortorder->item->maybe_null)
 	length++;				// Place for NULL marker
     }
-    set_if_smaller(sortorder->length, thd->variables.max_sort_length);
+    set_if_smaller(sortorder->length, session->variables.max_sort_length);
     length+=sortorder->length;
   }
   sortorder->field= (Field*) 0;			// end marker
@@ -1441,7 +1441,7 @@ sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
   layouts for the values of the non-sorted fields in the buffer and
   fills them.
 
-  @param thd                 Current thread
+  @param session                 Current thread
   @param ptabfield           Array of references to the table fields
   @param sortlength          Total length of sorted fields
   @param[out] plength        Total length of appended fields
@@ -1457,7 +1457,7 @@ sortlength(Session *thd, SORT_FIELD *sortorder, uint32_t s_length,
 */
 
 static SORT_ADDON_FIELD *
-get_addon_fields(Session *thd, Field **ptabfield, uint32_t sortlength, uint32_t *plength)
+get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint32_t *plength)
 {
   Field **pfield;
   Field *field;
@@ -1493,7 +1493,7 @@ get_addon_fields(Session *thd, Field **ptabfield, uint32_t sortlength, uint32_t 
     return 0;
   length+= (null_fields+7)/8;
 
-  if (length+sortlength > thd->variables.max_length_for_sort_data ||
+  if (length+sortlength > session->variables.max_length_for_sort_data ||
       !(addonf= (SORT_ADDON_FIELD *) my_malloc(sizeof(SORT_ADDON_FIELD)*
                                                (fields+1), MYF(MY_WME))))
     return 0;

@@ -20,16 +20,16 @@ void Field_iterator_table::set_table(Table *table)
 }
 
 
-Item *Field_iterator_table::create_item(Session *thd)
+Item *Field_iterator_table::create_item(Session *session)
 {
-  SELECT_LEX *select= thd->lex->current_select;
+  SELECT_LEX *select= session->lex->current_select;
 
-  Item_field *item= new Item_field(thd, &select->context, *ptr);
+  Item_field *item= new Item_field(session, &select->context, *ptr);
 
 #ifdef DEAD_CODE
 
-  if (item && thd->variables.sql_mode & MODE_ONLY_FULL_GROUP_BY &&
-      !thd->lex->in_sum_func && select->cur_pos_in_select_list != UNDEF_POS)
+  if (item && session->variables.sql_mode & MODE_ONLY_FULL_GROUP_BY &&
+      !session->lex->in_sum_func && select->cur_pos_in_select_list != UNDEF_POS)
   {
     select->non_agg_fields.push_back(item);
     item->marker= select->cur_pos_in_select_list;

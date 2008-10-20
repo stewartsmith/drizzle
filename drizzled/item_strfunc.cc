@@ -46,9 +46,9 @@ String my_empty_string("",default_charset_info);
 
 
 
-bool Item_str_func::fix_fields(Session *thd, Item **ref)
+bool Item_str_func::fix_fields(Session *session, Item **ref)
 {
-  bool res= Item_func::fix_fields(thd, ref);
+  bool res= Item_func::fix_fields(session, ref);
   /*
     In Item_str_func::check_well_formed_result() we may set null_value
     flag on the same condition as in test() below.
@@ -130,12 +130,12 @@ String *Item_func_concat::val_str(String *str)
       if (res2->length() == 0)
 	continue;
       if (res->length()+res2->length() >
-	  current_thd->variables.max_allowed_packet)
+	  current_session->variables.max_allowed_packet)
       {
-	push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+	push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			    ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			    ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-			    current_thd->variables.max_allowed_packet);
+			    current_session->variables.max_allowed_packet);
 	goto null;
       }
       if (!is_const && res->alloced_length() >= res->length()+res2->length())
@@ -291,12 +291,12 @@ String *Item_func_concat_ws::val_str(String *str)
       continue;					// Skip NULL
 
     if (res->length() + sep_str->length() + res2->length() >
-	current_thd->variables.max_allowed_packet)
+	current_session->variables.max_allowed_packet)
     {
-      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			  ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			  ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-			  current_thd->variables.max_allowed_packet);
+			  current_session->variables.max_allowed_packet);
       goto null;
     }
     if (res->alloced_length() >=
@@ -548,13 +548,13 @@ redo:
             if (*i++ != *j++) goto skip;
           offset= (int) (ptr-res->ptr());
           if (res->length()-from_length + to_length >
-	      current_thd->variables.max_allowed_packet)
+	      current_session->variables.max_allowed_packet)
 	  {
-	    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+	    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 				ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 				func_name(),
-				current_thd->variables.max_allowed_packet);
+				current_session->variables.max_allowed_packet);
 
             goto null;
 	  }
@@ -577,12 +577,12 @@ skip:
     do
     {
       if (res->length()-from_length + to_length >
-	  current_thd->variables.max_allowed_packet)
+	  current_session->variables.max_allowed_packet)
       {
-	push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+	push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			    ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			    ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED), func_name(),
-			    current_thd->variables.max_allowed_packet);
+			    current_session->variables.max_allowed_packet);
         goto null;
       }
       if (!alloced)
@@ -655,12 +655,12 @@ String *Item_func_insert::val_str(String *str)
     length= res->length() - start;
 
   if ((uint64_t) (res->length() - length + res2->length()) >
-      (uint64_t) current_thd->variables.max_allowed_packet)
+      (uint64_t) current_session->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_thd->variables.max_allowed_packet);
+			func_name(), current_session->variables.max_allowed_packet);
     goto null;
   }
   res=copy_if_not_alloced(str,res,res->length());
@@ -1276,14 +1276,14 @@ Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs
 String *Item_func_database::val_str(String *str)
 {
   assert(fixed == 1);
-  Session *thd= current_thd;
-  if (thd->db == NULL)
+  Session *session= current_session;
+  if (session->db == NULL)
   {
     null_value= 1;
     return 0;
   }
   else
-    str->copy(thd->db, thd->db_length, system_charset_info);
+    str->copy(session->db, session->db_length, system_charset_info);
   return str;
 }
 
@@ -1317,21 +1317,21 @@ bool Item_func_user::init(const char *user, const char *host)
 }
 
 
-bool Item_func_user::fix_fields(Session *thd, Item **ref)
+bool Item_func_user::fix_fields(Session *session, Item **ref)
 {
-  return (Item_func_sysconst::fix_fields(thd, ref) ||
-          init(thd->main_security_ctx.user,
-               thd->main_security_ctx.ip));
+  return (Item_func_sysconst::fix_fields(session, ref) ||
+          init(session->main_security_ctx.user,
+               session->main_security_ctx.ip));
 }
 
 
-bool Item_func_current_user::fix_fields(Session *thd, Item **ref)
+bool Item_func_current_user::fix_fields(Session *session, Item **ref)
 {
-  if (Item_func_sysconst::fix_fields(thd, ref))
+  if (Item_func_sysconst::fix_fields(session, ref))
     return true;
 
   Security_context *ctx=
-                         thd->security_ctx;
+                         session->security_ctx;
   return init(ctx->user, ctx->ip);
 }
 
@@ -1509,11 +1509,11 @@ String *Item_func_elt::val_str(String *str)
 }
 
 
-void Item_func_make_set::split_sum_func(Session *thd, Item **ref_pointer_array,
+void Item_func_make_set::split_sum_func(Session *session, Item **ref_pointer_array,
 					List<Item> &fields)
 {
-  item->split_sum_func2(thd, ref_pointer_array, fields, &item, true);
-  Item_str_func::split_sum_func(thd, ref_pointer_array, fields);
+  item->split_sum_func2(session, ref_pointer_array, fields, &item, true);
+  Item_str_func::split_sum_func(session, ref_pointer_array, fields);
 }
 
 
@@ -1609,7 +1609,7 @@ Item *Item_func_make_set::transform(Item_transformer transformer, unsigned char 
     change records at each execution.
   */
   if (item != new_item)
-    current_thd->change_item_tree(&item, new_item);
+    current_session->change_item_tree(&item, new_item);
   return Item_str_func::transform(transformer, arg);
 }
 
@@ -1734,12 +1734,12 @@ String *Item_func_repeat::val_str(String *str)
     return res;
   length=res->length();
   // Safe length check
-  if (length > current_thd->variables.max_allowed_packet / (uint) count)
+  if (length > current_session->variables.max_allowed_packet / (uint) count)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_thd->variables.max_allowed_packet);
+			func_name(), current_session->variables.max_allowed_packet);
     goto err;
   }
   tot_length= length*(uint) count;
@@ -1824,12 +1824,12 @@ String *Item_func_rpad::val_str(String *str)
   pad_char_length= rpad->numchars();
 
   byte_count= count * collation.collation->mbmaxlen;
-  if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > current_session->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_thd->variables.max_allowed_packet);
+			func_name(), current_session->variables.max_allowed_packet);
     goto err;
   }
   if (args[2]->null_value || !pad_char_length)
@@ -1929,12 +1929,12 @@ String *Item_func_lpad::val_str(String *str)
   pad_char_length= pad->numchars();
   byte_count= count * collation.collation->mbmaxlen;
   
-  if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > current_session->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_thd->variables.max_allowed_packet);
+			func_name(), current_session->variables.max_allowed_packet);
     goto err;
   }
 
@@ -2291,12 +2291,12 @@ String *Item_load_file::val_str(String *str)
     /* my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr()); */
     goto err;
   }
-  if (stat_info.st_size > (long) current_thd->variables.max_allowed_packet)
+  if (stat_info.st_size > (long) current_session->variables.max_allowed_packet)
   {
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_thd->variables.max_allowed_packet);
+			func_name(), current_session->variables.max_allowed_packet);
     goto err;
   }
   if (tmp_value.alloc(stat_info.st_size))
@@ -2540,7 +2540,7 @@ String *Item_func_uuid::val_str(String *str)
 {
   assert(fixed == 1);
   char *s;
-  Session *thd= current_thd;
+  Session *session= current_session;
 
   pthread_mutex_lock(&LOCK_uuid_generator);
   if (! uuid_time) /* first UUID() call. initializing data */
@@ -2557,7 +2557,7 @@ String *Item_func_uuid::val_str(String *str)
         with a clock_seq value (initialized random below), we use a separate
         randominit() here
       */
-      randominit(&uuid_rand, tmp + (ulong) thd, tmp + (ulong)global_query_id);
+      randominit(&uuid_rand, tmp + (ulong) session, tmp + (ulong)global_query_id);
       for (i=0; i < (int)sizeof(mac); i++)
         mac[i]=(unsigned char)(my_rnd(&uuid_rand)*255);
       /* purecov: end */    
@@ -2569,7 +2569,7 @@ String *Item_func_uuid::val_str(String *str)
       *--s=_dig_vec_lower[mac[i] >> 4];
     }
     randominit(&uuid_rand, tmp + (ulong) server_start_time,
-	       tmp + (ulong) thd->status_var.bytes_sent);
+	       tmp + (ulong) session->status_var.bytes_sent);
     set_clock_seq_str();
   }
 

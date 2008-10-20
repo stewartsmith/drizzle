@@ -70,7 +70,7 @@ int qcache_finalizer(st_plugin_int *plugin)
 
 /* The plugin_foreach() iterator requires that we
    convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the thd.
+   into just one single void ptr, plus the session.
    So we will take all the additional paramters of qcache_do1,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
@@ -82,7 +82,7 @@ typedef struct qcache_do1_parms_st
 } qcache_do1_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded qcache plugin */
-static bool qcache_do1_iterate (Session *thd, plugin_ref plugin, void *p)
+static bool qcache_do1_iterate (Session *session, plugin_ref plugin, void *p)
 {
   qcache_t *l= plugin_data(plugin, qcache_t *);
   qcache_do1_parms_t *parms= (qcache_do1_parms_t *) p;
@@ -90,7 +90,7 @@ static bool qcache_do1_iterate (Session *thd, plugin_ref plugin, void *p)
   /* call this loaded qcache plugin's qcache_func1 function pointer */
   if (l && l->qcache_func1)
   {
-    if (l->qcache_func1(thd, parms->parm1, parms->parm2))
+    if (l->qcache_func1(session, parms->parm1, parms->parm2))
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
@@ -104,7 +104,7 @@ static bool qcache_do1_iterate (Session *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do1 (Session *thd, void *parm1, void *parm2)
+bool qcache_do1 (Session *session, void *parm1, void *parm2)
 {
   qcache_do1_parms_t parms;
   bool foreach_rv;
@@ -115,7 +115,7 @@ bool qcache_do1 (Session *thd, void *parm1, void *parm2)
 
   /* call qcache_do1_iterate
      once for each loaded qcache plugin */
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
                              qcache_do1_iterate,
                              DRIZZLE_QCACHE_PLUGIN,
                              (void *) &parms);
@@ -124,7 +124,7 @@ bool qcache_do1 (Session *thd, void *parm1, void *parm2)
 
 /* The plugin_foreach() iterator requires that we
    convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the thd.
+   into just one single void ptr, plus the session.
    So we will take all the additional paramters of qcache_do2,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
@@ -136,7 +136,7 @@ typedef struct qcache_do2_parms_st
 } qcache_do2_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded qcache plugin */
-static bool qcache_do2_iterate (Session *thd, plugin_ref plugin, void *p)
+static bool qcache_do2_iterate (Session *session, plugin_ref plugin, void *p)
 {
   qcache_t *l= plugin_data(plugin, qcache_t *);
   qcache_do2_parms_t *parms= (qcache_do2_parms_t *) p;
@@ -144,7 +144,7 @@ static bool qcache_do2_iterate (Session *thd, plugin_ref plugin, void *p)
   /* call this loaded qcache plugin's qcache_func1 function pointer */
   if (l && l->qcache_func1)
   {
-    if (l->qcache_func2(thd, parms->parm3, parms->parm4))
+    if (l->qcache_func2(session, parms->parm3, parms->parm4))
     {
       /* TRANSLATORS: The leading word "qcache" is the name
          of the plugin api, and so should not be translated. */
@@ -159,7 +159,7 @@ static bool qcache_do2_iterate (Session *thd, plugin_ref plugin, void *p)
 
 /* This is the qcache_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool qcache_do2 (Session *thd, void *parm3, void *parm4)
+bool qcache_do2 (Session *session, void *parm3, void *parm4)
 {
   qcache_do2_parms_t parms;
   bool foreach_rv;
@@ -170,7 +170,7 @@ bool qcache_do2 (Session *thd, void *parm3, void *parm4)
 
   /* call qcache_do2_iterate
      once for each loaded qcache plugin */
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
                              qcache_do2_iterate,
                              DRIZZLE_QCACHE_PLUGIN,
                              (void *) &parms);

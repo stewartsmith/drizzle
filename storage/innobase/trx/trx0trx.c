@@ -27,12 +27,12 @@ Created 3/26/1996 Heikki Tuuri
 #include "trx0xa.h"
 #include "ha_prototypes.h"
 
-/* Copy of the prototype for innobase_mysql_print_thd: this
+/* Copy of the prototype for innobase_mysql_print_session: this
 copy MUST be equal to the one in mysql/sql/ha_innodb.cc ! */
 
-void innobase_mysql_print_thd(
+void innobase_mysql_print_session(
 	FILE*	f,
-	void*	thd,
+	void*	session,
 	ulint	max_query_len);
 
 /* Dummy session used currently in MySQL interface */
@@ -129,7 +129,7 @@ trx_create(
 
 	trx->dict_operation = FALSE;
 
-	trx->mysql_thd = NULL;
+	trx->mysql_session = NULL;
 	trx->mysql_query_str = NULL;
 	trx->active_trans = 0;
 	trx->duplicates = 0;
@@ -294,7 +294,7 @@ trx_free(
 
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
-			"  InnoDB: Error: MySQL is freeing a thd\n"
+			"  InnoDB: Error: MySQL is freeing a session\n"
 			"InnoDB: though trx->n_mysql_tables_in_use is %lu\n"
 			"InnoDB: and trx->mysql_n_tables_locked is %lu.\n",
 			(ulong)trx->n_mysql_tables_in_use,
@@ -1650,7 +1650,7 @@ trx_mark_sql_stat_end(
 /**************************************************************************
 Prints info about a transaction to the given file. The caller must own the
 kernel mutex and must have called
-innobase_mysql_prepare_print_arbitrary_thd(), unless he knows that MySQL
+innobase_mysql_prepare_print_arbitrary_session(), unless he knows that MySQL
 or InnoDB cannot meanwhile change the info printed here. */
 
 void
@@ -1755,8 +1755,8 @@ trx_print(
 		putc('\n', f);
 	}
 
-	if (trx->mysql_thd != NULL) {
-		innobase_mysql_print_thd(f, trx->mysql_thd, max_query_len);
+	if (trx->mysql_session != NULL) {
+		innobase_mysql_print_session(f, trx->mysql_session, max_query_len);
 	}
 }
 
@@ -1776,14 +1776,14 @@ trx_weight_cmp(
 	ibool	a_notrans_edit;
 	ibool	b_notrans_edit;
 
-	/* If mysql_thd is NULL for a transaction we assume that it has
+	/* If mysql_session is NULL for a transaction we assume that it has
 	not edited non-transactional tables. */
 
-	a_notrans_edit = a->mysql_thd != NULL
-	    && thd_has_edited_nontrans_tables(a->mysql_thd);
+	a_notrans_edit = a->mysql_session != NULL
+	    && session_has_edited_nontrans_tables(a->mysql_session);
 
-	b_notrans_edit = b->mysql_thd != NULL
-	    && thd_has_edited_nontrans_tables(b->mysql_thd);
+	b_notrans_edit = b->mysql_session != NULL
+	    && session_has_edited_nontrans_tables(b->mysql_session);
 
 	if (a_notrans_edit && !b_notrans_edit) {
 

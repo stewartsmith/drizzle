@@ -29,7 +29,7 @@ typedef struct st_slave_info
   char user[USERNAME_LENGTH+1];
   char password[MAX_PASSWORD_LENGTH+1];
   uint16_t port;
-  Session* thd;
+  Session* session;
 } SLAVE_INFO;
 
 extern bool opt_show_slave_auth_info;
@@ -38,25 +38,25 @@ extern bool server_id_supplied;
 
 extern int max_binlog_dump_events;
 
-int start_slave(Session* thd, Master_info* mi, bool net_report);
-int stop_slave(Session* thd, Master_info* mi, bool net_report);
-bool change_master(Session* thd, Master_info* mi);
-bool mysql_show_binlog_events(Session* thd);
+int start_slave(Session* session, Master_info* mi, bool net_report);
+int stop_slave(Session* session, Master_info* mi, bool net_report);
+bool change_master(Session* session, Master_info* mi);
+bool mysql_show_binlog_events(Session* session);
 int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
 		   const char* log_file_name2, uint64_t log_pos2);
-int reset_slave(Session *thd, Master_info* mi);
-int reset_master(Session* thd);
-bool purge_master_logs(Session* thd, const char* to_log);
-bool purge_master_logs_before_date(Session* thd, time_t purge_time);
+int reset_slave(Session *session, Master_info* mi);
+int reset_master(Session* session);
+bool purge_master_logs(Session* session, const char* to_log);
+bool purge_master_logs_before_date(Session* session, time_t purge_time);
 bool log_in_use(const char* log_name);
 void adjust_linfo_offsets(my_off_t purge_offset);
-bool show_binlogs(Session* thd);
+bool show_binlogs(Session* session);
 void kill_zombie_dump_threads(uint32_t slave_server_id);
 int check_binlog_magic(IO_CACHE* log, const char** errmsg);
 
 typedef struct st_load_file_info
 {
-  Session* thd;
+  Session* session;
   my_off_t last_pos_in_file;
   bool wrote_create_file, log_delayed;
 } LOAD_FILE_INFO;

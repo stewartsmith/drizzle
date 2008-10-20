@@ -70,7 +70,7 @@ int configvar_finalizer(st_plugin_int *plugin)
 
 /* The plugin_foreach() iterator requires that we
    convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the thd.
+   into just one single void ptr, plus the session.
    So we will take all the additional paramters of configvar_do1,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
@@ -82,7 +82,7 @@ typedef struct configvar_do1_parms_st
 } configvar_do1_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded configvar plugin */
-static bool configvar_do1_iterate (Session *thd, plugin_ref plugin, void *p)
+static bool configvar_do1_iterate (Session *session, plugin_ref plugin, void *p)
 {
   configvar_t *l= plugin_data(plugin, configvar_t *);
   configvar_do1_parms_t *parms= (configvar_do1_parms_t *) p;
@@ -90,7 +90,7 @@ static bool configvar_do1_iterate (Session *thd, plugin_ref plugin, void *p)
   /* call this loaded configvar plugin's configvar_func1 function pointer */
   if (l && l->configvar_func1)
   {
-    if (l->configvar_func1(thd, parms->parm1, parms->parm2))
+    if (l->configvar_func1(session, parms->parm1, parms->parm2))
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
@@ -104,7 +104,7 @@ static bool configvar_do1_iterate (Session *thd, plugin_ref plugin, void *p)
 
 /* This is the configvar_do1 entry point.
    This gets called by the rest of the Drizzle server code */
-bool configvar_do1 (Session *thd, void *parm1, void *parm2)
+bool configvar_do1 (Session *session, void *parm1, void *parm2)
 {
   configvar_do1_parms_t parms;
   bool foreach_rv;
@@ -115,7 +115,7 @@ bool configvar_do1 (Session *thd, void *parm1, void *parm2)
 
   /* call configvar_do1_iterate
      once for each loaded configvar plugin */
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
 			     configvar_do1_iterate,
 			     DRIZZLE_CONFIGVAR_PLUGIN,
 			     (void *) &parms);
@@ -124,7 +124,7 @@ bool configvar_do1 (Session *thd, void *parm1, void *parm2)
 
 /* The plugin_foreach() iterator requires that we
    convert all the parameters of a plugin api entry point
-   into just one single void ptr, plus the thd.
+   into just one single void ptr, plus the session.
    So we will take all the additional paramters of configvar_do2,
    and marshall them into a struct of this type, and
    then just pass in a pointer to it.
@@ -136,7 +136,7 @@ typedef struct configvar_do2_parms_st
 } configvar_do2_parms_t;
 
 /* This gets called by plugin_foreach once for each loaded configvar plugin */
-static bool configvar_do2_iterate (Session *thd, plugin_ref plugin, void *p)
+static bool configvar_do2_iterate (Session *session, plugin_ref plugin, void *p)
 {
   configvar_t *l= plugin_data(plugin, configvar_t *);
   configvar_do2_parms_t *parms= (configvar_do2_parms_t *) p;
@@ -144,7 +144,7 @@ static bool configvar_do2_iterate (Session *thd, plugin_ref plugin, void *p)
   /* call this loaded configvar plugin's configvar_func1 function pointer */
   if (l && l->configvar_func2)
   {
-    if (l->configvar_func2(thd, parms->parm3, parms->parm4))
+    if (l->configvar_func2(session, parms->parm3, parms->parm4))
     {
       /* TRANSLATORS: The leading word "configvar" is the name
          of the plugin api, and so should not be translated. */
@@ -159,7 +159,7 @@ static bool configvar_do2_iterate (Session *thd, plugin_ref plugin, void *p)
 
 /* This is the configvar_do2 entry point.
    This gets called by the rest of the Drizzle server code */
-bool configvar_do2 (Session *thd, void *parm3, void *parm4)
+bool configvar_do2 (Session *session, void *parm3, void *parm4)
 {
   configvar_do2_parms_t parms;
   bool foreach_rv;
@@ -170,7 +170,7 @@ bool configvar_do2 (Session *thd, void *parm3, void *parm4)
 
   /* call configvar_do2_iterate
      once for each loaded configvar plugin */
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
 			     configvar_do2_iterate,
 			     DRIZZLE_CONFIGVAR_PLUGIN,
 			     (void *) &parms);

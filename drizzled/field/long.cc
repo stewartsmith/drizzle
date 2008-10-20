@@ -131,7 +131,7 @@ int64_t Field_long::val_int(void)
 {
   int32_t j;
   /* See the comment in Field_long::store(int64_t) */
-  assert(table->in_use == current_thd);
+  assert(table->in_use == current_session);
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint4korr(ptr);

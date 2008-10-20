@@ -144,7 +144,7 @@ struct st_mysql_value;
 /*
   SYNOPSIS
     (*mysql_var_check_func)()
-      thd               thread handle
+      session               thread handle
       var               dynamic variable being altered
       save              pointer to temporary storage
       value             user provided value
@@ -160,14 +160,14 @@ struct st_mysql_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(Session *thd,
+typedef int (*mysql_var_check_func)(Session *session,
                                     struct st_mysql_sys_var *var,
                                     void *save, struct st_mysql_value *value);
 
 /*
   SYNOPSIS
     (*mysql_var_update_func)()
-      thd               thread handle
+      session               thread handle
       var               dynamic variable being altered
       var_ptr           pointer to dynamic variable
       save              pointer to temporary storage
@@ -178,7 +178,7 @@ typedef int (*mysql_var_check_func)(Session *thd,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(Session *thd,
+typedef void (*mysql_var_update_func)(Session *session,
                                       struct st_mysql_sys_var *var,
                                       void *var_ptr, const void *save);
 
@@ -230,7 +230,7 @@ typedef void (*mysql_var_update_func)(Session *thd,
 } DRIZZLE_SYSVAR_NAME(name)
 
 #define DECLARE_SessionVAR_FUNC(type) \
-  type *(*resolve)(Session *thd, int offset)
+  type *(*resolve)(Session *session, int offset)
 
 #define DECLARE_DRIZZLE_SessionVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
@@ -365,9 +365,9 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define SYSVAR(name) \
   (*(DRIZZLE_SYSVAR_NAME(name).value))
 
-/* when thd == null, result points to global value */
-#define SessionVAR(thd, name) \
-  (*(DRIZZLE_SYSVAR_NAME(name).resolve(thd, DRIZZLE_SYSVAR_NAME(name).offset)))
+/* when session == null, result points to global value */
+#define SessionVAR(session, name) \
+  (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
 /*
@@ -423,14 +423,14 @@ struct st_mysql_value
 extern "C" {
 #endif
 
-int thd_in_lock_tables(const Session *thd);
-int thd_tablespace_op(const Session *thd);
-int64_t thd_test_options(const Session *thd, int64_t test_options);
-int thd_sql_command(const Session *thd);
-void **thd_ha_data(const Session *thd, const struct handlerton *hton);
-int thd_tx_isolation(const Session *thd);
+int session_in_lock_tables(const Session *session);
+int session_tablespace_op(const Session *session);
+int64_t session_test_options(const Session *session, int64_t test_options);
+int session_sql_command(const Session *session);
+void **session_ha_data(const Session *session, const struct handlerton *hton);
+int session_tx_isolation(const Session *session);
 /* Increments the row counter, see Session::row_count */
-void thd_inc_row_count(Session *thd);
+void session_inc_row_count(Session *session);
 
 /**
   Create a temporary file.
@@ -456,20 +456,20 @@ int mysql_tmpfile(const char *prefix);
   time-consuming loops, and gracefully abort the operation if it is
   non-zero.
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @retval 0  the connection is active
   @retval 1  the connection has been killed
 */
-int thd_killed(const Session *thd);
+int session_killed(const Session *session);
 
 
 /**
   Return the thread id of a user thread
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @return  thread id
 */
-unsigned long thd_get_thread_id(const Session *thd);
+unsigned long session_get_thread_id(const Session *session);
 
 
 /**
@@ -484,41 +484,41 @@ unsigned long thd_get_thread_id(const Session *thd);
 
   @see alloc_root()
 */
-void *thd_alloc(Session *thd, unsigned int size);
+void *session_alloc(Session *session, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-void *thd_calloc(Session *thd, unsigned int size);
+void *session_calloc(Session *session, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-char *thd_strdup(Session *thd, const char *str);
+char *session_strdup(Session *session, const char *str);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-char *thd_strmake(Session *thd, const char *str, unsigned int size);
+char *session_strmake(Session *session, const char *str, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-void *thd_memdup(Session *thd, const void* str, unsigned int size);
+void *session_memdup(Session *session, const void* str, unsigned int size);
 
 /**
   Get the XID for this connection's transaction
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @param xid  location where identifier is stored
 */
-void thd_get_xid(const Session *thd, DRIZZLE_XID *xid);
+void session_get_xid(const Session *session, DRIZZLE_XID *xid);
 
 /**
   Invalidate the query cache for a given table.
 
-  @param thd         user thread connection handle
+  @param session         user thread connection handle
   @param key         databasename\\0tablename\\0
   @param key_length  length of key in bytes, including the NUL bytes
   @param using_trx   flag: TRUE if using transactions, FALSE otherwise
 */
-void mysql_query_cache_invalidate4(Session *thd,
+void mysql_query_cache_invalidate4(Session *session,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
 
@@ -532,9 +532,9 @@ void mysql_query_cache_invalidate4(Session *thd,
 */
 inline
 void *
-thd_get_ha_data(const Session *thd, const struct handlerton *hton)
+session_get_ha_data(const Session *session, const struct handlerton *hton)
 {
-  return *thd_ha_data(thd, hton);
+  return *session_ha_data(session, hton);
 }
 
 /**
@@ -542,10 +542,10 @@ thd_get_ha_data(const Session *thd, const struct handlerton *hton)
 */
 inline
 void
-thd_set_ha_data(const Session *thd, const struct handlerton *hton,
+session_set_ha_data(const Session *session, const struct handlerton *hton,
                 const void *ha_data)
 {
-  *thd_ha_data(thd, hton)= (void*) ha_data;
+  *session_ha_data(session, hton)= (void*) ha_data;
 }
 #endif
 

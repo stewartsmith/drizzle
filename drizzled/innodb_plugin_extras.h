@@ -30,7 +30,7 @@ extern "C" {
 /**
   Create a LEX_STRING in this connection's local memory pool
 
-  @param thd      user thread connection handle
+  @param session      user thread connection handle
   @param lex_str  pointer to LEX_STRING object to be initialized
   @param str      initializer to be copied into lex_str
   @param size     length of str, in bytes
@@ -38,9 +38,9 @@ extern "C" {
                               instead of using lex_str value
   @return  NULL on failure, or pointer to the LEX_STRING object
 
-  @see thd_alloc()
+  @see session_alloc()
 */
-LEX_STRING *thd_make_lex_string(Session *thd, LEX_STRING *lex_str,
+LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
                                 const char *str, unsigned int size,
                                 int allocate_lex_string);
 

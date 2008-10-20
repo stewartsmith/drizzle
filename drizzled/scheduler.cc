@@ -28,9 +28,9 @@
  */
 
 static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(Session *thd __attribute__((unused))) {}
+static void post_kill_dummy(Session *session __attribute__((unused))) {}
 static void end_dummy(void) {}
-static bool end_thread_dummy(Session *thd __attribute__((unused)),
+static bool end_thread_dummy(Session *session __attribute__((unused)),
                              bool cache_thread __attribute__((unused)))
 { return 0; }
 
@@ -50,32 +50,32 @@ scheduler_functions::scheduler_functions()
 static uint32_t created_threads, killed_threads;
 static bool kill_pool_threads;
 
-static struct event thd_add_event;
-static struct event thd_kill_event;
+static struct event session_add_event;
+static struct event session_kill_event;
 
-static pthread_mutex_t LOCK_thd_add;    /* protects thds_need_adding */
-static LIST *thds_need_adding;    /* list of thds to add to libevent queue */
+static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
+static LIST *sessions_need_adding;    /* list of sessions to add to libevent queue */
 
-static int thd_add_pipe[2]; /* pipe to signal add a connection to libevent*/
-static int thd_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
+static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
+static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
 
 /*
   LOCK_event_loop protects the non-thread safe libevent calls (event_add and 
-  event_del) and thds_need_processing and thds_waiting_for_io.
+  event_del) and sessions_need_processing and sessions_waiting_for_io.
 */
 static pthread_mutex_t LOCK_event_loop;
-static LIST *thds_need_processing; /* list of thds that needs some processing */
-static LIST *thds_waiting_for_io; /* list of thds with added events */
+static LIST *sessions_need_processing; /* list of sessions that needs some processing */
+static LIST *sessions_waiting_for_io; /* list of sessions with added events */
 
 pthread_handler_t libevent_thread_proc(void *arg);
 static void libevent_end();
-static bool libevent_needs_immediate_processing(Session *thd);
-static void libevent_connection_close(Session *thd);
-static bool libevent_should_close_connection(Session* thd);
-static void libevent_thd_add(Session* thd);
+static bool libevent_needs_immediate_processing(Session *session);
+static void libevent_connection_close(Session *session);
+static bool libevent_should_close_connection(Session* session);
+static void libevent_session_add(Session* session);
 void libevent_io_callback(int Fd, short Operation, void *ctx);
-void libevent_add_thd_callback(int Fd, short Operation, void *ctx);
-void libevent_kill_thd_callback(int Fd, short Operation, void *ctx);
+void libevent_add_session_callback(int Fd, short Operation, void *ctx);
+void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
 
 
 /*
@@ -95,44 +95,44 @@ static bool init_pipe(int pipe_fds[])
 
 
 /*
-  thd_scheduler keeps the link between Session and events.
+  session_scheduler keeps the link between Session and events.
   It's embedded in the Session class.
 */
 
-thd_scheduler::thd_scheduler()
+session_scheduler::session_scheduler()
   : logged_in(false), io_event(NULL), thread_attached(false)
 {  
 }
 
 
-thd_scheduler::~thd_scheduler()
+session_scheduler::~session_scheduler()
 {
   free(io_event);
 }
 
 
-thd_scheduler::thd_scheduler(const thd_scheduler&)
+session_scheduler::session_scheduler(const session_scheduler&)
   : logged_in(false), io_event(NULL), thread_attached(false)
 {}
 
-void thd_scheduler::operator=(const thd_scheduler&)
+void session_scheduler::operator=(const session_scheduler&)
 {}
 
-bool thd_scheduler::init(Session *parent_thd)
+bool session_scheduler::init(Session *parent_session)
 {
   io_event=
     (struct event*)my_malloc(sizeof(*io_event),MYF(MY_ZEROFILL|MY_WME));
     
   if (!io_event)
   {
-    sql_print_error(_("Memory allocation error in thd_scheduler::init\n"));
+    sql_print_error(_("Memory allocation error in session_scheduler::init\n"));
     return true;
   }
   
-  event_set(io_event, net_get_sd(&(parent_thd->net)), EV_READ, 
-            libevent_io_callback, (void*)parent_thd);
+  event_set(io_event, net_get_sd(&(parent_session->net)), EV_READ, 
+            libevent_io_callback, (void*)parent_session);
     
-  list.data= parent_thd;
+  list.data= parent_session;
   
   return false;
 }
@@ -142,17 +142,17 @@ bool thd_scheduler::init(Session *parent_thd)
   Attach/associate the connection with the OS thread, for command processing.
 */
 
-bool thd_scheduler::thread_attach()
+bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
-  Session* thd = (Session*)list.data;
-  if (libevent_should_close_connection(thd) ||
-      setup_connection_thread_globals(thd))
+  Session* session = (Session*)list.data;
+  if (libevent_should_close_connection(session) ||
+      setup_connection_thread_globals(session))
   {
     return true;
   }
   my_errno= 0;
-  thd->mysys_var->abort= 0;
+  session->mysys_var->abort= 0;
   thread_attached= true;
 
   return false;
@@ -163,12 +163,12 @@ bool thd_scheduler::thread_attach()
   Detach/disassociate the connection with the OS thread.
 */
 
-void thd_scheduler::thread_detach()
+void session_scheduler::thread_detach()
 {
   if (thread_attached)
   {
-    Session* thd = (Session*)list.data;
-    thd->mysys_var= NULL;
+    Session* session = (Session*)list.data;
+    session->mysys_var= NULL;
     thread_attached= false;
   }
 }
@@ -197,30 +197,30 @@ static bool libevent_init(void)
   kill_pool_threads= false;
   
   pthread_mutex_init(&LOCK_event_loop, NULL);
-  pthread_mutex_init(&LOCK_thd_add, NULL);
+  pthread_mutex_init(&LOCK_session_add, NULL);
   
-  /* set up the pipe used to add new thds to the event pool */
-  if (init_pipe(thd_add_pipe))
+  /* set up the pipe used to add new sessions to the event pool */
+  if (init_pipe(session_add_pipe))
   {
-    sql_print_error(_("init_pipe(thd_add_pipe) error in libevent_init\n"));
+    sql_print_error(_("init_pipe(session_add_pipe) error in libevent_init\n"));
     return(1);
   }
-  /* set up the pipe used to kill thds in the event queue */
-  if (init_pipe(thd_kill_pipe))
+  /* set up the pipe used to kill sessions in the event queue */
+  if (init_pipe(session_kill_pipe))
   {
-    sql_print_error(_("init_pipe(thd_kill_pipe) error in libevent_init\n"));
-    close(thd_add_pipe[0]);
-    close(thd_add_pipe[1]);
+    sql_print_error(_("init_pipe(session_kill_pipe) error in libevent_init\n"));
+    close(session_add_pipe[0]);
+    close(session_add_pipe[1]);
     return(1);
   }
-  event_set(&thd_add_event, thd_add_pipe[0], EV_READ|EV_PERSIST,
-            libevent_add_thd_callback, NULL);
-  event_set(&thd_kill_event, thd_kill_pipe[0], EV_READ|EV_PERSIST,
-            libevent_kill_thd_callback, NULL);
+  event_set(&session_add_event, session_add_pipe[0], EV_READ|EV_PERSIST,
+            libevent_add_session_callback, NULL);
+  event_set(&session_kill_event, session_kill_pipe[0], EV_READ|EV_PERSIST,
+            libevent_kill_session_callback, NULL);
  
- if (event_add(&thd_add_event, NULL) || event_add(&thd_kill_event, NULL))
+ if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
  {
-   sql_print_error(_("thd_add_event event_add error in libevent_init\n"));
+   sql_print_error(_("session_add_event event_add error in libevent_init\n"));
    libevent_end();
    return(1);
    
@@ -259,17 +259,17 @@ static bool libevent_init(void)
   NOTES
     This is only called by the thread that owns LOCK_event_loop.
   
-    We add the thd that got the data to thds_need_processing, and 
+    We add the session that got the data to sessions_need_processing, and 
     cause the libevent event_loop() to terminate. Then this same thread will
-    return from event_loop and pick the thd value back up for processing.
+    return from event_loop and pick the session value back up for processing.
 */
 
 void libevent_io_callback(int, short, void *ctx)
 {    
   safe_mutex_assert_owner(&LOCK_event_loop);
-  Session *thd= (Session*)ctx;
-  thds_waiting_for_io= list_delete(thds_waiting_for_io, &thd->scheduler.list);
-  thds_need_processing= list_add(thds_need_processing, &thd->scheduler.list);
+  Session *session= (Session*)ctx;
+  sessions_waiting_for_io= list_delete(sessions_waiting_for_io, &session->scheduler.list);
+  sessions_need_processing= list_add(sessions_need_processing, &session->scheduler.list);
 }
 
 /*
@@ -279,7 +279,7 @@ void libevent_io_callback(int, short, void *ctx)
     This is only called by the thread that owns LOCK_event_loop.
 */
 
-void libevent_kill_thd_callback(int Fd, short, void*)
+void libevent_kill_session_callback(int Fd, short, void*)
 {    
   safe_mutex_assert_owner(&LOCK_event_loop);
 
@@ -288,21 +288,21 @@ void libevent_kill_thd_callback(int Fd, short, void*)
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {}
 
-  LIST* list= thds_waiting_for_io;
+  LIST* list= sessions_waiting_for_io;
   while (list)
   {
-    Session *thd= (Session*)list->data;
+    Session *session= (Session*)list->data;
     list= list_rest(list);
-    if (thd->killed == Session::KILL_CONNECTION)
+    if (session->killed == Session::KILL_CONNECTION)
     {
       /*
         Delete from libevent and add to the processing queue.
       */
-      event_del(thd->scheduler.io_event);
-      thds_waiting_for_io= list_delete(thds_waiting_for_io,
-                                       &thd->scheduler.list);
-      thds_need_processing= list_add(thds_need_processing,
-                                     &thd->scheduler.list);
+      event_del(session->scheduler.io_event);
+      sessions_waiting_for_io= list_delete(sessions_waiting_for_io,
+                                       &session->scheduler.list);
+      sessions_need_processing= list_add(sessions_need_processing,
+                                     &session->scheduler.list);
     }
   }
 }
@@ -310,14 +310,14 @@ void libevent_kill_thd_callback(int Fd, short, void*)
 
 /*
   This is used to add connections to the pool. This callback is invoked from
-  the libevent event_loop() call whenever the thd_add_pipe[1] pipe has a byte
+  the libevent event_loop() call whenever the session_add_pipe[1] pipe has a byte
   written to it.
   
   NOTES
     This is only called by the thread that owns LOCK_event_loop.
 */
 
-void libevent_add_thd_callback(int Fd, short, void *)
+void libevent_add_session_callback(int Fd, short, void *)
 { 
   safe_mutex_assert_owner(&LOCK_event_loop);
 
@@ -326,41 +326,41 @@ void libevent_add_thd_callback(int Fd, short, void *)
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {}
 
-  pthread_mutex_lock(&LOCK_thd_add);
-  while (thds_need_adding)
+  pthread_mutex_lock(&LOCK_session_add);
+  while (sessions_need_adding)
   {
-    /* pop the first thd off the list */
-    Session* thd= (Session*)thds_need_adding->data;
-    thds_need_adding= list_delete(thds_need_adding, thds_need_adding);
+    /* pop the first session off the list */
+    Session* session= (Session*)sessions_need_adding->data;
+    sessions_need_adding= list_delete(sessions_need_adding, sessions_need_adding);
 
-    pthread_mutex_unlock(&LOCK_thd_add);
+    pthread_mutex_unlock(&LOCK_session_add);
     
-    if (!thd->scheduler.logged_in || libevent_should_close_connection(thd))
+    if (!session->scheduler.logged_in || libevent_should_close_connection(session))
     {
       /*
-        Add thd to thds_need_processing list. If it needs closing we'll close
+        Add session to sessions_need_processing list. If it needs closing we'll close
         it outside of event_loop().
       */
-      thds_need_processing= list_add(thds_need_processing,
-                                     &thd->scheduler.list);
+      sessions_need_processing= list_add(sessions_need_processing,
+                                     &session->scheduler.list);
     }
     else
     {
       /* Add to libevent */
-      if (event_add(thd->scheduler.io_event, NULL))
+      if (event_add(session->scheduler.io_event, NULL))
       {
-        sql_print_error(_("event_add error in libevent_add_thd_callback\n"));
-        libevent_connection_close(thd);
+        sql_print_error(_("event_add error in libevent_add_session_callback\n"));
+        libevent_connection_close(session);
       } 
       else
       {
-        thds_waiting_for_io= list_add(thds_waiting_for_io,
-                                      &thd->scheduler.list);
+        sessions_waiting_for_io= list_add(sessions_waiting_for_io,
+                                      &session->scheduler.list);
       }
     }
-    pthread_mutex_lock(&LOCK_thd_add);
+    pthread_mutex_lock(&LOCK_session_add);
   }
-  pthread_mutex_unlock(&LOCK_thd_add);
+  pthread_mutex_unlock(&LOCK_session_add);
 }
 
 
@@ -371,17 +371,17 @@ void libevent_add_thd_callback(int Fd, short, void *)
     LOCK_thread_count is locked on entry. This function MUST unlock it!
 */
 
-static void libevent_add_connection(Session *thd)
+static void libevent_add_connection(Session *session)
 {
-  if (thd->scheduler.init(thd))
+  if (session->scheduler.init(session))
   {
     sql_print_error(_("Scheduler init error in libevent_add_new_connection\n"));
     pthread_mutex_unlock(&LOCK_thread_count);
-    libevent_connection_close(thd);
+    libevent_connection_close(session);
     return;
   }
-  threads.append(thd);
-  libevent_thd_add(thd);
+  threads.append(session);
+  libevent_session_add(session);
   
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
@@ -392,17 +392,17 @@ static void libevent_add_connection(Session *thd)
   @brief Signal a waiting connection it's time to die.
  
   @details This function will signal libevent the Session should be killed.
-    Either the global LOCK_thd_count or the Session's LOCK_delete must be locked
+    Either the global LOCK_session_count or the Session's LOCK_delete must be locked
     upon entry.
  
-  @param[in]  thd The connection to kill
+  @param[in]  session The connection to kill
 */
 
 static void libevent_post_kill_notification(Session *)
 {
   /*
     Note, we just wake up libevent with an event that a Session should be killed,
-    It will search its list of thds for thd->killed ==  KILL_CONNECTION to
+    It will search its list of sessions for session->killed ==  KILL_CONNECTION to
     find the Sessions it should kill.
     
     So we don't actually tell it which one and we don't actually use the
@@ -410,7 +410,7 @@ static void libevent_post_kill_notification(Session *)
     later.
   */
   char c= 0;
-  assert(write(thd_kill_pipe[1], &c, sizeof(c))==sizeof(c));
+  assert(write(session_kill_pipe[1], &c, sizeof(c))==sizeof(c));
 }
 
 
@@ -418,17 +418,17 @@ static void libevent_post_kill_notification(Session *)
   Close and delete a connection.
 */
 
-static void libevent_connection_close(Session *thd)
+static void libevent_connection_close(Session *session)
 {
-  thd->killed= Session::KILL_CONNECTION;          // Avoid error messages
+  session->killed= Session::KILL_CONNECTION;          // Avoid error messages
 
-  if (net_get_sd(&(thd->net)) >= 0)                  // not already closed
+  if (net_get_sd(&(session->net)) >= 0)                  // not already closed
   {
-    end_connection(thd);
-    close_connection(thd, 0, 1);
+    end_connection(session);
+    close_connection(session, 0, 1);
   }
-  thd->scheduler.thread_detach();
-  unlink_thd(thd);   /* locks LOCK_thread_count and deletes thd */
+  session->scheduler.thread_detach();
+  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
   pthread_mutex_unlock(&LOCK_thread_count);
 
   return;
@@ -439,10 +439,10 @@ static void libevent_connection_close(Session *thd)
   Returns true if we should close and delete a Session connection.
 */
 
-static bool libevent_should_close_connection(Session* thd)
+static bool libevent_should_close_connection(Session* session)
 {
-  return net_should_close(&(thd->net)) ||
-         thd->killed == Session::KILL_CONNECTION;
+  return net_should_close(&(session->net)) ||
+         session->killed == Session::KILL_CONNECTION;
 }
 
 
@@ -472,11 +472,11 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   
   for (;;)
   {
-    Session *thd= NULL;
+    Session *session= NULL;
     (void) pthread_mutex_lock(&LOCK_event_loop);
     
-    /* get thd(s) to process */
-    while (!thds_need_processing)
+    /* get session(s) to process */
+    while (!sessions_need_processing)
     {
       if (kill_pool_threads)
       {
@@ -487,39 +487,39 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
       event_loop(EVLOOP_ONCE);
     }
     
-    /* pop the first thd off the list */
-    thd= (Session*)thds_need_processing->data;
-    thds_need_processing= list_delete(thds_need_processing,
-                                      thds_need_processing);
+    /* pop the first session off the list */
+    session= (Session*)sessions_need_processing->data;
+    sessions_need_processing= list_delete(sessions_need_processing,
+                                      sessions_need_processing);
     
     (void) pthread_mutex_unlock(&LOCK_event_loop);
     
-    /* now we process the connection (thd) */
+    /* now we process the connection (session) */
     
-    /* set up the thd<->thread links. */
-    thd->thread_stack= (char*) &thd;
+    /* set up the session<->thread links. */
+    session->thread_stack= (char*) &session;
     
-    if (thd->scheduler.thread_attach())
+    if (session->scheduler.thread_attach())
     {
-      libevent_connection_close(thd);
+      libevent_connection_close(session);
       continue;
     }
 
     /* is the connection logged in yet? */
-    if (!thd->scheduler.logged_in)
+    if (!session->scheduler.logged_in)
     {
-      if (login_connection(thd))
+      if (login_connection(session))
       {
         /* Failed to log in */
-        libevent_connection_close(thd);
+        libevent_connection_close(session);
         continue;
       }
       else
       {
         /* login successful */
-        thd->scheduler.logged_in= true;
-        prepare_new_connection_state(thd);
-        if (!libevent_needs_immediate_processing(thd))
+        session->scheduler.logged_in= true;
+        prepare_new_connection_state(session);
+        if (!libevent_needs_immediate_processing(session))
           continue; /* New connection is now waiting for data in libevent*/
       }
     }
@@ -527,12 +527,12 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
     do
     {
       /* Process a query */
-      if (do_command(thd))
+      if (do_command(session))
       {
-        libevent_connection_close(thd);
+        libevent_connection_close(session);
         break;
       }
-    } while (libevent_needs_immediate_processing(thd));
+    } while (libevent_needs_immediate_processing(session));
   }
   
 thread_exit:
@@ -551,11 +551,11 @@ thread_exit:
   instead it's queued for libevent processing or closed,
 */
 
-static bool libevent_needs_immediate_processing(Session *thd)
+static bool libevent_needs_immediate_processing(Session *session)
 {
-  if (libevent_should_close_connection(thd))
+  if (libevent_should_close_connection(session))
   {
-    libevent_connection_close(thd);
+    libevent_connection_close(session);
     return false;
   }
   /*
@@ -564,11 +564,11 @@ static bool libevent_needs_immediate_processing(Session *thd)
     Note: we cannot add for event processing because the whole request might
     already be buffered and we wouldn't receive an event.
   */
-  if (net_more_data(&(thd->net)))
+  if (net_more_data(&(session->net)))
     return true;
   
-  thd->scheduler.thread_detach();
-  libevent_thd_add(thd);
+  session->scheduler.thread_detach();
+  libevent_session_add(session);
   return false;
 }
 
@@ -578,19 +578,19 @@ static bool libevent_needs_immediate_processing(Session *thd)
   
   This call does not actually register the event with libevent.
   Instead, it places the Session onto a queue and signals libevent by writing
-  a byte into thd_add_pipe, which will cause our libevent_add_thd_callback to
+  a byte into session_add_pipe, which will cause our libevent_add_session_callback to
   be invoked which will find the Session on the queue and add it to libevent.
 */
 
-static void libevent_thd_add(Session* thd)
+static void libevent_session_add(Session* session)
 {
   char c=0;
-  pthread_mutex_lock(&LOCK_thd_add);
+  pthread_mutex_lock(&LOCK_session_add);
   /* queue for libevent */
-  thds_need_adding= list_add(thds_need_adding, &thd->scheduler.list);
+  sessions_need_adding= list_add(sessions_need_adding, &session->scheduler.list);
   /* notify libevent */
-  assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
-  pthread_mutex_unlock(&LOCK_thd_add);
+  assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
+  pthread_mutex_unlock(&LOCK_session_add);
 }
 
 
@@ -607,21 +607,21 @@ static void libevent_end()
   {
     /* wake up the event loop */
     char c= 0;
-    assert(write(thd_add_pipe[1], &c, sizeof(c))==sizeof(c));
+    assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
 
     pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   
-  event_del(&thd_add_event);
-  close(thd_add_pipe[0]);
-  close(thd_add_pipe[1]);
-  event_del(&thd_kill_event);
-  close(thd_kill_pipe[0]);
-  close(thd_kill_pipe[1]);
+  event_del(&session_add_event);
+  close(session_add_pipe[0]);
+  close(session_add_pipe[1]);
+  event_del(&session_kill_event);
+  close(session_kill_pipe[0]);
+  close(session_kill_pipe[1]);
 
   (void) pthread_mutex_destroy(&LOCK_event_loop);
-  (void) pthread_mutex_destroy(&LOCK_thd_add);
+  (void) pthread_mutex_destroy(&LOCK_session_add);
   return;
 }
 

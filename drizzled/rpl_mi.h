@@ -75,7 +75,7 @@ public:
   std::string user;
   std::string password;
   uint32_t connect_retry;
-  Session *io_thd;
+  Session *io_session;
   Master_info();
   ~Master_info();
 

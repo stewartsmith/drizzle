@@ -27,7 +27,7 @@
   Create right type of Cached_item for an item.
 */
 
-Cached_item *new_Cached_item(Session *thd, Item *item, bool use_result_field)
+Cached_item *new_Cached_item(Session *session, Item *item, bool use_result_field)
 {
   if (item->real_item()->type() == Item::FIELD_ITEM &&
       !(((Item_field *) (item->real_item()))->field->flags & BLOB_FLAG))
@@ -39,7 +39,7 @@ Cached_item *new_Cached_item(Session *thd, Item *item, bool use_result_field)
   }
   switch (item->result_type()) {
   case STRING_RESULT:
-    return new Cached_item_str(thd, (Item_field *) item);
+    return new Cached_item_str(session, (Item_field *) item);
   case INT_RESULT:
     return new Cached_item_int((Item_field *) item);
   case REAL_RESULT:
@@ -62,8 +62,8 @@ Cached_item::~Cached_item() {}
     Return true if values have changed
 */
 
-Cached_item_str::Cached_item_str(Session *thd, Item *arg)
-  :item(arg), value(cmin(arg->max_length, (uint32_t)thd->variables.max_sort_length))
+Cached_item_str::Cached_item_str(Session *session, Item *arg)
+  :item(arg), value(cmin(arg->max_length, (uint32_t)session->variables.max_sort_length))
 {}
 
 bool Cached_item_str::cmp(void)

@@ -37,11 +37,11 @@ int Field_datetime::store(const char *from,
   int error;
   uint64_t tmp= 0;
   enum enum_drizzle_timestamp_type func_res;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   func_res= str_to_datetime(from, len, &time_tmp,
                             (TIME_FUZZY_DATE |
-                             (thd->variables.sql_mode &
+                             (session->variables.sql_mode &
                               (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) DRIZZLE_TIMESTAMP_ERROR)
@@ -88,10 +88,10 @@ int Field_datetime::store(int64_t nr,
   DRIZZLE_TIME not_used;
   int error;
   int64_t initial_nr= nr;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
-                                         (thd->variables.sql_mode &
+                                         (session->variables.sql_mode &
                                           (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
@@ -135,7 +135,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
-                    (current_thd->variables.sql_mode &
+                    (current_session->variables.sql_mode &
                      (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];

@@ -82,12 +82,12 @@ static uint64_t get_microtime()
 /* we could just not have a pre entrypoint at all,
    and have logging_pre == NULL
    but we have this here for the sake of being an example */
-bool logging_query_func_pre (Session *thd __attribute__((unused)))
+bool logging_query_func_pre (Session *session __attribute__((unused)))
 {
   return false;
 }
 
-bool logging_query_func_post (Session *thd)
+bool logging_query_func_post (Session *session)
 {
   char msgbuf[MAX_MSG_LEN];
   int msgbuf_len= 0;
@@ -95,7 +95,7 @@ bool logging_query_func_post (Session *thd)
 
   if (fd < 0) return false;
 
-  assert(thd != NULL);
+  assert(session != NULL);
 
   /*
     here is some time stuff from class Session
@@ -121,17 +121,17 @@ bool logging_query_func_post (Session *thd)
 	       " command=%.*s"
 	       " rows_sent=%ld rows_examined=%u\n"
 	       " db=\"%.*s\" query=\"%.*s\"\n"),
-	     (unsigned long) thd->thread_id, 
-	     (unsigned long) thd->query_id,
-	     (unsigned long long)(t_mark - thd->connect_utime),
-	     (unsigned long long)(t_mark - thd->start_utime),
-	     (unsigned long long)(t_mark - thd->utime_after_lock),
-	     (uint32_t)command_name[thd->command].length,
-	     command_name[thd->command].str,
-	     (unsigned long) thd->sent_row_count,
-	     (uint32_t) thd->examined_row_count,
-	     thd->db_length, thd->db,
-	     thd->query_length, thd->query);
+	     (unsigned long) session->thread_id, 
+	     (unsigned long) session->query_id,
+	     (unsigned long long)(t_mark - session->connect_utime),
+	     (unsigned long long)(t_mark - session->start_utime),
+	     (unsigned long long)(t_mark - session->utime_after_lock),
+	     (uint32_t)command_name[session->command].length,
+	     command_name[session->command].str,
+	     (unsigned long) session->sent_row_count,
+	     (uint32_t) session->examined_row_count,
+	     session->db_length, session->db,
+	     session->query_length, session->query);
   /* a single write has a OS level thread lock
      so there is no need to have mutexes guarding this write,
   */

@@ -296,7 +296,7 @@ uint32_t delay_key_write_options, protocol_version;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
-uint64_t thd_startup_options;
+uint64_t session_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
@@ -1206,24 +1206,24 @@ static void network_init(void)
 /**
   Close a connection.
 
-  @param thd		Thread handle
+  @param session		Thread handle
   @param errcode	Error code to print to console
   @param lock	        1 if we have have to lock LOCK_thread_count
 
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void close_connection(Session *thd, uint32_t errcode, bool lock)
+void close_connection(Session *session, uint32_t errcode, bool lock)
 {
   st_vio *vio;
   if (lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
-  thd->killed= Session::KILL_CONNECTION;
-  if ((vio= thd->net.vio) != 0)
+  session->killed= Session::KILL_CONNECTION;
+  if ((vio= session->net.vio) != 0)
   {
     if (errcode)
-      net_send_error(thd, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&(thd->net));		/* vio is freed in delete thd */
+      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
+    net_close(&(session->net));		/* vio is freed in delete session */
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -1235,30 +1235,30 @@ void close_connection(Session *thd, uint32_t errcode, bool lock)
 /* ARGSUSED */
 extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
-  Session *thd=current_thd;
-  if (thd)
+  Session *session=current_session;
+  if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
+    thread_scheduler.end_thread(session,0);		/* purecov: inspected */
   }
   return;;				/* purecov: deadcode */
 }
 
 
 /*
-  Unlink thd from global list of available connections and free thd
+  Unlink session from global list of available connections and free session
 
   SYNOPSIS
-    unlink_thd()
-    thd		 Thread handler
+    unlink_session()
+    session		 Thread handler
 
   NOTES
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_thd(Session *thd)
+void unlink_session(Session *session)
 {
-  thd->cleanup();
+  session->cleanup();
 
   pthread_mutex_lock(&LOCK_connection_count);
   --connection_count;
@@ -1266,7 +1266,7 @@ void unlink_thd(Session *thd)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
-  delete thd;
+  delete session;
   return;;
 }
 
@@ -1302,19 +1302,19 @@ static bool cache_thread()
       pthread_cond_signal(&COND_flush_thread_cache);
     if (wake_thread)
     {
-      Session *thd;
+      Session *session;
       wake_thread--;
-      thd= thread_cache.get();
-      thd->thread_stack= (char*) &thd;          // For store_globals
-      (void) thd->store_globals();
+      session= thread_cache.get();
+      session->thread_stack= (char*) &session;          // For store_globals
+      (void) session->store_globals();
       /*
         Session::mysys_var::abort is associated with physical thread rather
         than with Session object. So we need to reset this flag before using
         this thread for handling of new Session object/connection.
       */
-      thd->mysys_var->abort= 0;
-      thd->thr_create_utime= my_micro_time();
-      threads.append(thd);
+      session->mysys_var->abort= 0;
+      session->thr_create_utime= my_micro_time();
+      threads.append(session);
       return(1);
     }
   }
@@ -1327,7 +1327,7 @@ static bool cache_thread()
 
   SYNOPSIS
     one_thread_per_connection_end()
-    thd		  Thread handler
+    session		  Thread handler
     put_in_cache  Store thread in cache, if there is room in it
                   Normally this is true in all cases except when we got
                   out of resources initializing the current thread
@@ -1341,9 +1341,9 @@ static bool cache_thread()
     0    Signal to handle_one_connection to reuse connection
 */
 
-bool one_thread_per_connection_end(Session *thd, bool put_in_cache)
+bool one_thread_per_connection_end(Session *session, bool put_in_cache)
 {
-  unlink_thd(thd);
+  unlink_session(session);
   if (put_in_cache)
     put_in_cache= cache_thread();
   pthread_mutex_unlock(&LOCK_thread_count);
@@ -1382,9 +1382,9 @@ void flush_thread_cache()
 */
 extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
 {
-  Session *thd=current_thd;
-  if (thd)
-    thd->killed= Session::KILL_CONNECTION;
+  Session *session=current_session;
+  if (session)
+    session->killed= Session::KILL_CONNECTION;
   return;;
 }
 #endif
@@ -1453,23 +1453,23 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
                      max_connections * sizeof(Session)) / 1024);
 
 #ifdef HAVE_STACKTRACE
-  Session *thd= current_thd;
+  Session *session= current_session;
 
   if (!(test_flags & TEST_NO_STACKTRACE))
   {
-    fprintf(stderr,"thd: 0x%lx\n",(long) thd);
+    fprintf(stderr,"session: 0x%lx\n",(long) session);
     fprintf(stderr,_("Attempting backtrace. You can use the following "
                      "information to find out\n"
                      "where mysqld died. If you see no messages after this, "
                      "something went\n"
                      "terribly wrong...\n"));
-    print_stacktrace(thd ? (unsigned char*) thd->thread_stack : (unsigned char*) 0,
+    print_stacktrace(session ? (unsigned char*) session->thread_stack : (unsigned char*) 0,
                      my_thread_stack_size);
   }
-  if (thd)
+  if (session)
   {
     const char *kreason= "UNKNOWN";
-    switch (thd->killed) {
+    switch (session->killed) {
     case Session::NOT_KILLED:
       kreason= "NOT_KILLED";
       break;
@@ -1489,9 +1489,9 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
     fprintf(stderr, _("Trying to get some variables.\n"
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
-    safe_print_str("thd->query", thd->query, 1024);
-    fprintf(stderr, "thd->thread_id=%"PRIu32"\n", (uint32_t) thd->thread_id);
-    fprintf(stderr, "thd->killed=%s\n", kreason);
+    safe_print_str("session->query", session->query, 1024);
+    fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
+    fprintf(stderr, "session->killed=%s\n", kreason);
   }
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
@@ -1808,55 +1808,55 @@ extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
-  Session *thd;
+  Session *session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((thd= current_thd))
+  if ((session= current_session))
   {
     if (MyFlags & ME_FATALERROR)
-      thd->is_fatal_error= 1;
+      session->is_fatal_error= 1;
 
     /*
       TODO: There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
     */
-    if (thd->handle_error(error, str,
+    if (session->handle_error(error, str,
                           DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
-    thd->is_slave_error=  1; // needed to catch query errors during replication
+    session->is_slave_error=  1; // needed to catch query errors during replication
 
     /*
-      thd->lex->current_select == 0 if lex structure is not inited
+      session->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (thd->lex->current_select &&
-        thd->lex->current_select->no_error && !thd->is_fatal_error))
+    if (! (session->lex->current_select &&
+        session->lex->current_select->no_error && !session->is_fatal_error))
     {
-      if (! thd->main_da.is_error())            // Return only first message
+      if (! session->main_da.is_error())            // Return only first message
       {
         if (error == 0)
           error= ER_UNKNOWN_ERROR;
         if (str == NULL)
           str= ER(error);
-        thd->main_da.set_error_status(thd, error, str);
+        session->main_da.set_error_status(session, error, str);
       }
     }
 
-    if (!thd->no_warnings_for_error && !thd->is_fatal_error)
+    if (!session->no_warnings_for_error && !session->is_fatal_error)
     {
       /*
         Suppress infinite recursion if there a memory allocation error
         inside push_warning.
       */
-      thd->no_warnings_for_error= true;
-      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
-      thd->no_warnings_for_error= false;
+      session->no_warnings_for_error= true;
+      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
+      session->no_warnings_for_error= false;
     }
   }
-  if (!thd || MyFlags & ME_NOREFRESH)
+  if (!session || MyFlags & ME_NOREFRESH)
     sql_print_error("%s: %s",my_progname,str); /* purecov: inspected */
   return;;
 }
@@ -2701,15 +2701,15 @@ int main(int argc, char **argv)
 
     This function will create new thread to handle the incoming
     connection.  If there are idle cached threads one will be used.
-    'thd' will be pushed into 'threads'.
+    'session' will be pushed into 'threads'.
 
     In single-threaded mode (\#define ONE_THREAD) connection will be
     handled inside this function.
 
-  @param[in,out] thd    Thread handle of future thread.
+  @param[in,out] session    Thread handle of future thread.
 */
 
-static void create_new_thread(Session *thd)
+static void create_new_thread(Session *session)
 {
 
   /*
@@ -2723,8 +2723,8 @@ static void create_new_thread(Session *thd)
   {
     pthread_mutex_unlock(&LOCK_connection_count);
 
-    close_connection(thd, ER_CON_COUNT_ERROR, 1);
-    delete thd;
+    close_connection(session, ER_CON_COUNT_ERROR, 1);
+    delete session;
     return;;
   }
 
@@ -2740,15 +2740,15 @@ static void create_new_thread(Session *thd)
   pthread_mutex_lock(&LOCK_thread_count);
 
   /*
-    The initialization of thread_id is done in create_embedded_thd() for
+    The initialization of thread_id is done in create_embedded_session() for
     the embedded library.
     TODO: refactor this to avoid code duplication there
   */
-  thd->thread_id= thd->variables.pseudo_thread_id= thread_id++;
+  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
 
   thread_count++;
 
-  thread_scheduler.add_connection(thd);
+  thread_scheduler.add_connection(session);
 
   return;;
 }
@@ -2777,7 +2777,7 @@ void handle_connections_sockets()
   int x;
   int sock,new_sock;
   uint32_t error_count=0;
-  Session *thd;
+  Session *session;
   struct sockaddr_storage cAddr;
 
   MAYBE_BROKEN_SYSCALL;
@@ -2866,19 +2866,19 @@ void handle_connections_sockets()
     ** Don't allow too many connections
     */
 
-    if (!(thd= new Session))
+    if (!(session= new Session))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
       close(new_sock);
       continue;
     }
-    if (net_init_sock(&thd->net, new_sock, sock == 0))
+    if (net_init_sock(&session->net, new_sock, sock == 0))
     {
-      delete thd;
+      delete session;
       continue;
     }
 
-    create_new_thread(thd);
+    create_new_thread(session);
   }
 }
 
@@ -3915,41 +3915,41 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(Session *thd __attribute__((unused)),
+static int show_net_compression(Session *session __attribute__((unused)),
                                 SHOW_VAR *var,
                                 char *buff __attribute__((unused)))
 {
   var->type= SHOW_MY_BOOL;
-  var->value= (char *)&thd->net.compress;
+  var->value= (char *)&session->net.compress;
   return 0;
 }
 
 static st_show_var_func_container
 show_net_compression_cont= { &show_net_compression };
 
-static int show_starttime(Session *thd, SHOW_VAR *var, char *buff)
+static int show_starttime(Session *session, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (thd->query_start() - server_start_time);
+  *((long *)buff)= (long) (session->query_start() - server_start_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_starttime_cont= { &show_starttime };
 
-static int show_flushstatustime(Session *thd, SHOW_VAR *var, char *buff)
+static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (thd->query_start() - flush_status_time);
+  *((long *)buff)= (long) (session->query_start() - flush_status_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(Session *thd __attribute__((unused)),
+static int show_slave_running(Session *session __attribute__((unused)),
                               SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
@@ -3964,7 +3964,7 @@ static int show_slave_running(Session *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_running_cont= { &show_slave_running };
 
-static int show_slave_retried_trans(Session *thd __attribute__((unused)),
+static int show_slave_retried_trans(Session *session __attribute__((unused)),
                                     SHOW_VAR *var, char *buff)
 {
   /*
@@ -3989,7 +3989,7 @@ static int show_slave_retried_trans(Session *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_retried_trans_cont= { &show_slave_retried_trans };
 
-static int show_slave_received_heartbeats(Session *thd __attribute__((unused)),
+static int show_slave_received_heartbeats(Session *session __attribute__((unused)),
                                           SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4010,7 +4010,7 @@ static int show_slave_received_heartbeats(Session *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
 
-static int show_heartbeat_period(Session *thd __attribute__((unused)),
+static int show_heartbeat_period(Session *session __attribute__((unused)),
                                  SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4029,7 +4029,7 @@ static int show_heartbeat_period(Session *thd __attribute__((unused)),
 static st_show_var_func_container
 show_heartbeat_period_cont= { &show_heartbeat_period};
 
-static int show_open_tables(Session *thd __attribute__((unused)),
+static int show_open_tables(Session *session __attribute__((unused)),
                             SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4038,7 +4038,7 @@ static int show_open_tables(Session *thd __attribute__((unused)),
   return 0;
 }
 
-static int show_table_definitions(Session *thd __attribute__((unused)),
+static int show_table_definitions(Session *session __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4247,7 +4247,7 @@ static void mysql_init_variables(void)
   log_error_file_ptr= log_error_file;
   language_ptr= language;
   mysql_data_home= mysql_real_data_home;
-  thd_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
+  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
   protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
@@ -4964,15 +4964,15 @@ static void create_pid_file()
 }
 
 /** Clear most status variables. */
-void refresh_status(Session *thd)
+void refresh_status(Session *session)
 {
   pthread_mutex_lock(&LOCK_status);
 
   /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &thd->status_var);
+  add_to_status(&global_status_var, &session->status_var);
 
   /* Reset thread's status variables */
-  memset(&thd->status_var, 0, sizeof(thd->status_var));
+  memset(&session->status_var, 0, sizeof(session->status_var));
 
   /* Reset some global variables */
   reset_status_vars();

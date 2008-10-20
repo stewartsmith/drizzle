@@ -35,7 +35,7 @@ Master_info::Master_info()
    abort_slave(0), slave_running(0), slave_run_id(0)
 {
   host[0] = 0; user[0] = 0; password[0] = 0;
-  io_thd= NULL;
+  io_session= NULL;
   port= DRIZZLE_PORT;
 
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);

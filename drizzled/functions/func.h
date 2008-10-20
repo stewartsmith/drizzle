@@ -117,7 +117,7 @@ public:
   }
   Item_func(List<Item> &list);
   // Constructor used for Item_cond_and/or (see Item comment)
-  Item_func(Session *thd, Item_func *item);
+  Item_func(Session *session, Item_func *item);
   bool fix_fields(Session *, Item **ref);
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
   table_map used_tables() const;
@@ -143,7 +143,7 @@ public:
   void set_arguments(List<Item> &list);
   uint32_t argument_count() const { return arg_count; }
   void remove_arguments() { arg_count=0; }
-  void split_sum_func(Session *thd, Item **ref_pointer_array, List<Item> &fields);
+  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
   virtual void print(String *str, enum_query_type query_type);
   void print_op(String *str, enum_query_type query_type);
   void print_args(String *str, uint32_t from, enum_query_type query_type);
@@ -161,7 +161,7 @@ public:
 
   Field *tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *t_arg);
-  Item *get_tmp_table_item(Session *thd);
+  Item *get_tmp_table_item(Session *session);
 
   my_decimal *val_decimal(my_decimal *);
 

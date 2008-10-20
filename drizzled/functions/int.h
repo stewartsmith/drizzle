@@ -33,7 +33,7 @@ public:
   Item_int_func(Item *a,Item *b,Item *c) :Item_func(a,b,c)
   { max_length= 21; }
   Item_int_func(List<Item> &list) :Item_func(list) { max_length= 21; }
-  Item_int_func(Session *thd, Item_int_func *item) :Item_func(thd, item) {}
+  Item_int_func(Session *session, Item_int_func *item) :Item_func(session, item) {}
   double val_real();
   String *val_str(String*str);
   enum Item_result result_type () const { return INT_RESULT; }

@@ -38,11 +38,11 @@
 
 static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new_fields)
 {
-  Session	*thd=current_thd;
+  Session	*session=current_session;
   Item *item, *new_item;
   Item_null *constant= new Item_null("ALL");
 
-  SELECT_LEX *new_select = (SELECT_LEX *) thd->memdup((char*) select_lex, sizeof(*select_lex));
+  SELECT_LEX *new_select = (SELECT_LEX *) session->memdup((char*) select_lex, sizeof(*select_lex));
   if (!new_select)
     return 1;
   lex->last_selects->next=new_select;
@@ -85,7 +85,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
       if (item->type() == Item::FIELD_ITEM)
 	privlist.push_back(constant);
       else
-	privlist.push_back((Item*)thd->memdup((char *)item,item->size_of()));
+	privlist.push_back((Item*)session->memdup((char *)item,item->size_of()));
     }
   }
   new_select->item_list=privlist;
@@ -147,12 +147,12 @@ int handle_olaps(LEX *lex, SELECT_LEX *select_lex)
   List<Item>	all_fields(select_lex->item_list);
 
 
-  if (setup_tables(lex->thd, &select_lex->context, &select_lex->top_join_list,
+  if (setup_tables(lex->session, &select_lex->context, &select_lex->top_join_list,
                    (TableList *)select_lex->table_list.first
                    &select_lex->leaf_tables, false) ||
-      setup_fields(lex->thd, 0, select_lex->item_list, MARK_COLUMNS_READ,
+      setup_fields(lex->session, 0, select_lex->item_list, MARK_COLUMNS_READ,
                    &all_fields,1) ||
-      setup_fields(lex->thd, 0, item_list_copy, MARK_COLUMNS_READ,
+      setup_fields(lex->session, 0, item_list_copy, MARK_COLUMNS_READ,
                    &all_fields, 1))
     return -1;
 

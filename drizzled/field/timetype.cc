@@ -208,13 +208,13 @@ String *Field_time::val_str(String *val_buffer,
 bool Field_time::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long tmp;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
   if (!(fuzzydate & TIME_FUZZY_DATE))
   {
-    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_DATA_OUT_OF_RANGE,
                         ER(ER_WARN_DATA_OUT_OF_RANGE), field_name,
-                        thd->row_count);
+                        session->row_count);
     return 1;
   }
   tmp=(long) sint3korr(ptr);

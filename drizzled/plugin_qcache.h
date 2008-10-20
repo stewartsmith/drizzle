@@ -32,8 +32,8 @@ typedef struct qcache_st
      if a function pointer is NULL, that's ok.
   */
 
-  bool (*qcache_func1)(Session *thd, void *parm1, void *parm2);
-  bool (*qcache_func2)(Session *thd, void *parm3, void *parm4);
+  bool (*qcache_func1)(Session *session, void *parm1, void *parm2);
+  bool (*qcache_func2)(Session *session, void *parm3, void *parm4);
 } qcache_t;
 
 #endif /* DRIZZLED_PLUGIN_QCACHE_H */

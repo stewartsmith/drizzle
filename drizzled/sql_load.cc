@@ -71,18 +71,18 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
+static int read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
+static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
 			  bool ignore_check_option_errors);
 
-static bool write_execute_load_query_log_event(Session *thd,
+static bool write_execute_load_query_log_event(Session *session,
 					       bool duplicates, bool ignore,
 					       bool transactional_table,
                                                Session::killed_state killed_status);
@@ -92,7 +92,7 @@ static bool write_execute_load_query_log_event(Session *thd,
 
   SYNOPSYS
     mysql_load()
-      thd - current thread
+      session - current thread
       ex  - sql_exchange object representing source file and its parsing rules
       table_list  - list of tables to which we are loading data
       fields_vars - list of fields and variables to which we read
@@ -108,7 +108,7 @@ static bool write_execute_load_query_log_event(Session *thd,
     true - error / false - success
 */
 
-int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
+int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,
@@ -128,7 +128,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  char *tdb= thd->db ? thd->db : db;		// Result is never null
+  char *tdb= session->db ? session->db : db;		// Result is never null
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
   Session::killed_state killed_status= Session::NOT_KILLED;
@@ -139,12 +139,12 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 	       MYF(0));
     return(true);
   }
-  if (open_and_lock_tables(thd, table_list))
+  if (open_and_lock_tables(session, table_list))
     return(true);
-  if (setup_tables_and_check_access(thd, &thd->lex->select_lex.context,
-                                    &thd->lex->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
+                                    &session->lex->select_lex.top_join_list,
                                     table_list,
-                                    &thd->lex->select_lex.leaf_tables, true))
+                                    &session->lex->select_lex.leaf_tables, true))
      return(-1);
 
   /*
@@ -155,7 +155,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
     table is marked to be 'used for insert' in which case we should never
     mark this table as 'const table' (ie, one that has only one row).
   */
-  if (unique_table(thd, table_list, table_list->next_global, 0))
+  if (unique_table(session, table_list, table_list->next_global, 0))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
     return(true);
@@ -175,16 +175,16 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
       Let us also prepare SET clause, altough it is probably empty
       in this case.
     */
-    if (setup_fields(thd, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
-        setup_fields(thd, 0, set_values, MARK_COLUMNS_READ, 0, 0))
+    if (setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
+        setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
       return(true);
   }
   else
   {						// Part field list
     /* TODO: use this conds for 'WITH CHECK OPTIONS' */
-    if (setup_fields(thd, 0, fields_vars, MARK_COLUMNS_WRITE, 0, 0) ||
-        setup_fields(thd, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
-        check_that_all_fields_are_given_values(thd, table, table_list))
+    if (setup_fields(session, 0, fields_vars, MARK_COLUMNS_WRITE, 0, 0) ||
+        setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
+        check_that_all_fields_are_given_values(session, table, table_list))
       return(true);
     /*
       Check whenever TIMESTAMP field with auto-set feature specified
@@ -202,7 +202,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
       }
     }
     /* Fix the expressions in SET clause */
-    if (setup_fields(thd, 0, set_values, MARK_COLUMNS_READ, 0, 0))
+    if (setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
       return(true);
   }
 
@@ -249,7 +249,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 
   if (read_file_from_client)
   {
-    (void)net_request_file(&thd->net,ex->file_name);
+    (void)net_request_file(&session->net,ex->file_name);
     file = -1;
   }
   else
@@ -281,7 +281,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 	return(true);
 
       // if we are not in slave thread, the file must be:
-      if (!thd->slave_thread &&
+      if (!session->slave_thread &&
 	  !((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
 	    (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
 	    ((stat_info.st_mode & S_IFREG) == S_IFREG ||
@@ -304,7 +304,7 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
   READ_INFO read_info(file,tot_length,
-                      ex->cs ? ex->cs : thd->variables.collation_database,
+                      ex->cs ? ex->cs : session->variables.collation_database,
 		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, read_file_from_client, is_fifo);
   if (read_info.error)
@@ -316,15 +316,15 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 
   if (mysql_bin_log.is_open())
   {
-    lf_info.thd = thd;
+    lf_info.session = session;
     lf_info.wrote_create_file = 0;
     lf_info.last_pos_in_file = HA_POS_ERROR;
     lf_info.log_delayed= transactional_table;
     read_info.set_io_cache_arg((void*) &lf_info);
   }
 
-  thd->count_cuted_fields= CHECK_FIELD_WARN;		/* calc cuted fields */
-  thd->cuted_fields=0L;
+  session->count_cuted_fields= CHECK_FIELD_WARN;		/* calc cuted fields */
+  session->cuted_fields=0L;
   /* Skip lines if there is a line terminator */
   if (ex->line_term->length())
   {
@@ -349,14 +349,14 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
     table->file->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    thd->abort_on_warning= true;
+    session->abort_on_warning= true;
 
     if (!field_term->length() && !enclosed->length())
-      error= read_fixed_length(thd, info, table_list, fields_vars,
+      error= read_fixed_length(session, info, table_list, fields_vars,
                                set_fields, set_values, read_info,
 			       skip_lines, ignore);
     else
-      error= read_sep_field(thd, info, table_list, fields_vars,
+      error= read_sep_field(session, info, table_list, fields_vars,
                             set_fields, set_values, read_info,
 			    *enclosed, skip_lines, ignore);
     if (table->file->ha_end_bulk_insert() && !error)
@@ -372,12 +372,12 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
     my_close(file,MYF(0));
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
-  thd->count_cuted_fields= CHECK_FIELD_IGNORE;
+  session->count_cuted_fields= CHECK_FIELD_IGNORE;
   /* 
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : thd->killed;
+  killed_status= (error == 0)? Session::NOT_KILLED : session->killed;
   if (error)
   {
     if (read_file_from_client)
@@ -413,13 +413,13 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
 	/* If the file was not empty, wrote_create_file is true */
 	if (lf_info.wrote_create_file)
 	{
-	  if (thd->transaction.stmt.modified_non_trans_table)
-	    write_execute_load_query_log_event(thd, handle_duplicates,
+	  if (session->transaction.stmt.modified_non_trans_table)
+	    write_execute_load_query_log_event(session, handle_duplicates,
 					       ignore, transactional_table,
                                                killed_status);
 	  else
 	  {
-	    Delete_file_log_event d(thd, db, transactional_table);
+	    Delete_file_log_event d(session, db, transactional_table);
             d.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
 	    mysql_bin_log.write(&d);
 	  }
@@ -430,10 +430,10 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
     goto err;
   }
   sprintf(name, ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
-	  (uint32_t) (info.records - info.copied), (uint32_t) thd->cuted_fields);
+	  (uint32_t) (info.records - info.copied), (uint32_t) session->cuted_fields);
 
-  if (thd->transaction.stmt.modified_non_trans_table)
-    thd->transaction.all.modified_non_trans_table= true;
+  if (session->transaction.stmt.modified_non_trans_table)
+    session->transaction.all.modified_non_trans_table= true;
 
   if (mysql_bin_log.is_open())
   {
@@ -445,8 +445,8 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
       version for the binary log to mark that table maps are invalid
       after this point.
      */
-    if (thd->current_stmt_binlog_row_based)
-      thd->binlog_flush_pending_rows_event(true);
+    if (session->current_stmt_binlog_row_based)
+      session->binlog_flush_pending_rows_event(true);
     else
     {
       /*
@@ -457,34 +457,34 @@ int mysql_load(Session *thd,sql_exchange *ex,TableList *table_list,
       read_info.end_io_cache();
       if (lf_info.wrote_create_file)
       {
-        write_execute_load_query_log_event(thd, handle_duplicates, ignore,
+        write_execute_load_query_log_event(session, handle_duplicates, ignore,
                                            transactional_table,killed_status);
       }
     }
   }
 
   /* ok to client sent only after binlog write and engine commit */
-  my_ok(thd, info.copied + info.deleted, 0L, name);
+  my_ok(session, info.copied + info.deleted, 0L, name);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
-              thd->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.modified_non_trans_table);
   table->file->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
-  thd->abort_on_warning= 0;
+  session->abort_on_warning= 0;
   return(error);
 }
 
 
 /* Not a very useful function; just to avoid duplication of code */
-static bool write_execute_load_query_log_event(Session *thd,
+static bool write_execute_load_query_log_event(Session *session,
 					       bool duplicates, bool ignore,
 					       bool transactional_table,
                                                Session::killed_state killed_err_arg)
 {
   Execute_load_query_log_event
-    e(thd, thd->query, thd->query_length,
-      (char*)thd->lex->fname_start - (char*)thd->query,
-      (char*)thd->lex->fname_end - (char*)thd->query,
+    e(session, session->query, session->query_length,
+      (char*)session->lex->fname_start - (char*)session->query,
+      (char*)session->lex->fname_end - (char*)session->query,
       (duplicates == DUP_REPLACE) ? LOAD_DUP_REPLACE :
       (ignore ? LOAD_DUP_IGNORE : LOAD_DUP_ERROR),
       transactional_table, false, killed_err_arg);
@@ -498,7 +498,7 @@ static bool write_execute_load_query_log_event(Session *thd,
 ****************************************************************************/
 
 static int
-read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
+read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
@@ -513,9 +513,9 @@ read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
  
   while (!read_info.read_fixed_length())
   {
-    if (thd->killed)
+    if (session->killed)
     {
-      thd->send_kill_message();
+      session->send_kill_message();
       return(1);
     }
     if (skip_lines)
@@ -554,10 +554,10 @@ read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
 
       if (pos == read_info.row_end)
       {
-        thd->cuted_fields++;			/* Not enough fields */
-        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+        session->cuted_fields++;			/* Not enough fields */
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                             ER_WARN_TOO_FEW_RECORDS, 
-                            ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
+                            ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
         if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
             ((Field_timestamp*) field)->set_time();
       }
@@ -577,18 +577,18 @@ read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
     }
     if (pos != read_info.row_end)
     {
-      thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      session->cuted_fields++;			/* To long row */
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, 
-                          ER(ER_WARN_TOO_MANY_RECORDS), thd->row_count); 
+                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count); 
     }
 
-    if (thd->killed ||
-        fill_record(thd, set_fields, set_values,
+    if (session->killed ||
+        fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
 
-    err= write_record(thd, table, &info);
+    err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
       return(1);
@@ -601,12 +601,12 @@ read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
       break;
     if (read_info.line_cuted)
     {
-      thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      session->cuted_fields++;			/* To long row */
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, 
-                          ER(ER_WARN_TOO_MANY_RECORDS), thd->row_count); 
+                          ER(ER_WARN_TOO_MANY_RECORDS), session->row_count); 
     }
-    thd->row_count++;
+    session->row_count++;
   }
   return(test(read_info.error));
 }
@@ -614,7 +614,7 @@ read_fixed_length(Session *thd, COPY_INFO &info, TableList *table_list,
 
 
 static int
-read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
+read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,
@@ -632,9 +632,9 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
 
   for (;;it.rewind())
   {
-    if (thd->killed)
+    if (session->killed)
     {
-      thd->send_kill_message();
+      session->send_kill_message();
       return(1);
     }
 
@@ -668,7 +668,7 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
           if (field->reset())
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0), field->field_name,
-                     thd->row_count);
+                     session->row_count);
             return(1);
           }
           field->set_null();
@@ -736,7 +736,7 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
           if (field->reset())
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0),field->field_name,
-                     thd->row_count);
+                     session->row_count);
             return(1);
           }
           if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
@@ -747,10 +747,10 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
             of warnings in Session::cuted_fields (and get rid of cuted_fields
             in the end ?)
           */
-          thd->cuted_fields++;
-          push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+          session->cuted_fields++;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_WARN_TOO_FEW_RECORDS,
-                              ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
+                              ER(ER_WARN_TOO_FEW_RECORDS), session->row_count);
         }
         else if (item->type() == Item::STRING_ITEM)
         {
@@ -765,12 +765,12 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
       }
     }
 
-    if (thd->killed ||
-        fill_record(thd, set_fields, set_values,
+    if (session->killed ||
+        fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
       return(1);
 
-    err= write_record(thd, table, &info);
+    err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
       return(1);
@@ -782,14 +782,14 @@ read_sep_field(Session *thd, COPY_INFO &info, TableList *table_list,
       break;
     if (read_info.line_cuted)
     {
-      thd->cuted_fields++;			/* To long row */
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+      session->cuted_fields++;			/* To long row */
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS), 
-                          thd->row_count);   
-      if (thd->killed)
+                          session->row_count);   
+      if (session->killed)
         return(1);
     }
-    thd->row_count++;
+    session->row_count++;
   }
   return(test(read_info.error));
 }

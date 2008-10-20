@@ -46,7 +46,7 @@ enum tmp_table_type
   INTERNAL_TMP_TABLE, SYSTEM_TMP_TABLE, TMP_TABLE_FRM_FILE_ONLY
 };
 
-bool mysql_frm_type(Session *thd, char *path, enum legacy_db_type *dbt);
+bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
 
 
 enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
@@ -337,7 +337,7 @@ typedef struct st_table_field_w_type
   LEX_STRING cset;
 } TABLE_FIELD_W_TYPE;
 
-bool create_myisam_from_heap(Session *thd, Table *table,
+bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo, 
                              int error, bool ignore_last_dupp_key_error);
@@ -374,7 +374,7 @@ public:
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo, 
                                uint64_t options);
-  void free_tmp_table(Session *thd);
+  void free_tmp_table(Session *session);
   bool open_tmp_table();
   size_t max_row_length(const unsigned char *data);
   uint32_t find_shortest_key(const key_map *usable_keys);
@@ -440,14 +440,14 @@ public:
 
    Temporary tables:
 
-   table->query_id is set to thd->query_id for the duration of a statement
+   table->query_id is set to session->query_id for the duration of a statement
    and is reset to 0 once it is closed by the same statement. A non-zero
    table->query_id means that a statement is using the table even if it's
    not the current statement (table is in use by some outer statement).
 
    Non-temporary tables:
 
-   Under pre-locked or LOCK TABLES mode: query_id is set to thd->query_id
+   Under pre-locked or LOCK TABLES mode: query_id is set to session->query_id
    for the duration of a statement and is reset to 0 once it is closed by
    the same statement. A non-zero query_id is used to control which tables
    in the list of pre-opened and locked tables are actually being used.
@@ -701,12 +701,12 @@ struct ST_SCHEMA_TABLE
   const char* table_name;
   ST_FIELD_INFO *fields_info;
   /* Create information_schema table */
-  Table *(*create_table)  (Session *thd, TableList *table_list);
+  Table *(*create_table)  (Session *session, TableList *table_list);
   /* Fill table with data */
-  int (*fill_table) (Session *thd, TableList *tables, COND *cond);
+  int (*fill_table) (Session *session, TableList *tables, COND *cond);
   /* Handle fileds for old SHOW */
-  int (*old_format) (Session *thd, struct ST_SCHEMA_TABLE *schema_table);
-  int (*process_table) (Session *thd, TableList *tables, Table *table,
+  int (*old_format) (Session *session, struct ST_SCHEMA_TABLE *schema_table);
+  int (*process_table) (Session *session, TableList *tables, Table *table,
                         bool res, LEX_STRING *db_name, LEX_STRING *table_name);
   int idx_field1, idx_field2; 
   bool hidden;

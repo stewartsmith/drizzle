@@ -147,7 +147,7 @@ int Field_timestamp::store(const char *from,
   int error;
   bool have_smth_to_conv;
   bool in_dst_time_gap;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   have_smth_to_conv= (str_to_datetime(from, len, &l_time, 1, &error) >
@@ -163,7 +163,7 @@ int Field_timestamp::store(const char *from,
   /* Only convert a correct date (not a zero date) */
   if (have_smth_to_conv && l_time.month)
   {
-    if (!(tmp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
+    if (!(tmp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
     {
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
@@ -206,10 +206,10 @@ int Field_timestamp::store(int64_t nr,
   my_time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
-  int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
+  int64_t tmp= number_to_datetime(nr, &l_time, (session->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE), &error);
   if (tmp == INT64_C(-1))
   {
@@ -218,7 +218,7 @@ int Field_timestamp::store(int64_t nr,
 
   if (!error && tmp)
   {
-    if (!(timestamp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
+    if (!(timestamp= TIME_to_timestamp(session, &l_time, &in_dst_time_gap)))
     {
       set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
@@ -250,9 +250,9 @@ int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
   DRIZZLE_TIME time_tmp;
-  Session  *thd= table ? table->in_use : current_thd;
+  Session  *session= table ? table->in_use : current_session;
 
-  thd->time_zone_used= 1;
+  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -263,7 +263,7 @@ int64_t Field_timestamp::val_int(void)
   if (temp == 0L)				// No time
     return(0);					/* purecov: inspected */
   
-  thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
   
   return time_tmp.year * INT64_C(10000000000) +
          time_tmp.month * INT64_C(100000000) +
@@ -276,14 +276,14 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 {
   uint32_t temp, temp2;
   DRIZZLE_TIME time_tmp;
-  Session *thd= table ? table->in_use : current_thd;
+  Session *session= table ? table->in_use : current_session;
   char *to;
 
   val_buffer->alloc(field_length+1);
   to= (char*) val_buffer->ptr();
   val_buffer->length(field_length);
 
-  thd->time_zone_used= 1;
+  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -298,7 +298,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
   }
   val_buffer->set_charset(&my_charset_bin);	// Safety
   
-  thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(my_time_t)temp);
+  session->variables.time_zone->gmt_sec_to_TIME(&time_tmp,(my_time_t)temp);
 
   temp= time_tmp.year % 100;
   if (temp < YY_PART_YEAR - 1)
@@ -347,8 +347,8 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
-  Session *thd= table ? table->in_use : current_thd;
-  thd->time_zone_used= 1;
+  Session *session= table ? table->in_use : current_session;
+  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -363,7 +363,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
   }
   else
   {
-    thd->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)temp);
+    session->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)temp);
   }
   return 0;
 }
@@ -430,8 +430,8 @@ void Field_timestamp::sql_type(String &res) const
 
 void Field_timestamp::set_time()
 {
-  Session *thd= table ? table->in_use : current_thd;
-  long tmp= (long) thd->query_start();
+  Session *session= table ? table->in_use : current_session;
+  long tmp= (long) session->query_start();
   set_notnull();
   store_timestamp(tmp);
 }

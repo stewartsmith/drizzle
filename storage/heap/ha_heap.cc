@@ -419,7 +419,7 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(Session *thd __attribute__((unused)),
+int ha_heap::external_lock(Session *session __attribute__((unused)),
                            int lock_type __attribute__((unused)))
 {
   return 0;					// No external locking
@@ -533,7 +533,7 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(Session *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_heap::store_lock(Session *session __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -754,7 +754,7 @@ int ha_heap::create(const char *name, Table *table_arg,
   hp_create_info.auto_key_type= auto_key_type;
   hp_create_info.auto_increment= (create_info->auto_increment_value ?
 				  create_info->auto_increment_value - 1 : 0);
-  hp_create_info.max_table_size=current_thd->variables.max_heap_table_size;
+  hp_create_info.max_table_size=current_session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= share->block_size;

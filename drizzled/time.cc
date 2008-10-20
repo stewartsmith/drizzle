@@ -222,16 +222,16 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
                           uint32_t flags)
 {
   int was_cut;
-  Session *thd= current_thd;
+  Session *session= current_session;
   enum enum_drizzle_timestamp_type ts_type;
   
   ts_type= str_to_datetime(str, length, l_time,
-                           (flags | (thd->variables.sql_mode &
+                           (flags | (session->variables.sql_mode &
                                      (MODE_INVALID_DATES |
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NULL);
   return ts_type;
 }
@@ -243,7 +243,7 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
 
   SYNOPSIS
     TIME_to_timestamp()
-      thd             - current thread
+      session             - current thread
       t               - datetime in broken-down representation, 
       in_dst_time_gap - pointer to bool which is set to true if t represents
                         value which doesn't exists (falls into the spring 
@@ -254,14 +254,14 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
      0 - t contains datetime value which is out of TIMESTAMP range.
      
 */
-my_time_t TIME_to_timestamp(Session *thd, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
+my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
 {
   my_time_t timestamp;
 
   *in_dst_time_gap= 0;
-  thd->time_zone_used= 1;
+  session->time_zone_used= 1;
 
-  timestamp= thd->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
+  timestamp= session->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
   if (timestamp)
   {
     return timestamp;
@@ -285,7 +285,7 @@ str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
@@ -603,7 +603,7 @@ DATE_TIME_FORMAT
 
   SYNOPSIS
     date_and_time_format_copy()
-    thd			Set if variable should be allocated in thread mem
+    session			Set if variable should be allocated in thread mem
     format		format to copy
 
   NOTES
@@ -614,13 +614,13 @@ DATE_TIME_FORMAT
     new object
 */
 
-DATE_TIME_FORMAT *date_time_format_copy(Session *thd, DATE_TIME_FORMAT *format)
+DATE_TIME_FORMAT *date_time_format_copy(Session *session, DATE_TIME_FORMAT *format)
 {
   DATE_TIME_FORMAT *new_format;
   uint32_t length= sizeof(*format) + format->format.length + 1;
 
-  if (thd)
-    new_format= (DATE_TIME_FORMAT *) thd->alloc(length);
+  if (session)
+    new_format= (DATE_TIME_FORMAT *) session->alloc(length);
   else
     new_format=  (DATE_TIME_FORMAT *) my_malloc(length, MYF(MY_WME));
   if (new_format)
@@ -714,7 +714,7 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_truncated_value_warning(Session *thd, DRIZZLE_ERROR::enum_warning_level level,
+void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint32_t str_length,
                                   enum enum_drizzle_timestamp_type time_type,
@@ -744,7 +744,7 @@ void make_truncated_value_warning(Session *thd, DRIZZLE_ERROR::enum_warning_leve
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                        type_str, str.c_ptr(), field_name,
-                       (uint32_t) thd->row_count);
+                       (uint32_t) session->row_count);
   else
   {
     if (time_type > DRIZZLE_TIMESTAMP_ERROR)
@@ -755,7 +755,7 @@ void make_truncated_value_warning(Session *thd, DRIZZLE_ERROR::enum_warning_leve
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_WRONG_VALUE), type_str, str.c_ptr());
   }
-  push_warning(thd, level,
+  push_warning(session, level,
                ER_TRUNCATED_WRONG_VALUE, warn_buff);
 }
 
@@ -862,7 +862,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   return 0;					// Ok
 
 invalid_date:
-  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+  push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_DATETIME_FUNCTION_OVERFLOW,
                       ER(ER_DATETIME_FUNCTION_OVERFLOW),
                       "datetime");

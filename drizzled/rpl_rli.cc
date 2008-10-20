@@ -52,7 +52,7 @@ Relay_log_info::Relay_log_info()
    cur_log_old_open_count(0), group_relay_log_pos(0), event_relay_log_pos(0),
    group_master_log_pos(0), log_space_total(0), ignore_log_space_limit(0),
    last_master_timestamp(0), slave_skip_counter(0),
-   abort_pos_wait(0), slave_run_id(0), sql_thd(0),
+   abort_pos_wait(0), slave_run_id(0), sql_session(0),
    inited(0), abort_slave(0), slave_running(0), until_condition(UNTIL_NONE),
    until_log_pos(0), retried_trans(0),
    tables_to_lock(0), tables_to_lock_count(0),
@@ -464,7 +464,7 @@ err:
 
   SYNOPSIS
     wait_for_pos()
-    thd             client thread that sent SELECT MASTER_POS_WAIT
+    session             client thread that sent SELECT MASTER_POS_WAIT
     log_name        log name to wait for
     log_pos         position to wait for
     timeout         timeout in seconds before giving up waiting
@@ -483,7 +483,7 @@ err:
                 before reaching the desired log/position
  */
 
-int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
+int32_t Relay_log_info::wait_for_pos(Session* session, String* log_name,
                                     int64_t log_pos,
                                     int64_t timeout)
 {
@@ -498,7 +498,7 @@ int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
 
   set_timespec(abstime,timeout);
   pthread_mutex_lock(&data_lock);
-  msg= thd->enter_cond(&data_cond, &data_lock,
+  msg= session->enter_cond(&data_cond, &data_lock,
                        "Waiting for the slave SQL thread to "
                        "advance position");
   /*
@@ -550,7 +550,7 @@ int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
   }
 
   /* The "compare and wait" main loop */
-  while (!thd->killed &&
+  while (!session->killed &&
          init_abort_pos_wait == abort_pos_wait &&
          slave_running)
   {
@@ -596,7 +596,7 @@ int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
 
       pos_reached= ((!cmp_result && group_master_log_pos >= (uint64_t)log_pos) ||
                     cmp_result > 0);
-      if (pos_reached || thd->killed)
+      if (pos_reached || session->killed)
         break;
     }
 
@@ -633,8 +633,8 @@ int32_t Relay_log_info::wait_for_pos(Session* thd, String* log_name,
   }
 
 err:
-  thd->exit_cond(msg);
-  if (thd->killed || init_abort_pos_wait != abort_pos_wait ||
+  session->exit_cond(msg);
+  if (session->killed || init_abort_pos_wait != abort_pos_wait ||
       !slave_running)
   {
     error= -2;
@@ -720,7 +720,7 @@ void Relay_log_info::close_temporary_tables()
     Assumes to have a run lock on rli and that no slave thread are running.
 */
 
-int32_t purge_relay_logs(Relay_log_info* rli, Session *thd, bool just_reset,
+int32_t purge_relay_logs(Relay_log_info* rli, Session *session, bool just_reset,
                      const char** errmsg)
 {
   int32_t error=0;
@@ -770,7 +770,7 @@ int32_t purge_relay_logs(Relay_log_info* rli, Session *thd, bool just_reset,
     rli->cur_log_fd= -1;
   }
 
-  if (rli->relay_log.reset_logs(thd))
+  if (rli->relay_log.reset_logs(session))
   {
     *errmsg = "Failed during log reset";
     error=1;
@@ -921,7 +921,7 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
     middle of the "transaction". START SLAVE will resume at BEGIN
     while the MyISAM table has already been updated.
   */
-  if ((sql_thd->options & OPTION_BEGIN) && opt_using_transactions)
+  if ((sql_session->options & OPTION_BEGIN) && opt_using_transactions)
     inc_event_relay_log_pos();
   else
   {
@@ -940,9 +940,9 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
   }
 }
 
-void Relay_log_info::cleanup_context(Session *thd, bool error)
+void Relay_log_info::cleanup_context(Session *session, bool error)
 {
-  assert(sql_thd == thd);
+  assert(sql_session == session);
   /*
     1) Instances of Table_map_log_event, if ::do_apply_event() was called on them,
     may have opened tables, which we cannot be sure have been closed (because
@@ -957,18 +957,18 @@ void Relay_log_info::cleanup_context(Session *thd, bool error)
   */
   if (error)
   {
-    ha_autocommit_or_rollback(thd, 1); // if a "statement transaction"
-    end_trans(thd, ROLLBACK); // if a "real transaction"
+    ha_autocommit_or_rollback(session, 1); // if a "statement transaction"
+    end_trans(session, ROLLBACK); // if a "real transaction"
   }
   m_table_map.clear_tables();
-  close_thread_tables(thd);
+  close_thread_tables(session);
   clear_tables_to_lock();
   clear_flag(IN_STMT);
   /*
     Cleanup for the flags that have been set at do_apply_event.
   */
-  thd->options&= ~OPTION_NO_FOREIGN_KEY_CHECKS;
-  thd->options&= ~OPTION_RELAXED_UNIQUE_CHECKS;
+  session->options&= ~OPTION_NO_FOREIGN_KEY_CHECKS;
+  session->options&= ~OPTION_RELAXED_UNIQUE_CHECKS;
   last_event_start_time= 0;
   return;
 }

@@ -62,10 +62,10 @@ public:
     illegal_method_call((const char*)"val_decimal");
     return 0;
   };
-  bool fix_fields(Session *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
   void cleanup();
-  void split_sum_func(Session *thd, Item **ref_pointer_array, List<Item> &fields);
+  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
   table_map used_tables() const { return used_tables_cache; };
   bool const_item() const { return const_item_cache; };
   enum Item_result result_type() const { return ROW_RESULT; }

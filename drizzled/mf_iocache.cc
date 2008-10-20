@@ -47,7 +47,7 @@ int _my_b_net_read(register IO_CACHE *info, unsigned char *Buffer,
 		   size_t Count __attribute__((unused)))
 {
   ulong read_length;
-  NET *net= &(current_thd)->net;
+  NET *net= &(current_session)->net;
 
   if (!info->end_of_file)
     return(1);	/* because my_b_get (no _) takes 1 byte at a time */

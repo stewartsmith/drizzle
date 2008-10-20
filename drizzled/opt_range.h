@@ -299,7 +299,7 @@ protected:
 public:
   uint32_t mrr_flags; /* Flags to be used with MRR interface */
 protected:
-  uint32_t mrr_buf_size; /* copy from thd->variables.read_rnd_buff_size */  
+  uint32_t mrr_buf_size; /* copy from session->variables.read_rnd_buff_size */  
   HANDLER_BUFFER *mrr_buf_desc; /* the handler buffer */
 
   /* Info about index we're scanning */
@@ -314,7 +314,7 @@ protected:
 public:
   MEM_ROOT alloc;
 
-  QUICK_RANGE_SELECT(Session *thd, Table *table,uint32_t index_arg,bool no_alloc,
+  QUICK_RANGE_SELECT(Session *session, Table *table,uint32_t index_arg,bool no_alloc,
                      MEM_ROOT *parent_alloc, bool *create_err);
   ~QUICK_RANGE_SELECT();
 
@@ -347,7 +347,7 @@ private:
   }
   friend class TRP_ROR_INTERSECT;
   friend
-  QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *thd, Table *table,
+  QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                                struct st_table_ref *ref,
                                                ha_rows records);
   friend bool get_quick_keys(PARAM *param, QUICK_RANGE_SELECT *quick, 
@@ -433,7 +433,7 @@ private:
 class QUICK_INDEX_MERGE_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_INDEX_MERGE_SELECT(Session *thd, Table *table);
+  QUICK_INDEX_MERGE_SELECT(Session *session, Table *table);
   ~QUICK_INDEX_MERGE_SELECT();
 
   int  init();
@@ -458,7 +458,7 @@ public:
   bool  doing_pk_scan;
 
   MEM_ROOT alloc;
-  Session *thd;
+  Session *session;
   int read_keys_and_merge();
 
   /* used to get rows collected in Unique */
@@ -487,7 +487,7 @@ public:
 class QUICK_ROR_INTERSECT_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_ROR_INTERSECT_SELECT(Session *thd, Table *table,
+  QUICK_ROR_INTERSECT_SELECT(Session *session, Table *table,
                              bool retrieve_full_rows,
                              MEM_ROOT *parent_alloc);
   ~QUICK_ROR_INTERSECT_SELECT();
@@ -517,7 +517,7 @@ public:
   QUICK_RANGE_SELECT *cpk_quick;
 
   MEM_ROOT alloc; /* Memory pool for this and merged quick selects data. */
-  Session *thd;       /* current thread */
+  Session *session;       /* current thread */
   bool need_to_fetch_row; /* if true, do retrieve full table records. */
   /* in top-level quick select, true if merged scans where initialized */
   bool scans_inited; 
@@ -540,7 +540,7 @@ public:
 class QUICK_ROR_UNION_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_ROR_UNION_SELECT(Session *thd, Table *table);
+  QUICK_ROR_UNION_SELECT(Session *session, Table *table);
   ~QUICK_ROR_UNION_SELECT();
 
   int  init();
@@ -560,7 +560,7 @@ public:
   QUEUE queue;    /* Priority queue for merge operation */
   MEM_ROOT alloc; /* Memory pool for this and merged quick selects data. */
 
-  Session *thd;             /* current thread */
+  Session *session;             /* current thread */
   unsigned char *cur_rowid;      /* buffer used in get_next() */
   unsigned char *prev_rowid;     /* rowid of last row returned by get_next() */
   bool have_prev_rowid; /* true if prev_rowid has valid data */
@@ -704,19 +704,19 @@ class SQL_SELECT :public Sql_alloc {
   SQL_SELECT();
   ~SQL_SELECT();
   void cleanup();
-  bool check_quick(Session *thd, bool force_quick_range, ha_rows limit)
+  bool check_quick(Session *session, bool force_quick_range, ha_rows limit)
   {
     key_map tmp;
     tmp.set_all();
-    return test_quick_select(thd, tmp, 0, limit, force_quick_range, false) < 0;
+    return test_quick_select(session, tmp, 0, limit, force_quick_range, false) < 0;
   }
   inline bool skip_record() { return cond ? cond->val_int() == 0 : 0; }
-  int test_quick_select(Session *thd, key_map keys, table_map prev_tables,
+  int test_quick_select(Session *session, key_map keys, table_map prev_tables,
 			ha_rows limit, bool force_quick_range, 
                         bool ordered_output);
 };
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *thd, Table *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                              struct st_table_ref *ref,
                                              ha_rows records);
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);

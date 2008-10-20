@@ -25,11 +25,11 @@
 int logging_initializer(st_plugin_int *plugin);
 int logging_finalizer(st_plugin_int *plugin);
 
-/* there are no parameters other than the thd because logging can
- * pull everything it needs out of the thd.  If need to add
+/* there are no parameters other than the session because logging can
+ * pull everything it needs out of the session.  If need to add
  * parameters, look at how errmsg.h and errmsg.cc do it. */
 
-bool logging_pre_do (Session *thd);
-bool logging_post_do (Session *thd);
+bool logging_pre_do (Session *session);
+bool logging_post_do (Session *session);
 
 #endif /* DRIZZLED_LOGGING_H */

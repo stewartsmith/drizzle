@@ -137,17 +137,17 @@ void Item_func::count_real_length()
 
 void Item_func::signal_divide_by_null()
 {
-  Session *thd= current_thd;
-  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
+  Session *session= current_session;
+  push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
 
 
-Item *Item_func::get_tmp_table_item(Session *thd)
+Item *Item_func::get_tmp_table_item(Session *session)
 {
   if (!with_sum_func && !const_item() && functype() != SUSERVAR_FUNC)
     return new Item_field(result_field);
-  return copy_or_same(thd);
+  return copy_or_same(session);
 }
 
 // Shift-functions, same as << and >> in C/C++
@@ -512,7 +512,7 @@ public:
   bool locked;
   pthread_cond_t cond;
   my_thread_id thread_id;
-  void set_thread(Session *thd) { thread_id= thd->thread_id; }
+  void set_thread(Session *session) { thread_id= session->thread_id; }
 
   User_level_lock(const unsigned char *key_arg,uint32_t length, ulong id) 
     :key_length(length),count(1),locked(1), thread_id(id)
@@ -589,19 +589,19 @@ void item_user_lock_release(User_level_lock *ull)
 int64_t Item_master_pos_wait::val_int()
 {
   assert(fixed == 1);
-  Session* thd = current_thd;
+  Session* session = current_session;
   String *log_name = args[0]->val_str(&value);
   int event_count= 0;
 
   null_value=0;
-  if (thd->slave_thread || !log_name || !log_name->length())
+  if (session->slave_thread || !log_name || !log_name->length())
   {
     null_value = 1;
     return 0;
   }
   int64_t pos = (ulong)args[1]->val_int();
   int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
-  if ((event_count = active_mi->rli.wait_for_pos(thd, log_name, pos, timeout)) == -2)
+  if ((event_count = active_mi->rli.wait_for_pos(session, log_name, pos, timeout)) == -2)
   {
     null_value = 1;
     event_count=0;
@@ -619,7 +619,7 @@ void debug_sync_point(const char* lock_name, uint32_t lock_timeout)
 
 int64_t Item_func_last_insert_id::val_int()
 {
-  Session *thd= current_thd;
+  Session *session= current_session;
   assert(fixed == 1);
   if (arg_count)
   {
@@ -632,17 +632,17 @@ int64_t Item_func_last_insert_id::val_int()
       LAST_INSERT_ID(X) take precedence over an generated auto_increment
       value for this row.
     */
-    thd->arg_of_last_insert_id_function= true;
-    thd->first_successful_insert_id_in_prev_stmt= value;
+    session->arg_of_last_insert_id_function= true;
+    session->first_successful_insert_id_in_prev_stmt= value;
     return value;
   }
-  return thd->read_first_successful_insert_id_in_prev_stmt();
+  return session->read_first_successful_insert_id_in_prev_stmt();
 }
 
 
-bool Item_func_last_insert_id::fix_fields(Session *thd, Item **ref)
+bool Item_func_last_insert_id::fix_fields(Session *session, Item **ref)
 {
-  return Item_int_func::fix_fields(thd, ref);
+  return Item_int_func::fix_fields(session, ref);
 }
 
 
@@ -654,7 +654,7 @@ int64_t Item_func_benchmark::val_int()
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
   my_decimal tmp_decimal;
-  Session *thd=current_thd;
+  Session *session=current_session;
   uint64_t loop_count;
 
   loop_count= (uint64_t) args[0]->val_int();
@@ -666,7 +666,7 @@ int64_t Item_func_benchmark::val_int()
     {
       char buff[22];
       llstr(((int64_t) loop_count), buff);
-      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
     }
@@ -676,7 +676,7 @@ int64_t Item_func_benchmark::val_int()
   }
 
   null_value=0;
-  for (uint64_t loop=0 ; loop < loop_count && !thd->killed; loop++)
+  for (uint64_t loop=0 ; loop < loop_count && !session->killed; loop++)
   {
     switch (args[1]->result_type()) {
     case REAL_RESULT:
@@ -745,7 +745,7 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
       the variable as "already logged" (line below) so that it won't be logged
       by Item_func_get_user_var (because that's not necessary).
     */
-    entry->used_query_id=current_thd->query_id;
+    entry->used_query_id=current_session->query_id;
     entry->type=STRING_RESULT;
     memcpy(entry->name.str, name.str, name.length+1);
     if (my_hash_insert(hash,(unsigned char*) entry))
@@ -762,19 +762,19 @@ static user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
   SELECT @a:= ).
 */
 
-bool Item_func_set_user_var::fix_fields(Session *thd, Item **ref)
+bool Item_func_set_user_var::fix_fields(Session *session, Item **ref)
 {
   assert(fixed == 0);
   /* fix_fields will call Item_func_set_user_var::fix_length_and_dec */
-  if (Item_func::fix_fields(thd, ref) ||
-      !(entry= get_variable(&thd->user_vars, name, 1)))
+  if (Item_func::fix_fields(session, ref) ||
+      !(entry= get_variable(&session->user_vars, name, 1)))
     return true;
   /* 
      Remember the last query which updated it, this way a query can later know
      if this variable is a constant item in the query (it is if update_query_id
      is different from query_id).
   */
-  entry->update_query_id= thd->query_id;
+  entry->update_query_id= session->query_id;
   /*
     As it is wrong and confusing to associate any 
     character set with NULL, @a should be latin2
@@ -1076,7 +1076,7 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
 
   @note
     For now it always return OK. All problem with value evaluating
-    will be caught by thd->is_error() check in sql_set_variables().
+    will be caught by session->is_error() check in sql_set_variables().
 
   @retval
     false OK.
@@ -1447,11 +1447,11 @@ int64_t Item_func_get_user_var::val_int()
   use into the binary log.
 
   When a user variable is invoked from an update query (INSERT, UPDATE etc),
-  stores this variable and its value in thd->user_var_events, so that it can be
+  stores this variable and its value in session->user_var_events, so that it can be
   written to the binlog (will be written just before the query is written, see
   log.cc).
 
-  @param      thd        Current thread
+  @param      session        Current thread
   @param      name       Variable name
   @param[out] out_entry  variable structure or NULL. The pointer is set
                          regardless of whether function succeeded or not.
@@ -1463,12 +1463,12 @@ int64_t Item_func_get_user_var::val_int()
 
 */
 
-int get_var_with_binlog(Session *thd, enum_sql_command sql_command,
+int get_var_with_binlog(Session *session, enum_sql_command sql_command,
                         LEX_STRING &name, user_var_entry **out_entry)
 {
   BINLOG_USER_VAR_EVENT *user_var_event;
   user_var_entry *var_entry;
-  var_entry= get_variable(&thd->user_vars, name, 0);
+  var_entry= get_variable(&session->user_vars, name, 0);
 
   /*
     Any reference to user-defined variable which is done from stored
@@ -1502,23 +1502,23 @@ int get_var_with_binlog(Session *thd, enum_sql_command sql_command,
     */
 
     List<set_var_base> tmp_var_list;
-    LEX *sav_lex= thd->lex, lex_tmp;
-    thd->lex= &lex_tmp;
-    lex_start(thd);
+    LEX *sav_lex= session->lex, lex_tmp;
+    session->lex= &lex_tmp;
+    lex_start(session);
     tmp_var_list.push_back(new set_var_user(new Item_func_set_user_var(name,
                                                                        new Item_null())));
     /* Create the variable */
-    if (sql_set_variables(thd, &tmp_var_list))
+    if (sql_set_variables(session, &tmp_var_list))
     {
-      thd->lex= sav_lex;
+      session->lex= sav_lex;
       goto err;
     }
-    thd->lex= sav_lex;
-    if (!(var_entry= get_variable(&thd->user_vars, name, 0)))
+    session->lex= sav_lex;
+    if (!(var_entry= get_variable(&session->user_vars, name, 0)))
       goto err;
   }
-  else if (var_entry->used_query_id == thd->query_id ||
-           mysql_bin_log.is_query_in_union(thd, var_entry->used_query_id))
+  else if (var_entry->used_query_id == session->query_id ||
+           mysql_bin_log.is_query_in_union(session, var_entry->used_query_id))
   {
     /* 
        If this variable was already stored in user_var_events by this query
@@ -1544,7 +1544,7 @@ int get_var_with_binlog(Session *thd, enum_sql_command sql_command,
   */
   size= ALIGN_SIZE(sizeof(BINLOG_USER_VAR_EVENT)) + var_entry->length;
   if (!(user_var_event= (BINLOG_USER_VAR_EVENT *)
-        alloc_root(thd->user_var_events_alloc, size)))
+        alloc_root(session->user_var_events_alloc, size)))
     goto err;
 
   user_var_event->value= (char*) user_var_event +
@@ -1565,8 +1565,8 @@ int get_var_with_binlog(Session *thd, enum_sql_command sql_command,
            var_entry->length);
   }
   /* Mark that this variable has been used by this query */
-  var_entry->used_query_id= thd->query_id;
-  if (insert_dynamic(&thd->user_var_events, (unsigned char*) &user_var_event))
+  var_entry->used_query_id= session->query_id;
+  if (insert_dynamic(&session->user_var_events, (unsigned char*) &user_var_event))
     goto err;
 
   *out_entry= var_entry;
@@ -1579,13 +1579,13 @@ err:
 
 void Item_func_get_user_var::fix_length_and_dec()
 {
-  Session *thd=current_thd;
+  Session *session=current_session;
   int error;
   maybe_null=1;
   decimals=NOT_FIXED_DEC;
   max_length=MAX_BLOB_WIDTH;
 
-  error= get_var_with_binlog(thd, thd->lex->sql_command, name, &var_entry);
+  error= get_var_with_binlog(session, session->lex->sql_command, name, &var_entry);
 
   /*
     If the variable didn't exist it has been created as a STRING-type.
@@ -1632,7 +1632,7 @@ void Item_func_get_user_var::fix_length_and_dec()
 
 bool Item_func_get_user_var::const_item() const
 {
-  return (!var_entry || current_thd->query_id != var_entry->update_query_id);
+  return (!var_entry || current_session->query_id != var_entry->update_query_id);
 }
 
 
@@ -1667,11 +1667,11 @@ bool Item_func_get_user_var::eq(const Item *item,
 }
 
 
-bool Item_user_var_as_out_param::fix_fields(Session *thd, Item **ref)
+bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
   assert(fixed == 0);
-  if (Item::fix_fields(thd, ref) ||
-      !(entry= get_variable(&thd->user_vars, name, 1)))
+  if (Item::fix_fields(session, ref) ||
+      !(entry= get_variable(&session->user_vars, name, 1)))
     return true;
   entry->type= STRING_RESULT;
   /*
@@ -1679,8 +1679,8 @@ bool Item_user_var_as_out_param::fix_fields(Session *thd, Item **ref)
     of fields in LOAD DATA INFILE.
     (Since Item_user_var_as_out_param is used only there).
   */
-  entry->collation.set(thd->variables.collation_database);
-  entry->update_query_id= thd->query_id;
+  entry->collation.set(session->variables.collation_database);
+  entry->update_query_id= session->query_id;
   return false;
 }
 
@@ -1748,7 +1748,7 @@ Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
 
 
 bool
-Item_func_get_system_var::fix_fields(Session *thd, Item **ref)
+Item_func_get_system_var::fix_fields(Session *session, Item **ref)
 {
   Item *item;
 
@@ -1757,10 +1757,10 @@ Item_func_get_system_var::fix_fields(Session *thd, Item **ref)
     instead of this item. If the variable can not be evaluated,
     the error is reported in sys_var::item().
   */
-  if (!(item= var->item(thd, var_type, &component)))
+  if (!(item= var->item(session, var_type, &component)))
     return(1);                             // Impossible
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
-  thd->change_item_tree(ref, item);
+  session->change_item_tree(ref, item);
 
   return(0);
 }
@@ -1789,7 +1789,7 @@ int64_t Item_func_bit_xor::val_int()
 /**
   Return value of an system variable base[.name] as a constant item.
 
-  @param thd			Thread handler
+  @param session			Thread handler
   @param var_type		global / session
   @param name		        Name of base or system variable
   @param component		Component.
@@ -1803,7 +1803,7 @@ int64_t Item_func_bit_xor::val_int()
 */
 
 
-Item *get_system_var(Session *thd, enum_var_type var_type, LEX_STRING name,
+Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
 		     LEX_STRING component)
 {
   sys_var *var;
@@ -1820,7 +1820,7 @@ Item *get_system_var(Session *thd, enum_var_type var_type, LEX_STRING name,
     component_name= &component;			// Empty string
   }
 
-  if (!(var= find_sys_var(thd, base_name->str, base_name->length)))
+  if (!(var= find_sys_var(session, base_name->str, base_name->length)))
     return 0;
   if (component.str)
   {
@@ -1896,15 +1896,15 @@ int64_t Item_func_is_used_lock::val_int()
 int64_t Item_func_row_count::val_int()
 {
   assert(fixed == 1);
-  Session *thd= current_thd;
+  Session *session= current_session;
 
-  return thd->row_count_func;
+  return session->row_count_func;
 }
 
 int64_t Item_func_found_rows::val_int()
 {
   assert(fixed == 1);
-  Session *thd= current_thd;
+  Session *session= current_session;
 
-  return thd->found_rows();
+  return session->found_rows();
 }

@@ -130,7 +130,7 @@ struct st_item_value_holder : public st_mysql_value
 
 /*
   stored in bookmark_hash, this structure is never removed from the
-  hash and is used to mark a single offset for a thd local variable
+  hash and is used to mark a single offset for a session local variable
   even if plugins have been uninstalled and reinstalled, repeatedly.
   This structure is allocated from plugin_mem_root.
 
@@ -181,15 +181,15 @@ public:
   { return !(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) && type != OPT_GLOBAL; }
   bool check_update_type(Item_result type);
   SHOW_TYPE show_type();
-  unsigned char* real_value_ptr(Session *thd, enum_var_type type);
+  unsigned char* real_value_ptr(Session *session, enum_var_type type);
   TYPELIB* plugin_var_typelib(void);
-  unsigned char* value_ptr(Session *thd, enum_var_type type, LEX_STRING *base);
-  bool check(Session *thd, set_var *var);
+  unsigned char* value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
+  bool check(Session *session, set_var *var);
   bool check_default(enum_var_type type __attribute__((unused)))
     { return is_readonly(); }
-  void set_default(Session *thd,
+  void set_default(Session *session,
                    enum_var_type type __attribute__((unused)));
-  bool update(Session *thd, set_var *var);
+  bool update(Session *session, set_var *var);
 };
 
 
@@ -200,8 +200,8 @@ static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
                                int *, char **);
 static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
                              struct st_plugin_int **);
-static void unlock_variables(Session *thd, struct system_variables *vars);
-static void cleanup_variables(Session *thd, struct system_variables *vars);
+static void unlock_variables(Session *session, struct system_variables *vars);
+static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
@@ -215,7 +215,7 @@ static void reap_plugins(void);
 
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
-extern bool throw_bounds_warning(Session *thd, bool fixed, bool unsignd,
+extern bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
                                  const char *name, int64_t val);
 
 /****************************************************************************
@@ -248,7 +248,7 @@ static const char *item_val_str(struct st_mysql_value *value,
     Lets be nice and create a temporary string since the
     buffer was too small
   */
-  return current_thd->strmake(res->c_ptr_quick(), res->length());
+  return current_session->strmake(res->c_ptr_quick(), res->length());
 }
 
 
@@ -521,19 +521,19 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
 }
 
 
-plugin_ref plugin_lock(Session *thd, plugin_ref *ptr CALLER_INFO_PROTO)
+plugin_ref plugin_lock(Session *session, plugin_ref *ptr CALLER_INFO_PROTO)
 {
-  LEX *lex= thd ? thd->lex : 0;
+  LEX *lex= session ? session->lex : 0;
   plugin_ref rc;
   rc= my_intern_plugin_lock_ci(lex, *ptr);
   return(rc);
 }
 
 
-plugin_ref plugin_lock_by_name(Session *thd, const LEX_STRING *name, int type
+plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type
                                CALLER_INFO_PROTO)
 {
-  LEX *lex= thd ? thd->lex : 0;
+  LEX *lex= session ? session->lex : 0;
   plugin_ref rc= NULL;
   st_plugin_int *plugin;
   if ((plugin= plugin_find_internal(name, type)))
@@ -767,9 +767,9 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 }
 
 
-void plugin_unlock(Session *thd, plugin_ref plugin)
+void plugin_unlock(Session *session, plugin_ref plugin)
 {
-  LEX *lex= thd ? thd->lex : 0;
+  LEX *lex= session ? session->lex : 0;
   if (!plugin)
     return;
   intern_plugin_unlock(lex, plugin);
@@ -777,9 +777,9 @@ void plugin_unlock(Session *thd, plugin_ref plugin)
 }
 
 
-void plugin_unlock_list(Session *thd, plugin_ref *list, uint32_t count)
+void plugin_unlock_list(Session *session, plugin_ref *list, uint32_t count)
 {
-  LEX *lex= thd ? thd->lex : 0;
+  LEX *lex= session ? session->lex : 0;
   assert(list);
   while (count--)
     intern_plugin_unlock(lex, *list++);
@@ -1239,7 +1239,7 @@ void plugin_shutdown(void)
 }
 
 
-bool plugin_foreach_with_mask(Session *thd, plugin_foreach_func *func,
+bool plugin_foreach_with_mask(Session *session, plugin_foreach_func *func,
                        int type, uint32_t state_mask, void *arg)
 {
   uint32_t idx, total;
@@ -1285,7 +1285,7 @@ bool plugin_foreach_with_mask(Session *thd, plugin_foreach_func *func,
     }
     plugin= plugins[idx];
     /* It will stop iterating on first engine error when "func" returns true */
-    if (plugin && func(thd, plugin_int_to_ref(plugin), arg))
+    if (plugin && func(session, plugin_int_to_ref(plugin), arg))
         goto err;
   }
 
@@ -1308,14 +1308,14 @@ err:
 #define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
 
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
-typedef DECLARE_DRIZZLE_SessionVAR_BASIC(thdvar_bool_t, bool);
+typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
-typedef DECLARE_DRIZZLE_SessionVAR_BASIC(thdvar_str_t, char *);
+typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 
 typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
-typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(thdvar_enum_t, unsigned long);
+typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_enum_t, unsigned long);
 typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
-typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(thdvar_set_t, uint64_t);
+typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_set_t, uint64_t);
 
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int_t, int);
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_long_t, long);
@@ -1324,21 +1324,21 @@ typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_uint_t, uint);
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
 
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_int_t, int);
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_long_t, long);
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_int64_t_t, int64_t);
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_uint_t, uint);
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_ulong_t, ulong);
-typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_int_t, int);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_long_t, long);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_int64_t_t, int64_t);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_uint_t, uint);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_ulong_t, ulong);
+typedef DECLARE_DRIZZLE_SessionVAR_SIMPLE(sessionvar_uint64_t_t, uint64_t);
 
-typedef bool *(*mysql_sys_var_ptr_p)(Session* a_thd, int offset);
+typedef bool *(*mysql_sys_var_ptr_p)(Session* a_session, int offset);
 
 
 /****************************************************************************
   default variable data check and update functions
 ****************************************************************************/
 
-static int check_func_bool(Session *thd __attribute__((unused)),
+static int check_func_bool(Session *session __attribute__((unused)),
                            struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
@@ -1378,7 +1378,7 @@ err:
 }
 
 
-static int check_func_int(Session *thd, struct st_mysql_sys_var *var,
+static int check_func_int(Session *session, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
   bool fixed;
@@ -1393,12 +1393,12 @@ static int check_func_int(Session *thd, struct st_mysql_sys_var *var,
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
 
-  return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
+  return throw_bounds_warning(session, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
                               var->name, (int64_t) tmp);
 }
 
 
-static int check_func_long(Session *thd, struct st_mysql_sys_var *var,
+static int check_func_long(Session *session, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
   bool fixed;
@@ -1413,12 +1413,12 @@ static int check_func_long(Session *thd, struct st_mysql_sys_var *var,
   else
     *(long *)save= (long) getopt_ll_limit_value(tmp, &options, &fixed);
 
-  return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
+  return throw_bounds_warning(session, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
                               var->name, (int64_t) tmp);
 }
 
 
-static int check_func_int64_t(Session *thd, struct st_mysql_sys_var *var,
+static int check_func_int64_t(Session *session, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
   bool fixed;
@@ -1433,11 +1433,11 @@ static int check_func_int64_t(Session *thd, struct st_mysql_sys_var *var,
   else
     *(int64_t *)save= getopt_ll_limit_value(tmp, &options, &fixed);
 
-  return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
+  return throw_bounds_warning(session, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
                               var->name, (int64_t) tmp);
 }
 
-static int check_func_str(Session *thd,
+static int check_func_str(Session *session,
                           struct st_mysql_sys_var *var __attribute__((unused)),
                           void *save, st_mysql_value *value)
 {
@@ -1447,13 +1447,13 @@ static int check_func_str(Session *thd,
 
   length= sizeof(buff);
   if ((str= value->val_str(value, buff, &length)))
-    str= thd->strmake(str, length);
+    str= session->strmake(str, length);
   *(const char**)save= str;
   return 0;
 }
 
 
-static int check_func_enum(Session *thd __attribute__((unused)),
+static int check_func_enum(Session *session __attribute__((unused)),
                            struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
@@ -1465,7 +1465,7 @@ static int check_func_enum(Session *thd __attribute__((unused)),
   int length;
 
   if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((thdvar_enum_t*) var)->typelib;
+    typelib= ((sessionvar_enum_t*) var)->typelib;
   else
     typelib= ((sysvar_enum_t*) var)->typelib;
 
@@ -1500,7 +1500,7 @@ err:
 }
 
 
-static int check_func_set(Session *thd __attribute__((unused)),
+static int check_func_set(Session *session __attribute__((unused)),
                           struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
@@ -1513,7 +1513,7 @@ static int check_func_set(Session *thd __attribute__((unused)),
   int length;
 
   if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((thdvar_set_t*) var)->typelib;
+    typelib= ((sessionvar_set_t*) var)->typelib;
   else
     typelib= ((sysvar_set_t*)var)->typelib;
 
@@ -1551,7 +1551,7 @@ err:
 }
 
 
-static void update_func_bool(Session *thd __attribute__((unused)),
+static void update_func_bool(Session *session __attribute__((unused)),
                              struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
@@ -1559,7 +1559,7 @@ static void update_func_bool(Session *thd __attribute__((unused)),
 }
 
 
-static void update_func_int(Session *thd __attribute__((unused)),
+static void update_func_int(Session *session __attribute__((unused)),
                             struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
@@ -1567,7 +1567,7 @@ static void update_func_int(Session *thd __attribute__((unused)),
 }
 
 
-static void update_func_long(Session *thd __attribute__((unused)),
+static void update_func_long(Session *session __attribute__((unused)),
                              struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
@@ -1575,7 +1575,7 @@ static void update_func_long(Session *thd __attribute__((unused)),
 }
 
 
-static void update_func_int64_t(Session *thd __attribute__((unused)),
+static void update_func_int64_t(Session *session __attribute__((unused)),
                                  struct st_mysql_sys_var *var __attribute__((unused)),
                                  void *tgt, const void *save)
 {
@@ -1583,7 +1583,7 @@ static void update_func_int64_t(Session *thd __attribute__((unused)),
 }
 
 
-static void update_func_str(Session *thd __attribute__((unused)), struct st_mysql_sys_var *var,
+static void update_func_str(Session *session __attribute__((unused)), struct st_mysql_sys_var *var,
                              void *tgt, const void *save)
 {
   char *old= *(char **) tgt;
@@ -1601,7 +1601,7 @@ static void update_func_str(Session *thd __attribute__((unused)), struct st_mysq
 ****************************************************************************/
 
 
-sys_var *find_sys_var(Session *thd, const char *str, uint32_t length)
+sys_var *find_sys_var(Session *session, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
@@ -1612,7 +1612,7 @@ sys_var *find_sys_var(Session *thd, const char *str, uint32_t length)
       (pi= var->cast_pluginvar()))
   {
     rw_unlock(&LOCK_system_variables_hash);
-    LEX *lex= thd ? thd->lex : 0;
+    LEX *lex= session ? session->lex : 0;
     if (!(plugin= my_intern_plugin_lock(lex, plugin_int_to_ref(pi->plugin))))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else
@@ -1677,8 +1677,8 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
 
 
 /*
-  returns a bookmark for thd-local variables, creating if neccessary.
-  returns null for non thd-local variables.
+  returns a bookmark for session-local variables, creating if neccessary.
+  returns null for non session-local variables.
   Requires that a write lock is obtained on LOCK_system_variables_hash
 */
 static st_bookmark *register_var(const char *plugin, const char *name,
@@ -1781,31 +1781,31 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
 
 /*
-  returns a pointer to the memory which holds the thd-local variable or
-  a pointer to the global variable if thd==null.
+  returns a pointer to the memory which holds the session-local variable or
+  a pointer to the global variable if session==null.
   If required, will sync with global variables if the requested variable
   has not yet been allocated in the current thread.
 */
-static unsigned char *intern_sys_var_ptr(Session* thd, int offset, bool global_lock)
+static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool global_lock)
 {
   assert(offset >= 0);
   assert((uint)offset <= global_system_variables.dynamic_variables_head);
 
-  if (!thd)
+  if (!session)
     return (unsigned char*) global_system_variables.dynamic_variables_ptr + offset;
 
   /*
     dynamic_variables_head points to the largest valid offset
   */
-  if (!thd->variables.dynamic_variables_ptr ||
-      (uint)offset > thd->variables.dynamic_variables_head)
+  if (!session->variables.dynamic_variables_ptr ||
+      (uint)offset > session->variables.dynamic_variables_head)
   {
     uint32_t idx;
 
     rw_rdlock(&LOCK_system_variables_hash);
 
-    thd->variables.dynamic_variables_ptr= (char*)
-      my_realloc(thd->variables.dynamic_variables_ptr,
+    session->variables.dynamic_variables_ptr= (char*)
+      my_realloc(session->variables.dynamic_variables_ptr,
                  global_variables_dynamic_size,
                  MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
 
@@ -1814,12 +1814,12 @@ static unsigned char *intern_sys_var_ptr(Session* thd, int offset, bool global_l
 
     safe_mutex_assert_owner(&LOCK_global_system_variables);
 
-    memcpy(thd->variables.dynamic_variables_ptr +
-             thd->variables.dynamic_variables_size,
+    memcpy(session->variables.dynamic_variables_ptr +
+             session->variables.dynamic_variables_size,
            global_system_variables.dynamic_variables_ptr +
-             thd->variables.dynamic_variables_size,
+             session->variables.dynamic_variables_size,
            global_system_variables.dynamic_variables_size -
-             thd->variables.dynamic_variables_size);
+             session->variables.dynamic_variables_size);
 
     /*
       now we need to iterate through any newly copied 'defaults'
@@ -1831,7 +1831,7 @@ static unsigned char *intern_sys_var_ptr(Session* thd, int offset, bool global_l
       sys_var *var;
       st_bookmark *v= (st_bookmark*) hash_element(&bookmark_hash,idx);
 
-      if (v->version <= thd->variables.dynamic_variables_version ||
+      if (v->version <= session->variables.dynamic_variables_version ||
           !(var= intern_find_sys_var(v->key + 1, v->name_len, true)) ||
           !(pi= var->cast_pluginvar()) ||
           v->key[0] != (pi->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
@@ -1842,7 +1842,7 @@ static unsigned char *intern_sys_var_ptr(Session* thd, int offset, bool global_l
       if ((pi->plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_STR &&
           pi->plugin_var->flags & PLUGIN_VAR_MEMALLOC)
       {
-         char **pp= (char**) (thd->variables.dynamic_variables_ptr +
+         char **pp= (char**) (session->variables.dynamic_variables_ptr +
                              *(int*)(pi->plugin_var + 1));
          if ((*pp= *(char**) (global_system_variables.dynamic_variables_ptr +
                              *(int*)(pi->plugin_var + 1))))
@@ -1853,70 +1853,70 @@ static unsigned char *intern_sys_var_ptr(Session* thd, int offset, bool global_l
     if (global_lock)
       pthread_mutex_unlock(&LOCK_global_system_variables);
 
-    thd->variables.dynamic_variables_version=
+    session->variables.dynamic_variables_version=
            global_system_variables.dynamic_variables_version;
-    thd->variables.dynamic_variables_head=
+    session->variables.dynamic_variables_head=
            global_system_variables.dynamic_variables_head;
-    thd->variables.dynamic_variables_size=
+    session->variables.dynamic_variables_size=
            global_system_variables.dynamic_variables_size;
 
     rw_unlock(&LOCK_system_variables_hash);
   }
-  return (unsigned char*)thd->variables.dynamic_variables_ptr + offset;
+  return (unsigned char*)session->variables.dynamic_variables_ptr + offset;
 }
 
-static bool *mysql_sys_var_ptr_bool(Session* a_thd, int offset)
+static bool *mysql_sys_var_ptr_bool(Session* a_session, int offset)
 {
-  return (bool *)intern_sys_var_ptr(a_thd, offset, true);
+  return (bool *)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static int *mysql_sys_var_ptr_int(Session* a_thd, int offset)
+static int *mysql_sys_var_ptr_int(Session* a_session, int offset)
 {
-  return (int *)intern_sys_var_ptr(a_thd, offset, true);
+  return (int *)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static long *mysql_sys_var_ptr_long(Session* a_thd, int offset)
+static long *mysql_sys_var_ptr_long(Session* a_session, int offset)
 {
-  return (long *)intern_sys_var_ptr(a_thd, offset, true);
+  return (long *)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static int64_t *mysql_sys_var_ptr_int64_t(Session* a_thd, int offset)
+static int64_t *mysql_sys_var_ptr_int64_t(Session* a_session, int offset)
 {
-  return (int64_t *)intern_sys_var_ptr(a_thd, offset, true);
+  return (int64_t *)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static char **mysql_sys_var_ptr_str(Session* a_thd, int offset)
+static char **mysql_sys_var_ptr_str(Session* a_session, int offset)
 {
-  return (char **)intern_sys_var_ptr(a_thd, offset, true);
+  return (char **)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static uint64_t *mysql_sys_var_ptr_set(Session* a_thd, int offset)
+static uint64_t *mysql_sys_var_ptr_set(Session* a_session, int offset)
 {
-  return (uint64_t *)intern_sys_var_ptr(a_thd, offset, true);
+  return (uint64_t *)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static unsigned long *mysql_sys_var_ptr_enum(Session* a_thd, int offset)
+static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
 {
-  return (unsigned long *)intern_sys_var_ptr(a_thd, offset, true);
+  return (unsigned long *)intern_sys_var_ptr(a_session, offset, true);
 }
 
 
-void plugin_thdvar_init(Session *thd)
+void plugin_sessionvar_init(Session *session)
 {
-  plugin_ref old_table_plugin= thd->variables.table_plugin;
+  plugin_ref old_table_plugin= session->variables.table_plugin;
   
-  thd->variables.table_plugin= NULL;
-  cleanup_variables(thd, &thd->variables);
+  session->variables.table_plugin= NULL;
+  cleanup_variables(session, &session->variables);
   
-  thd->variables= global_system_variables;
-  thd->variables.table_plugin= NULL;
+  session->variables= global_system_variables;
+  session->variables.table_plugin= NULL;
 
   /* we are going to allocate these lazily */
-  thd->variables.dynamic_variables_version= 0;
-  thd->variables.dynamic_variables_size= 0;
-  thd->variables.dynamic_variables_ptr= 0;
+  session->variables.dynamic_variables_version= 0;
+  session->variables.dynamic_variables_size= 0;
+  session->variables.dynamic_variables_ptr= 0;
 
-  thd->variables.table_plugin=
+  session->variables.table_plugin=
         my_intern_plugin_lock(NULL, global_system_variables.table_plugin);
   intern_plugin_unlock(NULL, old_table_plugin);
   return;
@@ -1926,7 +1926,7 @@ void plugin_thdvar_init(Session *thd)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(Session *thd __attribute__((unused)),
+static void unlock_variables(Session *session __attribute__((unused)),
                              struct system_variables *vars)
 {
   intern_plugin_unlock(NULL, vars->table_plugin);
@@ -1940,7 +1940,7 @@ static void unlock_variables(Session *thd __attribute__((unused)),
   Unlike plugin_vars_free_values() it frees all variables of all plugins,
   it's used on shutdown.
 */
-static void cleanup_variables(Session *thd, struct system_variables *vars)
+static void cleanup_variables(Session *session, struct system_variables *vars)
 {
   st_bookmark *v;
   sys_var_pluginvar *pivar;
@@ -1963,7 +1963,7 @@ static void cleanup_variables(Session *thd, struct system_variables *vars)
     if ((flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_STR &&
         flags & PLUGIN_VAR_SessionLOCAL && flags & PLUGIN_VAR_MEMALLOC)
     {
-      char **ptr= (char**) pivar->real_value_ptr(thd, OPT_SESSION);
+      char **ptr= (char**) pivar->real_value_ptr(session, OPT_SESSION);
       free(*ptr);
       *ptr= NULL;
     }
@@ -1979,22 +1979,22 @@ static void cleanup_variables(Session *thd, struct system_variables *vars)
 }
 
 
-void plugin_thdvar_cleanup(Session *thd)
+void plugin_sessionvar_cleanup(Session *session)
 {
   uint32_t idx;
   plugin_ref *list;
 
-  unlock_variables(thd, &thd->variables);
-  cleanup_variables(thd, &thd->variables);
+  unlock_variables(session, &session->variables);
+  cleanup_variables(session, &session->variables);
 
-  if ((idx= thd->lex->plugins.elements))
+  if ((idx= session->lex->plugins.elements))
   {
-    list= ((plugin_ref*) thd->lex->plugins.buffer) + idx - 1;
-    while ((unsigned char*) list >= thd->lex->plugins.buffer)
+    list= ((plugin_ref*) session->lex->plugins.buffer) + idx - 1;
+    while ((unsigned char*) list >= session->lex->plugins.buffer)
       intern_plugin_unlock(NULL, *list--);
   }
 
-  reset_dynamic(&thd->lex->plugins);
+  reset_dynamic(&session->lex->plugins);
 
   return;
 }
@@ -2071,15 +2071,15 @@ SHOW_TYPE sys_var_pluginvar::show_type()
 }
 
 
-unsigned char* sys_var_pluginvar::real_value_ptr(Session *thd, enum_var_type type)
+unsigned char* sys_var_pluginvar::real_value_ptr(Session *session, enum_var_type type)
 {
-  assert(thd || (type == OPT_GLOBAL));
+  assert(session || (type == OPT_GLOBAL));
   if (plugin_var->flags & PLUGIN_VAR_SessionLOCAL)
   {
     if (type == OPT_GLOBAL)
-      thd= NULL;
+      session= NULL;
 
-    return intern_sys_var_ptr(thd, *(int*) (plugin_var+1), false);
+    return intern_sys_var_ptr(session, *(int*) (plugin_var+1), false);
   }
   return *(unsigned char**) (plugin_var+1);
 }
@@ -2093,9 +2093,9 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
   case PLUGIN_VAR_SET:
     return ((sysvar_set_t *)plugin_var)->typelib;
   case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
-    return ((thdvar_enum_t *)plugin_var)->typelib;
+    return ((sessionvar_enum_t *)plugin_var)->typelib;
   case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
-    return ((thdvar_set_t *)plugin_var)->typelib;
+    return ((sessionvar_set_t *)plugin_var)->typelib;
   default:
     return NULL;
   }
@@ -2103,12 +2103,12 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 }
 
 
-unsigned char* sys_var_pluginvar::value_ptr(Session *thd, enum_var_type type,
+unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type,
                                     LEX_STRING *base __attribute__((unused)))
 {
   unsigned char* result;
 
-  result= real_value_ptr(thd, type);
+  result= real_value_ptr(session, type);
 
   if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_ENUM)
     result= (unsigned char*) get_type(plugin_var_typelib(), *(ulong*)result);
@@ -2131,13 +2131,13 @@ unsigned char* sys_var_pluginvar::value_ptr(Session *thd, enum_var_type type,
 
     result= (unsigned char*) "";
     if (str.length())
-      result= (unsigned char*) thd->strmake(str.ptr(), str.length()-1);
+      result= (unsigned char*) session->strmake(str.ptr(), str.length()-1);
   }
   return result;
 }
 
 
-bool sys_var_pluginvar::check(Session *thd, set_var *var)
+bool sys_var_pluginvar::check(Session *session, set_var *var)
 {
   st_item_value_holder value;
   assert(is_readonly() || plugin_var->check);
@@ -2149,11 +2149,11 @@ bool sys_var_pluginvar::check(Session *thd, set_var *var)
   value.item= var->value;
 
   return is_readonly() ||
-         plugin_var->check(thd, plugin_var, &var->save_result, &value);
+         plugin_var->check(session, plugin_var, &var->save_result, &value);
 }
 
 
-void sys_var_pluginvar::set_default(Session *thd, enum_var_type type)
+void sys_var_pluginvar::set_default(Session *session, enum_var_type type)
 {
   const void *src;
   void *tgt;
@@ -2164,84 +2164,84 @@ void sys_var_pluginvar::set_default(Session *thd, enum_var_type type)
     return;
 
   pthread_mutex_lock(&LOCK_global_system_variables);
-  tgt= real_value_ptr(thd, type);
+  tgt= real_value_ptr(session, type);
   src= ((void **) (plugin_var + 1) + 1);
 
   if (plugin_var->flags & PLUGIN_VAR_SessionLOCAL)
   {
     if (type != OPT_GLOBAL)
-      src= real_value_ptr(thd, OPT_GLOBAL);
+      src= real_value_ptr(session, OPT_GLOBAL);
     else
     switch (plugin_var->flags & PLUGIN_VAR_TYPEMASK) {
 	case PLUGIN_VAR_INT:
-	  src= &((thdvar_uint_t*) plugin_var)->def_val;
+	  src= &((sessionvar_uint_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_LONG:
-	  src= &((thdvar_ulong_t*) plugin_var)->def_val;
+	  src= &((sessionvar_ulong_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_LONGLONG:
-	  src= &((thdvar_uint64_t_t*) plugin_var)->def_val;
+	  src= &((sessionvar_uint64_t_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_ENUM:
-	  src= &((thdvar_enum_t*) plugin_var)->def_val;
+	  src= &((sessionvar_enum_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_SET:
-	  src= &((thdvar_set_t*) plugin_var)->def_val;
+	  src= &((sessionvar_set_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_BOOL:
-	  src= &((thdvar_bool_t*) plugin_var)->def_val;
+	  src= &((sessionvar_bool_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_STR:
-	  src= &((thdvar_str_t*) plugin_var)->def_val;
+	  src= &((sessionvar_str_t*) plugin_var)->def_val;
 	  break;
 	default:
 	  assert(0);
 	}
   }
 
-  /* thd must equal current_thd if PLUGIN_VAR_SessionLOCAL flag is set */
+  /* session must equal current_session if PLUGIN_VAR_SessionLOCAL flag is set */
   assert(!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) ||
-              thd == current_thd);
+              session == current_session);
 
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || type == OPT_GLOBAL)
   {
-    plugin_var->update(thd, plugin_var, tgt, src);
+    plugin_var->update(session, plugin_var, tgt, src);
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
   else
   {
     pthread_mutex_unlock(&LOCK_global_system_variables);
-    plugin_var->update(thd, plugin_var, tgt, src);
+    plugin_var->update(session, plugin_var, tgt, src);
   }
 }
 
 
-bool sys_var_pluginvar::update(Session *thd, set_var *var)
+bool sys_var_pluginvar::update(Session *session, set_var *var)
 {
   void *tgt;
 
   assert(is_readonly() || plugin_var->update);
 
-  /* thd must equal current_thd if PLUGIN_VAR_SessionLOCAL flag is set */
+  /* session must equal current_session if PLUGIN_VAR_SessionLOCAL flag is set */
   assert(!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) ||
-              thd == current_thd);
+              session == current_session);
 
   if (is_readonly())
     return 1;
 
   pthread_mutex_lock(&LOCK_global_system_variables);
-  tgt= real_value_ptr(thd, var->type);
+  tgt= real_value_ptr(session, var->type);
 
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || var->type == OPT_GLOBAL)
   {
     /* variable we are updating has global scope, so we unlock after updating */
-    plugin_var->update(thd, plugin_var, tgt, &var->save_result);
+    plugin_var->update(session, plugin_var, tgt, &var->save_result);
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
   else
   {
     pthread_mutex_unlock(&LOCK_global_system_variables);
-    plugin_var->update(thd, plugin_var, tgt, &var->save_result);
+    plugin_var->update(session, plugin_var, tgt, &var->save_result);
   }
  return 0;
 }
@@ -2306,45 +2306,45 @@ static void plugin_opt_set_limits(struct my_option *options,
     break;
   /* threadlocal variables */
   case PLUGIN_VAR_INT | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_INT, options, (thdvar_int_t*) opt);
+    OPTION_SET_LIMITS(GET_INT, options, (sessionvar_int_t*) opt);
     break;
   case PLUGIN_VAR_INT | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_UINT, options, (thdvar_uint_t*) opt);
+    OPTION_SET_LIMITS(GET_UINT, options, (sessionvar_uint_t*) opt);
     break;
   case PLUGIN_VAR_LONG | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_LONG, options, (thdvar_long_t*) opt);
+    OPTION_SET_LIMITS(GET_LONG, options, (sessionvar_long_t*) opt);
     break;
   case PLUGIN_VAR_LONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_ULONG, options, (thdvar_ulong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULONG, options, (sessionvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_LL, options, (thdvar_int64_t_t*) opt);
+    OPTION_SET_LIMITS(GET_LL, options, (sessionvar_int64_t_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
-    OPTION_SET_LIMITS(GET_ULL, options, (thdvar_uint64_t_t*) opt);
+    OPTION_SET_LIMITS(GET_ULL, options, (sessionvar_uint64_t_t*) opt);
     break;
   case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
     options->var_type= GET_ENUM;
-    options->typelib= ((thdvar_enum_t*) opt)->typelib;
-    options->def_value= ((thdvar_enum_t*) opt)->def_val;
+    options->typelib= ((sessionvar_enum_t*) opt)->typelib;
+    options->def_value= ((sessionvar_enum_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
     options->max_value= options->typelib->count - 1;
     break;
   case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
     options->var_type= GET_SET;
-    options->typelib= ((thdvar_set_t*) opt)->typelib;
-    options->def_value= ((thdvar_set_t*) opt)->def_val;
+    options->typelib= ((sessionvar_set_t*) opt)->typelib;
+    options->def_value= ((sessionvar_set_t*) opt)->def_val;
     options->min_value= options->block_size= 0;
     options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL:
     options->var_type= GET_BOOL;
-    options->def_value= ((thdvar_bool_t*) opt)->def_val;
+    options->def_value= ((sessionvar_bool_t*) opt)->def_val;
     break;
   case PLUGIN_VAR_STR | PLUGIN_VAR_SessionLOCAL:
     options->var_type= ((opt->flags & PLUGIN_VAR_MEMALLOC) ?
                         GET_STR_ALLOC : GET_STR);
-    options->def_value= (intptr_t) ((thdvar_str_t*) opt)->def_val;
+    options->def_value= (intptr_t) ((sessionvar_str_t*) opt)->def_val;
     break;
   default:
     assert(0);
@@ -2425,25 +2425,25 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       continue;
     switch (opt->flags & PLUGIN_VAR_TYPEMASK) {
     case PLUGIN_VAR_BOOL:
-      (((thdvar_bool_t *)opt)->resolve)= mysql_sys_var_ptr_bool;
+      (((sessionvar_bool_t *)opt)->resolve)= mysql_sys_var_ptr_bool;
       break;
     case PLUGIN_VAR_INT:
-      (((thdvar_int_t *)opt)->resolve)= mysql_sys_var_ptr_int;
+      (((sessionvar_int_t *)opt)->resolve)= mysql_sys_var_ptr_int;
       break;
     case PLUGIN_VAR_LONG:
-      (((thdvar_long_t *)opt)->resolve)= mysql_sys_var_ptr_long;
+      (((sessionvar_long_t *)opt)->resolve)= mysql_sys_var_ptr_long;
       break;
     case PLUGIN_VAR_LONGLONG:
-      (((thdvar_int64_t_t *)opt)->resolve)= mysql_sys_var_ptr_int64_t;
+      (((sessionvar_int64_t_t *)opt)->resolve)= mysql_sys_var_ptr_int64_t;
       break;
     case PLUGIN_VAR_STR:
-      (((thdvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
+      (((sessionvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
       break;
     case PLUGIN_VAR_ENUM:
-      (((thdvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
+      (((sessionvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
       break;
     case PLUGIN_VAR_SET:
-      (((thdvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
+      (((sessionvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
       break;
     default:
       sql_print_error(_("Unknown variable type code 0x%x in plugin '%s'."),

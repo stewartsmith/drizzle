@@ -57,10 +57,10 @@ inline bool check_and_unset_keyword(const char *dbug_str)
 inline bool
 check_and_unset_inject_value(int value)
 {
-  Session *thd= current_thd;
-  if (thd->error_inject_value == (uint)value)
+  Session *session= current_session;
+  if (session->error_inject_value == (uint)value)
   {
-    thd->error_inject_value= 0;
+    session->error_inject_value= 0;
     return 1;
   }
   return 0;
@@ -102,7 +102,7 @@ check_and_unset_inject_value(int value)
   error inject value instead of a code used by debug macros.
 */
 #define SET_ERROR_INJECT_VALUE(x) \
-  current_thd->error_inject_value= (x)
+  current_session->error_inject_value= (x)
 #define ERROR_INJECT_ACTION(code, action) \
   (check_and_unset_keyword(code) ? ((action), 0) : 0)
 #define ERROR_INJECT(code) \

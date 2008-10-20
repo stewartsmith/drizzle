@@ -37,19 +37,19 @@ class Arg_comparator: public Sql_alloc
   Arg_comparator *comparators;   // used only for compare_row()
   double precision;
   /* Fields used in DATE/DATETIME comparison. */
-  Session *thd;
+  Session *session;
   enum_field_types a_type, b_type; // Types of a and b items
   Item *a_cache, *b_cache;         // Cached values of a and b items
   bool is_nulls_eq;                // TRUE <=> compare for the EQUAL_FUNC
   enum enum_date_cmp_type { CMP_DATE_DFLT= 0, CMP_DATE_WITH_DATE,
                             CMP_DATE_WITH_STR, CMP_STR_WITH_DATE };
-  uint64_t (*get_value_func)(Session *thd, Item ***item_arg, Item **cache_arg,
+  uint64_t (*get_value_func)(Session *session, Item ***item_arg, Item **cache_arg,
                               Item *warn_item, bool *is_null);
 public:
   DTCollation cmp_collation;
 
-  Arg_comparator(): thd(0), a_cache(0), b_cache(0) {};
-  Arg_comparator(Item **a1, Item **a2): a(a1), b(a2), thd(0),
+  Arg_comparator(): session(0), a_cache(0), b_cache(0) {};
+  Arg_comparator(Item **a1, Item **a2): a(a1), b(a2), session(0),
     a_cache(0), b_cache(0) {};
 
   int set_compare_func(Item_bool_func2 *owner, Item_result type);
@@ -106,7 +106,7 @@ public:
   Item_bool_func() :Item_int_func() {}
   Item_bool_func(Item *a) :Item_int_func(a) {}
   Item_bool_func(Item *a,Item *b) :Item_int_func(a,b) {}
-  Item_bool_func(Session *thd, Item_bool_func *item) :Item_int_func(thd, item) {}
+  Item_bool_func(Session *session, Item_bool_func *item) :Item_int_func(session, item) {}
   bool is_bool_func() { return 1; }
   void fix_length_and_dec() { decimals=0; max_length=1; }
   uint32_t decimal_precision() const { return 1; }
@@ -235,7 +235,7 @@ public:
     save_cache(0), result_for_null_param(UNKNOWN)
   { with_subselect= true; }
   bool fix_fields(Session *, Item **);
-  bool fix_left(Session *thd, Item **ref);
+  bool fix_left(Session *session, Item **ref);
   bool is_null();
   int64_t val_int();
   void cleanup();
@@ -362,7 +362,7 @@ public:
   {
     allowed_arg_cols= 0;  // Fetch this value from first argument
   }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
   virtual Item *negated_item();
   bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
@@ -375,7 +375,7 @@ public:
   int64_t val_int();
   enum Functype functype() const { return NOT_FUNC; }
   const char *func_name() const { return "not"; }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
   virtual void print(String *str, enum_query_type query_type);
 };
 
@@ -447,7 +447,7 @@ public:
   void set_sum_test(Item_sum_hybrid *item) { test_sum_item= item; };
   void set_sub_test(Item_maxmin_subselect *item) { test_sub_item= item; };
   bool empty_underlying_subquery();
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
 };
 
 
@@ -458,7 +458,7 @@ public:
   Item_func_nop_all(Item *a) :Item_func_not_all(a) {}
   int64_t val_int();
   const char *func_name() const { return "<nop>"; }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
 };
 
 
@@ -485,7 +485,7 @@ public:
   enum Functype rev_functype() const { return EQUAL_FUNC; }
   cond_result eq_cmp_result() const { return COND_TRUE; }
   const char *func_name() const { return "<=>"; }
-  Item *neg_transformer(Session *thd __attribute__((unused))) { return 0; }
+  Item *neg_transformer(Session *session __attribute__((unused))) { return 0; }
 };
 
 
@@ -576,7 +576,7 @@ public:
 public:
   inline void negate() { negated= !negated; }
   inline void top_level_item() { pred_level= 1; }
-  Item *neg_transformer(Session *thd __attribute__((unused)))
+  Item *neg_transformer(Session *session __attribute__((unused)))
   {
     negated= !negated;
     return this;
@@ -864,14 +864,14 @@ public:
 class in_datetime :public in_int64_t
 {
 public:
-  Session *thd;
+  Session *session;
   /* An item used to issue warnings. */
   Item *warn_item;
   /* Cache for the left item. */
   Item *lval_cache;
 
   in_datetime(Item *warn_item_arg, uint32_t elements)
-    :in_int64_t(elements), thd(current_thd), warn_item(warn_item_arg),
+    :in_int64_t(elements), session(current_session), warn_item(warn_item_arg),
      lval_cache(0) {};
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
@@ -1022,14 +1022,14 @@ class cmp_item_datetime :public cmp_item
 {
   uint64_t value;
 public:
-  Session *thd;
+  Session *session;
   /* Item used for issuing warnings. */
   Item *warn_item;
   /* Cache for the left item. */
   Item *lval_cache;
 
   cmp_item_datetime(Item *warn_item_arg)
-    :thd(current_thd), warn_item(warn_item_arg), lval_cache(0) {}
+    :session(current_session), warn_item(warn_item_arg), lval_cache(0) {}
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *ci);
@@ -1156,7 +1156,7 @@ public:
   int64_t val_int();
   String *val_str(String *);
   my_decimal *val_decimal(my_decimal *);
-  bool fix_fields(Session *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec();
   uint32_t decimal_precision() const;
   table_map not_null_tables() const { return 0; }
@@ -1304,7 +1304,7 @@ public:
   }
   table_map not_null_tables() const { return 0; }
   optimize_type select_optimize() const { return OPTIMIZE_NULL; }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
   const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
 };
 
@@ -1350,7 +1350,7 @@ public:
   optimize_type select_optimize() const { return OPTIMIZE_NULL; }
   table_map not_null_tables() const
   { return abort_on_null ? not_null_tables_cache : 0; }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
   virtual void print(String *str, enum_query_type query_type);
   const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
   void top_level_item() { abort_on_null=1; }
@@ -1390,7 +1390,7 @@ public:
   optimize_type select_optimize() const;
   cond_result eq_cmp_result() const { return COND_TRUE; }
   const char *func_name() const { return "like"; }
-  bool fix_fields(Session *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   void cleanup();
 };
 
@@ -1414,7 +1414,7 @@ public:
     list.push_back(i1);
     list.push_back(i2);
   }
-  Item_cond(Session *thd, Item_cond *item);
+  Item_cond(Session *session, Item_cond *item);
   Item_cond(List<Item> &nlist)
     :Item_bool_func(), list(nlist), abort_on_null(0) {}
   bool add(Item *item) { return list.push_back(item); }
@@ -1428,15 +1428,15 @@ public:
   table_map used_tables() const;
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
-  void split_sum_func(Session *thd, Item **ref_pointer_array, List<Item> &fields);
-  friend int setup_conds(Session *thd, TableList *tables, TableList *leaves,
+  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
+  friend int setup_conds(Session *session, TableList *tables, TableList *leaves,
                          COND **conds);
   void top_level_item() { abort_on_null=1; }
-  void copy_andor_arguments(Session *thd, Item_cond *item);
+  void copy_andor_arguments(Session *session, Item_cond *item);
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
   void traverse_cond(Cond_traverser, void *arg, traverse_order order);
-  void neg_arguments(Session *thd);
+  void neg_arguments(Session *session);
   enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
   bool subst_argument_checker(unsigned char **arg __attribute__((unused)))
   { return true; }
@@ -1548,7 +1548,7 @@ public:
   void sort(Item_field_cmpfunc cmp, void *arg);
   friend class Item_equal_iterator;
   void fix_length_and_dec();
-  bool fix_fields(Session *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   void update_used_tables();
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
@@ -1597,21 +1597,21 @@ public:
                              to multiple equalities of upper and levels */  
   Item_cond_and() :Item_cond() {}
   Item_cond_and(Item *i1,Item *i2) :Item_cond(i1,i2) {}
-  Item_cond_and(Session *thd, Item_cond_and *item) :Item_cond(thd, item) {}
+  Item_cond_and(Session *session, Item_cond_and *item) :Item_cond(session, item) {}
   Item_cond_and(List<Item> &list_arg): Item_cond(list_arg) {}
   enum Functype functype() const { return COND_AND_FUNC; }
   int64_t val_int();
   const char *func_name() const { return "and"; }
   table_map not_null_tables() const
   { return abort_on_null ? not_null_tables_cache: and_tables_cache; }
-  Item* copy_andor_structure(Session *thd)
+  Item* copy_andor_structure(Session *session)
   {
     Item_cond_and *item;
-    if ((item= new Item_cond_and(thd, this)))
-       item->copy_andor_arguments(thd, this);
+    if ((item= new Item_cond_and(session, this)))
+       item->copy_andor_arguments(session, this);
     return item;
   }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
 };
 
 inline bool is_cond_and(Item *item)
@@ -1628,20 +1628,20 @@ class Item_cond_or :public Item_cond
 public:
   Item_cond_or() :Item_cond() {}
   Item_cond_or(Item *i1,Item *i2) :Item_cond(i1,i2) {}
-  Item_cond_or(Session *thd, Item_cond_or *item) :Item_cond(thd, item) {}
+  Item_cond_or(Session *session, Item_cond_or *item) :Item_cond(session, item) {}
   Item_cond_or(List<Item> &list_arg): Item_cond(list_arg) {}
   enum Functype functype() const { return COND_OR_FUNC; }
   int64_t val_int();
   const char *func_name() const { return "or"; }
   table_map not_null_tables() const { return and_tables_cache; }
-  Item* copy_andor_structure(Session *thd)
+  Item* copy_andor_structure(Session *session)
   {
     Item_cond_or *item;
-    if ((item= new Item_cond_or(thd, this)))
-      item->copy_andor_arguments(thd, this);
+    if ((item= new Item_cond_or(session, this)))
+      item->copy_andor_arguments(session, this);
     return item;
   }
-  Item *neg_transformer(Session *thd);
+  Item *neg_transformer(Session *session);
 };
 
 inline bool is_cond_or(Item *item)

@@ -69,14 +69,14 @@ static int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-static bool authenticate(Session *thd, const char *password)
+static bool authenticate(Session *session, const char *password)
 {
   int retval;
   auth_pam_userinfo userinfo= { NULL, NULL };
   struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
   pam_handle_t *pamh= NULL;
 
-  userinfo.name= thd->main_security_ctx.user;
+  userinfo.name= session->main_security_ctx.user;
   userinfo.password= password;
 
   retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);

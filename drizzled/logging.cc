@@ -69,7 +69,7 @@ int logging_finalizer(st_plugin_int *plugin)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_pre_iterate (Session *thd, plugin_ref plugin,
+static bool logging_pre_iterate (Session *session, plugin_ref plugin,
 				 void *p __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
@@ -77,7 +77,7 @@ static bool logging_pre_iterate (Session *thd, plugin_ref plugin,
   /* call this loaded logging plugin's logging_pre function pointer */
   if (l && l->logging_pre)
   {
-    if (l->logging_pre(thd))
+    if (l->logging_pre(session))
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
@@ -91,11 +91,11 @@ static bool logging_pre_iterate (Session *thd, plugin_ref plugin,
 
 /* This is the logging_pre_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_pre_do (Session *thd)
+bool logging_pre_do (Session *session)
 {
   bool foreach_rv;
 
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
 			     logging_pre_iterate,
 			     DRIZZLE_LOGGER_PLUGIN,
 			     NULL);
@@ -103,14 +103,14 @@ bool logging_pre_do (Session *thd)
 }
 
 /* This gets called by plugin_foreach once for each loaded logging plugin */
-static bool logging_post_iterate (Session *thd, plugin_ref plugin, 
+static bool logging_post_iterate (Session *session, plugin_ref plugin, 
 				  void *p __attribute__ ((__unused__)))
 {
   logging_t *l= plugin_data(plugin, logging_t *);
 
   if (l && l->logging_post)
   {
-    if (l->logging_post(thd))
+    if (l->logging_post(session))
     {
       /* TRANSLATORS: The leading word "logging" is the name
          of the plugin api, and so should not be translated. */
@@ -124,11 +124,11 @@ static bool logging_post_iterate (Session *thd, plugin_ref plugin,
 
 /* This is the logging_pre_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_post_do (Session *thd)
+bool logging_post_do (Session *session)
 {
   bool foreach_rv;
 
-  foreach_rv= plugin_foreach(thd,
+  foreach_rv= plugin_foreach(session,
 			     logging_post_iterate,
 			     DRIZZLE_LOGGER_PLUGIN,
 			     NULL);

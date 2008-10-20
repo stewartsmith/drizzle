@@ -36,9 +36,9 @@ public:
   uint32_t max_threads;
   bool (*init)(void);
   bool (*init_new_connection_thread)(void);
-  void (*add_connection)(Session *thd);
-  void (*post_kill_notification)(Session *thd);
-  bool (*end_thread)(Session *thd, bool cache_thread);
+  void (*add_connection)(Session *session);
+  void (*post_kill_notification)(Session *session);
+  bool (*end_thread)(Session *session, bool cache_thread);
   void (*end)(void);
   scheduler_functions();
 };
@@ -53,7 +53,7 @@ void one_thread_scheduler(scheduler_functions* func);
 
 #define HAVE_POOL_OF_THREADS 1
 
-class thd_scheduler
+class session_scheduler
 {
 public:
   bool logged_in;
@@ -61,11 +61,11 @@ public:
   LIST list;
   bool thread_attached;  /* Indicates if Session is attached to the OS thread */
 
-  thd_scheduler();
-  ~thd_scheduler();
-  thd_scheduler(const thd_scheduler&);
-  void operator=(const thd_scheduler&);
-  bool init(Session* parent_thd);
+  session_scheduler();
+  ~session_scheduler();
+  session_scheduler(const session_scheduler&);
+  void operator=(const session_scheduler&);
+  bool init(Session* parent_session);
   bool thread_attach();
   void thread_detach();
 };

@@ -59,7 +59,7 @@ int64_t Item_func_signed::val_int_from_str(int *error)
     char err_buff[128];
     String err_tmp(err_buff,(uint32_t) sizeof(err_buff), system_charset_info);
     err_tmp.copy(start, length, system_charset_info);
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         err_tmp.c_ptr());
@@ -84,7 +84,7 @@ int64_t Item_func_signed::val_int()
   value= val_int_from_str(&error);
   if (value < 0 && error == 0)
   {
-    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to signed converted positive out-of-range integer to "
                  "it's negative complement");
   }

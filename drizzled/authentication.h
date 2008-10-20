@@ -24,7 +24,7 @@
 
 #include <drizzled/plugin_authentication.h>
 
-bool authenticate_user(Session *thd, const char *password);
+bool authenticate_user(Session *session, const char *password);
 int authentication_initializer(st_plugin_int *plugin);
 int authentication_finalizer(st_plugin_int *plugin);
 

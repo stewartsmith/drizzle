@@ -34,8 +34,8 @@
 
 /*
   There are two containers holding information about open handler tables.
-  The first is 'thd->handler_tables'. It is a linked list of Table objects.
-  It is used like 'thd->open_tables' in the table cache. The trick is to
+  The first is 'session->handler_tables'. It is a linked list of Table objects.
+  It is used like 'session->open_tables' in the table cache. The trick is to
   exchange these two lists during open and lock of tables. Thus the normal
   table cache code can be used.
   The second container is a HASH. It holds objects of the type TableList.
@@ -44,7 +44,7 @@
   is, that we want handler tables to survive FLUSH Table commands. A table
   affected by FLUSH Table must be closed so that other threads are not
   blocked by handler tables still in use. Since we use the normal table cache
-  functions with 'thd->handler_tables', the closed tables are removed from
+  functions with 'session->handler_tables', the closed tables are removed from
   this list. Hence we need the original open information for the handler
   table in the case that it is used again. This information is handed over
   to mysql_ha_open() as a TableList. So we store this information in the
@@ -63,7 +63,7 @@
 /**
   Close a HANDLER table.
 
-  @param thd Thread identifier.
+  @param session Thread identifier.
   @param tables A list of tables with the first entry to close.
   @param is_locked If LOCK_open is locked.
 
@@ -72,18 +72,18 @@
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-static void mysql_ha_close_table(Session *thd, TableList *tables,
+static void mysql_ha_close_table(Session *session, TableList *tables,
                                  bool is_locked)
 {
   Table **table_ptr;
 
   /*
     Though we could take the table pointer from hash_tables->table,
-    we must follow the thd->handler_tables chain anyway, as we need the
+    we must follow the session->handler_tables chain anyway, as we need the
     address of the 'next' pointer referencing this table
     for close_thread_table().
   */
-  for (table_ptr= &(thd->handler_tables);
+  for (table_ptr= &(session->handler_tables);
        *table_ptr && (*table_ptr != tables->table);
          table_ptr= &(*table_ptr)->next)
     ;
@@ -93,7 +93,7 @@ static void mysql_ha_close_table(Session *thd, TableList *tables,
     (*table_ptr)->file->ha_index_or_rnd_end();
     if (! is_locked)
       pthread_mutex_lock(&LOCK_open);
-    if (close_thread_table(thd, table_ptr))
+    if (close_thread_table(session, table_ptr))
     {
       /* Tell threads waiting for refresh that something has happened */
       broadcast_refresh();
@@ -106,7 +106,7 @@ static void mysql_ha_close_table(Session *thd, TableList *tables,
     /* Must be a temporary table */
     Table *table= tables->table;
     table->file->ha_index_or_rnd_end();
-    table->query_id= thd->query_id;
+    table->query_id= session->query_id;
     table->open_by_handler= 0;
   }
 }
@@ -117,7 +117,7 @@ static void mysql_ha_close_table(Session *thd, TableList *tables,
 
   SYNOPSIS
     mysql_ha_close()
-    thd                         Thread identifier.
+    session                         Thread identifier.
     tables                      A list of tables with the first entry to close.
 
   DESCRIPTION
@@ -129,16 +129,16 @@ static void mysql_ha_close_table(Session *thd, TableList *tables,
     true  error
 */
 
-bool mysql_ha_close(Session *thd, TableList *tables)
+bool mysql_ha_close(Session *session, TableList *tables)
 {
   TableList    *hash_tables;
 
-  if ((hash_tables= (TableList*) hash_search(&thd->handler_tables_hash,
+  if ((hash_tables= (TableList*) hash_search(&session->handler_tables_hash,
                                               (unsigned char*) tables->alias,
                                               strlen(tables->alias) + 1)))
   {
-    mysql_ha_close_table(thd, hash_tables, false);
-    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
+    mysql_ha_close_table(session, hash_tables, false);
+    hash_delete(&session->handler_tables_hash, (unsigned char*) hash_tables);
   }
   else
   {
@@ -146,7 +146,7 @@ bool mysql_ha_close(Session *thd, TableList *tables)
     return(true);
   }
 
-  my_ok(thd);
+  my_ok(session);
   return(false);
 }
 
@@ -154,7 +154,7 @@ bool mysql_ha_close(Session *thd, TableList *tables)
 /**
   Scan the handler tables hash for matching tables.
 
-  @param thd Thread identifier.
+  @param session Thread identifier.
   @param tables The list of tables to remove.
 
   @return Pointer to head of linked list (TableList::next_local) of matching
@@ -162,14 +162,14 @@ bool mysql_ha_close(Session *thd, TableList *tables)
           table was matched.
 */
 
-static TableList *mysql_ha_find(Session *thd, TableList *tables)
+static TableList *mysql_ha_find(Session *session, TableList *tables)
 {
   TableList *hash_tables, *head= NULL, *first= tables;
 
   /* search for all handlers with matching table names */
-  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < session->handler_tables_hash.records; i++)
   {
-    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&session->handler_tables_hash, i);
     for (tables= first; tables; tables= tables->next_local)
     {
       if ((! *tables->db ||
@@ -192,27 +192,27 @@ static TableList *mysql_ha_find(Session *thd, TableList *tables)
 /**
   Remove matching tables from the HANDLER's hash table.
 
-  @param thd Thread identifier.
+  @param session Thread identifier.
   @param tables The list of tables to remove.
   @param is_locked If LOCK_open is locked.
 
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_rm_tables(Session *thd, TableList *tables, bool is_locked)
+void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked)
 {
   TableList *hash_tables, *next;
 
   assert(tables);
 
-  hash_tables= mysql_ha_find(thd, tables);
+  hash_tables= mysql_ha_find(session, tables);
 
   while (hash_tables)
   {
     next= hash_tables->next_local;
     if (hash_tables->table)
-      mysql_ha_close_table(thd, hash_tables, is_locked);
-    hash_delete(&thd->handler_tables_hash, (unsigned char*) hash_tables);
+      mysql_ha_close_table(session, hash_tables, is_locked);
+    hash_delete(&session->handler_tables_hash, (unsigned char*) hash_tables);
     hash_tables= next;
   }
 
@@ -224,23 +224,23 @@ void mysql_ha_rm_tables(Session *thd, TableList *tables, bool is_locked)
   Flush (close and mark for re-open) all tables that should be should
   be reopen.
 
-  @param thd Thread identifier.
+  @param session Thread identifier.
 
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_flush(Session *thd)
+void mysql_ha_flush(Session *session)
 {
   TableList *hash_tables;
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < session->handler_tables_hash.records; i++)
   {
-    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&session->handler_tables_hash, i);
     if (hash_tables->table && hash_tables->table->needs_reopen_or_name_lock())
     {
-      mysql_ha_close_table(thd, hash_tables, true);
+      mysql_ha_close_table(session, hash_tables, true);
       /* Mark table as closed, ready for re-open. */
       hash_tables->table= NULL;
     }
@@ -253,23 +253,23 @@ void mysql_ha_flush(Session *thd)
 /**
   Close all HANDLER's tables.
 
-  @param thd Thread identifier.
+  @param session Thread identifier.
 
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_cleanup(Session *thd)
+void mysql_ha_cleanup(Session *session)
 {
   TableList *hash_tables;
 
-  for (uint32_t i= 0; i < thd->handler_tables_hash.records; i++)
+  for (uint32_t i= 0; i < session->handler_tables_hash.records; i++)
   {
-    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&session->handler_tables_hash, i);
     if (hash_tables->table)
-      mysql_ha_close_table(thd, hash_tables, false);
+      mysql_ha_close_table(session, hash_tables, false);
    }
 
-  hash_free(&thd->handler_tables_hash);
+  hash_free(&session->handler_tables_hash);
 
   return;
 }

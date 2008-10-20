@@ -25,8 +25,8 @@
 
 typedef struct logging_st
 {
-  bool (*logging_pre)(Session *thd);
-  bool (*logging_post)(Session *thd);
+  bool (*logging_pre)(Session *session);
+  bool (*logging_post)(Session *session);
 } logging_t;
 
 #endif /* DRIZZLED_PLUGIN_LOGGING_H */
