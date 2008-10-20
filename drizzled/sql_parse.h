@@ -20,24 +20,24 @@
 #ifndef DRIZZLE_SERVER_SQL_PARSE_H
 #define DRIZZLE_SERVER_SQL_PARSE_H
 
-bool begin_trans(THD *thd);
-bool end_active_trans(THD *thd);
-int end_trans(THD *thd, enum enum_mysql_completiontype completion);
+bool begin_trans(Session *session);
+bool end_active_trans(Session *session);
+int end_trans(Session *session, enum enum_mysql_completiontype completion);
 
-bool execute_sqlcom_select(THD *thd, TableList *all_tables);
-bool multi_update_precheck(THD *thd, TableList *tables);
-bool multi_delete_precheck(THD *thd, TableList *tables);
-int mysql_multi_update_prepare(THD *thd);
-int mysql_multi_delete_prepare(THD *thd);
-bool mysql_insert_select_prepare(THD *thd);
-bool update_precheck(THD *thd, TableList *tables);
-bool delete_precheck(THD *thd, TableList *tables);
-bool insert_precheck(THD *thd, TableList *tables);
-bool create_table_precheck(THD *thd, TableList *tables,
+bool execute_sqlcom_select(Session *session, TableList *all_tables);
+bool multi_update_precheck(Session *session, TableList *tables);
+bool multi_delete_precheck(Session *session, TableList *tables);
+int mysql_multi_update_prepare(Session *session);
+int mysql_multi_delete_prepare(Session *session);
+bool mysql_insert_select_prepare(Session *session);
+bool update_precheck(Session *session, TableList *tables);
+bool delete_precheck(Session *session, TableList *tables);
+bool insert_precheck(Session *session, TableList *tables);
+bool create_table_precheck(Session *session, TableList *tables,
                            TableList *create_table);
-bool parse_sql(THD *thd, class Lex_input_stream *lip);
+bool parse_sql(Session *session, class Lex_input_stream *lip);
 
-Item *negate_expression(THD *thd, Item *expr);
+Item *negate_expression(Session *session, Item *expr);
 
 bool test_if_data_home_dir(const char *dir);
 

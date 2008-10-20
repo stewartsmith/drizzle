@@ -46,7 +46,7 @@ public:
   Natural_join_column(Field_translator *field_param, TableList *tab);
   Natural_join_column(Field *field_param, TableList *tab);
   const char *name();
-  Item *create_item(THD *thd);
+  Item *create_item(Session *session);
   Field *field();
   const char *table_name();
   const char *db_name();

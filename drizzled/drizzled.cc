@@ -69,9 +69,6 @@
 extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
-#ifndef __GNU_LIBRARY__
-#define __GNU_LIBRARY__				// Skip warnings in getopt.h
-#endif
 #include <mysys/my_getopt.h>
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
@@ -198,11 +195,7 @@ static TYPELIB tc_heuristic_recover_typelib=
 
 const char *first_keyword= "first", *binary_keyword= "BINARY";
 const char *my_localhost= "localhost";
-#if SIZEOF_OFF_T > 4 && defined(BIG_TABLES)
 #define GET_HA_ROWS GET_ULL
-#else
-#define GET_HA_ROWS GET_ULONG
-#endif
 
 /*
   Used with --help for detailed option
@@ -241,7 +234,7 @@ static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
-static I_List<THD> thread_cache;
+static I_List<Session> thread_cache;
 
 static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 
@@ -303,7 +296,7 @@ uint32_t delay_key_write_options, protocol_version;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
-uint64_t thd_startup_options;
+uint64_t session_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
@@ -411,7 +404,7 @@ Le_creator le_creator;
 
 FILE *stderror_file=0;
 
-I_List<THD> threads;
+I_List<Session> threads;
 I_List<NAMED_LIST> key_caches;
 Rpl_filter* rpl_filter;
 Rpl_filter* binlog_filter;
@@ -435,7 +428,7 @@ SHOW_COMP_OPTION have_compress;
 /* Thread specific variables */
 
 pthread_key(MEM_ROOT**,THR_MALLOC);
-pthread_key(THD*, THR_THD);
+pthread_key(Session*, THR_Session);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
 		LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
@@ -473,7 +466,7 @@ static int defaults_argc;
 static char **defaults_argv;
 static char *opt_bin_logname;
 
-struct rand_struct sql_rand; ///< used by sql_class.cc:THD::THD()
+struct rand_struct sql_rand; ///< used by sql_class.cc:Session::Session()
 
 struct passwd *user_info;
 static pthread_t select_thread;
@@ -583,17 +576,17 @@ static void close_connections(void)
     statements and inform their clients that the server is about to die.
   */
 
-  THD *tmp;
+  Session *tmp;
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
   while ((tmp=it++))
   {
     /* We skip slave threads & scheduler on this first loop through. */
     if (tmp->slave_thread)
       continue;
 
-    tmp->killed= THD::KILL_CONNECTION;
+    tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
     {
@@ -1213,24 +1206,24 @@ static void network_init(void)
 /**
   Close a connection.
 
-  @param thd		Thread handle
+  @param session		Thread handle
   @param errcode	Error code to print to console
   @param lock	        1 if we have have to lock LOCK_thread_count
 
   @note
     For the connection that is doing shutdown, this is called twice
 */
-void close_connection(THD *thd, uint32_t errcode, bool lock)
+void close_connection(Session *session, uint32_t errcode, bool lock)
 {
   st_vio *vio;
   if (lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
-  thd->killed= THD::KILL_CONNECTION;
-  if ((vio= thd->net.vio) != 0)
+  session->killed= Session::KILL_CONNECTION;
+  if ((vio= session->net.vio) != 0)
   {
     if (errcode)
-      net_send_error(thd, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&(thd->net));		/* vio is freed in delete thd */
+      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
+    net_close(&(session->net));		/* vio is freed in delete session */
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -1242,30 +1235,30 @@ void close_connection(THD *thd, uint32_t errcode, bool lock)
 /* ARGSUSED */
 extern "C" RETSIGTYPE end_thread_signal(int sig __attribute__((unused)))
 {
-  THD *thd=current_thd;
-  if (thd)
+  Session *session=current_session;
+  if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
+    thread_scheduler.end_thread(session,0);		/* purecov: inspected */
   }
   return;;				/* purecov: deadcode */
 }
 
 
 /*
-  Unlink thd from global list of available connections and free thd
+  Unlink session from global list of available connections and free session
 
   SYNOPSIS
-    unlink_thd()
-    thd		 Thread handler
+    unlink_session()
+    session		 Thread handler
 
   NOTES
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_thd(THD *thd)
+void unlink_session(Session *session)
 {
-  thd->cleanup();
+  session->cleanup();
 
   pthread_mutex_lock(&LOCK_connection_count);
   --connection_count;
@@ -1273,7 +1266,7 @@ void unlink_thd(THD *thd)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
-  delete thd;
+  delete session;
   return;;
 }
 
@@ -1309,19 +1302,19 @@ static bool cache_thread()
       pthread_cond_signal(&COND_flush_thread_cache);
     if (wake_thread)
     {
-      THD *thd;
+      Session *session;
       wake_thread--;
-      thd= thread_cache.get();
-      thd->thread_stack= (char*) &thd;          // For store_globals
-      (void) thd->store_globals();
+      session= thread_cache.get();
+      session->thread_stack= (char*) &session;          // For store_globals
+      (void) session->store_globals();
       /*
-        THD::mysys_var::abort is associated with physical thread rather
-        than with THD object. So we need to reset this flag before using
-        this thread for handling of new THD object/connection.
+        Session::mysys_var::abort is associated with physical thread rather
+        than with Session object. So we need to reset this flag before using
+        this thread for handling of new Session object/connection.
       */
-      thd->mysys_var->abort= 0;
-      thd->thr_create_utime= my_micro_time();
-      threads.append(thd);
+      session->mysys_var->abort= 0;
+      session->thr_create_utime= my_micro_time();
+      threads.append(session);
       return(1);
     }
   }
@@ -1334,7 +1327,7 @@ static bool cache_thread()
 
   SYNOPSIS
     one_thread_per_connection_end()
-    thd		  Thread handler
+    session		  Thread handler
     put_in_cache  Store thread in cache, if there is room in it
                   Normally this is true in all cases except when we got
                   out of resources initializing the current thread
@@ -1348,9 +1341,9 @@ static bool cache_thread()
     0    Signal to handle_one_connection to reuse connection
 */
 
-bool one_thread_per_connection_end(THD *thd, bool put_in_cache)
+bool one_thread_per_connection_end(Session *session, bool put_in_cache)
 {
-  unlink_thd(thd);
+  unlink_session(session);
   if (put_in_cache)
     put_in_cache= cache_thread();
   pthread_mutex_unlock(&LOCK_thread_count);
@@ -1389,9 +1382,9 @@ void flush_thread_cache()
 */
 extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
 {
-  THD *thd=current_thd;
-  if (thd)
-    thd->killed= THD::KILL_CONNECTION;
+  Session *session=current_session;
+  if (session)
+    session->killed= Session::KILL_CONNECTION;
   return;;
 }
 #endif
@@ -1457,48 +1450,48 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
                      thread_scheduler.max_threads +
-                     max_connections * sizeof(THD)) / 1024);
+                     max_connections * sizeof(Session)) / 1024);
 
 #ifdef HAVE_STACKTRACE
-  THD *thd= current_thd;
+  Session *session= current_session;
 
   if (!(test_flags & TEST_NO_STACKTRACE))
   {
-    fprintf(stderr,"thd: 0x%lx\n",(long) thd);
+    fprintf(stderr,"session: 0x%lx\n",(long) session);
     fprintf(stderr,_("Attempting backtrace. You can use the following "
                      "information to find out\n"
                      "where mysqld died. If you see no messages after this, "
                      "something went\n"
                      "terribly wrong...\n"));
-    print_stacktrace(thd ? (unsigned char*) thd->thread_stack : (unsigned char*) 0,
+    print_stacktrace(session ? (unsigned char*) session->thread_stack : (unsigned char*) 0,
                      my_thread_stack_size);
   }
-  if (thd)
+  if (session)
   {
     const char *kreason= "UNKNOWN";
-    switch (thd->killed) {
-    case THD::NOT_KILLED:
+    switch (session->killed) {
+    case Session::NOT_KILLED:
       kreason= "NOT_KILLED";
       break;
-    case THD::KILL_BAD_DATA:
+    case Session::KILL_BAD_DATA:
       kreason= "KILL_BAD_DATA";
       break;
-    case THD::KILL_CONNECTION:
+    case Session::KILL_CONNECTION:
       kreason= "KILL_CONNECTION";
       break;
-    case THD::KILL_QUERY:
+    case Session::KILL_QUERY:
       kreason= "KILL_QUERY";
       break;
-    case THD::KILLED_NO_VALUE:
+    case Session::KILLED_NO_VALUE:
       kreason= "KILLED_NO_VALUE";
       break;
     }
     fprintf(stderr, _("Trying to get some variables.\n"
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
-    safe_print_str("thd->query", thd->query, 1024);
-    fprintf(stderr, "thd->thread_id=%"PRIu32"\n", (uint32_t) thd->thread_id);
-    fprintf(stderr, "thd->killed=%s\n", kreason);
+    safe_print_str("session->query", session->query, 1024);
+    fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
+    fprintf(stderr, "session->killed=%s\n", kreason);
   }
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
@@ -1778,7 +1771,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       if (!abort_loop)
       {
         bool not_used;
-        reload_cache((THD*) 0,
+        reload_cache((Session*) 0,
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
                       REFRESH_THREADS | REFRESH_HOSTS),
@@ -1815,55 +1808,55 @@ extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
-  THD *thd;
+  Session *session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((thd= current_thd))
+  if ((session= current_session))
   {
     if (MyFlags & ME_FATALERROR)
-      thd->is_fatal_error= 1;
+      session->is_fatal_error= 1;
 
     /*
-      TODO: There are two exceptions mechanism (THD and sp_rcontext),
+      TODO: There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
     */
-    if (thd->handle_error(error, str,
+    if (session->handle_error(error, str,
                           DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
-    thd->is_slave_error=  1; // needed to catch query errors during replication
+    session->is_slave_error=  1; // needed to catch query errors during replication
 
     /*
-      thd->lex->current_select == 0 if lex structure is not inited
+      session->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (thd->lex->current_select &&
-        thd->lex->current_select->no_error && !thd->is_fatal_error))
+    if (! (session->lex->current_select &&
+        session->lex->current_select->no_error && !session->is_fatal_error))
     {
-      if (! thd->main_da.is_error())            // Return only first message
+      if (! session->main_da.is_error())            // Return only first message
       {
         if (error == 0)
           error= ER_UNKNOWN_ERROR;
         if (str == NULL)
           str= ER(error);
-        thd->main_da.set_error_status(thd, error, str);
+        session->main_da.set_error_status(session, error, str);
       }
     }
 
-    if (!thd->no_warnings_for_error && !thd->is_fatal_error)
+    if (!session->no_warnings_for_error && !session->is_fatal_error)
     {
       /*
         Suppress infinite recursion if there a memory allocation error
         inside push_warning.
       */
-      thd->no_warnings_for_error= true;
-      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
-      thd->no_warnings_for_error= false;
+      session->no_warnings_for_error= true;
+      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
+      session->no_warnings_for_error= false;
     }
   }
-  if (!thd || MyFlags & ME_NOREFRESH)
+  if (!session || MyFlags & ME_NOREFRESH)
     sql_print_error("%s: %s",my_progname,str); /* purecov: inspected */
   return;;
 }
@@ -2263,7 +2256,7 @@ static int init_thread_environment()
     (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
   }
 
-  if (pthread_key_create(&THR_THD,NULL) ||
+  if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_MALLOC,NULL))
   {
     sql_print_error(_("Can't create thread-keys"));
@@ -2649,7 +2642,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name))
+  if (mysql_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
@@ -2708,15 +2701,15 @@ int main(int argc, char **argv)
 
     This function will create new thread to handle the incoming
     connection.  If there are idle cached threads one will be used.
-    'thd' will be pushed into 'threads'.
+    'session' will be pushed into 'threads'.
 
     In single-threaded mode (\#define ONE_THREAD) connection will be
     handled inside this function.
 
-  @param[in,out] thd    Thread handle of future thread.
+  @param[in,out] session    Thread handle of future thread.
 */
 
-static void create_new_thread(THD *thd)
+static void create_new_thread(Session *session)
 {
 
   /*
@@ -2730,8 +2723,8 @@ static void create_new_thread(THD *thd)
   {
     pthread_mutex_unlock(&LOCK_connection_count);
 
-    close_connection(thd, ER_CON_COUNT_ERROR, 1);
-    delete thd;
+    close_connection(session, ER_CON_COUNT_ERROR, 1);
+    delete session;
     return;;
   }
 
@@ -2747,15 +2740,15 @@ static void create_new_thread(THD *thd)
   pthread_mutex_lock(&LOCK_thread_count);
 
   /*
-    The initialization of thread_id is done in create_embedded_thd() for
+    The initialization of thread_id is done in create_embedded_session() for
     the embedded library.
     TODO: refactor this to avoid code duplication there
   */
-  thd->thread_id= thd->variables.pseudo_thread_id= thread_id++;
+  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
 
   thread_count++;
 
-  thread_scheduler.add_connection(thd);
+  thread_scheduler.add_connection(session);
 
   return;;
 }
@@ -2784,7 +2777,7 @@ void handle_connections_sockets()
   int x;
   int sock,new_sock;
   uint32_t error_count=0;
-  THD *thd;
+  Session *session;
   struct sockaddr_storage cAddr;
 
   MAYBE_BROKEN_SYSCALL;
@@ -2873,19 +2866,19 @@ void handle_connections_sockets()
     ** Don't allow too many connections
     */
 
-    if (!(thd= new THD))
+    if (!(session= new Session))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
       close(new_sock);
       continue;
     }
-    if (net_init_sock(&thd->net, new_sock, sock == 0))
+    if (net_init_sock(&session->net, new_sock, sock == 0))
     {
-      delete thd;
+      delete session;
       continue;
     }
 
-    create_new_thread(thd);
+    create_new_thread(session);
   }
 }
 
@@ -3922,41 +3915,41 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(THD *thd __attribute__((unused)),
+static int show_net_compression(Session *session __attribute__((unused)),
                                 SHOW_VAR *var,
                                 char *buff __attribute__((unused)))
 {
   var->type= SHOW_MY_BOOL;
-  var->value= (char *)&thd->net.compress;
+  var->value= (char *)&session->net.compress;
   return 0;
 }
 
 static st_show_var_func_container
 show_net_compression_cont= { &show_net_compression };
 
-static int show_starttime(THD *thd, SHOW_VAR *var, char *buff)
+static int show_starttime(Session *session, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (thd->query_start() - server_start_time);
+  *((long *)buff)= (long) (session->query_start() - server_start_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_starttime_cont= { &show_starttime };
 
-static int show_flushstatustime(THD *thd, SHOW_VAR *var, char *buff)
+static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (thd->query_start() - flush_status_time);
+  *((long *)buff)= (long) (session->query_start() - flush_status_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(THD *thd __attribute__((unused)),
+static int show_slave_running(Session *session __attribute__((unused)),
                               SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
@@ -3971,7 +3964,7 @@ static int show_slave_running(THD *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_running_cont= { &show_slave_running };
 
-static int show_slave_retried_trans(THD *thd __attribute__((unused)),
+static int show_slave_retried_trans(Session *session __attribute__((unused)),
                                     SHOW_VAR *var, char *buff)
 {
   /*
@@ -3996,7 +3989,7 @@ static int show_slave_retried_trans(THD *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_retried_trans_cont= { &show_slave_retried_trans };
 
-static int show_slave_received_heartbeats(THD *thd __attribute__((unused)),
+static int show_slave_received_heartbeats(Session *session __attribute__((unused)),
                                           SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4017,7 +4010,7 @@ static int show_slave_received_heartbeats(THD *thd __attribute__((unused)),
 static st_show_var_func_container
 show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
 
-static int show_heartbeat_period(THD *thd __attribute__((unused)),
+static int show_heartbeat_period(Session *session __attribute__((unused)),
                                  SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4036,7 +4029,7 @@ static int show_heartbeat_period(THD *thd __attribute__((unused)),
 static st_show_var_func_container
 show_heartbeat_period_cont= { &show_heartbeat_period};
 
-static int show_open_tables(THD *thd __attribute__((unused)),
+static int show_open_tables(Session *session __attribute__((unused)),
                             SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4045,7 +4038,7 @@ static int show_open_tables(THD *thd __attribute__((unused)),
   return 0;
 }
 
-static int show_table_definitions(THD *thd __attribute__((unused)),
+static int show_table_definitions(Session *session __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4254,7 +4247,7 @@ static void mysql_init_variables(void)
   log_error_file_ptr= log_error_file;
   language_ptr= language;
   mysql_data_home= mysql_real_data_home;
-  thd_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
+  session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
   protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
@@ -4704,7 +4697,7 @@ static void get_options(int *argc,char **argv)
     test_flags&= ~TEST_CORE_ON_SIGNAL;
   }
   /* Set global MyISAM variables from delay_key_write_options */
-  fix_delay_key_write((THD*) 0, OPT_GLOBAL);
+  fix_delay_key_write((Session*) 0, OPT_GLOBAL);
   /* Set global slave_exec_mode from its option */
   fix_slave_exec_mode(OPT_GLOBAL);
 
@@ -4971,15 +4964,15 @@ static void create_pid_file()
 }
 
 /** Clear most status variables. */
-void refresh_status(THD *thd)
+void refresh_status(Session *session)
 {
   pthread_mutex_lock(&LOCK_status);
 
   /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &thd->status_var);
+  add_to_status(&global_status_var, &session->status_var);
 
   /* Reset thread's status variables */
-  memset(&thd->status_var, 0, sizeof(thd->status_var));
+  memset(&session->status_var, 0, sizeof(session->status_var));
 
   /* Reset some global variables */
   reset_status_vars();
@@ -5007,8 +5000,8 @@ void refresh_status(THD *thd)
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
-template class I_List<THD>;
-template class I_List_iterator<THD>;
+template class I_List<Session>;
+template class I_List_iterator<Session>;
 template class I_List<i_string>;
 template class I_List<i_string_pair>;
 template class I_List<NAMED_LIST>;

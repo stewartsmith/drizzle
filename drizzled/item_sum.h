@@ -273,7 +273,7 @@ public:
   }
   Item_sum(List<Item> &list);
   //Copy constructor, need to perform subselects with temporary tables
-  Item_sum(THD *thd, Item_sum *item);
+  Item_sum(Session *session, Item_sum *item);
   enum Type type() const { return SUM_FUNC_ITEM; }
   virtual enum Sumfunctype sum_func () const=0;
 
@@ -364,15 +364,15 @@ public:
   */
   void no_rows_in_result() { clear(); }
 
-  virtual bool setup(THD *thd __attribute__((unused))) {return 0;}
+  virtual bool setup(Session *session __attribute__((unused))) {return 0;}
   virtual void make_unique(void) {}
-  Item *get_tmp_table_item(THD *thd);
+  Item *get_tmp_table_item(Session *session);
   virtual Field *create_tmp_field(bool group, Table *table,
                                   uint32_t convert_blob_length);
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *argument);
-  bool init_sum_func_check(THD *thd);
-  bool check_sum_func(THD *thd, Item **ref);
-  bool register_sum_func(THD *thd, Item **ref);
+  bool init_sum_func_check(Session *session);
+  bool check_sum_func(Session *session, Item **ref);
+  bool register_sum_func(Session *session, Item **ref);
   st_select_lex *depended_from() 
     { return (nest_level == aggr_level ? 0 : aggr_sel); }
 };
@@ -395,9 +395,9 @@ public:
   Item_sum_num(Item *a, Item* b) :Item_sum(a,b),is_evaluated(false) {}
   Item_sum_num(List<Item> &list) 
     :Item_sum(list), is_evaluated(false) {}
-  Item_sum_num(THD *thd, Item_sum_num *item) 
-    :Item_sum(thd, item),is_evaluated(item->is_evaluated) {}
-  bool fix_fields(THD *, Item **);
+  Item_sum_num(Session *session, Item_sum_num *item) 
+    :Item_sum(session, item),is_evaluated(item->is_evaluated) {}
+  bool fix_fields(Session *, Item **);
   int64_t val_int()
   {
     assert(fixed == 1);
@@ -414,7 +414,7 @@ class Item_sum_int :public Item_sum_num
 public:
   Item_sum_int(Item *item_par) :Item_sum_num(item_par) {}
   Item_sum_int(List<Item> &list) :Item_sum_num(list) {}
-  Item_sum_int(THD *thd, Item_sum_int *item) :Item_sum_num(thd, item) {}
+  Item_sum_int(Session *session, Item_sum_int *item) :Item_sum_num(session, item) {}
   double val_real() { assert(fixed == 1); return (double) val_int(); }
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
@@ -435,7 +435,7 @@ protected:
 
 public:
   Item_sum_sum(Item *item_par) :Item_sum_num(item_par) {}
-  Item_sum_sum(THD *thd, Item_sum_sum *item);
+  Item_sum_sum(Session *session, Item_sum_sum *item);
   enum Sumfunctype sum_func () const {return SUM_FUNC;}
   void clear();
   bool add();
@@ -448,7 +448,7 @@ public:
   void update_field();
   void no_rows_in_result() {}
   const char *func_name() const { return "sum("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -469,12 +469,12 @@ protected:
   enum enum_field_types table_field_type;
   uint32_t tree_key_length;
 protected:
-  Item_sum_distinct(THD *thd, Item_sum_distinct *item);
+  Item_sum_distinct(Session *session, Item_sum_distinct *item);
 public:
   Item_sum_distinct(Item *item_par);
   ~Item_sum_distinct();
 
-  bool setup(THD *thd);
+  bool setup(Session *session);
   void clear();
   void cleanup();
   bool add();
@@ -505,14 +505,14 @@ public:
 class Item_sum_sum_distinct :public Item_sum_distinct
 {
 private:
-  Item_sum_sum_distinct(THD *thd, Item_sum_sum_distinct *item)
-    :Item_sum_distinct(thd, item) {}
+  Item_sum_sum_distinct(Session *session, Item_sum_sum_distinct *item)
+    :Item_sum_distinct(session, item) {}
 public:
   Item_sum_sum_distinct(Item *item_arg) :Item_sum_distinct(item_arg) {}
 
   enum Sumfunctype sum_func () const { return SUM_DISTINCT_FUNC; }
   const char *func_name() const { return "sum(distinct "; }
-  Item *copy_or_same(THD* thd) { return new Item_sum_sum_distinct(thd, this); }
+  Item *copy_or_same(Session* session) { return new Item_sum_sum_distinct(session, this); }
 };
 
 
@@ -521,8 +521,8 @@ public:
 class Item_sum_avg_distinct: public Item_sum_distinct
 {
 private:
-  Item_sum_avg_distinct(THD *thd, Item_sum_avg_distinct *original)
-    :Item_sum_distinct(thd, original) {}
+  Item_sum_avg_distinct(Session *session, Item_sum_avg_distinct *original)
+    :Item_sum_distinct(session, original) {}
 public:
   uint32_t prec_increment;
   Item_sum_avg_distinct(Item *item_arg) : Item_sum_distinct(item_arg) {}
@@ -531,7 +531,7 @@ public:
   virtual void calculate_val_and_count();
   enum Sumfunctype sum_func () const { return AVG_DISTINCT_FUNC; }
   const char *func_name() const { return "avg(distinct "; }
-  Item *copy_or_same(THD* thd) { return new Item_sum_avg_distinct(thd, this); }
+  Item *copy_or_same(Session* session) { return new Item_sum_avg_distinct(session, this); }
 };
 
 
@@ -543,8 +543,8 @@ class Item_sum_count :public Item_sum_int
   Item_sum_count(Item *item_par)
     :Item_sum_int(item_par),count(0)
   {}
-  Item_sum_count(THD *thd, Item_sum_count *item)
-    :Item_sum_int(thd, item), count(item->count)
+  Item_sum_count(Session *session, Item_sum_count *item)
+    :Item_sum_int(session, item), count(item->count)
   {}
   enum Sumfunctype sum_func () const { return COUNT_FUNC; }
   void clear();
@@ -560,7 +560,7 @@ class Item_sum_count :public Item_sum_int
   void cleanup();
   void update_field();
   const char *func_name() const { return "count("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -604,8 +604,8 @@ public:
      force_copy_fields(0), tree(0), count(0),
      original(0), always_null(false)
   { quick_group= 0; }
-  Item_sum_count_distinct(THD *thd, Item_sum_count_distinct *item)
-    :Item_sum_int(thd, item), table(item->table),
+  Item_sum_count_distinct(Session *session, Item_sum_count_distinct *item)
+    :Item_sum_int(session, item), table(item->table),
      field_lengths(item->field_lengths),
      tmp_table_param(item->tmp_table_param),
      force_copy_fields(0), tree(item->tree), count(item->count), 
@@ -623,9 +623,9 @@ public:
   void reset_field() { return ;}		// Never called
   void update_field() { return ; }		// Never called
   const char *func_name() const { return "count(distinct "; }
-  bool setup(THD *thd);
+  bool setup(Session *session);
   void make_unique();
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
   void no_rows_in_result() {}
 };
 
@@ -666,8 +666,8 @@ public:
   uint32_t f_precision, f_scale, dec_bin_size;
 
   Item_sum_avg(Item *item_par) :Item_sum_sum(item_par), count(0) {}
-  Item_sum_avg(THD *thd, Item_sum_avg *item)
-    :Item_sum_sum(thd, item), count(item->count),
+  Item_sum_avg(Session *session, Item_sum_avg *item)
+    :Item_sum_sum(session, item), count(item->count),
     prec_increment(item->prec_increment) {}
 
   void fix_length_and_dec();
@@ -685,7 +685,7 @@ public:
   { return new Item_avg_field(hybrid_type, this); }
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
   Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   void cleanup()
   {
@@ -764,7 +764,7 @@ public:
   Item_sum_variance(Item *item_par, uint32_t sample_arg) :Item_sum_num(item_par),
     hybrid_type(REAL_RESULT), count(0), sample(sample_arg)
     {}
-  Item_sum_variance(THD *thd, Item_sum_variance *item);
+  Item_sum_variance(Session *session, Item_sum_variance *item);
   enum Sumfunctype sum_func () const { return VARIANCE_FUNC; }
   void clear();
   bool add();
@@ -777,7 +777,7 @@ public:
   void no_rows_in_result() {}
   const char *func_name() const
     { return sample ? "var_samp(" : "variance("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
   Field *create_tmp_field(bool group, Table *table, uint32_t convert_blob_length);
   enum Item_result result_type () const { return REAL_RESULT; }
   void cleanup()
@@ -809,15 +809,15 @@ class Item_sum_std :public Item_sum_variance
   public:
   Item_sum_std(Item *item_par, uint32_t sample_arg)
     :Item_sum_variance(item_par, sample_arg) {}
-  Item_sum_std(THD *thd, Item_sum_std *item)
-    :Item_sum_variance(thd, item)
+  Item_sum_std(Session *session, Item_sum_std *item)
+    :Item_sum_variance(session, item)
     {}
   enum Sumfunctype sum_func () const { return STD_FUNC; }
   double val_real();
   Item *result_item(Field *field __attribute__((unused)))
     { return new Item_std_field(this); }
   const char *func_name() const { return "std("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
   enum Item_result result_type () const { return REAL_RESULT; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DOUBLE;}
 };
@@ -842,8 +842,8 @@ protected:
     hybrid_type(INT_RESULT), hybrid_field_type(DRIZZLE_TYPE_LONGLONG),
     cmp_sign(sign), was_values(true)
   { collation.set(&my_charset_bin); }
-  Item_sum_hybrid(THD *thd, Item_sum_hybrid *item);
-  bool fix_fields(THD *, Item **);
+  Item_sum_hybrid(Session *session, Item_sum_hybrid *item);
+  bool fix_fields(Session *, Item **);
   void clear();
   double val_real();
   int64_t val_int();
@@ -870,12 +870,12 @@ class Item_sum_min :public Item_sum_hybrid
 {
 public:
   Item_sum_min(Item *item_par) :Item_sum_hybrid(item_par,1) {}
-  Item_sum_min(THD *thd, Item_sum_min *item) :Item_sum_hybrid(thd, item) {}
+  Item_sum_min(Session *session, Item_sum_min *item) :Item_sum_hybrid(session, item) {}
   enum Sumfunctype sum_func () const {return MIN_FUNC;}
 
   bool add();
   const char *func_name() const { return "min("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -883,12 +883,12 @@ class Item_sum_max :public Item_sum_hybrid
 {
 public:
   Item_sum_max(Item *item_par) :Item_sum_hybrid(item_par,-1) {}
-  Item_sum_max(THD *thd, Item_sum_max *item) :Item_sum_hybrid(thd, item) {}
+  Item_sum_max(Session *session, Item_sum_max *item) :Item_sum_hybrid(session, item) {}
   enum Sumfunctype sum_func () const {return MAX_FUNC;}
 
   bool add();
   const char *func_name() const { return "max("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -900,8 +900,8 @@ protected:
 public:
   Item_sum_bit(Item *item_par,uint64_t reset_arg)
     :Item_sum_int(item_par),reset_bits(reset_arg),bits(reset_arg) {}
-  Item_sum_bit(THD *thd, Item_sum_bit *item):
-    Item_sum_int(thd, item), reset_bits(item->reset_bits), bits(item->bits) {}
+  Item_sum_bit(Session *session, Item_sum_bit *item):
+    Item_sum_int(session, item), reset_bits(item->reset_bits), bits(item->bits) {}
   enum Sumfunctype sum_func () const {return SUM_BIT_FUNC;}
   void clear();
   int64_t val_int();
@@ -921,10 +921,10 @@ class Item_sum_or :public Item_sum_bit
 {
 public:
   Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0) {}
-  Item_sum_or(THD *thd, Item_sum_or *item) :Item_sum_bit(thd, item) {}
+  Item_sum_or(Session *session, Item_sum_or *item) :Item_sum_bit(session, item) {}
   bool add();
   const char *func_name() const { return "bit_or("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -932,20 +932,20 @@ class Item_sum_and :public Item_sum_bit
 {
   public:
   Item_sum_and(Item *item_par) :Item_sum_bit(item_par, UINT64_MAX) {}
-  Item_sum_and(THD *thd, Item_sum_and *item) :Item_sum_bit(thd, item) {}
+  Item_sum_and(Session *session, Item_sum_and *item) :Item_sum_bit(session, item) {}
   bool add();
   const char *func_name() const { return "bit_and("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 class Item_sum_xor :public Item_sum_bit
 {
   public:
   Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0) {}
-  Item_sum_xor(THD *thd, Item_sum_xor *item) :Item_sum_bit(thd, item) {}
+  Item_sum_xor(Session *session, Item_sum_xor *item) :Item_sum_bit(session, item) {}
   bool add();
   const char *func_name() const { return "bit_xor("; }
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
 };
 
 
@@ -1001,7 +1001,7 @@ public:
                          bool is_distinct, List<Item> *is_select,
                          SQL_LIST *is_order, String *is_separator);
 
-  Item_func_group_concat(THD *thd, Item_func_group_concat *item);
+  Item_func_group_concat(Session *session, Item_func_group_concat *item);
   ~Item_func_group_concat();
   void cleanup();
 
@@ -1019,8 +1019,8 @@ public:
   bool add();
   void reset_field() { assert(0); }        // not used
   void update_field() { assert(0); }       // not used
-  bool fix_fields(THD *,Item **);
-  bool setup(THD *thd);
+  bool fix_fields(Session *,Item **);
+  bool setup(Session *session);
   void make_unique();
   double val_real()
   {
@@ -1042,7 +1042,7 @@ public:
     return val_decimal_from_string(decimal_value);
   }
   String* val_str(String* str);
-  Item *copy_or_same(THD* thd);
+  Item *copy_or_same(Session* session);
   void no_rows_in_result() {}
   virtual void print(String *str, enum_query_type query_type);
   virtual bool change_context_processor(unsigned char *cntx)

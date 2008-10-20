@@ -42,7 +42,7 @@ class Table;
 
   Note that inheriting from Sql_alloc had no effect: it has effects only when
   "ptr= new table_mapping" is called, and this is never called. And it would
-  then allocate from thd->mem_root which is a highly volatile object (reset
+  then allocate from session->mem_root which is a highly volatile object (reset
   from example after executing each query, see dispatch_command(), it has a
   free_root() at end); as the table_mapping object is supposed to live longer
   than a query, it was dangerous.

@@ -444,7 +444,7 @@ static void do_varstring1_mb(Copy_field *copy)
                                          to_char_length, &well_formed_error);
   if (length < from_length)
   {
-    if (current_thd->count_cuted_fields)
+    if (current_session->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }
@@ -481,7 +481,7 @@ static void do_varstring2_mb(Copy_field *copy)
                                          char_length, &well_formed_error);
   if (length < from_length)
   {
-    if (current_thd->count_cuted_fields)
+    if (current_session->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
   }  

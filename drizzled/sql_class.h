@@ -113,7 +113,7 @@ public:
     is why we supply it with a copy.
 
     @return If out of memory, 0 is returned and an error is set in
-    THD.
+    Session.
   */
   Key_part_spec *clone(MEM_ROOT *mem_root) const
   { return new (mem_root) Key_part_spec(*this); }
@@ -237,10 +237,10 @@ public:
 class select_result;
 class Time_zone;
 
-#define THD_SENTRY_MAGIC 0xfeedd1ff
-#define THD_SENTRY_GONE  0xdeadbeef
+#define Session_SENTRY_MAGIC 0xfeedd1ff
+#define Session_SENTRY_GONE  0xdeadbeef
 
-#define THD_CHECK_SENTRY(thd) assert(thd->dbug_sentry == THD_SENTRY_MAGIC)
+#define Session_CHECK_SENTRY(session) assert(session->dbug_sentry == Session_SENTRY_MAGIC)
 
 struct system_variables
 {
@@ -312,7 +312,7 @@ struct system_variables
   ulong trans_prealloc_size;
   ulong log_warnings;
   ulong group_concat_max_len;
-  ulong binlog_format; // binlog format for this thd (see enum_binlog_format)
+  ulong binlog_format; // binlog format for this session (see enum_binlog_format)
   /*
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly
@@ -439,7 +439,7 @@ typedef struct system_status_var
 
 #define last_system_status_var questions
 
-void mark_transaction_to_rollback(THD *thd, bool all);
+void mark_transaction_to_rollback(Session *session, bool all);
 
 #ifdef DRIZZLE_SERVER
 
@@ -497,8 +497,8 @@ public:
   One connection can contain a lot of simultaneously running statements,
   some of which could be:
    - prepared, that is, contain placeholders,
-  To perform some action with statement we reset THD part to the state  of
-  that statement, do the action, and then save back modified state from THD
+  To perform some action with statement we reset Session part to the state  of
+  that statement, do the action, and then save back modified state from Session
   to the statement. It will be changed in near future, and Statement will
   be used explicitly.
 */
@@ -519,7 +519,7 @@ public:
                         handler of fields used is set
     MARK_COLUMNS_READ:  Means a bit in read set is set to inform handler
 	                that the field is to be read. If field list contains
-                        duplicates, then thd->dup_field is set to point
+                        duplicates, then session->dup_field is set to point
                         to the last found duplicate.
     MARK_COLUMNS_WRITE: Means a bit is set in write set to inform handler
 			that it needs to update this field in write_row
@@ -538,11 +538,11 @@ public:
     LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
     non-NULL value if its previous value is NULL. We do not need to protect
     operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that thd->query cannot change at the moment, one should print
-    thd->query like this:
+    know that session->query cannot change at the moment, one should print
+    session->query like this:
       (1) reserve the LOCK_thread_count mutex;
-      (2) check if thd->query is NULL;
-      (3) if not NULL, then print at most thd->query_length characters from
+      (2) check if session->query is NULL;
+      (3) if not NULL, then print at most session->query_length characters from
       it. We will see the query_length field as either 0, or the right value
       for it.
     Assuming that the write and read of an n-bit memory field in an n-bit
@@ -562,7 +562,7 @@ public:
     valid database name.
 
     @note this attribute is set and alloced by the slave SQL thread (for
-    the THD of that thread); that thread is (and must remain, for now) the
+    the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
 
@@ -592,7 +592,7 @@ typedef struct st_xid_state {
   /* For now, this is only used to catch duplicated external xids */
   XID  xid;                           // transaction identifier
   enum xa_states xa_state;            // used by external XA only
-  bool in_thd;
+  bool in_session;
 } XID_STATE;
 
 extern pthread_mutex_t LOCK_xid_cache;
@@ -606,7 +606,7 @@ void xid_cache_delete(XID_STATE *xid_state);
 
 /**
   @class Security_context
-  @brief A set of THD members describing the current authenticated user.
+  @brief A set of Session members describing the current authenticated user.
 */
 
 class Security_context {
@@ -689,7 +689,7 @@ public:
     Tables that were locked with explicit or implicit LOCK TABLES.
     (Implicit LOCK TABLES happens when we are prelocking tables for
      execution of statement which uses stored routines. See description
-     THD::prelocked_mode for more info.)
+     Session::prelocked_mode for more info.)
   */
   DRIZZLE_LOCK *locked_tables;
 
@@ -734,7 +734,7 @@ public:
 };
 
 
-/* Flags for the THD::system_thread variable */
+/* Flags for the Session::system_thread variable */
 enum enum_thread_type
 {
   NON_SYSTEM_THREAD,
@@ -768,22 +768,22 @@ public:
     from the anticipated conditions trapped during runtime.
 
     This mechanism is similar to C++ try/throw/catch:
-    - 'try' correspond to <code>THD::push_internal_handler()</code>,
+    - 'try' correspond to <code>Session::push_internal_handler()</code>,
     - 'throw' correspond to <code>my_error()</code>,
     which invokes <code>my_message_sql()</code>,
     - 'catch' correspond to checking how/if an internal handler was invoked,
     before removing it from the exception stack with
-    <code>THD::pop_internal_handler()</code>.
+    <code>Session::pop_internal_handler()</code>.
 
     @param sql_errno the error number
     @param level the error level
-    @param thd the calling thread
+    @param session the calling thread
     @return true if the error is handled
   */
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
-                            THD *thd) = 0;
+                            Session *session) = 0;
 };
 
 
@@ -815,11 +815,11 @@ public:
   /** Set to make set_error_status after set_{ok,eof}_status possible. */
   bool can_overwrite_status;
 
-  void set_ok_status(THD *thd, ha_rows affected_rows_arg,
+  void set_ok_status(Session *session, ha_rows affected_rows_arg,
                      uint64_t last_insert_id_arg,
                      const char *message);
-  void set_eof_status(THD *thd);
-  void set_error_status(THD *thd, uint32_t sql_errno_arg, const char *message_arg);
+  void set_eof_status(Session *session);
+  void set_error_status(Session *session, uint32_t sql_errno_arg, const char *message_arg);
 
   void disable_status();
 
@@ -868,29 +868,29 @@ private:
   uint32_t m_sql_errno;
 
   /**
-    Copied from thd->server_status when the diagnostics area is assigned.
+    Copied from session->server_status when the diagnostics area is assigned.
     We need this member as some places in the code use the following pattern:
-    thd->server_status|= ...
-    my_eof(thd);
-    thd->server_status&= ~...
+    session->server_status|= ...
+    my_eof(session);
+    session->server_status&= ~...
     Assigned by OK, EOF or ERROR.
   */
   uint32_t m_server_status;
   /**
     The number of rows affected by the last statement. This is
-    semantically close to thd->row_count_func, but has a different
-    life cycle. thd->row_count_func stores the value returned by
+    semantically close to session->row_count_func, but has a different
+    life cycle. session->row_count_func stores the value returned by
     function ROW_COUNT() and is cleared only by statements that
     update its value, such as INSERT, UPDATE, DELETE and few others.
     This member is cleared at the beginning of the next statement.
 
-    We could possibly merge the two, but life cycle of thd->row_count_func
+    We could possibly merge the two, but life cycle of session->row_count_func
     can not be changed.
   */
   ha_rows    m_affected_rows;
   /**
     Similarly to the previous member, this is a replacement of
-    thd->first_successful_insert_id_in_prev_stmt, which is used
+    session->first_successful_insert_id_in_prev_stmt, which is used
     to implement LAST_INSERT_ID().
   */
   uint64_t   m_last_insert_id;
@@ -898,7 +898,7 @@ private:
   uint	     m_total_warn_count;
   enum_diagnostics_status m_status;
   /**
-    @todo: the following THD members belong here:
+    @todo: the following Session members belong here:
     - warn_list, warn_count,
   */
 };
@@ -932,12 +932,12 @@ struct Ha_data
 
 
 /**
-  @class THD
-  For each client connection we create a separate thread with THD serving as
+  @class Session
+  For each client connection we create a separate thread with Session serving as
   a thread/connection descriptor
 */
 
-class THD :public Statement,
+class Session :public Statement,
            public Open_tables_state
 {
 public:
@@ -945,9 +945,9 @@ public:
   Relay_log_info* rli_fake;
 
   /*
-    Constant for THD::where initialization in the beginning of every query.
+    Constant for Session::where initialization in the beginning of every query.
 
-    It's needed because we do not save/restore THD::where normally during
+    It's needed because we do not save/restore Session::where normally during
     primary (non subselect) query execution.
   */
   static const char * const DEFAULT_WHERE;
@@ -967,7 +967,7 @@ public:
   THR_LOCK_OWNER main_lock_id;          // To use for conventional queries
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
-  pthread_mutex_t LOCK_delete;		// Locked before thd is deleted
+  pthread_mutex_t LOCK_delete;		// Locked before session is deleted
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client
@@ -981,9 +981,9 @@ public:
 
   /**
     @note
-    Some members of THD (currently 'Statement::db',
+    Some members of Session (currently 'Statement::db',
     'catalog' and 'query')  are set and alloced by the slave SQL thread
-    (for the THD of that thread); that thread is (and must remain, for now)
+    (for the Session of that thread); that thread is (and must remain, for now)
     the only responsible for freeing these 3 members. If you add members
     here, and you add code to set them in replication, don't forget to
     free_them_and_set_them_to_0 in replication properly. For details see
@@ -997,10 +997,10 @@ public:
 
   /*
     Points to info-string that we show in SHOW PROCESSLIST
-    You are supposed to call THD_SET_PROC_INFO only if you have coded
+    You are supposed to call Session_SET_PROC_INFO only if you have coded
     a time-consuming piece that MySQL can get stuck in for a long time.
 
-    Set it using the  thd_proc_info(THD *thread, const char *message)
+    Set it using the  session_proc_info(Session *thread, const char *message)
     macro/function.
   */
   void        set_proc_info(const char *info) { proc_info= info; }
@@ -1044,7 +1044,7 @@ public:
   Ha_data ha_data[MAX_HA];
 
   /* Place to store various things */
-  void *thd_marker;
+  void *session_marker;
   int binlog_setup_trx_data();
 
   /*
@@ -1099,8 +1099,8 @@ public:
 
   struct st_transactions {
     SAVEPOINT *savepoints;
-    THD_TRANS all;			// Trans since BEGIN WORK
-    THD_TRANS stmt;			// Trans for current statement
+    Session_TRANS all;			// Trans since BEGIN WORK
+    Session_TRANS stmt;			// Trans for current statement
     bool on;                            // see ha_enable_transaction()
     XID_STATE xid_state;
     Rows_log_event *m_pending_rows_event;
@@ -1130,7 +1130,7 @@ public:
   /*
     This is to track items changed during execution of a prepared
     statement/stored procedure. It's created by
-    register_item_tree_change() in memory root of THD, and freed in
+    register_item_tree_change() in memory root of Session, and freed in
     rollback_item_tree_changes(). For conventional execution it's always
     empty.
   */
@@ -1289,7 +1289,7 @@ public:
   /*
     The set of those tables whose fields are referenced in all subqueries
     of the query.
-    TODO: possibly this it is incorrect to have used tables in THD because
+    TODO: possibly this it is incorrect to have used tables in Session because
     with more than one subquery, it is not clear what does the field mean.
   */
   table_map  used_tables;
@@ -1365,7 +1365,7 @@ public:
     can not continue. In particular, disables activation of
     CONTINUE or EXIT handlers of stored routines.
     Reset in the end of processing of the current user request, in
-    @see mysql_reset_thd_for_next_command().
+    @see mysql_reset_session_for_next_command().
   */
   bool is_fatal_error;
   /**
@@ -1447,7 +1447,7 @@ public:
     
     /* 
       'queries' (actually SP statements) that run under inside this binlog
-      union have thd->query_id >= first_query_id.
+      union have session->query_id >= first_query_id.
     */
     query_id_t first_query_id;
   } binlog_evt_union;
@@ -1461,13 +1461,13 @@ public:
   */
   Lex_input_stream *m_lip;
 
-  THD();
-  ~THD();
+  Session();
+  ~Session();
 
   void init(void);
   /*
     Initialize memory roots necessary for query processing and (!)
-    pre-allocate memory for it. We can't do that in THD constructor because
+    pre-allocate memory for it. We can't do that in Session constructor because
     there are use cases (acl_init, watcher threads,
     killing mysqld) where it's vital to not allocate excessive and not used
     memory. Note, that we still don't return error from init_for_queries():
@@ -1479,7 +1479,7 @@ public:
   void cleanup(void);
   void cleanup_after_query();
   bool store_globals();
-  void awake(THD::killed_state state_to_set);
+  void awake(Session::killed_state state_to_set);
 
   enum enum_binlog_query_type {
     /*
@@ -1503,7 +1503,7 @@ public:
   int binlog_query(enum_binlog_query_type qtype,
                    char const *query, ulong query_len,
                    bool is_trans, bool suppress_use,
-                   THD::killed_state killed_err_arg= THD::KILLED_NO_VALUE);
+                   Session::killed_state killed_err_arg= Session::KILLED_NO_VALUE);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1526,7 +1526,7 @@ public:
       Putting the mutex unlock in exit_cond() ensures that
       mysys_var->current_mutex is always unlocked _before_ mysys_var->mutex is
       locked (if that would not be the case, you'll get a deadlock if someone
-      does a THD::awake() on you).
+      does a Session::awake() on you).
     */
     pthread_mutex_unlock(mysys_var->current_mutex);
     pthread_mutex_lock(&mysys_var->mutex);
@@ -1748,7 +1748,7 @@ public:
     a statement is parsed but before it's executed.
   */
   bool copy_db_to(char **p_db, size_t *p_db_length);
-  thd_scheduler scheduler;
+  session_scheduler scheduler;
 
 public:
   /**
@@ -1795,22 +1795,22 @@ private:
 };
 
 
-/** A short cut for thd->main_da.set_ok_status(). */
+/** A short cut for session->main_da.set_ok_status(). */
 
 inline void
-my_ok(THD *thd, ha_rows affected_rows= 0, uint64_t id= 0,
+my_ok(Session *session, ha_rows affected_rows= 0, uint64_t id= 0,
         const char *message= NULL)
 {
-  thd->main_da.set_ok_status(thd, affected_rows, id, message);
+  session->main_da.set_ok_status(session, affected_rows, id, message);
 }
 
 
-/** A short cut for thd->main_da.set_eof_status(). */
+/** A short cut for session->main_da.set_eof_status(). */
 
 inline void
-my_eof(THD *thd)
+my_eof(Session *session)
 {
-  thd->main_da.set_eof_status(thd);
+  session->main_da.set_eof_status(session);
 }
 
 #define tmp_disable_binlog(A)       \
@@ -1850,7 +1850,7 @@ class JOIN;
 
 class select_result :public Sql_alloc {
 protected:
-  THD *thd;
+  Session *session;
   SELECT_LEX_UNIT *unit;
 public:
   select_result();
@@ -1889,7 +1889,7 @@ public:
     statement/stored procedure.
   */
   virtual void cleanup();
-  void set_thd(THD *thd_arg) { thd= thd_arg; }
+  void set_session(Session *session_arg) { session= session_arg; }
   void begin_dataset() {}
 };
 
@@ -2030,7 +2030,7 @@ class select_create: public select_insert {
   Field **field;
   /* lock data for tmp table */
   DRIZZLE_LOCK *m_lock;
-  /* m_lock or thd->extra_lock */
+  /* m_lock or session->extra_lock */
   DRIZZLE_LOCK **m_plock;
 public:
   select_create (TableList *table_arg,
@@ -2054,8 +2054,8 @@ public:
   void abort();
   virtual bool can_rollback_data() { return 1; }
 
-  // Needed for access from local class MY_HOOKS in prepare(), since thd is proteted.
-  const THD *get_thd(void) { return thd; }
+  // Needed for access from local class MY_HOOKS in prepare(), since session is proteted.
+  const Session *get_session(void) { return session; }
   const HA_CREATE_INFO *get_create_info() { return create_info; };
   int prepare2(void) { return 0; }
 };
@@ -2142,7 +2142,7 @@ public:
   bool send_eof();
   bool flush();
   void cleanup();
-  bool create_result_table(THD *thd, List<Item> *column_types,
+  bool create_result_table(Session *session, List<Item> *column_types,
                            bool is_distinct, uint64_t options,
                            const char *alias, bool bit_fields_as_long);
 };
@@ -2224,11 +2224,11 @@ public:
   LEX_STRING db;
   LEX_STRING table;
   SELECT_LEX_UNIT *sel;
-  inline Table_ident(THD *thd, LEX_STRING db_arg, LEX_STRING table_arg,
+  inline Table_ident(Session *session, LEX_STRING db_arg, LEX_STRING table_arg,
 		     bool force)
     :table(table_arg), sel((SELECT_LEX_UNIT *)0)
   {
-    if (!force && (thd->client_capabilities & CLIENT_NO_SCHEMA))
+    if (!force && (session->client_capabilities & CLIENT_NO_SCHEMA))
       db.str=0;
     else
       db= db_arg;

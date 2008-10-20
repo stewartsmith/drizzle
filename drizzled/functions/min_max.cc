@@ -50,7 +50,7 @@ void Item_func_min_max::fix_length_and_dec()
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     if (datetime_found)
     {
-      thd= current_thd;
+      session= current_session;
       compare_as_dates= true;
     }
   }
@@ -88,7 +88,7 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
   {
     Item **arg= args + i;
     bool is_null;
-    uint64_t res= get_datetime_value(thd, &arg, 0, datetime_item, &is_null);
+    uint64_t res= get_datetime_value(session, &arg, 0, datetime_item, &is_null);
     if ((null_value= args[i]->null_value))
       return 0;
     if (i == 0 || (res < min_max ? cmp_sign : -cmp_sign) > 0)

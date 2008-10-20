@@ -22,7 +22,7 @@
 
 #include <drizzled/global.h>
 
-class THD;
+class Session;
 class Item;
 
 #define DRIZZLE_XIDDATASIZE 128
@@ -53,12 +53,15 @@ typedef struct st_mysql_xid DRIZZLE_XID;
 #define DRIZZLE_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
 #define DRIZZLE_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
 #define DRIZZLE_UDF_PLUGIN             3  /* User-Defined Function */
-#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate function */
+#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate Function */
 #define DRIZZLE_AUDIT_PLUGIN           5  /* Audit */
-#define DRIZZLE_LOGGER_PLUGIN          6  /* Logging */
-#define DRIZZLE_AUTH_PLUGIN            7  /* Authorization */
+#define DRIZZLE_LOGGER_PLUGIN          6  /* Query Logging */
+#define DRIZZLE_ERRMSG_PLUGIN          7  /* Error Messages */
+#define DRIZZLE_AUTH_PLUGIN            8  /* Authorization */
+#define DRIZZLE_CONFIGVAR_PLUGIN       9  /* Configuration Variables */
+#define DRIZZLE_QCACHE_PLUGIN         10  /* Query Cache */
 
-#define DRIZZLE_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types */
+#define DRIZZLE_MAX_PLUGIN_TYPE_NUM   11  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
@@ -108,7 +111,7 @@ struct st_mysql_show_var {
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(THD *, struct st_mysql_show_var *, char *);
+typedef int (*mysql_show_var_func)(Session *, struct st_mysql_show_var *, char *);
 
 struct st_show_var_func_container {
   mysql_show_var_func func;
@@ -126,7 +129,7 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_ENUM         0x0006
 #define PLUGIN_VAR_SET          0x0007
 #define PLUGIN_VAR_UNSIGNED     0x0080
-#define PLUGIN_VAR_THDLOCAL     0x0100 /* Variable is per-connection */
+#define PLUGIN_VAR_SessionLOCAL     0x0100 /* Variable is per-connection */
 #define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
 #define PLUGIN_VAR_NOSYSVAR     0x0400 /* Not a server variable */
 #define PLUGIN_VAR_NOCMDOPT     0x0800 /* Not a command line option */
@@ -141,7 +144,7 @@ struct st_mysql_value;
 /*
   SYNOPSIS
     (*mysql_var_check_func)()
-      thd               thread handle
+      session               thread handle
       var               dynamic variable being altered
       save              pointer to temporary storage
       value             user provided value
@@ -157,14 +160,14 @@ struct st_mysql_value;
   automatically at the end of the statement.
 */
 
-typedef int (*mysql_var_check_func)(THD *thd,
+typedef int (*mysql_var_check_func)(Session *session,
                                     struct st_mysql_sys_var *var,
                                     void *save, struct st_mysql_value *value);
 
 /*
   SYNOPSIS
     (*mysql_var_update_func)()
-      thd               thread handle
+      session               thread handle
       var               dynamic variable being altered
       var_ptr           pointer to dynamic variable
       save              pointer to temporary storage
@@ -175,7 +178,7 @@ typedef int (*mysql_var_check_func)(THD *thd,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*mysql_var_update_func)(THD *thd,
+typedef void (*mysql_var_update_func)(Session *session,
                                       struct st_mysql_sys_var *var,
                                       void *var_ptr, const void *save);
 
@@ -226,29 +229,29 @@ typedef void (*mysql_var_update_func)(THD *thd,
   TYPELIB *typelib;             \
 } DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_THDVAR_FUNC(type) \
-  type *(*resolve)(THD *thd, int offset)
+#define DECLARE_SessionVAR_FUNC(type) \
+  type *(*resolve)(Session *session, int offset)
 
-#define DECLARE_DRIZZLE_THDVAR_BASIC(name, type) struct { \
+#define DECLARE_DRIZZLE_SessionVAR_BASIC(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   const type def_val;           \
-  DECLARE_THDVAR_FUNC(type);    \
+  DECLARE_SessionVAR_FUNC(type);    \
 } DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_DRIZZLE_THDVAR_SIMPLE(name, type) struct { \
+#define DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   type def_val; type min_val;   \
   type max_val; type blk_sz;    \
-  DECLARE_THDVAR_FUNC(type);    \
+  DECLARE_SessionVAR_FUNC(type);    \
 } DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_DRIZZLE_THDVAR_TYPELIB(name, type) struct { \
+#define DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, type) struct { \
   DRIZZLE_PLUGIN_VAR_HEADER;      \
   int offset;                   \
   type def_val;                 \
-  DECLARE_THDVAR_FUNC(type);    \
+  DECLARE_SessionVAR_FUNC(type);    \
   TYPELIB *typelib;             \
 } DRIZZLE_SYSVAR_NAME(name)
 
@@ -307,54 +310,54 @@ DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, uint64_t) = { \
   PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, typelib }
 
-#define DRIZZLE_THDVAR_BOOL(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_THDVAR_BASIC(name, char) = { \
-  PLUGIN_VAR_BOOL | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
+  PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
-#define DRIZZLE_THDVAR_STR(name, opt, comment, check, update, def) \
-DECLARE_DRIZZLE_THDVAR_BASIC(name, char *) = { \
-  PLUGIN_VAR_STR | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_STR(name, opt, comment, check, update, def) \
+DECLARE_DRIZZLE_SessionVAR_BASIC(name, char *) = { \
+  PLUGIN_VAR_STR | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL}
 
-#define DRIZZLE_THDVAR_INT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, int) = { \
-  PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_INT(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int) = { \
+  PLUGIN_VAR_INT | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_UINT(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, unsigned int) = { \
-  PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_UINT(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, unsigned int) = { \
+  PLUGIN_VAR_INT | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_LONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, long) = { \
-  PLUGIN_VAR_LONG | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_LONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, long) = { \
+  PLUGIN_VAR_LONG | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_ULONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, unsigned long) = { \
-  PLUGIN_VAR_LONG | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_ULONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, unsigned long) = { \
+  PLUGIN_VAR_LONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, int64_t) = { \
-  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int64_t) = { \
+  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_DRIZZLE_THDVAR_SIMPLE(name, uint64_t) = { \
-  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
+DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, uint64_t) = { \
+  PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_THDVAR_ENUM(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_THDVAR_TYPELIB(name, unsigned long) = { \
-  PLUGIN_VAR_ENUM | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_ENUM(name, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, unsigned long) = { \
+  PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL, typelib }
 
-#define DRIZZLE_THDVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_THDVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
+#define DRIZZLE_SessionVAR_SET(name, opt, comment, check, update, def, typelib) \
+DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
+  PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL, typelib }
 
 /* accessor macros */
@@ -362,9 +365,9 @@ DECLARE_DRIZZLE_THDVAR_TYPELIB(name, uint64_t) = { \
 #define SYSVAR(name) \
   (*(DRIZZLE_SYSVAR_NAME(name).value))
 
-/* when thd == null, result points to global value */
-#define THDVAR(thd, name) \
-  (*(DRIZZLE_SYSVAR_NAME(name).resolve(thd, DRIZZLE_SYSVAR_NAME(name).offset)))
+/* when session == null, result points to global value */
+#define SessionVAR(session, name) \
+  (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
 /*
@@ -420,14 +423,14 @@ struct st_mysql_value
 extern "C" {
 #endif
 
-int thd_in_lock_tables(const THD *thd);
-int thd_tablespace_op(const THD *thd);
-int64_t thd_test_options(const THD *thd, int64_t test_options);
-int thd_sql_command(const THD *thd);
-void **thd_ha_data(const THD *thd, const struct handlerton *hton);
-int thd_tx_isolation(const THD *thd);
-/* Increments the row counter, see THD::row_count */
-void thd_inc_row_count(THD *thd);
+int session_in_lock_tables(const Session *session);
+int session_tablespace_op(const Session *session);
+int64_t session_test_options(const Session *session, int64_t test_options);
+int session_sql_command(const Session *session);
+void **session_ha_data(const Session *session, const struct handlerton *hton);
+int session_tx_isolation(const Session *session);
+/* Increments the row counter, see Session::row_count */
+void session_inc_row_count(Session *session);
 
 /**
   Create a temporary file.
@@ -453,20 +456,20 @@ int mysql_tmpfile(const char *prefix);
   time-consuming loops, and gracefully abort the operation if it is
   non-zero.
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @retval 0  the connection is active
   @retval 1  the connection has been killed
 */
-int thd_killed(const THD *thd);
+int session_killed(const Session *session);
 
 
 /**
   Return the thread id of a user thread
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @return  thread id
 */
-unsigned long thd_get_thread_id(const THD *thd);
+unsigned long session_get_thread_id(const Session *session);
 
 
 /**
@@ -481,41 +484,41 @@ unsigned long thd_get_thread_id(const THD *thd);
 
   @see alloc_root()
 */
-void *thd_alloc(THD *thd, unsigned int size);
+void *session_alloc(Session *session, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-void *thd_calloc(THD *thd, unsigned int size);
+void *session_calloc(Session *session, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-char *thd_strdup(THD *thd, const char *str);
+char *session_strdup(Session *session, const char *str);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-char *thd_strmake(THD *thd, const char *str, unsigned int size);
+char *session_strmake(Session *session, const char *str, unsigned int size);
 /**
-  @see thd_alloc()
+  @see session_alloc()
 */
-void *thd_memdup(THD *thd, const void* str, unsigned int size);
+void *session_memdup(Session *session, const void* str, unsigned int size);
 
 /**
   Get the XID for this connection's transaction
 
-  @param thd  user thread connection handle
+  @param session  user thread connection handle
   @param xid  location where identifier is stored
 */
-void thd_get_xid(const THD *thd, DRIZZLE_XID *xid);
+void session_get_xid(const Session *session, DRIZZLE_XID *xid);
 
 /**
   Invalidate the query cache for a given table.
 
-  @param thd         user thread connection handle
+  @param session         user thread connection handle
   @param key         databasename\\0tablename\\0
   @param key_length  length of key in bytes, including the NUL bytes
   @param using_trx   flag: TRUE if using transactions, FALSE otherwise
 */
-void mysql_query_cache_invalidate4(THD *thd,
+void mysql_query_cache_invalidate4(Session *session,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
 
@@ -529,9 +532,9 @@ void mysql_query_cache_invalidate4(THD *thd,
 */
 inline
 void *
-thd_get_ha_data(const THD *thd, const struct handlerton *hton)
+session_get_ha_data(const Session *session, const struct handlerton *hton)
 {
-  return *thd_ha_data(thd, hton);
+  return *session_ha_data(session, hton);
 }
 
 /**
@@ -539,10 +542,10 @@ thd_get_ha_data(const THD *thd, const struct handlerton *hton)
 */
 inline
 void
-thd_set_ha_data(const THD *thd, const struct handlerton *hton,
+session_set_ha_data(const Session *session, const struct handlerton *hton,
                 const void *ha_data)
 {
-  *thd_ha_data(thd, hton)= (void*) ha_data;
+  *session_ha_data(session, hton)= (void*) ha_data;
 }
 #endif
 

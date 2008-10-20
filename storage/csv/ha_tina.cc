@@ -308,13 +308,13 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
   return(0);
 }
 
-bool ha_tina::check_and_repair(THD *thd)
+bool ha_tina::check_and_repair(Session *session)
 {
   HA_CHECK_OPT check_opt;
 
   check_opt.init();
 
-  return(repair(thd, &check_opt));
+  return(repair(session, &check_opt));
 }
 
 
@@ -1256,7 +1256,7 @@ error:
 
   SYNOPSIS
     repair()
-    thd         The thread, performing repair
+    session         The thread, performing repair
     check_opt   The options for repair. We do not use it currently.
 
   DESCRIPTION
@@ -1269,7 +1269,7 @@ error:
          rows (after the first bad one) as well.
 */
 
-int ha_tina::repair(THD* thd,
+int ha_tina::repair(Session* session,
                     HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   char repaired_fname[FN_REFLEN];
@@ -1309,7 +1309,7 @@ int ha_tina::repair(THD* thd,
   /* Read the file row-by-row. If everything is ok, repair is not needed. */
   while (!(rc= find_current_row(buf)))
   {
-    thd_inc_row_count(thd);
+    session_inc_row_count(session);
     rows_repaired++;
     current_position= next_position;
   }
@@ -1415,7 +1415,7 @@ int ha_tina::delete_all_rows()
   Called by the database to lock the table. Keep in mind that this
   is an internal lock.
 */
-THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
+THR_LOCK_DATA **ha_tina::store_lock(Session *session __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -1467,7 +1467,7 @@ int ha_tina::create(const char *name, Table *table_arg,
   return(0);
 }
 
-int ha_tina::check(THD* thd,
+int ha_tina::check(Session* session,
                    HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
@@ -1475,8 +1475,8 @@ int ha_tina::check(THD* thd,
   const char *old_proc_info;
   ha_rows count= share->rows_recorded;
 
-  old_proc_info= get_thd_proc_info(thd);
-  set_thd_proc_info(thd, "Checking table");
+  old_proc_info= get_session_proc_info(session);
+  set_session_proc_info(session, "Checking table");
   if (!(buf= (unsigned char*) my_malloc(table->s->reclength, MYF(MY_WME))))
     return(HA_ERR_OUT_OF_MEM);
 
@@ -1498,7 +1498,7 @@ int ha_tina::check(THD* thd,
   /* Read the file row-by-row. If everything is ok, repair is not needed. */
   while (!(rc= find_current_row(buf)))
   {
-    thd_inc_row_count(thd);
+    session_inc_row_count(session);
     count--;
     current_position= next_position;
   }
@@ -1506,7 +1506,7 @@ int ha_tina::check(THD* thd,
   free_root(&blobroot, MYF(0));
 
   free((char*)buf);
-  set_thd_proc_info(thd, old_proc_info);
+  set_session_proc_info(session, old_proc_info);
 
   if ((rc != HA_ERR_END_OF_FILE) || count)
   {

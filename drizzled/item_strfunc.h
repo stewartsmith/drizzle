@@ -36,7 +36,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return STRING_RESULT; }
   void left_right_max_length();
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
 };
 
 
@@ -256,7 +256,7 @@ public:
     assert(fixed == 1);
     return (null_value ? 0 : &str_value);
   }
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec()
   {
     max_length= (USERNAME_CHAR_LENGTH + HOSTNAME_LENGTH + 1) *
@@ -279,7 +279,7 @@ class Item_func_current_user :public Item_func_user
 public:
   Item_func_current_user(Name_resolution_context *context_arg)
     : context(context_arg) {}
-  bool fix_fields(THD *thd, Item **ref);
+  bool fix_fields(Session *session, Item **ref);
   const char *func_name() const { return "current_user"; }
   const char *fully_qualified_func_name() const { return "current_user()"; }
 };
@@ -316,14 +316,14 @@ class Item_func_make_set :public Item_str_func
 public:
   Item_func_make_set(Item *a,List<Item> &list) :Item_str_func(list),item(a) {}
   String *val_str(String *str);
-  bool fix_fields(THD *thd, Item **ref)
+  bool fix_fields(Session *session, Item **ref)
   {
     assert(fixed == 0);
-    return ((!item->fixed && item->fix_fields(thd, &item)) ||
+    return ((!item->fixed && item->fix_fields(session, &item)) ||
 	    item->check_cols(1) ||
-	    Item_func::fix_fields(thd, ref));
+	    Item_func::fix_fields(session, ref));
   }
-  void split_sum_func(THD *thd, Item **ref_pointer_array, List<Item> &fields);
+  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
   void fix_length_and_dec();
   void update_used_tables();
   const char *func_name() const { return "make_set"; }

@@ -5,14 +5,14 @@
 die() { echo "$@"; exit 1; }
 
 # LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
-LIBTOOLIZE_FLAGS=" --automake --copy"
+LIBTOOLIZE_FLAGS=" --automake --copy --force"
 # ACLOCAL=${ACLOCAL:-aclocal}
 ACLOCAL_FLAGS="-I m4"
 # AUTOHEADER=${AUTOHEADER:-autoheader}
 # AUTOMAKE=${AUTOMAKE:-automake}
 # --add-missing instructs automake to install missing auxiliary files
 # --copy tells it to make copies and not symlinks
-AUTOMAKE_FLAGS="--add-missing --copy"
+AUTOMAKE_FLAGS="--add-missing --copy --force"
 # AUTOCONF=${AUTOCONF:-autoconf}
 
 ARGV0=$0

@@ -40,7 +40,7 @@ static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_f
 			    Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
-static bool make_empty_rec(THD *thd, int file, enum legacy_db_type table_type,
+static bool make_empty_rec(Session *session, int file, enum legacy_db_type table_type,
 			   uint32_t table_options,
 			   List<Create_field> &create_fields,
 			   uint32_t reclength, ulong data_offset,
@@ -58,7 +58,7 @@ struct Pack_header_error_handler: public Internal_error_handler
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
-                            THD *thd);
+                            Session *session);
   bool is_handled;
   Pack_header_error_handler() :is_handled(false) {}
 };
@@ -69,7 +69,7 @@ Pack_header_error_handler::
 handle_error(uint32_t sql_errno,
              const char * /* message */,
              DRIZZLE_ERROR::enum_warning_level /* level */,
-             THD * /* thd */)
+             Session * /* session */)
 {
   is_handled= (sql_errno == ER_TOO_MANY_FIELDS);
   return is_handled;
@@ -80,7 +80,7 @@ handle_error(uint32_t sql_errno,
 
   SYNOPSIS
     mysql_create_frm()
-    thd			Thread handler
+    session			Thread handler
     file_name		Path for file (including database and .frm)
     db                  Name of database
     table               Name of table
@@ -95,7 +95,7 @@ handle_error(uint32_t sql_errno,
     1  error
 */
 
-bool mysql_create_frm(THD *thd, const char *file_name,
+bool mysql_create_frm(Session *session, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_fields,
@@ -127,14 +127,14 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     create_info->null_bits++;
   data_offset= (create_info->null_bits + 7) / 8;
 
-  thd->push_internal_handler(&pack_header_error_handler);
+  session->push_internal_handler(&pack_header_error_handler);
 
   error= pack_header(forminfo,
                      create_fields,info_length,
                      screens, create_info->table_options,
                      data_offset, db_file);
 
-  thd->pop_internal_handler();
+  session->pop_internal_handler();
 
   if (error)
   {
@@ -210,7 +210,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 #endif
   }
 
-  if ((file=create_frm(thd, file_name, db, table, reclength, fileinfo,
+  if ((file=create_frm(session, file_name, db, table, reclength, fileinfo,
 		       create_info, keys, key_info)) < 0)
   {
     free(screen_buff);
@@ -239,7 +239,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   my_seek(file,
 	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
 	       MY_SEEK_SET,MYF(0));
-  if (make_empty_rec(thd,file,ha_legacy_type(create_info->db_type),
+  if (make_empty_rec(session,file,ha_legacy_type(create_info->db_type),
                      create_info->table_options,
 		     create_fields,reclength, data_offset, db_file))
     goto err;
@@ -356,7 +356,7 @@ err3:
 
   SYNOPSIS
     rea_create_table()
-    thd			Thread handler
+    session			Thread handler
     path		Name of file (including database, without .frm)
     db			Data base name
     table_name		Table name
@@ -371,7 +371,7 @@ err3:
     1  error
 */
 
-int rea_create_table(THD *thd, const char *path,
+int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
@@ -381,18 +381,18 @@ int rea_create_table(THD *thd, const char *path,
 
   char frm_name[FN_REFLEN];
   strxmov(frm_name, path, reg_ext, NULL);
-  if (mysql_create_frm(thd, frm_name, db, table_name, create_info,
+  if (mysql_create_frm(session, frm_name, db, table_name, create_info,
                        create_fields, keys, key_info, file))
 
     return(1);
 
   // Make sure mysql_create_frm din't remove extension
   assert(*fn_rext(frm_name));
-  if (thd->variables.keep_files_on_create)
+  if (session->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
   if (file->ha_create_handler_files(path, NULL, CHF_CREATE_FLAG, create_info))
     goto err_handler;
-  if (!create_info->frm_only && ha_create_table(thd, path, db, table_name,
+  if (!create_info->frm_only && ha_create_table(session, path, db, table_name,
                                                 create_info,0))
     goto err_handler;
   return(0);
@@ -940,7 +940,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 
 /* save an empty record on start of formfile */
 
-static bool make_empty_rec(THD *thd, File file,
+static bool make_empty_rec(Session *session, File file,
                            enum legacy_db_type table_type __attribute__((unused)),
                            uint32_t table_options,
                            List<Create_field> &create_fields,
@@ -955,7 +955,7 @@ static bool make_empty_rec(THD *thd, File file,
   Table table;
   TABLE_SHARE share;
   Create_field *field;
-  enum_check_fields old_count_cuted_fields= thd->count_cuted_fields;
+  enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
   
 
   /* We need a table to generate columns for default values */
@@ -968,7 +968,7 @@ static bool make_empty_rec(THD *thd, File file,
     return(1);
   }
 
-  table.in_use= thd;
+  table.in_use= session;
   table.s->db_low_byte_first= handler->low_byte_first();
   table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
@@ -981,7 +981,7 @@ static bool make_empty_rec(THD *thd, File file,
   null_pos= buff;
 
   List_iterator<Create_field> it(create_fields);
-  thd->count_cuted_fields= CHECK_FIELD_WARN;    // To find wrong default values
+  session->count_cuted_fields= CHECK_FIELD_WARN;    // To find wrong default values
   while ((field=it++))
   {
     /*
@@ -1054,6 +1054,6 @@ static bool make_empty_rec(THD *thd, File file,
 
 err:
   free(buff);
-  thd->count_cuted_fields= old_count_cuted_fields;
+  session->count_cuted_fields= old_count_cuted_fields;
   return(error);
 } /* make_empty_rec */

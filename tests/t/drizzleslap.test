@@ -68,6 +68,9 @@ CREATE TABLE drizzleslap.t1 (id int, name varchar(64));
 
 SELECT count(*) from drizzleslap.t1;
 
+drop table drizzleslap.t1;
+drop schema drizzleslap;
+
 # Now we will test to make sure we can destory the data if it happens to be
 # in our way.
 #

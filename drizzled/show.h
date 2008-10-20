@@ -27,27 +27,27 @@
 #ifndef DRIZZLE_SERVER_SHOW_H
 #define DRIZZLE_SERVER_SHOW_H
 
-bool mysqld_show_open_tables(THD *thd,const char *wild);
-bool mysqld_show_logs(THD *thd);
-void append_identifier(THD *thd, String *packet, const char *name,
+bool mysqld_show_open_tables(Session *session,const char *wild);
+bool mysqld_show_logs(Session *session);
+void append_identifier(Session *session, String *packet, const char *name,
 		       uint32_t length);
-void mysqld_list_fields(THD *thd,TableList *table, const char *wild);
-int mysqld_dump_create_info(THD *thd, TableList *table_list, int fd);
-bool mysqld_show_create(THD *thd, TableList *table_list);
-bool mysqld_show_create_db(THD *thd, char *dbname, HA_CREATE_INFO *create);
+void mysqld_list_fields(Session *session,TableList *table, const char *wild);
+int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
+bool mysqld_show_create(Session *session, TableList *table_list);
+bool mysqld_show_create_db(Session *session, char *dbname, HA_CREATE_INFO *create);
 
-void mysqld_list_processes(THD *thd,const char *user,bool verbose);
-int mysqld_show_status(THD *thd);
-int mysqld_show_variables(THD *thd,const char *wild);
-bool mysqld_show_storage_engines(THD *thd);
-bool mysqld_show_authors(THD *thd);
-bool mysqld_show_contributors(THD *thd);
-bool mysqld_show_privileges(THD *thd);
-bool mysqld_show_column_types(THD *thd);
-bool mysqld_help (THD *thd, const char *text);
+void mysqld_list_processes(Session *session,const char *user,bool verbose);
+int mysqld_show_status(Session *session);
+int mysqld_show_variables(Session *session,const char *wild);
+bool mysqld_show_storage_engines(Session *session);
+bool mysqld_show_authors(Session *session);
+bool mysqld_show_contributors(Session *session);
+bool mysqld_show_privileges(Session *session);
+bool mysqld_show_column_types(Session *session);
+bool mysqld_help (Session *session, const char *text);
 void calc_sum_of_all_status(STATUS_VAR *to);
 
-void append_definer(THD *thd, String *buffer, const LEX_STRING *definer_user,
+void append_definer(Session *session, String *buffer, const LEX_STRING *definer_user,
                     const LEX_STRING *definer_host);
 
 int add_status_vars(SHOW_VAR *list);

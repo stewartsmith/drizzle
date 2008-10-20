@@ -119,7 +119,7 @@ static bool make_datetime_with_warn(date_time_format_types format, DRIZZLE_TIME 
   if (!warning)
     return 0;
 
-  make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+  make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                str->ptr(), str->length(),
                                DRIZZLE_TIMESTAMP_TIME, NULL);
   return make_datetime(format, ltime, str);
@@ -146,7 +146,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
     return 1;
   if (warning)
   {
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
                                  DRIZZLE_TIMESTAMP_TIME, NULL);
     make_time(format, l_time, str);
@@ -207,7 +207,7 @@ overflow:
   char buf[22];
   int len= (int)(int64_t10_to_str(seconds, buf, unsigned_flag ? 10 : -10)
                  - buf);
-  make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+  make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                buf, len, DRIZZLE_TIMESTAMP_TIME,
                                NULL);
   
@@ -575,7 +575,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
     {
       if (!my_isspace(&my_charset_utf8_general_ci,*val))
       {
-	make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+	make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                      val_begin, length,
 				     cached_timestamp_type, NULL);
 	break;
@@ -588,7 +588,7 @@ err:
   {
     char buff[128];
     strmake(buff, val_begin, cmin(length, (uint)sizeof(buff)-1));
-    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
   }
@@ -608,8 +608,8 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
   uint32_t weekday;
   ulong length;
   const char *ptr, *end;
-  THD *thd= current_thd;
-  MY_LOCALE *locale= thd->variables.lc_time_names;
+  Session *session= current_session;
+  MY_LOCALE *locale= session->variables.lc_time_names;
 
   str->length(0);
 
@@ -889,7 +889,7 @@ static bool get_interval_info(const char *str,uint32_t length, const CHARSET_INF
 int64_t Item_func_period_add::val_int()
 {
   assert(fixed == 1);
-  ulong period=(ulong) args[0]->val_int();
+  uint32_t period= args[0]->val_int();
   int months=(int) args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value) ||
@@ -904,8 +904,8 @@ int64_t Item_func_period_add::val_int()
 int64_t Item_func_period_diff::val_int()
 {
   assert(fixed == 1);
-  ulong period1=(ulong) args[0]->val_int();
-  ulong period2=(ulong) args[1]->val_int();
+  uint32_t period1= args[0]->val_int();
+  uint32_t period2= args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0; /* purecov: inspected */
@@ -1022,7 +1022,7 @@ String* Item_func_monthname::val_str(String* str)
   assert(fixed == 1);
   const char *month_name;
   uint32_t   month= (uint) val_int();
-  THD *thd= current_thd;
+  Session *session= current_session;
 
   if (null_value || !month)
   {
@@ -1030,7 +1030,7 @@ String* Item_func_monthname::val_str(String* str)
     return (String*) 0;
   }
   null_value=0;
-  month_name= thd->variables.lc_time_names->month_names->type_names[month-1];
+  month_name= session->variables.lc_time_names->month_names->type_names[month-1];
   str->set(month_name, strlen(month_name), system_charset_info);
   return str;
 }
@@ -1162,12 +1162,12 @@ String* Item_func_dayname::val_str(String* str)
   assert(fixed == 1);
   uint32_t weekday=(uint) val_int();		// Always Item_func_daynr()
   const char *day_name;
-  THD *thd= current_thd;
+  Session *session= current_session;
 
   if (null_value)
     return (String*) 0;
   
-  day_name= thd->variables.lc_time_names->day_names->type_names[weekday];
+  day_name= session->variables.lc_time_names->day_names->type_names[weekday];
   str->set(day_name, strlen(day_name), system_charset_info);
   return str;
 }
@@ -1243,7 +1243,7 @@ int64_t Item_func_unix_timestamp::val_int()
   
   assert(fixed == 1);
   if (arg_count == 0)
-    return (int64_t) current_thd->query_start();
+    return (int64_t) current_session->query_start();
   if (args[0]->type() == FIELD_ITEM)
   {						// Optimize timestamp field
     Field *field=((Item_field*) args[0])->field;
@@ -1262,7 +1262,7 @@ int64_t Item_func_unix_timestamp::val_int()
     return 0;
   }
   
-  return (int64_t) TIME_to_timestamp(current_thd, &ltime, &not_used);
+  return (int64_t) TIME_to_timestamp(current_session, &ltime, &not_used);
 }
 
 
@@ -1505,10 +1505,10 @@ String *Item_func_curdate::val_str(String *str)
 */
 void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
-  thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
-                                             (my_time_t)thd->query_start());
-  thd->time_zone_used= 1;
+  Session *session= current_session;
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, 
+                                             (my_time_t)session->query_start());
+  session->time_zone_used= 1;
 }
 
 
@@ -1519,7 +1519,7 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
-                             (my_time_t)(current_thd->query_start()));
+                             (my_time_t)(current_session->query_start()));
   /* 
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.
@@ -1562,10 +1562,10 @@ void Item_func_curtime::fix_length_and_dec()
 */
 void Item_func_curtime_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
-  thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
-                                             (my_time_t)thd->query_start());
-  thd->time_zone_used= 1;
+  Session *session= current_session;
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, 
+                                             (my_time_t)session->query_start());
+  session->time_zone_used= 1;
 }
 
 
@@ -1576,7 +1576,7 @@ void Item_func_curtime_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 void Item_func_curtime_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
-                             (my_time_t)(current_thd->query_start()));
+                             (my_time_t)(current_session->query_start()));
   /* 
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.
@@ -1611,10 +1611,10 @@ void Item_func_now::fix_length_and_dec()
 */
 void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
-  thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
-                                             (my_time_t)thd->query_start());
-  thd->time_zone_used= 1;
+  Session *session= current_session;
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, 
+                                             (my_time_t)session->query_start());
+  session->time_zone_used= 1;
 }
 
 
@@ -1625,7 +1625,7 @@ void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
-                             (my_time_t)(current_thd->query_start()));
+                             (my_time_t)(current_session->query_start()));
   /* 
     We are not flagging this query as using time zone, since it uses fixed
     UTC-SYSTEM time-zone.
@@ -1654,9 +1654,9 @@ int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((u
 */
 void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
-  THD *thd= current_thd;
-  thd->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
-  thd->time_zone_used= 1;
+  Session *session= current_session;
+  session->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
+  session->time_zone_used= 1;
 }
 
 
@@ -1750,7 +1750,7 @@ int64_t Item_func_sec_to_time::val_int()
 
 void Item_func_date_format::fix_length_and_dec()
 {
-  THD* thd= current_thd;
+  Session* session= current_session;
   /*
     Must use this_item() in case it's a local SP variable
     (for ->max_length and ->str_value)
@@ -1758,9 +1758,9 @@ void Item_func_date_format::fix_length_and_dec()
   Item *arg1= args[1]->this_item();
 
   decimals=0;
-  const CHARSET_INFO * const cs= thd->variables.collation_connection;
+  const CHARSET_INFO * const cs= session->variables.collation_connection;
   uint32_t repertoire= arg1->collation.repertoire;
-  if (!thd->variables.lc_time_names->is_ascii)
+  if (!session->variables.lc_time_names->is_ascii)
     repertoire|= MY_REPERTOIRE_EXTENDED;
   collation.set(cs, arg1->collation.derivation, repertoire);
   if (arg1->type() == STRING_ITEM)
@@ -1937,12 +1937,12 @@ null_date:
 
 void Item_func_from_unixtime::fix_length_and_dec()
 { 
-  thd= current_thd;
+  session= current_session;
   collation.set(&my_charset_bin);
   decimals= DATETIME_DEC;
   max_length=MAX_DATETIME_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
-  thd->time_zone_used= 1;
+  session->time_zone_used= 1;
 }
 
 
@@ -1990,7 +1990,7 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  thd->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)tmp);
+  session->variables.time_zone->gmt_sec_to_TIME(ltime, (my_time_t)tmp);
 
   return 0;
 }
@@ -2195,7 +2195,7 @@ int64_t Item_extract::val_int()
   case INTERVAL_MONTH:		return ltime.month;
   case INTERVAL_WEEK:
   {
-    week_format= current_thd->variables.default_week_format;
+    week_format= current_session->variables.default_week_format;
     return calc_week(&ltime, week_mode(week_format), &year);
   }
   case INTERVAL_DAY:		return ltime.day;
@@ -2352,7 +2352,7 @@ String *Item_char_typecast::val_str(String *str)
         str_value= *res;                        // Not malloced string
         res= &str_value;
       }
-      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE,
                           ER(ER_TRUNCATED_WRONG_VALUE), char_type,
                           res->c_ptr_safe());
@@ -2836,7 +2836,7 @@ String *Item_func_maketime::val_str(String *str)
     char *ptr= int64_t10_to_str(hour, buf, args[0]->unsigned_flag ? 10 : -10);
     int len = (int)(ptr - buf) +
       sprintf(ptr, ":%02u:%02u", (uint)minute, (uint)second);
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  buf, len, DRIZZLE_TIMESTAMP_TIME,
                                  NULL);
   }

@@ -41,23 +41,23 @@ public:
     Given the function name and list or arguments, this method creates
     an <code>Item</code> that represents the function call.
     In case or errors, a NULL item is returned, and an error is reported.
-    Note that the <code>thd</code> object may be modified by the builder.
+    Note that the <code>session</code> object may be modified by the builder.
     In particular, the following members/methods can be set/called,
     depending on the function called and the function possible side effects.
     <ul>
-      <li><code>thd->lex->binlog_row_based_if_mixed</code></li>
-      <li><code>thd->lex->current_context()</code></li>
-      <li><code>thd->lex->safe_to_cache_query</code></li>
-      <li><code>thd->lex->uncacheable(UNCACHEABLE_SIDEEFFECT)</code></li>
-      <li><code>thd->lex->uncacheable(UNCACHEABLE_RAND)</code></li>
-      <li><code>thd->lex->add_time_zone_tables_to_query_tables(thd)</code></li>
+      <li><code>session->lex->binlog_row_based_if_mixed</code></li>
+      <li><code>session->lex->current_context()</code></li>
+      <li><code>session->lex->safe_to_cache_query</code></li>
+      <li><code>session->lex->uncacheable(UNCACHEABLE_SIDEEFFECT)</code></li>
+      <li><code>session->lex->uncacheable(UNCACHEABLE_RAND)</code></li>
+      <li><code>session->lex->add_time_zone_tables_to_query_tables(session)</code></li>
     </ul>
-    @param thd The current thread
+    @param session The current thread
     @param name The function name
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call, or NULL
   */
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list) = 0;
+  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list) = 0;
 
 protected:
   /** Constructor */
@@ -78,23 +78,23 @@ public:
   /**
     The builder create method, for unqualified functions.
     This builder will use the current database for the database name.
-    @param thd The current thread
+    @param session The current thread
     @param name The function name
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     The builder create method, for qualified functions.
-    @param thd The current thread
+    @param session The current thread
     @param db The database name
     @param name The function name
     @param use_explicit_name Should the function be represented as 'db.name'?
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  virtual Item* create(THD *thd, LEX_STRING db, LEX_STRING name,
+  virtual Item* create(Session *session, LEX_STRING db, LEX_STRING name,
                        bool use_explicit_name, List<Item> *item_list) = 0;
 
 protected:
@@ -107,19 +107,19 @@ protected:
 
 /**
   Find the native function builder associated with a given function name.
-  @param thd The current thread
+  @param session The current thread
   @param name The native function name
   @return The native function builder associated with the name, or NULL
 */
-extern Create_func * find_native_function_builder(THD *thd, LEX_STRING name);
+extern Create_func * find_native_function_builder(Session *session, LEX_STRING name);
 
 
 /**
   Find the function builder for qualified functions.
-  @param thd The current thread
+  @param session The current thread
   @return A function builder for qualified functions
 */
-extern Create_qfunc * find_qualified_function_builder(THD *thd);
+extern Create_qfunc * find_qualified_function_builder(Session *session);
 
 
 /**
@@ -129,16 +129,16 @@ extern Create_qfunc * find_qualified_function_builder(THD *thd);
 class Create_udf_func : public Create_func
 {
 public:
-  virtual Item *create(THD *thd, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     The builder create method, for User Defined Functions.
-    @param thd The current thread
+    @param session The current thread
     @param fct The User Defined Function metadata
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  Item *create(THD *thd, udf_func *fct, List<Item> *item_list);
+  Item *create(Session *session, udf_func *fct, List<Item> *item_list);
 
   /** Singleton. */
   static Create_udf_func s_singleton;
@@ -151,11 +151,11 @@ protected:
 };
 
 Item*
-create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs);
+create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * const cs);
 
 /**
   Builder for cast expressions.
-  @param thd The current thread
+  @param session The current thread
   @param a The item to cast
   @param cast_type the type casted into
   @param len TODO
@@ -163,7 +163,7 @@ create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs)
   @param cs The character set
 */
 Item *
-create_func_cast(THD *thd, Item *a, Cast_target cast_type,
+create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *len, const char *dec,
                  const CHARSET_INFO * const cs);
 

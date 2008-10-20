@@ -56,8 +56,8 @@ Item_func::Item_func(List<Item> &list)
   set_arguments(list);
 }
 
-Item_func::Item_func(THD *thd, Item_func *item)
-  :Item_result_field(thd, item),
+Item_func::Item_func(Session *session, Item_func *item)
+  :Item_result_field(session, item),
    allowed_arg_cols(item->allowed_arg_cols),
    arg_count(item->arg_count),
    used_tables_cache(item->used_tables_cache),
@@ -70,7 +70,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) thd->alloc(sizeof(Item*)*arg_count)))
+      if (!(args=(Item**) session->alloc(sizeof(Item*)*arg_count)))
         return;
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
@@ -83,7 +83,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
 
   SYNOPSIS:
   fix_fields()
-  thd    Thread object
+  session    Thread object
   ref    Pointer to where this object is used.  This reference
   is used if we want to replace this object with another
   one (for example in the summary functions).
@@ -112,17 +112,17 @@ Item_func::Item_func(THD *thd, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
+Item_func::fix_fields(Session *session, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   Item **arg,**arg_end;
-  void *save_thd_marker= thd->thd_marker;
+  void *save_session_marker= session->session_marker;
   unsigned char buff[STACK_BUFF_ALLOC];      // Max argument in function
-  thd->thd_marker= 0;
+  session->session_marker= 0;
   used_tables_cache= not_null_tables_cache= 0;
   const_item_cache=1;
 
-  if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
+  if (check_stack_overrun(session, STACK_MIN_SIZE, buff))
     return true;        // Fatal error if flag is set!
   if (arg_count)
   {            // Print purify happy
@@ -133,7 +133,7 @@ Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
         We can't yet set item to *arg as fix_fields may change *arg
         We shouldn't call fix_fields() twice, so check 'fixed' field first
       */
-      if ((!(*arg)->fixed && (*arg)->fix_fields(thd, arg)))
+      if ((!(*arg)->fixed && (*arg)->fix_fields(session, arg)))
         return true;        /* purecov: inspected */
       item= *arg;
 
@@ -161,10 +161,10 @@ Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
     }
   }
   fix_length_and_dec();
-  if (thd->is_error()) // An error inside fix_length_and_dec occured
+  if (session->is_error()) // An error inside fix_length_and_dec occured
     return true;
   fixed= 1;
-  thd->thd_marker= save_thd_marker;
+  session->session_marker= save_session_marker;
   return false;
 }
 
@@ -264,13 +264,13 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
         return 0;
 
       /*
-        THD::change_item_tree() should be called only if the tree was
+        Session::change_item_tree() should be called only if the tree was
         really transformed, i.e. when a new item has been created.
         Otherwise we'll be allocating a lot of unnecessary memory for
         change records at each execution.
       */
       if (*arg != new_item)
-        current_thd->change_item_tree(arg, new_item);
+        current_session->change_item_tree(arg, new_item);
     }
   }
   return (this->*transformer)(argument);
@@ -318,7 +318,7 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
       unsigned char *arg_v= *arg_p;
       Item *new_item= (*arg)->compile(analyzer, &arg_v, transformer, arg_t);
       if (new_item && *arg != new_item)
-        current_thd->change_item_tree(arg, new_item);
+        current_session->change_item_tree(arg, new_item);
     }
   }
   return (this->*transformer)(arg_t);
@@ -328,12 +328,12 @@ Item *Item_func::compile(Item_analyzer analyzer, unsigned char **arg_p,
    See comments in Item_cmp_func::split_sum_func()
 */
 
-void Item_func::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_func::split_sum_func(Session *session, Item **ref_pointer_array,
                                List<Item> &fields)
 {
   Item **arg, **arg_end;
   for (arg= args, arg_end= args+arg_count; arg != arg_end ; arg++)
-    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, true);
+    (*arg)->split_sum_func2(session, ref_pointer_array, fields, arg, true);
 }
 
 

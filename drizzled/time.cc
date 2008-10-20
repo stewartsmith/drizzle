@@ -99,8 +99,8 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week)
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year)
 {
   uint32_t days;
-  ulong daynr=calc_daynr(l_time->year,l_time->month,l_time->day);
-  ulong first_daynr=calc_daynr(l_time->year,1,1);
+  uint32_t daynr= calc_daynr(l_time->year,l_time->month,l_time->day);
+  uint32_t first_daynr= calc_daynr(l_time->year,1,1);
   bool monday_first= test(week_behaviour & WEEK_MONDAY_FIRST);
   bool week_year= test(week_behaviour & WEEK_YEAR);
   bool first_weekday= test(week_behaviour & WEEK_FIRST_WEEKDAY);
@@ -182,9 +182,9 @@ void get_date_from_daynr(long daynr,uint32_t *ret_year,uint32_t *ret_month,
 
 	/* Functions to handle periods */
 
-ulong convert_period_to_month(ulong period)
+uint32_t convert_period_to_month(uint32_t period)
 {
-  ulong a,b;
+  uint32_t a,b;
   if (period == 0)
     return 0L;
   if ((a=period/100) < YY_PART_YEAR)
@@ -196,9 +196,9 @@ ulong convert_period_to_month(ulong period)
 }
 
 
-ulong convert_month_to_period(ulong month)
+uint32_t convert_month_to_period(uint32_t month)
 {
-  ulong year;
+  uint32_t year;
   if (month == 0L)
     return 0L;
   if ((year=month/12) < 100)
@@ -222,16 +222,16 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
                           uint32_t flags)
 {
   int was_cut;
-  THD *thd= current_thd;
+  Session *session= current_session;
   enum enum_drizzle_timestamp_type ts_type;
   
   ts_type= str_to_datetime(str, length, l_time,
-                           (flags | (thd->variables.sql_mode &
+                           (flags | (session->variables.sql_mode &
                                      (MODE_INVALID_DATES |
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NULL);
   return ts_type;
 }
@@ -243,7 +243,7 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
 
   SYNOPSIS
     TIME_to_timestamp()
-      thd             - current thread
+      session             - current thread
       t               - datetime in broken-down representation, 
       in_dst_time_gap - pointer to bool which is set to true if t represents
                         value which doesn't exists (falls into the spring 
@@ -254,14 +254,14 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
      0 - t contains datetime value which is out of TIMESTAMP range.
      
 */
-my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
+my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
 {
   my_time_t timestamp;
 
   *in_dst_time_gap= 0;
-  thd->time_zone_used= 1;
+  session->time_zone_used= 1;
 
-  timestamp= thd->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
+  timestamp= session->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
   if (timestamp)
   {
     return timestamp;
@@ -285,7 +285,7 @@ str_to_time_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time)
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
-    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
@@ -445,7 +445,7 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
       separators++;
       /* Store in separator_map which parts are punct characters */
       if (my_ispunct(&my_charset_utf8_general_ci, *ptr))
-	separator_map|= (ulong) 1 << (offset-1);
+	separator_map|= 1 << (offset-1);
       else if (!my_isspace(&my_charset_utf8_general_ci, *ptr))
 	return 1;
     }
@@ -482,8 +482,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
     /* remove fractional seconds from later tests */
     uint32_t pos= dt_pos[6] -1;
     /* Remove separator before %f from sep map */
-    separator_map= ((separator_map & ((ulong) (1 << pos)-1)) |
-		    ((separator_map & ~((ulong) (1 << pos)-1)) >> 1));
+    separator_map= ((separator_map & ((1 << pos)-1)) |
+		    ((separator_map & ~((1 << pos)-1)) >> 1));
     if (part_map & 64)			      
     {
       separators--;				// There is always a separator
@@ -508,8 +508,8 @@ bool parse_date_time_format(enum enum_drizzle_timestamp_type format_type,
   */
   offset= dt_pos[6] <= 3 ? 3 : 6;
   /* Remove separator before %p from sep map */
-  separator_map= ((separator_map & ((ulong) (1 << offset)-1)) |
-		  ((separator_map & ~((ulong) (1 << offset)-1)) >> 1));
+  separator_map= ((separator_map & ((1 << offset)-1)) |
+		  ((separator_map & ~((1 << offset)-1)) >> 1));
 
   format_str= 0;
   switch (format_type) {
@@ -592,7 +592,7 @@ DATE_TIME_FORMAT
   {
     tmp.format.str=    (char*) format_str;
     tmp.format.length= format_length;
-    return date_time_format_copy((THD *)0, &tmp);
+    return date_time_format_copy((Session *)0, &tmp);
   }
   return 0;
 }
@@ -603,7 +603,7 @@ DATE_TIME_FORMAT
 
   SYNOPSIS
     date_and_time_format_copy()
-    thd			Set if variable should be allocated in thread mem
+    session			Set if variable should be allocated in thread mem
     format		format to copy
 
   NOTES
@@ -614,13 +614,13 @@ DATE_TIME_FORMAT
     new object
 */
 
-DATE_TIME_FORMAT *date_time_format_copy(THD *thd, DATE_TIME_FORMAT *format)
+DATE_TIME_FORMAT *date_time_format_copy(Session *session, DATE_TIME_FORMAT *format)
 {
   DATE_TIME_FORMAT *new_format;
-  ulong length= sizeof(*format) + format->format.length + 1;
+  uint32_t length= sizeof(*format) + format->format.length + 1;
 
-  if (thd)
-    new_format= (DATE_TIME_FORMAT *) thd->alloc(length);
+  if (session)
+    new_format= (DATE_TIME_FORMAT *) session->alloc(length);
   else
     new_format=  (DATE_TIME_FORMAT *) my_malloc(length, MYF(MY_WME));
   if (new_format)
@@ -714,7 +714,7 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint32_t str_length,
                                   enum enum_drizzle_timestamp_type time_type,
@@ -744,7 +744,7 @@ void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level le
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                        type_str, str.c_ptr(), field_name,
-                       (ulong) thd->row_count);
+                       (uint32_t) session->row_count);
   else
   {
     if (time_type > DRIZZLE_TIMESTAMP_ERROR)
@@ -755,7 +755,7 @@ void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level le
       cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                          ER(ER_WRONG_VALUE), type_str, str.c_ptr());
   }
-  push_warning(thd, level,
+  push_warning(session, level,
                ER_TRUNCATED_WRONG_VALUE, warn_buff);
 }
 
@@ -826,13 +826,13 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
     period= (calc_daynr(ltime->year,ltime->month,ltime->day) +
              sign * (long) interval.day);
     /* Daynumber from year 0 to 9999-12-31 */
-    if ((ulong) period > MAX_DAY_NUMBER)
+    if (period > MAX_DAY_NUMBER)
       goto invalid_date;
     get_date_from_daynr((long) period,&ltime->year,&ltime->month,&ltime->day);
     break;
   case INTERVAL_YEAR:
     ltime->year+= sign * (long) interval.year;
-    if ((ulong) ltime->year >= 10000L)
+    if (ltime->year >= 10000L)
       goto invalid_date;
     if (ltime->month == 2 && ltime->day == 29 &&
 	calc_days_in_year(ltime->year) != 366)
@@ -843,7 +843,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   case INTERVAL_MONTH:
     period= (ltime->year*12 + sign * (long) interval.year*12 +
 	     ltime->month-1 + sign * (long) interval.month);
-    if ((ulong) period >= 120000L)
+    if (period >= 120000L)
       goto invalid_date;
     ltime->year= (uint) (period / 12);
     ltime->month= (uint) (period % 12L)+1;
@@ -862,7 +862,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   return 0;					// Ok
 
 invalid_date:
-  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+  push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_DATETIME_FUNCTION_OVERFLOW,
                       ER(ER_DATETIME_FUNCTION_OVERFLOW),
                       "datetime");

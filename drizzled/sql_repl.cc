@@ -73,9 +73,9 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
   return(0);
 }
 
-static int send_file(THD *thd)
+static int send_file(Session *session)
 {
-  NET* net = &thd->net;
+  NET* net = &session->net;
   int fd = -1, error = 1;
   size_t bytes;
   char fname[FN_REFLEN+1];
@@ -89,7 +89,7 @@ static int send_file(THD *thd)
     the job
   */
   old_timeout= net->read_timeout;
-  my_net_set_read_timeout(net, thd->variables.net_wait_timeout);
+  my_net_set_read_timeout(net, session->variables.net_wait_timeout);
 
   /*
     We need net_flush here because the client will not know it needs to send
@@ -167,10 +167,10 @@ static int send_file(THD *thd)
 
 void adjust_linfo_offsets(my_off_t purge_offset)
 {
-  THD *tmp;
+  Session *tmp;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
 
   while ((tmp=it++))
   {
@@ -197,11 +197,11 @@ void adjust_linfo_offsets(my_off_t purge_offset)
 bool log_in_use(const char* log_name)
 {
   int log_name_len = strlen(log_name) + 1;
-  THD *tmp;
+  Session *tmp;
   bool result = 0;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
+  I_List_iterator<Session> it(threads);
 
   while ((tmp=it++))
   {
@@ -220,7 +220,7 @@ bool log_in_use(const char* log_name)
   return result;
 }
 
-bool purge_error_message(THD* thd, int res)
+bool purge_error_message(Session* session, int res)
 {
   uint32_t errmsg= 0;
 
@@ -242,35 +242,35 @@ bool purge_error_message(THD* thd, int res)
     my_message(errmsg, ER(errmsg), MYF(0));
     return true;
   }
-  my_ok(thd);
+  my_ok(session);
   return false;
 }
 
 
-bool purge_master_logs(THD* thd, const char* to_log)
+bool purge_master_logs(Session* session, const char* to_log)
 {
   char search_file_name[FN_REFLEN];
   if (!mysql_bin_log.is_open())
   {
-    my_ok(thd);
+    my_ok(session);
     return false;
   }
 
   mysql_bin_log.make_log_name(search_file_name, to_log);
-  return purge_error_message(thd,
+  return purge_error_message(session,
 			     mysql_bin_log.purge_logs(search_file_name, 0, 1,
 						      1, NULL));
 }
 
 
-bool purge_master_logs_before_date(THD* thd, time_t purge_time)
+bool purge_master_logs_before_date(Session* session, time_t purge_time)
 {
   if (!mysql_bin_log.is_open())
   {
-    my_ok(thd);
+    my_ok(session);
     return 0;
   }
-  return purge_error_message(thd,
+  return purge_error_message(session,
                              mysql_bin_log.purge_logs_before_date(purge_time));
 }
 
@@ -308,17 +308,17 @@ Increase max_allowed_packet on master";
   An auxiliary function for calling in mysql_binlog_send
   to initialize the heartbeat timeout in waiting for a binlogged event.
 
-  @param[in]    thd  THD to access a user variable
+  @param[in]    session  Session to access a user variable
 
   @return        heartbeat period an uint64_t of nanoseconds
                  or zero if heartbeat was not demanded by slave
 */ 
-static uint64_t get_heartbeat_period(THD * thd)
+static uint64_t get_heartbeat_period(Session * session)
 {
   bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
   user_var_entry *entry= 
-    (user_var_entry*) hash_search(&thd->user_vars, (unsigned char*) name.str,
+    (user_var_entry*) hash_search(&session->user_vars, (unsigned char*) name.str,
                                   name.length);
   return entry? entry->val_int(&null_value) : 0;
 }
@@ -326,7 +326,7 @@ static uint64_t get_heartbeat_period(THD * thd)
 /*
   Function prepares and sends repliation heartbeat event.
 
-  @param net                net object of THD
+  @param net                net object of Session
   @param packet             buffer to store the heartbeat instance
   @param event_coordinates  binlog file name and position of the last
                             real event master sent from binlog
@@ -375,7 +375,7 @@ static int send_heartbeat_event(NET* net, String* packet,
   TODO: Clean up loop to only have one call to send_file()
 */
 
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
+void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos,
 		       uint16_t flags)
 {
   LOG_INFO linfo;
@@ -383,10 +383,10 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   char search_file_name[FN_REFLEN], *name;
   IO_CACHE log;
   File file = -1;
-  String* packet = &thd->packet;
+  String* packet = &session->packet;
   int error;
   const char *errmsg = "Unknown error";
-  NET* net = &thd->net;
+  NET* net = &session->net;
   pthread_mutex_t *log_lock;
   bool binlog_can_be_corrupted= false;
 
@@ -394,7 +394,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   /* 
      heartbeat_period from @master_heartbeat_period user variable
   */
-  uint64_t heartbeat_period= get_heartbeat_period(thd);
+  uint64_t heartbeat_period= get_heartbeat_period(session);
   struct timespec heartbeat_buf;
   struct event_coordinates coord_buf;
   struct timespec *heartbeat_ts= NULL;
@@ -437,7 +437,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   }
 
   pthread_mutex_lock(&LOCK_thread_count);
-  thd->current_linfo = &linfo;
+  session->current_linfo = &linfo;
   pthread_mutex_unlock(&LOCK_thread_count);
 
   if ((file=open_binlog(&log, log_file_name, &errmsg)) < 0)
@@ -503,7 +503,7 @@ impossible position";
     this larger than the corresponding packet (query) sent 
     from client to master.
   */
-  thd->variables.max_allowed_packet+= MAX_LOG_EVENT_HEADER;
+  session->variables.max_allowed_packet+= MAX_LOG_EVENT_HEADER;
 
   /*
     We can set log_lock now, it does not move (it's a member of
@@ -576,7 +576,7 @@ impossible position";
   /* seek to the requested position, to start the requested dump */
   my_b_seek(&log, pos);			// Seek will done on next read
 
-  while (!net->error && net->vio != 0 && !thd->killed)
+  while (!net->error && net->vio != 0 && !session->killed)
   {
     while (!(error = Log_event::read_log_event(&log, packet, log_lock)))
     {
@@ -604,7 +604,7 @@ impossible position";
 
       if ((*packet)[LOG_EVENT_OFFSET+1] == LOAD_EVENT)
       {
-	if (send_file(thd))
+	if (send_file(session))
 	{
 	  errmsg = "failed in send_file()";
 	  my_errno= ER_UNKNOWN_ERROR;
@@ -676,7 +676,7 @@ impossible position";
 	case LOG_READ_EOF:
         {
           int ret;
-	  if (thd->server_id==0) // for mysqlbinlog (mysqlbinlog.server_id==0)
+	  if (session->server_id==0) // for mysqlbinlog (mysqlbinlog.server_id==0)
 	  {
 	    pthread_mutex_unlock(log_lock);
 	    goto end;
@@ -689,7 +689,7 @@ impossible position";
               assert(heartbeat_ts && heartbeat_period != 0L);
               set_timespec_nsec(*heartbeat_ts, heartbeat_period);
             }
-            ret= mysql_bin_log.wait_for_update_bin_log(thd, heartbeat_ts);
+            ret= mysql_bin_log.wait_for_update_bin_log(session, heartbeat_ts);
             assert(ret == 0 || (heartbeat_period != 0L && coord != NULL));
             if (ret == ETIMEDOUT || ret == ETIME)
             {
@@ -705,7 +705,7 @@ impossible position";
             {
               assert(ret == 0);
             }
-          } while (ret != 0 && coord != NULL && !thd->killed);
+          } while (ret != 0 && coord != NULL && !session->killed);
           pthread_mutex_unlock(log_lock);
         }    
         break;
@@ -718,7 +718,7 @@ impossible position";
 
 	if (read_packet)
 	{
-	  thd->set_proc_info("Sending binlog event to slave");
+	  session->set_proc_info("Sending binlog event to slave");
 	  if (my_net_write(net, (unsigned char*) packet->ptr(), packet->length()) )
 	  {
 	    errmsg = "Failed on my_net_write()";
@@ -728,7 +728,7 @@ impossible position";
 
 	  if ((*packet)[LOG_EVENT_OFFSET+1] == LOAD_EVENT)
 	  {
-	    if (send_file(thd))
+	    if (send_file(session))
 	    {
 	      errmsg = "failed in send_file()";
 	      my_errno= ER_UNKNOWN_ERROR;
@@ -756,7 +756,7 @@ impossible position";
       bool loop_breaker = 0;
       /* need this to break out of the for loop from switch */
 
-      thd->set_proc_info("Finished reading one binlog; switching to next binlog");
+      session->set_proc_info("Finished reading one binlog; switching to next binlog");
       switch (mysql_bin_log.find_next_log(&linfo, 1)) {
       case LOG_INFO_EOF:
 	loop_breaker = (flags & BINLOG_DUMP_NON_BLOCK);
@@ -803,25 +803,25 @@ end:
   end_io_cache(&log);
   (void)my_close(file, MYF(MY_WME));
 
-  my_eof(thd);
-  thd->set_proc_info("Waiting to finalize termination");
+  my_eof(session);
+  session->set_proc_info("Waiting to finalize termination");
   pthread_mutex_lock(&LOCK_thread_count);
-  thd->current_linfo = 0;
+  session->current_linfo = 0;
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
 
 err:
-  thd->set_proc_info("Waiting to finalize termination");
+  session->set_proc_info("Waiting to finalize termination");
   end_io_cache(&log);
   /*
     Exclude  iteration through thread list
     this is needed for purge_logs() - it will iterate through
-    thread list and update thd->current_linfo->index_file_offset
+    thread list and update session->current_linfo->index_file_offset
     this mutex will make sure that it never tried to update our linfo
     after we return from this stack frame
   */
   pthread_mutex_lock(&LOCK_thread_count);
-  thd->current_linfo = 0;
+  session->current_linfo = 0;
   pthread_mutex_unlock(&LOCK_thread_count);
   if (file >= 0)
     (void) my_close(file, MYF(MY_WME));
@@ -830,7 +830,7 @@ err:
   return;
 }
 
-int start_slave(THD* thd , Master_info* mi,  bool net_report)
+int start_slave(Session* session , Master_info* mi,  bool net_report)
 {
   int slave_errno= 0;
   int thread_mask;
@@ -844,8 +844,8 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
     don't wan't to touch the other thread), so set the bit to 0 for the
     other thread
   */
-  if (thd->lex->slave_thd_opt)
-    thread_mask&= thd->lex->slave_thd_opt;
+  if (session->lex->slave_session_opt)
+    thread_mask&= session->lex->slave_session_opt;
   if (thread_mask) //some threads are stopped, start them
   {
     if (mi->init_master_info(master_info_file, relay_log_info_file, thread_mask))
@@ -861,22 +861,22 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
       {
         pthread_mutex_lock(&mi->rli.data_lock);
 
-        if (thd->lex->mi.pos)
+        if (session->lex->mi.pos)
         {
           mi->rli.until_condition= Relay_log_info::UNTIL_MASTER_POS;
-          mi->rli.until_log_pos= thd->lex->mi.pos;
+          mi->rli.until_log_pos= session->lex->mi.pos;
           /*
-             We don't check thd->lex->mi.log_file_name for NULL here
+             We don't check session->lex->mi.log_file_name for NULL here
              since it is checked in sql_yacc.yy
           */
-          strmake(mi->rli.until_log_name, thd->lex->mi.log_file_name,
+          strmake(mi->rli.until_log_name, session->lex->mi.log_file_name,
                   sizeof(mi->rli.until_log_name)-1);
         }
-        else if (thd->lex->mi.relay_log_pos)
+        else if (session->lex->mi.relay_log_pos)
         {
           mi->rli.until_condition= Relay_log_info::UNTIL_RELAY_POS;
-          mi->rli.until_log_pos= thd->lex->mi.relay_log_pos;
-          strmake(mi->rli.until_log_name, thd->lex->mi.relay_log_name,
+          mi->rli.until_log_pos= session->lex->mi.relay_log_pos;
+          strmake(mi->rli.until_log_name, session->lex->mi.relay_log_name,
                   sizeof(mi->rli.until_log_name)-1);
         }
         else
@@ -908,15 +908,15 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
 
           /* Issuing warning then started without --skip-slave-start */
           if (!opt_skip_slave_start)
-            push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+            push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                          ER_MISSING_SKIP_SLAVE,
                          ER(ER_MISSING_SKIP_SLAVE));
         }
 
         pthread_mutex_unlock(&mi->rli.data_lock);
       }
-      else if (thd->lex->mi.pos || thd->lex->mi.relay_log_pos)
-        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_UNTIL_COND_IGNORED,
+      else if (session->lex->mi.pos || session->lex->mi.relay_log_pos)
+        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_UNTIL_COND_IGNORED,
                      ER(ER_UNTIL_COND_IGNORED));
 
       if (!slave_errno)
@@ -932,7 +932,7 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
   else
   {
     /* no error if all threads are already started, only a warning */
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_RUNNING,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_RUNNING,
                  ER(ER_SLAVE_WAS_RUNNING));
   }
 
@@ -945,19 +945,19 @@ int start_slave(THD* thd , Master_info* mi,  bool net_report)
     return(1);
   }
   else if (net_report)
-    my_ok(thd);
+    my_ok(session);
 
   return(0);
 }
 
 
-int stop_slave(THD* thd, Master_info* mi, bool net_report )
+int stop_slave(Session* session, Master_info* mi, bool net_report )
 {
   int slave_errno;
-  if (!thd)
-    thd = current_thd;
+  if (!session)
+    session = current_session;
 
-  thd->set_proc_info("Killing slave");
+  session->set_proc_info("Killing slave");
   int thread_mask;
   lock_slave_threads(mi);
   // Get a mask of _running_ threads
@@ -968,8 +968,8 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
     was stopped (as we don't wan't to touch the other thread), so set the
     bit to 0 for the other thread
   */
-  if (thd->lex->slave_thd_opt)
-    thread_mask &= thd->lex->slave_thd_opt;
+  if (session->lex->slave_session_opt)
+    thread_mask &= session->lex->slave_session_opt;
 
   if (thread_mask)
   {
@@ -980,11 +980,11 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
   {
     //no error if both threads are already stopped, only a warning
     slave_errno= 0;
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_NOT_RUNNING,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_SLAVE_WAS_NOT_RUNNING,
                  ER(ER_SLAVE_WAS_NOT_RUNNING));
   }
   unlock_slave_threads(mi);
-  thd->set_proc_info(0);
+  session->set_proc_info(0);
 
   if (slave_errno)
   {
@@ -993,7 +993,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
     return(1);
   }
   else if (net_report)
-    my_ok(thd);
+    my_ok(session);
 
   return(0);
 }
@@ -1004,7 +1004,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
 
   SYNOPSIS
     reset_slave()
-    thd			Thread handler
+    session			Thread handler
     mi			Master info for the slave
 
   RETURN
@@ -1013,7 +1013,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
 */
 
 
-int reset_slave(THD *thd, Master_info* mi)
+int reset_slave(Session *session, Master_info* mi)
 {
   struct stat stat_area;
   char fname[FN_REFLEN];
@@ -1031,7 +1031,7 @@ int reset_slave(THD *thd, Master_info* mi)
   }
 
   // delete relay logs, clear relay log coordinates
-  if ((error= purge_relay_logs(&mi->rli, thd,
+  if ((error= purge_relay_logs(&mi->rli, session,
 			       1 /* just reset */,
 			       &errmsg)))
     goto err;
@@ -1092,8 +1092,8 @@ err:
 void kill_zombie_dump_threads(uint32_t slave_server_id)
 {
   pthread_mutex_lock(&LOCK_thread_count);
-  I_List_iterator<THD> it(threads);
-  THD *tmp;
+  I_List_iterator<Session> it(threads);
+  Session *tmp;
 
   while ((tmp=it++))
   {
@@ -1112,13 +1112,13 @@ void kill_zombie_dump_threads(uint32_t slave_server_id)
       it will be slow because it will iterate through the list
       again. We just to do kill the thread ourselves.
     */
-    tmp->awake(THD::KILL_QUERY);
+    tmp->awake(Session::KILL_QUERY);
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
 }
 
 
-bool change_master(THD* thd, Master_info* mi)
+bool change_master(Session* session, Master_info* mi)
 {
   int thread_mask;
   const char* errmsg= 0;
@@ -1133,8 +1133,8 @@ bool change_master(THD* thd, Master_info* mi)
     return(true);
   }
 
-  thd->set_proc_info("Changing master");
-  LEX_MASTER_INFO* lex_mi= &thd->lex->mi;
+  session->set_proc_info("Changing master");
+  LEX_MASTER_INFO* lex_mi= &session->lex->mi;
   // TODO: see if needs re-write
   if (mi->init_master_info(master_info_file, relay_log_info_file, thread_mask))
   {
@@ -1234,8 +1234,8 @@ bool change_master(THD* thd, Master_info* mi)
   if (need_relay_log_purge)
   {
     relay_log_purge= 1;
-    thd->set_proc_info("Purging old relay logs");
-    if (purge_relay_logs(&mi->rli, thd,
+    session->set_proc_info("Purging old relay logs");
+    if (purge_relay_logs(&mi->rli, session,
 			 0 /* not only reset, but also reinit */,
 			 &errmsg))
     {
@@ -1293,12 +1293,12 @@ bool change_master(THD* thd, Master_info* mi)
   pthread_mutex_unlock(&mi->rli.data_lock);
 
   unlock_slave_threads(mi);
-  thd->set_proc_info(0);
-  my_ok(thd);
+  session->set_proc_info(0);
+  my_ok(session);
   return(false);
 }
 
-int reset_master(THD* thd)
+int reset_master(Session* session)
 {
   if (!mysql_bin_log.is_open())
   {
@@ -1306,7 +1306,7 @@ int reset_master(THD* thd)
                ER(ER_FLUSH_MASTER_BINLOG_CLOSED), MYF(ME_BELL+ME_WAITTANG));
     return 1;
   }
-  return mysql_bin_log.reset_logs(thd);
+  return mysql_bin_log.reset_logs(session);
 }
 
 int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
@@ -1327,9 +1327,9 @@ int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
 }
 
 
-bool show_binlog_info(THD* thd)
+bool show_binlog_info(Session* session)
 {
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
   List<Item> field_list;
   field_list.push_back(new Item_empty_string("File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Position",20,
@@ -1354,7 +1354,7 @@ bool show_binlog_info(THD* thd)
     if (protocol->write())
       return(true);
   }
-  my_eof(thd);
+  my_eof(session);
   return(false);
 }
 
@@ -1364,14 +1364,14 @@ bool show_binlog_info(THD* thd)
 
   SYNOPSIS
     show_binlogs()
-    thd		Thread specific variable
+    session		Thread specific variable
 
   RETURN VALUES
     false OK
     true  error
 */
 
-bool show_binlogs(THD* thd)
+bool show_binlogs(Session* session)
 {
   IO_CACHE *index_file;
   LOG_INFO cur;
@@ -1380,7 +1380,7 @@ bool show_binlogs(THD* thd)
   List<Item> field_list;
   uint32_t length;
   int cur_dir_len;
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
 
   if (!mysql_bin_log.is_open())
   {
@@ -1435,7 +1435,7 @@ bool show_binlogs(THD* thd)
       goto err;
   }
   mysql_bin_log.unlock_index();
-  my_eof(thd);
+  my_eof(session);
   return(false);
 
 err:
@@ -1458,9 +1458,9 @@ int log_loaded_block(IO_CACHE* file)
   uint32_t block_len;
   /* buffer contains position where we started last read */
   unsigned char* buffer= (unsigned char*) my_b_get_buffer_start(file);
-  uint32_t max_event_size= current_thd->variables.max_allowed_packet;
+  uint32_t max_event_size= current_session->variables.max_allowed_packet;
   lf_info= (LOAD_FILE_INFO*) file->arg;
-  if (lf_info->thd->current_stmt_binlog_row_based)
+  if (lf_info->session->current_stmt_binlog_row_based)
     return(0);
   if (lf_info->last_pos_in_file != HA_POS_ERROR &&
       lf_info->last_pos_in_file >= my_b_get_pos_in_file(file))
@@ -1473,14 +1473,14 @@ int log_loaded_block(IO_CACHE* file)
     lf_info->last_pos_in_file= my_b_get_pos_in_file(file);
     if (lf_info->wrote_create_file)
     {
-      Append_block_log_event a(lf_info->thd, lf_info->thd->db, buffer,
+      Append_block_log_event a(lf_info->session, lf_info->session->db, buffer,
                                cmin(block_len, max_event_size),
                                lf_info->log_delayed);
       mysql_bin_log.write(&a);
     }
     else
     {
-      Begin_load_query_log_event b(lf_info->thd, lf_info->thd->db,
+      Begin_load_query_log_event b(lf_info->session, lf_info->session->db,
                                    buffer,
                                    cmin(block_len, max_event_size),
                                    lf_info->log_delayed);
@@ -1501,8 +1501,8 @@ public:
   sys_var_slave_skip_counter(sys_var_chain *chain, const char *name_arg)
     :sys_var(name_arg)
   { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var);
-  bool update(THD *thd, set_var *var);
+  bool check(Session *session, set_var *var);
+  bool update(Session *session, set_var *var);
   bool check_type(enum_var_type type) { return type != OPT_GLOBAL; }
   /*
     We can't retrieve the value of this, so we don't have to define
@@ -1516,15 +1516,15 @@ public:
   sys_var_sync_binlog_period(sys_var_chain *chain, const char *name_arg,
                              ulong *value_ptr)
     :sys_var_long_ptr(chain, name_arg,value_ptr) {}
-  bool update(THD *thd, set_var *var);
+  bool update(Session *session, set_var *var);
 };
 
-static void fix_slave_net_timeout(THD *thd,
+static void fix_slave_net_timeout(Session *session,
                                   enum_var_type type __attribute__((unused)))
 {
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
-    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                         "The currect value for master_heartbeat_period"
                         " exceeds the new value of `slave_net_timeout' sec."
@@ -1546,10 +1546,10 @@ static sys_var_long_ptr	sys_slave_trans_retries(&vars, "slave_transaction_retrie
 static sys_var_sync_binlog_period sys_sync_binlog_period(&vars, "sync_binlog", &sync_binlog_period);
 static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_counter");
 
-static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff);
+static int show_slave_skip_errors(Session *session, SHOW_VAR *var, char *buff);
 
 
-static int show_slave_skip_errors(THD *thd __attribute__((unused)),
+static int show_slave_skip_errors(Session *session __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type=SHOW_CHAR;
@@ -1601,7 +1601,7 @@ static SHOW_VAR fixed_vars[]= {
   {"slave_skip_errors",       (char*) &show_slave_skip_errors_cont,      SHOW_FUNC},
 };
 
-bool sys_var_slave_skip_counter::check(THD *thd __attribute__((unused)),
+bool sys_var_slave_skip_counter::check(Session *session __attribute__((unused)),
                                        set_var *var)
 {
   int result= 0;
@@ -1619,7 +1619,7 @@ bool sys_var_slave_skip_counter::check(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
+bool sys_var_slave_skip_counter::update(Session *session __attribute__((unused)),
                                         set_var *var)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1641,7 +1641,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
 }
 
 
-bool sys_var_sync_binlog_period::update(THD *thd __attribute__((unused)),
+bool sys_var_sync_binlog_period::update(Session *session __attribute__((unused)),
                                         set_var *var)
 {
   sync_binlog_period= (uint32_t) var->save_result.uint64_t_value;

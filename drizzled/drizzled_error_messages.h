@@ -760,7 +760,7 @@ N_("Field '%-.192s' doesn't have a default value"),
 /* ER_DIVISION_BY_ZERO 22012  */
 N_("Division by 0"),
 /* ER_TRUNCATED_WRONG_VALUE_FOR_FIELD   */
-N_("Incorrect %-.32s value: '%-.128s' for column '%.192s' at row %ld"),
+N_("Incorrect %-.32s value: '%-.128s' for column '%.192s' at row %u"),
 /* ER_ILLEGAL_VALUE_FOR_TYPE 22007  */
 N_("Illegal %s '%-.192s' value found during parsing"),
 /* ER_VIEW_NONUPD_CHECK   */

@@ -50,41 +50,41 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 #include <drizzled/sql_table.h>
 
 /* sql_db.cc */
-int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
-bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
-bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name,
+int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create, bool silent);
+bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
+bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent);
+bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
                      bool force_switch);
-bool mysql_opt_change_db(THD *thd,
+bool mysql_opt_change_db(Session *session,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,
                          bool *cur_db_changed);
 
 /* sql_repl.cc */
-void write_bin_log(THD *thd, bool clear_error,
+void write_bin_log(Session *session, bool clear_error,
                    char const *query, ulong query_length);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, uint16_t flags);
-void mysql_client_binlog_statement(THD *thd);
+void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos, uint16_t flags);
+void mysql_client_binlog_statement(Session *session);
 
 /* sql_rename.cc */
-bool mysql_rename_tables(THD *thd, TableList *table_list, bool silent);
-bool do_rename(THD *thd, TableList *ren_table, char *new_db,
+bool mysql_rename_tables(Session *session, TableList *table_list, bool silent);
+bool do_rename(Session *session, TableList *ren_table, char *new_db,
                       char *new_table_name, char *new_table_alias,
                       bool skip_error);
 
 /* sql_parse.cc */
-void mysql_parse(THD *thd, const char *inBuf, uint32_t length,
+void mysql_parse(Session *session, const char *inBuf, uint32_t length,
                  const char ** semicolon);
 
-bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint32_t length);
+bool mysql_test_parse_for_slave(Session *session,char *inBuf,uint32_t length);
 
 
 bool is_update_query(enum enum_sql_command command);
 
-bool alloc_query(THD *thd, const char *packet, uint32_t packet_length);
+bool alloc_query(Session *session, const char *packet, uint32_t packet_length);
 
-void mysql_reset_thd_for_next_command(THD *thd);
+void mysql_reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);
 
@@ -94,17 +94,17 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
 
 void init_update_queries(void);
 
-bool do_command(THD *thd);
+bool do_command(Session *session);
 
-bool dispatch_command(enum enum_server_command command, THD *thd,
+bool dispatch_command(enum enum_server_command command, Session *session,
 		      char* packet, uint32_t packet_length);
 
-void log_slow_statement(THD *thd);
+void log_slow_statement(Session *session);
 
-bool append_file_to_dir(THD *thd, const char **filename_ptr, 
+bool append_file_to_dir(Session *session, const char **filename_ptr, 
                         const char *table_name);
 
-bool reload_cache(THD *thd, ulong options, TableList *tables, bool *write_to_binlog);
+bool reload_cache(Session *session, ulong options, TableList *tables, bool *write_to_binlog);
 
 bool check_simple_select();
 
@@ -122,141 +122,141 @@ uint32_t cached_table_definitions(void);
 
 /* drizzled.cc */
 void kill_mysql(void);
-void close_connection(THD *thd, uint32_t errcode, bool lock);
+void close_connection(Session *session, uint32_t errcode, bool lock);
 
 /* sql_select.cc */
-Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
+Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list);
 
 /* handler.cc */
-bool mysql_xa_recover(THD *thd);
+bool mysql_xa_recover(Session *session);
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                   SORT_FIELD *sortorder);
-int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
+int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
 		List<Item> &fields, List <Item> &all_fields, order_st *order);
-int setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
+int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
 		List<Item> &fields, List<Item> &all_fields, order_st *order,
 		bool *hidden_group_fields);
-bool fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
+bool fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
                    Item **ref_pointer_array);
 
-bool handle_select(THD *thd, LEX *lex, select_result *result,
+bool handle_select(Session *session, LEX *lex, select_result *result,
                    ulong setup_tables_done_option);
-bool mysql_select(THD *thd, Item ***rref_pointer_array,
+bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
                   COND *conds, uint32_t og_num, order_st *order, order_st *group,
                   Item *having, order_st *proc_param, uint64_t select_type, 
                   select_result *result, SELECT_LEX_UNIT *unit, 
                   SELECT_LEX *select_lex);
-void free_underlaid_joins(THD *thd, SELECT_LEX *select);
-bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit,
+void free_underlaid_joins(Session *session, SELECT_LEX *select);
+bool mysql_explain_union(Session *session, SELECT_LEX_UNIT *unit,
                          select_result *result);
-int mysql_explain_select(THD *thd, SELECT_LEX *sl, char const *type,
+int mysql_explain_select(Session *session, SELECT_LEX *sl, char const *type,
 			 select_result *result);
-bool mysql_union(THD *thd, LEX *lex, select_result *result,
+bool mysql_union(Session *session, LEX *lex, select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option);
-bool mysql_handle_derived(LEX *lex, bool (*processor)(THD *thd,
+bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
-bool mysql_derived_prepare(THD *thd, LEX *lex, TableList *t);
-bool mysql_derived_filling(THD *thd, LEX *lex, TableList *t);
-Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
+bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
+bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
+Field *create_tmp_field(Session *session, Table *table,Item *item, Item::Type type,
 			Item ***copy_func, Field **from_field,
                         Field **def_field,
 			bool group, bool modify_item,
 			bool table_cant_handle_bit_fields,
                         bool make_copy_field,
                         uint32_t convert_blob_length);
-void sp_prepare_create_field(THD *thd, Create_field *sql_field);
+void sp_prepare_create_field(Session *session, Create_field *sql_field);
 int prepare_create_field(Create_field *sql_field, 
 			 uint32_t *blob_columns, 
 			 int *timestamps, int *timestamps_with_niladic,
 			 int64_t table_flags);
-bool mysql_create_table(THD *thd,const char *db, const char *table_name,
+bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
                         bool tmp_table, uint32_t select_field_count);
-bool mysql_create_table_no_lock(THD *thd, const char *db,
+bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 Alter_info *alter_info,
                                 bool tmp_table, uint32_t select_field_count,
                                 bool lock_open_lock);
 
-bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
+bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TableList *table_list,
                        Alter_info *alter_info,
                        uint32_t order_num, order_st *order, bool ignore);
-bool mysql_recreate_table(THD *thd, TableList *table_list);
-bool mysql_create_like_table(THD *thd, TableList *table,
+bool mysql_recreate_table(Session *session, TableList *table_list);
+bool mysql_create_like_table(Session *session, TableList *table,
                              TableList *src_table,
                              HA_CREATE_INFO *create_info);
 bool mysql_rename_table(handlerton *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
-bool mysql_prepare_update(THD *thd, TableList *table_list,
+bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);
-int mysql_update(THD *thd,TableList *tables,List<Item> &fields,
+int mysql_update(Session *session,TableList *tables,List<Item> &fields,
 		 List<Item> &values,COND *conds,
 		 uint32_t order_num, order_st *order, ha_rows limit,
 		 enum enum_duplicates handle_duplicates, bool ignore);
-bool mysql_multi_update(THD *thd, TableList *table_list,
+bool mysql_multi_update(Session *session, TableList *table_list,
                         List<Item> *fields, List<Item> *values,
                         COND *conds, uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
                         SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex);
-bool mysql_prepare_insert(THD *thd, TableList *table_list, Table *table,
+bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,
                           List<Item> &update_values, enum_duplicates duplic,
                           COND **where, bool select_insert,
                           bool check_fields, bool abort_on_warning);
-bool mysql_insert(THD *thd,TableList *table,List<Item> &fields,
+bool mysql_insert(Session *session,TableList *table,List<Item> &fields,
                   List<List_item> &values, List<Item> &update_fields,
                   List<Item> &update_values, enum_duplicates flag,
                   bool ignore);
-int check_that_all_fields_are_given_values(THD *thd, Table *entry,
+int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *table_list);
 void prepare_triggers_for_insert_stmt(Table *table);
-int mysql_prepare_delete(THD *thd, TableList *table_list, Item **conds);
-bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
+int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds);
+bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
-bool mysql_truncate(THD *thd, TableList *table_list, bool dont_send_ok);
-uint32_t create_table_def_key(THD *thd, char *key, TableList *table_list,
+bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
+uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
                           bool tmp_table);
-TABLE_SHARE *get_table_share(THD *thd, TableList *table_list, char *key,
+TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TABLE_SHARE *share, enum release_type type);
 TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name);
-Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type update,
+Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
                    uint32_t lock_flags);
-Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint32_t flags);
-bool name_lock_locked_table(THD *thd, TableList *tables);
-bool reopen_name_locked_table(THD* thd, TableList* table_list, bool link_in);
-Table *table_cache_insert_placeholder(THD *thd, const char *key,
+Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
+bool name_lock_locked_table(Session *session, TableList *tables);
+bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
+Table *table_cache_insert_placeholder(Session *session, const char *key,
                                       uint32_t key_length);
-bool lock_table_name_if_not_cached(THD *thd, const char *db,
+bool lock_table_name_if_not_cached(Session *session, const char *db,
                                    const char *table_name, Table **table);
-Table *find_locked_table(THD *thd, const char *db,const char *table_name);
+Table *find_locked_table(Session *session, const char *db,const char *table_name);
 void detach_merge_children(Table *table, bool clear_refs);
 bool fix_merge_after_open(TableList *old_child_list, TableList **old_last,
                           TableList *new_child_list, TableList **new_last);
 bool reopen_table(Table *table);
-bool reopen_tables(THD *thd,bool get_locks,bool in_refresh);
-void close_data_files_and_morph_locks(THD *thd, const char *db,
+bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
+void close_data_files_and_morph_locks(Session *session, const char *db,
                                       const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
-bool open_new_frm(THD *thd, TABLE_SHARE *share, const char *alias,
+bool open_new_frm(Session *session, TABLE_SHARE *share, const char *alias,
                   uint32_t db_stat, uint32_t prgflag,
                   uint32_t ha_open_flags, Table *outparam,
                   TableList *table_desc, MEM_ROOT *mem_root);
-bool wait_for_tables(THD *thd);
+bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(THD *thd,const char *db, const char *table_name);
-void abort_locked_tables(THD *thd,const char *db, const char *table_name);
-void execute_init_command(THD *thd, sys_var_str *init_command_var,
+Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
+void abort_locked_tables(Session *session,const char *db, const char *table_name);
+void execute_init_command(Session *session, sys_var_str *init_command_var,
 			  rw_lock_t *var_mutex);
 extern Field *not_found_field;
 extern Field *view_ref_found;
@@ -265,12 +265,12 @@ enum find_item_error_report_type {REPORT_ALL_ERRORS, REPORT_EXCEPT_NOT_FOUND,
 				  IGNORE_ERRORS, REPORT_EXCEPT_NON_UNIQUE,
                                   IGNORE_EXCEPT_NON_UNIQUE};
 Field *
-find_field_in_tables(THD *thd, Item_ident *item,
+find_field_in_tables(Session *session, Item_ident *item,
                      TableList *first_table, TableList *last_table,
                      Item **ref, find_item_error_report_type report_error,
                      bool check_privileges, bool register_tree_change);
 Field *
-find_field_in_table_ref(THD *thd, TableList *table_list,
+find_field_in_table_ref(Session *session, TableList *table_list,
                         const char *name, uint32_t length,
                         const char *item_name, const char *db_name,
                         const char *table_name, Item **ref,
@@ -278,7 +278,7 @@ find_field_in_table_ref(THD *thd, TableList *table_list,
                         uint32_t *cached_field_index_ptr,
                         bool register_tree_change, TableList **actual_table);
 Field *
-find_field_in_table(THD *thd, Table *table, const char *name, uint32_t length,
+find_field_in_table(Session *session, Table *table, const char *name, uint32_t length,
                     bool allow_rowid, uint32_t *cached_field_index_ptr);
 Field *
 find_field_in_table_sef(Table *table, const char *name);
@@ -286,7 +286,7 @@ int update_virtual_fields_marked_for_write(Table *table,
                                            bool ignore_stored=true);
 
 /* sql_do.cc */
-bool mysql_do(THD *thd, List<Item> &values);
+bool mysql_do(Session *session, List<Item> &values);
 
 /* sql_analyse.h */
 bool append_escaped(String *to_str, String *from_str);
@@ -301,13 +301,13 @@ extern LEX_STRING GENERAL_LOG_NAME;
 extern LEX_STRING SLOW_LOG_NAME;
 
 extern const LEX_STRING partition_keywords[];
-ST_SCHEMA_TABLE *find_schema_table(THD *thd, const char* table_name);
+ST_SCHEMA_TABLE *find_schema_table(Session *session, const char* table_name);
 ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx);
-int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
+int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          enum enum_schema_tables schema_table_idx);
-int make_schema_select(THD *thd,  SELECT_LEX *sel,
+int make_schema_select(Session *session,  SELECT_LEX *sel,
                        enum enum_schema_tables schema_table_idx);
-int mysql_schema_table(THD *thd, LEX *lex, TableList *table_list);
+int mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
 bool get_schema_tables_result(JOIN *join,
                               enum enum_schema_table_state executed_place);
 enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
@@ -316,18 +316,18 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
 
 /* sql_handler.cc */
-bool mysql_ha_open(THD *thd, TableList *tables, bool reopen);
-bool mysql_ha_close(THD *thd, TableList *tables);
-bool mysql_ha_read(THD *, TableList *,enum enum_ha_read_modes,char *,
+bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
+bool mysql_ha_close(Session *session, TableList *tables);
+bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
                    List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(THD *thd);
-void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(THD *thd);
+void mysql_ha_flush(Session *session);
+void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
+void mysql_ha_cleanup(Session *session);
 
 /* sql_base.cc */
 #define TMP_TABLE_KEY_EXTRA 8
 void set_item_name(Item *item,char *pos,uint32_t length);
-bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types type,
+bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
 		       uint32_t type_modifier,
                        enum column_format_type column_format,
@@ -336,7 +336,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types t
 		       char *change, List<String> *interval_list,
 		       const CHARSET_INFO * const cs,
 		       virtual_column_info *vcol_info);
-Create_field * new_create_field(THD *thd, char *field_name, enum_field_types type,
+Create_field * new_create_field(Session *session, char *field_name, enum_field_types type,
 				char *length, char *decimals,
 				uint32_t type_modifier, 
 				Item *default_value, Item *on_update_value,
@@ -344,16 +344,16 @@ Create_field * new_create_field(THD *thd, char *field_name, enum_field_types typ
 				List<String> *interval_list, CHARSET_INFO *cs,
 				virtual_column_info *vcol_info);
 void store_position_for_column(const char *name);
-bool add_to_list(THD *thd, SQL_LIST &list,Item *group,bool asc);
-bool push_new_name_resolution_context(THD *thd,
+bool add_to_list(Session *session, SQL_LIST &list,Item *group,bool asc);
+bool push_new_name_resolution_context(Session *session,
                                       TableList *left_op,
                                       TableList *right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       SELECT_LEX *lex);
-bool add_proc_to_list(THD *thd, Item *item);
-void unlink_open_table(THD *thd, Table *find, bool unlock);
-void drop_open_table(THD *thd, Table *table, const char *db_name,
+bool add_proc_to_list(Session *session, Item *item);
+void unlink_open_table(Session *session, Table *find, bool unlock);
+void drop_open_table(Session *session, Table *table, const char *db_name,
                      const char *table_name);
 void update_non_unique_table_error(TableList *update,
                                    const char *operation,
@@ -395,81 +395,81 @@ Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
                           enum_resolution_type *resolution);
 bool get_key_map_from_key_list(key_map *map, Table *table,
                                List<String> *index_list);
-bool insert_fields(THD *thd, Name_resolution_context *context,
+bool insert_fields(Session *session, Name_resolution_context *context,
 		   const char *db_name, const char *table_name,
                    List_iterator<Item> *it, bool any_privileges);
-bool setup_tables(THD *thd, Name_resolution_context *context,
+bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
                   TableList **leaves, bool select_insert);
-bool setup_tables_and_check_access(THD *thd, 
+bool setup_tables_and_check_access(Session *session, 
                                    Name_resolution_context *context,
                                    List<TableList> *from_clause, 
                                    TableList *tables, 
                                    TableList **leaves, 
                                    bool select_insert);
-int setup_wild(THD *thd, TableList *tables, List<Item> &fields,
+int setup_wild(Session *session, TableList *tables, List<Item> &fields,
 	       List<Item> *sum_func_list, uint32_t wild_num);
-bool setup_fields(THD *thd, Item** ref_pointer_array,
+bool setup_fields(Session *session, Item** ref_pointer_array,
                   List<Item> &item, enum_mark_columns mark_used_columns,
                   List<Item> *sum_func_list, bool allow_sum_func);
-inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
+inline bool setup_fields_with_no_wrap(Session *session, Item **ref_pointer_array,
                                       List<Item> &item,
                                       enum_mark_columns mark_used_columns,
                                       List<Item> *sum_func_list,
                                       bool allow_sum_func)
 {
   bool res;
-  res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
+  res= setup_fields(session, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
   return res;
 }
-int setup_conds(THD *thd, TableList *tables, TableList *leaves,
+int setup_conds(Session *session, TableList *tables, TableList *leaves,
 		COND **conds);
 int setup_ftfuncs(SELECT_LEX* select);
-int init_ftfuncs(THD *thd, SELECT_LEX* select, bool no_order);
-void wait_for_condition(THD *thd, pthread_mutex_t *mutex,
+int init_ftfuncs(Session *session, SELECT_LEX* select, bool no_order);
+void wait_for_condition(Session *session, pthread_mutex_t *mutex,
                         pthread_cond_t *cond);
-int open_tables(THD *thd, TableList **tables, uint32_t *counter, uint32_t flags);
+int open_tables(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
-int open_and_lock_tables_derived(THD *thd, TableList *tables, bool derived);
+int open_and_lock_tables_derived(Session *session, TableList *tables, bool derived);
 /* simple open_and_lock_tables without derived handling */
-inline int simple_open_n_lock_tables(THD *thd, TableList *tables)
+inline int simple_open_n_lock_tables(Session *session, TableList *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, false);
+  return open_and_lock_tables_derived(session, tables, false);
 }
 /* open_and_lock_tables with derived handling */
-inline int open_and_lock_tables(THD *thd, TableList *tables)
+inline int open_and_lock_tables(Session *session, TableList *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, true);
+  return open_and_lock_tables_derived(session, tables, true);
 }
 /* simple open_and_lock_tables without derived handling for single table */
-Table *open_n_lock_single_table(THD *thd, TableList *table_l,
+Table *open_n_lock_single_table(Session *session, TableList *table_l,
                                 thr_lock_type lock_type);
-bool open_normal_and_derived_tables(THD *thd, TableList *tables, uint32_t flags);
-int lock_tables(THD *thd, TableList *tables, uint32_t counter, bool *need_reopen);
-int decide_logging_format(THD *thd, TableList *tables);
-Table *open_temporary_table(THD *thd, const char *path, const char *db,
+bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
+int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
+int decide_logging_format(Session *session, TableList *tables);
+Table *open_temporary_table(Session *session, const char *path, const char *db,
                             const char *table_name, bool link_in_list,
                             open_table_mode open_mode);
 bool rm_temporary_table(handlerton *base, char *path, bool frm_only);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
-bool close_thread_table(THD *thd, Table **table_ptr);
-void close_temporary_tables(THD *thd);
-void close_tables_for_reopen(THD *thd, TableList **tables);
+bool close_thread_table(Session *session, Table **table_ptr);
+void close_temporary_tables(Session *session);
+void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
                                const char *db_name,
                                const char *table_name);
-TableList *unique_table(THD *thd, TableList *table, TableList *table_list,
+TableList *unique_table(Session *session, TableList *table, TableList *table_list,
                          bool check_alias);
-Table *find_temporary_table(THD *thd, const char *db, const char *table_name);
-Table *find_temporary_table(THD *thd, TableList *table_list);
-int drop_temporary_table(THD *thd, TableList *table_list);
-void close_temporary_table(THD *thd, Table *table, bool free_share,
+Table *find_temporary_table(Session *session, const char *db, const char *table_name);
+Table *find_temporary_table(Session *session, TableList *table_list);
+int drop_temporary_table(Session *session, TableList *table_list);
+void close_temporary_table(Session *session, Table *table, bool free_share,
                            bool delete_table);
 void close_temporary(Table *table, bool free_share, bool delete_table);
-bool rename_temporary_table(THD* thd, Table *table, const char *new_db,
+bool rename_temporary_table(Session* session, Table *table, const char *new_db,
 			    const char *table_name);
 void remove_db_from_cache(const char *db);
 void flush_tables();
@@ -478,10 +478,10 @@ char *make_default_log_name(char *buff,const char* log_ext);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000
-#define RTFC_OWNED_BY_THD_FLAG      0x0001
+#define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
 #define RTFC_CHECK_KILLED_FLAG      0x0004
-bool remove_table_from_cache(THD *thd, const char *db, const char *table,
+bool remove_table_from_cache(Session *session, const char *db, const char *table,
                              uint32_t flags);
 
 #define NORMAL_PART_NAME 0
@@ -495,15 +495,15 @@ void mem_alloc_error(size_t size);
 #define WFRM_PACK_FRM 4
 #define WFRM_KEEP_SHARE 8
 
-bool close_cached_tables(THD *thd, TableList *tables, bool have_lock,
+bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
                          bool wait_for_refresh, bool wait_for_placeholders);
-bool close_cached_connection_tables(THD *thd, bool wait_for_refresh,
+bool close_cached_connection_tables(Session *session, bool wait_for_refresh,
                                     LEX_STRING *connect_string,
                                     bool have_lock= false);
 void copy_field_from_tmp_record(Field *field,int offset);
-bool fill_record(THD * thd, List<Item> &fields, List<Item> &values, bool ignore_errors);
-bool fill_record(THD *thd, Field **field, List<Item> &values, bool ignore_errors);
-OPEN_TableList *list_open_tables(THD *thd, const char *db, const char *wild);
+bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
+bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
+OPEN_TableList *list_open_tables(Session *session, const char *db, const char *wild);
 
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,
@@ -526,12 +526,12 @@ inline TableList *find_table_in_local_list(TableList *table,
 bool eval_const_cond(COND *cond);
 
 /* sql_load.cc */
-int mysql_load(THD *thd, sql_exchange *ex, TableList *table_list,
+int mysql_load(Session *session, sql_exchange *ex, TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values_list,
                 enum enum_duplicates handle_duplicates, bool ignore,
                 bool local_file);
-int write_record(THD *thd, Table *table, COPY_INFO *info);
+int write_record(Session *session, Table *table, COPY_INFO *info);
 
 
 /* sql_test.cc */
@@ -563,12 +563,12 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
 
 /* mysqld.cc */
 extern void MYSQLerror(const char*);
-void refresh_status(THD *thd);
+void refresh_status(Session *session);
 bool mysql_rm_tmp_tables(void);
-void handle_connection_in_main_thread(THD *thd);
-void create_thread_to_handle_connection(THD *thd);
-void unlink_thd(THD *thd);
-bool one_thread_per_connection_end(THD *thd, bool put_in_cache);
+void handle_connection_in_main_thread(Session *session);
+void create_thread_to_handle_connection(Session *session);
+void unlink_session(Session *session);
+bool one_thread_per_connection_end(Session *session, bool put_in_cache);
 void flush_thread_cache();
 
 /* item_func.cc */
@@ -595,10 +595,10 @@ bool is_keyword(const char *name, uint32_t len);
 bool my_database_names_init(void);
 void my_database_names_free(void);
 bool check_db_dir_existence(const char *db_name);
-bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create);
-bool load_db_opt_by_name(THD *thd, const char *db_name,
+bool load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create);
+bool load_db_opt_by_name(Session *session, const char *db_name,
                          HA_CREATE_INFO *db_create_info);
-const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name);
+const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name);
 bool my_dbopt_init(void);
 void my_dbopt_cleanup(void);
 extern int creating_database; // How many database locks are made
@@ -632,7 +632,7 @@ extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t keybuff_size;
-extern uint64_t thd_startup_options;
+extern uint64_t session_startup_options;
 extern ulong thread_id;
 extern ulong binlog_cache_use, binlog_cache_disk_use;
 extern ulong aborted_threads,aborted_connects;
@@ -706,7 +706,7 @@ extern rw_lock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-extern I_List<THD> threads;
+extern I_List<Session> threads;
 extern I_List<NAMED_LIST> key_caches;
 extern MY_BITMAP temp_pool;
 extern String my_empty_string;
@@ -742,7 +742,7 @@ extern SHOW_COMP_OPTION have_compress;
 
 extern pthread_t signal_thread;
 
-DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **table, uint32_t count,
+DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
                               uint32_t flags, bool *need_reopen);
 /* mysql_lock_tables() and open_table() flags bits */
 #define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
@@ -752,44 +752,44 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **table, uint32_t count,
 #define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      0x0010
 #define DRIZZLE_LOCK_PERF_SCHEMA                  0x0020
 
-void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_some_tables(THD *thd, Table **table,uint32_t count);
-void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,Table *table,
+void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
+void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock);
+void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count);
+void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
                        bool always_unlock);
-void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock);
-void mysql_lock_downgrade_write(THD *thd, Table *table,
+void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock);
+void mysql_lock_downgrade_write(Session *session, Table *table,
                                 thr_lock_type new_lock_type);
-bool mysql_lock_abort_for_thread(THD *thd, Table *table);
+bool mysql_lock_abort_for_thread(Session *session, Table *table);
 DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b);
-TableList *mysql_lock_have_duplicate(THD *thd, TableList *needle,
+TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
                                       TableList *haystack);
-bool lock_global_read_lock(THD *thd);
-void unlock_global_read_lock(THD *thd);
-bool wait_if_global_read_lock(THD *thd, bool abort_on_refresh,
+bool lock_global_read_lock(Session *session);
+void unlock_global_read_lock(Session *session);
+bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
                               bool is_not_commit);
-void start_waiting_global_read_lock(THD *thd);
-bool make_global_read_lock_block_commit(THD *thd);
+void start_waiting_global_read_lock(Session *session);
+bool make_global_read_lock_block_commit(Session *session);
 bool set_protect_against_global_read_lock(void);
 void unset_protect_against_global_read_lock(void);
 void broadcast_refresh(void);
-int try_transactional_lock(THD *thd, TableList *table_list);
-int check_transactional_lock(THD *thd, TableList *table_list);
-int set_handler_table_locks(THD *thd, TableList *table_list,
+int try_transactional_lock(Session *session, TableList *table_list);
+int check_transactional_lock(Session *session, TableList *table_list);
+int set_handler_table_locks(Session *session, TableList *table_list,
                             bool transactional);
 
 /* Lock based on name */
-int lock_and_wait_for_table_name(THD *thd, TableList *table_list);
-int lock_table_name(THD *thd, TableList *table_list, bool check_in_use);
-void unlock_table_name(THD *thd, TableList *table_list);
-bool wait_for_locked_table_names(THD *thd, TableList *table_list);
-bool lock_table_names(THD *thd, TableList *table_list);
-void unlock_table_names(THD *thd, TableList *table_list,
+int lock_and_wait_for_table_name(Session *session, TableList *table_list);
+int lock_table_name(Session *session, TableList *table_list, bool check_in_use);
+void unlock_table_name(Session *session, TableList *table_list);
+bool wait_for_locked_table_names(Session *session, TableList *table_list);
+bool lock_table_names(Session *session, TableList *table_list);
+void unlock_table_names(Session *session, TableList *table_list,
 			TableList *last_table);
-bool lock_table_names_exclusively(THD *thd, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(THD *thd, 
+bool lock_table_names_exclusively(Session *session, TableList *table_list);
+bool is_table_name_exclusively_locked_by_this_thread(Session *session, 
                                                      TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *key,
+bool is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
                                                      int key_length);
 
 
@@ -797,12 +797,12 @@ bool is_table_name_exclusively_locked_by_this_thread(THD *thd, unsigned char *ke
 
 void unireg_init(ulong options);
 void unireg_end(void) __attribute__((noreturn));
-bool mysql_create_frm(THD *thd, const char *file_name,
+bool mysql_create_frm(Session *session, const char *file_name,
                       const char *db, const char *table,
 		      HA_CREATE_INFO *create_info,
 		      List<Create_field> &create_field,
 		      uint32_t key_count,KEY *key_info,handler *db_type);
-int rea_create_table(THD *thd, const char *path,
+int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      HA_CREATE_INFO *create_info,
   		     List<Create_field> &create_field,
@@ -814,13 +814,13 @@ int format_number(uint32_t inputflag,uint32_t max_length,char * pos,uint32_t len
 /* table.cc */
 TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length);
-void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
+void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
                           uint32_t key_length,
                           const char *table_name, const char *path);
 void free_table_share(TABLE_SHARE *share);
-int open_table_def(THD *thd, TABLE_SHARE *share, uint32_t db_flags);
+int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags);
 void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg);
-int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
+int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
 int readfrm(const char *name, unsigned char **data, size_t *length);
@@ -829,18 +829,18 @@ int closefrm(Table *table, bool free_share);
 int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
-ulong convert_period_to_month(ulong period);
-ulong convert_month_to_period(ulong month);
+uint32_t convert_period_to_month(uint32_t period);
+uint32_t convert_month_to_period(uint32_t month);
 void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
 			 uint32_t *day);
-my_time_t TIME_to_timestamp(THD *thd, const DRIZZLE_TIME *t, bool *not_exist);
+my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
-void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
+void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint32_t str_length, enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name);
@@ -854,7 +854,7 @@ extern LEX_STRING interval_type_to_name[];
 extern DATE_TIME_FORMAT *date_time_format_make(enum enum_drizzle_timestamp_type format_type,
 					       const char *format_str,
 					       uint32_t format_length);
-extern DATE_TIME_FORMAT *date_time_format_copy(THD *thd,
+extern DATE_TIME_FORMAT *date_time_format_copy(Session *session,
 					       DATE_TIME_FORMAT *format);
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 				                             enum enum_drizzle_timestamp_type type);
@@ -867,18 +867,18 @@ void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
 void make_time(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
                String *str);
 int my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b);
-uint64_t get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
+uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-void init_read_record(READ_RECORD *info, THD *thd, Table *reg_form,
+void init_read_record(READ_RECORD *info, Session *session, Table *reg_form,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_errors);
-void init_read_record_idx(READ_RECORD *info, THD *thd, Table *table, 
+void init_read_record_idx(READ_RECORD *info, Session *session, Table *table, 
                           bool print_error, uint32_t idx);
 void end_read_record(READ_RECORD *info);
-ha_rows filesort(THD *thd, Table *form,struct st_sort_field *sortorder,
+ha_rows filesort(Session *session, Table *form,struct st_sort_field *sortorder,
 		 uint32_t s_length, SQL_SELECT *select,
 		 ha_rows max_rows, bool sort_positions,
                  ha_rows *examined_rows);
@@ -898,7 +898,7 @@ ulong make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
 		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
-int create_frm(THD *thd, const char *name, const char *db, const char *table,
+int create_frm(Session *session, const char *name, const char *db, const char *table,
                uint32_t reclength, unsigned char *fileinfo,
 	       HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info);
 int rename_file_ext(const char * from,const char * to,const char * ext);
@@ -923,9 +923,9 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 #define NO_FRM_RENAME   (1 << 2)
 
 /* item_func.cc */
-Item *get_system_var(THD *thd, enum_var_type var_type, LEX_STRING name,
+Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
 		     LEX_STRING component);
-int get_var_with_binlog(THD *thd, enum_sql_command sql_command,
+int get_var_with_binlog(Session *session, enum_sql_command sql_command,
                         LEX_STRING &name, user_var_entry **out_entry);
 /* log.cc */
 bool flush_error_log(void);
@@ -936,24 +936,24 @@ void free_list(I_List <i_string> *list);
 
 /* Some inline functions for more speed */
 
-inline bool add_item_to_list(THD *thd, Item *item)
+inline bool add_item_to_list(Session *session, Item *item)
 {
-  return thd->lex->current_select->add_item_to_list(thd, item);
+  return session->lex->current_select->add_item_to_list(session, item);
 }
 
-inline bool add_value_to_list(THD *thd, Item *value)
+inline bool add_value_to_list(Session *session, Item *value)
 {
-  return thd->lex->value_list.push_back(value);
+  return session->lex->value_list.push_back(value);
 }
 
-inline bool add_order_to_list(THD *thd, Item *item, bool asc)
+inline bool add_order_to_list(Session *session, Item *item, bool asc)
 {
-  return thd->lex->current_select->add_order_to_list(thd, item, asc);
+  return session->lex->current_select->add_order_to_list(session, item, asc);
 }
 
-inline bool add_group_to_list(THD *thd, Item *item, bool asc)
+inline bool add_group_to_list(Session *session, Item *item, bool asc)
 {
-  return thd->lex->current_select->add_group_to_list(thd, item, asc);
+  return session->lex->current_select->add_group_to_list(session, item, asc);
 }
 
 inline void mark_as_null_row(Table *table)
@@ -1044,6 +1044,6 @@ inline int hexchar_to_int(char c)
 
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
 void kill_delayed_threads(void);
-bool check_stack_overrun(THD *thd, long margin, unsigned char *dummy);
+bool check_stack_overrun(Session *session, long margin, unsigned char *dummy);
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

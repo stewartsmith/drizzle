@@ -20,19 +20,19 @@ drop table t1, t2, t3, t4;
 # BUG#30622: Incorrect query results for MRR + filesort
 # 
 CREATE TABLE t1 (
-  ID int(10) NOT NULL AUTO_INCREMENT,
-  col1 int(10) DEFAULT NULL,
-  key1 int(10) NOT NULL DEFAULT '0',
-  key2 int(10) DEFAULT NULL,
+  ID int NOT NULL AUTO_INCREMENT,
+  col1 int DEFAULT NULL,
+  key1 int NOT NULL DEFAULT '0',
+  key2 int DEFAULT NULL,
   text1 text,
   text2 text,
-  col2 int(6) DEFAULT '100',
+  col2 int DEFAULT '100',
   col3 enum('headers','bodyandsubject') NOT NULL DEFAULT 'bodyandsubject',
-  col4 int(3) NOT NULL DEFAULT '0',
+  col4 int NOT NULL DEFAULT '0',
   PRIMARY KEY (ID),
   KEY (key1),
   KEY (key2)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6;
 
 INSERT INTO t1 VALUES
 (1,NULL,1130,NULL,'Hello',NULL,100,'bodyandsubject',0),

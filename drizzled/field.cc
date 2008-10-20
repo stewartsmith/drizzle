@@ -1230,7 +1230,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
 /**
   Initialize field definition for create.
 
-  @param thd                   Thread handle
+  @param session                   Thread handle
   @param fld_name              Field name
   @param fld_type              Field type
   @param fld_length            Field length
@@ -1250,7 +1250,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
+bool Create_field::init(Session *session __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint32_t fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
@@ -1783,12 +1783,12 @@ Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
     If this field was created only for type conversion purposes it
     will have table == NULL.
   */
-  THD *thd= table ? table->in_use : current_thd;
-  if (thd->count_cuted_fields)
+  Session *session= table ? table->in_use : current_session;
+  if (session->count_cuted_fields)
   {
-    thd->cuted_fields+= cuted_increment;
-    push_warning_printf(thd, level, code, ER(code), field_name,
-                        thd->row_count);
+    session->cuted_fields+= cuted_increment;
+    push_warning_printf(session, level, code, ER(code), field_name,
+                        session->row_count);
     return 0;
   }
   return level >= DRIZZLE_ERROR::WARN_LEVEL_WARN;
@@ -1817,11 +1817,11 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
                             const char *str, uint32_t str_length, 
                             enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
-  THD *thd= table ? table->in_use : current_thd;
-  if ((thd->really_abort_on_warning() &&
+  Session *session= table ? table->in_use : current_session;
+  if ((session->really_abort_on_warning() &&
        level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
-    make_truncated_value_warning(thd, level, str, str_length, ts_type,
+    make_truncated_value_warning(session, level, str, str_length, ts_type,
                                  field_name);
 }
 
@@ -1846,13 +1846,13 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
                             int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
-  THD *thd= table ? table->in_use : current_thd;
-  if (thd->really_abort_on_warning() ||
+  Session *session= table ? table->in_use : current_session;
+  if (session->really_abort_on_warning() ||
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
     char *str_end= int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(thd, level, str_nr, (uint32_t) (str_end - str_nr), 
+    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr), 
                                  ts_type, field_name);
   }
 }
@@ -1876,14 +1876,14 @@ void
 Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
                             double nr, enum enum_drizzle_timestamp_type ts_type)
 {
-  THD *thd= table ? table->in_use : current_thd;
-  if (thd->really_abort_on_warning() ||
+  Session *session= table ? table->in_use : current_session;
+  if (session->really_abort_on_warning() ||
       set_warning(level, code, 1))
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */
     char str_nr[DBL_DIG + 8];
     uint32_t str_len= sprintf(str_nr, "%g", nr);
-    make_truncated_value_warning(thd, level, str_nr, str_len, ts_type,
+    make_truncated_value_warning(session, level, str_nr, str_len, ts_type,
                                  field_name);
   }
 }

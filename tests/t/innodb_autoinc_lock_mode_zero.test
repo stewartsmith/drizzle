@@ -13,7 +13,7 @@ drop table if exists t1;
 #
 
 CREATE TABLE t1 (
-  id int(11) NOT NULL auto_increment,
+  id int NOT NULL auto_increment,
   ggid varchar(32) binary DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
   passwd varchar(32) binary DEFAULT '' NOT NULL,

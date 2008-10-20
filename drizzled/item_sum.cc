@@ -33,7 +33,7 @@
     If the set function is not allowed in any subquery where it occurs
     an error is reported immediately.
 
-  @param thd      reference to the thread context info
+  @param session      reference to the thread context info
 
   @note
     This function is to be called for any item created for a set function
@@ -46,19 +46,19 @@
     FALSE  otherwise
 */
  
-bool Item_sum::init_sum_func_check(THD *thd)
+bool Item_sum::init_sum_func_check(Session *session)
 {
-  if (!thd->lex->allow_sum_func)
+  if (!session->lex->allow_sum_func)
   {
     my_message(ER_INVALID_GROUP_FUNC_USE, ER(ER_INVALID_GROUP_FUNC_USE),
                MYF(0));
     return true;
   }
   /* Set a reference to the nesting set function if there is  any */
-  in_sum_func= thd->lex->in_sum_func;
+  in_sum_func= session->lex->in_sum_func;
   /* Save a pointer to object to be used in items for nested set functions */
-  thd->lex->in_sum_func= this;
-  nest_level= thd->lex->current_select->nest_level;
+  session->lex->in_sum_func= this;
+  nest_level= session->lex->current_select->nest_level;
   ref_by= 0;
   aggr_level= -1;
   aggr_sel= NULL;
@@ -86,7 +86,7 @@ bool Item_sum::init_sum_func_check(THD *thd)
     conditions. They are specified in the comment before the Item_sum
     class declaration.
     Additionally a bitmap variable called allow_sum_func is employed.
-    It is included into the thd->lex structure.
+    It is included into the session->lex structure.
     The bitmap contains 1 at n-th position if the set function happens
     to occur under a construct of the n-th level subquery where usage
     of set functions are allowed (i.e either in the SELECT list or
@@ -102,7 +102,7 @@ bool Item_sum::init_sum_func_check(THD *thd)
     - for AVG(t1.b) - 1 at the first position, 0 at the second position
     - for MIN(t2.d) - 1 at the first position, 1 at the second position.
 
-  @param thd  reference to the thread context info
+  @param session  reference to the thread context info
   @param ref  location of the pointer to this item in the embedding expression
 
   @note
@@ -117,10 +117,10 @@ bool Item_sum::init_sum_func_check(THD *thd)
     FALSE  otherwise
 */
  
-bool Item_sum::check_sum_func(THD *thd, Item **ref)
+bool Item_sum::check_sum_func(Session *session, Item **ref)
 {
   bool invalid= false;
-  nesting_map allow_sum_func= thd->lex->allow_sum_func;
+  nesting_map allow_sum_func= session->lex->allow_sum_func;
   /*  
     The value of max_arg_level is updated if an argument of the set function
     contains a column reference resolved  against a subquery whose level is
@@ -144,7 +144,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
       Try to find a subquery where it can be aggregated;
       If we fail to find such a subquery report an error.
     */
-    if (register_sum_func(thd, ref))
+    if (register_sum_func(session, ref))
       return true;
     invalid= aggr_level < 0 && !(allow_sum_func & (1 << nest_level));
     if (!invalid && false)
@@ -153,7 +153,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
   if (!invalid && aggr_level < 0)
   {
     aggr_level= nest_level;
-    aggr_sel= thd->lex->current_select;
+    aggr_sel= session->lex->current_select;
   }
   /*
     By this moment we either found a subquery where the set function is
@@ -257,7 +257,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
   }
   aggr_sel->full_group_by_flag|= SUM_FUNC_USED;
   update_used_tables();
-  thd->lex->in_sum_func= in_sum_func;
+  session->lex->in_sum_func= in_sum_func;
   return false;
 }
 
@@ -277,7 +277,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
     a subquery in one chain. It would simplify the process of 'splitting'
     for set functions.
 
-  @param thd  reference to the thread context info
+  @param session  reference to the thread context info
   @param ref  location of the pointer to this item in the embedding expression
 
   @retval
@@ -286,11 +286,11 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
     TRUE   otherwise
 */  
 
-bool Item_sum::register_sum_func(THD *thd, Item **ref)
+bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
   SELECT_LEX *sl;
-  nesting_map allow_sum_func= thd->lex->allow_sum_func;
-  for (sl= thd->lex->current_select->master_unit()->outer_select() ;
+  nesting_map allow_sum_func= session->lex->allow_sum_func;
+  for (sl= session->lex->current_select->master_unit()->outer_select() ;
        sl && sl->nest_level > max_arg_level;
        sl= sl->master_unit()->outer_select() )
   {
@@ -341,12 +341,12 @@ bool Item_sum::register_sum_func(THD *thd, Item **ref)
       with_sum_func being set for an st_select_lex means that this st_select_lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
-    for (sl= thd->lex->current_select; 
+    for (sl= session->lex->current_select; 
          sl && sl != aggr_sel && sl->master_unit()->item;
          sl= sl->master_unit()->outer_select() )
       sl->master_unit()->item->with_sum_func= 1;
   }
-  thd->lex->current_select->mark_as_dependent(aggr_sel);
+  session->lex->current_select->mark_as_dependent(aggr_sel);
   return false;
 }
 
@@ -374,8 +374,8 @@ Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   Constructor used in processing select with temporary tebles.
 */
 
-Item_sum::Item_sum(THD *thd, Item_sum *item):
-  Item_result_field(thd, item), arg_count(item->arg_count),
+Item_sum::Item_sum(Session *session, Item_sum *item):
+  Item_result_field(session, item), arg_count(item->arg_count),
   aggr_sel(item->aggr_sel),
   nest_level(item->nest_level), aggr_level(item->aggr_level),
   quick_group(item->quick_group), used_tables_cache(item->used_tables_cache),
@@ -384,7 +384,7 @@ Item_sum::Item_sum(THD *thd, Item_sum *item):
   if (arg_count <= 2)
     args=tmp_args;
   else
-    if (!(args= (Item**) thd->alloc(sizeof(Item*)*arg_count)))
+    if (!(args= (Item**) session->alloc(sizeof(Item*)*arg_count)))
       return;
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
@@ -392,7 +392,7 @@ Item_sum::Item_sum(THD *thd, Item_sum *item):
 
 void Item_sum::mark_as_sum_func()
 {
-  SELECT_LEX *cur_select= current_thd->lex->current_select;
+  SELECT_LEX *cur_select= current_session->lex->current_select;
   cur_select->n_sum_items++;
   cur_select->with_sum_func= 1;
   with_sum_func= 1;
@@ -439,9 +439,9 @@ void Item_sum::fix_num_length_and_dec()
   max_length=float_length(decimals);
 }
 
-Item *Item_sum::get_tmp_table_item(THD *thd)
+Item *Item_sum::get_tmp_table_item(Session *session)
 {
-  Item_sum* sum_item= (Item_sum *) copy_or_same(thd);
+  Item_sum* sum_item= (Item_sum *) copy_or_same(session);
   if (sum_item && sum_item->result_field)	   // If not a const sum func
   {
     Field *result_field_tmp= sum_item->result_field;
@@ -559,18 +559,18 @@ my_decimal *Item_sum_int::val_decimal(my_decimal *decimal_value)
 
 
 bool
-Item_sum_num::fix_fields(THD *thd, Item **ref)
+Item_sum_num::fix_fields(Session *session, Item **ref)
 {
   assert(fixed == 0);
 
-  if (init_sum_func_check(thd))
+  if (init_sum_func_check(session))
     return true;
 
   decimals=0;
   maybe_null=0;
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
-    if (args[i]->fix_fields(thd, args + i) || args[i]->check_cols(1))
+    if (args[i]->fix_fields(session, args + i) || args[i]->check_cols(1))
       return true;
     set_if_bigger(decimals, args[i]->decimals);
     maybe_null |= args[i]->maybe_null;
@@ -580,7 +580,7 @@ Item_sum_num::fix_fields(THD *thd, Item **ref)
   null_value=1;
   fix_length_and_dec();
 
-  if (check_sum_func(thd, ref))
+  if (check_sum_func(session, ref))
     return true;
 
   fixed= 1;
@@ -588,8 +588,8 @@ Item_sum_num::fix_fields(THD *thd, Item **ref)
 }
 
 
-Item_sum_hybrid::Item_sum_hybrid(THD *thd, Item_sum_hybrid *item)
-  :Item_sum(thd, item), value(item->value), hybrid_type(item->hybrid_type),
+Item_sum_hybrid::Item_sum_hybrid(Session *session, Item_sum_hybrid *item)
+  :Item_sum(session, item), value(item->value), hybrid_type(item->hybrid_type),
   hybrid_field_type(item->hybrid_field_type), cmp_sign(item->cmp_sign),
   was_values(item->was_values)
 {
@@ -618,17 +618,17 @@ Item_sum_hybrid::Item_sum_hybrid(THD *thd, Item_sum_hybrid *item)
 }
 
 bool
-Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
+Item_sum_hybrid::fix_fields(Session *session, Item **ref)
 {
   assert(fixed == 0);
 
   Item *item= args[0];
 
-  if (init_sum_func_check(thd))
+  if (init_sum_func_check(session))
     return true;
 
   // 'item' can be changed during fix_fields
-  if ((!item->fixed && item->fix_fields(thd, args)) ||
+  if ((!item->fixed && item->fix_fields(session, args)) ||
       (item= args[0])->check_cols(1))
     return true;
   decimals=item->decimals;
@@ -666,7 +666,7 @@ Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
   else
     hybrid_field_type= Item::field_type();
 
-  if (check_sum_func(thd, ref))
+  if (check_sum_func(session, ref))
     return true;
 
   fixed= 1;
@@ -681,7 +681,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   {
     field= ((Item_field*) args[0])->field;
     
-    if ((field= create_tmp_field_from_field(current_thd, field, name, table,
+    if ((field= create_tmp_field_from_field(current_session, field, name, table,
 					    NULL, convert_blob_length)))
       field->flags&= ~NOT_NULL_FLAG;
     return field;
@@ -719,8 +719,8 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
   @todo
   check if the following assignments are really needed
 */
-Item_sum_sum::Item_sum_sum(THD *thd, Item_sum_sum *item) 
-  :Item_sum_num(thd, item), hybrid_type(item->hybrid_type),
+Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item) 
+  :Item_sum_num(session, item), hybrid_type(item->hybrid_type),
    curr_dec_buff(item->curr_dec_buff)
 {
   /* TODO: check if the following assignments are really needed */
@@ -733,9 +733,9 @@ Item_sum_sum::Item_sum_sum(THD *thd, Item_sum_sum *item)
     sum= item->sum;
 }
 
-Item *Item_sum_sum::copy_or_same(THD* thd)
+Item *Item_sum_sum::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_sum(thd, this);
+  return new (session->mem_root) Item_sum_sum(session, this);
 }
 
 
@@ -884,8 +884,8 @@ Item_sum_distinct::Item_sum_distinct(Item *item_arg)
 }
 
 
-Item_sum_distinct::Item_sum_distinct(THD *thd, Item_sum_distinct *original)
-  :Item_sum_num(thd, original), val(original->val), tree(0),
+Item_sum_distinct::Item_sum_distinct(Session *session, Item_sum_distinct *original)
+  :Item_sum_num(session, original), val(original->val), tree(0),
   table_field_type(original->table_field_type)
 {
   quick_group= 0;
@@ -970,7 +970,7 @@ void Item_sum_distinct::fix_length_and_dec()
   @todo
   check that the case of CHAR(0) works OK
 */
-bool Item_sum_distinct::setup(THD *thd)
+bool Item_sum_distinct::setup(Session *session)
 {
   List<Create_field> field_list;
   Create_field field_def;                              /* field definition */
@@ -995,7 +995,7 @@ bool Item_sum_distinct::setup(THD *thd)
                                args[0]->decimals, args[0]->maybe_null,
                                args[0]->unsigned_flag);
 
-  if (! (table= create_virtual_tmp_table(thd, field_list)))
+  if (! (table= create_virtual_tmp_table(session, field_list)))
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
@@ -1008,7 +1008,7 @@ bool Item_sum_distinct::setup(THD *thd)
     are converted to binary representation as well.
   */
   tree= new Unique(simple_raw_key_cmp, &tree_key_length, tree_key_length,
-                   thd->variables.max_heap_table_size);
+                   session->variables.max_heap_table_size);
 
   is_evaluated= false;
   return(tree == 0);
@@ -1126,7 +1126,7 @@ void
 Item_sum_avg_distinct::fix_length_and_dec()
 {
   Item_sum_distinct::fix_length_and_dec();
-  prec_increment= current_thd->variables.div_precincrement;
+  prec_increment= current_session->variables.div_precincrement;
   /*
     AVG() will divide val by count. We need to reserve digits
     after decimal point as the result can be fractional.
@@ -1148,9 +1148,9 @@ Item_sum_avg_distinct::calculate_val_and_count()
 }
 
 
-Item *Item_sum_count::copy_or_same(THD* thd)
+Item *Item_sum_count::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_count(thd, this);
+  return new (session->mem_root) Item_sum_count(session, this);
 }
 
 
@@ -1189,7 +1189,7 @@ void Item_sum_avg::fix_length_and_dec()
 {
   Item_sum_sum::fix_length_and_dec();
   maybe_null=null_value=1;
-  prec_increment= current_thd->variables.div_precincrement;
+  prec_increment= current_session->variables.div_precincrement;
   if (hybrid_type == DECIMAL_RESULT)
   {
     int precision= args[0]->decimal_precision() + prec_increment;
@@ -1207,9 +1207,9 @@ void Item_sum_avg::fix_length_and_dec()
 }
 
 
-Item *Item_sum_avg::copy_or_same(THD* thd)
+Item *Item_sum_avg::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_avg(thd, this);
+  return new (session->mem_root) Item_sum_avg(session, this);
 }
 
 
@@ -1312,9 +1312,9 @@ double Item_sum_std::val_real()
   return sqrt(nr);
 }
 
-Item *Item_sum_std::copy_or_same(THD* thd)
+Item *Item_sum_std::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_std(thd, this);
+  return new (session->mem_root) Item_sum_std(session, this);
 }
 
 
@@ -1366,8 +1366,8 @@ static double variance_fp_recurrence_result(double s, uint64_t count, bool is_sa
 }
 
 
-Item_sum_variance::Item_sum_variance(THD *thd, Item_sum_variance *item):
-  Item_sum_num(thd, item), hybrid_type(item->hybrid_type),
+Item_sum_variance::Item_sum_variance(Session *session, Item_sum_variance *item):
+  Item_sum_num(session, item), hybrid_type(item->hybrid_type),
     count(item->count), sample(item->sample),
     prec_increment(item->prec_increment)
 {
@@ -1379,7 +1379,7 @@ Item_sum_variance::Item_sum_variance(THD *thd, Item_sum_variance *item):
 void Item_sum_variance::fix_length_and_dec()
 {
   maybe_null= null_value= 1;
-  prec_increment= current_thd->variables.div_precincrement;
+  prec_increment= current_session->variables.div_precincrement;
 
   /*
     According to the SQL2003 standard (Part 2, Foundations; sec 10.9,
@@ -1412,9 +1412,9 @@ void Item_sum_variance::fix_length_and_dec()
 }
 
 
-Item *Item_sum_variance::copy_or_same(THD* thd)
+Item *Item_sum_variance::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_variance(thd, this);
+  return new (session->mem_root) Item_sum_variance(session, this);
 }
 
 
@@ -1692,9 +1692,9 @@ void Item_sum_hybrid::no_rows_in_result()
 }
 
 
-Item *Item_sum_min::copy_or_same(THD* thd)
+Item *Item_sum_min::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_min(thd, this);
+  return new (session->mem_root) Item_sum_min(session, this);
 }
 
 
@@ -1756,9 +1756,9 @@ bool Item_sum_min::add()
 }
 
 
-Item *Item_sum_max::copy_or_same(THD* thd)
+Item *Item_sum_max::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_max(thd, this);
+  return new (session->mem_root) Item_sum_max(session, this);
 }
 
 
@@ -1834,9 +1834,9 @@ void Item_sum_bit::clear()
   bits= reset_bits;
 }
 
-Item *Item_sum_or::copy_or_same(THD* thd)
+Item *Item_sum_or::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_or(thd, this);
+  return new (session->mem_root) Item_sum_or(session, this);
 }
 
 
@@ -1848,9 +1848,9 @@ bool Item_sum_or::add()
   return 0;
 }
 
-Item *Item_sum_xor::copy_or_same(THD* thd)
+Item *Item_sum_xor::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_xor(thd, this);
+  return new (session->mem_root) Item_sum_xor(session, this);
 }
 
 
@@ -1862,9 +1862,9 @@ bool Item_sum_xor::add()
   return 0;
 }
 
-Item *Item_sum_and::copy_or_same(THD* thd)
+Item *Item_sum_and::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_sum_and(thd, this);
+  return new (session->mem_root) Item_sum_and(session, this);
 }
 
 
@@ -2528,10 +2528,10 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 }
 
 
-bool Item_sum_count_distinct::setup(THD *thd)
+bool Item_sum_count_distinct::setup(Session *session)
 {
   List<Item> list;
-  SELECT_LEX *select_lex= thd->lex->current_select;
+  SELECT_LEX *select_lex= session->lex->current_select;
 
   /*
     Setup can be called twice for ROLLUP items. This is a bug.
@@ -2559,9 +2559,9 @@ bool Item_sum_count_distinct::setup(THD *thd)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(thd, tmp_table_param, list, (order_st*) 0, 1,
+  if (!(table= create_tmp_table(session, tmp_table_param, list, (order_st*) 0, 1,
 				0,
-				(select_lex->options | thd->options),
+				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
     return true;
   table->file->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
@@ -2614,7 +2614,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) thd->alloc(table->s->fields * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->alloc(table->s->fields * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->field;
              field < field_end; ++field, ++length)
         {
@@ -2625,7 +2625,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
     }
     assert(tree == 0);
     tree= new Unique(compare_key, cmp_arg, tree_key_length,
-                     thd->variables.max_heap_table_size);
+                     session->variables.max_heap_table_size);
     /*
       The only time tree_key_length could be 0 is if someone does
       count(distinct) on a char(0) field - stupid thing to do,
@@ -2640,9 +2640,9 @@ bool Item_sum_count_distinct::setup(THD *thd)
 }
 
 
-Item *Item_sum_count_distinct::copy_or_same(THD* thd) 
+Item *Item_sum_count_distinct::copy_or_same(Session* session) 
 {
-  return new (thd->mem_root) Item_sum_count_distinct(thd, this);
+  return new (session->mem_root) Item_sum_count_distinct(session, this);
 }
 
 
@@ -2958,9 +2958,9 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 }
 
 
-Item_func_group_concat::Item_func_group_concat(THD *thd,
+Item_func_group_concat::Item_func_group_concat(Session *session,
                                                Item_func_group_concat *item)
-  :Item_sum(thd, item),
+  :Item_sum(session, item),
   tmp_table_param(item->tmp_table_param),
   warning(item->warning),
   separator(item->separator),
@@ -2993,7 +2993,7 @@ void Item_func_group_concat::cleanup()
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
-    warning->set_msg(current_thd, warn_buff);
+    warning->set_msg(current_session, warn_buff);
     warning= 0;
   }
 
@@ -3007,8 +3007,8 @@ void Item_func_group_concat::cleanup()
     tmp_table_param= 0;
     if (table)
     {
-      THD *thd= table->in_use;
-      table->free_tmp_table(thd);
+      Session *session= table->in_use;
+      table->free_tmp_table(session);
       table= 0;
       if (tree)
       {
@@ -3024,7 +3024,7 @@ void Item_func_group_concat::cleanup()
       {
         char warn_buff[DRIZZLE_ERRMSG_SIZE];
         sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
-        warning->set_msg(thd, warn_buff);
+        warning->set_msg(session, warn_buff);
         warning= 0;
       }
     }
@@ -3034,9 +3034,9 @@ void Item_func_group_concat::cleanup()
 }
 
 
-Item *Item_func_group_concat::copy_or_same(THD* thd)
+Item *Item_func_group_concat::copy_or_same(Session* session)
 {
-  return new (thd->mem_root) Item_func_group_concat(thd, this);
+  return new (session->mem_root) Item_func_group_concat(session, this);
 }
 
 
@@ -3103,12 +3103,12 @@ bool Item_func_group_concat::add()
 
 
 bool
-Item_func_group_concat::fix_fields(THD *thd, Item **ref)
+Item_func_group_concat::fix_fields(Session *session, Item **ref)
 {
   uint32_t i;                       /* for loop variable */
   assert(fixed == 0);
 
-  if (init_sum_func_check(thd))
+  if (init_sum_func_check(session))
     return true;
 
   maybe_null= 1;
@@ -3120,7 +3120,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
   for (i=0 ; i < arg_count ; i++)
   {
     if ((!args[i]->fixed &&
-         args[i]->fix_fields(thd, args + i)) ||
+         args[i]->fix_fields(session, args + i)) ||
         args[i]->check_cols(1))
       return true;
   }
@@ -3135,7 +3135,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
   result.set_charset(collation.collation);
   result_field= 0;
   null_value= 1;
-  max_length= thd->variables.group_concat_max_len;
+  max_length= session->variables.group_concat_max_len;
 
   uint32_t offset;
   if (separator->needs_conversion(separator->length(), separator->charset(),
@@ -3146,8 +3146,8 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
     char *buf;
     String *new_separator;
 
-    if (!(buf= (char*) thd->alloc(buflen)) ||
-        !(new_separator= new(thd->mem_root)
+    if (!(buf= (char*) session->alloc(buflen)) ||
+        !(new_separator= new(session->mem_root)
                            String(buf, buflen, collation.collation)))
       return true;
     
@@ -3158,7 +3158,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
     separator= new_separator;
   }
 
-  if (check_sum_func(thd, ref))
+  if (check_sum_func(session, ref))
     return true;
 
   fixed= 1;
@@ -3166,10 +3166,10 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
 }
 
 
-bool Item_func_group_concat::setup(THD *thd)
+bool Item_func_group_concat::setup(Session *session)
 {
   List<Item> list;
-  SELECT_LEX *select_lex= thd->lex->current_select;
+  SELECT_LEX *select_lex= session->lex->current_select;
 
   /*
     Currently setup() can be called twice. Please add
@@ -3209,7 +3209,7 @@ bool Item_func_group_concat::setup(THD *thd)
     tmp table columns.
   */
   if (arg_count_order &&
-      setup_order(thd, args, context->table_list, list, all_fields, *order))
+      setup_order(session, args, context->table_list, list, all_fields, *order))
     return(true);
 
   count_field_types(select_lex, tmp_table_param, all_fields, 0);
@@ -3234,9 +3234,9 @@ bool Item_func_group_concat::setup(THD *thd)
     Note that in the table, we first have the order_st BY fields, then the
     field list.
   */
-  if (!(table= create_tmp_table(thd, tmp_table_param, all_fields,
+  if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
                                 (order_st*) 0, 0, true,
-                                (select_lex->options | thd->options),
+                                (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
     return(true);
   table->file->extra(HA_EXTRA_NO_ROWS);
@@ -3257,8 +3257,8 @@ bool Item_func_group_concat::setup(THD *thd)
       syntax of this function). If there is no order_st BY clause, we don't
       create this tree.
     */
-    init_tree(tree, (uint) cmin(thd->variables.max_heap_table_size,
-                               thd->variables.sortbuff_size/16), 0,
+    init_tree(tree, (uint) cmin(session->variables.max_heap_table_size,
+                               session->variables.sortbuff_size/16), 0,
               tree_key_length, 
               group_concat_key_cmp_with_order , 0, NULL, (void*) this);
   }
@@ -3267,7 +3267,7 @@ bool Item_func_group_concat::setup(THD *thd)
     unique_filter= new Unique(group_concat_key_cmp_with_distinct,
                               (void*)this,
                               tree_key_length,
-                              thd->variables.max_heap_table_size);
+                              session->variables.max_heap_table_size);
   
   return(false);
 }
