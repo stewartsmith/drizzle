@@ -300,7 +300,7 @@ dict_str_starts_with_keyword(
 /*=========================*/
 					/* out: TRUE if str starts
 					with keyword */
-	void*		mysql_thd,	/* in: MySQL thread handle */
+	void*		mysql_session,	/* in: MySQL thread handle */
 	const char*	str,		/* in: string to scan for keyword */
 	const char*	keyword);	/* in: keyword to look for */
 /*************************************************************************

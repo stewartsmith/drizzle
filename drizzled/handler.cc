@@ -63,26 +63,26 @@ uint32_t known_extensions_id= 0;
 
 
 
-static plugin_ref ha_default_plugin(THD *thd)
+static plugin_ref ha_default_plugin(Session *session)
 {
-  if (thd->variables.table_plugin)
-    return thd->variables.table_plugin;
-  return my_plugin_lock(thd, &global_system_variables.table_plugin);
+  if (session->variables.table_plugin)
+    return session->variables.table_plugin;
+  return my_plugin_lock(session, &global_system_variables.table_plugin);
 }
 
 
 /**
   Return the default storage engine handlerton for thread
 
-  @param ha_default_handlerton(thd)
-  @param thd         current thread
+  @param ha_default_handlerton(session)
+  @param session         current thread
 
   @return
     pointer to handlerton
 */
-handlerton *ha_default_handlerton(THD *thd)
+handlerton *ha_default_handlerton(Session *session)
 {
-  plugin_ref plugin= ha_default_plugin(thd);
+  plugin_ref plugin= ha_default_plugin(session);
   assert(plugin);
   handlerton *hton= plugin_data(plugin, handlerton*);
   assert(hton);
@@ -93,25 +93,25 @@ handlerton *ha_default_handlerton(THD *thd)
 /**
   Return the storage engine handlerton for the supplied name
   
-  @param thd         current thread
+  @param session         current thread
   @param name        name of storage engine
   
   @return
     pointer to storage engine plugin handle
 */
-plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name)
+plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name)
 {
   const LEX_STRING *table_alias;
   plugin_ref plugin;
 
 redo:
   /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (thd && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
+  if (session && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
                            (const unsigned char *)name->str, name->length,
                            (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
-    return ha_default_plugin(thd);
+    return ha_default_plugin(session);
 
-  if ((plugin= my_plugin_lock_by_name(thd, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= my_plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags & HTON_NOT_USER_SELECTABLE))
@@ -120,7 +120,7 @@ redo:
     /*
       unlocking plugin immediately after locking is relatively low cost.
     */
-    plugin_unlock(thd, plugin);
+    plugin_unlock(session, plugin);
   }
 
   /*
@@ -141,27 +141,27 @@ redo:
 }
 
 
-plugin_ref ha_lock_engine(THD *thd, handlerton *hton)
+plugin_ref ha_lock_engine(Session *session, handlerton *hton)
 {
   if (hton)
   {
     st_plugin_int **plugin= hton2plugin + hton->slot;
     
-    return my_plugin_lock(thd, &plugin);
+    return my_plugin_lock(session, &plugin);
   }
   return NULL;
 }
 
 
-handlerton *ha_resolve_by_legacy_type(THD *thd, enum legacy_db_type db_type)
+handlerton *ha_resolve_by_legacy_type(Session *session, enum legacy_db_type db_type)
 {
   plugin_ref plugin;
   switch (db_type) {
   case DB_TYPE_DEFAULT:
-    return ha_default_handlerton(thd);
+    return ha_default_handlerton(session);
   default:
     if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
-        (plugin= ha_lock_engine(thd, installed_htons[db_type])))
+        (plugin= ha_lock_engine(session, installed_htons[db_type])))
       return plugin_data(plugin, handlerton*);
     /* fall through */
   case DB_TYPE_UNKNOWN:
@@ -173,10 +173,10 @@ handlerton *ha_resolve_by_legacy_type(THD *thd, enum legacy_db_type db_type)
 /**
   Use other database handler if databasehandler is not compiled in.
 */
-handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
+handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
                           bool no_substitute, bool report_error)
 {
-  handlerton *hton= ha_resolve_by_legacy_type(thd, database_type);
+  handlerton *hton= ha_resolve_by_legacy_type(session, database_type);
   if (ha_storage_engine_is_enabled(hton))
     return hton;
 
@@ -190,7 +190,7 @@ handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
     return NULL;
   }
 
-  return ha_default_handlerton(thd);
+  return ha_default_handlerton(session);
 } /* ha_checktype */
 
 
@@ -207,10 +207,10 @@ handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
   }
   /*
     Try the default table type
-    Here the call to current_thd() is ok as we call this function a lot of
+    Here the call to current_session() is ok as we call this function a lot of
     times but we enter this branch very seldom.
   */
-  return(get_new_handler(share, alloc, ha_default_handlerton(current_thd)));
+  return(get_new_handler(share, alloc, ha_default_handlerton(current_session)));
 }
 
 
@@ -444,7 +444,7 @@ int ha_end()
   return(error);
 }
 
-static bool dropdb_handlerton(THD *unused1 __attribute__((unused)),
+static bool dropdb_handlerton(Session *unused1 __attribute__((unused)),
                               plugin_ref plugin,
                               void *path)
 {
@@ -461,7 +461,7 @@ void ha_drop_database(char* path)
 }
 
 
-static bool closecon_handlerton(THD *thd, plugin_ref plugin,
+static bool closecon_handlerton(Session *session, plugin_ref plugin,
                                 void *unused __attribute__((unused)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
@@ -470,8 +470,8 @@ static bool closecon_handlerton(THD *thd, plugin_ref plugin,
     be rolled back already
   */
   if (hton->state == SHOW_OPTION_YES && hton->close_connection &&
-      thd_get_ha_data(thd, hton))
-    hton->close_connection(hton, thd);
+      session_get_ha_data(session, hton))
+    hton->close_connection(hton, session);
   return false;
 }
 
@@ -480,9 +480,9 @@ static bool closecon_handlerton(THD *thd, plugin_ref plugin,
   @note
     don't bother to rollback here, it's done already
 */
-void ha_close_connection(THD* thd)
+void ha_close_connection(Session* session)
 {
-  plugin_foreach(thd, closecon_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
+  plugin_foreach(session, closecon_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
 }
 
 /* ========================================================================
@@ -587,21 +587,21 @@ void ha_close_connection(THD* thd)
   -----------
 
   The server stores its transaction-related data in
-  thd->transaction. This structure has two members of type
-  THD_TRANS. These members correspond to the statement and
+  session->transaction. This structure has two members of type
+  Session_TRANS. These members correspond to the statement and
   normal transactions respectively:
 
-  - thd->transaction.stmt contains a list of engines
+  - session->transaction.stmt contains a list of engines
   that are participating in the given statement
-  - thd->transaction.all contains a list of engines that
+  - session->transaction.all contains a list of engines that
   have participated in any of the statement transactions started
   within the context of the normal transaction.
   Each element of the list contains a pointer to the storage
   engine, engine-specific transactional data, and engine-specific
   transaction flags.
 
-  In autocommit mode thd->transaction.all is empty.
-  Instead, data of thd->transaction.stmt is
+  In autocommit mode session->transaction.all is empty.
+  Instead, data of session->transaction.stmt is
   used to commit/rollback the normal transaction.
 
   The list of registered engines has a few important properties:
@@ -612,7 +612,7 @@ void ha_close_connection(THD* thd)
   Transaction life cycle
   ----------------------
 
-  When a new connection is established, thd->transaction
+  When a new connection is established, session->transaction
   members are initialized to an empty state.
   If a statement uses any tables, all affected engines
   are registered in the statement engine list. In
@@ -628,7 +628,7 @@ void ha_close_connection(THD* thd)
   and emptied again at the next statement's end.
 
   The normal transaction is committed in a similar way
-  (by going over all engines in thd->transaction.all list)
+  (by going over all engines in session->transaction.all list)
   but at different times:
   - upon COMMIT SQL statement is issued by the user
   - implicitly, by the server, at the beginning of a DDL statement
@@ -638,7 +638,7 @@ void ha_close_connection(THD* thd)
   - if the user has requested so, by issuing ROLLBACK SQL
   statement
   - if one of the storage engines requested a rollback
-  by setting thd->transaction_rollback_request. This may
+  by setting session->transaction_rollback_request. This may
   happen in case, e.g., when the transaction in the engine was
   chosen a victim of the internal deadlock resolution algorithm
   and rolled back internally. When such a situation happens, there
@@ -680,7 +680,7 @@ void ha_close_connection(THD* thd)
   transactions of other participants.
 
   After the normal transaction has been committed,
-  thd->transaction.all list is cleared.
+  session->transaction.all list is cleared.
 
   When a connection is closed, the current normal transaction, if
   any, is rolled back.
@@ -744,7 +744,7 @@ void ha_close_connection(THD* thd)
   ---------------------------------------------------
 
   DDLs and operations with non-transactional engines
-  do not "register" in thd->transaction lists, and thus do not
+  do not "register" in session->transaction lists, and thus do not
   modify the transaction state. Besides, each DDL in
   MySQL is prefixed with an implicit normal transaction commit
   (a call to end_active_trans()), and thus leaves nothing
@@ -791,20 +791,20 @@ void ha_close_connection(THD* thd)
     times per transaction.
 
 */
-void trans_register_ha(THD *thd, bool all, handlerton *ht_arg)
+void trans_register_ha(Session *session, bool all, handlerton *ht_arg)
 {
-  THD_TRANS *trans;
+  Session_TRANS *trans;
   Ha_trx_info *ha_info;
 
   if (all)
   {
-    trans= &thd->transaction.all;
-    thd->server_status|= SERVER_STATUS_IN_TRANS;
+    trans= &session->transaction.all;
+    session->server_status|= SERVER_STATUS_IN_TRANS;
   }
   else
-    trans= &thd->transaction.stmt;
+    trans= &session->transaction.stmt;
 
-  ha_info= thd->ha_data[ht_arg->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[ht_arg->slot].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -812,8 +812,8 @@ void trans_register_ha(THD *thd, bool all, handlerton *ht_arg)
   ha_info->register_ha(trans, ht_arg);
 
   trans->no_2pc|=(ht_arg->prepare==0);
-  if (thd->transaction.xid_state.xid.is_null())
-    thd->transaction.xid_state.xid.set(thd->query_id);
+  if (session->transaction.xid_state.xid.is_null())
+    session->transaction.xid_state.xid.set(session->query_id);
 
   return;
 }
@@ -824,10 +824,10 @@ void trans_register_ha(THD *thd, bool all, handlerton *ht_arg)
   @retval
     1   error, transaction was rolled back
 */
-int ha_prepare(THD *thd)
+int ha_prepare(Session *session)
 {
   int error=0, all=1;
-  THD_TRANS *trans=all ? &thd->transaction.all : &thd->transaction.stmt;
+  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
   Ha_trx_info *ha_info= trans->ha_list;
   if (ha_info)
   {
@@ -835,20 +835,20 @@ int ha_prepare(THD *thd)
     {
       int err;
       handlerton *ht= ha_info->ht();
-      status_var_increment(thd->status_var.ha_prepare_count);
+      status_var_increment(session->status_var.ha_prepare_count);
       if (ht->prepare)
       {
-        if ((err= ht->prepare(ht, thd, all)))
+        if ((err= ht->prepare(ht, session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-          ha_rollback_trans(thd, all);
+          ha_rollback_trans(session, all);
           error=1;
           break;
         }
       }
       else
       {
-        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                             ha_resolve_storage_engine_name(ht));
       }
@@ -873,7 +873,7 @@ int ha_prepare(THD *thd)
 
 static
 bool
-ha_check_and_coalesce_trx_read_only(THD *thd, Ha_trx_info *ha_list,
+ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
                                     bool all)
 {
   /* The number of storage engines that have actual changes. */
@@ -887,13 +887,13 @@ ha_check_and_coalesce_trx_read_only(THD *thd, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &thd->ha_data[ha_info->ht()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->ht()->slot].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
         transaction to its enclosing normal transaction. Do this
         only if in a real transaction -- that is, if we know
-        that ha_info_all is registered in thd->transaction.all.
+        that ha_info_all is registered in session->transaction.all.
         Since otherwise we only clutter the normal transaction flags.
       */
       if (ha_info_all->is_started()) /* false if autocommit. */
@@ -927,17 +927,17 @@ ha_check_and_coalesce_trx_read_only(THD *thd, Ha_trx_info *ha_list,
     stored functions or triggers. So we simply do nothing now.
     TODO: This should be fixed in later ( >= 5.1) releases.
 */
-int ha_commit_trans(THD *thd, bool all)
+int ha_commit_trans(Session *session, bool all)
 {
   int error= 0, cookie= 0;
   /*
     'all' means that this is either an explicit commit issued by
     user, or an implicit commit issued by a DDL.
   */
-  THD_TRANS *trans= all ? &thd->transaction.all : &thd->transaction.stmt;
-  bool is_real_trans= all || thd->transaction.all.ha_list == 0;
+  Session_TRANS *trans= all ? &session->transaction.all : &session->transaction.stmt;
+  bool is_real_trans= all || session->transaction.all.ha_list == 0;
   Ha_trx_info *ha_info= trans->ha_list;
-  my_xid xid= thd->transaction.xid_state.xid.get_my_xid();
+  my_xid xid= session->transaction.xid_state.xid.get_my_xid();
 
   /*
     We must not commit the normal transaction if a statement
@@ -945,31 +945,31 @@ int ha_commit_trans(THD *thd, bool all)
     flags will not get propagated to its normal transaction's
     counterpart.
   */
-  assert(thd->transaction.stmt.ha_list == NULL ||
-              trans == &thd->transaction.stmt);
+  assert(session->transaction.stmt.ha_list == NULL ||
+              trans == &session->transaction.stmt);
 
   if (ha_info)
   {
     bool must_2pc;
 
-    if (is_real_trans && wait_if_global_read_lock(thd, 0, 0))
+    if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
-      ha_rollback_trans(thd, all);
+      ha_rollback_trans(session, all);
       return(1);
     }
 
     if (   is_real_trans
         && opt_readonly
-        && ! thd->slave_thread
+        && ! session->slave_thread
        )
     {
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      ha_rollback_trans(thd, all);
+      ha_rollback_trans(session, all);
       error= 1;
       goto end;
     }
 
-    must_2pc= ha_check_and_coalesce_trx_read_only(thd, ha_info, all);
+    must_2pc= ha_check_and_coalesce_trx_read_only(session, ha_info, all);
 
     if (!trans->no_2pc && must_2pc)
     {
@@ -988,27 +988,27 @@ int ha_commit_trans(THD *thd, bool all)
           Sic: we know that prepare() is not NULL since otherwise
           trans->no_2pc would have been set.
         */
-        if ((err= ht->prepare(ht, thd, all)))
+        if ((err= ht->prepare(ht, session, all)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        status_var_increment(thd->status_var.ha_prepare_count);
+        status_var_increment(session->status_var.ha_prepare_count);
       }
       if (error || (is_real_trans && xid &&
-                    (error= !(cookie= tc_log->log_xid(thd, xid)))))
+                    (error= !(cookie= tc_log->log_xid(session, xid)))))
       {
-        ha_rollback_trans(thd, all);
+        ha_rollback_trans(session, all);
         error= 1;
         goto end;
       }
     }
-    error=ha_commit_one_phase(thd, all) ? (cookie ? 2 : 1) : 0;
+    error=ha_commit_one_phase(session, all) ? (cookie ? 2 : 1) : 0;
     if (cookie)
       tc_log->unlog(cookie, xid);
 end:
     if (is_real_trans)
-      start_waiting_global_read_lock(thd);
+      start_waiting_global_read_lock(session);
   }
   return(error);
 }
@@ -1017,11 +1017,11 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int ha_commit_one_phase(THD *thd, bool all)
+int ha_commit_one_phase(Session *session, bool all)
 {
   int error=0;
-  THD_TRANS *trans=all ? &thd->transaction.all : &thd->transaction.stmt;
-  bool is_real_trans=all || thd->transaction.all.ha_list == 0;
+  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
+  bool is_real_trans=all || session->transaction.all.ha_list == 0;
   Ha_trx_info *ha_info= trans->ha_list, *ha_info_next;
   if (ha_info)
   {
@@ -1029,42 +1029,42 @@ int ha_commit_one_phase(THD *thd, bool all)
     {
       int err;
       handlerton *ht= ha_info->ht();
-      if ((err= ht->commit(ht, thd, all)))
+      if ((err= ht->commit(ht, session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
         error=1;
       }
-      status_var_increment(thd->status_var.ha_commit_count);
+      status_var_increment(session->status_var.ha_commit_count);
       ha_info_next= ha_info->next();
       ha_info->reset(); /* keep it conveniently zero-filled */
     }
     trans->ha_list= 0;
     trans->no_2pc=0;
     if (is_real_trans)
-      thd->transaction.xid_state.xid.null();
+      session->transaction.xid_state.xid.null();
     if (all)
     {
-      thd->variables.tx_isolation=thd->session_tx_isolation;
-      thd->transaction.cleanup();
+      session->variables.tx_isolation=session->session_tx_isolation;
+      session->transaction.cleanup();
     }
   }
   return(error);
 }
 
 
-int ha_rollback_trans(THD *thd, bool all)
+int ha_rollback_trans(Session *session, bool all)
 {
   int error=0;
-  THD_TRANS *trans=all ? &thd->transaction.all : &thd->transaction.stmt;
+  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
   Ha_trx_info *ha_info= trans->ha_list, *ha_info_next;
-  bool is_real_trans=all || thd->transaction.all.ha_list == 0;
+  bool is_real_trans=all || session->transaction.all.ha_list == 0;
 
   /*
     We must not rollback the normal transaction if a statement
     transaction is pending.
   */
-  assert(thd->transaction.stmt.ha_list == NULL ||
-              trans == &thd->transaction.stmt);
+  assert(session->transaction.stmt.ha_list == NULL ||
+              trans == &session->transaction.stmt);
 
   if (ha_info)
   {
@@ -1072,27 +1072,27 @@ int ha_rollback_trans(THD *thd, bool all)
     {
       int err;
       handlerton *ht= ha_info->ht();
-      if ((err= ht->rollback(ht, thd, all)))
+      if ((err= ht->rollback(ht, session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error=1;
       }
-      status_var_increment(thd->status_var.ha_rollback_count);
+      status_var_increment(session->status_var.ha_rollback_count);
       ha_info_next= ha_info->next();
       ha_info->reset(); /* keep it conveniently zero-filled */
     }
     trans->ha_list= 0;
     trans->no_2pc=0;
     if (is_real_trans)
-      thd->transaction.xid_state.xid.null();
+      session->transaction.xid_state.xid.null();
     if (all)
     {
-      thd->variables.tx_isolation=thd->session_tx_isolation;
-      thd->transaction.cleanup();
+      session->variables.tx_isolation=session->session_tx_isolation;
+      session->transaction.cleanup();
     }
   }
   if (all)
-    thd->transaction_rollback_request= false;
+    session->transaction_rollback_request= false;
 
   /*
     If a non-transactional table was updated, warn; don't warn if this is a
@@ -1103,9 +1103,9 @@ int ha_rollback_trans(THD *thd, bool all)
     the error log; but we don't want users to wonder why they have this
     message in the error log, so we don't send it.
   */
-  if (is_real_trans && thd->transaction.all.modified_non_trans_table &&
-      !thd->slave_thread && thd->killed != THD::KILL_CONNECTION)
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+  if (is_real_trans && session->transaction.all.modified_non_trans_table &&
+      !session->slave_thread && session->killed != Session::KILL_CONNECTION)
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
   return(error);
@@ -1122,23 +1122,23 @@ int ha_rollback_trans(THD *thd, bool all)
     the user has used LOCK TABLES then that mechanism does not know to do the
     commit.
 */
-int ha_autocommit_or_rollback(THD *thd, int error)
+int ha_autocommit_or_rollback(Session *session, int error)
 {
-  if (thd->transaction.stmt.ha_list)
+  if (session->transaction.stmt.ha_list)
   {
     if (!error)
     {
-      if (ha_commit_trans(thd, 0))
+      if (ha_commit_trans(session, 0))
 	error=1;
     }
     else 
     {
-      (void) ha_rollback_trans(thd, 0);
-      if (thd->transaction_rollback_request)
-        (void) ha_rollback(thd);
+      (void) ha_rollback_trans(session, 0);
+      if (session->transaction_rollback_request)
+        (void) ha_rollback(session);
     }
 
-    thd->variables.tx_isolation=thd->session_tx_isolation;
+    session->variables.tx_isolation=session->session_tx_isolation;
   }
   return(error);
 }
@@ -1149,7 +1149,7 @@ struct xahton_st {
   int result;
 };
 
-static bool xacommit_handlerton(THD *unused1 __attribute__((unused)),
+static bool xacommit_handlerton(Session *unused1 __attribute__((unused)),
                                 plugin_ref plugin,
                                 void *arg)
 {
@@ -1162,7 +1162,7 @@ static bool xacommit_handlerton(THD *unused1 __attribute__((unused)),
   return false;
 }
 
-static bool xarollback_handlerton(THD *unused1 __attribute__((unused)),
+static bool xarollback_handlerton(Session *unused1 __attribute__((unused)),
                                   plugin_ref plugin,
                                   void *arg)
 {
@@ -1212,7 +1212,7 @@ struct xarecover_st
   bool dry_run;
 };
 
-static bool xarecover_handlerton(THD *unused __attribute__((unused)),
+static bool xarecover_handlerton(Session *unused __attribute__((unused)),
                                  plugin_ref plugin,
                                  void *arg)
 {
@@ -1334,10 +1334,10 @@ int ha_recover(HASH *commit_list)
     so mysql_xa_recover does not filter XID's to ensure uniqueness.
     It can be easily fixed later, if necessary.
 */
-bool mysql_xa_recover(THD *thd)
+bool mysql_xa_recover(Session *session)
 {
   List<Item> field_list;
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
   int i=0;
   XID_STATE *xs;
 
@@ -1370,7 +1370,7 @@ bool mysql_xa_recover(THD *thd)
   }
 
   pthread_mutex_unlock(&LOCK_xid_cache);
-  my_eof(thd);
+  my_eof(session);
   return(0);
 }
 
@@ -1378,8 +1378,8 @@ bool mysql_xa_recover(THD *thd)
   @details
   This function should be called when MySQL sends rows of a SELECT result set
   or the EOF mark to the client. It releases a possible adaptive hash index
-  S-latch held by thd in InnoDB and also releases a possible InnoDB query
-  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a thd to
+  S-latch held by session in InnoDB and also releases a possible InnoDB query
+  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
   keep them over several calls of the InnoDB handler interface when a join
   is executed. But when we let the control to pass to the client they have
   to be released because if the application program uses mysql_use_result(),
@@ -1387,35 +1387,35 @@ bool mysql_xa_recover(THD *thd)
   performs another SQL query. In MySQL-4.1 this is even more important because
   there a connection can have several SELECT queries open at the same time.
 
-  @param thd           the thread handle of the current connection
+  @param session           the thread handle of the current connection
 
   @return
     always 0
 */
-static bool release_temporary_latches(THD *thd, plugin_ref plugin,
+static bool release_temporary_latches(Session *session, plugin_ref plugin,
                                       void *unused __attribute__((unused)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
 
   if (hton->state == SHOW_OPTION_YES && hton->release_temporary_latches)
-    hton->release_temporary_latches(hton, thd);
+    hton->release_temporary_latches(hton, session);
 
   return false;
 }
 
 
-int ha_release_temporary_latches(THD *thd)
+int ha_release_temporary_latches(Session *session)
 {
-  plugin_foreach(thd, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
+  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
                  NULL);
 
   return 0;
 }
 
-int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
+int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= &thd->transaction.all;
+  Session_TRANS *trans= &session->transaction.all;
   Ha_trx_info *ha_info, *ha_info_next;
 
   trans->no_2pc=0;
@@ -1429,13 +1429,13 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
     handlerton *ht= ha_info->ht();
     assert(ht);
     assert(ht->savepoint_set != 0);
-    if ((err= ht->savepoint_rollback(ht, thd,
+    if ((err= ht->savepoint_rollback(ht, session,
                                      (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
     }
-    status_var_increment(thd->status_var.ha_savepoint_rollback_count);
+    status_var_increment(session->status_var.ha_savepoint_rollback_count);
     trans->no_2pc|= ht->prepare == 0;
   }
   /*
@@ -1447,12 +1447,12 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
   {
     int err;
     handlerton *ht= ha_info->ht();
-    if ((err= ht->rollback(ht, thd, !(0))))
+    if ((err= ht->rollback(ht, session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error=1;
     }
-    status_var_increment(thd->status_var.ha_rollback_count);
+    status_var_increment(session->status_var.ha_rollback_count);
     ha_info_next= ha_info->next();
     ha_info->reset(); /* keep it conveniently zero-filled */
   }
@@ -1466,10 +1466,10 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
   section "4.33.4 SQL-statements and transaction states",
   SAVEPOINT is *not* transaction-initiating SQL-statement
 */
-int ha_savepoint(THD *thd, SAVEPOINT *sv)
+int ha_savepoint(Session *session, SAVEPOINT *sv)
 {
   int error=0;
-  THD_TRANS *trans= &thd->transaction.all;
+  Session_TRANS *trans= &session->transaction.all;
   Ha_trx_info *ha_info= trans->ha_list;
   for (; ha_info; ha_info= ha_info->next())
   {
@@ -1482,12 +1482,12 @@ int ha_savepoint(THD *thd, SAVEPOINT *sv)
       error=1;
       break;
     }
-    if ((err= ht->savepoint_set(ht, thd, (unsigned char *)(sv+1)+ht->savepoint_offset)))
+    if ((err= ht->savepoint_set(ht, session, (unsigned char *)(sv+1)+ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error=1;
     }
-    status_var_increment(thd->status_var.ha_savepoint_count);
+    status_var_increment(session->status_var.ha_savepoint_count);
   }
   /*
     Remember the list of registered storage engines. All new
@@ -1497,7 +1497,7 @@ int ha_savepoint(THD *thd, SAVEPOINT *sv)
   return(error);
 }
 
-int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
+int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 {
   int error=0;
   Ha_trx_info *ha_info= sv->ha_list;
@@ -1510,7 +1510,7 @@ int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
     assert(ht);
     if (!ht->savepoint_release)
       continue;
-    if ((err= ht->savepoint_release(ht, thd,
+    if ((err= ht->savepoint_release(ht, session,
                                     (unsigned char *)(sv+1) + ht->savepoint_offset)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
@@ -1521,37 +1521,37 @@ int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
 }
 
 
-static bool snapshot_handlerton(THD *thd, plugin_ref plugin, void *arg)
+static bool snapshot_handlerton(Session *session, plugin_ref plugin, void *arg)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES &&
       hton->start_consistent_snapshot)
   {
-    hton->start_consistent_snapshot(hton, thd);
+    hton->start_consistent_snapshot(hton, session);
     *((bool *)arg)= false;
   }
   return false;
 }
 
-int ha_start_consistent_snapshot(THD *thd)
+int ha_start_consistent_snapshot(Session *session)
 {
   bool warn= true;
 
-  plugin_foreach(thd, snapshot_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
+  plugin_foreach(session, snapshot_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
 
   /*
     Same idea as when one wants to CREATE TABLE in one engine which does not
     exist:
   */
   if (warn)
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "This MySQL server does not support any "
                  "consistent-read capable storage engine");
   return 0;
 }
 
 
-static bool flush_handlerton(THD *thd __attribute__((unused)),
+static bool flush_handlerton(Session *session __attribute__((unused)),
                              plugin_ref plugin,
                              void *arg __attribute__((unused)))
 {
@@ -1611,7 +1611,7 @@ public:
   virtual bool handle_error(uint32_t sql_errno,
                             const char *message,
                             DRIZZLE_ERROR::enum_warning_level level,
-                            THD *thd);
+                            Session *session);
   char buff[DRIZZLE_ERRMSG_SIZE];
 };
 
@@ -1621,7 +1621,7 @@ Ha_delete_table_error_handler::
 handle_error(uint32_t sql_errno  __attribute__((unused)),
              const char *message,
              DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
-             THD *thd __attribute__((unused)))
+             Session *session __attribute__((unused)))
 {
   /* Grab the error message */
   strmake(buff, message, sizeof(buff)-1);
@@ -1633,7 +1633,7 @@ handle_error(uint32_t sql_errno  __attribute__((unused)),
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
+int ha_delete_table(Session *session, handlerton *table_type, const char *path,
                     const char *db, const char *alias, bool generate_warning)
 {
   handler *file;
@@ -1648,7 +1648,7 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
 
   /* DB_TYPE_UNKNOWN is used in ALTER Table when renaming only .frm files */
   if (table_type == NULL ||
-      ! (file=get_new_handler((TABLE_SHARE*)0, thd->mem_root, table_type)))
+      ! (file=get_new_handler((TABLE_SHARE*)0, session->mem_root, table_type)))
     return(ENOENT);
 
   path= check_lowercase_names(file, path, tmp_path);
@@ -1673,16 +1673,16 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
 
     file->change_table_ptr(&dummy_table, &dummy_share);
 
-    thd->push_internal_handler(&ha_delete_table_error_handler);
+    session->push_internal_handler(&ha_delete_table_error_handler);
     file->print_error(error, 0);
 
-    thd->pop_internal_handler();
+    session->pop_internal_handler();
 
     /*
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
                 ha_delete_table_error_handler.buff);
   }
   delete file;
@@ -1717,15 +1717,15 @@ void handler::ha_statistic_increment(ulong SSV::*offset) const
   status_var_increment(table->in_use->status_var.*offset);
 }
 
-void **handler::ha_data(THD *thd) const
+void **handler::ha_data(Session *session) const
 {
-  return thd_ha_data(thd, ht);
+  return session_ha_data(session, ht);
 }
 
-THD *handler::ha_thd(void) const
+Session *handler::ha_session(void) const
 {
-  assert(!table || !table->in_use || table->in_use == current_thd);
-  return (table && table->in_use) ? table->in_use : current_thd;
+  assert(!table || !table->in_use || table->in_use == current_session);
+  return (table && table->in_use) ? table->in_use : current_session;
 }
 
 /**
@@ -1857,9 +1857,9 @@ compute_next_insert_id(uint64_t nr,struct system_variables *variables)
 void handler::adjust_next_insert_id_after_explicit_value(uint64_t nr)
 {
   /*
-    If we have set THD::next_insert_id previously and plan to insert an
+    If we have set Session::next_insert_id previously and plan to insert an
     explicitely-specified value larger than this, we need to increase
-    THD::next_insert_id to be greater than the explicit value.
+    Session::next_insert_id to be greater than the explicit value.
   */
   if ((next_insert_id > 0) && (nr >= next_insert_id))
     set_next_insert_id(compute_next_insert_id(nr, &table->in_use->variables));
@@ -1935,7 +1935,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
     again to reserve a new interval.
 
   - In both cases, the reserved intervals are remembered in
-    thd->auto_inc_intervals_in_cur_stmt_for_binlog if statement-based
+    session->auto_inc_intervals_in_cur_stmt_for_binlog if statement-based
     binlogging; the last reserved interval is remembered in
     auto_inc_interval_for_cur_row.
 
@@ -1949,11 +1949,11 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
     start counting from the inserted value.
 
     This function's "outputs" are: the table's auto_increment field is filled
-    with a value, thd->next_insert_id is filled with the value to use for the
+    with a value, session->next_insert_id is filled with the value to use for the
     next row, if a value was autogenerated for the current row it is stored in
-    thd->insert_id_for_cur_row, if get_auto_increment() was called
-    thd->auto_inc_interval_for_cur_row is modified, if that interval is not
-    present in thd->auto_inc_intervals_in_cur_stmt_for_binlog it is added to
+    session->insert_id_for_cur_row, if get_auto_increment() was called
+    session->auto_inc_interval_for_cur_row is modified, if that interval is not
+    present in session->auto_inc_intervals_in_cur_stmt_for_binlog it is added to
     this list.
 
   @todo
@@ -1980,8 +1980,8 @@ int handler::update_auto_increment()
 {
   uint64_t nr, nb_reserved_values;
   bool append= false;
-  THD *thd= table->in_use;
-  struct system_variables *variables= &thd->variables;
+  Session *session= table->in_use;
+  struct system_variables *variables= &session->variables;
 
   /*
     next_insert_id is a "cursor" into the reserved interval, it may go greater
@@ -2006,7 +2006,7 @@ int handler::update_auto_increment()
   {
     /* next_insert_id is beyond what is reserved, so we reserve more. */
     const Discrete_interval *forced=
-      thd->auto_inc_intervals_forced.get_next();
+      session->auto_inc_intervals_forced.get_next();
     if (forced != NULL)
     {
       nr= forced->minimum();
@@ -2019,7 +2019,7 @@ int handler::update_auto_increment()
         handler::ha_start_bulk_insert(); if 0 it means "unknown".
       */
       uint32_t nb_already_reserved_intervals=
-        thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements();
+        session->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements();
       uint64_t nb_desired_values;
       /*
         If an estimation was given to the engine:
@@ -2078,7 +2078,7 @@ int handler::update_auto_increment()
     /*
       first test if the query was aborted due to strict mode constraints
     */
-    if (thd->killed == THD::KILL_BAD_DATA)
+    if (session->killed == Session::KILL_BAD_DATA)
       return(HA_ERR_AUTOINC_ERANGE);
 
     /*
@@ -2098,8 +2098,8 @@ int handler::update_auto_increment()
     auto_inc_interval_for_cur_row.replace(nr, nb_reserved_values,
                                           variables->auto_increment_increment);
     /* Row-based replication does not need to store intervals in binlog */
-    if (!thd->current_stmt_binlog_row_based)
-        thd->auto_inc_intervals_in_cur_stmt_for_binlog.append(auto_inc_interval_for_cur_row.minimum(),
+    if (!session->current_stmt_binlog_row_based)
+        session->auto_inc_intervals_in_cur_stmt_for_binlog.append(auto_inc_interval_for_cur_row.minimum(),
                                                               auto_inc_interval_for_cur_row.values(),
                                                               variables->auto_increment_increment);
   }
@@ -2625,7 +2625,7 @@ void handler::drop_table(const char *name)
 /**
   Performs checks upon the table.
 
-  @param thd                thread doing CHECK Table operation
+  @param session                thread doing CHECK Table operation
   @param check_opt          options from the parser
 
   @retval
@@ -2637,7 +2637,7 @@ void handler::drop_table(const char *name)
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
-int handler::ha_check(THD *thd, HA_CHECK_OPT *check_opt)
+int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
 {
   int error;
 
@@ -2655,7 +2655,7 @@ int handler::ha_check(THD *thd, HA_CHECK_OPT *check_opt)
     if (!error && (check_opt->sql_flags & TT_FOR_UPGRADE))
       return 0;
   }
-  if ((error= check(thd, check_opt)))
+  if ((error= check(session, check_opt)))
     return error;
   return update_frm_version(table);
 }
@@ -2669,7 +2669,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_thd()->ha_data[ht->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[ht->slot].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -2697,13 +2697,13 @@ handler::mark_trx_read_write()
   @sa handler::repair()
 */
 
-int handler::ha_repair(THD* thd, HA_CHECK_OPT* check_opt)
+int handler::ha_repair(Session* session, HA_CHECK_OPT* check_opt)
 {
   int result;
 
   mark_trx_read_write();
 
-  if ((result= repair(thd, check_opt)))
+  if ((result= repair(session, check_opt)))
     return result;
   return update_frm_version(table);
 }
@@ -2762,11 +2762,11 @@ handler::ha_reset_auto_increment(uint64_t value)
 */
 
 int
-handler::ha_optimize(THD* thd, HA_CHECK_OPT* check_opt)
+handler::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
 {
   mark_trx_read_write();
 
-  return optimize(thd, check_opt);
+  return optimize(session, check_opt);
 }
 
 
@@ -2777,11 +2777,11 @@ handler::ha_optimize(THD* thd, HA_CHECK_OPT* check_opt)
 */
 
 int
-handler::ha_analyze(THD* thd, HA_CHECK_OPT* check_opt)
+handler::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
 {
   mark_trx_read_write();
 
-  return analyze(thd, check_opt);
+  return analyze(session, check_opt);
 }
 
 
@@ -2792,11 +2792,11 @@ handler::ha_analyze(THD* thd, HA_CHECK_OPT* check_opt)
 */
 
 bool
-handler::ha_check_and_repair(THD *thd)
+handler::ha_check_and_repair(Session *session)
 {
   mark_trx_read_write();
 
-  return check_and_repair(thd);
+  return check_and_repair(session);
 }
 
 
@@ -2946,11 +2946,11 @@ handler::ha_create_handler_files(const char *name, const char *old_name,
   starts to commit every now and then automatically.
   This hint can be safely ignored.
 */
-int ha_enable_transaction(THD *thd, bool on)
+int ha_enable_transaction(Session *session, bool on)
 {
   int error=0;
 
-  if ((thd->transaction.on= on))
+  if ((session->transaction.on= on))
   {
     /*
       Now all storage engines should have transaction handling enabled.
@@ -2958,8 +2958,8 @@ int ha_enable_transaction(THD *thd, bool on)
       is an optimization hint that storage engine is free to ignore.
       So, let's commit an open transaction (if any) now.
     */
-    if (!(error= ha_commit_trans(thd, 0)))
-      error= end_trans(thd, COMMIT);
+    if (!(error= ha_commit_trans(session, 0)))
+      error= end_trans(session, COMMIT);
   }
   return(error);
 }
@@ -3027,7 +3027,7 @@ int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint3
   @retval
    1  error
 */
-int ha_create_table(THD *thd, const char *path,
+int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
 		    bool update_create_info)
@@ -3038,9 +3038,9 @@ int ha_create_table(THD *thd, const char *path,
   const char *name;
   TABLE_SHARE share;
   
-  init_tmp_table_share(thd, &share, db, 0, table_name, path);
-  if (open_table_def(thd, &share, 0) ||
-      open_table_from_share(thd, &share, "", 0, (uint) READ_ALL, 0, &table,
+  init_tmp_table_share(session, &share, db, 0, table_name, path);
+  if (open_table_def(session, &share, 0) ||
+      open_table_from_share(session, &share, "", 0, (uint) READ_ALL, 0, &table,
                             OTM_CREATE))
     goto err;
 
@@ -3074,7 +3074,7 @@ err:
   @retval
    > 0  Error, table existed but could not be created
 */
-int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
+int ha_create_table_from_engine(Session* session, const char *db, const char *name)
 {
   int error;
   unsigned char *frmblob;
@@ -3085,7 +3085,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   TABLE_SHARE share;
 
   memset(&create_info, 0, sizeof(create_info));
-  if ((error= ha_discover(thd, db, name, &frmblob, &frmlen)))
+  if ((error= ha_discover(session, db, name, &frmblob, &frmlen)))
   {
     /* Table could not be discovered and thus not created */
     return(error);
@@ -3103,12 +3103,12 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   if (error)
     return(2);
 
-  init_tmp_table_share(thd, &share, db, 0, name, path);
-  if (open_table_def(thd, &share, 0))
+  init_tmp_table_share(session, &share, db, 0, name, path);
+  if (open_table_def(session, &share, 0))
   {
     return(3);
   }
-  if (open_table_from_share(thd, &share, "" ,0, 0, 0, &table, OTM_OPEN))
+  if (open_table_from_share(session, &share, "" ,0, 0, 0, &table, OTM_OPEN))
   {
     free_table_share(&share);
     return(3);
@@ -3127,7 +3127,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
 void st_ha_check_opt::init()
 {
   flags= sql_flags= 0;
-  sort_buffer_size = current_thd->variables.myisam_sort_buff_size;
+  sort_buffer_size = current_session->variables.myisam_sort_buff_size;
 }
 
 
@@ -3239,13 +3239,13 @@ struct st_discover_args
   size_t *frmlen;
 };
 
-static bool discover_handlerton(THD *thd, plugin_ref plugin,
+static bool discover_handlerton(Session *session, plugin_ref plugin,
                                 void *arg)
 {
   st_discover_args *vargs= (st_discover_args *)arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->discover &&
-      (!(hton->discover(hton, thd, vargs->db, vargs->name, 
+      (!(hton->discover(hton, session, vargs->db, vargs->name, 
                         vargs->frmblob, 
                         vargs->frmlen))))
     return true;
@@ -3253,7 +3253,7 @@ static bool discover_handlerton(THD *thd, plugin_ref plugin,
   return false;
 }
 
-int ha_discover(THD *thd, const char *db, const char *name,
+int ha_discover(Session *session, const char *db, const char *name,
 		unsigned char **frmblob, size_t *frmlen)
 {
   int error= -1; // Table does not exist in any handler
@@ -3262,12 +3262,12 @@ int ha_discover(THD *thd, const char *db, const char *name,
   if (is_prefix(name,tmp_file_prefix)) /* skip temporary tables */
     return(error);
 
-  if (plugin_foreach(thd, discover_handlerton,
+  if (plugin_foreach(session, discover_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args))
     error= 0;
 
   if (!error)
-    status_var_increment(thd->status_var.ha_discover_count);
+    status_var_increment(session->status_var.ha_discover_count);
   return(error);
 }
 
@@ -3302,7 +3302,7 @@ struct st_table_exists_in_engine_args
   int err;
 };
 
-static bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
+static bool table_exists_in_engine_handlerton(Session *session, plugin_ref plugin,
                                               void *arg)
 {
   st_table_exists_in_engine_args *vargs= (st_table_exists_in_engine_args *)arg;
@@ -3311,7 +3311,7 @@ static bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
   int err= HA_ERR_NO_SUCH_TABLE;
 
   if (hton->state == SHOW_OPTION_YES && hton->table_exists_in_engine)
-    err = hton->table_exists_in_engine(hton, thd, vargs->db, vargs->name);
+    err = hton->table_exists_in_engine(hton, session, vargs->db, vargs->name);
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
@@ -3320,10 +3320,10 @@ static bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
   return false;
 }
 
-int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
+int ha_table_exists_in_engine(Session* session, const char* db, const char* name)
 {
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
-  plugin_foreach(thd, table_exists_in_engine_handlerton,
+  plugin_foreach(session, table_exists_in_engine_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
   return(args.err);
 }
@@ -3383,7 +3383,7 @@ double handler::index_only_read_time(uint32_t keynr, double records)
 
   @note
     This method (or an overriding one in a derived class) must check for
-    thd->killed and return HA_POS_ERROR if it is not zero. This is required
+    session->killed and return HA_POS_ERROR if it is not zero. This is required
     for a user to be able to interrupt the calculation by killing the
     connection/query.
 
@@ -3405,7 +3405,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
-  THD *thd= current_thd;
+  Session *session= current_session;
   
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
@@ -3413,7 +3413,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   seq_it= seq->init(seq_init_param, n_ranges, *flags);
   while (!seq->next(seq_it, &range))
   {
-    if (unlikely(thd->killed != 0))
+    if (unlikely(session->killed != 0))
       return HA_POS_ERROR;
     
     n_ranges++;
@@ -3679,9 +3679,9 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   rowids_buf_end= rowids_buf_last;
 
   /* Create a separate handler object to do rndpos() calls. */
-  THD *thd= current_thd;
-  if (!(new_h2= h->clone(thd->mem_root)) || 
-      new_h2->ha_external_lock(thd, F_RDLCK))
+  Session *session= current_session;
+  if (!(new_h2= h->clone(session->mem_root)) || 
+      new_h2->ha_external_lock(session, F_RDLCK))
   {
     delete new_h2;
     return(1);
@@ -3723,7 +3723,7 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   return(0);
 error:
   h2->ha_index_or_rnd_end();
-  h2->ha_external_lock(thd, F_UNLCK);
+  h2->ha_external_lock(session, F_UNLCK);
   h2->close();
   delete h2;
   return(1);
@@ -3734,7 +3734,7 @@ void DsMrr_impl::dsmrr_close()
 {
   if (h2)
   {
-    h2->ha_external_lock(current_thd, F_UNLCK);
+    h2->ha_external_lock(current_session, F_UNLCK);
     h2->close();
     delete h2;
     h2= NULL;
@@ -3974,8 +3974,8 @@ bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
 {
   COST_VECT dsmrr_cost;
   bool res;
-  THD *thd= current_thd;
-  if ((thd->variables.optimizer_use_mrr == 2) || 
+  Session *session= current_session;
+  if ((session->variables.optimizer_use_mrr == 2) || 
       (*flags & HA_MRR_INDEX_ONLY) || (*flags & HA_MRR_SORTED) ||
       (keyno == table->s->primary_key && 
        h->primary_key_is_clustered()) || 
@@ -3999,7 +3999,7 @@ bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
     DS-MRR whenever it is applicable without affecting other cost-based
     choices.
   */
-  if ((force_dsmrr= (thd->variables.optimizer_use_mrr == 1)) &&
+  if ((force_dsmrr= (session->variables.optimizer_use_mrr == 1)) &&
       dsmrr_cost.total_cost() > cost->total_cost())
     dsmrr_cost= *cost;
 
@@ -4352,7 +4352,7 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index, const unsig
   @retval
     pointer		pointer to TYPELIB structure
 */
-static bool exts_handlerton(THD *unused __attribute__((unused)),
+static bool exts_handlerton(Session *unused __attribute__((unused)),
                             plugin_ref plugin,
                             void *arg)
 {
@@ -4360,7 +4360,7 @@ static bool exts_handlerton(THD *unused __attribute__((unused)),
   handlerton *hton= plugin_data(plugin, handlerton *);
   handler *file;
   if (hton->state == SHOW_OPTION_YES && hton->create &&
-      (file= hton->create(hton, (TABLE_SHARE*) 0, current_thd->mem_root)))
+      (file= hton->create(hton, (TABLE_SHARE*) 0, current_session->mem_root)))
   {
     List_iterator_fast<char> it(*found_exts);
     const char **ext, *old_ext;
@@ -4411,11 +4411,11 @@ TYPELIB *ha_known_exts(void)
 }
 
 
-static bool stat_print(THD *thd, const char *type, uint32_t type_len,
+static bool stat_print(Session *session, const char *type, uint32_t type_len,
                        const char *file, uint32_t file_len,
                        const char *status, uint32_t status_len)
 {
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
   protocol->prepare_for_resend();
   protocol->store(type, type_len, system_charset_info);
   protocol->store(file, file_len, system_charset_info);
@@ -4425,10 +4425,10 @@ static bool stat_print(THD *thd, const char *type, uint32_t type_len,
   return false;
 }
 
-bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
+bool ha_show_status(Session *session, handlerton *db_type, enum ha_stat_type stat)
 {
   List<Item> field_list;
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
   bool result;
 
   field_list.push_back(new Item_empty_string("Type",10));
@@ -4440,10 +4440,10 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
     return true;
 
   result= db_type->show_status &&
-    db_type->show_status(db_type, thd, stat_print, stat) ? 1 : 0;
+    db_type->show_status(db_type, session, stat_print, stat) ? 1 : 0;
 
   if (!result)
-    my_eof(thd);
+    my_eof(session);
   return result;
 }
 
@@ -4460,7 +4460,7 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
   - table is not mysql.event
 */
 
-static bool check_table_binlog_row_based(THD *thd, Table *table)
+static bool check_table_binlog_row_based(Session *session, Table *table)
 {
   if (table->s->cached_row_logging_check == -1)
   {
@@ -4472,9 +4472,9 @@ static bool check_table_binlog_row_based(THD *thd, Table *table)
   assert(table->s->cached_row_logging_check == 0 ||
               table->s->cached_row_logging_check == 1);
 
-  return (thd->current_stmt_binlog_row_based &&
+  return (session->current_stmt_binlog_row_based &&
           table->s->cached_row_logging_check &&
-          (thd->options & OPTION_BIN_LOG) &&
+          (session->options & OPTION_BIN_LOG) &&
           mysql_bin_log.is_open());
 }
 
@@ -4484,28 +4484,28 @@ static bool check_table_binlog_row_based(THD *thd, Table *table)
    to the binary log.
 
    This function will generate and write table maps for all tables
-   that are locked by the thread 'thd'.  Either manually locked
-   (stored in THD::locked_tables) and automatically locked (stored
-   in THD::lock) are considered.
+   that are locked by the thread 'session'.  Either manually locked
+   (stored in Session::locked_tables) and automatically locked (stored
+   in Session::lock) are considered.
 
-   @param thd     Pointer to THD structure
+   @param session     Pointer to Session structure
 
    @retval 0   All OK
    @retval 1   Failed to write all table maps
 
    @sa
-       THD::lock
-       THD::locked_tables
+       Session::lock
+       Session::locked_tables
 */
 
-static int write_locked_table_maps(THD *thd)
+static int write_locked_table_maps(Session *session)
 {
-  if (thd->get_binlog_table_maps() == 0)
+  if (session->get_binlog_table_maps() == 0)
   {
     DRIZZLE_LOCK *locks[3];
-    locks[0]= thd->extra_lock;
-    locks[1]= thd->lock;
-    locks[2]= thd->locked_tables;
+    locks[0]= session->extra_lock;
+    locks[1]= session->lock;
+    locks[2]= session->locked_tables;
     for (uint32_t i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
     {
       DRIZZLE_LOCK const *const lock= locks[i];
@@ -4519,10 +4519,10 @@ static int write_locked_table_maps(THD *thd)
       {
         Table *const table= *table_ptr;
         if (table->current_lock == F_WRLCK &&
-            check_table_binlog_row_based(thd, table))
+            check_table_binlog_row_based(session, table))
         {
           int const has_trans= table->file->has_transactions();
-          int const error= thd->binlog_write_table_map(table, has_trans);
+          int const error= session->binlog_write_table_map(table, has_trans);
           /*
             If an error occurs, it is the responsibility of the caller to
             roll back the transaction.
@@ -4537,7 +4537,7 @@ static int write_locked_table_maps(THD *thd)
 }
 
 
-typedef bool Log_func(THD*, Table*, bool, const unsigned char*, const unsigned char*);
+typedef bool Log_func(Session*, Table*, bool, const unsigned char*, const unsigned char*);
 
 static int binlog_log_row(Table* table,
                           const unsigned char *before_record,
@@ -4547,25 +4547,25 @@ static int binlog_log_row(Table* table,
   if (table->no_replicate)
     return 0;
   bool error= 0;
-  THD *const thd= table->in_use;
+  Session *const session= table->in_use;
 
-  if (check_table_binlog_row_based(thd, table))
+  if (check_table_binlog_row_based(session, table))
   {
     /*
       If there are no table maps written to the binary log, this is
       the first row handled in this statement. In that case, we need
       to write table maps for all locked tables to the binary log.
     */
-    if (likely(!(error= write_locked_table_maps(thd))))
+    if (likely(!(error= write_locked_table_maps(session))))
     {
       bool const has_trans= table->file->has_transactions();
-      error= (*log_func)(thd, table, has_trans, before_record, after_record);
+      error= (*log_func)(session, table, has_trans, before_record, after_record);
     }
   }
   return error ? HA_ERR_RBR_LOGGING_FAILED : 0;
 }
 
-int handler::ha_external_lock(THD *thd, int lock_type)
+int handler::ha_external_lock(Session *session, int lock_type)
 {
   /*
     Whether this is lock or unlock, this should be true, and is to verify that
@@ -4580,7 +4580,7 @@ int handler::ha_external_lock(THD *thd, int lock_type)
   */
   DRIZZLE_EXTERNAL_LOCK(lock_type);
 
-  int error= external_lock(thd, lock_type);
+  int error= external_lock(session, lock_type);
   if (error == 0)
     cached_table_flags= table_flags();
   return(error);

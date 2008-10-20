@@ -28,9 +28,9 @@
   rli->description_event_for_exec.
 */
 
-void mysql_client_binlog_statement(THD* thd)
+void mysql_client_binlog_statement(Session* session)
 {
-  size_t coded_len= thd->lex->comment.length + 1;
+  size_t coded_len= session->lex->comment.length + 1;
   size_t decoded_len= base64_needed_decoded_length(coded_len);
   assert(coded_len > 0);
 
@@ -44,17 +44,17 @@ void mysql_client_binlog_statement(THD* thd)
     Format_description_event.
   */
   bool have_fd_event= true;
-  if (!thd->rli_fake)
+  if (!session->rli_fake)
   {
-    thd->rli_fake= new Relay_log_info;
+    session->rli_fake= new Relay_log_info;
 #ifdef HAVE_purify
-    thd->rli_fake->is_fake= true;
+    session->rli_fake->is_fake= true;
 #endif
     have_fd_event= false;
   }
-  if (thd->rli_fake && !thd->rli_fake->relay_log.description_event_for_exec)
+  if (session->rli_fake && !session->rli_fake->relay_log.description_event_for_exec)
   {
-    thd->rli_fake->relay_log.description_event_for_exec=
+    session->rli_fake->relay_log.description_event_for_exec=
       new Format_description_log_event(4);
     have_fd_event= false;
   }
@@ -66,19 +66,19 @@ void mysql_client_binlog_statement(THD* thd)
   /*
     Out of memory check
   */
-  if (!(thd->rli_fake &&
-        thd->rli_fake->relay_log.description_event_for_exec &&
+  if (!(session->rli_fake &&
+        session->rli_fake->relay_log.description_event_for_exec &&
         buf))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), 1);  /* needed 1 bytes */
     goto end;
   }
 
-  thd->rli_fake->sql_thd= thd;
-  thd->rli_fake->no_storage= true;
+  session->rli_fake->sql_session= session;
+  session->rli_fake->no_storage= true;
 
-  for (char const *strptr= thd->lex->comment.str ;
-       strptr < thd->lex->comment.str + thd->lex->comment.length ; )
+  for (char const *strptr= session->lex->comment.str ;
+       strptr < session->lex->comment.str + session->lex->comment.length ; )
   {
     char const *endptr= 0;
     int bytes_decoded= base64_decode(strptr, coded_len, buf, &endptr);
@@ -142,7 +142,7 @@ void mysql_client_binlog_statement(THD* thd)
       }
 
       ev= Log_event::read_log_event(bufptr, event_len, &error,
-                                    thd->rli_fake->relay_log.
+                                    session->rli_fake->relay_log.
                                       description_event_for_exec);
 
       if (!ev)
@@ -158,7 +158,7 @@ void mysql_client_binlog_statement(THD* thd)
       bytes_decoded -= event_len;
       bufptr += event_len;
 
-      ev->thd= thd;
+      ev->session= session;
       /*
         We go directly to the application phase, since we don't need
         to check if the event shall be skipped or not.
@@ -167,7 +167,7 @@ void mysql_client_binlog_statement(THD* thd)
         not used at all: the rli_fake instance is used only for error
         reporting.
       */
-      if (apply_event_and_update_pos(ev, thd, thd->rli_fake, false))
+      if (apply_event_and_update_pos(ev, session, session->rli_fake, false))
       {
         /*
           TODO: Maybe a better error message since the BINLOG statement
@@ -189,10 +189,10 @@ void mysql_client_binlog_statement(THD* thd)
     }
   }
 
-  my_ok(thd);
+  my_ok(session);
 
 end:
-  thd->rli_fake->clear_tables_to_lock();
+  session->rli_fake->clear_tables_to_lock();
   free(buf);
   return;
 }

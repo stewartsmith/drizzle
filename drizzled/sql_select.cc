@@ -43,7 +43,7 @@ struct st_sargable_param;
 static void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 static bool make_join_statistics(JOIN *join, TableList *leaves, COND *conds,
 				 DYNAMIC_ARRAY *keyuse);
-static bool update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,
+static bool update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,
                                 JOIN_TAB *join_tab,
                                 uint32_t tables, COND *conds,
                                 COND_EQUAL *cond_equal,
@@ -55,7 +55,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
 			       table_map used_tables);
 static bool choose_plan(JOIN *join,table_map join_tables);
 
-static void best_access_path(JOIN *join, JOIN_TAB *s, THD *thd,
+static void best_access_path(JOIN *join, JOIN_TAB *s, Session *session,
                              table_map remaining_tables, uint32_t idx,
                              double record_count, double read_time);
 static void optimize_straight_join(JOIN *join, table_map join_tables);
@@ -78,7 +78,7 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t index,
 static uint32_t cache_record_length(JOIN *join,uint32_t index);
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
-static store_key *get_store_key(THD *thd,
+static store_key *get_store_key(Session *session,
 				KEYUSE *keyuse, table_map used_tables,
 				KEY_PART_INFO *key_part, unsigned char *key_buff,
 				uint32_t maybe_null);
@@ -95,7 +95,7 @@ static int return_zero_rows(JOIN *join, select_result *res,TableList *tables,
                             List<Item> &fields, bool send_row,
                             uint64_t select_options, const char *info,
                             Item *having);
-static COND *build_equal_items(THD *thd, COND *cond,
+static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL *inherited,
                                List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref);
@@ -168,25 +168,25 @@ static bool list_contains_unique_index(Table *table,
                           bool (*find_func) (Field *, void *), void *data);
 static bool find_field_in_item_list (Field *field, void *data);
 static bool find_field_in_order_list (Field *field, void *data);
-static int create_sort_index(THD *thd, JOIN *join, order_st *order,
+static int create_sort_index(Session *session, JOIN *join, order_st *order,
 			     ha_rows filesort_limit, ha_rows select_limit,
                              bool is_order_by);
 static int remove_duplicates(JOIN *join,Table *entry,List<Item> &fields,
 			     Item *having);
-static int remove_dup_with_compare(THD *thd, Table *entry, Field **field,
+static int remove_dup_with_compare(Session *session, Table *entry, Field **field,
 				   ulong offset,Item *having);
-static int remove_dup_with_hash_index(THD *thd,Table *table,
+static int remove_dup_with_hash_index(Session *session,Table *table,
 				      uint32_t field_count, Field **first_field,
 
 				      ulong key_length,Item *having);
-static int join_init_cache(THD *thd,JOIN_TAB *tables,uint32_t table_count);
+static int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count);
 static ulong used_blob_length(CACHE_FIELD **ptr);
 static bool store_record_in_cache(JOIN_CACHE *cache);
 static void reset_cache_read(JOIN_CACHE *cache);
 static void reset_cache_write(JOIN_CACHE *cache);
 static void read_cached_record(JOIN_TAB *tab);
 static bool cmp_buffer_with_ref(JOIN_TAB *tab);
-static order_st *create_distinct_group(THD *thd, Item **ref_pointer_array,
+static order_st *create_distinct_group(Session *session, Item **ref_pointer_array,
                                     order_st *order, List<Item> &fields,
                                     List<Item> &all_fields,
 				    bool *all_order_by_fields_used);
@@ -196,20 +196,20 @@ static void calc_group_buffer(JOIN *join,order_st *group);
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static bool alloc_group_fields(JOIN *join,order_st *group);
 // Create list for using with tempory table
-static bool change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
+static bool change_to_use_tmp_fields(Session *session, Item **ref_pointer_array,
 				     List<Item> &new_list1,
 				     List<Item> &new_list2,
 				     uint32_t elements, List<Item> &items);
 // Create list for using with tempory table
-static bool change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
+static bool change_refs_to_tmp_fields(Session *session, Item **ref_pointer_array,
 				      List<Item> &new_list1,
 				      List<Item> &new_list2,
 				      uint32_t elements, List<Item> &items);
 static void init_tmptable_sum_functions(Item_sum **func);
 static void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
 static void copy_sum_funcs(Item_sum **func_ptr, Item_sum **end);
-static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab);
-static bool setup_sum_funcs(THD *thd, Item_sum **func_ptr);
+static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab);
+static bool setup_sum_funcs(Session *session, Item_sum **func_ptr);
 static bool init_sum_functions(Item_sum **func, Item_sum **end);
 static bool update_sum_func(Item_sum **func);
 void select_describe(JOIN *join, bool need_tmp_table,bool need_order,
@@ -237,7 +237,7 @@ static bool bitmap_covers(const table_map x, const table_map y)
   This handles SELECT with and without UNION.
 */
 
-bool handle_select(THD *thd, LEX *lex, select_result *result,
+bool handle_select(Session *session, LEX *lex, select_result *result,
                    ulong setup_tables_done_option)
 {
   bool res;
@@ -246,18 +246,18 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() || 
       select_lex->master_unit()->fake_select_lex)
-    res= mysql_union(thd, lex, result, &lex->unit, setup_tables_done_option);
+    res= mysql_union(session, lex, result, &lex->unit, setup_tables_done_option);
   else
   {
     SELECT_LEX_UNIT *unit= &lex->unit;
     unit->set_limit(unit->global_parameters);
-    thd->thd_marker= 0;
+    session->session_marker= 0;
     /*
       'options' of mysql_select will be set in JOIN, as far as JOIN for
       every PS/SP execution new, we will not need reset this flag if 
       setup_tables_done_option changed for next rexecution
     */
-    res= mysql_select(thd, &select_lex->ref_pointer_array,
+    res= mysql_select(session, &select_lex->ref_pointer_array,
 		      (TableList*) select_lex->table_list.first,
 		      select_lex->with_wild, select_lex->item_list,
 		      select_lex->where,
@@ -267,11 +267,11 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 		      (order_st*) select_lex->group_list.first,
 		      select_lex->having,
 		      (order_st*) lex->proc_list.first,
-		      select_lex->options | thd->options |
+		      select_lex->options | session->options |
                       setup_tables_done_option,
 		      result, unit, select_lex);
   }
-  res|= thd->is_error();
+  res|= session->is_error();
   if (unlikely(res))
     result->abort();
 
@@ -285,7 +285,7 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 
   SYNOPSIS
     fix_inner_refs()
-    thd               Thread handle
+    session               Thread handle
     all_fields        List of all fields used in select
     select            Current select
     ref_pointer_array Array of references to Items used in current select
@@ -322,7 +322,7 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 */
 
 bool
-fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
+fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
                  Item **ref_pointer_array)
 {
   Item_outer_ref *ref;
@@ -383,9 +383,9 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
     ref->outer_ref= new_ref;
     ref->ref= &ref->outer_ref;
 
-    if (!ref->fixed && ref->fix_fields(thd, 0))
+    if (!ref->fixed && ref->fix_fields(session, 0))
       return true;
-    thd->used_tables|= item->used_tables();
+    session->used_tables|= item->used_tables();
   }
   return res;
 }
@@ -393,7 +393,7 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
 /**
   Function to setup clauses without sum functions.
 */
-inline int setup_without_group(THD *thd, Item **ref_pointer_array,
+inline int setup_without_group(Session *session, Item **ref_pointer_array,
 			       TableList *tables,
 			       TableList *leaves,
 			       List<Item> &fields,
@@ -403,18 +403,18 @@ inline int setup_without_group(THD *thd, Item **ref_pointer_array,
 			       order_st *group, bool *hidden_group_fields)
 {
   int res;
-  nesting_map save_allow_sum_func=thd->lex->allow_sum_func ;
+  nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
 
-  thd->lex->allow_sum_func&= ~(1 << thd->lex->current_select->nest_level);
-  res= setup_conds(thd, tables, leaves, conds);
+  session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
+  res= setup_conds(session, tables, leaves, conds);
 
-  thd->lex->allow_sum_func|= 1 << thd->lex->current_select->nest_level;
-  res= res || setup_order(thd, ref_pointer_array, tables, fields, all_fields,
+  session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
+  res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
                           order);
-  thd->lex->allow_sum_func&= ~(1 << thd->lex->current_select->nest_level);
-  res= res || setup_group(thd, ref_pointer_array, tables, fields, all_fields,
+  session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
+  res= res || setup_group(session, ref_pointer_array, tables, fields, all_fields,
                           group, hidden_group_fields);
-  thd->lex->allow_sum_func= save_allow_sum_func;
+  session->lex->allow_sum_func= save_allow_sum_func;
   return(res);
 }
 
@@ -459,18 +459,18 @@ JOIN::prepare(Item ***rref_pointer_array,
   join_list= &select_lex->top_join_list;
   union_part= unit_arg->is_union();
 
-  thd->lex->current_select->is_item_list_lookup= 1;
+  session->lex->current_select->is_item_list_lookup= 1;
   /*
     If we have already executed SELECT, then it have not sense to prevent
     its table from update (see unique_table())
   */
-  if (thd->derived_tables_processing)
+  if (session->derived_tables_processing)
     select_lex->exclude_from_table_unique_test= true;
 
   /* Check that all tables, fields, conds and order are ok */
 
   if (!(select_options & OPTION_SETUP_TABLES_DONE) &&
-      setup_tables_and_check_access(thd, &select_lex->context, join_list,
+      setup_tables_and_check_access(session, &select_lex->context, join_list,
                                     tables_list, &select_lex->leaf_tables,
                                     false))
       return(-1);
@@ -481,11 +481,11 @@ JOIN::prepare(Item ***rref_pointer_array,
        table_ptr= table_ptr->next_leaf)
     tables++;
 
-  if (setup_wild(thd, tables_list, fields_list, &all_fields, wild_num) ||
-      select_lex->setup_ref_array(thd, og_num) ||
-      setup_fields(thd, (*rref_pointer_array), fields_list, MARK_COLUMNS_READ,
+  if (setup_wild(session, tables_list, fields_list, &all_fields, wild_num) ||
+      select_lex->setup_ref_array(session, og_num) ||
+      setup_fields(session, (*rref_pointer_array), fields_list, MARK_COLUMNS_READ,
 		   &all_fields, 1) ||
-      setup_without_group(thd, (*rref_pointer_array), tables_list,
+      setup_without_group(session, (*rref_pointer_array), tables_list,
 			  select_lex->leaf_tables, fields_list,
 			  all_fields, &conds, order, group_list,
 			  &hidden_group_fields))
@@ -495,17 +495,17 @@ JOIN::prepare(Item ***rref_pointer_array,
   
   if (having)
   {
-    nesting_map save_allow_sum_func= thd->lex->allow_sum_func;
-    thd->where="having clause";
-    thd->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
+    nesting_map save_allow_sum_func= session->lex->allow_sum_func;
+    session->where="having clause";
+    session->lex->allow_sum_func|= 1 << select_lex_arg->nest_level;
     select_lex->having_fix_field= 1;
     bool having_fix_rc= (!having->fixed &&
-			 (having->fix_fields(thd, &having) ||
+			 (having->fix_fields(session, &having) ||
 			  having->check_cols(1)));
     select_lex->having_fix_field= 0;
-    if (having_fix_rc || thd->is_error())
+    if (having_fix_rc || session->is_error())
       return(-1);				/* purecov: inspected */
-    thd->lex->allow_sum_func= save_allow_sum_func;
+    session->lex->allow_sum_func= save_allow_sum_func;
   }
 
   {
@@ -517,7 +517,7 @@ JOIN::prepare(Item ***rref_pointer_array,
     */
     if ((subselect= select_lex->master_unit()->item))
     {
-      bool do_semijoin= !test(thd->variables.optimizer_switch &
+      bool do_semijoin= !test(session->variables.optimizer_switch &
                               OPTIMIZER_SWITCH_NO_SEMIJOIN);
       if (subselect->substype() == Item_subselect::IN_SUBS)
         in_subs= (Item_in_subselect*)subselect;
@@ -544,7 +544,7 @@ JOIN::prepare(Item ***rref_pointer_array,
           !select_lex->master_unit()->first_select()->next_select() &&  // 2
           !select_lex->group_list.elements && !order &&                 // 3
           !having && !select_lex->with_sum_func &&                      // 4
-          thd->thd_marker &&                                            // 5
+          session->session_marker &&                                            // 5
           select_lex->outer_select()->join &&                           // (*)
           select_lex->master_unit()->first_select()->leaf_tables &&     // (**) 
           do_semijoin &&
@@ -552,7 +552,7 @@ JOIN::prepare(Item ***rref_pointer_array,
       {
         {
           if (!in_subs->left_expr->fixed &&
-               in_subs->left_expr->fix_fields(thd, &in_subs->left_expr))
+               in_subs->left_expr->fix_fields(session, &in_subs->left_expr))
           {
             return(-1);
           }
@@ -570,12 +570,12 @@ JOIN::prepare(Item ***rref_pointer_array,
         }
 
         /* Register the subquery for further processing */
-        select_lex->outer_select()->join->sj_subselects.append(thd->mem_root, in_subs);
-        in_subs->expr_join_nest= (TableList*)thd->thd_marker;
+        select_lex->outer_select()->join->sj_subselects.append(session->mem_root, in_subs);
+        in_subs->expr_join_nest= (TableList*)session->session_marker;
       }
       else
       {
-        bool do_materialize= !test(thd->variables.optimizer_switch &
+        bool do_materialize= !test(session->variables.optimizer_switch &
                                    OPTIMIZER_SWITCH_NO_MATERIALIZATION);
         /*
           Check if the subquery predicate can be executed via materialization.
@@ -610,7 +610,7 @@ JOIN::prepare(Item ***rref_pointer_array,
             in_subs  &&                                                   // 1
             !select_lex->master_unit()->first_select()->next_select() &&  // 2
             select_lex->master_unit()->first_select()->leaf_tables &&     // 3
-            thd->lex->sql_command == SQLCOM_SELECT)                       // *
+            session->lex->sql_command == SQLCOM_SELECT)                       // *
         {
           if (in_subs->is_top_level_item() &&                             // 4
               !in_subs->is_correlated &&                                  // 5
@@ -635,12 +635,12 @@ JOIN::prepare(Item ***rref_pointer_array,
     {
       Item *item= *ord->item;
       if (item->with_sum_func && item->type() != Item::SUM_FUNC_ITEM)
-        item->split_sum_func(thd, ref_pointer_array, all_fields);
+        item->split_sum_func(session, ref_pointer_array, all_fields);
     }
   }
 
   if (having && having->with_sum_func)
-    having->split_sum_func2(thd, ref_pointer_array, all_fields,
+    having->split_sum_func2(session, ref_pointer_array, all_fields,
                             &having, true);
   if (select_lex->inner_sum_func_list)
   {
@@ -649,13 +649,13 @@ JOIN::prepare(Item ***rref_pointer_array,
     do
     { 
       item_sum= item_sum->next;
-      item_sum->split_sum_func2(thd, ref_pointer_array,
+      item_sum->split_sum_func2(session, ref_pointer_array,
                                 all_fields, item_sum->ref_by, false);
     } while (item_sum != end);
   }
 
   if (select_lex->inner_refs_list.elements &&
-      fix_inner_refs(thd, all_fields, select_lex, ref_pointer_array))
+      fix_inner_refs(session, all_fields, select_lex, ref_pointer_array))
     return(-1);
 
   /*
@@ -1091,7 +1091,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jb
     }
   }
 
-  THD *thd= join->thd;
+  Session *session= join->session;
   SJ_TMP_TABLE **next_sjtbl_ptr= &join->sj_tmp_tables;
   /*
     Second pass: setup the chosen strategies    
@@ -1145,8 +1145,8 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jb
       {
         SJ_TMP_TABLE *sjtbl;
         uint32_t tabs_size= (last_tab - sjtabs) * sizeof(SJ_TMP_TABLE::TAB);
-        if (!(sjtbl= (SJ_TMP_TABLE*)thd->alloc(sizeof(SJ_TMP_TABLE))) ||
-            !(sjtbl->tabs= (SJ_TMP_TABLE::TAB*) thd->alloc(tabs_size)))
+        if (!(sjtbl= (SJ_TMP_TABLE*)session->alloc(sizeof(SJ_TMP_TABLE))) ||
+            !(sjtbl->tabs= (SJ_TMP_TABLE::TAB*) session->alloc(tabs_size)))
           return(true);
         memcpy(sjtbl->tabs, sjtabs, tabs_size);
         sjtbl->tabs_end= sjtbl->tabs + (last_tab - sjtabs);
@@ -1159,7 +1159,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jb
         sjtbl->next= NULL;
 
         sjtbl->tmp_table= 
-          create_duplicate_weedout_tmp_table(thd, 
+          create_duplicate_weedout_tmp_table(session, 
                                              sjtbl->rowid_len + 
                                              sjtbl->null_bytes,
                                              sjtbl);
@@ -1191,7 +1191,7 @@ static void cleanup_sj_tmp_tables(JOIN *join)
   {
     if (sj_tbl->tmp_table)
     {
-      sj_tbl->tmp_table->free_tmp_table(join->thd);
+      sj_tbl->tmp_table->free_tmp_table(join->session);
     }
   }
   join->sj_tmp_tables= NULL;
@@ -1219,7 +1219,7 @@ JOIN::optimize()
     return(0);
   optimized= 1;
 
-  thd->set_proc_info("optimizing");
+  session->set_proc_info("optimizing");
   row_limit= ((select_distinct || order || group_list) ? HA_POS_ERROR :
 	      unit->select_limit_cnt);
   /* select_limit is used to decide if we are likely to scan the whole table */
@@ -1228,8 +1228,8 @@ JOIN::optimize()
     select_limit= HA_POS_ERROR;
   do_send_rows = (unit->select_limit_cnt) ? 1 : 0;
   // Ignore errors of execution if option IGNORE present
-  if (thd->lex->ignore)
-    thd->lex->current_select->no_error= 1;
+  if (session->lex->ignore)
+    session->lex->current_select->no_error= 1;
 
 #ifdef HAVE_REF_TO_FIELDS			// Not done yet
   /* Add HAVING to WHERE if possible */
@@ -1246,8 +1246,8 @@ JOIN::optimize()
         Item_cond_and can't be fixed after creation, so we do not check
         conds->fixed
       */
-      conds->fix_fields(thd, &conds);
-      conds->change_ref_to_fields(thd, tables_list);
+      conds->fix_fields(session, &conds);
+      conds->change_ref_to_fields(session, tables_list);
       conds->top_level_item();
       having= 0;
     }
@@ -1259,7 +1259,7 @@ JOIN::optimize()
   build_bitmap_for_nested_joins(join_list, 0);
 
   conds= optimize_cond(this, conds, join_list, &cond_value);   
-  if (thd->is_error())
+  if (session->is_error())
   {
     error= 1;
     return(1);
@@ -1267,7 +1267,7 @@ JOIN::optimize()
 
   {
     having= optimize_cond(this, having, join_list, &having_value);
-    if (thd->is_error())
+    if (session->is_error())
     {
       error= 1;
       return(1);
@@ -1328,7 +1328,7 @@ JOIN::optimize()
         conjunctions.
         Preserve conditions for EXPLAIN.
       */
-      if (conds && !(thd->lex->describe & DESCRIBE_EXTENDED))
+      if (conds && !(session->lex->describe & DESCRIBE_EXTENDED))
       {
         COND *table_independent_conds=
           make_cond_for_table(conds, PSEUDO_TABLE_BITS, 0, 0);
@@ -1345,16 +1345,16 @@ JOIN::optimize()
   sort_by_table= get_sort_by_table(order, group_list, select_lex->leaf_tables);
 
   /* Calculate how to do the join */
-  thd->set_proc_info("statistics");
+  session->set_proc_info("statistics");
   if (make_join_statistics(this, select_lex->leaf_tables, conds, &keyuse) ||
-      thd->is_fatal_error)
+      session->is_fatal_error)
   {
     return(1);
   }
 
   /* Remove distinct if only const tables */
   select_distinct= select_distinct && (const_tables != tables);
-  thd->set_proc_info("preparing");
+  session->set_proc_info("preparing");
   if (result->initialize_tables(this))
   {
     return(1);				// error == -1
@@ -1363,23 +1363,23 @@ JOIN::optimize()
       !(select_options & SELECT_DESCRIBE) &&
       (!conds ||
        !(conds->used_tables() & RAND_TABLE_BIT) ||
-       select_lex->master_unit() == &thd->lex->unit)) // upper level SELECT
+       select_lex->master_unit() == &session->lex->unit)) // upper level SELECT
   {
     zero_result_cause= "no matching row in const table";
     error= 0;
     return(0);
   }
-  if (!(thd->options & OPTION_BIG_SELECTS) &&
-      best_read > (double) thd->variables.max_join_size &&
+  if (!(session->options & OPTION_BIG_SELECTS) &&
+      best_read > (double) session->variables.max_join_size &&
       !(select_options & SELECT_DESCRIBE))
   {						/* purecov: inspected */
     my_message(ER_TOO_BIG_SELECT, ER(ER_TOO_BIG_SELECT), MYF(0));
     error= -1;
     return(1);
   }
-  if (const_tables && !thd->locked_tables &&
+  if (const_tables && !session->locked_tables &&
       !(select_options & SELECT_NO_UNLOCK))
-    mysql_unlock_some_tables(thd, table, const_tables);
+    mysql_unlock_some_tables(session, table, const_tables);
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
@@ -1425,7 +1425,7 @@ JOIN::optimize()
 
   if (conds &&!outer_join && const_table_map != found_const_table_map && 
       (select_options & SELECT_DESCRIBE) &&
-      select_lex->master_unit() == &thd->lex->unit) // upper level SELECT
+      select_lex->master_unit() == &session->lex->unit) // upper level SELECT
   {
     conds=new Item_int((int64_t) 0,1);	// Always false
   }
@@ -1442,7 +1442,7 @@ JOIN::optimize()
   {
     order_st *org_order= order;
     order=remove_const(this, order,conds,1, &simple_order);
-    if (thd->is_error())
+    if (session->is_error())
     {
       error= 1;
       return(1);
@@ -1540,7 +1540,7 @@ JOIN::optimize()
     if (order)
       skip_sort_order= test_if_skip_sort_order(tab, order, select_limit, 1, 
         &tab->table->keys_in_use_for_order_by);
-    if ((group_list=create_distinct_group(thd, select_lex->ref_pointer_array,
+    if ((group_list=create_distinct_group(session, select_lex->ref_pointer_array,
                                           order, fields_list, all_fields,
 				          &all_order_fields_used)))
     {
@@ -1572,7 +1572,7 @@ JOIN::optimize()
       else
 	group_list= 0;
     }
-    else if (thd->is_fatal_error)			// End of memory
+    else if (session->is_fatal_error)			// End of memory
       return(1);
   }
   simple_group= 0;
@@ -1581,7 +1581,7 @@ JOIN::optimize()
     group_list= remove_const(this, (old_group_list= group_list), conds,
                              rollup.state == ROLLUP::STATE_NONE,
 			     &simple_group);
-    if (thd->is_error())
+    if (session->is_error())
     {
       error= 1;
       return(1);
@@ -1664,7 +1664,7 @@ JOIN::optimize()
         error= 0;
         return(unit->item->
                     change_engine(new
-                                  subselect_uniquesubquery_engine(thd,
+                                  subselect_uniquesubquery_engine(session,
                                                                   join_tab,
                                                                   unit->item,
                                                                   where)));
@@ -1678,7 +1678,7 @@ JOIN::optimize()
         error= 0;
         return(unit->item->
                     change_engine(new
-                                  subselect_indexsubquery_engine(thd,
+                                  subselect_indexsubquery_engine(session,
                                                                  join_tab,
                                                                  unit->item,
                                                                  where,
@@ -1694,7 +1694,7 @@ JOIN::optimize()
       conds= remove_additional_cond(conds);
       save_index_subquery_explain_info(join_tab, conds);
       return(unit->item->
-		  change_engine(new subselect_indexsubquery_engine(thd,
+		  change_engine(new subselect_indexsubquery_engine(session,
 								   join_tab,
 								   unit->item,
 								   conds,
@@ -1728,7 +1728,7 @@ JOIN::optimize()
         (join_tab[const_tables].type != JT_REF_OR_NULL) &&
         ((order && simple_order) || (group_list && simple_group)))
     {
-      if (add_ref_to_table_cond(thd,&join_tab[const_tables])) {
+      if (add_ref_to_table_cond(session,&join_tab[const_tables])) {
         return(1);
       }
     }
@@ -1789,7 +1789,7 @@ JOIN::optimize()
   /* Create a tmp table if distinct or if the sort is too complicated */
   if (need_tmp)
   {
-    thd->set_proc_info("Creating tmp table");
+    session->set_proc_info("Creating tmp table");
 
     init_items_ref_array();
 
@@ -1805,11 +1805,11 @@ JOIN::optimize()
     */
     ha_rows tmp_rows_limit= ((order == 0 || skip_sort_order) &&
                              !tmp_group &&
-                             !thd->lex->current_select->with_sum_func) ?
+                             !session->lex->current_select->with_sum_func) ?
                             select_limit : HA_POS_ERROR;
 
     if (!(exec_tmp_table1=
-	  create_tmp_table(thd, &tmp_table_param, all_fields,
+	  create_tmp_table(session, &tmp_table_param, all_fields,
                            tmp_group,
 			   group_list ? 0 : select_distinct,
 			   group_list && simple_group,
@@ -1837,12 +1837,12 @@ JOIN::optimize()
     /* if group or order on first table, sort first */
     if (group_list && simple_group)
     {
-      thd->set_proc_info("Sorting for group");
-      if (create_sort_index(thd, this, group_list,
+      session->set_proc_info("Sorting for group");
+      if (create_sort_index(session, this, group_list,
 			    HA_POS_ERROR, HA_POS_ERROR, false) ||
 	  alloc_group_fields(this, group_list) ||
           make_sum_func_list(all_fields, fields_list, 1) ||
-          setup_sum_funcs(thd, sum_funcs))
+          setup_sum_funcs(session, sum_funcs))
       {
         return(1);
       }
@@ -1851,15 +1851,15 @@ JOIN::optimize()
     else
     {
       if (make_sum_func_list(all_fields, fields_list, 0) ||
-          setup_sum_funcs(thd, sum_funcs))
+          setup_sum_funcs(session, sum_funcs))
       {
         return(1);
       }
 
       if (!group_list && ! exec_tmp_table1->distinct && order && simple_order)
       {
-        thd->set_proc_info("Sorting for order");
-        if (create_sort_index(thd, this, order,
+        session->set_proc_info("Sorting for order");
+        if (create_sort_index(session, this, order,
                               HA_POS_ERROR, HA_POS_ERROR, true))
         {
           return(1);
@@ -1876,7 +1876,7 @@ JOIN::optimize()
 
     if (exec_tmp_table1->distinct)
     {
-      table_map used_tables= thd->used_tables;
+      table_map used_tables= session->used_tables;
       JOIN_TAB *last_join_tab= join_tab+tables-1;
       do
       {
@@ -1976,7 +1976,7 @@ JOIN::reinit()
 bool
 JOIN::init_save_join_tab()
 {
-  if (!(tmp_join= (JOIN*)thd->alloc(sizeof(JOIN))))
+  if (!(tmp_join= (JOIN*)session->alloc(sizeof(JOIN))))
     return 1;                                  /* purecov: inspected */
   error= 0;				       // Ensure that tmp_join.error= 0
   restore_tmp();
@@ -1989,7 +1989,7 @@ JOIN::save_join_tab()
 {
   if (!join_tab_save && select_lex->master_unit()->uncacheable)
   {
-    if (!(join_tab_save= (JOIN_TAB*)thd->memdup((unsigned char*) join_tab,
+    if (!(join_tab_save= (JOIN_TAB*)session->memdup((unsigned char*) join_tab,
 						sizeof(JOIN_TAB) * tables)))
       return 1;
   }
@@ -2006,7 +2006,7 @@ JOIN::save_join_tab()
     the query.  It's never shown in EXPLAIN!
 
   @todo
-    When can we have here thd->net.report_error not zero?
+    When can we have here session->net.report_error not zero?
 */
 void
 JOIN::exec()
@@ -2014,7 +2014,7 @@ JOIN::exec()
   List<Item> *columns_list= &fields_list;
   int      tmp_error;
 
-  thd->set_proc_info("executing");
+  session->set_proc_info("executing");
   error= 0;
   (void) result->prepare2(); // Currently, this cannot fail.
 
@@ -2042,7 +2042,7 @@ JOIN::exec()
 	{
 	  error= (int) result->send_eof();
 	  send_records= ((select_options & OPTION_FOUND_ROWS) ? 1 :
-                         thd->sent_row_count);
+                         session->sent_row_count);
 	}
       }
       else
@@ -2052,8 +2052,8 @@ JOIN::exec()
       }
     }
     /* Single select (without union) always returns 0 or 1 row */
-    thd->limit_found_rows= send_records;
-    thd->examined_row_count= 0;
+    session->limit_found_rows= send_records;
+    session->examined_row_count= 0;
     return;
   }
   /*
@@ -2062,7 +2062,7 @@ JOIN::exec()
     It must be accumulated from all join iterations of all join parts.
   */
   if (tables)
-    thd->limit_found_rows= 0;
+    session->limit_found_rows= 0;
 
   if (zero_result_cause)
   {
@@ -2140,7 +2140,7 @@ JOIN::exec()
     curr_tmp_table= exec_tmp_table1;
 
     /* Copy data to the temporary table */
-    thd->set_proc_info("Copying to tmp table");
+    session->set_proc_info("Copying to tmp table");
     if (!curr_join->sort_and_group &&
         curr_join->const_tables != curr_join->tables)
       curr_join->join_tab[curr_join->const_tables].sorted= 0;
@@ -2161,14 +2161,14 @@ JOIN::exec()
       items1= items0 + all_fields.elements;
       if (sort_and_group || curr_tmp_table->group)
       {
-	if (change_to_use_tmp_fields(thd, items1,
+	if (change_to_use_tmp_fields(session, items1,
 				     tmp_fields_list1, tmp_all_fields1,
 				     fields_list.elements, all_fields))
 	  return;
       }
       else
       {
-	if (change_refs_to_tmp_fields(thd, items1,
+	if (change_refs_to_tmp_fields(session, items1,
 				      tmp_fields_list1, tmp_all_fields1,
 				      fields_list.elements, all_fields))
 	  return;
@@ -2241,7 +2241,7 @@ JOIN::exec()
           curr_join->tmp_table_param.precomputed_group_by= true;
 
 	if (!(curr_tmp_table=
-	      exec_tmp_table2= create_tmp_table(thd,
+	      exec_tmp_table2= create_tmp_table(session,
 						&curr_join->tmp_table_param,
 						*curr_all_fields,
 						(order_st*) 0,
@@ -2255,12 +2255,12 @@ JOIN::exec()
       }
       if (curr_join->group_list)
       {
-	thd->set_proc_info("Creating sort index");
+	session->set_proc_info("Creating sort index");
 	if (curr_join->join_tab == join_tab && save_join_tab())
 	{
 	  return;
 	}
-	if (create_sort_index(thd, curr_join, curr_join->group_list,
+	if (create_sort_index(session, curr_join, curr_join->group_list,
 			      HA_POS_ERROR, HA_POS_ERROR, false) ||
 	    make_group_fields(this, curr_join))
 	{
@@ -2269,7 +2269,7 @@ JOIN::exec()
         sortorder= curr_join->sortorder;
       }
       
-      thd->set_proc_info("Copying to group table");
+      session->set_proc_info("Copying to group table");
       tmp_error= -1;
       if (curr_join != this)
       {
@@ -2292,7 +2292,7 @@ JOIN::exec()
       if (!curr_join->sort_and_group &&
           curr_join->const_tables != curr_join->tables)
         curr_join->join_tab[curr_join->const_tables].sorted= 0;
-      if (setup_sum_funcs(curr_join->thd, curr_join->sum_funcs) ||
+      if (setup_sum_funcs(curr_join->session, curr_join->sum_funcs) ||
 	  (tmp_error= do_select(curr_join, (List<Item> *) 0, curr_tmp_table)))
       {
 	error= tmp_error;
@@ -2306,7 +2306,7 @@ JOIN::exec()
       if (!items2)
       {
 	items2= items1 + all_fields.elements;
-	if (change_to_use_tmp_fields(thd, items2,
+	if (change_to_use_tmp_fields(session, items2,
 				     tmp_fields_list2, tmp_all_fields2, 
 				     fields_list.elements, tmp_all_fields1))
 	  return;
@@ -2326,7 +2326,7 @@ JOIN::exec()
     curr_join->join_free();			/* Free quick selects */
     if (curr_join->select_distinct && ! curr_join->group_list)
     {
-      thd->set_proc_info("Removing duplicates");
+      session->set_proc_info("Removing duplicates");
       if (curr_join->tmp_having)
 	curr_join->tmp_having->update_used_tables();
       if (remove_duplicates(curr_join, curr_tmp_table,
@@ -2355,7 +2355,7 @@ JOIN::exec()
       if (!items0)
 	init_items_ref_array();
       items3= ref_pointer_array + (all_fields.elements*4);
-      setup_copy_fields(thd, &curr_join->tmp_table_param,
+      setup_copy_fields(session, &curr_join->tmp_table_param,
 			items3, tmp_fields_list3, tmp_all_fields3,
 			curr_fields_list->elements, *curr_all_fields);
       tmp_table_param.save_copy_funcs= curr_join->tmp_table_param.copy_funcs;
@@ -2378,13 +2378,13 @@ JOIN::exec()
 
     if (curr_join->make_sum_func_list(*curr_all_fields, *curr_fields_list,
 				      1, true) || 
-        setup_sum_funcs(curr_join->thd, curr_join->sum_funcs) ||
-        thd->is_fatal_error)
+        setup_sum_funcs(curr_join->session, curr_join->sum_funcs) ||
+        session->is_fatal_error)
       return;
   }
   if (curr_join->group_list || curr_join->order)
   {
-    thd->set_proc_info("Sorting result");
+    session->set_proc_info("Sorting result");
     /* If we have already done the group, add HAVING to sorted table */
     if (curr_join->tmp_having && ! curr_join->group_list && 
 	! curr_join->sort_and_group)
@@ -2430,7 +2430,7 @@ JOIN::exec()
       else
       {
 	/*
-	  We can abort sorting after thd->select_limit rows if we there is no
+	  We can abort sorting after session->select_limit rows if we there is no
 	  WHERE clause for any tables after the sorted one.
 	*/
 	JOIN_TAB *curr_table= &curr_join->join_tab[curr_join->const_tables+1];
@@ -2463,7 +2463,7 @@ JOIN::exec()
 	the query. XXX: it's never shown in EXPLAIN!
 	OPTION_FOUND_ROWS supersedes LIMIT and is taken into account.
       */
-      if (create_sort_index(thd, curr_join,
+      if (create_sort_index(session, curr_join,
 			    curr_join->group_list ? 
 			    curr_join->group_list : curr_join->order,
 			    curr_join->select_limit,
@@ -2484,25 +2484,25 @@ JOIN::exec()
       }
     }
   }
-  /* XXX: When can we have here thd->is_error() not zero? */
-  if (thd->is_error())
+  /* XXX: When can we have here session->is_error() not zero? */
+  if (session->is_error())
   {
-    error= thd->is_error();
+    error= session->is_error();
     return;
   }
   curr_join->having= curr_join->tmp_having;
   curr_join->fields= curr_fields_list;
 
   {
-    thd->set_proc_info("Sending data");
+    session->set_proc_info("Sending data");
     result->send_fields(*curr_fields_list,
                         Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
     error= do_select(curr_join, curr_fields_list, NULL);
-    thd->limit_found_rows= curr_join->send_records;
+    session->limit_found_rows= curr_join->send_records;
   }
 
   /* Accumulate the counts from all join iterations of all join parts. */
-  thd->examined_row_count+= curr_join->examined_rows;
+  session->examined_row_count+= curr_join->examined_rows;
 
   /* 
     With EXPLAIN EXTENDED we have to restore original ref_array
@@ -2510,7 +2510,7 @@ JOIN::exec()
     Otherwise we would not be able to print the query  correctly.
   */ 
   if (items0 &&
-      (thd->lex->describe & DESCRIBE_EXTENDED) &&
+      (session->lex->describe & DESCRIBE_EXTENDED) &&
       select_lex->linkage == DERIVED_TABLE_TYPE)      
     set_items_ref_array(items0);
 
@@ -2546,9 +2546,9 @@ JOIN::destroy()
 
   cleanup(1);
   if (exec_tmp_table1)
-    exec_tmp_table1->free_tmp_table(thd);
+    exec_tmp_table1->free_tmp_table(session);
   if (exec_tmp_table2)
-    exec_tmp_table2->free_tmp_table(thd);
+    exec_tmp_table2->free_tmp_table(session);
   delete select;
   delete_dynamic(&keyuse);
   return(error);
@@ -2559,7 +2559,7 @@ JOIN::destroy()
 /**
   An entry point to single-unit select (a select without UNION).
 
-  @param thd                  thread handler
+  @param session                  thread handler
   @param rref_pointer_array   a reference to ref_pointer_array of
                               the top-level select_lex for this query
   @param tables               list of all tables used in this query.
@@ -2601,7 +2601,7 @@ JOIN::destroy()
 */
 
 bool
-mysql_select(THD *thd, Item ***rref_pointer_array,
+mysql_select(Session *session, Item ***rref_pointer_array,
 	     TableList *tables, uint32_t wild_num, List<Item> &fields,
 	     COND *conds, uint32_t og_num,  order_st *order, order_st *group,
 	     Item *having, order_st *proc_param, uint64_t select_options,
@@ -2646,10 +2646,10 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
   }
   else
   {
-    if (!(join= new JOIN(thd, fields, select_options, result)))
+    if (!(join= new JOIN(session, fields, select_options, result)))
 	return(true);
-    thd->set_proc_info("init");
-    thd->used_tables=0;                         // Updated by setup_fields
+    session->set_proc_info("init");
+    session->used_tables=0;                         // Updated by setup_fields
     if ((err= join->prepare(rref_pointer_array, tables, wild_num,
                            conds, og_num, order, group, having, proc_param,
                            select_lex, unit)) == true)
@@ -2671,18 +2671,18 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
     goto err;					// 1
   }
 
-  if (thd->lex->describe & DESCRIBE_EXTENDED)
+  if (session->lex->describe & DESCRIBE_EXTENDED)
   {
     join->conds_history= join->conds;
     join->having_history= (join->having?join->having:join->tmp_having);
   }
 
-  if (thd->is_error())
+  if (session->is_error())
     goto err;
 
   join->exec();
 
-  if (thd->lex->describe & DESCRIBE_EXTENDED)
+  if (session->lex->describe & DESCRIBE_EXTENDED)
   {
     select_lex->where= join->conds_history;
     select_lex->having= join->having_history;
@@ -2691,9 +2691,9 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
 err:
   if (free_join)
   {
-    thd->set_proc_info("end");
+    session->set_proc_info("end");
     err|= select_lex->cleanup();
-    return(err || thd->is_error());
+    return(err || session->is_error());
   }
   return(join->error);
 }
@@ -2713,10 +2713,10 @@ inline Item * and_items(Item* cond, Item *item)
 }
 
 
-static TableList *alloc_join_nest(THD *thd)
+static TableList *alloc_join_nest(Session *session)
 {
   TableList *tbl;
-  if (!(tbl= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
+  if (!(tbl= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
     return NULL;
   tbl->nested_join= (nested_join_st*) ((unsigned char*)tbl + 
@@ -2772,7 +2772,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
   SELECT_LEX *parent_lex= parent_join->select_lex;
   TableList *emb_tbl_nest= NULL;
   List<TableList> *emb_join_list= &parent_lex->top_join_list;
-  THD *thd= parent_join->thd;
+  Session *session= parent_join->session;
 
   /*
     1. Find out where to put the predicate into.
@@ -2829,7 +2829,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
         A3: changes in the TableList::outer_join will make everything work
             automatically.
       */
-      if (!(wrap_nest= alloc_join_nest(parent_join->thd)))
+      if (!(wrap_nest= alloc_join_nest(parent_join->session)))
       {
         return(true);
       }
@@ -2874,7 +2874,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 
   TableList *sj_nest;
   nested_join_st *nested_join;
-  if (!(sj_nest= alloc_join_nest(parent_join->thd)))
+  if (!(sj_nest= alloc_join_nest(parent_join->session)))
   {
     return(true);
   }
@@ -2952,12 +2952,12 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     Put the subquery's WHERE into semi-join's sj_on_expr
     Add the subquery-induced equalities too.
   */
-  SELECT_LEX *save_lex= thd->lex->current_select;
-  thd->lex->current_select=subq_lex;
+  SELECT_LEX *save_lex= session->lex->current_select;
+  session->lex->current_select=subq_lex;
   if (!subq_pred->left_expr->fixed &&
-       subq_pred->left_expr->fix_fields(thd, &subq_pred->left_expr))
+       subq_pred->left_expr->fix_fields(session, &subq_pred->left_expr))
     return(true);
-  thd->lex->current_select=save_lex;
+  session->lex->current_select=save_lex;
 
   sj_nest->nested_join->sj_corr_tables= subq_pred->used_tables();
   sj_nest->nested_join->sj_depends_on=  subq_pred->used_tables() |
@@ -3005,7 +3005,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     }
   }
   /* Fix the created equality and AND */
-  sj_nest->sj_on_expr->fix_fields(parent_join->thd, &sj_nest->sj_on_expr);
+  sj_nest->sj_on_expr->fix_fields(parent_join->session, &sj_nest->sj_on_expr);
 
   /*
     Walk through sj nest's WHERE and ON expressions and call
@@ -3023,13 +3023,13 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
   {
     emb_tbl_nest->on_expr= and_items(emb_tbl_nest->on_expr, 
                                      sj_nest->sj_on_expr);
-    emb_tbl_nest->on_expr->fix_fields(parent_join->thd, &emb_tbl_nest->on_expr);
+    emb_tbl_nest->on_expr->fix_fields(parent_join->session, &emb_tbl_nest->on_expr);
   }
   else
   {
     /* Inject into the WHERE */
     parent_join->conds= and_items(parent_join->conds, sj_nest->sj_on_expr);
-    parent_join->conds->fix_fields(parent_join->thd, &parent_join->conds);
+    parent_join->conds->fix_fields(parent_join->session, &parent_join->conds);
     parent_join->select_lex->where= parent_join->conds;
   }
 
@@ -3118,7 +3118,7 @@ bool JOIN::flatten_subqueries()
     if (replace_where_subcondition(this, *in_subq, substitute, do_fix_fields))
       return(true);
 
-    //if ((*in_subq)->fix_fields(thd, (*in_subq)->ref_ptr))
+    //if ((*in_subq)->fix_fields(session, (*in_subq)->ref_ptr))
     //  return(true);
   }
   sj_subselects.clear();
@@ -3359,18 +3359,18 @@ int pull_out_semijoin_tables(JOIN *join)
 *****************************************************************************/
 
 
-static ha_rows get_quick_record_count(THD *thd, SQL_SELECT *select,
+static ha_rows get_quick_record_count(Session *session, SQL_SELECT *select,
 				      Table *table,
 				      const key_map *keys,ha_rows limit)
 {
   int error;
-  if (check_stack_overrun(thd, STACK_MIN_SIZE, NULL))
+  if (check_stack_overrun(session, STACK_MIN_SIZE, NULL))
     return(0);                           // Fatal error flag is set
   if (select)
   {
     select->head=table;
     table->reginfo.impossible_range=0;
-    if ((error= select->test_quick_select(thd, *(key_map *)keys,(table_map) 0,
+    if ((error= select->test_quick_select(session, *(key_map *)keys,(table_map) 0,
                                           limit, 0, false)) == 1)
       return(select->quick->records);
     if (error == -1)
@@ -3422,9 +3422,9 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
   JOIN_TAB *stat_vector[MAX_TABLES+1];
 
   table_count=join->tables;
-  stat=(JOIN_TAB*) join->thd->calloc(sizeof(JOIN_TAB)*table_count);
-  stat_ref=(JOIN_TAB**) join->thd->alloc(sizeof(JOIN_TAB*)*MAX_TABLES);
-  table_vector=(Table**) join->thd->alloc(sizeof(Table*)*(table_count*2));
+  stat=(JOIN_TAB*) join->session->calloc(sizeof(JOIN_TAB)*table_count);
+  stat_ref=(JOIN_TAB**) join->session->alloc(sizeof(JOIN_TAB*)*MAX_TABLES);
+  table_vector=(Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
   if (!stat || !stat_ref || !table_vector)
     return(1);				// Eom /* purecov: inspected */
 
@@ -3543,7 +3543,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
   }
 
   if (conds || outer_join)
-    if (update_ref_and_keys(join->thd, keyuse_array, stat, join->tables,
+    if (update_ref_and_keys(join->session, keyuse_array, stat, join->tables,
                             conds, join->cond_equal,
                             ~outer_join, join->select_lex, &sargables))
       return(1);
@@ -3768,7 +3768,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 			  1, &error);
       if (!select)
         return(1);
-      records= get_quick_record_count(join->thd, select, s->table,
+      records= get_quick_record_count(join->session, select, s->table,
 				      &s->const_keys, join->row_limit);
       s->quick=select->quick;
       s->needed_reg=select->needed_reg;
@@ -3822,7 +3822,7 @@ make_join_statistics(JOIN *join, TableList *tables, COND *conds,
     join->best_read=1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
-  return(join->thd->killed || get_best_combination(join));
+  return(join->session->killed || get_best_combination(join));
 }
 
 
@@ -4545,7 +4545,7 @@ static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
 /**
   Update keyuse array with all possible keys we can use to fetch rows.
   
-  @param       thd 
+  @param       session 
   @param[out]  keyuse         Put here ordered array of KEYUSE structures
   @param       join_tab       Array in tablenr_order
   @param       tables         Number of tables in join
@@ -4564,7 +4564,7 @@ static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
 */
 
 static bool
-update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
+update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
                     uint32_t tables, COND *cond,
                     COND_EQUAL *cond_equal __attribute__((unused)),
                     table_map normal_tables, SELECT_LEX *select_lex,
@@ -4597,9 +4597,9 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
     substitutions.
   */ 
   sz= cmax(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
-      (((thd->lex->current_select->cond_count+1)*2 +
-	thd->lex->current_select->between_count)*m+1);
-  if (!(key_fields=(KEY_FIELD*)	thd->alloc(sz)))
+      (((session->lex->current_select->cond_count+1)*2 +
+	session->lex->current_select->between_count)*m+1);
+  if (!(key_fields=(KEY_FIELD*)	session->alloc(sz)))
     return true; /* purecov: inspected */
   and_level= 0;
   field= end= key_fields;
@@ -4898,7 +4898,7 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest,
   @param join             pointer to the structure providing all context info
                           for the query
   @param s                the table to be joined by the function
-  @param thd              thread for the connection that submitted the query
+  @param session              thread for the connection that submitted the query
   @param remaining_tables set of tables not included into the partial plan yet
   @param idx              the length of the partial plan
   @param record_count     estimate for the number of records returned by the
@@ -4912,7 +4912,7 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest,
 static void
 best_access_path(JOIN      *join,
                  JOIN_TAB  *s,
-                 THD       *thd,
+                 Session       *session,
                  table_map remaining_tables,
                  uint32_t      idx,
                  double    record_count,
@@ -5163,7 +5163,7 @@ best_access_path(JOIN      *join,
             }
             /* Limit the number of matched rows */
             tmp= records;
-            set_if_smaller(tmp, (double) thd->variables.max_seeks_for_key);
+            set_if_smaller(tmp, (double) session->variables.max_seeks_for_key);
             if (table->covering_keys.is_set(key))
             {
               /* we can use only index tree */
@@ -5328,7 +5328,7 @@ best_access_path(JOIN      *join,
             }
 
             /* Limit the number of matched rows */
-            set_if_smaller(tmp, (double) thd->variables.max_seeks_for_key);
+            set_if_smaller(tmp, (double) session->variables.max_seeks_for_key);
             if (table->covering_keys.is_set(key))
             {
               /* we can use only index tree */
@@ -5458,7 +5458,7 @@ best_access_path(JOIN      *join,
         /* We read the table as many times as join buffer becomes full. */
         tmp*= (1.0 + floor((double) cache_record_length(join,idx) *
                            record_count /
-                           (double) thd->variables.join_buff_size));
+                           (double) session->variables.join_buff_size));
         /* 
             We don't make full cartesian product between rows in the scanned
            table and existing records because we skip all rows from the
@@ -5536,8 +5536,8 @@ best_access_path(JOIN      *join,
 static bool
 choose_plan(JOIN *join, table_map join_tables)
 {
-  uint32_t search_depth= join->thd->variables.optimizer_search_depth;
-  uint32_t prune_level=  join->thd->variables.optimizer_prune_level;
+  uint32_t search_depth= join->session->variables.optimizer_search_depth;
+  uint32_t prune_level=  join->session->variables.optimizer_prune_level;
   bool straight_join= test(join->select_options & SELECT_STRAIGHT_JOIN);
 
   join->cur_embedding_map= 0;
@@ -5585,8 +5585,8 @@ choose_plan(JOIN *join, table_map join_tables)
     i.e. they have subqueries, unions or call stored procedures.
     TODO: calculate a correct cost for a query with subqueries and UNIONs.
   */
-  if (join->thd->lex->is_single_level_stmt())
-    join->thd->status_var.last_query_cost= join->best_read;
+  if (join->session->lex->is_single_level_stmt())
+    join->session->status_var.last_query_cost= join->best_read;
   return(false);
 }
 
@@ -5739,7 +5739,7 @@ optimize_straight_join(JOIN *join, table_map join_tables)
   {
     /* Find the best access method from 's' to the current partial plan */
     advance_sj_state(join_tables, s);
-    best_access_path(join, s, join->thd, join_tables, idx,
+    best_access_path(join, s, join->session, join_tables, idx,
                      record_count, read_time);
     /* compute the cost of the new plan extended with 's' */
     record_count*= join->positions[idx].records_read;
@@ -6027,8 +6027,8 @@ best_extension_by_limited_search(JOIN      *join,
                                  uint32_t      search_depth,
                                  uint32_t      prune_level)
 {
-  THD *thd= join->thd;
-  if (thd->killed)  // Abort
+  Session *session= join->session;
+  if (session->killed)  // Abort
     return(true);
 
   /* 
@@ -6057,7 +6057,7 @@ best_extension_by_limited_search(JOIN      *join,
           when the depth is insufficient??)
       */
       /* Find the best access method from 's' to the current partial plan */
-      best_access_path(join, s, thd, remaining_tables, idx,
+      best_access_path(join, s, session, remaining_tables, idx,
                        record_count, read_time);
       /* Compute the cost of extending the plan with 's' */
       current_record_count= record_count * join->positions[idx].records_read;
@@ -6152,8 +6152,8 @@ static bool
 find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count,
 	  double read_time)
 {
-  THD *thd= join->thd;
-  if (thd->killed)
+  Session *session= join->session;
+  if (session->killed)
     return(true);
   if (!rest_tables)
   {
@@ -6182,7 +6182,7 @@ find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count,
     {
       double records, best;
       advance_sj_state(rest_tables, s);
-      best_access_path(join, s, thd, rest_tables, idx, record_count, 
+      best_access_path(join, s, session, rest_tables, idx, record_count, 
                        read_time);
       records= join->positions[idx].records_read;
       best= join->positions[idx].read_time;
@@ -6223,7 +6223,7 @@ find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count,
   Find how much space the prevous read not const tables takes in cache.
 */
 
-static void calc_used_field_length(THD *thd __attribute__((unused)),
+static void calc_used_field_length(Session *session __attribute__((unused)),
                                    JOIN_TAB *join_tab)
 {
   uint32_t null_fields,blobs,fields,rec_length;
@@ -6265,7 +6265,7 @@ cache_record_length(JOIN *join,uint32_t idx)
 {
   uint32_t length=0;
   JOIN_TAB **pos,**end;
-  THD *thd=join->thd;
+  Session *session=join->session;
 
   for (pos=join->best_ref+join->const_tables,end=join->best_ref+idx ;
        pos != end ;
@@ -6273,7 +6273,7 @@ cache_record_length(JOIN *join,uint32_t idx)
   {
     JOIN_TAB *join_tab= *pos;
     if (!join_tab->used_fieldlength)		/* Not calced yet */
-      calc_used_field_length(thd, join_tab);
+      calc_used_field_length(session, join_tab);
     length+=join_tab->used_fieldlength;
   }
   return length;
@@ -6377,11 +6377,11 @@ get_best_combination(JOIN *join)
   JOIN_TAB *join_tab,*j;
   KEYUSE *keyuse;
   uint32_t table_count;
-  THD *thd=join->thd;
+  Session *session=join->session;
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
-	(JOIN_TAB*) thd->alloc(sizeof(JOIN_TAB)*table_count)))
+	(JOIN_TAB*) session->alloc(sizeof(JOIN_TAB)*table_count)))
     return(true);
 
   join->full_join=0;
@@ -6425,7 +6425,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
 			       table_map used_tables)
 {
   KEYUSE *keyuse=org_keyuse;
-  THD  *thd= join->thd;
+  Session  *session= join->session;
   uint32_t keyparts,length,key;
   Table *table;
   KEY *keyinfo;
@@ -6464,11 +6464,11 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   j->ref.key_parts=keyparts;
   j->ref.key_length=length;
   j->ref.key=(int) key;
-  if (!(j->ref.key_buff= (unsigned char*) thd->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (store_key**) thd->alloc((sizeof(store_key*) *
+  if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
+      !(j->ref.key_copy= (store_key**) session->alloc((sizeof(store_key*) *
 						   (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) thd->alloc(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) thd->alloc(sizeof(uint*)*keyparts)))
+      !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
+      !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
   {
     return(true);
   }
@@ -6498,16 +6498,16 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
       if (!keyuse->used_tables &&
 	  !(join->select_options & SELECT_DESCRIBE))
       {					// Compare against constant
-	store_key_item tmp(thd, keyinfo->key_part[i].field,
+	store_key_item tmp(session, keyinfo->key_part[i].field,
                            key_buff + maybe_null,
                            maybe_null ?  key_buff : 0,
                            keyinfo->key_part[i].length, keyuse->val);
-	if (thd->is_fatal_error)
+	if (session->is_fatal_error)
 	  return(true);
 	tmp.copy();
       }
       else
-	*ref_key++= get_store_key(thd,
+	*ref_key++= get_store_key(session,
 				  keyuse,join->const_table_map,
 				  &keyinfo->key_part[i],
 				  key_buff, maybe_null);
@@ -6550,12 +6550,12 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
 
 
 static store_key *
-get_store_key(THD *thd, KEYUSE *keyuse, table_map used_tables,
+get_store_key(Session *session, KEYUSE *keyuse, table_map used_tables,
 	      KEY_PART_INFO *key_part, unsigned char *key_buff, uint32_t maybe_null)
 {
   if (!((~used_tables) & keyuse->used_tables))		// if const item
   {
-    return new store_key_const_item(thd,
+    return new store_key_const_item(session,
 				    key_part->field,
 				    key_buff + maybe_null,
 				    maybe_null ? key_buff : 0,
@@ -6568,14 +6568,14 @@ get_store_key(THD *thd, KEYUSE *keyuse, table_map used_tables,
             (*(Item_ref**)((Item_ref*)keyuse->val)->ref)->ref_type() ==
              Item_ref::DIRECT_REF && 
             keyuse->val->real_item()->type() == Item::FIELD_ITEM))
-    return new store_key_field(thd,
+    return new store_key_field(session,
 			       key_part->field,
 			       key_buff + maybe_null,
 			       maybe_null ? key_buff : 0,
 			       key_part->length,
 			       ((Item_field*) keyuse->val->real_item())->field,
 			       keyuse->val->full_name());
-  return new store_key_item(thd,
+  return new store_key_item(session,
 			    key_part->field,
 			    key_buff + maybe_null,
 			    maybe_null ? key_buff : 0,
@@ -6595,19 +6595,19 @@ store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 {
   bool error;
   Table *table= field->table;
-  THD *thd= table->in_use;
-  ha_rows cuted_fields=thd->cuted_fields;
+  Session *session= table->in_use;
+  ha_rows cuted_fields=session->cuted_fields;
 
   /*
     we should restore old value of count_cuted_fields because
     store_val_in_field can be called from mysql_insert 
     with select_insert, which make count_cuted_fields= 1
    */
-  enum_check_fields old_count_cuted_fields= thd->count_cuted_fields;
-  thd->count_cuted_fields= check_flag;
+  enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
+  session->count_cuted_fields= check_flag;
   error= item->save_in_field(field, 1);
-  thd->count_cuted_fields= old_count_cuted_fields;
-  return error || cuted_fields != thd->cuted_fields;
+  session->count_cuted_fields= old_count_cuted_fields;
+  return error || cuted_fields != session->cuted_fields;
 }
 
 
@@ -6623,7 +6623,7 @@ make_simple_join(JOIN *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (Table**) join->thd->alloc(sizeof(Table*))))
+    if (!(join->table_reexec= (Table**) join->session->alloc(sizeof(Table*))))
       return(true);                        /* purecov: inspected */
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
@@ -6631,7 +6631,7 @@ make_simple_join(JOIN *join,Table *tmp_table)
   if (!join->join_tab_reexec)
   {
     if (!(join->join_tab_reexec=
-          (JOIN_TAB*) join->thd->alloc(sizeof(JOIN_TAB))))
+          (JOIN_TAB*) join->session->alloc(sizeof(JOIN_TAB))))
       return(true);                        /* purecov: inspected */
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
@@ -6779,7 +6779,7 @@ static void add_not_null_conds(JOIN *join)
             when it is called from make_join_select after this function is 
             called.
           */
-          if (notnull->fix_fields(join->thd, &notnull))
+          if (notnull->fix_fields(join->session, &notnull))
             return;
           add_cond_and_fix(&referred_tab->select_cond, notnull);
         }
@@ -6921,7 +6921,7 @@ make_outerjoin_info(JOIN *join)
 static bool
 make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 {
-  THD *thd= join->thd;
+  Session *session= join->session;
   if (select)
   {
     add_not_null_conds(join);
@@ -6931,8 +6931,8 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       if (join->tables > 1)
         cond->update_used_tables();		// Tablenr may have changed
       if (join->const_tables == join->tables &&
-	  thd->lex->current_select->master_unit() ==
-	  &thd->lex->unit)		// not upper level SELECT
+	  session->lex->current_select->master_unit() ==
+	  &session->lex->unit)		// not upper level SELECT
         join->const_table_map|=RAND_TABLE_BIT;
       {						// Check const tables
         COND *const_cond=
@@ -7039,7 +7039,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           tab->type == JT_EQ_REF)
       {
 	SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
-                                       thd->memdup((unsigned char*) select,
+                                       session->memdup((unsigned char*) select,
                                                    sizeof(*select)));
 	if (!sel)
 	  return(1);			// End of memory
@@ -7061,7 +7061,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           /* Push condition to storage engine if this is enabled
              and the condition is not guarded */
           tab->table->file->pushed_cond= NULL;
-	  if (thd->variables.engine_condition_pushdown)
+	  if (session->variables.engine_condition_pushdown)
           {
             COND *push_cond= 
               make_cond_for_table(tmp, current_map, current_map, 0);
@@ -7130,7 +7130,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    if (sel->cond && !sel->cond->fixed)
 	      sel->cond->quick_fix_field();
 
-	    if (sel->test_quick_select(thd, tab->keys,
+	    if (sel->test_quick_select(session, tab->keys,
 				       used_tables & ~ current_map,
 				       (join->select_options &
 					OPTION_FOUND_ROWS ?
@@ -7144,7 +7144,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	      */
               sel->cond=orig_cond;
               if (!*tab->on_expr_ref ||
-                  sel->test_quick_select(thd, tab->keys,
+                  sel->test_quick_select(session, tab->keys,
                                          used_tables & ~ current_map,
                                          (join->select_options &
                                           OPTION_FOUND_ROWS ?
@@ -7186,7 +7186,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 					 current_map, 0)))
 	    {
 	      tab->cache.select=(SQL_SELECT*)
-		thd->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
+		session->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
 	      tab->cache.select->cond=tmp;
 	      tab->cache.select->read_tables=join->const_table_map;
 	    }
@@ -7542,7 +7542,7 @@ static void push_index_cond(JOIN_TAB *tab, uint32_t keyno, bool other_tbls_ok)
 {
   Item *idx_cond;
   if (tab->table->file->index_flags(keyno, 0, 1) & HA_DO_INDEX_COND_PUSHDOWN &&
-      tab->join->thd->variables.engine_condition_pushdown)
+      tab->join->session->variables.engine_condition_pushdown)
   {
     idx_cond= make_cond_for_index(tab->select_cond, tab->table, keyno,
                                   other_tbls_ok);
@@ -7666,7 +7666,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
     sorted= 0;                                  // only first must be sorted
     if (tab->insideout_match_tab)
     {
-      if (!(tab->insideout_buf= (unsigned char*)join->thd->alloc(tab->table->key_info
+      if (!(tab->insideout_buf= (unsigned char*)join->session->alloc(tab->table->key_info
                                                          [tab->index].
                                                          key_length)))
         return true;
@@ -7750,7 +7750,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
           !tab->insideout_match_tab)
       {
 	if ((options & SELECT_DESCRIBE) ||
-	    !join_init_cache(join->thd,join->join_tab+join->const_tables,
+	    !join_init_cache(join->session,join->join_tab+join->const_tables,
 			     i-join->const_tables))
 	{
           using_join_cache= true;
@@ -7760,10 +7760,10 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
       /* These init changes read_record */
       if (tab->use_quick == 2)
       {
-	join->thd->server_status|=SERVER_QUERY_NO_GOOD_INDEX_USED;
+	join->session->server_status|=SERVER_QUERY_NO_GOOD_INDEX_USED;
 	tab->read_first_record= join_init_quick_read_record;
 	if (statistics)
-	  status_var_increment(join->thd->status_var.select_range_check_count);
+	  status_var_increment(join->session->status_var.select_range_check_count);
       }
       else
       {
@@ -7773,13 +7773,13 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
 	  if (tab->select && tab->select->quick)
 	  {
 	    if (statistics)
-	      status_var_increment(join->thd->status_var.select_range_count);
+	      status_var_increment(join->session->status_var.select_range_count);
 	  }
 	  else
 	  {
-	    join->thd->server_status|=SERVER_QUERY_NO_INDEX_USED;
+	    join->session->server_status|=SERVER_QUERY_NO_INDEX_USED;
 	    if (statistics)
-	      status_var_increment(join->thd->status_var.select_scan_count);
+	      status_var_increment(join->session->status_var.select_scan_count);
 	  }
 	}
 	else
@@ -7787,13 +7787,13 @@ make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
 	  if (tab->select && tab->select->quick)
 	  {
 	    if (statistics)
-	      status_var_increment(join->thd->status_var.select_full_range_join_count);
+	      status_var_increment(join->session->status_var.select_full_range_join_count);
 	  }
 	  else
 	  {
-	    join->thd->server_status|=SERVER_QUERY_NO_INDEX_USED;
+	    join->session->server_status|=SERVER_QUERY_NO_INDEX_USED;
 	    if (statistics)
-	      status_var_increment(join->thd->status_var.select_full_join_count);
+	      status_var_increment(join->session->status_var.select_full_join_count);
 	  }
 	}
 	if (!table->no_keyread)
@@ -7955,7 +7955,7 @@ void JOIN::join_free()
     Optimization: if not EXPLAIN and we are done with the JOIN,
     free all tables.
   */
-  bool full= (!select_lex->uncacheable && !thd->lex->describe);
+  bool full= (!select_lex->uncacheable && !session->lex->describe);
   bool can_unlock= full;
 
   cleanup(full);
@@ -7985,17 +7985,17 @@ void JOIN::join_free()
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
   */
-  if (can_unlock && lock && thd->lock &&
+  if (can_unlock && lock && session->lock &&
       !(select_options & SELECT_NO_UNLOCK) &&
       !select_lex->subquery_in_having &&
-      (select_lex == (thd->lex->unit.fake_select_lex ?
-                      thd->lex->unit.fake_select_lex : &thd->lex->select_lex)))
+      (select_lex == (session->lex->unit.fake_select_lex ?
+                      session->lex->unit.fake_select_lex : &session->lex->select_lex)))
   {
     /*
       TODO: unlock tables even if the join isn't top level select in the
       tree.
     */
-    mysql_unlock_read_tables(thd, lock);           // Don't free join->lock
+    mysql_unlock_read_tables(session, lock);           // Don't free join->lock
     lock= 0;
   }
 
@@ -8332,7 +8332,7 @@ return_zero_rows(JOIN *join, select_result *result,TableList *tables,
     result->send_eof();				// Should be safe
   }
   /* Update results for FOUND_ROWS */
-  join->thd->limit_found_rows= join->thd->examined_row_count= 0;
+  join->session->limit_found_rows= join->session->examined_row_count= 0;
   return(0);
 }
 
@@ -8692,7 +8692,7 @@ static bool check_simple_equality(Item *left_item, Item *right_item,
     simple equality nor a row equality the item for this predicate is added
     to eq_list.
 
-  @param thd        thread handle
+  @param session        thread handle
   @param left_row   left term of the row equality to be processed
   @param right_row  right term of the row equality to be processed
   @param cond_equal multiple equalities that must hold together with the
@@ -8706,7 +8706,7 @@ static bool check_simple_equality(Item *left_item, Item *right_item,
     false   otherwise
 */
  
-static bool check_row_equality(THD *thd, Item *left_row, Item_row *right_row,
+static bool check_row_equality(Session *session, Item *left_row, Item_row *right_row,
                                COND_EQUAL *cond_equal, List<Item>* eq_list)
 { 
   uint32_t n= left_row->cols();
@@ -8718,17 +8718,17 @@ static bool check_row_equality(THD *thd, Item *left_row, Item_row *right_row,
     if (left_item->type() == Item::ROW_ITEM &&
         right_item->type() == Item::ROW_ITEM)
     {
-      is_converted= check_row_equality(thd, 
+      is_converted= check_row_equality(session, 
                                        (Item_row *) left_item,
                                        (Item_row *) right_item,
 			               cond_equal, eq_list);
       if (!is_converted)
-        thd->lex->current_select->cond_count++;      
+        session->lex->current_select->cond_count++;      
     }
     else
     { 
       is_converted= check_simple_equality(left_item, right_item, 0, cond_equal);
-      thd->lex->current_select->cond_count++;
+      session->lex->current_select->cond_count++;
     }  
  
     if (!is_converted)
@@ -8759,7 +8759,7 @@ static bool check_row_equality(THD *thd, Item *left_row, Item_row *right_row,
     equalities which are treated in the same way as original equality
     predicates.
 
-  @param thd        thread handle
+  @param session        thread handle
   @param item       predicate to process
   @param cond_equal multiple equalities that must hold together with the
                     predicate
@@ -8775,7 +8775,7 @@ static bool check_row_equality(THD *thd, Item *left_row, Item_row *right_row,
            or, if the procedure fails by a fatal error.
 */
 
-static bool check_equality(THD *thd, Item *item, COND_EQUAL *cond_equal,
+static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
                            List<Item> *eq_list)
 {
   if (item->type() == Item::FUNC_ITEM &&
@@ -8787,8 +8787,8 @@ static bool check_equality(THD *thd, Item *item, COND_EQUAL *cond_equal,
     if (left_item->type() == Item::ROW_ITEM &&
         right_item->type() == Item::ROW_ITEM)
     {
-      thd->lex->current_select->cond_count--;
-      return check_row_equality(thd,
+      session->lex->current_select->cond_count--;
+      return check_row_equality(session,
                                 (Item_row *) left_item,
                                 (Item_row *) right_item,
                                 cond_equal, eq_list);
@@ -8819,7 +8819,7 @@ static bool check_equality(THD *thd, Item *item, COND_EQUAL *cond_equal,
     just an argument of a comparison predicate.
     The function also determines the maximum number of members in 
     equality lists of each Item_cond_and object assigning it to
-    thd->lex->current_select->max_equal_elems.
+    session->lex->current_select->max_equal_elems.
 
   @note
     Multiple equality predicate =(f1,..fn) is equivalent to the conjuction of
@@ -8856,7 +8856,7 @@ static bool check_equality(THD *thd, Item *item, COND_EQUAL *cond_equal,
     We need to do things in this order as lower AND levels need to know about
     all possible Item_equal objects in upper levels.
 
-  @param thd        thread handle
+  @param session        thread handle
   @param cond       condition(expression) where to make replacement
   @param inherited  path to all inherited multiple equality items
 
@@ -8864,7 +8864,7 @@ static bool check_equality(THD *thd, Item *item, COND_EQUAL *cond_equal,
     pointer to the transformed condition
 */
 
-static COND *build_equal_items_for_cond(THD *thd, COND *cond,
+static COND *build_equal_items_for_cond(Session *session, COND *cond,
                                         COND_EQUAL *inherited)
 {
   Item_equal *item_equal;
@@ -8896,7 +8896,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
           structure here because it's restored before each
           re-execution of any prepared statement/stored procedure.
         */
-        if (check_equality(thd, item, &cond_equal, &eq_list))
+        if (check_equality(session, item, &cond_equal, &eq_list))
           li.remove();
       }
 
@@ -8905,7 +8905,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
       {
         item_equal->fix_length_and_dec();
         item_equal->update_used_tables();
-        set_if_bigger(thd->lex->current_select->max_equal_elems,
+        set_if_bigger(session->lex->current_select->max_equal_elems,
                       item_equal->members());  
       }
 
@@ -8920,7 +8920,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
     while ((item= li++))
     { 
       Item *new_item;
-      if ((new_item= build_equal_items_for_cond(thd, item, inherited)) != item)
+      if ((new_item= build_equal_items_for_cond(session, item, inherited)) != item)
       {
         /* This replacement happens only for standalone equalities */
         /*
@@ -8950,7 +8950,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
       for WHERE a=b AND c=d AND (b=c OR d=5)
       b=c is replaced by =(a,b,c,d).  
      */
-    if (check_equality(thd, cond, &cond_equal, &eq_list))
+    if (check_equality(session, cond, &cond_equal, &eq_list))
     {
       int n= cond_equal.current_level.elements + eq_list.elements;
       if (n == 0)
@@ -8964,7 +8964,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
 	}
         else
           item_equal= (Item_equal *) eq_list.pop();
-        set_if_bigger(thd->lex->current_select->max_equal_elems,
+        set_if_bigger(session->lex->current_select->max_equal_elems,
                       item_equal->members());  
         return item_equal;
       }
@@ -8982,7 +8982,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
         {
           item_equal->fix_length_and_dec();
           item_equal->update_used_tables();
-          set_if_bigger(thd->lex->current_select->max_equal_elems,
+          set_if_bigger(session->lex->current_select->max_equal_elems,
                         item_equal->members());  
         }
         and_cond->cond_equal= cond_equal;
@@ -9062,7 +9062,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
     can get more freedom in performing join operations.
     Althogh we don't use this property now, it probably makes sense to use 
     it in the future.    
-  @param thd		      Thread handler
+  @param session		      Thread handler
   @param cond                condition to build the multiple equalities for
   @param inherited           path to all inherited multiple equality items
   @param join_list           list of join tables to which the condition
@@ -9074,7 +9074,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
     pointer to the transformed condition containing multiple equalities
 */
    
-static COND *build_equal_items(THD *thd, COND *cond,
+static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL *inherited,
                                List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref)
@@ -9083,7 +9083,7 @@ static COND *build_equal_items(THD *thd, COND *cond,
 
   if (cond) 
   {
-    cond= build_equal_items_for_cond(thd, cond, inherited);
+    cond= build_equal_items_for_cond(session, cond, inherited);
     cond->update_used_tables();
     if (cond->type() == Item::COND_ITEM &&
         ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
@@ -9117,7 +9117,7 @@ static COND *build_equal_items(THD *thd, COND *cond,
           We can modify table->on_expr because its old value will
           be restored before re-execution of PS/SP.
         */
-        table->on_expr= build_equal_items(thd, table->on_expr, inherited,
+        table->on_expr= build_equal_items(session, table->on_expr, inherited,
                                           nested_join_list,
                                           &table->cond_equal);
       }
@@ -9455,7 +9455,7 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
 */
 
 static void
-change_cond_ref_to_const(THD *thd, I_List<COND_CMP> *save_list,
+change_cond_ref_to_const(Session *session, I_List<COND_CMP> *save_list,
                          Item *and_father, Item *cond,
                          Item *field, Item *value)
 {
@@ -9466,7 +9466,7 @@ change_cond_ref_to_const(THD *thd, I_List<COND_CMP> *save_list,
     List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item=li++))
-      change_cond_ref_to_const(thd, save_list,and_level ? cond : item, item,
+      change_cond_ref_to_const(session, save_list,and_level ? cond : item, item,
 			       field, value);
     return;
   }
@@ -9490,7 +9490,7 @@ change_cond_ref_to_const(THD *thd, I_List<COND_CMP> *save_list,
     
     if (tmp)
     {
-      thd->change_item_tree(args + 1, tmp);
+      session->change_item_tree(args + 1, tmp);
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC)
 	  && and_father != cond && !left_item->const_item())
@@ -9514,14 +9514,14 @@ change_cond_ref_to_const(THD *thd, I_List<COND_CMP> *save_list,
     
     if (tmp)
     {
-      thd->change_item_tree(args, tmp);
+      session->change_item_tree(args, tmp);
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC)
 	  && and_father != cond && !right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
-        thd->change_item_tree(args + 1, value);
+        session->change_item_tree(args + 1, value);
 	cond->marker=1;
 	COND_CMP *tmp2;
 	if ((tmp2=new COND_CMP(and_father,func)))
@@ -9565,7 +9565,7 @@ static Item *remove_additional_cond(Item* conds)
 }
 
 static void
-propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
+propagate_cond_constants(Session *session, I_List<COND_CMP> *save_list,
                          COND *and_father, COND *cond)
 {
   if (cond->type() == Item::COND_ITEM)
@@ -9577,7 +9577,7 @@ propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
     I_List<COND_CMP> save;
     while ((item=li++))
     {
-      propagate_cond_constants(thd, &save,and_level ? cond : item, item);
+      propagate_cond_constants(session, &save,and_level ? cond : item, item);
     }
     if (and_level)
     {						// Handle other found items
@@ -9587,7 +9587,7 @@ propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
       {
         Item **args= cond_cmp->cmp_func->arguments();
         if (!args[0]->const_item())
-          change_cond_ref_to_const(thd, &save,cond_cmp->and_level,
+          change_cond_ref_to_const(session, &save,cond_cmp->and_level,
                                    cond_cmp->and_level, args[0], args[1]);
       }
     }
@@ -9607,16 +9607,16 @@ propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
       {
 	if (right_const)
 	{
-          resolve_const_item(thd, &args[1], args[0]);
+          resolve_const_item(session, &args[1], args[0]);
 	  func->update_used_tables();
-          change_cond_ref_to_const(thd, save_list, and_father, and_father,
+          change_cond_ref_to_const(session, save_list, and_father, and_father,
                                    args[0], args[1]);
 	}
 	else if (left_const)
 	{
-          resolve_const_item(thd, &args[0], args[1]);
+          resolve_const_item(session, &args[0], args[1]);
 	  func->update_used_tables();
-          change_cond_ref_to_const(thd, save_list, and_father, and_father,
+          change_cond_ref_to_const(session, save_list, and_father, and_father,
                                    args[1], args[0]);
 	}
       }
@@ -9789,7 +9789,7 @@ simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top,
           assert(expr);
 
           table->on_expr= expr;
-          table->prep_on_expr= expr->copy_andor_structure(join->thd);
+          table->prep_on_expr= expr->copy_andor_structure(join->session);
         }
       }
       nested_join->used_tables= (table_map) 0;
@@ -9830,7 +9830,7 @@ simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top,
           conds->top_level_item();
           /* conds is always a new item as both cond and on_expr existed */
           assert(!conds->fixed);
-          conds->fix_fields(join->thd, &conds);
+          conds->fix_fields(join->session, &conds);
         }
         else
           conds= table->on_expr; 
@@ -10209,7 +10209,7 @@ static COND *
 optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list,
               Item::cond_result *cond_value)
 {
-  THD *thd= join->thd;
+  Session *session= join->session;
 
   if (!conds)
     *cond_value= Item::COND_TRUE;
@@ -10223,16 +10223,16 @@ optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list,
       predicate. Substitute a constant instead of this field if the
       multiple equality contains a constant.
     */ 
-    conds= build_equal_items(join->thd, conds, NULL, join_list,
+    conds= build_equal_items(join->session, conds, NULL, join_list,
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    propagate_cond_constants(thd, (I_List<COND_CMP> *) 0, conds, conds);
+    propagate_cond_constants(session, (I_List<COND_CMP> *) 0, conds, conds);
     /*
       Remove all instances of item == item
       Remove all and-levels where CONST item != CONST item
     */
-    conds= remove_eq_conds(thd, conds, cond_value) ;
+    conds= remove_eq_conds(session, conds, cond_value) ;
   }
   return(conds);
 }
@@ -10250,7 +10250,7 @@ optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list,
 */
 
 COND *
-remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
+remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
 {
   if (cond->type() == Item::COND_ITEM)
   {
@@ -10264,7 +10264,7 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
     Item *item;
     while ((item=li++))
     {
-      Item *new_item=remove_eq_conds(thd, item, &tmp_cond_value);
+      Item *new_item=remove_eq_conds(session, item, &tmp_cond_value);
       if (!new_item)
 	li.remove();
       else if (item != new_item)
@@ -10329,14 +10329,14 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
     {
       Field *field=((Item_field*) args[0])->field;
       if (field->flags & AUTO_INCREMENT_FLAG && !field->table->maybe_null &&
-	  (thd->options & OPTION_AUTO_IS_NULL) &&
-	  (thd->first_successful_insert_id_in_prev_stmt > 0 &&
-           thd->substitute_null_with_insert_id))
+	  (session->options & OPTION_AUTO_IS_NULL) &&
+	  (session->first_successful_insert_id_in_prev_stmt > 0 &&
+           session->substitute_null_with_insert_id))
       {
 	COND *new_cond;
 	if ((new_cond= new Item_func_eq(args[0],
 					new Item_int("last_insert_id()",
-                                                     thd->read_first_successful_insert_id_in_prev_stmt(),
+                                                     session->read_first_successful_insert_id_in_prev_stmt(),
                                                      MY_INT64_NUM_DECIMAL_DIGITS))))
 	{
 	  cond=new_cond;
@@ -10345,13 +10345,13 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
             cond->fixed, also it do not need tables so we use 0 as second
             argument.
           */
-	  cond->fix_fields(thd, &cond);
+	  cond->fix_fields(session, &cond);
 	}
         /*
           IS NULL should be mapped to LAST_INSERT_ID only for first row, so
           clear for next row
         */
-        thd->substitute_null_with_insert_id= false;
+        session->substitute_null_with_insert_id= false;
       }
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
       else if (((field->type() == DRIZZLE_TYPE_NEWDATE) ||
@@ -10368,7 +10368,7 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
             cond->fixed, also it do not need tables so we use 0 as second
             argument.
           */
-	  cond->fix_fields(thd, &cond);
+	  cond->fix_fields(session, &cond);
 	}
       }
     }
@@ -10627,7 +10627,7 @@ do_select(JOIN *join,List<Item> *fields,Table *table)
         so we don't touch it here.
       */
       join->examined_rows++;
-      join->thd->row_count++;
+      join->session->row_count++;
       assert(join->examined_rows <= 1);
     }
     else if (join->send_row_on_empty_set())
@@ -10681,7 +10681,7 @@ do_select(JOIN *join,List<Item> *fields,Table *table)
     if (new_errno)
       table->file->print_error(new_errno,MYF(0));
   }
-  return(join->thd->is_error() ? -1 : rc);
+  return(join->session->is_error() ? -1 : rc);
 }
 
 
@@ -10697,9 +10697,9 @@ sub_select_cache(JOIN *join,JOIN_TAB *join_tab,bool end_of_records)
       rc= sub_select(join,join_tab,end_of_records);
     return rc;
   }
-  if (join->thd->killed)		// If aborted by user
+  if (join->session->killed)		// If aborted by user
   {
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return NESTED_LOOP_KILLED;                   /* purecov: inspected */
   }
   if (join_tab->use_quick != 2 || test_if_quick_select(join_tab) <= 0)
@@ -10877,7 +10877,7 @@ sub_select(JOIN *join,JOIN_TAB *join_tab,bool end_of_records)
       /* Set first_unmatched for the last inner table of this group */
       join_tab->last_inner->first_unmatched= join_tab;
     }
-    join->thd->row_count= 0;
+    join->session->row_count= 0;
 
     error= (*join_tab->read_first_record)(join_tab);
     rc= evaluate_join_record(join, join_tab, error);
@@ -10917,7 +10917,7 @@ sub_select(JOIN *join,JOIN_TAB *join_tab,bool end_of_records)
     0   The row combination is not a duplicate (continue)
 */
 
-int do_sj_dups_weedout(THD *thd, SJ_TMP_TABLE *sjtbl) 
+int do_sj_dups_weedout(Session *session, SJ_TMP_TABLE *sjtbl) 
 {
   int error;
   SJ_TMP_TABLE::TAB *tab= sjtbl->tabs;
@@ -10970,7 +10970,7 @@ int do_sj_dups_weedout(THD *thd, SJ_TMP_TABLE *sjtbl)
   {
     /* create_myisam_from_heap will generate error if needed */
     if (sjtbl->tmp_table->file->is_fatal_error(error, HA_CHECK_DUP) &&
-        create_myisam_from_heap(thd, sjtbl->tmp_table, sjtbl->start_recinfo, 
+        create_myisam_from_heap(session, sjtbl->tmp_table, sjtbl->start_recinfo, 
                                 &sjtbl->recinfo, error, 1))
       return -1;
     //return (error == HA_ERR_FOUND_DUPP_KEY || error== HA_ERR_FOUND_DUPP_UNIQUE) ? 1: -1;
@@ -11007,13 +11007,13 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
   ha_rows found_records=join->found_records;
   COND *select_cond= join_tab->select_cond;
 
-  if (error > 0 || (join->thd->is_error()))     // Fatal error
+  if (error > 0 || (join->session->is_error()))     // Fatal error
     return NESTED_LOOP_ERROR;
   if (error < 0)
     return NESTED_LOOP_NO_MORE_ROWS;
-  if (join->thd->killed)			// Aborted by user
+  if (join->session->killed)			// Aborted by user
   {
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return NESTED_LOOP_KILLED;               /* purecov: inspected */
   }
   if (!select_cond || select_cond->val_int())
@@ -11076,7 +11076,7 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
     join_tab->found_match= true;
     if (join_tab->check_weed_out_table)
     {
-      int res= do_sj_dups_weedout(join->thd, join_tab->check_weed_out_table);
+      int res= do_sj_dups_weedout(join->session, join_tab->check_weed_out_table);
       if (res == -1)
         return NESTED_LOOP_ERROR;
       if (res == 1)
@@ -11097,7 +11097,7 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
       (See above join->return_tab= tab).
     */
     join->examined_rows++;
-    join->thd->row_count++;
+    join->session->row_count++;
 
     if (found)
     {
@@ -11129,7 +11129,7 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
       with the beginning coinciding with the current partial join.
     */
     join->examined_rows++;
-    join->thd->row_count++;
+    join->session->row_count++;
     join_tab->read_record.file->unlock_row();
   }
   return NESTED_LOOP_OK;
@@ -11239,9 +11239,9 @@ flush_cached_records(JOIN *join,JOIN_TAB *join_tab,bool skip_last)
   info= &join_tab->read_record;
   do
   {
-    if (join->thd->killed)
+    if (join->session->killed)
     {
-      join->thd->send_kill_message();
+      join->session->send_kill_message();
       return NESTED_LOOP_KILLED; // Aborted by user /* purecov: inspected */
     }
     SQL_SELECT *select=join_tab->select;
@@ -11257,7 +11257,7 @@ flush_cached_records(JOIN *join,JOIN_TAB *join_tab,bool skip_last)
         {
           int res= 0;
           if (!join_tab->check_weed_out_table || 
-              !(res= do_sj_dups_weedout(join->thd, join_tab->check_weed_out_table)))
+              !(res= do_sj_dups_weedout(join->session, join_tab->check_weed_out_table)))
           {
             rc= (join_tab->next_select)(join,join_tab+1,0);
             if (rc != NESTED_LOOP_OK && rc != NESTED_LOOP_NO_MORE_ROWS)
@@ -11422,7 +11422,7 @@ join_read_const(JOIN_TAB *tab)
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     table->status= 0;
-    if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
+    if (cp_buffer_from_ref(tab->join->session, &tab->ref))
       error=HA_ERR_KEY_NOT_FOUND;
     else
     {
@@ -11538,7 +11538,7 @@ join_read_always_key(JOIN_TAB *tab)
         return -1;
   }
 
-  if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
+  if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->file->index_read_map(table->record[0],
                                          tab->ref.key_buff,
@@ -11567,7 +11567,7 @@ join_read_last_key(JOIN_TAB *tab)
 
   if (!table->file->inited)
     table->file->ha_index_init(tab->ref.key, tab->sorted);
-  if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
+  if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->file->index_read_last_map(table->record[0],
                                               tab->ref.key_buff,
@@ -11684,7 +11684,7 @@ test_if_quick_select(JOIN_TAB *tab)
 {
   delete tab->select->quick;
   tab->select->quick=0;
-  return tab->select->test_quick_select(tab->join->thd, tab->keys,
+  return tab->select->test_quick_select(tab->join->session, tab->keys,
 					(table_map) 0, HA_POS_ERROR, 0,
                                         false);
 }
@@ -11695,7 +11695,7 @@ join_init_read_record(JOIN_TAB *tab)
 {
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
-  init_read_record(&tab->read_record, tab->join->thd, tab->table,
+  init_read_record(&tab->read_record, tab->join->session, tab->table,
 		   tab->select,1,1);
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -12048,31 +12048,15 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 {
   Table *table=join->tmp_table;
 
-  if (join->thd->killed)			// Aborted by user
+  if (join->session->killed)			// Aborted by user
   {
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return(NESTED_LOOP_KILLED);             /* purecov: inspected */
   }
   if (!end_of_records)
   {
     copy_fields(&join->tmp_table_param);
     copy_funcs(join->tmp_table_param.items_to_copy);
-#ifdef TO_BE_DELETED
-    if (!table->uniques)			// If not unique handling
-    {
-      /* Copy null values from group to row */
-      order_st   *group;
-      for (group=table->group ; group ; group=group->next)
-      {
-	Item *item= *group->item;
-	if (item->maybe_null)
-	{
-	  Field *field=item->get_tmp_table_field();
-	  field->ptr[-1]= (unsigned char) (field->is_null() ? 1 : 0);
-	}
-      }
-    }
-#endif
     if (!join->having || join->having->val_int())
     {
       int error;
@@ -12081,7 +12065,7 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
       {
         if (!table->file->is_fatal_error(error, HA_CHECK_DUP))
 	  goto end;
-	if (create_myisam_from_heap(join->thd, table,
+	if (create_myisam_from_heap(join->session, table,
                                     join->tmp_table_param.start_recinfo,
                                     &join->tmp_table_param.recinfo,
 				    error, 1))
@@ -12116,9 +12100,9 @@ end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 
   if (end_of_records)
     return(NESTED_LOOP_OK);
-  if (join->thd->killed)			// Aborted by user
+  if (join->session->killed)			// Aborted by user
   {
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return(NESTED_LOOP_KILLED);             /* purecov: inspected */
   }
 
@@ -12166,7 +12150,7 @@ end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
   copy_funcs(join->tmp_table_param.items_to_copy);
   if ((error=table->file->ha_write_row(table->record[0])))
   {
-    if (create_myisam_from_heap(join->thd, table,
+    if (create_myisam_from_heap(join->session, table,
                                 join->tmp_table_param.start_recinfo,
                                 &join->tmp_table_param.recinfo,
 				error, 0))
@@ -12191,9 +12175,9 @@ end_unique_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 
   if (end_of_records)
     return(NESTED_LOOP_OK);
-  if (join->thd->killed)			// Aborted by user
+  if (join->session->killed)			// Aborted by user
   {
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return(NESTED_LOOP_KILLED);             /* purecov: inspected */
   }
 
@@ -12236,9 +12220,9 @@ end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
   Table *table=join->tmp_table;
   int	  idx= -1;
 
-  if (join->thd->killed)
+  if (join->session->killed)
   {						// Aborted by user
-    join->thd->send_kill_message();
+    join->session->send_kill_message();
     return(NESTED_LOOP_KILLED);             /* purecov: inspected */
   }
   if (!join->first_record || end_of_records ||
@@ -12259,7 +12243,7 @@ end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	if (!join->having || join->having->val_int())
 	{
           int error= table->file->ha_write_row(table->record[0]);
-          if (error && create_myisam_from_heap(join->thd, table,
+          if (error && create_myisam_from_heap(join->session, table,
                                                join->tmp_table_param.start_recinfo,
                                                 &join->tmp_table_param.recinfo,
                                                error, 0))
@@ -12363,7 +12347,7 @@ static bool test_if_ref(Item_field *left_item,Item *right_item)
    @param join The top-level query.
    @param old_cond The expression to be replaced.
    @param new_cond The expression to be substituted.
-   @param do_fix_fields If true, Item::fix_fields(THD*, Item**) is called for
+   @param do_fix_fields If true, Item::fix_fields(Session*, Item**) is called for
    the new expression.
    @return <code>true</code> if there was an error, <code>false</code> if
    successful.
@@ -12374,7 +12358,7 @@ static bool replace_where_subcondition(JOIN *join, Item *old_cond,
   if (join->conds == old_cond) {
     join->conds= new_cond;
     if (do_fix_fields)
-      new_cond->fix_fields(join->thd, &join->conds);
+      new_cond->fix_fields(join->session, &join->conds);
     return false;
   }
   
@@ -12386,7 +12370,7 @@ static bool replace_where_subcondition(JOIN *join, Item *old_cond,
       {
         li.replace(new_cond);
         if (do_fix_fields)
-          new_cond->fix_fields(join->thd, li.ref());
+          new_cond->fix_fields(join->session, li.ref());
         return false;
       }
   }
@@ -12995,7 +12979,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
           new_ref_key_map.clear_all();  // Force the creation of quick select
           new_ref_key_map.set_bit(new_ref_key); // only for new_ref_key.
 
-          if (select->test_quick_select(tab->join->thd, new_ref_key_map, 0,
+          if (select->test_quick_select(tab->join->session, new_ref_key_map, 0,
                                         (tab->join->select_options &
                                          OPTION_FOUND_ROWS) ?
                                         HA_POS_ERROR :
@@ -13182,7 +13166,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
         map.clear_all();       // Force the creation of quick select
         map.set_bit(best_key); // only best_key.
         quick_created=         
-          select->test_quick_select(join->thd, map, 0,
+          select->test_quick_select(join->session, map, 0,
                                     join->select_options & OPTION_FOUND_ROWS ?
                                     HA_POS_ERROR :
                                     join->unit->select_limit_cnt,
@@ -13301,7 +13285,7 @@ check_reverse_order:
 
   SYNOPSIS
    create_sort_index()
-     thd		Thread handler
+     session		Thread handler
      tab		Table to sort (in join structure)
      order		How table should be sorted
      filesort_limit	Max number of rows that needs to be sorted
@@ -13326,7 +13310,7 @@ check_reverse_order:
 */
 
 static int
-create_sort_index(THD *thd, JOIN *join, order_st *order,
+create_sort_index(Session *session, JOIN *join, order_st *order,
 		  ha_rows filesort_limit, ha_rows select_limit,
                   bool is_order_by)
 {
@@ -13390,7 +13374,7 @@ create_sort_index(THD *thd, JOIN *join, order_st *order,
 	For impossible ranges (like when doing a lookup on NULL on a NOT NULL
 	field, quick will contain an empty record set.
       */
-      if (!(select->quick= (get_quick_select_for_ref(thd, table, &tab->ref, 
+      if (!(select->quick= (get_quick_select_for_ref(session, table, &tab->ref, 
                                                      tab->found_records))))
 	goto err;
     }
@@ -13403,7 +13387,7 @@ create_sort_index(THD *thd, JOIN *join, order_st *order,
 
   if (table->s->tmp_table)
     table->file->info(HA_STATUS_VARIABLE);	// Get record count
-  table->sort.found_records=filesort(thd, table,join->sortorder, length,
+  table->sort.found_records=filesort(session, table,join->sortorder, length,
                                      select, filesort_limit, 0,
                                      &examined_rows);
   tab->records= table->sort.found_records;	// For SQL_CALC_ROWS
@@ -13455,7 +13439,7 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
   int error;
   ulong reclength,offset;
   uint32_t field_count;
-  THD *thd= join->thd;
+  Session *session= join->session;
 
   entry->reginfo.lock_type=TL_WRITE;
 
@@ -13485,12 +13469,12 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
   if (entry->s->db_type() == heap_hton ||
       (!entry->s->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->file->stats.records <
-	thd->variables.sortbuff_size)))
-    error=remove_dup_with_hash_index(join->thd, entry,
+	session->variables.sortbuff_size)))
+    error=remove_dup_with_hash_index(join->session, entry,
 				     field_count, first_field,
 				     reclength, having);
   else
-    error=remove_dup_with_compare(join->thd, entry, first_field, offset,
+    error=remove_dup_with_compare(join->session, entry, first_field, offset,
 				  having);
 
   free_blobs(first_field);
@@ -13498,7 +13482,7 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
 }
 
 
-static int remove_dup_with_compare(THD *thd, Table *table, Field **first_field,
+static int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
 				   ulong offset, Item *having)
 {
   handler *file=table->file;
@@ -13514,9 +13498,9 @@ static int remove_dup_with_compare(THD *thd, Table *table, Field **first_field,
   error=file->rnd_next(record);
   for (;;)
   {
-    if (thd->killed)
+    if (session->killed)
     {
-      thd->send_kill_message();
+      session->send_kill_message();
       error=0;
       goto err;
     }
@@ -13589,7 +13573,7 @@ err:
     Note that this will not work on tables with blobs!
 */
 
-static int remove_dup_with_hash_index(THD *thd, Table *table,
+static int remove_dup_with_hash_index(Session *session, Table *table,
 				      uint32_t field_count,
 				      Field **first_field,
 				      ulong key_length,
@@ -13637,9 +13621,9 @@ static int remove_dup_with_hash_index(THD *thd, Table *table,
   for (;;)
   {
     unsigned char *org_key_pos;
-    if (thd->killed)
+    if (session->killed)
     {
-      thd->send_kill_message();
+      session->send_kill_message();
       error=0;
       goto err;
     }
@@ -13740,7 +13724,7 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length,
 ******************************************************************************/
 
 static int
-join_init_cache(THD *thd,JOIN_TAB *tables,uint32_t table_count)
+join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
 {
   register unsigned int i;
   unsigned int length, blobs;
@@ -13756,7 +13740,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint32_t table_count)
   for (i=0 ; i < table_count ; i++,join_tab++)
   {
     if (!join_tab->used_fieldlength)		/* Not calced yet */
-      calc_used_field_length(thd, join_tab);
+      calc_used_field_length(session, join_tab);
     cache->fields+=join_tab->used_fields;
     blobs+=join_tab->used_blobs;
 
@@ -13849,7 +13833,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint32_t table_count)
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
   *blob_ptr=0;					/* End sequentel */
-  size=cmax(thd->variables.join_buff_size, (ulong)cache->length);
+  size=cmax(session->variables.join_buff_size, (ulong)cache->length);
   if (!(cache->buff=(unsigned char*) my_malloc(size,MYF(0))))
     return(1);				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
@@ -14037,7 +14021,7 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
   }
   else 
     no_prev_key= true;
-  if ((tab->ref.key_err= cp_buffer_from_ref(tab->join->thd, &tab->ref)) ||
+  if ((tab->ref.key_err= cp_buffer_from_ref(tab->join->session, &tab->ref)) ||
       no_prev_key)
     return 1;
   return memcmp(tab->ref.key_buff2, tab->ref.key_buff, tab->ref.key_length)
@@ -14046,10 +14030,10 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
 
 
 bool
-cp_buffer_from_ref(THD *thd, TABLE_REF *ref)
+cp_buffer_from_ref(Session *session, TABLE_REF *ref)
 {
-  enum enum_check_fields save_count_cuted_fields= thd->count_cuted_fields;
-  thd->count_cuted_fields= CHECK_FIELD_IGNORE;
+  enum enum_check_fields save_count_cuted_fields= session->count_cuted_fields;
+  session->count_cuted_fields= CHECK_FIELD_IGNORE;
   bool result= 0;
 
   for (store_key **copy=ref->key_copy ; *copy ; copy++)
@@ -14060,7 +14044,7 @@ cp_buffer_from_ref(THD *thd, TABLE_REF *ref)
       break;
     }
   }
-  thd->count_cuted_fields= save_count_cuted_fields;
+  session->count_cuted_fields= save_count_cuted_fields;
   return result;
 }
 
@@ -14085,7 +14069,7 @@ cp_buffer_from_ref(THD *thd, TABLE_REF *ref)
 
   ref_pointer_array and all_fields are updated.
 
-  @param[in] thd		     Pointer to current thread structure
+  @param[in] session		     Pointer to current thread structure
   @param[in,out] ref_pointer_array  All select, group and order by fields
   @param[in] tables                 List of tables to search in (usually
     FROM clause)
@@ -14103,7 +14087,7 @@ cp_buffer_from_ref(THD *thd, TABLE_REF *ref)
 */
 
 static bool
-find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
+find_order_in_list(Session *session, Item **ref_pointer_array, TableList *tables,
                    order_st *order, List<Item> &fields, List<Item> &all_fields,
                    bool is_group_field)
 {
@@ -14124,7 +14108,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
     if (!count || count > fields.elements)
     {
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               order_item->full_name(), thd->where);
+               order_item->full_name(), session->where);
       return true;
     }
     order->item= ref_pointer_array + count - 1;
@@ -14150,7 +14134,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
       for this name (in case if we would perform lookup in all tables).
     */
     if (resolution == RESOLVED_BEHIND_ALIAS && !order_item->fixed &&
-        order_item->fix_fields(thd, order->item))
+        order_item->fix_fields(session, order->item))
       return true;
 
     /* Lookup the current GROUP field in the FROM clause. */
@@ -14159,7 +14143,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
     if ((is_group_field && order_item_type == Item::FIELD_ITEM) ||
         order_item_type == Item::REF_ITEM)
     {
-      from_field= find_field_in_tables(thd, (Item_ident*) order_item, tables,
+      from_field= find_field_in_tables(session, (Item_ident*) order_item, tables,
                                        NULL, &view_ref, IGNORE_ERRORS, true,
                                        false);
       if (!from_field)
@@ -14199,10 +14183,10 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
         warning so the user knows that the field from the FROM clause
         overshadows the column reference from the SELECT list.
       */
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          current_thd->where);
+                          current_session->where);
     }
   }
 
@@ -14219,9 +14203,9 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
     arguments for which fix_fields already was called.
   */
   if (!order_item->fixed &&
-      (order_item->fix_fields(thd, order->item) ||
+      (order_item->fix_fields(session, order->item) ||
        (order_item= *order->item)->check_cols(1) ||
-       thd->is_fatal_error))
+       session->is_fatal_error))
     return true; /* Wrong field. */
 
   uint32_t el= all_fields.elements;
@@ -14239,13 +14223,13 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
   the field list.
 */
 
-int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
+int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
 		List<Item> &fields, List<Item> &all_fields, order_st *order)
 {
-  thd->where="order clause";
+  session->where="order clause";
   for (; order; order=order->next)
   {
-    if (find_order_in_list(thd, ref_pointer_array, tables, order, fields,
+    if (find_order_in_list(session, ref_pointer_array, tables, order, fields,
 			   all_fields, false))
       return 1;
   }
@@ -14256,7 +14240,7 @@ int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
 /**
   Intitialize the GROUP BY list.
 
-  @param thd			Thread handler
+  @param session			Thread handler
   @param ref_pointer_array	We store references to all fields that was
                                not in 'fields' here.
   @param fields		All fields in the select part. Any item in
@@ -14280,7 +14264,7 @@ int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
 */
 
 int
-setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
+setup_group(Session *session, Item **ref_pointer_array, TableList *tables,
 	    List<Item> &fields, List<Item> &all_fields, order_st *order,
 	    bool *hidden_group_fields)
 {
@@ -14292,10 +14276,10 @@ setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
 
   uint32_t org_fields=all_fields.elements;
 
-  thd->where="group statement";
+  session->where="group statement";
   for (ord= order; ord; ord= ord->next)
   {
-    if (find_order_in_list(thd, ref_pointer_array, tables, ord, fields,
+    if (find_order_in_list(session, ref_pointer_array, tables, ord, fields,
 			   all_fields, true))
       return 1;
     (*ord->item)->marker= UNDEF_POS;		/* Mark found */
@@ -14326,7 +14310,7 @@ setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
     Item_field *field;
     int cur_pos_in_select_list= 0;
     List_iterator<Item> li(fields);
-    List_iterator<Item_field> naf_it(thd->lex->current_select->non_agg_fields);
+    List_iterator<Item_field> naf_it(session->lex->current_select->non_agg_fields);
 
     field= naf_it++;
     while (field && (item=li++))
@@ -14377,7 +14361,7 @@ next_field:
 */
 
 static order_st *
-create_distinct_group(THD *thd, Item **ref_pointer_array,
+create_distinct_group(Session *session, Item **ref_pointer_array,
                       order_st *order_list, List<Item> &fields,
                       List<Item> &all_fields __attribute__((unused)),
                       bool *all_order_by_fields_used)
@@ -14395,7 +14379,7 @@ create_distinct_group(THD *thd, Item **ref_pointer_array,
   {
     if (order->in_field_list)
     {
-      order_st *ord=(order_st*) thd->memdup((char*) order,sizeof(order_st));
+      order_st *ord=(order_st*) session->memdup((char*) order,sizeof(order_st));
       if (!ord)
 	return 0;
       *prev=ord;
@@ -14420,7 +14404,7 @@ create_distinct_group(THD *thd, Item **ref_pointer_array,
         if ((*ord_iter->item)->eq(item, 1))
           goto next_item;
       
-      order_st *ord=(order_st*) thd->calloc(sizeof(order_st));
+      order_st *ord=(order_st*) session->calloc(sizeof(order_st));
       if (!ord)
 	return 0;
 
@@ -14670,7 +14654,7 @@ alloc_group_fields(JOIN *join,order_st *group)
   {
     for (; group ; group=group->next)
     {
-      Cached_item *tmp=new_Cached_item(join->thd, *group->item, false);
+      Cached_item *tmp=new_Cached_item(join->session, *group->item, false);
       if (!tmp || join->group_fields.push_front(tmp))
 	return true;
     }
@@ -14717,7 +14701,7 @@ int test_if_item_cache_changed(List<Cached_item> &list)
   Change old item_field to use a new field with points at saved fieldvalue
   This function is only called before use of send_fields.
 
-  @param thd                   THD pointer
+  @param session                   Session pointer
   @param param                 temporary table parameters
   @param ref_pointer_array     array of pointers to top elements of filed list
   @param res_selected_fields   new list of items of select item list
@@ -14738,7 +14722,7 @@ int test_if_item_cache_changed(List<Cached_item> &list)
 */
 
 bool
-setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
+setup_copy_fields(Session *session, TMP_TABLE_PARAM *param,
 		  Item **ref_pointer_array,
 		  List<Item> &res_selected_fields, List<Item> &res_all_fields,
 		  uint32_t elements, List<Item> &all_fields)
@@ -14765,7 +14749,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
     if (real_pos->type() == Item::FIELD_ITEM)
     {
       Item_field *item;
-      if (!(item= new Item_field(thd, ((Item_field*) real_pos))))
+      if (!(item= new Item_field(session, ((Item_field*) real_pos))))
 	goto err;
       if (pos->type() == Item::REF_ITEM)
       {
@@ -14799,7 +14783,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 	   saved value
 	*/
 	field= item->field;
-	item->result_field=field->new_field(thd->mem_root,field->table, 1);
+	item->result_field=field->new_field(session->mem_root,field->table, 1);
         /*
           We need to allocate one extra byte for null handling and
           another extra byte to not get warnings from purify in
@@ -14933,7 +14917,7 @@ bool JOIN::alloc_func_list()
   }
 
   /* This must use calloc() as rollup_make_fields depends on this */
-  sum_funcs= (Item_sum**) thd->calloc(sizeof(Item_sum**) * (func_count+1) +
+  sum_funcs= (Item_sum**) session->calloc(sizeof(Item_sum**) * (func_count+1) +
 				      sizeof(Item_sum***) * (group_parts+1));
   sum_funcs_end= (Item_sum***) (sum_funcs+func_count+1);
   return(sum_funcs == 0);
@@ -14994,7 +14978,7 @@ bool JOIN::make_sum_func_list(List<Item> &field_list, List<Item> &send_fields,
   Change all funcs and sum_funcs to fields in tmp table, and create
   new list of all items.
 
-  @param thd                   THD pointer
+  @param session                   Session pointer
   @param ref_pointer_array     array of pointers to top elements of filed list
   @param res_selected_fields   new list of items of select item list
   @param res_all_fields        new list of all items
@@ -15008,7 +14992,7 @@ bool JOIN::make_sum_func_list(List<Item> &field_list, List<Item> &send_fields,
 */
 
 static bool
-change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
+change_to_use_tmp_fields(Session *session, Item **ref_pointer_array,
 			 List<Item> &res_selected_fields,
 			 List<Item> &res_all_fields,
 			 uint32_t elements, List<Item> &all_fields)
@@ -15032,7 +15016,7 @@ change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
     {
       if (item->type() == Item::FIELD_ITEM)
       {
-	item_field= item->get_tmp_table_item(thd);
+	item_field= item->get_tmp_table_item(session);
       }
       else if ((field= item->get_tmp_table_field()))
       {
@@ -15074,7 +15058,7 @@ change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
   Change all sum_func refs to fields to point at fields in tmp table.
   Change all funcs to be fields in tmp table.
 
-  @param thd                   THD pointer
+  @param session                   Session pointer
   @param ref_pointer_array     array of pointers to top elements of filed list
   @param res_selected_fields   new list of items of select item list
   @param res_all_fields        new list of all items
@@ -15088,7 +15072,7 @@ change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
 */
 
 static bool
-change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
+change_refs_to_tmp_fields(Session *session, Item **ref_pointer_array,
 			  List<Item> &res_selected_fields,
 			  List<Item> &res_all_fields, uint32_t elements,
 			  List<Item> &all_fields)
@@ -15101,7 +15085,7 @@ change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
   uint32_t i, border= all_fields.elements - elements;
   for (i= 0; (item= it++); i++)
   {
-    res_all_fields.push_back(new_item= item->get_tmp_table_item(thd));
+    res_all_fields.push_back(new_item= item->get_tmp_table_item(session));
     ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
       new_item;
   }
@@ -15111,7 +15095,7 @@ change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
     itr++;
   itr.sublist(res_selected_fields, elements);
 
-  return thd->is_fatal_error;
+  return session->is_fatal_error;
 }
 
 
@@ -15124,7 +15108,7 @@ change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
 /**
   Call ::setup for all sum functions.
 
-  @param thd           thread handler
+  @param session           thread handler
   @param func_ptr      sum function list
 
   @retval
@@ -15133,12 +15117,12 @@ change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
     true   error
 */
 
-static bool setup_sum_funcs(THD *thd, Item_sum **func_ptr)
+static bool setup_sum_funcs(Session *session, Item_sum **func_ptr)
 {
   Item_sum *func;
   while ((func= *(func_ptr++)))
   {
-    if (func->setup(thd))
+    if (func->setup(session))
       return(true);
   }
   return(false);
@@ -15221,7 +15205,7 @@ copy_funcs(Item **func_ptr)
   currenct select for the table.
 */
 
-static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
+static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab)
 {
   if (!join_tab->ref.key_parts)
     return(false);
@@ -15239,11 +15223,11 @@ static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
     Item *value=join_tab->ref.items[i];
     cond->add(new Item_func_equal(new Item_field(field), value));
   }
-  if (thd->is_fatal_error)
+  if (session->is_fatal_error)
     return(true);
 
   if (!cond->fixed)
-    cond->fix_fields(thd, (Item**)&cond);
+    cond->fix_fields(session, (Item**)&cond);
   if (join_tab->select)
   {
     error=(int) cond->add(join_tab->select->cond);
@@ -15260,11 +15244,11 @@ static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
 /**
   Free joins of subselect of this select.
 
-  @param thd      THD pointer
+  @param session      Session pointer
   @param select   pointer to st_select_lex which subselects joins we will free
 */
 
-void free_underlaid_joins(THD *thd __attribute__((unused)),
+void free_underlaid_joins(Session *session __attribute__((unused)),
                           SELECT_LEX *select)
 {
   for (SELECT_LEX_UNIT *unit= select->first_inner_unit();
@@ -15302,7 +15286,7 @@ void free_underlaid_joins(THD *thd __attribute__((unused)),
     This substitution is needed GROUP BY queries with ROLLUP if
     SELECT list contains expressions over group by attributes.
 
-  @param thd                  reference to the context
+  @param session                  reference to the context
   @param expr                 expression to make replacement
   @param group_list           list of references to group by items
   @param changed        out:  returns 1 if item contains a replaced field item
@@ -15317,12 +15301,12 @@ void free_underlaid_joins(THD *thd __attribute__((unused)),
     1   on error
 */
 
-static bool change_group_ref(THD *thd, Item_func *expr, order_st *group_list,
+static bool change_group_ref(Session *session, Item_func *expr, order_st *group_list,
                              bool *changed)
 {
   if (expr->arg_count)
   {
-    Name_resolution_context *context= &thd->lex->current_select->context;
+    Name_resolution_context *context= &session->lex->current_select->context;
     Item **arg,**arg_end;
     bool arg_changed= false;
     for (arg= expr->arguments(),
@@ -15341,14 +15325,14 @@ static bool change_group_ref(THD *thd, Item_func *expr, order_st *group_list,
             if (!(new_item= new Item_ref(context, group_tmp->item, 0,
                                         item->name)))
               return 1;                                 // fatal_error is set
-            thd->change_item_tree(arg, new_item);
+            session->change_item_tree(arg, new_item);
             arg_changed= true;
           }
         }
       }
       else if (item->type() == Item::FUNC_ITEM)
       {
-        if (change_group_ref(thd, (Item_func *) item, group_list, &arg_changed))
+        if (change_group_ref(session, (Item_func *) item, group_list, &arg_changed))
           return 1;
       }
     }
@@ -15378,7 +15362,7 @@ bool JOIN::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  if (!(rollup.null_items= (Item_null_result**) thd->alloc((sizeof(Item*) +
+  if (!(rollup.null_items= (Item_null_result**) session->alloc((sizeof(Item*) +
                                                 sizeof(Item**) +
                                                 sizeof(List<Item>) +
 				                ref_pointer_array_size)
@@ -15395,7 +15379,7 @@ bool JOIN::rollup_init()
   */
   for (i= 0 ; i < send_group_parts ; i++)
   {
-    rollup.null_items[i]= new (thd->mem_root) Item_null_result();
+    rollup.null_items[i]= new (session->mem_root) Item_null_result();
     List<Item> *rollup_fields= &rollup.fields[i];
     rollup_fields->empty();
     rollup.ref_pointer_arrays[i]= ref_array;
@@ -15437,12 +15421,12 @@ bool JOIN::rollup_init()
           Item* new_item= new Item_func_rollup_const(item);
           if (!new_item)
             return 1;
-          new_item->fix_fields(thd, (Item **) 0);
-          thd->change_item_tree(it.ref(), new_item);
+          new_item->fix_fields(session, (Item **) 0);
+          session->change_item_tree(it.ref(), new_item);
           for (order_st *tmp= group_tmp; tmp; tmp= tmp->next)
           { 
             if (*tmp->item == item)
-              thd->change_item_tree(tmp->item, new_item);
+              session->change_item_tree(tmp->item, new_item);
           }
         }
       }
@@ -15450,7 +15434,7 @@ bool JOIN::rollup_init()
     if (item->type() == Item::FUNC_ITEM && !found_in_group)
     {
       bool changed= false;
-      if (change_group_ref(thd, (Item_func *) item, group_list, &changed))
+      if (change_group_ref(session, (Item_func *) item, group_list, &changed))
         return 1;
       /*
         We have to prevent creation of a field in a temporary table for
@@ -15553,7 +15537,7 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
 	  sub select.  Fortunately it's not common to have rollup in
 	  sub selects.
 	*/
-	item= item->copy_or_same(thd);
+	item= item->copy_or_same(session);
 	((Item_sum*) item)->make_unique();
 	*(*func)= (Item_sum*) item;
 	(*func)++;
@@ -15571,7 +15555,7 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
 	      This is an element that is used by the GROUP BY and should be
 	      set to NULL in this level
 	    */
-            Item_null_result *null_item= new (thd->mem_root) Item_null_result();
+            Item_null_result *null_item= new (session->mem_root) Item_null_result();
             if (!null_item)
               return 1;
 	    item->maybe_null= 1;		// Value will be null sometimes
@@ -15677,7 +15661,7 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
       if ((write_error= table_arg->file->ha_write_row(table_arg->record[0])))
       {
-	if (create_myisam_from_heap(thd, table_arg, 
+	if (create_myisam_from_heap(session, table_arg, 
                                     tmp_table_param.start_recinfo,
                                     &tmp_table_param.recinfo,
                                     write_error, 0))
@@ -15719,18 +15703,18 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 {
   List<Item> field_list;
   List<Item> item_list;
-  THD *thd=join->thd;
+  Session *session=join->session;
   select_result *result=join->result;
   Item *item_null= new Item_null();
   const CHARSET_INFO * const cs= system_charset_info;
   int quick_type;
   /* Don't log this into the slow query log */
-  thd->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+  session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
   join->unit->offset_limit_cnt= 0;
 
   /* 
     NOTE: the number/types of items pushed into item_list must be in sync with
-    EXPLAIN column types as they're "defined" in THD::send_explain_fields()
+    EXPLAIN column types as they're "defined" in Session::send_explain_fields()
   */
   if (message)
   {
@@ -15740,7 +15724,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					strlen(join->select_lex->type), cs));
     for (uint32_t i=0 ; i < 7; i++)
       item_list.push_back(item_null);
-    if (join->thd->lex->describe & DESCRIBE_EXTENDED)
+    if (join->session->lex->describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
   
     item_list.push_back(new Item_string(message,strlen(message),cs));
@@ -15800,7 +15784,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     /* ref */
     item_list.push_back(item_null);
     /* in_rows */
-    if (join->thd->lex->describe & DESCRIBE_EXTENDED)
+    if (join->session->lex->describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
     /* rows */
     item_list.push_back(item_null);
@@ -15971,7 +15955,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if (table_list->schema_table)
       {
         /* in_rows */
-        if (join->thd->lex->describe & DESCRIBE_EXTENDED)
+        if (join->session->lex->describe & DESCRIBE_EXTENDED)
           item_list.push_back(item_null);
         /* rows */
         item_list.push_back(item_null);
@@ -15991,7 +15975,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
                                          MY_INT64_NUM_DECIMAL_DIGITS));
 
         /* Add "filtered" field to item_list. */
-        if (join->thd->lex->describe & DESCRIBE_EXTENDED)
+        if (join->session->lex->describe & DESCRIBE_EXTENDED)
         {
           float f= 0.0; 
           if (examined_rows)
@@ -16064,11 +16048,11 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           {
             const COND *pushed_cond= tab->table->file->pushed_cond;
 
-            if (thd->variables.engine_condition_pushdown && pushed_cond)
+            if (session->variables.engine_condition_pushdown && pushed_cond)
             {
               extra.append(STRING_WITH_LEN("; Using where with pushed "
                                            "condition"));
-              if (thd->lex->describe & DESCRIBE_EXTENDED)
+              if (session->lex->describe & DESCRIBE_EXTENDED)
               {
                 extra.append(STRING_WITH_LEN(": "));
                 ((COND *)pushed_cond)->print(&extra, QT_ORDINARY);
@@ -16123,7 +16107,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           need_order=0;
           extra.append(STRING_WITH_LEN("; Using filesort"));
         }
-        if (distinct & test_all_bits(used_tables,thd->used_tables))
+        if (distinct & test_all_bits(used_tables,session->used_tables))
           extra.append(STRING_WITH_LEN("; Distinct"));
 
         if (tab->insideout_match_tab)
@@ -16185,14 +16169,14 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
        unit;
        unit= unit->next_unit())
   {
-    if (mysql_explain_union(thd, unit, result))
+    if (mysql_explain_union(session, unit, result))
       return;
   }
   return;
 }
 
 
-bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
+bool mysql_explain_union(Session *session, SELECT_LEX_UNIT *unit, select_result *result)
 {
   bool res= 0;
   SELECT_LEX *first= unit->first_select();
@@ -16203,7 +16187,7 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
     uint8_t uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
-    sl->type= (((&thd->lex->select_lex)==sl)?
+    sl->type= (((&session->lex->select_lex)==sl)?
 	       (sl->first_inner_unit() || sl->next_select() ? 
 		"PRIMARY" : "SIMPLE"):
 	       ((sl == first)?
@@ -16224,15 +16208,15 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
     unit->fake_select_lex->select_number= UINT_MAX; // jost for initialization
     unit->fake_select_lex->type= "UNION RESULT";
     unit->fake_select_lex->options|= SELECT_DESCRIBE;
-    if (!(res= unit->prepare(thd, result, SELECT_NO_UNLOCK | SELECT_DESCRIBE)))
+    if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK | SELECT_DESCRIBE)))
       res= unit->exec();
     res|= unit->cleanup();
   }
   else
   {
-    thd->lex->current_select= first;
+    session->lex->current_select= first;
     unit->set_limit(unit->global_parameters);
-    res= mysql_select(thd, &first->ref_pointer_array,
+    res= mysql_select(session, &first->ref_pointer_array,
 			(TableList*) first->table_list.first,
 			first->with_wild, first->item_list,
 			first->where,
@@ -16241,18 +16225,18 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
 			(order_st*) first->order_list.first,
 			(order_st*) first->group_list.first,
 			first->having,
-			(order_st*) thd->lex->proc_list.first,
-			first->options | thd->options | SELECT_DESCRIBE,
+			(order_st*) session->lex->proc_list.first,
+			first->options | session->options | SELECT_DESCRIBE,
 			result, unit, first);
   }
-  return(res || thd->is_error());
+  return(res || session->is_error());
 }
 
 
-static void print_table_array(THD *thd, String *str, TableList **table, 
+static void print_table_array(Session *session, String *str, TableList **table, 
                               TableList **end)
 {
-  (*table)->print(thd, str, QT_ORDINARY);
+  (*table)->print(session, str, QT_ORDINARY);
 
   for (TableList **tbl= table + 1; tbl < end; tbl++)
   {
@@ -16268,7 +16252,7 @@ static void print_table_array(THD *thd, String *str, TableList **table,
       str->append(STRING_WITH_LEN(" semi join "));
     else
       str->append(STRING_WITH_LEN(" join "));
-    curr->print(thd, str, QT_ORDINARY);
+    curr->print(session, str, QT_ORDINARY);
     if (curr->on_expr)
     {
       str->append(STRING_WITH_LEN(" on("));
@@ -16281,20 +16265,20 @@ static void print_table_array(THD *thd, String *str, TableList **table,
 
 /**
   Print joins from the FROM clause.
-  @param thd     thread handler
+  @param session     thread handler
   @param str     string where table should be printed
   @param tables  list of tables in join
   @query_type    type of the query is being generated
 */
 
-static void print_join(THD *thd,
+static void print_join(Session *session,
                        String *str,
                        List<TableList> *tables,
                        enum_query_type query_type __attribute__((unused)))
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
-  TableList **table= (TableList **)thd->alloc(sizeof(TableList*) *
+  TableList **table= (TableList **)session->alloc(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory
@@ -16321,7 +16305,7 @@ static void print_join(THD *thd,
     }
   }
   assert(tables->elements >= 1);
-  print_table_array(thd, str, table, table + tables->elements);
+  print_table_array(session, str, table, table + tables->elements);
 }
 
 
@@ -16330,7 +16314,7 @@ static void print_join(THD *thd,
 
   @details Prints out the USE|FORCE|IGNORE index hint.
 
-  @param      thd         the current thread
+  @param      session         the current thread
   @param[out] str         appends the index hint here
   @param      hint        what the hint is (as string : "USE INDEX"|
                           "FORCE INDEX"|"IGNORE INDEX")
@@ -16339,7 +16323,7 @@ static void print_join(THD *thd,
 */
 
 void 
-Index_hint::print(THD *thd, String *str)
+Index_hint::print(Session *session, String *str)
 {
   switch (type)
   {
@@ -16350,13 +16334,13 @@ Index_hint::print(THD *thd, String *str)
   str->append (STRING_WITH_LEN(" ("));
   if (key_name.length)
   {
-    if (thd && !my_strnncoll(system_charset_info,
+    if (session && !my_strnncoll(system_charset_info,
                              (const unsigned char *)key_name.str, key_name.length, 
                              (const unsigned char *)primary_key_name, 
                              strlen(primary_key_name)))
       str->append(primary_key_name);
     else
-      append_identifier(thd, str, key_name.str, key_name.length);
+      append_identifier(session, str, key_name.str, key_name.length);
   }
   str->append(')');
 }
@@ -16368,12 +16352,12 @@ Index_hint::print(THD *thd, String *str)
   @param str   string where table should be printed
 */
 
-void TableList::print(THD *thd, String *str, enum_query_type query_type)
+void TableList::print(Session *session, String *str, enum_query_type query_type)
 {
   if (nested_join)
   {
     str->append('(');
-    print_join(thd, str, &nested_join->join_list, query_type);
+    print_join(session, str, &nested_join->join_list, query_type);
     str->append(')');
   }
   else
@@ -16391,18 +16375,18 @@ void TableList::print(THD *thd, String *str, enum_query_type query_type)
     {
       // A normal table
       {
-        append_identifier(thd, str, db, db_length);
+        append_identifier(session, str, db, db_length);
         str->append('.');
       }
       if (schema_table)
       {
-        append_identifier(thd, str, schema_table_name,
+        append_identifier(session, str, schema_table_name,
                           strlen(schema_table_name));
         cmp_name= schema_table_name;
       }
       else
       {
-        append_identifier(thd, str, table_name, table_name_length);
+        append_identifier(session, str, table_name, table_name_length);
         cmp_name= table_name;
       }
     }
@@ -16422,7 +16406,7 @@ void TableList::print(THD *thd, String *str, enum_query_type query_type)
         }
       }
 
-      append_identifier(thd, str, t_alias, strlen(t_alias));
+      append_identifier(session, str, t_alias, strlen(t_alias));
     }
 
     if (index_hints)
@@ -16433,26 +16417,26 @@ void TableList::print(THD *thd, String *str, enum_query_type query_type)
       while ((hint= it++))
       {
         str->append (STRING_WITH_LEN(" "));
-        hint->print (thd, str);
+        hint->print (session, str);
       }
     }
   }
 }
 
 
-void st_select_lex::print(THD *thd, String *str, enum_query_type query_type)
+void st_select_lex::print(Session *session, String *str, enum_query_type query_type)
 {
-  /* QQ: thd may not be set for sub queries, but this should be fixed */
-  if (!thd)
-    thd= current_thd;
+  /* QQ: session may not be set for sub queries, but this should be fixed */
+  if (!session)
+    session= current_session;
 
   str->append(STRING_WITH_LEN("select "));
 
   /* First add options */
   if (options & SELECT_STRAIGHT_JOIN)
     str->append(STRING_WITH_LEN("straight_join "));
-  if ((thd->lex->lock_option == TL_READ_HIGH_PRIORITY) &&
-      (this == &thd->lex->select_lex))
+  if ((session->lex->lock_option == TL_READ_HIGH_PRIORITY) &&
+      (this == &session->lex->select_lex))
     str->append(STRING_WITH_LEN("high_priority "));
   if (options & SELECT_DISTINCT)
     str->append(STRING_WITH_LEN("distinct "));
@@ -16486,7 +16470,7 @@ void st_select_lex::print(THD *thd, String *str, enum_query_type query_type)
   {
     str->append(STRING_WITH_LEN(" from "));
     /* go through join tree */
-    print_join(thd, str, &top_join_list, query_type);
+    print_join(session, str, &top_join_list, query_type);
   }
   else if (where)
   {
@@ -16549,7 +16533,7 @@ void st_select_lex::print(THD *thd, String *str, enum_query_type query_type)
   }
 
   // limit
-  print_limit(thd, str, query_type);
+  print_limit(session, str, query_type);
 
   // PROCEDURE unsupported here
 }

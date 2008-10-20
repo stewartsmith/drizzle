@@ -490,7 +490,7 @@ public:
 
 /*
   A simple intrusive list which automaticly removes element from list
-  on delete (for THD element)
+  on delete (for Session element)
 */
 
 struct ilink
@@ -638,7 +638,7 @@ public:
   Evidently not all template arguments have clone() method with
   the right signature.
 
-  @return You must query the error state in THD for out-of-memory
+  @return You must query the error state in Session for out-of-memory
   situation after calling this function.
 */
 

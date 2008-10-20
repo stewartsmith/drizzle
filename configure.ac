@@ -1279,7 +1279,6 @@ fi
 # Check for requested features
 #--------------------------------------------------------------------
 
-DRIZZLE_CHECK_BIG_TABLES
 DRIZZLE_CHECK_MAX_INDEXES
 DRIZZLE_CHECK_VIO
 

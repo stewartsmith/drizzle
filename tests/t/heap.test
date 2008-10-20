@@ -284,7 +284,6 @@ select sql_big_result trim(v),count(t) from t1 group by v limit 10;
 select sql_big_result trim(v),count(c) from t1 group by v limit 10;
 select c,count(*) from t1 group by c limit 10;
 select c,count(t) from t1 group by c limit 10;
-select sql_big_result c,count(t) from t1 group by c limit 10;
 select t,count(*) from t1 group by t limit 10;
 select t,count(t) from t1 group by t limit 10;
 select sql_big_result trim(t),count(t) from t1 group by t limit 10;
@@ -396,10 +395,10 @@ create table t1 (v varchar(10), c char(10), t varchar(50), key(v(5)), key(c(5)),
 show create table t1;
 drop table t1;
 
-create table t1 (v varchar(65530), key(v(10)));
+create table t1 (v varchar(16383), key(v(10)));
 show create table t1;
-insert into t1 values(repeat('a',65530));
-select length(v) from t1 where v=repeat('a',65530);
+insert into t1 values(repeat('a',16383));
+select length(v) from t1 where v=repeat('a',16383);
 drop table t1;
 
 #

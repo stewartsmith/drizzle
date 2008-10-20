@@ -3741,7 +3741,7 @@ shortcut_fails_too_big_rec:
 		word there */
 
 		if (dict_str_starts_with_keyword(
-			    trx->mysql_thd, *trx->mysql_query_str, "SELECT")) {
+			    trx->mysql_session, *trx->mysql_query_str, "SELECT")) {
 			/* It is a plain locking SELECT and the isolation
 			level is low: do not lock gaps */
 

@@ -37,7 +37,7 @@
 char internal_table_name[2]= "*";
 char empty_c_string[1]= {0};    /* used for not defined db */
 
-const char * const THD::DEFAULT_WHERE= "field list";
+const char * const Session::DEFAULT_WHERE= "field list";
 
 
 /*****************************************************************************
@@ -86,7 +86,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
   Construct an (almost) deep copy of this key. Only those
   elements that are known to never change are not copied.
   If out of memory, a partial copy is returned and an error is set
-  in THD.
+  in Session.
 */
 
 Key::Key(const Key &rhs, MEM_ROOT *mem_root)
@@ -103,7 +103,7 @@ Key::Key(const Key &rhs, MEM_ROOT *mem_root)
   Construct an (almost) deep copy of this foreign key. Only those
   elements that are known to never change are not copied.
   If out of memory, a partial copy is returned and an error is set
-  in THD.
+  in Session.
 */
 
 Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
@@ -265,67 +265,67 @@ extern "C" int mysql_tmpfile(const char *prefix)
 
 
 extern "C"
-int thd_in_lock_tables(const THD *thd)
+int session_in_lock_tables(const Session *session)
 {
-  return test(thd->in_lock_tables);
+  return test(session->in_lock_tables);
 }
 
 
 extern "C"
-int thd_tablespace_op(const THD *thd)
+int session_tablespace_op(const Session *session)
 {
-  return test(thd->tablespace_op);
+  return test(session->tablespace_op);
 }
 
 
 /**
-   Set the process info field of the THD structure.
+   Set the process info field of the Session structure.
 
    This function is used by plug-ins. Internally, the
-   THD::set_proc_info() function should be used.
+   Session::set_proc_info() function should be used.
 
-   @see THD::set_proc_info
+   @see Session::set_proc_info
  */
 extern "C" void
-set_thd_proc_info(THD *thd, const char *info)
+set_session_proc_info(Session *session, const char *info)
 {
-  thd->set_proc_info(info);
+  session->set_proc_info(info);
 }
 
 extern "C"
-const char *get_thd_proc_info(THD *thd)
+const char *get_session_proc_info(Session *session)
 {
-  return thd->get_proc_info();
+  return session->get_proc_info();
 }
 
 extern "C"
-void **thd_ha_data(const THD *thd, const struct handlerton *hton)
+void **session_ha_data(const Session *session, const struct handlerton *hton)
 {
-  return (void **) &thd->ha_data[hton->slot].ha_ptr;
+  return (void **) &session->ha_data[hton->slot].ha_ptr;
 }
 
 extern "C"
-int64_t thd_test_options(const THD *thd, int64_t test_options)
+int64_t session_test_options(const Session *session, int64_t test_options)
 {
-  return thd->options & test_options;
+  return session->options & test_options;
 }
 
 extern "C"
-int thd_sql_command(const THD *thd)
+int session_sql_command(const Session *session)
 {
-  return (int) thd->lex->sql_command;
+  return (int) session->lex->sql_command;
 }
 
 extern "C"
-int thd_tx_isolation(const THD *thd)
+int session_tx_isolation(const Session *session)
 {
-  return (int) thd->variables.tx_isolation;
+  return (int) session->variables.tx_isolation;
 }
 
 extern "C"
-void thd_inc_row_count(THD *thd)
+void session_inc_row_count(Session *session)
 {
-  thd->row_count++;
+  session->row_count++;
 }
 
 /**
@@ -357,7 +357,7 @@ Diagnostics_area::reset_diagnostics_area()
 */
 
 void
-Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
+Diagnostics_area::set_ok_status(Session *session, ha_rows affected_rows_arg,
                                 uint64_t last_insert_id_arg,
                                 const char *message_arg)
 {
@@ -370,8 +370,8 @@ Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
     return;
   /** Only allowed to report success if has not yet reported an error */
 
-  m_server_status= thd->server_status;
-  m_total_warn_count= thd->total_warn_count;
+  m_server_status= session->server_status;
+  m_total_warn_count= session->total_warn_count;
   m_affected_rows= affected_rows_arg;
   m_last_insert_id= last_insert_id_arg;
   if (message_arg)
@@ -387,7 +387,7 @@ Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
 */
 
 void
-Diagnostics_area::set_eof_status(THD *thd)
+Diagnostics_area::set_eof_status(Session *session)
 {
   /** Only allowed to report eof if has not yet reported an error */
 
@@ -399,13 +399,13 @@ Diagnostics_area::set_eof_status(THD *thd)
   if (is_error() || is_disabled())
     return;
 
-  m_server_status= thd->server_status;
+  m_server_status= session->server_status;
   /*
     If inside a stored procedure, do not return the total
     number of warnings, since they are not available to the client
     anyway.
   */
-  m_total_warn_count= thd->total_warn_count;
+  m_total_warn_count= session->total_warn_count;
 
   m_status= DA_EOF;
 }
@@ -415,7 +415,7 @@ Diagnostics_area::set_eof_status(THD *thd)
 */
 
 void
-Diagnostics_area::set_error_status(THD *thd __attribute__((unused)),
+Diagnostics_area::set_error_status(Session *session __attribute__((unused)),
                                    uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
@@ -455,7 +455,7 @@ Diagnostics_area::disable_status()
 }
 
 
-THD::THD()
+Session::Session()
    :Statement(&main_lex, &main_mem_root,
               /* statement id */ 0),
    Open_tables_state(refresh_version), rli_fake(0),
@@ -502,7 +502,7 @@ THD::THD()
   limit_found_rows= 0;
   row_count_func= -1;
   statement_id_counter= 0UL;
-  // Must be reset to handle error with THD's created for init of mysqld
+  // Must be reset to handle error with Session's created for init of mysqld
   lex->current_select= 0;
   start_time=(time_t) 0;
   start_utime= 0L;
@@ -519,7 +519,7 @@ THD::THD()
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var=0;
   binlog_evt_union.do_union= false;
-  dbug_sentry=THD_SENTRY_MAGIC;
+  dbug_sentry=Session_SENTRY_MAGIC;
   net.vio=0;
   client_capabilities= 0;                       // minimalistic client
   system_thread= NON_SYSTEM_THREAD;
@@ -531,7 +531,7 @@ THD::THD()
 
   /* Variables with default values */
   proc_info="login";
-  where= THD::DEFAULT_WHERE;
+  where= Session::DEFAULT_WHERE;
   server_id = ::server_id;
   slave_net = 0;
   command=COM_CONNECT;
@@ -567,18 +567,18 @@ THD::THD()
 }
 
 
-void THD::push_internal_handler(Internal_error_handler *handler)
+void Session::push_internal_handler(Internal_error_handler *handler)
 {
   /*
     TODO: The current implementation is limited to 1 handler at a time only.
-    THD and sp_rcontext need to be modified to use a common handler stack.
+    Session and sp_rcontext need to be modified to use a common handler stack.
   */
   assert(m_internal_handler == NULL);
   m_internal_handler= handler;
 }
 
 
-bool THD::handle_error(uint32_t sql_errno, const char *message,
+bool Session::handle_error(uint32_t sql_errno, const char *message,
                        DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
@@ -590,70 +590,70 @@ bool THD::handle_error(uint32_t sql_errno, const char *message,
 }
 
 
-void THD::pop_internal_handler()
+void Session::pop_internal_handler()
 {
   assert(m_internal_handler != NULL);
   m_internal_handler= NULL;
 }
 
 extern "C"
-void *thd_alloc(THD *thd, unsigned int size)
+void *session_alloc(Session *session, unsigned int size)
 {
-  return thd->alloc(size);
+  return session->alloc(size);
 }
 
 extern "C"
-void *thd_calloc(THD *thd, unsigned int size)
+void *session_calloc(Session *session, unsigned int size)
 {
-  return thd->calloc(size);
+  return session->calloc(size);
 }
 
 extern "C"
-char *thd_strdup(THD *thd, const char *str)
+char *session_strdup(Session *session, const char *str)
 {
-  return thd->strdup(str);
+  return session->strdup(str);
 }
 
 extern "C"
-char *thd_strmake(THD *thd, const char *str, unsigned int size)
+char *session_strmake(Session *session, const char *str, unsigned int size)
 {
-  return thd->strmake(str, size);
+  return session->strmake(str, size);
 }
 
 extern "C"
-LEX_STRING *thd_make_lex_string(THD *thd, LEX_STRING *lex_str,
+LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
                                 const char *str, unsigned int size,
                                 int allocate_lex_string)
 {
-  return thd->make_lex_string(lex_str, str, size,
+  return session->make_lex_string(lex_str, str, size,
                               (bool) allocate_lex_string);
 }
 
 extern "C"
-void *thd_memdup(THD *thd, const void* str, unsigned int size)
+void *session_memdup(Session *session, const void* str, unsigned int size)
 {
-  return thd->memdup(str, size);
+  return session->memdup(str, size);
 }
 
 extern "C"
-void thd_get_xid(const THD *thd, DRIZZLE_XID *xid)
+void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 {
-  *xid = *(DRIZZLE_XID *) &thd->transaction.xid_state.xid;
+  *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
 }
 
 /*
   Init common variables that has to be reset on start and on change_user
 */
 
-void THD::init(void)
+void Session::init(void)
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
-  plugin_thdvar_init(this);
-  variables.time_format= date_time_format_copy((THD*) 0,
+  plugin_sessionvar_init(this);
+  variables.time_format= date_time_format_copy((Session*) 0,
 					       variables.time_format);
-  variables.date_format= date_time_format_copy((THD*) 0,
+  variables.date_format= date_time_format_copy((Session*) 0,
 					       variables.date_format);
-  variables.datetime_format= date_time_format_copy((THD*) 0,
+  variables.datetime_format= date_time_format_copy((Session*) 0,
 						   variables.datetime_format);
   /*
     variables= global_system_variables above has reset
@@ -663,7 +663,7 @@ void THD::init(void)
   variables.pseudo_thread_id= thread_id;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   server_status= SERVER_STATUS_AUTOCOMMIT;
-  options= thd_startup_options;
+  options= session_startup_options;
 
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
@@ -686,12 +686,12 @@ void THD::init(void)
 
 
 /*
-  Init THD for query processing.
+  Init Session for query processing.
   This has to be called once before we call mysql_parse.
   See also comments in sql_class.h.
 */
 
-void THD::init_for_queries()
+void Session::init_for_queries()
 {
   set_time(); 
   ha_enable_transaction(this,true);
@@ -702,13 +702,13 @@ void THD::init_for_queries()
                       variables.trans_alloc_block_size,
                       variables.trans_prealloc_size);
   transaction.xid_state.xid.null();
-  transaction.xid_state.in_thd=1;
+  transaction.xid_state.in_session=1;
 }
 
 
 /* Do operations that may take a long time */
 
-void THD::cleanup(void)
+void Session::cleanup(void)
 {
   assert(cleanup_done == 0);
 
@@ -743,10 +743,10 @@ void THD::cleanup(void)
   return;
 }
 
-THD::~THD()
+Session::~Session()
 {
-  THD_CHECK_SENTRY(this);
-  /* Ensure that no one is using THD */
+  Session_CHECK_SENTRY(this);
+  /* Ensure that no one is using Session */
   pthread_mutex_lock(&LOCK_delete);
   pthread_mutex_unlock(&LOCK_delete);
   add_to_status(&global_status_var, &status_var);
@@ -761,7 +761,7 @@ THD::~THD()
     cleanup();
 
   ha_close_connection(this);
-  plugin_thdvar_cleanup(this);
+  plugin_sessionvar_cleanup(this);
 
   main_security_ctx.destroy();
   if (db)
@@ -773,7 +773,7 @@ THD::~THD()
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
   pthread_mutex_destroy(&LOCK_delete);
-  dbug_sentry= THD_SENTRY_GONE;
+  dbug_sentry= Session_SENTRY_GONE;
   if (rli_fake)
   {
     delete rli_fake;
@@ -836,13 +836,13 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
 }
 
 
-void THD::awake(THD::killed_state state_to_set)
+void Session::awake(Session::killed_state state_to_set)
 {
-  THD_CHECK_SENTRY(this);
+  Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete); 
 
   killed= state_to_set;
-  if (state_to_set != THD::KILL_QUERY)
+  if (state_to_set != Session::KILL_QUERY)
   {
     thr_alarm_kill(thread_id);
     if (!slave_thread)
@@ -869,7 +869,7 @@ void THD::awake(THD::killed_state state_to_set)
       current_cond and current_mutex are 0), then the victim will not get
       a signal and it may wait "forever" on the cond (until
       we issue a second KILL or the status it's waiting for happens).
-      It's true that we have set its thd->killed but it may not
+      It's true that we have set its session->killed but it may not
       see it immediately and so may have time to reach the cond_wait().
     */
     if (mysys_var->current_cond && mysys_var->current_mutex)
@@ -888,7 +888,7 @@ void THD::awake(THD::killed_state state_to_set)
   sql_alloc() and the structure for the net buffer
 */
 
-bool THD::store_globals()
+bool Session::store_globals()
 {
   /*
     Assert that thread_stack is initialized: it's necessary to be able
@@ -896,19 +896,19 @@ bool THD::store_globals()
   */
   assert(thread_stack);
 
-  if (pthread_setspecific(THR_THD,  this) ||
+  if (pthread_setspecific(THR_Session,  this) ||
       pthread_setspecific(THR_MALLOC, &mem_root))
     return 1;
   mysys_var=my_thread_var;
   /*
     Let mysqld define the thread id (not mysys)
-    This allows us to move THD to different threads if needed.
+    This allows us to move Session to different threads if needed.
   */
   mysys_var->id= thread_id;
   real_id= pthread_self();                      // For debugging
 
   /*
-    We have to call thr_lock_info_init() again here as THD may have been
+    We have to call thr_lock_info_init() again here as Session may have been
     created in another thread
   */
   thr_lock_info_init(&lock_info);
@@ -920,7 +920,7 @@ bool THD::store_globals()
   Cleanup after query.
 
   SYNOPSIS
-    THD::cleanup_after_query()
+    Session::cleanup_after_query()
 
   DESCRIPTION
     This function is used to reset thread data to its default state.
@@ -932,7 +932,7 @@ bool THD::store_globals()
     slave.
 */
 
-void THD::cleanup_after_query()
+void Session::cleanup_after_query()
 {
   /*
     Reset rand_used so that detection of calls to rand() will save random 
@@ -956,7 +956,7 @@ void THD::cleanup_after_query()
   /* Free Items that were created during this execution */
   free_items();
   /* Reset where. */
-  where= THD::DEFAULT_WHERE;
+  where= Session::DEFAULT_WHERE;
 }
 
 
@@ -970,7 +970,7 @@ void THD::cleanup_after_query()
                               instead of using lex_str value
   @return  NULL on failure, or pointer to the LEX_STRING object
 */
-LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
+LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                  const char* str, uint32_t length,
                                  bool allocate_lex_string)
 {
@@ -1004,7 +1004,7 @@ LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
         In this case to->str will point to 0 and to->length will be 0.
 */
 
-bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
+bool Session::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 			 const char *from, uint32_t from_length,
 			 const CHARSET_INFO * const from_cs)
 {
@@ -1026,7 +1026,7 @@ bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
   Convert string from source character set to target character set inplace.
 
   SYNOPSIS
-    THD::convert_string
+    Session::convert_string
 
   DESCRIPTION
     Convert string using convert_buffer - buffer for character set 
@@ -1037,7 +1037,7 @@ bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
    !0   out of memory
 */
 
-bool THD::convert_string(String *s, const CHARSET_INFO * const from_cs,
+bool Session::convert_string(String *s, const CHARSET_INFO * const from_cs,
                          const CHARSET_INFO * const to_cs)
 {
   uint32_t dummy_errors;
@@ -1058,7 +1058,7 @@ bool THD::convert_string(String *s, const CHARSET_INFO * const from_cs,
   Update some cache variables when character set changes
 */
 
-void THD::update_charset()
+void Session::update_charset()
 {
   uint32_t not_used;
   charset_is_system_charset= !String::needs_conversion(0,charset(),
@@ -1088,7 +1088,7 @@ inline static void list_include(CHANGED_TableList** prev,
 
 /* add table to list of changed in transaction tables */
 
-void THD::add_changed_table(Table *table)
+void Session::add_changed_table(Table *table)
 {
   assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
 	      table->file->has_transactions());
@@ -1098,7 +1098,7 @@ void THD::add_changed_table(Table *table)
 }
 
 
-void THD::add_changed_table(const char *key, long key_length)
+void Session::add_changed_table(const char *key, long key_length)
 {
   CHANGED_TableList **prev_changed = &transaction.changed_tables;
   CHANGED_TableList *curr = transaction.changed_tables;
@@ -1130,7 +1130,7 @@ void THD::add_changed_table(const char *key, long key_length)
 }
 
 
-CHANGED_TableList* THD::changed_table_dup(const char *key, long key_length)
+CHANGED_TableList* Session::changed_table_dup(const char *key, long key_length)
 {
   CHANGED_TableList* new_table = 
     (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
@@ -1151,7 +1151,7 @@ CHANGED_TableList* THD::changed_table_dup(const char *key, long key_length)
 }
 
 
-int THD::send_explain_fields(select_result *result)
+int Session::send_explain_fields(select_result *result)
 {
   List<Item> field_list;
   Item *item;
@@ -1211,10 +1211,10 @@ struct Item_change_record: public ilink
 /*
   Register an item tree tree transformation, performed by the query
   optimizer. We need a pointer to runtime_memroot because it may be !=
-  thd->mem_root (this may no longer be a true statement)
+  session->mem_root (this may no longer be a true statement)
 */
 
-void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
+void Session::nocheck_register_item_tree_change(Item **place, Item *old_value,
                                             MEM_ROOT *runtime_memroot)
 {
   Item_change_record *change;
@@ -1227,7 +1227,7 @@ void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
   if (change_mem == 0)
   {
     /*
-      OOM, thd->fatal_error() is called by the error handler of the
+      OOM, session->fatal_error() is called by the error handler of the
       memroot. Just return.
     */
     return;
@@ -1239,7 +1239,7 @@ void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
 }
 
 
-void THD::rollback_item_tree_changes()
+void Session::rollback_item_tree_changes()
 {
   I_List_iterator<Item_change_record> it(change_list);
   Item_change_record *change;
@@ -1258,7 +1258,7 @@ void THD::rollback_item_tree_changes()
 
 select_result::select_result()
 {
-  thd=current_thd;
+  session=current_session;
 }
 
 void select_result::send_error(uint32_t errcode,const char *err)
@@ -1298,7 +1298,7 @@ sql_exchange::sql_exchange(char *name, bool flag,
 bool select_send::send_fields(List<Item> &list, uint32_t flags)
 {
   bool res;
-  if (!(res= thd->protocol->send_fields(&list, flags)))
+  if (!(res= session->protocol->send_fields(&list, flags)))
     is_result_set_started= 1;
   return res;
 }
@@ -1333,12 +1333,12 @@ bool select_send::send_data(List<Item> &items)
   /*
     We may be passing the control from mysqld to the client: release the
     InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
-    by thd
+    by session
   */
-  ha_release_temporary_latches(thd);
+  ha_release_temporary_latches(session);
 
   List_iterator_fast<Item> li(items);
-  Protocol *protocol= thd->protocol;
+  Protocol *protocol= session->protocol;
   char buff[MAX_FIELD_WIDTH];
   String buffer(buff, sizeof(buff), &my_charset_bin);
 
@@ -1353,13 +1353,13 @@ bool select_send::send_data(List<Item> &items)
       break;
     }
   }
-  thd->sent_row_count++;
-  if (thd->is_error())
+  session->sent_row_count++;
+  if (session->is_error())
   {
     protocol->remove_last_row();
     return(1);
   }
-  if (thd->vio_ok())
+  if (session->vio_ok())
     return(protocol->write());
   return(0);
 }
@@ -1369,17 +1369,17 @@ bool select_send::send_eof()
   /* 
     We may be passing the control from mysqld to the client: release the
     InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
-    by thd 
+    by session 
   */
-  ha_release_temporary_latches(thd);
+  ha_release_temporary_latches(session);
 
   /* Unlock tables before sending packet to gain some speed */
-  if (thd->lock)
+  if (session->lock)
   {
-    mysql_unlock_tables(thd, thd->lock);
-    thd->lock=0;
+    mysql_unlock_tables(session, session->lock);
+    session->lock=0;
   }
-  ::my_eof(thd);
+  ::my_eof(session);
   is_result_set_started= 0;
   return false;
 }
@@ -1414,7 +1414,7 @@ bool select_to_file::send_eof()
       function, SELECT INTO has to have an own SQLCOM.
       TODO: split from SQLCOM_SELECT
     */
-    ::my_ok(thd,row_count);
+    ::my_ok(session,row_count);
   }
   file= -1;
   return error;
@@ -1451,7 +1451,7 @@ select_to_file::~select_to_file()
 
 select_export::~select_export()
 {
-  thd->sent_row_count=row_count;
+  session->sent_row_count=row_count;
 }
 
 
@@ -1460,7 +1460,7 @@ select_export::~select_export()
 
   SYNOPSIS
     create_file()
-    thd			Thread handle
+    session			Thread handle
     path		File name
     exchange		Excange class
     cache		IO cache
@@ -1471,7 +1471,7 @@ select_export::~select_export()
 */
 
 
-static File create_file(THD *thd, char *path, sql_exchange *exchange,
+static File create_file(Session *session, char *path, sql_exchange *exchange,
 			IO_CACHE *cache)
 {
   File file;
@@ -1483,7 +1483,7 @@ static File create_file(THD *thd, char *path, sql_exchange *exchange,
 
   if (!dirname_length(exchange->file_name))
   {
-    strxnmov(path, FN_REFLEN-1, mysql_real_data_home, thd->db ? thd->db : "",
+    strxnmov(path, FN_REFLEN-1, mysql_real_data_home, session->db ? session->db : "",
              NULL);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
@@ -1530,7 +1530,7 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
   if ((uint) strlen(exchange->file_name) + NAME_LEN >= FN_REFLEN)
     strmake(path,exchange->file_name,FN_REFLEN-1);
 
-  if ((file= create_file(thd, path, exchange, &cache)) < 0)
+  if ((file= create_file(session, path, exchange, &cache)) < 0)
     return 1;
   /* Check if there is any blobs in data */
   {
@@ -1573,7 +1573,7 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
       (exchange->opt_enclosed && non_string_results &&
        field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_AMBIGUOUS_FIELD_TERM, ER(ER_AMBIGUOUS_FIELD_TERM));
     is_ambiguous_field_term= true;
   }
@@ -1652,7 +1652,7 @@ bool select_export::send_data(List<Item> &items)
       {
         char *pos, *start, *end;
         const CHARSET_INFO * const res_charset= res->charset();
-        const CHARSET_INFO * const character_set_client= thd->variables.
+        const CHARSET_INFO * const character_set_client= session->variables.
                                                             character_set_client;
         bool check_second_byte= (res_charset == &my_charset_bin) &&
                                  character_set_client->
@@ -1788,7 +1788,7 @@ select_dump::prepare(List<Item> &list __attribute__((unused)),
 		     SELECT_LEX_UNIT *u)
 {
   unit= u;
-  return (int) ((file= create_file(thd, path, exchange, &cache)) < 0);
+  return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
 }
 
 
@@ -2048,14 +2048,14 @@ Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
   Don't free mem_root, as mem_root is freed in the end of dispatch_command
   (once for any command).
 */
-void THD::end_statement()
+void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
 }
 
 
-bool THD::copy_db_to(char **p_db, size_t *p_db_length)
+bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
   if (db == NULL)
   {
@@ -2090,25 +2090,25 @@ bool select_dumpvar::send_data(List<Item> &items)
     if (mv->local == 0)
     {
       Item_func_set_user_var *suv= new Item_func_set_user_var(mv->s, item);
-      suv->fix_fields(thd, 0);
+      suv->fix_fields(session, 0);
       suv->check(0);
       suv->update();
     }
   }
-  return(thd->is_error());
+  return(session->is_error());
 }
 
 bool select_dumpvar::send_eof()
 {
   if (! row_count)
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
   /*
     In order to remember the value of affected rows for ROW_COUNT()
     function, SELECT INTO has to have an own SQLCOM.
     TODO: split from SQLCOM_SELECT
   */
-  ::my_ok(thd,row_count);
+  ::my_ok(session,row_count);
   return 0;
 }
 
@@ -2128,35 +2128,35 @@ void TMP_TABLE_PARAM::init()
 }
 
 
-void thd_increment_bytes_sent(ulong length)
+void session_increment_bytes_sent(ulong length)
 {
-  THD *thd=current_thd;
-  if (likely(thd != 0))
-  { /* current_thd==0 when close_connection() calls net_send_error() */
-    thd->status_var.bytes_sent+= length;
+  Session *session=current_session;
+  if (likely(session != 0))
+  { /* current_session==0 when close_connection() calls net_send_error() */
+    session->status_var.bytes_sent+= length;
   }
 }
 
 
-void thd_increment_bytes_received(ulong length)
+void session_increment_bytes_received(ulong length)
 {
-  current_thd->status_var.bytes_received+= length;
+  current_session->status_var.bytes_received+= length;
 }
 
 
-void thd_increment_net_big_packet_count(ulong length)
+void session_increment_net_big_packet_count(ulong length)
 {
-  current_thd->status_var.net_big_packet_count+= length;
+  current_session->status_var.net_big_packet_count+= length;
 }
 
-void THD::send_kill_message() const
+void Session::send_kill_message() const
 {
   int err= killed_errno();
   if (err)
     my_message(err, ER(err), MYF(0));
 }
 
-void THD::set_status_var_init()
+void Session::set_status_var_init()
 {
   memset(&status_var, 0, sizeof(status_var));
 }
@@ -2198,7 +2198,7 @@ void Security_context::skip_grants()
   access to mysql.proc table to find definitions of stored routines.
 ****************************************************************************/
 
-void THD::reset_n_backup_open_tables_state(Open_tables_state *backup)
+void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
 {
   backup->set_open_tables_state(this);
   reset_open_tables_state();
@@ -2207,7 +2207,7 @@ void THD::reset_n_backup_open_tables_state(Open_tables_state *backup)
 }
 
 
-void THD::restore_backup_open_tables_state(Open_tables_state *backup)
+void Session::restore_backup_open_tables_state(Open_tables_state *backup)
 {
   /*
     Before we will throw away current open tables state we want
@@ -2222,55 +2222,55 @@ void THD::restore_backup_open_tables_state(Open_tables_state *backup)
 
 /**
   Check the killed state of a user thread
-  @param thd  user thread
+  @param session  user thread
   @retval 0 the user thread is active
   @retval 1 the user thread has been killed
 */
-extern "C" int thd_killed(const THD *thd)
+extern "C" int session_killed(const Session *session)
 {
-  return(thd->killed);
+  return(session->killed);
 }
 
 /**
   Return the thread id of a user thread
-  @param thd user thread
+  @param session user thread
   @return thread id
 */
-extern "C" unsigned long thd_get_thread_id(const THD *thd)
+extern "C" unsigned long session_get_thread_id(const Session *session)
 {
-  return((unsigned long)thd->thread_id);
+  return((unsigned long)session->thread_id);
 }
 
 
 #ifdef INNODB_COMPATIBILITY_HOOKS
-extern "C" const struct charset_info_st *thd_charset(THD *thd)
+extern "C" const struct charset_info_st *session_charset(Session *session)
 {
-  return(thd->charset());
+  return(session->charset());
 }
 
-extern "C" char **thd_query(THD *thd)
+extern "C" char **session_query(Session *session)
 {
-  return(&thd->query);
+  return(&session->query);
 }
 
-extern "C" int thd_slave_thread(const THD *thd)
+extern "C" int session_slave_thread(const Session *session)
 {
-  return(thd->slave_thread);
+  return(session->slave_thread);
 }
 
-extern "C" int thd_non_transactional_update(const THD *thd)
+extern "C" int session_non_transactional_update(const Session *session)
 {
-  return(thd->transaction.all.modified_non_trans_table);
+  return(session->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int thd_binlog_format(const THD *thd)
+extern "C" int session_binlog_format(const Session *session)
 {
-  return (int) thd->variables.binlog_format;
+  return (int) session->variables.binlog_format;
 }
 
-extern "C" void thd_mark_transaction_to_rollback(THD *thd, bool all)
+extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
 {
-  mark_transaction_to_rollback(thd, all);
+  mark_transaction_to_rollback(session, all);
 }
 #endif // INNODB_COMPATIBILITY_HOOKS */
 
@@ -2278,16 +2278,16 @@ extern "C" void thd_mark_transaction_to_rollback(THD *thd, bool all)
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
 
-  @param  thd   Thread handle
+  @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
 
-void mark_transaction_to_rollback(THD *thd, bool all)
+void mark_transaction_to_rollback(Session *session, bool all)
 {
-  if (thd)
+  if (session)
   {
-    thd->is_fatal_sub_stmt_error= true;
-    thd->transaction_rollback_request= all;
+    session->is_fatal_sub_stmt_error= true;
+    session->transaction_rollback_request= all;
   }
 }
 /***************************************************************************
@@ -2309,7 +2309,7 @@ unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
 
 void xid_free_hash(void *ptr)
 {
-  if (!((XID_STATE*)ptr)->in_thd)
+  if (!((XID_STATE*)ptr)->in_session)
     free((unsigned char*)ptr);
 }
 
@@ -2351,7 +2351,7 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
   {
     xs->xa_state=xa_state;
     xs->xid.set(xid);
-    xs->in_thd=0;
+    xs->in_session=0;
     res=my_hash_insert(&xid_cache, (unsigned char*)xs);
   }
   pthread_mutex_unlock(&LOCK_xid_cache);
@@ -2392,7 +2392,7 @@ void xid_cache_delete(XID_STATE *xid_state)
     - Events of type 'RowEventT' have the type code 'type_code'.
     
   POST CONDITION:
-    If a non-NULL pointer is returned, the pending event for thread 'thd' will
+    If a non-NULL pointer is returned, the pending event for thread 'session' will
     be an event of type 'RowEventT' (which have the type code 'type_code')
     will either empty or have enough space to hold 'needed' bytes.  In
     addition, the columns bitmap will be correct for the row, meaning that
@@ -2406,7 +2406,7 @@ void xid_cache_delete(XID_STATE *xid_state)
  */
 
 template <class RowsEventT> Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
+Session::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
 				       RowsEventT *hint __attribute__((unused)))
@@ -2482,15 +2482,15 @@ THD::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
   compiling option.
 */
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
+Session::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Write_rows_log_event*);
 
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
+Session::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
 template Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
+Session::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif
 
@@ -2608,7 +2608,7 @@ namespace {
 }
 
 
-int THD::binlog_write_row(Table* table, bool is_trans, 
+int Session::binlog_write_row(Table* table, bool is_trans, 
                           unsigned char const *record) 
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
@@ -2635,7 +2635,7 @@ int THD::binlog_write_row(Table* table, bool is_trans,
   return ev->add_row_data(row_data, len);
 }
 
-int THD::binlog_update_row(Table* table, bool is_trans,
+int Session::binlog_update_row(Table* table, bool is_trans,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 { 
@@ -2669,7 +2669,7 @@ int THD::binlog_update_row(Table* table, bool is_trans,
     ev->add_row_data(after_row, after_size);
 }
 
-int THD::binlog_delete_row(Table* table, bool is_trans, 
+int Session::binlog_delete_row(Table* table, bool is_trans, 
                            unsigned char const *record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
@@ -2697,7 +2697,7 @@ int THD::binlog_delete_row(Table* table, bool is_trans,
 }
 
 
-int THD::binlog_flush_pending_rows_event(bool stmt_end)
+int Session::binlog_flush_pending_rows_event(bool stmt_end)
 {
   /*
     We shall flush the pending event even if we are not in row-based
@@ -2751,9 +2751,9 @@ int THD::binlog_flush_pending_rows_event(bool stmt_end)
   RETURN VALUE
     Error code, or 0 if no error.
 */
-int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
+int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *query_arg,
                       ulong query_len, bool is_trans, bool suppress_use,
-                      THD::killed_state killed_status_arg)
+                      Session::killed_state killed_status_arg)
 {
   assert(query_arg && mysql_bin_log.is_open());
 
@@ -2782,11 +2782,11 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
   }
 
   switch (qtype) {
-  case THD::ROW_QUERY_TYPE:
+  case Session::ROW_QUERY_TYPE:
     if (current_stmt_binlog_row_based)
       return(0);
     /* Otherwise, we fall through */
-  case THD::DRIZZLE_QUERY_TYPE:
+  case Session::DRIZZLE_QUERY_TYPE:
     /*
       Using this query type is a conveniece hack, since we have been
       moving back and forth between using RBR for replication of
@@ -2795,7 +2795,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
       Make sure to change in check_table_binlog_row_based() according
       to how you treat this.
     */
-  case THD::STMT_QUERY_TYPE:
+  case Session::STMT_QUERY_TYPE:
     /*
       The DRIZZLE_LOG::write() function will set the STMT_END_F flag and
       flush the pending rows event if necessary.
@@ -2816,7 +2816,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     }
     break;
 
-  case THD::QUERY_TYPE_COUNT:
+  case Session::QUERY_TYPE_COUNT:
   default:
     assert(0 <= qtype && qtype < QUERY_TYPE_COUNT);
   }

@@ -24,7 +24,7 @@
 
 static bool are_plugins_loaded= false;
 
-static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
+static bool authenticate_by(Session *session, plugin_ref plugin, void* p_data)
 {
   const char *password= (const char *)p_data;
   authentication_st *auth= plugin_data(plugin, authentication_st *);
@@ -33,20 +33,20 @@ static bool authenticate_by(THD *thd, plugin_ref plugin, void* p_data)
 
   if (auth && auth->authenticate)
   {
-    if (auth->authenticate(thd, password))
+    if (auth->authenticate(session, password))
       return true;
   }
 
   return false;
 }
 
-bool authenticate_user(THD *thd, const char *password)
+bool authenticate_user(Session *session, const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)
     return true;
 
-  return plugin_foreach(thd, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(session, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 

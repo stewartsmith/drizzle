@@ -18,8 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define __need_timeval 1
-
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
 #include <libdrizzle/errmsg.h>

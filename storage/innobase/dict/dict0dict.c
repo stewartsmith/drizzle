@@ -102,7 +102,7 @@ struct charset_info_st*
 innobase_get_charset(
 /*=================*/
 				/* out: connection character set */
-	void*	mysql_thd);	/* in: MySQL thread handle */
+	void*	mysql_session);	/* in: MySQL thread handle */
 #endif /* !UNIV_HOTBACKUP */
 
 /***********************************************************************
@@ -3476,11 +3476,11 @@ dict_str_starts_with_keyword(
 /*=========================*/
 					/* out: TRUE if str starts
 					with keyword */
-	void*		mysql_thd,	/* in: MySQL thread handle */
+	void*		mysql_session,	/* in: MySQL thread handle */
 	const char*	str,		/* in: string to scan for keyword */
 	const char*	keyword)	/* in: keyword to look for */
 {
-	struct charset_info_st*	cs	= innobase_get_charset(mysql_thd);
+	struct charset_info_st*	cs	= innobase_get_charset(mysql_session);
 	ibool			success;
 
 	dict_accept(cs, str, keyword, &success);
@@ -3519,13 +3519,13 @@ dict_create_foreign_constraints(
 	mem_heap_t*		heap;
 
 	ut_a(trx);
-	ut_a(trx->mysql_thd);
+	ut_a(trx->mysql_session);
 
 	str = dict_strip_comments(sql_string);
 	heap = mem_heap_create(10000);
 
 	err = dict_create_foreign_constraints_low(
-		trx, heap, innobase_get_charset(trx->mysql_thd), str, name,
+		trx, heap, innobase_get_charset(trx->mysql_session), str, name,
 		reject_fks);
 
 	mem_heap_free(heap);
@@ -3562,9 +3562,9 @@ dict_foreign_parse_drop_constraints(
 	struct charset_info_st*	cs;
 
 	ut_a(trx);
-	ut_a(trx->mysql_thd);
+	ut_a(trx->mysql_session);
 
-	cs = innobase_get_charset(trx->mysql_thd);
+	cs = innobase_get_charset(trx->mysql_session);
 
 	*n = 0;
 

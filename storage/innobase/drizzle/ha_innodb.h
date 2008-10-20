@@ -44,7 +44,7 @@ class ha_innobase: public handler
 	row_prebuilt_t*	prebuilt;	/* prebuilt struct in InnoDB, used
 					to save CPU time with prebuilt data
 					structures*/
-	THD*		user_thd;	/* the thread handle of the user
+	Session*		user_session;	/* the thread handle of the user
 					currently using the handle; this is
 					set in external_lock function */
 	THR_LOCK_DATA	lock;
@@ -69,11 +69,10 @@ class ha_innobase: public handler
 
 	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
                                    const unsigned char* record);
-	inline void update_thd(THD* thd);
-	void update_thd();
-	int change_active_index(uint keynr);
-	int general_fetch(unsigned char* buf, uint direction, uint match_mode);
-	int innobase_read_and_init_auto_inc(uint64_t* ret);
+	int update_session(Session* session);
+	int change_active_index(uint32_t keynr);
+	int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
+	int innobase_read_and_init_auto_inc(int64_t* ret);
 	ulong innobase_autoinc_lock();
 	ulong innobase_set_max_autoinc(uint64_t auto_inc);
 	ulong innobase_reset_autoinc(uint64_t auto_inc);
@@ -140,14 +139,14 @@ class ha_innobase: public handler
 
 	void position(const unsigned char *record);
 	int info(uint);
-	int analyze(THD* thd,HA_CHECK_OPT* check_opt);
-	int optimize(THD* thd,HA_CHECK_OPT* check_opt);
+	int analyze(Session* session,HA_CHECK_OPT* check_opt);
+	int optimize(Session* session,HA_CHECK_OPT* check_opt);
 	int discard_or_import_tablespace(bool discard);
 	int extra(enum ha_extra_function operation);
         int reset();
-	int external_lock(THD *thd, int lock_type);
-	int transactional_table_lock(THD *thd, int lock_type);
-	int start_stmt(THD *thd, thr_lock_type lock_type);
+	int external_lock(Session *session, int lock_type);
+	int transactional_table_lock(Session *session, int lock_type);
+	int start_stmt(Session *session, thr_lock_type lock_type);
 	void position(unsigned char *record);
 	ha_rows records_in_range(uint inx, key_range *min_key, key_range
 								*max_key);
@@ -159,14 +158,14 @@ class ha_innobase: public handler
 	int delete_all_rows();
 	int delete_table(const char *name);
 	int rename_table(const char* from, const char* to);
-	int check(THD* thd, HA_CHECK_OPT* check_opt);
+	int check(Session* session, HA_CHECK_OPT* check_opt);
 	char* update_table_comment(const char* comment);
 	char* get_foreign_key_create_info();
-	int get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list);
+	int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);
 	bool can_switch_engines();
 	uint referenced_by_foreign_key();
 	void free_foreign_key_create_info(char* str);
-	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
+	THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 					enum thr_lock_type lock_type);
 	void init_table_handle_for_HANDLER();
         virtual void get_auto_increment(uint64_t offset, uint64_t increment,
@@ -181,10 +180,10 @@ class ha_innobase: public handler
 	/*
 	  ask handler about permission to cache table during query registration
 	*/
-	bool register_query_cache_table(THD *thd, char *table_key,
-					   uint key_length,
-					   qc_engine_callback *call_back,
-					   uint64_t *engine_data);
+        bool register_query_cache_table(Session *session, char *table_key,
+                                        uint32_t key_length,
+                                        qc_engine_callback *call_back,
+                                        uint64_t *engine_data);
 	static char *get_mysql_bin_log_name();
 	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered();
@@ -230,8 +229,8 @@ the definitions are bracketed with #ifdef INNODB_COMPATIBILITY_HOOKS */
 #endif
 
 extern "C" {
-struct charset_info_st *thd_charset(THD *thd);
-char **thd_query(THD *thd);
+struct charset_info_st *session_charset(Session *session);
+char **session_query(Session *session);
 
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
@@ -245,33 +244,33 @@ uint64_t mysql_bin_log_file_pos(void);
 
 /**
   Check if a user thread is a replication slave thread
-  @param thd  user thread
+  @param session  user thread
   @retval 0 the user thread is not a replication slave thread
   @retval 1 the user thread is a replication slave thread
 */
-int thd_slave_thread(const THD *thd);
+int session_slave_thread(const Session *session);
 
 /**
   Check if a user thread is running a non-transactional update
-  @param thd  user thread
+  @param session  user thread
   @retval 0 the user thread is not running a non-transactional update
   @retval 1 the user thread is running a non-transactional update
 */
-int thd_non_transactional_update(const THD *thd);
+int session_non_transactional_update(const Session *session);
 
 /**
   Get the user thread's binary logging format
-  @param thd  user thread
+  @param session  user thread
   @return Value to be used as index into the binlog_format_names array
 */
-int thd_binlog_format(const THD *thd);
+int session_binlog_format(const Session *session);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  thd   Thread handle
+  @param  session   Thread handle
   @param  all   TRUE <=> rollback main transaction.
 */
-void thd_mark_transaction_to_rollback(THD *thd, bool all);
+void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;

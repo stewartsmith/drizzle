@@ -53,7 +53,7 @@ int64_t Item_func_unsigned::val_int()
 
   value= val_int_from_str(&error);
   if (error < 0)
-    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to unsigned converted negative integer to it's "
                  "positive complement");
   return value;

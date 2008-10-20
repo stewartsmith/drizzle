@@ -224,3 +224,5 @@ CREATE TABLE drizzleslap.t1 (id int, name varchar(64));
 SELECT count(*) from drizzleslap.t1;
 count(*)
 20
+drop table drizzleslap.t1;
+drop schema drizzleslap;

@@ -55,7 +55,7 @@ void Item_row::illegal_method_call(const char *method __attribute__((unused)))
   return;
 }
 
-bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((unused)))
+bool Item_row::fix_fields(Session *session, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   null_value= 0;
@@ -63,7 +63,7 @@ bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((unused)))
   Item **arg, **arg_end;
   for (arg= items, arg_end= items+arg_count; arg != arg_end ; arg++)
   {
-    if ((*arg)->fix_fields(thd, arg))
+    if ((*arg)->fix_fields(session, arg))
       return true;
     // we can't assign 'item' before, because fix_fields() can change arg
     Item *item= *arg;
@@ -99,12 +99,12 @@ void Item_row::cleanup()
 }
 
 
-void Item_row::split_sum_func(THD *thd, Item **ref_pointer_array,
+void Item_row::split_sum_func(Session *session, Item **ref_pointer_array,
                               List<Item> &fields)
 {
   Item **arg, **arg_end;
   for (arg= items, arg_end= items+arg_count; arg != arg_end ; arg++)
-    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, true);
+    (*arg)->split_sum_func2(session, ref_pointer_array, fields, arg, true);
 }
 
 
@@ -176,13 +176,13 @@ Item *Item_row::transform(Item_transformer transformer, unsigned char *arg)
       return 0;
 
     /*
-      THD::change_item_tree() should be called only if the tree was
+      Session::change_item_tree() should be called only if the tree was
       really transformed, i.e. when a new item has been created.
       Otherwise we'll be allocating a lot of unnecessary memory for
       change records at each execution.
     */
     if (items[i] != new_item)
-      current_thd->change_item_tree(&items[i], new_item);
+      current_session->change_item_tree(&items[i], new_item);
   }
   return (this->*transformer)(arg);
 }

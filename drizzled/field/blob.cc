@@ -420,7 +420,7 @@ int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
 
 uint32_t Field_blob::sort_length() const
 {
-  return (uint32_t) (current_thd->variables.max_sort_length + 
+  return (uint32_t) (current_session->variables.max_sort_length + 
                    (field_charset == &my_charset_bin ? 0 : packlength));
 }
 

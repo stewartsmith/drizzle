@@ -445,7 +445,7 @@ explain extended select makedate(1997,1), addtime("31.12.97 11.59.59.999999 PM",
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select makedate(1997,1) AS "makedate(1997,1)",addtime('31.12.97 11.59.59.999999 PM','1 1.1.1.000002') AS "addtime(""31.12.97 11.59.59.999999 PM"", ""1 1.1.1.000002"")",subtime('31.12.97 11.59.59.999999 PM','1 1.1.1.000002') AS "subtime(""31.12.97 11.59.59.999999 PM"", ""1 1.1.1.000002"")",timediff('01.01.97 11:59:59.000001 PM','31.12.95 11:59:59.000002 PM') AS "timediff(""01.01.97 11:59:59.000001 PM"",""31.12.95 11:59:59.000002 PM"")",cast(str_to_date('15-01-2001 12:59:59','%d-%m-%Y %H:%i:%S') as time) AS "cast(str_to_date(""15-01-2001 12:59:59"", ""%d-%m-%Y %H:%i:%S"") as TIME)",maketime(23,11,12) AS "maketime(23,11,12)",microsecond('1997-12-31 23:59:59.000001') AS "microsecond(""1997-12-31 23:59:59.000001"")"
+Note	1003	select makedate(1997,1) AS `makedate(1997,1)`,addtime('31.12.97 11.59.59.999999 PM','1 1.1.1.000002') AS `addtime("31.12.97 11.59.59.999999 PM", "1 1.1.1.000002")`,subtime('31.12.97 11.59.59.999999 PM','1 1.1.1.000002') AS `subtime("31.12.97 11.59.59.999999 PM", "1 1.1.1.000002")`,timediff('01.01.97 11:59:59.000001 PM','31.12.95 11:59:59.000002 PM') AS `timediff("01.01.97 11:59:59.000001 PM","31.12.95 11:59:59.000002 PM")`,cast(str_to_date('15-01-2001 12:59:59','%d-%m-%Y %H:%i:%S') as time) AS `cast(str_to_date("15-01-2001 12:59:59", "%d-%m-%Y %H:%i:%S") as TIME)`,maketime(23,11,12) AS `maketime(23,11,12)`,microsecond('1997-12-31 23:59:59.000001') AS `microsecond("1997-12-31 23:59:59.000001")`
 create table t1 (d date);
 insert into t1 values ('2004-07-14'),('2005-07-14');
 select date_format(d,"%d") from t1 order by 1;
@@ -506,22 +506,6 @@ f1	f2
 Warnings:
 Warning	1292	Truncated incorrect date value: '2003-04-05  g'
 Warning	1292	Truncated incorrect datetime value: '2003-04-05 10:11:12.101010234567'
-set names latin1;
-select date_format('2004-01-01','%W (%a), %e %M (%b) %Y');
-date_format('2004-01-01','%W (%a), %e %M (%b) %Y')
-Thursday (Thu), 1 January (Jan) 2004
-set lc_time_names=ru_RU;
-set names koi8r;
-select date_format('2004-01-01','%W (%a), %e %M (%b) %Y');
-date_format('2004-01-01','%W (%a), %e %M (%b) %Y')
-Четверг (Чтв), 1 Января (Янв) 2004
-set lc_time_names=de_DE;
-set names latin1;
-select date_format('2004-01-01','%W (%a), %e %M (%b) %Y');
-date_format('2004-01-01','%W (%a), %e %M (%b) %Y')
-Donnerstag (Do), 1 Januar (Jan) 2004
-set names latin1;
-set lc_time_names=en_US;
 create table t1 (f1 datetime);
 insert into t1 (f1) values ("2005-01-01");
 insert into t1 (f1) values ("2005-02-01");

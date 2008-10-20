@@ -72,7 +72,7 @@ String *Item_func_compress::val_str(String *str)
 		     (const Bytef*)res->ptr(), res->length())) != Z_OK)
   {
     code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
-    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
+    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
     null_value= 1;
     return 0;
   }

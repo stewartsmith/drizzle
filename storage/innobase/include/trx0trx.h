@@ -348,7 +348,7 @@ trx_commit_step(
 /**************************************************************************
 Prints info about a transaction to the given file. The caller must own the
 kernel mutex and must have called
-innobase_mysql_prepare_print_arbitrary_thd(), unless he knows that MySQL
+innobase_mysql_prepare_print_arbitrary_session(), unless he knows that MySQL
 or InnoDB cannot meanwhile change the info printed here. */
 UNIV_INTERN
 void
@@ -549,9 +549,9 @@ struct trx_struct{
 	dulint		table_id;	/* Table to drop iff dict_operation
 					is TRUE, or ut_dulint_zero. */
 	/*------------------------------*/
-	void*		mysql_thd;	/* MySQL thread handle corresponding
+	void*		mysql_session;	/* MySQL thread handle corresponding
 					to this trx, or NULL */
-	char**		mysql_query_str;/* pointer to the field in mysqld_thd
+	char**		mysql_query_str;/* pointer to the field in mysqld_session
 					which contains the pointer to the
 					current SQL query string */
 	const char*	mysql_log_file_name;

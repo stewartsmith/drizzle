@@ -28,12 +28,12 @@ void Item_func_connection_id::fix_length_and_dec()
 }
 
 
-bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
+bool Item_func_connection_id::fix_fields(Session *session, Item **ref)
 {
-  if (Item_int_func::fix_fields(thd, ref))
+  if (Item_int_func::fix_fields(session, ref))
     return true;
-  thd->thread_specific_used= true;
-  value= thd->variables.pseudo_thread_id;
+  session->thread_specific_used= true;
+  value= session->variables.pseudo_thread_id;
   return false;
 }
 

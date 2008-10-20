@@ -236,9 +236,9 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
 };
 
 
-void dummy_error_processor(THD *thd, void *data);
+void dummy_error_processor(Session *session, void *data);
 
-void view_error_processor(THD *thd, void *data);
+void view_error_processor(Session *session, void *data);
 
 /*
   Instances of Name_resolution_context store the information necesary for
@@ -298,7 +298,7 @@ struct Name_resolution_context: Sql_alloc
     hide underlying tables in errors about views (i.e. it substitute some
     errors for views)
   */
-  void (*error_processor)(THD *, void *);
+  void (*error_processor)(Session *, void *);
   void *error_processor_data;
 
   /*
@@ -334,9 +334,9 @@ struct Name_resolution_context: Sql_alloc
     resolve_in_select_list= false;
   }
 
-  void process_error(THD *thd)
+  void process_error(Session *session)
   {
-    (*error_processor)(thd, error_processor_data);
+    (*error_processor)(session, error_processor_data);
   }
 };
 
@@ -503,7 +503,7 @@ public:
      top AND/OR structure of WHERE clause to protect it of
      optimisation changes in prepared statements
   */
-  Item(THD *thd, Item *item);
+  Item(Session *session, Item *item);
   virtual ~Item()
   {
 #ifdef EXTRA_DEBUG
@@ -516,7 +516,7 @@ public:
   virtual void cleanup();
   virtual void make_field(Send_field *field);
   Field *make_string_field(Table *table);
-  virtual bool fix_fields(THD *, Item **);
+  virtual bool fix_fields(Session *, Item **);
   /*
     Fix after some tables has been pulled out. Basically re-calculate all
     attributes that are dependent on the tables.
@@ -774,11 +774,11 @@ public:
 
   void print_item_w_name(String *, enum_query_type query_type);
   virtual void update_used_tables() {}
-  virtual void split_sum_func(THD *thd __attribute__((unused)),
+  virtual void split_sum_func(Session *session __attribute__((unused)),
                               Item **ref_pointer_array __attribute__((unused)),
                               List<Item> &fields __attribute__((unused))) {}
   /* Called for items that really have to be split */
-  void split_sum_func2(THD *thd, Item **ref_pointer_array, List<Item> &fields,
+  void split_sum_func2(Session *session, Item **ref_pointer_array, List<Item> &fields,
                        Item **ref, bool skip_registered);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
@@ -822,12 +822,12 @@ public:
     set value of aggregate function in case of no rows for grouping were found
   */
   virtual void no_rows_in_result(void) {}
-  virtual Item *copy_or_same(THD *thd __attribute__((unused)))
+  virtual Item *copy_or_same(Session *session __attribute__((unused)))
   { return this; }
-  virtual Item *copy_andor_structure(THD *thd  __attribute__((unused)))
+  virtual Item *copy_andor_structure(Session *session  __attribute__((unused)))
   { return this; }
   virtual Item *real_item(void) { return this; }
-  virtual Item *get_tmp_table_item(THD *thd) { return copy_or_same(thd); }
+  virtual Item *get_tmp_table_item(Session *session) { return copy_or_same(session); }
 
   static const CHARSET_INFO *default_charset();
   virtual const CHARSET_INFO *compare_collation() { return NULL; }
@@ -931,7 +931,7 @@ public:
     For SP local variable returns address of pointer to Item representing its
     current value and pointer passed via parameter otherwise.
   */
-  virtual Item **this_item_addr(THD *thd __attribute__((unused)), Item **addr_arg) { return addr_arg; }
+  virtual Item **this_item_addr(Session *session __attribute__((unused)), Item **addr_arg) { return addr_arg; }
 
   // Row emulation
   virtual uint32_t cols() { return 1; }
@@ -946,7 +946,7 @@ public:
   Field *tmp_table_field_from_field_type(Table *table, bool fixed_length);
   virtual Item_field *filed_for_view_update() { return 0; }
 
-  virtual Item *neg_transformer(THD *thd __attribute__((unused))) { return NULL; }
+  virtual Item *neg_transformer(Session *session __attribute__((unused))) { return NULL; }
   virtual Item *update_value_transformer(unsigned char *select_arg __attribute__((unused))) { return this; }
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   void delete_self()
@@ -1057,14 +1057,14 @@ public:
   Item_ident(Name_resolution_context *context_arg,
              const char *db_name_arg, const char *table_name_arg,
              const char *field_name_arg);
-  Item_ident(THD *thd, Item_ident *item);
+  Item_ident(Session *session, Item_ident *item);
   const char *full_name() const;
   void cleanup();
   bool remove_dependence_processor(unsigned char * arg);
   virtual void print(String *str, enum_query_type query_type);
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
-  friend bool insert_fields(THD *thd, Name_resolution_context *context,
+  friend bool insert_fields(Session *session, Name_resolution_context *context,
                             const char *db_name,
                             const char *table_name, List_iterator<Item> *it,
                             bool any_privileges);
@@ -1116,13 +1116,13 @@ public:
   /*
     Constructor needed to process subselect with temporary tables (see Item)
   */
-  Item_field(THD *thd, Item_field *item);
+  Item_field(Session *session, Item_field *item);
   /*
     Constructor used inside setup_wild(), ensures that field, table,
     and database names will live as long as Item_field (this is important
     in prepared statements).
   */
-  Item_field(THD *thd, Name_resolution_context *context_arg, Field *field);
+  Item_field(Session *session, Name_resolution_context *context_arg, Field *field);
   /*
     If this constructor is used, fix_fields() won't work, because
     db_name, table_name and column_name are unknown. It's necessary to call
@@ -1142,7 +1142,7 @@ public:
   bool val_bool_result();
   bool send(Protocol *protocol, String *str_arg);
   void reset_field(Field *f);
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
   void make_field(Send_field *tmp_field);
   int save_in_field(Field *field,bool no_conversions);
@@ -1172,7 +1172,7 @@ public:
   bool get_time(DRIZZLE_TIME *ltime);
   bool is_null() { return field->is_null(); }
   void update_null_value();
-  Item *get_tmp_table_item(THD *thd);
+  Item *get_tmp_table_item(Session *session);
   bool collect_item_field_processor(unsigned char * arg);
   bool find_item_in_field_list_processor(unsigned char *arg);
   bool register_field_in_read_map(unsigned char *arg);
@@ -1192,7 +1192,7 @@ public:
   inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  int fix_outer_field(THD *thd, Field **field, Item **reference);
+  int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual void print(String *str, enum_query_type query_type);
 
@@ -1346,7 +1346,7 @@ public:
   bool set_longdata(const char *str, ulong length);
   void set_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type type,
                 uint32_t max_length_arg);
-  bool set_from_user_var(THD *thd, const user_var_entry *entry);
+  bool set_from_user_var(Session *session, const user_var_entry *entry);
   void reset();
   /*
     Assign placeholder value from bind data.
@@ -1358,7 +1358,7 @@ public:
 
   const String *query_val_str(String *str) const;
 
-  bool convert_str_value(THD *thd);
+  bool convert_str_value(Session *session);
 
   /*
     If value for parameter was not set we treat it as non-const
@@ -1809,8 +1809,8 @@ public:
   Field *result_field;				/* Save result here */
   Item_result_field() :result_field(0) {}
   // Constructor used for Item_sum/Item_cond_and/or (see Item comment)
-  Item_result_field(THD *thd, Item_result_field *item):
-    Item(thd, item), result_field(item->result_field)
+  Item_result_field(Session *session, Item_result_field *item):
+    Item(session, item), result_field(item->result_field)
   {}
   ~Item_result_field() {}			/* Required with gcc 2.95 */
   Field *get_tmp_table_field() { return result_field; }
@@ -1862,8 +1862,8 @@ public:
            bool alias_name_used_arg= false);
 
   /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_ref(THD *thd, Item_ref *item)
-    :Item_ident(thd, item), result_field(item->result_field), ref(item->ref) {}
+  Item_ref(Session *session, Item_ref *item)
+    :Item_ident(session, item), result_field(item->result_field), ref(item->ref) {}
   enum Type type() const		{ return REF_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const
   { 
@@ -1884,7 +1884,7 @@ public:
   bool val_bool_result();
   bool send(Protocol *prot, String *tmp);
   void make_field(Send_field *field);
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
   int save_in_field(Field *field, bool no_conversions);
   void save_org_in_field(Field *field);
@@ -1892,7 +1892,7 @@ public:
   enum_field_types field_type() const   { return (*ref)->field_type(); }
   Field *get_tmp_table_field()
   { return result_field ? result_field : (*ref)->get_tmp_table_field(); }
-  Item *get_tmp_table_item(THD *thd);
+  Item *get_tmp_table_item(Session *session);
   table_map used_tables() const		
   {
     return depended_from ? OUTER_REF_TABLE_BIT : (*ref)->used_tables(); 
@@ -1971,7 +1971,7 @@ public:
               field_name_arg, alias_name_used_arg)
   {}
   /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_direct_ref(THD *thd, Item_direct_ref *item) : Item_ref(thd, item) {}
+  Item_direct_ref(Session *session, Item_direct_ref *item) : Item_ref(session, item) {}
 
   double val_real();
   int64_t val_int();
@@ -1995,14 +1995,14 @@ public:
                   const char *field_name_arg)
     :Item_direct_ref(context_arg, item, table_name_arg, field_name_arg) {}
   /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_direct_view_ref(THD *thd, Item_direct_ref *item)
-    :Item_direct_ref(thd, item) {}
+  Item_direct_view_ref(Session *session, Item_direct_ref *item)
+    :Item_direct_ref(session, item) {}
 
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   bool eq(const Item *item, bool binary_cmp) const;
-  Item *get_tmp_table_item(THD *thd)
+  Item *get_tmp_table_item(Session *session)
   {
-    Item *item= Item_ref::get_tmp_table_item(thd);
+    Item *item= Item_ref::get_tmp_table_item(session);
     item->name= name;
     return item;
   }
@@ -2054,7 +2054,7 @@ public:
   {
     outer_ref->save_org_in_field(result_field);
   }
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
   table_map used_tables() const
   {
@@ -2200,7 +2200,7 @@ class Cached_item_str :public Cached_item
   Item *item;
   String value,tmp_value;
 public:
-  Cached_item_str(THD *thd, Item *arg);
+  Cached_item_str(Session *session, Item *arg);
   bool cmp(void);
   ~Cached_item_str();                           // Deallocate String:s
 };
@@ -2264,7 +2264,7 @@ public:
      arg(a) {}
   enum Type type() const { return DEFAULT_VALUE_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   virtual void print(String *str, enum_query_type query_type);
   int save_in_field(Field *field_arg, bool no_conversions);
   table_map used_tables() const { return (table_map)0L; }
@@ -2297,7 +2297,7 @@ public:
                (const char *)NULL),
      arg(a) {}
   bool eq(const Item *item, bool binary_cmp) const;
-  bool fix_fields(THD *, Item **);
+  bool fix_fields(Session *, Item **);
   virtual void print(String *str, enum_query_type query_type);
   int save_in_field(Field *field_arg, bool no_conversions)
   {
@@ -2540,7 +2540,7 @@ protected:
   /* It is used to count decimal precision in join_types */
   int prev_decimal_int_part;
 public:
-  Item_type_holder(THD*, Item*);
+  Item_type_holder(Session*, Item*);
 
   Item_result result_type() const;
   enum_field_types field_type() const { return fld_type; };
@@ -2549,7 +2549,7 @@ public:
   int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
-  bool join_types(THD *thd, Item *);
+  bool join_types(Session *session, Item *);
   Field *make_field_by_type(Table *table);
   static uint32_t display_length(Item *item);
   static enum_field_types get_real_type(Item *);
@@ -2557,15 +2557,15 @@ public:
 
 
 class st_select_lex;
-void mark_select_range_as_dependent(THD *thd,
+void mark_select_range_as_dependent(Session *session,
                                     st_select_lex *last_select,
                                     st_select_lex *current_sel,
                                     Field *found_field, Item *found_item,
                                     Item_ident *resolved_item);
 
-extern Cached_item *new_Cached_item(THD *thd, Item *item,
+extern Cached_item *new_Cached_item(Session *session, Item *item,
                                     bool use_result_field);
-extern void resolve_const_item(THD *thd, Item **ref, Item *cmp_item);
+extern void resolve_const_item(Session *session, Item **ref, Item *cmp_item);
 extern bool field_is_equal_to_item(Field *field,Item *item);
 
 #endif

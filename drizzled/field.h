@@ -109,7 +109,7 @@ public:
   unsigned char		*ptr;			// Position to field in record
   unsigned char		*null_ptr;		// Byte where null_bit is
   /*
-    Note that you can use table->in_use as replacement for current_thd member 
+    Note that you can use table->in_use as replacement for current_session member 
     only inside of val_*() and store() members (e.g. you can't use it in cons)
   */
   Table *table;		// Pointer for table
@@ -556,7 +556,7 @@ public:
 
   /* Hash value */
   virtual void hash(uint32_t *nr, uint32_t *nr2);
-  friend bool reopen_table(THD *,Table *,bool);
+  friend bool reopen_table(Session *,Table *,bool);
   friend int cre_myisam(char * name, register Table *form, uint32_t options,
 			uint64_t auto_increment_value);
   friend class Copy_field;
@@ -662,7 +662,7 @@ public:
                           uint32_t max_length, uint32_t decimals,
                           bool maybe_null, bool is_unsigned);
 
-  bool init(THD *thd, char *field_name, enum_field_types type, char *length,
+  bool init(Session *session, char *field_name, enum_field_types type, char *length,
             char *decimals, uint32_t type_modifier, Item *default_value,
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, const CHARSET_INFO * const cs,
