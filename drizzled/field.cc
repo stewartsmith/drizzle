@@ -1559,7 +1559,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 uint32_t pack_length_to_packflag(uint32_t type)
 {
   switch (type) {
-    case 1: return (((int) (DRIZZLE_TYPE_TINY)) << FIELDFLAG_PACK_SHIFT);
+    case 1: return 1 << FIELDFLAG_PACK_SHIFT;
     case 2: assert(1);
     case 3: assert(1);
     case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
