@@ -332,7 +332,7 @@ typedef struct st_vio Vio;
 #define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
 /* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
-enum enum_field_types { DRIZZLE_TYPE_TINY=1,
+enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,   DRIZZLE_TYPE_TIMESTAMP,
