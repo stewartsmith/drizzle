@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
@@ -332,7 +332,7 @@ typedef struct st_vio Vio;
 #define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
 /* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
-enum enum_field_types { DRIZZLE_TYPE_TINY=1,
+enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,   DRIZZLE_TYPE_TIMESTAMP,
@@ -340,10 +340,11 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_DATETIME,
                         DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-			                  DRIZZLE_TYPE_VIRTUAL=252,
-                        DRIZZLE_TYPE_NEWDECIMAL=253,
-                        DRIZZLE_TYPE_ENUM=254,
-                        DRIZZLE_TYPE_BLOB=255
+			                  DRIZZLE_TYPE_VIRTUAL,
+                        DRIZZLE_TYPE_NEWDECIMAL,
+                        DRIZZLE_TYPE_ENUM,
+                        DRIZZLE_TYPE_BLOB,
+                        DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
 

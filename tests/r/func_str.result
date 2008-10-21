@@ -714,13 +714,13 @@ create table t1 (i int);
 insert into t1 values (1000000000),(1);
 select lpad(i, 7, ' ') as t from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					t	10	7	7	Y	128	31	63
+def					t	9	7	7	Y	128	31	63
 t
 1000000
       1
 select rpad(i, 7, ' ') as t from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					t	10	7	7	Y	128	31	63
+def					t	9	7	7	Y	128	31	63
 t
 1000000
 1      
