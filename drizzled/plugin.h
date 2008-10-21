@@ -60,8 +60,10 @@ typedef struct st_mysql_xid DRIZZLE_XID;
 #define DRIZZLE_AUTH_PLUGIN            8  /* Authorization */
 #define DRIZZLE_CONFIGVAR_PLUGIN       9  /* Configuration Variables */
 #define DRIZZLE_QCACHE_PLUGIN         10  /* Query Cache */
+#define DRIZZLE_PARSER_PLUGIN         11  /* Language Parser */
+#define DRIZZLE_SCHEDULING_PLUGIN     12  /* Thread and Session Scheduling */
 
-#define DRIZZLE_MAX_PLUGIN_TYPE_NUM   11  /* The number of plugin types */
+#define DRIZZLE_MAX_PLUGIN_TYPE_NUM   13  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0

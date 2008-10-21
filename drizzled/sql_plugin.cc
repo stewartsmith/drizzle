@@ -21,6 +21,8 @@
 #include <errmsg.h>
 #include <configvar.h>
 #include <qcache.h>
+#include <parser.h>
+#include <scheduling.h>
 
 #include <string>
 
@@ -55,7 +57,9 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("ERRMSG") },
   { C_STRING_WITH_LEN("AUTH") },
   { C_STRING_WITH_LEN("CONFIGVAR") },
-  { C_STRING_WITH_LEN("QCACHE") }
+  { C_STRING_WITH_LEN("QCACHE") },
+  { C_STRING_WITH_LEN("PARSER") }
+  { C_STRING_WITH_LEN("SCHEDULING") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
@@ -81,7 +85,9 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   errmsg_initializer,  /* Error Messages */
   authentication_initializer,  /* Auth */
   configvar_initializer,
-  qcache_initializer
+  qcache_initializer,
+  parser_initializer,
+  scheduling_initializer
 };
 
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
@@ -96,7 +102,9 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   errmsg_finalizer,  /* Logger */
   authentication_finalizer,  /* Auth */
   configvar_finalizer,
-  qcache_finalizer
+  qcache_finalizer,
+  parser_finalizer,
+  scheduling_finalizer
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";

@@ -54,6 +54,8 @@ dist_drizzledinclude_HEADERS =	error.h \
 				plugin_errmsg.h \
 				plugin_configvar.h \
 				plugin_qcache.h \
+				plugin_parser.h \
+				plugin_scheduling.h \
 				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la libyacc.la
@@ -82,6 +84,8 @@ noinst_HEADERS = item.h \
 		 logging.h \
 		 errmsg.h \
 		 configvar.h \
+		 parser.h \
+		 scheduling.h \
 		 qcache.h \
                  key_map.h \
 		 item_func.h \
@@ -162,6 +166,8 @@ drizzled_SOURCES = \
 		   logging.cc \
 		   errmsg.cc \
 		   configvar.cc \
+		   parser.cc \
+		   ssheduler.cc \
 		   qcache.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
