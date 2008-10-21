@@ -22,6 +22,8 @@
 #include <configvar.h>
 #include <qcache.h>
 
+#include <string>
+
 #include <drizzled/drizzled_error_messages.h>
 
 #define REPORT_TO_LOG  1
@@ -29,6 +31,8 @@
 
 #define plugin_ref_to_int(A) (A ? A[0] : NULL)
 #define plugin_int_to_ref(A) &(A)
+
+using namespace std;
 
 extern struct st_mysql_plugin *mysqld_builtins[];
 
@@ -324,11 +328,12 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
-  char dlpath[FN_REFLEN];
-  uint32_t plugin_dir_len, dummy_errors, dlpathlen;
+  string dlpath;
+  uint32_t plugin_dir_len, dummy_errors;
   struct st_plugin_dl *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
+  dlpath.reserve(FN_REFLEN);
   /*
     Ensure that the dll doesn't have a path.
     This is done to ensure that only approved libraries from the
@@ -353,24 +358,25 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   }
   memset(&plugin_dl, 0, sizeof(plugin_dl));
   /* Compile dll path */
-  dlpathlen=
-    strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", dl->str, NULL) -
-    dlpath;
+  dlpath.append(opt_plugin_dir);
+  dlpath.append("/");
+  dlpath.append(dl->str);
   plugin_dl.ref_count= 1;
   /* Open new dll handle */
-  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_LAZY|RTLD_GLOBAL)))
+  if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
   {
     const char *errmsg=dlerror();
-    if (!strncmp(dlpath, errmsg, dlpathlen))
+    uint32_t dlpathlen= dlpath.length();
+    if (!dlpath.compare(0, dlpathlen, errmsg))
     { // if errmsg starts from dlpath, trim this prefix.
       errmsg+=dlpathlen;
       if (*errmsg == ':') errmsg++;
       if (*errmsg == ' ') errmsg++;
     }
     if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath, errno, errmsg);
+      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath.c_str(), errno, errmsg);
     if (report & REPORT_TO_LOG)
-      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath, errno, errmsg);
+      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
     return(0);
   }
 

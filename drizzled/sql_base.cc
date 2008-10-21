@@ -4597,7 +4597,13 @@ find_field_in_tables(Session *session, Item_ident *item,
     char buff[NAME_LEN*2+1];
     if (db && db[0])
     {
-      strxnmov(buff,sizeof(buff)-1,db,".",table_name,NULL);
+      /* We're in an error condition, two extra strlen's aren't going
+       * to kill us */
+      assert(strlen(db) <= NAME_LEN);
+      assert(strlen(table_name) <= NAME_LEN);
+      strcpy(buff, db);
+      strcat(buff,".");
+      strcat(buff, table_name);
       table_name=buff;
     }
     my_error(ER_UNKNOWN_TABLE, MYF(0), table_name, session->where);
