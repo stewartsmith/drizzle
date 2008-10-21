@@ -617,7 +617,7 @@ ha_innobase::add_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	heap = mem_heap_create(1024);
 
@@ -630,11 +630,11 @@ ha_innobase::add_index(
 	trx = trx_allocate_for_mysql();
 	trx_start_if_not_started(trx);
 
-	trans_register_ha(user_thd, FALSE, ht);
+	trans_register_ha(user_session, FALSE, ht);
 	prebuilt->trx->active_trans = 1;
 
-	trx->mysql_thd = user_thd;
-	trx->mysql_query_str = thd_query(user_thd);
+	trx->mysql_session = user_session;
+	trx->mysql_query_str = session_query(user_session);
 
 	innodb_table = indexed_table
 		= dict_table_get(prebuilt->table->name, FALSE);
@@ -716,7 +716,7 @@ err_exit:
 			default:
 				error = convert_error_code_to_mysql(
 					trx->error_state, innodb_table->flags,
-					user_thd);
+					user_session);
 			}
 
 			row_mysql_unlock_data_dictionary(trx);
@@ -870,7 +870,7 @@ error:
 convert_error:
 		error = convert_error_code_to_mysql(error,
 						    innodb_table->flags,
-						    user_thd);
+						    user_session);
 	}
 
 	mem_heap_free(heap);
@@ -913,7 +913,7 @@ ha_innobase::prepare_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx = prebuilt->trx;
@@ -979,7 +979,7 @@ ha_innobase::prepare_drop_index(
 	is later deleted. */
 
 	if (trx->check_foreigns
-	    && thd_sql_command(user_thd) != SQLCOM_CREATE_INDEX) {
+	    && session_sql_command(user_session) != SQLCOM_CREATE_INDEX) {
 		dict_index_t*	index
 			= dict_table_get_first_index(prebuilt->table);
 
@@ -1068,7 +1068,7 @@ ha_innobase::final_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_thd();
+	update_session();
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 
@@ -1077,11 +1077,11 @@ ha_innobase::final_drop_index(
 	trx = trx_allocate_for_mysql();
 	trx_start_if_not_started(trx);
 
-	trans_register_ha(user_thd, FALSE, ht);
+	trans_register_ha(user_session, FALSE, ht);
 	prebuilt->trx->active_trans = 1;
 
-	trx->mysql_thd = user_thd;
-	trx->mysql_query_str = thd_query(user_thd);
+	trx->mysql_session = user_session;
+	trx->mysql_query_str = session_query(user_session);
 
 	/* Flag this transaction as a dictionary operation, so that
 	the data dictionary will be locked in crash recovery. */
@@ -1091,7 +1091,7 @@ ha_innobase::final_drop_index(
 	transaction depends on an index that is being dropped. */
 	err = convert_error_code_to_mysql(
 		row_merge_lock_table(prebuilt->trx, prebuilt->table, LOCK_X),
-		prebuilt->table->flags, user_thd);
+		prebuilt->table->flags, user_session);
 
 	if (UNIV_UNLIKELY(err)) {
 

@@ -49,7 +49,7 @@ static const char plugin_author[] = "Innobase Oy";
 #define RETURN_IF_INNODB_NOT_STARTED(plugin_name)			\
 do {									\
 	if (!srv_was_started) {						\
-		push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,	\
+		push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,	\
 				    ER_CANT_FIND_SYSTEM_REC,		\
 				    "InnoDB: SELECTing from "		\
 				    "INFORMATION_SCHEMA.%s but "	\
@@ -99,7 +99,7 @@ time_t			DRIZZLE_TYPE_DATETIME
 */
 
 /* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
-bool schema_table_store_record(THD *thd, Table *table);
+bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
 /***********************************************************************
@@ -112,7 +112,7 @@ int
 trx_i_s_common_fill_table(
 /*======================*/
 				/* out: 0 on success */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond);	/* in: condition (not used) */
 
@@ -142,7 +142,7 @@ field_store_time_t(
 #if 0
 	/* use this if you are sure that `variables' and `time_zone'
 	are always initialized */
-	thd->variables.time_zone->gmt_sec_to_TIME(
+	session->variables.time_zone->gmt_sec_to_TIME(
 		&my_time, (my_time_t) time);
 #else
 	localtime_r(&time, &tm_time);
@@ -293,7 +293,7 @@ fill_innodb_trx_from_cache(
 /*=======================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: used to call
+	Session*			session,	/* in: used to call
 					schema_table_store_record() */
 	Table*			table)	/* in/out: fill this table */
 {
@@ -361,7 +361,7 @@ fill_innodb_trx_from_cache(
 		OK(field_store_string(fields[IDX_TRX_QUERY],
 				      row->trx_query));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
 	return(0);
@@ -537,7 +537,7 @@ fill_innodb_locks_from_cache(
 /*=========================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: MySQL client connection */
+	Session*			session,	/* in: MySQL client connection */
 	Table*			table)	/* in/out: fill this table */
 {
 	Field**	fields;
@@ -593,7 +593,7 @@ fill_innodb_locks_from_cache(
 		bufend = innobase_convert_name(buf, sizeof(buf),
 					       row->lock_table,
 					       strlen(row->lock_table),
-					       thd, TRUE);
+					       session, TRUE);
 		OK(fields[IDX_LOCK_TABLE]->store(buf, bufend - buf,
 						 system_charset_info));
 
@@ -603,7 +603,7 @@ fill_innodb_locks_from_cache(
 			bufend = innobase_convert_name(buf, sizeof(buf),
 						       row->lock_index,
 						       strlen(row->lock_index),
-						       thd, FALSE);
+						       session, FALSE);
 			OK(fields[IDX_LOCK_INDEX]->store(buf, bufend - buf,
 							 system_charset_info));
 			fields[IDX_LOCK_INDEX]->set_notnull();
@@ -628,7 +628,7 @@ fill_innodb_locks_from_cache(
 		OK(field_store_string(fields[IDX_LOCK_DATA],
 				      row->lock_data));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
 	return(0);
@@ -749,7 +749,7 @@ fill_innodb_lock_waits_from_cache(
 /*==============================*/
 					/* out: 0 on success */
 	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	THD*			thd,	/* in: used to call
+	Session*			session,	/* in: used to call
 					schema_table_store_record() */
 	Table*			table)	/* in/out: fill this table */
 {
@@ -803,7 +803,7 @@ fill_innodb_lock_waits_from_cache(
 				   blocking_lock_id,
 				   sizeof(blocking_lock_id))));
 
-		OK(schema_table_store_record(thd, table));
+		OK(schema_table_store_record(session, table));
 	}
 
 	return(0);
@@ -883,7 +883,7 @@ int
 trx_i_s_common_fill_table(
 /*======================*/
 				/* out: 0 on success */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		)	/* in: condition (not used) */
 {
@@ -921,7 +921,7 @@ trx_i_s_common_fill_table(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -929,7 +929,7 @@ trx_i_s_common_fill_table(
 	} else if (innobase_strcasecmp(table_name, "innodb_locks") == 0) {
 
 		if (fill_innodb_locks_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -937,7 +937,7 @@ trx_i_s_common_fill_table(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, thd, tables->table) != 0) {
+			cache, session, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -1034,7 +1034,7 @@ int
 i_s_cmp_fill_low(
 /*=============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		,	/* in: condition (ignored) */
 	ibool		reset)	/* in: TRUE=reset cumulated counts */
@@ -1068,7 +1068,7 @@ i_s_cmp_fill_low(
 			memset(zip_stat, 0, sizeof *zip_stat);
 		}
 
-		if (schema_table_store_record(thd, table)) {
+		if (schema_table_store_record(session, table)) {
 			status = 1;
 			break;
 		}
@@ -1084,11 +1084,11 @@ int
 i_s_cmp_fill(
 /*=========*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmp_fill_low(thd, tables, cond, FALSE));
+	return(i_s_cmp_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
@@ -1098,11 +1098,11 @@ int
 i_s_cmp_reset_fill(
 /*===============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmp_fill_low(thd, tables, cond, TRUE));
+	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
 }
 
 /***********************************************************************
@@ -1285,7 +1285,7 @@ int
 i_s_cmpmem_fill_low(
 /*================*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		,	/* in: condition (ignored) */
 	ibool		reset)	/* in: TRUE=reset cumulated counts */
@@ -1315,7 +1315,7 @@ i_s_cmpmem_fill_low(
 			buddy_stat->relocated_usec = 0;
 		}
 
-		if (schema_table_store_record(thd, table)) {
+		if (schema_table_store_record(session, table)) {
 			status = 1;
 			break;
 		}
@@ -1332,11 +1332,11 @@ int
 i_s_cmpmem_fill(
 /*============*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmpmem_fill_low(thd, tables, cond, FALSE));
+	return(i_s_cmpmem_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
@@ -1346,11 +1346,11 @@ int
 i_s_cmpmem_reset_fill(
 /*==================*/
 				/* out: 0 on success, 1 on failure */
-	THD*		thd,	/* in: thread */
+	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
 {
-	return(i_s_cmpmem_fill_low(thd, tables, cond, TRUE));
+	return(i_s_cmpmem_fill_low(session, tables, cond, TRUE));
 }
 
 /***********************************************************************

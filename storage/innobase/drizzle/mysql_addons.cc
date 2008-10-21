@@ -29,14 +29,14 @@ Created November 07, 2007 Vasil Dimov
 #include "univ.i"
 
 /***********************************************************************
-Retrieve THD::thread_id
+Retrieve Session::thread_id
 http://bugs.mysql.com/30930 */
 extern "C" UNIV_INTERN
 unsigned long
-ib_thd_get_thread_id(
+ib_session_get_thread_id(
 /*=================*/
-				/* out: THD::thread_id */
-	const void*	thd)	/* in: THD */
+				/* out: Session::thread_id */
+	const void*	session)	/* in: Session */
 {
-  return(thd_get_thread_id((const THD*)thd));
+  return(session_get_thread_id((const Session*)session));
 }

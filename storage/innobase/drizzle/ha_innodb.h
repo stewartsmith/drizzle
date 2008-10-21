@@ -69,10 +69,11 @@ class ha_innobase: public handler
 
 	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
                                    const unsigned char* record);
-	int update_session(Session* session);
+	void update_session();
+	void update_session(Session* session);
 	int change_active_index(uint32_t keynr);
 	int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
-	int innobase_read_and_init_auto_inc(int64_t* ret);
+	int innobase_read_and_init_auto_inc(uint64_t* ret);
 	ulong innobase_autoinc_lock();
 	ulong innobase_set_max_autoinc(uint64_t auto_inc);
 	ulong innobase_reset_autoinc(uint64_t auto_inc);
@@ -285,4 +286,4 @@ convert_error_code_to_mysql(
 				/* out: MySQL error code */
 	int		error,	/* in: InnoDB error code */
 	ulint		flags,	/* in: InnoDB table flags, or 0 */
-	THD	        *thd);	/* in: user thread handle or NULL */
+	Session	        *session);	/* in: user thread handle or NULL */

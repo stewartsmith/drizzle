@@ -20,14 +20,22 @@ extern "C" {
 #endif /* __cplusplus */
 
 /***********************************************************************
-Retrieve THD::thread_id
+Retrieve Session::thread_id
 http://bugs.mysql.com/30930 */
 
+#ifdef BUILD_DRIZZLE
+unsigned long
+ib_session_get_thread_id(
+/*=================*/
+				/* out: Session::thread_id */
+	const void*	session);	/* in: Session */
+#else
 unsigned long
 ib_thd_get_thread_id(
 /*=================*/
 				/* out: THD::thread_id */
 	const void*	thd);	/* in: THD */
+#endif
 
 #ifdef __cplusplus
 }

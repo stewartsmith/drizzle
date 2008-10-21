@@ -27,14 +27,6 @@ Created 3/26/1996 Heikki Tuuri
 #include "trx0xa.h"
 #include "ha_prototypes.h"
 
-/* Copy of the prototype for innobase_mysql_print_session: this
-copy MUST be equal to the one in mysql/sql/ha_innodb.cc ! */
-
-void innobase_mysql_print_session(
-	FILE*	f,
-	void*	session,
-	ulint	max_query_len);
-
 /* Dummy session used currently in MySQL interface */
 UNIV_INTERN sess_t*		trx_dummy_sess = NULL;
 

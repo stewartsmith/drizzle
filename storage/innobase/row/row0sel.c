@@ -3733,7 +3733,11 @@ shortcut_fails_too_big_rec:
 
 	if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
 	    && prebuilt->select_lock_type != LOCK_NONE
+#ifdef BUILD_DRIZZLE
+	    && trx->mysql_session != NULL
+#else
 	    && trx->mysql_thd != NULL
+#endif
 	    && trx->mysql_query_str != NULL
 	    && *trx->mysql_query_str != NULL) {
 

@@ -23,31 +23,6 @@ Created 5/7/1996 Heikki Tuuri
 #include "trx0sys.h"
 
 
-/* 2 function prototypes copied from ha_innodb.cc: */
-
-/*****************************************************************
-If you want to print a session that is not associated with the current thread,
-you must call this function before reserving the InnoDB kernel_mutex, to
-protect MySQL from setting session->query NULL. If you print a session of the current
-thread, we know that MySQL cannot modify session->query, and it is not necessary
-to call this. Call innobase_mysql_end_print_arbitrary_session() after you release
-the kernel_mutex.
-NOTE that /mysql/innobase/lock/lock0lock.c must contain the prototype for this
-function! */
-
-void
-innobase_mysql_prepare_print_arbitrary_session(void);
-/*============================================*/
-
-/*****************************************************************
-Relases the mutex reserved by innobase_mysql_prepare_print_arbitrary_session().
-NOTE that /mysql/innobase/lock/lock0lock.c must contain the prototype for this
-function! */
-
-void
-innobase_mysql_end_print_arbitrary_session(void);
-/*========================================*/
-
 /* Restricts the length of search we will do in the waits-for
 graph of transactions */
 #define LOCK_MAX_N_STEPS_IN_DEADLOCK_CHECK 1000000

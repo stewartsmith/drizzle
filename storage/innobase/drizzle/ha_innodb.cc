@@ -3935,7 +3935,8 @@ set_max_autoinc:
 
 	innodb_srv_conc_exit_innodb(prebuilt->trx);
 
-	error = convert_error_code_to_mysql(error, user_session);
+        error = convert_error_code_to_mysql(error, prebuilt->table->flags,
+                                            user_session);
 
 func_exit:
 	innobase_active_small();
@@ -6147,9 +6148,6 @@ ha_innobase::rename_table(
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;
-	trx_t*	trx;
-	char	norm_from[1000];
-	char	norm_to[1000];
 	Session*	session		= ha_session();
 
 	/* Get the transaction associated with the current session, or create one
@@ -7321,7 +7319,7 @@ ha_innobase::external_lock(
 
 				if (error != DB_SUCCESS) {
 					error = convert_error_code_to_mysql(
-						(int) error, session);
+                                                (int) error, 0, session);
 					return((int) error);
 				}
 			}

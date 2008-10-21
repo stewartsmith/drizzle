@@ -389,7 +389,11 @@ fill_trx_row(
 
 	row->trx_weight = (ullint) ut_conv_dulint_to_longlong(TRX_WEIGHT(trx));
 
+#ifdef BUILD_DRIZZLE
+	row->trx_mysql_thread_id = ib_session_get_thread_id(trx->mysql_session);
+#else
 	row->trx_mysql_thread_id = ib_thd_get_thread_id(trx->mysql_thd);
+#endif /* BUILD_DRIZZLE */
 
 	if (trx->mysql_query_str != NULL && *trx->mysql_query_str != NULL) {
 
@@ -1140,7 +1144,7 @@ trx_i_s_possibly_fetch_data_into_cache(
 	}
 
 	/* We are going to access trx->query in all transactions */
-	innobase_mysql_prepare_print_arbitrary_thd();
+	innobase_mysql_prepare_print_arbitrary_session();
 
 	/* We need to read trx_sys and record/table lock queues */
 	mutex_enter(&kernel_mutex);
@@ -1149,7 +1153,7 @@ trx_i_s_possibly_fetch_data_into_cache(
 
 	mutex_exit(&kernel_mutex);
 
-	innobase_mysql_end_print_arbitrary_thd();
+	innobase_mysql_end_print_arbitrary_session();
 
 	return(0);
 }
