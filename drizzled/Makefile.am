@@ -74,6 +74,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
+drizzled_DEPENDENCIES = @mysql_plugin_libs@
 
 drizzled_LDFLAGS =
 
