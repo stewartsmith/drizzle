@@ -19,10 +19,10 @@
  */
 
 /**
-   @file
+  @file
 
-   @brief
-   This file implements classes defined in field.h
+  @brief
+  This file implements classes defined in field.h
 */
 #include <drizzled/server_includes.h>
 #include "sql_select.h"
@@ -480,13 +480,13 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
 };
 
 /**
-   Return type of which can carry value of both given types in UNION result.
+  Return type of which can carry value of both given types in UNION result.
 
-   @param a  type for merging
-   @param b  type for merging
+  @param a  type for merging
+  @param b  type for merging
 
-   @return
-   type of field
+  @return
+    type of field
 */
 
 enum_field_types Field::field_type_merge(enum_field_types a,
@@ -522,10 +522,8 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
   //DRIZZLE_TYPE_VIRTUAL
   STRING_RESULT,
-  //DRIZZLE_TYPE_NEWDECIMAL
-  DECIMAL_RESULT,
-  //DRIZZLE_TYPE_ENUM
-  STRING_RESULT,
+  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
+  DECIMAL_RESULT,           STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
   STRING_RESULT,
 };
@@ -537,14 +535,14 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   or any data for binary string.
 
   SYNOPSIS
-  test_if_important_data()
-  cs          Character set
-  str         String to test
-  strend      String end
+    test_if_important_data()
+    cs          Character set
+    str         String to test
+    strend      String end
 
   RETURN
-  false - If string does not have important data
-  true  - If string has some important data
+    false - If string does not have important data
+    true  - If string has some important data
 */
 
 bool
@@ -558,12 +556,12 @@ test_if_important_data(const CHARSET_INFO * const cs, const char *str,
 
 
 /**
-   Detect Item_result by given field type of UNION merge result.
+  Detect Item_result by given field type of UNION merge result.
 
-   @param field_type  given field type
+  @param field_type  given field type
 
-   @return
-   Item_result (type of internal MySQL expression result)
+  @return
+    Item_result (type of internal MySQL expression result)
 */
 
 Item_result Field::result_merge_type(enum_field_types field_type)
@@ -578,17 +576,17 @@ Item_result Field::result_merge_type(enum_field_types field_type)
 
 
 /**
-   Check whether a field type can be partially indexed by a key.
+  Check whether a field type can be partially indexed by a key.
 
-   This is a static method, rather than a virtual function, because we need
-   to check the type of a non-Field in mysql_alter_table().
+  This is a static method, rather than a virtual function, because we need
+  to check the type of a non-Field in mysql_alter_table().
 
-   @param type  field type
+  @param type  field type
 
-   @retval
-   true  Type can have a prefixed key
-   @retval
-   false Type can not have a prefixed key
+  @retval
+    true  Type can have a prefixed key
+  @retval
+    false Type can not have a prefixed key
 */
 
 bool Field::type_can_have_key_part(enum enum_field_types type)
@@ -604,15 +602,15 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
 
 
 /**
-   Process decimal library return codes and issue warnings for overflow and
-   truncation.
+  Process decimal library return codes and issue warnings for overflow and
+  truncation.
 
-   @param op_result  decimal library return code (E_DEC_* see include/decimal.h)
+  @param op_result  decimal library return code (E_DEC_* see include/decimal.h)
 
-   @retval
-   1  there was overflow
-   @retval
-   0  no error or some other errors except overflow
+  @retval
+    1  there was overflow
+  @retval
+    0  no error or some other errors except overflow
 */
 
 int Field::warn_if_overflow(int op_result)
@@ -637,7 +635,7 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
   cs= system_charset_info; // QQ move test_if_real into CHARSET_INFO struct
 
   while (length && my_isspace(cs,*str))
-  {            // Allow start space
+  {						// Allow start space
     length--; str++;
   }
   if (!length)
@@ -666,7 +664,7 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
     return 1;
   if (*str == 'E' || *str == 'e')
   {
-    if (length < 3 || (str[1] != '+' && str[1] != '-') ||
+    if (length < 3 || (str[1] != '+' && str[1] != '-') || 
         !my_isdigit(cs,str[2]))
       return 0;
     length-=3;
@@ -677,7 +675,7 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
     }
   }
   for (; length ; length--, str++)
-  {            // Allow end space
+  {						// Allow end space
     if (!my_isspace(cs,*str))
       return 0;
   }
@@ -687,9 +685,9 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
 
 
 /**
-   Interpret field value as an integer but return the result as a string.
+  Interpret field value as an integer but return the result as a string.
 
-   This is used for printing bit_fields as numbers while debugging.
+  This is used for printing bit_fields as numbers while debugging.
 */
 
 String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
@@ -701,9 +699,9 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
   if (val_buffer->alloc(MY_INT64_NUM_DECIMAL_DIGITS))
     return 0;
   length= (uint32_t) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
-                                                   MY_INT64_NUM_DECIMAL_DIGITS,
-                                                   unsigned_val ? 10 : -10,
-                                                   value);
+                                                MY_INT64_NUM_DECIMAL_DIGITS,
+                                                unsigned_val ? 10 : -10,
+                                                value);
   val_buffer->length(length);
   return val_buffer;
 }
@@ -711,14 +709,14 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 
 /// This is used as a table name when the table structure is not set up
 Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
-             unsigned char null_bit_arg,
-             utype unireg_check_arg, const char *field_name_arg)
+	     unsigned char null_bit_arg,
+	     utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
    table(0), orig_table(0), table_name(0),
    field_name(field_name_arg),
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
-   field_length(length_arg), null_bit(null_bit_arg),
+   field_length(length_arg), null_bit(null_bit_arg), 
    is_created_from_null_item(false),
    vcol_info(NULL), is_stored(true)
 {
@@ -776,9 +774,9 @@ bool Field::send_binary(Protocol *protocol)
    Check to see if field size is compatible with destination.
 
    This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The
+   field size is less than or equal to the master's field size. The 
    encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination).
+   to the size of this field (the slave or destination). 
 
    @param   field_metadata   Encoded size in field metadata
 
@@ -873,7 +871,7 @@ Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
    @param   to         Destination of the data
    @param   from       Source of the data
    @param   param_data Real type and original pack length of the field
-   data
+                       data
 
    @param low_byte_first
    If this flag is @c true, all composite entities (e.g., lengths)
@@ -907,7 +905,7 @@ Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
   }
 
   uint32_t len= (param_data && (param_data < length)) ?
-    param_data : length;
+            param_data : length;
 
   memcpy(to, from, param_data > length ? length : len);
   return from+len;
@@ -951,18 +949,18 @@ void Field::make_field(Send_field *field)
 
 
 /**
-   Conversion from decimal to int64_t with checking overflow and
-   setting correct value (min/max) in case of overflow.
+  Conversion from decimal to int64_t with checking overflow and
+  setting correct value (min/max) in case of overflow.
 
-   @param val             value which have to be converted
-   @param unsigned_flag   type of integer in which we convert val
-   @param err             variable to pass error code
+  @param val             value which have to be converted
+  @param unsigned_flag   type of integer in which we convert val
+  @param err             variable to pass error code
 
-   @return
-   value converted from val
+  @return
+    value converted from val
 */
 int64_t Field::convert_decimal2int64_t(const my_decimal *val,
-                                       bool unsigned_flag __attribute__((unused)), int *err)
+                                         bool unsigned_flag __attribute__((unused)), int *err)
 {
   int64_t i;
   if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
@@ -1019,10 +1017,10 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
 }
 
 /**
-   This is called when storing a date in a string.
+  This is called when storing a date in a string.
 
-   @note
-   Needs to be changed if/when we want to support different time formats.
+  @note
+    Needs to be changed if/when we want to support different time formats.
 */
 
 int Field::store_time(DRIZZLE_TIME *ltime,
@@ -1095,25 +1093,25 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
   after storing a character string info a field.
 
   SYNOPSIS
-  check_string_copy_error()
-  field                    - Field
-  well_formed_error_pos    - where not well formed data was first met
-  cannot_convert_error_pos - where a not-convertable character was first met
-  end                      - end of the string
-  cs                       - character set of the string
+    check_string_copy_error()
+    field                    - Field
+    well_formed_error_pos    - where not well formed data was first met
+    cannot_convert_error_pos - where a not-convertable character was first met
+    end                      - end of the string
+    cs                       - character set of the string
 
   NOTES
-  As of version 5.0 both cases return the same error:
+    As of version 5.0 both cases return the same error:
 
-  "Invalid string value: 'xxx' for column 't' at row 1"
+      "Invalid string value: 'xxx' for column 't' at row 1"
 
   Future versions will possibly introduce a new error message:
 
-  "Cannot convert character string: 'xxx' for column 't' at row 1"
+      "Cannot convert character string: 'xxx' for column 't' at row 1"
 
   RETURN
-  false - If errors didn't happen
-  true  - If an error happened
+    false - If errors didn't happen
+    true  - If an error happened
 */
 
 bool
@@ -1125,7 +1123,7 @@ check_string_copy_error(Field_str *field,
 {
   const char *pos, *end_orig;
   char tmp[64], *t;
-
+  
   if (!(pos= well_formed_error_pos) &&
       !(pos= cannot_convert_error_pos))
     return false;
@@ -1139,7 +1137,7 @@ check_string_copy_error(Field_str *field,
       If the source string is ASCII compatible (mbminlen==1)
       and the source character is in ASCII printable range (0x20..0x7F),
       then display the character as is.
-
+      
       Otherwise, if the source string is not ASCII compatible (e.g. UCS2),
       or the source character is not in the printable range,
       then print the character using HEX notation.
@@ -1165,11 +1163,11 @@ check_string_copy_error(Field_str *field,
     *t++= '.';
   }
   *t= '\0';
-  push_warning_printf(field->table->in_use,
+  push_warning_printf(field->table->in_use, 
                       field->table->in_use->abort_on_warning ?
                       DRIZZLE_ERROR::WARN_LEVEL_ERROR :
                       DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                      ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
+                      ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
                       (uint32_t) field->table->in_use->row_count);
@@ -1182,10 +1180,10 @@ uint32_t Field::is_equal(Create_field *new_field)
 }
 
 /**
-   @retval
-   1  if the fields are equally defined
-   @retval
-   0  if the fields are unequally defined
+  @retval
+    1  if the fields are equally defined
+  @retval
+    0  if the fields are unequally defined
 */
 
 bool Field::eq_def(Field *field)
@@ -1197,8 +1195,8 @@ bool Field::eq_def(Field *field)
 }
 
 /**
-   @return
-   returns 1 if the fields are equally defined
+  @return
+  returns 1 if the fields are equally defined
 */
 bool Field_enum::eq_def(Field *field)
 {
@@ -1223,7 +1221,7 @@ bool Field_enum::eq_def(Field *field)
 *****************************************************************************/
 
 /**
-   Convert create_field::length from number of characters to number of bytes.
+  Convert create_field::length from number of characters to number of bytes.
 */
 
 void Create_field::create_length_to_internal_length(void)
@@ -1243,10 +1241,10 @@ void Create_field::create_length_to_internal_length(void)
   case DRIZZLE_TYPE_NEWDECIMAL:
     key_length= pack_length=
       my_decimal_get_binary_size(my_decimal_length_to_precision(length,
-                                                                decimals,
-                                                                flags &
-                                                                UNSIGNED_FLAG),
-                                 decimals);
+								decimals,
+								flags &
+								UNSIGNED_FLAG),
+				 decimals);
     break;
   default:
     key_length= pack_length= calc_pack_length(sql_type, length);
@@ -1256,7 +1254,7 @@ void Create_field::create_length_to_internal_length(void)
 
 
 /**
-   Init for a tmp table field. To be extended if need be.
+  Init for a tmp table field. To be extended if need be.
 */
 void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
                                       uint32_t length_arg, uint32_t decimals_arg,
@@ -1278,26 +1276,26 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
 
 
 /**
-   Initialize field definition for create.
+  Initialize field definition for create.
 
-   @param session                   Thread handle
-   @param fld_name              Field name
-   @param fld_type              Field type
-   @param fld_length            Field length
-   @param fld_decimals          Decimal (if any)
-   @param fld_type_modifier     Additional type information
-   @param fld_default_value     Field default value (if any)
-   @param fld_on_update_value   The value of ON UPDATE clause
-   @param fld_comment           Field comment
-   @param fld_change            Field change
-   @param fld_interval_list     Interval list (if any)
-   @param fld_charset           Field charset
-   @param fld_vcol_info         Virtual column data
+  @param session                   Thread handle
+  @param fld_name              Field name
+  @param fld_type              Field type
+  @param fld_length            Field length
+  @param fld_decimals          Decimal (if any)
+  @param fld_type_modifier     Additional type information
+  @param fld_default_value     Field default value (if any)
+  @param fld_on_update_value   The value of ON UPDATE clause
+  @param fld_comment           Field comment
+  @param fld_change            Field change
+  @param fld_interval_list     Interval list (if any)
+  @param fld_charset           Field charset
+  @param fld_vcol_info         Virtual column data
 
-   @retval
-   false on success
-   @retval
-   true  on error
+  @retval
+    false on success
+  @retval
+    true  on error
 */
 
 bool Create_field::init(Session *session __attribute__((unused)), char *fld_name, enum_field_types fld_type,
@@ -1346,19 +1344,19 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
     assert(vcol_info && vcol_info->expr_item);
     is_stored= vcol_info->get_field_stored();
     /*
-      Perform per item-type checks to determine if the expression is
+      Perform per item-type checks to determine if the expression is 
       allowed for a virtual column.
       Note that validation of the specific function is done later in
       procedures open_table_from_share and fix_fields_vcol_func
     */
     switch (vcol_info->expr_item->type()) {
     case Item::FUNC_ITEM:
-      if (((Item_func *)vcol_info->expr_item)->functype() == Item_func::FUNC_SP)
-      {
-        my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
-        return(true);
-      }
-      break;
+         if (((Item_func *)vcol_info->expr_item)->functype() == Item_func::FUNC_SP)
+         {
+           my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
+           return(true);
+         }
+         break;
     case Item::COPY_STR_ITEM:
     case Item::FIELD_AVG_ITEM:
     case Item::PROC_ITEM:
@@ -1370,11 +1368,11 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
     case Item::CACHE_ITEM:
     case Item::TYPE_HOLDER:
     case Item::PARAM_ITEM:
-    case Item::VIEW_FIXER_ITEM:
-      my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
-      return true;
-      break;
-    default:
+    case Item::VIEW_FIXER_ITEM: 
+         my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
+         return true;
+         break;
+    default: 
       // Continue with the field creation
       break;
     }
@@ -1485,11 +1483,11 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
     if (fld_default_value)
     {
       /* Grammar allows only NOW() value for ON UPDATE clause */
-      if (fld_default_value->type() == Item::FUNC_ITEM &&
+      if (fld_default_value->type() == Item::FUNC_ITEM && 
           ((Item_func*)fld_default_value)->functype() == Item_func::NOW_FUNC)
       {
         unireg_check= (fld_on_update_value ? Field::TIMESTAMP_DNUN_FIELD:
-                       Field::TIMESTAMP_DN_FIELD);
+                                             Field::TIMESTAMP_DN_FIELD);
         /*
           We don't need default value any longer moreover it is dangerous.
           Everything handled by unireg_check further.
@@ -1498,7 +1496,7 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
       }
       else
         unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD:
-                       Field::NONE);
+                                             Field::NONE);
     }
     else
     {
@@ -1517,7 +1515,7 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
       */
       unireg_check= (fld_on_update_value ? Field::TIMESTAMP_UN_FIELD :
                      (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD :
-                      Field::NONE));
+                                              Field::NONE));
     }
     break;
   case DRIZZLE_TYPE_NEWDATE:
@@ -1530,17 +1528,17 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
     length= MAX_DATETIME_WIDTH;
     break;
   case DRIZZLE_TYPE_ENUM:
-  {
-    /* Should be safe. */
-    pack_length= get_enum_pack_length(fld_interval_list->elements);
+    {
+      /* Should be safe. */
+      pack_length= get_enum_pack_length(fld_interval_list->elements);
 
-    List_iterator<String> it(*fld_interval_list);
-    String *tmp;
-    while ((tmp= it++))
-      interval_list.push_back(tmp);
-    length= 1; /* See comment for DRIZZLE_TYPE_SET above. */
-    break;
-  }
+      List_iterator<String> it(*fld_interval_list);
+      String *tmp;
+      while ((tmp= it++))
+        interval_list.push_back(tmp);
+      length= 1; /* See comment for DRIZZLE_TYPE_SET above. */
+      break;
+   }
   case DRIZZLE_TYPE_VIRTUAL: // Must not happen
     assert(0);
   }
@@ -1554,8 +1552,8 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
        (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
-             MYF(0),
-             fld_name, max_field_charlength); /* purecov: inspected */
+              MYF(0),
+              fld_name, max_field_charlength); /* purecov: inspected */
     return(true);
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;
@@ -1587,16 +1585,16 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
-  case DRIZZLE_TYPE_TINY  : return 1;
+  case DRIZZLE_TYPE_TINY	: return 1;
   case DRIZZLE_TYPE_NEWDATE:
   case DRIZZLE_TYPE_TIME:   return 3;
   case DRIZZLE_TYPE_TIMESTAMP:
-  case DRIZZLE_TYPE_LONG  : return 4;
+  case DRIZZLE_TYPE_LONG	: return 4;
   case DRIZZLE_TYPE_DOUBLE: return sizeof(double);
   case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_LONGLONG: return 8;  /* Don't crash if no int64_t */
-  case DRIZZLE_TYPE_NULL  : return 0;
-  case DRIZZLE_TYPE_BLOB:    return 4+portable_sizeof_char_ptr;
+  case DRIZZLE_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
+  case DRIZZLE_TYPE_NULL	: return 0;
+  case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
     abort(); return 0;                          // This shouldn't happen
@@ -1609,24 +1607,24 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 uint32_t pack_length_to_packflag(uint32_t type)
 {
   switch (type) {
-  case 1: return 1 << FIELDFLAG_PACK_SHIFT;
-  case 2: assert(1);
-  case 3: assert(1);
-  case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
-  case 8: return f_settype((uint32_t) DRIZZLE_TYPE_LONGLONG);
+    case 1: return 1 << FIELDFLAG_PACK_SHIFT;
+    case 2: assert(1);
+    case 3: assert(1);
+    case 4: return f_settype((uint32_t) DRIZZLE_TYPE_LONG);
+    case 8: return f_settype((uint32_t) DRIZZLE_TYPE_LONGLONG);
   }
-  return 0;          // This shouldn't happen
+  return 0;					// This shouldn't happen
 }
 
 
 Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
-                  unsigned char *null_pos, unsigned char null_bit,
-                  uint32_t pack_flag,
-                  enum_field_types field_type,
-                  const CHARSET_INFO * field_charset,
-                  Field::utype unireg_check,
-                  TYPELIB *interval,
-                  const char *field_name)
+		  unsigned char *null_pos, unsigned char null_bit,
+		  uint32_t pack_flag,
+		  enum_field_types field_type,
+		  const CHARSET_INFO * field_charset,
+		  Field::utype unireg_check,
+		  TYPELIB *interval,
+		  const char *field_name)
 {
   if (!f_maybe_null(pack_flag))
   {
@@ -1662,22 +1660,22 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
     }
 
     uint32_t pack_length=calc_pack_length((enum_field_types)
-                                          f_packtype(pack_flag),
-                                          field_length);
+				      f_packtype(pack_flag),
+				      field_length);
 
     if (f_is_blob(pack_flag))
       return new Field_blob(ptr,null_pos,null_bit,
-                            unireg_check, field_name, share,
-                            pack_length, field_charset);
+			    unireg_check, field_name, share,
+			    pack_length, field_charset);
     if (interval)
     {
       if (f_is_enum(pack_flag))
-      {
-        return new Field_enum(ptr,field_length,null_pos,null_bit,
-                              unireg_check, field_name,
-                              get_enum_pack_length(interval->count),
-                              interval, field_charset);
-      }
+{
+	return new Field_enum(ptr,field_length,null_pos,null_bit,
+				  unireg_check, field_name,
+				  get_enum_pack_length(interval->count),
+                                  interval, field_charset);
+}
     }
   }
 
@@ -1690,41 +1688,41 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
                                  f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_DOUBLE:
     return new Field_double(ptr,field_length,null_pos,null_bit,
-                            unireg_check, field_name,
-                            f_decimals(pack_flag),
-                            false,
-                            f_is_dec(pack_flag)== 0);
+			    unireg_check, field_name,
+			    f_decimals(pack_flag),
+			    false,
+			    f_is_dec(pack_flag)== 0);
   case DRIZZLE_TYPE_TINY:
     assert(0);
   case DRIZZLE_TYPE_LONG:
     return new Field_long(ptr,field_length,null_pos,null_bit,
-                          unireg_check, field_name,
-                          false,
-                          f_is_dec(pack_flag) == 0);
+			   unireg_check, field_name,
+                           false,
+			   f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_LONGLONG:
     return new Field_int64_t(ptr,field_length,null_pos,null_bit,
-                             unireg_check, field_name,
-                             false,
-                             f_is_dec(pack_flag) == 0);
+			      unireg_check, field_name,
+                              false,
+			      f_is_dec(pack_flag) == 0);
   case DRIZZLE_TYPE_TIMESTAMP:
     return new Field_timestamp(ptr,field_length, null_pos, null_bit,
                                unireg_check, field_name, share,
                                field_charset);
   case DRIZZLE_TYPE_NEWDATE:
     return new Field_newdate(ptr,null_pos,null_bit,
-                             unireg_check, field_name, field_charset);
+			     unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_TIME:
     return new Field_time(ptr,null_pos,null_bit,
-                          unireg_check, field_name, field_charset);
+			  unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_DATETIME:
     return new Field_datetime(ptr,null_pos,null_bit,
-                              unireg_check, field_name, field_charset);
+			      unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_NULL:
     return new Field_null(ptr, field_length, unireg_check, field_name,
                           field_charset);
   case DRIZZLE_TYPE_VIRTUAL:                    // Must not happen
     assert(0);
-  default:          // Impossible (Wrong version)
+  default:					// Impossible (Wrong version)
     break;
   }
   return 0;
@@ -1743,7 +1741,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   pack_length=old_field->pack_length();
   key_length= old_field->key_length();
   sql_type=   old_field->real_type();
-  charset=    old_field->charset();    // May be NULL ptr
+  charset=    old_field->charset();		// May be NULL ptr
   comment=    old_field->comment;
   decimals=   old_field->decimals();
   vcol_info=  old_field->vcol_info;
@@ -1752,7 +1750,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
     pack_length= (pack_length- old_field->table->s->blob_ptr_size +
-                  portable_sizeof_char_ptr);
+		  portable_sizeof_char_ptr);
 
   switch (sql_type) {
   case DRIZZLE_TYPE_BLOB:
@@ -1780,7 +1778,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   if (!(flags & (NO_DEFAULT_VALUE_FLAG | BLOB_FLAG)) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
-       old_field->table->timestamp_field != old_field ||  /* timestamp field */
+       old_field->table->timestamp_field != old_field ||  /* timestamp field */ 
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
     char buff[MAX_FIELD_WIDTH];
@@ -1790,7 +1788,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     /* Get the value from default_values */
     diff= (my_ptrdiff_t) (orig_field->table->s->default_values-
                           orig_field->table->record[0]);
-    orig_field->move_field_offset(diff);  // Points now at default_values
+    orig_field->move_field_offset(diff);	// Points now at default_values
     if (!orig_field->is_real_null())
     {
       char buff[MAX_FIELD_WIDTH], *pos;
@@ -1799,7 +1797,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
       pos= (char*) sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
-    orig_field->move_field_offset(-diff);  // Back to record[0]
+    orig_field->move_field_offset(-diff);	// Back to record[0]
   }
 }
 
@@ -1809,26 +1807,26 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 *****************************************************************************/
 
 /**
-   Produce warning or note about data saved into field.
+  Produce warning or note about data saved into field.
 
-   @param level            - level of message (Note/Warning/Error)
-   @param code             - error code of message to be produced
-   @param cuted_increment  - whenever we should increase cut fields count or not
+  @param level            - level of message (Note/Warning/Error)
+  @param code             - error code of message to be produced
+  @param cuted_increment  - whenever we should increase cut fields count or not
 
-   @note
-   This function won't produce warning and increase cut fields counter
-   if count_cuted_fields == CHECK_FIELD_IGNORE for current thread.
+  @note
+    This function won't produce warning and increase cut fields counter
+    if count_cuted_fields == CHECK_FIELD_IGNORE for current thread.
 
-   if count_cuted_fields == CHECK_FIELD_IGNORE then we ignore notes.
-   This allows us to avoid notes in optimisation, like convert_constant_item().
+    if count_cuted_fields == CHECK_FIELD_IGNORE then we ignore notes.
+    This allows us to avoid notes in optimisation, like convert_constant_item().
 
-   @retval
-   1 if count_cuted_fields == CHECK_FIELD_IGNORE and error level is not NOTE
-   @retval
-   0 otherwise
+  @retval
+    1 if count_cuted_fields == CHECK_FIELD_IGNORE and error level is not NOTE
+  @retval
+    0 otherwise
 */
 
-bool
+bool 
 Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
                    int cuted_increment)
 {
@@ -1849,25 +1847,25 @@ Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
 
 
 /**
-   Produce warning or note about datetime string data saved into field.
+  Produce warning or note about datetime string data saved into field.
 
-   @param level            level of message (Note/Warning/Error)
-   @param code             error code of message to be produced
-   @param str              string value which we tried to save
-   @param str_length       length of string which we tried to save
-   @param ts_type          type of datetime value (datetime/date/time)
-   @param cuted_increment  whenever we should increase cut fields count or not
+  @param level            level of message (Note/Warning/Error)
+  @param code             error code of message to be produced
+  @param str              string value which we tried to save
+  @param str_length       length of string which we tried to save
+  @param ts_type          type of datetime value (datetime/date/time)
+  @param cuted_increment  whenever we should increase cut fields count or not
 
-   @note
-   This function will always produce some warning but won't increase cut
-   fields counter if count_cuted_fields ==FIELD_CHECK_IGNORE for current
-   thread.
+  @note
+    This function will always produce some warning but won't increase cut
+    fields counter if count_cuted_fields ==FIELD_CHECK_IGNORE for current
+    thread.
 */
 
-void
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
-                            unsigned int code,
-                            const char *str, uint32_t str_length,
+void 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
+                            unsigned int code, 
+                            const char *str, uint32_t str_length, 
                             enum enum_drizzle_timestamp_type ts_type, int cuted_increment)
 {
   Session *session= table ? table->in_use : current_session;
@@ -1880,22 +1878,22 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
 
 
 /**
-   Produce warning or note about integer datetime value saved into field.
+  Produce warning or note about integer datetime value saved into field.
 
-   @param level            level of message (Note/Warning/Error)
-   @param code             error code of message to be produced
-   @param nr               numeric value which we tried to save
-   @param ts_type          type of datetime value (datetime/date/time)
-   @param cuted_increment  whenever we should increase cut fields count or not
+  @param level            level of message (Note/Warning/Error)
+  @param code             error code of message to be produced
+  @param nr               numeric value which we tried to save
+  @param ts_type          type of datetime value (datetime/date/time)
+  @param cuted_increment  whenever we should increase cut fields count or not
 
-   @note
-   This function will always produce some warning but won't increase cut
-   fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
-   thread.
+  @note
+    This function will always produce some warning but won't increase cut
+    fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
+    thread.
 */
 
-void
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
+void 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
                             int64_t nr, enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment)
 {
@@ -1905,28 +1903,28 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
   {
     char str_nr[22];
     char *str_end= int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
+    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr), 
                                  ts_type, field_name);
   }
 }
 
 
 /**
-   Produce warning or note about double datetime data saved into field.
+  Produce warning or note about double datetime data saved into field.
 
-   @param level            level of message (Note/Warning/Error)
-   @param code             error code of message to be produced
-   @param nr               double value which we tried to save
-   @param ts_type          type of datetime value (datetime/date/time)
+  @param level            level of message (Note/Warning/Error)
+  @param code             error code of message to be produced
+  @param nr               double value which we tried to save
+  @param ts_type          type of datetime value (datetime/date/time)
 
-   @note
-   This function will always produce some warning but won't increase cut
-   fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
-   thread.
+  @note
+    This function will always produce some warning but won't increase cut
+    fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
+    thread.
 */
 
-void
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code,
+void 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
                             double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   Session *session= table ? table->in_use : current_session;
