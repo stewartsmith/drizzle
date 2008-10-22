@@ -34,12 +34,12 @@ dist_libdrizzleinclude_HEADERS =	\
 					drizzle_parameters.h \
 					drizzle_res.h \
 					drizzle_rows.h \
-					libdrizzle.h \	
+					libdrizzle.h \
 					errmsg.h \
 					net_serv.h \
 					pack.h \
 					password.h \
-					sql_common.h \
+					sql_common.h
 
 lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = client.c \
