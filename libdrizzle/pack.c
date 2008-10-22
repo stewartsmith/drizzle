@@ -18,6 +18,8 @@
  */
 
 #include "libdrizzle.h"
+#include <libdrizzle/pack.h>
+#include <drizzled/korr.h>
 #include <stdint.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */

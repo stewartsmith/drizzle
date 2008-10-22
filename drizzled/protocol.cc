@@ -22,6 +22,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 #include <drizzled/sql_state.h>
+#include <libdrizzle/pack.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */

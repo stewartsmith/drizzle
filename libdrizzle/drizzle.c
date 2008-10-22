@@ -21,6 +21,7 @@
 
 #include <drizzled/drizzle_common.h>
 #include <libdrizzle/libdrizzle.h>
+#include <libdrizzle/pack.h>
 #include <libdrizzle/errmsg.h>
 #include <libdrizzle/drizzle.h>
 #include <drizzled/gettext.h>

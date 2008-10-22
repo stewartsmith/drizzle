@@ -42,6 +42,7 @@
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/net_serv.h>
 #include "libdrizzle_priv.h"
+#include <libdrizzle/pack.h>
 
 #include <sys/poll.h>
 #include <sys/ioctl.h>

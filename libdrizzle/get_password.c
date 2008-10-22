@@ -21,12 +21,15 @@
 ** Ask for a password from tty
 ** This is an own file to avoid conflicts with curses
 */
+#include "config.h"
 #include "libdrizzle.h"
+#include <libdrizzle/get_password.h>
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include <sys/ioctl.h>
 #ifdef HAVE_TERMIOS_H				/* For tty-password */

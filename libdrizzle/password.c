@@ -64,6 +64,7 @@
 
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
+#include <libdrizzle/password.h>
 #include <stdlib.h>
 #include <string.h>
 

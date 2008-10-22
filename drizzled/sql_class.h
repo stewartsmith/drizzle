@@ -23,6 +23,7 @@
 #include <drizzled/global.h>
 #include "log.h"
 #include "rpl_tblmap.h"
+#include <libdrizzle/password.h>     // rand_struct
 
 class Relay_log_info;
 
@@ -98,7 +99,7 @@ typedef struct st_copy_info {
 
 class Key_part_spec :public Sql_alloc {
 public:
-  const LEX_STRING field_name;
+  LEX_STRING field_name;
   uint32_t length;
   Key_part_spec(const LEX_STRING &name, uint32_t len)
     : field_name(name), length(len)

@@ -214,7 +214,7 @@ drizzled_SOURCES = \
 		slave.cc \
 		sql_base.cc \
 		sql_binlog.cc \
-		sql_builtin.cc 
+		sql_builtin.cc \
 		sql_class.cc \
 		sql_client.cc \
 		sql_connect.cc \

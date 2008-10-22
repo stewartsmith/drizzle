@@ -19,6 +19,7 @@
 
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
+#include <libdrizzle/pack.h>
 #include "errmsg.h"
 #include <sys/stat.h>
 #include <signal.h>

@@ -22,6 +22,7 @@
 #include "rpl_record.h"
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/pack.h>
 
 #include <algorithm>
 

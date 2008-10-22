@@ -22,11 +22,12 @@
 */
 
 #ifndef DRIZZLED_DRIZZLE_COMMON_H
-#define DRIZZLED_DRIZZLE_COMMON__H
+#define DRIZZLED_DRIZZLE_COMMON_H
 
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <drizzled/korr.h>
 
 /*
    This is included in the server and in the client.
@@ -403,27 +404,7 @@ typedef struct st_udf_init
 #define NET_HEADER_SIZE 4		/* standard header size */
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
-  /* Prototypes to password functions */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-  char *get_tty_password(const char *opt_message);
-
-  uint32_t net_field_length(unsigned char **packet);
-  uint64_t net_field_length_ll(unsigned char **packet);
-  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
-
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #define NULL_LENGTH UINT32_MAX /* For net_store_length */
-#define DRIZZLE_STMT_HEADER       4
-#define DRIZZLE_LONG_DATA_HEADER  6
 
 #endif

@@ -83,6 +83,8 @@
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
 
+#include <drizzled/korr.h>
+
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
 #else
