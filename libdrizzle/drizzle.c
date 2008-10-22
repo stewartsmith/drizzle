@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/drizzle_common.h>
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
 #include <libdrizzle/drizzle.h>

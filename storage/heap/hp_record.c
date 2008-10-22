@@ -17,7 +17,7 @@
 /* Implements various base record-related functions, such as encode and decode into chunks */
 
 #include "heapdef.h"
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/drizzle_common.h>
 
 
 /**

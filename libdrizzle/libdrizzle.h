@@ -29,7 +29,7 @@
 #ifndef _libdrizzle_libdrizzle_h
 #define _libdrizzle_libdrizzle_h
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/drizzle_common.h>
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */

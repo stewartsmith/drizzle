@@ -24,19 +24,22 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 libdrizzleincludedir = ${includedir}/libdrizzle
-dist_libdrizzleinclude_HEADERS =	libdrizzle.h \
-					drizzle_com.h \
+dist_libdrizzleinclude_HEADERS =	\
+					get_password.h \
+					drizzle.h \
+					drizzle_data.h \
+					drizzle_field.h \
+					drizzle_methods.h \
+					drizzle_options.h \
+					drizzle_parameters.h \
+					drizzle_res.h \
+					drizzle_rows.h \
+					libdrizzle.h \	
 					errmsg.h \
 					net_serv.h \
+					pack.h \
+					password.h \
 					sql_common.h \
-					drizzle.h \
-					drizzle_res.h \
-					drizzle_field.h \
-					drizzle_rows.h \
-					drizzle_methods.h \
-					drizzle_data.h \
-					drizzle_options.h \
-					drizzle_parameters.h
 
 lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = client.c \

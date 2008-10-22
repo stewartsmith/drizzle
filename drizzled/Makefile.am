@@ -48,7 +48,9 @@ DTRACEFILES = handler.o \
 	      sql_update.o
 
 drizzledincludedir = ${includedir}/drizzled
-dist_drizzledinclude_HEADERS =	error.h \
+dist_drizzledinclude_HEADERS =	drizzle_common.h \
+				error.h \
+				korr.h \
 				plugin.h \
 				plugin_authentication.h \
 				plugin_configvar.h \

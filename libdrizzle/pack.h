@@ -17,24 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_ABS_H
-#define DRIZZLED_FUNCTIONS_ABS_H
+#ifndef LIBDRIZZLE_PACK_H
+#define LIBDRIZZLE_PACK_H
 
-#include <drizzled/functions/func.h>
-#include <drizzled/functions/num1.h>
+#include <stdint.h>
 
-class Item_func_abs :public Item_func_num1
-{
-public:
-  Item_func_abs(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "abs"; }
-  void fix_length_and_dec();
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-};
+  uint32_t net_field_length(unsigned char **packet);
+  uint64_t net_field_length_ll(unsigned char **packet);
+  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
 
-#endif /* DRIZZLED_FUNCTIONS_ABS_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LIBDRIZZLE_PACK_H */
