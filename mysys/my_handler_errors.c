@@ -1,3 +1,25 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include <drizzled/base.h>
+#include <mysys/my_handler.h>
+
 #include <drizzled/gettext.h>
 
 /*
@@ -13,7 +35,8 @@ static const char *handler_error_messages[]=
   /* HA_ERR_INTERNAL_ERROR */
   N_("Internal (unspecified) error in handler"),
   /* HA_ERR_RECORD_CHANGED */
-  N_("Someone has changed the row since it was read (while the table was locked to prevent it)"),
+  N_("Someone has changed the row since it was read (while the table "
+     "was locked to prevent it)"),
   /* HA_ERR_WRONG_INDEX */
   N_("Wrong index given to function"),
   /* empty */
@@ -130,3 +153,40 @@ static const char *handler_error_messages[]=
   N_("Tablespace not empty") /* TODO: get a better message */
 };
 
+
+/*
+  Register handler error messages for usage with my_error()
+
+  NOTES
+    This is safe to call multiple times as my_error_register()
+    will ignore calls to register already registered error numbers.
+*/
+
+
+void my_handler_error_register(void)
+{
+  /*
+    If you got compilation error here about compile_time_assert array, check
+    that every HA_ERR_xxx constant has a corresponding error message in
+    handler_error_messages[] list (check mysys/ma_handler_errors.h and
+    include/my_base.h).
+
+    TODO: Remove fix the handler_error_messages so that this hack isn't 
+          necessary.
+  */
+#ifdef __GNUC__
+  char compile_time_assert[(HA_ERR_FIRST +
+                            array_elements(handler_error_messages) ==
+                            HA_ERR_LAST + 1) ? 1 : -1]
+    __attribute__ ((__unused__));
+#endif
+  my_error_register(handler_error_messages, HA_ERR_FIRST,
+                    HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
+}
+
+
+void my_handler_error_unregister(void)
+{
+  my_error_unregister(HA_ERR_FIRST,
+                      HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
+}

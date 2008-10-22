@@ -34,7 +34,6 @@ noinst_HEADERS =	mysys_priv.h \
 			my_dir.h \
 			my_static.h \
 			my_handler.h \
-			my_handler_errors.h \
 			my_nosys.h \
 			mysys_err.h \
 			my_tree.h \
@@ -82,6 +81,7 @@ libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_sleep.c \
 			charset.c charset-def.c my_bitmap.c my_bit.c \
 			sha1.c \
+			my_handler_errors.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \
                         ${thr_mutex_source} ${thr_rwlock_source}
