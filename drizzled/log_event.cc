@@ -28,7 +28,7 @@
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include <libdrizzle/libdrizzle.h>
 
 #define log_cs	&my_charset_utf8_general_ci

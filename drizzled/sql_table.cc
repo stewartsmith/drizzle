@@ -19,7 +19,7 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/sql_show.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
 

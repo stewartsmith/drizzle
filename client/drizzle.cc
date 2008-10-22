@@ -50,7 +50,7 @@
 #include <locale.h>
 #endif
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 const char *VER= "14.14";
 

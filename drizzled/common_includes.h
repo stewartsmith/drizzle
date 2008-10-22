@@ -71,7 +71,7 @@
 /* Definitions that the client and the server have in common */
 #include <libdrizzle/drizzle_com.h>
 /* gettext() convenience wrappers */
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */

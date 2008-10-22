@@ -150,7 +150,7 @@ inline void setup_fpu()
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);

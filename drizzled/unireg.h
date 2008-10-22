@@ -22,7 +22,7 @@
 
 #ifndef _unireg_h
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */

@@ -20,7 +20,7 @@
 #ifndef _drizzled_error_h
 #define _drizzled_error_h
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 enum drizzled_error_code {
   ER_ERROR_FIRST= 1000,

@@ -19,6 +19,7 @@
 
 
 /* Classes in mysql */
+
 #include <drizzled/global.h>
 #include "log.h"
 #include "rpl_tblmap.h"
@@ -35,7 +36,7 @@ enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_ha_read_modes { RFIRST, RNEXT, RPREV, RLAST, RKEY, RNEXT_SAME };
 enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
-			    DELAY_KEY_WRITE_ALL };
+                            DELAY_KEY_WRITE_ALL };
 enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
                             SLAVE_EXEC_MODE_IDEMPOTENT,
                             SLAVE_EXEC_MODE_LAST_BIT};
@@ -97,7 +98,7 @@ typedef struct st_copy_info {
 
 class Key_part_spec :public Sql_alloc {
 public:
-  LEX_STRING field_name;
+  const LEX_STRING field_name;
   uint32_t length;
   Key_part_spec(const LEX_STRING &name, uint32_t len)
     : field_name(name), length(len)

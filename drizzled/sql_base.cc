@@ -19,7 +19,7 @@
 #include <drizzled/sql_select.h>
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

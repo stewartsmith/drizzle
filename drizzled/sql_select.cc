@@ -29,7 +29,7 @@
 
 #include <mysys/my_bit.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",

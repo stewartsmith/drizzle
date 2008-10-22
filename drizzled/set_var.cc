@@ -52,7 +52,7 @@
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 

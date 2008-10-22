@@ -55,7 +55,7 @@
 
 #include <sql_common.h>
 #include "local_infile.h"
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
 

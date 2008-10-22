@@ -34,7 +34,7 @@
 
 #include <drizzled/plugin.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)

@@ -1,4 +1,4 @@
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 /*
   Errors a handler can give you

@@ -82,6 +82,7 @@ drizzled_LDFLAGS =
 noinst_HEADERS = item.h \
 		 authentication.h \
 		 logging.h \
+		 gettext.h \
 		 errmsg.h \
 		 configvar.h \
 		 parser.h \
