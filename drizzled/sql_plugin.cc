@@ -58,7 +58,7 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("AUTH") },
   { C_STRING_WITH_LEN("CONFIGVAR") },
   { C_STRING_WITH_LEN("QCACHE") },
-  { C_STRING_WITH_LEN("PARSER") }
+  { C_STRING_WITH_LEN("PARSER") },
   { C_STRING_WITH_LEN("SCHEDULING") }
 };
 
@@ -605,7 +605,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint32_t name_len= strlen(plugin->name);
-    if (plugin->type >= 0 && plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
+    if (plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
         ! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
                        (const unsigned char *)plugin->name,

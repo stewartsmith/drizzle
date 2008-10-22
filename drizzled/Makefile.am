@@ -167,7 +167,7 @@ drizzled_SOURCES = \
 		   errmsg.cc \
 		   configvar.cc \
 		   parser.cc \
-		   ssheduler.cc \
+                   scheduling.cc \
 		   qcache.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
