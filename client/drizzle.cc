@@ -2495,10 +2495,11 @@ static int com_server_help(string *buffer,
 {
   DRIZZLE_ROW cur;
   const char *server_cmd= buffer->c_str();
-  char cmd_buf[100];
+  string cmd_buf;
   DRIZZLE_RES *result;
   int error;
 
+  cmd_buf.reserve(100);
   if (help_arg[0] != '\'')
   {
     char *end_arg= strchr(help_arg, '\0');
@@ -2508,8 +2509,11 @@ static int com_server_help(string *buffer,
         end_arg--;
       *++end_arg= '\0';
     }
-    (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NULL);
-    server_cmd= cmd_buf;
+    cmd_buf.append("help '");
+    cmd_buf.append(help_arg);
+    cmd_buf.append("'");
+  
+    server_cmd= cmd_buf.c_str();
   }
 
   if (!connected && reconnect())
@@ -3859,15 +3863,20 @@ Max number of examined row combination in a join is set to: %lu\n\n",
 static const char *
 server_version_string(DRIZZLE *con)
 {
-  static char buf[MAX_SERVER_VERSION_LENGTH] = "";
+  static string buf("");
+  static bool server_version_string_reserved= false;
 
+  if (!server_version_string_reserved)
+  {
+    buf.reserve(MAX_SERVER_VERSION_LENGTH);
+    server_version_string_reserved= true;
+  }
   /* Only one thread calls this, so no synchronization is needed */
   if (buf[0] == '\0')
   {
-    char *bufp = buf;
     DRIZZLE_RES *result;
 
-    bufp= my_stpncpy(buf, drizzle_get_server_info(con), sizeof buf);
+    buf.append(drizzle_get_server_info(con));
 
     /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
     if (!drizzle_query(con, "select @@version_comment limit 1") &&
@@ -3876,17 +3885,14 @@ server_version_string(DRIZZLE *con)
       DRIZZLE_ROW cur = drizzle_fetch_row(result);
       if (cur && cur[0])
       {
-        bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NULL);
+        buf.append(" ");
+        buf.append(cur[0]);
       }
       drizzle_free_result(result);
     }
-
-    /* str*nmov doesn't guarantee NUL-termination */
-    if (bufp == buf + sizeof buf)
-      buf[sizeof buf - 1] = '\0';
   }
 
-  return buf;
+  return buf.c_str();
 }
 
 static int

@@ -81,7 +81,6 @@ extern	char *strxcat(char *dst,const char *src, ...);
 extern	char *strxmov(char *dst,const char *src, ...);
 extern	char *strxcpy(char *dst,const char *src, ...);
 extern	char *strxncat(char *dst,size_t len, const char *src, ...);
-extern	char *strxnmov(char *dst,size_t len, const char *src, ...);
 extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
 
 /* Prototypes of normal stringfunctions (with may ours) */

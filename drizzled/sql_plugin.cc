@@ -21,6 +21,10 @@
 #include <errmsg.h>
 #include <configvar.h>
 #include <qcache.h>
+#include <parser.h>
+#include <scheduling.h>
+
+#include <string>
 
 #include <drizzled/drizzled_error_messages.h>
 
@@ -29,6 +33,8 @@
 
 #define plugin_ref_to_int(A) (A ? A[0] : NULL)
 #define plugin_int_to_ref(A) &(A)
+
+using namespace std;
 
 extern struct st_mysql_plugin *mysqld_builtins[];
 
@@ -51,7 +57,9 @@ const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("ERRMSG") },
   { C_STRING_WITH_LEN("AUTH") },
   { C_STRING_WITH_LEN("CONFIGVAR") },
-  { C_STRING_WITH_LEN("QCACHE") }
+  { C_STRING_WITH_LEN("QCACHE") },
+  { C_STRING_WITH_LEN("PARSER") },
+  { C_STRING_WITH_LEN("SCHEDULING") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
@@ -77,7 +85,9 @@ plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   errmsg_initializer,  /* Error Messages */
   authentication_initializer,  /* Auth */
   configvar_initializer,
-  qcache_initializer
+  qcache_initializer,
+  parser_initializer,
+  scheduling_initializer
 };
 
 plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
@@ -92,7 +102,9 @@ plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
   errmsg_finalizer,  /* Logger */
   authentication_finalizer,  /* Auth */
   configvar_finalizer,
-  qcache_finalizer
+  qcache_finalizer,
+  parser_finalizer,
+  scheduling_finalizer
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
@@ -324,11 +336,12 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
-  char dlpath[FN_REFLEN];
-  uint32_t plugin_dir_len, dummy_errors, dlpathlen;
+  string dlpath;
+  uint32_t plugin_dir_len, dummy_errors;
   struct st_plugin_dl *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
+  dlpath.reserve(FN_REFLEN);
   /*
     Ensure that the dll doesn't have a path.
     This is done to ensure that only approved libraries from the
@@ -353,24 +366,25 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
   }
   memset(&plugin_dl, 0, sizeof(plugin_dl));
   /* Compile dll path */
-  dlpathlen=
-    strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", dl->str, NULL) -
-    dlpath;
+  dlpath.append(opt_plugin_dir);
+  dlpath.append("/");
+  dlpath.append(dl->str);
   plugin_dl.ref_count= 1;
   /* Open new dll handle */
-  if (!(plugin_dl.handle= dlopen(dlpath, RTLD_LAZY|RTLD_GLOBAL)))
+  if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
   {
     const char *errmsg=dlerror();
-    if (!strncmp(dlpath, errmsg, dlpathlen))
+    uint32_t dlpathlen= dlpath.length();
+    if (!dlpath.compare(0, dlpathlen, errmsg))
     { // if errmsg starts from dlpath, trim this prefix.
       errmsg+=dlpathlen;
       if (*errmsg == ':') errmsg++;
       if (*errmsg == ' ') errmsg++;
     }
     if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath, errno, errmsg);
+      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath.c_str(), errno, errmsg);
     if (report & REPORT_TO_LOG)
-      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath, errno, errmsg);
+      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
     return(0);
   }
 
@@ -591,7 +605,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint32_t name_len= strlen(plugin->name);
-    if (plugin->type >= 0 && plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
+    if (plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
         ! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
                        (const unsigned char *)plugin->name,

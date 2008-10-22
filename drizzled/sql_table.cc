@@ -76,8 +76,9 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
                     system_charset_info,  to, to_length, &errors);
     if (errors) // Old 5.0 name
     {
-      res= (strxnmov(to, to_length, MYSQL50_TABLE_NAME_PREFIX,  from, NULL) -
-            to);
+      strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
+      strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
+      res= strlen(to);
       sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
     }
   }
@@ -173,12 +174,14 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   if (pos - rootdir_len >= buff &&
       memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
     pos= my_stpncpy(pos, FN_ROOTDIR, end - pos);
-  pos= strxnmov(pos, end - pos, dbbuff, FN_ROOTDIR, NULL);
+  pos= my_stpncpy(pos, dbbuff, end-pos);
+  pos= my_stpncpy(pos, FN_ROOTDIR, end-pos);
 #ifdef USE_SYMDIR
   unpack_dirname(buff, buff);
   pos= strend(buff);
 #endif
-  pos= strxnmov(pos, end - pos, tbbuff, ext, NULL);
+  pos= my_stpncpy(pos, tbbuff, end - pos);
+  pos= my_stpncpy(pos, ext, end - pos);
 
   return(pos - buff);
 }
@@ -4414,8 +4417,15 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(session,table_list,
                                               alter_info->tablespace_op));
-  strxnmov(new_name_buff, sizeof (new_name_buff) - 1, mysql_data_home, "/", db, 
-           "/", table_name, reg_ext, NULL);
+  char* pos= new_name_buff;
+  char* pos_end= pos+strlen(new_name_buff)-1;
+  pos= my_stpncpy(new_name_buff, mysql_data_home, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
+  pos= my_stpncpy(new_name_buff, db, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
+  pos= my_stpncpy(new_name_buff, table_name, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, reg_ext, pos_end-pos);
+
   (void) unpack_filename(new_name_buff, new_name_buff);
   /*
     If this is just a rename of a view, short cut to the
