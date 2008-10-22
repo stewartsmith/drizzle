@@ -42,21 +42,21 @@ DTRACEFLAGS = @DTRACEFLAGS@
 
 DTRACEFILES = handler.o \
 	      filesort.o \
-	      sql_insert.o \
 	      sql_delete.o \
+	      sql_insert.o \
 	      sql_select.o \
 	      sql_update.o
 
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
-				plugin_logging.h \
-				plugin_errmsg.h \
+				plugin_authentication.h \
 				plugin_configvar.h \
+				plugin_errmsg.h \
+				plugin_logging.h \
 				plugin_qcache.h \
 				plugin_parser.h \
-				plugin_scheduling.h \
-				plugin_authentication.h
+				plugin_scheduling.h
 
 noinst_LTLIBRARIES = libhandler.la libyacc.la
 
@@ -79,179 +79,180 @@ drizzled_LDADD = libhandler.la libyacc.la \
 
 drizzled_LDFLAGS =
 
-noinst_HEADERS = item.h \
-		 authentication.h \
-		 logging.h \
-		 gettext.h \
-		 errmsg.h \
-		 configvar.h \
-		 parser.h \
-		 scheduling.h \
-		 qcache.h \
-                 key_map.h \
-		 item_func.h \
-		 item_sum.h \
-		 item_cmpfunc.h \
-		 item_strfunc.h \
-		 item_timefunc.h \
-		 item_create.h \
-		 item_subselect.h \
-		 item_row.h \
-		 server_includes.h \
-		 sql_bitmap.h \
-		 table_map_iterator.h \
-		 sql_class.h \
-		 sql_lex.h \
-		 sql_list.h \
-		 sql_locale.h \
-		 sql_state.h \
-		 sql_string.h \
-		 sql_error.h \
-		 field.h \
-		 handler.h \
-		 rpl_constants.h \
-		 opt_range.h \
-		 protocol.h \
-		 rpl_tblmap.h \
-		 rpl_utility.h \
-		 rpl_reporting.h \
-		 log.h \
-		 sql_show.h \
-		 rpl_rli.h \
-		 rpl_mi.h \
-		 sql_select.h \
-		 structs.h \
-		 table.h \
-		 sql_udf.h \
-		 lex.h \
-		 lex_symbol.h \
-		 sql_repl.h \
-		 slave.h \
-		 rpl_filter.h \
-		 log_event.h \
-		 rpl_record.h \
-		 stacktrace.h \
-		 sql_sort.h \
-		 set_var.h \
-		 tzfile.h \
-		 client_settings.h \
-		 tztime.h \
-		 my_decimal.h\
-		 sql_array.h \
-		 scheduler.h \
-		 sql_plugin.h \
-		 global.h \
-		 base.h \
-		 probes.h \
-		 definitions.h \
-		 sql_alloc.h \
-		 sql_parse.h \
-		 error_injection.h \
-		 connect.h \
-		 sql_table.h \
-		 show.h \
-		 tmp_table.h \
-		 sj_tmp_table.h \
-		 table_list.h \
-		 drizzled_error_messages.h \
-		 innodb_plugin_extras.h \
-		 order.h \
-		 filesort_info.h \
-		 field_iterator.h \
-		 common_includes.h
+noinst_HEADERS = \
+		authentication.h \
+		base.h \
+		client_settings.h \
+		common_includes.h \
+		configvar.h \
+		connect.h \
+		definitions.h \
+		drizzled_error_messages.h \
+		errmsg.h \
+		error_injection.h \
+		field.h \
+		field_iterator.h \
+		filesort_info.h \
+		gettext.h \
+		global.h \
+		handler.h \
+		innodb_plugin_extras.h \
+		item_cmpfunc.h \
+		item_create.h \
+		item_func.h \
+	       	item.h \
+		item_row.h \
+		item_strfunc.h \
+		item_subselect.h \
+		item_sum.h \
+		item_timefunc.h \
+                key_map.h \
+		lex.h \
+		lex_symbol.h \
+		log_event.h \
+		logging.h \
+		log.h \
+		my_decimal.h\
+		opt_range.h \
+		order.h \
+		parser.h \
+		probes.h \
+		protocol.h \
+		qcache.h \
+		rpl_constants.h \
+		rpl_filter.h \
+		rpl_mi.h \
+		rpl_record.h \
+		rpl_reporting.h \
+		rpl_rli.h \
+		rpl_tblmap.h \
+		rpl_utility.h \
+		scheduler.h \
+		scheduling.h \
+		server_includes.h \
+		set_var.h \
+		show.h \
+		sj_tmp_table.h \
+		slave.h \
+		sql_alloc.h \
+		sql_array.h \
+		sql_bitmap.h \
+		sql_class.h \
+		sql_error.h \
+		sql_lex.h \
+		sql_list.h \
+		sql_locale.h \
+		sql_parse.h \
+		sql_plugin.h \
+		sql_repl.h \
+		sql_select.h \
+		sql_show.h \
+		sql_sort.h \
+		sql_state.h \
+		sql_string.h \
+		sql_table.h \
+		sql_udf.h \
+		stacktrace.h \
+		structs.h \
+		table.h \
+		table_list.h \
+		table_map_iterator.h \
+		tmp_table.h \
+		tzfile.h \
+		tztime.h
 
 drizzled_SOURCES = \
-		   sql_db.cc \
-		   sql_lex.cc \
-		   authentication.cc \
-		   logging.cc \
-		   errmsg.cc \
-		   configvar.cc \
-		   parser.cc \
-                   scheduling.cc \
-		   qcache.cc \
-		   sql_handler.cc \
-		   natural_join_column.cc \
-                   table_map_iterator.cc \
-		   field_iterator.cc \
-                   key_map.cc \
-		   item.cc \
-		   item_sum.cc \
-		   item_buff.cc \
-		   item_func.cc \
-		   item_cmpfunc.cc \
-		   item_strfunc.cc \
-		   item_timefunc.cc \
-		   thr_malloc.cc \
-		   item_create.cc \
-		   item_subselect.cc \
-		   item_row.cc \
-		   field.cc \
-		   strfunc.cc \
-		   key.cc \
-		   sql_class.cc \
-		   sql_list.cc \
-		   protocol.cc \
-		   sql_state.cc \
-		   lock.cc \
-		   sql_string.cc \
-		   drizzled.cc \
-		   sql_connect.cc \
-		   scheduler.cc \
-		   sql_parse.cc \
-		   set_var.cc \
-		   sql_base.cc \
-		   table.cc \
-		   sql_select.cc \
-		   sql_insert.cc \
-		   sql_error.cc \
-		   sql_locale.cc \
-		   sql_update.cc \
-		   sql_delete.cc \
-		   uniques.cc \
-		   log.cc \
-		   init.cc \
-		   derror.cc \
-		   unireg.cc \
-		   log_event.cc \
-		   rpl_record.cc \
-		   discover.cc \
-		   time.cc \
-		   opt_range.cc \
-		   opt_sum.cc \
-		   records.cc \
-		   filesort.cc \
-		   sql_table.cc \
-		   sql_rename.cc \
-		   sql_load.cc \
-		   mf_iocache.cc \
-		   field_conv.cc \
-		   sql_show.cc \
-		   sql_udf.cc \
-		   slave.cc \
-		   sql_repl.cc \
-		   rpl_filter.cc \
-		   rpl_tblmap.cc \
-		   rpl_utility.cc \
-		   rpl_rli.cc \
-		   rpl_mi.cc \
-		   rpl_reporting.cc \
-		   sql_union.cc \
-		   sql_derived.cc \
-		   sql_client.cc \
-		   stacktrace.cc \
-		   sql_olap.cc \
-		   tztime.cc \
-		   my_decimal.cc\
-		   sql_plugin.cc \
-		   sql_binlog.cc \
-		   tmp_table.cc \
-		   sj_tmp_table.cc \
-		   sql_builtin.cc 
+		authentication.cc \
+		configvar.cc \
+		derror.cc \
+		discover.cc \
+		drizzled.cc \
+		errmsg.cc \
+		field.cc \
+		field_conv.cc \
+		field_iterator.cc \
+		filesort.cc \
+		init.cc \
+		item_buff.cc \
+		item.cc \
+		item_cmpfunc.cc \
+		item_create.cc \
+		item_func.cc \
+		item_row.cc \
+		item_strfunc.cc \
+		item_subselect.cc \
+		item_sum.cc \
+		item_timefunc.cc \
+		key.cc \
+                key_map.cc \
+		lock.cc \
+		log.cc \
+		log_event.cc \
+		logging.cc \
+		mf_iocache.cc \
+		my_decimal.cc\
+		natural_join_column.cc \
+		opt_range.cc \
+		opt_sum.cc \
+		parser.cc \
+		protocol.cc \
+		qcache.cc \
+		records.cc \
+		rpl_filter.cc \
+		rpl_mi.cc \
+		rpl_record.cc \
+		rpl_reporting.cc \
+		rpl_rli.cc \
+		rpl_tblmap.cc \
+		rpl_utility.cc \
+		scheduler.cc \
+                scheduling.cc \
+		set_var.cc \
+		sj_tmp_table.cc \
+		slave.cc \
+		sql_base.cc \
+		sql_binlog.cc \
+		sql_builtin.cc 
+		sql_class.cc \
+		sql_client.cc \
+		sql_connect.cc \
+		sql_db.cc \
+		sql_delete.cc \
+		sql_derived.cc \
+		sql_error.cc \
+		sql_handler.cc \
+		sql_insert.cc \
+		sql_lex.cc \
+		sql_list.cc \
+		sql_load.cc \
+		sql_locale.cc \
+		sql_olap.cc \
+		sql_parse.cc \
+		sql_plugin.cc \
+		sql_rename.cc \
+		sql_repl.cc \
+		sql_select.cc \
+		sql_show.cc \
+		sql_state.cc \
+		sql_string.cc \
+		sql_table.cc \
+		sql_udf.cc \
+		sql_union.cc \
+		sql_update.cc \
+		stacktrace.cc \
+		strfunc.cc \
+		table.cc \
+                table_map_iterator.cc \
+		thr_malloc.cc \
+		time.cc \
+		tmp_table.cc \
+		tztime.cc \
+		uniques.cc \
+		unireg.cc
 
 libhandler_la_SOURCES = handler.cc
 libyacc_la_SOURCES = sql_yacc.yy
-# Code output from YAC contains GOBS of unused macros, and I can't
+# Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.
 libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
 
