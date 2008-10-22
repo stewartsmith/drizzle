@@ -21,7 +21,6 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <drizzled/version.h>
 #include <errno.h>
 #include <mysys/my_getopt.h>
 
@@ -63,7 +62,7 @@ static void verify_sort(void);
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
-	 DRIZZLE_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+	 VERSION,SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 

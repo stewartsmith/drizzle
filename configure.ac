@@ -122,15 +122,22 @@ AM_GNU_GETTEXT_VERSION(0.17)
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 AC_SUBST(DRIZZLE_NO_DASH_VERSION)
-AC_SUBST(DRIZZLE_BASE_VERSION)
+AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
+                  [Major and minor version])
 AC_SUBST(DRIZZLE_VERSION_ID)
+AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
+		   [Version ID that can be easily used for numeric comparison])
 AC_SUBST(DRIZZLE_PREVIOUS_BASE_VERSION)
 AC_SUBST(PROTOCOL_VERSION)
 AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
                    [mysql client protocol version])
 AC_SUBST(DOT_FRM_VERSION)
-AC_DEFINE_UNQUOTED([DOT_FRM_VERSION], [$DOT_FRM_VERSION],
+AC_DEFINE_UNQUOTED([FRM_VER], [$DOT_FRM_VERSION],
                    [Version of .frm files])
+AC_DEFINE_UNQUOTED([FRM_VERSION_TRUE_VARCHAR],[FRM_VER+4],
+                   [Current version of .frm info we're using])
+AC_DEFINE_UNQUOTED([DRIZZLE_CONFIG_NAME],["drizzled"],[Name of server config section])
+
 AC_SUBST(SHARED_LIB_MAJOR_VERSION)
 AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
@@ -739,7 +746,8 @@ AC_ARG_WITH([server-suffix],
     [ DRIZZLE_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
     [ DRIZZLE_SERVER_SUFFIX= ]
     )
-AC_SUBST(DRIZZLE_SERVER_SUFFIX)
+AC_DEFINE_UNQUOTED([DRIZZLE_SERVER_SUFFIX],[$DRIZZLE_SERVER_SUFFIX],
+                   [Append value to the version string])
 
 # Force use of a curses libs
 AC_ARG_WITH([named-curses-libs],
@@ -786,6 +794,10 @@ AC_ARG_WITH([tcp-port],
 AC_SUBST(DRIZZLE_TCP_PORT)
 # We might want to document the assigned port in the manual.
 AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
+AC_DEFINE_UNQUOTED([DRIZZLE_PORT],[$DRIZZLE_TCP_PORT],
+                   [Drizzle port to use])
+AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
+		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([mysqld-user],
@@ -914,7 +926,8 @@ then
 else
   COMPILATION_COMMENT="Source distribution"
 fi
-AC_SUBST(COMPILATION_COMMENT)
+AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
+                   [Comment about compilation environment])
 
 if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
 then
@@ -1516,7 +1529,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- drizzled/version.h plugin/Makefile dnl
+ plugin/Makefile dnl
  drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

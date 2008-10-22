@@ -16,6 +16,8 @@
 
 /* Some general useful functions */
 
+#include "config.h"
+
 #include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 

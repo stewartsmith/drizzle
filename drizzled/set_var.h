@@ -1049,9 +1049,6 @@ public:
                             Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     : sys_var_session(name_arg, NULL, binlog_status_arg)
   {
-#if DRIZZLE_VERSION_ID < 50000
-    no_support_one_shot= 0;
-#endif
     chain_sys_var(chain);
   }
   bool check(Session *session, set_var *var);

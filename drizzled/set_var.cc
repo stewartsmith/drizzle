@@ -356,7 +356,7 @@ static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
-                                            DRIZZLE_COMPILATION_COMMENT);
+                                            COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",

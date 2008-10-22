@@ -79,7 +79,6 @@
 #include <errno.h>
 
 
-#include <drizzled/version.h>
 #include <drizzled/gettext.h>
 #include "local_infile.h"
 

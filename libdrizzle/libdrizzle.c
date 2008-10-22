@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "libdrizzle.h"
+#include "config.h"
 #include "libdrizzle_priv.h"
+
+#include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/pack.h>
-#include "errmsg.h"
+#include <libdrizzle/errmsg.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
@@ -51,8 +53,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-#include <drizzled/version.h>
 
 /* Borrowed from libicu header */
 
@@ -441,7 +441,7 @@ drizzle_get_proto_info(const DRIZZLE *drizzle)
 const char *
 drizzle_get_client_info(void)
 {
-  return (char*) DRIZZLE_SERVER_VERSION;
+  return (char*) VERSION;
 }
 
 uint32_t drizzle_get_client_version(void)
