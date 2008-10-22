@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <drizzled/drizzle_common.h>
+#include <drizzled/common.h>
 #include <libdrizzle/drizzle_field.h>
 #include <libdrizzle/drizzle_options.h>
 #include <libdrizzle/drizzle_res.h>

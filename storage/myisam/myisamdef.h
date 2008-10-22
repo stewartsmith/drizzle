@@ -23,7 +23,7 @@
 #include <mysys/my_tree.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
-#include <drizzled/drizzle_common.h>
+#include <drizzled/common.h>
 
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */

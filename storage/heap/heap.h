@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <drizzled/base.h>
-#include <drizzled/drizzle_common.h>
+#include <drizzled/common.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 

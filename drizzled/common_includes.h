@@ -69,7 +69,7 @@
 /* Network database operations (hostent, netent, servent, etc...*/
 #include <netdb.h>
 /* Definitions that the client and the server have in common */
-#include <drizzled/drizzle_common.h>
+#include <drizzled/common.h>
 /* gettext() convenience wrappers */
 #include <drizzled/gettext.h>
 /* Contains system-wide constants and #defines */

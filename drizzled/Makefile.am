@@ -86,6 +86,7 @@ noinst_HEADERS = \
 		base.h \
 		client_settings.h \
 		common_includes.h \
+		common.h \
 		configvar.h \
 		connect.h \
 		definitions.h \

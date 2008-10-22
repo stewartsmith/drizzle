@@ -52,7 +52,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sql_common.h>
 #include <drizzled/version.h>
 
 /* Borrowed from libicu header */

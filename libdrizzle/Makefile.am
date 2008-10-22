@@ -38,8 +38,7 @@ dist_libdrizzleinclude_HEADERS =	\
 					errmsg.h \
 					net_serv.h \
 					pack.h \
-					password.h \
-					sql_common.h
+					password.h
 
 lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = client.c \

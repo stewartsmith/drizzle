@@ -80,7 +80,6 @@
 
 
 #include <drizzled/version.h>
-#include <libdrizzle/sql_common.h>
 #include <drizzled/gettext.h>
 #include "local_infile.h"
 

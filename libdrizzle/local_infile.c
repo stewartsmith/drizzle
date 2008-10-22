@@ -53,7 +53,6 @@
 #define INADDR_NONE  -1
 #endif
 
-#include <sql_common.h>
 #include "local_infile.h"
 #include <drizzled/gettext.h>
 
