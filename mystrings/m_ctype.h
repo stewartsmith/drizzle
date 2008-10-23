@@ -21,6 +21,10 @@
 #ifndef _m_ctype_h
 #define _m_ctype_h
 
+#include <drizzled/global.h>
+#include <stdint.h>
+#include <stdbool.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif

@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mysys_priv.h"
+#include <config.h>
 
 #include <mystrings/m_ctype.h>
 #include <drizzled/base.h>
-#include <my_handler.h>
-#include <my_sys.h>
+#include <storage/myisam/my_handler.h>
+#include <mysys/my_sys.h>
 
 /**
   Swap the contents of two variables.

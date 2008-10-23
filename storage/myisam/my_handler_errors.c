@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/base.h>
-#include <mysys/my_handler.h>
+#include <storage/myisam/my_handler.h>
 
 #include <drizzled/gettext.h>
 
