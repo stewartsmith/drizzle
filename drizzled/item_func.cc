@@ -24,7 +24,7 @@
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_bit.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 bool check_reserved_words(LEX_STRING *name)
 {

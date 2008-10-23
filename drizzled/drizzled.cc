@@ -23,7 +23,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

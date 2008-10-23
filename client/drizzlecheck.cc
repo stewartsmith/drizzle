@@ -17,7 +17,7 @@
 
 #define CHECK_VERSION "2.5.0"
 
-#include "config.h"
+#include <config.h>
 #include <vector>
 #include <string>
 #include "client_priv.h"

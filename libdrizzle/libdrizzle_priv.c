@@ -19,7 +19,7 @@
 
 /* Various helper functions not intended to be part of a public API */
 
-#include "config.h"
+#include <config.h>
 #include "libdrizzle_priv.h"
 #include <poll.h>
 #include <fcntl.h>

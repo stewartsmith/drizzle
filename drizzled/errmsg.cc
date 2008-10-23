@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
+#include <drizzled/gettext.h>
 
 int errmsg_initializer(st_plugin_int *plugin)
 {

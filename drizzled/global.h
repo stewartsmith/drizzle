@@ -26,7 +26,7 @@
 #define __i386__
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #if defined(__cplusplus)
 
@@ -284,7 +284,5 @@ typedef int    myf;  /* Type of MyFlags in my_funcs */
 #ifdef TARGET_OS_LINUX
 #define NEED_EXPLICIT_SYNC_DIR 1
 #endif
-
-#include <drizzled/gettext.h>
 
 #endif /* DRIZZLE_SERVER_GLOBAL_H */

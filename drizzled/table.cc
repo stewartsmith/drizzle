@@ -16,10 +16,11 @@
 
 /* Some general useful functions */
 
-#include "config.h"
+#include <config.h>
 
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 #include "tmp_table.h"
 #include "sj_tmp_table.h"

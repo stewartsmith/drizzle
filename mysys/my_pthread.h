@@ -18,6 +18,9 @@
 #ifndef _my_pthread_h
 #define _my_pthread_h
 
+#include <stdint.h>
+#include <unistd.h>
+
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
 #endif
@@ -250,7 +253,7 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
 int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
 			struct timespec *abstime, const char *file, uint32_t line);
 void safe_mutex_global_init(void);
-void safe_mutex_end(FILE *file);
+void safe_mutex_end(void);
 
 	/* Wrappers if safe mutex is actually used */
 #define safe_mutex_assert_owner(mp)
@@ -374,7 +377,7 @@ extern pthread_mutexattr_t my_errorcheck_mutexattr;
 #define ESRCH 1
 #endif
 
-typedef ulong my_thread_id;
+typedef pthread_t my_thread_id;
 
 extern bool my_thread_global_init(void);
 extern void my_thread_global_end(void);

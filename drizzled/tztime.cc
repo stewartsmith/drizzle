@@ -16,6 +16,7 @@
 
 #include <drizzled/server_includes.h>
 #include "tzfile.h"
+#include <drizzled/gettext.h>
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo

@@ -21,7 +21,7 @@
 ** Ask for a password from tty
 ** This is an own file to avoid conflicts with curses
 */
-#include "config.h"
+#include <config.h>
 #include "libdrizzle.h"
 #include <libdrizzle/get_password.h>
 

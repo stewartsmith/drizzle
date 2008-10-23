@@ -89,7 +89,6 @@ noinst_HEADERS = \
 		configvar.h \
 		connect.h \
 		definitions.h \
-		drizzled_error_messages.h \
 		errmsg.h \
 		error_injection.h \
 		field.h \
@@ -166,10 +165,10 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		configvar.cc \
-		derror.cc \
 		discover.cc \
 		drizzled.cc \
 		errmsg.cc \
+		error.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \

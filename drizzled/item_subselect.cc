@@ -25,7 +25,7 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {

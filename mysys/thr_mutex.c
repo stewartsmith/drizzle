@@ -354,7 +354,7 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint32_t line)
    This is ok, as this thread may not yet have been exited.
 */
 
-void safe_mutex_end(FILE *file __attribute__((unused)))
+void safe_mutex_end(int *file __attribute__((unused)))
 {
   if (!safe_mutex_count)			/* safetly */
     pthread_mutex_destroy(&THR_LOCK_mutex);

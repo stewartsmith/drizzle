@@ -50,8 +50,6 @@
 #include <signal.h>
 /* Deadlock-free table-list lock API */
 #include <mysys/thr_lock.h>
-/* Custom error API */
-#include <drizzled/error.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */
@@ -68,14 +66,10 @@
 #include <netdb.h>
 /* Definitions that the client and the server have in common */
 #include <drizzled/common.h>
-/* gettext() convenience wrappers */
-#include <drizzled/gettext.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */
 #include <drizzled/structs.h>
-/* Custom error definitions */
-#include <drizzled/error.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */

@@ -21,6 +21,7 @@
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_errmsg.h>
+#include <drizzled/gettext.h>
 
 #include <stdio.h>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */

@@ -24,6 +24,7 @@
 #include "log.h"
 #include "rpl_tblmap.h"
 #include <libdrizzle/password.h>     // rand_struct
+#include <drizzled/error.h>
 
 class Relay_log_info;
 

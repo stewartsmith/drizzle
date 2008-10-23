@@ -48,10 +48,8 @@
 #define PLUGINDIR	"lib/plugin"
 #endif
 
-#define ER(X) _(drizzled_error_messages[(X) - ER_ERROR_FIRST])
-#define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : _("Invalid error code"))
+#define ER(X) error_message((X))
 
-#define ERRMAPP 1				/* Errormap f|r my_error */
 #define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)

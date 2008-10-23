@@ -25,7 +25,7 @@
 */
 #include <drizzled/server_includes.h>
 #include <time.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 /** Day number for Dec 31st, 9999. */
 #define MAX_DAY_NUMBER 3652424L

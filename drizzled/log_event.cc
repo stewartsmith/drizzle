@@ -21,7 +21,7 @@
 #include "rpl_utility.h"
 #include "rpl_record.h"
 #include <mysys/my_dir.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <libdrizzle/pack.h>
 
 #include <algorithm>
@@ -1793,7 +1793,7 @@ compare_errors:
                   _("Query caused differenxt errors on master and slave.\n"
                     "Error on master: '%s' (%d), Error on slave: '%s' (%d).\n"
                     "Default database: '%s'. Query: '%s'"),
-                  ER_SAFE(expected_error),
+                  ER(expected_error),
                   expected_error,
                   actual_error ? session->main_da.message() : _("no error"),
                   actual_error,

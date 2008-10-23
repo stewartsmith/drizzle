@@ -21,7 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timetype.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 /****************************************************************************
 ** time type

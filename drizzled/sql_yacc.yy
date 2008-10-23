@@ -40,7 +40,7 @@
 #include <drizzled/server_includes.h>
 #include "lex_symbol.h"
 #include <storage/myisam/myisam.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 int yylex(void *yylval, void *yysession);
 

@@ -28,7 +28,7 @@
 #include "sj_tmp_table.h"
 
 #include <mysys/my_bit.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
 

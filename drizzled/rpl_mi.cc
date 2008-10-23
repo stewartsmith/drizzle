@@ -15,6 +15,7 @@
 
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
+#include <drizzled/gettext.h>
 #include <iostream>
 #include <fstream>
 
