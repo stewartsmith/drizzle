@@ -105,6 +105,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/error.h>
 
 /*
   Convert double value to #rows. Currently this does floor(), and we

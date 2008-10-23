@@ -30,6 +30,7 @@ have disabled the InnoDB inlining in this file. */
 #include <mysys/mysys_err.h>
 #include "ha_innodb.h"
 #include <drizzled/innodb_plugin_extras.h>
+#include <drizzled/error.h>
 
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t

@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/datetime.h>
+#include <drizzled/error.h>
 
 /****************************************************************************
 ** datetime type

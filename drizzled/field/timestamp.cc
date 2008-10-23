@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/error.h>
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to 

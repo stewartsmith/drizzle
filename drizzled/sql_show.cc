@@ -21,6 +21,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/convert.h>
+#include <drizzled/error.h>
 #include <string>
 
 inline const char *

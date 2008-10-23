@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/longstr.h>
+#include <drizzled/error.h>
 
 /*
   Check if we lost any important data and send a truncation error/warning

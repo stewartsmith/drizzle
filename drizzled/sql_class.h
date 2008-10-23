@@ -24,7 +24,6 @@
 #include "log.h"
 #include "rpl_tblmap.h"
 #include <libdrizzle/password.h>     // rand_struct
-#include <drizzled/error.h>
 
 class Relay_log_info;
 
@@ -1346,10 +1345,10 @@ public:
 
   enum killed_state
   {
-    NOT_KILLED=0,
-    KILL_BAD_DATA=1,
-    KILL_CONNECTION=ER_SERVER_SHUTDOWN,
-    KILL_QUERY=ER_QUERY_INTERRUPTED,
+    NOT_KILLED,
+    KILL_BAD_DATA,
+    KILL_CONNECTION,
+    KILL_QUERY,
     KILLED_NO_VALUE      /* means neither of the states */
   };
   killed_state volatile killed;

@@ -31,6 +31,7 @@
 
 #include <drizzled/gettext.h>
 #include <libdrizzle/libdrizzle.h>
+#include <drizzled/error.h>
 
 #define log_cs	&my_charset_utf8_general_ci
 
@@ -6280,6 +6281,20 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
   }
 
   return(error);
+}
+
+
+int Rows_log_event::unpack_current_row(const Relay_log_info *const rli,
+                                         MY_BITMAP const *cols)
+{
+  assert(m_table);
+  ASSERT_OR_RETURN_ERROR(m_curr_row < m_rows_end, HA_ERR_CORRUPT_EVENT);
+  int const result= ::unpack_row(rli, m_table, m_width, m_curr_row, cols,
+                                 &m_curr_row_end, &m_master_reclength);
+  if (m_curr_row_end > m_rows_end)
+    my_error(ER_SLAVE_CORRUPT_EVENT, MYF(0));
+  ASSERT_OR_RETURN_ERROR(m_curr_row_end <= m_rows_end, HA_ERR_CORRUPT_EVENT);
+  return result;
 }
 
 
