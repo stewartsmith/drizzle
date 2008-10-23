@@ -377,7 +377,7 @@ extern pthread_mutexattr_t my_errorcheck_mutexattr;
 #define ESRCH 1
 #endif
 
-typedef pthread_t my_thread_id;
+typedef uint64_t my_thread_id;
 
 extern bool my_thread_global_init(void);
 extern void my_thread_global_end(void);

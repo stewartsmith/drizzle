@@ -445,7 +445,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= (Session*) file->in_use.data))
-    sql_print_error(_("Got an error from thread_id=%lu, %s:%d"), cur_session->thread_id,
+    sql_print_error(_("Got an error from thread_id=%"PRIu64", %s:%d"),
+                    cur_session->thread_id,
                     sfile, sline);
   else
     sql_print_error(_("Got an error from unknown thread, %s:%d"), sfile, sline);
