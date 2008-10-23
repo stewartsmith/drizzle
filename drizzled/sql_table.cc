@@ -99,7 +99,6 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   RETURN
     File name length.
 */
-
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t errors, length;

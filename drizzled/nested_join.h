@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_NESTED_JOIN_H
 #define DRIZZLED_NESTED_JOIN_H
 
+#include <drizzled/sql_list.h>
+#include <drizzled/sql_bitmap.h>
+
 struct nested_join_st
 {
   List<TableList>  join_list;       /* list of elements in the nested join */

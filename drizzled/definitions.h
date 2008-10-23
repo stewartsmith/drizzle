@@ -377,5 +377,7 @@
 #define IS_EQUAL_YES 1
 #define IS_EQUAL_PACK_LENGTH 2
 
+typedef uint64_t query_id_t;
+
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
