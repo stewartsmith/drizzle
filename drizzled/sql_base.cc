@@ -20,6 +20,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/nested_join.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

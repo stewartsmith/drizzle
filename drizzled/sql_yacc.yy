@@ -41,6 +41,7 @@
 #include "lex_symbol.h"
 #include <storage/myisam/myisam.h>
 #include <drizzled/error.h>
+#include <drizzled/nested_join.h>
 
 int yylex(void *yylval, void *yysession);
 
