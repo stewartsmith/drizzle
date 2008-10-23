@@ -4778,8 +4778,8 @@ fn_format_relative_to_data_home(char * to, const char *name,
   char tmp_path[FN_REFLEN];
   if (!test_if_hard_path(dir))
   {
-    strxnmov(tmp_path,sizeof(tmp_path)-1, mysql_real_data_home,
-	     dir, NULL);
+    strcpy(tmp_path, mysql_real_data_home);
+    strncat(tmp_path, dir, sizeof(tmp_path)-strlen(mysql_real_data_home)-1);
     dir=tmp_path;
   }
   return !fn_format(to, name, dir, extension,
@@ -4814,17 +4814,21 @@ static void fix_paths(void)
 
   char *sharedir=get_relative_path(SHAREDIR);
   if (test_if_hard_path(sharedir))
-    strmake(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
+    strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
-    strxnmov(buff,sizeof(buff)-1,mysql_home,sharedir,NULL);
+  {
+    strcpy(buff, mysql_home);
+    strncat(buff, sharedir, sizeof(buff)-strlen(mysql_home)-1);
+  }
   convert_dirname(buff,buff,NULL);
   (void) my_load_path(language,language,buff);
 
   /* If --character-sets-dir isn't given, use shared library dir */
   if (charsets_dir != mysql_charsets_dir)
   {
-    strxnmov(mysql_charsets_dir, sizeof(mysql_charsets_dir)-1, buff,
-	     CHARSET_DIR, NULL);
+    strcpy(mysql_charsets_dir, buff);
+    strncat(mysql_charsets_dir, CHARSET_DIR,
+            sizeof(mysql_charsets_dir)-strlen(buff)-1);
   }
   (void) my_load_path(mysql_charsets_dir, mysql_charsets_dir, buff);
   convert_dirname(mysql_charsets_dir, mysql_charsets_dir, NULL);
