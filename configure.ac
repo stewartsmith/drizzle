@@ -1495,7 +1495,7 @@ then
   if test "$ac_warn_pedantic" = "yes"
   then
   save_CXXFLAGS="${CXXFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${BASE_WARNINGS}"
+  CXXFLAGS="${CXXFLAGS} ${BASE_WARNINGS} -Wredundant-decls"
   AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
     [ac_cv_safe_to_use_Wredundant_decls_],
     [AC_LANG_PUSH(C++)
