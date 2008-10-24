@@ -1462,7 +1462,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros -${W_FAIL}"
+  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros ${W_FAIL}"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1494,7 +1494,7 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
-  save_CXXFLAGS=CXXFLAGS
+  save_CXXFLAGS="${CXXFLAGS}"
   CXXFLAGS="${CXXFLAGS} ${BASE_WARNINGS}"
   AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
     [ac_cv_safe_to_use_Wredundant_decls_],
@@ -1520,6 +1520,7 @@ void bar(C<int> &e) { e.foo(); }
     fi
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations ${W_REDUNDANT_DECLS} ${W_STRICT_ALIASING}"
     GXX_PEDANTIC="-pedantic -Wundef ${W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    CXXFLAGS="${save_CXXFLAGS}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
