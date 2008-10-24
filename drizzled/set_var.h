@@ -453,17 +453,26 @@ public:
 
 class sys_var_session_uint64_t :public sys_var_session
 {
+  sys_check_func check_func;
 public:
   uint64_t SV::*offset;
   bool only_global;
+  sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg,
+                           uint64_t SV::*offset_arg,
+                           sys_after_update_func au_func= NULL,
+                           sys_check_func c_func= NULL,
+                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
+        :sys_var_session(name_arg, au_func, binlog_status_arg),
+         check_func(c_func),
+         offset(offset_arg)
+            { chain_sys_var(chain); }
   sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg, 
-                        uint64_t SV::*offset_arg)
-    :sys_var_session(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
-  sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg, 
-                        uint64_t SV::*offset_arg,
-			sys_after_update_func func, bool only_global_arg)
-    :sys_var_session(name_arg, func), offset(offset_arg),
+                        uint64_t SV::*offset_arg, 
+			sys_after_update_func func, bool only_global_arg,
+      sys_check_func cfunc= NULL)
+    :sys_var_session(name_arg, func),
+    check_func(cfunc),
+    offset(offset_arg),
     only_global(only_global_arg)
   { chain_sys_var(chain); }
   bool update(Session *session, set_var *var);

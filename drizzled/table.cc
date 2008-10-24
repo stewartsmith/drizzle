@@ -4027,7 +4027,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
             session->thread_id, session->tmp_table++);
   }
 

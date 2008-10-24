@@ -753,7 +753,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 extern "C" RETSIGTYPE print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning(_("Got signal %d from thread %lud"), sig,my_thread_id());
+    sql_print_warning(_("Got signal %d from thread %"PRIu64), sig,my_thread_id());
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif

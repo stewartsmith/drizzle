@@ -87,7 +87,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
             session->thread_id, session->tmp_table++);
   }
   fn_format(path, path, mysql_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);

@@ -319,7 +319,8 @@ struct system_variables
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly
   */
-  my_thread_id pseudo_thread_id;
+  /* TODO: change this to my_thread_id - but have to fix set_var first */
+  uint64_t pseudo_thread_id;
 
   bool low_priority_updates;
   bool new_mode;
