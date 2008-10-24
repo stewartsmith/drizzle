@@ -197,6 +197,27 @@ public:
 };
 
 
+typedef uint64_t table_map;          /* Used for table bits in join */
+#if MAX_INDEXES <= 64
+typedef Bitmap<64>  key_map;          /* Used for finding keys */
+#else
+typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
+#endif
+typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
+
+/*
+  Used to identify NESTED_JOIN structures within a join (applicable only to
+  structures that have not been simplified away and embed more the one
+  element)
+*/
+typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
+
+/* useful constants */#
+extern const key_map key_map_empty;
+extern key_map key_map_full;          /* Should be threaded as const */
+extern const char *primary_key_name;
+
+
 /* An iterator to quickly walk over bits in unint64_t bitmap. */
 class Table_map_iterator
 {

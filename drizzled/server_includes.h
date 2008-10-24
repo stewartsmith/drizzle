@@ -1043,7 +1043,6 @@ inline int hexchar_to_int(char c)
 */
 
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
-void kill_delayed_threads(void);
 bool check_stack_overrun(Session *session, long margin, unsigned char *dummy);
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

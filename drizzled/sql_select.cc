@@ -31,6 +31,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
+#include <drizzled/nested_join.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",

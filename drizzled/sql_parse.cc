@@ -19,6 +19,7 @@
 #include "rpl_filter.h"
 #include "logging.h"
 #include <drizzled/error.h>
+#include <drizzled/nested_join.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment

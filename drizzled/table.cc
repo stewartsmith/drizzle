@@ -22,8 +22,9 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include "tmp_table.h"
-#include "sj_tmp_table.h"
+#include <drizzled/tmp_table.h>
+#include <drizzled/sj_tmp_table.h>
+#include <drizzled/nested_join.h>
 
 #include <string>
 
