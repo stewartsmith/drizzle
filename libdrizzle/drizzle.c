@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#include <signal.h>
 
 #include <libdrizzle/drizzle_com.h>
 #include <libdrizzle/libdrizzle.h>

@@ -1389,7 +1389,7 @@ extern "C" RETSIGTYPE abort_thread(int sig __attribute__((unused)))
 }
 #endif
 
-#if BACKTRACE_DEMANGLE
+#if defined(BACKTRACE_DEMANGLE)
 #include <cxxabi.h>
 extern "C" char *my_demangle(const char *mangled_name, int *status)
 {

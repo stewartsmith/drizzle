@@ -19,6 +19,7 @@
  */
 
 
+using namespace std;
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
 
@@ -72,7 +73,7 @@ int Field_real::truncate(double *nr, double max_value)
   int error= 1;
   double res= *nr;
   
-  if (std::isnan(res))
+  if (isnan(res))
   {
     res= 0;
     set_null();
@@ -91,7 +92,7 @@ int Field_real::truncate(double *nr, double max_value)
     max_value-= 1.0 / log_10[dec];
 
     /* Check for infinity so we don't get NaN in calculations */
-    if (!(std::isinf(res)))
+    if (!(isinf(res)))
     {
       double tmp= rint((res - floor(res)) * log_10[dec]) / log_10[dec];
       res= floor(res) + tmp;

@@ -17,6 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+using namespace std;
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/round.h>
@@ -109,9 +110,9 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
   tmp=(abs_dec < array_elements(log_10) ?
        log_10[abs_dec] : pow(10.0,(double) abs_dec));
 
-  if (dec_negative && std::isinf(tmp))
+  if (dec_negative && isinf(tmp))
     tmp2= 0;
-  else if (!dec_negative && std::isinf(value * tmp))
+  else if (!dec_negative && isinf(value * tmp))
     tmp2= value;
   else if (truncate)
   {
