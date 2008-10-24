@@ -21,6 +21,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  asin.cc \
 			  atan.cc \
 			  additive_op.cc \
+			  benchmark.cc \
 			  bit.cc \
 			  bit_count.cc \
 			  char_length.cc \
@@ -34,9 +35,11 @@ libfunctions_la_SOURCES = abs.cc \
 			  find_in_set.cc \
 			  floor.cc \
 			  func.cc \
+			  get_system_var.cc \
                           int.cc \
                           int_divide.cc \
                           int_val.cc \
+			  last_insert.cc \
 			  length.cc \
 			  ln.cc \
 			  locate.cc \
@@ -69,6 +72,7 @@ noinst_HEADERS = abs.h \
 		 asin.h \
 		 atan.h \
 		 additive_op.h \
+		 benchmark.h \
 		 bit.h \
 		 bit_count.h \
 		 bit_length.h \
@@ -84,9 +88,11 @@ noinst_HEADERS = abs.h \
 		 find_in_set.h \
 		 floor.h \
 		 func.h \
+		 get_system_var.h \
                  int.h \
                  int_divide.h \
                  int_val.h \
+		 last_insert.h \
 		 length.h \
 		 ln.h \
 		 locate.h \
@@ -103,7 +109,7 @@ noinst_HEADERS = abs.h \
                  plus.h \
                  pow.h \
 		 real.h \
-		 round.h \
+		 rollup_const.h \
 		 round.h \
 		 sign.h \
 		 signed.h \
