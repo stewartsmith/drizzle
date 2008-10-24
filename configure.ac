@@ -1495,7 +1495,7 @@ then
   if test "$ac_warn_pedantic" = "yes"
   then
   save_CXXFLAGS="${CXXFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${BASE_WARNINGS} -Wredundant-decls"
+  CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
   AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
     [ac_cv_safe_to_use_Wredundant_decls_],
     [AC_LANG_PUSH(C++)
@@ -1504,22 +1504,18 @@ then
 template <typename E> struct C { void foo(); };
 template <typename E> void C<E>::foo() { }
 template <> void C<int>::foo();
-
-template <> void C<int>::foo() { }
-
-void bar(C<int> &e) { e.foo(); }
           AC_INCLUDES_DEFAULT])],
        [ac_cv_safe_to_use_Wredundant_decls_=yes],
        [ac_cv_safe_to_use_Wredundant_decls_=no])
      AC_LANG_POP()])
-    if test $ac_cv_safe_to_define___extensions__ = yes
+    if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
     then
-      W_REDUNDANT_DECLS="-Wredundant-decls"
+      GXX_W_REDUNDANT_DECLS="-Wredundant-decls"
     else
-      W_REDUNDANT_DECLS="-Wno-redundant-decls"
+      GXX_W_REDUNDANT_DECLS="-Wno-redundant-decls"
     fi
-    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations ${W_REDUNDANT_DECLS} ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef ${W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
     CXXFLAGS="${save_CXXFLAGS}"
   fi
 
