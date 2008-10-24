@@ -1457,6 +1457,13 @@ AC_ARG_ENABLE([go-crazy],
 if test "$GCC" = "yes"
 then
 
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    W_FAIL="-Werror"
+  fi
+  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros -${W_FAIL}"
+
   if test "$ac_warn_longlong" = "yes"
   then
     W_LONGLONG="-Wlong-long"
@@ -1487,20 +1494,38 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef -Wredundant-decls ${W_LONGLONG} ${W_STRICT_ALIASING}"
+  save_CXXFLAGS=CXXFLAGS
+  CXXFLAGS="${CXXFLAGS} ${BASE_WARNINGS}"
+  AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
+    [ac_cv_safe_to_use_Wredundant_decls_],
+    [AC_LANG_PUSH(C++)
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+template <typename E> struct C { void foo(); };
+template <typename E> void C<E>::foo() { }
+template <> void C<int>::foo();
+
+template <> void C<int>::foo() { }
+
+void bar(C<int> &e) { e.foo(); }
+          AC_INCLUDES_DEFAULT])],
+       [ac_cv_safe_to_use_Wredundant_decls_=yes],
+       [ac_cv_safe_to_use_Wredundant_decls_=no])
+     AC_LANG_POP()])
+    if test $ac_cv_safe_to_define___extensions__ = yes
+    then
+      W_REDUNDANT_DECLS="-Wredundant-decls"
+    else
+      W_REDUNDANT_DECLS="-Wno-redundant-decls"
+    fi
+    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations ${W_REDUNDANT_DECLS} ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef ${W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
   then
     W_UNREACHABLE="-Wunreachable-code"
   fi
-
-  if test "$ac_warn_fail" = "yes"
-  then
-    W_FAIL="-Werror"
-  fi
-
   if test "$ac_warn_cast" = "yes"
   then
     W_CAST="-Wold-style-cast"
@@ -1516,9 +1541,8 @@ then
     W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
   fi
 
-  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros"
-  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
-  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
   AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
   AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
