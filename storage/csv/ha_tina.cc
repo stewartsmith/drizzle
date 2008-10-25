@@ -42,6 +42,7 @@ TODO:
 */
 #include <drizzled/common_includes.h>
 #include "ha_tina.h"
+#include <drizzled/error.h>
 
 
 /*

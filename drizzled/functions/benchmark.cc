@@ -20,7 +20,8 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/benchmark.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+
 
 /* This function is just used to test speed of different functions */
 

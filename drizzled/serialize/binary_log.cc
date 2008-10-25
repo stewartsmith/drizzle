@@ -1,4 +1,4 @@
-#include "config.h"
+#include <config.h>
 #include "binary_log.h"
 
 #include <google/protobuf/io/coded_stream.h>

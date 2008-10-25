@@ -23,8 +23,6 @@ using namespace std;
 #include CSTDINT_H
 #include <cassert>
 
-#include <drizzled/version.h>
-
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
 

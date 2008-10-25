@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _drizzled_drizzled_error_messages
-#define _drizzled_drizzled_error_messages
-
-
 /*
  *   Errors a drizzled can give you
  *   */
+
+#include <config.h>
+#include <mysys/my_sys.h>
+#include <mysys/mysys_err.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 static const char *drizzled_error_messages[]=
 {
@@ -1393,4 +1396,62 @@ N_("'%s' is not yet supported for virtual columns."),
 N_("Constant expression in virtual column function is not allowed.")
 };
 
-#endif
+const char * error_message(unsigned int code)
+{
+  return drizzled_error_messages[code-ER_ERROR_FIRST];
+}
+
+
+
+/**
+  Read messages from errorfile.
+
+  This function can be called multiple times to reload the messages.
+  If it fails to load the messages, it will fail softly by initializing
+  the errmesg pointer to an array of empty strings or by keeping the
+  old array if it exists.
+
+  @retval
+    FALSE       OK
+  @retval
+    TRUE        Error
+*/
+
+
+static void init_myfunc_errs()
+{
+  init_glob_errs();                     /* Initiate english errors */
+
+  {
+    EE(EE_FILENOTFOUND)   = ER(ER_FILE_NOT_FOUND);
+    EE(EE_CANTCREATEFILE) = ER(ER_CANT_CREATE_FILE);
+    EE(EE_READ)           = ER(ER_ERROR_ON_READ);
+    EE(EE_WRITE)          = ER(ER_ERROR_ON_WRITE);
+    EE(EE_BADCLOSE)       = ER(ER_ERROR_ON_CLOSE);
+    EE(EE_OUTOFMEMORY)    = ER(ER_OUTOFMEMORY);
+    EE(EE_DELETE)         = ER(ER_CANT_DELETE_FILE);
+    EE(EE_LINK)           = ER(ER_ERROR_ON_RENAME);
+    EE(EE_EOFERR)         = ER(ER_UNEXPECTED_EOF);
+    EE(EE_CANTLOCK)       = ER(ER_CANT_LOCK);
+    EE(EE_DIR)            = ER(ER_CANT_READ_DIR);
+    EE(EE_STAT)           = ER(ER_CANT_GET_STAT);
+    EE(EE_GETWD)          = ER(ER_CANT_GET_WD);
+    EE(EE_SETWD)          = ER(ER_CANT_SET_WD);
+    EE(EE_DISK_FULL)      = ER(ER_DISK_FULL);
+  }
+}
+
+bool init_errmessage(void)
+{
+
+  /* Register messages for use with my_error(). */
+  if (my_error_register(drizzled_error_messages,
+                        ER_ERROR_FIRST, ER_ERROR_LAST))
+  {
+    return(true);
+  }
+
+  init_myfunc_errs();                   /* Init myfunc messages */
+  return(false);
+}
+

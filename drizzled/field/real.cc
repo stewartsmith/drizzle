@@ -22,6 +22,7 @@
 using namespace std;
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
+#include <drizzled/error.h>
 
 /*
   Floating-point numbers

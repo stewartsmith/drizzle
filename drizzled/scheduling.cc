@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/scheduling.h>
+#include <drizzled/gettext.h>
 
 int scheduling_initializer(st_plugin_int *plugin)
 {

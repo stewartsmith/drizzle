@@ -14,10 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include "rpl_rli.h"
-#include "rpl_record.h"
-#include "rpl_utility.h"
-#include "rpl_rli.h"
+#include <drizzled/rpl_rli.h>
+#include <drizzled/rpl_record.h>
+#include <drizzled/rpl_utility.h>
+#include <drizzled/rpl_rli.h>
+#include <drizzled/error.h>
 
 /**
    Pack a record of data for a table into a format suitable for

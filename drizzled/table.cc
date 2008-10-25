@@ -16,11 +16,15 @@
 
 /* Some general useful functions */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <config.h>
 
-#include "tmp_table.h"
-#include "sj_tmp_table.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+
+#include <drizzled/tmp_table.h>
+#include <drizzled/sj_tmp_table.h>
+#include <drizzled/nested_join.h>
 
 #include <string>
 
@@ -4024,7 +4028,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
             session->thread_id, session->tmp_table++);
   }
 

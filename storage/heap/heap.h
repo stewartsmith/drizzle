@@ -23,11 +23,11 @@ extern "C" {
 #endif
 
 #include <drizzled/base.h>
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 
-#include <mysys/my_handler.h>
+#include <storage/myisam/my_handler.h>
 #include <mysys/my_tree.h>
 
 	/* defines used by heap-funktions */

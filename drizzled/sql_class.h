@@ -19,9 +19,11 @@
 
 
 /* Classes in mysql */
+
 #include <drizzled/global.h>
 #include "log.h"
 #include "rpl_tblmap.h"
+#include <libdrizzle/password.h>     // rand_struct
 
 class Relay_log_info;
 
@@ -35,7 +37,7 @@ enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_ha_read_modes { RFIRST, RNEXT, RPREV, RLAST, RKEY, RNEXT_SAME };
 enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
-			    DELAY_KEY_WRITE_ALL };
+                            DELAY_KEY_WRITE_ALL };
 enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
                             SLAVE_EXEC_MODE_IDEMPOTENT,
                             SLAVE_EXEC_MODE_LAST_BIT};
@@ -317,7 +319,8 @@ struct system_variables
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly
   */
-  my_thread_id pseudo_thread_id;
+  /* TODO: change this to my_thread_id - but have to fix set_var first */
+  uint64_t pseudo_thread_id;
 
   bool low_priority_updates;
   bool new_mode;
@@ -1343,10 +1346,10 @@ public:
 
   enum killed_state
   {
-    NOT_KILLED=0,
-    KILL_BAD_DATA=1,
-    KILL_CONNECTION=ER_SERVER_SHUTDOWN,
-    KILL_QUERY=ER_QUERY_INTERRUPTED,
+    NOT_KILLED,
+    KILL_BAD_DATA,
+    KILL_CONNECTION,
+    KILL_QUERY,
     KILLED_NO_VALUE      /* means neither of the states */
   };
   killed_state volatile killed;

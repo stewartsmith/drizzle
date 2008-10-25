@@ -16,7 +16,8 @@
 #include <drizzled/server_includes.h>
 #include "rpl_utility.h"
 #include "rpl_rli.h"
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 /*********************************************************************
  *                   table_def member definitions                    *

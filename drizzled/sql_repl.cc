@@ -15,11 +15,12 @@
 
 #include <drizzled/server_includes.h>
 
-#include "rpl_mi.h"
-#include "sql_repl.h"
-#include "log_event.h"
-#include "rpl_filter.h"
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/rpl_mi.h>
+#include <drizzled/sql_repl.h>
+#include <drizzled/log_event.h>
+#include <drizzled/rpl_filter.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 int max_binlog_dump_events = 0; // unlimited
 

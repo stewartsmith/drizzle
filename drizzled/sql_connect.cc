@@ -19,7 +19,7 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 

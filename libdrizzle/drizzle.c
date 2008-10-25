@@ -20,11 +20,12 @@
 #include <config.h>
 #include <signal.h>
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <libdrizzle/libdrizzle.h>
+#include <libdrizzle/pack.h>
 #include <libdrizzle/errmsg.h>
 #include <libdrizzle/drizzle.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include <libdrizzle/net_serv.h>
 #include <libdrizzle/drizzle_data.h>
 #include <libdrizzle/local_infile.h>
@@ -32,8 +33,6 @@
 #include "libdrizzle_priv.h"
 
 #include <vio/violite.h>
-
-#include <drizzled/version.h>
 
 #include <stdio.h>
 #include <stdlib.h>

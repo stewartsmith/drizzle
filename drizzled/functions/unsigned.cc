@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/unsigned.h>
+#include <drizzled/error.h>
 
 void Item_func_unsigned::print(String *str, enum_query_type query_type)
 {

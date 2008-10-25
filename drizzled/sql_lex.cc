@@ -18,6 +18,7 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
+#include <drizzled/error.h>
 
 static int lex_one_token(void *arg, void *yysession);
 

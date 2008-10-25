@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_sql_common_h
-#define _libdrizzle_sql_common_h
+#ifndef LIBDRIZZLE_PACK_H
+#define LIBDRIZZLE_PACK_H
 
-#ifdef	__cplusplus
+#include <stdint.h>
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef	__cplusplus
+  uint32_t net_field_length(unsigned char **packet);
+  uint64_t net_field_length_ll(unsigned char **packet);
+  unsigned char *net_store_length(unsigned char *pkg, uint64_t length);
+
+#ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* LIBDRIZZLE_PACK_H */

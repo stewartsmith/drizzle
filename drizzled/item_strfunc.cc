@@ -40,7 +40,7 @@ extern "C" {
 }
 #endif
 
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 String my_empty_string("",default_charset_info);
 

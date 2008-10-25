@@ -21,7 +21,6 @@
 /* Definitions for parameters to do with handler-routines */
 
 
-#include <mysys/my_handler.h>
 #include <storage/myisam/keycache.h>
 
 #ifndef NO_HASH

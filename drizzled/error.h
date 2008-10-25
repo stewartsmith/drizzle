@@ -20,11 +20,15 @@
 #ifndef _drizzled_error_h
 #define _drizzled_error_h
 
-#include <libdrizzle/gettext.h>
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+const char * error_message(unsigned int err_index);
 
 enum drizzled_error_code {
   ER_ERROR_FIRST= 1000,
-  ER_HASHCHK= 1000,
+  ER_HASHCHK= ER_ERROR_FIRST,
   ER_NISAMCHK,
   ER_NO,
   ER_YES,
@@ -708,6 +712,10 @@ enum drizzled_error_code {
   ER_CONST_EXPR_IN_VCOL,
   ER_ERROR_LAST= ER_CONST_EXPR_IN_VCOL
 };
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
 

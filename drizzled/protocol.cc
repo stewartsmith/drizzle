@@ -20,8 +20,9 @@
   The actual communction is handled by the net_xxx functions in net_serv.cc
 */
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <drizzled/sql_state.h>
+#include <libdrizzle/pack.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */

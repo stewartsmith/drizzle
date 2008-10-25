@@ -27,7 +27,6 @@
 #include <drizzled/order.h>
 #include <drizzled/filesort_info.h>
 #include <drizzled/natural_join_column.h>
-#include <drizzled/nested_join.h>
 #include <drizzled/field_iterator.h>
 
 class Item;				/* Needed by order_st */

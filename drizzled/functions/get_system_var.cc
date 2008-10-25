@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
+#include <drizzled/error.h>
 #include <drizzled/functions/get_system_var.h>
 
 Item_func_get_system_var::

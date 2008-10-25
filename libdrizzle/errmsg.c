@@ -19,7 +19,7 @@
 
 /* Error messages for MySQL clients */
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include "errmsg.h"
 
 const char *client_errors[]=

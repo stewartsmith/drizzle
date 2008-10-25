@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "heapdef.h"
-#include "libdrizzle/drizzle_com.h"
+#include "drizzled/common.h"
 #include "drizzled/error.h"
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);

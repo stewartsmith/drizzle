@@ -27,7 +27,7 @@
 #define NOT_FIXED_DEC			31
 #endif
 
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 #include <mysys/iocache.h>
 
 class String;

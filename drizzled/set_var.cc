@@ -51,8 +51,8 @@
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
-#include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 
@@ -217,9 +217,9 @@ static sys_var_session_ulong	sys_max_error_count(&vars, "max_error_count",
 					    &SV::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
 						&SV::max_heap_table_size);
-static sys_var_session_ulong sys_pseudo_thread_id(&vars, "pseudo_thread_id",
+static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               &SV::pseudo_thread_id,
-                                              check_pseudo_thread_id, 0,
+                                              0, check_pseudo_thread_id,
                                               sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
 					  &SV::max_join_size,
@@ -356,7 +356,7 @@ static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
-                                            DRIZZLE_COMPILATION_COMMENT);
+                                            COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
@@ -1146,7 +1146,8 @@ unsigned char *sys_var_session_ha_rows::value_ptr(Session *session, enum_var_typ
 
 bool sys_var_session_uint64_t::check(Session *session, set_var *var)
 {
-  return get_unsigned(session, var);
+  return (get_unsigned(session, var) ||
+	  (check_func && (*check_func)(session, var)));
 }
 
 bool sys_var_session_uint64_t::update(Session *session,  set_var *var)

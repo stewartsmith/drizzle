@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <libdrizzle/libdrizzle.h>
 #include "event.h"
+#include <drizzled/gettext.h>
 
 
 /*

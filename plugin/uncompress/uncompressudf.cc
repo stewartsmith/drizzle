@@ -15,7 +15,7 @@
 
 #define DRIZZLE_SERVER 1 /* for session variable max_allowed_packet */
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 #include <zlib.h>
 

@@ -17,24 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_ABS_H
-#define DRIZZLED_FUNCTIONS_ABS_H
+#ifndef LIBDRIZZLE_PACK_H
+#define LIBDRIZZLE_GET_PASSWORD_H
 
-#include <drizzled/functions/func.h>
-#include <drizzled/functions/num1.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-class Item_func_abs :public Item_func_num1
-{
-public:
-  Item_func_abs(Item *a) :Item_func_num1(a) {}
-  double real_op();
-  int64_t int_op();
-  my_decimal *decimal_op(my_decimal *);
-  const char *func_name() const { return "abs"; }
-  void fix_length_and_dec();
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
+  char *get_tty_password(const char *opt_message);
 
-};
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* DRIZZLED_FUNCTIONS_ABS_H */
+#endif /* LIBDRIZZLE_GET_PASSWORD_H */

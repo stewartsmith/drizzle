@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/parser.h>
+#include <drizzled/gettext.h>
 
 int parser_initializer(st_plugin_int *plugin)
 {

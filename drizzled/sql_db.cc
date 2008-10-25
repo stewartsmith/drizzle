@@ -15,7 +15,7 @@
 
 
 /* create and drop of databases */
-#include "config.h"
+#include <config.h>
 #include CSTDINT_H
 #include CINTTYPES_H
 #include <string>
@@ -26,8 +26,8 @@ using namespace std;
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include "log.h"
-#include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 
 #define MAX_DROP_TABLE_Q_LEN      1024

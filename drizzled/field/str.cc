@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/str.h>
+#include <drizzled/error.h>
 
 Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg, unsigned char *null_ptr_arg,
                      unsigned char null_bit_arg, utype unireg_check_arg,

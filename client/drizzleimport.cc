@@ -26,7 +26,7 @@
 */
 #define IMPORT_VERSION "3.7"
 
-#include "config.h"
+#include <config.h>
 #include <string>
 
 #include "client_priv.h"

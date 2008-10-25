@@ -16,17 +16,18 @@
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
 
-#include <authentication.h>
-#include <logging.h>
-#include <errmsg.h>
-#include <configvar.h>
-#include <qcache.h>
-#include <parser.h>
-#include <scheduling.h>
+#include <drizzled/authentication.h>
+#include <drizzled/logging.h>
+#include <drizzled/errmsg.h>
+#include <drizzled/configvar.h>
+#include <drizzled/qcache.h>
+#include <drizzled/parser.h>
+#include <drizzled/scheduling.h>
 
 #include <string>
 
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2

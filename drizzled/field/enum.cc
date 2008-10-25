@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/enum.h>
+#include <drizzled/error.h>
 
 /****************************************************************************
 ** enum type.

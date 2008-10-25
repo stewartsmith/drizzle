@@ -22,8 +22,9 @@
 #include <myisampack.h>
 #include "ha_myisam.h"
 #include "myisamdef.h"
-#include <drizzled/drizzled_error_messages.h>
 #include <drizzled/util/test.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -444,15 +445,16 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   LIST *element;
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= (Session*) file->in_use.data))
-    sql_print_error("Got an error from thread_id=%lu, %s:%d", cur_session->thread_id,
+    sql_print_error(_("Got an error from thread_id=%"PRIu64", %s:%d"),
+                    cur_session->thread_id,
                     sfile, sline);
   else
-    sql_print_error("Got an error from unknown thread, %s:%d", sfile, sline);
+    sql_print_error(_("Got an error from unknown thread, %s:%d"), sfile, sline);
   if (message)
     sql_print_error("%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    sql_print_error("%s", "Unknown thread accessing table");
+    sql_print_error("%s", _("Unknown thread accessing table"));
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }

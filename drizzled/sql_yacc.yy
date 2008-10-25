@@ -39,9 +39,9 @@
 #define Select Lex->current_select
 #include <drizzled/server_includes.h>
 #include "lex_symbol.h"
-#include <storage/myisam/myisam.h>
-#include <drizzled/drizzled_error_messages.h>
 #include <drizzled/functions/locate.h>
+#include <drizzled/error.h>
+#include <drizzled/nested_join.h>
 
 int yylex(void *yylval, void *yysession);
 

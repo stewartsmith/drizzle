@@ -23,7 +23,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -150,7 +150,7 @@ inline void setup_fpu()
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
@@ -753,7 +753,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 extern "C" RETSIGTYPE print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning(_("Got signal %d from thread %lud"), sig,my_thread_id());
+    sql_print_warning(_("Got signal %d from thread %"PRIu64), sig,my_thread_id());
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -2666,7 +2666,7 @@ int main(int argc, char **argv)
   }
 
   sql_print_information(_(ER(ER_STARTUP)),my_progname,server_version,
-                        "", mysqld_port, DRIZZLE_COMPILATION_COMMENT);
+                        "", mysqld_port, COMPILATION_COMMENT);
 
 
   handle_connections_sockets();
@@ -4142,7 +4142,7 @@ static void print_version(void)
     version from the output of 'mysqld --version', so don't change it!
   */
   printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
-	 server_version,SYSTEM_TYPE,MACHINE_TYPE, DRIZZLE_COMPILATION_COMMENT);
+	 server_version,SYSTEM_TYPE,MACHINE_TYPE, COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -4253,7 +4253,7 @@ static void mysql_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   global_query_id= thread_id= 1L;
-  my_stpcpy(server_version, DRIZZLE_SERVER_VERSION);
+  my_stpcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4738,12 +4738,12 @@ static void get_options(int *argc,char **argv)
 #ifdef DRIZZLE_SERVER_SUFFIX
 #define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
 #else
-#define DRIZZLE_SERVER_SUFFIX_STR DRIZZLE_SERVER_SUFFIX_DEF
+#define DRIZZLE_SERVER_SUFFIX_STR ""
 #endif
 
 static void set_server_version(void)
 {
-  char *end= strxmov(server_version, DRIZZLE_SERVER_VERSION,
+  char *end= strxmov(server_version, VERSION,
                      DRIZZLE_SERVER_SUFFIX_STR, NULL);
   if (opt_bin_log)
     my_stpcpy(end, "-log");                        // This may slow down system

@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/long.h>
+#include <drizzled/error.h>
 
 /****************************************************************************
 ** long int

@@ -22,6 +22,7 @@
 
 #include <sys/socket.h>
 #include <libdrizzle/drizzle.h>
+#include <drizzled/korr.h>
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |  \
                              CLIENT_TRANSACTIONS |                      \

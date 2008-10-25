@@ -19,7 +19,7 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 bool mysql_union(Session *session,
                  LEX *lex __attribute__((unused)),

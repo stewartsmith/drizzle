@@ -14,10 +14,9 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "myisamdef.h"
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 #include <drizzled/util/test.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
 

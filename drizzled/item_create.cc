@@ -23,6 +23,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/functions/coercibility.h>
 #include <drizzled/functions/locate.h>
+#include <drizzled/error.h>
 
 /*
 =============================================================================

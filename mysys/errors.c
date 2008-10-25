@@ -15,7 +15,7 @@
 
 #include "mysys_priv.h"
 #include "mysys_err.h"
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 /* Error message numbers in global map */
 const char * globerrs[GLOBERRS];
