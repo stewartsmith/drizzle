@@ -17,22 +17,32 @@ noinst_LTLIBRARIES = 	libfunctions.la
 
 libfunctions_la_SOURCES = abs.cc \
 			  acos.cc \
+			  ascii.cc \
 			  asin.cc \
 			  atan.cc \
 			  additive_op.cc \
+			  benchmark.cc \
+			  bit.cc \
+			  bit_count.cc \
+			  char_length.cc \
 			  ceiling.cc \
 			  connection_id.cc \
+			  coercibility.cc \
 			  cos.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
 			  exp.cc \
+			  find_in_set.cc \
 			  floor.cc \
 			  func.cc \
+			  get_system_var.cc \
                           int.cc \
                           int_divide.cc \
                           int_val.cc \
+			  last_insert.cc \
 			  length.cc \
 			  ln.cc \
+			  locate.cc \
 			  log.cc \
 			  min_max.cc \
 			  minus.cc \
@@ -42,6 +52,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  num1.cc \
                           numhybrid.cc \
                           num_op.cc \
+                          ord.cc \
                           plus.cc \
                           pow.cc \
 			  rand.cc \
@@ -52,27 +63,39 @@ libfunctions_la_SOURCES = abs.cc \
 			  sin.cc \
 			  sqrt.cc \
 			  tan.cc \
+			  units.cc \
 			  unsigned.cc
 
 noinst_HEADERS = abs.h \
 		 acos.h \
+		 ascii.h \
 		 asin.h \
 		 atan.h \
 		 additive_op.h \
+		 benchmark.h \
+		 bit.h \
+		 bit_count.h \
+		 bit_length.h \
 		 ceiling.h \
+		 char_length.h \
+		 coercibility.h \
 		 connection_id.h \
 		 cos.h \
 		 dec.h \
 		 decimal_typecast.h \
 		 divide.h \
 		 exp.h \
+		 find_in_set.h \
 		 floor.h \
 		 func.h \
+		 get_system_var.h \
                  int.h \
                  int_divide.h \
                  int_val.h \
+		 last_insert.h \
 		 length.h \
 		 ln.h \
+		 locate.h \
 		 log.h \
 		 min_max.h \
 		 minus.h \
@@ -82,10 +105,11 @@ noinst_HEADERS = abs.h \
 		 num1.h \
                  numhybrid.h \
                  num_op.h \
+                 ord.h \
                  plus.h \
                  pow.h \
 		 real.h \
-		 round.h \
+		 rollup_const.h \
 		 round.h \
 		 sign.h \
 		 signed.h \

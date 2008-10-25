@@ -35,7 +35,12 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/connection_id.h>
 #include <drizzled/functions/decimal_typecast.h>
 #include <drizzled/functions/divide.h>
+#include <drizzled/functions/get_system_var.h>
 #include <drizzled/functions/int.h>
+#include <drizzled/functions/bit.h>
+#include <drizzled/functions/bit_count.h>
+#include <drizzled/functions/bit_length.h>
+#include <drizzled/functions/find_in_set.h>
 #include <drizzled/functions/int_divide.h>
 #include <drizzled/functions/length.h>
 #include <drizzled/functions/min_max.h>
@@ -49,17 +54,24 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/abs.h>
 #include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
+#include <drizzled/functions/rollup_const.h>
 #include <drizzled/functions/dec.h>
 #include <drizzled/functions/int_val.h>
 #include <drizzled/functions/acos.h>
+#include <drizzled/functions/ascii.h>
 #include <drizzled/functions/asin.h>
 #include <drizzled/functions/atan.h>
+#include <drizzled/functions/benchmark.h>
+#include <drizzled/functions/char_length.h>
 #include <drizzled/functions/ceiling.h>
 #include <drizzled/functions/cos.h>
 #include <drizzled/functions/exp.h>
 #include <drizzled/functions/floor.h>
+#include <drizzled/functions/last_insert.h>
 #include <drizzled/functions/ln.h>
 #include <drizzled/functions/log.h>
+#include <drizzled/functions/units.h>
+#include <drizzled/functions/ord.h>
 #include <drizzled/functions/pow.h>
 #include <drizzled/functions/rand.h>
 #include <drizzled/functions/round.h>
@@ -77,93 +89,6 @@ public:
   void fix_length_and_dec();
 };
 
-class Item_func_units :public Item_real_func
-{
-  char *name;
-  double mul,add;
-public:
-  Item_func_units(char *name_arg,Item *a,double mul_arg,double add_arg)
-    :Item_real_func(a),name(name_arg),mul(mul_arg),add(add_arg) {}
-  double val_real();
-  const char *func_name() const { return name; }
-  void fix_length_and_dec()
-  { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
-};
-
-
-/* 
-  Objects of this class are used for ROLLUP queries to wrap up 
-  each constant item referred to in GROUP BY list. 
-*/
-
-class Item_func_rollup_const :public Item_func
-{
-public:
-  Item_func_rollup_const(Item *a) :Item_func(a)
-  {
-    name= a->name;
-    name_length= a->name_length;
-  }
-  double val_real() { return args[0]->val_real(); }
-  int64_t val_int() { return args[0]->val_int(); }
-  String *val_str(String *str) { return args[0]->val_str(str); }
-  my_decimal *val_decimal(my_decimal *dec) { return args[0]->val_decimal(dec); }
-  const char *func_name() const { return "rollup_const"; }
-  bool const_item() const { return 0; }
-  Item_result result_type() const { return args[0]->result_type(); }
-  void fix_length_and_dec()
-  {
-    collation= args[0]->collation;
-    max_length= args[0]->max_length;
-    decimals=args[0]->decimals; 
-    /* The item could be a NULL constant. */
-    null_value= args[0]->is_null();
-  }
-};
-
-class Item_func_bit_length :public Item_func_length
-{
-public:
-  Item_func_bit_length(Item *a) :Item_func_length(a) {}
-  int64_t val_int()
-    { assert(fixed == 1); return Item_func_length::val_int()*8; }
-  const char *func_name() const { return "bit_length"; }
-};
-
-class Item_func_char_length :public Item_int_func
-{
-  String value;
-public:
-  Item_func_char_length(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "char_length"; }
-  void fix_length_and_dec() { max_length=10; }
-};
-
-class Item_func_coercibility :public Item_int_func
-{
-public:
-  Item_func_coercibility(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "coercibility"; }
-  void fix_length_and_dec() { max_length=10; maybe_null= 0; }
-  table_map not_null_tables() const { return 0; }
-};
-
-class Item_func_locate :public Item_int_func
-{
-  String value1,value2;
-  DTCollation cmp_collation;
-public:
-  Item_func_locate(Item *a,Item *b) :Item_int_func(a,b) {}
-  Item_func_locate(Item *a,Item *b,Item *c) :Item_int_func(a,b,c) {}
-  const char *func_name() const { return "locate"; }
-  int64_t val_int();
-  void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
 class Item_func_field :public Item_int_func
 {
   String value,tmp;
@@ -174,141 +99,6 @@ public:
   int64_t val_int();
   const char *func_name() const { return "field"; }
   void fix_length_and_dec();
-};
-
-
-class Item_func_ascii :public Item_int_func
-{
-  String value;
-public:
-  Item_func_ascii(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "ascii"; }
-  void fix_length_and_dec() { max_length=3; }
-};
-
-class Item_func_ord :public Item_int_func
-{
-  String value;
-public:
-  Item_func_ord(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "ord"; }
-};
-
-class Item_func_find_in_set :public Item_int_func
-{
-  String value,value2;
-  uint32_t enum_value;
-  uint64_t enum_bit;
-  DTCollation cmp_collation;
-public:
-  Item_func_find_in_set(Item *a,Item *b) :Item_int_func(a,b),enum_value(0) {}
-  int64_t val_int();
-  const char *func_name() const { return "find_in_set"; }
-  void fix_length_and_dec();
-};
-
-/* Base class for all bit functions: '~', '|', '^', '&', '>>', '<<' */
-
-class Item_func_bit: public Item_int_func
-{
-public:
-  Item_func_bit(Item *a, Item *b) :Item_int_func(a, b) {}
-  Item_func_bit(Item *a) :Item_int_func(a) {}
-  void fix_length_and_dec() { unsigned_flag= 1; }
-
-  virtual inline void print(String *str, enum_query_type query_type)
-  {
-    print_op(str, query_type);
-  }
-};
-
-class Item_func_bit_or :public Item_func_bit
-{
-public:
-  Item_func_bit_or(Item *a, Item *b) :Item_func_bit(a, b) {}
-  int64_t val_int();
-  const char *func_name() const { return "|"; }
-};
-
-class Item_func_bit_and :public Item_func_bit
-{
-public:
-  Item_func_bit_and(Item *a, Item *b) :Item_func_bit(a, b) {}
-  int64_t val_int();
-  const char *func_name() const { return "&"; }
-};
-
-class Item_func_bit_count :public Item_int_func
-{
-public:
-  Item_func_bit_count(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "bit_count"; }
-  void fix_length_and_dec() { max_length=2; }
-};
-
-class Item_func_shift_left :public Item_func_bit
-{
-public:
-  Item_func_shift_left(Item *a, Item *b) :Item_func_bit(a, b) {}
-  int64_t val_int();
-  const char *func_name() const { return "<<"; }
-};
-
-class Item_func_shift_right :public Item_func_bit
-{
-public:
-  Item_func_shift_right(Item *a, Item *b) :Item_func_bit(a, b) {}
-  int64_t val_int();
-  const char *func_name() const { return ">>"; }
-};
-
-class Item_func_bit_neg :public Item_func_bit
-{
-public:
-  Item_func_bit_neg(Item *a) :Item_func_bit(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "~"; }
-
-  virtual inline void print(String *str, enum_query_type query_type)
-  {
-    Item_func::print(str, query_type);
-  }
-};
-
-
-class Item_func_last_insert_id :public Item_int_func
-{
-public:
-  Item_func_last_insert_id() :Item_int_func() {}
-  Item_func_last_insert_id(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "last_insert_id"; }
-  void fix_length_and_dec()
-  {
-    if (arg_count)
-      max_length= args[0]->max_length;
-  }
-  bool fix_fields(Session *session, Item **ref);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_benchmark :public Item_int_func
-{
-public:
-  Item_func_benchmark(Item *count_expr, Item *expr)
-    :Item_int_func(count_expr, expr)
-  {}
-  int64_t val_int();
-  const char *func_name() const { return "benchmark"; }
-  void fix_length_and_dec() { max_length=1; maybe_null=0; }
-  virtual void print(String *str, enum_query_type query_type);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
 };
 
 /* replication functions */
@@ -443,47 +233,6 @@ public:
   void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
 };
 
-
-/* A system variable */
-
-class Item_func_get_system_var :public Item_func
-{
-  sys_var *var;
-  enum_var_type var_type;
-  LEX_STRING component;
-public:
-  Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
-                           LEX_STRING *component_arg, const char *name_arg,
-                           size_t name_len_arg);
-  bool fix_fields(Session *session, Item **ref);
-  /*
-    Stubs for pure virtual methods. Should never be called: this
-    item is always substituted with a constant in fix_fields().
-  */
-  double val_real()         { assert(0); return 0.0; }
-  int64_t val_int()        { assert(0); return 0; }
-  String* val_str(String*)  { assert(0); return 0; }
-  void fix_length_and_dec() { assert(0); }
-  /* TODO: fix to support views */
-  const char *func_name() const { return "get_system_var"; }
-  /**
-    Indicates whether this system variable is written to the binlog or not.
-
-    Variables are written to the binlog as part of "status_vars" in
-    Query_log_event, as an Intvar_log_event, or a Rand_log_event.
-
-    @return true if the variable is written to the binlog, false otherwise.
-  */
-  bool is_written_to_binlog();
-};
-
-class Item_func_bit_xor : public Item_func_bit
-{
-public:
-  Item_func_bit_xor(Item *a, Item *b) :Item_func_bit(a, b) {}
-  int64_t val_int();
-  const char *func_name() const { return "^"; }
-};
 
 class Item_func_is_free_lock :public Item_int_func
 {

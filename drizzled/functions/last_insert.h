@@ -17,17 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_LAST_INSERT_H
+#define DRIZZLED_FUNCTIONS_LAST_INSERT_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
-{
+class Item_func_last_insert_id :public Item_int_func
+{ 
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_last_insert_id() :Item_int_func() {}
+  Item_func_last_insert_id(Item *a) :Item_int_func(a) {}
+  int64_t val_int();
+  const char *func_name() const { return "last_insert_id"; }
+  void fix_length_and_dec()
+  {
+    if (arg_count)
+      max_length= args[0]->max_length;
+  }
+  bool fix_fields(Session *session, Item **ref);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
-
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+    
+#endif /* DRIZZLED_FUNCTIONS_LAST_INSERT_H */

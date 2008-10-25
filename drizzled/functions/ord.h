@@ -17,17 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_ORD_H
+#define DRIZZLED_FUNCTIONS_ORD_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_ord :public Item_int_func
 {
+  String value;
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_ord(Item *a) :Item_int_func(a) {}
+  int64_t val_int();
+  const char *func_name() const { return "ord"; }
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_ORD_H */

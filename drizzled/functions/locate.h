@@ -17,17 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_LOCATE_H
+#define DRIZZLED_FUNCTIONS_LOCATE_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_locate :public Item_int_func
 {
+  String value1,value2;
+  DTCollation cmp_collation;
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_locate(Item *a,Item *b) :Item_int_func(a,b) {}
+  Item_func_locate(Item *a,Item *b,Item *c) :Item_int_func(a,b,c) {}
+  const char *func_name() const { return "locate"; }
+  int64_t val_int();
+  void fix_length_and_dec();
+  virtual void print(String *str, enum_query_type query_type);
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_LOCATE_H */
