@@ -17,17 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/coercibility.h>
 
-#include <drizzled/functions/func.h> 
-
-class Item_func_int_val :public Item_func_num1
+int64_t Item_func_coercibility::val_int()
 {
-public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
-};
+  assert(fixed == 1);
+  null_value= 0;
+  return (int64_t) args[0]->collation.derivation;
+}
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+

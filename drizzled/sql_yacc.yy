@@ -39,6 +39,7 @@
 #define Select Lex->current_select
 #include <drizzled/server_includes.h>
 #include "lex_symbol.h"
+#include <drizzled/functions/locate.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 

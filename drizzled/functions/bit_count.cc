@@ -17,17 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <mysys/my_bit.h>
+#include <drizzled/functions/bit_count.h>
 
-#include <drizzled/functions/func.h> 
-
-class Item_func_int_val :public Item_func_num1
+int64_t Item_func_bit_count::val_int()
 {
-public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
-};
+  assert(fixed == 1);
+  uint64_t value= (uint64_t) args[0]->val_int();
+  if ((null_value= args[0]->null_value))
+    return 0; /* purecov: inspected */
+  return (int64_t) my_count_bits(value);
+}
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */

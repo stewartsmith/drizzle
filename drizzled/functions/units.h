@@ -17,17 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_UNITS_H
+#define DRIZZLED_FUNCTIONS_UNITS_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_units :public Item_real_func
 {
+  char *name;
+  double mul,add;
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_units(char *name_arg,Item *a,double mul_arg,double add_arg)
+    :Item_real_func(a),name(name_arg),mul(mul_arg),add(add_arg) {}
+  double val_real();
+  const char *func_name() const { return name; }
+  void fix_length_and_dec()
+  { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_UNITS_H */

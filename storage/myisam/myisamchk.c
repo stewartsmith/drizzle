@@ -667,6 +667,8 @@ get_one_option(int optid,
       method_conv= MI_STATS_METHOD_IGNORE_NULLS;
       break;
     default: assert(0);                         /* Impossible */
+      fprintf(stderr, "Invalid value of stats_method: %s.\n", argument);
+      exit(1);
     }
     check_param.stats_method= method_conv;
     break;

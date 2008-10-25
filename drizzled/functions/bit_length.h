@@ -17,17 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_BIT_LENGTH_H
+#define DRIZZLED_FUNCTIONS_BIT_LENGTH_H
 
 #include <drizzled/functions/func.h> 
+#include <drizzled/functions/length.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_bit_length :public Item_func_length
 {
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_bit_length(Item *a) :Item_func_length(a) {}
+  int64_t val_int()
+    { assert(fixed == 1); return Item_func_length::val_int()*8; }
+  const char *func_name() const { return "bit_length"; }
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_BIT_LENGTH_H */
