@@ -28,10 +28,10 @@ the thread local storage, just add it to struct thr_local_struct in the
 header file. */
 
 /* Mutex protecting the local storage hash table */
-mutex_t	thr_local_mutex;
+static mutex_t		thr_local_mutex;
 
 /* The hash table. The module is not yet initialized when it is NULL. */
-hash_table_t*	thr_local_hash	= NULL;
+static hash_table_t*	thr_local_hash	= NULL;
 
 /* The private data for each thread should be put to
 the structure below and the accessor functions written
@@ -71,7 +71,7 @@ try_again:
 	local = NULL;
 
 	HASH_SEARCH(hash, thr_local_hash, os_thread_pf(id),
-		    local, os_thread_eq(local->id, id));
+		    thr_local_t*, local, os_thread_eq(local->id, id));
 	if (local == NULL) {
 		mutex_exit(&thr_local_mutex);
 
@@ -89,7 +89,7 @@ try_again:
 
 /***********************************************************************
 Gets the slot number in the thread table of a thread. */
-
+UNIV_INTERN
 ulint
 thr_local_get_slot_no(
 /*==================*/
@@ -112,7 +112,7 @@ thr_local_get_slot_no(
 
 /***********************************************************************
 Sets the slot number in the thread table of a thread. */
-
+UNIV_INTERN
 void
 thr_local_set_slot_no(
 /*==================*/
@@ -133,7 +133,7 @@ thr_local_set_slot_no(
 /***********************************************************************
 Returns pointer to the 'in_ibuf' field within the current thread local
 storage. */
-
+UNIV_INTERN
 ibool*
 thr_local_get_in_ibuf_field(void)
 /*=============================*/
@@ -152,7 +152,7 @@ thr_local_get_in_ibuf_field(void)
 
 /***********************************************************************
 Creates a local storage struct for the calling new thread. */
-
+UNIV_INTERN
 void
 thr_local_create(void)
 /*==================*/
@@ -182,7 +182,7 @@ thr_local_create(void)
 
 /***********************************************************************
 Frees the local storage struct for the specified thread. */
-
+UNIV_INTERN
 void
 thr_local_free(
 /*===========*/
@@ -195,7 +195,7 @@ thr_local_free(
 	/* Look for the local struct in the hash table */
 
 	HASH_SEARCH(hash, thr_local_hash, os_thread_pf(id),
-		    local, os_thread_eq(local->id, id));
+		    thr_local_t*, local, os_thread_eq(local->id, id));
 	if (local == NULL) {
 		mutex_exit(&thr_local_mutex);
 
@@ -214,7 +214,7 @@ thr_local_free(
 
 /********************************************************************
 Initializes the thread local storage module. */
-
+UNIV_INTERN
 void
 thr_local_init(void)
 /*================*/

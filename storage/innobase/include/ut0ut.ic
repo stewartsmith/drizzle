@@ -102,35 +102,6 @@ ut_pair_cmp(
 }
 
 /*****************************************************************
-Calculates fast the remainder when divided by a power of two. */
-UNIV_INLINE
-ulint
-ut_2pow_remainder(
-/*==============*/	/* out: remainder */
-	ulint	n,	/* in: number to be divided */
-	ulint	m)	/* in: divisor; power of 2 */
-{
-	ut_ad(0x80000000UL % m == 0);
-
-	return(n & (m - 1));
-}
-
-/*****************************************************************
-Calculates fast a value rounded to a multiple of a power of 2. */
-UNIV_INLINE
-ulint
-ut_2pow_round(
-/*==========*/		/* out: value of n rounded down to nearest
-			multiple of m */
-	ulint	n,	/* in: number to be rounded */
-	ulint	m)	/* in: divisor; power of 2 */
-{
-	ut_ad(0x80000000UL % m == 0);
-
-	return(n & ~(m - 1));
-}
-
-/*****************************************************************
 Calculates fast the 2-logarithm of a number, rounded upward to an
 integer. */
 UNIV_INLINE

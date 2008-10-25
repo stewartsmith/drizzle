@@ -11,7 +11,7 @@ Created 9/20/1997 Heikki Tuuri
 
 #include "univ.i"
 #include "ut0byte.h"
-#include "page0types.h"
+#include "buf0types.h"
 #include "hash0hash.h"
 #include "log0log.h"
 
@@ -21,29 +21,32 @@ extern ibool	recv_replay_file_ops;
 
 /***********************************************************************
 Reads the checkpoint info needed in hot backup. */
-
+UNIV_INTERN
 ibool
 recv_read_cp_info_for_backup(
 /*=========================*/
-			/* out: TRUE if success */
-	byte*	hdr,	/* in: buffer containing the log group header */
-	dulint*	lsn,	/* out: checkpoint lsn */
-	ulint*	offset,	/* out: checkpoint offset in the log group */
-	ulint*	fsp_limit,/* out: fsp limit of space 0, 1000000000 if the
-			database is running with < version 3.23.50 of InnoDB */
-	dulint*	cp_no,	/* out: checkpoint number */
-	dulint*	first_header_lsn);
-			/* out: lsn of of the start of the first log file */
+				/* out: TRUE if success */
+	byte*		hdr,	/* in: buffer containing the log group
+				header */
+	ib_uint64_t*	lsn,	/* out: checkpoint lsn */
+	ulint*		offset,	/* out: checkpoint offset in the log group */
+	ulint*		fsp_limit,/* out: fsp limit of space 0,
+				1000000000 if the database is running
+				with < version 3.23.50 of InnoDB */
+	ib_uint64_t*	cp_no,	/* out: checkpoint number */
+	ib_uint64_t*	first_header_lsn);
+				/* out: lsn of of the start of the
+				first log file */
 /***********************************************************************
 Scans the log segment and n_bytes_scanned is set to the length of valid
 log scanned. */
-
+UNIV_INTERN
 void
 recv_scan_log_seg_for_backup(
 /*=========================*/
 	byte*		buf,		/* in: buffer containing log data */
 	ulint		buf_len,	/* in: data length in that buffer */
-	dulint*		scanned_lsn,	/* in/out: lsn of buffer start,
+	ib_uint64_t*	scanned_lsn,	/* in/out: lsn of buffer start,
 					we return scanned lsn */
 	ulint*		scanned_checkpoint_no,
 					/* in/out: 4 lowest bytes of the
@@ -68,102 +71,113 @@ recv_recovery_from_backup_is_on(void);
 Applies the hashed log records to the page, if the page lsn is less than the
 lsn of a log record. This can be called when a buffer page has just been
 read in, or also for a page already in the buffer pool. */
-
+UNIV_INTERN
 void
 recv_recover_page(
 /*==============*/
-	ibool	recover_backup,	/* in: TRUE if we are recovering a backup
+	ibool		recover_backup,
+				/* in: TRUE if we are recovering a backup
 				page: then we do not acquire any latches
 				since the page was read in outside the
 				buffer pool */
-	ibool	just_read_in,	/* in: TRUE if the i/o-handler calls this for
+	ibool		just_read_in,
+				/* in: TRUE if the i/o-handler calls this for
 				a freshly read page */
-	page_t*	page,		/* in: buffer page */
-	ulint	space,		/* in: space id */
-	ulint	page_no);	/* in: page number */
+	buf_block_t*	block);	/* in: buffer block */
 /************************************************************
 Recovers from a checkpoint. When this function returns, the database is able
 to start processing of new user transactions, but the function
 recv_recovery_from_checkpoint_finish should be called later to complete
 the recovery and free the resources used in it. */
-
+UNIV_INTERN
 ulint
 recv_recovery_from_checkpoint_start(
 /*================================*/
-				/* out: error code or DB_SUCCESS */
-	ulint	type,		/* in: LOG_CHECKPOINT or LOG_ARCHIVE */
-	dulint	limit_lsn,	/* in: recover up to this lsn if possible */
-	dulint	min_flushed_lsn,/* in: min flushed lsn from data files */
-	dulint	max_flushed_lsn);/* in: max flushed lsn from data files */
+					/* out: error code or DB_SUCCESS */
+	ulint		type,		/* in: LOG_CHECKPOINT or LOG_ARCHIVE */
+	ib_uint64_t	limit_lsn,	/* in: recover up to this lsn
+					if possible */
+	ib_uint64_t	min_flushed_lsn,/* in: min flushed lsn from
+					data files */
+	ib_uint64_t	max_flushed_lsn);/* in: max flushed lsn from
+					 data files */
 /************************************************************
 Completes recovery from a checkpoint. */
-
+UNIV_INTERN
 void
 recv_recovery_from_checkpoint_finish(void);
 /*======================================*/
 /***********************************************************
 Scans log from a buffer and stores new log data to the parsing buffer. Parses
 and hashes the log records if new data found. */
-
+UNIV_INTERN
 ibool
 recv_scan_log_recs(
 /*===============*/
-				/* out: TRUE if limit_lsn has been reached, or
-				not able to scan any more in this log group */
-	ibool	apply_automatically,/* in: TRUE if we want this function to
-				apply log records automatically when the
-				hash table becomes full; in the hot backup tool
-				the tool does the applying, not this
-				function */
-	ulint	available_memory,/* in: we let the hash table of recs to grow
-				to this size, at the maximum */
-	ibool	store_to_hash,	/* in: TRUE if the records should be stored
-				to the hash table; this is set to FALSE if just
-				debug checking is needed */
-	byte*	buf,		/* in: buffer containing a log segment or
-				garbage */
-	ulint	len,		/* in: buffer length */
-	dulint	start_lsn,	/* in: buffer start lsn */
-	dulint*	contiguous_lsn,	/* in/out: it is known that all log groups
-				contain contiguous log data up to this lsn */
-	dulint*	group_scanned_lsn);/* out: scanning succeeded up to this lsn */
+					/* out: TRUE if limit_lsn has been
+					reached, or not able to scan any more
+					in this log group */
+	ibool		apply_automatically,/* in: TRUE if we want this
+					function to apply log records
+					automatically when the hash table
+					becomes full; in the hot backup tool
+					the tool does the applying, not this
+					function */
+	ulint		available_memory,/* in: we let the hash table of recs
+					to grow to this size, at the maximum */
+	ibool		store_to_hash,	/* in: TRUE if the records should be
+					stored to the hash table; this is set
+					to FALSE if just debug checking is
+					needed */
+	byte*		buf,		/* in: buffer containing a log segment
+					or garbage */
+	ulint		len,		/* in: buffer length */
+	ib_uint64_t	start_lsn,	/* in: buffer start lsn */
+	ib_uint64_t*	contiguous_lsn,	/* in/out: it is known that all log
+					groups contain contiguous log data up
+					to this lsn */
+	ib_uint64_t*	group_scanned_lsn);/* out: scanning succeeded up to
+					this lsn */
 /**********************************************************
 Resets the logs. The contents of log files will be lost! */
-
+UNIV_INTERN
 void
 recv_reset_logs(
 /*============*/
-	dulint	lsn,		/* in: reset to this lsn rounded up to
-				be divisible by OS_FILE_LOG_BLOCK_SIZE,
-				after which we add LOG_BLOCK_HDR_SIZE */
+	ib_uint64_t	lsn,		/* in: reset to this lsn
+					rounded up to be divisible by
+					OS_FILE_LOG_BLOCK_SIZE, after
+					which we add
+					LOG_BLOCK_HDR_SIZE */
 #ifdef UNIV_LOG_ARCHIVE
-	ulint	arch_log_no,	/* in: next archived log file number */
+	ulint		arch_log_no,	/* in: next archived log file number */
 #endif /* UNIV_LOG_ARCHIVE */
-	ibool	new_logs_created);/* in: TRUE if resetting logs is done
-				at the log creation; FALSE if it is done
-				after archive recovery */
+	ibool		new_logs_created);/* in: TRUE if resetting logs
+					is done at the log creation;
+					FALSE if it is done after
+					archive recovery */
 #ifdef UNIV_HOTBACKUP
 /**********************************************************
 Creates new log files after a backup has been restored. */
-
+UNIV_INTERN
 void
 recv_reset_log_files_for_backup(
 /*============================*/
 	const char*	log_dir,	/* in: log file directory path */
 	ulint		n_log_files,	/* in: number of log files */
 	ulint		log_file_size,	/* in: log file size */
-	dulint		lsn);		/* in: new start lsn, must be
+	ib_uint64_t	lsn);		/* in: new start lsn, must be
 					divisible by OS_FILE_LOG_BLOCK_SIZE */
 #endif /* UNIV_HOTBACKUP */
 /************************************************************
 Creates the recovery system. */
-
+UNIV_INTERN
 void
 recv_sys_create(void);
 /*=================*/
 /************************************************************
 Inits the recovery system for a recovery operation. */
-
+UNIV_INTERN
 void
 recv_sys_init(
 /*==========*/
@@ -173,7 +187,7 @@ recv_sys_init(
 /***********************************************************************
 Empties the hash table of stored log records, applying them to appropriate
 pages. */
-
+UNIV_INTERN
 void
 recv_apply_hashed_log_recs(
 /*=======================*/
@@ -187,7 +201,7 @@ recv_apply_hashed_log_recs(
 #ifdef UNIV_HOTBACKUP
 /***********************************************************************
 Applies log records in the hash table to a backup. */
-
+UNIV_INTERN
 void
 recv_apply_log_recs_for_backup(void);
 /*================================*/
@@ -195,21 +209,23 @@ recv_apply_log_recs_for_backup(void);
 #ifdef UNIV_LOG_ARCHIVE
 /************************************************************
 Recovers from archived log files, and also from log files, if they exist. */
-
+UNIV_INTERN
 ulint
 recv_recovery_from_archive_start(
 /*=============================*/
-				/* out: error code or DB_SUCCESS */
-	dulint	min_flushed_lsn,/* in: min flushed lsn field from the
-				data files */
-	dulint	limit_lsn,	/* in: recover up to this lsn if possible */
-	ulint	first_log_no);	/* in: number of the first archived log file
-				to use in the recovery; the file will be
-				searched from INNOBASE_LOG_ARCH_DIR specified
-				in server config file */
+					/* out: error code or DB_SUCCESS */
+	ib_uint64_t	min_flushed_lsn,/* in: min flushed lsn field from the
+					data files */
+	ib_uint64_t	limit_lsn,	/* in: recover up to this lsn if
+					possible */
+	ulint		first_log_no);	/* in: number of the first archived
+					log file to use in the recovery; the
+					file will be searched from
+					INNOBASE_LOG_ARCH_DIR specified in
+					server config file */
 /************************************************************
 Completes recovery from archive. */
-
+UNIV_INTERN
 void
 recv_recovery_from_archive_finish(void);
 /*===================================*/
@@ -231,11 +247,11 @@ struct recv_struct{
 	ulint		len;	/* log record body length in bytes */
 	recv_data_t*	data;	/* chain of blocks containing the log record
 				body */
-	dulint		start_lsn;/* start lsn of the log segment written by
+	ib_uint64_t	start_lsn;/* start lsn of the log segment written by
 				the mtr which generated this log record: NOTE
 				that this is not necessarily the start lsn of
 				this log record */
-	dulint		end_lsn;/* end lsn of the log segment written by
+	ib_uint64_t	end_lsn;/* end lsn of the log segment written by
 				the mtr which generated this log record: NOTE
 				that this is not necessarily the end lsn of
 				this log record */
@@ -269,7 +285,7 @@ struct recv_sys_struct{
 	ibool		apply_batch_on;
 				/* this is TRUE when a log rec application
 				batch is running */
-	dulint		lsn;	/* log sequence number */
+	ib_uint64_t	lsn;	/* log sequence number */
 	ulint		last_log_buf_size;
 				/* size of the log buffer when the database
 				last time wrote to the log */
@@ -281,12 +297,12 @@ struct recv_sys_struct{
 				preceding buffer */
 	byte*		buf;	/* buffer for parsing log records */
 	ulint		len;	/* amount of data in buf */
-	dulint		parse_start_lsn;
+	ib_uint64_t	parse_start_lsn;
 				/* this is the lsn from which we were able to
 				start parsing log records and adding them to
-				the hash table; ut_dulint_zero if a suitable
+				the hash table; zero if a suitable
 				start point not found yet */
-	dulint		scanned_lsn;
+	ib_uint64_t	scanned_lsn;
 				/* the log data has been scanned up to this
 				lsn */
 	ulint		scanned_checkpoint_no;
@@ -295,10 +311,10 @@ struct recv_sys_struct{
 	ulint		recovered_offset;
 				/* start offset of non-parsed log records in
 				buf */
-	dulint		recovered_lsn;
+	ib_uint64_t	recovered_lsn;
 				/* the log records have been parsed up to
 				this lsn */
-	dulint		limit_lsn;/* recovery should be made at most up to this
+	ib_uint64_t	limit_lsn;/* recovery should be made at most up to this
 				lsn */
 	ibool		found_corrupt_log;
 				/* this is set to TRUE if we during log

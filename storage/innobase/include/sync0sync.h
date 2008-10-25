@@ -17,19 +17,16 @@ Created 9/5/1995 Heikki Tuuri
 #include "os0sync.h"
 #include "sync0arr.h"
 
-#ifndef UNIV_HOTBACKUP
-extern bool	timed_mutexes;
-#endif /* UNIV_HOTBACKUP */
 
 /**********************************************************************
 Initializes the synchronization data structures. */
-
+UNIV_INTERN
 void
 sync_init(void);
 /*===========*/
 /**********************************************************************
 Frees the resources in synchronization data structures. */
-
+UNIV_INTERN
 void
 sync_close(void);
 /*===========*/
@@ -57,7 +54,7 @@ Creates, or rather, initializes a mutex object in a specified memory
 location (which must be appropriately aligned). The mutex is initialized
 in the reset state. Explicit freeing of the mutex with mutex_free is
 necessary only if the memory block containing it is freed. */
-
+UNIV_INTERN
 void
 mutex_create_func(
 /*==============*/
@@ -70,12 +67,14 @@ mutex_create_func(
 #endif /* UNIV_DEBUG */
 	const char*	cfile_name,	/* in: file name where created */
 	ulint		cline);		/* in: file line where created */
+
+#undef mutex_free			/* Fix for MacOS X */
+
 /**********************************************************************
 Calling this function is obligatory only if the memory buffer containing
 the mutex is freed. Removes a mutex object from the mutex list. The mutex
 is checked to be in the reset state. */
-
-#undef mutex_free			/* Fix for MacOS X */
+UNIV_INTERN
 void
 mutex_free(
 /*=======*/
@@ -85,15 +84,6 @@ NOTE! The following macro should be used in mutex locking, not the
 corresponding function. */
 
 #define mutex_enter(M)	  mutex_enter_func((M), __FILE__, __LINE__)
-/**********************************************************************
-A noninlined function that reserves a mutex. In ha_innodb.cc we have disabled
-inlining of InnoDB functions, and no inlined functions should be called from
-there. That is why we need to duplicate the inlined function here. */
-
-void
-mutex_enter_noninline(
-/*==================*/
-	mutex_t*	mutex);	/* in: mutex */
 /******************************************************************
 NOTE! The following macro should be used in mutex locking, not the
 corresponding function. */
@@ -101,7 +91,6 @@ corresponding function. */
 /* NOTE! currently same as mutex_enter! */
 
 #define mutex_enter_fast(M)	mutex_enter_func((M), __FILE__, __LINE__)
-#define mutex_enter_fast_func	mutex_enter_func;
 /**********************************************************************
 NOTE! Use the corresponding macro in the header file, not this function
 directly. Locks a mutex for the current thread. If the mutex is reserved
@@ -124,7 +113,7 @@ corresponding function. */
 NOTE! Use the corresponding macro in the header file, not this function
 directly. Tries to lock the mutex for the current thread. If the lock is not
 acquired immediately, returns with return value 1. */
-
+UNIV_INTERN
 ulint
 mutex_enter_nowait_func(
 /*====================*/
@@ -141,16 +130,9 @@ mutex_exit(
 /*=======*/
 	mutex_t*	mutex);	/* in: pointer to mutex */
 /**********************************************************************
-Releases a mutex. */
-
-void
-mutex_exit_noninline(
-/*=================*/
-	mutex_t*	mutex);	/* in: mutex */
-/**********************************************************************
 Returns TRUE if no mutex or rw-lock is currently locked.
 Works only in the debug version. */
-
+UNIV_INTERN
 ibool
 sync_all_freed(void);
 /*================*/
@@ -158,14 +140,14 @@ sync_all_freed(void);
 FUNCTION PROTOTYPES FOR DEBUGGING */
 /***********************************************************************
 Prints wait info of the sync system. */
-
+UNIV_INTERN
 void
 sync_print_wait_info(
 /*=================*/
 	FILE*	file);		/* in: file where to print */
 /***********************************************************************
 Prints info of the sync system. */
-
+UNIV_INTERN
 void
 sync_print(
 /*=======*/
@@ -173,7 +155,7 @@ sync_print(
 #ifdef UNIV_DEBUG
 /**********************************************************************
 Checks that the mutex has been initialized. */
-
+UNIV_INTERN
 ibool
 mutex_validate(
 /*===========*/
@@ -181,7 +163,7 @@ mutex_validate(
 /**********************************************************************
 Checks that the current thread owns the mutex. Works only
 in the debug version. */
-
+UNIV_INTERN
 ibool
 mutex_own(
 /*======*/
@@ -193,7 +175,7 @@ mutex_own(
 Adds a latch and its level in the thread level array. Allocates the memory
 for the array if called first time for this OS thread. Makes the checks
 against other latch levels stored in the array for this thread. */
-
+UNIV_INTERN
 void
 sync_thread_add_level(
 /*==================*/
@@ -202,7 +184,7 @@ sync_thread_add_level(
 			SYNC_LEVEL_VARYING, nothing is done */
 /**********************************************************************
 Removes a latch from the thread level array if it is found there. */
-
+UNIV_INTERN
 ibool
 sync_thread_reset_level(
 /*====================*/
@@ -213,14 +195,14 @@ sync_thread_reset_level(
 	void*	latch);	/* in: pointer to a mutex or an rw-lock */
 /**********************************************************************
 Checks that the level array for the current thread is empty. */
-
+UNIV_INTERN
 ibool
 sync_thread_levels_empty(void);
 /*==========================*/
 			/* out: TRUE if empty */
 /**********************************************************************
 Checks that the level array for the current thread is empty. */
-
+UNIV_INTERN
 ibool
 sync_thread_levels_empty_gen(
 /*=========================*/
@@ -232,7 +214,7 @@ sync_thread_levels_empty_gen(
 					allowed */
 /**********************************************************************
 Gets the debug information for a reserved mutex. */
-
+UNIV_INTERN
 void
 mutex_get_debug_info(
 /*=================*/
@@ -243,7 +225,7 @@ mutex_get_debug_info(
 					the mutex */
 /**********************************************************************
 Counts currently reserved mutexes. Works only in the debug version. */
-
+UNIV_INTERN
 ulint
 mutex_n_reserved(void);
 /*==================*/
@@ -400,6 +382,12 @@ or row lock! */
 					their level set after the page is
 					locked; see e.g.
 					ibuf_bitmap_get_map_page(). */
+#define SYNC_TRX_I_S_RWLOCK	1910	/* Used for
+					trx_i_s_cache_t::rw_lock */
+#define SYNC_TRX_I_S_LAST_READ	1900	/* Used for
+					trx_i_s_cache_t::last_read_mutex */
+#define SYNC_FILE_FORMAT_TAG	1200	/* Used to serialize access to the
+					file format tag */
 #define	SYNC_DICT_OPERATION	1001	/* table create, drop, etc. reserve
 					this in X-mode, implicit or backround
 					operations purge, rollback, foreign
@@ -470,9 +458,11 @@ Do not use its fields directly! The structure used in the spin lock
 implementation of a mutual exclusion semaphore. */
 
 struct mutex_struct {
+	os_event_t	event;	/* Used by sync0arr.c for the wait queue */
 	ulint	lock_word;	/* This ulint is the target of the atomic
 				test-and-set instruction in Win32 */
-#if !defined(_WIN32) || !defined(UNIV_CAN_USE_X86_ASSEMBLER)
+#if defined WIN32 && defined UNIV_CAN_USE_X86_ASSEMBLER
+#else
 	os_fast_mutex_t
 		os_fast_mutex;	/* In other systems we use this OS mutex
 				in place of lock_word */
@@ -503,8 +493,8 @@ struct mutex_struct {
 	ulong		count_spin_loop; /* count of spin loops */
 	ulong		count_spin_rounds; /* count of spin rounds */
 	ulong		count_os_yield; /* count of os_wait */
-	uint64_t	lspent_time; /* mutex os_wait timer msec */
-	uint64_t	lmax_spent_time; /* mutex os_wait timer msec */
+	ulonglong	lspent_time; /* mutex os_wait timer msec */
+	ulonglong	lmax_spent_time; /* mutex os_wait timer msec */
 	const char*	cmutex_name;/* mutex name */
 	ulint		mutex_type;/* 0 - usual mutex 1 - rw_lock mutex	 */
 # endif /* UNIV_DEBUG */

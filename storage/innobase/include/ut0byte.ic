@@ -52,17 +52,17 @@ ut_dulint_get_low(
 }
 
 /***********************************************************
-Converts a dulint (a struct of 2 ulints) to ib_longlong, which is a 64-bit
+Converts a dulint (a struct of 2 ulints) to ib_int64_t, which is a 64-bit
 integer type. */
 UNIV_INLINE
-ib_longlong
+ib_int64_t
 ut_conv_dulint_to_longlong(
 /*=======================*/
-			/* out: value in ib_longlong type */
+			/* out: value in ib_int64_t type */
 	dulint	d)	/* in: dulint */
 {
-	return((ib_longlong)d.low
-	       + (((ib_longlong)d.high) << 32));
+	return((ib_int64_t)d.low
+	       + (((ib_int64_t)d.high) << 32));
 }
 
 /***********************************************************
@@ -261,21 +261,39 @@ ut_dulint_align_up(
 }
 
 /************************************************************
-The following function calculates the value of an integer n rounded
-to the least product of align_no which is >= n. align_no
-has to be a power of 2. */
+Rounds ib_uint64_t downward to a multiple of a power of 2. */
 UNIV_INLINE
-ulint
-ut_calc_align(
-/*==========*/
-				/* out: rounded value */
-	ulint	 n,		/* in: number to be rounded */
-	ulint	 align_no)	/* in: align by this number */
+ib_uint64_t
+ut_uint64_align_down(
+/*=================*/
+					/* out: rounded value */
+	ib_uint64_t	 n,		/* in: number to be rounded */
+	ulint		 align_no)	/* in: align by this number
+					which must be a power of 2 */
 {
 	ut_ad(align_no > 0);
-	ut_ad(((align_no - 1) & align_no) == 0);
+	ut_ad(ut_is_2pow(align_no));
 
-	return((n + align_no - 1) & ~(align_no - 1));
+	return(n & ~((ib_uint64_t) align_no - 1));
+}
+
+/************************************************************
+Rounds ib_uint64_t upward to a multiple of a power of 2. */
+UNIV_INLINE
+ib_uint64_t
+ut_uint64_align_up(
+/*===============*/
+					/* out: rounded value */
+	ib_uint64_t	 n,		/* in: number to be rounded */
+	ulint		 align_no)	/* in: align by this number
+					which must be a power of 2 */
+{
+	ib_uint64_t	align_1 = (ib_uint64_t) align_no - 1;
+
+	ut_ad(align_no > 0);
+	ut_ad(ut_is_2pow(align_no));
+
+	return((n + align_1) & ~align_1);
 }
 
 /*************************************************************
@@ -285,7 +303,7 @@ void*
 ut_align(
 /*=====*/
 				/* out: aligned pointer */
-	const void*	ptr,		/* in: pointer */
+	void*	ptr,		/* in: pointer */
 	ulint	align_no)	/* in: align by this number */
 {
 	ut_ad(align_no > 0);
@@ -297,24 +315,6 @@ ut_align(
 	return((void*)((((ulint)ptr) + align_no - 1) & ~(align_no - 1)));
 }
 
-/************************************************************
-The following function calculates the value of an integer n rounded
-to the biggest product of align_no which is <= n. align_no has to be a
-power of 2. */
-UNIV_INLINE
-ulint
-ut_calc_align_down(
-/*===============*/
-				/* out: rounded value */
-	ulint	 n,		 /* in: number to be rounded */
-	ulint	 align_no)	 /* in: align by this number */
-{
-	ut_ad(align_no > 0);
-	ut_ad(((align_no - 1) & align_no) == 0);
-
-	return(n & ~(align_no - 1));
-}
-
 /*************************************************************
 The following function rounds down a pointer to the nearest
 aligned address. */
@@ -322,9 +322,9 @@ UNIV_INLINE
 void*
 ut_align_down(
 /*==========*/
-				/* out: aligned pointer */
+					/* out: aligned pointer */
 	const void*	ptr,		/* in: pointer */
-	ulint	align_no)	/* in: align by this number */
+	ulint		align_no)	/* in: align by this number */
 {
 	ut_ad(align_no > 0);
 	ut_ad(((align_no - 1) & align_no) == 0);

@@ -27,35 +27,16 @@ Created 3/26/1996 Heikki Tuuri
 #include "trx0xa.h"
 #include "ha_prototypes.h"
 
-/* Copy of the prototype for innobase_mysql_print_session: this
-copy MUST be equal to the one in mysql/sql/ha_innodb.cc ! */
-
-void innobase_mysql_print_session(
-	FILE*	f,
-	void*	session,
-	ulint	max_query_len);
-
 /* Dummy session used currently in MySQL interface */
-sess_t*		trx_dummy_sess = NULL;
+UNIV_INTERN sess_t*		trx_dummy_sess = NULL;
 
 /* Number of transactions currently allocated for MySQL: protected by
 the kernel mutex */
-ulint	trx_n_mysql_transactions = 0;
-
-/*****************************************************************
-Starts the transaction if it is not yet started. */
-
-void
-trx_start_if_not_started_noninline(
-/*===============================*/
-	trx_t*	trx) /* in: transaction */
-{
-	trx_start_if_not_started(trx);
-}
+UNIV_INTERN ulint	trx_n_mysql_transactions = 0;
 
 /*****************************************************************
 Set detailed error message for the transaction. */
-
+UNIV_INTERN
 void
 trx_set_detailed_error(
 /*===================*/
@@ -68,7 +49,7 @@ trx_set_detailed_error(
 /*****************************************************************
 Set detailed error message for the transaction from a file. Note that the
 file is rewinded before reading from it. */
-
+UNIV_INTERN
 void
 trx_set_detailed_error_from_file(
 /*=============================*/
@@ -80,29 +61,18 @@ trx_set_detailed_error_from_file(
 }
 
 /********************************************************************
-Retrieves the error_info field from a trx. */
-
-void*
-trx_get_error_info(
-/*===============*/
-			/* out: the error info */
-	trx_t*	trx)	/* in: trx object */
-{
-	return(trx->error_info);
-}
-
-/********************************************************************
 Creates and initializes a transaction object. */
-
+UNIV_INTERN
 trx_t*
 trx_create(
 /*=======*/
 			/* out, own: the transaction */
-	sess_t*	sess)	/* in: session or NULL */
+	sess_t*	sess)	/* in: session */
 {
 	trx_t*	trx;
 
 	ut_ad(mutex_own(&kernel_mutex));
+	ut_ad(sess);
 
 	trx = mem_alloc(sizeof(trx_t));
 
@@ -111,6 +81,7 @@ trx_create(
 	trx->op_info = "";
 
 	trx->is_purge = 0;
+	trx->is_recovered = 0;
 	trx->conc_state = TRX_NOT_STARTED;
 	trx->start_time = time(NULL);
 
@@ -127,7 +98,8 @@ trx_create(
 	trx->flush_log_later = FALSE;
 	trx->must_flush_log_later = FALSE;
 
-	trx->dict_operation = FALSE;
+	trx->dict_operation = TRX_DICT_OP_NONE;
+	trx->table_id = ut_dulint_zero;
 
 	trx->mysql_session = NULL;
 	trx->mysql_query_str = NULL;
@@ -151,6 +123,7 @@ trx_create(
 	trx->undo_no_arr = NULL;
 
 	trx->error_state = DB_SUCCESS;
+	trx->error_key_num = 0;
 	trx->detailed_error[0] = '\0';
 
 	trx->sess = sess;
@@ -199,7 +172,7 @@ trx_create(
 
 /************************************************************************
 Creates a transaction object for MySQL. */
-
+UNIV_INTERN
 trx_t*
 trx_allocate_for_mysql(void)
 /*========================*/
@@ -208,12 +181,6 @@ trx_allocate_for_mysql(void)
 	trx_t*	trx;
 
 	mutex_enter(&kernel_mutex);
-
-	/* Open a dummy session */
-
-	if (!trx_dummy_sess) {
-		trx_dummy_sess = sess_open();
-	}
 
 	trx = trx_create(trx_dummy_sess);
 
@@ -232,7 +199,7 @@ trx_allocate_for_mysql(void)
 
 /************************************************************************
 Creates a transaction object for background operations by the master thread. */
-
+UNIV_INTERN
 trx_t*
 trx_allocate_for_background(void)
 /*=============================*/
@@ -241,12 +208,6 @@ trx_allocate_for_background(void)
 	trx_t*	trx;
 
 	mutex_enter(&kernel_mutex);
-
-	/* Open a dummy session */
-
-	if (!trx_dummy_sess) {
-		trx_dummy_sess = sess_open();
-	}
 
 	trx = trx_create(trx_dummy_sess);
 
@@ -257,7 +218,7 @@ trx_allocate_for_background(void)
 
 /************************************************************************
 Releases the search latch if trx has reserved it. */
-
+UNIV_INTERN
 void
 trx_search_latch_release_if_reserved(
 /*=================================*/
@@ -272,7 +233,7 @@ trx_search_latch_release_if_reserved(
 
 /************************************************************************
 Frees a transaction object. */
-
+UNIV_INTERN
 void
 trx_free(
 /*=====*/
@@ -350,7 +311,7 @@ trx_free(
 
 /************************************************************************
 Frees a transaction object for MySQL. */
-
+UNIV_INTERN
 void
 trx_free_for_mysql(
 /*===============*/
@@ -371,7 +332,7 @@ trx_free_for_mysql(
 
 /************************************************************************
 Frees a transaction object of a background operation of the master thread. */
-
+UNIV_INTERN
 void
 trx_free_for_background(
 /*====================*/
@@ -430,7 +391,7 @@ trx_sys at database start. Rollback segment and undo log lists must
 already exist when this function is called, because the lists of
 transactions to be rolled back or cleaned up are built based on the
 undo log lists. */
-
+UNIV_INTERN
 void
 trx_lists_init_at_db_start(void)
 /*============================*/
@@ -451,8 +412,9 @@ trx_lists_init_at_db_start(void)
 
 		while (undo != NULL) {
 
-			trx = trx_create(NULL);
+			trx = trx_create(trx_dummy_sess);
 
+			trx->is_recovered = TRUE;
 			trx->id = undo->trx_id;
 			trx->xid = undo->xid;
 			trx->insert_undo = undo;
@@ -467,11 +429,11 @@ trx_lists_init_at_db_start(void)
 				if (undo->state == TRX_UNDO_PREPARED) {
 
 					fprintf(stderr,
-						"InnoDB: Transaction %lu %lu"
+						"InnoDB: Transaction "
+						TRX_ID_FMT
 						" was in the"
 						" XA prepared state.\n",
-						ut_dulint_get_high(trx->id),
-						ut_dulint_get_low(trx->id));
+						TRX_ID_PREP_PRINTF(trx->id));
 
 					if (srv_force_recovery == 0) {
 
@@ -509,7 +471,8 @@ trx_lists_init_at_db_start(void)
 			}
 
 			if (undo->dict_operation) {
-				trx->dict_operation = undo->dict_operation;
+				trx_set_dict_operation(
+					trx, TRX_DICT_OP_TABLE);
 				trx->table_id = undo->table_id;
 			}
 
@@ -529,8 +492,9 @@ trx_lists_init_at_db_start(void)
 			trx = trx_get_on_id(undo->trx_id);
 
 			if (NULL == trx) {
-				trx = trx_create(NULL);
+				trx = trx_create(trx_dummy_sess);
 
+				trx->is_recovered = TRUE;
 				trx->id = undo->trx_id;
 				trx->xid = undo->xid;
 
@@ -542,12 +506,10 @@ trx_lists_init_at_db_start(void)
 
 					if (undo->state == TRX_UNDO_PREPARED) {
 						fprintf(stderr,
-							"InnoDB: Transaction"
-							" %lu %lu was in the"
+							"InnoDB: Transaction "
+							TRX_ID_FMT " was in the"
 							" XA prepared state.\n",
-							ut_dulint_get_high(
-								trx->id),
-							ut_dulint_get_low(
+							TRX_ID_PREP_PRINTF(
 								trx->id));
 
 						if (srv_force_recovery == 0) {
@@ -588,8 +550,8 @@ trx_lists_init_at_db_start(void)
 				trx_list_insert_ordered(trx);
 
 				if (undo->dict_operation) {
-					trx->dict_operation
-						= undo->dict_operation;
+					trx_set_dict_operation(
+						trx, TRX_DICT_OP_TABLE);
 					trx->table_id = undo->table_id;
 				}
 			}
@@ -647,7 +609,7 @@ loop:
 
 /********************************************************************
 Starts a new transaction. */
-
+UNIV_INTERN
 ibool
 trx_start_low(
 /*==========*/
@@ -698,7 +660,7 @@ trx_start_low(
 
 /********************************************************************
 Starts a new transaction. */
-
+UNIV_INTERN
 ibool
 trx_start(
 /*======*/
@@ -721,17 +683,16 @@ trx_start(
 
 /********************************************************************
 Commits a transaction. */
-
+UNIV_INTERN
 void
 trx_commit_off_kernel(
 /*==================*/
 	trx_t*	trx)	/* in: transaction */
 {
 	page_t*		update_hdr_page;
-	dulint		lsn;
+	ib_uint64_t	lsn		= 0;
 	trx_rseg_t*	rseg;
 	trx_undo_t*	undo;
-	ibool		must_flush_log	= FALSE;
 	mtr_t		mtr;
 
 	ut_ad(mutex_own(&kernel_mutex));
@@ -745,8 +706,6 @@ trx_commit_off_kernel(
 		mutex_exit(&kernel_mutex);
 
 		mtr_start(&mtr);
-
-		must_flush_log = TRUE;
 
 		/* Change the undo log segment states from TRX_UNDO_ACTIVE
 		to some other state: these modifications to the file data
@@ -795,7 +754,7 @@ trx_commit_off_kernel(
 			trx_sys_update_mysql_binlog_offset(
 				trx->mysql_log_file_name,
 				trx->mysql_log_offset,
-				TRX_SYS_DRIZZLE_LOG_INFO, &mtr);
+				TRX_SYS_MYSQL_LOG_INFO, &mtr);
 			trx->mysql_log_file_name = NULL;
 		}
 
@@ -856,7 +815,7 @@ trx_commit_off_kernel(
 
 	trx->read_view = NULL;
 
-	if (must_flush_log) {
+	if (lsn) {
 
 		mutex_exit(&kernel_mutex);
 
@@ -933,6 +892,7 @@ trx_commit_off_kernel(
 	trx->rseg = NULL;
 	trx->undo_no = ut_dulint_zero;
 	trx->last_sql_stat_start.least_undo_no = ut_dulint_zero;
+	trx->mysql_query_str = NULL;
 
 	ut_ad(UT_LIST_GET_LEN(trx->wait_thrs) == 0);
 	ut_ad(UT_LIST_GET_LEN(trx->trx_locks) == 0);
@@ -944,7 +904,7 @@ trx_commit_off_kernel(
 Cleans up a transaction at database startup. The cleanup is needed if
 the transaction already got to the middle of a commit when the database
 crashed, andf we cannot roll it back. */
-
+UNIV_INTERN
 void
 trx_cleanup_at_db_startup(
 /*======================*/
@@ -967,7 +927,7 @@ trx_cleanup_at_db_startup(
 Assigns a read view for a consistent read query. All the consistent reads
 within the same transaction will get the same read view, which is created
 when this function is first called for a new started transaction. */
-
+UNIV_INTERN
 read_view_t*
 trx_assign_read_view(
 /*=================*/
@@ -1041,7 +1001,7 @@ trx_handle_commit_sig_off_kernel(
 The transaction must be in the TRX_QUE_LOCK_WAIT state. Puts it to
 the TRX_QUE_RUNNING state and releases query threads which were
 waiting for a lock in the wait_thrs list. */
-
+UNIV_INTERN
 void
 trx_end_lock_wait(
 /*==============*/
@@ -1199,7 +1159,7 @@ trx_sig_is_compatible(
 
 /********************************************************************
 Sends a signal to a trx object. */
-
+UNIV_INTERN
 void
 trx_sig_send(
 /*=========*/
@@ -1286,7 +1246,7 @@ Ends signal handling. If the session is in the error state, and
 trx->graph_before_signal_handling != NULL, then returns control to the error
 handling routine of the graph (currently just returns the control to the
 graph root which then will send an error message to the client). */
-
+UNIV_INTERN
 void
 trx_end_signal_handling(
 /*====================*/
@@ -1307,7 +1267,7 @@ trx_end_signal_handling(
 
 /********************************************************************
 Starts handling of a trx signal. */
-
+UNIV_INTERN
 void
 trx_sig_start_handle(
 /*=================*/
@@ -1413,7 +1373,7 @@ loop:
 /********************************************************************
 Send the reply message when a signal in the queue of the trx has been
 handled. */
-
+UNIV_INTERN
 void
 trx_sig_reply(
 /*==========*/
@@ -1447,7 +1407,7 @@ trx_sig_reply(
 
 /********************************************************************
 Removes a signal object from the trx signal queue. */
-
+UNIV_INTERN
 void
 trx_sig_remove(
 /*===========*/
@@ -1469,7 +1429,7 @@ trx_sig_remove(
 
 /*************************************************************************
 Creates a commit command node struct. */
-
+UNIV_INTERN
 commit_node_t*
 commit_node_create(
 /*===============*/
@@ -1487,7 +1447,7 @@ commit_node_create(
 
 /***************************************************************
 Performs an execution step for a commit type node in a query graph. */
-
+UNIV_INTERN
 que_thr_t*
 trx_commit_step(
 /*============*/
@@ -1535,11 +1495,11 @@ trx_commit_step(
 
 /**************************************************************************
 Does the transaction commit for MySQL. */
-
+UNIV_INTERN
 ulint
 trx_commit_for_mysql(
 /*=================*/
-			/* out: 0 or error number */
+			/* out: DB_SUCCESS or error number */
 	trx_t*	trx)	/* in: trx handle */
 {
 	/* Because we do not do the commit by sending an Innobase
@@ -1548,29 +1508,9 @@ trx_commit_for_mysql(
 
 	ut_a(trx);
 
-	trx->op_info = "committing";
-
-	/* If we are doing the XA recovery of prepared transactions, then
-	the transaction object does not have an InnoDB session object, and we
-	set the dummy session that we use for all MySQL transactions. */
-
-	if (trx->sess == NULL) {
-		/* Open a dummy session */
-
-		if (!trx_dummy_sess) {
-			mutex_enter(&kernel_mutex);
-
-			if (!trx_dummy_sess) {
-				trx_dummy_sess = sess_open();
-			}
-
-			mutex_exit(&kernel_mutex);
-		}
-
-		trx->sess = trx_dummy_sess;
-	}
-
 	trx_start_if_not_started(trx);
+
+	trx->op_info = "committing";
 
 	mutex_enter(&kernel_mutex);
 
@@ -1580,20 +1520,20 @@ trx_commit_for_mysql(
 
 	trx->op_info = "";
 
-	return(0);
+	return(DB_SUCCESS);
 }
 
 /**************************************************************************
 If required, flushes the log to disk if we called trx_commit_for_mysql()
 with trx->flush_log_later == TRUE. */
-
+UNIV_INTERN
 ulint
 trx_commit_complete_for_mysql(
 /*==========================*/
 			/* out: 0 or error number */
 	trx_t*	trx)	/* in: trx handle */
 {
-	dulint	lsn	= trx->commit_lsn;
+	ib_uint64_t	lsn	= trx->commit_lsn;
 
 	ut_a(trx);
 
@@ -1632,7 +1572,7 @@ trx_commit_complete_for_mysql(
 
 /**************************************************************************
 Marks the latest SQL statement ended. */
-
+UNIV_INTERN
 void
 trx_mark_sql_stat_end(
 /*==================*/
@@ -1652,7 +1592,7 @@ Prints info about a transaction to the given file. The caller must own the
 kernel mutex and must have called
 innobase_mysql_prepare_print_arbitrary_session(), unless he knows that MySQL
 or InnoDB cannot meanwhile change the info printed here. */
-
+UNIV_INTERN
 void
 trx_print(
 /*======*/
@@ -1663,9 +1603,7 @@ trx_print(
 {
 	ibool	newline;
 
-	fprintf(f, "TRANSACTION %lu %lu",
-		(ulong) ut_dulint_get_high(trx->id),
-		(ulong) ut_dulint_get_low(trx->id));
+	fprintf(f, "TRANSACTION " TRX_ID_FMT, TRX_ID_PREP_PRINTF(trx->id));
 
 	switch (trx->conc_state) {
 	case TRX_NOT_STARTED:
@@ -1695,6 +1633,10 @@ trx_print(
 	if (*trx->op_info) {
 		putc(' ', f);
 		fputs(trx->op_info, f);
+	}
+
+	if (trx->is_recovered) {
+		fputs(" recovered trx", f);
 	}
 
 	if (trx->is_purge) {
@@ -1745,7 +1687,7 @@ trx_print(
 		fputs(", holds adaptive hash latch", f);
 	}
 
-	if (ut_dulint_cmp(trx->undo_no, ut_dulint_zero) != 0) {
+	if (!ut_dulint_is_zero(trx->undo_no)) {
 		newline = TRUE;
 		fprintf(f, ", undo log entries %lu",
 			(ulong) ut_dulint_get_low(trx->undo_no));
@@ -1761,17 +1703,16 @@ trx_print(
 }
 
 /***********************************************************************
-Compares the "weight" (or size) of two transactions. The weight of one
-transaction is estimated as the number of altered rows + the number of
-locked rows. Transactions that have edited non-transactional tables are
-considered heavier than ones that have not. */
-
+Compares the "weight" (or size) of two transactions. Transactions that
+have edited non-transactional tables are considered heavier than ones
+that have not. */
+UNIV_INTERN
 int
 trx_weight_cmp(
 /*===========*/
-			/* out: <0, 0 or >0; similar to strcmp(3) */
-	trx_t*	a,	/* in: the first transaction to be compared */
-	trx_t*	b)	/* in: the second transaction to be compared */
+				/* out: <0, 0 or >0; similar to strcmp(3) */
+	const trx_t*	a,	/* in: the first transaction to be compared */
+	const trx_t*	b)	/* in: the second transaction to be compared */
 {
 	ibool	a_notrans_edit;
 	ibool	b_notrans_edit;
@@ -1809,24 +1750,20 @@ trx_weight_cmp(
 		UT_LIST_GET_LEN(b->trx_locks));
 #endif
 
-#define TRX_WEIGHT(t)	\
-	ut_dulint_add((t)->undo_no, UT_LIST_GET_LEN((t)->trx_locks))
-
 	return(ut_dulint_cmp(TRX_WEIGHT(a), TRX_WEIGHT(b)));
 }
 
 /********************************************************************
 Prepares a transaction. */
-
-static void
+UNIV_INLINE
+void
 trx_prepare_off_kernel(
 /*===================*/
 	trx_t*	trx)	/* in: transaction */
 {
 	page_t*		update_hdr_page;
 	trx_rseg_t*	rseg;
-	ibool		must_flush_log	= FALSE;
-	dulint		lsn;
+	ib_uint64_t	lsn		= 0;
 	mtr_t		mtr;
 
 	ut_ad(mutex_own(&kernel_mutex));
@@ -1838,8 +1775,6 @@ trx_prepare_off_kernel(
 		mutex_exit(&kernel_mutex);
 
 		mtr_start(&mtr);
-
-		must_flush_log = TRUE;
 
 		/* Change the undo log segment states from TRX_UNDO_ACTIVE
 		to TRX_UNDO_PREPARED: these modifications to the file data
@@ -1881,7 +1816,7 @@ trx_prepare_off_kernel(
 	trx->conc_state = TRX_PREPARED;
 	/*--------------------------------------*/
 
-	if (must_flush_log) {
+	if (lsn) {
 		/* Depending on the my.cnf options, we may now write the log
 		buffer to the log files, making the prepared state of the
 		transaction durable if the OS does not crash. We may also
@@ -1930,7 +1865,7 @@ trx_prepare_off_kernel(
 
 /**************************************************************************
 Does the transaction prepare for MySQL. */
-
+UNIV_INTERN
 ulint
 trx_prepare_for_mysql(
 /*==================*/
@@ -1961,7 +1896,7 @@ trx_prepare_for_mysql(
 /**************************************************************************
 This function is used to find number of prepared transactions and
 their transaction objects for a recovery. */
-
+UNIV_INTERN
 int
 trx_recover_for_mysql(
 /*==================*/
@@ -1996,10 +1931,9 @@ trx_recover_for_mysql(
 
 			ut_print_timestamp(stderr);
 			fprintf(stderr,
-				"  InnoDB: Transaction %lu %lu in"
+				"  InnoDB: Transaction " TRX_ID_FMT " in"
 				" prepared state after recovery\n",
-				(ulong) ut_dulint_get_high(trx->id),
-				(ulong) ut_dulint_get_low(trx->id));
+				TRX_ID_PREP_PRINTF(trx->id));
 
 			ut_print_timestamp(stderr);
 			fprintf(stderr,
@@ -2034,7 +1968,7 @@ trx_recover_for_mysql(
 /***********************************************************************
 This function is used to find one X/Open XA distributed transaction
 which is in the prepared state */
-
+UNIV_INTERN
 trx_t*
 trx_get_trx_by_xid(
 /*===============*/

@@ -23,9 +23,6 @@
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
 
-#if !defined(PARS0GRM_H)
-#define PARS0GRM_H
-
 /* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
@@ -222,8 +219,7 @@
 #define NEG 350
 
 
-int
-yyparse(void);
+
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
 typedef int YYSTYPE;
@@ -236,4 +232,3 @@ extern YYSTYPE yylval;
 
 
 
-#endif

@@ -7,27 +7,32 @@ Created 1/30/1994 Heikki Tuuri
 **********************************************************************/
 
 #include "univ.i"
+#include "ut0dbg.h"
 
 #if defined(__GNUC__) && (__GNUC__ > 2)
 #else
 /* This is used to eliminate compiler warnings */
-ulint	ut_dbg_zero	= 0;
+UNIV_INTERN ulint	ut_dbg_zero	= 0;
 #endif
 
 #if defined(UNIV_SYNC_DEBUG) || !defined(UT_DBG_USE_ABORT)
 /* If this is set to TRUE all threads will stop into the next assertion
 and assert */
-ibool	ut_dbg_stop_threads	= FALSE;
+UNIV_INTERN ibool	ut_dbg_stop_threads	= FALSE;
 #endif
-#if !defined(UT_DBG_USE_ABORT)
+#ifdef __NETWARE__
+/* This is set to TRUE when on NetWare there happens an InnoDB
+assertion failure or other fatal error condition that requires an
+immediate shutdown. */
+UNIV_INTERN ibool panic_shutdown = FALSE;
+#elif !defined(UT_DBG_USE_ABORT)
 /* Null pointer used to generate memory trap */
-
-ulint*	ut_dbg_null_ptr		= NULL;
+UNIV_INTERN ulint*	ut_dbg_null_ptr		= NULL;
 #endif
 
 /*****************************************************************
 Report a failed assertion. */
-
+UNIV_INTERN
 void
 ut_dbg_assertion_failed(
 /*====================*/
@@ -60,10 +65,25 @@ ut_dbg_assertion_failed(
 #endif
 }
 
+#ifdef __NETWARE__
+/*****************************************************************
+Shut down MySQL/InnoDB after assertion failure. */
+UNIV_INTERN
+void
+ut_dbg_panic(void)
+/*==============*/
+{
+	if (!panic_shutdown) {
+		panic_shutdown = TRUE;
+		innobase_shutdown_for_mysql();
+	}
+	exit(1);
+}
+#else /* __NETWARE__ */
 # if defined(UNIV_SYNC_DEBUG) || !defined(UT_DBG_USE_ABORT)
 /*****************************************************************
 Stop a thread after assertion failure. */
-
+UNIV_INTERN
 void
 ut_dbg_stop_thread(
 /*===============*/
@@ -75,3 +95,70 @@ ut_dbg_stop_thread(
 	os_thread_sleep(1000000000);
 }
 # endif
+#endif /* __NETWARE__ */
+
+#ifdef UNIV_COMPILE_TEST_FUNCS
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#include <unistd.h>
+
+#ifndef timersub
+#define timersub(a, b, r)						\
+	do {								\
+		(r)->tv_sec = (a)->tv_sec - (b)->tv_sec;		\
+		(r)->tv_usec = (a)->tv_usec - (b)->tv_usec;		\
+		if ((r)->tv_usec < 0) {					\
+			(r)->tv_sec--;					\
+			(r)->tv_usec += 1000000;			\
+		}							\
+	} while (0)
+#endif /* timersub */
+
+/***********************************************************************
+Resets a speedo (records the current time in it). */
+UNIV_INTERN
+void
+speedo_reset(
+/*=========*/
+	speedo_t*	speedo)	/* out: speedo */
+{
+	gettimeofday(&speedo->tv, NULL);
+
+	getrusage(RUSAGE_SELF, &speedo->ru);
+}
+
+/***********************************************************************
+Shows the time elapsed and usage statistics since the last reset of a
+speedo. */
+UNIV_INTERN
+void
+speedo_show(
+/*========*/
+	const speedo_t*	speedo)	/* in: speedo */
+{
+	struct rusage	ru_now;
+	struct timeval	tv_now;
+	struct timeval	tv_diff;
+
+	getrusage(RUSAGE_SELF, &ru_now);
+
+	gettimeofday(&tv_now, NULL);
+
+#define PRINT_TIMEVAL(prefix, tvp)		\
+	fprintf(stderr, "%s% 5ld.%06ld sec\n",	\
+		prefix, (tvp)->tv_sec, (tvp)->tv_usec)
+
+	timersub(&tv_now, &speedo->tv, &tv_diff);
+	PRINT_TIMEVAL("real", &tv_diff);
+
+	timersub(&ru_now.ru_utime, &speedo->ru.ru_utime, &tv_diff);
+	PRINT_TIMEVAL("user", &tv_diff);
+
+	timersub(&ru_now.ru_stime, &speedo->ru.ru_stime, &tv_diff);
+	PRINT_TIMEVAL("sys ", &tv_diff);
+}
+
+#endif /* UNIV_COMPILE_TEST_FUNCS */

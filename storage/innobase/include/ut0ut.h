@@ -11,17 +11,35 @@ Created 1/20/1994 Heikki Tuuri
 
 #include "univ.i"
 #include <time.h>
-#ifndef DRIZZLE_SERVER
+#ifndef MYSQL_SERVER
 #include <ctype.h>
 #endif
 
+#define	TEMP_INDEX_PREFIX	'\377'	/* Index name prefix in fast index
+					creation */
+
 typedef time_t	ib_time_t;
+
+/*************************************************************************
+Delays execution for at most max_wait_us microseconds or returns earlier
+if cond becomes true; cond is evaluated every 2 ms. */
+
+#define UT_WAIT_FOR(cond, max_wait_us)				\
+do {								\
+	ullint	start_us;					\
+	start_us = ut_time_us(NULL);				\
+	while (!(cond) 						\
+	       && ut_time_us(NULL) - start_us < (max_wait_us)) {\
+								\
+		os_thread_sleep(2000 /* 2 ms */);		\
+	}							\
+} while (0)
 
 /************************************************************
 Gets the high 32 bits in a ulint. That is makes a shift >> 32,
 but since there seem to be compiler bugs in both gcc and Visual C++,
 we do this by a special conversion. */
-
+UNIV_INTERN
 ulint
 ut_get_high32(
 /*==========*/
@@ -79,22 +97,20 @@ ut_pair_cmp(
 	ulint	b1,	/* in: more significant part of second pair */
 	ulint	b2);	/* in: less significant part of second pair */
 /*****************************************************************
-Calculates fast the remainder when divided by a power of two. */
-UNIV_INLINE
-ulint
-ut_2pow_remainder(
-/*==============*/	/* out: remainder */
-	ulint	n,	/* in: number to be divided */
-	ulint	m);	/* in: divisor; power of 2 */
+Determines if a number is zero or a power of two. */
+#define ut_is_2pow(n) UNIV_LIKELY(!((n) & ((n) - 1)))
 /*****************************************************************
-Calculates fast value rounded to a multiple of a power of 2. */
-UNIV_INLINE
-ulint
-ut_2pow_round(
-/*==========*/		/* out: value of n rounded down to nearest
-			multiple of m */
-	ulint	n,	/* in: number to be rounded */
-	ulint	m);	/* in: divisor; power of 2 */
+Calculates fast the remainder of n/m when m is a power of two. */
+#define ut_2pow_remainder(n, m) ((n) & ((m) - 1))
+/*****************************************************************
+Calculates the biggest multiple of m that is not bigger than n
+when m is a power of two.  In other words, rounds n down to m * k. */
+#define ut_2pow_round(n, m) ((n) & ~((m) - 1))
+#define ut_calc_align_down(n, m) ut_2pow_round(n, m)
+/************************************************************
+Calculates the smallest multiple of m that is not smaller than n
+when m is a power of two.  In other words, rounds n up to m * k. */
+#define ut_calc_align(n, m) (((n) + ((m) - 1)) & ~((m) - 1))
 /*****************************************************************
 Calculates fast the 2-logarithm of a number, rounded upward to an
 integer. */
@@ -114,7 +130,7 @@ ut_2_exp(
 	ulint	n);	/* in: number */
 /*****************************************************************
 Calculates fast the number rounded up to the nearest power of 2. */
-
+UNIV_INTERN
 ulint
 ut_2_power_up(
 /*==========*/
@@ -126,35 +142,36 @@ ut_2_power_up(
 store the given number of bits. */
 #define UT_BITS_IN_BYTES(b) (((b) + 7) / 8)
 
-/****************************************************************
-Sort function for ulint arrays. */
-
-void
-ut_ulint_sort(ulint* arr, ulint* aux_arr, ulint low, ulint high);
-/*============================================================*/
-/************************************************************
-The following function returns elapsed CPU time in milliseconds. */
-
-ulint
-ut_clock(void);
 /**************************************************************
 Returns system time. We do not specify the format of the time returned:
 the only way to manipulate it is to use the function ut_difftime. */
-
+UNIV_INTERN
 ib_time_t
 ut_time(void);
 /*=========*/
 /**************************************************************
 Returns system time. */
-
+UNIV_INTERN
 void
 ut_usectime(
 /*========*/
 	ulint*	sec,	/* out: seconds since the Epoch */
 	ulint*	ms);	/* out: microseconds since the Epoch+*sec */
+
+/**************************************************************
+Returns the number of microseconds since epoch. Similar to
+time(3), the return value is also stored in *tloc, provided
+that tloc is non-NULL. */
+UNIV_INTERN
+ullint
+ut_time_us(
+/*=======*/
+			/* out: us since epoch */
+	ullint*	tloc);	/* out: us since epoch, if non-NULL */
+
 /**************************************************************
 Returns the difference of two times in seconds. */
-
+UNIV_INTERN
 double
 ut_difftime(
 /*========*/
@@ -163,14 +180,14 @@ ut_difftime(
 	ib_time_t	time1);	/* in: time */
 /**************************************************************
 Prints a timestamp to a file. */
-
+UNIV_INTERN
 void
 ut_print_timestamp(
 /*===============*/
 	FILE*  file); /* in: file where to print */
 /**************************************************************
 Sprintfs a timestamp to a buffer, 13..14 chars plus terminating NUL. */
-
+UNIV_INTERN
 void
 ut_sprintf_timestamp(
 /*=================*/
@@ -178,14 +195,14 @@ ut_sprintf_timestamp(
 /**************************************************************
 Sprintfs a timestamp to a buffer with no spaces and with ':' characters
 replaced by '_'. */
-
+UNIV_INTERN
 void
 ut_sprintf_timestamp_without_extra_chars(
 /*=====================================*/
 	char*	buf); /* in: buffer where to sprintf */
 /**************************************************************
 Returns current year, month, day. */
-
+UNIV_INTERN
 void
 ut_get_year_month_day(
 /*==================*/
@@ -195,7 +212,7 @@ ut_get_year_month_day(
 /*****************************************************************
 Runs an idle loop on CPU. The argument gives the desired delay
 in microseconds on 100 MHz Pentium + Visual C++. */
-
+UNIV_INTERN
 ulint
 ut_delay(
 /*=====*/
@@ -203,7 +220,7 @@ ut_delay(
 	ulint	delay);	/* in: delay in microseconds on 100 MHz Pentium */
 /*****************************************************************
 Prints the contents of a memory buffer in hex and ascii. */
-
+UNIV_INTERN
 void
 ut_print_buf(
 /*=========*/
@@ -213,7 +230,7 @@ ut_print_buf(
 
 /**************************************************************************
 Outputs a NUL-terminated file name, quoted with apostrophes. */
-
+UNIV_INTERN
 void
 ut_print_filename(
 /*==============*/
@@ -228,7 +245,7 @@ Outputs a fixed-length string, quoted as an SQL identifier.
 If the string contains a slash '/', the string will be
 output as two identifiers separated by a period (.),
 as in SQL database_name.identifier. */
-
+UNIV_INTERN
 void
 ut_print_name(
 /*==========*/
@@ -243,7 +260,7 @@ Outputs a fixed-length string, quoted as an SQL identifier.
 If the string contains a slash '/', the string will be
 output as two identifiers separated by a period (.),
 as in SQL database_name.identifier. */
-
+UNIV_INTERN
 void
 ut_print_namel(
 /*===========*/
@@ -256,7 +273,7 @@ ut_print_namel(
 
 /**************************************************************************
 Catenate files. */
-
+UNIV_INTERN
 void
 ut_copy_file(
 /*=========*/

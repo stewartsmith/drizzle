@@ -24,10 +24,10 @@ struct dulint_struct{
 };
 
 /* Zero value for a dulint */
-extern dulint	ut_dulint_zero;
+extern const dulint	ut_dulint_zero;
 
 /* Maximum value for a dulint */
-extern dulint	ut_dulint_max;
+extern const dulint	ut_dulint_max;
 
 /***********************************************************
 Creates a 64-bit dulint out of two ulints. */
@@ -55,13 +55,13 @@ ut_dulint_get_low(
 			/* out: 32 bits in ulint */
 	dulint	d);	/* in: dulint */
 /***********************************************************
-Converts a dulint (a struct of 2 ulints) to ib_longlong, which is a 64-bit
+Converts a dulint (a struct of 2 ulints) to ib_int64_t, which is a 64-bit
 integer type. */
 UNIV_INLINE
-ib_longlong
+ib_int64_t
 ut_conv_dulint_to_longlong(
 /*=======================*/
-			/* out: value in ib_longlong type */
+			/* out: value in ib_int64_t type */
 	dulint	d);	/* in: dulint */
 /***********************************************************
 Tests if a dulint is zero. */
@@ -148,6 +148,26 @@ ut_dulint_align_up(
 	dulint	 n,		/* in: number to be rounded */
 	ulint	 align_no);	/* in: align by this number which must be a
 				power of 2 */
+/************************************************************
+Rounds a dulint downward to a multiple of a power of 2. */
+UNIV_INLINE
+ib_uint64_t
+ut_uint64_align_down(
+/*=================*/
+					/* out: rounded value */
+	ib_uint64_t	 n,		/* in: number to be rounded */
+	ulint		 align_no);	/* in: align by this number
+					which must be a power of 2 */
+/************************************************************
+Rounds ib_uint64_t upward to a multiple of a power of 2. */
+UNIV_INLINE
+ib_uint64_t
+ut_uint64_align_up(
+/*===============*/
+					/* out: rounded value */
+	ib_uint64_t	 n,		/* in: number to be rounded */
+	ulint		 align_no);	/* in: align by this number
+					which must be a power of 2 */
 /***********************************************************
 Increments a dulint variable by 1. */
 #define UT_DULINT_INC(D)\
@@ -163,33 +183,15 @@ Increments a dulint variable by 1. */
 Tests if two dulints are equal. */
 #define UT_DULINT_EQ(D1, D2)	(((D1).low == (D2).low)\
 						&& ((D1).high == (D2).high))
+#ifdef notdefined
 /****************************************************************
 Sort function for dulint arrays. */
+UNIV_INTERN
 void
 ut_dulint_sort(dulint* arr, dulint* aux_arr, ulint low, ulint high);
 /*===============================================================*/
-/************************************************************
-The following function calculates the value of an integer n rounded
-to the least product of align_no which is >= n. align_no has to be a
-power of 2. */
-UNIV_INLINE
-ulint
-ut_calc_align(
-/*==========*/
-				/* out: rounded value */
-	ulint	 n,		/* in: number to be rounded */
-	ulint	 align_no);	/* in: align by this number */
-/************************************************************
-The following function calculates the value of an integer n rounded
-to the biggest product of align_no which is <= n. align_no has to be a
-power of 2. */
-UNIV_INLINE
-ulint
-ut_calc_align_down(
-/*===============*/
-				/* out: rounded value */
-	ulint	 n,		/* in: number to be rounded */
-	ulint	 align_no);	/* in: align by this number */
+#endif /* notdefined */
+
 /*************************************************************
 The following function rounds up a pointer to the nearest aligned address. */
 UNIV_INLINE
@@ -197,7 +199,7 @@ void*
 ut_align(
 /*=====*/
 				/* out: aligned pointer */
-	const void*	ptr,		/* in: pointer */
+	void*	ptr,		/* in: pointer */
 	ulint	align_no);	/* in: align by this number */
 /*************************************************************
 The following function rounds down a pointer to the nearest
@@ -206,9 +208,9 @@ UNIV_INLINE
 void*
 ut_align_down(
 /*==========*/
-				/* out: aligned pointer */
+					/* out: aligned pointer */
 	const void*	ptr,		/* in: pointer */
-	ulint	align_no)	/* in: align by this number */
+	ulint		align_no)	/* in: align by this number */
 		__attribute__((const));
 /*************************************************************
 The following function computes the offset of a pointer from the nearest
