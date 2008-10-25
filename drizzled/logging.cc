@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/logging.h>
+#include <drizzled/gettext.h>
 
 int logging_initializer(st_plugin_int *plugin)
 {

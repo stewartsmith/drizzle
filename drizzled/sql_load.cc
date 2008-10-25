@@ -18,7 +18,7 @@
 
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 
 class READ_INFO {
@@ -259,7 +259,8 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 #endif
     if (!dirname_length(ex->file_name))
     {
-      strxnmov(name, FN_REFLEN-1, mysql_real_data_home, tdb, NULL);
+      strcpy(name, mysql_real_data_home);
+      strncat(name, tdb, FN_REFLEN-strlen(mysql_real_data_home)-1);
       (void) fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }

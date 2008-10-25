@@ -49,28 +49,37 @@ typedef struct st_mysql_xid DRIZZLE_XID;
 /*
   The allowable types of plugins
 */
-#define DRIZZLE_DAEMON_PLUGIN          0  /* Daemon / Raw */
-#define DRIZZLE_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
-#define DRIZZLE_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
-#define DRIZZLE_UDF_PLUGIN             3  /* User-Defined Function */
-#define DRIZZLE_UDA_PLUGIN             4  /* User-Defined Aggregate Function */
-#define DRIZZLE_AUDIT_PLUGIN           5  /* Audit */
-#define DRIZZLE_LOGGER_PLUGIN          6  /* Query Logging */
-#define DRIZZLE_ERRMSG_PLUGIN          7  /* Error Messages */
-#define DRIZZLE_AUTH_PLUGIN            8  /* Authorization */
-#define DRIZZLE_CONFIGVAR_PLUGIN       9  /* Configuration Variables */
-#define DRIZZLE_QCACHE_PLUGIN         10  /* Query Cache */
+enum drizzle_plugin_type {
+  DRIZZLE_DAEMON_PLUGIN,                /* Daemon / Raw */
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,        /* Storage Engine */
+  DRIZZLE_INFORMATION_SCHEMA_PLUGIN,    /* Information Schema */
+  DRIZZLE_UDF_PLUGIN,                   /* User-Defined Function */
+  DRIZZLE_UDA_PLUGIN,                   /* User-Defined Aggregate Function */
+  DRIZZLE_AUDIT_PLUGIN,                 /* Audit */
+  DRIZZLE_LOGGER_PLUGIN,                /* Query Logging */
+  DRIZZLE_ERRMSG_PLUGIN,                /* Error Messages */
+  DRIZZLE_AUTH_PLUGIN,                  /* Authorization */
+  DRIZZLE_CONFIGVAR_PLUGIN,             /* Configuration Variables */
+  DRIZZLE_QCACHE_PLUGIN,                /* Query Cache */
+  DRIZZLE_PARSER_PLUGIN,                /* Language Parser */
+  DRIZZLE_SCHEDULING_PLUGIN,            /* Thread and Session Scheduling */
+  DRIZZLE_PLUGIN_MAX=DRIZZLE_SCHEDULING_PLUGIN
+};
 
-#define DRIZZLE_MAX_PLUGIN_TYPE_NUM   11  /* The number of plugin types */
+/* The number of plugin types */
+const uint32_t DRIZZLE_MAX_PLUGIN_TYPE_NUM=DRIZZLE_PLUGIN_MAX+1;
 
 /* We use the following strings to define licenses for plugins */
-#define PLUGIN_LICENSE_PROPRIETARY 0
-#define PLUGIN_LICENSE_GPL 1
-#define PLUGIN_LICENSE_BSD 2
+enum plugin_license_type {
+  PLUGIN_LICENSE_PROPRIETARY,
+  PLUGIN_LICENSE_GPL,
+  PLUGIN_LICENSE_BSD,
+  PLUGIN_LICENSE_MAX=PLUGIN_LICENSE_BSD
+};
 
-#define PLUGIN_LICENSE_PROPRIETARY_STRING "PROPRIETARY"
-#define PLUGIN_LICENSE_GPL_STRING "GPL"
-#define PLUGIN_LICENSE_BSD_STRING "BSD"
+const char * const PLUGIN_LICENSE_PROPRIETARY_STRING="PROPRIETARY";
+const char * const PLUGIN_LICENSE_GPL_STRING="GPL";
+const char * const PLUGIN_LICENSE_BSD_STRING="BSD";
 
 /*
   Macros for beginning and ending plugin declarations.  Between
@@ -376,7 +385,7 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 
 struct st_mysql_plugin
 {
-  int type;             /* the plugin type (a DRIZZLE_XXX_PLUGIN value)   */
+  uint32_t type;        /* the plugin type (a DRIZZLE_XXX_PLUGIN value)   */
   const char *name;     /* plugin name (for SHOW PLUGINS)               */
   const char *version;  /* plugin version (for SHOW PLUGINS)            */
   const char *author;   /* plugin author (for SHOW PLUGINS)             */

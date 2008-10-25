@@ -32,7 +32,7 @@
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 static int32_t count_relay_log_space(Relay_log_info* rli);
 

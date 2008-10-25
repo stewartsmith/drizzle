@@ -15,7 +15,7 @@
 
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;

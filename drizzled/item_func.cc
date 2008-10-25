@@ -24,7 +24,7 @@
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_bit.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 bool check_reserved_words(LEX_STRING *name)
 {
@@ -182,17 +182,6 @@ int64_t Item_func_shift_right::val_int()
   return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0);
 }
 
-
-int64_t Item_func_bit_neg::val_int()
-{
-  assert(fixed == 1);
-  uint64_t res= (uint64_t) args[0]->val_int();
-  if ((null_value=args[0]->null_value))
-    return 0;
-  return ~res;
-}
-
-
 // Conversion functions
 
 void Item_func_integer::fix_length_and_dec()
@@ -202,103 +191,6 @@ void Item_func_integer::fix_length_and_dec()
   set_if_smaller(max_length,tmp);
   decimals=0;
 }
-
-double Item_func_units::val_real()
-{
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0;
-  return value*mul+add;
-}
-
-
-int64_t Item_func_char_length::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  return (int64_t) res->numchars();
-}
-
-
-int64_t Item_func_coercibility::val_int()
-{
-  assert(fixed == 1);
-  null_value= 0;
-  return (int64_t) args[0]->collation.derivation;
-}
-
-
-void Item_func_locate::fix_length_and_dec()
-{
-  max_length= MY_INT32_NUM_DECIMAL_DIGITS;
-  agg_arg_charsets(cmp_collation, args, 2, MY_COLL_CMP_CONV, 1);
-}
-
-
-int64_t Item_func_locate::val_int()
-{
-  assert(fixed == 1);
-  String *a=args[0]->val_str(&value1);
-  String *b=args[1]->val_str(&value2);
-  if (!a || !b)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  /* must be int64_t to avoid truncation */
-  int64_t start=  0; 
-  int64_t start0= 0;
-  my_match_t match;
-
-  if (arg_count == 3)
-  {
-    start0= start= args[2]->val_int() - 1;
-
-    if ((start < 0) || (start > a->length()))
-      return 0;
-
-    /* start is now sufficiently valid to pass to charpos function */
-    start= a->charpos((int) start);
-
-    if (start + b->length() > a->length())
-      return 0;
-  }
-
-  if (!b->length())				// Found empty string at start
-    return start + 1;
-  
-  if (!cmp_collation.collation->coll->instr(cmp_collation.collation,
-                                            a->ptr()+start,
-                                            (uint) (a->length()-start),
-                                            b->ptr(), b->length(),
-                                            &match, 1))
-    return 0;
-  return (int64_t) match.mb_len + start0 + 1;
-}
-
-
-void Item_func_locate::print(String *str, enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("locate("));
-  args[1]->print(str, query_type);
-  str->append(',');
-  args[0]->print(str, query_type);
-  if (arg_count == 3)
-  {
-    str->append(',');
-    args[2]->print(str, query_type);
-  }
-  str->append(')');
-}
-
 
 int64_t Item_func_field::val_int()
 {
@@ -366,19 +258,6 @@ void Item_func_field::fix_length_and_dec()
 }
 
 
-int64_t Item_func_ascii::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0;
-  }
-  null_value=0;
-  return (int64_t) (res->length() ? (unsigned char) (*res)[0] : (unsigned char) 0);
-}
-
 int64_t Item_func_ord::val_int()
 {
   assert(fixed == 1);
@@ -403,96 +282,6 @@ int64_t Item_func_ord::val_int()
   }
 #endif
   return (int64_t) ((unsigned char) (*res)[0]);
-}
-
-	/* Search after a string in a string of strings separated by ',' */
-	/* Returns number of found type >= 1 or 0 if not found */
-	/* This optimizes searching in enums to bit testing! */
-
-void Item_func_find_in_set::fix_length_and_dec()
-{
-  decimals=0;
-  max_length=3;					// 1-999
-  agg_arg_charsets(cmp_collation, args, 2, MY_COLL_CMP_CONV, 1);
-}
-
-static const char separator=',';
-
-int64_t Item_func_find_in_set::val_int()
-{
-  assert(fixed == 1);
-  if (enum_value)
-  {
-    uint64_t tmp=(uint64_t) args[1]->val_int();
-    if (!(null_value=args[1]->null_value || args[0]->null_value))
-    {
-      if (tmp & enum_bit)
-	return enum_value;
-    }
-    return 0L;
-  }
-
-  String *find=args[0]->val_str(&value);
-  String *buffer=args[1]->val_str(&value2);
-  if (!find || !buffer)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-
-  int diff;
-  if ((diff=buffer->length() - find->length()) >= 0)
-  {
-    my_wc_t wc;
-    const CHARSET_INFO * const cs= cmp_collation.collation;
-    const char *str_begin= buffer->ptr();
-    const char *str_end= buffer->ptr();
-    const char *real_end= str_end+buffer->length();
-    const unsigned char *find_str= (const unsigned char *) find->ptr();
-    uint32_t find_str_len= find->length();
-    int position= 0;
-    while (1)
-    {
-      int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, 
-                                       (unsigned char*) real_end)) > 0)
-      {
-        const char *substr_end= str_end + symbol_len;
-        bool is_last_item= (substr_end == real_end);
-        bool is_separator= (wc == (my_wc_t) separator);
-        if (is_separator || is_last_item)
-        {
-          position++;
-          if (is_last_item && !is_separator)
-            str_end= substr_end;
-          if (!my_strnncoll(cs, (const unsigned char *) str_begin,
-                            str_end - str_begin,
-                            find_str, find_str_len))
-            return (int64_t) position;
-          else
-            str_begin= substr_end;
-        }
-        str_end= substr_end;
-      }
-      else if (str_end - str_begin == 0 &&
-               find_str_len == 0 &&
-               wc == (my_wc_t) separator)
-        return (int64_t) ++position;
-      else
-        return 0L;
-    }
-  }
-  return 0;
-}
-
-int64_t Item_func_bit_count::val_int()
-{
-  assert(fixed == 1);
-  uint64_t value= (uint64_t) args[0]->val_int();
-  if ((null_value= args[0]->null_value))
-    return 0; /* purecov: inspected */
-  return (int64_t) my_count_bits(value);
 }
 
 /*
@@ -615,101 +404,6 @@ void debug_sync_point(const char* lock_name, uint32_t lock_timeout)
 }
 
 #endif
-
-
-int64_t Item_func_last_insert_id::val_int()
-{
-  Session *session= current_session;
-  assert(fixed == 1);
-  if (arg_count)
-  {
-    int64_t value= args[0]->val_int();
-    null_value= args[0]->null_value;
-    /*
-      LAST_INSERT_ID(X) must affect the client's mysql_insert_id() as
-      documented in the manual. We don't want to touch
-      first_successful_insert_id_in_cur_stmt because it would make
-      LAST_INSERT_ID(X) take precedence over an generated auto_increment
-      value for this row.
-    */
-    session->arg_of_last_insert_id_function= true;
-    session->first_successful_insert_id_in_prev_stmt= value;
-    return value;
-  }
-  return session->read_first_successful_insert_id_in_prev_stmt();
-}
-
-
-bool Item_func_last_insert_id::fix_fields(Session *session, Item **ref)
-{
-  return Item_int_func::fix_fields(session, ref);
-}
-
-
-/* This function is just used to test speed of different functions */
-
-int64_t Item_func_benchmark::val_int()
-{
-  assert(fixed == 1);
-  char buff[MAX_FIELD_WIDTH];
-  String tmp(buff,sizeof(buff), &my_charset_bin);
-  my_decimal tmp_decimal;
-  Session *session=current_session;
-  uint64_t loop_count;
-
-  loop_count= (uint64_t) args[0]->val_int();
-
-  if (args[0]->null_value ||
-      (!args[0]->unsigned_flag && (((int64_t) loop_count) < 0)))
-  {
-    if (!args[0]->null_value)
-    {
-      char buff[22];
-      llstr(((int64_t) loop_count), buff);
-      push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
-                          "count", buff, "benchmark");
-    }
-
-    null_value= 1;
-    return 0;
-  }
-
-  null_value=0;
-  for (uint64_t loop=0 ; loop < loop_count && !session->killed; loop++)
-  {
-    switch (args[1]->result_type()) {
-    case REAL_RESULT:
-      (void) args[1]->val_real();
-      break;
-    case INT_RESULT:
-      (void) args[1]->val_int();
-      break;
-    case STRING_RESULT:
-      (void) args[1]->val_str(&tmp);
-      break;
-    case DECIMAL_RESULT:
-      (void) args[1]->val_decimal(&tmp_decimal);
-      break;
-    case ROW_RESULT:
-    default:
-      // This case should never be chosen
-      assert(0);
-      return 0;
-    }
-  }
-  return 0;
-}
-
-
-void Item_func_benchmark::print(String *str, enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("benchmark("));
-  args[0]->print(str, query_type);
-  str->append(',');
-  args[1]->print(str, query_type);
-  str->append(')');
-}
 
 #define extra_size sizeof(double)
 
@@ -1735,53 +1429,6 @@ void Item_user_var_as_out_param::print(String *str,
   str->append(name.str,name.length);
 }
 
-
-Item_func_get_system_var::
-Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
-                       LEX_STRING *component_arg, const char *name_arg,
-                       size_t name_len_arg)
-  :var(var_arg), var_type(var_type_arg), component(*component_arg)
-{
-  /* set_name() will allocate the name */
-  set_name(name_arg, name_len_arg, system_charset_info);
-}
-
-
-bool
-Item_func_get_system_var::fix_fields(Session *session, Item **ref)
-{
-  Item *item;
-
-  /*
-    Evaluate the system variable and substitute the result (a basic constant)
-    instead of this item. If the variable can not be evaluated,
-    the error is reported in sys_var::item().
-  */
-  if (!(item= var->item(session, var_type, &component)))
-    return(1);                             // Impossible
-  item->set_name(name, 0, system_charset_info); // don't allocate a new name
-  session->change_item_tree(ref, item);
-
-  return(0);
-}
-
-
-bool Item_func_get_system_var::is_written_to_binlog()
-{
-  return var->is_written_to_binlog(var_type);
-}
-
-int64_t Item_func_bit_xor::val_int()
-{
-  assert(fixed == 1);
-  uint64_t arg1= (uint64_t) args[0]->val_int();
-  uint64_t arg2= (uint64_t) args[1]->val_int();
-  if ((null_value= (args[0]->null_value || args[1]->null_value)))
-    return 0;
-  return (int64_t) (arg1 ^ arg2);
-}
-
-
 /***************************************************************************
   System variables
 ****************************************************************************/
@@ -1801,41 +1448,6 @@ int64_t Item_func_bit_xor::val_int()
     - 0  : error
     - #  : constant item
 */
-
-
-Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
-		     LEX_STRING component)
-{
-  sys_var *var;
-  LEX_STRING *base_name, *component_name;
-
-  if (component.str)
-  {
-    base_name= &component;
-    component_name= &name;
-  }
-  else
-  {
-    base_name= &name;
-    component_name= &component;			// Empty string
-  }
-
-  if (!(var= find_sys_var(session, base_name->str, base_name->length)))
-    return 0;
-  if (component.str)
-  {
-    if (!var->is_struct())
-    {
-      my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
-      return 0;
-    }
-  }
-
-  set_if_smaller(component_name->length, MAX_SYS_VAR_LENGTH);
-
-  return new Item_func_get_system_var(var, var_type, component_name,
-                                      NULL, 0);
-}
 
 
 /**

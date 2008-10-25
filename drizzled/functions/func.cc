@@ -17,12 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+using namespace std;
 #include <drizzled/server_includes.h>
 
 #include CSTDINT_H
 #include <cassert>
-
-#include <drizzled/version.h>
 
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
@@ -510,7 +509,7 @@ bool Item_func::agg_arg_charsets(DTCollation &c, Item **items, uint32_t nitems,
 
 double Item_func::fix_result(double value)
 {
-  if (CMATH_NAMESPACE::isfinite(value))
+  if (isfinite(value))
     return value;
   null_value=1;
   return 0.0;

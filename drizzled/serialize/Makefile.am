@@ -82,13 +82,14 @@ length_CXXFLAGS = -fexceptions
 EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto
 BUILT_SOURCES = schema.pb.h \
 		table.pb.h \
-		schema.pb.cc \
-		table.pb.cc \
-		binary_log.pb.cc
+		binary_log.pb.h \
+		master_list.pb.h
 
 CLEANFILES =  binary_log.pb.h \
               binary_log.pb.cc \
               schema.pb.h \
               schema.pb.cc \
               table.pb.h \
-              table.pb.cc
+              table.pb.cc \
+              master_list.pb.h \
+              master_list.pb.cc

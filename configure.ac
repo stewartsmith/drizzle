@@ -67,7 +67,37 @@ ifdef([AC_PROG_CC_C99],[
   AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
-AC_USE_SYSTEM_EXTENSIONS
+
+ifdef([AC_USE_SYSTEM_EXTENSIONS],[
+  AC_USE_SYSTEM_EXTENSIONS
+],[
+
+  AH_VERBATIM([__EXTENSIONS__],
+[/* Enable extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif])
+
+  AC_CACHE_CHECK([whether it is safe to define __EXTENSIONS__],
+    [ac_cv_safe_to_define___extensions__],
+    [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+#         define __EXTENSIONS__ 1
+          AC_INCLUDES_DEFAULT])],
+       [ac_cv_safe_to_define___extensions__=yes],
+       [ac_cv_safe_to_define___extensions__=no])])
+  test $ac_cv_safe_to_define___extensions__ = yes &&
+    AC_DEFINE([__EXTENSIONS__])
+  AC_DEFINE([_POSIX_PTHREAD_SEMANTICS])
+  AC_DEFINE([_TANDEM_SOURCE])
+])
+
 AC_PROG_CXX
 AC_CXX_HEADER_STDCXX_98
 if test "$ac_cv_cxx_stdcxx_98" = "no"
@@ -122,15 +152,22 @@ AM_GNU_GETTEXT_VERSION(0.17)
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 AC_SUBST(DRIZZLE_NO_DASH_VERSION)
-AC_SUBST(DRIZZLE_BASE_VERSION)
+AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
+                  [Major and minor version])
 AC_SUBST(DRIZZLE_VERSION_ID)
+AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
+		   [Version ID that can be easily used for numeric comparison])
 AC_SUBST(DRIZZLE_PREVIOUS_BASE_VERSION)
 AC_SUBST(PROTOCOL_VERSION)
 AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
                    [mysql client protocol version])
 AC_SUBST(DOT_FRM_VERSION)
-AC_DEFINE_UNQUOTED([DOT_FRM_VERSION], [$DOT_FRM_VERSION],
+AC_DEFINE_UNQUOTED([FRM_VER], [$DOT_FRM_VERSION],
                    [Version of .frm files])
+AC_DEFINE_UNQUOTED([FRM_VERSION_TRUE_VARCHAR],[FRM_VER+4],
+                   [Current version of .frm info we're using])
+AC_DEFINE_UNQUOTED([DRIZZLE_CONFIG_NAME],["drizzled"],[Name of server config section])
+
 AC_SUBST(SHARED_LIB_MAJOR_VERSION)
 AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
@@ -743,7 +780,8 @@ AC_ARG_WITH([server-suffix],
     [ DRIZZLE_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
     [ DRIZZLE_SERVER_SUFFIX= ]
     )
-AC_SUBST(DRIZZLE_SERVER_SUFFIX)
+AC_DEFINE_UNQUOTED([DRIZZLE_SERVER_SUFFIX],[$DRIZZLE_SERVER_SUFFIX],
+                   [Append value to the version string])
 
 # Force use of a curses libs
 AC_ARG_WITH([named-curses-libs],
@@ -790,6 +828,10 @@ AC_ARG_WITH([tcp-port],
 AC_SUBST(DRIZZLE_TCP_PORT)
 # We might want to document the assigned port in the manual.
 AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
+AC_DEFINE_UNQUOTED([DRIZZLE_PORT],[$DRIZZLE_TCP_PORT],
+                   [Drizzle port to use])
+AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
+		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([mysqld-user],
@@ -918,7 +960,8 @@ then
 else
   COMPILATION_COMMENT="Source distribution"
 fi
-AC_SUBST(COMPILATION_COMMENT)
+AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
+                   [Comment about compilation environment])
 
 if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
 then
@@ -1418,6 +1461,13 @@ AC_ARG_ENABLE([go-crazy],
 if test "$GCC" = "yes"
 then
 
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    W_FAIL="-Werror"
+  fi
+  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros ${W_FAIL}"
+
   if test "$ac_warn_longlong" = "yes"
   then
     W_LONGLONG="-Wlong-long"
@@ -1448,20 +1498,35 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
+  save_CXXFLAGS="${CXXFLAGS}"
+  CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
+  AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
+    [ac_cv_safe_to_use_Wredundant_decls_],
+    [AC_LANG_PUSH(C++)
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([
+template <typename E> struct C { void foo(); };
+template <typename E> void C<E>::foo() { }
+template <> void C<int>::foo();
+          AC_INCLUDES_DEFAULT])],
+       [ac_cv_safe_to_use_Wredundant_decls_=yes],
+       [ac_cv_safe_to_use_Wredundant_decls_=no])
+     AC_LANG_POP()])
+    if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
+    then
+      GXX_W_REDUNDANT_DECLS="-Wredundant-decls"
+    else
+      GXX_W_REDUNDANT_DECLS="-Wno-redundant-decls"
+    fi
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef -Wredundant-decls ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+    CXXFLAGS="${save_CXXFLAGS}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
   then
     W_UNREACHABLE="-Wunreachable-code"
   fi
-
-  if test "$ac_warn_fail" = "yes"
-  then
-    W_FAIL="-Werror"
-  fi
-
   if test "$ac_warn_cast" = "yes"
   then
     W_CAST="-Wold-style-cast"
@@ -1477,9 +1542,8 @@ then
     W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
   fi
 
-  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros"
-  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
-  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
   AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
   AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
@@ -1520,7 +1584,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- drizzled/version.h plugin/Makefile dnl
+ plugin/Makefile dnl
  drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

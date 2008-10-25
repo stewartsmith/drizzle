@@ -18,8 +18,8 @@
 #include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/sql_show.h>
-#include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
 
@@ -76,8 +76,9 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
                     system_charset_info,  to, to_length, &errors);
     if (errors) // Old 5.0 name
     {
-      res= (strxnmov(to, to_length, MYSQL50_TABLE_NAME_PREFIX,  from, NULL) -
-            to);
+      strcpy(to, MYSQL50_TABLE_NAME_PREFIX);
+      strncat(to, from, to_length-MYSQL50_TABLE_NAME_PREFIX_LENGTH-1);
+      res= strlen(to);
       sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
     }
   }
@@ -98,7 +99,6 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   RETURN
     File name length.
 */
-
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t errors, length;
@@ -173,12 +173,14 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   if (pos - rootdir_len >= buff &&
       memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
     pos= my_stpncpy(pos, FN_ROOTDIR, end - pos);
-  pos= strxnmov(pos, end - pos, dbbuff, FN_ROOTDIR, NULL);
+  pos= my_stpncpy(pos, dbbuff, end-pos);
+  pos= my_stpncpy(pos, FN_ROOTDIR, end-pos);
 #ifdef USE_SYMDIR
   unpack_dirname(buff, buff);
   pos= strend(buff);
 #endif
-  pos= strxnmov(pos, end - pos, tbbuff, ext, NULL);
+  pos= my_stpncpy(pos, tbbuff, end - pos);
+  pos= my_stpncpy(pos, ext, end - pos);
 
   return(pos - buff);
 }
@@ -206,7 +208,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
 
   char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
-  snprintf(p, bufflen - (p - buff), "/%s%lx_%lx_%x%s",
+  snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
 	      tmp_file_prefix, current_pid,
               session->thread_id, session->tmp_table++, reg_ext);
 
@@ -2278,7 +2280,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (stat(from, &stat_info))
     goto end;				// Can't use USE_FRM flag
 
-  snprintf(tmp, sizeof(tmp), "%s-%lx_%lx",
+  snprintf(tmp, sizeof(tmp), "%s-%lx_%"PRIx64,
            from, current_pid, session->thread_id);
 
   /* If we could open the table, close it */
@@ -3756,7 +3758,7 @@ Table *create_altered_table(Session *session,
   char tmp_name[80];
   char path[FN_REFLEN];
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx",
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64,
            tmp_file_prefix, current_pid, session->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
@@ -4414,8 +4416,15 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(session,table_list,
                                               alter_info->tablespace_op));
-  strxnmov(new_name_buff, sizeof (new_name_buff) - 1, mysql_data_home, "/", db, 
-           "/", table_name, reg_ext, NULL);
+  char* pos= new_name_buff;
+  char* pos_end= pos+strlen(new_name_buff)-1;
+  pos= my_stpncpy(new_name_buff, mysql_data_home, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
+  pos= my_stpncpy(new_name_buff, db, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
+  pos= my_stpncpy(new_name_buff, table_name, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, reg_ext, pos_end-pos);
+
   (void) unpack_filename(new_name_buff, new_name_buff);
   /*
     If this is just a rename of a view, short cut to the
@@ -4788,7 +4797,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       close_temporary_table(session, altered_table, 1, 1);
   }
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx", tmp_file_prefix,
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, tmp_file_prefix,
            current_pid, session->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
@@ -4914,7 +4923,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   */
 
   session->set_proc_info("rename result table");
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%lx", tmp_file_prefix,
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, tmp_file_prefix,
            current_pid, session->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);

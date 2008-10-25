@@ -14,8 +14,9 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
-#include "rpl_rli.h"
+#include <drizzled/rpl_rli.h>
 #include <mysys/base64.h>
+#include <drizzled/error.h>
 
 /**
   Execute a BINLOG statement

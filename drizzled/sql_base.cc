@@ -18,8 +18,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <mysys/my_dir.h>
-#include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/nested_join.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -4597,7 +4598,13 @@ find_field_in_tables(Session *session, Item_ident *item,
     char buff[NAME_LEN*2+1];
     if (db && db[0])
     {
-      strxnmov(buff,sizeof(buff)-1,db,".",table_name,NULL);
+      /* We're in an error condition, two extra strlen's aren't going
+       * to kill us */
+      assert(strlen(db) <= NAME_LEN);
+      assert(strlen(table_name) <= NAME_LEN);
+      strcpy(buff, db);
+      strcat(buff,".");
+      strcat(buff, table_name);
       table_name=buff;
     }
     my_error(ER_UNKNOWN_TABLE, MYF(0), table_name, session->where);

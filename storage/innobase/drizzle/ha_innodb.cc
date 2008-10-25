@@ -79,6 +79,8 @@ extern "C" {
 }
 
 #include "ha_innodb.h"
+#include <drizzled/innodb_plugin_extras.h>
+#include <drizzled/error.h>
 #include "i_s.h"
 
 #ifndef DRIZZLE_SERVER

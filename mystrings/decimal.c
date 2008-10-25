@@ -97,7 +97,7 @@
       implementation-defined.
 */
 
-#include "config.h"
+#include <config.h>
 #include <alloca.h>
 #include <m_string.h>
 #include <m_ctype.h>

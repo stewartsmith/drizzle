@@ -42,6 +42,7 @@
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/net_serv.h>
 #include "libdrizzle_priv.h"
+#include <libdrizzle/pack.h>
 
 #include <sys/poll.h>
 #include <sys/ioctl.h>
@@ -78,9 +79,7 @@
 #include <errno.h>
 
 
-#include <drizzled/version.h>
-#include <libdrizzle/sql_common.h>
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 #include "local_infile.h"
 
 

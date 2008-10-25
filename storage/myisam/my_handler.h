@@ -109,8 +109,8 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 extern int ha_compare_text(const CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
-extern void my_handler_error_register(void);
-extern void my_handler_error_unregister(void);
+void my_handler_error_register(void);
+void my_handler_error_unregister(void);
 extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
                       uint32_t key_length,uint32_t nextflag,uint32_t *diff_length);
 

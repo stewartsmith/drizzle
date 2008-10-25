@@ -16,11 +16,19 @@
 
 /* Some general useful functions */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <config.h>
 
-#include "tmp_table.h"
-#include "sj_tmp_table.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+
+#include <drizzled/tmp_table.h>
+#include <drizzled/sj_tmp_table.h>
+#include <drizzled/nested_join.h>
+
+#include <string>
+
+using namespace std;
 
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
@@ -300,15 +308,18 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags  __at
   bool error_given;
   File file;
   unsigned char head[64], *disk_buff;
-  char	path[FN_REFLEN];
+  string	path("");
+
   MEM_ROOT **root_ptr, *old_root;
 
   error= 1;
   error_given= 0;
   disk_buff= NULL;
 
-  strxmov(path, share->normalized_path.str, reg_ext, NULL);
-  if ((file= open(path, O_RDONLY)) < 0)
+  path.reserve(FN_REFLEN);
+  path.append(share->normalized_path.str);
+  path.append(reg_ext);
+  if ((file= open(path.c_str(), O_RDONLY)) < 0)
   {
     /*
       We don't try to open 5.0 unencoded name, if
@@ -329,11 +340,16 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags  __at
       goto err_not_open;
 
     /* Try unencoded 5.0 name */
-    uint32_t length;
-    strxnmov(path, sizeof(path)-1,
-             mysql_data_home, "/", share->db.str, "/",
-             share->table_name.str, reg_ext, NULL);
-    length= unpack_filename(path, path) - reg_ext_length;
+    size_t length;
+    char unpacked_path[FN_REFLEN];
+    path.clear();
+    path.append(mysql_data_home);
+    path.append("/");
+    path.append(share->db.str);
+    path.append("/");
+    path.append(share->table_name.str);
+    path.append(reg_ext);
+    length= unpack_filename(unpacked_path, path.c_str()) - reg_ext_length;
     /*
       The following is a safety test and should never fail
       as the old file name should never be longer than the new one.
@@ -345,12 +361,12 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags  __at
       so no need to check the old file name.
     */
     if (length == share->normalized_path.length ||
-        ((file= open(path, O_RDONLY)) < 0))
+        ((file= open(unpacked_path, O_RDONLY)) < 0))
       goto err_not_open;
 
     /* Unencoded 5.0 table name found */
-    path[length]= '\0'; // Remove .frm extension
-    my_stpcpy(share->normalized_path.str, path);
+    unpacked_path[length]= '\0'; // Remove .frm extension
+    my_stpcpy(share->normalized_path.str, unpacked_path);
     share->normalized_path.length= length;
   }
 
@@ -4012,7 +4028,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%lx_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
             session->thread_id, session->tmp_table++);
   }
 

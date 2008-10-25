@@ -17,7 +17,7 @@
 /* Functions to handle date and time */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <drizzled/util/test.h>
 
 

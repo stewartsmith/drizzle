@@ -21,7 +21,8 @@
 
 #include <drizzled/server_includes.h>
 #include "rpl_filter.h"
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 /*
   While we have legacy_db_type, we have this array to

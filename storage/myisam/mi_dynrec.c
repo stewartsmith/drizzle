@@ -94,7 +94,8 @@ bool mi_dynmap_file(MI_INFO *info, my_off_t size)
     info->s->file_map= NULL;
     return(1);
   }
-#if defined(HAVE_MADVISE)
+/* per krow we should look at removing the following code */
+#if defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
   madvise((char*) info->s->file_map, size, MADV_RANDOM);
 #endif
   info->s->mmaped_length= size;

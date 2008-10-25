@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_ABS_H
 #define DRIZZLED_FUNCTIONS_ABS_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/functions/num1.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/num1.h>
 
 class Item_func_abs :public Item_func_num1
 {

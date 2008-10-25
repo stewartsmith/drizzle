@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 
 /* Added this for string translation. */
-#include <libdrizzle/gettext.h>
+#include <drizzled/gettext.h>
 
 #define ADMIN_VERSION "8.42"
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */

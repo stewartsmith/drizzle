@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/qcache.h>
+#include <drizzled/gettext.h>
 
 int qcache_initializer(st_plugin_int *plugin)
 {

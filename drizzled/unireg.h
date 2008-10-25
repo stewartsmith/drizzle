@@ -22,17 +22,11 @@
 
 #ifndef _unireg_h
 
-#include <libdrizzle/gettext.h>
-
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
 #endif
 
-#define ER(X) _(drizzled_error_messages[(X) - ER_ERROR_FIRST])
-#define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : _("Invalid error code"))
 
-
-#define ERRMAPP 1				/* Errormap f|r my_error */
 #define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
@@ -150,7 +144,7 @@
 #define TE_INFO_LENGTH 3
 #define MTYP_NOEMPTY_BIT 128
 
-#define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
+
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
 #define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
@@ -178,7 +172,6 @@
 
 /* Include prototypes for unireg */
 
-#include <drizzled/error.h>
 #include "structs.h"				/* All structs we need */
 
 #endif

@@ -85,7 +85,6 @@ So, we can read full search-structure as 32-bit word
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
-#include <drizzled/version.h>
 #include "lex.h"
 
 const char *default_dbug_option="d:t:o,/tmp/gen_lex_hash.trace";
@@ -344,7 +343,7 @@ void print_find_structs()
 static void usage(int version)
 {
   printf("%s  Ver 3.6 Distrib %s, for %s (%s)\n",
-	 my_progname, DRIZZLE_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
+	 my_progname, VERSION, SYSTEM_TYPE, MACHINE_TYPE);
   if (version)
     return;
   puts("Copyright (C) 2008 Sun Microsystems, Inc.");

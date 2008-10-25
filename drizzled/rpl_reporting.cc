@@ -1,5 +1,6 @@
 #include <drizzled/server_includes.h>
 #include "rpl_reporting.h"
+#include <drizzled/gettext.h>
 
 void
 Slave_reporting_capability::report(loglevel level, int err_code,

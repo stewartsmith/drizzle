@@ -21,7 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/num.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 /**
   Numeric fields base class constructor.

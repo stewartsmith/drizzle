@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <libdrizzle/drizzle_com.h>
+#include <drizzled/common.h>
 
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 

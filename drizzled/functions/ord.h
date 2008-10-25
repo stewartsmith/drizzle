@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_sql_common_h
-#define _libdrizzle_sql_common_h
+#ifndef DRIZZLED_FUNCTIONS_ORD_H
+#define DRIZZLED_FUNCTIONS_ORD_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#include <drizzled/functions/func.h> 
 
-#ifdef	__cplusplus
-}
-#endif
+class Item_func_ord :public Item_int_func
+{
+  String value;
+public:
+  Item_func_ord(Item *a) :Item_int_func(a) {}
+  int64_t val_int();
+  const char *func_name() const { return "ord"; }
+};
 
-#endif
+#endif /* DRIZZLED_FUNCTIONS_ORD_H */

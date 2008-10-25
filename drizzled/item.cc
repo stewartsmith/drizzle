@@ -16,7 +16,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 const String my_null_string("NULL", 4, default_charset_info);
 

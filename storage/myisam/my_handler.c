@@ -1,28 +1,28 @@
-/* Copyright (C) 2002-2006 MySQL AB
-   
-   This library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Library General Public
-   License as published by the Free Software Foundation; version 2
-   of the License.
-   
-   This library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Library General Public License for more details.
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   You should have received a copy of the GNU Library General Public
-   License along with this library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-   MA 02111-1307, USA */
-
-#include "mysys_priv.h"
+#include <config.h>
 
 #include <mystrings/m_ctype.h>
 #include <drizzled/base.h>
-#include <my_handler.h>
-#include <my_sys.h>
-
-#include "my_handler_errors.h"
+#include <storage/myisam/my_handler.h>
+#include <mysys/my_sys.h>
 
 /**
   Swap the contents of two variables.
@@ -579,39 +579,3 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
 
 
 
-/*
-  Register handler error messages for usage with my_error()
-
-  NOTES
-    This is safe to call multiple times as my_error_register()
-    will ignore calls to register already registered error numbers.
-*/
-
-
-void my_handler_error_register(void)
-{
-  /*
-    If you got compilation error here about compile_time_assert array, check
-    that every HA_ERR_xxx constant has a corresponding error message in
-    handler_error_messages[] list (check mysys/ma_handler_errors.h and
-    include/my_base.h).
-
-    TODO: Remove fix the handler_error_messages so that this hack isn't 
-          necessary.
-  */
-#ifdef __GNUC__
-  char compile_time_assert[(HA_ERR_FIRST +
-                            array_elements(handler_error_messages) ==
-                            HA_ERR_LAST + 1) ? 1 : -1]
-      __attribute__ ((__unused__));
-#endif
-  my_error_register(handler_error_messages, HA_ERR_FIRST,
-                    HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
-}
-
-
-void my_handler_error_unregister(void)
-{
-  my_error_unregister(HA_ERR_FIRST,
-                      HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
-}

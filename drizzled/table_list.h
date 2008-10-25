@@ -71,8 +71,10 @@ class Field_translator;
 class Item_subselect;
 class Table;
 
+struct nested_join_st;
+
 enum enum_schema_table_state
-{ 
+{
   NOT_PROCESSED= 0,
   PROCESSED_BY_CREATE_SORT_INDEX,
   PROCESSED_BY_JOIN_EXEC

@@ -20,6 +20,7 @@
 #include <mystrings/m_string.h>
 #include <libdrizzle/libdrizzle.h>
 #include <libdrizzle/errmsg.h>
+#include <libdrizzle/get_password.h>
 #include <mysys/my_getopt.h>
 
 #if TIME_WITH_SYS_TIME

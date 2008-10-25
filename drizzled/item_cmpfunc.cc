@@ -23,6 +23,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/error.h>
 
 static bool convert_constant_item(Session *, Item_field *, Item **);
 

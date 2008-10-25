@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/decimal_typecast.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 
 String *Item_decimal_typecast::val_str(String *str)

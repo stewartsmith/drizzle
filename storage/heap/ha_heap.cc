@@ -17,6 +17,7 @@
 #include <drizzled/server_includes.h>
 #include "ha_heap.h"
 #include "heapdef.h"
+#include <drizzled/error.h>
 
 static handler *heap_create_handler(handlerton *hton,
                                     TABLE_SHARE *table, 

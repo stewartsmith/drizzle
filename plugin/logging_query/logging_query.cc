@@ -21,6 +21,7 @@
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
+#include <drizzled/gettext.h>
 
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN (32*1024)

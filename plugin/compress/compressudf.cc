@@ -16,7 +16,7 @@
 #include <drizzled/common_includes.h>
 #include <drizzled/item_func.h>
 #include <drizzled/item_strfunc.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <zlib.h>
 
 class Item_func_compress: public Item_str_func

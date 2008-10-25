@@ -20,7 +20,7 @@ Created 5/11/1994 Heikki Tuuri
 #include "ha_prototypes.h"
 #ifndef UNIV_HOTBACKUP
 # if defined(BUILD_DRIZZLE)
-#  include <libdrizzle/drizzle_com.h>
+#  include <drizzled/common.h>
 #  if TIME_WITH_SYS_TIME
 #   include <sys/time.h>
 #   include <time.h>

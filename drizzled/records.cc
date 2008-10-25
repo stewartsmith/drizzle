@@ -21,6 +21,7 @@
   Functions for easy reading of records, possible through a cache
 */
 #include <drizzled/server_includes.h>
+#include <drizzled/error.h>
 
 static int rr_quick(READ_RECORD *info);
 int rr_sequential(READ_RECORD *info);

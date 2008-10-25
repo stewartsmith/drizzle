@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <drizzled/innodb_plugin_extras.h>
 
 /*
@@ -1483,8 +1483,9 @@ static File create_file(Session *session, char *path, sql_exchange *exchange,
 
   if (!dirname_length(exchange->file_name))
   {
-    strxnmov(path, FN_REFLEN-1, mysql_real_data_home, session->db ? session->db : "",
-             NULL);
+    strcpy(path, mysql_real_data_home);
+    if (session->db)
+      strncat(path, session->db, FN_REFLEN-strlen(mysql_real_data_home)-1);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
   else

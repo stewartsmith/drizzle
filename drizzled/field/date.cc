@@ -21,6 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/date.h>
+#include <drizzled/error.h>
 
 /****************************************************************************
 ** The new date type

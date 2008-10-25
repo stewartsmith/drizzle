@@ -150,8 +150,8 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
     Check on destroying of mutexes. A few may be left that will get cleaned
     up by C++ destructors
   */
-  safe_mutex_end((infoflag & (MY_GIVE_INFO | MY_CHECK_ERROR)) ? stderr :
-                 (FILE *) 0);
+  safe_mutex_end();
+
 #endif /* defined(SAFE_MUTEX) */
 
   my_init_done=0;

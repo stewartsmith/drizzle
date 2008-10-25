@@ -21,7 +21,6 @@
 #define DRIZZLED_FUNCTIONS_INT_VAL_H
 
 #include <drizzled/functions/func.h> 
-/* #include <drizzled/functions/num1.h>  */
 
 class Item_func_int_val :public Item_func_num1
 {

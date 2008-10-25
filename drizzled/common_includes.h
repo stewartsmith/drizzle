@@ -38,8 +38,6 @@
 
 /* Cross-platform portability code and standard includes */
 #include <drizzled/global.h>                    
-/* Server versioning information and defines */
-#include <drizzled/version.h>                   
 /* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
 #include <mysys/my_sys.h>                       
 /* Convenience functions for working with times */
@@ -52,8 +50,6 @@
 #include <signal.h>
 /* Deadlock-free table-list lock API */
 #include <mysys/thr_lock.h>
-/* Custom error API */
-#include <drizzled/error.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */
@@ -69,19 +65,17 @@
 /* Network database operations (hostent, netent, servent, etc...*/
 #include <netdb.h>
 /* Definitions that the client and the server have in common */
-#include <libdrizzle/drizzle_com.h>
-/* gettext() convenience wrappers */
-#include <libdrizzle/gettext.h>
+#include <drizzled/common.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */
 #include <drizzled/structs.h>
-/* Custom error definitions */
-#include <drizzled/error.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
+
+#include <drizzled/korr.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
@@ -117,49 +111,6 @@ enum enum_query_type
   QT_IS
 };
 
-/** 
- * @TODO convert all these three maps to Bitmap classes 
- *
- * @TODO Move these to a more appropriate header file (maps.h?).  The following files use them:
- *
- *    item_sum.h
- *    item_compfunc.h
- *    item.h
- *    table.h
- *    item_subselect.h
- *    sql_bitmap.h
- *    unireg.h (going bye bye?)
- *    sql_udf.h
- *    item_row.h
- *    handler.cc
- *    sql_insert.cc
- *    opt_range.h
- *    opt_sum.cc
- *    item_strfunc.h
- *    sql_delete.cc
- *    sql_select.h
- *
- *    Since most of these include table.h, I think that would appropriate...
- */
-typedef uint64_t table_map;          /* Used for table bits in join */
-#if MAX_INDEXES <= 64
-typedef Bitmap<64>  key_map;          /* Used for finding keys */
-#else
-typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
-#endif
-typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
-
-/*
-  Used to identify NESTED_JOIN structures within a join (applicable only to
-  structures that have not been simplified away and embed more the one
-  element)
-*/
-typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
-
-/* useful constants */#
-extern const key_map key_map_empty;
-extern key_map key_map_full;          /* Should be threaded as const */
-extern const char *primary_key_name;
 
 /**
  * @TODO Move the following into a drizzled.h header?
@@ -168,7 +119,6 @@ extern const char *primary_key_name;
  * and that are used only in the server should be separated out into 
  * a drizzled.h header file -- JRP
  */
-typedef uint64_t query_id_t;
 extern query_id_t global_query_id;
 
 /* increment query_id and return it.  */

@@ -914,7 +914,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table, const char *ext, uint32_t flags);
 
 #define MYSQL50_TABLE_NAME_PREFIX         "#mysql50#"
-#define MYSQL50_TABLE_NAME_PREFIX_LENGTH  9
+#define MYSQL50_TABLE_NAME_PREFIX_LENGTH  sizeof(MYSQL50_TABLE_NAME_PREFIX)
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)
@@ -1043,7 +1043,6 @@ inline int hexchar_to_int(char c)
 */
 
 extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
-void kill_delayed_threads(void);
 bool check_stack_overrun(Session *session, long margin, unsigned char *dummy);
 
 #endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

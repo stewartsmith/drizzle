@@ -31,10 +31,10 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include <mysys/thr_alarm.h>
-#include <libdrizzle/sql_common.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

@@ -21,7 +21,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/fstring.h>
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 
 #define LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE 128

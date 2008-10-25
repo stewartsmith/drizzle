@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
-#include <drizzled/drizzled_error_messages.h>
+#include <drizzled/error.h>
 #include <drizzled/functions/signed.h>
 
 void Item_func_signed::print(String *str, enum_query_type query_type)
