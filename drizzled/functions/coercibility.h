@@ -17,17 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_COERCIBILITY_H
+#define DRIZZLED_FUNCTIONS_COERCIBILITY_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_coercibility :public Item_int_func
 {
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_coercibility(Item *a) :Item_int_func(a) {}
+  int64_t val_int();
+  const char *func_name() const { return "coercibility"; }
+  void fix_length_and_dec() { max_length=10; maybe_null= 0; }
+  table_map not_null_tables() const { return 0; }
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_COERCIBILITY_H */

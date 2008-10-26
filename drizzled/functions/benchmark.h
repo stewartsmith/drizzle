@@ -17,17 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#ifndef DRIZZLED_FUNCTIONS_BENCHMARK_H
+#define DRIZZLED_FUNCTIONS_BENCHMARK_H
 
 #include <drizzled/functions/func.h> 
 
-class Item_func_int_val :public Item_func_num1
+class Item_func_benchmark :public Item_int_func
 {
 public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
+  Item_func_benchmark(Item *count_expr, Item *expr)
+    :Item_int_func(count_expr, expr)
+  {}
+  int64_t val_int();
+  const char *func_name() const { return "benchmark"; }
+  void fix_length_and_dec() { max_length=1; maybe_null=0; }
+  virtual void print(String *str, enum_query_type query_type);
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
+#endif /* DRIZZLED_FUNCTIONS_BENCHMARK_H */

@@ -17,17 +17,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_INT_VAL_H
-#define DRIZZLED_FUNCTIONS_INT_VAL_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/ord.h>
 
-#include <drizzled/functions/func.h> 
-
-class Item_func_int_val :public Item_func_num1
+int64_t Item_func_ord::val_int()
 {
-public:
-  Item_func_int_val(Item *a) :Item_func_num1(a) {}
-  void fix_num_length_and_dec();
-  void find_num_type();
-};
+  assert(fixed == 1);
+  String *res=args[0]->val_str(&value);
+  if (!res)
+  {
+    null_value=1;
+    return 0;
+  }
+  null_value=0;
+  if (!res->length()) return 0;
+#ifdef USE_MB
+  if (use_mb(res->charset()))
+  {
+    register const char *str=res->ptr();
+    register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
+    if (!l)
+      return (int64_t)((unsigned char) *str);
+    while (l--)
+      n=(n<<8)|(uint32_t)((unsigned char) *str++);
+    return (int64_t) n;
+  }
+#endif
+  return (int64_t) ((unsigned char) (*res)[0]);
+}
 
-#endif /* DRIZZLED_FUNCTIONS_INT_VAL_H */
