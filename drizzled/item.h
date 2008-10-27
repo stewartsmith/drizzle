@@ -1094,6 +1094,7 @@ public:
 
 class Item_equal;
 class COND_EQUAL;
+class user_var_entry;
 
 class Item_field :public Item_ident
 {

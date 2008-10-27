@@ -314,7 +314,6 @@ ulong thread_pool_size= 0;
 ulong binlog_cache_size= 0;
 ulong max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
-query_id_t global_query_id;
 ulong aborted_threads;
 ulong aborted_connects;
 ulong specialflag= 0;
@@ -4252,7 +4251,7 @@ static void mysql_init_variables(void)
   protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
-  global_query_id= thread_id= 1L;
+  thread_id= 1;
   my_stpcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";

@@ -17,6 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include CSTDINT_H
 
 /**
  * @file
@@ -377,7 +378,104 @@
 #define IS_EQUAL_YES 1
 #define IS_EQUAL_PACK_LENGTH 2
 
-typedef uint64_t query_id_t;
 
+/**
+  Query type constants.
+
+  QT_ORDINARY -- ordinary SQL query.
+  QT_IS -- SQL query to be shown in INFORMATION_SCHEMA (in utf8 and without
+  character set introducers).
+
+  @TODO
+
+  Move this out of here once Stew's done with UDF breakout.  The following headers need it:
+
+    sql_lex.h --> included by sql_class.h
+    item.h
+    table.h
+    item_func.h
+    item_subselect.h
+    item_timefunc.h
+    item_sum.h
+    item_cmpfunc.h
+    item_strfunc.h
+*/
+enum enum_query_type
+{
+  QT_ORDINARY,
+  QT_IS
+};
+
+
+/**
+ * @TODO Move to a separate header?
+ *
+ * It's needed by item.h and field.h, which are both inter-dependent
+ * and contain forward declarations of many structs/classes in the
+ * other header file.
+ *
+ * What is needed is a separate header file that is included
+ * by *both* item.h and field.h to resolve inter-dependencies
+ *
+ * But, probably want to hold off on this until Stew finished the UDF cleanup
+ */
+enum Derivation
+{
+  DERIVATION_IGNORABLE= 5,
+  DERIVATION_COERCIBLE= 4,
+  DERIVATION_SYSCONST= 3,
+  DERIVATION_IMPLICIT= 2,
+  DERIVATION_NONE= 1,
+  DERIVATION_EXPLICIT= 0
+};
+
+/**
+ * Opening modes for open_temporary_table and open_table_from_share
+ *
+ * @TODO Put this into an appropriate header. It is only needed in:
+ *
+ *    table.cc
+ *    sql_base.cc
+ */
+enum open_table_mode
+{
+  OTM_OPEN= 0,
+  OTM_CREATE= 1,
+  OTM_ALTER= 2
+};
+
+enum enum_parsing_place
+{
+  NO_MATTER
+  , IN_HAVING
+  , SELECT_LIST
+  , IN_WHERE
+  , IN_ON
+};
+
+enum enum_mysql_completiontype {
+  ROLLBACK_RELEASE= -2
+  , ROLLBACK= 1
+  , ROLLBACK_AND_CHAIN= 7
+  , COMMIT_RELEASE= -1
+  , COMMIT= 0
+  , COMMIT_AND_CHAIN= 6
+};
+
+enum enum_check_fields
+{
+  CHECK_FIELD_IGNORE
+  , CHECK_FIELD_WARN
+  , CHECK_FIELD_ERROR_FOR_NULL
+};
+
+enum enum_var_type
+{
+  OPT_DEFAULT= 0
+  , OPT_SESSION
+  , OPT_GLOBAL
+};
+
+typedef uint64_t query_id_t;
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
