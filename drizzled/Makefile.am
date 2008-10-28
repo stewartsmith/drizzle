@@ -74,6 +74,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
+		 -luuid \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
