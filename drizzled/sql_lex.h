@@ -39,7 +39,7 @@ class LEX_COLUMN;
   YYSTYPE before including this file
 */
 
-#include "set_var.h"
+#include <drizzled/set_var.h>
 
 #ifdef DRIZZLE_YACC
 #define LEX_YYSTYPE void *

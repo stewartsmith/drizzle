@@ -1,18 +1,21 @@
-/* Copyright (C) 2000-2004 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <drizzled/server_includes.h>
 #include "rpl_rli.h"
@@ -33,6 +36,7 @@
 #include <libdrizzle/libdrizzle.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
+#include <drizzled/tztime.h>
 
 #define log_cs	&my_charset_utf8_general_ci
 
@@ -2345,7 +2349,7 @@ int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
     perform, we don't call Start_log_event_v3::do_apply_event()
     (this was just to update the log's description event).
   */
-  if (server_id != (uint32_t) ::server_id)
+  if (server_id != ::server_id)
   {
     /*
       If the event was not requested by the slave i.e. the master sent
@@ -2367,7 +2371,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
   delete rli->relay_log.description_event_for_exec;
   rli->relay_log.description_event_for_exec= this;
 
-  if (server_id == (uint32_t) ::server_id)
+  if (server_id == ::server_id)
   {
     /*
       We only increase the relay log position if we are skipping
