@@ -37,6 +37,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  func.cc \
 			  get_system_var.cc \
                           int.cc \
+                          integer.cc \
                           int_divide.cc \
                           int_val.cc \
 			  last_insert.cc \
@@ -44,6 +45,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  ln.cc \
 			  locate.cc \
 			  log.cc \
+			  master_pos_wait.cc \
 			  min_max.cc \
 			  minus.cc \
 			  mod.cc \
@@ -90,6 +92,7 @@ noinst_HEADERS = abs.h \
 		 func.h \
 		 get_system_var.h \
                  int.h \
+                 integer.h \
                  int_divide.h \
                  int_val.h \
 		 last_insert.h \
@@ -97,6 +100,7 @@ noinst_HEADERS = abs.h \
 		 ln.h \
 		 locate.h \
 		 log.h \
+		 master_pos_wait.h \
 		 min_max.h \
 		 minus.h \
 		 mod.h \

@@ -22,7 +22,6 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "rpl_mi.h"
 #include <mysys/my_bit.h>
 #include <drizzled/error.h>
 
@@ -184,14 +183,6 @@ int64_t Item_func_shift_right::val_int()
 
 // Conversion functions
 
-void Item_func_integer::fix_length_and_dec()
-{
-  max_length=args[0]->max_length - args[0]->decimals+1;
-  uint32_t tmp=float_length(decimals);
-  set_if_smaller(max_length,tmp);
-  decimals=0;
-}
-
 int64_t Item_func_field::val_int()
 {
   assert(fixed == 1);
@@ -255,33 +246,6 @@ void Item_func_field::fix_length_and_dec()
     cmp_type= item_cmp_type(cmp_type, args[i]->result_type());
   if (cmp_type == STRING_RESULT)
     agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1);
-}
-
-
-int64_t Item_func_ord::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0;
-  }
-  null_value=0;
-  if (!res->length()) return 0;
-#ifdef USE_MB
-  if (use_mb(res->charset()))
-  {
-    register const char *str=res->ptr();
-    register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
-    if (!l)
-      return (int64_t)((unsigned char) *str);
-    while (l--)
-      n=(n<<8)|(uint32_t)((unsigned char) *str++);
-    return (int64_t) n;
-  }
-#endif
-  return (int64_t) ((unsigned char) (*res)[0]);
 }
 
 /*
@@ -368,34 +332,6 @@ void item_user_lock_release(User_level_lock *ull)
     pthread_cond_signal(&ull->cond);
   else
     delete ull;
-}
-
-/**
-  Wait until we are at or past the given position in the master binlog
-  on the slave.
-*/
-
-int64_t Item_master_pos_wait::val_int()
-{
-  assert(fixed == 1);
-  Session* session = current_session;
-  String *log_name = args[0]->val_str(&value);
-  int event_count= 0;
-
-  null_value=0;
-  if (session->slave_thread || !log_name || !log_name->length())
-  {
-    null_value = 1;
-    return 0;
-  }
-  int64_t pos = (ulong)args[1]->val_int();
-  int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
-  if ((event_count = active_mi->rli.wait_for_pos(session, log_name, pos, timeout)) == -2)
-  {
-    null_value = 1;
-    event_count=0;
-  }
-  return event_count;
 }
 
 #ifdef EXTRA_DEBUG
