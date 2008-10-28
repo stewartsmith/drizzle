@@ -22,7 +22,6 @@ Created 5/7/1996 Heikki Tuuri
 #include "dict0mem.h"
 #include "trx0sys.h"
 
-
 /* Restricts the length of search we will do in the waits-for
 graph of transactions */
 #define LOCK_MAX_N_STEPS_IN_DEADLOCK_CHECK 1000000
@@ -4300,11 +4299,11 @@ lock_print_info_summary(
 /*====================*/
 	FILE*	file)	/* in: file where to print */
 {
-	/* We must protect the MySQL session->query field with a MySQL mutex, and
+	/* We must protect the MySQL thd->query field with a MySQL mutex, and
 	because the MySQL mutex must be reserved before the kernel_mutex of
-	InnoDB, we call innobase_mysql_prepare_print_arbitrary_session() here. */
+	InnoDB, we call innobase_mysql_prepare_print_arbitrary_thd() here. */
 
-	innobase_mysql_prepare_print_arbitrary_session();
+	innobase_mysql_prepare_print_arbitrary_thd();
 	lock_mutex_enter_kernel();
 
 	if (lock_deadlock_found) {
@@ -4385,7 +4384,7 @@ loop:
 
 	if (trx == NULL) {
 		lock_mutex_exit_kernel();
-		innobase_mysql_end_print_arbitrary_session();
+		innobase_mysql_end_print_arbitrary_thd();
 
 		ut_ad(lock_validate());
 
@@ -4455,7 +4454,7 @@ loop:
 			ulint	page_no = lock->un_member.rec_lock.page_no;
 
 			lock_mutex_exit_kernel();
-			innobase_mysql_end_print_arbitrary_session();
+			innobase_mysql_end_print_arbitrary_thd();
 
 			mtr_start(&mtr);
 
@@ -4466,7 +4465,7 @@ loop:
 
 			load_page_first = FALSE;
 
-			innobase_mysql_prepare_print_arbitrary_session();
+			innobase_mysql_prepare_print_arbitrary_thd();
 			lock_mutex_enter_kernel();
 
 			goto loop;

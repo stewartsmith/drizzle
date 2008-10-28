@@ -489,7 +489,7 @@ ut_print_namel(
 
 	bufend = innobase_convert_name(buf, sizeof buf,
 				       name, namelen,
-				       trx ? trx->mysql_session : NULL,
+				       trx ? trx->mysql_thd : NULL,
 				       table_id);
 
 	ssize_t ret= fwrite(buf, 1, bufend - buf, f);
