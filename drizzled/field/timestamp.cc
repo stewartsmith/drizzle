@@ -1,7 +1,7 @@
-/* - mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++ c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
+#include <drizzled/tztime.h>
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to 

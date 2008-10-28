@@ -73,13 +73,6 @@
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
 
-#include <drizzled/korr.h>
-
-#ifdef HAVE_DTRACE
-#define _DTRACE_VERSION 1
-#else
-#undef _DTRACE_VERSION
-#endif
 #include "probes.h"
 
 
@@ -108,7 +101,7 @@ extern "C" const char *get_session_proc_info(Session *session);
 /*
   External variables
 */
-extern ulong server_id;
+extern uint32_t server_id;
 
 /* Custom C++-style String class API */
 #include <drizzled/sql_string.h>
@@ -132,7 +125,6 @@ void close_thread_tables(Session *session);
 
 #include "sql_class.h"
 #include "slave.h" // for tables_ok(), rpl_filter
-#include "tztime.h"
 
 void sql_perror(const char *message);
 

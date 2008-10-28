@@ -6,6 +6,7 @@ AC_ARG_ENABLE([dtrace],
             [Build with support for the DTRACE. @<:@default=off@:>@])],
     [ 
       AC_DEFINE([HAVE_DTRACE], [1], [Enables DTRACE Support])
+      AC_DEFINE([_DTRACE_VERSION], [1], [DTRACE Version to Use])
       AC_CHECK_PROGS(DTRACE, dtrace)
       ENABLE_DTRACE="yes" 
       AC_SUBST(DTRACEFLAGS)
