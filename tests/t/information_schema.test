@@ -33,7 +33,7 @@ select * from information_schema.STATISTICS where TABLE_SCHEMA = "mysqltest";
 
 show tables like 't%';
 --replace_column 8 # 12 # 13 #
-show table status;
+#show table status;
 show full columns from t3 like "a%";
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";

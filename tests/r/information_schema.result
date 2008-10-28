@@ -36,14 +36,9 @@ Tables_in_test (t%)
 t2
 t3
 t5
-show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t2	InnoDB	10	Compact	0	0	16384	#	0	4194304	NULL	#	#	NULL	utf8_general_ci	NULL		
-t3	InnoDB	10	Compact	0	0	16384	#	16384	4194304	NULL	#	#	NULL	utf8_general_ci	NULL		
-t5	InnoDB	10	Compact	1	16384	16384	#	0	4194304	11	#	#	NULL	utf8_general_ci	NULL		
 show full columns from t3 like "a%";
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-a	int	NULL	YES	MUL	NULL			
+a	int	NULL	YES	MUL	NULL		#	
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
