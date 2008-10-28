@@ -1140,6 +1140,10 @@ os_file_set_nocache(
 				"see MySQL Bug#26662\n");
 		}
 	}
+#else /* Required for OSX */
+        (void)fd;
+        (void)file_name;
+        (void)operation_name;
 #endif
 }
 
