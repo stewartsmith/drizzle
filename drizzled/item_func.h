@@ -40,6 +40,7 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/bit.h>
 #include <drizzled/functions/bit_count.h>
 #include <drizzled/functions/bit_length.h>
+#include <drizzled/functions/field.h>
 #include <drizzled/functions/find_in_set.h>
 #include <drizzled/functions/integer.h>
 #include <drizzled/functions/int_divide.h>
@@ -85,18 +86,6 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/signed.h>
 #include <drizzled/functions/tan.h>
 #include <drizzled/functions/unsigned.h>
-
-class Item_func_field :public Item_int_func
-{
-  String value,tmp;
-  Item_result cmp_type;
-  DTCollation cmp_collation;
-public:
-  Item_func_field(List<Item> &list) :Item_int_func(list) {}
-  int64_t val_int();
-  const char *func_name() const { return "field"; }
-  void fix_length_and_dec();
-};
 
 /* Handling of user definable variables */
 

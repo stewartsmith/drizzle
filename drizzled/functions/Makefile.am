@@ -32,6 +32,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
 			  exp.cc \
+			  field.cc \
 			  find_in_set.cc \
 			  floor.cc \
 			  func.cc \
@@ -62,6 +63,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  real.cc \
 			  round.cc \
 			  row_count.cc \
+			  shift.cc \
 			  sign.cc \
 			  signed.cc \
 			  sin.cc \
@@ -89,6 +91,7 @@ noinst_HEADERS = abs.h \
 		 decimal_typecast.h \
 		 divide.h \
 		 exp.h \
+		 field.h \
 		 find_in_set.h \
 		 floor.h \
 		 func.h \
