@@ -190,7 +190,7 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 libpars_la_CFLAGS=	${AM_CFLAGS} -Wno-redundant-decls -Wno-unused-macros
 libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
 
-libinnobase_la_CFLAGS=	$(AM_CFLAGS)
+libinnobase_la_CFLAGS=	$(AM_CFLAGS) -Wno-unused-macros
 libinnobase_la_LIBADD= libpars.la
 
 
