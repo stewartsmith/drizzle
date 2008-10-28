@@ -52,6 +52,7 @@ row_undo_ins_remove_clust_rec(
 	ut_a(success);
 
 	if (ut_dulint_cmp(node->table->id, DICT_INDEXES_ID) == 0) {
+		ut_ad(node->trx->dict_operation_lock_mode == RW_X_LATCH);
 
 		/* Drop the index tree associated with the row in
 		SYS_INDEXES table: */
@@ -234,64 +235,56 @@ row_undo_ins_parse_undo_rec(
 	ut_ad(type == TRX_UNDO_INSERT_REC);
 	node->rec_type = type;
 
+	node->update = NULL;
 	node->table = dict_table_get_on_id(table_id, node->trx);
 
-	if (node->table == NULL) {
-
-		return;
-	}
-
-	if (node->table->ibd_file_missing) {
-		/* We skip undo operations to missing .ibd files */
+	/* Skip the UNDO if we can't find the table or the .ibd file. */
+	if (UNIV_UNLIKELY(node->table == NULL)) {
+	} else if (UNIV_UNLIKELY(node->table->ibd_file_missing)) {
 		node->table = NULL;
+	} else {
+		clust_index = dict_table_get_first_index(node->table);
 
-		return;
+		ptr = trx_undo_rec_get_row_ref(
+			ptr, clust_index, &node->ref, node->heap);
 	}
-
-	clust_index = dict_table_get_first_index(node->table);
-
-	ptr = trx_undo_rec_get_row_ref(ptr, clust_index, &(node->ref),
-				       node->heap);
 }
 
 /***************************************************************
 Undoes a fresh insert of a row to a table. A fresh insert means that
 the same clustered index unique key did not have any record, even delete
 marked, at the time of the insert. */
-
+UNIV_INTERN
 ulint
 row_undo_ins(
 /*=========*/
 				/* out: DB_SUCCESS or DB_OUT_OF_FILE_SPACE */
 	undo_node_t*	node)	/* in: row undo node */
 {
-	dtuple_t*	entry;
-	ibool		found;
-	ulint		err;
-
 	ut_ad(node);
 	ut_ad(node->state == UNDO_NODE_INSERT);
 
 	row_undo_ins_parse_undo_rec(node);
 
-	if (node->table == NULL) {
-		found = FALSE;
-	} else {
-		found = row_undo_search_clust_to_pcur(node);
-	}
-
-	if (!found) {
+	if (!node->table || !row_undo_search_clust_to_pcur(node)) {
 		trx_undo_rec_release(node->trx, node->undo_no);
 
 		return(DB_SUCCESS);
 	}
 
+	/* Iterate over all the indexes and undo the insert.*/
+
+	/* Skip the clustered index (the first index) */
 	node->index = dict_table_get_next_index(
 		dict_table_get_first_index(node->table));
 
 	while (node->index != NULL) {
-		entry = row_build_index_entry(node->row, node->index,
-					      node->heap);
+		dtuple_t*	entry;
+		ulint		err;
+
+		entry = row_build_index_entry(node->row, node->ext,
+					      node->index, node->heap);
+		ut_a(entry);
 		err = row_undo_ins_remove_sec(node->index, entry);
 
 		if (err != DB_SUCCESS) {
@@ -302,7 +295,5 @@ row_undo_ins(
 		node->index = dict_table_get_next_index(node->index);
 	}
 
-	err = row_undo_ins_remove_clust_rec(node);
-
-	return(err);
+	return(row_undo_ins_remove_clust_rec(node));
 }

@@ -33,14 +33,14 @@ Created 2/6/1997 Heikki Tuuri
 Finds out if an active transaction has inserted or modified a secondary
 index record. NOTE: the kernel mutex is temporarily released in this
 function! */
-
+UNIV_INTERN
 trx_t*
 row_vers_impl_x_locked_off_kernel(
 /*==============================*/
 				/* out: NULL if committed, else the active
 				transaction; NOTE that the kernel mutex is
 				temporarily released! */
-	rec_t*		rec,	/* in: record in a secondary index */
+	const rec_t*	rec,	/* in: record in a secondary index */
 	dict_index_t*	index,	/* in: the secondary index */
 	const ulint*	offsets)/* in: rec_get_offsets(rec, index) */
 {
@@ -158,12 +158,24 @@ row_vers_impl_x_locked_off_kernel(
 		mem_heap_free(heap2); /* free version and clust_offsets */
 
 		if (prev_version) {
+			row_ext_t*	ext;
+
 			clust_offsets = rec_get_offsets(
 				prev_version, clust_index, NULL,
 				ULINT_UNDEFINED, &heap);
+			/* The stack of versions is locked by mtr.
+			Thus, it is safe to fetch the prefixes for
+			externally stored columns. */
 			row = row_build(ROW_COPY_POINTERS, clust_index,
-					prev_version, clust_offsets, heap);
-			entry = row_build_index_entry(row, index, heap);
+					prev_version, clust_offsets,
+					NULL, &ext, heap);
+			entry = row_build_index_entry(row, ext, index, heap);
+			/* entry may be NULL if a record was inserted
+			in place of a deleted record, and the BLOB
+			pointers of the new record were not
+			initialized yet.  But in that case,
+			prev_version should be NULL. */
+			ut_a(entry);
 		}
 
 		mutex_enter(&kernel_mutex);
@@ -254,7 +266,7 @@ exit_func:
 /*********************************************************************
 Finds out if we must preserve a delete marked earlier version of a clustered
 index record, because it is >= the purge view. */
-
+UNIV_INTERN
 ibool
 row_vers_must_preserve_del_marked(
 /*==============================*/
@@ -286,7 +298,7 @@ purge view, should have ientry as its secondary index entry. We check
 if there is any not delete marked version of the record where the trx
 id >= purge view, and the secondary index entry and ientry are identified in
 the alphabetical ordering; exactly in this case we return TRUE. */
-
+UNIV_INTERN
 ibool
 row_vers_old_has_index_entry(
 /*=========================*/
@@ -294,27 +306,26 @@ row_vers_old_has_index_entry(
 	ibool		also_curr,/* in: TRUE if also rec is included in the
 				versions to search; otherwise only versions
 				prior to it are searched */
-	rec_t*		rec,	/* in: record in the clustered index; the
+	const rec_t*	rec,	/* in: record in the clustered index; the
 				caller must have a latch on the page */
 	mtr_t*		mtr,	/* in: mtr holding the latch on rec; it will
 				also hold the latch on purge_view */
 	dict_index_t*	index,	/* in: the secondary index */
-	dtuple_t*	ientry)	/* in: the secondary index entry */
+	const dtuple_t*	ientry)	/* in: the secondary index entry */
 {
-	rec_t*		version;
+	const rec_t*	version;
 	rec_t*		prev_version;
 	dict_index_t*	clust_index;
 	ulint*		clust_offsets;
 	mem_heap_t*	heap;
 	mem_heap_t*	heap2;
-	dtuple_t*	row;
-	dtuple_t*	entry;
+	const dtuple_t*	row;
+	const dtuple_t*	entry;
 	ulint		err;
 	ulint		comp;
 
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(rec), MTR_MEMO_PAGE_X_FIX)
-	      || mtr_memo_contains(mtr, buf_block_align(rec),
-				   MTR_MEMO_PAGE_S_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_X_FIX)
+	      || mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_S_FIX));
 #ifdef UNIV_SYNC_DEBUG
 	ut_ad(!rw_lock_own(&(purge_sys->latch), RW_LOCK_SHARED));
 #endif /* UNIV_SYNC_DEBUG */
@@ -329,17 +340,37 @@ row_vers_old_has_index_entry(
 					ULINT_UNDEFINED, &heap);
 
 	if (also_curr && !rec_get_deleted_flag(rec, comp)) {
+		row_ext_t*	ext;
+
+		/* The stack of versions is locked by mtr.
+		Thus, it is safe to fetch the prefixes for
+		externally stored columns. */
 		row = row_build(ROW_COPY_POINTERS, clust_index,
-				rec, clust_offsets, heap);
-		entry = row_build_index_entry(row, index, heap);
+				rec, clust_offsets, NULL, &ext, heap);
+		entry = row_build_index_entry(row, ext, index, heap);
+
+		/* If entry == NULL, the record contains unset BLOB
+		pointers.  This must be a freshly inserted record.  If
+		this is called from
+		row_purge_remove_sec_if_poss_low(), the thread will
+		hold latches on the clustered index and the secondary
+		index.  Because the insert works in three steps:
+
+			(1) insert the record to clustered index
+			(2) store the BLOBs and update BLOB pointers
+			(3) insert records to secondary indexes
+
+		the purge thread can safely ignore freshly inserted
+		records and delete the secondary index record.  The
+		thread that inserted the new record will be inserting
+		the secondary index records. */
 
 		/* NOTE that we cannot do the comparison as binary
 		fields because the row is maybe being modified so that
-		the clustered index record has already been updated
-		to a different binary value in a char field, but the
+		the clustered index record has already been updated to
+		a different binary value in a char field, but the
 		collation identifies the old and new value anyway! */
-
-		if (dtuple_datas_are_ordering_equal(ientry, entry)) {
+		if (entry && !dtuple_coll_cmp(ientry, entry)) {
 
 			mem_heap_free(heap);
 
@@ -369,9 +400,21 @@ row_vers_old_has_index_entry(
 						NULL, ULINT_UNDEFINED, &heap);
 
 		if (!rec_get_deleted_flag(prev_version, comp)) {
+			row_ext_t*	ext;
+
+			/* The stack of versions is locked by mtr.
+			Thus, it is safe to fetch the prefixes for
+			externally stored columns. */
 			row = row_build(ROW_COPY_POINTERS, clust_index,
-					prev_version, clust_offsets, heap);
-			entry = row_build_index_entry(row, index, heap);
+					prev_version, clust_offsets,
+					NULL, &ext, heap);
+			entry = row_build_index_entry(row, ext, index, heap);
+
+			/* If entry == NULL, the record contains unset
+			BLOB pointers.  This must be a freshly
+			inserted record that we can safely ignore.
+			For the justification, see the comments after
+			the previous row_build_index_entry() call. */
 
 			/* NOTE that we cannot do the comparison as binary
 			fields because maybe the secondary index record has
@@ -379,7 +422,7 @@ row_vers_old_has_index_entry(
 			a char field, but the collation identifies the old
 			and new value anyway! */
 
-			if (dtuple_datas_are_ordering_equal(ientry, entry)) {
+			if (entry && !dtuple_coll_cmp(ientry, entry)) {
 
 				mem_heap_free(heap);
 
@@ -395,12 +438,12 @@ row_vers_old_has_index_entry(
 Constructs the version of a clustered index record which a consistent
 read should see. We assume that the trx id stored in rec is such that
 the consistent read should not see rec in its present version. */
-
+UNIV_INTERN
 ulint
 row_vers_build_for_consistent_read(
 /*===============================*/
 				/* out: DB_SUCCESS or DB_MISSING_HISTORY */
-	rec_t*		rec,	/* in: record in a clustered index; the
+	const rec_t*	rec,	/* in: record in a clustered index; the
 				caller must have a latch on the page; this
 				latch locks the top of the stack of versions
 				of this records */
@@ -412,24 +455,23 @@ row_vers_build_for_consistent_read(
 	mem_heap_t**	offset_heap,/* in/out: memory heap from which
 				the offsets are allocated */
 	mem_heap_t*	in_heap,/* in: memory heap from which the memory for
-				old_vers is allocated; memory for possible
+				*old_vers is allocated; memory for possible
 				intermediate versions is allocated and freed
 				locally within the function */
 	rec_t**		old_vers)/* out, own: old version, or NULL if the
 				record does not exist in the view, that is,
 				it was freshly inserted afterwards */
 {
-	rec_t*		version;
+	const rec_t*	version;
 	rec_t*		prev_version;
 	dulint		trx_id;
 	mem_heap_t*	heap		= NULL;
 	byte*		buf;
 	ulint		err;
 
-	ut_ad(index->type & DICT_CLUSTERED);
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(rec), MTR_MEMO_PAGE_X_FIX)
-	      || mtr_memo_contains(mtr, buf_block_align(rec),
-				   MTR_MEMO_PAGE_S_FIX));
+	ut_ad(dict_index_is_clust(index));
+	ut_ad(mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_X_FIX)
+	      || mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_S_FIX));
 #ifdef UNIV_SYNC_DEBUG
 	ut_ad(!rw_lock_own(&(purge_sys->latch), RW_LOCK_SHARED));
 #endif /* UNIV_SYNC_DEBUG */
@@ -528,12 +570,12 @@ row_vers_build_for_consistent_read(
 /*********************************************************************
 Constructs the last committed version of a clustered index record,
 which should be seen by a semi-consistent read. */
-
+UNIV_INTERN
 ulint
 row_vers_build_for_semi_consistent_read(
 /*====================================*/
 				/* out: DB_SUCCESS or DB_MISSING_HISTORY */
-	rec_t*		rec,	/* in: record in a clustered index; the
+	const rec_t*	rec,	/* in: record in a clustered index; the
 				caller must have a latch on the page; this
 				latch locks the top of the stack of versions
 				of this records */
@@ -544,23 +586,22 @@ row_vers_build_for_semi_consistent_read(
 	mem_heap_t**	offset_heap,/* in/out: memory heap from which
 				the offsets are allocated */
 	mem_heap_t*	in_heap,/* in: memory heap from which the memory for
-				old_vers is allocated; memory for possible
+				*old_vers is allocated; memory for possible
 				intermediate versions is allocated and freed
 				locally within the function */
-	rec_t**		old_vers)/* out, own: rec, old version, or NULL if the
+	const rec_t**	old_vers)/* out: rec, old version, or NULL if the
 				record does not exist in the view, that is,
 				it was freshly inserted afterwards */
 {
-	rec_t*		version;
+	const rec_t*	version;
 	mem_heap_t*	heap		= NULL;
 	byte*		buf;
 	ulint		err;
-	dulint		rec_trx_id	= ut_dulint_create(0, 0);
+	dulint		rec_trx_id	= ut_dulint_zero;
 
-	ut_ad(index->type & DICT_CLUSTERED);
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(rec), MTR_MEMO_PAGE_X_FIX)
-	      || mtr_memo_contains(mtr, buf_block_align(rec),
-				   MTR_MEMO_PAGE_S_FIX));
+	ut_ad(dict_index_is_clust(index));
+	ut_ad(mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_X_FIX)
+	      || mtr_memo_contains_page(mtr, rec, MTR_MEMO_PAGE_S_FIX));
 #ifdef UNIV_SYNC_DEBUG
 	ut_ad(!rw_lock_own(&(purge_sys->latch), RW_LOCK_SHARED));
 #endif /* UNIV_SYNC_DEBUG */

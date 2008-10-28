@@ -20,7 +20,7 @@ Created 4/20/1996 Heikki Tuuri
 Checks if foreign key constraint fails for an index entry. Sets shared locks
 which lock either the success or the failure of the constraint. NOTE that
 the caller must have a shared latch on dict_foreign_key_check_lock. */
-
+UNIV_INTERN
 ulint
 row_ins_check_foreign_constraint(
 /*=============================*/
@@ -39,7 +39,7 @@ row_ins_check_foreign_constraint(
 	que_thr_t*	thr);	/* in: query thread */
 /*************************************************************************
 Creates an insert node struct. */
-
+UNIV_INTERN
 ins_node_t*
 ins_node_create(
 /*============*/
@@ -51,42 +51,18 @@ ins_node_create(
 Sets a new row to insert for an INS_DIRECT node. This function is only used
 if we have constructed the row separately, which is a rare case; this
 function is quite slow. */
-
+UNIV_INTERN
 void
 ins_node_set_new_row(
 /*=================*/
 	ins_node_t*	node,	/* in: insert node */
 	dtuple_t*	row);	/* in: new row (or first row) for the node */
 /*******************************************************************
-Tries to insert an index entry to an index. If the index is clustered
-and a record with the same unique key is found, the other record is
-necessarily marked deleted by a committed transaction, or a unique key
-violation error occurs. The delete marked record is then updated to an
-existing record, and we must write an undo log record on the delete
-marked record. If the index is secondary, and a record with exactly the
-same fields is found, the other record is necessarily marked deleted.
-It is then unmarked. Otherwise, the entry is just inserted to the index. */
-
-ulint
-row_ins_index_entry_low(
-/*====================*/
-				/* out: DB_SUCCESS, DB_LOCK_WAIT, DB_FAIL
-				if pessimistic retry needed, or error code */
-	ulint		mode,	/* in: BTR_MODIFY_LEAF or BTR_MODIFY_TREE,
-				depending on whether we wish optimistic or
-				pessimistic descent down the index tree */
-	dict_index_t*	index,	/* in: index */
-	dtuple_t*	entry,	/* in: index entry to insert */
-	ulint*		ext_vec,/* in: array containing field numbers of
-				externally stored fields in entry, or NULL */
-	ulint		n_ext_vec,/* in: number of fields in ext_vec */
-	que_thr_t*	thr);	/* in: query thread */
-/*******************************************************************
 Inserts an index entry to index. Tries first optimistic, then pessimistic
 descent down the tree. If the entry matches enough to a delete marked record,
 performs the insert by updating or delete unmarking the delete marked
 record. */
-
+UNIV_INTERN
 ulint
 row_ins_index_entry(
 /*================*/
@@ -94,29 +70,25 @@ row_ins_index_entry(
 				DB_DUPLICATE_KEY, or some other error code */
 	dict_index_t*	index,	/* in: index */
 	dtuple_t*	entry,	/* in: index entry to insert */
-	ulint*		ext_vec,/* in: array containing field numbers of
-				externally stored fields in entry, or NULL */
-	ulint		n_ext_vec,/* in: number of fields in ext_vec */
-	que_thr_t*	thr);	/* in: query thread */
-/***************************************************************
-Inserts a row to a table. */
-
-ulint
-row_ins(
-/*====*/
-				/* out: DB_SUCCESS if operation successfully
-				completed, else error code or DB_LOCK_WAIT */
-	ins_node_t*	node,	/* in: row insert node */
+	ulint		n_ext,	/* in: number of externally stored columns */
+	ibool		foreign,/* in: TRUE=check foreign key constraints */
 	que_thr_t*	thr);	/* in: query thread */
 /***************************************************************
 Inserts a row to a table. This is a high-level function used in
 SQL execution graphs. */
-
+UNIV_INTERN
 que_thr_t*
 row_ins_step(
 /*=========*/
 				/* out: query thread to run next or NULL */
 	que_thr_t*	thr);	/* in: query thread */
+/***************************************************************
+Creates an entry template for each index of a table. */
+UNIV_INTERN
+void
+ins_node_create_entry_list(
+/*=======================*/
+	ins_node_t*	node);	/* in: row insert node */
 
 /* Insert node structure */
 

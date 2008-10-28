@@ -39,7 +39,7 @@ flst_init(
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Adds a node as the last node in a list. */
-
+UNIV_INTERN
 void
 flst_add_last(
 /*==========*/
@@ -48,7 +48,7 @@ flst_add_last(
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Adds a node as the first node in a list. */
-
+UNIV_INTERN
 void
 flst_add_first(
 /*===========*/
@@ -57,7 +57,7 @@ flst_add_first(
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Inserts a node after another in a list. */
-
+UNIV_INTERN
 void
 flst_insert_after(
 /*==============*/
@@ -67,7 +67,7 @@ flst_insert_after(
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Inserts a node before another in a list. */
-
+UNIV_INTERN
 void
 flst_insert_before(
 /*===============*/
@@ -77,7 +77,7 @@ flst_insert_before(
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Removes a node. */
-
+UNIV_INTERN
 void
 flst_remove(
 /*========*/
@@ -88,7 +88,7 @@ flst_remove(
 Cuts off the tail of the list, including the node given. The number of
 nodes which will be removed must be provided by the caller, as this function
 does not measure the length of the tail. */
-
+UNIV_INTERN
 void
 flst_cut_end(
 /*=========*/
@@ -101,7 +101,7 @@ flst_cut_end(
 Cuts off the tail of the list, not including the given node. The number of
 nodes which will be removed must be provided by the caller, as this function
 does not measure the length of the tail. */
-
+UNIV_INTERN
 void
 flst_truncate_end(
 /*==============*/
@@ -116,7 +116,7 @@ ulint
 flst_get_len(
 /*=========*/
 					/* out: length */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Gets list first node address. */
@@ -125,7 +125,7 @@ fil_addr_t
 flst_get_first(
 /*===========*/
 					/* out: file address */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Gets list last node address. */
@@ -134,7 +134,7 @@ fil_addr_t
 flst_get_last(
 /*==========*/
 					/* out: file address */
-	flst_base_node_t*	base,	/* in: pointer to base node */
+	const flst_base_node_t*	base,	/* in: pointer to base node */
 	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Gets list next node address. */
@@ -142,18 +142,18 @@ UNIV_INLINE
 fil_addr_t
 flst_get_next_addr(
 /*===============*/
-				/* out: file address */
-	flst_node_t*	node,	/* in: pointer to node */
-	mtr_t*		mtr);	/* in: mini-transaction handle */
+					/* out: file address */
+	const flst_node_t*	node,	/* in: pointer to node */
+	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Gets list prev node address. */
 UNIV_INLINE
 fil_addr_t
 flst_get_prev_addr(
 /*===============*/
-				/* out: file address */
-	flst_node_t*	node,	/* in: pointer to node */
-	mtr_t*		mtr);	/* in: mini-transaction handle */
+					/* out: file address */
+	const flst_node_t*	node,	/* in: pointer to node */
+	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Writes a file address. */
 UNIV_INLINE
@@ -169,25 +169,25 @@ UNIV_INLINE
 fil_addr_t
 flst_read_addr(
 /*===========*/
-				/* out: file address */
-	fil_faddr_t*	faddr,	/* in: pointer to file faddress */
-	mtr_t*		mtr);	/* in: mini-transaction handle */
+					/* out: file address */
+	const fil_faddr_t*	faddr,	/* in: pointer to file faddress */
+	mtr_t*			mtr);	/* in: mini-transaction handle */
 /************************************************************************
 Validates a file-based list. */
-
+UNIV_INTERN
 ibool
 flst_validate(
 /*==========*/
 					/* out: TRUE if ok */
-	flst_base_node_t*	base,	/* in: pointer to base node of list */
+	const flst_base_node_t*	base,	/* in: pointer to base node of list */
 	mtr_t*			mtr1);	/* in: mtr */
 /************************************************************************
 Prints info of a file-based list. */
-
+UNIV_INTERN
 void
 flst_print(
 /*=======*/
-	flst_base_node_t*	base,	/* in: pointer to base node of list */
+	const flst_base_node_t*	base,	/* in: pointer to base node of list */
 	mtr_t*			mtr);	/* in: mtr */
 
 

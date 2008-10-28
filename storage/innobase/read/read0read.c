@@ -145,7 +145,7 @@ Makes a copy of the oldest existing read view, with the exception that also
 the creating trx of the oldest view is set as not visible in the 'copied'
 view. Opens a new view if no views currently exist. The view must be closed
 with ..._close. This is used in purge. */
-
+UNIV_INTERN
 read_view_t*
 read_view_oldest_copy_or_open_new(
 /*==============================*/
@@ -173,8 +173,7 @@ read_view_oldest_copy_or_open_new(
 
 	n = old_view->n_trx_ids;
 
-	if (ut_dulint_cmp(old_view->creator_trx_id,
-			  ut_dulint_create(0,0)) != 0) {
+	if (!ut_dulint_is_zero(old_view->creator_trx_id)) {
 		n++;
 	} else {
 		needs_insert = FALSE;
@@ -212,7 +211,6 @@ read_view_oldest_copy_or_open_new(
 	view_copy->low_limit_no = old_view->low_limit_no;
 	view_copy->low_limit_id = old_view->low_limit_id;
 
-	view_copy->can_be_too_old = FALSE;
 
 	if (n > 0) {
 		/* The last active transaction has the smallest id: */
@@ -230,7 +228,7 @@ read_view_oldest_copy_or_open_new(
 /*************************************************************************
 Opens a read view where exactly the transactions serialized before this
 point in time are seen in the view. */
-
+UNIV_INTERN
 read_view_t*
 read_view_open_now(
 /*===============*/
@@ -251,14 +249,12 @@ read_view_open_now(
 
 	view->creator_trx_id = cr_trx_id;
 	view->type = VIEW_NORMAL;
-	view->undo_no = ut_dulint_create(0, 0);
+	view->undo_no = ut_dulint_zero;
 
 	/* No future transactions should be visible in the view */
 
 	view->low_limit_no = trx_sys->max_trx_id;
 	view->low_limit_id = view->low_limit_no;
-
-	view->can_be_too_old = FALSE;
 
 	n = 0;
 	trx = UT_LIST_GET_FIRST(trx_sys->trx_list);
@@ -306,7 +302,7 @@ read_view_open_now(
 
 /*************************************************************************
 Closes a read view. */
-
+UNIV_INTERN
 void
 read_view_close(
 /*============*/
@@ -320,7 +316,7 @@ read_view_close(
 /*************************************************************************
 Closes a consistent read view for MySQL. This function is called at an SQL
 statement end if the trx isolation level is <= TRX_ISO_READ_COMMITTED. */
-
+UNIV_INTERN
 void
 read_view_close_for_mysql(
 /*======================*/
@@ -342,7 +338,7 @@ read_view_close_for_mysql(
 
 /*************************************************************************
 Prints a read view to stderr. */
-
+UNIV_INTERN
 void
 read_view_print(
 /*============*/
@@ -364,23 +360,19 @@ read_view_print(
 		(ulong) ut_dulint_get_high(view->low_limit_no),
 		(ulong) ut_dulint_get_low(view->low_limit_no));
 
-	fprintf(stderr, "Read view up limit trx id %lu %lu\n",
-		(ulong) ut_dulint_get_high(view->up_limit_id),
-		(ulong) ut_dulint_get_low(view->up_limit_id));
+	fprintf(stderr, "Read view up limit trx id " TRX_ID_FMT "\n",
+		TRX_ID_PREP_PRINTF(view->up_limit_id));
 
-	fprintf(stderr, "Read view low limit trx id %lu %lu\n",
-		(ulong) ut_dulint_get_high(view->low_limit_id),
-		(ulong) ut_dulint_get_low(view->low_limit_id));
+	fprintf(stderr, "Read view low limit trx id " TRX_ID_FMT "\n",
+		TRX_ID_PREP_PRINTF(view->low_limit_id));
 
 	fprintf(stderr, "Read view individually stored trx ids:\n");
 
 	n_ids = view->n_trx_ids;
 
 	for (i = 0; i < n_ids; i++) {
-		fprintf(stderr, "Read view trx id %lu %lu\n",
-			(ulong) ut_dulint_get_high(
-				read_view_get_nth_trx_id(view, i)),
-			(ulong) ut_dulint_get_low(
+		fprintf(stderr, "Read view trx id " TRX_ID_FMT "\n",
+			TRX_ID_PREP_PRINTF(
 				read_view_get_nth_trx_id(view, i)));
 	}
 }
@@ -390,7 +382,7 @@ Create a high-granularity consistent cursor view for mysql to be used
 in cursors. In this consistent read view modifications done by the
 creating transaction after the cursor is created or future transactions
 are not visible. */
-
+UNIV_INTERN
 cursor_view_t*
 read_cursor_view_create_for_mysql(
 /*==============================*/
@@ -431,8 +423,6 @@ read_cursor_view_create_for_mysql(
 
 	view->low_limit_no = trx_sys->max_trx_id;
 	view->low_limit_id = view->low_limit_no;
-
-	view->can_be_too_old = FALSE;
 
 	n = 0;
 	trx = UT_LIST_GET_FIRST(trx_sys->trx_list);
@@ -482,7 +472,7 @@ read_cursor_view_create_for_mysql(
 /*************************************************************************
 Close a given consistent cursor view for mysql and restore global read view
 back to a transaction read view. */
-
+UNIV_INTERN
 void
 read_cursor_view_close_for_mysql(
 /*=============================*/
@@ -511,7 +501,7 @@ read_cursor_view_close_for_mysql(
 This function sets a given consistent cursor view to a transaction
 read view if given consistent cursor view is not NULL. Otherwise, function
 restores a global read view to a transaction read view. */
-
+UNIV_INTERN
 void
 read_cursor_set_for_mysql(
 /*======================*/

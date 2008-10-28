@@ -24,8 +24,8 @@ fseg_alloc_free_page): */
 #define	FSP_DOWN	((byte)112)	/* alphabetically downwards */
 #define	FSP_NO_DIR	((byte)113)	/* no order */
 
-/* File space extent size in pages */
-#define	FSP_EXTENT_SIZE		64
+/* File space extent size (one megabyte) in pages */
+#define	FSP_EXTENT_SIZE		(1 << (20 - UNIV_PAGE_SIZE_SHIFT))
 
 /* On a page of any file segment, data may be put starting from this offset: */
 #define FSEG_PAGE_DATA		FIL_PAGE_DATA
@@ -41,34 +41,33 @@ typedef	byte	fseg_header_t;
 
 /**************************************************************************
 Initializes the file space system. */
-
+UNIV_INTERN
 void
 fsp_init(void);
 /*==========*/
 /**************************************************************************
-Gets the current free limit of a tablespace. The free limit means the
-place of the first page which has never been put to the the free list
-for allocation. The space above that address is initialized to zero.
-Sets also the global variable log_fsp_current_free_limit. */
-
+Gets the current free limit of the system tablespace.  The free limit
+means the place of the first page which has never been put to the the
+free list for allocation.  The space above that address is initialized
+to zero.  Sets also the global variable log_fsp_current_free_limit. */
+UNIV_INTERN
 ulint
-fsp_header_get_free_limit(
-/*======================*/
-			/* out: free limit in megabytes */
-	ulint	space);	/* in: space id, must be 0 */
-/**************************************************************************
-Gets the size of the tablespace from the tablespace header. If we do not
-have an auto-extending data file, this should be equal to the size of the
-data files. If there is an auto-extending data file, this can be smaller. */
-
-ulint
-fsp_header_get_tablespace_size(
+fsp_header_get_free_limit(void);
 /*===========================*/
+			/* out: free limit in megabytes */
+/**************************************************************************
+Gets the size of the system tablespace from the tablespace header.  If
+we do not have an auto-extending data file, this should be equal to
+the size of the data files.  If there is an auto-extending data file,
+this can be smaller. */
+UNIV_INTERN
+ulint
+fsp_header_get_tablespace_size(void);
+/*================================*/
 			/* out: size in pages */
-	ulint	space);	/* in: space id, must be 0 */
 /**************************************************************************
 Reads the file space size stored in the header page. */
-
+UNIV_INTERN
 ulint
 fsp_get_size_low(
 /*=============*/
@@ -76,34 +75,54 @@ fsp_get_size_low(
 	page_t*	page);	/* in: header page (page 0 in the tablespace) */
 /**************************************************************************
 Reads the space id from the first page of a tablespace. */
-
+UNIV_INTERN
 ulint
 fsp_header_get_space_id(
 /*====================*/
-			/* out: space id, ULINT UNDEFINED if error */
-	page_t* page);	 /* in: first page of a tablespace */
+				/* out: space id, ULINT UNDEFINED if error */
+	const page_t*	page);	/* in: first page of a tablespace */
 /**************************************************************************
-Writes the space id to a tablespace header. This function is used past the
-buffer pool when we in fil0fil.c create a new single-table tablespace. */
-
+Reads the space flags from the first page of a tablespace. */
+UNIV_INTERN
+ulint
+fsp_header_get_flags(
+/*=================*/
+				/* out: flags */
+	const page_t*	page);	/* in: first page of a tablespace */
+/**************************************************************************
+Reads the compressed page size from the first page of a tablespace. */
+UNIV_INTERN
+ulint
+fsp_header_get_zip_size(
+/*====================*/
+				/* out: compressed page size in bytes,
+				or 0 if uncompressed */
+	const page_t*	page);	/* in: first page of a tablespace */
+/**************************************************************************
+Writes the space id and compressed page size to a tablespace header.
+This function is used past the buffer pool when we in fil0fil.c create
+a new single-table tablespace. */
+UNIV_INTERN
 void
-fsp_header_write_space_id(
-/*======================*/
-	page_t*	page,		/* in: first page in the space */
-	ulint	space_id);	/* in: space id */
+fsp_header_init_fields(
+/*===================*/
+	page_t*	page,		/* in/out: first page in the space */
+	ulint	space_id,	/* in: space id */
+	ulint	flags);		/* in: tablespace flags (FSP_SPACE_FLAGS):
+				0, or table->flags if newer than COMPACT */
 /**************************************************************************
 Initializes the space header of a new created space and creates also the
 insert buffer tree root if space == 0. */
-
+UNIV_INTERN
 void
 fsp_header_init(
 /*============*/
-	ulint	space,	/* in: space id */
-	ulint	size,	/* in: current size in blocks */
-	mtr_t*	mtr);	/* in: mini-transaction handle */
+	ulint	space,		/* in: space id */
+	ulint	size,		/* in: current size in blocks */
+	mtr_t*	mtr);		/* in: mini-transaction handle */
 /**************************************************************************
 Increases the space size field of a space. */
-
+UNIV_INTERN
 void
 fsp_header_inc_size(
 /*================*/
@@ -112,11 +131,11 @@ fsp_header_inc_size(
 	mtr_t*	mtr);	/* in: mini-transaction handle */
 /**************************************************************************
 Creates a new segment. */
-
-page_t*
+UNIV_INTERN
+buf_block_t*
 fseg_create(
 /*========*/
-			/* out: the page where the segment header is placed,
+			/* out: the block where the segment header is placed,
 			x-latched, NULL if could not create segment
 			because of lack of space */
 	ulint	space,	/* in: space id */
@@ -129,11 +148,11 @@ fseg_create(
 	mtr_t*	mtr);	/* in: mtr */
 /**************************************************************************
 Creates a new segment. */
-
-page_t*
+UNIV_INTERN
+buf_block_t*
 fseg_create_general(
 /*================*/
-			/* out: the page where the segment header is placed,
+			/* out: the block where the segment header is placed,
 			x-latched, NULL if could not create segment
 			because of lack of space */
 	ulint	space,	/* in: space id */
@@ -153,7 +172,7 @@ fseg_create_general(
 /**************************************************************************
 Calculates the number of pages reserved by a segment, and how many pages are
 currently used. */
-
+UNIV_INTERN
 ulint
 fseg_n_reserved_pages(
 /*==================*/
@@ -165,7 +184,7 @@ fseg_n_reserved_pages(
 Allocates a single free page from a segment. This function implements
 the intelligent allocation strategy which tries to minimize
 file space fragmentation. */
-
+UNIV_INTERN
 ulint
 fseg_alloc_free_page(
 /*=================*/
@@ -183,7 +202,7 @@ fseg_alloc_free_page(
 Allocates a single free page from a segment. This function implements
 the intelligent allocation strategy which tries to minimize file space
 fragmentation. */
-
+UNIV_INTERN
 ulint
 fseg_alloc_free_page_general(
 /*=========================*/
@@ -227,7 +246,7 @@ function we would liberally reserve several 64 page extents for every page
 split or merge in a B-tree. But we do not want to waste disk space if the table
 only occupies < 32 pages. That is why we apply different rules in that special
 case, just ensuring that there are 3 free pages available. */
-
+UNIV_INTERN
 ibool
 fsp_reserve_free_extents(
 /*=====================*/
@@ -244,7 +263,7 @@ This function should be used to get information on how much we still
 will be able to insert new data to the database without running out the
 tablespace. Only free extents are taken into account and we also subtract
 the safety margin required by the above function fsp_reserve_free_extents. */
-
+UNIV_INTERN
 ullint
 fsp_get_available_space_in_free_extents(
 /*====================================*/
@@ -252,7 +271,7 @@ fsp_get_available_space_in_free_extents(
 	ulint	space);	/* in: space id */
 /**************************************************************************
 Frees a single page of a segment. */
-
+UNIV_INTERN
 void
 fseg_free_page(
 /*===========*/
@@ -263,11 +282,13 @@ fseg_free_page(
 /***********************************************************************
 Frees a segment. The freeing is performed in several mini-transactions,
 so that there is no danger of bufferfixing too many buffer pages. */
-
+UNIV_INTERN
 void
 fseg_free(
 /*======*/
 	ulint	space,	/* in: space id */
+	ulint	zip_size,/* in: compressed page size in bytes
+			or 0 for uncompressed pages */
 	ulint	page_no,/* in: page number where the segment header is
 			placed */
 	ulint	offset);/* in: byte offset of the segment header on that
@@ -277,7 +298,7 @@ Frees part of a segment. This function can be used to free a segment
 by repeatedly calling this function in different mini-transactions.
 Doing the freeing in a single mini-transaction might result in
 too big a mini-transaction. */
-
+UNIV_INTERN
 ibool
 fseg_free_step(
 /*===========*/
@@ -290,7 +311,7 @@ fseg_free_step(
 /**************************************************************************
 Frees part of a segment. Differs from fseg_free_step because this function
 leaves the header page unfreed. */
-
+UNIV_INTERN
 ibool
 fseg_free_step_not_header(
 /*======================*/
@@ -306,20 +327,22 @@ ibool
 fsp_descr_page(
 /*===========*/
 			/* out: TRUE if a descriptor page */
+	ulint	zip_size,/* in: compressed page size in bytes;
+			0 for uncompressed pages */
 	ulint	page_no);/* in: page number */
 /***************************************************************
 Parses a redo log record of a file page init. */
-
+UNIV_INTERN
 byte*
 fsp_parse_init_file_page(
 /*=====================*/
-			/* out: end of log record or NULL */
-	byte*	ptr,	/* in: buffer */
-	byte*	end_ptr,/* in: buffer end */
-	page_t*	page);	/* in: page or NULL */
+				/* out: end of log record or NULL */
+	byte*		ptr,	/* in: buffer */
+	byte*		end_ptr, /* in: buffer end */
+	buf_block_t*	block);	/* in: block or NULL */
 /***********************************************************************
 Validates the file space system and its segments. */
-
+UNIV_INTERN
 ibool
 fsp_validate(
 /*=========*/
@@ -327,28 +350,30 @@ fsp_validate(
 	ulint	space);	/* in: space id */
 /***********************************************************************
 Prints info of a file space. */
-
+UNIV_INTERN
 void
 fsp_print(
 /*======*/
 	ulint	space);	/* in: space id */
 /***********************************************************************
 Validates a segment. */
-
+UNIV_INTERN
 ibool
 fseg_validate(
 /*==========*/
 				/* out: TRUE if ok */
 	fseg_header_t*	header, /* in: segment header */
 	mtr_t*		mtr2);	/* in: mtr */
+#ifdef UNIV_BTR_PRINT
 /***********************************************************************
 Writes info of a segment. */
-
+UNIV_INTERN
 void
 fseg_print(
 /*=======*/
 	fseg_header_t*	header, /* in: segment header */
 	mtr_t*		mtr);	/* in: mtr */
+#endif /* UNIV_BTR_PRINT */
 
 /* Flags for fsp_reserve_free_extents */
 #define FSP_NORMAL	1000000
@@ -358,7 +383,8 @@ fseg_print(
 /* Number of pages described in a single descriptor page: currently each page
 description takes less than 1 byte; a descriptor page is repeated every
 this many file pages */
-#define XDES_DESCRIBED_PER_PAGE		UNIV_PAGE_SIZE
+/* #define XDES_DESCRIBED_PER_PAGE		UNIV_PAGE_SIZE */
+/* This has been replaced with either UNIV_PAGE_SIZE or page_zip->size. */
 
 /* The space low address page map */
 /*--------------------------------------*/

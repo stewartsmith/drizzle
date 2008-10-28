@@ -20,7 +20,7 @@ index field in bytes.
 
 NOTE: the prototype of this function is copied from ha_innodb.cc! If you change
 this function, you MUST change also the prototype here! */
-
+UNIV_INTERN
 ulint
 innobase_get_at_most_n_mbchars(
 /*===========================*/
@@ -38,13 +38,13 @@ this MySQL installation to this global variable. If we have < 4.1.2 format
 column definitions, or records in the insert buffer, we use this
 charset-collation code for them. */
 
-ulint	data_mysql_default_charset_coll		= 99999999;
+UNIV_INTERN ulint	data_mysql_default_charset_coll;
 
 /*************************************************************************
 Determine how many bytes the first n characters of the given string occupy.
 If the string is shorter than n characters, returns the number of bytes
 the characters in the string occupy. */
-
+UNIV_INTERN
 ulint
 dtype_get_at_most_n_mbchars(
 /*========================*/
@@ -91,7 +91,7 @@ dtype_get_at_most_n_mbchars(
 /*************************************************************************
 Checks if a data main type is a string type. Also a BLOB is considered a
 string type. */
-
+UNIV_INTERN
 ibool
 dtype_is_string_type(
 /*=================*/
@@ -112,7 +112,7 @@ dtype_is_string_type(
 Checks if a type is a binary string type. Note that for tables created with
 < 4.0.14, we do not know if a DATA_BLOB column is a BLOB or a TEXT column. For
 those DATA_BLOB columns this function currently returns FALSE. */
-
+UNIV_INTERN
 ibool
 dtype_is_binary_string_type(
 /*========================*/
@@ -135,7 +135,7 @@ Checks if a type is a non-binary string type. That is, dtype_is_string_type is
 TRUE and dtype_is_binary_string_type is FALSE. Note that for tables created
 with < 4.0.14, we do not know if a DATA_BLOB column is a BLOB or a TEXT column.
 For those DATA_BLOB columns this function currently returns TRUE. */
-
+UNIV_INTERN
 ibool
 dtype_is_non_binary_string_type(
 /*============================*/
@@ -153,20 +153,9 @@ dtype_is_non_binary_string_type(
 }
 
 /*************************************************************************
-Gets the MySQL charset-collation code for MySQL string types. */
-
-ulint
-dtype_get_charset_coll_noninline(
-/*=============================*/
-	ulint	prtype)	/* in: precise data type */
-{
-	return(dtype_get_charset_coll(prtype));
-}
-
-/*************************************************************************
 Forms a precise type from the < 4.1.2 format precise type plus the
 charset-collation code. */
-
+UNIV_INTERN
 ulint
 dtype_form_prtype(
 /*==============*/
@@ -182,19 +171,19 @@ dtype_form_prtype(
 
 /*************************************************************************
 Validates a data type structure. */
-
+UNIV_INTERN
 ibool
 dtype_validate(
 /*===========*/
 				/* out: TRUE if ok */
-	dtype_t*	type)	/* in: type struct to validate */
+	const dtype_t*	type)	/* in: type struct to validate */
 {
 	ut_a(type);
 	ut_a(type->mtype >= DATA_VARCHAR);
 	ut_a(type->mtype <= DATA_MYSQL);
 
 	if (type->mtype == DATA_SYS) {
-		ut_a((type->prtype & DATA_DRIZZLE_TYPE_MASK) < DATA_N_SYS_COLS);
+		ut_a((type->prtype & DATA_MYSQL_TYPE_MASK) < DATA_N_SYS_COLS);
 	}
 
 	ut_a(type->mbminlen <= type->mbmaxlen);
@@ -204,11 +193,11 @@ dtype_validate(
 
 /*************************************************************************
 Prints a data type structure. */
-
+UNIV_INTERN
 void
 dtype_print(
 /*========*/
-	dtype_t*	type)	/* in: type */
+	const dtype_t*	type)	/* in: type */
 {
 	ulint	mtype;
 	ulint	prtype;

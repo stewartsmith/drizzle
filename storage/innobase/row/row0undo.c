@@ -24,6 +24,7 @@ Created 1/8/1997 Heikki Tuuri
 #include "row0row.h"
 #include "row0uins.h"
 #include "row0umod.h"
+#include "row0upd.h"
 #include "row0mysql.h"
 #include "srv0srv.h"
 
@@ -104,7 +105,7 @@ or if the roll ptr is NULL, i.e., it was a fresh insert. */
 
 /************************************************************************
 Creates a row undo node to a query graph. */
-
+UNIV_INTERN
 undo_node_t*
 row_undo_node_create(
 /*=================*/
@@ -137,7 +138,7 @@ Looks for the clustered index record when node has the row reference.
 The pcur in node is used in the search. If found, stores the row to node,
 and stores the position of pcur, and detaches it. The pcur must be closed
 by the caller in any case. */
-
+UNIV_INTERN
 ibool
 row_undo_search_clust_to_pcur(
 /*==========================*/
@@ -154,7 +155,7 @@ row_undo_search_clust_to_pcur(
 	mem_heap_t*	heap		= NULL;
 	ulint		offsets_[REC_OFFS_NORMAL_SIZE];
 	ulint*		offsets		= offsets_;
-	*offsets_ = (sizeof offsets_) / sizeof *offsets_;
+	rec_offs_init(offsets_);
 
 	mtr_start(&mtr);
 
@@ -183,7 +184,16 @@ row_undo_search_clust_to_pcur(
 		ret = FALSE;
 	} else {
 		node->row = row_build(ROW_COPY_DATA, clust_index, rec,
-				      offsets, node->heap);
+				      offsets, NULL, &node->ext, node->heap);
+		if (node->update) {
+			node->undo_row = dtuple_copy(node->row, node->heap);
+			row_upd_replace(node->undo_row, &node->undo_ext,
+					clust_index, node->update, node->heap);
+		} else {
+			node->undo_row = NULL;
+			node->undo_ext = NULL;
+		}
+
 		btr_pcur_store_position(&(node->pcur), &mtr);
 
 		ret = TRUE;
@@ -303,7 +313,7 @@ row_undo(
 /***************************************************************
 Undoes a row operation in a table. This is a high-level function used
 in SQL execution graphs. */
-
+UNIV_INTERN
 que_thr_t*
 row_undo_step(
 /*==========*/

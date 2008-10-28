@@ -7,6 +7,7 @@ Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
 #include "data0type.h"
+#include "page0page.h"
 
 /***************************************************************************
 Builds a roll pointer dulint. */
@@ -96,8 +97,9 @@ trx_write_roll_ptr(
 	byte*	ptr,		/* in: pointer to memory where written */
 	dulint	roll_ptr)	/* in: roll ptr */
 {
-	ut_ad(DATA_ROLL_PTR_LEN == 7);
-
+#if DATA_ROLL_PTR_LEN != 7
+# error "DATA_ROLL_PTR_LEN != 7"
+#endif
 	mach_write_to_7(ptr, roll_ptr);
 }
 
@@ -109,8 +111,8 @@ UNIV_INLINE
 dulint
 trx_read_roll_ptr(
 /*==============*/
-			/* out: roll ptr */
-	byte*	ptr)	/* in: pointer to memory from where to read */
+				/* out: roll ptr */
+	const byte*	ptr)	/* in: pointer to memory from where to read */
 {
 #if DATA_ROLL_PTR_LEN != 7
 # error "DATA_ROLL_PTR_LEN != 7"
@@ -126,18 +128,18 @@ trx_undo_page_get(
 /*==============*/
 				/* out: pointer to page x-latched */
 	ulint	space,		/* in: space where placed */
+	ulint	zip_size,	/* in: compressed page size in bytes
+				or 0 for uncompressed pages */
 	ulint	page_no,	/* in: page number */
 	mtr_t*	mtr)		/* in: mtr */
 {
-	page_t*	page;
-
-	page = buf_page_get(space, page_no, RW_X_LATCH, mtr);
-
+	buf_block_t*	block = buf_page_get(space, zip_size, page_no,
+					     RW_X_LATCH, mtr);
 #ifdef UNIV_SYNC_DEBUG
-	buf_page_dbg_add_level(page, SYNC_TRX_UNDO_PAGE);
+	buf_block_dbg_add_level(block, SYNC_TRX_UNDO_PAGE);
 #endif /* UNIV_SYNC_DEBUG */
 
-	return(page);
+	return(buf_block_get_frame(block));
 }
 
 /**********************************************************************
@@ -148,18 +150,18 @@ trx_undo_page_get_s_latched(
 /*========================*/
 				/* out: pointer to page s-latched */
 	ulint	space,		/* in: space where placed */
+	ulint	zip_size,	/* in: compressed page size in bytes
+				or 0 for uncompressed pages */
 	ulint	page_no,	/* in: page number */
 	mtr_t*	mtr)		/* in: mtr */
 {
-	page_t*	page;
-
-	page = buf_page_get(space, page_no, RW_S_LATCH, mtr);
-
+	buf_block_t*	block = buf_page_get(space, zip_size, page_no,
+					     RW_S_LATCH, mtr);
 #ifdef UNIV_SYNC_DEBUG
-	buf_page_dbg_add_level(page, SYNC_TRX_UNDO_PAGE);
+	buf_block_dbg_add_level(block, SYNC_TRX_UNDO_PAGE);
 #endif /* UNIV_SYNC_DEBUG */
 
-	return(page);
+	return(buf_block_get_frame(block));
 }
 
 /**********************************************************************
@@ -176,7 +178,7 @@ trx_undo_page_get_start(
 {
 	ulint	start;
 
-	if (page_no == buf_frame_get_page_no(undo_page)) {
+	if (page_no == page_get_page_no(undo_page)) {
 
 		start = mach_read_from_2(offset + undo_page
 					 + TRX_UNDO_LOG_START);
@@ -202,7 +204,7 @@ trx_undo_page_get_end(
 	trx_ulogf_t*	log_hdr;
 	ulint		end;
 
-	if (page_no == buf_frame_get_page_no(undo_page)) {
+	if (page_no == page_get_page_no(undo_page)) {
 
 		log_hdr = undo_page + offset;
 
@@ -235,7 +237,7 @@ trx_undo_page_get_prev_rec(
 	page_t*	undo_page;
 	ulint	start;
 
-	undo_page = buf_frame_align(rec);
+	undo_page = (page_t*) ut_align_down(rec, UNIV_PAGE_SIZE);
 
 	start = trx_undo_page_get_start(undo_page, page_no, offset);
 
@@ -263,7 +265,7 @@ trx_undo_page_get_next_rec(
 	ulint	end;
 	ulint	next;
 
-	undo_page = buf_frame_align(rec);
+	undo_page = (page_t*) ut_align_down(rec, UNIV_PAGE_SIZE);
 
 	end = trx_undo_page_get_end(undo_page, page_no, offset);
 

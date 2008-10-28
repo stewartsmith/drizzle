@@ -40,7 +40,7 @@ struct os_event_struct {
 					in the signaled state, i.e., a thread
 					does not stop if it tries to wait for
 					this event */
-	ib_longlong	signal_count;	/* this is incremented each time
+	ib_int64_t	signal_count;	/* this is incremented each time
 					the event becomes signaled */
 	pthread_cond_t	cond_var;	/* condition variable is used in
 					waiting for the event */
@@ -69,13 +69,13 @@ extern ulint		os_fast_mutex_count;
 
 /*************************************************************
 Initializes global event and OS 'slow' mutex lists. */
-
+UNIV_INTERN
 void
 os_sync_init(void);
 /*==============*/
 /*************************************************************
 Frees created events and OS 'slow' mutexes. */
-
+UNIV_INTERN
 void
 os_sync_free(void);
 /*==============*/
@@ -83,7 +83,7 @@ os_sync_free(void);
 Creates an event semaphore, i.e., a semaphore which may just have two states:
 signaled and nonsignaled. The created event is manual reset: it must be reset
 explicitly by calling sync_os_reset_event. */
-
+UNIV_INTERN
 os_event_t
 os_event_create(
 /*============*/
@@ -94,7 +94,7 @@ os_event_create(
 /*************************************************************
 Creates an auto-reset event semaphore, i.e., an event which is automatically
 reset when a single thread is released. Works only in Windows. */
-
+UNIV_INTERN
 os_event_t
 os_event_create_auto(
 /*=================*/
@@ -105,40 +105,66 @@ os_event_create_auto(
 /**************************************************************
 Sets an event semaphore to the signaled state: lets waiting threads
 proceed. */
-
+UNIV_INTERN
 void
 os_event_set(
 /*=========*/
 	os_event_t	event);	/* in: event to set */
 /**************************************************************
 Resets an event semaphore to the nonsignaled state. Waiting threads will
-stop to wait for the event. */
-
-void
+stop to wait for the event.
+The return value should be passed to os_even_wait_low() if it is desired
+that this thread should not wait in case of an intervening call to
+os_event_set() between this os_event_reset() and the
+os_event_wait_low() call. See comments for os_event_wait_low(). */
+UNIV_INTERN
+ib_int64_t
 os_event_reset(
 /*===========*/
 	os_event_t	event);	/* in: event to reset */
 /**************************************************************
 Frees an event object. */
-
+UNIV_INTERN
 void
 os_event_free(
 /*==========*/
 	os_event_t	event);	/* in: event to free */
+
 /**************************************************************
 Waits for an event object until it is in the signaled state. If
 srv_shutdown_state == SRV_SHUTDOWN_EXIT_THREADS this also exits the
 waiting thread when the event becomes signaled (or immediately if the
-event is already in the signaled state). */
+event is already in the signaled state).
 
+Typically, if the event has been signalled after the os_event_reset()
+we'll return immediately because event->is_set == TRUE.
+There are, however, situations (e.g.: sync_array code) where we may
+lose this information. For example:
+
+thread A calls os_event_reset()
+thread B calls os_event_set()   [event->is_set == TRUE]
+thread C calls os_event_reset() [event->is_set == FALSE]
+thread A calls os_event_wait()  [infinite wait!]
+thread C calls os_event_wait()  [infinite wait!]
+
+Where such a scenario is possible, to avoid infinite wait, the
+value returned by os_event_reset() should be passed in as
+reset_sig_count. */
+UNIV_INTERN
 void
-os_event_wait(
-/*==========*/
-	os_event_t	event);	/* in: event to wait */
+os_event_wait_low(
+/*==============*/
+	os_event_t	event,		/* in: event to wait */
+	ib_int64_t	reset_sig_count);/* in: zero or the value
+					returned by previous call of
+					os_event_reset(). */
+
+#define os_event_wait(event) os_event_wait_low(event, 0)
+
 /**************************************************************
 Waits for an event object until it is in the signaled state or
 a timeout is exceeded. In Unix the timeout is always infinite. */
-
+UNIV_INTERN
 ulint
 os_event_wait_time(
 /*===============*/
@@ -152,7 +178,7 @@ os_event_wait_time(
 /**************************************************************
 Waits for any event in an OS native event array. Returns if even a single
 one is signaled or becomes signaled. */
-
+UNIV_INTERN
 ulint
 os_event_wait_multiple(
 /*===================*/
@@ -167,7 +193,7 @@ os_event_wait_multiple(
 /*************************************************************
 Creates an operating system mutex semaphore. Because these are slow, the
 mutex semaphore of InnoDB itself (mutex_t) should be used where possible. */
-
+UNIV_INTERN
 os_mutex_t
 os_mutex_create(
 /*============*/
@@ -176,21 +202,21 @@ os_mutex_create(
 				the mutex is created without a name */
 /**************************************************************
 Acquires ownership of a mutex semaphore. */
-
+UNIV_INTERN
 void
 os_mutex_enter(
 /*===========*/
 	os_mutex_t	mutex);	/* in: mutex to acquire */
 /**************************************************************
 Releases ownership of a mutex. */
-
+UNIV_INTERN
 void
 os_mutex_exit(
 /*==========*/
 	os_mutex_t	mutex);	/* in: mutex to release */
 /**************************************************************
 Frees an mutex object. */
-
+UNIV_INTERN
 void
 os_mutex_free(
 /*==========*/
@@ -208,28 +234,28 @@ os_fast_mutex_trylock(
 	os_fast_mutex_t*	fast_mutex);	/* in: mutex to acquire */
 /**************************************************************
 Releases ownership of a fast mutex. */
-
+UNIV_INTERN
 void
 os_fast_mutex_unlock(
 /*=================*/
 	os_fast_mutex_t*	fast_mutex);	/* in: mutex to release */
 /*************************************************************
 Initializes an operating system fast mutex semaphore. */
-
+UNIV_INTERN
 void
 os_fast_mutex_init(
 /*===============*/
 	os_fast_mutex_t*	fast_mutex);	/* in: fast mutex */
 /**************************************************************
 Acquires ownership of a fast mutex. */
-
+UNIV_INTERN
 void
 os_fast_mutex_lock(
 /*===============*/
 	os_fast_mutex_t*	fast_mutex);	/* in: mutex to acquire */
 /**************************************************************
 Frees an mutex object. */
-
+UNIV_INTERN
 void
 os_fast_mutex_free(
 /*===============*/

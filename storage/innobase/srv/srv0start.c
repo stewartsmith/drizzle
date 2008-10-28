@@ -57,29 +57,27 @@ Created 2/16/1996 Heikki Tuuri
 #include "que0que.h"
 
 /* Log sequence number immediately after startup */
-dulint		srv_start_lsn;
+UNIV_INTERN ib_uint64_t	srv_start_lsn;
 /* Log sequence number at shutdown */
-dulint		srv_shutdown_lsn;
+UNIV_INTERN ib_uint64_t	srv_shutdown_lsn;
 
 #ifdef HAVE_DARWIN_THREADS
 # include <sys/utsname.h>
-ibool		srv_have_fullfsync = FALSE;
+UNIV_INTERN ibool	srv_have_fullfsync = FALSE;
 #endif
 
-ibool		srv_start_raw_disk_in_use = FALSE;
+UNIV_INTERN ibool	srv_start_raw_disk_in_use = FALSE;
 
-ulint		srv_sizeof_trx_t_in_ha_innodb_cc;
-
-ibool		srv_startup_is_before_trx_rollback_phase = FALSE;
-ibool		srv_is_being_started = FALSE;
+UNIV_INTERN ibool	srv_startup_is_before_trx_rollback_phase = FALSE;
+UNIV_INTERN ibool	srv_is_being_started = FALSE;
+UNIV_INTERN ibool	srv_was_started = FALSE;
 #ifndef UNIV_HOTBACKUP
 static ibool	srv_start_has_been_called = FALSE;
-static ibool	srv_was_started = FALSE;
 #endif /* !UNIV_HOTBACKUP */
 
 /* At a shutdown the value first climbs to SRV_SHUTDOWN_CLEANUP
 and then to SRV_SHUTDOWN_LAST_PHASE */
-ulint		srv_shutdown_state = 0;
+UNIV_INTERN ulint		srv_shutdown_state = 0;
 
 #ifndef UNIV_HOTBACKUP
 static os_file_t	files[1000];
@@ -150,7 +148,7 @@ srv_parse_megabytes(
 /*************************************************************************
 Reads the data files and their sizes from a character string given in
 the .cnf file. */
-
+UNIV_INTERN
 ibool
 srv_parse_data_file_paths_and_sizes(
 /*================================*/
@@ -342,7 +340,7 @@ srv_parse_data_file_paths_and_sizes(
 /*************************************************************************
 Reads log group home directories from a character string given in
 the .cnf file. */
-
+UNIV_INTERN
 ibool
 srv_parse_log_group_home_dirs(
 /*==========================*/
@@ -457,7 +455,7 @@ io_handler_thread(
 
 /*************************************************************************
 Normalizes a directory path for Windows: converts slashes to backslashes. */
-
+UNIV_INTERN
 void
 srv_normalize_path_for_win(
 /*=======================*/
@@ -477,7 +475,7 @@ srv_normalize_path_for_win(
 /*************************************************************************
 Adds a slash or a backslash to the end of a string if it is missing
 and the string is not empty. */
-
+UNIV_INTERN
 char*
 srv_add_path_separator_if_needed(
 /*=============================*/
@@ -652,7 +650,7 @@ open_or_create_log_file(
 		which is for this log group */
 
 		fil_space_create(name,
-				 2 * k + SRV_LOG_SPACE_FIRST_ID, FIL_LOG);
+				 2 * k + SRV_LOG_SPACE_FIRST_ID, 0, FIL_LOG);
 	}
 
 	ut_a(fil_validate());
@@ -667,7 +665,7 @@ open_or_create_log_file(
 	if (k == 0 && i == 0) {
 		arch_space_id = 2 * k + 1 + SRV_LOG_SPACE_FIRST_ID;
 
-		fil_space_create("arch_log_space", arch_space_id, FIL_LOG);
+		fil_space_create("arch_log_space", arch_space_id, 0, FIL_LOG);
 	} else {
 		arch_space_id = ULINT_UNDEFINED;
 	}
@@ -689,18 +687,21 @@ static
 ulint
 open_or_create_data_files(
 /*======================*/
-				/* out: DB_SUCCESS or error code */
-	ibool*	create_new_db,	/* out: TRUE if new database should be
-								created */
+					/* out: DB_SUCCESS or error code */
+	ibool*		create_new_db,	/* out: TRUE if new database should be
+					created */
 #ifdef UNIV_LOG_ARCHIVE
-	ulint*	min_arch_log_no,/* out: min of archived log numbers in data
-				files */
-	ulint*	max_arch_log_no,/* out: */
+	ulint*		min_arch_log_no,/* out: min of archived log
+					numbers in data files */
+	ulint*		max_arch_log_no,/* out: max of archived log
+					numbers in data files */
 #endif /* UNIV_LOG_ARCHIVE */
-	dulint*	min_flushed_lsn,/* out: min of flushed lsn values in data
-				files */
-	dulint*	max_flushed_lsn,/* out: */
-	ulint*	sum_of_new_sizes)/* out: sum of sizes of the new files added */
+	ib_uint64_t*	min_flushed_lsn,/* out: min of flushed lsn
+					values in data files */
+	ib_uint64_t*	max_flushed_lsn,/* out: max of flushed lsn
+					values in data files */
+	ulint*		sum_of_new_sizes)/* out: sum of sizes of the
+					new files added */
 {
 	ibool	ret;
 	ulint	i;
@@ -936,18 +937,13 @@ skip_size_check:
 		ut_a(ret);
 
 		if (i == 0) {
-			fil_space_create(name, 0, FIL_TABLESPACE);
+			fil_space_create(name, 0, 0, FIL_TABLESPACE);
 		}
 
 		ut_a(fil_validate());
 
-		if (srv_data_file_is_raw_partition[i]) {
-
-			fil_node_create(name, srv_data_file_sizes[i], 0, TRUE);
-		} else {
-			fil_node_create(name, srv_data_file_sizes[i], 0,
-					FALSE);
-		}
+		fil_node_create(name, srv_data_file_sizes[i], 0,
+				srv_data_file_is_raw_partition[i] != 0);
 	}
 
 	ios = 0;
@@ -961,30 +957,31 @@ skip_size_check:
 Starts InnoDB and creates a new database if database files
 are not found and the user wants. Server parameters are
 read from a file of name "srv_init" in the ib_home directory. */
-
+UNIV_INTERN
 int
 innobase_start_or_create_for_mysql(void)
 /*====================================*/
 				/* out: DB_SUCCESS or error code */
 {
 	buf_pool_t*	ret;
-	ibool	create_new_db;
-	ibool	log_file_created;
-	ibool	log_created	= FALSE;
-	ibool	log_opened	= FALSE;
-	dulint	min_flushed_lsn;
-	dulint	max_flushed_lsn;
+	ibool		create_new_db;
+	ibool		log_file_created;
+	ibool		log_created	= FALSE;
+	ibool		log_opened	= FALSE;
+	ib_uint64_t	min_flushed_lsn;
+	ib_uint64_t	max_flushed_lsn;
 #ifdef UNIV_LOG_ARCHIVE
-	ulint	min_arch_log_no;
-	ulint	max_arch_log_no;
+	ulint		min_arch_log_no;
+	ulint		max_arch_log_no;
 #endif /* UNIV_LOG_ARCHIVE */
-	ulint	sum_of_new_sizes;
-	ulint	sum_of_data_file_sizes;
-	ulint	tablespace_size_in_header;
-	ulint	err;
-	ulint	i;
-	ibool	srv_file_per_table_original_value  = srv_file_per_table;
-	mtr_t	mtr;
+	ulint		sum_of_new_sizes;
+	ulint		sum_of_data_file_sizes;
+	ulint		tablespace_size_in_header;
+	ulint		err;
+	ulint		i;
+	my_bool		srv_file_per_table_original_value
+		= srv_file_per_table;
+	mtr_t		mtr;
 #ifdef HAVE_DARWIN_THREADS
 # ifdef F_FULLFSYNC
 	/* This executable has been compiled on Mac OS X 10.3 or later.
@@ -1018,8 +1015,11 @@ innobase_start_or_create_for_mysql(void)
 			(ulong)sizeof(ulint), (ulong)sizeof(void*));
 	}
 
-	srv_file_per_table = FALSE; /* system tables are created in tablespace
-				    0 */
+	/* System tables are created in tablespace 0.  Thus, we must
+	temporarily clear srv_file_per_table.  This is ok, because the
+	server will not accept connections (which could modify
+	innodb_file_per_table) until this function has returned. */
+	srv_file_per_table = FALSE;
 #ifdef UNIV_DEBUG
 	fprintf(stderr,
 		"InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n");
@@ -1046,22 +1046,6 @@ innobase_start_or_create_for_mysql(void)
 		"InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n");
 #endif
 
-#ifdef UNIV_SIMULATE_AWE
-	fprintf(stderr,
-		"InnoDB: !!!!!!!! UNIV_SIMULATE_AWE switched on !!!!!!!!!\n");
-#endif
-	if (srv_sizeof_trx_t_in_ha_innodb_cc != (ulint)sizeof(trx_t)) {
-		fprintf(stderr,
-			"InnoDB: Error: trx_t size is %lu in ha_innodb.cc"
-			" but %lu in srv0start.c\n"
-			"InnoDB: Check that pthread_mutex_t is defined"
-			" in the same way in these\n"
-			"InnoDB: compilation modules. Cannot continue.\n",
-			(ulong)  srv_sizeof_trx_t_in_ha_innodb_cc,
-			(ulong) sizeof(trx_t));
-		return(DB_ERROR);
-	}
-
 	/* Since InnoDB does not currently clean up all its internal data
 	structures in MySQL Embedded Server Library server_end(), we
 	print an error message if someone tries to start up InnoDB a
@@ -1087,21 +1071,6 @@ innobase_start_or_create_for_mysql(void)
 	srv_is_being_started = TRUE;
 	srv_startup_is_before_trx_rollback_phase = TRUE;
 	os_aio_use_native_aio = FALSE;
-
-#if !defined(__WIN2000__) && !defined(UNIV_SIMULATE_AWE)
-	if (srv_use_awe) {
-
-		fprintf(stderr,
-			"InnoDB: Error: You have specified"
-			" innodb_buffer_pool_awe_mem_mb\n"
-			"InnoDB: in my.cnf, but AWE can only"
-			" be used in Windows 2000 and later.\n"
-			"InnoDB: To use AWE, InnoDB must"
-			" be compiled with __WIN2000__ defined.\n");
-
-		return(DB_ERROR);
-	}
-#endif
 
 #ifdef __WIN__
 	if (os_get_os_version() == OS_WIN95
@@ -1162,22 +1131,27 @@ innobase_start_or_create_for_mysql(void)
 	}
 
 	/* Note that the call srv_boot() also changes the values of
-	srv_pool_size etc. to the units used by InnoDB internally */
+	some variables to the units used by InnoDB internally */
 
 	/* Set the maximum number of threads which can wait for a semaphore
 	inside InnoDB: this is the 'sync wait array' size, as well as the
 	maximum number of threads that can wait in the 'srv_conc array' for
 	their time to enter InnoDB. */
 
-	if (srv_pool_size >= 1000 * 1024) {
-		/* Here we still have srv_pool_size counted
-		in kilobytes (in 4.0 this was in bytes)
-		srv_boot() converts the value to
-		pages; if buffer pool is less than 1000 MB,
+#if defined(__NETWARE__)
+
+	/* Create less event semaphores because Win 98/ME had
+	difficulty creating 40000 event semaphores.  Comment from
+	Novell, Inc.: also, these just take a lot of memory on
+	NetWare. */
+	srv_max_n_threads = 1000;
+#else
+	if (srv_buf_pool_size >= 1000 * 1024 * 1024) {
+		/* If buffer pool is less than 1000 MB,
 		assume fewer threads. */
 		srv_max_n_threads = 50000;
 
-	} else if (srv_pool_size >= 8 * 1024) {
+	} else if (srv_buf_pool_size >= 8 * 1024 * 1024) {
 
 		srv_max_n_threads = 10000;
 	} else {
@@ -1185,7 +1159,8 @@ innobase_start_or_create_for_mysql(void)
 						especially in 64-bit
 						computers */
 	}
-	err = srv_boot(); /* This changes srv_pool_size to units of a page */
+#endif
+	err = srv_boot();
 
 	if (err != DB_SUCCESS) {
 
@@ -1251,25 +1226,7 @@ innobase_start_or_create_for_mysql(void)
 
 	fil_init(srv_max_n_open_files);
 
-	if (srv_use_awe) {
-		fprintf(stderr,
-			"InnoDB: Using AWE: Memory window is %lu MB"
-			" and AWE memory is %lu MB\n",
-			(ulong) (srv_awe_window_size / ((1024 * 1024)
-							/ UNIV_PAGE_SIZE)),
-			(ulong) (srv_pool_size / ((1024 * 1024)
-						  / UNIV_PAGE_SIZE)));
-
-		/* We must disable adaptive hash indexes because they do not
-		tolerate remapping of pages in AWE */
-
-		srv_use_adaptive_hash_indexes = FALSE;
-		ret = buf_pool_init(srv_pool_size, srv_pool_size,
-				    srv_awe_window_size);
-	} else {
-		ret = buf_pool_init(srv_pool_size, srv_pool_size,
-				    srv_pool_size);
-	}
+	ret = buf_pool_init();
 
 	if (ret == NULL) {
 		fprintf(stderr,
@@ -1408,7 +1365,7 @@ innobase_start_or_create_for_mysql(void)
 	    && !srv_archive_recovery
 #endif /* UNIV_LOG_ARCHIVE */
 	    ) {
-		if (ut_dulint_cmp(max_flushed_lsn, min_flushed_lsn) != 0
+		if (max_flushed_lsn != min_flushed_lsn
 #ifdef UNIV_LOG_ARCHIVE
 		    || max_arch_log_no != min_arch_log_no
 #endif /* UNIV_LOG_ARCHIVE */
@@ -1423,8 +1380,7 @@ innobase_start_or_create_for_mysql(void)
 			return(DB_ERROR);
 		}
 
-		if (ut_dulint_cmp(max_flushed_lsn, ut_dulint_create(0, 1000))
-		    < 0) {
+		if (max_flushed_lsn < (ib_uint64_t) 1000) {
 			fprintf(stderr,
 				"InnoDB: Cannot initialize created"
 				" log files because\n"
@@ -1452,9 +1408,10 @@ innobase_start_or_create_for_mysql(void)
 		mutex_exit(&(log_sys->mutex));
 	}
 
+	trx_sys_file_format_init();
+
 	if (create_new_db) {
 		mtr_start(&mtr);
-
 		fsp_header_init(0, sum_of_new_sizes, &mtr);
 
 		mtr_commit(&mtr);
@@ -1484,16 +1441,26 @@ innobase_start_or_create_for_mysql(void)
 
 		/* Initialize the fsp free limit global variable in the log
 		system */
-		fsp_header_get_free_limit(0);
+		fsp_header_get_free_limit();
 
 		recv_recovery_from_archive_finish();
 #endif /* UNIV_LOG_ARCHIVE */
 	} else {
+
+		/* Check if we support the max format that is stamped
+		on the system tablespace. */
+		err = trx_sys_file_format_max_check(
+			srv_check_file_format_at_startup);
+
+		if (err != DB_SUCCESS) {
+			return(err);
+		}
+
 		/* We always try to do a recovery, even if the database had
 		been shut down normally: this is the normal startup path */
 
 		err = recv_recovery_from_checkpoint_start(LOG_CHECKPOINT,
-							  ut_dulint_max,
+							  IB_ULONGLONG_MAX,
 							  min_flushed_lsn,
 							  max_flushed_lsn);
 		if (err != DB_SUCCESS) {
@@ -1539,7 +1506,7 @@ innobase_start_or_create_for_mysql(void)
 
 		/* Initialize the fsp free limit global variable in the log
 		system */
-		fsp_header_get_free_limit(0);
+		fsp_header_get_free_limit();
 
 		/* recv_recovery_from_checkpoint_finish needs trx lists which
 		are initialized in trx_sys_init_at_db_start(). */
@@ -1595,7 +1562,6 @@ innobase_start_or_create_for_mysql(void)
 	/* Create the thread which warns of long semaphore waits */
 	os_thread_create(&srv_error_monitor_thread, NULL,
 			 thread_ids + 3 + SRV_MAX_N_IO_THREADS);
-	srv_was_started = TRUE;
 	srv_is_being_started = FALSE;
 
 	if (trx_doublewrite == NULL) {
@@ -1624,7 +1590,7 @@ innobase_start_or_create_for_mysql(void)
 		sum_of_data_file_sizes += srv_data_file_sizes[i];
 	}
 
-	tablespace_size_in_header = fsp_header_get_tablespace_size(0);
+	tablespace_size_in_header = fsp_header_get_tablespace_size();
 
 	if (!srv_auto_extend_last_data_file
 	    && sum_of_data_file_sizes != tablespace_size_in_header) {
@@ -1708,9 +1674,9 @@ innobase_start_or_create_for_mysql(void)
 	if (srv_print_verbose_log) {
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
-			"  InnoDB: Started; log sequence number %lu %lu\n",
-			(ulong) ut_dulint_get_high(srv_start_lsn),
-			(ulong) ut_dulint_get_low(srv_start_lsn));
+			" InnoDB Plugin %s started; "
+			"log sequence number %"PRIu64"\n",
+			INNODB_VERSION_STR, srv_start_lsn);
 	}
 
 	if (srv_force_recovery > 0) {
@@ -1782,18 +1748,23 @@ innobase_start_or_create_for_mysql(void)
 
 	srv_file_per_table = srv_file_per_table_original_value;
 
+	srv_was_started = TRUE;
+
 	return((int) DB_SUCCESS);
 }
 
 /********************************************************************
 Shuts down the InnoDB database. */
-
+UNIV_INTERN
 int
 innobase_shutdown_for_mysql(void)
 /*=============================*/
 				/* out: DB_SUCCESS or error code */
 {
 	ulint	i;
+#ifdef __NETWARE__
+	extern ibool panic_shutdown;
+#endif
 	if (!srv_was_started) {
 		if (srv_is_being_started) {
 			ut_print_timestamp(stderr);
@@ -1822,7 +1793,10 @@ innobase_shutdown_for_mysql(void)
 			"InnoDB will do a crash recovery!\n");
 	}
 
-	logs_empty_and_mark_files_at_shutdown();
+#ifdef __NETWARE__
+	if(!panic_shutdown)
+#endif
+		logs_empty_and_mark_files_at_shutdown();
 
 	if (srv_conc_n_threads != 0) {
 		fprintf(stderr,
@@ -1911,6 +1885,8 @@ innobase_shutdown_for_mysql(void)
 		srv_misc_tmpfile = 0;
 	}
 
+	trx_sys_file_format_close();
+
 	mutex_free(&srv_monitor_file_mutex);
 	mutex_free(&srv_dict_tmpfile_mutex);
 	mutex_free(&srv_misc_tmpfile_mutex);
@@ -1938,6 +1914,7 @@ innobase_shutdown_for_mysql(void)
 	/* 5. Free all allocated memory and the os_fast_mutex created in
 	ut0mem.c */
 
+	buf_pool_free();
 	ut_free_all_mem();
 
 	if (os_thread_count != 0
@@ -1964,12 +1941,20 @@ innobase_shutdown_for_mysql(void)
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: Shutdown completed;"
-			" log sequence number %lu %lu\n",
-			(ulong) ut_dulint_get_high(srv_shutdown_lsn),
-			(ulong) ut_dulint_get_low(srv_shutdown_lsn));
+			" log sequence number %"PRIu64"\n",
+			srv_shutdown_lsn);
 	}
+
+	srv_was_started = FALSE;
 
 	return((int) DB_SUCCESS);
 }
 
+#ifdef __NETWARE__
+void set_panic_flag_for_netware()
+{
+	extern ibool panic_shutdown;
+	panic_shutdown = TRUE;
+}
+#endif /* __NETWARE__ */
 #endif /* !UNIV_HOTBACKUP */

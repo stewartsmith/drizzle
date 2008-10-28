@@ -34,4 +34,16 @@ typedef	struct undo_node_struct undo_node_t;
 
 typedef	struct purge_node_struct purge_node_t;
 
+typedef struct row_ext_struct row_ext_t;
+
+/* MySQL data types */
+#if defined(BUILD_DRIZZLE)
+# if defined(__cplusplus)
+typedef class Table TABLE;
+# else
+typedef void TABLE;
+# endif /* cplusplus */
+#else
+typedef struct st_table TABLE;
+#endif
 #endif

@@ -11,18 +11,22 @@ Created 8/22/1994 Heikki Tuuri
 #include "ha0ha.ic"
 #endif
 
-#include "buf0buf.h"
+#ifdef UNIV_DEBUG
+# include "buf0buf.h"
+#endif /* UNIV_DEBUG */
+#ifdef UNIV_SYNC_DEBUG
+# include "btr0sea.h"
+#endif /* UNIV_SYNC_DEBUG */
+#include "page0page.h"
 
 /*****************************************************************
 Creates a hash table with >= n array cells. The actual number of cells is
 chosen to be a prime number slightly bigger than n. */
-
+UNIV_INTERN
 hash_table_t*
 ha_create_func(
 /*===========*/
 				/* out, own: created table */
-	ibool	in_btr_search,	/* in: TRUE if the hash table is used in
-				the btr_search module */
 	ulint	n,		/* in: number of array cells */
 #ifdef UNIV_SYNC_DEBUG
 	ulint	mutex_level,	/* in: level of the mutexes in the latching
@@ -36,22 +40,16 @@ ha_create_func(
 
 	table = hash_create(n);
 
-	if (in_btr_search) {
-		table->adaptive = TRUE;
-	} else {
-		table->adaptive = FALSE;
-	}
-
+#ifdef UNIV_DEBUG
+	table->adaptive = TRUE;
+#endif /* UNIV_DEBUG */
 	/* Creating MEM_HEAP_BTR_SEARCH type heaps can potentially fail,
 	but in practise it never should in this case, hence the asserts. */
 
 	if (n_mutexes == 0) {
-		if (in_btr_search) {
-			table->heap = mem_heap_create_in_btr_search(4096);
-			ut_a(table->heap);
-		} else {
-			table->heap = mem_heap_create_in_buffer(4096);
-		}
+		table->heap = mem_heap_create_in_btr_search(
+			ut_min(4096, MEM_MAX_ALLOC_IN_BUF));
+		ut_a(table->heap);
 
 		return(table);
 	}
@@ -61,25 +59,51 @@ ha_create_func(
 	table->heaps = mem_alloc(n_mutexes * sizeof(void*));
 
 	for (i = 0; i < n_mutexes; i++) {
-		if (in_btr_search) {
-			table->heaps[i] = mem_heap_create_in_btr_search(4096);
-			ut_a(table->heaps[i]);
-		} else {
-			table->heaps[i] = mem_heap_create_in_buffer(4096);
-		}
+		table->heaps[i] = mem_heap_create_in_btr_search(4096);
+		ut_a(table->heaps[i]);
 	}
 
 	return(table);
 }
 
 /*****************************************************************
+Empties a hash table and frees the memory heaps. */
+UNIV_INTERN
+void
+ha_clear(
+/*=====*/
+	hash_table_t*	table)	/* in, own: hash table */
+{
+	ulint	i;
+	ulint	n;
+
+#ifdef UNIV_SYNC_DEBUG
+	ut_ad(rw_lock_own(&btr_search_latch, RW_LOCK_EXCLUSIVE));
+#endif /* UNIV_SYNC_DEBUG */
+
+	/* Free the memory heaps. */
+	n = table->n_mutexes;
+
+	for (i = 0; i < n; i++) {
+		mem_heap_free(table->heaps[i]);
+	}
+
+	/* Clear the hash table. */
+	n = hash_get_n_cells(table);
+
+	for (i = 0; i < n; i++) {
+		hash_get_nth_cell(table, i)->node = NULL;
+	}
+}
+
+/*****************************************************************
 Inserts an entry into a hash table. If an entry with the same fold number
 is found, its node is updated to point to the new data, and no new node
 is inserted. */
-
+UNIV_INTERN
 ibool
-ha_insert_for_fold(
-/*===============*/
+ha_insert_for_fold_func(
+/*====================*/
 				/* out: TRUE if succeed, FALSE if no more
 				memory could be allocated */
 	hash_table_t*	table,	/* in: hash table */
@@ -87,15 +111,18 @@ ha_insert_for_fold(
 				the same fold value already exists, it is
 				updated to point to the same data, and no new
 				node is created! */
+#ifdef UNIV_DEBUG
+	buf_block_t*	block,	/* in: buffer block containing the data */
+#endif /* UNIV_DEBUG */
 	void*		data)	/* in: data, must not be NULL */
 {
 	hash_cell_t*	cell;
 	ha_node_t*	node;
 	ha_node_t*	prev_node;
-	buf_block_t*	prev_block;
 	ulint		hash;
 
 	ut_ad(table && data);
+	ut_ad(block->frame == page_align(data));
 	ut_ad(!table->mutexes || mutex_own(hash_get_mutex(table, fold)));
 
 	hash = hash_calc_hash(fold, table);
@@ -106,13 +133,18 @@ ha_insert_for_fold(
 
 	while (prev_node != NULL) {
 		if (prev_node->fold == fold) {
+#ifdef UNIV_DEBUG
 			if (table->adaptive) {
-				prev_block = buf_block_align(prev_node->data);
+				buf_block_t* prev_block = prev_node->block;
+				ut_a(prev_block->frame
+				     == page_align(prev_node->data));
 				ut_a(prev_block->n_pointers > 0);
 				prev_block->n_pointers--;
-				buf_block_align(data)->n_pointers++;
+				block->n_pointers++;
 			}
 
+			prev_node->block = block;
+#endif /* UNIV_DEBUG */
 			prev_node->data = data;
 
 			return(TRUE);
@@ -134,12 +166,13 @@ ha_insert_for_fold(
 		return(FALSE);
 	}
 
-	ha_node_set_data(node, data);
+	ha_node_set_data(node, block, data);
 
+#ifdef UNIV_DEBUG
 	if (table->adaptive) {
-		buf_block_align(data)->n_pointers++;
+		block->n_pointers++;
 	}
-
+#endif /* UNIV_DEBUG */
 	node->fold = fold;
 
 	node->next = NULL;
@@ -165,24 +198,26 @@ ha_insert_for_fold(
 
 /***************************************************************
 Deletes a hash node. */
-
+UNIV_INTERN
 void
 ha_delete_hash_node(
 /*================*/
 	hash_table_t*	table,		/* in: hash table */
 	ha_node_t*	del_node)	/* in: node to be deleted */
 {
+#ifdef UNIV_DEBUG
 	if (table->adaptive) {
-		ut_a(buf_block_align(del_node->data)->n_pointers > 0);
-		buf_block_align(del_node->data)->n_pointers--;
+		ut_a(del_node->block->frame = page_align(del_node->data));
+		ut_a(del_node->block->n_pointers > 0);
+		del_node->block->n_pointers--;
 	}
-
+#endif /* UNIV_DEBUG */
 	HASH_DELETE_AND_COMPACT(ha_node_t, next, table, del_node);
 }
 
 /*****************************************************************
 Deletes an entry from a hash table. */
-
+UNIV_INTERN
 void
 ha_delete(
 /*======*/
@@ -205,28 +240,35 @@ ha_delete(
 /*************************************************************
 Looks for an element when we know the pointer to the data, and updates
 the pointer to data, if found. */
-
+UNIV_INTERN
 void
-ha_search_and_update_if_found(
-/*==========================*/
+ha_search_and_update_if_found_func(
+/*===============================*/
 	hash_table_t*	table,	/* in: hash table */
 	ulint		fold,	/* in: folded value of the searched data */
 	void*		data,	/* in: pointer to the data */
+#ifdef UNIV_DEBUG
+	buf_block_t*	new_block,/* in: block containing new_data */
+#endif
 	void*		new_data)/* in: new pointer to the data */
 {
 	ha_node_t*	node;
 
 	ut_ad(!table->mutexes || mutex_own(hash_get_mutex(table, fold)));
+	ut_ad(new_block->frame == page_align(new_data));
 
 	node = ha_search_with_data(table, fold, data);
 
 	if (node) {
+#ifdef UNIV_DEBUG
 		if (table->adaptive) {
-			ut_a(buf_block_align(node->data)->n_pointers > 0);
-			buf_block_align(node->data)->n_pointers--;
-			buf_block_align(new_data)->n_pointers++;
+			ut_a(node->block->n_pointers > 0);
+			node->block->n_pointers--;
+			new_block->n_pointers++;
 		}
 
+		node->block = new_block;
+#endif /* UNIV_DEBUG */
 		node->data = new_data;
 	}
 }
@@ -234,13 +276,13 @@ ha_search_and_update_if_found(
 /*********************************************************************
 Removes from the chain determined by fold all nodes whose data pointer
 points to the page given. */
-
+UNIV_INTERN
 void
 ha_remove_all_nodes_to_page(
 /*========================*/
 	hash_table_t*	table,	/* in: hash table */
 	ulint		fold,	/* in: fold value */
-	page_t*		page)	/* in: buffer page */
+	const page_t*	page)	/* in: buffer page */
 {
 	ha_node_t*	node;
 
@@ -249,7 +291,7 @@ ha_remove_all_nodes_to_page(
 	node = ha_chain_get_first(table, fold);
 
 	while (node) {
-		if (buf_frame_align(ha_node_get_data(node)) == page) {
+		if (page_align(ha_node_get_data(node)) == page) {
 
 			/* Remove the hash node */
 
@@ -270,7 +312,7 @@ ha_remove_all_nodes_to_page(
 	node = ha_chain_get_first(table, fold);
 
 	while (node) {
-		ut_a(buf_frame_align(ha_node_get_data(node)) != page);
+		ut_a(page_align(ha_node_get_data(node)) != page);
 
 		node = ha_chain_get_next(node);
 	}
@@ -279,7 +321,7 @@ ha_remove_all_nodes_to_page(
 
 /*****************************************************************
 Validates a given range of the cells in hash table. */
-
+UNIV_INTERN
 ibool
 ha_validate(
 /*========*/
@@ -324,7 +366,7 @@ ha_validate(
 
 /*****************************************************************
 Prints info of a hash table. */
-
+UNIV_INTERN
 void
 ha_print_info(
 /*==========*/

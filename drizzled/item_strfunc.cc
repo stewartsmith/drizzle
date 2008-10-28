@@ -29,6 +29,7 @@ using namespace std;
 #include <drizzled/server_includes.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
+#include <drizzled/query_id.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -2549,6 +2550,7 @@ String *Item_func_uuid::val_str(String *str)
     ulong tmp= sql_rnd();
     unsigned char mac[6];
     int i;
+    const Query_id& query_id= Query_id::get_query_id();
     if (my_gethwaddr(mac))
     {
       /* purecov: begin inspected */
@@ -2558,7 +2560,7 @@ String *Item_func_uuid::val_str(String *str)
         with a clock_seq value (initialized random below), we use a separate
         randominit() here
       */
-      randominit(&uuid_rand, tmp + (ulong) session, tmp + (ulong)global_query_id);
+      randominit(&uuid_rand, tmp + (ulong) session, tmp + query_id.value());
       for (i=0; i < (int)sizeof(mac); i++)
         mac[i]=(unsigned char)(my_rnd(&uuid_rand)*255);
       /* purecov: end */    
