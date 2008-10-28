@@ -20,6 +20,7 @@
 #include "logging.h"
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
+#include <drizzled/query_id.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -490,16 +491,17 @@ static bool deny_updates_if_read_only_option(Session *session,
         COM_QUIT/COM_SHUTDOWN
 */
 bool dispatch_command(enum enum_server_command command, Session *session,
-		      char* packet, uint32_t packet_length)
+                      char* packet, uint32_t packet_length)
 {
   NET *net= &session->net;
   bool error= 0;
+  Query_id &query_id= Query_id::get_query_id();
 
   session->command=command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   pthread_mutex_lock(&LOCK_thread_count);
-  session->query_id= global_query_id;
+  session->query_id= query_id.value();
 
   switch( command ) {
   /* Ignore these statements. */
@@ -508,7 +510,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Increase id and count all other statements. */
   default:
     statistic_increment(session->status_var.questions, &LOCK_status);
-    next_query_id();
+    query_id.next();
   }
 
   thread_running++;
@@ -677,7 +679,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
         Count each statement from the client.
       */
       statistic_increment(session->status_var.questions, &LOCK_status);
-      session->query_id= next_query_id();
+      session->query_id= query_id.next();
       session->set_time(); /* Reset the query start time. */
       /* TODO: set session->lex->sql_command to SQLCOM_END here */
       pthread_mutex_unlock(&LOCK_thread_count);

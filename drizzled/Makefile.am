@@ -121,6 +121,7 @@ noinst_HEADERS = \
 		probes.h \
 		protocol.h \
 		qcache.h \
+		query_id.h \
 		rpl_constants.h \
 		rpl_filter.h \
 		rpl_mi.h \
@@ -199,6 +200,7 @@ drizzled_SOURCES = \
 		parser.cc \
 		protocol.cc \
 		qcache.cc \
+		query_id.cc \
 		records.cc \
 		rpl_filter.cc \
 		rpl_mi.cc \

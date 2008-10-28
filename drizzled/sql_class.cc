@@ -29,6 +29,7 @@
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/innodb_plugin_extras.h>
+#include <drizzled/query_id.h>
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -556,9 +557,10 @@ Session::Session()
   protocol= &protocol_text;			// Default protocol
   protocol_text.init(this);
 
+  const Query_id& query_id= Query_id::get_query_id();
   tablespace_op= false;
   tmp= sql_rnd();
-  randominit(&rand, tmp + (ulong) &rand, tmp + (ulong) ::global_query_id);
+  randominit(&rand, tmp + (ulong) &rand, tmp + query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
