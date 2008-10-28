@@ -31,7 +31,7 @@ combination of types */
 #define DICT_UNIQUE	2	/* unique index */
 #define	DICT_UNIVERSAL	4	/* index which can contain records from any
 				other index */
-#define	DICT_IBUF	8	/* insert buffer tree */
+#define	DICT_IBUF 	8	/* insert buffer tree */
 
 /* Types for a table object */
 #define DICT_TABLE_ORDINARY		1
@@ -41,12 +41,35 @@ combination of types */
 					  really a cluster definition */
 #endif
 
-/* Table flags */
-#define DICT_TF_COMPACT			1	/* compact page format */
+/* Table flags.  All unused bits must be 0. */
+#define DICT_TF_COMPACT			1	/* Compact page format.
+						This must be set for
+						new file formats
+						(later than
+						DICT_TF_FORMAT_51). */
+
+/* compressed page size (0=uncompressed, up to 15 compressed sizes) */
+#define DICT_TF_ZSSIZE_SHIFT		1
+#define DICT_TF_ZSSIZE_MASK		(15 << DICT_TF_ZSSIZE_SHIFT)
+#define DICT_TF_ZSSIZE_MAX (UNIV_PAGE_SIZE_SHIFT - PAGE_ZIP_MIN_SIZE_SHIFT + 1)
+
+
+#define DICT_TF_FORMAT_SHIFT		5	/* file format */
+#define DICT_TF_FORMAT_MASK		(127 << DICT_TF_FORMAT_SHIFT)
+#define DICT_TF_FORMAT_51		0	/* InnoDB/MySQL up to 5.1 */
+#define DICT_TF_FORMAT_ZIP		1	/* InnoDB plugin for 5.1:
+						compressed tables,
+						new BLOB treatment */
+#define DICT_TF_FORMAT_MAX		DICT_TF_FORMAT_ZIP
+
+#define DICT_TF_BITS			6	/* number of flag bits */
+#if (1 << (DICT_TF_BITS - DICT_TF_FORMAT_SHIFT)) <= DICT_TF_FORMAT_MAX
+# error "DICT_TF_BITS is insufficient for DICT_TF_FORMAT_MAX"
+#endif
 
 /**************************************************************************
 Creates a table memory object. */
-
+UNIV_INTERN
 dict_table_t*
 dict_mem_table_create(
 /*==================*/
@@ -60,14 +83,14 @@ dict_mem_table_create(
 	ulint		flags);		/* in: table flags */
 /********************************************************************
 Free a table memory object. */
-
+UNIV_INTERN
 void
 dict_mem_table_free(
 /*================*/
 	dict_table_t*	table);		/* in: table */
 /**************************************************************************
 Adds a column definition to a table. */
-
+UNIV_INTERN
 void
 dict_mem_table_add_col(
 /*===================*/
@@ -79,7 +102,7 @@ dict_mem_table_add_col(
 	ulint		len);	/* in: precision */
 /**************************************************************************
 Creates an index memory object. */
-
+UNIV_INTERN
 dict_index_t*
 dict_mem_index_create(
 /*==================*/
@@ -96,7 +119,7 @@ dict_mem_index_create(
 Adds a field definition to an index. NOTE: does not take a copy
 of the column name if the field is a column. The memory occupied
 by the column name may be released only after publishing the index. */
-
+UNIV_INTERN
 void
 dict_mem_index_add_field(
 /*=====================*/
@@ -107,14 +130,14 @@ dict_mem_index_add_field(
 					INDEX (textcol(25)) */
 /**************************************************************************
 Frees an index memory object. */
-
+UNIV_INTERN
 void
 dict_mem_index_free(
 /*================*/
 	dict_index_t*	index);	/* in: index */
 /**************************************************************************
 Creates and initializes a foreign constraint memory object. */
-
+UNIV_INTERN
 dict_foreign_t*
 dict_mem_foreign_create(void);
 /*=========================*/
@@ -167,7 +190,7 @@ a character may take at most 3 bytes.
 This constant MUST NOT BE CHANGED, or the compatibility of InnoDB data
 files would be at risk! */
 
-#define DICT_MAX_INDEX_COL_LEN		768
+#define DICT_MAX_INDEX_COL_LEN		REC_MAX_INDEX_COL_LEN
 
 /* Data structure for a field in an index */
 struct dict_field_struct{
@@ -185,17 +208,19 @@ struct dict_field_struct{
 					DICT_MAX_INDEX_COL_LEN */
 };
 
-/* Data structure for an index */
+/* Data structure for an index.  Most fields will be
+initialized to 0, NULL or FALSE in dict_mem_index_create(). */
 struct dict_index_struct{
 	dulint		id;	/* id of the index */
 	mem_heap_t*	heap;	/* memory heap */
-	ulint		type;	/* index type */
 	const char*	name;	/* index name */
 	const char*	table_name; /* table name */
 	dict_table_t*	table;	/* back pointer to table */
 	unsigned	space:32;
 				/* space where the index tree is placed */
 	unsigned	page:32;/* index tree root page number */
+	unsigned	type:4;	/* index type (DICT_CLUSTERED, DICT_UNIQUE,
+				DICT_UNIVERSAL, DICT_IBUF) */
 	unsigned	trx_id_offset:10;/* position of the the trx id column
 				in a clustered index record, if the fields
 				before it are known to be of a fixed size,
@@ -212,12 +237,16 @@ struct dict_index_struct{
 	unsigned	n_nullable:10;/* number of nullable fields */
 	unsigned	cached:1;/* TRUE if the index object is in the
 				dictionary cache */
+	unsigned	to_be_dropped:1;
+				/* TRUE if this index is marked to be
+				dropped in ha_innobase::prepare_drop_index(),
+				otherwise FALSE */
 	dict_field_t*	fields;	/* array of field descriptions */
 	UT_LIST_NODE_T(dict_index_t)
 			indexes;/* list of indexes of the table */
 	btr_search_t*	search_info; /* info used in optimistic searches */
 	/*----------------------*/
-	ib_longlong*	stat_n_diff_key_vals;
+	ib_int64_t*	stat_n_diff_key_vals;
 				/* approximate number of different key values
 				for this index, for each n-column prefix
 				where n <= dict_get_n_unique(index); we
@@ -229,6 +258,11 @@ struct dict_index_struct{
 				index tree */
 	rw_lock_t	lock;	/* read-write lock protecting the upper levels
 				of the index tree */
+#ifdef ROW_MERGE_IS_INDEX_USABLE
+	dulint		trx_id; /* id of the transaction that created this
+				index, or ut_dulint_zero if the index existed
+				when InnoDB was started up */
+#endif /* ROW_MERGE_IS_INDEX_USABLE */
 #ifdef UNIV_DEBUG
 	ulint		magic_n;/* magic number */
 # define DICT_INDEX_MAGIC_N	76789786
@@ -236,7 +270,8 @@ struct dict_index_struct{
 };
 
 /* Data structure for a foreign key constraint; an example:
-FOREIGN KEY (A, B) REFERENCES TABLE2 (C, D) */
+FOREIGN KEY (A, B) REFERENCES TABLE2 (C, D).  Most fields will be
+initialized to 0, NULL or FALSE in dict_mem_foreign_create(). */
 
 struct dict_foreign_struct{
 	mem_heap_t*	heap;		/* this object is allocated from
@@ -284,7 +319,8 @@ a foreign key constraint is enforced, therefore RESTRICT just means no flag */
 #define DICT_FOREIGN_ON_UPDATE_NO_ACTION 32
 
 
-/* Data structure for a database table */
+/* Data structure for a database table.  Most fields will be
+initialized to 0, NULL or FALSE in dict_mem_table_create(). */
 struct dict_table_struct{
 	dulint		id;	/* id of the table */
 	mem_heap_t*	heap;	/* memory heap */
@@ -298,6 +334,7 @@ struct dict_table_struct{
 	unsigned	space:32;
 				/* space where the clustered index of the
 				table is placed */
+	unsigned	flags:DICT_TF_BITS;/* DICT_TF_COMPACT, ... */
 	unsigned	ibd_file_missing:1;
 				/* TRUE if this is in a single-table
 				tablespace and the .ibd file is missing; then
@@ -310,7 +347,6 @@ struct dict_table_struct{
 				TABLESPACE */
 	unsigned	cached:1;/* TRUE if the table object has been added
 				to the dictionary cache */
-	unsigned	flags:8;/* DICT_TF_COMPACT, ... */
 	unsigned	n_def:10;/* number of columns defined so far */
 	unsigned	n_cols:10;/* number of columns */
 	dict_col_t*	cols;	/* array of column descriptions */
@@ -381,7 +417,7 @@ struct dict_table_struct{
 	unsigned	stat_initialized:1; /* TRUE if statistics have
 				been calculated the first time
 				after database startup or table creation */
-	ib_longlong	stat_n_rows;
+	ib_int64_t	stat_n_rows;
 				/* approximate number of rows in the table;
 				we periodically calculate new estimates */
 	ulint		stat_clustered_index_size;
@@ -409,13 +445,13 @@ struct dict_table_struct{
 				/* TRUE if the autoinc counter has been
 				inited; MySQL gets the init value by executing
 				SELECT MAX(auto inc column) */
-	ib_longlong	autoinc;/* autoinc counter value to give to the
+	ib_uint64_t	autoinc;/* autoinc counter value to give to the
 				next inserted row */
-
-	ib_longlong	autoinc_increment;
+	ib_int64_t	autoinc_increment;
 				/* The increment step of the auto increment
 				column. Value must be greater than or equal
 				to 1 */
+	/*----------------------*/
 	ulong		n_waiting_or_granted_auto_inc_locks;
 				/* This counter is used to track the number
 				of granted and pending autoinc locks on this

@@ -1,17 +1,22 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
@@ -24,6 +29,7 @@
 #include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <drizzled/error.h>
+#include <drizzled/tztime.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -297,7 +303,8 @@ uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
-ulong back_log, connect_timeout, server_id;
+ulong back_log, connect_timeout;
+uint32_t server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
 ulong slow_launch_time, slave_open_temp_tables;
@@ -314,7 +321,6 @@ ulong thread_pool_size= 0;
 ulong binlog_cache_size= 0;
 ulong max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
-query_id_t global_query_id;
 ulong aborted_threads;
 ulong aborted_connects;
 ulong specialflag= 0;
@@ -3877,7 +3883,7 @@ struct my_option my_long_options[] =
    N_("How many threads we should create to handle query requests in case of "
       "'thread_handling=pool-of-threads'"),
    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
-   REQUIRED_ARG, 20, 1, 16384, 0, 1, 0},
+   REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
@@ -4252,7 +4258,7 @@ static void mysql_init_variables(void)
   protocol_version= PROTOCOL_VERSION;
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
-  global_query_id= thread_id= 1L;
+  thread_id= 1;
   my_stpcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";

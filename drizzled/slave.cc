@@ -47,6 +47,7 @@
 # endif
 #endif
 
+#include <drizzled/tztime.h>
 
 #include "rpl_tblmap.h"
 

@@ -31,21 +31,21 @@ of a scroll cursor easier */
 
 /******************************************************************
 Allocates memory for a persistent cursor object and initializes the cursor. */
-
+UNIV_INTERN
 btr_pcur_t*
 btr_pcur_create_for_mysql(void);
 /*============================*/
 				/* out, own: persistent cursor */
 /******************************************************************
 Frees the memory for a persistent cursor object. */
-
+UNIV_INTERN
 void
 btr_pcur_free_for_mysql(
 /*====================*/
 	btr_pcur_t*	cursor);	/* in, own: persistent cursor */
 /******************************************************************
 Copies the stored position of a pcur to another pcur. */
-
+UNIV_INTERN
 void
 btr_pcur_copy_stored_position(
 /*==========================*/
@@ -68,7 +68,7 @@ void
 btr_pcur_open(
 /*==========*/
 	dict_index_t*	index,	/* in: index */
-	dtuple_t*	tuple,	/* in: tuple on which search done */
+	const dtuple_t*	tuple,	/* in: tuple on which search done */
 	ulint		mode,	/* in: PAGE_CUR_L, ...;
 				NOTE that if the search is made using a unique
 				prefix of a record, mode should be
@@ -86,7 +86,7 @@ void
 btr_pcur_open_with_no_init(
 /*=======================*/
 	dict_index_t*	index,	/* in: index */
-	dtuple_t*	tuple,	/* in: tuple on which search done */
+	const dtuple_t*	tuple,	/* in: tuple on which search done */
 	ulint		mode,	/* in: PAGE_CUR_L, ...;
 				NOTE that if the search is made using a unique
 				prefix of a record, mode should be
@@ -143,12 +143,12 @@ PAGE_CUR_LE, on the last user record. If no such user record exists, then
 in the first case sets the cursor after last in tree, and in the latter case
 before first in tree. The latching mode must be BTR_SEARCH_LEAF or
 BTR_MODIFY_LEAF. */
-
+UNIV_INTERN
 void
 btr_pcur_open_on_user_rec(
 /*======================*/
 	dict_index_t*	index,		/* in: index */
-	dtuple_t*	tuple,		/* in: tuple on which search done */
+	const dtuple_t*	tuple,		/* in: tuple on which search done */
 	ulint		mode,		/* in: PAGE_CUR_L, ... */
 	ulint		latch_mode,	/* in: BTR_SEARCH_LEAF or
 					BTR_MODIFY_LEAF */
@@ -180,7 +180,7 @@ cursor data structure, or just setting a flag if the cursor id before the
 first in an EMPTY tree, or after the last in an EMPTY tree. NOTE that the
 page where the cursor is positioned must not be empty if the index tree is
 not totally empty! */
-
+UNIV_INTERN
 void
 btr_pcur_store_position(
 /*====================*/
@@ -198,7 +198,7 @@ infimum;
 GREATER than the user record which was the predecessor of the supremum.
 (4) cursor was positioned before the first or after the last in an empty tree:
 restores to before first or after the last in the tree. */
-
+UNIV_INTERN
 ibool
 btr_pcur_restore_position(
 /*======================*/
@@ -216,7 +216,7 @@ releases the page latch and bufferfix reserved by the cursor.
 NOTE! In the case of BTR_LEAF_MODIFY, there should not exist changes
 made by the current mini-transaction to the data protected by the
 cursor latch, as then the latch must not be released until mtr_commit. */
-
+UNIV_INTERN
 void
 btr_pcur_release_leaf(
 /*==================*/
@@ -228,8 +228,8 @@ UNIV_INLINE
 ulint
 btr_pcur_get_rel_pos(
 /*=================*/
-				/* out: BTR_PCUR_ON, ... */
-	btr_pcur_t*	cursor);/* in: persistent cursor */
+					/* out: BTR_PCUR_ON, ... */
+	const btr_pcur_t*	cursor);/* in: persistent cursor */
 /*************************************************************
 Sets the mtr field for a pcur. */
 UNIV_INLINE
@@ -288,7 +288,7 @@ btr_pcur_move_to_next(
 /*************************************************************
 Moves the persistent cursor to the previous record in the tree. If no records
 are left, the cursor stays 'before first in tree'. */
-
+UNIV_INTERN
 ibool
 btr_pcur_move_to_prev(
 /*==================*/
@@ -322,7 +322,7 @@ Moves the persistent cursor to the first record on the next page.
 Releases the latch on the current page, and bufferunfixes it.
 Note that there must not be modifications on the current page,
 as then the x-latch can be released only in mtr_commit. */
-
+UNIV_INTERN
 void
 btr_pcur_move_to_next_page(
 /*=======================*/
@@ -339,29 +339,36 @@ The alphabetical position of the cursor is guaranteed to be sensible
 on return, but it may happen that the cursor is not positioned on the
 last record of any page, because the structure of the tree may have
 changed while the cursor had no latches. */
-
+UNIV_INTERN
 void
 btr_pcur_move_backward_from_page(
 /*=============================*/
 	btr_pcur_t*	cursor,	/* in: persistent cursor, must be on the
 				first record of the current page */
 	mtr_t*		mtr);	/* in: mtr */
+#ifdef UNIV_DEBUG
 /*************************************************************
 Returns the btr cursor component of a persistent cursor. */
 UNIV_INLINE
 btr_cur_t*
 btr_pcur_get_btr_cur(
 /*=================*/
-				/* out: pointer to btr cursor component */
-	btr_pcur_t*	cursor);	/* in: persistent cursor */
+						/* out: pointer to
+						btr cursor component */
+	const btr_pcur_t*	cursor);	/* in: persistent cursor */
 /*************************************************************
 Returns the page cursor component of a persistent cursor. */
 UNIV_INLINE
 page_cur_t*
 btr_pcur_get_page_cur(
 /*==================*/
-				/* out: pointer to page cursor component */
-	btr_pcur_t*	cursor);	/* in: persistent cursor */
+						/* out: pointer to
+						page cursor component */
+	const btr_pcur_t*	cursor);	/* in: persistent cursor */
+#else /* UNIV_DEBUG */
+# define btr_pcur_get_btr_cur(cursor) (&(cursor)->btr_cur)
+# define btr_pcur_get_page_cur(cursor) (&(cursor)->btr_cur.page_cur)
+#endif /* UNIV_DEBUG */
 /*************************************************************
 Returns the page of a persistent cursor. */
 UNIV_INLINE
@@ -369,6 +376,14 @@ page_t*
 btr_pcur_get_page(
 /*==============*/
 				/* out: pointer to the page */
+	btr_pcur_t*	cursor);/* in: persistent cursor */
+/*************************************************************
+Returns the buffer block of a persistent cursor. */
+UNIV_INLINE
+buf_block_t*
+btr_pcur_get_block(
+/*===============*/
+				/* out: pointer to the block */
 	btr_pcur_t*	cursor);/* in: persistent cursor */
 /*************************************************************
 Returns the record of a persistent cursor. */
@@ -384,8 +399,7 @@ UNIV_INLINE
 ibool
 btr_pcur_is_on_user_rec(
 /*====================*/
-	btr_pcur_t*	cursor,	/* in: persistent cursor */
-	mtr_t*		mtr);	/* in: mtr */
+	const btr_pcur_t*	cursor);/* in: persistent cursor */
 /*************************************************************
 Checks if the persistent cursor is after the last user record on
 a page. */
@@ -393,8 +407,7 @@ UNIV_INLINE
 ibool
 btr_pcur_is_after_last_on_page(
 /*===========================*/
-	btr_pcur_t*	cursor,	/* in: persistent cursor */
-	mtr_t*		mtr);	/* in: mtr */
+	const btr_pcur_t*	cursor);/* in: persistent cursor */
 /*************************************************************
 Checks if the persistent cursor is before the first user record on
 a page. */
@@ -402,8 +415,7 @@ UNIV_INLINE
 ibool
 btr_pcur_is_before_first_on_page(
 /*=============================*/
-	btr_pcur_t*	cursor,	/* in: persistent cursor */
-	mtr_t*		mtr);	/* in: mtr */
+	const btr_pcur_t*	cursor);/* in: persistent cursor */
 /*************************************************************
 Checks if the persistent cursor is before the first user record in
 the index tree. */
@@ -428,16 +440,14 @@ UNIV_INLINE
 void
 btr_pcur_move_to_next_on_page(
 /*==========================*/
-	btr_pcur_t*	cursor,	/* in: persistent cursor */
-	mtr_t*		mtr);	/* in: mtr */
+	btr_pcur_t*	cursor);/* in/out: persistent cursor */
 /*************************************************************
 Moves the persistent cursor to the previous record on the same page. */
 UNIV_INLINE
 void
 btr_pcur_move_to_prev_on_page(
 /*==========================*/
-	btr_pcur_t*	cursor,	/* in: persistent cursor */
-	mtr_t*		mtr);	/* in: mtr */
+	btr_pcur_t*	cursor);/* in/out: persistent cursor */
 
 
 /* The persistent B-tree cursor structure. This is used mainly for SQL
@@ -468,9 +478,8 @@ struct btr_pcur_struct{
 					cursor was on, before, or after the
 					old_rec record */
 	buf_block_t*	block_when_stored;/* buffer block when the position was
-					stored; note that if AWE is on, frames
-					may move */
-	dulint		modify_clock;	/* the modify clock value of the
+					stored */
+	ib_uint64_t	modify_clock;	/* the modify clock value of the
 					buffer block when the cursor position
 					was stored */
 	ulint		pos_state;	/* see TODO note below!

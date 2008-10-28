@@ -438,6 +438,7 @@ struct handlerton;
 /* The handler for a table type.  Will be included in the Table structure */
 
 class Table;
+class TableList;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;

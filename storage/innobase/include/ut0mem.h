@@ -32,7 +32,7 @@ ut_memcmp(const void* str1, const void* str2, ulint n);
 /**************************************************************************
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined and set_to_zero is TRUE. */
-
+UNIV_INTERN
 void*
 ut_malloc_low(
 /*==========*/
@@ -46,7 +46,7 @@ ut_malloc_low(
 /**************************************************************************
 Allocates memory. Sets it also to zero if UNIV_SET_MEM_TO_ZERO is
 defined. */
-
+UNIV_INTERN
 void*
 ut_malloc(
 /*======*/
@@ -56,7 +56,7 @@ ut_malloc(
 Tests if malloc of n bytes would succeed. ut_malloc() asserts if memory runs
 out. It cannot be used if we want to return an error message. Prints to
 stderr a message if fails. */
-
+UNIV_INTERN
 ibool
 ut_test_malloc(
 /*===========*/
@@ -64,7 +64,7 @@ ut_test_malloc(
 	ulint	n);	/* in: try to allocate this many bytes */
 /**************************************************************************
 Frees a memory block allocated with ut_malloc. */
-
+UNIV_INTERN
 void
 ut_free(
 /*====*/
@@ -93,7 +93,7 @@ RETURN VALUE
        be passed to free() is returned.	 If realloc()  fails  the
        original	 block	is  left  untouched  - it is not freed or
        moved. */
-
+UNIV_INTERN
 void*
 ut_realloc(
 /*=======*/
@@ -102,7 +102,7 @@ ut_realloc(
 	ulint	size);	/* in: desired size */
 /**************************************************************************
 Frees in shutdown all allocated memory not freed yet. */
-
+UNIV_INTERN
 void
 ut_free_all_mem(void);
 /*=================*/
@@ -117,13 +117,13 @@ ut_strlen(const char* str);
 
 UNIV_INLINE
 int
-ut_strcmp(const void* str1, const void* str2);
+ut_strcmp(const char* str1, const char* str2);
 
 /**************************************************************************
 Copies up to size - 1 characters from the NUL-terminated string src to
 dst, NUL-terminating the result. Returns strlen(src), so truncation
 occurred if the return value >= size. */
-
+UNIV_INTERN
 ulint
 ut_strlcpy(
 /*=======*/
@@ -135,7 +135,7 @@ ut_strlcpy(
 /**************************************************************************
 Like ut_strlcpy, but if src doesn't fit in dst completely, copies the last
 (size - 1) bytes of src, not the first. */
-
+UNIV_INTERN
 ulint
 ut_strlcpy_rev(
 /*===========*/
@@ -158,7 +158,7 @@ ut_strlenq(
 Make a quoted copy of a NUL-terminated string.	Leading and trailing
 quotes will not be included; only embedded quotes will be escaped.
 See also ut_strlenq() and ut_memcpyq(). */
-
+UNIV_INTERN
 char*
 ut_strcpyq(
 /*=======*/
@@ -171,7 +171,7 @@ ut_strcpyq(
 Make a quoted copy of a fixed-length string.  Leading and trailing
 quotes will not be included; only embedded quotes will be escaped.
 See also ut_strlenq() and ut_strcpyq(). */
-
+UNIV_INTERN
 char*
 ut_memcpyq(
 /*=======*/
@@ -184,7 +184,7 @@ ut_memcpyq(
 /**************************************************************************
 Return the number of times s2 occurs in s1. Overlapping instances of s2
 are only counted once. */
-
+UNIV_INTERN
 ulint
 ut_strcount(
 /*========*/
@@ -195,8 +195,8 @@ ut_strcount(
 /**************************************************************************
 Replace every occurrence of s1 in str with s2. Overlapping instances of s1
 are only replaced once. */
-
-char *
+UNIV_INTERN
+char*
 ut_strreplace(
 /*==========*/
 				/* out, own: modified string, must be
@@ -204,6 +204,38 @@ ut_strreplace(
 	const char*	str,	/* in: string to operate on */
 	const char*	s1,	/* in: string to replace */
 	const char*	s2);	/* in: string to replace s1 with */
+
+/**************************************************************************
+Converts a raw binary data to a '\0'-terminated hex string. The output is
+truncated if there is not enough space in "hex", make sure "hex_size" is at
+least (2 * raw_size + 1) if you do not want this to happen. Returns the
+actual number of characters written to "hex" (including the '\0'). */
+UNIV_INLINE
+ulint
+ut_raw_to_hex(
+/*==========*/
+					/* out: number of chars written */
+	const void*	raw,		/* in: raw data */
+	ulint		raw_size,	/* in: "raw" length in bytes */
+	char*		hex,		/* out: hex string */
+	ulint		hex_size);	/* in: "hex" size in bytes */
+
+/***********************************************************************
+Adds single quotes to the start and end of string and escapes any quotes
+by doubling them. Returns the number of bytes that were written to "buf"
+(including the terminating '\0'). If buf_size is too small then the
+trailing bytes from "str" are discarded. */
+UNIV_INLINE
+ulint
+ut_str_sql_format(
+/*==============*/
+					/* out: number of bytes
+					that were written */
+	const char*	str,		/* in: string */
+	ulint		str_len,	/* in: string length in bytes */
+	char*		buf,		/* out: output buffer */
+	ulint		buf_size);	/* in: output buffer size
+					in bytes */
 
 #ifndef UNIV_NONINL
 #include "ut0mem.ic"

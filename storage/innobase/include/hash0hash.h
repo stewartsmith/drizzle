@@ -24,7 +24,7 @@ typedef void*	hash_node_t;
 /*****************************************************************
 Creates a hash table with >= n array cells. The actual number
 of cells is chosen to be a prime number slightly bigger than n. */
-
+UNIV_INTERN
 hash_table_t*
 hash_create(
 /*========*/
@@ -32,7 +32,7 @@ hash_create(
 	ulint	n);	/* in: number of array cells */
 /*****************************************************************
 Creates a mutex array to protect a hash table. */
-
+UNIV_INTERN
 void
 hash_create_mutexes_func(
 /*=====================*/
@@ -50,7 +50,7 @@ hash_create_mutexes_func(
 
 /*****************************************************************
 Frees a hash table. */
-
+UNIV_INTERN
 void
 hash_table_free(
 /*============*/
@@ -101,6 +101,14 @@ do {\
 	}\
 } while (0)
 
+#ifdef UNIV_HASH_DEBUG
+# define HASH_ASSERT_VALID(DATA) ut_a((void*) (DATA) != (void*) -1)
+# define HASH_INVALIDATE(DATA, NAME) DATA->NAME = (void*) -1
+#else
+# define HASH_ASSERT_VALID(DATA) do {} while (0)
+# define HASH_INVALIDATE(DATA, NAME) do {} while (0)
+#endif
+
 /***********************************************************************
 Deletes a struct from a hash table. */
 
@@ -114,6 +122,7 @@ do {\
 	cell3333 = hash_get_nth_cell(TABLE, hash_calc_hash(FOLD, TABLE));\
 \
 	if (cell3333->node == DATA) {\
+		HASH_ASSERT_VALID(DATA->NAME);\
 		cell3333->node = DATA->NAME;\
 	} else {\
 		struct3333 = cell3333->node;\
@@ -126,6 +135,7 @@ do {\
 \
 		struct3333->NAME = DATA->NAME;\
 	}\
+	HASH_INVALIDATE(DATA, NAME);\
 } while (0)
 
 /***********************************************************************
@@ -141,18 +151,20 @@ Gets the next struct in a hash chain, NULL if none. */
 
 /************************************************************************
 Looks for a struct in a hash table. */
-#define HASH_SEARCH(NAME, TABLE, FOLD, DATA, TEST)\
+#define HASH_SEARCH(NAME, TABLE, FOLD, TYPE, DATA, TEST)\
 {\
 \
 	HASH_ASSERT_OWNED(TABLE, FOLD)\
 \
-	(DATA) = HASH_GET_FIRST(TABLE, hash_calc_hash(FOLD, TABLE));\
+	(DATA) = (TYPE) HASH_GET_FIRST(TABLE, hash_calc_hash(FOLD, TABLE));\
+	HASH_ASSERT_VALID(DATA);\
 \
 	while ((DATA) != NULL) {\
 		if (TEST) {\
 			break;\
 		} else {\
-			(DATA) = HASH_GET_NEXT(NAME, DATA);\
+			HASH_ASSERT_VALID(HASH_GET_NEXT(NAME, DATA));\
+			(DATA) = (TYPE) HASH_GET_NEXT(NAME, DATA);\
 		}\
 	}\
 }
@@ -166,6 +178,15 @@ hash_get_nth_cell(
 				/* out: pointer to cell */
 	hash_table_t*	table,	/* in: hash table */
 	ulint		n);	/* in: cell index */
+
+/*****************************************************************
+Clears a hash table so that all the cells become empty. */
+UNIV_INLINE
+void
+hash_table_clear(
+/*=============*/
+	hash_table_t*	table);	/* in/out: hash table */
+
 /*****************************************************************
 Returns the number of cells in a hash table. */
 UNIV_INLINE
@@ -306,7 +327,7 @@ hash_get_mutex(
 	ulint		fold);	/* in: fold */
 /****************************************************************
 Reserves the mutex for a fold value in a hash table. */
-
+UNIV_INTERN
 void
 hash_mutex_enter(
 /*=============*/
@@ -314,7 +335,7 @@ hash_mutex_enter(
 	ulint		fold);	/* in: fold */
 /****************************************************************
 Releases the mutex for a fold value in a hash table. */
-
+UNIV_INTERN
 void
 hash_mutex_exit(
 /*============*/
@@ -322,14 +343,14 @@ hash_mutex_exit(
 	ulint		fold);	/* in: fold */
 /****************************************************************
 Reserves all the mutexes of a hash table, in an ascending order. */
-
+UNIV_INTERN
 void
 hash_mutex_enter_all(
 /*=================*/
 	hash_table_t*	table);	/* in: hash table */
 /****************************************************************
 Releases all the mutexes of a hash table. */
-
+UNIV_INTERN
 void
 hash_mutex_exit_all(
 /*================*/
@@ -342,8 +363,10 @@ struct hash_cell_struct{
 
 /* The hash table structure */
 struct hash_table_struct {
+#ifdef UNIV_DEBUG
 	ibool		adaptive;/* TRUE if this is the hash table of the
 				adaptive hash index */
+#endif /* UNIV_DEBUG */
 	ulint		n_cells;/* number of cells in the hash table */
 	hash_cell_t*	array;	/* pointer to cell array */
 	ulint		n_mutexes;/* if mutexes != NULL, then the number of

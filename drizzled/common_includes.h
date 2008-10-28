@@ -72,44 +72,8 @@
 #include <drizzled/structs.h>
 /* Custom continguous-section memory allocator */
 #include <drizzled/sql_alloc.h>
-/* Definition of the MY_LOCALE struct and some convenience functions */
-#include <drizzled/sql_locale.h>
 
-#include <drizzled/korr.h>
-
-#ifdef HAVE_DTRACE
-#define _DTRACE_VERSION 1
-#else
-#undef _DTRACE_VERSION
-#endif
 #include "probes.h"
-
-/**
-  Query type constants.
-
-  QT_ORDINARY -- ordinary SQL query.
-  QT_IS -- SQL query to be shown in INFORMATION_SCHEMA (in utf8 and without
-  character set introducers).
-
-  @TODO
-
-  Move this out of here once Stew's done with UDF breakout.  The following headers need it:
-
-    sql_lex.h --> included by sql_class.h
-    item.h
-    table.h
-    item_func.h
-    item_subselect.h
-    item_timefunc.h
-    item_sum.h
-    item_cmpfunc.h
-    item_strfunc.h
-*/
-enum enum_query_type
-{
-  QT_ORDINARY,
-  QT_IS
-};
 
 
 /**
@@ -119,91 +83,10 @@ enum enum_query_type
  * and that are used only in the server should be separated out into 
  * a drizzled.h header file -- JRP
  */
-extern query_id_t global_query_id;
 
-/* increment query_id and return it.  */
-inline query_id_t next_query_id() { return global_query_id++; }
 
 extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
-
-/**
- * @TODO Move to a separate header?
- *
- * It's needed by item.h and field.h, which are both inter-dependent
- * and contain forward declarations of many structs/classes in the
- * other header file.
- *
- * What is needed is a separate header file that is included
- * by *both* item.h and field.h to resolve inter-dependencies
- *
- * But, probably want to hold off on this until Stew finished the UDF cleanup
- */
-enum Derivation
-{
-  DERIVATION_IGNORABLE= 5,
-  DERIVATION_COERCIBLE= 4,
-  DERIVATION_SYSCONST= 3,
-  DERIVATION_IMPLICIT= 2,
-  DERIVATION_NONE= 1,
-  DERIVATION_EXPLICIT= 0
-};
-
-/**
- * Opening modes for open_temporary_table and open_table_from_share
- *
- * @TODO Put this into an appropriate header. It is only needed in:
- *
- *    table.cc
- *    sql_base.cc
- */
-enum open_table_mode
-{
-  OTM_OPEN= 0,
-  OTM_CREATE= 1,
-  OTM_ALTER= 2
-};
-
-enum enum_parsing_place
-{
-  NO_MATTER
-  , IN_HAVING
-  , SELECT_LIST
-  , IN_WHERE
-  , IN_ON
-};
-
-enum enum_mysql_completiontype {
-  ROLLBACK_RELEASE= -2
-  , ROLLBACK= 1
-  , ROLLBACK_AND_CHAIN= 7
-  , COMMIT_RELEASE= -1
-  , COMMIT= 0
-  , COMMIT_AND_CHAIN= 6
-};
-
-enum enum_check_fields
-{
-  CHECK_FIELD_IGNORE
-  , CHECK_FIELD_WARN
-  , CHECK_FIELD_ERROR_FOR_NULL
-};
-
-enum enum_var_type
-{
-  OPT_DEFAULT= 0
-  , OPT_SESSION
-  , OPT_GLOBAL
-};
-
-/* Forward declarations */
-
-class TableList;
-class String;
-class Table;
-class Session;
-class user_var_entry;
-class Security_context;
 
 extern pthread_key(Session*, THR_Session);
 inline Session *_current_session(void)
@@ -218,7 +101,7 @@ extern "C" const char *get_session_proc_info(Session *session);
 /*
   External variables
 */
-extern ulong server_id;
+extern uint32_t server_id;
 
 /* Custom C++-style String class API */
 #include <drizzled/sql_string.h>
@@ -242,7 +125,6 @@ void close_thread_tables(Session *session);
 
 #include "sql_class.h"
 #include "slave.h" // for tables_ok(), rpl_filter
-#include "tztime.h"
 
 void sql_perror(const char *message);
 
@@ -259,7 +141,8 @@ bool fn_format_relative_to_data_home(char * to, const char *name,
  */
 #if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
 bool check_global_access(Session *session, ulong want_access);
-int get_quote_char_for_identifier(Session *session, const char *name, uint32_t length);
+int get_quote_char_for_identifier(Session *session, const char *name,
+                                  uint32_t length);
 extern struct system_variables global_system_variables;
 extern uint32_t mysql_data_home_len;
 extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],

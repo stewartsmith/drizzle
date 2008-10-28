@@ -85,7 +85,7 @@ mlog_catenate_ulint(
 #if MLOG_8BYTES != 8
 # error "MLOG_8BYTES != 8"
 #endif
-	ptr = dyn_array_push(mlog, type);
+	ptr = (byte*) dyn_array_push(mlog, type);
 
 	if (type == MLOG_4BYTES) {
 		mach_write_to_4(ptr, val);
@@ -153,26 +153,29 @@ UNIV_INLINE
 byte*
 mlog_write_initial_log_record_fast(
 /*===============================*/
-			/* out: new value of log_ptr */
-	byte*	ptr,	/* in: pointer to (inside) a buffer frame holding the
-			file page where modification is made */
-	byte	type,	/* in: log item type: MLOG_1BYTE, ... */
-	byte*	log_ptr,/* in: pointer to mtr log which has been opened */
-	mtr_t*	mtr)	/* in: mtr */
+				/* out: new value of log_ptr */
+	const byte*	ptr,	/* in: pointer to (inside) a buffer
+				frame holding the file page where
+				modification is made */
+	byte		type,	/* in: log item type: MLOG_1BYTE, ... */
+	byte*		log_ptr,/* in: pointer to mtr log which has
+				been opened */
+	mtr_t*		mtr)	/* in: mtr */
 {
+#ifdef UNIV_DEBUG
 	buf_block_t*	block;
+#endif
+	const byte*	page;
 	ulint		space;
 	ulint		offset;
 
-	ut_ad(mtr_memo_contains(mtr, buf_block_align(ptr),
-				MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, ptr, MTR_MEMO_PAGE_X_FIX));
 	ut_ad(type <= MLOG_BIGGEST_TYPE);
 	ut_ad(ptr && log_ptr);
 
-	block = buf_block_align(ptr);
-
-	space = buf_block_get_space(block);
-	offset = buf_block_get_page_no(block);
+	page = (const byte*) ut_align_down(ptr, UNIV_PAGE_SIZE);
+	space = mach_read_from_4(page + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
+	offset = mach_read_from_4(page + FIL_PAGE_OFFSET);
 
 	mach_write_to_1(log_ptr, type);
 	log_ptr++;
@@ -182,13 +185,16 @@ mlog_write_initial_log_record_fast(
 	mtr->n_log_recs++;
 
 #ifdef UNIV_LOG_DEBUG
-	/*	fprintf(stderr,
-	"Adding to mtr log record type %lu space %lu page no %lu\n",
-	type, space, offset); */
+	fprintf(stderr,
+		"Adding to mtr log record type %lu space %lu page no %lu\n",
+		(ulong) type, space, offset);
 #endif
 
 #ifdef UNIV_DEBUG
+	buf_pool_mutex_enter();
 	/* We now assume that all x-latched pages have been modified! */
+	block = (buf_block_t*) buf_block_align(ptr);
+	buf_pool_mutex_exit();
 
 	if (!mtr_memo_contains(mtr, block, MTR_MEMO_MODIFY)) {
 

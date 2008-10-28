@@ -82,10 +82,10 @@ row_undo_mod_clust_low(
 				we may run out of file space */
 	undo_node_t*	node,	/* in: row undo node */
 	que_thr_t*	thr,	/* in: query thread */
-	mtr_t*		mtr,	/* in: mtr */
+	mtr_t*		mtr,	/* in: mtr; must be committed before
+				latching any further pages */
 	ulint		mode)	/* in: BTR_MODIFY_LEAF or BTR_MODIFY_TREE */
 {
-	big_rec_t*	dummy_big_rec;
 	btr_pcur_t*	pcur;
 	btr_cur_t*	btr_cur;
 	ulint		err;
@@ -106,14 +106,22 @@ row_undo_mod_clust_low(
 						btr_cur, node->update,
 						node->cmpl_info, thr, mtr);
 	} else {
+		mem_heap_t*	heap		= NULL;
+		big_rec_t*	dummy_big_rec;
+
 		ut_ad(mode == BTR_MODIFY_TREE);
 
 		err = btr_cur_pessimistic_update(
 			BTR_NO_LOCKING_FLAG
 			| BTR_NO_UNDO_LOG_FLAG
 			| BTR_KEEP_SYS_FLAG,
-			btr_cur, &dummy_big_rec, node->update,
+			btr_cur, &heap, &dummy_big_rec, node->update,
 			node->cmpl_info, thr, mtr);
+
+		ut_a(!dummy_big_rec);
+		if (UNIV_LIKELY_NULL(heap)) {
+			mem_heap_free(heap);
+		}
 	}
 
 	return(err);
@@ -411,7 +419,6 @@ row_undo_mod_del_unmark_sec_and_undo_update(
 	btr_pcur_t	pcur;
 	upd_t*		update;
 	ulint		err		= DB_SUCCESS;
-	ibool		found;
 	big_rec_t*	dummy_big_rec;
 	mtr_t		mtr;
 	trx_t*		trx		= thr_get_trx(thr);
@@ -419,9 +426,14 @@ row_undo_mod_del_unmark_sec_and_undo_update(
 	log_free_check();
 	mtr_start(&mtr);
 
-	found = row_search_index_entry(index, entry, mode, &pcur, &mtr);
+	/* Ignore indexes that are being created. */
+	if (UNIV_UNLIKELY(*index->name == TEMP_INDEX_PREFIX)) {
 
-	if (!found) {
+		return(DB_SUCCESS);
+	}
+
+	if (UNIV_UNLIKELY(!row_search_index_entry(index, entry,
+						  mode, &pcur, &mtr))) {
 		fputs("InnoDB: error in sec index entry del undo in\n"
 		      "InnoDB: ", stderr);
 		dict_index_name_print(stderr, trx, index);
@@ -457,15 +469,19 @@ row_undo_mod_del_unmark_sec_and_undo_update(
 			err = btr_cur_optimistic_update(
 				BTR_KEEP_SYS_FLAG | BTR_NO_LOCKING_FLAG,
 				btr_cur, update, 0, thr, &mtr);
-			if (err == DB_OVERFLOW || err == DB_UNDERFLOW) {
+			switch (err) {
+			case DB_OVERFLOW:
+			case DB_UNDERFLOW:
+			case DB_ZIP_OVERFLOW:
 				err = DB_FAIL;
 			}
 		} else {
 			ut_a(mode == BTR_MODIFY_TREE);
 			err = btr_cur_pessimistic_update(
 				BTR_KEEP_SYS_FLAG | BTR_NO_LOCKING_FLAG,
-				btr_cur, &dummy_big_rec,
+				btr_cur, &heap, &dummy_big_rec,
 				update, 0, thr, &mtr);
+			ut_a(!dummy_big_rec);
 		}
 
 		mem_heap_free(heap);
@@ -497,8 +513,9 @@ row_undo_mod_upd_del_sec(
 	while (node->index != NULL) {
 		index = node->index;
 
-		entry = row_build_index_entry(node->row, index, heap);
-
+		entry = row_build_index_entry(node->row, node->ext,
+					      index, heap);
+		ut_a(entry);
 		err = row_undo_mod_del_mark_or_remove_sec(node, thr, index,
 							  entry);
 		if (err != DB_SUCCESS) {
@@ -536,8 +553,9 @@ row_undo_mod_del_mark_sec(
 	while (node->index != NULL) {
 		index = node->index;
 
-		entry = row_build_index_entry(node->row, index, heap);
-
+		entry = row_build_index_entry(node->row, node->ext,
+					      index, heap);
+		ut_a(entry);
 		err = row_undo_mod_del_unmark_sec_and_undo_update(
 			BTR_MODIFY_LEAF, thr, index, entry);
 		if (err == DB_FAIL) {
@@ -590,8 +608,9 @@ row_undo_mod_upd_exist_sec(
 						     node->update)) {
 
 			/* Build the newest version of the index entry */
-			entry = row_build_index_entry(node->row, index, heap);
-
+			entry = row_build_index_entry(node->row, node->ext,
+						      index, heap);
+			ut_a(entry);
 			/* NOTE that if we updated the fields of a
 			delete-marked secondary index record so that
 			alphabetically they stayed the same, e.g.,
@@ -617,9 +636,12 @@ row_undo_mod_upd_exist_sec(
 			the secondary index record if we updated its fields
 			but alphabetically they stayed the same, e.g.,
 			'abc' -> 'aBc'. */
+			mem_heap_empty(heap);
+			entry = row_build_index_entry(node->undo_row,
+						      node->undo_ext,
+						      index, heap);
+			ut_a(entry);
 
-			row_upd_index_replace_new_col_vals(entry, index,
-							   node->update, NULL);
 			err = row_undo_mod_del_unmark_sec_and_undo_update(
 				BTR_MODIFY_LEAF, thr, index, entry);
 			if (err == DB_FAIL) {
@@ -704,7 +726,7 @@ row_undo_mod_parse_undo_rec(
 
 /***************************************************************
 Undoes a modify operation on a row of a table. */
-
+UNIV_INTERN
 ulint
 row_undo_mod(
 /*=========*/
@@ -712,7 +734,6 @@ row_undo_mod(
 	undo_node_t*	node,	/* in: row undo node */
 	que_thr_t*	thr)	/* in: query thread */
 {
-	ibool	found;
 	ulint	err;
 
 	ut_ad(node && thr);
@@ -720,13 +741,7 @@ row_undo_mod(
 
 	row_undo_mod_parse_undo_rec(node, thr);
 
-	if (node->table == NULL) {
-		found = FALSE;
-	} else {
-		found = row_undo_search_clust_to_pcur(node);
-	}
-
-	if (!found) {
+	if (!node->table || !row_undo_search_clust_to_pcur(node)) {
 		/* It is already undone, or will be undone by another query
 		thread, or table was dropped */
 

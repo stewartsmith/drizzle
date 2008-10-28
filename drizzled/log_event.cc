@@ -1,18 +1,21 @@
-/* Copyright (C) 2000-2004 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <drizzled/server_includes.h>
 #include "rpl_rli.h"
@@ -32,6 +35,8 @@
 #include <drizzled/gettext.h>
 #include <libdrizzle/libdrizzle.h>
 #include <drizzled/error.h>
+#include <drizzled/query_id.h>
+#include <drizzled/tztime.h>
 
 #define log_cs	&my_charset_utf8_general_ci
 
@@ -1650,6 +1655,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
 {
   LEX_STRING new_db;
   int expected_error,actual_error= 0;
+  Query_id &query_id= Query_id::get_query_id();
   /*
     Colleagues: please never free(session->catalog) in MySQL. This would
     lead to bugs as here session->catalog is a part of an alloced block,
@@ -1694,9 +1700,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
     session->set_time((time_t)when);
     session->query_length= q_len_arg;
     session->query= (char*)query_arg;
-    pthread_mutex_lock(&LOCK_thread_count);
-    session->query_id = next_query_id();
-    pthread_mutex_unlock(&LOCK_thread_count);
+    session->query_id= query_id.next();
     session->variables.pseudo_thread_id= thread_id;		// for temp tables
 
     if (ignored_error_code((expected_error= error_code)) ||
@@ -2345,7 +2349,7 @@ int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
     perform, we don't call Start_log_event_v3::do_apply_event()
     (this was just to update the log's description event).
   */
-  if (server_id != (uint32_t) ::server_id)
+  if (server_id != ::server_id)
   {
     /*
       If the event was not requested by the slave i.e. the master sent
@@ -2367,7 +2371,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
   delete rli->relay_log.description_event_for_exec;
   rli->relay_log.description_event_for_exec= this;
 
-  if (server_id == (uint32_t) ::server_id)
+  if (server_id == ::server_id)
   {
     /*
       We only increase the relay log position if we are skipping
@@ -2818,6 +2822,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
                                    bool use_rli_only_for_errors)
 {
   LEX_STRING new_db;
+  Query_id &query_id= Query_id::get_query_id();
   new_db.length= db_len;
   new_db.str= (char *) rpl_filter->get_rewrite_db(db, &new_db.length);
   session->set_db(new_db.str, new_db.length);
@@ -2870,9 +2875,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
   if (rpl_filter->db_ok(session->db))
   {
     session->set_time((time_t)when);
-    pthread_mutex_lock(&LOCK_thread_count);
-    session->query_id = next_query_id();
-    pthread_mutex_unlock(&LOCK_thread_count);
+    session->query_id = query_id.next();
     /*
       Initing session->row_count is not necessary in theory as this variable has no
       influence in the case of the slave SQL thread (it is used to generate a
@@ -5728,14 +5731,13 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
 {
   RPL_TableList *table_list;
   char *db_mem, *tname_mem;
+  Query_id &query_id= Query_id::get_query_id();
   size_t dummy_len;
   void *memory;
   assert(rli->sql_session == session);
 
   /* Step the query id to mark what columns that are actually used. */
-  pthread_mutex_lock(&LOCK_thread_count);
-  session->query_id= next_query_id();
-  pthread_mutex_unlock(&LOCK_thread_count);
+  session->query_id= query_id.next();
 
   if (!(memory= my_multi_malloc(MYF(MY_WME),
                                 &table_list, (uint) sizeof(RPL_TableList),

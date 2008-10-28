@@ -17,7 +17,7 @@ Created 3/26/1996 Heikki Tuuri
 
 /***********************************************************************
 Returns a transaction savepoint taken at this point in time. */
-
+UNIV_INTERN
 trx_savept_t
 trx_savept_take(
 /*============*/
@@ -25,13 +25,13 @@ trx_savept_take(
 	trx_t*	trx);	/* in: transaction */
 /***********************************************************************
 Creates an undo number array. */
-
+UNIV_INTERN
 trx_undo_arr_t*
 trx_undo_arr_create(void);
 /*=====================*/
 /***********************************************************************
 Frees an undo number array. */
-
+UNIV_INTERN
 void
 trx_undo_arr_free(
 /*==============*/
@@ -47,7 +47,7 @@ trx_undo_arr_get_nth_info(
 	ulint		n);	/* in: position */
 /***************************************************************************
 Tries truncate the undo logs. */
-
+UNIV_INTERN
 void
 trx_roll_try_truncate(
 /*==================*/
@@ -58,7 +58,7 @@ as a single stack of records ordered by their undo numbers. Inserts the
 undo number of the popped undo record to the array of currently processed
 undo numbers in the transaction. When the query thread finishes processing
 of this undo record, it must be released with trx_undo_rec_release. */
-
+UNIV_INTERN
 trx_undo_rec_t*
 trx_roll_pop_top_rec_of_trx(
 /*========================*/
@@ -73,7 +73,7 @@ trx_roll_pop_top_rec_of_trx(
 Reserves an undo log record for a query thread to undo. This should be
 called if the query thread gets the undo log record not using the pop
 function above. */
-
+UNIV_INTERN
 ibool
 trx_undo_rec_reserve(
 /*=================*/
@@ -82,7 +82,7 @@ trx_undo_rec_reserve(
 	dulint	undo_no);/* in: undo number of the record */
 /***********************************************************************
 Releases a reserved undo record. */
-
+UNIV_INTERN
 void
 trx_undo_rec_release(
 /*=================*/
@@ -90,7 +90,7 @@ trx_undo_rec_release(
 	dulint	undo_no);/* in: undo number */
 /*************************************************************************
 Starts a rollback operation. */
-
+UNIV_INTERN
 void
 trx_rollback(
 /*=========*/
@@ -102,21 +102,22 @@ trx_rollback(
 				calling function can start running
 				a new query thread */
 /***********************************************************************
-Rollback or clean up transactions which have no user session. If the
-transaction already was committed, then we clean up a possible insert
-undo log. If the transaction was not yet committed, then we roll it back.
+Rollback or clean up any incomplete transactions which were
+encountered in crash recovery.  If the transaction already was
+committed, then we clean up a possible insert undo log. If the
+transaction was not yet committed, then we roll it back.
 Note: this is done in a background thread. */
-
+UNIV_INTERN
 os_thread_ret_t
-trx_rollback_or_clean_all_without_sess(
-/*===================================*/
+trx_rollback_or_clean_all_recovered(
+/*================================*/
 			/* out: a dummy parameter */
 	void*	arg __attribute__((unused)));
 			/* in: a dummy parameter required by
 			os_thread_create */
 /********************************************************************
 Finishes a transaction rollback. */
-
+UNIV_INTERN
 void
 trx_finish_rollback_off_kernel(
 /*===========================*/
@@ -133,7 +134,7 @@ Builds an undo 'query' graph for a transaction. The actual rollback is
 performed by executing this query graph like a query subprocedure call.
 The reply about the completion of the rollback will be sent by this
 graph. */
-
+UNIV_INTERN
 que_t*
 trx_roll_graph_build(
 /*=================*/
@@ -141,7 +142,7 @@ trx_roll_graph_build(
 	trx_t*	trx);	/* in: trx handle */
 /*************************************************************************
 Creates a rollback command node struct. */
-
+UNIV_INTERN
 roll_node_t*
 roll_node_create(
 /*=============*/
@@ -149,7 +150,7 @@ roll_node_create(
 	mem_heap_t*	heap);	/* in: mem heap where created */
 /***************************************************************
 Performs an execution step for a rollback command node in a query graph. */
-
+UNIV_INTERN
 que_thr_t*
 trx_rollback_step(
 /*==============*/
@@ -157,7 +158,7 @@ trx_rollback_step(
 	que_thr_t*	thr);	/* in: query thread */
 /***********************************************************************
 Rollback a transaction used in MySQL. */
-
+UNIV_INTERN
 int
 trx_rollback_for_mysql(
 /*===================*/
@@ -165,7 +166,7 @@ trx_rollback_for_mysql(
 	trx_t*	trx);	/* in: transaction handle */
 /***********************************************************************
 Rollback the latest SQL statement for MySQL. */
-
+UNIV_INTERN
 int
 trx_rollback_last_sql_stat_for_mysql(
 /*=================================*/
@@ -173,7 +174,7 @@ trx_rollback_last_sql_stat_for_mysql(
 	trx_t*	trx);	/* in: transaction handle */
 /***********************************************************************
 Rollback a transaction used in MySQL. */
-
+UNIV_INTERN
 int
 trx_general_rollback_for_mysql(
 /*===========================*/
@@ -189,7 +190,7 @@ which are stored in memory. If a lock is 'implicit', that is, a new inserted
 row holds a lock where the lock information is carried by the trx id stored in
 the row, these locks are naturally released in the rollback. Savepoints which
 were set after this savepoint are deleted. */
-
+UNIV_INTERN
 ulint
 trx_rollback_to_savepoint_for_mysql(
 /*================================*/
@@ -199,7 +200,7 @@ trx_rollback_to_savepoint_for_mysql(
 						otherwise DB_SUCCESS */
 	trx_t*		trx,			/* in: transaction handle */
 	const char*	savepoint_name,		/* in: savepoint name */
-	ib_longlong*	mysql_binlog_cache_pos);/* out: the MySQL binlog cache
+	ib_int64_t*	mysql_binlog_cache_pos);/* out: the MySQL binlog cache
 						position corresponding to this
 						savepoint; MySQL needs this
 						information to remove the
@@ -210,14 +211,14 @@ Creates a named savepoint. If the transaction is not yet started, starts it.
 If there is already a savepoint of the same name, this call erases that old
 savepoint and replaces it with a new. Savepoints are deleted in a transaction
 commit or rollback. */
-
+UNIV_INTERN
 ulint
 trx_savepoint_for_mysql(
 /*====================*/
 						/* out: always DB_SUCCESS */
 	trx_t*		trx,			/* in: transaction handle */
 	const char*	savepoint_name,		/* in: savepoint name */
-	ib_longlong	binlog_cache_pos);	/* in: MySQL binlog cache
+	ib_int64_t	binlog_cache_pos);	/* in: MySQL binlog cache
 						position corresponding to this
 						connection at the time of the
 						savepoint */
@@ -225,7 +226,7 @@ trx_savepoint_for_mysql(
 /***********************************************************************
 Releases a named savepoint. Savepoints which
 were set after this savepoint are deleted. */
-
+UNIV_INTERN
 ulint
 trx_release_savepoint_for_mysql(
 /*============================*/
@@ -238,7 +239,7 @@ trx_release_savepoint_for_mysql(
 
 /***********************************************************************
 Frees savepoint structs. */
-
+UNIV_INTERN
 void
 trx_roll_savepoints_free(
 /*=====================*/
@@ -246,8 +247,6 @@ trx_roll_savepoints_free(
 	trx_named_savept_t*	savep);	/* in: free all savepoints > this one;
 					if this is NULL, free all savepoints
 					of trx */
-
-extern sess_t*		trx_dummy_sess;
 
 /* A cell in the array used during a rollback and a purge */
 struct	trx_undo_inf_struct{
@@ -281,7 +280,7 @@ struct trx_named_savept_struct{
 	char*		name;		/* savepoint name */
 	trx_savept_t	savept;		/* the undo number corresponding to
 					the savepoint */
-	ib_longlong	mysql_binlog_cache_pos;
+	ib_int64_t	mysql_binlog_cache_pos;
 					/* the MySQL binlog cache position
 					corresponding to this savepoint, not
 					defined if the MySQL binlogging is not

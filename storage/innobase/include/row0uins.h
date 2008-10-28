@@ -21,13 +21,12 @@ Created 2/25/1997 Heikki Tuuri
 Undoes a fresh insert of a row to a table. A fresh insert means that
 the same clustered index unique key did not have any record, even delete
 marked, at the time of the insert. */
-
+UNIV_INTERN
 ulint
 row_undo_ins(
 /*=========*/
 				/* out: DB_SUCCESS */
 	undo_node_t*	node);	/* in: row undo node */
-
 
 #ifndef UNIV_NONINL
 #include "row0uins.ic"

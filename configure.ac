@@ -172,6 +172,10 @@ AC_SUBST(SHARED_LIB_MAJOR_VERSION)
 AC_SUBST(SHARED_LIB_VERSION)
 AC_SUBST(AVAILABLE_LANGUAGES)
 
+dnl Ok. This is sort of lame, but we need to be nice to plugins Makefile.am's.
+AM_CONDITIONAL(BUILDING_DRIZZLE,[test "x" = "x"])
+
+
 # General Constants
 AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and 
   a multiple of 512. May be
@@ -1355,6 +1359,11 @@ else
   DEBUG_OPTIMIZE_CXX=""
   OPTIMIZE_CXXFLAGS="-O"
 fi
+
+
+AC_CHECK_HEADERS(uuid/uuid.h)
+AC_CHECK_LIB(uuid, uuid_generate)
+
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
 # AX_HEADER_ASSERT

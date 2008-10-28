@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /* Functions to handle date and time */
@@ -19,9 +23,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
+#include <drizzled/tztime.h>
 
-
-	/* Some functions to calculate dates */
+/* Some functions to calculate dates */
 
 #ifndef TESTTIME
 
@@ -254,7 +258,8 @@ str_to_datetime_with_warn(const char *str, uint32_t length, DRIZZLE_TIME *l_time
      0 - t contains datetime value which is out of TIMESTAMP range.
      
 */
-my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t, bool *in_dst_time_gap)
+my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
+                            bool *in_dst_time_gap)
 {
   my_time_t timestamp;
 

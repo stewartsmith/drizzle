@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2003 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @file
@@ -46,6 +50,7 @@
     them you must first assign a value to them (in specific ::check() for
     example).
 */
+
 #include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_getopt.h>
@@ -53,6 +58,7 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/tztime.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 
@@ -309,7 +315,9 @@ static sys_var_session_ulong	sys_trans_prealloc_size(&vars, "transaction_preallo
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
-static sys_var_long_ptr	sys_server_id(&vars, "server_id", &server_id, fix_server_id);
+static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
+                                           fix_server_id);
+
 static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_protocol",
 						      &opt_slave_compressed_protocol);
 static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
@@ -976,6 +984,29 @@ void sys_var_long_ptr_global::set_default(Session *session __attribute__((unused
   *value= (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
                                          option_limits, &not_used);
   pthread_mutex_unlock(guard);
+}
+
+bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
+{
+  uint32_t tmp= var->save_result.uint32_t_value;
+  pthread_mutex_lock(&LOCK_global_system_variables);
+  if (option_limits)
+    *value= (uint32_t) fix_unsigned(session, tmp, option_limits);
+  else
+    *value= (uint32_t) tmp;
+  pthread_mutex_unlock(&LOCK_global_system_variables);
+  return 0;
+}
+
+
+void sys_var_uint32_t_ptr::set_default(Session *session __attribute__((unused)),
+                                        enum_var_type type __attribute__((unused)))
+{
+  bool not_used;
+  pthread_mutex_lock(&LOCK_global_system_variables);
+  *value= getopt_ull_limit_value((uint32_t) option_limits->def_value,
+                                 option_limits, &not_used);
+  pthread_mutex_unlock(&LOCK_global_system_variables);
 }
 
 

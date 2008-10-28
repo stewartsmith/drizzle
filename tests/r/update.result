@@ -246,7 +246,7 @@ update t1 set b=9999 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
 Handler_read_first	2
-Handler_read_key	8
+Handler_read_key	12
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	2
@@ -256,7 +256,7 @@ delete from t1 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
 Handler_read_first	1
-Handler_read_key	4
+Handler_read_key	6
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	1
@@ -266,7 +266,7 @@ delete from t1 order by a desc limit 1;
 show status like 'handler_read%';
 Variable_name	Value
 Handler_read_first	1
-Handler_read_key	4
+Handler_read_key	6
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	1
@@ -279,7 +279,7 @@ delete from t1 order by a limit 1;
 show status like 'handler_read%';
 Variable_name	Value
 Handler_read_first	1
-Handler_read_key	4
+Handler_read_key	6
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	1
@@ -332,7 +332,7 @@ update t2 set a=3 where a=2;
 show status like 'handler_read%';
 Variable_name	Value
 Handler_read_first	0
-Handler_read_key	4
+Handler_read_key	6
 Handler_read_next	1
 Handler_read_prev	0
 Handler_read_rnd	1
@@ -435,8 +435,8 @@ select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 64
 update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 64
-info: Rows matched: 64  Changed: 64  Warnings: 0
+affected rows: 0
+info: Rows matched: 64  Changed: 0  Warnings: 0
 insert into t2(a) select a from t2;
 update t2 set a=id;
 truncate t1;
@@ -445,15 +445,15 @@ select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 128
 update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 128
-info: Rows matched: 128  Changed: 128  Warnings: 0
+affected rows: 0
+info: Rows matched: 128  Changed: 0  Warnings: 0
 update t1 set a=1;
 update t2 set a=1;
 select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 16384
 update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 128
-info: Rows matched: 128  Changed: 128  Warnings: 0
+affected rows: 127
+info: Rows matched: 128  Changed: 127  Warnings: 0
 drop table t1,t2;
 End of 5.0 tests

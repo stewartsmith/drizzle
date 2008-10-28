@@ -581,6 +581,8 @@ alter table test.t1 rename test.t1;
 use test;
 drop table t1;
 CREATE TABLE t1(a INT) ROW_FORMAT=FIXED;
+Warnings:
+Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 CREATE INDEX i1 ON t1(a);
 SHOW CREATE TABLE t1;
 Table	Create Table

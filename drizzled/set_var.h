@@ -183,6 +183,29 @@ public:
 };
 
 
+class sys_var_uint32_t_ptr :public sys_var
+{
+  uint32_t *value;
+public:
+  sys_var_uint32_t_ptr(sys_var_chain *chain, const char *name_arg,
+                       uint32_t *value_ptr_arg)
+    :sys_var(name_arg),value(value_ptr_arg)
+  { chain_sys_var(chain); }
+  sys_var_uint32_t_ptr(sys_var_chain *chain, const char *name_arg,
+                       uint32_t *value_ptr_arg,
+                       sys_after_update_func func)
+    :sys_var(name_arg,func), value(value_ptr_arg)
+  { chain_sys_var(chain); }
+  bool update(Session *session, set_var *var);
+  void set_default(Session *session, enum_var_type type);
+  SHOW_TYPE show_type() { return SHOW_LONG; }
+  unsigned char *value_ptr(Session *session __attribute__((unused)),
+                   enum_var_type type __attribute__((unused)),
+                   LEX_STRING *base __attribute__((unused)))
+  { return (unsigned char*) value; }
+};
+
+
 class sys_var_uint64_t_ptr :public sys_var
 {
   uint64_t *value;
@@ -1116,6 +1139,7 @@ public:
   {
     const CHARSET_INFO *charset;
     ulong ulong_value;
+    uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     plugin_ref plugin;
     DATE_TIME_FORMAT *date_time_format;

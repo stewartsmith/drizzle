@@ -36,7 +36,7 @@ struct mem_area_struct{
 
 /************************************************************************
 Creates a memory pool. */
-
+UNIV_INTERN
 mem_pool_t*
 mem_pool_create(
 /*============*/
@@ -45,18 +45,20 @@ mem_pool_create(
 /************************************************************************
 Allocates memory from a pool. NOTE: This low-level function should only be
 used in mem0mem.*! */
-
+UNIV_INTERN
 void*
 mem_area_alloc(
 /*===========*/
 				/* out, own: allocated memory buffer */
-	ulint		size,	/* in: allocated size in bytes; for optimum
+	ulint*		psize,	/* in: requested size in bytes; for optimum
 				space usage, the size should be a power of 2
-				minus MEM_AREA_EXTRA_SIZE */
+				minus MEM_AREA_EXTRA_SIZE;
+				out: allocated size in bytes (greater than
+				or equal to the requested size) */
 	mem_pool_t*	pool);	/* in: memory pool */
 /************************************************************************
 Frees memory to a pool. */
-
+UNIV_INTERN
 void
 mem_area_free(
 /*==========*/
@@ -65,7 +67,7 @@ mem_area_free(
 	mem_pool_t*	pool);	/* in: memory pool */
 /************************************************************************
 Returns the amount of reserved memory. */
-
+UNIV_INTERN
 ulint
 mem_pool_get_reserved(
 /*==================*/
@@ -73,19 +75,19 @@ mem_pool_get_reserved(
 	mem_pool_t*	pool);	/* in: memory pool */
 /************************************************************************
 Reserves the mem pool mutex. */
-
+UNIV_INTERN
 void
 mem_pool_mutex_enter(void);
 /*======================*/
 /************************************************************************
 Releases the mem pool mutex. */
-
+UNIV_INTERN
 void
 mem_pool_mutex_exit(void);
 /*=====================*/
 /************************************************************************
 Validates a memory pool. */
-
+UNIV_INTERN
 ibool
 mem_pool_validate(
 /*==============*/
@@ -93,7 +95,7 @@ mem_pool_validate(
 	mem_pool_t*	pool);	/* in: memory pool */
 /************************************************************************
 Prints info of a memory pool. */
-
+UNIV_INTERN
 void
 mem_pool_print_info(
 /*================*/
