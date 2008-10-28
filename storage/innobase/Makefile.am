@@ -144,7 +144,7 @@ noinst_HEADERS=		include/btr0btr.h include/btr0btr.ic		\
 			include/handler0alter.h				\
 			$(HANDLER_DIR)/i_s.h
 
-noinst_LTLIBRARIES=	libinnobase.la
+noinst_LTLIBRARIES=	libinnobase.la libpars.la
 libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			btr/btr0sea.c buf/buf0buddy.c			\
 			buf/buf0buf.c buf/buf0flu.c			\
@@ -164,7 +164,6 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			mtr/mtr0mtr.c os/os0file.c os/os0proc.c		\
 			os/os0sync.c os/os0thread.c page/page0cur.c	\
 			page/page0page.c page/page0zip.c		\
-			pars/lexyy.c pars/pars0grm.c			\
 			pars/pars0opt.c pars/pars0pars.c		\
 			pars/pars0sym.c que/que0que.c read/read0read.c	\
 			rem/rem0cmp.c rem/rem0rec.c row/row0ext.c	\
@@ -187,7 +186,13 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			$(HANDLER_DIR)/i_s.cc				\
 			$(HANDLER_DIR)/mysql_addons.cc
 
-libinnobase_la_CFLAGS=	$(AM_CFLAGS)  -Wno-unused-macros
+# lexyy.c has lots of redundant decls, but it's generated anyway 
+libpars_la_CFLAGS=	${AM_CFLAGS} -Wno-redundant-decls -Wno-unused-macros
+libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
+
+libinnobase_la_CFLAGS=	$(AM_CFLAGS)
+libinnobase_la_LIBADD= libpars.la
+
 
 EXTRA_LTLIBRARIES=	ha_innodb.la
 pkgplugin_LTLIBRARIES=	@plugin_innobase_shared_target@
