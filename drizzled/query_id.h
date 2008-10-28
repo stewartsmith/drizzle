@@ -36,10 +36,10 @@ public:
 
   /* increment query_id and return it.  */
   query_id_t next();
-  query_id_t the_query_id;
 
 private:
   pthread_mutex_t LOCK_query_id;
+  query_id_t the_query_id;
 
   Query_id();
   Query_id(Query_id const&);
