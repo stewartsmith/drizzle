@@ -493,7 +493,7 @@ ut_print_namel(
 				       table_id);
 
 	ssize_t ret= fwrite(buf, 1, bufend - buf, f);
-        assert(ret==bufend-buf);  
+	assert(ret==bufend-buf);  
 #endif
 }
 
@@ -515,7 +515,8 @@ ut_copy_file(
 			? (size_t) len
 			: sizeof buf;
 		size_t	size = fread(buf, 1, maxs, src);
-		assert(fwrite(buf, 1, size, dest)==size);
+		size_t ret= fwrite(buf, 1, size, dest);
+		assert(ret==size);
 		len -= (long) size;
 		if (size < maxs) {
 			break;
