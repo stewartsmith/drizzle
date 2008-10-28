@@ -44,6 +44,7 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/integer.h>
 #include <drizzled/functions/int_divide.h>
 #include <drizzled/functions/length.h>
+#include <drizzled/functions/lock.h>
 #include <drizzled/functions/master_pos_wait.h>
 #include <drizzled/functions/min_max.h>
 #include <drizzled/functions/minus.h>
@@ -57,6 +58,7 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/plus.h>
 #include <drizzled/functions/real.h>
 #include <drizzled/functions/rollup_const.h>
+#include <drizzled/functions/row_count.h>
 #include <drizzled/functions/dec.h>
 #include <drizzled/functions/int_val.h>
 #include <drizzled/functions/acos.h>
@@ -213,30 +215,6 @@ public:
 };
 
 
-class Item_func_is_free_lock :public Item_int_func
-{
-  String value;
-public:
-  Item_func_is_free_lock(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "is_free_lock"; }
-  void fix_length_and_dec() { decimals=0; max_length=1; maybe_null=1;}
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-class Item_func_is_used_lock :public Item_int_func
-{
-  String value;
-public:
-  Item_func_is_used_lock(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "is_used_lock"; }
-  void fix_length_and_dec() { decimals=0; max_length=10; maybe_null=1;}
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
 /* For type casts */
 
 enum Cast_target
@@ -244,18 +222,6 @@ enum Cast_target
   ITEM_CAST_BINARY, ITEM_CAST_SIGNED_INT, ITEM_CAST_UNSIGNED_INT,
   ITEM_CAST_DATE, ITEM_CAST_TIME, ITEM_CAST_DATETIME, ITEM_CAST_CHAR,
   ITEM_CAST_DECIMAL
-};
-
-
-class Item_func_row_count :public Item_int_func
-{
-public:
-  Item_func_row_count() :Item_int_func() {}
-  int64_t val_int();
-  const char *func_name() const { return "row_count"; }
-  void fix_length_and_dec() { decimals= 0; maybe_null=0; }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
 };
 
 

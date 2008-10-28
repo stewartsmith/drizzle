@@ -44,6 +44,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  length.cc \
 			  ln.cc \
 			  locate.cc \
+			  lock.cc \
 			  log.cc \
 			  master_pos_wait.cc \
 			  min_max.cc \
@@ -60,6 +61,7 @@ libfunctions_la_SOURCES = abs.cc \
 			  rand.cc \
 			  real.cc \
 			  round.cc \
+			  row_count.cc \
 			  sign.cc \
 			  signed.cc \
 			  sin.cc \
@@ -99,6 +101,7 @@ noinst_HEADERS = abs.h \
 		 length.h \
 		 ln.h \
 		 locate.h \
+		 lock.h \
 		 log.h \
 		 master_pos_wait.h \
 		 min_max.h \
@@ -115,6 +118,7 @@ noinst_HEADERS = abs.h \
 		 real.h \
 		 rollup_const.h \
 		 round.h \
+		 row_count.h \
 		 sign.h \
 		 signed.h \
 		 sin.h \
