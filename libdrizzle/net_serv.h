@@ -29,6 +29,9 @@
 extern "C" {
 #endif
 
+#define LIBDRIZZLE_ERRMSG_SIZE 512
+#define LIBDRIZZLE_SQLSTATE_LENGTH 5
+
 typedef struct st_net {
   Vio *vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
@@ -60,9 +63,9 @@ typedef struct st_net {
   unsigned int last_errno;
   unsigned char error; 
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
-  char last_error[DRIZZLE_ERRMSG_SIZE];
+  char last_error[LIBDRIZZLE_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */
-  char sqlstate[SQLSTATE_LENGTH+1];
+  char sqlstate[LIBDRIZZLE_SQLSTATE_LENGTH+1];
   void *extension;
 } NET;
 
