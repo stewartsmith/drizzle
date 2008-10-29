@@ -2269,6 +2269,17 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 /* these are called by storage engines */
 void trans_register_ha(Session *session, bool all, handlerton *ht);
 
+void table_case_convert(char * name, uint32_t length);
+const char *table_case_name(HA_CREATE_INFO *info, const char *name);
+
+extern char reg_ext[FN_EXTLEN];
+extern uint32_t reg_ext_length;
+extern ulong specialflag;
+extern uint32_t lower_case_table_names;
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
+
+
 /*
   Storage engine has to assume the transaction will end up with 2pc if
    - there is more than one 2pc-capable storage engine available

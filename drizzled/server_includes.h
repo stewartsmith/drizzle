@@ -692,7 +692,7 @@ extern DRIZZLE_BIN_LOG mysql_bin_log;
 extern LOGGER logger;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_key(MEM_ROOT**,THR_MALLOC);
+extern pthread_key_t THR_MALLOC;
 extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
@@ -960,18 +960,6 @@ inline void mark_as_null_row(Table *table)
   table->null_row=1;
   table->status|=STATUS_NULL_ROW;
   memset(table->null_flags, 255, table->s->null_bytes);
-}
-
-inline void table_case_convert(char * name, uint32_t length)
-{
-  if (lower_case_table_names)
-    files_charset_info->cset->casedn(files_charset_info,
-                                     name, length, name, length);
-}
-
-inline const char *table_case_name(HA_CREATE_INFO *info, const char *name)
-{
-  return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }
 
 inline ulong sql_rnd()

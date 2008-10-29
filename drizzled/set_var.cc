@@ -59,6 +59,8 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>
+#include <drizzled/slave.h>
+#include <drizzled/data_home.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 

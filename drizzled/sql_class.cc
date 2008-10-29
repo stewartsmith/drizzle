@@ -32,8 +32,8 @@
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
-#include <drizzled/innodb_plugin_extras.h>
 #include <drizzled/query_id.h>
+#include <drizzled/data_home.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -603,50 +603,43 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-extern "C"
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 void *session_alloc(Session *session, unsigned int size)
 {
   return session->alloc(size);
 }
 
-extern "C"
 void *session_calloc(Session *session, unsigned int size)
 {
   return session->calloc(size);
 }
 
-extern "C"
 char *session_strdup(Session *session, const char *str)
 {
   return session->strdup(str);
 }
 
-extern "C"
 char *session_strmake(Session *session, const char *str, unsigned int size)
 {
   return session->strmake(str, size);
 }
 
-extern "C"
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                const char *str, unsigned int size,
-                                int allocate_lex_string)
-{
-  return session->make_lex_string(lex_str, str, size,
-                              (bool) allocate_lex_string);
-}
-
-extern "C"
 void *session_memdup(Session *session, const void* str, unsigned int size)
 {
   return session->memdup(str, size);
 }
 
-extern "C"
 void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 {
   *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
 }
+
+#if defined(__cplusplus)
+}
+#endif
 
 /*
   Init common variables that has to be reset on start and on change_user
@@ -2250,7 +2243,15 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
 }
 
 
-#ifdef INNODB_COMPATIBILITY_HOOKS
+extern "C"
+LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
+                                const char *str, unsigned int size,
+                                int allocate_lex_string)
+{
+  return session->make_lex_string(lex_str, str, size,
+                              (bool) allocate_lex_string);
+}
+
 extern "C" const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
@@ -2280,7 +2281,6 @@ extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
 }
-#endif // INNODB_COMPATIBILITY_HOOKS */
 
 
 /**

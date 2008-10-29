@@ -23,6 +23,7 @@
 #include "rpl_filter.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
 
 /*
   While we have legacy_db_type, we have this array to
@@ -4672,4 +4673,16 @@ void handler::use_hidden_primary_key()
 {
   /* fallback to use all columns in the table to identify row */
   table->use_all_columns();
+}
+
+void table_case_convert(char * name, uint32_t length)
+{
+  if (lower_case_table_names)
+    files_charset_info->cset->casedn(files_charset_info,
+                                     name, length, name, length);
+}
+
+const char *table_case_name(HA_CREATE_INFO *info, const char *name)
+{
+  return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }

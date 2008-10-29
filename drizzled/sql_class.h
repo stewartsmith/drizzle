@@ -18,6 +18,9 @@
  */
 
 
+#ifndef DRIZZLED_SQL_CLASS_H
+#define DRIZZLED_SQL_CLASS_H
+
 /* Classes in mysql */
 
 #include <drizzled/global.h>
@@ -360,6 +363,8 @@ struct system_variables
   bool sysdate_is_now;
 
 };
+
+extern struct system_variables global_system_variables;
 
 #include "sql_lex.h"  /* only for SQLCOM_END */
 
@@ -2449,3 +2454,5 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
 #endif /* DRIZZLE_SERVER */
+
+#endif /* DRIZZLED_SQL_CLASS_H */

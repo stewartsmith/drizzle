@@ -21,6 +21,7 @@
 #include <drizzled/rpl_filter.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
 
 int max_binlog_dump_events = 0; // unlimited
 

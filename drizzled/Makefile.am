@@ -89,6 +89,7 @@ noinst_HEADERS = \
 		common_includes.h \
 		configvar.h \
 		connect.h \
+		data_home.h \
 		definitions.h \
 		errmsg.h \
 		error_injection.h \
@@ -98,7 +99,6 @@ noinst_HEADERS = \
 		gettext.h \
 		global.h \
 		handler.h \
-		innodb_plugin_extras.h \
 		item_cmpfunc.h \
 		item_create.h \
 		item_func.h \
