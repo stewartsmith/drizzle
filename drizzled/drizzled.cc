@@ -3883,7 +3883,7 @@ struct my_option my_long_options[] =
    N_("How many threads we should create to handle query requests in case of "
       "'thread_handling=pool-of-threads'"),
    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
-   REQUIRED_ARG, 20, 1, 16384, 0, 1, 0},
+   REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,

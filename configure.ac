@@ -1360,6 +1360,11 @@ else
   OPTIMIZE_CXXFLAGS="-O"
 fi
 
+
+AC_CHECK_HEADERS(uuid/uuid.h)
+AC_CHECK_LIB(uuid, uuid_generate)
+
+
 dnl TODO: Remove this define once we are using 2.61 across the board.
 # AX_HEADER_ASSERT
 # ----------------
