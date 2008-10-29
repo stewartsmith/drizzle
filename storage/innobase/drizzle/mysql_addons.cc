@@ -33,7 +33,7 @@ Retrieve Session::thread_id
 http://bugs.mysql.com/30930 */
 extern "C" UNIV_INTERN
 unsigned long
-ib_session_get_thread_id(
+ib_thd_get_thread_id(
 /*=================*/
 				/* out: Session::thread_id */
 	const void*	session)	/* in: Session */

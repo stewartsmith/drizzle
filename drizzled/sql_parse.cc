@@ -3649,8 +3649,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
   }
   if (session && (options & REFRESH_STATUS))
     refresh_status(session);
-  if (options & REFRESH_THREADS)
-    flush_thread_cache();
   if (options & REFRESH_MASTER)
   {
     assert(session);

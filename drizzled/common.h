@@ -304,9 +304,6 @@ enum enum_server_command
 
 #define ONLY_KILL_QUERY         1
 
-struct st_vio;					/* Only C */
-typedef struct st_vio Vio;
-
 #define MAX_TINYINT_WIDTH       3       /* Max width for a TINY w.o. sign */
 #define MAX_SMALLINT_WIDTH      5       /* Max width for a SHORT w.o. sign */
 #define MAX_MEDIUMINT_WIDTH     8       /* Max width for a INT24 w.o. sign */

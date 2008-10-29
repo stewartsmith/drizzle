@@ -227,10 +227,9 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
-static uint32_t kill_cached_threads, wake_thread;
+static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
-static volatile uint32_t cached_thread_count= 0;
 static char *mysqld_user, *mysqld_chroot, *log_error_file_ptr;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -436,10 +435,12 @@ SHOW_COMP_OPTION have_compress;
 pthread_key(MEM_ROOT**,THR_MALLOC);
 pthread_key(Session*, THR_Session);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
-		LOCK_status, LOCK_global_read_lock,
-		LOCK_error_log, LOCK_uuid_generator,
-	        LOCK_global_system_variables,
-		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
+                LOCK_status,
+                LOCK_global_read_lock,
+                LOCK_error_log,
+                LOCK_global_system_variables,
+                LOCK_slave_list, 
+                LOCK_active_mi,
                 LOCK_connection_count;
 
 rw_lock_t	LOCK_sys_init_connect, LOCK_sys_init_slave;
@@ -526,10 +527,6 @@ static void close_connections(void)
   int count=0;
 #endif
 
-  /* Clear thread cache */
-  kill_cached_threads++;
-  flush_thread_cache();
-
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
 
@@ -600,9 +597,9 @@ static void close_connections(void)
       pthread_mutex_lock(&tmp->mysys_var->mutex);
       if (tmp->mysys_var->current_cond)
       {
-	pthread_mutex_lock(tmp->mysys_var->current_mutex);
-	pthread_cond_broadcast(tmp->mysys_var->current_cond);
-	pthread_mutex_unlock(tmp->mysys_var->current_mutex);
+        pthread_mutex_lock(tmp->mysys_var->current_mutex);
+        pthread_cond_broadcast(tmp->mysys_var->current_cond);
+        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
       }
       pthread_mutex_unlock(&tmp->mysys_var->mutex);
     }
@@ -912,7 +909,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
-  (void) pthread_mutex_destroy(&LOCK_user_conn);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) rwlock_destroy(&LOCK_sys_init_connect);
@@ -920,7 +916,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
   (void) rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
-  (void) pthread_mutex_destroy(&LOCK_uuid_generator);
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_refresh);
   (void) pthread_cond_destroy(&COND_global_read_lock);
@@ -1274,108 +1269,6 @@ void unlink_session(Session *session)
   thread_count--;
   delete session;
   return;;
-}
-
-
-/*
-  Store thread in cache for reuse by new connections
-
-  SYNOPSIS
-    cache_thread()
-
-  NOTES
-    LOCK_thread_count has to be locked
-
-  RETURN
-    0  Thread was not put in cache
-    1  Thread is to be reused by new connection.
-       (ie, caller should return, not abort with pthread_exit())
-*/
-
-
-static bool cache_thread()
-{
-  safe_mutex_assert_owner(&LOCK_thread_count);
-  if (cached_thread_count < thread_cache_size &&
-      ! abort_loop && !kill_cached_threads)
-  {
-    /* Don't kill the thread, just put it in cache for reuse */
-    cached_thread_count++;
-    while (!abort_loop && ! wake_thread && ! kill_cached_threads)
-      (void) pthread_cond_wait(&COND_thread_cache, &LOCK_thread_count);
-    cached_thread_count--;
-    if (kill_cached_threads)
-      pthread_cond_signal(&COND_flush_thread_cache);
-    if (wake_thread)
-    {
-      Session *session;
-      wake_thread--;
-      session= thread_cache.get();
-      session->thread_stack= (char*) &session;          // For store_globals
-      (void) session->store_globals();
-      /*
-        Session::mysys_var::abort is associated with physical thread rather
-        than with Session object. So we need to reset this flag before using
-        this thread for handling of new Session object/connection.
-      */
-      session->mysys_var->abort= 0;
-      session->thr_create_utime= my_micro_time();
-      threads.append(session);
-      return(1);
-    }
-  }
-  return(0);
-}
-
-
-/*
-  End thread for the current connection
-
-  SYNOPSIS
-    one_thread_per_connection_end()
-    session		  Thread handler
-    put_in_cache  Store thread in cache, if there is room in it
-                  Normally this is true in all cases except when we got
-                  out of resources initializing the current thread
-
-  NOTES
-    If thread is cached, we will wait until thread is scheduled to be
-    reused and then we will return.
-    If thread is not cached, we end the thread.
-
-  RETURN
-    0    Signal to handle_one_connection to reuse connection
-*/
-
-bool one_thread_per_connection_end(Session *session, bool put_in_cache)
-{
-  unlink_session(session);
-  if (put_in_cache)
-    put_in_cache= cache_thread();
-  pthread_mutex_unlock(&LOCK_thread_count);
-  if (put_in_cache)
-    return(0);                             // Thread is reused
-
-  /* It's safe to broadcast outside a lock (COND... is not deleted here) */
-  my_thread_end();
-  (void) pthread_cond_broadcast(&COND_thread_count);
-
-  pthread_exit(0);
-  return(0);                               // Impossible
-}
-
-
-void flush_thread_cache()
-{
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  kill_cached_threads++;
-  while (cached_thread_count)
-  {
-    pthread_cond_broadcast(&COND_thread_cache);
-    pthread_cond_wait(&COND_flush_thread_cache,&LOCK_thread_count);
-  }
-  kill_cached_threads--;
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
 
 
@@ -1779,8 +1672,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
         bool not_used;
         reload_cache((Session*) 0,
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
-                      REFRESH_GRANT |
-                      REFRESH_THREADS | REFRESH_HOSTS),
+                      REFRESH_HOSTS),
                      (TableList*) 0, &not_used); // Flush logs
       }
       break;
@@ -2234,12 +2126,10 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) my_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_uuid_generator, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_connection_count, MY_MUTEX_INIT_FAST);
   (void) my_rwlock_init(&LOCK_sys_init_connect, NULL);
   (void) my_rwlock_init(&LOCK_sys_init_slave, NULL);
@@ -4131,7 +4021,6 @@ SHOW_VAR status_vars[]= {
   {"Tc_log_page_size",         (char*) &tc_log_page_size,       SHOW_LONG},
   {"Tc_log_page_waits",        (char*) &tc_log_page_waits,      SHOW_LONG},
 #endif
-  {"Threads_cached",           (char*) &cached_thread_count,    SHOW_LONG_NOFLUSH},
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
@@ -4217,9 +4106,8 @@ static void mysql_init_variables(void)
   defaults_argv= 0;
   server_id_supplied= 0;
   test_flags= select_errors= dropping_tables= ha_open_options=0;
-  thread_count= thread_running= kill_cached_threads= wake_thread=0;
+  thread_count= thread_running= wake_thread=0;
   slave_open_temp_tables= 0;
-  cached_thread_count= 0;
   opt_endinfo= using_udf_functions= 0;
   opt_using_transactions= using_update_log= 0;
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;

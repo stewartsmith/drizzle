@@ -50,7 +50,7 @@ static bool drizzle_client_init= false;
 unsigned int drizzle_server_last_errno;
 
 /* Server error code and message */
-char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
+char drizzle_server_last_error[LIBDRIZZLE_ERRMSG_SIZE];
 
 /*
   Note that the drizzle argument must be initialized with drizzle_init()

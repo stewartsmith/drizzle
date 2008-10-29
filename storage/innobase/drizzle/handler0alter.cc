@@ -633,7 +633,7 @@ ha_innobase::add_index(
 	trans_register_ha(user_session, FALSE, ht);
 	prebuilt->trx->active_trans = 1;
 
-	trx->mysql_session = user_session;
+	trx->mysql_thd = user_session;
 	trx->mysql_query_str = session_query(user_session);
 
 	innodb_table = indexed_table
@@ -1080,7 +1080,7 @@ ha_innobase::final_drop_index(
 	trans_register_ha(user_session, FALSE, ht);
 	prebuilt->trx->active_trans = 1;
 
-	trx->mysql_session = user_session;
+	trx->mysql_thd = user_session;
 	trx->mysql_query_str = session_query(user_session);
 
 	/* Flag this transaction as a dictionary operation, so that
