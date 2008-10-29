@@ -60,8 +60,6 @@
 #include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
-/* The <strong>connection</strong> thread scheduler API */
-#include "scheduler.h"
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */

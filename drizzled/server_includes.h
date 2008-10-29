@@ -724,7 +724,6 @@ extern Table *unused_tables;
 extern const char* any_db;
 extern struct my_option my_long_options[];
 extern const LEX_STRING view_type;
-extern scheduler_functions thread_scheduler;
 extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern uint32_t sql_command_flags[];

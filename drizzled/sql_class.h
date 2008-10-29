@@ -25,6 +25,7 @@
 #include "rpl_tblmap.h"
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
+#include <drizzled/scheduler.h>
 
 class Relay_log_info;
 
