@@ -32,11 +32,15 @@ libfunctions_la_SOURCES = abs.cc \
 			  decimal_typecast.cc \
 			  divide.cc \
 			  exp.cc \
+			  get_user_var.cc \
+			  get_variable.cc \
 			  field.cc \
 			  find_in_set.cc \
 			  floor.cc \
+			  found_rows.cc \
 			  func.cc \
 			  get_system_var.cc \
+			  get_variable.cc \
                           int.cc \
                           integer.cc \
                           int_divide.cc \
@@ -94,8 +98,10 @@ noinst_HEADERS = abs.h \
 		 field.h \
 		 find_in_set.h \
 		 floor.h \
+		 found_rows.h \
 		 func.h \
 		 get_system_var.h \
+		 get_user_var.h \
                  int.h \
                  integer.h \
                  int_divide.h \

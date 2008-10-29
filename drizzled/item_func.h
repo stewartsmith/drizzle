@@ -42,6 +42,9 @@ extern "C"				/* Bug in BSDI include file */
 #include <drizzled/functions/bit_length.h>
 #include <drizzled/functions/field.h>
 #include <drizzled/functions/find_in_set.h>
+#include <drizzled/functions/found_rows.h>
+#include <drizzled/functions/get_user_var.h>
+#include <drizzled/functions/get_variable.h>
 #include <drizzled/functions/integer.h>
 #include <drizzled/functions/int_divide.h>
 #include <drizzled/functions/length.h>
@@ -145,36 +148,6 @@ public:
 };
 
 
-class Item_func_get_user_var :public Item_func
-{
-  user_var_entry *var_entry;
-  Item_result m_cached_result_type;
-
-public:
-  LEX_STRING name; // keep it public
-  Item_func_get_user_var(LEX_STRING a):
-    Item_func(), m_cached_result_type(STRING_RESULT), name(a) {}
-  enum Functype functype() const { return GUSERVAR_FUNC; }
-  LEX_STRING get_name() { return name; }
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal*);
-  String *val_str(String* str);
-  void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
-  enum Item_result result_type() const;
-  /*
-    We must always return variables as strings to guard against selects of type
-    select @t1:=1,@t1,@t:="hello",@t from foo where (@t1:= t2.b)
-  */
-  const char *func_name() const { return "get_user_var"; }
-  bool const_item() const;
-  table_map used_tables() const
-  { return const_item() ? 0 : RAND_TABLE_BIT; }
-  bool eq(const Item *item, bool binary_cmp) const;
-};
-
-
 /*
   This item represents user variable used as out parameter (e.g in LOAD DATA),
   and it is supposed to be used only for this purprose. So it is simplified
@@ -211,26 +184,6 @@ enum Cast_target
   ITEM_CAST_BINARY, ITEM_CAST_SIGNED_INT, ITEM_CAST_UNSIGNED_INT,
   ITEM_CAST_DATE, ITEM_CAST_TIME, ITEM_CAST_DATETIME, ITEM_CAST_CHAR,
   ITEM_CAST_DECIMAL
-};
-
-
-/*
- *
- * Stored FUNCTIONs
- *
- */
-
-struct st_sp_security_context;
-
-class Item_func_found_rows :public Item_int_func
-{
-public:
-  Item_func_found_rows() :Item_int_func() {}
-  int64_t val_int();
-  const char *func_name() const { return "found_rows"; }
-  void fix_length_and_dec() { decimals= 0; maybe_null=0; }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
 };
 
 #endif /* DRIZZLE_SERVER_ITEM_FUNC_H */
