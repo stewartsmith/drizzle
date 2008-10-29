@@ -19,7 +19,7 @@
 
 /**
  * @file
- * 
+ *
  * Contains #includes and definitions that apply to ALL server-related
  * executables, including storage engine plugins.
  *
@@ -48,8 +48,6 @@
 #include <mysys/hash.h>
 /* Standard signals API */
 #include <signal.h>
-/* Deadlock-free table-list lock API */
-#include <mysys/thr_lock.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */

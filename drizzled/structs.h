@@ -21,6 +21,7 @@
 /* The old structures from unireg */
 
 #include <mysys/iocache.h>
+#include <mysys/definitions.h>
 
 class Table;
 class Field;

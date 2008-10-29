@@ -476,6 +476,7 @@ enum enum_var_type
   , OPT_GLOBAL
 };
 
+
 typedef uint64_t query_id_t;
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
