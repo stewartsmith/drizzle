@@ -60,8 +60,6 @@
 #include <drizzled/definitions.h>
 /* System-wide common data structures */
 #include <drizzled/structs.h>
-/* Custom continguous-section memory allocator */
-#include <drizzled/sql_alloc.h>
 
 #include "probes.h"
 
