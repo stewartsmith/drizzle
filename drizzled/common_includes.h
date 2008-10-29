@@ -64,8 +64,6 @@
 #include "scheduler.h"
 /* Network database operations (hostent, netent, servent, etc...*/
 #include <netdb.h>
-/* Definitions that the client and the server have in common */
-#include <drizzled/common.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */

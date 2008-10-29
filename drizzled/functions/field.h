@@ -17,33 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#ifndef DRIZZLED_FUNCTIONS_FIELD_H
+#define DRIZZLED_FUNCTIONS_FIELD_H
 
-#include <pthread.h>
+#include <drizzled/functions/func.h> 
 
-class Query_id
+class Item_func_field :public Item_int_func
 {
+  String value,tmp;
+  Item_result cmp_type;
+  DTCollation cmp_collation;
 public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
-  }
-  ~Query_id();
-
-  /* return current query_id value */
-  query_id_t value() const;
-
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
+  Item_func_field(List<Item> &list) :Item_int_func(list) {}
+  int64_t val_int();
+  const char *func_name() const { return "field"; }
+  void fix_length_and_dec();
 };
 
-#endif
+#endif /* DRIZZLED_FUNCTIONS_FIELD_H */

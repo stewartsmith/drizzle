@@ -17,33 +17,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#include <drizzled/server_includes.h>
+#include "../rpl_mi.h"
+#include CSTDINT_H
+#include <drizzled/functions/master_pos_wait.h>
 
-#include <pthread.h>
+/**
+  Wait until we are at or past the given position in the master binlog
+  on the slave.
+*/
 
-class Query_id
+int64_t Item_master_pos_wait::val_int()
 {
-public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
+  assert(fixed == 1);
+  Session* session = current_session;
+  String *log_name = args[0]->val_str(&value);
+  int event_count= 0;
+
+  null_value=0;
+  if (session->slave_thread || !log_name || !log_name->length())
+  {
+    null_value = 1;
+    return 0;
   }
-  ~Query_id();
+  int64_t pos = (ulong)args[1]->val_int();
+  int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
+  if ((event_count = active_mi->rli.wait_for_pos(session, log_name, pos, timeout)) == -2)
+  {
+    null_value = 1;
+    event_count=0;
+  }
+  return event_count;
+}
 
-  /* return current query_id value */
-  query_id_t value() const;
-
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
-};
-
-#endif

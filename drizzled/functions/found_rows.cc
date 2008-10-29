@@ -17,33 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/found_rows.h>
 
-#include <pthread.h>
-
-class Query_id
+int64_t Item_func_found_rows::val_int()
 {
-public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
-  }
-  ~Query_id();
+  assert(fixed == 1);
+  Session *session= current_session;
 
-  /* return current query_id value */
-  query_id_t value() const;
+  return session->found_rows();
+}
 
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
-};
-
-#endif

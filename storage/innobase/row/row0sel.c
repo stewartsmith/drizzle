@@ -3733,11 +3733,7 @@ shortcut_fails_too_big_rec:
 
 	if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
 	    && prebuilt->select_lock_type != LOCK_NONE
-#ifdef BUILD_DRIZZLE
-	    && trx->mysql_session != NULL
-#else
 	    && trx->mysql_thd != NULL
-#endif
 	    && trx->mysql_query_str != NULL
 	    && *trx->mysql_query_str != NULL) {
 
@@ -3745,7 +3741,7 @@ shortcut_fails_too_big_rec:
 		word there */
 
 		if (dict_str_starts_with_keyword(
-			    trx->mysql_session, *trx->mysql_query_str, "SELECT")) {
+			    trx->mysql_thd, *trx->mysql_query_str, "SELECT")) {
 			/* It is a plain locking SELECT and the isolation
 			level is low: do not lock gaps */
 

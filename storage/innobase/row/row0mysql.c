@@ -3941,7 +3941,7 @@ row_scan_and_check_index(
 
 	ret = row_search_for_mysql(buf, PAGE_CUR_G, prebuilt, 0, 0);
 loop:
-	/* Check session->killed every 1,000 scanned rows */
+	/* Check thd->killed every 1,000 scanned rows */
 	if (--cnt == 0) {
 		if (trx_is_interrupted(prebuilt->trx)) {
 			goto func_exit;

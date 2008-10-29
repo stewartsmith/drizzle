@@ -17,33 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/integer.h>
 
-#include <pthread.h>
-
-class Query_id
+void Item_func_integer::fix_length_and_dec()
 {
-public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
-  }
-  ~Query_id();
+  max_length=args[0]->max_length - args[0]->decimals+1;
+  uint32_t tmp=float_length(decimals);
+  set_if_smaller(max_length,tmp);
+  decimals=0;
+}
 
-  /* return current query_id value */
-  query_id_t value() const;
-
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
-};
-
-#endif

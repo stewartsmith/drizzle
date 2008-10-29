@@ -17,33 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#ifndef DRIZZLED_FUNCTIONS_GET_VARIABLE_H
+#define DRIZZLED_FUNCTIONS_GET_VARIABLE_H
 
-#include <pthread.h>
+#include <drizzled/functions/func.h> 
 
-class Query_id
-{
-public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
-  }
-  ~Query_id();
+class user_var_entry;
+user_var_entry *get_variable(HASH *hash, 
+			     LEX_STRING &name,
+                             bool create_if_not_exists);
 
-  /* return current query_id value */
-  query_id_t value() const;
+#endif /* DRIZZLED_FUNCTIONS_GET_VARIABLE_H */
 
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
-};
-
-#endif

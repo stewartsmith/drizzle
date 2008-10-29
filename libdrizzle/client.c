@@ -131,8 +131,8 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       len-=2;
       if (pos[0] == '#')
       {
-        strncpy(net->sqlstate, pos+1, SQLSTATE_LENGTH);
-        pos+= SQLSTATE_LENGTH+1;
+        strncpy(net->sqlstate, pos+1, LIBDRIZZLE_SQLSTATE_LENGTH);
+        pos+= LIBDRIZZLE_SQLSTATE_LENGTH+1;
       }
       else
       {

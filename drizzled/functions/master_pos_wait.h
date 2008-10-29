@@ -17,33 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#ifndef DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H
+#define DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H
 
-#include <pthread.h>
+#include <drizzled/functions/func.h> 
 
-class Query_id
+class Item_master_pos_wait :public Item_int_func
 {
+  String value;
 public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
-  }
-  ~Query_id();
-
-  /* return current query_id value */
-  query_id_t value() const;
-
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
+  Item_master_pos_wait(Item *a,Item *b) :Item_int_func(a,b) {}
+  Item_master_pos_wait(Item *a,Item *b,Item *c) :Item_int_func(a,b,c) {}
+  int64_t val_int();
+  const char *func_name() const { return "master_pos_wait"; }
+  void fix_length_and_dec() { max_length=21; maybe_null=1;}
+  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
+  { return true; }
 };
 
-#endif
+
+#endif /* DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H */

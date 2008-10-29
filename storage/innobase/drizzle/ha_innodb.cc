@@ -572,10 +572,14 @@ Returns true if the thread is the replication thread on the slave
 server. Used in srv_conc_enter_innodb() to determine if the thread
 should be allowed to enter InnoDB - the replication thread is treated
 differently than other threads. Also used in
-srv_conc_force_exit_innodb(). */
+srv_conc_force_exit_innodb().
+
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
+         in non-handler code.
+*/
 extern "C" UNIV_INTERN
 ibool
-session_is_replication_slave_thread(
+thd_is_replication_slave_thread(
 /*============================*/
 			/* out: true if session is the replication thread */
 	void*	session)	/* in: thread handle (Session*) */
@@ -643,10 +647,14 @@ innobase_release_stat_resources(
 Returns true if the transaction this thread is processing has edited
 non-transactional tables. Used by the deadlock detector when deciding
 which transaction to rollback in case of a deadlock - we try to avoid
-rolling back transactions that have edited non-transactional tables. */
+rolling back transactions that have edited non-transactional tables.
+
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
+         in non-handler code.
+*/
 extern "C" UNIV_INTERN
 ibool
-session_has_edited_nontrans_tables(
+thd_has_edited_nontrans_tables(
 /*===========================*/
 			/* out: true if non-transactional tables have
 			been edited */
@@ -834,11 +842,15 @@ If you want to print a session that is not associated with the current thread,
 you must call this function before reserving the InnoDB kernel_mutex, to
 protect MySQL from setting session->query NULL. If you print a session of the
 current thread, we know that Drizzle cannot modify sesion->query, and it is
-not necessary to call this. Call innobase_mysql_end_print_arbitrary_session()
-after you release the kernel_mutex. */
+not necessary to call this. Call innobase_mysql_end_print_arbitrary_thd()
+after you release the kernel_mutex.
+
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
+         in non-handler code.
+ */
 extern "C" UNIV_INTERN
 void
-innobase_mysql_prepare_print_arbitrary_session(void)
+innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
 	ut_ad(!mutex_own(&kernel_mutex));
@@ -846,13 +858,17 @@ innobase_mysql_prepare_print_arbitrary_session(void)
 }
 
 /*****************************************************************
-Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_session().
+Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_thd().
 In the InnoDB latching order, the mutex sits right above the
 kernel_mutex.  In debug builds, we assert that the kernel_mutex is
-released before this function is invoked. */
+released before this function is invoked. 
+
+DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
+         in non-handler code.
+*/
 extern "C" UNIV_INTERN
 void
-innobase_mysql_end_print_arbitrary_session(void)
+innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
 	ut_ad(!mutex_own(&kernel_mutex));
@@ -863,7 +879,7 @@ innobase_mysql_end_print_arbitrary_session(void)
 Prints info of a Session object (== user session thread) to the given file. */
 extern "C" UNIV_INTERN
 void
-innobase_mysql_print_session(
+innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/* in: output stream */
 	void*	input_session __attribute__((unused)),	/* in: pointer to a MySQL Session object */
@@ -1088,7 +1104,7 @@ check_trx_exists(
 		assert(session != NULL);
 		trx = trx_allocate_for_mysql();
 
-		trx->mysql_session = session;
+		trx->mysql_thd = session;
 		trx->mysql_query_str = session_query(session);
 
 		/* Update the info whether we should skip XA steps that eat
@@ -1415,7 +1431,7 @@ innobase_invalidate_query_cache(
 
 	/* Argument TRUE below means we are using transactions */
 #ifdef HAVE_QUERY_CACHE
-	mysql_query_cache_invalidate4((Session*) trx->mysql_session,
+	mysql_query_cache_invalidate4((Session*) trx->mysql_thd,
 				      (const char*) full_name,
 				      (uint32) full_name_len,
 				      TRUE);
@@ -1573,7 +1589,7 @@ trx_is_interrupted(
 			/* out: TRUE if interrupted */
 	trx_t*	trx)	/* in: transaction */
 {
-	return(trx && trx->mysql_session && session_killed((Session*) trx->mysql_session));
+	return(trx && trx->mysql_thd && session_killed((Session*) trx->mysql_thd));
 }
 
 /******************************************************************
@@ -5535,7 +5551,7 @@ ha_innobase::create(
 
 	trx = trx_allocate_for_mysql();
 
-	trx->mysql_session = session;
+	trx->mysql_thd = session;
 	trx->mysql_query_str = session_query(session);
 
 	if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
@@ -5958,7 +5974,7 @@ ha_innobase::delete_table(
 
 	trx = trx_allocate_for_mysql();
 
-	trx->mysql_session = session;
+	trx->mysql_thd = session;
 	trx->mysql_query_str = session_query(session);
 
 	if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
@@ -6049,7 +6065,7 @@ innobase_drop_database(
 	innobase_casedn_str(namebuf);
 #endif
 	trx = trx_allocate_for_mysql();
-	trx->mysql_session = session;
+	trx->mysql_thd = session;
 	trx->mysql_query_str = session_query(session);
 
 	if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {
@@ -6164,7 +6180,7 @@ ha_innobase::rename_table(
 	trx_search_latch_release_if_reserved(parent_trx);
 
 	trx = trx_allocate_for_mysql();
-	trx->mysql_session = session;
+	trx->mysql_thd = session;
 	trx->mysql_query_str = session_query(session);
 
 	if (session_test_options(session, OPTION_NO_FOREIGN_KEY_CHECKS)) {

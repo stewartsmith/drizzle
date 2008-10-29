@@ -17,33 +17,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
 
-#include <pthread.h>
+// Shift-functions, same as << and >> in C/C++
 
-class Query_id
+int64_t Item_func_shift_left::val_int()
 {
-public:
-  static Query_id& get_query_id() {
-    static Query_id the_id;
-    return the_id;
+  assert(fixed == 1);
+  uint32_t shift;
+  uint64_t res= ((uint64_t) args[0]->val_int() <<
+                  (shift=(uint) args[1]->val_int()));
+  if (args[0]->null_value || args[1]->null_value)
+  {
+    null_value=1;
+    return 0;
   }
-  ~Query_id();
+  null_value=0;
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0L);
+}
 
-  /* return current query_id value */
-  query_id_t value() const;
+int64_t Item_func_shift_right::val_int()
+{
+  assert(fixed == 1);
+  uint32_t shift;
+  uint64_t res= (uint64_t) args[0]->val_int() >>
+    (shift=(uint) args[1]->val_int());
+  if (args[0]->null_value || args[1]->null_value)
+  {
+    null_value=1;
+    return 0;
+  }
+  null_value=0;
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0);
+}
 
-  /* increment query_id and return it.  */
-  query_id_t next();
-
-private:
-  pthread_mutex_t LOCK_query_id;
-  query_id_t the_query_id;
-
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
-};
-
-#endif

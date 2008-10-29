@@ -62,7 +62,7 @@ innobase_convert_name(
 	ulint		buflen,	/* in: length of buf, in bytes */
 	const char*	id,	/* in: identifier to convert */
 	ulint		idlen,	/* in: length of id, in bytes */
-	void*		session,	/* in: MySQL connection thread, or NULL */
+	void*		thd,	/* in: MySQL connection thread, or NULL */
 	ibool		table_id);/* in: TRUE=id is a table or database name;
 				FALSE=id is an index name */
 
@@ -74,10 +74,10 @@ differently than other threads. Also used in
 srv_conc_force_exit_innodb(). */
 UNIV_INTERN
 ibool
-session_is_replication_slave_thread(
+thd_is_replication_slave_thread(
 /*============================*/
-			/* out: true if session is the replication thread */
-	void*	session);	/* in: thread handle (Session*) */
+			/* out: true if thd is the replication thread */
+	void*	thd);	/* in: thread handle (THD*) */
 
 /**********************************************************************
 Returns true if the transaction this thread is processing has edited
@@ -86,20 +86,20 @@ which transaction to rollback in case of a deadlock - we try to avoid
 rolling back transactions that have edited non-transactional tables. */
 UNIV_INTERN
 ibool
-session_has_edited_nontrans_tables(
+thd_has_edited_nontrans_tables(
 /*===========================*/
 			/* out: true if non-transactional tables have
 			been edited */
-	void*	session);	/* in: thread handle (Session*) */
+	void*	thd);	/* in: thread handle (THD*) */
 
 /*****************************************************************
-Prints info of a Session object (== user session thread) to the given file. */
+Prints info of a THD object (== user session thread) to the given file. */
 UNIV_INTERN
 void
-innobase_mysql_print_session(
+innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/* in: output stream */
-	void*	session,		/* in: pointer to a MySQL Session object */
+	void*	thd,		/* in: pointer to a MySQL THD object */
 	uint	max_query_len);	/* in: max query length to print, or 0 to
 				   use the default max length */
 
@@ -122,25 +122,25 @@ get_innobase_type_from_mysql_type(
 	__attribute__((nonnull));
 
 /*****************************************************************
-If you want to print a session that is not associated with the current thread,
+If you want to print a thd that is not associated with the current thread,
 you must call this function before reserving the InnoDB kernel_mutex, to
-protect MySQL from setting session->query NULL. If you print a session of the current
-thread, we know that MySQL cannot modify session->query, and it is not necessary
-to call this. Call innobase_mysql_end_print_arbitrary_session() after you release
+protect MySQL from setting thd->query NULL. If you print a thd of the current
+thread, we know that MySQL cannot modify thd->query, and it is not necessary
+to call this. Call innobase_mysql_end_print_arbitrary_thd() after you release
 the kernel_mutex. */
 UNIV_INTERN
 void
-innobase_mysql_prepare_print_arbitrary_session(void);
+innobase_mysql_prepare_print_arbitrary_thd(void);
 /*============================================*/
 
 /*****************************************************************
-Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_session().
+Releases the mutex reserved by innobase_mysql_prepare_print_arbitrary_thd().
 In the InnoDB latching order, the mutex sits right above the
 kernel_mutex.  In debug builds, we assert that the kernel_mutex is
 released before this function is invoked. */
 UNIV_INTERN
 void
-innobase_mysql_end_print_arbitrary_session(void);
+innobase_mysql_end_print_arbitrary_thd(void);
 /*========================================*/
 
 /**********************************************************************
