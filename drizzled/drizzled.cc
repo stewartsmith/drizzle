@@ -23,6 +23,7 @@
 #include <netdb.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <signal.h>
 
 #include <mysys/my_bit.h>
 #include <drizzled/slave.h>

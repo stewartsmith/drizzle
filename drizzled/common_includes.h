@@ -46,8 +46,6 @@
 #include <mystrings/m_string.h>
 /* Custom HASH API */
 #include <mysys/hash.h>
-/* Standard signals API */
-#include <signal.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */
