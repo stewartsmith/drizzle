@@ -62,8 +62,6 @@
 #include "sql_plugin.h"
 /* The <strong>connection</strong> thread scheduler API */
 #include "scheduler.h"
-/* Network database operations (hostent, netent, servent, etc...*/
-#include <netdb.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */

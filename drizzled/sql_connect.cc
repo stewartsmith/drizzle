@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
 #include <drizzled/error.h>
+#include <netdb.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 

@@ -19,15 +19,18 @@
 
 
 #include <drizzled/server_includes.h>
-#include <mysys/my_bit.h>
-#include "slave.h"
-#include "rpl_mi.h"
-#include "sql_repl.h"
-#include "rpl_filter.h"
-#include "stacktrace.h"
-#include <mysys/mysys_err.h>
+
+#include <netdb.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+
+#include <mysys/my_bit.h>
+#include <drizzled/slave.h>
+#include <drizzled/rpl_mi.h>
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_filter.h>
+#include <drizzled/stacktrace.h>
+#include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 
