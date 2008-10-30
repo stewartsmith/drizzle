@@ -19,8 +19,8 @@
 
 /* Dynamic hashing of record with different key-length */
 
-#ifndef DRIZZLED_HASH_H
-#define DRIZZLED_HASH_H
+#ifndef MYSYS_HASH_H
+#define MYSYS_HASH_H
 
 #include <mysys/my_sys.h>
 

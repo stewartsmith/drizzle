@@ -26,6 +26,7 @@
 #define DRIZZLED_FIELD_H
 
 #include <drizzled/sql_error.h>
+#include <drizzled/my_decimal.h>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER

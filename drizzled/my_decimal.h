@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 #include <mystrings/decimal.h>
+#include <mysys/my_time.h>
 
 #ifdef __cplusplus
 }

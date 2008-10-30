@@ -40,16 +40,10 @@
 #include <drizzled/global.h>                    
 /* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
 #include <mysys/my_sys.h>                       
-/* Convenience functions for working with times */
-#include <mysys/my_time.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
-/* Custom queue API */
-#include <mysys/queues.h>
-/* Custom Bitmap API */
-#include <drizzled/sql_bitmap.h>
 /* Array of pointers to Elem that uses memory from MEM_ROOT */
 #include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
@@ -84,7 +78,6 @@ inline Session *_current_session(void)
 #include <drizzled/sql_string.h>
 /* Custom singly-linked list lite struct and full-blown type-safe, templatized class */
 #include <drizzled/sql_list.h>
-#include "my_decimal.h"
 #include "handler.h"
 #include <drizzled/table_list.h>
 /* Drizzle server data type class definitions */

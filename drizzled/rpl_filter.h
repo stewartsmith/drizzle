@@ -21,7 +21,7 @@
 #define RPL_FILTER_H
 
 #include <libdrizzle/libdrizzle.h>
-#include <drizzled/hash.h>
+#include <mysys/hash.h>
 
 typedef struct st_table_rule_ent
 {

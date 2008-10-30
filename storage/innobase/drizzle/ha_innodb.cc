@@ -25,7 +25,7 @@
 #include <drizzled/error.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
-#include <drizzled/hash.h>
+#include <mysys/hash.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/plugin.h>
 #include <drizzled/sql_show.h>
