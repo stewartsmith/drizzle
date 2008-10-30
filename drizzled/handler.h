@@ -27,6 +27,8 @@
 #include <storage/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/sql_list.h>
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
