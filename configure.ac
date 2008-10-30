@@ -1509,28 +1509,48 @@ then
 
   if test "$ac_warn_pedantic" = "yes"
   then
-  save_CXXFLAGS="${CXXFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
-  AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
-    [ac_cv_safe_to_use_Wredundant_decls_],
-    [AC_LANG_PUSH(C++)
-     AC_COMPILE_IFELSE(
-       [AC_LANG_PROGRAM([
+    save_CXXFLAGS="${CXXFLAGS}"
+    CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
+    AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
+      [ac_cv_safe_to_use_Wredundant_decls_],
+      [AC_LANG_PUSH(C++)
+       AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([
 template <typename E> struct C { void foo(); };
 template <typename E> void C<E>::foo() { }
 template <> void C<int>::foo();
-          AC_INCLUDES_DEFAULT])],
-       [ac_cv_safe_to_use_Wredundant_decls_=yes],
-       [ac_cv_safe_to_use_Wredundant_decls_=no])
-     AC_LANG_POP()])
+            AC_INCLUDES_DEFAULT])],
+          [ac_cv_safe_to_use_Wredundant_decls_=yes],
+          [ac_cv_safe_to_use_Wredundant_decls_=no])
+        AC_LANG_POP()])
     if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
     then
       GXX_W_REDUNDANT_DECLS="-Wredundant-decls"
     else
       GXX_W_REDUNDANT_DECLS="-Wno-redundant-decls"
     fi
+    
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
     GXX_PEDANTIC="-pedantic -Wundef ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
+
+    AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
+      [ac_cv_can_use_hidden_],
+      [AC_LANG_PUSH(C++)
+       AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([
+          AC_INCLUDES_DEFAULT
+__attribute__((visibility ("hidden")))
+void testme() {  };],[
+     testme();])],  
+         [ac_cv_can_use_hidden_=yes],
+         [ac_cv_can_use_hidden_=no])
+       AC_LANG_POP()])
+    if test "$ac_cv_can_use_hidden_" = "yes"
+    then
+      AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
+                [Define to 1 if you have support for __attribute__((visibility("hidden")))])
+    fi
+
     CXXFLAGS="${save_CXXFLAGS}"
   fi
 
