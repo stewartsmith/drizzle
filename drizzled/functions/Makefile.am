@@ -67,14 +67,17 @@ libfunctions_la_SOURCES = abs.cc \
 			  real.cc \
 			  round.cc \
 			  row_count.cc \
+			  set_user_var.cc \
 			  shift.cc \
 			  sign.cc \
 			  signed.cc \
 			  sin.cc \
 			  sqrt.cc \
 			  tan.cc \
+			  update_hash.cc \
 			  units.cc \
-			  unsigned.cc
+			  unsigned.cc \
+			  user_var_as_out_param.cc
 
 noinst_HEADERS = abs.h \
 		 acos.h \
@@ -128,12 +131,14 @@ noinst_HEADERS = abs.h \
 		 rollup_const.h \
 		 round.h \
 		 row_count.h \
+		 set_user_var.h \
 		 sign.h \
 		 signed.h \
 		 sin.h \
 		 sqrt.h \
 		 tan.h \
-		 unsigned.h
+		 unsigned.h \
+		 user_var_as_out_param.h
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@
