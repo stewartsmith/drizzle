@@ -37,21 +37,14 @@
 
 
 /* Cross-platform portability code and standard includes */
-#include <drizzled/global.h>                    
-/* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
-#include <mysys/my_sys.h>                       
-/* Convenience functions for working with times */
-#include <mysys/my_time.h>
+#include <drizzled/global.h>
+/* Lots of system-wide struct definitions like IO_CACHE,
+   prototypes for all my_* functions */
+#include <mysys/my_sys.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
-/* Custom queue API */
-#include <mysys/queues.h>
-/* Custom Bitmap API */
-#include <drizzled/sql_bitmap.h>
-/* Array of pointers to Elem that uses memory from MEM_ROOT */
-#include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
 /* Contains system-wide constants and #defines */
@@ -84,17 +77,12 @@ inline Session *_current_session(void)
 #include <drizzled/sql_string.h>
 /* Custom singly-linked list lite struct and full-blown type-safe, templatized class */
 #include <drizzled/sql_list.h>
-#include "my_decimal.h"
 #include "handler.h"
 #include <drizzled/table_list.h>
-#include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
-#include "protocol.h"
 #include "item.h"
 
-
-#include <drizzled/sql_parse.h>
 
 #include "sql_class.h"
 

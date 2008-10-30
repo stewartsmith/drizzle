@@ -22,8 +22,7 @@
 /* Key length of 0 isn't allowed */
 
 #include <config.h>
-#include <drizzled/definitions.h>
-#include <drizzled/hash.h>
+#include <mysys/hash.h>
 
 const uint32_t NO_RECORD= UINT32_MAX;
 

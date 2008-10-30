@@ -26,6 +26,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <libdrizzle/pack.h>
+#include <drizzled/sql_parse.h>
 
 #include <algorithm>
 

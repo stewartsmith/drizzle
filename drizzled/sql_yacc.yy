@@ -42,6 +42,7 @@
 #include <drizzled/functions/locate.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
+#include <drizzled/sql_parse.h>
 
 int yylex(void *yylval, void *yysession);
 

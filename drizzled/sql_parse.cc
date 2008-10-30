@@ -15,12 +15,13 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include "sql_repl.h"
-#include "rpl_filter.h"
-#include "logging.h"
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_filter.h>
+#include <drizzled/logging.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
 
 /**
