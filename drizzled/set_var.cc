@@ -494,16 +494,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
 static sys_var_const_str_ptr    sys_repl_report_host(&vars, "report_host", &report_host);
-static sys_var_const_str_ptr    sys_repl_report_user(&vars, "report_user", &report_user);
-static sys_var_const_str_ptr    sys_repl_report_password(&vars, "report_password", &report_password);
-
-static unsigned char *slave_get_report_port(Session *session)
-{
-  session->sys_var_tmp.long_value= report_port;
-  return (unsigned char*) &session->sys_var_tmp.long_value;
-}
-
-static sys_var_readonly    sys_repl_report_port(&vars, "report_port", OPT_GLOBAL, SHOW_INT, slave_get_report_port);
 
 sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create", 
                                            &SV::keep_files_on_create);
