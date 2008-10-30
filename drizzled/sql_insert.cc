@@ -28,6 +28,7 @@
 #include <drizzled/rpl_mi.h>
 #include <drizzled/error.h>
 #include <drizzled/slave.h>
+#include <drizzled/probes.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 

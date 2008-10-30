@@ -33,7 +33,7 @@
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <mysys/hash.h>
+#include <drizzled/hash.h>
 #include <stdarg.h>
 
 #include <drizzled/error.h>

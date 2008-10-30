@@ -24,6 +24,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
+#include <drizzled/probes.h>
 
 /*
   While we have legacy_db_type, we have this array to

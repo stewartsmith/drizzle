@@ -101,6 +101,7 @@ noinst_HEADERS = \
 		gettext.h \
 		global.h \
 		handler.h \
+		hash.h \
 		item_cmpfunc.h \
 		item_create.h \
 		item_func.h \
@@ -177,6 +178,7 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		hash.cc \
 		init.cc \
 		item_buff.cc \
 		item.cc \

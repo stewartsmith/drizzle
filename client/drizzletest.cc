@@ -48,7 +48,7 @@
 
 #include <pcrecpp.h>
 
-#include <mysys/hash.h>
+#include <drizzled/hash.h>
 #include <stdarg.h>
 
 #include "errname.h"

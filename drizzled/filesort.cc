@@ -24,8 +24,9 @@
 #include <drizzled/server_includes.h>
 #include "sql_sort.h"
 #include <drizzled/error.h>
+#include <drizzled/probes.h>
 
-	/* functions defined in this file */
+/* functions defined in this file */
 
 static char **make_char_array(char **old_pos, register uint32_t fields,
                               uint32_t length, myf my_flag);
