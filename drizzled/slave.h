@@ -32,19 +32,12 @@
    compiled in (embedded).
 */
 
-/**
-   The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
-*/
-#define SLAVE_MAX_HEARTBEAT_PERIOD 4294967
 
 #include "log.h"
 #include <mysys/my_list.h>
 #include "rpl_filter.h"
 #include "rpl_tblmap.h"
 
-#define SLAVE_NET_TIMEOUT  3600
-
-#define MAX_SLAVE_ERROR    2000
 
 // Forward declarations
 class Relay_log_info;
@@ -222,9 +215,6 @@ extern char *master_ssl_cipher, *master_ssl_key;
        
 extern I_List<Session> threads;
 
-/* masks for start/stop operations on io and sql slave threads */
-#define SLAVE_IO  1
-#define SLAVE_SQL 2
 
 /**
   @} (end of group Replication)

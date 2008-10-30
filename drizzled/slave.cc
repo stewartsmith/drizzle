@@ -35,6 +35,7 @@
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <signal.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

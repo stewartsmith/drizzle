@@ -21,6 +21,7 @@
 #define DRIZZLED_PLUGIN_H
 
 #include <drizzled/global.h>
+#include <mystrings/m_string.h>
 
 class Session;
 class Item;
@@ -434,12 +435,20 @@ extern "C" {
 
 int session_in_lock_tables(const Session *session);
 int session_tablespace_op(const Session *session);
+void set_session_proc_info(Session *session, const char *info);
+const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
 void **session_ha_data(const Session *session, const struct handlerton *hton);
 int session_tx_isolation(const Session *session);
 /* Increments the row counter, see Session::row_count */
 void session_inc_row_count(Session *session);
+
+LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
+                                    const char *str, unsigned int size,
+                                    int allocate_lex_string);
+
+
 
 /**
   Create a temporary file.

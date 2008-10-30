@@ -7,6 +7,7 @@ Smart ALTER TABLE
 #if defined(BUILD_DRIZZLE)
 # include <drizzled/common_includes.h>
 # include <drizzled/error.h>
+# include <mystrings/m_ctype.h>
 #else
 # include <mysql_priv.h>
 # include <mysqld_error.h>

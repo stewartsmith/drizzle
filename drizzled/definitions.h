@@ -476,6 +476,20 @@ enum enum_var_type
   , OPT_GLOBAL
 };
 
+
 typedef uint64_t query_id_t;
+
+/**
+   The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
+*/
+const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
+
+#define SLAVE_NET_TIMEOUT  3600
+
+#define MAX_SLAVE_ERROR    2000
+
+/* masks for start/stop operations on io and sql slave threads */
+#define SLAVE_IO  1
+#define SLAVE_SQL 2
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */

@@ -14,6 +14,13 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/rpl_mi.h>
+#include <drizzled/rpl_rli.h>
+// For check_binlog_magic
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_utility.h>
+#include <drizzled/data_home.h>
+#include <drizzled/gettext.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -27,12 +34,6 @@
 #endif
 
 
-#include "rpl_mi.h"
-#include "rpl_rli.h"
-#include "sql_repl.h"  // For check_binlog_magic
-#include "rpl_utility.h"
-
-#include <drizzled/gettext.h>
 
 static int32_t count_relay_log_space(Relay_log_info* rli);
 
@@ -90,7 +91,7 @@ Relay_log_info::~Relay_log_info()
 
 
 int32_t init_relay_log_info(Relay_log_info* rli,
-			const char* info_fname)
+                            const char* info_fname)
 {
   char fname[FN_REFLEN+128];
   int32_t info_fd;

@@ -25,24 +25,18 @@
     (This shouldn't be needed)
 */
 
-using namespace std;
 #include <drizzled/server_includes.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
 #include <drizzled/query_id.h>
 #include <uuid/uuid.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <mysys/my_static.h>			// For soundex_map
-
-#ifdef __cplusplus
-}
-#endif
-
+#include <drizzled/data_home.h>
 #include <drizzled/error.h>
+
+// For soundex_map
+#include <mysys/my_static.h>
+
+using namespace std;
 
 String my_empty_string("",default_charset_info);
 

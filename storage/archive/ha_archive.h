@@ -17,6 +17,7 @@
 #include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
+#include <mysys/thr_lock.h>
 
 /*
   Please read ha_archive.cc first. If you are looking for more general

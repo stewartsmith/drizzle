@@ -19,7 +19,7 @@
 
 /**
  * @file
- * 
+ *
  * Contains #includes and definitions that apply to ALL server-related
  * executables, including storage engine plugins.
  *
@@ -46,10 +46,6 @@
 #include <mystrings/m_string.h>
 /* Custom HASH API */
 #include <mysys/hash.h>
-/* Standard signals API */
-#include <signal.h>
-/* Deadlock-free table-list lock API */
-#include <mysys/thr_lock.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */
@@ -60,16 +56,10 @@
 #include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
-/* The <strong>connection</strong> thread scheduler API */
-#include "scheduler.h"
-/* Network database operations (hostent, netent, servent, etc...*/
-#include <netdb.h>
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 /* System-wide common data structures */
 #include <drizzled/structs.h>
-/* Custom continguous-section memory allocator */
-#include <drizzled/sql_alloc.h>
 
 #include "probes.h"
 
@@ -86,15 +76,12 @@
 extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
 
-extern pthread_key(Session*, THR_Session);
+extern pthread_key_t THR_Session;
 inline Session *_current_session(void)
 {
   return (Session *)pthread_getspecific(THR_Session);
 }
 #define current_session _current_session()
-
-extern "C" void set_session_proc_info(Session *session, const char *info);
-extern "C" const char *get_session_proc_info(Session *session);
 
 /*
   External variables
@@ -114,48 +101,10 @@ extern uint32_t server_id;
 #include "protocol.h"
 #include "item.h"
 
-extern my_decimal decimal_zero;
-
-/** @TODO Find a good header to put this guy... */
-void close_thread_tables(Session *session);
 
 #include <drizzled/sql_parse.h>
 
 #include "sql_class.h"
-#include "slave.h" // for tables_ok(), rpl_filter
-
-void sql_perror(const char *message);
-
-bool fn_format_relative_to_data_home(char * to, const char *name,
-				     const char *dir, const char *extension);
-
-/**
- * @TODO
- *
- * This is much better than the previous situation of a crap-ton
- * of conditional defines all over mysql_priv.h, but this still
- * is hackish.  Put these things into a separate header?  Or fix
- * InnoDB?  Or does the InnoDB plugin already fix this stuff?
- */
-#if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-bool check_global_access(Session *session, ulong want_access);
-int get_quote_char_for_identifier(Session *session, const char *name,
-                                  uint32_t length);
-extern struct system_variables global_system_variables;
-extern uint32_t mysql_data_home_len;
-extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
-            mysql_real_data_home[], mysql_unpacked_real_data_home[];
-extern const CHARSET_INFO *character_set_filesystem;
-extern char reg_ext[FN_EXTLEN];
-extern uint32_t reg_ext_length;
-extern ulong specialflag;
-extern uint32_t lower_case_table_names;
-uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
-                const CHARSET_INFO *to_cs, char *to, uint32_t to_length,
-                uint32_t *errors);
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
-#endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
 
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

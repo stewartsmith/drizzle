@@ -19,15 +19,19 @@
 
 
 #include <drizzled/server_includes.h>
-#include <mysys/my_bit.h>
-#include "slave.h"
-#include "rpl_mi.h"
-#include "sql_repl.h"
-#include "rpl_filter.h"
-#include "stacktrace.h"
-#include <mysys/mysys_err.h>
+
+#include <netdb.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <signal.h>
+
+#include <mysys/my_bit.h>
+#include <drizzled/slave.h>
+#include <drizzled/rpl_mi.h>
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_filter.h>
+#include <drizzled/stacktrace.h>
+#include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 
@@ -432,8 +436,8 @@ SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
-pthread_key(MEM_ROOT**,THR_MALLOC);
-pthread_key(Session*, THR_Session);
+pthread_key_t THR_MALLOC;
+pthread_key_t THR_Session;
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
@@ -4655,29 +4659,6 @@ static char *get_relative_path(const char *path)
       path++;
   }
   return (char*) path;
-}
-
-
-/**
-  Fix filename and replace extension where 'dir' is relative to
-  mysql_real_data_home.
-  @return
-    1 if len(path) > FN_REFLEN
-*/
-
-bool
-fn_format_relative_to_data_home(char * to, const char *name,
-				const char *dir, const char *extension)
-{
-  char tmp_path[FN_REFLEN];
-  if (!test_if_hard_path(dir))
-  {
-    strcpy(tmp_path, mysql_real_data_home);
-    strncat(tmp_path, dir, sizeof(tmp_path)-strlen(mysql_real_data_home)-1);
-    dir=tmp_path;
-  }
-  return !fn_format(to, name, dir, extension,
-		    MY_APPEND_EXT | MY_UNPACK_FILENAME | MY_SAFE_PATH);
 }
 
 

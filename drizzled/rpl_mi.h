@@ -26,6 +26,8 @@
 #include <string>
 
 
+typedef struct st_drizzle DRIZZLE;
+
 /*****************************************************************************
 
   Replication IO Thread

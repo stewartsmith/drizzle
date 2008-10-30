@@ -24,6 +24,8 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 
+extern my_decimal decimal_zero;
+
 /**
   Prepare an aggregate function item for checking context conditions.
 
