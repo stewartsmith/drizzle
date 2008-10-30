@@ -37,15 +37,14 @@
 
 
 /* Cross-platform portability code and standard includes */
-#include <drizzled/global.h>                    
-/* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
-#include <mysys/my_sys.h>                       
+#include <drizzled/global.h>
+/* Lots of system-wide struct definitions like IO_CACHE,
+   prototypes for all my_* functions */
+#include <mysys/my_sys.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
-/* Array of pointers to Elem that uses memory from MEM_ROOT */
-#include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
 /* Contains system-wide constants and #defines */
