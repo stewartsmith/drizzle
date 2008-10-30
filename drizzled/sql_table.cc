@@ -20,10 +20,11 @@
 #include <drizzled/sql_show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
 
-const char *primary_key_name="PRIMARY";
+const char * primary_key_name="PRIMARY";
 
 static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);

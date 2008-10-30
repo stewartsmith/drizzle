@@ -14,8 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include "rpl_mi.h"
+#include <drizzled/rpl_mi.h>
 #include <drizzled/gettext.h>
+#include <drizzled/slave.h>
+#include <drizzled/data_home.h>
+
 #include <iostream>
 #include <fstream>
 
@@ -26,7 +29,7 @@ using namespace std;
 // Defined in slave.cc
 int init_intvar_from_file(int* var, IO_CACHE* f, int default_val);
 int init_strvar_from_file(char *var, int max_size, IO_CACHE *f,
-			  const char *default_val);
+                          const char *default_val);
 int init_floatvar_from_file(float* var, IO_CACHE* f, float default_val);
 
 Master_info::Master_info()

@@ -1067,7 +1067,7 @@ int main(int argc,char *argv[])
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(argc, (char **) argv))
   {
@@ -1353,7 +1353,7 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, my.cnf, $DRIZZLE_TCP_PORT, ")
+  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
    N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
    (char**) &opt_drizzle_port,
    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
@@ -1442,13 +1442,14 @@ static void usage(int version)
 
   if (version)
     return;
-  printf(_("\
-Copyright (C) 2000-2008 MySQL AB\n                                      \
-This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n \
-and you are welcome to modify and redistribute it under the GPL license\n"));
+  printf(_("Copyright (C) 2008 Sun Microsystems\n"
+           "This software comes with ABSOLUTELY NO WARRANTY. "
+           "This is free software,\n"
+           "and you are welcome to modify and redistribute it "
+           "under the GPL license\n"));
   printf(_("Usage: %s [OPTIONS] [database]\n"), my_progname);
   my_print_help(my_long_options);
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
 }
 

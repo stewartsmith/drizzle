@@ -25,6 +25,7 @@
 #include <drizzled/tmp_table.h>
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/nested_join.h>
+#include <drizzled/data_home.h>
 
 #include <string>
 

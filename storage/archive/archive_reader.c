@@ -310,7 +310,7 @@ static void usage(void)
        license\n");
   puts("Read and modify Archive files directly\n");
   printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", my_progname);
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
 }
 
@@ -322,7 +322,7 @@ static void print_version(void)
 
 static void get_options(int *argc, char ***argv)
 {
-  load_defaults("my", load_default_groups, argc, argv);
+  load_defaults("drizzle", load_default_groups, argc, argv);
   default_argv= *argv;
 
   handle_options(argc, argv, my_long_options, get_one_option);

@@ -17,6 +17,7 @@
 #include <drizzled/rpl_rli.h>
 #include <mysys/base64.h>
 #include <drizzled/error.h>
+#include <drizzled/slave.h>
 
 /**
   Execute a BINLOG statement

@@ -278,4 +278,7 @@ public:
   */
   bool process_index_hints(Table *table);
 };
+
+void close_thread_tables(Session *session);
+
 #endif /* DRIZZLED_TMP_TABLE_H */

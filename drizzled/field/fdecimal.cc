@@ -23,6 +23,7 @@
 #include <drizzled/field/fdecimal.h>
 #include <drizzled/error.h>
 
+extern my_decimal decimal_zero;
 
 /****************************************************************************
 ** Field_new_decimal

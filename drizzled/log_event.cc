@@ -37,8 +37,7 @@
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/tztime.h>
-
-#define log_cs	&my_charset_utf8_general_ci
+#include <drizzled/slave.h>
 
 
 static const char *HA_ERR(int i)
@@ -2963,11 +2962,11 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       session->lex->duplicates= handle_dup;
 
       sql_exchange ex((char*)fname, sql_ex.opt_flags & DUMPFILE_FLAG);
-      String field_term(sql_ex.field_term,sql_ex.field_term_len,log_cs);
-      String enclosed(sql_ex.enclosed,sql_ex.enclosed_len,log_cs);
-      String line_term(sql_ex.line_term,sql_ex.line_term_len,log_cs);
-      String line_start(sql_ex.line_start,sql_ex.line_start_len,log_cs);
-      String escaped(sql_ex.escaped,sql_ex.escaped_len, log_cs);
+      String field_term(sql_ex.field_term,sql_ex.field_term_len,&my_charset_utf8_general_ci);
+      String enclosed(sql_ex.enclosed,sql_ex.enclosed_len,&my_charset_utf8_general_ci);
+      String line_term(sql_ex.line_term,sql_ex.line_term_len,&my_charset_utf8_general_ci);
+      String line_start(sql_ex.line_start,sql_ex.line_start_len,&my_charset_utf8_general_ci);
+      String escaped(sql_ex.escaped,sql_ex.escaped_len, &my_charset_utf8_general_ci);
       ex.field_term= &field_term;
       ex.enclosed= &enclosed;
       ex.line_term= &line_term;
@@ -3090,7 +3089,7 @@ error:
 void Rotate_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], buf[22];
-  String tmp(buf1, sizeof(buf1), log_cs);
+  String tmp(buf1, sizeof(buf1), &my_charset_utf8_general_ci);
   tmp.length(0);
   tmp.append(new_log_ident, ident_len);
   tmp.append(STRING_WITH_LEN(";pos="));

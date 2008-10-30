@@ -318,7 +318,7 @@ int main(int argc, char **argv)
 
   MY_INIT(argv[0]);
 
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(&argc,&argv))
   {
@@ -713,7 +713,7 @@ static void usage(void)
        license\n");
   puts("Run a query multiple times against the server\n");
   printf("Usage: %s [OPTIONS]\n",my_progname);
-  print_defaults("my",load_default_groups);
+  print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
 }
 

@@ -128,7 +128,7 @@ static struct my_option my_long_options[] =
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
    (char**) &opt_mysql_port,
    (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
@@ -214,7 +214,7 @@ static void usage(void)
   printf("OR     %s [OPTIONS] --databases DB1 [DB2 DB3...]\n",
    my_progname);
   printf("OR     %s [OPTIONS] --all-databases\n", my_progname);
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 } /* usage */
@@ -299,7 +299,7 @@ static int get_options(int *argc, char ***argv)
     exit(0);
   }
 
-  load_defaults("my", load_default_groups, argc, argv);
+  load_defaults("drizzle", load_default_groups, argc, argv);
 
   if ((ho_error=handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);

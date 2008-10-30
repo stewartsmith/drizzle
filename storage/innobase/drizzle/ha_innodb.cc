@@ -21,30 +21,16 @@
     in Windows?
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#if defined(BUILD_DRIZZLE)
-# include <drizzled/common_includes.h>
-# include <drizzled/error.h>
-# include <mystrings/m_ctype.h>
-# include <mysys/my_sys.h>
-# include <mysys/hash.h>
-# include <mysys/mysys_err.h>
-# include <drizzled/plugin.h>
-# include <drizzled/innodb_plugin_extras.h>
-#else
-# include <mysql_priv.h>
-# include <mysqld_error.h>
-
-# include <m_ctype.h>
-# include <hash.h>
-# include <myisampack.h>
-# include <mysys_err.h>
-# include <my_sys.h>
-# include <mysql/plugin.h>
-#endif
+#include <drizzled/common_includes.h>
+#include <drizzled/error.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/my_sys.h>
+#include <mysys/hash.h>
+#include <mysys/mysys_err.h>
+#include <drizzled/plugin.h>
+#include <drizzled/sql_show.h>
+#include <drizzled/data_home.h>
+#include <drizzled/error.h>
 
 /* Include necessary InnoDB headers */
 extern "C" {
@@ -79,8 +65,6 @@ extern "C" {
 }
 
 #include "ha_innodb.h"
-#include <drizzled/innodb_plugin_extras.h>
-#include <drizzled/error.h>
 #include "i_s.h"
 
 #ifndef DRIZZLE_SERVER
@@ -88,11 +72,6 @@ extern "C" {
 is defined the same in both builds: the MySQL server and the InnoDB plugin. */
 extern pthread_mutex_t LOCK_thread_count;
 
-#if DRIZZLE_VERSION_ID < 50124
-/* this is defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER
-but we need it here */
-bool check_global_access(Session *session, ulong want_access);
-#endif /* DRIZZLE_VERSION_ID < 50124 */
 #endif /* DRIZZLE_SERVER */
 
 /** to protect innobase_open_files */

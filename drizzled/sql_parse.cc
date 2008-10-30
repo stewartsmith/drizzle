@@ -21,13 +21,14 @@
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
+#include <drizzled/data_home.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
 */
 
-
+extern const CHARSET_INFO *character_set_filesystem;
 const char *any_db="*any*";	// Special symbol for check_access
 
 const LEX_STRING command_name[COM_END+1]={

@@ -17,11 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_HANDLER_H
+#define DRIZZLED_HANDLER_H
 
 /* Definitions for parameters to do with handler-routines */
 
-
 #include <storage/myisam/keycache.h>
+#include <mysys/thr_lock.h>
+
+/* Bits to show what an alter table will do */
+#include <drizzled/sql_bitmap.h>
+
+#define HA_MAX_ALTER_FLAGS 40
+typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 #ifndef NO_HASH
 #define NO_HASH				/* Not yet implemented */
@@ -44,11 +52,6 @@
 #define HA_ADMIN_NEEDS_ALTER    -11
 #define HA_ADMIN_NEEDS_CHECK    -12
 
-/* Bits to show what an alter table will do */
-#include <drizzled/sql_bitmap.h>
-
-#define HA_MAX_ALTER_FLAGS 40
-typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 #define HA_ADD_INDEX                  (0)
 #define HA_DROP_INDEX                 (1)
@@ -2266,6 +2269,17 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 /* these are called by storage engines */
 void trans_register_ha(Session *session, bool all, handlerton *ht);
 
+void table_case_convert(char * name, uint32_t length);
+const char *table_case_name(HA_CREATE_INFO *info, const char *name);
+
+extern char reg_ext[FN_EXTLEN];
+extern uint32_t reg_ext_length;
+extern ulong specialflag;
+extern uint32_t lower_case_table_names;
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
+
+
 /*
   Storage engine has to assume the transaction will end up with 2pc if
    - there is more than one 2pc-capable storage engine available
@@ -2273,3 +2287,5 @@ void trans_register_ha(Session *session, bool all, handlerton *ht);
 */
 #define trans_need_2pc(session, all)                   ((total_ha_2pc > 1) && \
         !((all ? &session->transaction.all : &session->transaction.stmt)->no_2pc))
+
+#endif /* DRIZZLED_HANDLER_H */

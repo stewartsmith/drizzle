@@ -25,9 +25,9 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "sql_repl.h"
-#include "rpl_filter.h"
-#include "rpl_rli.h"
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_filter.h>
+#include <drizzled/rpl_rli.h>
 
 #include <mysys/my_dir.h>
 #include <stdarg.h>
@@ -35,6 +35,7 @@
 #include <drizzled/plugin.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/data_home.h>
 
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
@@ -45,7 +46,7 @@ DRIZZLE_BIN_LOG mysql_bin_log;
 ulong sync_binlog_counter= 0;
 
 static bool test_if_number(const char *str,
-			   long *res, bool allow_wildcards);
+                           long *res, bool allow_wildcards);
 static int binlog_init(void *p);
 static int binlog_close_connection(handlerton *hton, Session *session);
 static int binlog_savepoint_set(handlerton *hton, Session *session, void *sv);

@@ -442,4 +442,7 @@ extern sql_print_message_func sql_print_message_handlers[];
 int error_log_print(enum loglevel level, const char *format,
                     va_list args);
 
+void sql_perror(const char *message);
+
+
 #endif /* DRIZZLE_SERVER_LOG_H */

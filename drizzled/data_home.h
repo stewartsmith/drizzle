@@ -17,24 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H
-#define DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H
+#ifndef DRIZZLED_DATA_HOME_H
+#define DRIZZLED_DATA_HOME_H
 
-#include <drizzled/functions/func.h> 
-#include <drizzled/slave.h>
+extern uint32_t mysql_data_home_len;
+extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
+            mysql_real_data_home[], mysql_unpacked_real_data_home[];
 
-class Item_master_pos_wait :public Item_int_func
-{
-  String value;
-public:
-  Item_master_pos_wait(Item *a,Item *b) :Item_int_func(a,b) {}
-  Item_master_pos_wait(Item *a,Item *b,Item *c) :Item_int_func(a,b,c) {}
-  int64_t val_int();
-  const char *func_name() const { return "master_pos_wait"; }
-  void fix_length_and_dec() { max_length=21; maybe_null=1;}
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-
-#endif /* DRIZZLED_FUNCTIONS_MASTER_POS_WAIT_H */
+#endif /* DRIZZLED_DATA_HOME_H */
