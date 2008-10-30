@@ -44,8 +44,6 @@
 #include <mysys/my_time.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
-/* Custom HASH API */
-#include <mysys/hash.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
 /* Custom queue API */
@@ -60,8 +58,6 @@
 #include <drizzled/definitions.h>
 /* System-wide common data structures */
 #include <drizzled/structs.h>
-
-#include "probes.h"
 
 
 /**

@@ -11,7 +11,7 @@ Created July 18, 2007 Vasil Dimov
 # include <drizzled/error.h>
 # include <mystrings/m_ctype.h>
 # include <mysys/my_sys.h>
-# include <mysys/hash.h>
+# include <drizzled/hash.h>
 # include <mysys/mysys_err.h>
 # include <drizzled/plugin.h>
 #else

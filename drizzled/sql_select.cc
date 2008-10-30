@@ -25,13 +25,14 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include "sj_tmp_table.h"
+#include <drizzled/sj_tmp_table.h>
 
 #include <mysys/my_bit.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
 #include <drizzled/nested_join.h>
+#include <drizzled/probes.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",
