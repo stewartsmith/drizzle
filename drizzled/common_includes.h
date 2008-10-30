@@ -90,7 +90,6 @@ inline Session *_current_session(void)
 #include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
-#include "protocol.h"
 #include "item.h"
 
 
