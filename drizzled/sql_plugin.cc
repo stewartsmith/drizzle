@@ -22,6 +22,7 @@
 #include <drizzled/configvar.h>
 #include <drizzled/qcache.h>
 #include <drizzled/parser.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 
 #include <string>

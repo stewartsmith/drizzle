@@ -20,6 +20,7 @@
 #include <drizzled/sql_repl.h>
 #include <drizzled/rpl_utility.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/gettext.h>
 
 #if TIME_WITH_SYS_TIME

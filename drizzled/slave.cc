@@ -26,14 +26,15 @@
 #include <drizzled/server_includes.h>
 
 #include <storage/myisam/myisam.h>
-#include "rpl_mi.h"
-#include "rpl_rli.h"
-#include "sql_repl.h"
-#include "rpl_filter.h"
+#include <drizzled/rpl_mi.h>
+#include <drizzled/rpl_rli.h>
+#include <drizzled/sql_repl.h>
+#include <drizzled/rpl_filter.h>
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/gettext.h>
 #include <signal.h>
 

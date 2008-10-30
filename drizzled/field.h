@@ -22,6 +22,10 @@
   variables must declare the size_of() member function.
 */
 
+#ifndef DRIZZLED_FIELD_H
+#define DRIZZLED_FIELD_H
+
+#include <drizzled/sql_error.h>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
@@ -801,3 +805,5 @@ check_string_copy_error(Field_str *field,
                         const char *cannot_convert_error_pos,
                         const char *end,
                         const CHARSET_INFO * const cs);
+
+#endif /* DRIZZLED_FIELD_H */

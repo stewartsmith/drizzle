@@ -87,13 +87,10 @@ inline Session *_current_session(void)
 #include "my_decimal.h"
 #include "handler.h"
 #include <drizzled/table_list.h>
-#include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
 #include "item.h"
 
-
-#include <drizzled/sql_parse.h>
 
 #include "sql_class.h"
 
