@@ -19,6 +19,7 @@
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include <drizzled/error.h>
+#include <drizzled/data_home.h>
 
 
 class READ_INFO {

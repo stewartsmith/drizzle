@@ -320,6 +320,11 @@ typedef struct charset_info_st
   MY_COLLATION_HANDLER *coll;
   
 } CHARSET_INFO;
+
+uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
+                const CHARSET_INFO *to_cs, char *to, uint32_t to_length,
+                uint32_t *errors);
+
 #define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
 
 

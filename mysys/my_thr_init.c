@@ -36,9 +36,9 @@
 uint32_t thd_lib_detected= 0;
 
 #ifdef USE_TLS
-pthread_key(struct st_my_thread_var*, THR_KEY_mysys);
+pthread_key_t THR_KEY_mysys;
 #else
-pthread_key(struct st_my_thread_var, THR_KEY_mysys);
+pthread_key_t THR_KEY_mysys;
 #endif /* USE_TLS */
 pthread_mutex_t THR_LOCK_malloc,THR_LOCK_open,
 	        THR_LOCK_lock,THR_LOCK_isam,THR_LOCK_myisam,THR_LOCK_heap,

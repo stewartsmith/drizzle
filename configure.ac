@@ -466,6 +466,17 @@ LIBS="$save_LIBS"
 AC_LANG_POP()
 
 #--------------------------------------------------------------------
+# Check for libuuid
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(uuid/uuid.h)
+if test "x$ac_cv_header_uuid_uuid_h" = "xno"
+then
+  AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
+fi
+AC_CHECK_LIB(uuid, uuid_generate)
+
+#--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
 
@@ -1359,11 +1370,6 @@ else
   DEBUG_OPTIMIZE_CXX=""
   OPTIMIZE_CXXFLAGS="-O"
 fi
-
-
-AC_CHECK_HEADERS(uuid/uuid.h)
-AC_CHECK_LIB(uuid, uuid_generate)
-
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
 # AX_HEADER_ASSERT

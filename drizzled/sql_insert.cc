@@ -25,8 +25,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/sql_show.h>
-#include "rpl_mi.h"
+#include <drizzled/rpl_mi.h>
 #include <drizzled/error.h>
+#include <drizzled/slave.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 

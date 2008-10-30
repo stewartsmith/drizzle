@@ -43,4 +43,7 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info);
 bool schema_table_store_record(Session *session, Table *table);
 
+int get_quote_char_for_identifier(Session *session, const char *name,
+                                  uint32_t length);
+
 #endif /* SQL_SHOW_H */

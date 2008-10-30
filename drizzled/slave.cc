@@ -35,6 +35,7 @@
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <signal.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -870,7 +871,7 @@ static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
   /*
     Check that the master's server id and ours are different. Because if they
     are equal (which can result from a simple copy of master's datadir to slave,
-    thus copying some my.cnf), replication will work but all events will be
+    thus copying some drizzle.cnf), replication will work but all events will be
     skipped.
     Do not die if SHOW VARIABLES LIKE 'SERVER_ID' fails on master (very old
     master?).

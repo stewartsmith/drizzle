@@ -78,7 +78,7 @@ static struct my_option my_long_options[] =
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', N_("Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
    "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &tcp_port,
    (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -165,7 +165,7 @@ int main(int argc,char *argv[])
 
   MY_INIT(argv[0]);
   drizzle_create(&drizzle);
-  load_defaults("my",load_default_groups,&argc,&argv);
+  load_defaults("drizzle",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
   {

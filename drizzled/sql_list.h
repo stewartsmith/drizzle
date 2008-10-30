@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef INCLUDES_DRIZZLE_SQL_LIST_H
-#define INCLUDES_DRIZZLE_SQL_LIST_H
+#ifndef DRIZZLED_SQL_LIST_H
+#define DRIZZLED_SQL_LIST_H
 
 
 #include <utility>
 #include <algorithm>
+#include <drizzled/sql_alloc.h>
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
@@ -654,4 +655,4 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
     it.replace(el->clone(mem_root));
 }
 
-#endif // INCLUDES_DRIZZLE_SQL_LIST_H
+#endif // DRIZZLED_SQL_LIST_H

@@ -505,7 +505,7 @@ static void usage(void)
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
   puts("Dumping definition and data DRIZZLE database or table");
   short_usage_sub();
-  print_defaults("my",load_default_groups);
+  print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 } /* usage */
@@ -753,7 +753,7 @@ static int get_options(int *argc, char ***argv)
   opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
 
   md_result_file= stdout;
-  load_defaults("my",load_default_groups,argc,argv);
+  load_defaults("drizzle",load_default_groups,argc,argv);
   defaults_argv= *argv;
 
   if (hash_init(&ignore_table, charset_info, 16, 0, 0,

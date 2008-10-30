@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 /*****************************************************************************
@@ -28,9 +32,10 @@
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
-#include <drizzled/innodb_plugin_extras.h>
 #include <drizzled/query_id.h>
+#include <drizzled/data_home.h>
 
+extern scheduler_functions thread_scheduler;
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -598,50 +603,43 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-extern "C"
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 void *session_alloc(Session *session, unsigned int size)
 {
   return session->alloc(size);
 }
 
-extern "C"
 void *session_calloc(Session *session, unsigned int size)
 {
   return session->calloc(size);
 }
 
-extern "C"
 char *session_strdup(Session *session, const char *str)
 {
   return session->strdup(str);
 }
 
-extern "C"
 char *session_strmake(Session *session, const char *str, unsigned int size)
 {
   return session->strmake(str, size);
 }
 
-extern "C"
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                const char *str, unsigned int size,
-                                int allocate_lex_string)
-{
-  return session->make_lex_string(lex_str, str, size,
-                              (bool) allocate_lex_string);
-}
-
-extern "C"
 void *session_memdup(Session *session, const void* str, unsigned int size)
 {
   return session->memdup(str, size);
 }
 
-extern "C"
 void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 {
   *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
 }
+
+#if defined(__cplusplus)
+}
+#endif
 
 /*
   Init common variables that has to be reset on start and on change_user
@@ -2245,7 +2243,15 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
 }
 
 
-#ifdef INNODB_COMPATIBILITY_HOOKS
+extern "C"
+LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
+                                const char *str, unsigned int size,
+                                int allocate_lex_string)
+{
+  return session->make_lex_string(lex_str, str, size,
+                              (bool) allocate_lex_string);
+}
+
 extern "C" const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
@@ -2275,7 +2281,6 @@ extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
 }
-#endif // INNODB_COMPATIBILITY_HOOKS */
 
 
 /**

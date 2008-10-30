@@ -14,7 +14,6 @@ Created July 18, 2007 Vasil Dimov
 # include <mysys/hash.h>
 # include <mysys/mysys_err.h>
 # include <drizzled/plugin.h>
-# include <drizzled/innodb_plugin_extras.h>
 #else
 # include <mysql_priv.h>
 # include <mysqld_error.h>

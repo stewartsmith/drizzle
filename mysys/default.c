@@ -938,7 +938,7 @@ void print_defaults(const char *conf_file, const char **groups)
 
   @details
     1. /etc/
-    2. /etc/mysql/
+    2. /etc/drizzle/
     3. --sysconfdir=<path> (compile-time option)
     4. getenv(DEFAULT_HOME_ENV)
     5. --defaults-extra-file=<path> (run-time option)
@@ -949,7 +949,7 @@ static void init_default_directories(void)
 {
   memset(default_directories, 0, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
-  ADD_DIRECTORY("/etc/mysql/");
+  ADD_DIRECTORY("/etc/drizzle/");
 #if defined(DEFAULT_SYSCONFDIR)
     ADD_DIRECTORY(DEFAULT_SYSCONFDIR);
 #endif
