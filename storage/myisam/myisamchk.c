@@ -432,7 +432,7 @@ static void usage(void)
   -b,  --block-search=#\n\
                        Find a record, a block at given offset belongs to.");
 
-  print_defaults("my", load_default_groups);
+  print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
 }
 
@@ -693,7 +693,7 @@ static void get_options(register int *argc,register char ***argv)
 {
   int ho_error;
 
-  load_defaults("my", load_default_groups, argc, argv);
+  load_defaults("drizzle", load_default_groups, argc, argv);
   default_argv= *argv;
   if (isatty(fileno(stdout)))
     check_param.testflag|=T_WRITE_LOOP;

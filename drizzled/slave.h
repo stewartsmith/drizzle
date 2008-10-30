@@ -203,7 +203,7 @@ extern bool replicate_same_server_id;
 
 extern int32_t disconnect_slave_event_count, abort_slave_event_count ;
 
-/* the master variables are defaults read from my.cnf or command line */
+/* the master variables are defaults read from drizzle.cnf or command line */
 extern uint32_t master_port, master_connect_retry, report_port;
 extern char * master_user, *master_password, *master_host;
 extern char *master_info_file, *relay_log_info_file, *report_user;

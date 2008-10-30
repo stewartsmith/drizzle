@@ -3177,7 +3177,7 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P',
    N_("Port number to use for connection or 0 for default to, in "
-      "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+      "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
       "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &mysqld_port,
    (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
