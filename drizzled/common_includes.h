@@ -83,10 +83,6 @@ inline Session *_current_session(void)
 }
 #define current_session _current_session()
 
-/*
-  External variables
-*/
-extern uint32_t server_id;
 
 /* Custom C++-style String class API */
 #include <drizzled/sql_string.h>

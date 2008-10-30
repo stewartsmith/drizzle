@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_HANDLER_H
 #define DRIZZLED_HANDLER_H
 
+#include <drizzled/xid.h>
+
 /* Definitions for parameters to do with handler-routines */
 
 #include <storage/myisam/keycache.h>
@@ -340,13 +342,6 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
-typedef uint64_t my_xid; // this line is the same as in log_event.h
-#define DRIZZLE_XID_PREFIX "MySQLXid"
-#define DRIZZLE_XID_PREFIX_LEN 8 // must be a multiple of 8
-#define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
-#define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
-
-#define XIDDATASIZE DRIZZLE_XIDDATASIZE
 #define MAXGTRIDSIZE 64
 #define MAXBQUALSIZE 64
 
@@ -357,84 +352,6 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
                                       uint32_t key_length,
                                       uint64_t *engine_data);
 
-/**
-  struct xid_t is binary compatible with the XID structure as
-  in the X/Open CAE Specification, Distributed Transaction Processing:
-  The XA Specification, X/Open Company Ltd., 1991.
-  http://www.opengroup.org/bookstore/catalog/c193.htm
-
-  @see DRIZZLE_XID in mysql/plugin.h
-*/
-struct xid_t {
-  long formatID;
-  long gtrid_length;
-  long bqual_length;
-  char data[XIDDATASIZE];  // not \0-terminated !
-
-  xid_t() {}                                /* Remove gcc warning */  
-  bool eq(struct xid_t *xid)
-  { return eq(xid->gtrid_length, xid->bqual_length, xid->data); }
-  bool eq(long g, long b, const char *d)
-  { return g == gtrid_length && b == bqual_length && !memcmp(d, data, g+b); }
-  void set(struct xid_t *xid)
-  { memcpy(this, xid, xid->length()); }
-  void set(long f, const char *g, long gl, const char *b, long bl)
-  {
-    formatID= f;
-    memcpy(data, g, gtrid_length= gl);
-    memcpy(data+gl, b, bqual_length= bl);
-  }
-  void set(uint64_t xid)
-  {
-    my_xid tmp;
-    formatID= 1;
-    set(DRIZZLE_XID_PREFIX_LEN, 0, DRIZZLE_XID_PREFIX);
-    memcpy(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id));
-    tmp= xid;
-    memcpy(data+DRIZZLE_XID_OFFSET, &tmp, sizeof(tmp));
-    gtrid_length=DRIZZLE_XID_GTRID_LEN;
-  }
-  void set(long g, long b, const char *d)
-  {
-    formatID= 1;
-    gtrid_length= g;
-    bqual_length= b;
-    memcpy(data, d, g+b);
-  }
-  bool is_null() { return formatID == -1; }
-  void null() { formatID= -1; }
-  my_xid quick_get_my_xid()
-  {
-    my_xid tmp;
-    memcpy(&tmp, data+DRIZZLE_XID_OFFSET, sizeof(tmp));
-    return tmp;
-  }
-  my_xid get_my_xid()
-  {
-    return gtrid_length == DRIZZLE_XID_GTRID_LEN && bqual_length == 0 &&
-           !memcmp(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id)) &&
-           !memcmp(data, DRIZZLE_XID_PREFIX, DRIZZLE_XID_PREFIX_LEN) ?
-           quick_get_my_xid() : 0;
-  }
-  uint32_t length()
-  {
-    return sizeof(formatID)+sizeof(gtrid_length)+sizeof(bqual_length)+
-           gtrid_length+bqual_length;
-  }
-  unsigned char *key()
-  {
-    return (unsigned char *)&gtrid_length;
-  }
-  uint32_t key_length()
-  {
-    return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
-  }
-};
-typedef struct xid_t XID;
-
-/* for recover() handlerton call */
-#define MIN_XID_LIST_SIZE  128
-#define MAX_XID_LIST_SIZE  (1024*128)
 
 struct handlerton;
 

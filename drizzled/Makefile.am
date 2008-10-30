@@ -59,7 +59,8 @@ dist_drizzledinclude_HEADERS =	common.h \
 				plugin_logging.h \
 				plugin_qcache.h \
 				plugin_parser.h \
-				plugin_scheduling.h
+			 	plugin_scheduling.h \
+				xid.h
 
 noinst_LTLIBRARIES = libhandler.la libyacc.la
 
@@ -253,7 +254,8 @@ drizzled_SOURCES = \
 		tmp_table.cc \
 		tztime.cc \
 		uniques.cc \
-		unireg.cc
+		unireg.cc \
+		xid.cc
 
 libhandler_la_SOURCES = handler.cc
 libyacc_la_SOURCES = sql_yacc.yy
