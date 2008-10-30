@@ -21,7 +21,7 @@
 #define DRIZZLED_PLUGIN_H
 
 #include <drizzled/global.h>
-#include <mystrings/m_string.h>
+#include <drizzled/lex_string.h>
 
 class Session;
 class Item;

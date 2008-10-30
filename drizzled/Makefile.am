@@ -51,6 +51,7 @@ drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	common.h \
 				error.h \
 				korr.h \
+				lex_string.h \
 				plugin.h \
 				plugin_authentication.h \
 				plugin_configvar.h \
