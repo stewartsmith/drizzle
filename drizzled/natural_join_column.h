@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_NATURAL_JOIN_COLUMN_H
 #define DRIZZLED_NATURAL_JOIN_COLUMN_H
 
+#include <drizzled/sql_alloc.h>
+
 class Field;
 class Field_translator;
+class TableList;
 
 /*
   Column reference of a NATURAL/USING join. Since column references in

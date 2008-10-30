@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ORDER_H
 #define DRIZZLED_ORDER_H
 
+#include <drizzled/sql_bitmap.h>
+
 /* Order clause list element */
 
 struct order_st {
