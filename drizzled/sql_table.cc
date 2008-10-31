@@ -21,6 +21,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_parse.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
 

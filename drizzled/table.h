@@ -28,6 +28,8 @@
 #include <drizzled/filesort_info.h>
 #include <drizzled/natural_join_column.h>
 #include <drizzled/field_iterator.h>
+#include <mysys/hash.h>
+#include <drizzled/handler.h>
 
 class Item;				/* Needed by order_st */
 class Item_subselect;

@@ -20,10 +20,12 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "rpl_filter.h"
+#include <drizzled/rpl_filter.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
+#include <drizzled/probes.h>
+#include <drizzled/sql_parse.h>
 
 /*
   While we have legacy_db_type, we have this array to

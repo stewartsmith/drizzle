@@ -21,27 +21,11 @@
 #define DRIZZLED_PLUGIN_H
 
 #include <drizzled/global.h>
-#include <mystrings/m_string.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/xid.h>
 
 class Session;
 class Item;
-
-#define DRIZZLE_XIDDATASIZE 128
-/**
-  struct st_mysql_xid is binary compatible with the XID structure as
-  in the X/Open CAE Specification, Distributed Transaction Processing:
-  The XA Specification, X/Open Company Ltd., 1991.
-  http://www.opengroup.org/bookstore/catalog/c193.htm
-
-  @see XID in sql/handler.h
-*/
-struct st_mysql_xid {
-  long formatID;
-  long gtrid_length;
-  long bqual_length;
-  char data[DRIZZLE_XIDDATASIZE];  /* Not \0-terminated */
-};
-typedef struct st_mysql_xid DRIZZLE_XID;
 
 /*************************************************************************
   Plugin API. Common for all plugin types.

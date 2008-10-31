@@ -25,9 +25,9 @@
 **
 *****************************************************************************/
 #include <drizzled/server_includes.h>
-#include "rpl_rli.h"
-#include "rpl_record.h"
-#include "log_event.h"
+#include <drizzled/rpl_rli.h>
+#include <drizzled/rpl_record.h>
+#include <drizzled/log_event.h>
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>

@@ -26,6 +26,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <libdrizzle/pack.h>
+#include <drizzled/sql_parse.h>
 
 #include <algorithm>
 
@@ -3426,8 +3427,8 @@ void Xid_log_event::pack_info(Protocol *protocol)
 /**
   @note
   It's ok not to use int8store here,
-  as long as xid_t::set(uint64_t) and
-  xid_t::get_my_xid doesn't do it either.
+  as long as XID::set(uint64_t) and
+  XID::get_my_xid doesn't do it either.
   We don't care about actual values of xids as long as
   identical numbers compare identically
 */

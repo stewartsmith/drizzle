@@ -1,61 +1,70 @@
-/* Copyright (C) 2000 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-/* The hash functions used for saveing keys */
+/* The hash functions used for saving keys */
 /* One of key_length or key_length_offset must be given */
 /* Key length of 0 isn't allowed */
 
-#include "mysys_priv.h"
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
-#include "hash.h"
+#include <config.h>
+#include <mysys/hash.h>
 
-#define NO_RECORD	((uint) -1)
-#define LOWFIND 1
-#define LOWUSED 2
-#define HIGHFIND 4
-#define HIGHUSED 8
+const uint32_t NO_RECORD= UINT32_MAX;
+
+const int LOWFIND= 1;
+const int LOWUSED= 2;
+const int HIGHFIND= 4;
+const int HIGHUSED= 8;
 
 typedef struct st_hash_info {
-  uint32_t next;					/* index to next key */
-  unsigned char *data;					/* data for current entry */
+  /* index to next key */
+  uint32_t next;
+  /* data for current entry */
+  unsigned char *data;
 } HASH_LINK;
 
-static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
-static void movelink(HASH_LINK *array,uint32_t pos,uint32_t next_link,uint32_t newlink);
+static uint32_t hash_mask(uint32_t hashnr, uint32_t buffmax,
+                          uint32_t maxlength);
+static void movelink(HASH_LINK *array, uint32_t pos,
+                     uint32_t next_link, uint32_t newlink);
 static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
                    size_t length);
 
-static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t length)
+static uint32_t calc_hash(const HASH *hash, const unsigned char *key,
+                          size_t length)
 {
   uint32_t nr1=1, nr2=4;
-  hash->charset->coll->hash_sort(hash->charset,(const unsigned char*) key,length,&nr1,&nr2);
+  hash->charset->coll->hash_sort(hash->charset, key,length, &nr1, &nr2);
   return nr1;
 }
 
 bool
 _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
-	   uint32_t size, size_t key_offset, size_t key_length,
-	   hash_get_key get_key,
-	   void (*free_element)(void*),uint32_t flags CALLER_INFO_PROTO)
+           uint32_t size, size_t key_offset, size_t key_length,
+           hash_get_key get_key,
+           void (*free_element)(void*),uint32_t flags CALLER_INFO_PROTO)
 {
   hash->records=0;
   if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
                                growth_size))
   {
-    hash->free=0;				/* Allow call to hash_free */
+    /* Allow call to hash_free */
+    hash->free=0;
     return true;
   }
   hash->key_offset=key_offset;
@@ -73,11 +82,11 @@ _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
   Call hash->free on all elements in hash.
 
   SYNOPSIS
-    hash_free_elements()
-    hash   hash table
+  hash_free_elements()
+  hash   hash table
 
   NOTES:
-    Sets records to 0
+  Sets records to 0
 */
 
 static inline void hash_free_elements(HASH *hash)
@@ -97,8 +106,8 @@ static inline void hash_free_elements(HASH *hash)
   Free memory used by hash.
 
   SYNOPSIS
-    hash_free()
-    hash   the hash to delete elements of
+  hash_free()
+  hash   the hash to delete elements of
 
   NOTES: Hash can't be reused without calling hash_init again.
 */
@@ -116,8 +125,8 @@ void hash_free(HASH *hash)
   Delete all elements from the hash (the hash itself is to be reused).
 
   SYNOPSIS
-    my_hash_reset()
-    hash   the hash to delete elements of
+  my_hash_reset()
+  hash   the hash to delete elements of
 */
 
 void my_hash_reset(HASH *hash)
@@ -146,7 +155,7 @@ hash_key(const HASH *hash, const unsigned char *record, size_t *length,
   return (char*) record+hash->key_offset;
 }
 
-	/* Calculate pos according to keys */
+/* Calculate pos according to keys */
 
 static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength)
 {
@@ -155,7 +164,7 @@ static uint32_t hash_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength)
 }
 
 static uint32_t hash_rec_mask(const HASH *hash, HASH_LINK *pos,
-                          uint32_t buffmax, uint32_t maxlength)
+                              uint32_t buffmax, uint32_t maxlength)
 {
   size_t length;
   unsigned char *key= (unsigned char*) hash_key(hash,pos->data,&length,0);
@@ -164,11 +173,8 @@ static uint32_t hash_rec_mask(const HASH *hash, HASH_LINK *pos,
 
 
 
-/* for compilers which can not handle inline */
 static
-#if !defined(__USLC__) && !defined(__sgi)
 inline
-#endif
 unsigned int rec_hashnr(HASH *hash,const unsigned char *record)
 {
   size_t length;
@@ -177,7 +183,8 @@ unsigned int rec_hashnr(HASH *hash,const unsigned char *record)
 }
 
 
-unsigned char* hash_search(const HASH *hash, const unsigned char *key, size_t length)
+unsigned char* hash_search(const HASH *hash, const unsigned char *key,
+                           size_t length)
 {
   HASH_SEARCH_STATE state;
   return hash_first(hash, key, length, &state);
@@ -187,11 +194,12 @@ unsigned char* hash_search(const HASH *hash, const unsigned char *key, size_t le
   Search after a record based on a key
 
   NOTE
-   Assigns the number of the found record to HASH_SEARCH_STATE state
+  Assigns the number of the found record to HASH_SEARCH_STATE state
 */
 
-unsigned char* hash_first(const HASH *hash, const unsigned char *key, size_t length,
-                HASH_SEARCH_STATE *current_record)
+unsigned char* hash_first(const HASH *hash, const unsigned char *key,
+                          size_t length,
+                          HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
   uint32_t flag,idx;
@@ -200,20 +208,22 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key, size_t len
   if (hash->records)
   {
     idx=hash_mask(calc_hash(hash,key,length ? length : hash->key_length),
-		    hash->blength,hash->records);
+                  hash->blength,hash->records);
     do
     {
       pos= dynamic_element(&hash->array,idx,HASH_LINK*);
       if (!hashcmp(hash,pos,key,length))
       {
-	*current_record= idx;
-	return (pos->data);
+        *current_record= idx;
+        return (pos->data);
       }
       if (flag)
       {
-	flag=0;					/* Reset flag */
-	if (hash_rec_mask(hash,pos,hash->blength,hash->records) != idx)
-	  break;				/* Wrong link */
+        /* Reset flag */
+        flag=0;
+        if (hash_rec_mask(hash,pos,hash->blength,hash->records) != idx)
+          /* Wrong link */
+          break;
       }
     }
     while ((idx=pos->next) != NO_RECORD);
@@ -222,11 +232,12 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key, size_t len
   return(0);
 }
 
-	/* Get next record with identical key */
-	/* Can only be called if previous calls was hash_search */
+/* Get next record with identical key */
+/* Can only be called if previous calls was hash_search */
 
-unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t length,
-               HASH_SEARCH_STATE *current_record)
+unsigned char* hash_next(const HASH *hash, const unsigned char *key,
+                         size_t length,
+                         HASH_SEARCH_STATE *current_record)
 {
   HASH_LINK *pos;
   uint32_t idx;
@@ -239,8 +250,8 @@ unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t leng
       pos=data+idx;
       if (!hashcmp(hash,pos,key,length))
       {
-	*current_record= idx;
-	return pos->data;
+        *current_record= idx;
+        return pos->data;
       }
     }
     *current_record= NO_RECORD;
@@ -249,9 +260,10 @@ unsigned char* hash_next(const HASH *hash, const unsigned char *key, size_t leng
 }
 
 
-	/* Change link from pos to new_link */
+/* Change link from pos to new_link */
 
-static void movelink(HASH_LINK *array,uint32_t find,uint32_t next_link,uint32_t newlink)
+static void movelink(HASH_LINK *array, uint32_t find,
+                     uint32_t next_link, uint32_t newlink)
 {
   HASH_LINK *old_link;
   do
@@ -267,33 +279,34 @@ static void movelink(HASH_LINK *array,uint32_t find,uint32_t next_link,uint32_t 
   Compare a key in a record to a whole key. Return 0 if identical
 
   SYNOPSIS
-    hashcmp()
-    hash   hash table
-    pos    position of hash record to use in comparison
-    key    key for comparison
-    length length of key
+  hashcmp()
+  hash   hash table
+  pos    position of hash record to use in comparison
+  key    key for comparison
+  length length of key
 
   NOTES:
-    If length is 0, comparison is done using the length of the
-    record being compared against.
+  If length is 0, comparison is done using the length of the
+  record being compared against.
 
   RETURN
-    = 0  key of record == key
-    != 0 key of record != key
- */
+  = 0  key of record == key
+  != 0 key of record != key
+*/
 
 static int hashcmp(const HASH *hash, HASH_LINK *pos, const unsigned char *key,
                    size_t length)
 {
   size_t rec_keylength;
-  unsigned char *rec_key= (unsigned char*) hash_key(hash,pos->data,&rec_keylength,1);
+  unsigned char *rec_key= (unsigned char*) hash_key(hash, pos->data,
+                                                    &rec_keylength,1);
   return ((length && length != rec_keylength) ||
-	  my_strnncoll(hash->charset, (const unsigned char*) rec_key, rec_keylength,
-		       (const unsigned char*) key, rec_keylength));
+          my_strnncoll(hash->charset, rec_key, rec_keylength,
+                       key, rec_keylength));
 }
 
 
-	/* Write a hash-key to the hash-index */
+/* Write a hash-key to the hash-index */
 
 bool my_hash_insert(HASH *info,const unsigned char *record)
 {
@@ -307,79 +320,87 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   {
     unsigned char *key= (unsigned char*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
-      return(true);				/* Duplicate entry */
+      /* Duplicate entry */
+      return(true);
   }
 
   flag=0;
   if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
-    return(true);				/* No more memory */
+    /* No more memory */
+    return(true);
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;
 
   idx=first_index=info->records-halfbuff;
-  if (idx != info->records)				/* If some records */
+  /* If some records */
+  if (idx != info->records)
   {
     do
     {
       pos=data+idx;
       hash_nr=rec_hashnr(info,pos->data);
-      if (flag == 0)				/* First loop; Check if ok */
-	if (hash_mask(hash_nr,info->blength,info->records) != first_index)
-	  break;
+      /* First loop; Check if ok */
+      if (flag == 0)
+        if (hash_mask(hash_nr,info->blength,info->records) != first_index)
+          break;
       if (!(hash_nr & halfbuff))
-      {						/* Key will not move */
-	if (!(flag & LOWFIND))
-	{
-	  if (flag & HIGHFIND)
-	  {
-	    flag=LOWFIND | HIGHFIND;
-	    /* key shall be moved to the current empty position */
-	    gpos=empty;
-	    ptr_to_rec=pos->data;
-	    empty=pos;				/* This place is now free */
-	  }
-	  else
-	  {
-	    flag=LOWFIND | LOWUSED;		/* key isn't changed */
-	    gpos=pos;
-	    ptr_to_rec=pos->data;
-	  }
-	}
-	else
-	{
-	  if (!(flag & LOWUSED))
-	  {
-	    /* Change link of previous LOW-key */
-	    gpos->data=ptr_to_rec;
-	    gpos->next= (uint) (pos-data);
-	    flag= (flag & HIGHFIND) | (LOWFIND | LOWUSED);
-	  }
-	  gpos=pos;
-	  ptr_to_rec=pos->data;
-	}
+      {
+        /* Key will not move */
+        if (!(flag & LOWFIND))
+        {
+          if (flag & HIGHFIND)
+          {
+            flag=LOWFIND | HIGHFIND;
+            /* key shall be moved to the current empty position */
+            gpos=empty;
+            ptr_to_rec=pos->data;
+            /* This place is now free */
+            empty=pos;
+          }
+          else
+          {
+            /* key isn't changed */
+            flag=LOWFIND | LOWUSED;
+            gpos=pos;
+            ptr_to_rec=pos->data;
+          }
+        }
+        else
+        {
+          if (!(flag & LOWUSED))
+          {
+            /* Change link of previous LOW-key */
+            gpos->data=ptr_to_rec;
+            gpos->next= (uint) (pos-data);
+            flag= (flag & HIGHFIND) | (LOWFIND | LOWUSED);
+          }
+          gpos=pos;
+          ptr_to_rec=pos->data;
+        }
       }
       else
-      {						/* key will be moved */
-	if (!(flag & HIGHFIND))
-	{
-	  flag= (flag & LOWFIND) | HIGHFIND;
-	  /* key shall be moved to the last (empty) position */
-	  gpos2 = empty; empty=pos;
-	  ptr_to_rec2=pos->data;
-	}
-	else
-	{
-	  if (!(flag & HIGHUSED))
-	  {
-	    /* Change link of previous hash-key and save */
-	    gpos2->data=ptr_to_rec2;
-	    gpos2->next=(uint) (pos-data);
-	    flag= (flag & LOWFIND) | (HIGHFIND | HIGHUSED);
-	  }
-	  gpos2=pos;
-	  ptr_to_rec2=pos->data;
-	}
+      {
+        /* key will be moved */
+        if (!(flag & HIGHFIND))
+        {
+          flag= (flag & LOWFIND) | HIGHFIND;
+          /* key shall be moved to the last (empty) position */
+          gpos2 = empty; empty=pos;
+          ptr_to_rec2=pos->data;
+        }
+        else
+        {
+          if (!(flag & HIGHUSED))
+          {
+            /* Change link of previous hash-key and save */
+            gpos2->data=ptr_to_rec2;
+            gpos2->next=(uint) (pos-data);
+            flag= (flag & LOWFIND) | (HIGHFIND | HIGHUSED);
+          }
+          gpos2=pos;
+          ptr_to_rec2=pos->data;
+        }
       }
     }
     while ((idx=pos->next) != NO_RECORD);
@@ -428,10 +449,10 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
 
 
 /******************************************************************************
-** Remove one record from hash-table. The record with the same record
-** ptr is removed.
-** if there is a free-function it's called for record if found
-******************************************************************************/
+ ** Remove one record from hash-table. The record with the same record
+ ** ptr is removed.
+ ** if there is a free-function it's called for record if found
+ *****************************************************************************/
 
 bool hash_delete(HASH *hash,unsigned char *record)
 {
@@ -450,7 +471,9 @@ bool hash_delete(HASH *hash,unsigned char *record)
   {
     gpos=pos;
     if (pos->next == NO_RECORD)
-      return(1);			/* Key not found */
+      /* Key not found */
+      return(1);
+
     pos=data+pos->next;
   }
 
@@ -460,7 +483,8 @@ bool hash_delete(HASH *hash,unsigned char *record)
   /* Remove link to record */
   empty=pos; empty_index=(uint) (empty-data);
   if (gpos)
-    gpos->next=pos->next;		/* unlink current ptr */
+    /* unlink current ptr */
+    gpos->next=pos->next;
   else if (pos->next != NO_RECORD)
   {
     empty=data+(empty_index=pos->next);
@@ -468,14 +492,16 @@ bool hash_delete(HASH *hash,unsigned char *record)
     pos->next=empty->next;
   }
 
-  if (empty == lastpos)			/* last key at wrong pos or no next link */
+  /* last key at wrong pos or no next link */
+  if (empty == lastpos)
     goto exit;
 
   /* Move the last key (lastpos) */
   lastpos_hashnr=rec_hashnr(hash,lastpos->data);
   /* pos is where lastpos should be */
   pos=data+hash_mask(lastpos_hashnr,hash->blength,hash->records);
-  if (pos == empty)			/* Move to empty position. */
+  /* Move to empty position. */
+  if (pos == empty)
   {
     empty[0]=lastpos[0];
     goto exit;
@@ -514,29 +540,31 @@ exit:
   return(0);
 }
 
-	/*
-	  Update keys when record has changed.
-	  This is much more efficent than using a delete & insert.
-	  */
+/*
+  Update keys when record has changed.
+  This is much more efficent than using a delete & insert.
+*/
 
 bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
-                    size_t old_key_length)
+                 size_t old_key_length)
 {
   uint32_t new_index,new_pos_index,blength,records,empty;
   size_t idx;
   HASH_LINK org_link,*data,*previous,*pos;
-  
+
   if (HASH_UNIQUE & hash->flags)
   {
     HASH_SEARCH_STATE state;
-    unsigned char *found, *new_key= (unsigned char*) hash_key(hash, record, &idx, 1);
+    unsigned char *found,
+      *new_key= (unsigned char*) hash_key(hash, record, &idx, 1);
+
     if ((found= hash_first(hash, new_key, idx, &state)))
     {
-      do 
+      do
       {
         if (found != record)
           return(1);		/* Duplicate entry */
-      } 
+      }
       while ((found= hash_next(hash, new_key, idx, &state)));
     }
   }
@@ -547,9 +575,9 @@ bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
   /* Search after record with key */
 
   idx=hash_mask(calc_hash(hash, old_key,(old_key_length ?
-					      old_key_length :
-					      hash->key_length)),
-		  blength,records);
+                                         old_key_length :
+                                         hash->key_length)),
+                blength,records);
   new_index=hash_mask(rec_hashnr(hash,record),blength,records);
   if (idx == new_index)
     return(0);			/* Nothing to do (No record check) */
@@ -631,7 +659,8 @@ unsigned char *hash_element(HASH *hash,uint32_t idx)
   isn't changed
 */
 
-void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record, unsigned char *new_row)
+void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record,
+                  unsigned char *new_row)
 {
   if (*current_record != NO_RECORD)            /* Safety */
     dynamic_element(&hash->array, *current_record, HASH_LINK*)->data= new_row;

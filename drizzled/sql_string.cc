@@ -1040,22 +1040,22 @@ void String::print(String *str)
     switch (c)
     {
     case '\\':
-      str->append(STRING_WITH_LEN("\\\\"));
+      str->append("\\\\", sizeof("\\\\")-1);
       break;
     case '\0':
-      str->append(STRING_WITH_LEN("\\0"));
+      str->append("\\0", sizeof("\\0")-1);
       break;
     case '\'':
-      str->append(STRING_WITH_LEN("\\'"));
+      str->append("\\'", sizeof("\\'")-1);
       break;
     case '\n':
-      str->append(STRING_WITH_LEN("\\n"));
+      str->append("\\n", sizeof("\\n")-1);
       break;
     case '\r':
-      str->append(STRING_WITH_LEN("\\r"));
+      str->append("\\r", sizeof("\\r")-1);
       break;
     case '\032': // Ctrl-Z
-      str->append(STRING_WITH_LEN("\\Z"));
+      str->append("\\Z", sizeof("\\Z")-1);
       break;
     default:
       str->append(c);

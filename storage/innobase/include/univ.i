@@ -191,10 +191,10 @@ by one. */
 
 /* Linkage specifier for non-static InnoDB symbols (variables and functions)
 that are only referenced from within InnoDB, not from MySQL */
-#ifdef __WIN__
-# define UNIV_INTERN
-#else
+#if defined(HAVE_ATTR_HIDDEN)
 # define UNIV_INTERN __attribute__((visibility ("hidden")))
+#else
+# define UNIV_INTERN
 #endif
 
 #if (!defined(UNIV_DEBUG) && !defined(UNIV_MUST_NOT_INLINE))

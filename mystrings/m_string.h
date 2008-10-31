@@ -144,7 +144,7 @@ extern char *ullstr(int64_t value,char *buff);
 extern char *int2str(int32_t val, char *dst, int radix, int upcase);
 extern char *int10_to_str(int32_t val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
-			 long *val);
+                     long *val);
 int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
 extern char *int64_t2str(int64_t val,char *dst,int radix);
 extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
@@ -154,23 +154,6 @@ extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
 }
 #endif
 
-/*
-  LEX_STRING -- a pair of a C-string and its length.
-*/
-
-#ifndef _my_plugin_h
-/* This definition must match the one given in mysql/plugin.h */
-struct st_mysql_lex_string
-{
-  char *str;
-  size_t length;
-};
-#endif
-typedef struct st_mysql_lex_string LEX_STRING;
-
-#define STRING_WITH_LEN(X) (X), ((size_t) (sizeof(X) - 1))
-#define USTRING_WITH_LEN(X) ((unsigned char*) X), ((size_t) (sizeof(X) - 1))
-#define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
 
 /**
   Skip trailing space.
@@ -181,7 +164,7 @@ typedef struct st_mysql_lex_string LEX_STRING;
 */
 
 static inline const unsigned char *
-skip_trailing_space(const unsigned char *ptr,size_t len)
+skip_trailing_space(const unsigned char *ptr, size_t len)
 {
   const unsigned char *end= ptr + len;
 

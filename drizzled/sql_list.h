@@ -67,46 +67,6 @@ typedef struct st_sql_list {
   }
 } SQL_LIST;
 
-/* mysql standard class memory allocator */
-class Sql_alloc
-{
-public:
-  static void *operator new(size_t size) throw ()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size)
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
-  { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                MEM_ROOT *mem_root __attribute__((unused)))
-  { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((unused)),
-                                size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
-#ifdef HAVE_purify
-  bool dummy;
-  inline Sql_alloc() :dummy(0) {}
-  inline ~Sql_alloc() {}
-#else
-  inline Sql_alloc() {}
-  inline ~Sql_alloc() {}
-#endif
-
-};
-
-
 /*
   Basic single linked list
   Used for item and item_buffs.

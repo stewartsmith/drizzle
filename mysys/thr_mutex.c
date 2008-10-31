@@ -388,7 +388,6 @@ void safe_mutex_end(int *file __attribute__((unused)))
 #include <m_string.h>
 
 #include <m_ctype.h>
-#include <hash.h>
 #include <myisampack.h>
 #include <mysys_err.h>
 #include <my_sys.h>

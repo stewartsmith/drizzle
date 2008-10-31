@@ -24,8 +24,9 @@
 /* Classes in mysql */
 
 #include <drizzled/global.h>
-#include "log.h"
-#include "rpl_tblmap.h"
+#include <drizzled/log.h>
+#include <drizzled/rpl_tblmap.h>
+#include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
 #include <drizzled/scheduler.h>

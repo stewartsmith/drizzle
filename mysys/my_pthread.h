@@ -19,6 +19,7 @@
 #define _my_pthread_h
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #ifndef ETIME

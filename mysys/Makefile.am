@@ -69,8 +69,8 @@ libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_wcomp.c my_gethwaddr.c \
 			mf_qsort.c mf_qsort2.c mf_sort.c \
 			ptr_cmp.c mf_radix.c queues.c \
-			tree.c list.c hash.c array.c typelib.c \
-			my_copy.c my_lib.c \
+			tree.c list.c array.c typelib.c \
+			my_copy.c my_lib.c hash.c \
 			my_delete.c my_rename.c my_redel.c \
 			my_quick.c my_static.c \
 			my_time.c \
