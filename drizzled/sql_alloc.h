@@ -22,6 +22,7 @@
 
 #include <libdrizzle/net_serv.h>
 
+
 void init_sql_alloc(MEM_ROOT *root, uint32_t block_size, uint32_t pre_alloc_size);
 void *sql_alloc(size_t);
 void *sql_calloc(size_t);
@@ -37,5 +38,44 @@ char *sql_strmake_with_convert(const char *str, size_t arg_length,
 void sql_kill(Session *session, ulong id, bool only_kill_query);
 bool net_request_file(NET* net, const char* fname);
 char* query_table_status(Session *session,const char *db,const char *table_name);
+
+/* mysql standard class memory allocator */
+class Sql_alloc
+{
+public:
+  static void *operator new(size_t size) throw ()
+  {
+    return sql_alloc(size);
+  }
+  static void *operator new[](size_t size)
+  {
+    return sql_alloc(size);
+  }
+  static void *operator new[](size_t size, MEM_ROOT *mem_root) throw ()
+  { return alloc_root(mem_root, size); }
+  static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
+  { return alloc_root(mem_root, size); }
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
+  { TRASH(ptr, size); }
+  static void operator delete(void *ptr __attribute__((unused)),
+                              MEM_ROOT *mem_root __attribute__((unused)))
+  { /* never called */ }
+  static void operator delete[](void *ptr __attribute__((unused)),
+                                MEM_ROOT *mem_root __attribute__((unused)))
+  { /* never called */ }
+  static void operator delete[](void *ptr __attribute__((unused)),
+                                size_t size __attribute__((unused)))
+  { TRASH(ptr, size); }
+#ifdef HAVE_purify
+  bool dummy;
+  inline Sql_alloc() :dummy(0) {}
+  inline ~Sql_alloc() {}
+#else
+  inline Sql_alloc() {}
+  inline ~Sql_alloc() {}
+#endif
+
+};
 
 #endif /* DRIZZLE_SERVER_SQL_ALLOC_H */

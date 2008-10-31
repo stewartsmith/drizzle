@@ -73,18 +73,13 @@ inline Session *_current_session(void)
 #define current_session _current_session()
 
 
-/* Custom C++-style String class API */
-#include <drizzled/sql_string.h>
-/* Custom singly-linked list lite struct and full-blown type-safe, templatized class */
-#include <drizzled/sql_list.h>
-#include "handler.h"
 #include <drizzled/table_list.h>
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
-#include "item.h"
+#include <drizzled/item.h>
 
 
-#include "sql_class.h"
+#include <drizzled/sql_class.h>
 
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

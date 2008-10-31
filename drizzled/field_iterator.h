@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_FIELD_ITERATOR_H
 #define DRIZZLED_FIELD_ITERATOR_H
 
+#include <drizzled/sql_alloc.h>
+#include <drizzled/sql_list.h>
+
 class Table;
 class TableList;
 
