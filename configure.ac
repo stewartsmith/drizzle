@@ -107,6 +107,8 @@ fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
+AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
+
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
@@ -1350,25 +1352,26 @@ AC_SUBST(mysql_plugin_defs)
 
 # Build optimized or debug version ?
 # First check for gcc and g++
-if test "$ac_cv_c_compiler_gnu" = "yes"
+SYMBOLS_FLAGS="-g"
+DEBUG_OPTIMIZE_CC=""
+OPTIMIZE_CFLAGS="-O"
+DEBUG_OPTIMIZE_CXX=""
+OPTIMIZE_CXXFLAGS="-O"
+if test "$GCC" = "yes"
 then
-  SYMBOLS_CFLAGS="-ggdb3"
+  SYMBOLS_FLAGS="-ggdb3"
   DEBUG_OPTIMIZE_CC="-O0"
   OPTIMIZE_CFLAGS="-O3"
-else
-  SYMBOLS_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-O"
-fi
-if test "$ac_cv_prog_cxx_g" = "yes"
-then
-  SYMBOLS_CXXFLAGS="-ggdb3"
   DEBUG_OPTIMIZE_CXX="-O0"
   OPTIMIZE_CXXFLAGS="-O3"
-else
-  SYMBOLS_CXXFLAGS="-g"
+fi
+if test "$SUNCC" = "yes"
+then
+  SYMBOLS_CLAGS="-g"
+  DEBUG_OPTIMIZE_CC=""
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend"
   DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-O"
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
@@ -1388,9 +1391,8 @@ AC_DEFUN([AX_HEADER_ASSERT],
 
 AX_HEADER_ASSERT
 
-CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
-#CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
@@ -1578,6 +1580,11 @@ void testme() {  };],[
 
   AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
   AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
+fi
+if test "$SUNCC" = "yes"
+then
+  AM_CFLAGS="-v ${AM_CFLAGS}"
+  AM_CXXFLAGS="-v ${AM_CXXFLAGS}"
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
