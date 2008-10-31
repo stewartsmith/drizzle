@@ -147,6 +147,7 @@ DRIZZLE_TCP_PORT_DEFAULT=4427
 
 sinclude(m4/dtrace.m4)
 sinclude(m4/character_sets.m4)
+sinclude(m4/gettext.m4)
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
