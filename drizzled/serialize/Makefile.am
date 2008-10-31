@@ -15,9 +15,10 @@
 
 #called from the top level Makefile
 
-LDADD = libserialize.la -lprotobuf
+LDADD = libserialize.la ${PROTOBUF_LIBS}
 
-libserialize_la_CXXFLAGS =
+AM_CXXFLAGS = ${AM_CXXFLAGS} -Wno-error
+AM_CPPFLAGS = ${PROTOBUF_CPPFLAGS}
 
 TESTS_ENVIRONMENT = sh
 TESTS = check_length.sh
@@ -56,28 +57,21 @@ noinst_HEADERS = table.pb.h \
 DEFS= @DEFS@
 
 binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
-binlog_reader_CXXFLAGS = 
 
 binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
-binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
-schema_reader_CXXFLAGS =
 
 table_reader_SOURCES =  table_reader.cc
-table_reader_CXXFLAGS =
 
 table_writer_SOURCES =  table_writer.cc
-table_writer_CXXFLAGS =
 
 master_list_writer_SOURCES =  master_list_writer.cc
-master_list_writer_CXXFLAGS =
 
 master_list_reader_SOURCES =  master_list_reader.cc
-master_list_reader_CXXFLAGS =
 
 length_SOURCES = length.cc
-length_CXXFLAGS = -fexceptions
+length_CXXFLAGS = ${AM_CXXFLAGS} -fexceptions
 
 EXTRA_DIST = schema.proto table.proto binary_log.proto master_list.proto
 BUILT_SOURCES = schema.pb.h \

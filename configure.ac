@@ -408,6 +408,65 @@ then
     ;;
   esac
 fi
+# Build optimized or debug version ?
+# First check for gcc and g++
+SYMBOLS_FLAGS="-g"
+DEBUG_OPTIMIZE_CC=""
+OPTIMIZE_CFLAGS="-O"
+DEBUG_OPTIMIZE_CXX=""
+OPTIMIZE_CXXFLAGS="-O"
+if test "$GCC" = "yes"
+then
+  SYMBOLS_FLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O3"
+fi
+if test "$SUNCC" = "yes"
+then
+  SYMBOLS_CLAGS="-g"
+  DEBUG_OPTIMIZE_CC=""
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrcont -mt -D_FORTEC_"
+  DEBUG_OPTIMIZE_CXX=""
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_"
+fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AX_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+AC_DEFUN([AX_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [AS_HELP_STRING([--disable-assert],
+       [Turn off assertions])],
+    [ac_cv_assert="no"],
+    [ac_cv_assert="yes"])
+  AC_MSG_RESULT([$ac_cv_assert])
+])
+
+AX_HEADER_ASSERT
+
+CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
+
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
+    [with_debug=$withval],
+    [with_debug=no])
+if test "$with_debug" = "yes"
+then
+  # Medium debug.
+  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
+else
+  # Optimized version. No debug
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
+  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
+fi
 
 AC_SUBST(CC)
 AC_SUBST(CFLAGS)
@@ -439,17 +498,32 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
+AC_MSG_CHECKING(for Google Protocol Buffers)
+AC_ARG_WITH(protobuf,
+  [AS_HELP_STRING([--with-protobuf],
+       [Use protobuf directory])],
+  [ with_protobuf=$withval ],
+  [ with_protobuf=yes ])
+
+save_CPPFLAGS="$CPPFLAGS"
+save_LIBS="$LIBS"
+
+if test "$with_protobuf" = "yes"
+then
+  CPPFLAGS=""
+  LIBS="-lprotobuf"
+else
+  CPPFLAGS="-I$withval/include"
+  LIBS="-L$withval/lib -lprotobuf"
+fi 
+
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([google/protobuf/message.h])
 if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
 fi
-
-save_CFLAGS="$CFLAGS"
-save_LIBS="$LIBS"
-CFLAGS=""
-LIBS="-lprotobuf"
+AC_MSG_RESULT("$wthval")
 
 AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
   AC_TRY_LINK([
@@ -463,8 +537,10 @@ AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
 ])
 
 PROTOBUF_LIBS="${LIBS}"
+PROTOBUF_CPPFLAGS="${CPPFLAGS}"
 AC_SUBST(PROTOBUF_LIBS)
-CFLAGS="$save_CFLAGS"
+AC_SUBST(PROTOBUF_CPPFLAGS)
+CPPFLAGS="$save_CPPFLAGS"
 LIBS="$save_LIBS"
 AC_LANG_POP()
 
@@ -1351,65 +1427,6 @@ AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
 
-# Build optimized or debug version ?
-# First check for gcc and g++
-SYMBOLS_FLAGS="-g"
-DEBUG_OPTIMIZE_CC=""
-OPTIMIZE_CFLAGS="-O"
-DEBUG_OPTIMIZE_CXX=""
-OPTIMIZE_CXXFLAGS="-O"
-if test "$GCC" = "yes"
-then
-  SYMBOLS_FLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
-  OPTIMIZE_CFLAGS="-O3"
-  DEBUG_OPTIMIZE_CXX="-O0"
-  OPTIMIZE_CXXFLAGS="-O3"
-fi
-if test "$SUNCC" = "yes"
-then
-  SYMBOLS_CLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend"
-  DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil"
-fi
-
-dnl TODO: Remove this define once we are using 2.61 across the board.
-# AX_HEADER_ASSERT
-# ----------------
-# Check whether to enable assertions.
-AC_DEFUN([AX_HEADER_ASSERT],
-[
-  AC_MSG_CHECKING([whether to enable assertions])
-  AC_ARG_ENABLE([assert],
-    [AS_HELP_STRING([--disable-assert],
-       [Turn off assertions])],
-    [ac_cv_assert="no"],
-    [ac_cv_assert="yes"])
-  AC_MSG_RESULT([$ac_cv_assert])
-])
-
-AX_HEADER_ASSERT
-
-CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
-
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
-else
-  # Optimized version. No debug
-  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
-fi
 
 AC_ARG_ENABLE([profiling],
     [AS_HELP_STRING([--enable-profiling],
