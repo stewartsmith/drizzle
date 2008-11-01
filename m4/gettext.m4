@@ -72,9 +72,9 @@ AC_DEFUN([AM_GNU_GETTEXT],
   AM_GNU_GETTEXT_NEED([$2])
 
   AC_REQUIRE([AM_PO_SUBDIRS])dnl
-  ifelse(gt_included_intl, yes, [
-    AC_REQUIRE([AM_INTL_SUBDIR])dnl
-  ])
+  dnl ifelse(gt_included_intl, yes, [
+  dnl   AC_REQUIRE([AM_INTL_SUBDIR])dnl
+  dnl ])
 
   dnl Prerequisites of AC_LIB_LINKFLAGS_BODY.
   AC_REQUIRE([AC_LIB_PREPARE_PREFIX])

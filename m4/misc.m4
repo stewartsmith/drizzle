@@ -562,33 +562,38 @@ dnl ---------------------------------------------------------------------------
 dnl END OF DRIZZLE_CHECK_MAX_INDEXES SECTION
 dnl ---------------------------------------------------------------------------
 
+AC_DEFUN([DRIZZLE_CHECK_C_VERSION],[
+
+  dnl Print version of C compiler
+  AC_MSG_CHECKING("C Compiler version")
+  if test "$GCC" = "yes"
+  then
+    CC_VERSION=`$CC --version | sed 1q`
+  elif test "$SUNCC" = "yes"
+  then
+    CC_VERSION=`$CC -V`
+  else
+    CC_VERSION=""
+  fi
+  AC_MSG_RESULT("$CC $CC_VERSION")
+  AC_SUBST(CC_VERSION)
+])
+
 
 AC_DEFUN([DRIZZLE_CHECK_CXX_VERSION], [
-case $SYSTEM_TYPE in
-  *netware*)
-    CXX_VERSION=`$CXX -version | grep -i version`
-  ;;
-  *)
+  dnl Print version of CXX compiler
+  AC_MSG_CHECKING("C++ Compiler version")
+  if test "$GCC" = "yes"
+  then
     CXX_VERSION=`$CXX --version | sed 1q`
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=`$CXX -V 2>&1|sed 1q` # trying harder for Sun and SGI
-    fi
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=`$CXX -v 2>&1|sed 1q` # even harder for Alpha
-    fi
-    if test $? -ne "0" -o -z "$CXX_VERSION"
-    then
-      CXX_VERSION=""
-    fi
-esac
-if test "$CXX_VERSION"
-then
-  AC_MSG_CHECKING("C++ compiler version")
+  elif test "$SUNCC" = "yes"
+  then
+    CXX_VERSION=`$CXX -V`
+  else
+    CXX_VERSION=""
+  fi
   AC_MSG_RESULT("$CXX $CXX_VERSION")
-fi
-AC_SUBST(CXX_VERSION)
+  AC_SUBST(CXX_VERSION)
 ])
 
 AC_DEFUN([DRIZZLE_PROG_AR], [
