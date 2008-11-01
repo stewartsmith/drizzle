@@ -275,23 +275,25 @@ AM_SANITY_CHECK
 AC_PROG_MAKE_SET
 
 
-# Print version of CC and CXX compiler (if they support --version)
-case $SYSTEM_TYPE in
+case "$target_os" in
+  *linux*)
+  TARGET_LINUX="true"
+  AC_SUBST(TARGET_LINUX)
+  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
+    ;;
   *apple-darwin*)
+    TARGET_OSX="true"
+    AC_SUBST(TARGET_OSX)
     AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
     ;;
+  *solaris*)
+    TARGET_SOLARIS="true"
+    AC_SUBST(TARGET_SOLARIS)
+    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
+    ;;
   *)
-CC_VERSION=`$CC --version | sed 1q`
     ;;
 esac
-if test $? -eq "0"
-then
-  AC_MSG_CHECKING("C Compiler version")
-  AC_MSG_RESULT("$CC $CC_VERSION")
-else
-CC_VERSION=""
-fi
-AC_SUBST(CC_VERSION)
 
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
 dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
@@ -304,6 +306,7 @@ then
   CXXFLAGS=
 fi
 
+DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
@@ -317,7 +320,7 @@ else
 fi
 
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
-if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
+if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
 then
   AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
 fi
@@ -386,14 +389,6 @@ fi
 ])
 AC_MSG_RESULT($mysql_cv_sys_os)
 
-# This should be rewritten to use $target_os
-case "$target_os" in
-  *solaris*)
-    TARGET_SOLARIS="true"
-    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
-    AC_SUBST(TARGET_SOLARIS)
-  ;;
-esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
@@ -425,9 +420,10 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
-  SYMBOLS_CLAGS="-g"
+  dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
+  SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrcont -mt -D_FORTEC_"
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
   DEBUG_OPTIMIZE_CXX=""
   OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_"
 fi
@@ -489,7 +485,7 @@ fi
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if $LD --version 2>/dev/null|grep -q GNU; then
+if test "$GCC" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
@@ -967,7 +963,12 @@ AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
-AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h)
+AC_CHECK_HEADERS([curses.h term.h],[],[],
+[[#ifdef HAVE_CURSES_H
+# include <curses.h>
+#endif
+]])
 AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
 AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
 AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
@@ -1053,14 +1054,6 @@ fi
 AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
 
-if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
-then
-  TARGET_LINUX="true"
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-else
-  TARGET_LINUX="false"
-fi
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
@@ -1101,6 +1094,7 @@ DRIZZLE_TZNAME
 DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
+AC_CHECK_TYPES([uint ulong])
 
 DRIZZLE_PTHREAD_YIELD
 
@@ -1132,8 +1126,8 @@ AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
 AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
- sys/file.h sys/ndir.h sys/ptem.h sys/pte.h sys/select.h sys/stream.h \
- sys/mman.h curses.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
+ sys/file.h sys/ndir.h sys/pte.h sys/select.h sys/stream.h \
+ sys/mman.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
 paths.h semaphore.h)
 
 # Already-done: strcasecmp
@@ -1264,7 +1258,7 @@ CFLAGS="$ORG_CFLAGS"
 # Sanity check: We chould not have any fseeko symbol unless
 # large_file_support=yes
 AC_CHECK_FUNC(fseeko,
-[if test "$large_file_support" = no -a "$TARGET_LINUX" = "true";
+[if test "$large_file_support" = no -a "x$TARGET_LINUX" = "xtrue";
 then
   AC_MSG_ERROR("Found fseeko symbol but large_file_support is not enabled!")
 fi]
@@ -1601,7 +1595,7 @@ void testme() {  };],[
 fi
 if test "$SUNCC" = "yes"
 then
-  AM_CFLAGS="-v ${AM_CFLAGS}"
+  AM_CFLAGS="-v -xc99=all ${AM_CFLAGS}"
   AM_CXXFLAGS="-v ${AM_CXXFLAGS}"
 fi
 
@@ -1626,7 +1620,7 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
-AM_CONDITIONAL([GCC_PCH],[test "x$GCC" = "xyes"])
+AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
