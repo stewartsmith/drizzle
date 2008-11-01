@@ -14,6 +14,7 @@ AC_ARG_ENABLE([dtrace],
     ],
     [
       ENABLE_DTRACE="no" 
+      AC_DEFINE([_DTRACE_VERSION], [0])
     ]
     )
 AM_CONDITIONAL([HAVE_DTRACE], [ test "$ENABLE_DTRACE" = "yes" ])

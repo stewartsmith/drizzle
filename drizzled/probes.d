@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-provider mysql {
+provider drizzle {
 probe external_lock(int);
 probe insert_row_start();
 probe insert_row_end();
