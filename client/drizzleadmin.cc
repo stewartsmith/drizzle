@@ -38,6 +38,8 @@ static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
 static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
+using namespace std;
+
 /*
   Forward declarations 
 */

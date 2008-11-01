@@ -15,10 +15,12 @@
 
 /* readline for batch mode */
 
-#include "client_priv.h"
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include "my_readline.h"
+
+using namespace std;
 
 static bool init_line_buffer(LINE_BUFFER *buffer,File file,uint32_t size,
 			    uint32_t max_size);

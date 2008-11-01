@@ -33,6 +33,11 @@
 
 #include <mysys/my_alloc.h>
 
+/* Sun Studio does not inject this into main namespace yet */
+#if defined(__cplusplus)
+  using std::FILE;
+#endif 
+
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */

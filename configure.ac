@@ -423,9 +423,10 @@ then
   dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
   SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
+  #OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_ -v -errtags=yes"
   DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_"
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xport64 +w +w2 -errtags=yes -erroff=attrskipunsup -xlang=c99 -compat=5"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
@@ -479,7 +480,7 @@ if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
 fi
 
 DRIZZLE_PROG_AR
@@ -1094,7 +1095,7 @@ DRIZZLE_TZNAME
 DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
-AC_CHECK_TYPES([uint ulong])
+AC_CHECK_TYPES([uint, ulong])
 
 DRIZZLE_PTHREAD_YIELD
 
