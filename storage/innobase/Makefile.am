@@ -188,12 +188,12 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 libpars_la_CFLAGS=	${AM_CFLAGS} \
-			${W_NO_REDUNDANT_DECLS} \
-			${W_NO_UNUSED_MACROS}
+			${NO_REDUNDANT_DECLS} \
+			${NO_UNUSED_MACROS}
 libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
 
 libinnobase_la_CFLAGS=	$(AM_CFLAGS) \
-			 ${W_NO_UNUSED_MACROS}
+			${NO_UNUSED_MACROS}
 libinnobase_la_LIBADD= libpars.la
 
 
