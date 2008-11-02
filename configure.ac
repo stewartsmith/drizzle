@@ -847,14 +847,14 @@ AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
 		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
 
 # Use this to set the place used for unix socket used to local communication.
-AC_ARG_WITH([mysqld-user],
-    [AS_HELP_STRING([--with-mysqld-user=username],
-            [What user the mysqld daemon shall be run as.
-		@<:@default=mysql@:>@])],
-    [ MYSQLD_USER=$withval ],
-    [ MYSQLD_USER=mysql ]
+AC_ARG_WITH([drizzled-user],
+    [AS_HELP_STRING([--with-drizzled-user=username],
+            [What user the drizzled daemon shall be run as.
+		@<:@default=drizzle@:>@])],
+    [ DRIZZLED_USER=$withval ],
+    [ DRIZZLED_USER=drizzle ]
     )
-AC_SUBST(MYSQLD_USER)
+AC_SUBST(DRIZZLED_USER)
 
 # If we should allow LOAD DATA LOCAL
 AC_MSG_CHECKING(If we should should enable LOAD DATA LOCAL by default)

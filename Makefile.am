@@ -39,7 +39,9 @@ DISTCLEANFILES = ac_available_languages_fragment
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+		groupadd $(DRIZZLED_USER) ;\
+		useradd -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
+		chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
 	fi
 
 distclean-local:
