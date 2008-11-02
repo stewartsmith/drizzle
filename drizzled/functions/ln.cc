@@ -20,6 +20,12 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/ln.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 
 /** Gateway to natural LOG function. */
 double Item_func_ln::val_real()

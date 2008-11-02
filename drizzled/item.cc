@@ -17,6 +17,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -37,6 +42,11 @@ const Hybrid_type_traits *Hybrid_type_traits::instance()
   return &real_traits_instance;
 }
 
+int64_t Hybrid_type_traits::val_int(Hybrid_type *val,
+                                    bool) const
+{
+  return (int64_t) rint(val->real);
+}
 
 my_decimal *
 Hybrid_type_traits::val_decimal(Hybrid_type *val,
@@ -1978,6 +1988,20 @@ String *Item_float::val_str(String *str)
   return str;
 }
 
+
+int64_t Item_float::val_int()
+{
+  assert(fixed == 1);
+  if (value <= (double) INT64_MIN)
+  {
+     return INT64_MIN;
+  }
+  else if (value >= (double) (uint64_t) INT64_MAX)
+  {
+    return INT64_MAX;
+  }
+  return (int64_t) rint(value);
+}
 
 my_decimal *Item_float::val_decimal(my_decimal *decimal_value)
 {

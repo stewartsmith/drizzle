@@ -36,7 +36,6 @@
 
 # include CSTDINT_H
 # include CINTTYPES_H
-# include CMATH_H
 # include <cstdio>
 # include <cstdlib>
 # include <cstddef>

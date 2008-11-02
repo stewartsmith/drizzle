@@ -46,20 +46,6 @@ then
    ALLOCA=alloca.o
    AC_DEFINE(C_ALLOCA, 1)
  
- AC_CACHE_CHECK(whether alloca needs Cray hooks, ac_cv_os_cray,
- [AC_EGREP_CPP(webecray,
- [#if defined(CRAY) && ! defined(CRAY2)
- webecray
- #else
- wenotbecray
- #endif
- ], ac_cv_os_cray=yes, ac_cv_os_cray=no)])
- if test "$ac_cv_os_cray" = "yes"; then
- for ac_func in _getb67 GETB67 getb67; do
-   AC_CHECK_FUNC($ac_func, [AC_DEFINE_UNQUOTED(CRAY_STACKSEG_END, $ac_func)
-   break])
- done
- fi
  fi
  AC_SUBST(ALLOCA)dnl
 else

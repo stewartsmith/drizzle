@@ -37,6 +37,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 
+
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 

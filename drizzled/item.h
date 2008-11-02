@@ -168,8 +168,7 @@ struct Hybrid_type_traits
   { val->real/= uint64_t2double(u); }
 
   virtual int64_t val_int(Hybrid_type *val,
-                           bool unsigned_flag __attribute__((unused))) const
-  { return (int64_t) rint(val->real); }
+                          bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
   virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
@@ -1517,19 +1516,7 @@ public:
   enum Type type() const { return REAL_ITEM; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DOUBLE; }
   double val_real() { assert(fixed == 1); return value; }
-  int64_t val_int()
-  {
-    assert(fixed == 1);
-    if (value <= (double) INT64_MIN)
-    {
-       return INT64_MIN;
-    }
-    else if (value >= (double) (uint64_t) INT64_MAX)
-    {
-      return INT64_MAX;
-    }
-    return (int64_t) rint(value);
-  }
+  int64_t val_int();
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
   bool basic_const_item() const { return 1; }

@@ -167,8 +167,6 @@ AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
 AC_SUBST(DOT_FRM_VERSION)
 AC_DEFINE_UNQUOTED([FRM_VER], [$DOT_FRM_VERSION],
                    [Version of .frm files])
-AC_DEFINE_UNQUOTED([FRM_VERSION_TRUE_VARCHAR],[FRM_VER+4],
-                   [Current version of .frm info we're using])
 AC_DEFINE_UNQUOTED([DRIZZLE_CONFIG_NAME],["drizzled"],[Name of server config section])
 
 AC_SUBST(SHARED_LIB_MAJOR_VERSION)
@@ -186,7 +184,6 @@ AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and
   isam btree library. eg to big to slow.])
 AC_DEFINE([SC_MAXWIDTH],[256], [Max width of screen (for error messages)])
 AC_DEFINE([FN_LEN],[256	], [Max file name len ])
-AC_DEFINE([FN_HEADLEN],[253], [Max length of filepart of file name ])
 AC_DEFINE([FN_EXTLEN],[20], [Max length of extension (part of FN_LEN) ])
 AC_DEFINE([FN_REFLEN],[512], [Max length of full path-name ])
 AC_DEFINE([FN_EXTCHAR],['.'], [File extension character])
@@ -368,7 +365,7 @@ AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
 # Not critical since the generated file is distributed
-AC_CHECK_PROGS(YACC, ['bison -y -p MYSQL'])
+AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -962,19 +959,15 @@ AC_HEADER_STDBOOL
 AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
-AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
-AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h)
+AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
 AC_CHECK_HEADERS([curses.h term.h],[],[],
 [[#ifdef HAVE_CURSES_H
 # include <curses.h>
 #endif
 ]])
 AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
-AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
-AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
+AC_CHECK_HEADERS(sys/prctl.h ieeefp.h)
 AC_CHECK_HEADERS(execinfo.h)
-
-AC_CHECK_HEADERS([xfs/xfs.h])
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
@@ -1013,7 +1006,7 @@ AC_CHECK_TYPES([fp_except], [], [], [
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
-AC_CHECK_FUNCS(dlopen dlerror)
+AC_CHECK_FUNCS(dlopen)
 if test "$ac_cv_func_dlopen" != "yes"
 then
   AC_MSG_ERROR([Drizzle requires dlopen])
@@ -1090,34 +1083,21 @@ DRIZZLE_FUNC_ALLOCA
 DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 DRIZZLE_TZNAME
-# Do the c++ compiler have a bool type
-DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
-AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
 AC_CHECK_TYPES([uint ulong])
 
 DRIZZLE_PTHREAD_YIELD
 
 
 dnl Checks for header files.
-AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
+AC_CHECK_HEADERS(malloc.h)
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
 AC_PROG_GCC_TRADITIONAL
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(re_comp regcomp strdup)
 
-dnl Sun compilers have their own vis.h that is about something
-dnl totally different. So, not to change the libedit source, we
-dnl do some additional checks before we define HAVE_VIS_H.
-AC_CHECK_HEADER(vis.h,
-  [AC_CHECK_FUNC(strvis,
-    [AC_DEFINE([HAVE_VIS_H], [1],[Found vis.h and the strvis() function])])])
-
-AC_CHECK_FUNCS(strlcat strlcpy)
 AC_CHECK_FUNCS(issetugid)
-AC_CHECK_FUNCS(getline flockfile)
 
 # from old readline settting:
 
@@ -1126,23 +1106,19 @@ AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
 AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
- sys/file.h sys/ndir.h sys/pte.h sys/select.h sys/stream.h \
- sys/mman.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
-paths.h semaphore.h)
+ sys/ndir.h sys/select.h \
+ sys/mman.h termcap.h termio.h asm/termbits.h grp.h \
+ paths.h)
 
 # Already-done: strcasecmp
-AC_CHECK_FUNCS(lstat putenv select setenv setlocale strcoll tcgetattr)
+AC_CHECK_FUNCS(lstat select)
 
 AC_HEADER_STAT
 DRIZZLE_SIGNAL_CHECK
 DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
-DRIZZLE_HAVE_FIONREAD
 DRIZZLE_HAVE_TIOCSTAT
-DRIZZLE_STRUCT_DIRENT_D_INO
-DRIZZLE_STRUCT_DIRENT_D_NAMLEN
 DRIZZLE_TYPE_SIGHANDLER
-DRIZZLE_CHECK_MULTIBYTE
 if test "$with_named_curses" = "no"
 then
   DRIZZLE_CHECK_LIB_TERMCAP
@@ -1150,19 +1126,6 @@ else
   TERMCAP_LIBS="$with_named_curses"
 fi
 AC_SUBST(TERMCAP_LIBS)
-
-# Check if the termcap function 'tgoto' is already declared in
-# system header files or if it need to be declared locally
-AC_CHECK_DECLS(tgoto,,,[
-#ifdef HAVE_CURSES_H
-# include <curses.h>
-#elif HAVE_NCURSES_H
-# include <ncurses.h>
-#endif
-#ifdef HAVE_TERM_H
-# include <term.h>
-#endif
-])
 
 # End of readline/libedit stuff
 #########################################################################
@@ -1193,25 +1156,24 @@ fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
 
-AC_CHECK_FUNCS(bsearch \
+AC_CHECK_FUNCS( \
   cuserid fchmod \
-  fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
+  fdatasync fpresetsticky fpsetmask fsync \
   getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
-  locking longjmp lrand48 madvise mallinfo \
-  memmove \
-  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 \
+  madvise \
+  mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
   pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
   realpath rename rwlock_init setupterm \
-  shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
-  sighold sigset sigthreadmask port_create sleep \
-  snprintf socket strcasecmp strerror strsignal strpbrk \
-  tell tempnam vidattr \
-  posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
+  sigaction \
+  sigthreadmask \
+  snprintf strpbrk \
+  tell tempnam \
+  backtrace backtrace_symbols backtrace_symbols_fd)
 
 AC_LANG_PUSH(C++)
 # Test whether madvise() is declared in C++ code -- it is not on some
@@ -1226,31 +1188,6 @@ AC_LANG_POP()
 
 
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
-
-# Check that isinf() is available in math.h and can be used in both C and C++
-# code
-AC_MSG_CHECKING(for isinf in math.h)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
-    float f = 0.0; 
-    int r = isinf(f); 
-    return r;
-  ]])],[
-    AC_MSG_RESULT(yes)
-    AC_MSG_CHECKING(whether isinf() can be used in C++ code)
-    AC_LANG_PUSH([C++])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
-      float f = 0.0;
-      int r = isinf(f);
-      return r;
-    ]])],[
-      AC_MSG_RESULT(yes)
-      AC_DEFINE(HAVE_ISINF, [1], [isinf() macro or function])
-    ],[
-      AC_MSG_RESULT(no)
-    ])
-    AC_LANG_POP([])
-  ],[
-  AC_MSG_RESULT(no)])
 
 
 CFLAGS="$ORG_CFLAGS"
@@ -1373,20 +1310,6 @@ if test "$mysql_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
 fi
-
-# Check for bad includes
-AC_MSG_CHECKING("can netinet files be included")
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>]], [[ printf("1\n"); ]])],[netinet_inc=yes],[netinet_inc=no])
-if test "$netinet_inc" = "no"
-then
-  AC_DEFINE([HAVE_BROKEN_NETINET_INCLUDES], [1], [Can netinet be included])
-fi
-AC_MSG_RESULT("$netinet_inc")
 
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS(cxxabi.h)

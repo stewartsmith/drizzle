@@ -18,11 +18,15 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/functions/real.h>
 
 #include CSTDINT_H
 #include <cassert>
+#include CMATH_H
 
-#include <drizzled/functions/real.h>
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 String *Item_real_func::val_str(String *str)
 {
@@ -45,4 +49,15 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
   return decimal_value;
 }
 
+int64_t Item_real_func::val_int()
+{
+  assert(fixed == 1);
+  return (int64_t) rint(val_real());
+}
+
+void Item_real_func::fix_length_and_dec()
+{
+  decimals= NOT_FIXED_DEC;
+  max_length= float_length(decimals);
+}
 

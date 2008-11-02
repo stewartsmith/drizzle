@@ -22,6 +22,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
  Field type int64_t int (8 bytes)

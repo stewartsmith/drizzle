@@ -33,6 +33,11 @@
 #include <drizzled/util/test.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",

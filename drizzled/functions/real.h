@@ -31,11 +31,9 @@ public:
   Item_real_func(List<Item> &list) :Item_func(list) {}
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *decimal_value);
-  int64_t val_int()
-    { assert(fixed == 1); return (int64_t) rint(val_real()); }
+  int64_t val_int();
   enum Item_result result_type () const { return REAL_RESULT; }
-  void fix_length_and_dec()
-  { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
+  void fix_length_and_dec();
 };
 
 #endif /* DRIZZLED_FUNCTIONS_REAL_H */

@@ -36,6 +36,7 @@
 #include <config.h>
 
 #include <string>
+#include CMATH_H
 
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
@@ -51,6 +52,10 @@
 #endif
 
 #include <drizzled/gettext.h>
+
+#if defined(CMATH_NAMESPACE)
+  using namespace CMATH_NAMESPACE;
+#endif
 
 const char *VER= "14.14";
 
