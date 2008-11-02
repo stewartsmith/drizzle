@@ -20,7 +20,12 @@
 #include <drizzled/server_includes.h>
 
 #include CSTDINT_H
+#include CMATH_H
 #include <cassert>
+
+#if defined(CMATH_NAMESPACE) && CMATH_NAMESPACE
+using CMATH_NAMESPACE;
+#endif
 
 #include <drizzled/functions/real.h>
 

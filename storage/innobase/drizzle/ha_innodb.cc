@@ -2600,9 +2600,9 @@ normalize_table_name(
 					null-terminated string */
 	const char*	name)		/* in: table name string */
 {
-	char*	name_ptr;
-	char*	db_ptr;
-	char*	ptr;
+	const char*	name_ptr;
+	const char*	db_ptr;
+	const char*	ptr;
 
 	/* Scan name from the end */
 

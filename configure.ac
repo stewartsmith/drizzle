@@ -109,11 +109,6 @@ AM_PROG_CC_C_O
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 
-AC_CXX_STL_HASH
-AC_CXX_CSTDINT
-AC_CXX_CINTTYPES
-AC_CXX_CMATH
-
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
 dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
 if test "x${CFLAGS}" = "x-g -O2"
@@ -424,9 +419,9 @@ then
   SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
   #OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_ -v -errtags=yes"
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_"
   DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xport64 +w +w2 -errtags=yes -erroff=attrskipunsup -xlang=c99 -compat=5"
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xlang=c99 -compat=5"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
@@ -476,12 +471,10 @@ AC_SUBST(INSTALL_SCRIPT)
 
 export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
-if test "$GCC" = "yes"
-then
-  # Disable exceptions as they seams to create problems with gcc and threads.
-  # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
-fi
+AC_CXX_STL_HASH
+AC_CXX_CSTDINT
+AC_CXX_CINTTYPES
+AC_CXX_CMATH
 
 DRIZZLE_PROG_AR
 
@@ -1588,17 +1581,31 @@ void testme() {  };],[
     W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
   fi
 
-  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
-  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
+  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
-  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
-  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
+  NO_EXCEPTIONS="-fno-exceptions"
+  W_EXCEPTIONS="-fexceptions"
+  NO_UNUSED_MACROS="-Wno-unused-macros"
+  NO_REDUNDANT_DECLS="-Wno-redundant-decls"
+  # Disable exceptions as they seams to create problems with gcc and threads.
+  # drizzled doesn't use run-time-type-checking, so we disable it.
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
 fi
 if test "$SUNCC" = "yes"
 then
-  AM_CFLAGS="-v -xc99=all ${AM_CFLAGS}"
-  AM_CXXFLAGS="-v ${AM_CXXFLAGS}"
+  CC_WARNINGS="-v -xc99=all -errtags=yes"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  NO_EXCEPTIONS="-features=no%except"
+  W_EXCEPTIONS="-features=except"
 fi
+AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS}  ${AM_CXXFLAGS}"
+AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
+
+AC_SUBST(NO_EXCEPTIONS)
+AC_SUBST(W_EXCEPTIONS)
+AC_SUBST(NO_UNUSED_MACROS)
+AC_SUBST(NO_REDUNDANT_DECLS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])

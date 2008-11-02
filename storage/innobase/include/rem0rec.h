@@ -691,7 +691,7 @@ rec_get_converted_extra_size(
 	ulint	data_size,	/* in: data size */
 	ulint	n_fields,	/* in: number of fields */
 	ulint	n_ext)		/* in: number of externally stored columns */
-		__attribute__((const));
+		__attribute__((__const__));
 /**************************************************************
 Determines the size of a data tuple in ROW_FORMAT=COMPACT. */
 UNIV_INTERN

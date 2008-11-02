@@ -87,6 +87,8 @@ So, we can read full search-structure as 32-bit word
 #include <mysys/my_getopt.h>
 #include "lex.h"
 
+using namespace std;
+
 const char *default_dbug_option="d:t:o,/tmp/gen_lex_hash.trace";
 
 struct my_option my_long_options[] =

@@ -647,7 +647,7 @@ dict_table_flags_to_zip_size(
 			/* out: compressed page size,
 			or 0 if not compressed */
 	ulint	flags)	/* in: flags */
-	__attribute__((const));
+	__attribute__((__const__));
 /************************************************************************
 Check whether the table uses the compressed compact page format. */
 UNIV_INLINE
