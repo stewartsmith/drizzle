@@ -23,8 +23,6 @@ libserialize_la_CXXFLAGS =
 TESTS_ENVIRONMENT = sh
 TESTS = check_length.sh
 
-PROTOC = protoc
-
 %.pb.h %.pb.cc : %.proto
 	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
 

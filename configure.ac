@@ -499,10 +499,18 @@ if test "$with_protobuf" = "yes"
 then
   CPPFLAGS=""
   LIBS="-lprotobuf"
+  PROTO_PATH="$PATH"
 else
   CPPFLAGS="-I$withval/include"
   LIBS="-L$withval/lib -lprotobuf"
+  PROTO_PATH="${withval}/bin:$PATH"
 fi 
+
+AC_CHECK_TOOL([PROTOC],[protoc],[no],[$PROTO_PATH])
+if test "x$PROTOC" = "xno"
+then
+  AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
+fi
 
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([google/protobuf/message.h])
