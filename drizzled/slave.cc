@@ -1110,10 +1110,6 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
   if (!report_host)
     return(0);
   report_host_len= strlen(report_host);
-  if (report_user)
-    report_user_len= strlen(report_user);
-  if (report_password)
-    report_password_len= strlen(report_password);
   /* 30 is a good safety margin */
   if (report_host_len + report_user_len + report_password_len + 30 >
       sizeof(buf))
@@ -1121,8 +1117,8 @@ int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
 
   int4store(pos, server_id); pos+= 4;
   pos= net_store_data(pos, (unsigned char*) report_host, report_host_len);
-  pos= net_store_data(pos, (unsigned char*) report_user, report_user_len);
-  pos= net_store_data(pos, (unsigned char*) report_password, report_password_len);
+  pos= net_store_data(pos, NULL, report_user_len);
+  pos= net_store_data(pos, NULL, report_password_len);
   int2store(pos, (uint16_t) report_port); pos+= 2;
   int4store(pos, 0);    pos+= 4;
   /* The master will fill in master_id */

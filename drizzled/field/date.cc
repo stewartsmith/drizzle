@@ -22,6 +22,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/date.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /****************************************************************************
 ** The new date type

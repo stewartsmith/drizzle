@@ -17,21 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/functions/tan.h>
-#include CMATH_H
+#ifndef DRIZZLED_FUNCTIONS_UPDATE_HASH_H
+#define DRIZZLED_FUNCTIONS_UPDATE_HASH_H
 
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
+#include <drizzled/functions/func.h> 
 
-double Item_func_tan::val_real()
-{ 
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return fix_result(tan(value));
-} 
-  
+bool
+update_hash(
+  user_var_entry *entry, 
+  bool set_null, 
+  void *ptr, 
+  uint32_t length,
+  Item_result type, 
+  const CHARSET_INFO * const cs, 
+  Derivation dv,
+  bool unsigned_arg
+  );
+
+
+#endif /* DRIZZLED_FUNCTIONS_UPDATE_HASH_H */

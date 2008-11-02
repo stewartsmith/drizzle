@@ -23,6 +23,11 @@
 #include <cassert>
 
 #include <drizzled/functions/numhybrid.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 void Item_func_numhybrid::fix_num_length_and_dec()
 {}

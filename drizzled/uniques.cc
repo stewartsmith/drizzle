@@ -31,7 +31,12 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "sql_sort.h"
+#include <drizzled/sql_sort.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 
 int unique_write_to_file(unsigned char* key,

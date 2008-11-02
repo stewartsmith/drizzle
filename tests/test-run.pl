@@ -2546,9 +2546,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--relay-log=%s/log/slave%s-relay-bin", $prefix,
                 $opt_vardir, $sidx);
     mtr_add_arg($args, "%s--report-host=127.0.0.1", $prefix);
-    mtr_add_arg($args, "%s--report-port=%d", $prefix,
-                $mysqld->{'port'});
-#    mtr_add_arg($args, "%s--report-user=root", $prefix);
     mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
     mtr_add_arg($args, "%s--skip-slave-start", $prefix);
 

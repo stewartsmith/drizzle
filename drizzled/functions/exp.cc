@@ -21,6 +21,12 @@
 #include CSTDINT_H
 #include <drizzled/item_func.h>
 #include <drizzled/functions/exp.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 
 double Item_func_exp::val_real()
 {

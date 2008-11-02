@@ -562,7 +562,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
                  const char **errmsg);
 
 /* mysqld.cc */
-extern void MYSQLerror(const char*);
+extern void DRIZZLEerror(const char*);
 void refresh_status(Session *session);
 bool mysql_rm_tmp_tables(void);
 void handle_connection_in_main_thread(Session *session);

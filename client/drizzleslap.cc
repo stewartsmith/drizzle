@@ -84,6 +84,12 @@
 #include <ctype.h>
 #include <string>
 
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 using namespace std;
 
 #ifdef HAVE_SMEM

@@ -22,6 +22,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timetype.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 
 /****************************************************************************
 ** time type

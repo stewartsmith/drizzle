@@ -245,8 +245,6 @@ static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 static I_List<Session> thread_cache;
 
-static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
-
 /* Global variables */
 
 bool opt_bin_log;
@@ -458,7 +456,8 @@ pthread_cond_t  COND_server_started;
 uint32_t report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
-char *relay_log_info_file, *report_user, *report_password, *report_host;
+char *relay_log_info_file;
+char *report_host;
 char *opt_relay_logname = 0, *opt_relaylog_index_name=0;
 char *opt_logname;
 
@@ -923,8 +922,6 @@ static void clean_up_mutexes()
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_refresh);
   (void) pthread_cond_destroy(&COND_global_read_lock);
-  (void) pthread_cond_destroy(&COND_thread_cache);
-  (void) pthread_cond_destroy(&COND_flush_thread_cache);
 }
 
 
@@ -2140,8 +2137,6 @@ static int init_thread_environment()
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
-  (void) pthread_cond_init(&COND_thread_cache,NULL);
-  (void) pthread_cond_init(&COND_flush_thread_cache,NULL);
 
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&connection_attrib);
@@ -3266,16 +3261,6 @@ struct my_option my_long_options[] =
       "the slave from the master or other hosts."),
    (char**) &report_host, (char**) &report_host, 0, GET_STR, REQUIRED_ARG, 0, 0,
    0, 0, 0, 0},
-  {"report-password", OPT_REPORT_PASSWORD, "Undocumented.",
-   (char**) &report_password, (char**) &report_password, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"report-port", OPT_REPORT_PORT,
-   N_("Port for connecting to slave reported to the master during slave "
-      "registration. Set it only if the slave is listening on a non-default "
-      "port or if you have a special tunnel from the master or other clients "
-      "to the slave. If not sure, leave this option unset."),
-   (char**) &report_port, (char**) &report_port, 0, GET_UINT, REQUIRED_ARG,
-   DRIZZLE_PORT, 0, 0, 0, 0, 0},
   {"safe-mode", OPT_SAFE,
    N_("Skip some optimize stages (for testing)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -4174,7 +4159,7 @@ static void mysql_init_variables(void)
   /* Replication parameters */
   master_info_file= (char*) "master.info",
     relay_log_info_file= (char*) "relay-log.info";
-  report_user= report_password = report_host= 0;	/* TO BE DELETED */
+  report_host= 0;	/* TO BE DELETED */
   opt_relay_logname= opt_relaylog_index_name= 0;
 
   /* Variables in libraries */

@@ -21,10 +21,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
-#include <ieeefp.h>
 #include CMATH_H
 
-using namespace std;
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /*
   Floating-point numbers

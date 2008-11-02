@@ -27,6 +27,12 @@ using namespace std;
 #include <drizzled/sql_list.h>
 
 #include <drizzled/functions/int.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 
 
 void Item_func::set_arguments(List<Item> &list)

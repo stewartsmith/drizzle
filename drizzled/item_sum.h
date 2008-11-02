@@ -398,11 +398,7 @@ public:
   Item_sum_num(Session *session, Item_sum_num *item) 
     :Item_sum(session, item),is_evaluated(item->is_evaluated) {}
   bool fix_fields(Session *, Item **);
-  int64_t val_int()
-  {
-    assert(fixed == 1);
-    return (int64_t) rint(val_real());             /* Real as default */
-  }
+  int64_t val_int();
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
@@ -676,7 +672,7 @@ public:
   bool add();
   double val_real();
   // In SPs we might force the "wrong" type with select into a declare variable
-  int64_t val_int() { return (int64_t) rint(val_real()); }
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String *str);
   void reset_field();
@@ -709,8 +705,7 @@ public:
   Item_variance_field(Item_sum_variance *item);
   enum Type type() const {return FIELD_VARIANCE_ITEM; }
   double val_real();
-  int64_t val_int()
-  { /* can't be fix_fields()ed */ return (int64_t) rint(val_real()); }
+  int64_t val_int();
   String *val_str(String *str)
   { return val_string_from_real(str); }
   my_decimal *val_decimal(my_decimal *dec_buf)
@@ -769,6 +764,7 @@ public:
   void clear();
   bool add();
   double val_real();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
   void update_field();
