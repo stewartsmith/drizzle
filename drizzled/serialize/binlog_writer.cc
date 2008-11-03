@@ -9,6 +9,7 @@
 #include <google/protobuf/io/coded_stream.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <map>
@@ -17,6 +18,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using namespace std;
 using namespace google::protobuf::io;
 
 typedef std::map<std::string,std::string> Assign;
@@ -33,7 +35,7 @@ void print_usage_and_exit(char *prog) {
        << "    --output name    Append query to file <name> (default: 'log.bin')\n"
        << "    --set var=val    Set value of user variable for query\n"
        << "    --trans-id <id>  Set transaction id to <id>\n"
-       << std::flush;
+       << flush;
   exit(1);
 }
 
@@ -41,7 +43,7 @@ void print_usage_and_exit(char *prog) {
 void
 write_query(CodedOutputStream* out,
             unsigned long trans_id,
-            const std::string& query,
+            const string& query,
             const Assign& assign)
 {
   BinaryLog::Query *message = new BinaryLog::Query;
@@ -70,7 +72,6 @@ write_query(CodedOutputStream* out,
 
 int main(int argc, char *argv[])
 {
-  using std::ios;
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   static struct option options[] = {
@@ -97,8 +98,8 @@ int main(int argc, char *argv[])
       char *pos= strchr(optarg, '=');
       if (!pos)
         pos= end;
-      const std::string key(optarg, pos);
-      const std::string value(pos == end ? end : pos+1, end);
+      const string key(optarg, pos);
+      const string value(pos == end ? end : pos+1, end);
       assign[key]= value;
     }
 
@@ -115,23 +116,22 @@ int main(int argc, char *argv[])
   if (optind >= argc)
     print_usage_and_exit(argv[0]);
 
-  int outfd= open(file_name, O_WRONLY | O_CREAT | O_APPEND, 0644);
-  if (outfd < 0)
-  {
-    perror("open");
-    exit(1);
-  }
+  filebuf fb;
 
-  ZeroCopyOutputStream* raw_output = new FileOutputStream(outfd);
+  fb.open(file_name, ios::app | ios::out);
+
+  ostream os(&fb);
+
+  ZeroCopyOutputStream* raw_output = new OstreamOutputStream(&os);
   CodedOutputStream* coded_output = new CodedOutputStream(raw_output);
 
-  std::stringstream sout;
+  stringstream sout;
   sout << ioutil::join(" ", &argv[optind], &argv[argc]);
 
   write_query(coded_output, trans_id, sout.str(), assign);
 
   delete coded_output;
   delete raw_output;
-  close(outfd);
+  fb.close();
   exit(0);
 }

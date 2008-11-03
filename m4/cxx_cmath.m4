@@ -4,10 +4,14 @@
 # HAVE_BOOST_CMATH depending
 # on location.
 
+m4_define([_AH_NEED_FUNCS],
+[m4_foreach_w([AC_Func], [$1],
+  [AH_TEMPLATE(AS_TR_CPP([NEED_]m4_defn([AC_Func])),
+    [Define to 1 if you need to build a local version of `]m4_defn([AC_Func])[' function.])])])
+
 AC_DEFUN([AC_CXX_CMATH],
   [AC_MSG_CHECKING(the location of cmath)
-  AC_LANG_SAVE
-   AC_LANG_CPLUSPLUS
+   AC_LANG_PUSH(C++)
    ac_cv_cxx_cmath=""
    ac_cv_cxx_cmath_namespace=""
    for location in tr1/cmath boost/cmath cmath; do
@@ -27,6 +31,13 @@ AC_DEFUN([AC_CXX_CMATH],
       ac_cv_cxx_cmath_namespace=""
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cmath header.])
+      
+      _AH_NEED_FUNCS([isinf isnan isfinite])
+      for ac_func in isinf isnan isfinite ; do
+        AC_TRY_COMPILE([#include <math.h>],
+                       [double x=1.0; $ac_func(x)],
+                       [],[AC_DEFINE_UNQUOTED(AS_TR_CPP([NEED_$ac_func]))])
+      done
    fi
    AC_DEFINE_UNQUOTED(CMATH_H,$ac_cv_cxx_cmath,
                       [the location of <cmath>])
@@ -35,4 +46,5 @@ AC_DEFUN([AC_CXX_CMATH],
      AC_DEFINE_UNQUOTED(CMATH_NAMESPACE,$ac_cv_cxx_cmath_namespace,
                         [the namespace of C99 math extensions])
    fi
+   AC_LANG_POP()
 ])
