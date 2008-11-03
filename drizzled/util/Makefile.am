@@ -17,12 +17,12 @@ noinst_HEADERS = convert.h \
 		 math.h \
                  test.h
 
-if GCC_PCH
 # Trick automake into producing CXXCOMPILE var. Won't be needed once we
 # have real CXX files in here
 lib_LTLIBRARIES = libutil.la
-libutil_la_SOURCES = dummy.cc
+libutil_la_SOURCES = math.cc
 
+if GCC_PCH
 BUILT_SOURCES = convert.h.gch \
                 test.h.gch
 

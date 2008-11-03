@@ -336,14 +336,15 @@ dnl  C++ compiler does not!
 
 dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
 dnl       Need for all of this? 
-case "$target_os" in
-  *solaris*)
-  dnl Do we need both of these? 
-  CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
-  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
-  ;;
-esac
-
+if test "$GCC" = "yes"
+then
+  case "$target_os" in
+    *solaris*)
+    CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+    CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
+    ;;
+  esac
+fi
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
@@ -1163,6 +1164,7 @@ AC_CHECK_FUNCS( \
   fdatasync fpresetsticky fpsetmask fsync \
   getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
+  isinf isfinite \
   localtime_r gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \

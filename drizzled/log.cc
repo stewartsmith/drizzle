@@ -3406,7 +3406,9 @@ int TC_LOG_MMAP::open(const char *opt_name)
 
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
   data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
-  msync(data, tc_log_page_size, MS_SYNC);
+  // must cast data to (char *) for solaris. Arg1 is (void *) on linux
+  //   so the cast should be fine. 
+  msync((char *)data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
 
@@ -3612,7 +3614,9 @@ int TC_LOG_MMAP::sync()
     sit down and relax - this can take a while...
     note - no locks are held at this point
   */
-  err= msync(syncing->start, 1, MS_SYNC);
+  // must cast data to (char *) for solaris. Arg1 is (void *) on linux
+  //   so the cast should be fine. 
+  err= msync((char *)syncing->start, 1, MS_SYNC);
   if(err==0)
     err= my_sync(fd, MYF(0));
 

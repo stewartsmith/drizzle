@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/round.h>
 #include CMATH_H
+#include <drizzled/util/math.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

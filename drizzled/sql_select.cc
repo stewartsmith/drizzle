@@ -26,6 +26,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/sj_tmp_table.h>
+#include <drizzled/table_map_iterator.h>
 
 #include <mysys/my_bit.h>
 #include <drizzled/error.h>

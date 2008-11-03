@@ -18,37 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_UTIL_MATH
-#define DRIZZLE_SERVER_UTIL_MATH
-
-/**
- * This is all to work around what I _think_ is a bug in Sun Studio headers
- * But for now, it just gets things compiling while I get the Sun Studio 
- * guys to look at it.
+/*
+ * Work around Sun Studio not supporting all of C99 math in C++
  */
 
-#if defined(_FORTEC_)
+#include <config.h>
+#if defined(NEED_ISNAN) || defined(NEED_ISINF) || defined(NEED_ISFINITE)
 # if defined(HAVE_IEEEFP_H)
 #  include <ieeefp.h>
 # endif
-# include CMATH_H
+#endif
 
-# if defined(__cplusplus) 
+#if defined(NEED_ISNAN)
+int isnan (double a)
+{
+  return isnand(a);
+}
+#endif /* defined(NEED_ISNAN) */
 
-#  if defined(NEED_ISNAN)
-int isnan (double a);
-#  endif /* defined(NEED_ISNAN) */
+#if defined(NEED_ISINF)
+int isinf(double a)
+{
+  fpclass_t fc= fpclass(a);
+  return ((fc==FP_NINF)||(fc==FP_PINF)) ? 0 : 1;
+}
+#endif /* !defined(NEED_ISINF) */
 
-#  if defined(NEED_ISINF)
-int isinf(double a);
-#  endif /* defined(NEED_ISINF) */
-
-#  if defined(NEED_ISFINITE)
-int isfinite(double a);
-#  endif /* defined(NEED_ISFINITE) */
-
-# endif /* defined(__cplusplus) */
-#endif /* __FORTEC__ */
-
-
-#endif /* DRIZZLE_SERVER_UTIL_MATH */
+#if defined(NEED_ISFINITE)
+int isfinite(double a)
+{
+  fpclass_t fc= fpclass(a);
+  return ((fc!=FP_NINF)&&(fc!=FP_PINF)) ? 0 : 1;
+}
+#endif /* !defined(NEED_ISFINITE) */

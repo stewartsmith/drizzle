@@ -1866,7 +1866,7 @@ protected:
 public:
   select_result();
   virtual ~select_result() {};
-  virtual int prepare(List<Item> &list __attribute__((unused)),
+  virtual int prepare(List<Item> &,
                       SELECT_LEX_UNIT *u)
   {
     unit= u;
@@ -1882,7 +1882,7 @@ public:
   { return fields.elements; }
   virtual bool send_fields(List<Item> &list, uint32_t flags)=0;
   virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN  __attribute__((unused)) *join=0)
+  virtual bool initialize_tables (JOIN *)
   { return 0; }
   virtual void send_error(uint32_t errcode,const char *err);
   virtual bool send_eof()=0;
@@ -1915,10 +1915,11 @@ class select_result_interceptor: public select_result
 {
 public:
   select_result_interceptor() {}              /* Remove gcc warning */
-  uint32_t field_count(List<Item> &fields __attribute__((unused))) const
+  uint32_t field_count(List<Item> &) const
   { return 0; }
-  bool send_fields(List<Item> &fields __attribute__((unused)),
-                   uint32_t flag __attribute__((unused))) { return false; }
+  bool send_fields(List<Item> &,
+                   uint32_t)
+  { return false; }
 };
 
 
