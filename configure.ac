@@ -487,8 +487,8 @@ AC_SUBST(LD_VERSION_SCRIPT)
 
 AC_MSG_CHECKING(for Google Protocol Buffers)
 AC_ARG_WITH(protobuf,
-  [AS_HELP_STRING([--with-protobuf],
-       [Use protobuf directory])],
+  [AS_HELP_STRING([--with-protobuf@<:@=DIR@:>@],
+       [search for protobuf in DIR/include and DIR/lib])],
   [ with_protobuf=$withval ],
   [ with_protobuf=yes ])
 
@@ -556,8 +556,8 @@ AC_CHECK_LIB(uuid, uuid_generate)
 
 AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
-  [AS_HELP_STRING([--with-libevent],
-       [Use libevent build directory])],
+  [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
+       [Use libevent in DIR])],
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
 
@@ -573,31 +573,31 @@ then
     AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
     LIBEVENT_LIBS="${LIBS}"
     LIBS="${my_save_LIBS}"
-    LIBEVENT_CFLAGS=""
+    LIBEVENT_CPPFLAGS=""
 else
     AC_MSG_RESULT($withval)
     if test -f $withval/event.h -a -f $withval/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CFLAGS="-I$withval"
+       LIBEVENT_CPPFLAGS="-I$withval"
        LIBEVENT_LIBS="-L$withval -levent"
     elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CFLAGS="-I$withval/include"
+       LIBEVENT_CPPFLAGS="-I$withval/include"
        LIBEVENT_LIBS="-L$withval/lib -levent"
     else
        AC_MSG_ERROR([event.h or libevent.a not found in $withval])
     fi
 fi
 
-AC_SUBST(LIBEVENT_CFLAGS)
+AC_SUBST(LIBEVENT_CPPFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
 
 AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
-  save_CFLAGS="$CFLAGS"
+  save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
-  CFLAGS="$LIBEVENT_CFLAGS"
+  CPPFLAGS="$LIBEVENT_CPPFLAGS"
   LIBS="$LIBEVENT_LIBS"
   AC_TRY_LINK([
 #include <sys/types.h>
@@ -611,7 +611,7 @@ AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
 	check http://www.monkey.org/~provos/libevent/])
   ])
 
-  CFLAGS="$save_CFLAGS"
+  CPPFLAGS="$save_CPPFLAGS"
   LIBS="$save_LIBS"
 ])
 
