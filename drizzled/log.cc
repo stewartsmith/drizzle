@@ -893,7 +893,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
     int len=snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
 		     "started with:\nTCP Port: %d, Named Pipe: %s\n",
                      my_progname, server_version, COMPILATION_COMMENT,
-                     mysqld_port, ""
+                     drizzled_port, ""
                      );
     end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);

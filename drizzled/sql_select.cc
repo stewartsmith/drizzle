@@ -182,13 +182,12 @@ static int create_sort_index(Session *session, JOIN *join, order_st *order,
 static int remove_duplicates(JOIN *join,Table *entry,List<Item> &fields,
 			     Item *having);
 static int remove_dup_with_compare(Session *session, Table *entry, Field **field,
-				   ulong offset,Item *having);
+				   uint32_t offset, Item *having);
 static int remove_dup_with_hash_index(Session *session,Table *table,
 				      uint32_t field_count, Field **first_field,
-
-				      ulong key_length,Item *having);
+				      uint32_t key_length, Item *having);
 static int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count);
-static ulong used_blob_length(CACHE_FIELD **ptr);
+static uint32_t used_blob_length(CACHE_FIELD **ptr);
 static bool store_record_in_cache(JOIN_CACHE *cache);
 static void reset_cache_read(JOIN_CACHE *cache);
 static void reset_cache_write(JOIN_CACHE *cache);
@@ -5302,7 +5301,7 @@ best_access_path(JOIN      *join,
                     tmp= a;
                   set_if_bigger(tmp,1.0);
                 }
-                records = (ulong) tmp;
+                records = (uint32_t) tmp;
               }
 
               if (ref_or_null_part)
@@ -13445,7 +13444,7 @@ static int
 remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
 {
   int error;
-  ulong reclength,offset;
+  uint32_t reclength,offset;
   uint32_t field_count;
   Session *session= join->session;
 
@@ -13470,7 +13469,7 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
   offset= (field_count ? 
            entry->field[entry->s->fields - field_count]->
            offset(entry->record[0]) : 0);
-  reclength=entry->s->reclength-offset;
+  reclength= entry->s->reclength-offset;
 
   free_io_cache(entry);				// Safety
   entry->file->info(HA_STATUS_VARIABLE);
@@ -13478,11 +13477,11 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
       (!entry->s->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->file->stats.records <
 	session->variables.sortbuff_size)))
-    error=remove_dup_with_hash_index(join->session, entry,
+    error= remove_dup_with_hash_index(join->session, entry,
 				     field_count, first_field,
 				     reclength, having);
   else
-    error=remove_dup_with_compare(join->session, entry, first_field, offset,
+    error= remove_dup_with_compare(join->session, entry, first_field, offset,
 				  having);
 
   free_blobs(first_field);
@@ -13491,13 +13490,13 @@ remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
 
 
 static int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
-				   ulong offset, Item *having)
+				   uint32_t offset, Item *having)
 {
   handler *file=table->file;
   char *org_record,*new_record;
   unsigned char *record;
   int error;
-  ulong reclength= table->s->reclength-offset;
+  uint32_t reclength= table->s->reclength-offset;
 
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
@@ -13584,13 +13583,13 @@ err:
 static int remove_dup_with_hash_index(Session *session, Table *table,
 				      uint32_t field_count,
 				      Field **first_field,
-				      ulong key_length,
+				      uint32_t key_length,
 				      Item *having)
 {
   unsigned char *key_buffer, *key_pos, *record=table->record[0];
   int error;
   handler *file= table->file;
-  ulong extra_length= ALIGN_SIZE(key_length)-key_length;
+  uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
 
@@ -13605,7 +13604,7 @@ static int remove_dup_with_hash_index(Session *session, Table *table,
 
   {
     Field **ptr;
-    ulong total_length= 0;
+    uint32_t total_length= 0;
     for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
@@ -13841,7 +13840,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
   *blob_ptr=0;					/* End sequentel */
-  size=cmax(session->variables.join_buff_size, (ulong)cache->length);
+  size=cmax(session->variables.join_buff_size, (uint32_t)cache->length);
   if (!(cache->buff=(unsigned char*) my_malloc(size,MYF(0))))
     return(1);				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;
@@ -13850,8 +13849,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
 }
 
 
-static ulong
-used_blob_length(CACHE_FIELD **ptr)
+static uint32_t used_blob_length(CACHE_FIELD **ptr)
 {
   uint32_t length,blob_length;
   for (length=0 ; *ptr ; ptr++)
@@ -13877,7 +13875,7 @@ store_record_in_cache(JOIN_CACHE *cache)
 
   length=cache->length;
   if (cache->blobs)
-    length+=used_blob_length(cache->blob_ptr);
+    length+= used_blob_length(cache->blob_ptr);
   if ((last_record= (length + cache->length > (size_t) (cache->end - pos))))
     cache->ptr_record=cache->records;
   /*

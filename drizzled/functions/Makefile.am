@@ -15,69 +15,71 @@
 
 noinst_LTLIBRARIES = 	libfunctions.la
 
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+
 libfunctions_la_SOURCES = abs.cc \
-			  acos.cc \
-			  ascii.cc \
-			  asin.cc \
-			  atan.cc \
-			  additive_op.cc \
-			  benchmark.cc \
-			  bit.cc \
-			  bit_count.cc \
-			  char_length.cc \
-			  ceiling.cc \
-			  connection_id.cc \
-			  coercibility.cc \
-			  cos.cc \
-			  decimal_typecast.cc \
-			  divide.cc \
-			  exp.cc \
-			  get_user_var.cc \
-			  get_variable.cc \
-			  field.cc \
-			  find_in_set.cc \
-			  floor.cc \
-			  found_rows.cc \
-			  func.cc \
-			  get_system_var.cc \
-			  get_variable.cc \
-                          int.cc \
-                          integer.cc \
-                          int_divide.cc \
-                          int_val.cc \
-			  last_insert.cc \
-			  length.cc \
-			  ln.cc \
-			  locate.cc \
-			  lock.cc \
-			  log.cc \
-			  master_pos_wait.cc \
-			  min_max.cc \
-			  minus.cc \
-			  mod.cc \
-			  multiply.cc \
-			  neg.cc \
-			  num1.cc \
-                          numhybrid.cc \
-                          num_op.cc \
-                          ord.cc \
-                          plus.cc \
-                          pow.cc \
-			  rand.cc \
-			  real.cc \
-			  round.cc \
-			  row_count.cc \
-			  set_user_var.cc \
-			  shift.cc \
-			  sign.cc \
-			  signed.cc \
-			  sin.cc \
-			  sqrt.cc \
-			  tan.cc \
-			  update_hash.cc \
-			  units.cc \
-			  unsigned.cc \
-			  user_var_as_out_param.cc
+		  acos.cc \
+		  ascii.cc \
+		  asin.cc \
+		  atan.cc \
+		  additive_op.cc \
+		  benchmark.cc \
+		  bit.cc \
+		  bit_count.cc \
+		  char_length.cc \
+		  ceiling.cc \
+		  connection_id.cc \
+		  coercibility.cc \
+		  cos.cc \
+		  decimal_typecast.cc \
+		  divide.cc \
+		  exp.cc \
+		  get_user_var.cc \
+		  get_variable.cc \
+		  field.cc \
+		  find_in_set.cc \
+		  floor.cc \
+		  found_rows.cc \
+		  func.cc \
+		  get_system_var.cc \
+		  get_variable.cc \
+		  int.cc \
+		  integer.cc \
+		  int_divide.cc \
+		  int_val.cc \
+		  last_insert.cc \
+		  length.cc \
+		  ln.cc \
+		  locate.cc \
+		  lock.cc \
+		  log.cc \
+		  master_pos_wait.cc \
+		  min_max.cc \
+		  minus.cc \
+		  mod.cc \
+		  multiply.cc \
+		  neg.cc \
+		  num1.cc \
+		  numhybrid.cc \
+		  num_op.cc \
+		  ord.cc \
+		  plus.cc \
+		  pow.cc \
+		  rand.cc \
+		  real.cc \
+		  round.cc \
+		  row_count.cc \
+		  set_user_var.cc \
+		  shift.cc \
+		  sign.cc \
+		  signed.cc \
+		  sin.cc \
+		  sqrt.cc \
+		  tan.cc \
+		  update_hash.cc \
+		  units.cc \
+		  unsigned.cc \
+		  user_var_as_out_param.cc
 
 noinst_HEADERS = abs.h \
 		 acos.h \
@@ -105,10 +107,10 @@ noinst_HEADERS = abs.h \
 		 func.h \
 		 get_system_var.h \
 		 get_user_var.h \
-                 int.h \
-                 integer.h \
-                 int_divide.h \
-                 int_val.h \
+		 int.h \
+		 integer.h \
+		 int_divide.h \
+		 int_val.h \
 		 last_insert.h \
 		 length.h \
 		 ln.h \
@@ -122,11 +124,11 @@ noinst_HEADERS = abs.h \
 		 multiply.h \
 		 neg.h \
 		 num1.h \
-                 numhybrid.h \
-                 num_op.h \
-                 ord.h \
-                 plus.h \
-                 pow.h \
+		 numhybrid.h \
+		 num_op.h \
+		 ord.h \
+		 plus.h \
+		 pow.h \
 		 real.h \
 		 rollup_const.h \
 		 round.h \

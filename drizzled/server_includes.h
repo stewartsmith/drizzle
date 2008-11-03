@@ -562,7 +562,6 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
                  const char **errmsg);
 
 /* mysqld.cc */
-extern void DRIZZLEerror(const char*);
 void refresh_status(Session *session);
 bool mysql_rm_tmp_tables(void);
 void handle_connection_in_main_thread(Session *session);
@@ -656,7 +655,7 @@ extern ulong tc_log_page_waits;
 extern bool relay_log_purge;
 extern bool opt_innodb_safe_binlog, opt_innodb;
 extern uint32_t test_flags,select_errors,ha_open_options;
-extern uint32_t protocol_version, mysqld_port, dropping_tables;
+extern uint32_t protocol_version, drizzled_port, dropping_tables;
 extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;

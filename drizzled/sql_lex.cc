@@ -692,14 +692,14 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 
 
 /*
-  MYSQLlex remember the following states from the following MYSQLlex()
+  DRIZZLElex remember the following states from the following DRIZZLElex()
 
   - MY_LEX_EOQ			Found end of query
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
 
-int MYSQLlex(void *arg, void *yysession)
+int DRIZZLElex(void *arg, void *yysession)
 {
   Session *session= (Session *)yysession;
   Lex_input_stream *lip= session->m_lip;
@@ -2039,7 +2039,7 @@ void st_select_lex::print_limit(Session *session __attribute__((unused)),
   @brief Restore the LEX and Session in case of a parse error.
 
   This is a clean up call that is invoked by the Bison generated
-  parser before returning an error from MYSQLparse. If your
+  parser before returning an error from DRIZZLEparse. If your
   semantic actions manipulate with the global thread state (which
   is a very bad practice and should not normally be employed) and
   need a clean-up in case of error, and you can not use %destructor
