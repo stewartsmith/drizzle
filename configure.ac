@@ -487,7 +487,7 @@ AC_SUBST(LD_VERSION_SCRIPT)
 
 AC_MSG_CHECKING(for Google Protocol Buffers)
 AC_ARG_WITH(protobuf,
-  [AS_HELP_STRING([--with-protobuf[[=DIR]]],
+  [AS_HELP_STRING([--with-protobuf@<:@=DIR@:>@],
        [search for protobuf in DIR/include and DIR/lib])],
   [ with_protobuf=$withval ],
   [ with_protobuf=yes ])
@@ -556,7 +556,7 @@ AC_CHECK_LIB(uuid, uuid_generate)
 
 AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
-  [AS_HELP_STRING([--with-libevent[[=DIR]]],
+  [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
        [Use libevent in DIR])],
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
