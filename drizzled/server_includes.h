@@ -655,7 +655,7 @@ extern ulong tc_log_page_waits;
 extern bool relay_log_purge;
 extern bool opt_innodb_safe_binlog, opt_innodb;
 extern uint32_t test_flags,select_errors,ha_open_options;
-extern uint32_t protocol_version, mysqld_port, dropping_tables;
+extern uint32_t protocol_version, drizzled_port, dropping_tables;
 extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;

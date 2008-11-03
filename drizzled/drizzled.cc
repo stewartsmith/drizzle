@@ -234,7 +234,7 @@ static bool opt_debugging= 0, opt_console= 0;
 static uint32_t wake_thread;
 static uint32_t killed_threads, thread_created;
 static uint32_t max_used_connections;
-static char *mysqld_user, *mysqld_chroot, *log_error_file_ptr;
+static char *drizzled_user, *drizzled_chroot, *log_error_file_ptr;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
 static char *character_set_filesystem_name;
@@ -297,8 +297,8 @@ const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
-uint32_t mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
-uint32_t mysqld_port_timeout;
+uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
+uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version;
 uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
@@ -471,7 +471,7 @@ static int cleanup_done;
 static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
-static char *mysql_home_ptr, *pidfile_name_ptr;
+static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
 static char **defaults_argv;
 static char *opt_bin_logname;
@@ -497,7 +497,7 @@ uint32_t connection_count= 0;
 /* Function declarations */
 
 pthread_handler_t signal_hand(void *arg);
-static void mysql_init_variables(void);
+static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 extern "C" bool mysqld_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
@@ -518,7 +518,7 @@ static void close_server_sock();
 static void clean_up_mutexes(void);
 static void wait_for_signal_thread_to_end(void);
 static void create_pid_file();
-static void mysqld_exit(int exit_code) __attribute__((noreturn));
+static void drizzled_exit(int exit_code) __attribute__((noreturn));
 
 /****************************************************************************
 ** Code to end mysqld
@@ -797,11 +797,11 @@ extern "C" void unireg_abort(int exit_code)
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
-  mysqld_exit(exit_code);
+  drizzled_exit(exit_code);
 }
 
 
-static void mysqld_exit(int exit_code)
+static void drizzled_exit(int exit_code)
 {
   wait_for_signal_thread_to_end();
   clean_up_mutexes();
@@ -932,9 +932,9 @@ static void clean_up_mutexes()
 static void set_ports()
 {
   char	*env;
-  if (!mysqld_port)
+  if (!drizzled_port)
   {					// Get port if not from commandline
-    mysqld_port= DRIZZLE_PORT;
+    drizzled_port= DRIZZLE_PORT;
 
     /*
       if builder specifically requested a default port, use that
@@ -948,12 +948,12 @@ static void set_ports()
 
     struct  servent *serv_ptr;
     if ((serv_ptr= getservbyname("drizzle", "tcp")))
-      mysqld_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
+      drizzled_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
 
     if ((env = getenv("DRIZZLE_TCP_PORT")))
-      mysqld_port= (uint) atoi(env);		/* purecov: inspected */
+      drizzled_port= (uint) atoi(env);		/* purecov: inspected */
 
-    assert(mysqld_port);
+    assert(drizzled_port);
   }
 }
 
@@ -1100,7 +1100,7 @@ static void network_init(void)
   hints.ai_flags= AI_PASSIVE;
   hints.ai_socktype= SOCK_STREAM;
 
-  snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
+  snprintf(port_buf, NI_MAXSERV, "%d", drizzled_port);
   error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
   if (error != 0)
   {
@@ -1173,15 +1173,15 @@ static void network_init(void)
       on busy Linux systems. Retry to bind the address at these intervals:
       Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
       Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
-      Limit the sequence by mysqld_port_timeout (set --port-open-timeout=#).
+      Limit the sequence by drizzled_port_timeout (set --port-open-timeout=#).
     */
     for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
     {
       if (((ret= bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
           (errno != EADDRINUSE) ||
-          (waited >= mysqld_port_timeout))
+          (waited >= drizzled_port_timeout))
         break;
-      sql_print_information(_("Retrying bind on TCP/IP port %u"), mysqld_port);
+      sql_print_information(_("Retrying bind on TCP/IP port %u"), drizzled_port);
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
@@ -1189,7 +1189,7 @@ static void network_init(void)
     {
       sql_perror(_("Can't start server: Bind on TCP/IP port"));
       sql_print_error(_("Do you already have another drizzled server running "
-                        "on port: %d ?"),mysqld_port);
+                        "on port: %d ?"),drizzled_port);
       unireg_abort(1);
     }
     if (listen(ip_sock,(int) back_log) < 0)
@@ -1908,7 +1908,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (init_thread_environment())
     return 1;
-  mysql_init_variables();
+  drizzle_init_variables();
 
 #ifdef HAVE_TZNAME
   {
@@ -2411,7 +2411,7 @@ static int init_server_components()
       locked_in_memory= 0;
     }
     if (user_info)
-      set_user(mysqld_user, user_info);
+      set_user(drizzled_user, user_info);
   }
   else
 #endif
@@ -2498,14 +2498,14 @@ int main(int argc, char **argv)
   mysql_data_home[1]=0;
   mysql_data_home_len= 2;
 
-  if ((user_info= check_user(mysqld_user)))
+  if ((user_info= check_user(drizzled_user)))
   {
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
     if (locked_in_memory) // getuid() == 0 here
       set_effective_user(user_info);
     else
 #endif
-      set_user(mysqld_user, user_info);
+      set_user(drizzled_user, user_info);
   }
 
   if (opt_bin_log && !server_id)
@@ -2561,7 +2561,7 @@ int main(int argc, char **argv)
   }
 
   sql_print_information(_(ER(ER_STARTUP)),my_progname,server_version,
-                        "", mysqld_port, COMPILATION_COMMENT);
+                        "", drizzled_port, COMPILATION_COMMENT);
 
 
   handle_connections_sockets();
@@ -2587,7 +2587,7 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
-  mysqld_exit(0);
+  drizzled_exit(0);
 }
 
 
@@ -2938,7 +2938,7 @@ struct my_option my_long_options[] =
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
       "relative to this."),
-   (char**) &mysql_home_ptr, (char**) &mysql_home_ptr, 0, GET_STR, REQUIRED_ARG,
+   (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
@@ -2991,7 +2991,7 @@ struct my_option my_long_options[] =
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot mysqld daemon during startup."),
-   (char**) &mysqld_chroot, (char**) &mysqld_chroot, 0, GET_STR, REQUIRED_ARG,
+   (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"collation-server", OPT_DEFAULT_COLLATION,
    N_("Set the default collation."),
@@ -3174,13 +3174,13 @@ struct my_option my_long_options[] =
    N_("Port number to use for connection or 0 for default to, in "
       "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
       "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
-   (char**) &mysqld_port,
-   (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzled_port,
+   (char**) &drizzled_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
-   (char**) &mysqld_port_timeout,
-   (char**) &mysqld_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzled_port_timeout,
+   (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log", OPT_RELAY_LOG,
    N_("The location and name to use for relay logs."),
    (char**) &opt_relay_logname, (char**) &opt_relay_logname, 0,
@@ -3349,7 +3349,7 @@ struct my_option my_long_options[] =
    0, 0, 0, GET_STR, REQUIRED_ARG, 0,
    0, 0, 0, 0, 0},
   {"user", 'u',
-   N_("Run mysqld daemon as user."),
+   N_("Run drizzled daemon as user."),
    0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"version", 'V',
@@ -4078,7 +4078,7 @@ static void usage(void)
     as these are initialized by my_getopt.
 */
 
-static void mysql_init_variables(void)
+static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   opt_skip_slave_start= opt_reckless_slave = 0;
@@ -4105,7 +4105,7 @@ static void mysql_init_variables(void)
   specialflag= 0;
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
-  mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
+  drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
   opt_mysql_tmpdir= my_bind_addr_str= NULL;
   memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
   memset(&global_status_var, 0, sizeof(global_status_var));
@@ -4125,7 +4125,7 @@ static void mysql_init_variables(void)
   slave_exec_mode_options= 0;
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
-  mysql_home_ptr= mysql_home;
+  drizzle_home_ptr= mysql_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;
   language_ptr= language;
@@ -4230,12 +4230,12 @@ mysqld_get_one_option(int optid,
     mysql_data_home_len= strlen(mysql_data_home);
     break;
   case 'u':
-    if (!mysqld_user || !strcmp(mysqld_user, argument))
-      mysqld_user= argument;
+    if (!drizzled_user || !strcmp(drizzled_user, argument))
+      drizzled_user= argument;
     else
       sql_print_warning(_("Ignoring user change to '%s' because the user was "
                           "set to '%s' earlier on the command line\n"),
-                        argument, mysqld_user);
+                        argument, drizzled_user);
     break;
   case 'L':
     strmake(language, argument, sizeof(language)-1);
@@ -4584,8 +4584,8 @@ static void get_options(int *argc,char **argv)
   /* Set global slave_exec_mode from its option */
   fix_slave_exec_mode(OPT_GLOBAL);
 
-  if (mysqld_chroot)
-    set_root(mysqld_chroot);
+  if (drizzled_chroot)
+    set_root(drizzled_chroot);
   fix_paths();
 
   /*
