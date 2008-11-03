@@ -141,7 +141,7 @@ void my_parse_error(const char *s)
   to abort from the parser.
 */
 
-void MYSQLerror(const char *s)
+void DRIZZLEerror(const char *s)
 {
   Session *session= current_session;
 
