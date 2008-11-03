@@ -3639,9 +3639,9 @@ struct my_option my_long_options[] =
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
-   N_("Optional comma separated list of plugins to load, where each plugin is "
-      "identified by the name of the shared library. "
-      "[for example: --plugin_load=libmd5udf.so]"),
+   N_("Optional colon (or semicolon) separated list of plugins to load,"
+      "where each plugin is identified by the name of the shared library. "
+      "[for example: --plugin_load=libmd5udf.so:libauth_pam.so]"),
    (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
