@@ -1164,7 +1164,6 @@ AC_CHECK_FUNCS( \
   fdatasync fpresetsticky fpsetmask fsync \
   getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
-  isinf isfinite \
   localtime_r gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
