@@ -5,9 +5,9 @@
 # on location.
 
 m4_define([_AH_NEED_FUNCS],
-[m4_foreach_w([AC_Func], [$1],
-  [AH_TEMPLATE(AS_TR_CPP([NEED_]m4_defn([AC_Func])),
-    [Define to 1 if you need to build a local version of `]m4_defn([AC_Func])[' function.])])])
+[AC_FOREACH([AC_Func], [$1],
+  [AH_TEMPLATE(AS_TR_CPP([NEED_]AC_Func),
+    [Define to 1 if you need to build a local version of `]AC_Func[' function.])])])
 
 AC_DEFUN([AC_CXX_CMATH],
   [AC_MSG_CHECKING(the location of cmath)
