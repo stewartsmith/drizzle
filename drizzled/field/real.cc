@@ -18,11 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-using namespace std;
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /*
   Floating-point numbers

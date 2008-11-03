@@ -411,7 +411,7 @@ struct st_my_thread_var
   void *opt_info;
 };
 
-extern struct st_my_thread_var *_my_thread_var(void) __attribute__ ((const));
+extern struct st_my_thread_var *_my_thread_var(void);
 extern uint32_t my_thread_end_wait_time;
 #define my_thread_var (_my_thread_var())
 /*

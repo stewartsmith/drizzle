@@ -36,6 +36,7 @@
 #include <config.h>
 
 #include <string>
+#include CMATH_H
 
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
@@ -51,6 +52,10 @@
 #endif
 
 #include <drizzled/gettext.h>
+
+#if defined(CMATH_NAMESPACE)
+  using namespace CMATH_NAMESPACE;
+#endif
 
 const char *VER= "14.14";
 
@@ -204,8 +209,8 @@ void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
-bool get_one_option(int optid, const struct my_option *opt,
-                    char *argument);
+extern "C" bool get_one_option(int optid, const struct my_option *opt,
+                               char *argument);
 static int com_quit(string *str,const char*),
   com_go(string *str,const char*), com_ego(string *str,const char*),
   com_print(string *str,const char*),
@@ -1005,8 +1010,8 @@ static uint32_t start_timer(void);
 static void end_timer(uint32_t start_time,char *buff);
 static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern RETSIGTYPE drizzle_end(int sig);
-extern RETSIGTYPE handle_sigint(int sig);
+extern "C" RETSIGTYPE drizzle_end(int sig);
+extern "C" RETSIGTYPE handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
 static RETSIGTYPE window_resize(int sig);
 #endif
@@ -1214,6 +1219,7 @@ RETSIGTYPE drizzle_end(int sig)
   If query is in process, kill query
   no query in process, terminate like previous behavior
 */
+extern "C"
 RETSIGTYPE handle_sigint(int sig)
 {
   char kill_buffer[40];
@@ -1454,7 +1460,7 @@ static void usage(int version)
 }
 
 
-bool
+extern "C" bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                char *argument)
 {
@@ -2072,7 +2078,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
 
 static char **mysql_completion (const char *text, int start, int end);
-static char *new_command_generator(const char *text, int);
+extern "C" char *new_command_generator(const char *text, int);
 
 /*
   Tell the GNU Readline library how to complete.  We want to try to complete
@@ -2185,8 +2191,8 @@ char **mysql_completion (const char *text,
     return (char**) 0;
 }
 
-
-static char *new_command_generator(const char *text,int state)
+extern "C"
+char *new_command_generator(const char *text,int state)
 {
   static int textlen;
   char *ptr;
@@ -2492,7 +2498,7 @@ static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *l
 
 static int com_server_help(string *buffer,
                            const char *line __attribute__((unused)),
-                           char *help_arg)
+                           const char *help_arg)
 {
   DRIZZLE_ROW cur;
   const char *server_cmd= buffer->c_str();
@@ -2503,15 +2509,14 @@ static int com_server_help(string *buffer,
   cmd_buf.reserve(100);
   if (help_arg[0] != '\'')
   {
-    char *end_arg= strchr(help_arg, '\0');
+    const char *end_arg= strchr(help_arg, '\0');
     if(--end_arg)
     {
       while (my_isspace(charset_info,*end_arg))
         end_arg--;
-      *++end_arg= '\0';
     }
     cmd_buf.append("help '");
-    cmd_buf.append(help_arg);
+    cmd_buf.append(help_arg, end_arg-help_arg);
     cmd_buf.append("'");
   
     server_cmd= cmd_buf.c_str();
@@ -2590,7 +2595,8 @@ com_help(string *buffer __attribute__((unused)),
          const char *line __attribute__((unused)))
 {
   register int i, j;
-  char * help_arg= strchr(line,' '), buff[32], *end;
+  const char *help_arg= strchr(line,' ');
+  char buff[32], *end;
   if (help_arg)
   {
     while (my_isspace(charset_info,*help_arg))
@@ -3279,7 +3285,8 @@ print_tab_data(DRIZZLE_RES *result)
 static int
 com_tee(string *buffer __attribute__((unused)), const char *line )
 {
-  char file_name[FN_REFLEN], *end, *param;
+  char file_name[FN_REFLEN], *end;
+  const char *param;
 
   if (status.batch)
     return 0;
@@ -3338,7 +3345,8 @@ static int
 com_pager(string *buffer __attribute__((unused)),
           const char *line __attribute__((unused)))
 {
-  char pager_name[FN_REFLEN], *end, *param;
+  char pager_name[FN_REFLEN], *end;
+  const char *param;
 
   if (status.batch)
     return 0;
@@ -3482,7 +3490,8 @@ com_connect(string *buffer, const char *line)
 
 static int com_source(string *buffer __attribute__((unused)), const char *line)
 {
-  char source_name[FN_REFLEN], *end, *param;
+  char source_name[FN_REFLEN], *end;
+  const char *param;
   LINE_BUFFER *line_buff;
   int error;
   STATUS old_status;
@@ -4301,7 +4310,7 @@ static void init_username()
 static int com_prompt(string *buffer __attribute__((unused)),
                       const char *line)
 {
-  char *ptr=strchr(line, ' ');
+  const char *ptr=strchr(line, ' ');
   prompt_counter = 0;
   free(current_prompt);
   current_prompt= strdup(ptr ? ptr+1 : default_prompt);

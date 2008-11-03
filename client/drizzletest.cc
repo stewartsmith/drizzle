@@ -837,7 +837,7 @@ static void free_used_memory(void)
   vector<struct st_command *>::iterator iter;
   for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
   {
-    struct st_command * q_line= *(iter.base());
+    struct st_command * q_line= *iter;
     if (q_line->query_buf != NULL)
     {
       free(q_line->query_buf);

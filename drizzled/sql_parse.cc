@@ -4277,12 +4277,12 @@ bool test_if_data_home_dir(const char *dir)
 }
 
 
-extern int MYSQLparse(void *session); // from sql_yacc.cc
+extern int DRIZZLEparse(void *session); // from sql_yacc.cc
 
 
 /**
-  This is a wrapper of MYSQLparse(). All the code should call parse_sql()
-  instead of MYSQLparse().
+  This is a wrapper of DRIZZLEparse(). All the code should call parse_sql()
+  instead of DRIZZLEparse().
 
   @param session Thread context.
   @param lip Lexer context.
@@ -4302,9 +4302,9 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
 
   /* Parse the query. */
 
-  bool mysql_parse_status= MYSQLparse(session) != 0;
+  bool mysql_parse_status= DRIZZLEparse(session) != 0;
 
-  /* Check that if MYSQLparse() failed, session->is_error() is set. */
+  /* Check that if DRIZZLEparse() failed, session->is_error() is set. */
 
   assert(!mysql_parse_status || session->is_error());
 

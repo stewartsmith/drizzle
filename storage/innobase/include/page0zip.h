@@ -49,7 +49,7 @@ page_zip_rec_needs_ext(
 	ulint	rec_size,	/* in: length of the record in bytes */
 	ulint	comp,		/* in: nonzero=compact format */
 	ulint	zip_size)	/* in: compressed page size in bytes, or 0 */
-	__attribute__((const));
+	__attribute__((__const__));
 
 /**************************************************************************
 Determine the guaranteed free space on an empty page. */

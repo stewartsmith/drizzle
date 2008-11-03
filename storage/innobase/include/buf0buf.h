@@ -929,7 +929,7 @@ buf_page_address_fold(
 			/* out: the folded value */
 	ulint	space,	/* in: space id */
 	ulint	offset)	/* in: offset of the page within space */
-	__attribute__((const));
+	__attribute__((__const__));
 /**********************************************************************
 Returns the control block of a file page, NULL if not found. */
 UNIV_INLINE

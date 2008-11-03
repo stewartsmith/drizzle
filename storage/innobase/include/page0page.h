@@ -148,7 +148,7 @@ page_align(
 /*=======*/
 				/* out: start of the page */
 	const void*	ptr)	/* in: pointer to page frame */
-		__attribute__((const));
+		__attribute__((__const__));
 /****************************************************************
 Gets the offset within a page. */
 UNIV_INLINE
@@ -157,7 +157,7 @@ page_offset(
 /*========*/
 				/* out: offset from the start of the page */
 	const void*	ptr)	/* in: pointer to page frame */
-		__attribute__((const));
+		__attribute__((__const__));
 /*****************************************************************
 Returns the max trx id field value. */
 UNIV_INLINE
@@ -536,7 +536,7 @@ page_rec_is_user_rec_low(
 /*=====================*/
 			/* out: TRUE if a user record */
 	ulint	offset)	/* in: record offset on page */
-	__attribute__((const));
+	__attribute__((__const__));
 /****************************************************************
 TRUE if the record is the supremum record on a page. */
 UNIV_INLINE
@@ -545,7 +545,7 @@ page_rec_is_supremum_low(
 /*=====================*/
 			/* out: TRUE if the supremum record */
 	ulint	offset)	/* in: record offset on page */
-	__attribute__((const));
+	__attribute__((__const__));
 /****************************************************************
 TRUE if the record is the infimum record on a page. */
 UNIV_INLINE
@@ -554,7 +554,7 @@ page_rec_is_infimum_low(
 /*====================*/
 			/* out: TRUE if the infimum record */
 	ulint	offset)	/* in: record offset on page */
-	__attribute__((const));
+	__attribute__((__const__));
 
 /****************************************************************
 TRUE if the record is a user record on the page. */
@@ -564,7 +564,7 @@ page_rec_is_user_rec(
 /*=================*/
 				/* out: TRUE if a user record */
 	const rec_t*	rec)	/* in: record */
-	__attribute__((const));
+	__attribute__((__const__));
 /****************************************************************
 TRUE if the record is the supremum record on a page. */
 UNIV_INLINE
@@ -573,7 +573,7 @@ page_rec_is_supremum(
 /*=================*/
 				/* out: TRUE if the supremum record */
 	const rec_t*	rec)	/* in: record */
-	__attribute__((const));
+	__attribute__((__const__));
 
 /****************************************************************
 TRUE if the record is the infimum record on a page. */
@@ -583,7 +583,7 @@ page_rec_is_infimum(
 /*================*/
 				/* out: TRUE if the infimum record */
 	const rec_t*	rec)	/* in: record */
-	__attribute__((const));
+	__attribute__((__const__));
 /*******************************************************************
 Looks for the record which owns the given record. */
 UNIV_INLINE
@@ -634,7 +634,7 @@ page_get_free_space_of_empty(
 /*=========================*/
 			/* out: free space */
 	ulint	comp)	/* in: nonzero=compact page format */
-		__attribute__((const));
+		__attribute__((__const__));
 /**************************************************************
 Returns the base extra size of a physical record.  This is the
 size of the fixed header, independent of the record size. */

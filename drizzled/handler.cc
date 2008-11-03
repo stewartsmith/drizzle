@@ -26,6 +26,11 @@
 #include <drizzled/data_home.h>
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /*
   While we have legacy_db_type, we have this array to

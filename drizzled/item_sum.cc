@@ -23,6 +23,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 extern my_decimal decimal_zero;
 
@@ -538,6 +543,13 @@ String *
 Item_sum_num::val_str(String *str)
 {
   return val_string_from_real(str);
+}
+
+
+int64_t Item_sum_num::val_int()
+{
+  assert(fixed == 1);
+  return (int64_t) rint(val_real());             /* Real as default */
 }
 
 
@@ -1269,6 +1281,12 @@ double Item_sum_avg::val_real()
 }
 
 
+int64_t Item_sum_avg::val_int()
+{
+  return (int64_t) rint(val_real());
+}
+
+
 my_decimal *Item_sum_avg::val_decimal(my_decimal *val)
 {
   my_decimal sum_buff, cnt;
@@ -1488,6 +1506,13 @@ double Item_sum_variance::val_real()
 
   null_value=0;
   return variance_fp_recurrence_result(recurrence_s, count, sample);
+}
+
+
+int64_t Item_sum_variance::val_int()
+{
+  /* can't be fix_fields()ed */
+  return (int64_t) rint(val_real());
 }
 
 
@@ -2404,6 +2429,13 @@ Item_variance_field::Item_variance_field(Item_sum_variance *item)
     f_precision1= item->f_precision1;
     dec_bin_size1= item->dec_bin_size1;
   }
+}
+
+
+int64_t Item_variance_field::val_int()
+{
+  /* can't be fix_fields()ed */
+  return (int64_t) rint(val_real());
 }
 
 

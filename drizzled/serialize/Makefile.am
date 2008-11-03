@@ -15,14 +15,13 @@
 
 #called from the top level Makefile
 
-LDADD = libserialize.la -lprotobuf
+LDADD = libserialize.la ${PROTOBUF_LIBS}
 
+AM_CPPFLAGS = ${PROTOBUF_CPPFLAGS}
 libserialize_la_CXXFLAGS =
 
 TESTS_ENVIRONMENT = sh
 TESTS = check_length.sh
-
-PROTOC = protoc
 
 %.pb.h %.pb.cc : %.proto
 	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<

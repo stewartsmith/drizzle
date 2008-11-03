@@ -23,6 +23,11 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to 

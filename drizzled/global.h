@@ -36,7 +36,6 @@
 
 # include CSTDINT_H
 # include CINTTYPES_H
-# include CMATH_H
 # include <cstdio>
 # include <cstdlib>
 # include <cstddef>
@@ -271,6 +270,12 @@ typedef int    myf;  /* Type of MyFlags in my_funcs */
 */
 #ifdef TARGET_OS_LINUX
 #define NEED_EXPLICIT_SYNC_DIR 1
+#endif
+
+/* We need to turn off _DTRACE_VERSION if we're not going to use dtrace */
+#if !defined(HAVE_DTRACE)
+# undef _DTRACE_VERSION
+# define _DTRACE_VERSION 0
 #endif
 
 #endif /* DRIZZLE_SERVER_GLOBAL_H */

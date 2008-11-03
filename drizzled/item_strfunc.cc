@@ -35,6 +35,11 @@
 
 // For soundex_map
 #include <mysys/my_static.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
 
 using namespace std;
 

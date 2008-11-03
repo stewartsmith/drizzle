@@ -5,94 +5,211 @@
 #ifndef	_PROBES_H
 #define	_PROBES_H
 
-
+#include <unistd.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#if defined(_DTRACE_VERSION)
+#if _DTRACE_VERSION
 
 #define	DRIZZLE_DELETE_END() \
-	__dtrace_mysql___delete_end()
+	__dtrace_drizzle___delete_end()
+#ifndef	__sparc
 #define	DRIZZLE_DELETE_END_ENABLED() \
-	__dtraceenabled_mysql___delete_end()
+	__dtraceenabled_drizzle___delete_end()
+#else
+#define	DRIZZLE_DELETE_END_ENABLED() \
+	__dtraceenabled_drizzle___delete_end(0)
+#endif
 #define	DRIZZLE_DELETE_START() \
-	__dtrace_mysql___delete_start()
+	__dtrace_drizzle___delete_start()
+#ifndef	__sparc
 #define	DRIZZLE_DELETE_START_ENABLED() \
-	__dtraceenabled_mysql___delete_start()
+	__dtraceenabled_drizzle___delete_start()
+#else
+#define	DRIZZLE_DELETE_START_ENABLED() \
+	__dtraceenabled_drizzle___delete_start(0)
+#endif
 #define	DRIZZLE_EXTERNAL_LOCK(arg0) \
-	__dtrace_mysql___external_lock(arg0)
+	__dtrace_drizzle___external_lock(arg0)
+#ifndef	__sparc
 #define	DRIZZLE_EXTERNAL_LOCK_ENABLED() \
-	__dtraceenabled_mysql___external_lock()
+	__dtraceenabled_drizzle___external_lock()
+#else
+#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() \
+	__dtraceenabled_drizzle___external_lock(0)
+#endif
 #define	DRIZZLE_FILESORT_END() \
-	__dtrace_mysql___filesort_end()
+	__dtrace_drizzle___filesort_end()
+#ifndef	__sparc
 #define	DRIZZLE_FILESORT_END_ENABLED() \
-	__dtraceenabled_mysql___filesort_end()
+	__dtraceenabled_drizzle___filesort_end()
+#else
+#define	DRIZZLE_FILESORT_END_ENABLED() \
+	__dtraceenabled_drizzle___filesort_end(0)
+#endif
 #define	DRIZZLE_FILESORT_START() \
-	__dtrace_mysql___filesort_start()
+	__dtrace_drizzle___filesort_start()
+#ifndef	__sparc
 #define	DRIZZLE_FILESORT_START_ENABLED() \
-	__dtraceenabled_mysql___filesort_start()
+	__dtraceenabled_drizzle___filesort_start()
+#else
+#define	DRIZZLE_FILESORT_START_ENABLED() \
+	__dtraceenabled_drizzle___filesort_start(0)
+#endif
 #define	DRIZZLE_INSERT_END() \
-	__dtrace_mysql___insert_end()
+	__dtrace_drizzle___insert_end()
+#ifndef	__sparc
 #define	DRIZZLE_INSERT_END_ENABLED() \
-	__dtraceenabled_mysql___insert_end()
+	__dtraceenabled_drizzle___insert_end()
+#else
+#define	DRIZZLE_INSERT_END_ENABLED() \
+	__dtraceenabled_drizzle___insert_end(0)
+#endif
 #define	DRIZZLE_INSERT_ROW_END() \
-	__dtrace_mysql___insert_row_end()
+	__dtrace_drizzle___insert_row_end()
+#ifndef	__sparc
 #define	DRIZZLE_INSERT_ROW_END_ENABLED() \
-	__dtraceenabled_mysql___insert_row_end()
+	__dtraceenabled_drizzle___insert_row_end()
+#else
+#define	DRIZZLE_INSERT_ROW_END_ENABLED() \
+	__dtraceenabled_drizzle___insert_row_end(0)
+#endif
 #define	DRIZZLE_INSERT_ROW_START() \
-	__dtrace_mysql___insert_row_start()
+	__dtrace_drizzle___insert_row_start()
+#ifndef	__sparc
 #define	DRIZZLE_INSERT_ROW_START_ENABLED() \
-	__dtraceenabled_mysql___insert_row_start()
+	__dtraceenabled_drizzle___insert_row_start()
+#else
+#define	DRIZZLE_INSERT_ROW_START_ENABLED() \
+	__dtraceenabled_drizzle___insert_row_start(0)
+#endif
 #define	DRIZZLE_INSERT_START() \
-	__dtrace_mysql___insert_start()
+	__dtrace_drizzle___insert_start()
+#ifndef	__sparc
 #define	DRIZZLE_INSERT_START_ENABLED() \
-	__dtraceenabled_mysql___insert_start()
+	__dtraceenabled_drizzle___insert_start()
+#else
+#define	DRIZZLE_INSERT_START_ENABLED() \
+	__dtraceenabled_drizzle___insert_start(0)
+#endif
 #define	DRIZZLE_SELECT_END() \
-	__dtrace_mysql___select_end()
+	__dtrace_drizzle___select_end()
+#ifndef	__sparc
 #define	DRIZZLE_SELECT_END_ENABLED() \
-	__dtraceenabled_mysql___select_end()
+	__dtraceenabled_drizzle___select_end()
+#else
+#define	DRIZZLE_SELECT_END_ENABLED() \
+	__dtraceenabled_drizzle___select_end(0)
+#endif
 #define	DRIZZLE_SELECT_START() \
-	__dtrace_mysql___select_start()
+	__dtrace_drizzle___select_start()
+#ifndef	__sparc
 #define	DRIZZLE_SELECT_START_ENABLED() \
-	__dtraceenabled_mysql___select_start()
+	__dtraceenabled_drizzle___select_start()
+#else
+#define	DRIZZLE_SELECT_START_ENABLED() \
+	__dtraceenabled_drizzle___select_start(0)
+#endif
 #define	DRIZZLE_UPDATE_END() \
-	__dtrace_mysql___update_end()
+	__dtrace_drizzle___update_end()
+#ifndef	__sparc
 #define	DRIZZLE_UPDATE_END_ENABLED() \
-	__dtraceenabled_mysql___update_end()
+	__dtraceenabled_drizzle___update_end()
+#else
+#define	DRIZZLE_UPDATE_END_ENABLED() \
+	__dtraceenabled_drizzle___update_end(0)
+#endif
 #define	DRIZZLE_UPDATE_START() \
-	__dtrace_mysql___update_start()
+	__dtrace_drizzle___update_start()
+#ifndef	__sparc
 #define	DRIZZLE_UPDATE_START_ENABLED() \
-	__dtraceenabled_mysql___update_start()
+	__dtraceenabled_drizzle___update_start()
+#else
+#define	DRIZZLE_UPDATE_START_ENABLED() \
+	__dtraceenabled_drizzle___update_start(0)
+#endif
 
 
-extern void __dtrace_mysql___delete_end(void);
-extern int __dtraceenabled_mysql___delete_end(void);
-extern void __dtrace_mysql___delete_start(void);
-extern int __dtraceenabled_mysql___delete_start(void);
-extern void __dtrace_mysql___external_lock(int);
-extern int __dtraceenabled_mysql___external_lock(void);
-extern void __dtrace_mysql___filesort_end(void);
-extern int __dtraceenabled_mysql___filesort_end(void);
-extern void __dtrace_mysql___filesort_start(void);
-extern int __dtraceenabled_mysql___filesort_start(void);
-extern void __dtrace_mysql___insert_end(void);
-extern int __dtraceenabled_mysql___insert_end(void);
-extern void __dtrace_mysql___insert_row_end(void);
-extern int __dtraceenabled_mysql___insert_row_end(void);
-extern void __dtrace_mysql___insert_row_start(void);
-extern int __dtraceenabled_mysql___insert_row_start(void);
-extern void __dtrace_mysql___insert_start(void);
-extern int __dtraceenabled_mysql___insert_start(void);
-extern void __dtrace_mysql___select_end(void);
-extern int __dtraceenabled_mysql___select_end(void);
-extern void __dtrace_mysql___select_start(void);
-extern int __dtraceenabled_mysql___select_start(void);
-extern void __dtrace_mysql___update_end(void);
-extern int __dtraceenabled_mysql___update_end(void);
-extern void __dtrace_mysql___update_start(void);
-extern int __dtraceenabled_mysql___update_start(void);
+extern void __dtrace_drizzle___delete_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___delete_end(void);
+#else
+extern int __dtraceenabled_drizzle___delete_end(long);
+#endif
+extern void __dtrace_drizzle___delete_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___delete_start(void);
+#else
+extern int __dtraceenabled_drizzle___delete_start(long);
+#endif
+extern void __dtrace_drizzle___external_lock(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___external_lock(void);
+#else
+extern int __dtraceenabled_drizzle___external_lock(long);
+#endif
+extern void __dtrace_drizzle___filesort_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___filesort_end(void);
+#else
+extern int __dtraceenabled_drizzle___filesort_end(long);
+#endif
+extern void __dtrace_drizzle___filesort_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___filesort_start(void);
+#else
+extern int __dtraceenabled_drizzle___filesort_start(long);
+#endif
+extern void __dtrace_drizzle___insert_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert_end(void);
+#else
+extern int __dtraceenabled_drizzle___insert_end(long);
+#endif
+extern void __dtrace_drizzle___insert_row_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert_row_end(void);
+#else
+extern int __dtraceenabled_drizzle___insert_row_end(long);
+#endif
+extern void __dtrace_drizzle___insert_row_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert_row_start(void);
+#else
+extern int __dtraceenabled_drizzle___insert_row_start(long);
+#endif
+extern void __dtrace_drizzle___insert_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert_start(void);
+#else
+extern int __dtraceenabled_drizzle___insert_start(long);
+#endif
+extern void __dtrace_drizzle___select_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___select_end(void);
+#else
+extern int __dtraceenabled_drizzle___select_end(long);
+#endif
+extern void __dtrace_drizzle___select_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___select_start(void);
+#else
+extern int __dtraceenabled_drizzle___select_start(long);
+#endif
+extern void __dtrace_drizzle___update_end(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update_end(void);
+#else
+extern int __dtraceenabled_drizzle___update_end(long);
+#endif
+extern void __dtrace_drizzle___update_start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update_start(void);
+#else
+extern int __dtraceenabled_drizzle___update_start(long);
+#endif
 
 #else
 

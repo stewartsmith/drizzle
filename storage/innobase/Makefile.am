@@ -187,10 +187,13 @@ libinnobase_la_SOURCES=	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c	\
 			$(HANDLER_DIR)/mysql_addons.cc
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
-libpars_la_CFLAGS=	${AM_CFLAGS} -Wno-redundant-decls -Wno-unused-macros
+libpars_la_CFLAGS=	${AM_CFLAGS} \
+			${NO_REDUNDANT_DECLS} \
+			${NO_UNUSED_MACROS}
 libpars_la_SOURCES= 	pars/lexyy.c pars/pars0grm.c
 
-libinnobase_la_CFLAGS=	$(AM_CFLAGS) -Wno-unused-macros
+libinnobase_la_CFLAGS=	$(AM_CFLAGS) \
+			${NO_UNUSED_MACROS}
 libinnobase_la_LIBADD= libpars.la
 
 

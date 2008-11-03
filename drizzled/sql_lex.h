@@ -1340,7 +1340,7 @@ public:
     Starting position of the TEXT_STRING or IDENT in the pre-processed
     buffer.
 
-    NOTE: this member must be used within MYSQLlex() function only.
+    NOTE: this member must be used within DRIZZLElex() function only.
   */
   const char *m_cpp_text_start;
 
@@ -1348,14 +1348,14 @@ public:
     Ending position of the TEXT_STRING or IDENT in the pre-processed
     buffer.
 
-    NOTE: this member must be used within MYSQLlex() function only.
+    NOTE: this member must be used within DRIZZLElex() function only.
     */
   const char *m_cpp_text_end;
 
   /**
     Character set specified by the character-set-introducer.
 
-    NOTE: this member must be used within MYSQLlex() function only.
+    NOTE: this member must be used within DRIZZLElex() function only.
   */
   const CHARSET_INFO *m_underscore_cs;
 };

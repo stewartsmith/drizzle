@@ -19,6 +19,10 @@
 
 #include <openssl/md5.h>
 
+#include <stdio.h>
+
+using namespace std;
+
 class Item_func_md5 : public Item_str_func
 {
 public:

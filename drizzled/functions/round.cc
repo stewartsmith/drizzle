@@ -17,10 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-using namespace std;
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/round.h>
+#include CMATH_H
+
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+using namespace std;
 
 void Item_func_round::fix_length_and_dec()
 {

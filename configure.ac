@@ -109,11 +109,6 @@ AM_PROG_CC_C_O
 
 AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
 
-AC_CXX_STL_HASH
-AC_CXX_CSTDINT
-AC_CXX_CINTTYPES
-AC_CXX_CMATH
-
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
 dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
 if test "x${CFLAGS}" = "x-g -O2"
@@ -147,6 +142,7 @@ DRIZZLE_TCP_PORT_DEFAULT=4427
 
 sinclude(m4/dtrace.m4)
 sinclude(m4/character_sets.m4)
+sinclude(m4/gettext.m4)
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
@@ -166,8 +162,6 @@ AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
 AC_SUBST(DOT_FRM_VERSION)
 AC_DEFINE_UNQUOTED([FRM_VER], [$DOT_FRM_VERSION],
                    [Version of .frm files])
-AC_DEFINE_UNQUOTED([FRM_VERSION_TRUE_VARCHAR],[FRM_VER+4],
-                   [Current version of .frm info we're using])
 AC_DEFINE_UNQUOTED([DRIZZLE_CONFIG_NAME],["drizzled"],[Name of server config section])
 
 AC_SUBST(SHARED_LIB_MAJOR_VERSION)
@@ -185,7 +179,6 @@ AC_DEFINE([IO_SIZE], [4096], [Io buffer size; Must be a power of 2 and
   isam btree library. eg to big to slow.])
 AC_DEFINE([SC_MAXWIDTH],[256], [Max width of screen (for error messages)])
 AC_DEFINE([FN_LEN],[256	], [Max file name len ])
-AC_DEFINE([FN_HEADLEN],[253], [Max length of filepart of file name ])
 AC_DEFINE([FN_EXTLEN],[20], [Max length of extension (part of FN_LEN) ])
 AC_DEFINE([FN_REFLEN],[512], [Max length of full path-name ])
 AC_DEFINE([FN_EXTCHAR],['.'], [File extension character])
@@ -274,23 +267,25 @@ AM_SANITY_CHECK
 AC_PROG_MAKE_SET
 
 
-# Print version of CC and CXX compiler (if they support --version)
-case $SYSTEM_TYPE in
+case "$target_os" in
+  *linux*)
+  TARGET_LINUX="true"
+  AC_SUBST(TARGET_LINUX)
+  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
+    ;;
   *apple-darwin*)
+    TARGET_OSX="true"
+    AC_SUBST(TARGET_OSX)
     AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
     ;;
+  *solaris*)
+    TARGET_SOLARIS="true"
+    AC_SUBST(TARGET_SOLARIS)
+    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
+    ;;
   *)
-CC_VERSION=`$CC --version | sed 1q`
     ;;
 esac
-if test $? -eq "0"
-then
-  AC_MSG_CHECKING("C Compiler version")
-  AC_MSG_RESULT("$CC $CC_VERSION")
-else
-CC_VERSION=""
-fi
-AC_SUBST(CC_VERSION)
 
 dnl AC_CANONICAL_HOST thinks it's a good idea to just set CFLAGS to 
 dnl -g -O2 if you're running gcc. We would like to use something else, thanks.
@@ -303,6 +298,7 @@ then
   CXXFLAGS=
 fi
 
+DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
@@ -316,7 +312,7 @@ else
 fi
 
 dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
-if test "$ac_cv_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
+if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
 then
   AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
 fi
@@ -364,7 +360,7 @@ AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
 # Not critical since the generated file is distributed
-AC_CHECK_PROGS(YACC, ['bison -y -p MYSQL'])
+AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -385,14 +381,6 @@ fi
 ])
 AC_MSG_RESULT($mysql_cv_sys_os)
 
-# This should be rewritten to use $target_os
-case "$target_os" in
-  *solaris*)
-    TARGET_SOLARIS="true"
-    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
-    AC_SUBST(TARGET_SOLARIS)
-  ;;
-esac
 
 # The following is required for portable results of floating point calculations
 # on PowerPC. The same must also be done for IA-64, but this options is missing
@@ -407,6 +395,67 @@ then
     ;;
   esac
 fi
+# Build optimized or debug version ?
+# First check for gcc and g++
+SYMBOLS_FLAGS="-g"
+DEBUG_OPTIMIZE_CC=""
+OPTIMIZE_CFLAGS="-O"
+DEBUG_OPTIMIZE_CXX=""
+OPTIMIZE_CXXFLAGS="-O"
+if test "$GCC" = "yes"
+then
+  SYMBOLS_FLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O3"
+fi
+if test "$SUNCC" = "yes"
+then
+  dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
+  SYMBOLS_FLAGS=""
+  DEBUG_OPTIMIZE_CC=""
+  #OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
+  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_"
+  DEBUG_OPTIMIZE_CXX=""
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xlang=c99 -compat=5"
+fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AX_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+AC_DEFUN([AX_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [AS_HELP_STRING([--disable-assert],
+       [Turn off assertions])],
+    [ac_cv_assert="no"],
+    [ac_cv_assert="yes"])
+  AC_MSG_RESULT([$ac_cv_assert])
+])
+
+AX_HEADER_ASSERT
+
+CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
+
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
+    [with_debug=$withval],
+    [with_debug=no])
+if test "$with_debug" = "yes"
+then
+  # Medium debug.
+  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
+else
+  # Optimized version. No debug
+  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
+  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
+fi
 
 AC_SUBST(CC)
 AC_SUBST(CFLAGS)
@@ -419,17 +468,15 @@ AC_SUBST(INSTALL_SCRIPT)
 
 export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
-if test "$GCC" = "yes"
-then
-  # Disable exceptions as they seams to create problems with gcc and threads.
-  # drizzled doesn't use run-time-type-checking, so we disable it.
-  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions"
-fi
+AC_CXX_STL_HASH
+AC_CXX_CSTDINT
+AC_CXX_CINTTYPES
+AC_CXX_CMATH
 
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if $LD --version 2>/dev/null|grep -q GNU; then
+if test "$GCC" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
@@ -438,17 +485,40 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
+AC_MSG_CHECKING(for Google Protocol Buffers)
+AC_ARG_WITH(protobuf,
+  [AS_HELP_STRING([--with-protobuf],
+       [Use protobuf directory])],
+  [ with_protobuf=$withval ],
+  [ with_protobuf=yes ])
+
+save_CPPFLAGS="$CPPFLAGS"
+save_LIBS="$LIBS"
+
+if test "$with_protobuf" = "yes"
+then
+  CPPFLAGS=""
+  LIBS="-lprotobuf"
+  PROTO_PATH="$PATH"
+else
+  CPPFLAGS="-I$withval/include"
+  LIBS="-L$withval/lib -lprotobuf"
+  PROTO_PATH="${withval}/bin:$PATH"
+fi 
+
+AC_CHECK_TOOL([PROTOC],[protoc],[no],[$PROTO_PATH])
+if test "x$PROTOC" = "xno"
+then
+  AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
+fi
+
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([google/protobuf/message.h])
 if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
 fi
-
-save_CFLAGS="$CFLAGS"
-save_LIBS="$LIBS"
-CFLAGS=""
-LIBS="-lprotobuf"
+AC_MSG_RESULT("$wthval")
 
 AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
   AC_TRY_LINK([
@@ -462,8 +532,10 @@ AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
 ])
 
 PROTOBUF_LIBS="${LIBS}"
+PROTOBUF_CPPFLAGS="${CPPFLAGS}"
 AC_SUBST(PROTOBUF_LIBS)
-CFLAGS="$save_CFLAGS"
+AC_SUBST(PROTOBUF_CPPFLAGS)
+CPPFLAGS="$save_CPPFLAGS"
 LIBS="$save_LIBS"
 AC_LANG_POP()
 
@@ -847,14 +919,14 @@ AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
 		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
 
 # Use this to set the place used for unix socket used to local communication.
-AC_ARG_WITH([mysqld-user],
-    [AS_HELP_STRING([--with-mysqld-user=username],
-            [What user the mysqld daemon shall be run as.
-		@<:@default=mysql@:>@])],
-    [ MYSQLD_USER=$withval ],
-    [ MYSQLD_USER=mysql ]
+AC_ARG_WITH([drizzled-user],
+    [AS_HELP_STRING([--with-drizzled-user=username],
+            [What user the drizzled daemon shall be run as.
+		@<:@default=drizzle@:>@])],
+    [ DRIZZLED_USER=$withval ],
+    [ DRIZZLED_USER=drizzle ]
     )
-AC_SUBST(MYSQLD_USER)
+AC_SUBST(DRIZZLED_USER)
 
 # If we should allow LOAD DATA LOCAL
 AC_MSG_CHECKING(If we should should enable LOAD DATA LOCAL by default)
@@ -889,14 +961,15 @@ AC_HEADER_STDBOOL
 AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
-AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
-AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
+AC_CHECK_HEADERS([curses.h term.h],[],[],
+[[#ifdef HAVE_CURSES_H
+# include <curses.h>
+#endif
+]])
 AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
-AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
-AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
+AC_CHECK_HEADERS(sys/prctl.h ieeefp.h)
 AC_CHECK_HEADERS(execinfo.h)
-
-AC_CHECK_HEADERS([xfs/xfs.h])
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
@@ -935,7 +1008,7 @@ AC_CHECK_TYPES([fp_except], [], [], [
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
-AC_CHECK_FUNCS(dlopen dlerror)
+AC_CHECK_FUNCS(dlopen)
 if test "$ac_cv_func_dlopen" != "yes"
 then
   AC_MSG_ERROR([Drizzle requires dlopen])
@@ -976,14 +1049,6 @@ fi
 AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
 
-if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
-then
-  TARGET_LINUX="true"
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-else
-  TARGET_LINUX="false"
-fi
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
@@ -1020,33 +1085,21 @@ DRIZZLE_FUNC_ALLOCA
 DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 DRIZZLE_TZNAME
-# Do the c++ compiler have a bool type
-DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
-AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
+AC_CHECK_TYPES([uint, ulong])
 
 DRIZZLE_PTHREAD_YIELD
 
 
 dnl Checks for header files.
-AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
+AC_CHECK_HEADERS(malloc.h)
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
 AC_PROG_GCC_TRADITIONAL
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(re_comp regcomp strdup)
 
-dnl Sun compilers have their own vis.h that is about something
-dnl totally different. So, not to change the libedit source, we
-dnl do some additional checks before we define HAVE_VIS_H.
-AC_CHECK_HEADER(vis.h,
-  [AC_CHECK_FUNC(strvis,
-    [AC_DEFINE([HAVE_VIS_H], [1],[Found vis.h and the strvis() function])])])
-
-AC_CHECK_FUNCS(strlcat strlcpy)
 AC_CHECK_FUNCS(issetugid)
-AC_CHECK_FUNCS(getline flockfile)
 
 # from old readline settting:
 
@@ -1055,23 +1108,19 @@ AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
 AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
- sys/file.h sys/ndir.h sys/ptem.h sys/pte.h sys/select.h sys/stream.h \
- sys/mman.h curses.h termcap.h termio.h termbits.h asm/termbits.h grp.h \
-paths.h semaphore.h)
+ sys/ndir.h sys/select.h \
+ sys/mman.h termcap.h termio.h asm/termbits.h grp.h \
+ paths.h)
 
 # Already-done: strcasecmp
-AC_CHECK_FUNCS(lstat putenv select setenv setlocale strcoll tcgetattr)
+AC_CHECK_FUNCS(lstat select)
 
 AC_HEADER_STAT
 DRIZZLE_SIGNAL_CHECK
 DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
-DRIZZLE_HAVE_FIONREAD
 DRIZZLE_HAVE_TIOCSTAT
-DRIZZLE_STRUCT_DIRENT_D_INO
-DRIZZLE_STRUCT_DIRENT_D_NAMLEN
 DRIZZLE_TYPE_SIGHANDLER
-DRIZZLE_CHECK_MULTIBYTE
 if test "$with_named_curses" = "no"
 then
   DRIZZLE_CHECK_LIB_TERMCAP
@@ -1079,19 +1128,6 @@ else
   TERMCAP_LIBS="$with_named_curses"
 fi
 AC_SUBST(TERMCAP_LIBS)
-
-# Check if the termcap function 'tgoto' is already declared in
-# system header files or if it need to be declared locally
-AC_CHECK_DECLS(tgoto,,,[
-#ifdef HAVE_CURSES_H
-# include <curses.h>
-#elif HAVE_NCURSES_H
-# include <ncurses.h>
-#endif
-#ifdef HAVE_TERM_H
-# include <term.h>
-#endif
-])
 
 # End of readline/libedit stuff
 #########################################################################
@@ -1122,25 +1158,24 @@ fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
 
-AC_CHECK_FUNCS(bsearch \
+AC_CHECK_FUNCS( \
   cuserid fchmod \
-  fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
+  fdatasync fpresetsticky fpsetmask fsync \
   getcwd getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
-  locking longjmp lrand48 madvise mallinfo \
-  memmove \
-  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 \
+  madvise \
+  mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
   pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
   realpath rename rwlock_init setupterm \
-  shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
-  sighold sigset sigthreadmask port_create sleep \
-  snprintf socket strcasecmp strerror strsignal strpbrk \
-  tell tempnam vidattr \
-  posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
+  sigaction \
+  sigthreadmask \
+  snprintf strpbrk \
+  tell tempnam \
+  backtrace backtrace_symbols backtrace_symbols_fd)
 
 AC_LANG_PUSH(C++)
 # Test whether madvise() is declared in C++ code -- it is not on some
@@ -1156,38 +1191,13 @@ AC_LANG_POP()
 
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
-# Check that isinf() is available in math.h and can be used in both C and C++
-# code
-AC_MSG_CHECKING(for isinf in math.h)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
-    float f = 0.0; 
-    int r = isinf(f); 
-    return r;
-  ]])],[
-    AC_MSG_RESULT(yes)
-    AC_MSG_CHECKING(whether isinf() can be used in C++ code)
-    AC_LANG_PUSH([C++])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
-      float f = 0.0;
-      int r = isinf(f);
-      return r;
-    ]])],[
-      AC_MSG_RESULT(yes)
-      AC_DEFINE(HAVE_ISINF, [1], [isinf() macro or function])
-    ],[
-      AC_MSG_RESULT(no)
-    ])
-    AC_LANG_POP([])
-  ],[
-  AC_MSG_RESULT(no)])
-
 
 CFLAGS="$ORG_CFLAGS"
 
 # Sanity check: We chould not have any fseeko symbol unless
 # large_file_support=yes
 AC_CHECK_FUNC(fseeko,
-[if test "$large_file_support" = no -a "$TARGET_LINUX" = "true";
+[if test "$large_file_support" = no -a "x$TARGET_LINUX" = "xtrue";
 then
   AC_MSG_ERROR("Found fseeko symbol but large_file_support is not enabled!")
 fi]
@@ -1303,20 +1313,6 @@ then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
 fi
 
-# Check for bad includes
-AC_MSG_CHECKING("can netinet files be included")
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>]], [[ printf("1\n"); ]])],[netinet_inc=yes],[netinet_inc=no])
-if test "$netinet_inc" = "no"
-then
-  AC_DEFINE([HAVE_BROKEN_NETINET_INCLUDES], [1], [Can netinet be included])
-fi
-AC_MSG_RESULT("$netinet_inc")
-
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS(cxxabi.h)
 AC_CACHE_CHECK([checking for abi::__cxa_demangle], mysql_cv_cxa_demangle,
@@ -1350,65 +1346,6 @@ AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
 
-# Build optimized or debug version ?
-# First check for gcc and g++
-SYMBOLS_FLAGS="-g"
-DEBUG_OPTIMIZE_CC=""
-OPTIMIZE_CFLAGS="-O"
-DEBUG_OPTIMIZE_CXX=""
-OPTIMIZE_CXXFLAGS="-O"
-if test "$GCC" = "yes"
-then
-  SYMBOLS_FLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O0"
-  OPTIMIZE_CFLAGS="-O3"
-  DEBUG_OPTIMIZE_CXX="-O0"
-  OPTIMIZE_CXXFLAGS="-O3"
-fi
-if test "$SUNCC" = "yes"
-then
-  SYMBOLS_CLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
-  OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend"
-  DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil"
-fi
-
-dnl TODO: Remove this define once we are using 2.61 across the board.
-# AX_HEADER_ASSERT
-# ----------------
-# Check whether to enable assertions.
-AC_DEFUN([AX_HEADER_ASSERT],
-[
-  AC_MSG_CHECKING([whether to enable assertions])
-  AC_ARG_ENABLE([assert],
-    [AS_HELP_STRING([--disable-assert],
-       [Turn off assertions])],
-    [ac_cv_assert="no"],
-    [ac_cv_assert="yes"])
-  AC_MSG_RESULT([$ac_cv_assert])
-])
-
-AX_HEADER_ASSERT
-
-CFLAGS="${SYMBOLS_FLAGS} ${CFLAGS}"
-CXXFLAGS="${SYMBOLS_FLAGS} ${CXXFLAGS}"
-
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  CFLAGS="$DEBUG_OPTIMIZE_CC -DDEBUG $CFLAGS ${SAVE_CFLAGS}"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX -DDEBUG $CXXFLAGS ${SAVE_CXXFLAGS}"
-else
-  # Optimized version. No debug
-  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS} ${SAVE_CFLAGS}"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS ${SAVE_CXXFLAGS}"
-fi
 
 AC_ARG_ENABLE([profiling],
     [AS_HELP_STRING([--enable-profiling],
@@ -1575,17 +1512,31 @@ void testme() {  };],[
     W_CRAZY="-Wshadow -Wconversion -Winvalid-pch"
   fi
 
-  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
-  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
+  CC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CRAZY}"
+  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_EFFC} ${W_CRAZY}"
 
-  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
-  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
+  NO_EXCEPTIONS="-fno-exceptions"
+  W_EXCEPTIONS="-fexceptions"
+  NO_UNUSED_MACROS="-Wno-unused-macros"
+  NO_REDUNDANT_DECLS="-Wno-redundant-decls"
+  # Disable exceptions as they seams to create problems with gcc and threads.
+  # drizzled doesn't use run-time-type-checking, so we disable it.
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
 fi
 if test "$SUNCC" = "yes"
 then
-  AM_CFLAGS="-v ${AM_CFLAGS}"
-  AM_CXXFLAGS="-v ${AM_CXXFLAGS}"
+  CC_WARNINGS="-v -xc99=all -errtags=yes"
+  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
+  NO_EXCEPTIONS="-features=no%except"
+  W_EXCEPTIONS="-features=except"
 fi
+AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS}  ${AM_CXXFLAGS}"
+AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"
+
+AC_SUBST(NO_EXCEPTIONS)
+AC_SUBST(W_EXCEPTIONS)
+AC_SUBST(NO_UNUSED_MACROS)
+AC_SUBST(NO_REDUNDANT_DECLS)
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
@@ -1608,7 +1559,7 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
-AM_CONDITIONAL([GCC_PCH],[test "x$GCC" = "xyes"])
+AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
