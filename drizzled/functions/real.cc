@@ -22,6 +22,9 @@
 
 #include CSTDINT_H
 #include <cassert>
+#if defined(HAVE_IEEEFP_H)
+# include <ieeefp.h>
+#endif
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

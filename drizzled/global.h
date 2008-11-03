@@ -278,4 +278,8 @@ typedef int    myf;  /* Type of MyFlags in my_funcs */
 # define _DTRACE_VERSION 0
 #endif
 
+#if !defined(HAVE_ISNAN) && defined(__cplusplus)
+template<type T>
+isnan<T>( 
+#endif
 #endif /* DRIZZLE_SERVER_GLOBAL_H */

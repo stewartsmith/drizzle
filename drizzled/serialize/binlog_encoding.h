@@ -8,8 +8,10 @@
 
 #define LENGTH_ENCODE_MAX_BYTES (sizeof(size_t) + 1)
 
+using std::size_t;
+
 inline unsigned char *
-length_encode(size_t length, unsigned char *buf)
+length_encode(std::size_t length, unsigned char *buf)
 {
   unsigned char *ptr= buf;
   assert(length > 1);
@@ -38,7 +40,7 @@ length_encode(size_t length, unsigned char *buf)
       }
     }
     // Clear the remaining bytes up to the next power of two
-    memset(ptr + 1, 0, pow2 - (ptr - buf));
+    std::memset(ptr + 1, 0, pow2 - (ptr - buf));
     *buf= log2m1;
     ptr= buf + pow2 + 1;
   }

@@ -339,8 +339,8 @@ dnl       Need for all of this?
 case "$target_os" in
   *solaris*)
   dnl Do we need both of these? 
-  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
   ;;
 esac
 
@@ -415,10 +415,10 @@ then
   dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
   SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
-  #OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
   OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_"
   DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xlang=c99 -compat=5"
+  #Put back in once isnan is figured out
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -mt -D_FORTEC_ -xlang=c99 -compat=5 -library=stlport4"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.

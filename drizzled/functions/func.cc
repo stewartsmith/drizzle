@@ -27,6 +27,10 @@ using namespace std;
 #include <drizzled/sql_list.h>
 
 #include <drizzled/functions/int.h>
+#if defined(HAVE_IEEEFP_H)
+# include <ieeefp.h>
+#endif
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
