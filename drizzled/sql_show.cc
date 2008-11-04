@@ -2049,7 +2049,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
       if (files->push_back(i_s_name_copy))
         return 1;
     }
-    return (find_files(session, files, NULL, mysql_data_home,
+    return (find_files(session, files, NULL, drizzle_data_home,
                        lookup_field_vals->db_value.str, 1) != FIND_FILES_OK);
   }
 
@@ -2081,7 +2081,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
     return 1;
   *with_i_schema= 1;
   return (find_files(session, files, NULL,
-                     mysql_data_home, NULL, 1) != FIND_FILES_OK);
+                     drizzle_data_home, NULL, 1) != FIND_FILES_OK);
 }
 
 

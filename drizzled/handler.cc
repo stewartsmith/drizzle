@@ -1603,7 +1603,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
     we only should turn into lowercase database/table part
     so start the process after homedirectory
   */
-  my_casedn_str(files_charset_info, tmp_path + mysql_data_home_len);
+  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
   return tmp_path;
 }
 

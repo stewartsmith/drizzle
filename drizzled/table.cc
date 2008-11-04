@@ -345,7 +345,7 @@ int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags  __at
     size_t length;
     char unpacked_path[FN_REFLEN];
     path.clear();
-    path.append(mysql_data_home);
+    path.append(drizzle_data_home);
     path.append("/");
     path.append(share->db.str);
     path.append("/");

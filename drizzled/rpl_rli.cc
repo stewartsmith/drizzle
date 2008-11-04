@@ -102,7 +102,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
 
   if (rli->inited)                       // Set if this function called
     return(0);
-  fn_format(fname, info_fname, mysql_data_home, "", 4+32);
+  fn_format(fname, info_fname, drizzle_data_home, "", 4+32);
   pthread_mutex_lock(&rli->data_lock);
   info_fd = rli->info_fd;
   rli->cur_log_fd = -1;

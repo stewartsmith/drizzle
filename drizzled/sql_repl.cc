@@ -1050,14 +1050,14 @@ int reset_slave(Session *session, Master_info* mi)
   // close master_info_file, relay_log_info_file, set mi->inited=rli->inited=0
   mi->end_master_info();
   // and delete these two files
-  fn_format(fname, master_info_file, mysql_data_home, "", 4+32);
+  fn_format(fname, master_info_file, drizzle_data_home, "", 4+32);
   if (!stat(fname, &stat_area) && my_delete(fname, MYF(MY_WME)))
   {
     error=1;
     goto err;
   }
   // delete relay_log_info_file
-  fn_format(fname, relay_log_info_file, mysql_data_home, "", 4+32);
+  fn_format(fname, relay_log_info_file, drizzle_data_home, "", 4+32);
   if (!stat(fname, &stat_area) && my_delete(fname, MYF(MY_WME)))
   {
     error=1;

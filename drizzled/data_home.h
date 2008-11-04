@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
-extern uint32_t mysql_data_home_len;
-extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
-            mysql_real_data_home[], mysql_unpacked_real_data_home[];
+extern uint32_t drizzle_data_home_len;
+extern char *drizzle_data_home,server_version[SERVER_VERSION_LENGTH],
+             drizzle_real_data_home[], drizzle_unpacked_real_data_home[];
 
 #endif /* DRIZZLED_DATA_HOME_H */
