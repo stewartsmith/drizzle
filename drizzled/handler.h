@@ -238,45 +238,20 @@ public:
   {
     cached_table_flags= table_flags();
   }
+
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint32_t idx, bool sorted)
-  {
-    int result;
-    assert(inited==NONE);
-    if (!(result= index_init(idx, sorted)))
-      inited=INDEX;
-    end_range= NULL;
-    return(result);
-  }
-  int ha_index_end()
-  {
-    assert(inited==INDEX);
-    inited=NONE;
-    end_range= NULL;
-    return(index_end());
-  }
-  int ha_rnd_init(bool scan)
-  {
-    int result;
-    assert(inited==NONE || (inited==RND && scan));
-    inited= (result= rnd_init(scan)) ? NONE: RND;
-    return(result);
-  }
-  int ha_rnd_end()
-  {
-    assert(inited==RND);
-    inited=NONE;
-    return(rnd_end());
-  }
+  int ha_index_init(uint32_t idx, bool sorted);
+  int ha_index_end();
+  int ha_rnd_init(bool scan);
+  int ha_rnd_end();
   int ha_reset();
+
   /* this is necessary in many places, e.g. in HANDLER command */
-  int ha_index_or_rnd_end()
-  {
-    return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
-  }
-  Table_flags ha_table_flags() const { return cached_table_flags; }
+  int ha_index_or_rnd_end();
+  Table_flags ha_table_flags() const;
+
   /**
     These functions represent the public interface to *users* of the
     handler class, hence they are *not* virtual. For the inheritance
@@ -293,16 +268,8 @@ public:
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
   int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
-  void ha_start_bulk_insert(ha_rows rows)
-  {
-    estimation_rows_to_insert= rows;
-    start_bulk_insert(rows);
-  }
-  int ha_end_bulk_insert()
-  {
-    estimation_rows_to_insert= 0;
-    return end_bulk_insert();
-  }
+  void ha_start_bulk_insert(ha_rows rows);
+  int ha_end_bulk_insert();
   int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
                          uint32_t *dup_key_found);
   int ha_delete_all_rows();
@@ -329,11 +296,8 @@ public:
   virtual void print_error(int error, myf errflag);
   virtual bool get_error_message(int error, String *buf);
   uint32_t get_dup_key(int error);
-  virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share)
-  {
-    table= table_arg;
-    table_share= share;
-  }
+  virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share);
+
   /* Estimates calculation */
   virtual double scan_time(void)
   { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
@@ -355,9 +319,8 @@ public:
   virtual int multi_range_read_next(char **range_info);
 
 
-  virtual const key_map *keys_to_use_for_scanning() { return &key_map_empty; }
-  bool has_transactions()
-  { return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0; }
+  virtual const key_map *keys_to_use_for_scanning();
+  bool has_transactions();
   virtual uint32_t extra_rec_buf_length() const { return 0; }
 
   /**
@@ -370,15 +333,7 @@ public:
     same thing as HA_ERR_FOUND_DUP_KEY but can in some cases lead to
     a slightly different error message.
   */
-  virtual bool is_fatal_error(int error, uint32_t flags)
-  {
-    if (!error ||
-        ((flags & HA_CHECK_DUP_KEY) &&
-         (error == HA_ERR_FOUND_DUPP_KEY ||
-          error == HA_ERR_FOUND_DUPP_UNIQUE)))
-      return false;
-    return true;
-  }
+  virtual bool is_fatal_error(int error, uint32_t flags);
 
   /**
     Number of rows in table. It will only be called if

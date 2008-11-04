@@ -1723,7 +1723,76 @@ handler *handler::clone(MEM_ROOT *mem_root)
   return NULL;
 }
 
+int handler::ha_index_init(uint32_t idx, bool sorted)
+{
+  int result;
+  assert(inited==NONE);
+  if (!(result= index_init(idx, sorted)))
+    inited=INDEX;
+  end_range= NULL;
+  return(result);
+}
 
+int handler::ha_index_end()
+{
+  assert(inited==INDEX);
+  inited=NONE;
+  end_range= NULL;
+  return(index_end());
+}
+
+int handler::ha_rnd_init(bool scan)
+{
+  int result;
+  assert(inited==NONE || (inited==RND && scan));
+  inited= (result= rnd_init(scan)) ? NONE: RND;
+  return(result);
+}
+
+int handler::ha_rnd_end()
+{
+  assert(inited==RND);
+  inited=NONE;
+  return(rnd_end());
+}
+
+int handler::ha_index_or_rnd_end()
+{
+  return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
+}
+
+handler::Table_flags handler::ha_table_flags() const
+{
+  return cached_table_flags;
+}
+
+void handler::ha_start_bulk_insert(ha_rows rows)
+{
+  estimation_rows_to_insert= rows;
+  start_bulk_insert(rows);
+}
+
+int handler::ha_end_bulk_insert()
+{
+  estimation_rows_to_insert= 0;
+  return end_bulk_insert();
+}
+
+void handler::change_table_ptr(Table *table_arg, TABLE_SHARE *share)
+{
+  table= table_arg;
+  table_share= share;
+}
+
+const key_map *handler::keys_to_use_for_scanning()
+{
+  return &key_map_empty;
+}
+
+bool handler::has_transactions()
+{
+  return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
+}
 
 void handler::ha_statistic_increment(ulong SSV::*offset) const
 {
@@ -1739,6 +1808,17 @@ Session *handler::ha_session(void) const
 {
   assert(!table || !table->in_use || table->in_use == current_session);
   return (table && table->in_use) ? table->in_use : current_session;
+}
+
+
+bool handler::is_fatal_error(int error, uint32_t flags)
+{
+  if (!error ||
+      ((flags & HA_CHECK_DUP_KEY) &&
+       (error == HA_ERR_FOUND_DUPP_KEY ||
+        error == HA_ERR_FOUND_DUPP_UNIQUE)))
+    return false;
+  return true;
 }
 
 /**
