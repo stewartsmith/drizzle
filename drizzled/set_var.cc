@@ -736,7 +736,7 @@ extern void fix_delay_key_write(Session *session __attribute__((unused)),
 bool sys_var_set::update(Session *session __attribute__((unused)),
                          set_var *var)
 {
-  *value= var->save_result.ulong_value;
+  *value= var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -776,8 +776,8 @@ bool sys_var_set_slave_mode::check(Session *session, set_var *var)
 {
   bool rc=  sys_var_set::check(session, var);
   if (!rc &&
-      bit_is_set(var->save_result.ulong_value, SLAVE_EXEC_MODE_STRICT) == 1 &&
-      bit_is_set(var->save_result.ulong_value, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
+      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_STRICT) == 1 &&
+      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
     rc= true;
     my_error(ER_SLAVE_AMBIGOUS_EXEC_MODE, MYF(0), "");
@@ -1028,7 +1028,7 @@ void sys_var_uint64_t_ptr::set_default(Session *session __attribute__((unused)),
 
 bool sys_var_bool_ptr::update(Session *session __attribute__((unused)), set_var *var)
 {
-  *value= (bool) var->save_result.ulong_value;
+  *value= (bool) var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -1041,7 +1041,7 @@ void sys_var_bool_ptr::set_default(Session *session __attribute__((unused)), enu
 
 bool sys_var_enum::update(Session *session __attribute__((unused)), set_var *var)
 {
-  *value= (uint) var->save_result.ulong_value;
+  *value= (uint) var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -1223,9 +1223,9 @@ unsigned char *sys_var_session_uint64_t::value_ptr(Session *session, enum_var_ty
 bool sys_var_session_bool::update(Session *session,  set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= (bool) var->save_result.ulong_value;
+    global_system_variables.*offset= (bool) var->save_result.uint32_t_value;
   else
-    session->variables.*offset= (bool) var->save_result.ulong_value;
+    session->variables.*offset= (bool) var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -1257,10 +1257,7 @@ bool sys_var::check_enum(Session *session __attribute__((unused)),
 
   if (var->value->result_type() == STRING_RESULT)
   {
-    if (!(res=var->value->val_str(&str)) ||
-	((long) (var->save_result.ulong_value=
-		 (ulong) find_type(enum_names, res->ptr(),
-				   res->length(),1)-1)) < 0)
+    if (!(res=var->value->val_str(&str)))
     {
       value= res ? res->c_ptr() : "NULL";
       goto err;
@@ -1275,7 +1272,7 @@ bool sys_var::check_enum(Session *session __attribute__((unused)),
       value=buff;				// Wrong value is here
       goto err;
     }
-    var->save_result.ulong_value= (ulong) tmp;	// Save for update
+    var->save_result.uint32_t_value= (uint32_t) tmp;	// Save for update
   }
   return 0;
 
@@ -1308,7 +1305,7 @@ bool sys_var::check_set(Session *session __attribute__((unused)),
       goto err;
     }
 
-    var->save_result.ulong_value= ((ulong)
+    var->save_result.uint32_t_value= ((uint32_t)
 				   find_set(enum_names, res->c_ptr(),
 					    res->length(),
                                             NULL,
@@ -1342,7 +1339,7 @@ bool sys_var::check_set(Session *session __attribute__((unused)),
       llstr(tmp, buff);
       goto err;
     }
-    var->save_result.ulong_value= (ulong) tmp;  // Save for update
+    var->save_result.uint32_t_value= (uint32_t) tmp;  // Save for update
   }
   return 0;
 
@@ -1384,9 +1381,9 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
   }
   case SHOW_LONG:
   {
-    ulong value;
+    uint32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(ulong*) value_ptr(session, var_type, base);
+    value= *(uint32_t*) value_ptr(session, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_uint((uint64_t) value);
   }
@@ -1468,9 +1465,9 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
 bool sys_var_session_enum::update(Session *session, set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= var->save_result.ulong_value;
+    global_system_variables.*offset= var->save_result.uint32_t_value;
   else
-    session->variables.*offset= var->save_result.ulong_value;
+    session->variables.*offset= var->save_result.uint32_t_value;
   return 0;
 }
 
@@ -1924,7 +1921,7 @@ bool sys_var_log_state::update(Session *session __attribute__((unused)), set_var
 {
   bool res;
   pthread_mutex_lock(&LOCK_global_system_variables);
-  if (!var->save_result.ulong_value)
+  if (!var->save_result.uint32_t_value)
     res= false;
   else
     res= true;
@@ -1992,7 +1989,7 @@ bool sys_var_log_output::update(Session *session __attribute__((unused)),
 {
   pthread_mutex_lock(&LOCK_global_system_variables);
   logger.lock_exclusive();
-  *value= var->save_result.ulong_value;
+  *value= var->save_result.uint32_t_value;
   logger.unlock();
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return 0;
@@ -2390,7 +2387,7 @@ unsigned char *sys_var_microseconds::value_ptr(Session *session, enum_var_type t
 static bool set_option_bit(Session *session, set_var *var)
 {
   sys_var_session_bit *sys_var= ((sys_var_session_bit*) var->var);
-  if ((var->save_result.ulong_value != 0) == sys_var->reverse)
+  if ((var->save_result.uint32_t_value != 0) == sys_var->reverse)
     session->options&= ~sys_var->bit_flag;
   else
     session->options|= sys_var->bit_flag;
@@ -2404,7 +2401,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
 
   uint64_t org_options= session->options;
 
-  if (var->save_result.ulong_value != 0)
+  if (var->save_result.uint32_t_value != 0)
     session->options&= ~((sys_var_session_bit*) var->var)->bit_flag;
   else
     session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
