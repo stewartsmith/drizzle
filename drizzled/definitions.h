@@ -478,6 +478,8 @@ enum enum_var_type
 
 
 typedef uint64_t query_id_t;
+typedef void *range_seq_t;
+
 
 /**
    The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
@@ -867,5 +869,11 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
   will not have NULL values.
 */
 #define HA_MRR_NO_NULL_ENDPOINTS 128
+
+enum enum_ha_read_modes { RFIRST, RNEXT, RPREV, RLAST, RKEY, RNEXT_SAME };
+
+enum enum_tx_isolation { ISO_READ_UNCOMMITTED, ISO_READ_COMMITTED,
+                         ISO_REPEATABLE_READ, ISO_SERIALIZABLE};
+
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */

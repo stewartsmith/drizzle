@@ -29,6 +29,9 @@
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
+#include <drizzled/handlerton.h>
+#include <drizzled/handler_structs.h>
+#include <drizzled/ha_statistics.h>
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
@@ -42,8 +45,6 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
                                       uint64_t *engine_data);
 
 
-struct handlerton;
-
 /* The handler for a table type.  Will be included in the Table structure */
 
 class Table;
@@ -51,369 +52,9 @@ class TableList;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
-typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
-                             const char *file, uint32_t file_len,
-                             const char *status, uint32_t status_len);
-enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
-extern st_plugin_int *hton2plugin[MAX_HA];
-
-/*
-  handlerton is a singleton structure - one instance per storage engine -
-  to provide access to storage engine functionality that works on the
-  "global" level (unlike handler class that works on a per-table basis)
-
-  usually handlerton instance is defined statically in ha_xxx.cc as
-
-  static handlerton { ... } xxx_hton;
-
-  savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
-*/
-struct handlerton
-{
-  /*
-    Historical marker for if the engine is available of not
-  */
-  SHOW_COMP_OPTION state;
-
-  /*
-    Historical number used for frm file to determine the correct storage engine.
-    This is going away and new engines will just use "name" for this.
-  */
-  enum legacy_db_type db_type;
-  /*
-    each storage engine has it's own memory area (actually a pointer)
-    in the session, for storing per-connection information.
-    It is accessed as
-
-      session->ha_data[xxx_hton.slot]
-
-   slot number is initialized by MySQL after xxx_init() is called.
-   */
-   uint32_t slot;
-   /*
-     to store per-savepoint data storage engine is provided with an area
-     of a requested size (0 is ok here).
-     savepoint_offset must be initialized statically to the size of
-     the needed memory to store per-savepoint information.
-     After xxx_init it is changed to be an offset to savepoint storage
-     area and need not be used by storage engine.
-     see binlog_hton and binlog_savepoint_set/rollback for an example.
-   */
-   uint32_t savepoint_offset;
-   /*
-     handlerton methods:
-
-     close_connection is only called if
-     session->ha_data[xxx_hton.slot] is non-zero, so even if you don't need
-     this storage area - set it to something, so that MySQL would know
-     this storage engine was accessed in this connection
-   */
-   int  (*close_connection)(handlerton *hton, Session *session);
-   /*
-     sv points to an uninitialized storage area of requested size
-     (see savepoint_offset description)
-   */
-   int  (*savepoint_set)(handlerton *hton, Session *session, void *sv);
-   /*
-     sv points to a storage area, that was earlier passed
-     to the savepoint_set call
-   */
-   int  (*savepoint_rollback)(handlerton *hton, Session *session, void *sv);
-   int  (*savepoint_release)(handlerton *hton, Session *session, void *sv);
-   /*
-     'all' is true if it's a real commit, that makes persistent changes
-     'all' is false if it's not in fact a commit but an end of the
-     statement that is part of the transaction.
-     NOTE 'all' is also false in auto-commit mode where 'end of statement'
-     and 'real commit' mean the same event.
-   */
-   int  (*commit)(handlerton *hton, Session *session, bool all);
-   int  (*rollback)(handlerton *hton, Session *session, bool all);
-   int  (*prepare)(handlerton *hton, Session *session, bool all);
-   int  (*recover)(handlerton *hton, XID *xid_list, uint32_t len);
-   int  (*commit_by_xid)(handlerton *hton, XID *xid);
-   int  (*rollback_by_xid)(handlerton *hton, XID *xid);
-   void *(*create_cursor_read_view)(handlerton *hton, Session *session);
-   void (*set_cursor_read_view)(handlerton *hton, Session *session, void *read_view);
-   void (*close_cursor_read_view)(handlerton *hton, Session *session, void *read_view);
-   handler *(*create)(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root);
-   void (*drop_database)(handlerton *hton, char* path);
-   int (*start_consistent_snapshot)(handlerton *hton, Session *session);
-   bool (*flush_logs)(handlerton *hton);
-   bool (*show_status)(handlerton *hton, Session *session, stat_print_fn *print, enum ha_stat_type stat);
-   int (*fill_files_table)(handlerton *hton, Session *session,
-                           TableList *tables,
-                           class Item *cond);
-   uint32_t flags;                                /* global handler flags */
-   int (*release_temporary_latches)(handlerton *hton, Session *session);
-
-   int (*discover)(handlerton *hton, Session* session, const char *db, 
-                   const char *name,
-                   unsigned char **frmblob, 
-                   size_t *frmlen);
-   int (*table_exists_in_engine)(handlerton *hton, Session* session, const char *db,
-                                 const char *name);
-   uint32_t license; /* Flag for Engine License */
-   void *data; /* Location for engines to keep personal structures */
-};
-
-
-
-class Ha_trx_info;
-
-struct Session_TRANS
-{
-  /* true is not all entries in the ht[] support 2pc */
-  bool        no_2pc;
-  /* storage engines that registered in this transaction */
-  Ha_trx_info *ha_list;
-  /* 
-    The purpose of this flag is to keep track of non-transactional
-    tables that were modified in scope of:
-    - transaction, when the variable is a member of
-    Session::transaction.all
-    - top-level statement or sub-statement, when the variable is a
-    member of Session::transaction.stmt
-    This member has the following life cycle:
-    * stmt.modified_non_trans_table is used to keep track of
-    modified non-transactional tables of top-level statements. At
-    the end of the previous statement and at the beginning of the session,
-    it is reset to false.  If such functions
-    as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to true.  At the
-    end of the statement, the value of stmt.modified_non_trans_table 
-    is merged with all.modified_non_trans_table and gets reset.
-    * all.modified_non_trans_table is reset at the end of transaction
-    
-    * Since we do not have a dedicated context for execution of a
-    sub-statement, to keep track of non-transactional changes in a
-    sub-statement, we re-use stmt.modified_non_trans_table. 
-    At entrance into a sub-statement, a copy of the value of
-    stmt.modified_non_trans_table (containing the changes of the
-    outer statement) is saved on stack. Then 
-    stmt.modified_non_trans_table is reset to false and the
-    substatement is executed. Then the new value is merged with the
-    saved value.
-  */
-  bool modified_non_trans_table;
-
-  void reset() { no_2pc= false; modified_non_trans_table= false; }
-};
-
-
-/**
-  Either statement transaction or normal transaction - related
-  thread-specific storage engine data.
-
-  If a storage engine participates in a statement/transaction,
-  an instance of this class is present in
-  session->transaction.{stmt|all}.ha_list. The addition to
-  {stmt|all}.ha_list is made by trans_register_ha().
-
-  When it's time to commit or rollback, each element of ha_list
-  is used to access storage engine's prepare()/commit()/rollback()
-  methods, and also to evaluate if a full two phase commit is
-  necessary.
-
-  @sa General description of transaction handling in handler.cc.
-*/
-
-class Ha_trx_info
-{
-public:
-  /** Register this storage engine in the given transaction context. */
-  void register_ha(Session_TRANS *trans, handlerton *ht_arg)
-  {
-    assert(m_flags == 0);
-    assert(m_ht == NULL);
-    assert(m_next == NULL);
-
-    m_ht= ht_arg;
-    m_flags= (int) TRX_READ_ONLY; /* Assume read-only at start. */
-
-    m_next= trans->ha_list;
-    trans->ha_list= this;
-  }
-
-  /** Clear, prepare for reuse. */
-  void reset()
-  {
-    m_next= NULL;
-    m_ht= NULL;
-    m_flags= 0;
-  }
-
-  Ha_trx_info() { reset(); }
-
-  void set_trx_read_write()
-  {
-    assert(is_started());
-    m_flags|= (int) TRX_READ_WRITE;
-  }
-  bool is_trx_read_write() const
-  {
-    assert(is_started());
-    return m_flags & (int) TRX_READ_WRITE;
-  }
-  bool is_started() const { return m_ht != NULL; }
-  /** Mark this transaction read-write if the argument is read-write. */
-  void coalesce_trx_with(const Ha_trx_info *stmt_trx)
-  {
-    /*
-      Must be called only after the transaction has been started.
-      Can be called many times, e.g. when we have many
-      read-write statements in a transaction.
-    */
-    assert(is_started());
-    if (stmt_trx->is_trx_read_write())
-      set_trx_read_write();
-  }
-  Ha_trx_info *next() const
-  {
-    assert(is_started());
-    return m_next;
-  }
-  handlerton *ht() const
-  {
-    assert(is_started());
-    return m_ht;
-  }
-private:
-  enum { TRX_READ_ONLY= 0, TRX_READ_WRITE= 1 };
-  /** Auxiliary, used for ha_list management */
-  Ha_trx_info *m_next;
-  /**
-    Although a given Ha_trx_info instance is currently always used
-    for the same storage engine, 'ht' is not-NULL only when the
-    corresponding storage is a part of a transaction.
-  */
-  handlerton *m_ht;
-  /**
-    Transaction flags related to this engine.
-    Not-null only if this instance is a part of transaction.
-    May assume a combination of enum values above.
-  */
-  unsigned char       m_flags;
-};
-
-
-enum enum_tx_isolation { ISO_READ_UNCOMMITTED, ISO_READ_COMMITTED,
-                         ISO_REPEATABLE_READ, ISO_SERIALIZABLE};
-
-typedef struct {
-  uint64_t data_file_length;
-  uint64_t max_data_file_length;
-  uint64_t index_file_length;
-  uint64_t delete_length;
-  ha_rows records;
-  uint32_t mean_rec_length;
-  time_t create_time;
-  time_t check_time;
-  time_t update_time;
-  uint64_t check_sum;
-} PARTITION_INFO;
 
 class Item;
 struct st_table_log_memory_entry;
-
-
-typedef struct st_ha_create_information
-{
-  const CHARSET_INFO *table_charset, *default_table_charset;
-  LEX_STRING connect_string;
-  LEX_STRING comment;
-  const char *data_file_name, *index_file_name;
-  const char *alias;
-  uint64_t max_rows,min_rows;
-  uint64_t auto_increment_value;
-  uint32_t table_options;
-  uint32_t avg_row_length;
-  uint32_t used_fields;
-  uint32_t key_block_size;
-  uint32_t block_size;
-  handlerton *db_type;
-  enum row_type row_type;
-  uint32_t null_bits;                       /* NULL bits at start of record */
-  uint32_t options;				/* OR of HA_CREATE_ options */
-  uint32_t extra_size;                      /* length of extra data segment */
-  bool table_existed;			/* 1 in create if table existed */
-  bool frm_only;                        /* 1 if no ha_create_table() */
-  bool varchar;                         /* 1 if table has a VARCHAR */
-  enum ha_choice page_checksum;         /* If we have page_checksums */
-} HA_CREATE_INFO;
-
-typedef struct st_ha_alter_information
-{
-  KEY  *key_info_buffer;
-  uint32_t key_count;
-  uint32_t index_drop_count;
-  uint32_t *index_drop_buffer;
-  uint32_t index_add_count;
-  uint32_t *index_add_buffer;
-  void *data;
-} HA_ALTER_INFO;
-
-
-typedef struct st_key_create_information
-{
-  enum ha_key_alg algorithm;
-  uint32_t block_size;
-  LEX_STRING parser_name;
-  LEX_STRING comment;
-} KEY_CREATE_INFO;
-
-
-/*
-  Class for maintaining hooks used inside operations on tables such
-  as: create table functions, delete table functions, and alter table
-  functions.
-
-  Class is using the Template Method pattern to separate the public
-  usage interface from the private inheritance interface.  This
-  imposes no overhead, since the public non-virtual function is small
-  enough to be inlined.
-
-  The hooks are usually used for functions that does several things,
-  e.g., create_table_from_items(), which both create a table and lock
-  it.
- */
-class TABLEOP_HOOKS
-{
-public:
-  TABLEOP_HOOKS() {}
-  virtual ~TABLEOP_HOOKS() {}
-
-  inline void prelock(Table **tables, uint32_t count)
-  {
-    do_prelock(tables, count);
-  }
-
-  inline int postlock(Table **tables, uint32_t count)
-  {
-    return do_postlock(tables, count);
-  }
-private:
-  /* Function primitive that is called prior to locking tables */
-  virtual void do_prelock(Table **tables __attribute__((unused)),
-                          uint32_t count __attribute__((unused)))
-  {
-    /* Default is to do nothing */
-  }
-
-  /**
-     Primitive called after tables are locked.
-
-     If an error is returned, the tables will be unlocked and error
-     handling start.
-
-     @return Error code or zero.
-   */
-  virtual int do_postlock(Table **tables __attribute__((unused)),
-                          uint32_t count __attribute__((unused)))
-  {
-    return 0;                           /* Default is to do nothing */
-  }
-};
 
 typedef struct st_savepoint SAVEPOINT;
 extern uint32_t savepoint_alloc_size;
@@ -422,173 +63,34 @@ extern KEY_CREATE_INFO default_key_create_info;
 /* Forward declaration for condition pushdown to storage engine */
 typedef class Item COND;
 
-typedef struct st_ha_check_opt
-{
-  st_ha_check_opt() {}                        /* Remove gcc warning */
-  uint32_t sort_buffer_size;
-  uint32_t flags;       /* isam layer flags (e.g. for myisamchk) */
-  uint32_t sql_flags;   /* sql layer flags - for something myisamchk cannot do */
-  KEY_CACHE *key_cache;	/* new key cache when changing key cache */
-  void init();
-} HA_CHECK_OPT;
-
-
-
-/*
-  This is a buffer area that the handler can use to store rows.
-  'end_of_used_area' should be kept updated after calls to
-  read-functions so that other parts of the code can use the
-  remaining area (until next read calls is issued).
-*/
-
-typedef struct st_handler_buffer
-{
-  unsigned char *buffer;         /* Buffer one can start using */
-  unsigned char *buffer_end;     /* End of buffer */
-  unsigned char *end_of_used_area;     /* End of area that was used by handler */
-} HANDLER_BUFFER;
-
 typedef struct system_status_var SSV;
 
+class COST_VECT;
 
-typedef void *range_seq_t;
-
-typedef struct st_range_seq_if
-{
-  /*
-    Initialize the traversal of range sequence
-    
-    SYNOPSIS
-      init()
-        init_params  The seq_init_param parameter 
-        n_ranges     The number of ranges obtained 
-        flags        A combination of HA_MRR_SINGLE_POINT, HA_MRR_FIXED_KEY
-
-    RETURN
-      An opaque value to be used as RANGE_SEQ_IF::next() parameter
-  */
-  range_seq_t (*init)(void *init_params, uint32_t n_ranges, uint32_t flags);
-
-
-  /*
-    Get the next range in the range sequence
-
-    SYNOPSIS
-      next()
-        seq    The value returned by RANGE_SEQ_IF::init()
-        range  OUT Information about the next range
-    
-    RETURN
-      0 - Ok, the range structure filled with info about the next range
-      1 - No more ranges
-  */
-  uint32_t (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
-} RANGE_SEQ_IF;
 
 uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx);
 char* &mrr_get_ptr_by_idx(range_seq_t seq, uint32_t idx);
-
-class COST_VECT
-{ 
-public:
-  double io_count;     /* number of I/O                 */
-  double avg_io_cost;  /* cost of an average I/O oper.  */
-  double cpu_cost;     /* cost of operations in CPU     */
-  double mem_cost;     /* cost of used memory           */ 
-  double import_cost;  /* cost of remote operations     */
-  
-  enum { IO_COEFF=1 };
-  enum { CPU_COEFF=1 };
-  enum { MEM_COEFF=1 };
-  enum { IMPORT_COEFF=1 };
-
-  COST_VECT() {}                              // keep gcc happy
-
-  double total_cost() 
-  {
-    return IO_COEFF*io_count*avg_io_cost + CPU_COEFF * cpu_cost +
-           MEM_COEFF*mem_cost + IMPORT_COEFF*import_cost;
-  }
-
-  void zero()
-  {
-    avg_io_cost= 1.0;
-    io_count= cpu_cost= mem_cost= import_cost= 0.0;
-  }
-
-  void multiply(double m)
-  {
-    io_count *= m;
-    cpu_cost *= m;
-    import_cost *= m;
-    /* Don't multiply mem_cost */
-  }
-
-  void add(const COST_VECT* cost)
-  {
-    double io_count_sum= io_count + cost->io_count;
-    add_io(cost->io_count, cost->avg_io_cost);
-    io_count= io_count_sum;
-    cpu_cost += cost->cpu_cost;
-  }
-  void add_io(double add_io_cnt, double add_avg_cost)
-  {
-    double io_count_sum= io_count + add_io_cnt;
-    avg_io_cost= (io_count * avg_io_cost + 
-                  add_io_cnt * add_avg_cost) / io_count_sum;
-    io_count= io_count_sum;
-  }
-};
-
-void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
-                         COST_VECT *cost);
-
-
-
-class ha_statistics
-{
-public:
-  uint64_t data_file_length;		/* Length off data file */
-  uint64_t max_data_file_length;	/* Length off data file */
-  uint64_t index_file_length;
-  uint64_t max_index_file_length;
-  uint64_t delete_length;		/* Free bytes */
-  uint64_t auto_increment_value;
-  /*
-    The number of records in the table. 
-      0    - means the table has exactly 0 rows
-    other  - if (table_flags() & HA_STATS_RECORDS_IS_EXACT)
-               the value is the exact number of records in the table
-             else
-               it is an estimate
-  */
-  ha_rows records;
-  ha_rows deleted;			/* Deleted records */
-  uint32_t mean_rec_length;		/* physical reclength */
-  time_t create_time;			/* When table was created */
-  time_t check_time;
-  time_t update_time;
-  uint32_t block_size;			/* index block size */
-
-  ha_statistics():
-    data_file_length(0), max_data_file_length(0),
-    index_file_length(0), delete_length(0), auto_increment_value(0),
-    records(0), deleted(0), mean_rec_length(0), create_time(0),
-    check_time(0), update_time(0), block_size(0)
-  {}
-};
 
 uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
 */
-#define make_keypart_map(N) (((key_part_map)2 << (N)) - 1)
+template<class T>
+inline key_part_map make_keypart_map(T a)
+{
+  return (((key_part_map)2 << a) - 1);
+}
+
 /*
   bitmap with first N bits set
   (keypart_map for a key prefix of [0..N-1] keyparts)
 */
-#define make_prev_keypart_map(N) (((key_part_map)1 << (N)) - 1)
+template<class T>
+inline key_part_map make_prev_keypart_map(T a)
+{
+  return (((key_part_map)1 << a) - 1);
+}
 
 /**
   The handler class is the interface for dynamically loadable
@@ -1826,6 +1328,14 @@ extern uint32_t lower_case_table_names;
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
 
+
+bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
+bool mysql_ha_close(Session *session, TableList *tables);
+bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
+                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
+void mysql_ha_flush(Session *session);
+void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
+void mysql_ha_cleanup(Session *session);
 
 /*
   Storage engine has to assume the transaction will end up with 2pc if

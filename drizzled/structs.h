@@ -20,6 +20,9 @@
 
 /* The old structures from unireg */
 
+#ifndef DRIZZLED_STRUCTS_H
+#define DRIZZLED_STRUCTS_H
+
 #include <mysys/iocache.h>
 #include <mysys/definitions.h>
 
@@ -371,3 +374,5 @@ public:
   uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
   uint32_t      nb_elements() const { return elements; }
 };
+
+#endif /* DRIZZLED_STRUCTS_H */

@@ -26,6 +26,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/cost_vect.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -64,8 +65,9 @@ const char *ha_row_type[] = {
 const char *tx_isolation_names[] =
 { "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
   NULL};
+
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-			       tx_isolation_names, NULL};
+                               tx_isolation_names, NULL};
 
 static TYPELIB known_extensions= {0,"known_exts", NULL, NULL};
 uint32_t known_extensions_id= 0;
@@ -139,7 +141,8 @@ redo:
   {
     if (!my_strnncoll(&my_charset_utf8_general_ci,
                       (const unsigned char *)name->str, name->length,
-                      (const unsigned char *)table_alias->str, table_alias->length))
+                      (const unsigned char *)table_alias->str,
+                      table_alias->length))
     {
       name= table_alias + 1;
       goto redo;
@@ -155,14 +158,15 @@ plugin_ref ha_lock_engine(Session *session, handlerton *hton)
   if (hton)
   {
     st_plugin_int **plugin= hton2plugin + hton->slot;
-    
+
     return my_plugin_lock(session, &plugin);
   }
   return NULL;
 }
 
 
-handlerton *ha_resolve_by_legacy_type(Session *session, enum legacy_db_type db_type)
+handlerton *ha_resolve_by_legacy_type(Session *session,
+                                      enum legacy_db_type db_type)
 {
   plugin_ref plugin;
   switch (db_type) {
@@ -341,9 +345,9 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
 
   hton= (handlerton *)my_malloc(sizeof(handlerton),
                                 MYF(MY_WME | MY_ZEROFILL));
-  /* 
+  /*
     FIXME: the MY_ZEROFILL flag above doesn't zero all the bytes.
-    
+
     This was detected after adding get_backup_engine member to handlerton
     structure. Apparently get_backup_engine was not NULL even though it was
     not initialized.
@@ -406,10 +410,10 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     hton->state= SHOW_OPTION_DISABLED;
     break;
   }
-  
-  /* 
-    This is entirely for legacy. We will create a new "disk based" hton and a 
-    "memory" hton which will be configurable longterm. We should be able to 
+
+  /*
+    This is entirely for legacy. We will create a new "disk based" hton and a
+    "memory" hton which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
   if (strcmp(plugin->plugin->name, "MEMORY") == 0)
@@ -442,7 +446,7 @@ int ha_end()
 {
   int error= 0;
 
-  /* 
+  /*
     This should be eventualy based  on the graceful shutdown flag.
     So if flag is equal to HA_PANIC_CLOSE, the deallocate
     the errors.
@@ -1138,9 +1142,9 @@ int ha_autocommit_or_rollback(Session *session, int error)
     if (!error)
     {
       if (ha_commit_trans(session, 0))
-	error=1;
+        error=1;
     }
-    else 
+    else
     {
       (void) ha_rollback_trans(session, 0);
       if (session->transaction_rollback_request)

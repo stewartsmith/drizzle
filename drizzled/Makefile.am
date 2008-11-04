@@ -92,6 +92,7 @@ noinst_HEADERS = \
 		common_includes.h \
 		configvar.h \
 		connect.h \
+		cost_vect.h \
 		data_home.h \
 		definitions.h \
 		errmsg.h \
@@ -101,7 +102,10 @@ noinst_HEADERS = \
 		filesort_info.h \
 		gettext.h \
 		global.h \
+		ha_trx_info.h \
+		ha_statistics.h \
 		handler.h \
+		handler_structs.h \
 		item_cmpfunc.h \
 		item_create.h \
 		item_func.h \
@@ -163,6 +167,7 @@ noinst_HEADERS = \
 		table.h \
 		table_list.h \
 		table_map_iterator.h \
+		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h
@@ -250,6 +255,7 @@ drizzled_SOURCES = \
 		strfunc.cc \
 		table.cc \
                 table_map_iterator.cc \
+		tableop_hooks.cc \
 		thr_malloc.cc \
 		time.cc \
 		tmp_table.cc \

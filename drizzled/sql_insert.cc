@@ -30,6 +30,7 @@
 #include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
+#include <drizzled/tableop_hooks.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
@@ -1566,7 +1567,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock,
-                                      TABLEOP_HOOKS *hooks)
+                                      Tableop_hooks *hooks)
 {
   Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
@@ -1725,7 +1726,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   DRIZZLE_LOCK *extra_lock= NULL;
   
 
-  TABLEOP_HOOKS *hook_ptr= NULL;
+  Tableop_hooks *hook_ptr= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
     in two pieces: the first one contain the CREATE TABLE statement
@@ -1744,7 +1745,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     slave.  Hence, we have to hold on to the CREATE part of the
     statement until the statement has finished.
    */
-  class MY_HOOKS : public TABLEOP_HOOKS {
+  class MY_HOOKS : public Tableop_hooks {
   public:
     MY_HOOKS(select_create *x, TableList *create_table,
              TableList *select_tables)
