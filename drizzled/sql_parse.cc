@@ -2484,8 +2484,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     corresponding exec. (Thus we only have to check in fix_fields.)
   - Passing to check_stack_overrun() prevents the compiler from removing it.
 */
-bool check_stack_overrun(Session *session, long margin,
-			 unsigned char *buf __attribute__((unused)))
+bool check_stack_overrun(Session *session, long margin, unsigned char *)
 {
   long stack_used;
   assert(session == current_session);
@@ -3197,7 +3196,7 @@ bool st_select_lex::init_nested_join(Session *session)
     - 0, otherwise
 */
 
-TableList *st_select_lex::end_nested_join(Session *session __attribute__((unused)))
+TableList *st_select_lex::end_nested_join(Session *)
 {
   TableList *ptr;
   nested_join_st *nested_join;
@@ -3685,8 +3684,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
 */
 
 static unsigned int
-kill_one_thread(Session *session __attribute__((unused)),
-                ulong id, bool only_kill_query)
+kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp;
   uint32_t error=ER_NO_SUCH_THREAD;
@@ -3865,8 +3863,7 @@ Item * all_any_subquery_creator(Item *left_expr,
     true  Error
 */
 
-bool multi_update_precheck(Session *session,
-                           TableList *tables __attribute__((unused)))
+bool multi_update_precheck(Session *session, TableList *)
 {
   const char *msg= 0;
   LEX *lex= session->lex;
@@ -3902,8 +3899,7 @@ bool multi_update_precheck(Session *session,
     true  error
 */
 
-bool multi_delete_precheck(Session *session,
-                           TableList *tables __attribute__((unused)))
+bool multi_delete_precheck(Session *session, TableList *)
 {
   SELECT_LEX *select_lex= &session->lex->select_lex;
   TableList **save_query_tables_own_last= session->lex->query_tables_own_last;
@@ -3938,9 +3934,8 @@ bool multi_delete_precheck(Session *session,
   @return Matching table, NULL otherwise.
 */
 
-static TableList *multi_delete_table_match(LEX *lex __attribute__((unused)),
-                                            TableList *tbl,
-                                            TableList *tables)
+static TableList *multi_delete_table_match(LEX *, TableList *tbl,
+                                           TableList *tables)
 {
   TableList *match= NULL;
 
@@ -4030,7 +4025,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     true  Error
 */
 
-bool update_precheck(Session *session, TableList *tables __attribute__((unused)))
+bool update_precheck(Session *session, TableList *)
 {
   if (session->lex->select_lex.item_list.elements != session->lex->value_list.elements)
   {
@@ -4053,7 +4048,7 @@ bool update_precheck(Session *session, TableList *tables __attribute__((unused))
     true   error
 */
 
-bool insert_precheck(Session *session, TableList *tables __attribute__((unused)))
+bool insert_precheck(Session *session, TableList *)
 {
   LEX *lex= session->lex;
 
@@ -4083,8 +4078,7 @@ bool insert_precheck(Session *session, TableList *tables __attribute__((unused))
     true   Error
 */
 
-bool create_table_precheck(Session *session __attribute__((unused)),
-                           TableList *tables __attribute__((unused)),
+bool create_table_precheck(Session *, TableList *,
                            TableList *create_table)
 {
   bool error= true;                                 // Error message is given
@@ -4132,34 +4126,6 @@ Item *negate_expression(Session *session, Item *expr)
   if ((negated= expr->neg_transformer(session)) != 0)
     return negated;
   return new Item_func_not(expr);
-}
-
-
-/**
-  Check that byte length of a string does not exceed some limit.
-
-  @param str         string to be checked
-  @param err_msg     error message to be displayed if the string is too long
-  @param max_length  max length
-
-  @retval
-    false   the passed string is not longer than max_length
-  @retval
-    true    the passed string is longer than max_length
-
-  NOTE
-    The function is not used in existing code but can be useful later?
-*/
-
-bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
-                              uint32_t max_byte_length)
-{
-  if (str->length <= max_byte_length)
-    return false;
-
-  my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_byte_length);
-
-  return true;
 }
 
 

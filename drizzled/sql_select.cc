@@ -4572,8 +4572,7 @@ static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
 
 static bool
 update_ref_and_keys(Session *session, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
-                    uint32_t tables, COND *cond,
-                    COND_EQUAL *cond_equal __attribute__((unused)),
+                    uint32_t tables, COND *cond, COND_EQUAL *,
                     table_map normal_tables, SELECT_LEX *select_lex,
                     SARGABLE_PARAM **sargables)
 {
@@ -4923,7 +4922,7 @@ best_access_path(JOIN      *join,
                  table_map remaining_tables,
                  uint32_t      idx,
                  double    record_count,
-                 double    read_time __attribute__((unused)))
+                 double)
 {
   KEYUSE *best_key=         0;
   uint32_t best_max_key_part=   0;
@@ -6230,8 +6229,7 @@ find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count,
   Find how much space the prevous read not const tables takes in cache.
 */
 
-static void calc_used_field_length(Session *session __attribute__((unused)),
-                                   JOIN_TAB *join_tab)
+static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
 {
   uint32_t null_fields,blobs,fields,rec_length;
   Field **f_ptr,*field;
@@ -8371,8 +8369,7 @@ public:
   {
     return (void*) sql_alloc((uint) size);
   }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
 
   Item *and_level;
@@ -11590,7 +11587,7 @@ join_read_last_key(JOIN_TAB *tab)
 
 	/* ARGSUSED */
 static int
-join_no_more_records(READ_RECORD *info __attribute__((unused)))
+join_no_more_records(READ_RECORD *)
 {
   return -1;
 }
@@ -11890,8 +11887,8 @@ join_read_next_same_or_null(READ_RECORD *info)
 
 /* ARGSUSED */
 static enum_nested_loop_state
-end_send(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-	 bool end_of_records)
+end_send(JOIN *join, JOIN_TAB *,
+         bool end_of_records)
 {
   if (!end_of_records)
   {
@@ -11955,10 +11952,9 @@ end_send(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 }
 
 
-	/* ARGSUSED */
+/* ARGSUSED */
 enum_nested_loop_state
-end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-	       bool end_of_records)
+end_send_group(JOIN *join, JOIN_TAB *, bool end_of_records)
 {
   int idx= -1;
   enum_nested_loop_state ok_code= NESTED_LOOP_OK;
@@ -11966,7 +11962,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
   if (!join->first_record || end_of_records ||
       (idx=test_if_item_cache_changed(join->group_fields)) >= 0)
   {
-    if (join->first_record || 
+    if (join->first_record ||
         (end_of_records && !join->group && !join->group_optimized_away))
     {
       if (idx < (int) join->send_group_parts)
@@ -12048,10 +12044,10 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 }
 
 
-	/* ARGSUSED */
+/* ARGSUSED */
 enum_nested_loop_state
-end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-	  bool end_of_records)
+end_write(JOIN *join, JOIN_TAB *,
+          bool end_of_records)
 {
   Table *table=join->tmp_table;
 
@@ -12098,8 +12094,8 @@ end:
 /** Group by searching after group record and updating it if possible. */
 
 static enum_nested_loop_state
-end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-	   bool end_of_records)
+end_update(JOIN *join, JOIN_TAB *,
+           bool end_of_records)
 {
   Table *table=join->tmp_table;
   order_st   *group;
@@ -12174,8 +12170,8 @@ end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 /** Like end_update, but this is done with unique constraints instead of keys.  */
 
 static enum_nested_loop_state
-end_unique_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-		  bool end_of_records)
+end_unique_update(JOIN *join, JOIN_TAB *,
+                  bool end_of_records)
 {
   Table *table=join->tmp_table;
   int	  error;
@@ -12219,10 +12215,10 @@ end_unique_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 }
 
 
-	/* ARGSUSED */
+/* ARGSUSED */
 enum_nested_loop_state
-end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
-		bool end_of_records)
+end_write_group(JOIN *join, JOIN_TAB *,
+                bool end_of_records)
 {
   Table *table=join->tmp_table;
   int	  idx= -1;
@@ -14369,8 +14365,7 @@ next_field:
 static order_st *
 create_distinct_group(Session *session, Item **ref_pointer_array,
                       order_st *order_list, List<Item> &fields,
-                      List<Item> &all_fields __attribute__((unused)),
-                      bool *all_order_by_fields_used)
+                      List<Item> &, bool *all_order_by_fields_used)
 {
   List_iterator<Item> li(fields);
   Item *item;
@@ -15147,8 +15142,7 @@ init_tmptable_sum_functions(Item_sum **func_ptr)
 /** Update record 0 in tmp_table from record 1. */
 
 static void
-update_tmptable_sum_func(Item_sum **func_ptr,
-			 Table *tmp_table __attribute__((unused)))
+update_tmptable_sum_func(Item_sum **func_ptr, Table *)
 {
   Item_sum *func;
   while ((func= *(func_ptr++)))
@@ -15254,8 +15248,7 @@ static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab)
   @param select   pointer to st_select_lex which subselects joins we will free
 */
 
-void free_underlaid_joins(Session *session __attribute__((unused)),
-                          SELECT_LEX *select)
+void free_underlaid_joins(Session *, SELECT_LEX *select)
 {
   for (SELECT_LEX_UNIT *unit= select->first_inner_unit();
        unit;
@@ -16277,10 +16270,8 @@ static void print_table_array(Session *session, String *str, TableList **table,
   @query_type    type of the query is being generated
 */
 
-static void print_join(Session *session,
-                       String *str,
-                       List<TableList> *tables,
-                       enum_query_type query_type __attribute__((unused)))
+static void print_join(Session *session, String *str,
+                       List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
