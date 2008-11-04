@@ -21,9 +21,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 
-bool mysql_union(Session *session,
-                 LEX *lex __attribute__((unused)),
-                 select_result *result,
+bool mysql_union(Session *session, LEX *, select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
 {
   bool res;
@@ -40,8 +38,7 @@ bool mysql_union(Session *session,
 ** store records in temporary table for UNION
 ***************************************************************************/
 
-int select_union::prepare(List<Item> &list __attribute__((unused)),
-                          SELECT_LEX_UNIT *u)
+int select_union::prepare(List<Item> &, SELECT_LEX_UNIT *u)
 {
   unit= u;
   return 0;

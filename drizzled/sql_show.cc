@@ -180,7 +180,7 @@ static bool show_plugins(Session *session, plugin_ref plugin,
 }
 
 
-int fill_plugins(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_plugins(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
@@ -563,9 +563,9 @@ int get_quote_char_for_identifier(Session *session, const char *name, uint32_t l
 
 /* Append directory name (if exists) to CREATE INFO */
 
-static void append_directory(Session *session __attribute__((unused)),
+static void append_directory(Session *,
                              String *packet, const char *dir_type,
-			     const char *filename)
+                             const char *filename)
 {
   if (filename)
   {
@@ -581,7 +581,7 @@ static void append_directory(Session *session __attribute__((unused)),
 
 #define LIST_PROCESS_HOST_LEN 64
 
-static bool get_field_default_value(Session *session __attribute__((unused)),
+static bool get_field_default_value(Session *,
                                     Field *timestamp_field,
                                     Field *field, String *def_value,
                                     bool quoted)
@@ -1054,7 +1054,7 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   return(false);
 }
 
-static void store_key_options(Session *session __attribute__((unused)),
+static void store_key_options(Session *,
                               String *packet, Table *table,
                               KEY *key_info)
 {
@@ -1096,8 +1096,7 @@ public:
   {
     return (void*) sql_alloc((uint) size);
   }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
+  static void operator delete(void *, size_t)
   { TRASH(ptr, size); }
 
   ulong thread_id;
@@ -1215,8 +1214,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
   return;
 }
 
-int fill_schema_processlist(Session* session, TableList* tables,
-                            COND* cond __attribute__((unused)))
+int fill_schema_processlist(Session* session, TableList* tables, COND*)
 {
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2385,7 +2383,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 
 static uint32_t get_table_open_method(TableList *tables,
                                   ST_SCHEMA_TABLE *schema_table,
-                                  enum enum_schema_tables schema_table_idx __attribute__((unused)))
+                                  enum enum_schema_tables)
 {
   /*
     determine which method will be used for table opening
@@ -2428,7 +2426,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                       ST_SCHEMA_TABLE *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name,
-                                      enum enum_schema_tables schema_table_idx __attribute__((unused)))
+                                      enum enum_schema_tables)
 {
   Table *table= tables->table;
   TABLE_SHARE *share;
@@ -3216,7 +3214,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
 
 
 
-int fill_schema_charsets(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_schema_charsets(Session *session, TableList *tables, COND *)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3247,7 +3245,7 @@ int fill_schema_charsets(Session *session, TableList *tables, COND *cond __attri
 }
 
 
-int fill_schema_collation(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_schema_collation(Session *session, TableList *tables, COND *)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3289,7 +3287,7 @@ int fill_schema_collation(Session *session, TableList *tables, COND *cond __attr
 }
 
 
-int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *)
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -3593,7 +3591,7 @@ static int get_schema_key_column_usage_record(Session *session,
 }
 
 
-int fill_open_tables(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_open_tables(Session *session, TableList *tables, COND *)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
   Table *table= tables->table;
@@ -3617,7 +3615,7 @@ int fill_open_tables(Session *session, TableList *tables, COND *cond __attribute
 }
 
 
-int fill_variables(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_variables(Session *session, TableList *tables, COND *)
 {
   int res= 0;
   LEX *lex= session->lex;
@@ -3640,7 +3638,7 @@ int fill_variables(Session *session, TableList *tables, COND *cond __attribute__
 }
 
 
-int fill_status(Session *session, TableList *tables, COND *cond __attribute__((unused)))
+int fill_status(Session *session, TableList *tables, COND *)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -3778,9 +3776,8 @@ struct schema_table_ref
     0	table not found
     1   found the schema table
 */
-static bool find_schema_table_in_plugin(Session *session __attribute__((unused)),
-                                           plugin_ref plugin,
-                                           void* p_table)
+static bool find_schema_table_in_plugin(Session *, plugin_ref plugin,
+                                        void* p_table)
 {
   schema_table_ref *p_schema_table= (schema_table_ref *)p_table;
   const char* table_name= p_schema_table->table_name;

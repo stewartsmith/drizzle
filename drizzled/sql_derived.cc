@@ -92,7 +92,7 @@ out:
     true   Error
 */
 
-bool mysql_derived_prepare(Session *session, LEX *lex __attribute__((unused)),
+bool mysql_derived_prepare(Session *session, LEX *,
                            TableList *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;

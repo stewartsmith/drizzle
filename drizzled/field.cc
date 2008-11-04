@@ -842,7 +842,7 @@ int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
 */
 unsigned char *
 Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
-            bool low_byte_first __attribute__((unused)))
+            bool)
 {
   uint32_t length= pack_length();
   set_if_smaller(length, max_length);
@@ -882,7 +882,7 @@ Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
 */
 const unsigned char *
 Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
-              bool low_byte_first __attribute__((unused)))
+              bool)
 {
   uint32_t length=pack_length();
   int from_type= 0;
@@ -912,7 +912,7 @@ Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
 }
 
 
-my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((unused)))
+my_decimal *Field::val_decimal(my_decimal *)
 {
   /* This never have to be called */
   assert(0);
@@ -959,8 +959,7 @@ void Field::make_field(Send_field *field)
   @return
     value converted from val
 */
-int64_t Field::convert_decimal2int64_t(const my_decimal *val,
-                                         bool unsigned_flag __attribute__((unused)), int *err)
+int64_t Field::convert_decimal2int64_t(const my_decimal *val, bool, int *err)
 {
   int64_t i;
   if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
@@ -1023,8 +1022,7 @@ bool Field::get_time(DRIZZLE_TIME *ltime)
     Needs to be changed if/when we want to support different time formats.
 */
 
-int Field::store_time(DRIZZLE_TIME *ltime,
-                      enum enum_drizzle_timestamp_type type_arg __attribute__((unused)))
+int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   uint32_t length= (uint32_t) my_TIME_to_str(ltime, buff);
@@ -1038,8 +1036,7 @@ bool Field::optimize_range(uint32_t idx, uint32_t part)
 }
 
 
-Field *Field::new_field(MEM_ROOT *root, Table *new_table,
-                        bool keep_type __attribute__((unused)))
+Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)
 {
   Field *tmp;
   if (!(tmp= (Field*) memdup_root(root,(char*) this,size_of())))
@@ -1298,14 +1295,13 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(Session *session __attribute__((unused)), char *fld_name, enum_field_types fld_type,
+bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint32_t fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         const CHARSET_INFO * const fld_charset,
-                        uint32_t fld_geom_type __attribute__((unused)),
-                        enum column_format_type column_format,
+                        uint32_t, enum column_format_type column_format,
                         virtual_column_info *fld_vcol_info)
 {
   uint32_t sign_len, allowed_type_modifier= 0;
@@ -1567,7 +1563,7 @@ bool Create_field::init(Session *session __attribute__((unused)), char *fld_name
 }
 
 
-enum_field_types get_blob_type_from_length(uint32_t length __attribute__((unused)))
+enum_field_types get_blob_type_from_length(uint32_t)
 {
   enum_field_types type;
 
