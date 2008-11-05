@@ -832,7 +832,7 @@ public:
   }
 
   static void operator delete(void *ptr,
-                              size_t size __attribute__((unused)))
+                              size_t)
   {
     free((unsigned char*) ptr);
   }
@@ -848,9 +848,9 @@ public:
             write_data_header(file) ||
             write_data_body(file));
   }
-  virtual bool write_data_header(IO_CACHE* file __attribute__((unused)))
+  virtual bool write_data_header(IO_CACHE*)
   { return 0; }
-  virtual bool write_data_body(IO_CACHE* file __attribute__((unused)))
+  virtual bool write_data_body(IO_CACHE*)
   { return 0; }
   inline time_t get_time()
   {
@@ -975,7 +975,7 @@ protected:
     @retval 0     Event applied successfully
     @retval errno Error code if event application failed
   */
-  virtual int do_apply_event(Relay_log_info const *rli __attribute__((unused)))
+  virtual int do_apply_event(Relay_log_info const *)
   {
     return 0;                /* Default implementation does nothing */
   }
@@ -1469,7 +1469,7 @@ public:
   }
   Log_event_type get_type_code() { return QUERY_EVENT; }
   bool write(IO_CACHE* file);
-  virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((unused)))
+  virtual bool write_post_header_for_derived(IO_CACHE*)
   { return false; }
   bool is_valid() const { return query != 0; }
 
@@ -2182,7 +2182,7 @@ public:
   Item_result type;
   uint32_t charset_number;
   bool is_null;
-  User_var_log_event(Session* session_arg __attribute__((unused)),
+  User_var_log_event(Session*,
                      char *name_arg, uint32_t name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
 		     uint32_t charset_number_arg)
@@ -2229,7 +2229,7 @@ public:
 
 private:
   virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((unused)))
+  virtual enum_skip_reason do_shall_skip(Relay_log_info *)
   {
     /*
       Events from ourself should be skipped, but they should not
@@ -3146,8 +3146,7 @@ public:
                        const Format_description_log_event *description_event);
   static bool binlog_row_logging_function(Session *session, Table *table,
                                           bool is_transactional,
-                                          const unsigned char *before_record
-                                          __attribute__((unused)),
+                                          const unsigned char *,
                                           const unsigned char *after_record)
   {
     return session->binlog_write_row(table, is_transactional, after_record);
@@ -3251,8 +3250,7 @@ public:
   static bool binlog_row_logging_function(Session *session, Table *table,
                                           bool is_transactional,
                                           const unsigned char *before_record,
-                                          const unsigned char *after_record
-                                          __attribute__((unused)))
+                                          const unsigned char *)
   {
     return session->binlog_delete_row(table, is_transactional, before_record);
   }

@@ -45,18 +45,18 @@ Item_row::Item_row(List<Item> &arg):
   while ((item= li++))
   {
     items[i]= item;
-    i++;    
+    i++;
   }
 }
 
-void Item_row::illegal_method_call(const char *method __attribute__((unused)))
+void Item_row::illegal_method_call(const char *)
 {
   assert(0);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
   return;
 }
 
-bool Item_row::fix_fields(Session *session, Item **ref __attribute__((unused)))
+bool Item_row::fix_fields(Session *session, Item **)
 {
   assert(fixed == 0);
   null_value= 0;
@@ -121,8 +121,7 @@ void Item_row::update_used_tables()
   }
 }
 
-void Item_row::fix_after_pullout(st_select_lex *new_parent,
-                                 Item **ref __attribute__((unused)))
+void Item_row::fix_after_pullout(st_select_lex *new_parent, Item **)
 {
   used_tables_cache= 0;
   const_item_cache= 1;

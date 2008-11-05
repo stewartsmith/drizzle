@@ -336,14 +336,15 @@ dnl  C++ compiler does not!
 
 dnl TODO: Can _ISOC99_SOURCE be defined on all platforms and remove the 
 dnl       Need for all of this? 
-case "$target_os" in
-  *solaris*)
-  dnl Do we need both of these? 
-  CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
-  CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
-  ;;
-esac
-
+if test "$GCC" = "yes"
+then
+  case "$target_os" in
+    *solaris*)
+    CFLAGS="${CFLAGS} -D_XOPEN_SOURCE=600"
+    CXXFLAGS="${CXXFLAGS} -D__C99FEATURES__"
+    ;;
+  esac
+fi
 
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
@@ -415,10 +416,10 @@ then
   dnl I'm cheating here and sticking C99 support in SYMBOLS_FLAGS
   SYMBOLS_FLAGS=""
   DEBUG_OPTIMIZE_CC=""
-  #OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -xstrconst -mt -D_FORTEC_"
   OPTIMIZE_CFLAGS="-xO4 -xlibmil -xdepend -Xa -mt -xstrconst -D_FORTEC_"
   DEBUG_OPTIMIZE_CXX=""
-  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -library=stlport4 -mt -D_FORTEC_ -xlang=c99 -compat=5"
+  #Put back in once isnan is figured out
+  OPTIMIZE_CXXFLAGS="-xO4 -xlibmil -mt -D_FORTEC_ -xlang=c99 -compat=5 -library=stlport4"
 fi
 
 dnl TODO: Remove this define once we are using 2.61 across the board.
@@ -487,8 +488,8 @@ AC_SUBST(LD_VERSION_SCRIPT)
 
 AC_MSG_CHECKING(for Google Protocol Buffers)
 AC_ARG_WITH(protobuf,
-  [AS_HELP_STRING([--with-protobuf],
-       [Use protobuf directory])],
+  [AS_HELP_STRING([--with-protobuf@<:@=DIR@:>@],
+       [search for protobuf in DIR/include and DIR/lib])],
   [ with_protobuf=$withval ],
   [ with_protobuf=yes ])
 
@@ -556,8 +557,8 @@ AC_CHECK_LIB(uuid, uuid_generate)
 
 AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
-  [AS_HELP_STRING([--with-libevent],
-       [Use libevent build directory])],
+  [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
+       [Use libevent in DIR])],
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
 
@@ -573,31 +574,31 @@ then
     AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
     LIBEVENT_LIBS="${LIBS}"
     LIBS="${my_save_LIBS}"
-    LIBEVENT_CFLAGS=""
+    LIBEVENT_CPPFLAGS=""
 else
     AC_MSG_RESULT($withval)
     if test -f $withval/event.h -a -f $withval/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CFLAGS="-I$withval"
+       LIBEVENT_CPPFLAGS="-I$withval"
        LIBEVENT_LIBS="-L$withval -levent"
     elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CFLAGS="-I$withval/include"
+       LIBEVENT_CPPFLAGS="-I$withval/include"
        LIBEVENT_LIBS="-L$withval/lib -levent"
     else
        AC_MSG_ERROR([event.h or libevent.a not found in $withval])
     fi
 fi
 
-AC_SUBST(LIBEVENT_CFLAGS)
+AC_SUBST(LIBEVENT_CPPFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
 
 AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
-  save_CFLAGS="$CFLAGS"
+  save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
-  CFLAGS="$LIBEVENT_CFLAGS"
+  CPPFLAGS="$LIBEVENT_CPPFLAGS"
   LIBS="$LIBEVENT_LIBS"
   AC_TRY_LINK([
 #include <sys/types.h>
@@ -611,7 +612,7 @@ AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
 	check http://www.monkey.org/~provos/libevent/])
   ])
 
-  CFLAGS="$save_CFLAGS"
+  CPPFLAGS="$save_CPPFLAGS"
   LIBS="$save_LIBS"
 ])
 

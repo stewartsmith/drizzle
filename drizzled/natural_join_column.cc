@@ -1,7 +1,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/natural_join_column.h>
 
-Natural_join_column::Natural_join_column(Field_translator *field_param __attribute__((unused)), TableList *tab)
+Natural_join_column::Natural_join_column(Field_translator *, TableList *tab)
 {
   assert(tab->field_translation);
   table_field= NULL;

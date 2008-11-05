@@ -27,13 +27,6 @@
 #include <drizzled/sql_list.h>
 
 
-#ifdef HAVE_IEEEFP_H
-extern "C"        /* Bug in BSDI include file */
-{
-#include <ieeefp.h>
-}
-#endif
-
 class Item_func :public Item_result_field
 {
 protected:

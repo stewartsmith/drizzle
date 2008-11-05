@@ -200,16 +200,6 @@ public:
 handlerton *binlog_hton;
 
 
-/* Check if a given table is opened log table */
-int check_if_log_table(uint32_t db_len __attribute__((unused)),
-                       const char *db __attribute__((unused)),
-                       uint32_t table_name_len __attribute__((unused)),
-                       const char *table_name __attribute__((unused)),
-                       uint32_t check_if_opened __attribute__((unused)))
-{
-  return 0;
-}
-
 /*
   Log error with all enabled log event handlers
 
@@ -269,7 +259,7 @@ void LOGGER::init_base()
 }
 
 
-bool LOGGER::flush_logs(Session *session __attribute__((unused)))
+bool LOGGER::flush_logs(Session *)
 {
   int rc= 0;
 
@@ -386,8 +376,7 @@ int binlog_init(void *p)
   return 0;
 }
 
-static int binlog_close_connection(handlerton *hton __attribute__((unused)),
-                                   Session *session)
+static int binlog_close_connection(handlerton *, Session *session)
 {
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
@@ -493,9 +482,7 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
   return(error);
 }
 
-static int binlog_prepare(handlerton *hton __attribute__((unused)),
-                          Session *session __attribute__((unused)),
-                          bool all __attribute__((unused)))
+static int binlog_prepare(handlerton *, Session *, bool)
 {
   /*
     do nothing.
@@ -519,8 +506,7 @@ static int binlog_prepare(handlerton *hton __attribute__((unused)),
 
   @see handlerton::commit
 */
-static int binlog_commit(handlerton *hton __attribute__((unused)),
-                         Session *session, bool all)
+static int binlog_commit(handlerton *, Session *session, bool all)
 {
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
@@ -617,8 +603,7 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
 
   @see handlerton::rollback
 */
-static int binlog_rollback(handlerton *hton __attribute__((unused)),
-                           Session *session, bool all)
+static int binlog_rollback(handlerton *, Session *session, bool all)
 {
   int error=0;
   binlog_trx_data *const trx_data=
@@ -682,20 +667,18 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
   that case there is no need to have it in the binlog).
 */
 
-static int binlog_savepoint_set(handlerton *hton __attribute__((unused)),
-                                Session *session, void *sv)
+static int binlog_savepoint_set(handlerton *, Session *session, void *sv)
 {
   binlog_trans_log_savepos(session, (my_off_t*) sv);
   /* Write it to the binary log */
-  
+
   int const error=
     session->binlog_query(Session::STMT_QUERY_TYPE,
                       session->query, session->query_length, true, false);
   return(error);
 }
 
-static int binlog_savepoint_rollback(handlerton *hton __attribute__((unused)),
-                                     Session *session, void *sv)
+static int binlog_savepoint_rollback(handlerton *, Session *session, void *sv)
 {
   /*
     Write ROLLBACK TO SAVEPOINT to the binlog cache if we have updated some
@@ -893,7 +876,7 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
     int len=snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
 		     "started with:\nTCP Port: %d, Named Pipe: %s\n",
                      my_progname, server_version, COMPILATION_COMMENT,
-                     mysqld_port, ""
+                     drizzled_port, ""
                      );
     end= my_stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
@@ -3195,10 +3178,8 @@ void DRIZZLE_BIN_LOG::signal_update()
     signature to be compatible with other logging routines, which could
     return an error (e.g. logging to the log tables)
 */
-static void print_buffer_to_file(enum loglevel level,
-                                 int error_code __attribute__((unused)),
-                                 const char *buffer,
-                                 size_t buffer_length __attribute__((unused)))
+static void print_buffer_to_file(enum loglevel level, int,
+                                 const char *buffer, size_t)
 {
   time_t skr;
   struct tm tm_tmp;
@@ -3406,7 +3387,9 @@ int TC_LOG_MMAP::open(const char *opt_name)
 
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
   data[sizeof(tc_log_magic)]= (unsigned char)total_ha_2pc;
-  msync(data, tc_log_page_size, MS_SYNC);
+  // must cast data to (char *) for solaris. Arg1 is (void *) on linux
+  //   so the cast should be fine. 
+  msync((char *)data, tc_log_page_size, MS_SYNC);
   my_sync(fd, MYF(0));
   inited=5;
 
@@ -3527,7 +3510,7 @@ int TC_LOG_MMAP::overflow()
     to the position in memory where xid was logged to.
 */
 
-int TC_LOG_MMAP::log_xid(Session *session __attribute__((unused)), my_xid xid)
+int TC_LOG_MMAP::log_xid(Session *, my_xid xid)
 {
   int err;
   PAGE *p;
@@ -3612,7 +3595,9 @@ int TC_LOG_MMAP::sync()
     sit down and relax - this can take a while...
     note - no locks are held at this point
   */
-  err= msync(syncing->start, 1, MS_SYNC);
+  // must cast data to (char *) for solaris. Arg1 is (void *) on linux
+  //   so the cast should be fine. 
+  err= msync((char *)syncing->start, 1, MS_SYNC);
   if(err==0)
     err= my_sync(fd, MYF(0));
 
@@ -3639,7 +3624,7 @@ int TC_LOG_MMAP::sync()
   cookie points directly to the memory where xid was logged.
 */
 
-void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid __attribute__((unused)))
+void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid)
 {
   PAGE *p=pages+(cookie/tc_log_page_size);
   my_xid *x=(my_xid *)(data+cookie);
@@ -3897,8 +3882,7 @@ int TC_LOG_BINLOG::log_xid(Session *session, my_xid xid)
   return(!binlog_end_trans(session, trx_data, &xle, true));
 }
 
-void TC_LOG_BINLOG::unlog(ulong cookie __attribute__((unused)),
-                          my_xid xid __attribute__((unused)))
+void TC_LOG_BINLOG::unlog(ulong, my_xid)
 {
   pthread_mutex_lock(&LOCK_prep_xids);
   assert(prepared_xids > 0);

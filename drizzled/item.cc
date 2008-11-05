@@ -49,8 +49,7 @@ int64_t Hybrid_type_traits::val_int(Hybrid_type *val,
 }
 
 my_decimal *
-Hybrid_type_traits::val_decimal(Hybrid_type *val,
-                                my_decimal *to __attribute__((unused))) const
+Hybrid_type_traits::val_decimal(Hybrid_type *val, my_decimal *) const
 {
   double2my_decimal(E_DEC_FATAL_ERROR, val->real, val->dec_buf);
   return val->dec_buf;
@@ -153,8 +152,7 @@ const Hybrid_type_traits_integer *Hybrid_type_traits_integer::instance()
 }
 
 void
-Hybrid_type_traits_integer::fix_length_and_dec(Item *item,
-                                               Item *arg __attribute__((unused))) const
+Hybrid_type_traits_integer::fix_length_and_dec(Item *item, Item *) const
 {
   item->decimals= 0;
   item->max_length= MY_INT64_NUM_DECIMAL_DIGITS;
@@ -479,7 +477,7 @@ void Item::cleanup()
   @param arg   a dummy parameter, is not used here
 */
 
-bool Item::cleanup_processor(unsigned char *arg __attribute__((unused)))
+bool Item::cleanup_processor(unsigned char *)
 {
   if (fixed)
     cleanup();
@@ -759,7 +757,7 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
   - When trying to find an order_st BY/GROUP BY item in the SELECT part
 */
 
-bool Item::eq(const Item *item, bool binary_cmp __attribute__((unused))) const
+bool Item::eq(const Item *item, bool) const
 {
   /*
     Note, that this is never true if item is a Item_param:
@@ -789,7 +787,7 @@ Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
   the latter returns a non-fixed Item, so val_str() crashes afterwards.
   Override Item_num method, to return a fixed item.
 */
-Item *Item_num::safe_charset_converter(const CHARSET_INFO * const tocs __attribute__((unused)))
+Item *Item_num::safe_charset_converter(const CHARSET_INFO * const)
 {
   Item_string *conv;
   char buf[64];
@@ -804,7 +802,7 @@ Item *Item_num::safe_charset_converter(const CHARSET_INFO * const tocs __attribu
 }
 
 
-Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const tocs __attribute__((unused)))
+Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const)
 {
   Item_string *conv;
   char buf[64];
@@ -1443,8 +1441,7 @@ Item_field::Item_field(Field *f)
   Item_field (this is important in prepared statements).
 */
 
-Item_field::Item_field(Session *session __attribute__((unused)),
-                       Name_resolution_context *context_arg,
+Item_field::Item_field(Session *, Name_resolution_context *context_arg,
                        Field *f)
   :Item_ident(context_arg, f->table->s->db.str, *f->table_name, f->field_name),
    item_equal(0), no_const_subst(0),
@@ -1540,7 +1537,7 @@ const char *Item_ident::full_name() const
 }
 
 void Item_ident::print(String *str,
-                       enum_query_type query_type __attribute__((unused)))
+                       enum_query_type)
 {
   Session *session= current_session;
   char d_name_buff[MAX_ALIAS_NAME], t_name_buff[MAX_ALIAS_NAME];
@@ -1717,8 +1714,7 @@ bool Item_field::val_bool_result()
 }
 
 
-bool Item_field::eq(const Item *item,
-                    bool binary_cmp __attribute__((unused))) const
+bool Item_field::eq(const Item *item, bool) const
 {
   Item *real_item= ((Item *) item)->real_item();
   if (real_item->type() != FIELD_ITEM)
@@ -1756,8 +1752,7 @@ table_map Item_field::used_tables() const
 }
 
 
-void Item_field::fix_after_pullout(st_select_lex *new_parent,
-                                   Item **ref __attribute__((unused)))
+void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
 {
   if (new_parent == depended_from)
     depended_from= NULL;
@@ -1778,8 +1773,7 @@ Item *Item_field::get_tmp_table_item(Session *session)
   return new_item;
 }
 
-int64_t Item_field::val_int_endpoint(bool left_endp __attribute__((unused)),
-                                      bool *incl_endp __attribute__((unused)))
+int64_t Item_field::val_int_endpoint(bool, bool *)
 {
   int64_t res= val_int();
   return null_value? INT64_MIN : res;
@@ -1816,8 +1810,7 @@ String *Item_int::val_str(String *str)
   return str;
 }
 
-void Item_int::print(String *str,
-                     enum_query_type query_type __attribute__((unused)))
+void Item_int::print(String *str, enum_query_type)
 {
   // my_charset_bin is good enough for numbers
   str_value.set(value, &my_charset_bin);
@@ -1848,8 +1841,7 @@ String *Item_uint::val_str(String *str)
 }
 
 
-void Item_uint::print(String *str,
-                      enum_query_type query_type __attribute__((unused)))
+void Item_uint::print(String *str, enum_query_type)
 {
   // latin1 is good enough for numbers
   str_value.set((uint64_t) value, default_charset());
@@ -1878,9 +1870,7 @@ Item_decimal::Item_decimal(int64_t val, bool unsig)
 }
 
 
-Item_decimal::Item_decimal(double val,
-                           int precision __attribute__((unused)),
-                           int scale __attribute__((unused)))
+Item_decimal::Item_decimal(double val, int, int)
 {
   double2my_decimal(E_DEC_FATAL_ERROR, val, &decimal_value);
   decimals= (uint8_t) decimal_value.frac;
@@ -1943,16 +1933,14 @@ String *Item_decimal::val_str(String *result)
   return result;
 }
 
-void Item_decimal::print(String *str,
-                         enum_query_type query_type __attribute__((unused)))
+void Item_decimal::print(String *str, enum_query_type)
 {
   my_decimal2string(E_DEC_FATAL_ERROR, &decimal_value, 0, 0, 0, &str_value);
   str->append(str_value);
 }
 
 
-bool Item_decimal::eq(const Item *item,
-                      bool binary_cmp __attribute__((unused))) const
+bool Item_decimal::eq(const Item *item, bool) const
 {
   if (type() == item->type() && item->basic_const_item())
   {
@@ -2111,8 +2099,7 @@ my_decimal *Item_string::val_decimal(my_decimal *decimal_value)
 }
 
 
-bool Item_null::eq(const Item *item,
-                   bool binary_cmp __attribute__((unused))) const
+bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }
 
 
@@ -2131,7 +2118,7 @@ int64_t Item_null::val_int()
   return 0;
 }
 /* ARGSUSED */
-String *Item_null::val_str(String *str __attribute__((unused)))
+String *Item_null::val_str(String *)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
@@ -2139,7 +2126,7 @@ String *Item_null::val_str(String *str __attribute__((unused)))
   return 0;
 }
 
-my_decimal *Item_null::val_decimal(my_decimal *decimal_value __attribute__((unused)))
+my_decimal *Item_null::val_decimal(my_decimal *)
 {
   return 0;
 }
@@ -2159,9 +2146,7 @@ Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 */
 
 static void
-default_set_param_func(Item_param *param,
-                       unsigned char **pos __attribute__((unused)),
-                       ulong len __attribute__((unused)))
+default_set_param_func(Item_param *param, unsigned char **, ulong)
 {
   param->set_null();
 }
@@ -2807,8 +2792,7 @@ Item_param::eq(const Item *arg, bool binary_cmp) const
 
 /* End of Item_param related */
 
-void Item_param::print(String *str,
-                       enum_query_type query_type __attribute__((unused)))
+void Item_param::print(String *str, enum_query_type)
 {
   if (state == NO_VALUE)
   {
@@ -2838,7 +2822,7 @@ void Item_copy_string::copy()
 }
 
 /* ARGSUSED */
-String *Item_copy_string::val_str(String *str __attribute__((unused)))
+String *Item_copy_string::val_str(String *)
 {
   // Item_copy_string is used without fix_fields call
   if (null_value)
@@ -2862,8 +2846,7 @@ my_decimal *Item_copy_string::val_decimal(my_decimal *decimal_value)
 */
 
 /* ARGSUSED */
-bool Item::fix_fields(Session *session __attribute__((unused)),
-                      Item **ref __attribute__((unused)))
+bool Item::fix_fields(Session *, Item **)
 {
 
   // We do not check fields which are fixed during construction
@@ -3874,7 +3857,7 @@ Item *Item_field::equal_fields_propagator(unsigned char *arg)
   See comments in Arg_comparator::set_compare_func() for details.
 */
 
-bool Item_field::set_no_const_sub(unsigned char *arg __attribute__((unused)))
+bool Item_field::set_no_const_sub(unsigned char *)
 {
   if (field->charset() != &my_charset_bin)
     no_const_subst=1;
@@ -3907,7 +3890,7 @@ bool Item_field::set_no_const_sub(unsigned char *arg __attribute__((unused)))
     - this - otherwise.
 */
 
-Item *Item_field::replace_equal_field(unsigned char *arg __attribute__((unused)))
+Item *Item_field::replace_equal_field(unsigned char *)
 {
   if (item_equal)
   {
@@ -4112,7 +4095,7 @@ Field *Item::make_string_field(Table *table)
     \#    Created field
 */
 
-Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __attribute__((unused)))
+Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -4329,8 +4312,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
 }
 
 
-int Item_string::save_in_field(Field *field,
-                               bool no_conversions __attribute__((unused)))
+int Item_string::save_in_field(Field *field, bool)
 {
   String *result;
   result=val_str(&str_value);
@@ -4345,8 +4327,7 @@ int Item_uint::save_in_field(Field *field, bool no_conversions)
 }
 
 
-int Item_int::save_in_field(Field *field,
-                            bool no_conversions __attribute__((unused)))
+int Item_int::save_in_field(Field *field, bool)
 {
   int64_t nr=val_int();
   if (null_value)
@@ -4356,16 +4337,14 @@ int Item_int::save_in_field(Field *field,
 }
 
 
-int Item_decimal::save_in_field(Field *field,
-                                bool no_conversions __attribute__((unused)))
+int Item_decimal::save_in_field(Field *field, bool)
 {
   field->set_notnull();
   return field->store_decimal(&decimal_value);
 }
 
 
-bool Item_int::eq(const Item *arg,
-                  bool binary_cmp __attribute__((unused))) const
+bool Item_int::eq(const Item *arg, bool) const
 {
   /* No need to check for null value as basic constant can't be NULL */
   if (arg->basic_const_item() && arg->type() == type())
@@ -4451,8 +4430,7 @@ Item_float::Item_float(const char *str_arg, uint32_t length)
 }
 
 
-int Item_float::save_in_field(Field *field,
-                              bool no_conversions __attribute__((unused)))
+int Item_float::save_in_field(Field *field, bool)
 {
   double nr= val_real();
   if (null_value)
@@ -4462,8 +4440,7 @@ int Item_float::save_in_field(Field *field,
 }
 
 
-void Item_float::print(String *str,
-                       enum_query_type query_type __attribute__((unused)))
+void Item_float::print(String *str, enum_query_type)
 {
   if (presentation)
   {
@@ -4483,8 +4460,7 @@ void Item_float::print(String *str,
   In number context this is a int64_t value.
 */
 
-bool Item_float::eq(const Item *arg,
-                    bool binary_cmp __attribute__((unused))) const
+bool Item_float::eq(const Item *arg, bool) const
 {
   if (arg->basic_const_item() && arg->type() == type())
   {
@@ -4552,12 +4528,11 @@ my_decimal *Item_hex_string::val_decimal(my_decimal *decimal_value)
 }
 
 
-int Item_hex_string::save_in_field(Field *field,
-                                   bool no_conversions __attribute__((unused)))
+int Item_hex_string::save_in_field(Field *field, bool)
 {
   field->set_notnull();
   if (field->result_type() == STRING_RESULT)
-    return field->store(str_value.ptr(), str_value.length(), 
+    return field->store(str_value.ptr(), str_value.length(),
                         collation.collation);
 
   uint64_t nr;
@@ -4583,8 +4558,7 @@ warn:
 }
 
 
-void Item_hex_string::print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
+void Item_hex_string::print(String *str, enum_query_type)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
        *ptr= end - cmin(str_value.length(), (uint32_t)sizeof(int64_t));
@@ -4664,7 +4638,7 @@ Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
 */
 
 bool Item_null::send(Protocol *protocol,
-                     String *packet __attribute__((unused)))
+                     String *)
 {
   return protocol->store_null();
 }
@@ -4743,8 +4717,7 @@ bool Item::send(Protocol *protocol, String *buffer)
 }
 
 
-bool Item_field::send(Protocol *protocol,
-                      String *buffer __attribute__((unused)))
+bool Item_field::send(Protocol *protocol, String *)
 {
   return protocol->store(result_field);
 }
@@ -5490,8 +5463,7 @@ void Item_outer_ref::fix_after_pullout(st_select_lex *new_parent, Item **ref)
   }
 }
 
-void Item_ref::fix_after_pullout(st_select_lex *new_parent,
-                                 Item **refptr __attribute__((unused)))
+void Item_ref::fix_after_pullout(st_select_lex *new_parent, Item **)
 {
   if (depended_from == new_parent)
   {
@@ -5517,8 +5489,7 @@ void Item_ref::fix_after_pullout(st_select_lex *new_parent,
     false   otherwise
 */
 
-bool Item_direct_view_ref::eq(const Item *item,
-                              bool binary_cmp __attribute__((unused))) const
+bool Item_direct_view_ref::eq(const Item *item, bool) const
 {
   if (item->type() == REF_ITEM)
   {
@@ -5539,8 +5510,7 @@ bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_default_value::fix_fields(Session *session,
-                                    Item **items __attribute__((unused)))
+bool Item_default_value::fix_fields(Session *session, Item **)
 {
   Item *real_arg;
   Item_field *field_arg;
@@ -5656,8 +5626,7 @@ bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 }
 
 
-bool Item_insert_value::fix_fields(Session *session,
-                                   Item **items __attribute__((unused)))
+bool Item_insert_value::fix_fields(Session *session, Item **)
 {
   assert(fixed == 0);
   /* We should only check that arg is in first table */
@@ -6000,7 +5969,7 @@ String* Item_cache_decimal::val_str(String *str)
   return str;
 }
 
-my_decimal *Item_cache_decimal::val_decimal(my_decimal *val __attribute__((unused)))
+my_decimal *Item_cache_decimal::val_decimal(my_decimal *)
 {
   assert(fixed);
   return &decimal_value;
@@ -6108,7 +6077,7 @@ void Item_cache_row::store(Item * item)
 }
 
 
-void Item_cache_row::illegal_method_call(const char *method __attribute__((unused)))
+void Item_cache_row::illegal_method_call(const char *)
 {
   assert(0);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
@@ -6260,8 +6229,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
     false  OK
 */
 
-bool Item_type_holder::join_types(Session *session __attribute__((unused)),
-                                  Item *item)
+bool Item_type_holder::join_types(Session *, Item *item)
 {
   uint32_t max_length_orig= max_length;
   uint32_t decimals_orig= decimals;
@@ -6492,8 +6460,7 @@ void Item_result_field::cleanup()
     do nothing
 */
 
-void dummy_error_processor(Session *session __attribute__((unused)),
-                           void *data __attribute__((unused)))
+void dummy_error_processor(Session *, void *)
 {}
 
 /**
