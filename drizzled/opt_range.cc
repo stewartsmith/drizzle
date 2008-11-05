@@ -4469,7 +4469,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   /* For comparison purposes allow invalid dates like 2000-01-32 */
   orig_sql_mode= field->table->in_use->variables.sql_mode;
   if (value->real_item()->type() == Item::STRING_ITEM &&
-      (field->type() == DRIZZLE_TYPE_NEWDATE ||
+      (field->type() == DRIZZLE_TYPE_DATE ||
        field->type() == DRIZZLE_TYPE_DATETIME))
     field->table->in_use->variables.sql_mode|= MODE_INVALID_DATES;
   err= value->save_in_field_no_warnings(field, 1);
@@ -4492,7 +4492,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
           for the cases like int_field > 999999999999999999999999 as well.
         */
         tree= 0;
-        if (err == 3 && field->type() == DRIZZLE_TYPE_NEWDATE &&
+        if (err == 3 && field->type() == DRIZZLE_TYPE_DATE &&
             (type == Item_func::GT_FUNC || type == Item_func::GE_FUNC ||
              type == Item_func::LT_FUNC || type == Item_func::LE_FUNC) )
         {

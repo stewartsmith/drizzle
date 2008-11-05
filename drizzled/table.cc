@@ -3724,7 +3724,7 @@ static Field *create_tmp_field_from_item(Session *session __attribute__((unused)
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_NEWDATE ||
+        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
     /* 

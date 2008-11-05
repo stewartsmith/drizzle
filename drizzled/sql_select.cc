@@ -10361,7 +10361,7 @@ remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
         session->substitute_null_with_insert_id= false;
       }
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
-      else if (((field->type() == DRIZZLE_TYPE_NEWDATE) ||
+      else if (((field->type() == DRIZZLE_TYPE_DATE) ||
 		(field->type() == DRIZZLE_TYPE_DATETIME)) &&
 		(field->flags & NOT_NULL_FLAG) &&
 	       !field->table->maybe_null)
@@ -14583,7 +14583,7 @@ calc_group_buffer(JOIN *join,order_st *group)
           by 8 as maximum pack length of such fields.
         */
         if (type == DRIZZLE_TYPE_TIME ||
-            type == DRIZZLE_TYPE_NEWDATE ||
+            type == DRIZZLE_TYPE_DATE ||
             type == DRIZZLE_TYPE_DATETIME ||
             type == DRIZZLE_TYPE_TIMESTAMP)
         {

@@ -342,7 +342,7 @@ public:
   Item_date() :Item_func() {}
   Item_date(Item *a) :Item_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   String *val_str(String *str);
   int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
@@ -783,7 +783,7 @@ public:
   bool get_date(DRIZZLE_TIME *ltime, uint32_t fuzzy_date);
   bool get_time(DRIZZLE_TIME *ltime);
   const char *cast_type() const { return "date"; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -880,7 +880,7 @@ public:
   Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
   String *val_str(String *str);
   const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   void fix_length_and_dec()
   { 
     decimals=0;

@@ -3145,7 +3145,7 @@ get_innobase_type_from_mysql_type(
 	case MYSQL_TYPE_DATE:
 	case MYSQL_TYPE_DATETIME:
 	case MYSQL_TYPE_YEAR:
-	case MYSQL_TYPE_NEWDATE:
+	case MYSQL_TYPE_DATE:
 	case MYSQL_TYPE_TIME:
 	case MYSQL_TYPE_TIMESTAMP:
 		return(DATA_INT);

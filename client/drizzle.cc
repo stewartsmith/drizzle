@@ -2857,7 +2857,7 @@ static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
     case DRIZZLE_TYPE_BLOB:        return "BLOB";
-    case DRIZZLE_TYPE_NEWDATE:        return "DATE";
+    case DRIZZLE_TYPE_DATE:        return "DATE";
     case DRIZZLE_TYPE_DATETIME:    return "DATETIME";
     case DRIZZLE_TYPE_NEWDECIMAL:  return "DECIMAL";
     case DRIZZLE_TYPE_DOUBLE:      return "DOUBLE";
