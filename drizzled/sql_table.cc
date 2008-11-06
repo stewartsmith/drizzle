@@ -67,7 +67,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   uint32_t errors;
   uint32_t res;
 
-  if (!memcmp(from, tmp_file_prefix, tmp_file_prefix_length))
+  if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
     res= (my_stpncpy(to, from, to_length) - to);
@@ -211,8 +211,8 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 
   char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
-	      tmp_file_prefix, current_pid,
-              session->thread_id, session->tmp_table++, reg_ext);
+           TMP_FILE_PREFIX, current_pid,
+           session->thread_id, session->tmp_table++, reg_ext);
 
   if (lower_case_table_names)
   {
@@ -3754,7 +3754,7 @@ Table *create_altered_table(Session *session,
   char path[FN_REFLEN];
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64,
-           tmp_file_prefix, current_pid, session->thread_id);
+           TMP_FILE_PREFIX, current_pid, session->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -4792,7 +4792,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       close_temporary_table(session, altered_table, 1, 1);
   }
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, tmp_file_prefix,
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
@@ -4915,7 +4915,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   */
 
   session->set_proc_info("rename result table");
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, tmp_file_prefix,
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);

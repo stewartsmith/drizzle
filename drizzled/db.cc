@@ -981,7 +981,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
                             MYSQL50_TABLE_NAME_PREFIX_LENGTH +
                             strlen(file->name) + 1);
       table_list->alias= table_list->table_name;	// If lower_case_table_names=2
-      table_list->internal_tmp_table= is_prefix(file->name, tmp_file_prefix);
+      table_list->internal_tmp_table= is_prefix(file->name, TMP_FILE_PREFIX);
       /* Link into list */
       (*tot_list_next)= table_list;
       tot_list_next= &table_list->next_local;

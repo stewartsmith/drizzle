@@ -45,7 +45,7 @@
 inline bool is_user_table(Table * table)
 {
   const char *name= table->s->table_name.str;
-  return strncmp(name, tmp_file_prefix, tmp_file_prefix_length);
+  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
 }
 
 
@@ -6246,7 +6246,7 @@ bool drizzle_rm_tmp_tables(void)
                                    (file->name[1] == '.' &&  !file->name[2])))
         continue;
 
-      if (!memcmp(file->name, tmp_file_prefix, tmp_file_prefix_length))
+      if (!memcmp(file->name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
       {
         char *ext= fn_ext(file->name);
         uint32_t ext_len= strlen(ext);
