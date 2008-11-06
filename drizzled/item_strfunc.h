@@ -19,29 +19,8 @@
 
 
 #include <drizzled/functions/str/concat.h>
-
-class Item_func_reverse :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_reverse(Item *a) :Item_str_func(a) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "reverse"; }
-};
-
-
-class Item_func_replace :public Item_str_func
-{
-  String tmp_value,tmp_value2;
-public:
-  Item_func_replace(Item *org,Item *find,Item *replace)
-    :Item_str_func(org,find,replace) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "replace"; }
-};
-
+#include <drizzled/functions/str/replace.h>
+#include <drizzled/functions/str/reverse.h>
 
 class Item_func_insert :public Item_str_func
 {

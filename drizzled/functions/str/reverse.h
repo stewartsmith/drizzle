@@ -17,31 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONCAT_H
-#define DRIZZLED_STR_FUNCTIONS_CONCAT_H
+#ifndef DRIZZLED_STR_FUNCTIONS_REVERSE_H
+#define DRIZZLED_STR_FUNCTIONS_REVERSE_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
-class Item_func_concat :public Item_str_func
+class Item_func_reverse :public Item_str_func
 {
   String tmp_value;
 public:
-  Item_func_concat(List<Item> &list) :Item_str_func(list) {}
-  Item_func_concat(Item *a,Item *b) :Item_str_func(a,b) {}
+  Item_func_reverse(Item *a) :Item_str_func(a) {}
   String *val_str(String *);
   void fix_length_and_dec();
-  const char *func_name() const { return "concat"; }
+  const char *func_name() const { return "reverse"; }
 };
 
-class Item_func_concat_ws :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_concat_ws(List<Item> &list) :Item_str_func(list) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "concat_ws"; }
-  table_map not_null_tables() const { return 0; }
-};
-
-#endif /* DRIZZLED_STR_FUNCTIONS_CONCAT_H */
+#endif /* DRIZZLED_STR_FUNCTIONS_REVERSE_H */

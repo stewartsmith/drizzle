@@ -43,9 +43,6 @@ using namespace CMATH_NAMESPACE;
 
 using namespace std;
 
-String my_empty_string("",default_charset_info);
-
-
 bool Item_str_func::fix_fields(Session *session, Item **ref)
 {
   bool res= Item_func::fix_fields(session, ref);

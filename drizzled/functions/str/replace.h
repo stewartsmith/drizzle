@@ -17,31 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONCAT_H
-#define DRIZZLED_STR_FUNCTIONS_CONCAT_H
+#ifndef DRIZZLED_STR_FUNCTIONS_REPLACE_H
+#define DRIZZLED_STR_FUNCTIONS_REPLACE_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
-class Item_func_concat :public Item_str_func
+class Item_func_replace :public Item_str_func
 {
-  String tmp_value;
+  String tmp_value,tmp_value2;
 public:
-  Item_func_concat(List<Item> &list) :Item_str_func(list) {}
-  Item_func_concat(Item *a,Item *b) :Item_str_func(a,b) {}
+  Item_func_replace(Item *org,Item *find,Item *replace)
+    :Item_str_func(org,find,replace) {}
   String *val_str(String *);
   void fix_length_and_dec();
-  const char *func_name() const { return "concat"; }
+  const char *func_name() const { return "replace"; }
 };
 
-class Item_func_concat_ws :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_concat_ws(List<Item> &list) :Item_str_func(list) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "concat_ws"; }
-  table_map not_null_tables() const { return 0; }
-};
-
-#endif /* DRIZZLED_STR_FUNCTIONS_CONCAT_H */
+#endif /* DRIZZLED_STR_FUNCTIONS_REPLACE_H */
