@@ -18,49 +18,7 @@
  */
 
 
-/* This file defines all string functions */
-
-
-class Item_str_func :public Item_func
-{
-public:
-  Item_str_func() :Item_func() { decimals=NOT_FIXED_DEC; }
-  Item_str_func(Item *a) :Item_func(a) {decimals=NOT_FIXED_DEC; }
-  Item_str_func(Item *a,Item *b) :Item_func(a,b) { decimals=NOT_FIXED_DEC; }
-  Item_str_func(Item *a,Item *b,Item *c) :Item_func(a,b,c) { decimals=NOT_FIXED_DEC; }
-  Item_str_func(Item *a,Item *b,Item *c,Item *d) :Item_func(a,b,c,d) {decimals=NOT_FIXED_DEC; }
-  Item_str_func(Item *a,Item *b,Item *c,Item *d, Item* e) :Item_func(a,b,c,d,e) {decimals=NOT_FIXED_DEC; }
-  Item_str_func(List<Item> &list) :Item_func(list) {decimals=NOT_FIXED_DEC; }
-  int64_t val_int();
-  double val_real();
-  my_decimal *val_decimal(my_decimal *);
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void left_right_max_length();
-  bool fix_fields(Session *session, Item **ref);
-};
-
-
-class Item_func_concat :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_concat(List<Item> &list) :Item_str_func(list) {}
-  Item_func_concat(Item *a,Item *b) :Item_str_func(a,b) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "concat"; }
-};
-
-class Item_func_concat_ws :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_concat_ws(List<Item> &list) :Item_str_func(list) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "concat_ws"; }
-  table_map not_null_tables() const { return 0; }
-};
+#include <drizzled/functions/str/concat.h>
 
 class Item_func_reverse :public Item_str_func
 {
