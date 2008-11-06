@@ -25,6 +25,7 @@
 
 #include <mysys/iocache.h>
 #include <mysys/definitions.h>
+#include <drizzled/lex_string.h>
 
 class Table;
 class Field;
@@ -156,7 +157,6 @@ typedef struct st_known_date_time_format {
   const char *time_format;
 } KNOWN_DATE_TIME_FORMAT;
 
-enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
 
 extern const char *show_comp_option_name[];
 

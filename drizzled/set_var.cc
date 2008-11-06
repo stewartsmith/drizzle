@@ -2930,7 +2930,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   if (type == OPT_GLOBAL)
     plugin= my_plugin_lock(session, &(global_system_variables.*offset));
   hton= plugin_data(plugin, handlerton*);
-  engine_name= &hton2plugin[hton->slot]->name;
+  engine_name= ha_storage_engine_name(hton);
   result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
   if (type == OPT_GLOBAL)
     plugin_unlock(session, plugin);

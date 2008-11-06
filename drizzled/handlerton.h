@@ -20,15 +20,21 @@
 #ifndef DRIZZLED_HANDLERTON_H
 #define DRIZZLED_HANDLERTON_H
 
+#include <drizzled/definitions.h>
 #include CSTDINT_H
+#include <drizzled/sql_plugin.h>
 
 class TableList;
+class Session;
+class XID;
+class handler;
+
+typedef struct st_mysql_lex_string LEX_STRING;
 typedef struct st_table_share TABLE_SHARE;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
-extern st_plugin_int *hton2plugin[MAX_HA];
 
 /*
   handlerton is a singleton structure - one instance per storage engine -
@@ -131,5 +137,21 @@ struct handlerton
 };
 
 
+/* lookups */
+handlerton *ha_default_handlerton(Session *session);
+plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
+plugin_ref ha_lock_engine(Session *session, handlerton *hton);
+handlerton *ha_resolve_by_legacy_type(Session *session,
+                                      enum legacy_db_type db_type);
+handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
+                         handlerton *db_type);
+handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
+                         bool no_substitute, bool report_error);
+
+enum legacy_db_type ha_legacy_type(const handlerton *db_type);
+const char *ha_resolve_storage_engine_name(const handlerton *db_type);
+bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag);
+bool ha_storage_engine_is_enabled(const handlerton *db_type);
+LEX_STRING *ha_storage_engine_name(const handlerton *hton);
 
 #endif /* DRIZZLED_HANDLERTON_H */

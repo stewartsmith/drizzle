@@ -339,7 +339,7 @@ public:
     Number of rows in table. It will only be called if
     (table_flags() & (HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT)) != 0
   */
-  virtual ha_rows records() { return stats.records; }
+  virtual ha_rows records();
   /**
     Return upper bound of current number of records in the table
     (max. of how many records one will retrieve when doing a full table scan)
@@ -1180,38 +1180,6 @@ extern uint32_t total_ha, total_ha_2pc;
        /* Wrapper functions */
 #define ha_commit(session) (ha_commit_trans((session), true))
 #define ha_rollback(session) (ha_rollback_trans((session), true))
-
-/* lookups */
-handlerton *ha_default_handlerton(Session *session);
-plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name);
-plugin_ref ha_lock_engine(Session *session, handlerton *hton);
-handlerton *ha_resolve_by_legacy_type(Session *session, enum legacy_db_type db_type);
-handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
-                         handlerton *db_type);
-handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
-                          bool no_substitute, bool report_error);
-
-
-static inline enum legacy_db_type ha_legacy_type(const handlerton *db_type)
-{
-  return (db_type == NULL) ? DB_TYPE_UNKNOWN : db_type->db_type;
-}
-
-static inline const char *ha_resolve_storage_engine_name(const handlerton *db_type)
-{
-  return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
-}
-
-static inline bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag)
-{
-  return db_type == NULL ? false : test(db_type->flags & flag);
-}
-
-static inline bool ha_storage_engine_is_enabled(const handlerton *db_type)
-{
-  return (db_type && db_type->create) ?
-         (db_type->state == SHOW_OPTION_YES) : false;
-}
 
 /* basic stuff */
 int ha_init_errors(void);

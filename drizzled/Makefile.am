@@ -264,7 +264,7 @@ drizzled_SOURCES = \
 		unireg.cc \
 		xid.cc
 
-libhandler_la_SOURCES = handler.cc
+libhandler_la_SOURCES = handler.cc handlerton.cc
 libyacc_la_SOURCES = sql_yacc.yy
 # Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.

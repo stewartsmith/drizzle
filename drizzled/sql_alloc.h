@@ -22,6 +22,7 @@
 
 #include <libdrizzle/net_serv.h>
 
+class Session;
 
 void init_sql_alloc(MEM_ROOT *root, uint32_t block_size, uint32_t pre_alloc_size);
 void *sql_alloc(size_t);
