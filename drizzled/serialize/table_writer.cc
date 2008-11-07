@@ -8,7 +8,8 @@ using namespace std;
   Written from Google proto example
 */
 
-void fill_engine(drizzle::Table::StorageEngine *engine) {
+void fill_engine(drizzle::Table::StorageEngine *engine) 
+{
   using namespace drizzle;
   using std::string;
   int16_t x;
@@ -27,7 +28,8 @@ void fill_engine(drizzle::Table::StorageEngine *engine) {
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; ++x) {
+  for (x= 0; x < 2; x++) 
+  {
     option= engine->add_option();
     option->set_name(option_names[x]);
     option->set_value(option_values[x]);
@@ -35,15 +37,14 @@ void fill_engine(drizzle::Table::StorageEngine *engine) {
   }
 }
 
-void new_index_to_table(
-    drizzle::Table *table
-    , const std::string name
-    , uint16_t num_index_parts
-    , uint32_t field_indexes[]
-    , uint32_t compare_lengths[]
-    , bool is_primary
-    , bool is_unique
-    ) {
+void new_index_to_table( drizzle::Table *table, 
+                         const std::string name,
+                         uint16_t num_index_parts,
+                         uint32_t field_indexes[],
+                         uint32_t compare_lengths[],
+                         bool is_primary,
+                         bool is_unique) 
+{
   using namespace drizzle;
   uint16_t x;
 
@@ -58,8 +59,8 @@ void new_index_to_table(
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
-  while (x < num_index_parts) {
-
+  while (x < num_index_parts) 
+  {
     index_part= index->add_index_part();
 
     field= index_part->mutable_field();
@@ -108,7 +109,6 @@ void fill_table(drizzle::Table *table, const char *name)
     if (x % 3)
     {
       string_field_options->set_collation("utf8_swedish_ci");
-      string_field_options->set_charset("utf8");
     }
   }
 
@@ -136,6 +136,7 @@ void fill_table(drizzle::Table *table, const char *name)
     field->set_name("some_btye_string");
     field->set_type(Table::Field::BLOB);
   }
+
   /* Write out a DECIMAL */
   {
     field= table->add_field();
@@ -151,37 +152,21 @@ void fill_table(drizzle::Table *table, const char *name)
   }
 
   {
-  uint32_t fields_in_index[1]= {6};
-  uint32_t compare_lengths_in_index[1]= {0};
-  bool is_unique= true;
-  bool is_primary= false;
-  /* Add a single-column index on important_number field */
-  new_index_to_table(
-      table
-    , "idx_important_decimal"
-    , 1
-    , fields_in_index
-    , compare_lengths_in_index
-    , is_primary
-    , is_unique
-    );
+    uint32_t fields_in_index[1]= {6};
+    uint32_t compare_lengths_in_index[1]= {0};
+    bool is_unique= true;
+    bool is_primary= false;
+    /* Add a single-column index on important_number field */
+    new_index_to_table(table, "idx_important_decimal", 1, fields_in_index, compare_lengths_in_index, is_primary, is_unique);
   }
 
   {
-  /* Add a double-column index on first two varchar fields */
-  uint32_t fields_in_index[2]= {0,1};
-  uint32_t compare_lengths_in_index[2]= {20,35};
-  bool is_unique= true;
-  bool is_primary= true;
-  new_index_to_table(
-      table
-    , "idx_varchar1_2"
-    , 2
-    , fields_in_index
-    , compare_lengths_in_index
-    , is_primary
-    , is_unique
-    );
+    /* Add a double-column index on first two varchar fields */
+    uint32_t fields_in_index[2]= {0,1};
+    uint32_t compare_lengths_in_index[2]= {20,35};
+    bool is_unique= true;
+    bool is_primary= true;
+    new_index_to_table(table, "idx_varchar1_2", 2, fields_in_index, compare_lengths_in_index, is_primary, is_unique);
   }
 
   /* Do engine-specific stuff */
@@ -194,7 +179,8 @@ int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2) {
+  if (argc != 2) 
+  {
     cerr << "Usage:  " << argv[0] << " SCHEMA" << endl;
     return -1;
   }
