@@ -16,4 +16,4 @@
 /* qsort that sends one extra argument to the compare subrutine */
 
 #define QSORT_EXTRA_CMP_ARGUMENT
-#include "mf_qsort.c"
+#include "mf_qsort.cc"

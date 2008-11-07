@@ -7669,7 +7669,8 @@ static my_coll_lexem_num my_coll_lexem_next(MY_COLL_LEXEM *lexem)
       for (beg++, lexem->diff= 1;
            (beg < lexem->end) && 
            (*beg == '<') && (lexem->diff<3);
-           beg++, lexem->diff++);
+           beg++, lexem->diff++)
+      {}
       rc= MY_COLL_LEXEM_DIFF;
       goto ex;
     }

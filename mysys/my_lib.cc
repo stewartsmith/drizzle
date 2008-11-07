@@ -96,9 +96,9 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
 
   dirp = opendir(directory_file_name(tmp_path,(char *) path));
   if (dirp == NULL || 
-      ! (buffer= my_malloc(ALIGN_SIZE(sizeof(MY_DIR)) + 
-                           ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)) +
-                           sizeof(MEM_ROOT), MyFlags)))
+      ! (buffer= (char *) my_malloc(ALIGN_SIZE(sizeof(MY_DIR)) + 
+                                    ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)) +
+                                    sizeof(MEM_ROOT), MyFlags)))
     goto error;
 
   dir_entries_storage= (DYNAMIC_ARRAY*)(buffer + ALIGN_SIZE(sizeof(MY_DIR))); 

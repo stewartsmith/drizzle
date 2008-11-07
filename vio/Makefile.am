@@ -23,4 +23,4 @@ vioincludedir = ${includedir}/vio
 dist_vioinclude_HEADERS =	vio_priv.h \
 			violite.h
 
-libviolt_la_SOURCES =	vio.c viosocket.c
+libviolt_la_SOURCES =	vio.cc viosocket.cc

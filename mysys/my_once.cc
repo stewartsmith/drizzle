@@ -75,7 +75,7 @@ void* my_once_alloc(size_t Size, myf MyFlags)
 char *my_once_strdup(const char *src,myf myflags)
 {
   size_t len= strlen(src)+1;
-  unsigned char *dst= my_once_alloc(len, myflags);
+  void *dst= my_once_alloc(len, myflags);
   if (dst)
     memcpy(dst, src, len);
   return (char*) dst;
@@ -84,7 +84,7 @@ char *my_once_strdup(const char *src,myf myflags)
 
 void *my_once_memdup(const void *src, size_t len, myf myflags)
 {
-  unsigned char *dst= my_once_alloc(len, myflags);
+  void *dst= my_once_alloc(len, myflags);
   if (dst)
     memcpy(dst, src, len);
   return dst;
