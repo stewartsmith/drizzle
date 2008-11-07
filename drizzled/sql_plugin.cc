@@ -219,10 +219,9 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-#define my_intern_plugin_lock(A,B) intern_plugin_lock(A,B CALLER_INFO)
-#define my_intern_plugin_lock_ci(A,B) intern_plugin_lock(A,B ORIG_CALLER_INFO)
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin
-                                     CALLER_INFO_PROTO);
+#define my_intern_plugin_lock(A,B) intern_plugin_lock(A,B)
+#define my_intern_plugin_lock_ci(A,B) intern_plugin_lock(A,B)
+static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref plugin);
 static void intern_plugin_unlock(LEX *lex, plugin_ref plugin);
 static void reap_plugins(void);
 
@@ -511,7 +510,7 @@ SHOW_COMP_OPTION sys_var_have_plugin::get_option()
 }
 
 
-static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
+static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc)
 {
   st_plugin_int *pi= plugin_ref_to_int(rc);
 
@@ -537,7 +536,7 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
 }
 
 
-plugin_ref plugin_lock(Session *session, plugin_ref *ptr CALLER_INFO_PROTO)
+plugin_ref plugin_lock(Session *session, plugin_ref *ptr)
 {
   LEX *lex= session ? session->lex : 0;
   plugin_ref rc;
@@ -546,8 +545,7 @@ plugin_ref plugin_lock(Session *session, plugin_ref *ptr CALLER_INFO_PROTO)
 }
 
 
-plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type
-                               CALLER_INFO_PROTO)
+plugin_ref plugin_lock_by_name(Session *session, const LEX_STRING *name, int type)
 {
   LEX *lex= session ? session->lex : 0;
   plugin_ref rc= NULL;

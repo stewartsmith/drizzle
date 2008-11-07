@@ -374,21 +374,21 @@ const double log_10[] = {
 
 time_t server_start_time, flush_status_time;
 
-char mysql_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
+char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char log_error_file[FN_REFLEN], glob_hostname[FN_REFLEN];
-char mysql_real_data_home[FN_REFLEN],
+char drizzle_real_data_home[FN_REFLEN],
      language[FN_REFLEN], reg_ext[FN_EXTLEN], mysql_charsets_dir[FN_REFLEN],
      *opt_init_file, *opt_tc_log_file;
-char mysql_unpacked_real_data_home[FN_REFLEN];
+char drizzle_unpacked_real_data_home[FN_REFLEN];
 uint32_t reg_ext_length;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
 const char *opt_date_time_formats[3];
 
-uint32_t mysql_data_home_len;
-char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
+uint32_t drizzle_data_home_len;
+char mysql_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
 const char *myisam_recover_options_str="OFF";
@@ -2184,10 +2184,10 @@ static int init_server_components()
   if (opt_error_log && !opt_help)
   {
     if (!log_error_file_ptr[0])
-      fn_format(log_error_file, pidfile_name, mysql_data_home, ".err",
+      fn_format(log_error_file, pidfile_name, drizzle_data_home, ".err",
                 MY_REPLACE_EXT); /* replace '.<domain>' by '.err', bug#4997 */
     else
-      fn_format(log_error_file, log_error_file_ptr, mysql_data_home, ".err",
+      fn_format(log_error_file, log_error_file_ptr, drizzle_data_home, ".err",
                 MY_UNPACK_FILENAME | MY_SAFE_PATH);
     if (!log_error_file[0])
       opt_error_log= 1;				// Too long file name
@@ -2490,13 +2490,13 @@ int main(int argc, char **argv)
   /*
     We have enough space for fiddling with the argv, continue
   */
-  check_data_home(mysql_real_data_home);
-  if (my_setwd(mysql_real_data_home,MYF(MY_WME)) && !opt_help)
+  check_data_home(drizzle_real_data_home);
+  if (my_setwd(drizzle_real_data_home,MYF(MY_WME)) && !opt_help)
     unireg_abort(1);				/* purecov: inspected */
-  mysql_data_home= mysql_data_home_buff;
-  mysql_data_home[0]=FN_CURLIB;		// all paths are relative from here
-  mysql_data_home[1]=0;
-  mysql_data_home_len= 2;
+  drizzle_data_home= mysql_data_home_buff;
+  drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
+  drizzle_data_home[1]=0;
+  drizzle_data_home_len= 2;
 
   if ((user_info= check_user(drizzled_user)))
   {
@@ -3012,8 +3012,8 @@ struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h',
    N_("Path to the database root."),
-   (char**) &mysql_data_home,
-   (char**) &mysql_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzle_data_home,
+   (char**) &drizzle_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -4082,7 +4082,7 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   opt_skip_slave_start= opt_reckless_slave = 0;
-  mysql_home[0]= pidfile_name[0]= log_error_file[0]= 0;
+  drizzle_home[0]= pidfile_name[0]= log_error_file[0]= 0;
   log_output_options= find_bit_type(log_output_str, &log_output_typelib);
   opt_bin_log= 0;
   opt_skip_show_db=0;
@@ -4125,11 +4125,11 @@ static void drizzle_init_variables(void)
   slave_exec_mode_options= 0;
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
-  drizzle_home_ptr= mysql_home;
+  drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;
   language_ptr= language;
-  mysql_data_home= mysql_real_data_home;
+  drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_BIN_LOG |
                         OPTION_QUOTE_SHOW_CREATE | OPTION_SQL_NOTES);
   protocol_version= PROTOCOL_VERSION;
@@ -4150,11 +4150,11 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strmake(language, LANGUAGE, sizeof(language)-1);
-  strmake(mysql_real_data_home, get_relative_path(DATADIR),
-	  sizeof(mysql_real_data_home)-1);
+  strmake(drizzle_real_data_home, get_relative_path(DATADIR),
+	  sizeof(drizzle_real_data_home)-1);
   mysql_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
   mysql_data_home_buff[1]=0;
-  mysql_data_home_len= 2;
+  drizzle_data_home_len= 2;
 
   /* Replication parameters */
   master_info_file= (char*) "master.info",
@@ -4200,7 +4200,7 @@ static void drizzle_init_variables(void)
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
     tmpenv = DEFAULT_DRIZZLE_HOME;
-  (void) strmake(mysql_home, tmpenv, sizeof(mysql_home)-1);
+  (void) strmake(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
 }
 
 
@@ -4217,17 +4217,17 @@ mysqld_get_one_option(int optid,
     global_system_variables.tx_isolation= ISO_SERIALIZABLE;
     break;
   case 'b':
-    strmake(mysql_home,argument,sizeof(mysql_home)-1);
+    strmake(drizzle_home,argument,sizeof(drizzle_home)-1);
     break;
   case 'C':
     if (default_collation_name == compiled_default_collation_name)
       default_collation_name= 0;
     break;
   case 'h':
-    strmake(mysql_real_data_home,argument, sizeof(mysql_real_data_home)-1);
+    strmake(drizzle_real_data_home,argument, sizeof(drizzle_real_data_home)-1);
     /* Correct pointer set by my_getopt (for embedded library) */
-    mysql_data_home= mysql_real_data_home;
-    mysql_data_home_len= strlen(mysql_data_home);
+    drizzle_data_home= drizzle_real_data_home;
+    drizzle_data_home_len= strlen(drizzle_data_home);
     break;
   case 'u':
     if (!drizzled_user || !strcmp(drizzled_user, argument))
@@ -4650,26 +4650,26 @@ static char *get_relative_path(const char *path)
 static void fix_paths(void)
 {
   char buff[FN_REFLEN],*pos;
-  convert_dirname(mysql_home,mysql_home,NULL);
-  /* Resolve symlinks to allow 'mysql_home' to be a relative symlink */
-  my_realpath(mysql_home,mysql_home,MYF(0));
-  /* Ensure that mysql_home ends in FN_LIBCHAR */
-  pos= strchr(mysql_home, '\0');
+  convert_dirname(drizzle_home,drizzle_home,NULL);
+  /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
+  my_realpath(drizzle_home,drizzle_home,MYF(0));
+  /* Ensure that drizzle_home ends in FN_LIBCHAR */
+  pos= strchr(drizzle_home, '\0');
   if (pos[-1] != FN_LIBCHAR)
   {
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  convert_dirname(mysql_real_data_home,mysql_real_data_home,NULL);
-  (void) fn_format(buff, mysql_real_data_home, "", "",
+  convert_dirname(drizzle_real_data_home,drizzle_real_data_home,NULL);
+  (void) fn_format(buff, drizzle_real_data_home, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  (void) unpack_dirname(mysql_unpacked_real_data_home, buff);
+  (void) unpack_dirname(drizzle_unpacked_real_data_home, buff);
   convert_dirname(language,language,NULL);
-  (void) my_load_path(mysql_home,mysql_home,""); // Resolve current dir
-  (void) my_load_path(mysql_real_data_home,mysql_real_data_home,mysql_home);
-  (void) my_load_path(pidfile_name,pidfile_name,mysql_real_data_home);
+  (void) my_load_path(drizzle_home,drizzle_home,""); // Resolve current dir
+  (void) my_load_path(drizzle_real_data_home,drizzle_real_data_home,drizzle_home);
+  (void) my_load_path(pidfile_name,pidfile_name,drizzle_real_data_home);
   (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
-                                      get_relative_path(PLUGINDIR), mysql_home);
+                                      get_relative_path(PLUGINDIR), drizzle_home);
   opt_plugin_dir_ptr= opt_plugin_dir;
 
   char *sharedir=get_relative_path(SHAREDIR);
@@ -4677,8 +4677,8 @@ static void fix_paths(void)
     strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
   else
   {
-    strcpy(buff, mysql_home);
-    strncat(buff, sharedir, sizeof(buff)-strlen(mysql_home)-1);
+    strcpy(buff, drizzle_home);
+    strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
   }
   convert_dirname(buff,buff,NULL);
   (void) my_load_path(language,language,buff);

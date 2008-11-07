@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_ITEM_TIMEFUNC_H
+#define DRIZZLED_ITEM_TIMEFUNC_H
 
 /* Function items used by mysql */
 
@@ -1039,3 +1041,5 @@ public:
   const char *func_name() const { return "last_day"; }
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
 };
+
+#endif /* DRIZZLED_ITEM_TIMEFUNC_H */

@@ -232,8 +232,6 @@ typedef uint64_t my_off_t;
 
 #define MY_FILEPOS_ERROR  (UINT64_MAX)
 
-typedef int    myf;  /* Type of MyFlags in my_funcs */
-#define MYF(v)		(myf) (v)
 
 /* Defines for time function */
 #define SCALE_SEC  100

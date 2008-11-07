@@ -1483,13 +1483,13 @@ static File create_file(Session *session, char *path, sql_exchange *exchange,
 
   if (!dirname_length(exchange->file_name))
   {
-    strcpy(path, mysql_real_data_home);
+    strcpy(path, drizzle_real_data_home);
     if (session->db)
-      strncat(path, session->db, FN_REFLEN-strlen(mysql_real_data_home)-1);
+      strncat(path, session->db, FN_REFLEN-strlen(drizzle_real_data_home)-1);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) fn_format(path, exchange->file_name, mysql_real_data_home, "", option);
+    (void) fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))

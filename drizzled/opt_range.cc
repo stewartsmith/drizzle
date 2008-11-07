@@ -106,6 +106,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/cost_vect.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

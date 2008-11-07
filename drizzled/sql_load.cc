@@ -260,14 +260,14 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 #endif
     if (!dirname_length(ex->file_name))
     {
-      strcpy(name, mysql_real_data_home);
-      strncat(name, tdb, FN_REFLEN-strlen(mysql_real_data_home)-1);
+      strcpy(name, drizzle_real_data_home);
+      strncat(name, tdb, FN_REFLEN-strlen(drizzle_real_data_home)-1);
       (void) fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }
     else
     {
-      (void) fn_format(name, ex->file_name, mysql_real_data_home, "",
+      (void) fn_format(name, ex->file_name, drizzle_real_data_home, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
       if (opt_secure_file_priv &&

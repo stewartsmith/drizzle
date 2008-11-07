@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions .
+SUBDIRS = util field serialize functions functions/str .
 
 sbin_PROGRAMS =drizzled
 
@@ -74,6 +74,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
+		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
 		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
@@ -92,6 +93,7 @@ noinst_HEADERS = \
 		common_includes.h \
 		configvar.h \
 		connect.h \
+		cost_vect.h \
 		data_home.h \
 		definitions.h \
 		errmsg.h \
@@ -101,7 +103,10 @@ noinst_HEADERS = \
 		filesort_info.h \
 		gettext.h \
 		global.h \
+		ha_trx_info.h \
+		ha_statistics.h \
 		handler.h \
+		handler_structs.h \
 		item_cmpfunc.h \
 		item_create.h \
 		item_func.h \
@@ -163,6 +168,7 @@ noinst_HEADERS = \
 		table.h \
 		table_list.h \
 		table_map_iterator.h \
+		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h
@@ -250,6 +256,7 @@ drizzled_SOURCES = \
 		strfunc.cc \
 		table.cc \
                 table_map_iterator.cc \
+		tableop_hooks.cc \
 		thr_malloc.cc \
 		time.cc \
 		tmp_table.cc \
@@ -258,7 +265,7 @@ drizzled_SOURCES = \
 		unireg.cc \
 		xid.cc
 
-libhandler_la_SOURCES = handler.cc
+libhandler_la_SOURCES = handler.cc handlerton.cc
 libyacc_la_SOURCES = sql_yacc.yy
 # Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.
@@ -281,10 +288,14 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
+#		server_includes.h.gch
 if GCC_PCH
-PCHHEADERS =
+PCHHEADERS = \
+		definitions.h.gch \
+		handlerton.h.gch  \
+		sql_plugin.h.gch
 else
-PCHHEADERS =
+PCHHEADERS = 
 endif
 
 BUILT_MAINT_SRC = sql_yacc.cc \
@@ -301,6 +312,7 @@ EXTRA_DIST = $(BUILT_MAINT_SRC) \
 
 CLEANFILES = lex_hash.h \
 	     sql_yacc.output \
+	     $(PCHHEADERS) \
 	     $(nodist_drizzled_SOURCES)
 
 DISTCLEANFILES = $(EXTRA_PROGRAMS) \
@@ -326,7 +338,7 @@ probes.h: probes.d
 
 if GCC_PCH
 %.h.gch: %.h
-	$(CXXCOMPILE) -include config.h -c $<
+	$(CXXCOMPILE) -include config.h -Wno-unused-macros -c $<
 endif
 
 SUFFIXES = .d

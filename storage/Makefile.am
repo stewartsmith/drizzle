@@ -13,11 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# Process this file with automake to create Makefile.in
-
-AUTOMAKE_OPTIONS =	foreign
-
-# These are built from source in the Docs directory
 EXTRA_DIST =		
 SUBDIRS = @mysql_se_dirs@
 
