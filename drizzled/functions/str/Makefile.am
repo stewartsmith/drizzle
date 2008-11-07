@@ -18,13 +18,21 @@ noinst_LTLIBRARIES = 	libstrfunc.la
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 libstrfunc_la_SOURCES = concat.cc \
+		  conv.cc \
+		  insert.cc \
+		  left.cc \
 		  replace.cc \
 		  reverse.cc \
+		  right.cc \
 		  strfunc.cc
 
 noinst_HEADERS = concat.h \
+		 conv.h \
+		 insert.h \
+		 left.h \
 		 replace.h \
 		 reverse.h \
+		 right.h \
 		 strfunc.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

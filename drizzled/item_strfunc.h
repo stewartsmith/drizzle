@@ -19,71 +19,12 @@
 
 
 #include <drizzled/functions/str/concat.h>
+#include <drizzled/functions/str/conv.h>
+#include <drizzled/functions/str/insert.h>
+#include <drizzled/functions/str/left.h>
 #include <drizzled/functions/str/replace.h>
 #include <drizzled/functions/str/reverse.h>
-
-class Item_func_insert :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_insert(Item *org,Item *start,Item *length,Item *new_str)
-    :Item_str_func(org,start,length,new_str) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "insert"; }
-};
-
-
-class Item_str_conv :public Item_str_func
-{
-protected:
-  uint32_t multiply;
-  my_charset_conv_case converter;
-  String tmp_value;
-public:
-  Item_str_conv(Item *item) :Item_str_func(item) {}
-  String *val_str(String *);
-};
-
-
-class Item_func_lcase :public Item_str_conv
-{
-public:
-  Item_func_lcase(Item *item) :Item_str_conv(item) {}
-  const char *func_name() const { return "lcase"; }
-  void fix_length_and_dec();
-};
-
-class Item_func_ucase :public Item_str_conv
-{
-public:
-  Item_func_ucase(Item *item) :Item_str_conv(item) {}
-  const char *func_name() const { return "ucase"; }
-  void fix_length_and_dec();
-};
-
-
-class Item_func_left :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_left(Item *a,Item *b) :Item_str_func(a,b) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "left"; }
-};
-
-
-class Item_func_right :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_right(Item *a,Item *b) :Item_str_func(a,b) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "right"; }
-};
-
+#include <drizzled/functions/str/right.h>
 
 class Item_func_substr :public Item_str_func
 {
