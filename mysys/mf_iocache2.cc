@@ -396,7 +396,7 @@ process_flags:
       if (minimum_width > length2) 
       {
         const size_t buflen = minimum_width - length2;
-        unsigned char *buffz= my_alloca(buflen);
+        unsigned char *buffz= (unsigned char *)my_alloca(buflen);
         memset(buffz, is_zero_padded ? '0' : ' ', buflen);
         my_b_write(info, buffz, buflen);
         my_afree(buffz);

@@ -172,7 +172,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
       extra_groups[i]= group->type_names[i]; /** copy group */
       
       len= strlen(extra_groups[i]);
-      if (!(ptr= alloc_root(ctx->alloc, len+instance_len+1)))
+      if (!(ptr= (char *)alloc_root(ctx->alloc, len+instance_len+1)))
 	goto err;
       
       extra_groups[i+group->count]= ptr;
@@ -271,7 +271,7 @@ static int handle_default_option(void *in_ctx, const char *group_name,
 
   if (find_type((char *)group_name, ctx->group, 3))
   {
-    if (!(tmp= alloc_root(ctx->alloc, strlen(option) + 1)))
+    if (!(tmp= (char *)alloc_root(ctx->alloc, strlen(option) + 1)))
       return 1;
     if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;

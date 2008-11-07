@@ -272,7 +272,7 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
 }
 
 
-const const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
+const CHARSET_INFO *get_charset(uint32_t cs_number, myf flags)
 {
   const CHARSET_INFO *cs;
   if (cs_number == default_charset_info->number)

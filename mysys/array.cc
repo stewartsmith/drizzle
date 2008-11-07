@@ -60,7 +60,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
   array->max_element=init_alloc;
   array->alloc_increment=alloc_increment;
   array->size_of_element=element_size;
-  if ((array->buffer= init_buffer))
+  if ((array->buffer= (unsigned char*) init_buffer))
     return(false);
   if (!(array->buffer=(unsigned char*) my_malloc_ci(element_size*init_alloc,
                                             MYF(MY_WME))))
