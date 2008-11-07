@@ -123,7 +123,7 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
 
 /*
-  Creates path to a file: mysql_data_dir/db/table.ext
+  Creates path to a file: drizzle_data_dir/db/table.ext
 
   SYNOPSIS
    build_table_filename()
@@ -139,7 +139,7 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
   NOTES
 
     Uses database and table name, and extension to create
-    a file name in mysql_data_dir. Database and table
+    a file name in drizzle_data_dir. Database and table
     names are converted from system_charset_info into "fscs".
     Unless flags indicate a temporary table name.
     'db' is always converted.
@@ -169,8 +169,8 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   tablename_to_filename(db, dbbuff, sizeof(dbbuff));
 
   char *end = buff + bufflen;
-  /* Don't add FN_ROOTDIR if mysql_data_home already includes it */
-  char *pos = my_stpncpy(buff, mysql_data_home, bufflen);
+  /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
+  char *pos = my_stpncpy(buff, drizzle_data_home, bufflen);
   int rootdir_len= strlen(FN_ROOTDIR);
   if (pos - rootdir_len >= buff &&
       memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
@@ -4420,7 +4420,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
                                               alter_info->tablespace_op));
   char* pos= new_name_buff;
   char* pos_end= pos+strlen(new_name_buff)-1;
-  pos= my_stpncpy(new_name_buff, mysql_data_home, pos_end-pos);
+  pos= my_stpncpy(new_name_buff, drizzle_data_home, pos_end-pos);
   pos= my_stpncpy(new_name_buff, "/", pos_end-pos);
   pos= my_stpncpy(new_name_buff, db, pos_end-pos);
   pos= my_stpncpy(new_name_buff, "/", pos_end-pos);

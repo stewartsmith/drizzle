@@ -2277,7 +2277,7 @@ String *Item_load_file::val_str(String *str)
   if (!(file_name= args[0]->val_str(str)))
     goto err;
 
-  (void) fn_format(path, file_name->c_ptr(), mysql_real_data_home, "",
+  (void) fn_format(path, file_name->c_ptr(), drizzle_real_data_home, "",
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
   /* Read only allowed from within dir specified by secure_file_priv */

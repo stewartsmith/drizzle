@@ -616,7 +616,7 @@ extern Lt_creator lt_creator;
 extern Ge_creator ge_creator;
 extern Le_creator le_creator;
 extern char language[FN_REFLEN];
-extern char glob_hostname[FN_REFLEN], mysql_home[FN_REFLEN];
+extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
 extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
 extern const double log_10[309];

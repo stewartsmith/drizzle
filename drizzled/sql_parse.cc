@@ -4222,7 +4222,7 @@ bool check_identifier_name(LEX_STRING *str, uint32_t max_char_length,
 bool test_if_data_home_dir(const char *dir)
 {
   char path[FN_REFLEN], conv_path[FN_REFLEN];
-  uint32_t dir_len, home_dir_len= strlen(mysql_unpacked_real_data_home);
+  uint32_t dir_len, home_dir_len= strlen(drizzle_unpacked_real_data_home);
 
   if (!dir)
     return(0);
@@ -4235,7 +4235,7 @@ bool test_if_data_home_dir(const char *dir)
   {
     if (!my_strnncoll(character_set_filesystem,
                       (const unsigned char*) conv_path, home_dir_len,
-                      (const unsigned char*) mysql_unpacked_real_data_home,
+                      (const unsigned char*) drizzle_unpacked_real_data_home,
                       home_dir_len))
       return(1);
   }
