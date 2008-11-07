@@ -25,99 +25,10 @@
 #include <drizzled/functions/str/replace.h>
 #include <drizzled/functions/str/reverse.h>
 #include <drizzled/functions/str/right.h>
-
-class Item_func_substr :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_substr(Item *a,Item *b) :Item_str_func(a,b) {}
-  Item_func_substr(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "substr"; }
-};
-
-
-class Item_func_substr_index :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_substr_index(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "substring_index"; }
-};
-
-
-class Item_func_trim :public Item_str_func
-{
-protected:
-  String tmp_value;
-  String remove;
-public:
-  Item_func_trim(Item *a,Item *b) :Item_str_func(a,b) {}
-  Item_func_trim(Item *a) :Item_str_func(a) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "trim"; }
-  virtual void print(String *str, enum_query_type query_type);
-  virtual const char *mode_name() const { return "both"; }
-};
-
-
-class Item_func_ltrim :public Item_func_trim
-{
-public:
-  Item_func_ltrim(Item *a,Item *b) :Item_func_trim(a,b) {}
-  Item_func_ltrim(Item *a) :Item_func_trim(a) {}
-  String *val_str(String *);
-  const char *func_name() const { return "ltrim"; }
-  const char *mode_name() const { return "leading"; }
-};
-
-
-class Item_func_rtrim :public Item_func_trim
-{
-public:
-  Item_func_rtrim(Item *a,Item *b) :Item_func_trim(a,b) {}
-  Item_func_rtrim(Item *a) :Item_func_trim(a) {}
-  String *val_str(String *);
-  const char *func_name() const { return "rtrim"; }
-  const char *mode_name() const { return "trailing"; }
-};
-
-
-class Item_func_sysconst :public Item_str_func
-{
-public:
-  Item_func_sysconst()
-  { collation.set(system_charset_info,DERIVATION_SYSCONST); }
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  /*
-    Used to create correct Item name in new converted item in
-    safe_charset_converter, return string representation of this function
-    call
-  */
-  virtual const char *fully_qualified_func_name() const = 0;
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_database :public Item_func_sysconst
-{
-public:
-  Item_func_database() :Item_func_sysconst() {}
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    max_length= MAX_FIELD_NAME * system_charset_info->mbmaxlen;
-    maybe_null=1;
-  }
-  const char *func_name() const { return "database"; }
-  const char *fully_qualified_func_name() const { return "database()"; }
-};
-
+#include <drizzled/functions/str/substr.h>
+#include <drizzled/functions/str/sysconst.h>
+#include <drizzled/functions/str/database.h>
+#include <drizzled/functions/str/trim.h>
 
 class Item_func_user :public Item_func_sysconst
 {

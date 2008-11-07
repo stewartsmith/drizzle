@@ -19,20 +19,28 @@ AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 libstrfunc_la_SOURCES = concat.cc \
 		  conv.cc \
+		  database.cc \
 		  insert.cc \
 		  left.cc \
 		  replace.cc \
 		  reverse.cc \
 		  right.cc \
-		  strfunc.cc
+		  strfunc.cc \
+		  substr.cc \
+		  sysconst.cc \
+		  trim.cc
 
 noinst_HEADERS = concat.h \
 		 conv.h \
+		 database.h \
 		 insert.h \
 		 left.h \
 		 replace.h \
 		 reverse.h \
 		 right.h \
-		 strfunc.h
+		 strfunc.h \
+		 substr.h \
+		 sysconst.h \
+		 trim.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@
