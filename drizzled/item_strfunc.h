@@ -20,8 +20,11 @@
 
 #include <drizzled/functions/str/concat.h>
 #include <drizzled/functions/str/conv.h>
+#include <drizzled/functions/str/elt.h>
+#include <drizzled/functions/str/format.h>
 #include <drizzled/functions/str/insert.h>
 #include <drizzled/functions/str/left.h>
+#include <drizzled/functions/str/make_set.h>
 #include <drizzled/functions/str/replace.h>
 #include <drizzled/functions/str/reverse.h>
 #include <drizzled/functions/str/right.h>
@@ -29,115 +32,7 @@
 #include <drizzled/functions/str/sysconst.h>
 #include <drizzled/functions/str/database.h>
 #include <drizzled/functions/str/trim.h>
-
-class Item_func_user :public Item_func_sysconst
-{
-protected:
-  bool init (const char *user, const char *host);
-
-public:
-  Item_func_user()
-  {
-    str_value.set("", 0, system_charset_info);
-  }
-  String *val_str(String *)
-  {
-    assert(fixed == 1);
-    return (null_value ? 0 : &str_value);
-  }
-  bool fix_fields(Session *session, Item **ref);
-  void fix_length_and_dec()
-  {
-    max_length= (USERNAME_CHAR_LENGTH + HOSTNAME_LENGTH + 1) *
-                system_charset_info->mbmaxlen;
-  }
-  const char *func_name() const { return "user"; }
-  const char *fully_qualified_func_name() const { return "user()"; }
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
-  {
-    return save_str_value_in_field(field, &str_value);
-  }
-};
-
-
-class Item_func_current_user :public Item_func_user
-{
-  Name_resolution_context *context;
-
-public:
-  Item_func_current_user(Name_resolution_context *context_arg)
-    : context(context_arg) {}
-  bool fix_fields(Session *session, Item **ref);
-  const char *func_name() const { return "current_user"; }
-  const char *fully_qualified_func_name() const { return "current_user()"; }
-};
-
-
-class Item_func_soundex :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_soundex(Item *a) :Item_str_func(a) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "soundex"; }
-};
-
-
-class Item_func_elt :public Item_str_func
-{
-public:
-  Item_func_elt(List<Item> &list) :Item_str_func(list) {}
-  double val_real();
-  int64_t val_int();
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  const char *func_name() const { return "elt"; }
-};
-
-
-class Item_func_make_set :public Item_str_func
-{
-  Item *item;
-  String tmp_str;
-
-public:
-  Item_func_make_set(Item *a,List<Item> &list) :Item_str_func(list),item(a) {}
-  String *val_str(String *str);
-  bool fix_fields(Session *session, Item **ref)
-  {
-    assert(fixed == 0);
-    return ((!item->fixed && item->fix_fields(session, &item)) ||
-	    item->check_cols(1) ||
-	    Item_func::fix_fields(session, ref));
-  }
-  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
-  void fix_length_and_dec();
-  void update_used_tables();
-  const char *func_name() const { return "make_set"; }
-
-  bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg)
-  {
-    return item->walk(processor, walk_subquery, arg) ||
-      Item_str_func::walk(processor, walk_subquery, arg);
-  }
-  Item *transform(Item_transformer transformer, unsigned char *arg);
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-class Item_func_format :public Item_str_func
-{
-  String tmp_str;
-public:
-  Item_func_format(Item *org, Item *dec);
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "format"; }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
+#include <drizzled/functions/str/user.h>
 
 class Item_func_char :public Item_str_func
 {
