@@ -19,6 +19,7 @@
 
 #include <config.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <drizzled/common.h>
 #include <libdrizzle/libdrizzle.h>
@@ -31,8 +32,6 @@
 #include <libdrizzle/local_infile.h>
 
 #include "libdrizzle_priv.h"
-
-#include <vio/violite.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1590,7 +1590,7 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (end_active_trans(session) || mysql_rename_tables(session, first_table, 0))
+    if (end_active_trans(session) || drizzle_rename_tables(session, first_table, 0))
       {
         goto error;
       }

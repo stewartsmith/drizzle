@@ -29,7 +29,7 @@ static TableList *reverse_table_list(TableList *table_list);
   second entry is the new name.
 */
 
-bool mysql_rename_tables(Session *session, TableList *table_list, bool silent)
+bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
 {
   bool error= 1;
   TableList *ren_table= 0;

@@ -38,7 +38,8 @@ dist_libdrizzleinclude_HEADERS =	\
 					errmsg.h \
 					net_serv.h \
 					pack.h \
-					password.h
+					password.h \
+					vio.h
 
 lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = client.c \
@@ -51,9 +52,10 @@ libdrizzle_la_SOURCES = client.c \
 			local_infile.c \
 			net_serv.c \
 			pack.c \
-			password.c
+			password.c \
+			vio.c \
+			viosocket.c
 
-libdrizzle_la_LIBADD =	${top_builddir}/vio/libviolt.la 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \

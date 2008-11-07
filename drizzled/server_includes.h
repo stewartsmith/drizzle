@@ -68,7 +68,7 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos, uint16_t
 void mysql_client_binlog_statement(Session *session);
 
 /* sql_rename.cc */
-bool mysql_rename_tables(Session *session, TableList *table_list, bool silent);
+bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent);
 bool do_rename(Session *session, TableList *ren_table, char *new_db,
                       char *new_table_name, char *new_table_alias,
                       bool skip_error);
