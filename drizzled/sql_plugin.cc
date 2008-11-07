@@ -755,7 +755,7 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 
   pi= plugin_ref_to_int(plugin);
 
-  free((unsigned char*) plugin);
+  free((void *) plugin);
 
   if (lex)
   {
