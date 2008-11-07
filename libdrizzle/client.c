@@ -54,7 +54,6 @@
 #undef net_buffer_length
 
 #include <libdrizzle/errmsg.h>
-#include <vio/violite.h>
 
 #include <sys/stat.h>
 #include <signal.h>

@@ -1028,7 +1028,7 @@ int ha_recover(HASH *commit_list)
 #endif
 
 
-  for (info.len= MAX_XID_LIST_SIZE ; 
+  for (info.len= MAX_XID_LIST_SIZE ;
        info.list==0 && info.len > MIN_XID_LIST_SIZE; info.len/=2)
   {
     info.list=(XID *)my_malloc(info.len*sizeof(XID), MYF(0));
@@ -1039,12 +1039,12 @@ int ha_recover(HASH *commit_list)
     return(1);
   }
 
-  plugin_foreach(NULL, xarecover_handlerton, 
+  plugin_foreach(NULL, xarecover_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
   free((unsigned char*)info.list);
   if (info.found_foreign_xids)
-    sql_print_warning(_("Found %d prepared XA transactions"), 
+    sql_print_warning(_("Found %d prepared XA transactions"),
                       info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
@@ -1142,7 +1142,7 @@ static bool release_temporary_latches(Session *session, plugin_ref plugin,
 
 int ha_release_temporary_latches(Session *session)
 {
-  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
+  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN,
                  NULL);
 
   return 0;
@@ -1292,7 +1292,7 @@ static bool flush_handlerton(Session *session __attribute__((unused)),
                              void *arg __attribute__((unused)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
-  if (hton->state == SHOW_OPTION_YES && hton->flush_logs && 
+  if (hton->state == SHOW_OPTION_YES && hton->flush_logs &&
       hton->flush_logs(hton))
     return true;
   return false;
@@ -1433,7 +1433,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
   /*
     Allocate handler->ref here because otherwise ha_open will allocate it
-    on this->table->mem_root and we will not be able to reclaim that memory 
+    on this->table->mem_root and we will not be able to reclaim that memory
     when the clone handler object is destroyed.
   */
   if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
@@ -1582,7 +1582,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from handler::clone() */
-    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root, 
+    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root,
                                           ALIGN_SIZE(ref_length)*2)))
     {
       close();
@@ -1859,7 +1859,7 @@ int handler::update_auto_increment()
         /* avoid overflow in formula, with this if() */
         if (nb_already_reserved_intervals <= AUTO_INC_DEFAULT_NB_MAX_BITS)
         {
-          nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS * 
+          nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS *
             (1 << nb_already_reserved_intervals);
           set_if_smaller(nb_desired_values, AUTO_INC_DEFAULT_NB_MAX);
         }
@@ -1873,7 +1873,7 @@ int handler::update_auto_increment()
                          &nb_reserved_values);
       if (nr == ~(uint64_t) 0)
         return(HA_ERR_AUTOINC_READ_FAILED);  // Mark failure
-      
+
       /*
         That rounding below should not be needed when all engines actually
         respect offset and increment in get_auto_increment(). But they don't
@@ -1884,7 +1884,7 @@ int handler::update_auto_increment()
       */
       nr= compute_next_insert_id(nr-1, variables);
     }
-    
+
     if (table->s->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
@@ -2856,7 +2856,7 @@ int ha_create_table(Session *session, const char *path,
   char name_buff[FN_REFLEN];
   const char *name;
   TABLE_SHARE share;
-  
+
   init_tmp_table_share(session, &share, db, 0, table_name, path);
   if (open_table_def(session, &share, 0) ||
       open_table_from_share(session, &share, "", 0, (uint) READ_ALL, 0, &table,
@@ -3054,7 +3054,7 @@ struct st_discover_args
 {
   const char *db;
   const char *name;
-  unsigned char **frmblob; 
+  unsigned char **frmblob;
   size_t *frmlen;
 };
 
@@ -3064,8 +3064,8 @@ static bool discover_handlerton(Session *session, plugin_ref plugin,
   st_discover_args *vargs= (st_discover_args *)arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->discover &&
-      (!(hton->discover(hton, session, vargs->db, vargs->name, 
-                        vargs->frmblob, 
+      (!(hton->discover(hton, session, vargs->db, vargs->name,
+                        vargs->frmblob,
                         vargs->frmlen))))
     return true;
 
@@ -3225,7 +3225,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
   Session *session= current_session;
-  
+
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
 
@@ -3234,7 +3234,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   {
     if (unlikely(session->killed != 0))
       return HA_POS_ERROR;
-    
+
     n_ranges++;
     key_range *min_endp, *max_endp;
     {
@@ -3245,7 +3245,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
       rows= 1; /* there can be at most one row */
     else
     {
-      if (HA_POS_ERROR == (rows= this->records_in_range(keyno, min_endp, 
+      if (HA_POS_ERROR == (rows= this->records_in_range(keyno, min_endp,
                                                         max_endp)))
       {
         /* Can't scan one range => can't do MRR scan at all */
@@ -3255,7 +3255,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
     }
     total_rows += rows;
   }
-  
+
   if (total_rows != HA_POS_ERROR)
   {
     /* The following calculation is the same as in multi_range_read_info(): */
@@ -3328,14 +3328,14 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
 /**
   Initialize the MRR scan
 
-  Initialize the MRR scan. This function may do heavyweight scan 
+  Initialize the MRR scan. This function may do heavyweight scan
   initialization like row prefetching/sorting/etc (NOTE: but better not do
   it here as we may not need it, e.g. if we never satisfy WHERE clause on
   previous tables. For many implementations it would be natural to do such
   initializations in the first multi_read_range_next() call)
 
   mode is a combination of the following flags: HA_MRR_SORTED,
-  HA_MRR_INDEX_ONLY, HA_MRR_NO_ASSOCIATION 
+  HA_MRR_INDEX_ONLY, HA_MRR_NO_ASSOCIATION
 
   @param seq             Range sequence to be traversed
   @param seq_init_param  First parameter for seq->init()
@@ -3347,12 +3347,12 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
     One must have called index_init() before calling this function. Several
     multi_range_read_init() calls may be made in course of one query.
 
-    Until WL#2623 is done (see its text, section 3.2), the following will 
+    Until WL#2623 is done (see its text, section 3.2), the following will
     also hold:
     The caller will guarantee that if "seq->init == mrr_ranges_array_init"
     then seq_init_param is an array of n_ranges KEY_MULTI_RANGE structures.
     This property will only be used by NDB handler until WL#2623 is done.
-     
+
     Buffer memory management is done according to the following scenario:
     The caller allocates the buffer and provides it to the callee by filling
     the members of HANDLER_BUFFER structure.
@@ -3447,7 +3447,7 @@ scan_it_again:
 
 
 /* **************************************************************************
- * DS-MRR implementation 
+ * DS-MRR implementation
  ***************************************************************************/
 
 /**
@@ -3490,16 +3490,16 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
 
   is_mrr_assoc= !test(mode & HA_MRR_NO_ASSOCIATION);
   rowids_buf_end= buf->buffer_end;
-  
+
   elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
-  rowids_buf_last= rowids_buf + 
+  rowids_buf_last= rowids_buf +
                       ((rowids_buf_end - rowids_buf)/ elem_size)*
                       elem_size;
   rowids_buf_end= rowids_buf_last;
 
   /* Create a separate handler object to do rndpos() calls. */
   Session *session= current_session;
-  if (!(new_h2= h->clone(session->mem_root)) || 
+  if (!(new_h2= h->clone(session->mem_root)) ||
       new_h2->ha_external_lock(session, F_RDLCK))
   {
     delete new_h2;
@@ -3518,12 +3518,12 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   table->prepare_for_position();
   new_h2->extra(HA_EXTRA_KEYREAD);
 
-  if (h2->ha_index_init(keyno, false) || 
+  if (h2->ha_index_init(keyno, false) ||
       h2->handler::multi_range_read_init(seq_funcs, seq_init_param, n_ranges,
                                          mode, buf))
     goto error;
   use_default_impl= false;
-  
+
   if (pushed_cond)
     h2->idx_cond_push(keyno, pushed_cond);
   if (dsmrr_fill_buffer(new_h2))
@@ -3533,12 +3533,12 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
     If the above call has scanned through all intervals in *seq, then
     adjust *buf to indicate that the remaining buffer space will not be used.
   */
-  if (dsmrr_eof) 
+  if (dsmrr_eof)
     buf->end_of_used_area= rowids_buf_last;
 
   if (h->ha_rnd_init(false))
     goto error;
-  
+
   return(0);
 error:
   h2->ha_index_or_rnd_end();
@@ -3573,12 +3573,12 @@ static int rowid_cmp(void *h, unsigned char *a, unsigned char *b)
   DS-MRR: Fill the buffer with rowids and sort it by rowid
 
   {This is an internal function of DiskSweep MRR implementation}
-  Scan the MRR ranges and collect ROWIDs (or {ROWID, range_id} pairs) into 
-  buffer. When the buffer is full or scan is completed, sort the buffer by 
+  Scan the MRR ranges and collect ROWIDs (or {ROWID, range_id} pairs) into
+  buffer. When the buffer is full or scan is completed, sort the buffer by
   rowid and return.
-  
-  The function assumes that rowids buffer is empty when it is invoked. 
-  
+
+  The function assumes that rowids buffer is empty when it is invoked.
+
   @param h  Table handler
 
   @retval 0      OK, the next portion of rowids is in the buffer,
@@ -3592,7 +3592,7 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   int res = 0;
 
   rowids_buf_cur= rowids_buf;
-  while ((rowids_buf_cur < rowids_buf_end) && 
+  while ((rowids_buf_cur < rowids_buf_end) &&
          !(res= h2->handler::multi_range_read_next(&range_info)))
   {
     /* Put rowid, or {rowid, range_id} pair into the buffer */
@@ -3608,13 +3608,13 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   }
 
   if (res && res != HA_ERR_END_OF_FILE)
-    return(res); 
+    return(res);
   dsmrr_eof= test(res == HA_ERR_END_OF_FILE);
 
   /* Sort the buffer contents by rowid */
   uint32_t elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
   uint32_t n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
-  
+
   my_qsort2(rowids_buf, n_rowids, elem_size, (qsort2_cmp)rowid_cmp,
             (void*)h);
   rowids_buf_last= rowids_buf_cur;
@@ -3630,10 +3630,10 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
 int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
 {
   int res;
-  
+
   if (use_default_impl)
     return h->handler::multi_range_read_next(range_info);
-    
+
   if (rowids_buf_cur == rowids_buf_last)
   {
     if (dsmrr_eof)
@@ -3645,7 +3645,7 @@ int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
     if (res)
       goto end;
   }
-  
+
   /* Return EOF if there are no rowids in the buffer after re-fill attempt */
   if (rowids_buf_cur == rowids_buf_last)
   {
@@ -3673,7 +3673,7 @@ end:
 */
 int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uint32_t *bufsz,
                            uint32_t *flags, COST_VECT *cost)
-{  
+{
   int res;
   uint32_t def_flags= *flags;
   uint32_t def_bufsz= *bufsz;
@@ -3683,7 +3683,7 @@ int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uin
                                          &def_flags, cost);
   assert(!res);
 
-  if ((*flags & HA_MRR_USE_DEFAULT_IMPL) || 
+  if ((*flags & HA_MRR_USE_DEFAULT_IMPL) ||
       choose_mrr_impl(keyno, rows, &def_flags, &def_bufsz, cost))
   {
     /* Default implementation is choosen */
@@ -3699,7 +3699,7 @@ int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uin
 */
 
 ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                 void *seq_init_param, uint32_t n_ranges, 
+                                 void *seq_init_param, uint32_t n_ranges,
                                  uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ha_rows rows;
@@ -3707,7 +3707,7 @@ ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   uint32_t def_bufsz= *bufsz;
   /* Get cost/flags/mem_usage of default MRR implementation */
   rows= h->handler::multi_range_read_info_const(keyno, seq, seq_init_param,
-                                                n_ranges, &def_bufsz, 
+                                                n_ranges, &def_bufsz,
                                                 &def_flags, cost);
   if (rows == HA_POS_ERROR)
   {
@@ -3794,25 +3794,25 @@ bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
   COST_VECT dsmrr_cost;
   bool res;
   Session *session= current_session;
-  if ((session->variables.optimizer_use_mrr == 2) || 
+  if ((session->variables.optimizer_use_mrr == 2) ||
       (*flags & HA_MRR_INDEX_ONLY) || (*flags & HA_MRR_SORTED) ||
-      (keyno == table->s->primary_key && 
-       h->primary_key_is_clustered()) || 
+      (keyno == table->s->primary_key &&
+       h->primary_key_is_clustered()) ||
        key_uses_partial_cols(keyno))
   {
     /* Use the default implementation */
     *flags |= HA_MRR_USE_DEFAULT_IMPL;
     return true;
   }
-  
-  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length; 
+
+  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length;
   *bufsz -= add_len;
   if (get_disk_sweep_mrr_cost(keyno, rows, *flags, bufsz, &dsmrr_cost))
     return true;
   *bufsz += add_len;
-  
+
   bool force_dsmrr;
-  /* 
+  /*
     If @@optimizer_use_mrr==force, then set cost of DS-MRR to be minimum of
     DS-MRR and Default implementations cost. This allows one to force use of
     DS-MRR whenever it is applicable without affecting other cost-based
@@ -3871,15 +3871,15 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
 
   /* Number of iterations we'll make with full buffer */
   n_full_steps= (uint)floor(rows2double(rows) / max_buff_entries);
-  
-  /* 
-    Get numbers of rows we'll be processing in 
-     - non-last sweep, with full buffer 
+
+  /*
+    Get numbers of rows we'll be processing in
+     - non-last sweep, with full buffer
      - last iteration, with non-full buffer
   */
   rows_in_full_step= max_buff_entries;
   rows_in_last_step= rows % max_buff_entries;
-  
+
   /* Adjust buffer size if we expect to use only part of the buffer */
   if (n_full_steps)
   {
@@ -3889,20 +3889,20 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
   else
   {
     cost->zero();
-    *buffer_size= cmax((ulong)*buffer_size, 
-                      (size_t)(1.2*rows_in_last_step) * elem_size + 
+    *buffer_size= cmax((ulong)*buffer_size,
+                      (size_t)(1.2*rows_in_last_step) * elem_size +
                       h->ref_length + table->key_info[keynr].key_length);
   }
-  
+
   COST_VECT last_step_cost;
   get_sort_and_sweep_cost(table, rows_in_last_step, &last_step_cost);
   cost->add(&last_step_cost);
- 
+
   if (n_full_steps != 0)
     cost->mem_cost= *buffer_size;
   else
     cost->mem_cost= (double)rows_in_last_step * elem_size;
-  
+
   /* Total cost of all index accesses */
   index_read_cost= h->index_only_read_time(keynr, (double)rows);
   cost->add_io(index_read_cost, 1 /* Random seeks */);
@@ -3910,7 +3910,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
 }
 
 
-/* 
+/*
   Get cost of one sort-and-sweep step
 
   SYNOPSIS
@@ -3925,7 +3925,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
      - read #nrows records from table in a sweep.
 */
 
-static 
+static
 void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 {
   if (nrows)
@@ -3959,7 +3959,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
   Time to move the disk head is proportional to head travel distance.
 
   Time to wait for the plate to rotate depends on whether the disk head
-  was moved or not. 
+  was moved or not.
 
   If disk head wasn't moved, the wait time is proportional to distance
   between the previous block and the block we're reading.
@@ -3970,7 +3970,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 
   Our cost units are "random disk seeks". The cost of random disk seek is
   actually not a constant, it depends one range of cylinders we're going
-  to access. We make it constant by introducing a fuzzy concept of "typical 
+  to access. We make it constant by introducing a fuzzy concept of "typical
   datafile length" (it's fuzzy as it's hard to tell whether it should
   include index file, temp.tables etc). Then random seek cost is:
 
@@ -3985,7 +3985,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
   @param cost         OUT  The cost.
 */
 
-void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
+void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
                          COST_VECT *cost)
 {
   cost->zero();
@@ -4064,7 +4064,7 @@ int handler::read_range_first(const key_range *start_key,
                            start_key->keypart_map,
                            start_key->flag);
   if (result)
-    return((result == HA_ERR_KEY_NOT_FOUND) 
+    return((result == HA_ERR_KEY_NOT_FOUND)
 		? HA_ERR_END_OF_FILE
 		: result);
 
@@ -4332,7 +4332,7 @@ static int write_locked_table_maps(Session *session)
         continue;
 
       Table **const end_ptr= lock->table + lock->table_count;
-      for (Table **table_ptr= lock->table ; 
+      for (Table **table_ptr= lock->table ;
            table_ptr != end_ptr ;
            ++table_ptr)
       {

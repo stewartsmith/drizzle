@@ -1565,7 +1565,7 @@ AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
- vio/Makefile po/Makefile.in dnl
+ po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl

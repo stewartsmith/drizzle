@@ -18,8 +18,8 @@
  * Purpose: include file for Vio that will work with C and C++
  */
 
-#ifndef vio_violite_h_
-#define	vio_violite_h_
+#ifndef LIBDRIZZLE_VIO_H
+#define	LIBDRIZZLE_VIO_H
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -36,8 +36,6 @@ enum enum_vio_type
   VIO_TYPE_SSL, VIO_TYPE_SHARED_MEMORY
 };
 
-
-struct st_vio;					/* Only C */
 typedef struct st_vio Vio;
 
 #define VIO_LOCALHOST 1                         /* a localhost connection */
@@ -77,6 +75,9 @@ bool vio_peek_read(Vio *vio, unsigned int *bytes);
 
 void vio_end(void);
 
+void vio_ignore_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
+void vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout);
+
 #ifdef	__cplusplus
 }
 #endif
@@ -107,7 +108,6 @@ enum SSL_type
   SSL_TYPE_X509,
   SSL_TYPE_SPECIFIED
 };
-
 
 /* HFTODO - hide this if we don't want client in embedded server */
 /* This structure is for every connection on both sides */
@@ -141,4 +141,5 @@ struct st_vio
   void	  (*timeout)(Vio*, bool is_sndtimeo, int32_t timeout);
   char                  *read_buffer;   /* buffer for vio_read_buff */
 };
-#endif /* vio_violite_h_ */
+
+#endif /* LIBDRIZZLE_VIO_H */

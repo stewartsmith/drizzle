@@ -20,7 +20,11 @@
   the file descriptior.
 */
 
-#include "vio_priv.h"
+#define DONT_MAP_VIO
+#include <drizzled/global.h>
+#include <libdrizzle/vio.h>
+#include <string.h>
+#include <stdint.h>
 
 /*
  * Helper to fill most of the Vio* with defaults.
@@ -36,7 +40,7 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
   vio->type	= type;
   vio->sd	= sd;
   if ((flags & VIO_BUFFERED_READ) &&
-      !(vio->read_buffer= (char*)my_malloc(VIO_READ_BUFFER_SIZE, MYF(MY_WME))))
+      !(vio->read_buffer= (char*)malloc(VIO_READ_BUFFER_SIZE)))
     flags&= ~VIO_BUFFERED_READ;
   {
     vio->viodelete	=vio_delete;
@@ -70,9 +74,9 @@ void vio_reset(Vio* vio, enum enum_vio_type type,
 
 Vio *vio_new(int sd, enum enum_vio_type type, uint32_t flags)
 {
-  Vio *vio;
+  Vio *vio = (Vio*) malloc(sizeof(Vio));
 
-  if ((vio = (Vio*) my_malloc(sizeof(*vio),MYF(MY_WME))))
+  if (vio != NULL)
   {
     vio_init(vio, type, sd, flags);
     sprintf(vio->desc, "TCP/IP (%d)", vio->sd);

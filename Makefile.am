@@ -20,7 +20,7 @@ if BUILD_GETTEXT
   po=po
 endif
 
-SUBDIRS = ${po} . vio \
+SUBDIRS = ${po} . \
 	  mystrings \
 	  mysys \
 	  extra \

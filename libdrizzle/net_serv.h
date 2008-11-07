@@ -21,13 +21,17 @@
 #ifndef _libdrizzle_net_serv_h_
 #define _libdrizzle_net_serv_h_
 
-#include <vio/violite.h>
+#ifdef __cplusplus
+#include CSTDINT_H
+extern "C" {
+#else
+#include <stdint.h>
+#include <stdbool.h>
+#endif
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <libdrizzle/vio.h>
 
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5
