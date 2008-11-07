@@ -4,11 +4,11 @@
 #include "table.pb.h"
 using namespace std;
 
-/* 
+/*
   Written from Google proto example
 */
 
-void fill_engine(drizzle::Table::StorageEngine *engine) 
+void fill_engine(drizzle::Table::StorageEngine *engine)
 {
   using namespace drizzle;
   using std::string;
@@ -28,7 +28,7 @@ void fill_engine(drizzle::Table::StorageEngine *engine)
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; x++) 
+  for (x= 0; x < 2; x++)
   {
     option= engine->add_option();
     option->set_name(option_names[x]);
@@ -37,13 +37,13 @@ void fill_engine(drizzle::Table::StorageEngine *engine)
   }
 }
 
-void new_index_to_table( drizzle::Table *table, 
+void new_index_to_table( drizzle::Table *table,
                          const std::string name,
                          uint16_t num_index_parts,
                          uint32_t field_indexes[],
                          uint32_t compare_lengths[],
                          bool is_primary,
-                         bool is_unique) 
+                         bool is_unique)
 {
   using namespace drizzle;
   uint16_t x;
@@ -59,7 +59,7 @@ void new_index_to_table( drizzle::Table *table,
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
-  while (x < num_index_parts) 
+  while (x < num_index_parts)
   {
     index_part= index->add_index_part();
 
@@ -73,7 +73,7 @@ void new_index_to_table( drizzle::Table *table,
   }
 }
 
-void fill_table(drizzle::Table *table, const char *name) 
+void fill_table(drizzle::Table *table, const char *name)
 {
   uint16_t x;
 
@@ -145,7 +145,7 @@ void fill_table(drizzle::Table *table, const char *name)
 
     field_constraints= field->mutable_constraints();
     field_constraints->set_is_nullable(true);
-    
+
     numeric_field_options= field->mutable_numeric_options();
     numeric_field_options->set_precision(8);
     numeric_field_options->set_scale(3);
@@ -175,11 +175,11 @@ void fill_table(drizzle::Table *table, const char *name)
 
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2) 
+  if (argc != 2)
   {
     cerr << "Usage:  " << argv[0] << " SCHEMA" << endl;
     return -1;
@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
   fill_table(&table, "example_table");
 
   fstream output(argv[1], ios::out | ios::trunc | ios::binary);
-  if (!table.SerializeToOstream(&output)) 
+  if (!table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;
     return -1;
