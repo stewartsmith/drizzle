@@ -21,6 +21,7 @@
 #define DRIZZLE_SERVER_SQL_ALLOC_H
 
 #include <libdrizzle/net_serv.h>
+#include <mysys/my_alloc.h>
 
 class Session;
 

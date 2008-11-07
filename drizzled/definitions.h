@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include CSTDINT_H
-
 /**
  * @file
  *
@@ -27,6 +25,12 @@
 
 #ifndef DRIZZLE_SERVER_DEFINITIONS_H
 #define DRIZZLE_SERVER_DEFINITIONS_H
+
+#if defined(__cplusplus)
+#include CSTDINT_H
+#else
+#include <stdint.h>
+#endif
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
@@ -484,7 +488,7 @@ typedef void *range_seq_t;
 /**
    The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
 */
-const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
+static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 
 #define SLAVE_NET_TIMEOUT  3600
 
@@ -877,5 +881,8 @@ enum enum_tx_isolation { ISO_READ_UNCOMMITTED, ISO_READ_COMMITTED,
 
 
 enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
+
+typedef int myf;
+#define MYF(v)		(myf) (v)
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */

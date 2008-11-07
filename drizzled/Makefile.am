@@ -287,10 +287,14 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
+#		server_includes.h.gch
 if GCC_PCH
-PCHHEADERS =
+PCHHEADERS = \
+		definitions.h.gch \
+		handlerton.h.gch  \
+		sql_plugin.h.gch
 else
-PCHHEADERS =
+PCHHEADERS = 
 endif
 
 BUILT_MAINT_SRC = sql_yacc.cc \
@@ -307,6 +311,7 @@ EXTRA_DIST = $(BUILT_MAINT_SRC) \
 
 CLEANFILES = lex_hash.h \
 	     sql_yacc.output \
+	     $(PCHHEADERS) \
 	     $(nodist_drizzled_SOURCES)
 
 DISTCLEANFILES = $(EXTRA_PROGRAMS) \
@@ -332,7 +337,7 @@ probes.h: probes.d
 
 if GCC_PCH
 %.h.gch: %.h
-	$(CXXCOMPILE) -include config.h -c $<
+	$(CXXCOMPILE) -include config.h -Wno-unused-macros -c $<
 endif
 
 SUFFIXES = .d

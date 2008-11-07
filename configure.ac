@@ -1523,6 +1523,7 @@ void testme() {  };],[
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
   AM_CXXFLAGS="${AM_CXXFLAGS} -fno-rtti"
+  CPPFLAGS="${CPPFLAGS} -fpch-deps"
 fi
 if test "$SUNCC" = "yes"
 then

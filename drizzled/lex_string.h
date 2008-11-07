@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_LEX_STRING_H
 #define DRIZZLED_LEX_STRING_H
 
+#include <stddef.h>
+
 /*
   LEX_STRING -- a pair of a C-string and its length.
 */

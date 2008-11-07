@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SUM_H
+#define DRIZZLED_SUM_H
 
 /* classes for sum functions */
 
@@ -1044,3 +1046,5 @@ public:
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };
+
+#endif /* DRIZZLED_ITEM_SUM_H */

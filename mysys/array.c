@@ -42,7 +42,7 @@
 
 bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
                             void *init_buffer, uint32_t init_alloc, 
-                            uint32_t alloc_increment CALLER_INFO_PROTO)
+                            uint32_t alloc_increment)
 {
   if (!alloc_increment)
   {
@@ -73,7 +73,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
 
 bool init_dynamic_array(DYNAMIC_ARRAY *array, uint32_t element_size,
                            uint32_t init_alloc, 
-                           uint32_t alloc_increment CALLER_INFO_PROTO)
+                           uint32_t alloc_increment)
 {
   /* placeholder to preserve ABI */
   return my_init_dynamic_array_ci(array, element_size, init_alloc, 
