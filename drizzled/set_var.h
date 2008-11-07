@@ -1141,7 +1141,6 @@ public:
   union
   {
     const CHARSET_INFO *charset;
-    ulong ulong_value;
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     plugin_ref plugin;

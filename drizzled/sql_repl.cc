@@ -1616,7 +1616,7 @@ bool sys_var_slave_skip_counter::check(Session *session __attribute__((unused)),
   }
   pthread_mutex_unlock(&active_mi->rli.run_lock);
   pthread_mutex_unlock(&LOCK_active_mi);
-  var->save_result.ulong_value= (ulong) var->value->val_int();
+  var->save_result.uint32_t_value= (ulong) var->value->val_int();
   return result;
 }
 
@@ -1634,7 +1634,7 @@ bool sys_var_slave_skip_counter::update(Session *session __attribute__((unused))
   if (!active_mi->rli.slave_running)
   {
     pthread_mutex_lock(&active_mi->rli.data_lock);
-    active_mi->rli.slave_skip_counter= var->save_result.ulong_value;
+    active_mi->rli.slave_skip_counter= var->save_result.uint32_t_value;
     pthread_mutex_unlock(&active_mi->rli.data_lock);
   }
   pthread_mutex_unlock(&active_mi->rli.run_lock);
