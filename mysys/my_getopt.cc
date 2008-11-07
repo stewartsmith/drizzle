@@ -579,11 +579,8 @@ static char *check_struct_option(char *cur_arg, char *key_name)
     strmake(key_name, cur_arg, len);
     return ++ptr;
   }
-  else
-  {
-    key_name[0]= 0;
-    return cur_arg;
-  }
+  key_name[0]= 0;
+  return cur_arg;
 }
 
 /*
