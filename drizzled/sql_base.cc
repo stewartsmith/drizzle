@@ -6300,7 +6300,7 @@ err:
 }
 
 
-bool mysql_rm_tmp_tables(void)
+bool drizzle_rm_tmp_tables(void)
 {
   uint32_t i, idx;
   char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];

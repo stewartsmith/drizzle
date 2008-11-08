@@ -776,7 +776,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_other);
     my_eof(session);
     close_thread_tables(session);			// Free before kill
-    kill_mysql();
+    kill_drizzle();
     error=true;
     break;
   }

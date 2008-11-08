@@ -121,7 +121,7 @@ uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
 
 /* drizzled.cc */
-void kill_mysql(void);
+void kill_drizzle(void);
 void close_connection(Session *session, uint32_t errcode, bool lock);
 
 /* sql_select.cc */
@@ -554,7 +554,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
 
 /* mysqld.cc */
 void refresh_status(Session *session);
-bool mysql_rm_tmp_tables(void);
+bool drizzle_rm_tmp_tables(void);
 void handle_connection_in_main_thread(Session *session);
 void create_thread_to_handle_connection(Session *session);
 void unlink_session(Session *session);
@@ -683,7 +683,7 @@ extern LOGGER logger;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_key_t THR_MALLOC;
-extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,
+extern pthread_mutex_t LOCK_drizzle_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,

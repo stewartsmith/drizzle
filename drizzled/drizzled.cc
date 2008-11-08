@@ -436,7 +436,7 @@ SHOW_COMP_OPTION have_compress;
 
 pthread_key_t THR_MALLOC;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
+pthread_mutex_t LOCK_drizzle_create_db, LOCK_open, LOCK_thread_count,
                 LOCK_status,
                 LOCK_global_read_lock,
                 LOCK_error_log,
@@ -499,7 +499,7 @@ uint32_t connection_count= 0;
 pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-extern "C" bool mysqld_get_one_option(int, const struct my_option *, char *);
+extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
 static int init_thread_environment();
 static char *get_relative_path(const char *path);
@@ -521,7 +521,7 @@ static void create_pid_file();
 static void drizzled_exit(int exit_code) __attribute__((noreturn));
 
 /****************************************************************************
-** Code to end mysqld
+** Code to end drizzled
 ****************************************************************************/
 
 static void close_connections(void)
@@ -671,7 +671,7 @@ static void close_server_sock()
 }
 
 
-void kill_mysql(void)
+void kill_drizzle(void)
 {
 
 #if defined(SIGNALS_DONT_BREAK_READ)
@@ -771,7 +771,7 @@ extern "C" RETSIGTYPE print_signal_warning(int sig)
   cleanup all memory and end program nicely.
 
     If SIGNALS_DONT_BREAK_READ is defined, this function is called
-    by the main thread. To get MySQL to shut down nicely in this case
+    by the main thread. To get Drizzle to shut down nicely in this case
     (Mac OS X) we have to call exit() instead if pthread_exit().
 
   @note
@@ -886,7 +886,7 @@ void clean_up(bool print_message)
 
 /**
   This is mainly needed when running with purify, but it's still nice to
-  know that all child threads have died when mysqld exits.
+  know that all child threads have died when drizzled exits.
 */
 static void wait_for_signal_thread_to_end()
 {
@@ -906,7 +906,7 @@ static void wait_for_signal_thread_to_end()
 
 static void clean_up_mutexes()
 {
-  (void) pthread_mutex_destroy(&LOCK_mysql_create_db);
+  (void) pthread_mutex_destroy(&LOCK_drizzle_create_db);
   (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
@@ -983,7 +983,7 @@ static struct passwd *check_user(const char *user)
   if (!user)
   {
     sql_print_error(_("Fatal error: Please read \"Security\" section of "
-                      "the manual to find out how to run mysqld as root!\n"));
+                      "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
 
     return NULL;
@@ -1320,7 +1320,7 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
   curr_time= my_time(0);
   localtime_r(&curr_time, &tm);
 
-  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - mysqld got "
+  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
           SIGNAL_FMT " ;\n"
           "This could be because you hit a bug. It is also possible that "
           "this binary\n or one of the libraries it was linked against is "
@@ -1340,7 +1340,7 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
   fprintf(stderr, "thread_count=%u\n", thread_count);
   fprintf(stderr, "connection_count=%u\n", connection_count);
-  fprintf(stderr, _("It is possible that mysqld could use up to \n"
+  fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
                     "sort_buffer_size)*max_threads = %lu K\n"
                     "bytes of memory\n"
@@ -1360,7 +1360,7 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
     fprintf(stderr,"session: 0x%lx\n",(long) session);
     fprintf(stderr,_("Attempting backtrace. You can use the following "
                      "information to find out\n"
-                     "where mysqld died. If you see no messages after this, "
+                     "where drizzled died. If you see no messages after this, "
                      "something went\n"
                      "terribly wrong...\n"));
     print_stacktrace(session ? (unsigned char*) session->thread_stack : (unsigned char*) 0,
@@ -1606,7 +1606,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   if (opt_do_pstack)
   {
-    sprintf(pstack_file_name,"mysqld-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
+    sprintf(pstack_file_name,"drizzled-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
     pstack_install_segv_action(pstack_file_name);
   }
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
@@ -1644,7 +1644,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
     case SIGQUIT:
     case SIGKILL:
 #ifdef EXTRA_DEBUG
-      sql_print_information(_("Got signal %d to shutdown mysqld"),sig);
+      sql_print_information(_("Got signal %d to shutdown drizzled"),sig);
 #endif
       /* switch to the old log message processing */
       if (!abort_loop)
@@ -1761,16 +1761,16 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 }
 
 
-extern "C" void *my_str_malloc_mysqld(size_t size);
-extern "C" void my_str_free_mysqld(void *ptr);
+extern "C" void *my_str_malloc_drizzled(size_t size);
+extern "C" void my_str_free_drizzled(void *ptr);
 
-void *my_str_malloc_mysqld(size_t size)
+void *my_str_malloc_drizzled(size_t size)
 {
   return my_malloc(size, MYF(MY_FAE));
 }
 
 
-void my_str_free_mysqld(void *ptr)
+void my_str_free_drizzled(void *ptr)
 {
   free((unsigned char*)ptr);
 }
@@ -2121,7 +2121,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 static int init_thread_environment()
 {
-  (void) pthread_mutex_init(&LOCK_mysql_create_db,MY_MUTEX_INIT_SLOW);
+  (void) pthread_mutex_init(&LOCK_drizzle_create_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_lock_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
@@ -2311,7 +2311,7 @@ static int init_server_components()
     my_getopt_skip_unknown= 0;
 
     if ((ho_error= handle_options(&defaults_argc, &tmp_argv, no_opts,
-                                  mysqld_get_one_option)))
+                                  drizzled_get_one_option)))
       unireg_abort(ho_error);
 
     if (defaults_argc)
@@ -2435,7 +2435,7 @@ int main(int argc, char **argv)
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
 
-  /* Set signal used to kill MySQL */
+  /* Set signal used to kill Drizzle */
 #if defined(SIGUSR2)
   thr_kill_signal= thd_lib_detected == THD_LIB_LT ? SIGINT : SIGUSR2;
 #else
@@ -2527,8 +2527,8 @@ int main(int argc, char **argv)
   /*
    Initialize my_str_malloc() and my_str_free()
   */
-  my_str_malloc= &my_str_malloc_mysqld;
-  my_str_free= &my_str_free_mysqld;
+  my_str_malloc= &my_str_malloc_drizzled;
+  my_str_free= &my_str_free_drizzled;
 
   /*
     init signals & alarm
@@ -2537,7 +2537,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop=1;
     select_thread_in_use=0;
@@ -2782,7 +2782,7 @@ void handle_connections_sockets()
   Handle start options
 ******************************************************************************/
 
-enum options_mysqld
+enum options_drizzled
 {
   OPT_ISAM_LOG=256,            OPT_SKIP_NEW,
   OPT_SKIP_GRANT,
@@ -2990,7 +2990,7 @@ struct my_option my_long_options[] =
    N_("Directory where character sets are."), (char**) &charsets_dir,
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
-   N_("Chroot mysqld daemon during startup."),
+   N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"collation-server", OPT_DEFAULT_COLLATION,
@@ -3148,7 +3148,7 @@ struct my_option my_long_options[] =
    (char**) &max_binlog_dump_events, (char**) &max_binlog_dump_events, 0,
    GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"memlock", OPT_MEMLOCK,
-   N_("Lock mysqld in memory."),
+   N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"myisam-recover", OPT_MYISAM_RECOVER,
@@ -3357,8 +3357,8 @@ struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"back_log", OPT_BACK_LOG,
-   N_("The number of outstanding connection requests MySQL can have. This "
-      "comes into play when the main MySQL thread gets very many connection "
+   N_("The number of outstanding connection requests Drizzle can have. This "
+      "comes into play when the main Drizzle thread gets very many connection "
       "requests in a very short time."),
     (char**) &back_log, (char**) &back_log, 0, GET_ULONG,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
@@ -3375,7 +3375,7 @@ struct my_option my_long_options[] =
     (char**) &max_system_variables.bulk_insert_buff_size,
     0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
   { "connect_timeout", OPT_CONNECT_TIMEOUT,
-    N_("The number of seconds the mysqld server is waiting for a connect "
+    N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
     0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
@@ -3608,8 +3608,8 @@ struct my_option my_long_options[] =
     (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"open_files_limit", OPT_OPEN_FILES_LIMIT,
-   N_("If this is not 0, then mysqld will use this value to reserve file "
-      "descriptors to use with setrlimit(). If this value is 0 then mysqld "
+   N_("If this is not 0, then drizzled will use this value to reserve file "
+      "descriptors to use with setrlimit(). If this value is 0 then drizzled "
       "will reserve max_connections*5 or max_connections + table_cache*2 "
       "(whichever is larger) number of files."),
    (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
@@ -4023,7 +4023,7 @@ static void print_version(void)
   set_server_version();
   /*
     Note: the instance manager keys off the string 'Ver' so it can find the
-    version from the output of 'mysqld --version', so don't change it!
+    version from the output of 'drizzled --version', so don't change it!
   */
   printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
 	 server_version,SYSTEM_TYPE,MACHINE_TYPE, COMPILATION_COMMENT);
@@ -4063,7 +4063,7 @@ static void usage(void)
 
 
 /**
-  Initialize all MySQL global variables to default values.
+  Initialize all Drizzle global variables to default values.
 
   We don't need to set numeric variables refered to in my_long_options
   as these are initialized by my_getopt.
@@ -4205,7 +4205,7 @@ static void drizzle_init_variables(void)
 
 
 bool
-mysqld_get_one_option(int optid,
+drizzled_get_one_option(int optid,
                       const struct my_option *opt __attribute__((unused)),
                       char *argument)
 {
@@ -4494,11 +4494,11 @@ mysqld_get_one_option(int optid,
 
 /** Handle arguments for multiple key caches. */
 
-extern "C" char **mysql_getopt_value(const char *keyname, uint32_t key_length,
+extern "C" char **drizzle_getopt_value(const char *keyname, uint32_t key_length,
                                       const struct my_option *option);
 
 char**
-mysql_getopt_value(const char *keyname, uint32_t key_length,
+drizzle_getopt_value(const char *keyname, uint32_t key_length,
 		   const struct my_option *option)
 {
   switch (option->id) {
@@ -4550,14 +4550,14 @@ static void get_options(int *argc,char **argv)
 {
   int ho_error;
 
-  my_getopt_register_get_addr(mysql_getopt_value);
+  my_getopt_register_get_addr(drizzle_getopt_value);
   my_getopt_error_reporter= option_error_reporter;
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
   if ((ho_error= handle_options(argc, &argv, my_long_options,
-                                mysqld_get_one_option)))
+                                drizzled_get_one_option)))
     exit(ho_error);
   (*argc)++; /* add back one for the progname handle_options removes */
              /* no need to do this for argv as we are discarding it. */
@@ -4612,7 +4612,7 @@ static void get_options(int *argc,char **argv)
 
 
 /*
-  Create version name for running mysqld version
+  Create version name for running drizzled version
   We automaticly add suffixes -debug, -embedded and -log to the version
   name to make the version more descriptive.
   (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)

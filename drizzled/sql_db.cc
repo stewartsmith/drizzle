@@ -543,12 +543,12 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
 
   /*
     Do not create database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_mysql_create_db.
+    Wait for global read lock before acquiring LOCK_drizzle_create_db.
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_mysql_create_db first,
+    global read lock. If we would acquire LOCK_drizzle_create_db first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_mysql_create_db...
+    (admin a db), it would then go and wait on LOCK_drizzle_create_db...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -559,7 +559,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
     goto exit2;
   }
 
-  pthread_mutex_lock(&LOCK_mysql_create_db);
+  pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   /* Check directory */
   path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
@@ -658,14 +658,14 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       qinfo.db     = db;
       qinfo.db_len = strlen(db);
 
-      /* These DDL methods and logging protected with LOCK_mysql_create_db */
+      /* These DDL methods and logging protected with LOCK_drizzle_create_db */
       mysql_bin_log.write(&qinfo);
     }
     my_ok(session, result);
   }
 
 exit:
-  pthread_mutex_unlock(&LOCK_mysql_create_db);
+  pthread_mutex_unlock(&LOCK_drizzle_create_db);
   start_waiting_global_read_lock(session);
 exit2:
   return(error);
@@ -682,12 +682,12 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
 
   /*
     Do not alter database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_mysql_create_db.
+    Wait for global read lock before acquiring LOCK_drizzle_create_db.
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_mysql_create_db first,
+    global read lock. If we would acquire LOCK_drizzle_create_db first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_mysql_create_db...
+    (admin a db), it would then go and wait on LOCK_drizzle_create_db...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -695,7 +695,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   if ((error=wait_if_global_read_lock(session,0,1)))
     goto exit2;
 
-  pthread_mutex_lock(&LOCK_mysql_create_db);
+  pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   /* 
      Recreate db options file: /dbpath/.db.opt
@@ -730,13 +730,13 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     qinfo.db_len = strlen(db);
 
     session->clear_error();
-    /* These DDL methods and logging protected with LOCK_mysql_create_db */
+    /* These DDL methods and logging protected with LOCK_drizzle_create_db */
     mysql_bin_log.write(&qinfo);
   }
   my_ok(session, result);
 
 exit:
-  pthread_mutex_unlock(&LOCK_mysql_create_db);
+  pthread_mutex_unlock(&LOCK_drizzle_create_db);
   start_waiting_global_read_lock(session);
 exit2:
   return(error);
@@ -777,12 +777,12 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
   /*
     Do not drop database if another thread is holding read lock.
-    Wait for global read lock before acquiring LOCK_mysql_create_db.
+    Wait for global read lock before acquiring LOCK_drizzle_create_db.
     After wait_if_global_read_lock() we have protection against another
-    global read lock. If we would acquire LOCK_mysql_create_db first,
+    global read lock. If we would acquire LOCK_drizzle_create_db first,
     another thread could step in and get the global read lock before we
     reach wait_if_global_read_lock(). If this thread tries the same as we
-    (admin a db), it would then go and wait on LOCK_mysql_create_db...
+    (admin a db), it would then go and wait on LOCK_drizzle_create_db...
     Furthermore wait_if_global_read_lock() checks if the current thread
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
@@ -793,7 +793,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
     goto exit2;
   }
 
-  pthread_mutex_lock(&LOCK_mysql_create_db);
+  pthread_mutex_lock(&LOCK_drizzle_create_db);
 
   /*
     This statement will be replicated as a statement, even when using
@@ -864,7 +864,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       qinfo.db_len = strlen(db);
 
       session->clear_error();
-      /* These DDL methods and logging protected with LOCK_mysql_create_db */
+      /* These DDL methods and logging protected with LOCK_drizzle_create_db */
       mysql_bin_log.write(&qinfo);
     }
     session->clear_error();
@@ -892,7 +892,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       tbl_name_len= strlen(tbl->table_name) + 3;
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
-        /* These DDL methods and logging protected with LOCK_mysql_create_db */
+        /* These DDL methods and logging protected with LOCK_drizzle_create_db */
         write_to_binlog(session, query, query_pos -1 - query, db, db_len);
         query_pos= query_data_start;
       }
@@ -905,7 +905,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
     if (query_pos != query_data_start)
     {
-      /* These DDL methods and logging protected with LOCK_mysql_create_db */
+      /* These DDL methods and logging protected with LOCK_drizzle_create_db */
       write_to_binlog(session, query, query_pos -1 - query, db, db_len);
     }
   }
@@ -919,7 +919,7 @@ exit:
   */
   if (session->db && !strcmp(session->db, db))
     mysql_change_db_impl(session, NULL, session->variables.collation_server);
-  pthread_mutex_unlock(&LOCK_mysql_create_db);
+  pthread_mutex_unlock(&LOCK_drizzle_create_db);
   start_waiting_global_read_lock(session);
 exit2:
   return(error);
