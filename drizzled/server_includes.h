@@ -68,7 +68,7 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos, uint16_t
 void mysql_client_binlog_statement(Session *session);
 
 /* sql_rename.cc */
-bool mysql_rename_tables(Session *session, TableList *table_list, bool silent);
+bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent);
 bool do_rename(Session *session, TableList *ren_table, char *new_db,
                       char *new_table_name, char *new_table_alias,
                       bool skip_error);
@@ -314,15 +314,6 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
 
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
-
-/* sql_handler.cc */
-bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
-bool mysql_ha_close(Session *session, TableList *tables);
-bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
-                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(Session *session);
-void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(Session *session);
 
 /* sql_base.cc */
 #define TMP_TABLE_KEY_EXTRA 8

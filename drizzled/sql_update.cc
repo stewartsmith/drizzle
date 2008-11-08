@@ -149,14 +149,10 @@ static void prepare_record_for_error_message(int error, Table *table)
     1  - error
 */
 
-int mysql_update(Session *session,
-                 TableList *table_list,
-                 List<Item> &fields,
-                 List<Item> &values,
-                 COND *conds,
+int mysql_update(Session *session, TableList *table_list,
+                 List<Item> &fields, List<Item> &values, COND *conds,
                  uint32_t order_num, order_st *order,
-                 ha_rows limit,
-                 enum enum_duplicates handle_duplicates __attribute__((unused)),
+                 ha_rows limit, enum enum_duplicates,
                  bool ignore)
 {
   bool		using_limit= limit != HA_POS_ERROR;
@@ -1020,8 +1016,8 @@ multi_update::multi_update(TableList *table_list,
   Connect fields with tables and create list of tables that are updated
 */
 
-int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
-                          SELECT_LEX_UNIT *lex_unit __attribute__((unused)))
+int multi_update::prepare(List<Item> &,
+                          SELECT_LEX_UNIT *)
 {
   TableList *table_ref;
   SQL_LIST update;
@@ -1317,10 +1313,10 @@ multi_update::~multi_update()
 }
 
 
-bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused)))
+bool multi_update::send_data(List<Item> &)
 {
   TableList *cur_table;
-  
+
   for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
   {
     Table *table= cur_table->table;

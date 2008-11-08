@@ -17,8 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include CSTDINT_H
-
 /**
  * @file
  *
@@ -27,6 +25,12 @@
 
 #ifndef DRIZZLE_SERVER_DEFINITIONS_H
 #define DRIZZLE_SERVER_DEFINITIONS_H
+
+#if defined(__cplusplus)
+#include CSTDINT_H
+#else
+#include <stdint.h>
+#endif
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
@@ -478,11 +482,13 @@ enum enum_var_type
 
 
 typedef uint64_t query_id_t;
+typedef void *range_seq_t;
+
 
 /**
    The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
 */
-const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
+static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 
 #define SLAVE_NET_TIMEOUT  3600
 
@@ -867,5 +873,16 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
   will not have NULL values.
 */
 #define HA_MRR_NO_NULL_ENDPOINTS 128
+
+enum enum_ha_read_modes { RFIRST, RNEXT, RPREV, RLAST, RKEY, RNEXT_SAME };
+
+enum enum_tx_isolation { ISO_READ_UNCOMMITTED, ISO_READ_COMMITTED,
+                         ISO_REPEATABLE_READ, ISO_SERIALIZABLE};
+
+
+enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
+
+typedef int myf;
+#define MYF(v)		(myf) (v)
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */

@@ -22,7 +22,7 @@
 #include "libdrizzle.h"
 #include "libdrizzle_priv.h"
 #include <libdrizzle/errmsg.h>
-#include <vio/violite.h>
+#include <libdrizzle/vio.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

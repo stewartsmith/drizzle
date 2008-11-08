@@ -79,15 +79,16 @@ void* sql_memdup(const void *ptr, size_t len)
   return pos;
 }
 
-void sql_element_free(void *ptr __attribute__((unused)))
+void sql_element_free(void *)
 {} /* purecov: deadcode */
 
 
 
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       const CHARSET_INFO * const from_cs,
-			       size_t max_res_length,
-			       const CHARSET_INFO * const to_cs, size_t *result_length)
+                               const CHARSET_INFO * const from_cs,
+                               size_t max_res_length,
+                               const CHARSET_INFO * const to_cs,
+                               size_t *result_length)
 {
   char *pos;
   size_t new_length= to_cs->mbmaxlen*arg_length;

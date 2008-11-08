@@ -1746,8 +1746,8 @@ innobase_init(
 	necessarily the current directory of this program. */
 
 	if (mysqld_embedded) {
-		default_path = drizzle_real_data_home;
-		fil_path_to_mysql_datadir = drizzle_real_data_home;
+		default_path = mysql_real_data_home;
+		fil_path_to_mysql_datadir = mysql_real_data_home;
 	} else {
 		/* It's better to use current lib, to keep paths short */
 		current_dir[0] = FN_CURLIB;
@@ -6574,7 +6574,7 @@ ha_innobase::info(
 		}
 
 		my_snprintf(path, sizeof(path), "%s/%s%s",
-				drizzle_data_home, ib_table->name, reg_ext);
+				mysql_data_home, ib_table->name, reg_ext);
 
 		unpack_filename(path,path);
 

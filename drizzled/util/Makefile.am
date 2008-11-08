@@ -19,7 +19,7 @@ noinst_HEADERS = convert.h \
 
 # Trick automake into producing CXXCOMPILE var. Won't be needed once we
 # have real CXX files in here
-lib_LTLIBRARIES = libutil.la
+noinst_LTLIBRARIES = libutil.la
 libutil_la_SOURCES = math.cc
 
 if GCC_PCH

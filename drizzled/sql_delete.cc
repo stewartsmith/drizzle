@@ -503,8 +503,7 @@ multi_delete::multi_delete(TableList *dt, uint32_t num_of_tables_arg)
 
 
 int
-multi_delete::prepare(List<Item> &values __attribute__((unused)),
-                      SELECT_LEX_UNIT *u)
+multi_delete::prepare(List<Item> &, SELECT_LEX_UNIT *u)
 {
   
   unit= u;
@@ -599,11 +598,11 @@ multi_delete::~multi_delete()
 }
 
 
-bool multi_delete::send_data(List<Item> &values __attribute__((unused)))
+bool multi_delete::send_data(List<Item> &)
 {
   int secure_counter= delete_while_scanning ? -1 : 0;
   TableList *del_table;
-  
+
 
   for (del_table= delete_tables;
        del_table;

@@ -20,6 +20,9 @@
 #ifndef _my_alloc_h
 #define _my_alloc_h
 
+#include <stddef.h>
+#include <drizzled/definitions.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

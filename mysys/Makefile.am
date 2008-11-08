@@ -47,41 +47,41 @@ noinst_HEADERS =	mysys_priv.h \
 			aio_result.h
 
 if BUILD_FAST_MUTEX
-thr_mutex_source=thr_mutex.c
+thr_mutex_source=thr_mutex.cc
 endif
 if BUILD_THR_RWLOCK
-thr_rwlock_source=thr_rwlock.c
+thr_rwlock_source=thr_rwlock.cc
 endif
 
-libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
-			mf_path.c mf_loadpath.c my_file.c \
-			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
-			my_write.c \
-			mf_iocache.c mf_iocache2.c mf_cache.c mf_tempfile.c \
-			mf_tempdir.c \
-			my_malloc.c my_realloc.c my_once.c mulalloc.c \
-			my_alloc.c \
-			my_fopen.c my_fstream.c my_getsystime.c \
-			my_error.c errors.c my_filename.c my_messnc.c \
-			mf_format.c mf_same.c mf_dirname.c mf_fn_ext.c \
-			my_symlink.c my_symlink2.c \
-			mf_pack.c mf_unixpath.c mf_arr_appstr.c \
-			mf_wcomp.c my_gethwaddr.c \
-			mf_qsort.c mf_qsort2.c mf_sort.c \
-			ptr_cmp.c mf_radix.c queues.c \
-			tree.c list.c array.c typelib.c \
-			my_copy.c my_lib.c hash.c \
-			my_delete.c my_rename.c my_redel.c \
-			my_quick.c my_static.c \
-			my_time.c \
-			my_sync.c my_getopt.c my_mkdir.c \
-			default_modify.c default.c \
-                        checksum.c \
-			my_sleep.c \
-			charset.c charset-def.c my_bitmap.c my_bit.c \
-			sha1.c \
-			my_access.c base64.c \
-			thr_alarm.c thr_lock.c my_thr_init.c \
+libmysys_la_SOURCES = my_init.cc my_getwd.cc mf_getdate.cc \
+			mf_path.cc mf_loadpath.cc my_file.cc \
+			my_open.cc my_create.cc my_dup.cc my_seek.cc my_read.cc \
+			my_write.cc \
+			mf_iocache.cc mf_iocache2.cc mf_cache.cc mf_tempfile.cc \
+			mf_tempdir.cc \
+			my_malloc.cc my_realloc.cc my_once.cc mulalloc.cc \
+			my_alloc.cc \
+			my_fopen.cc my_fstream.cc my_getsystime.cc \
+			my_error.cc errors.cc my_filename.cc my_messnc.cc \
+			mf_format.cc mf_same.cc mf_dirname.cc mf_fn_ext.cc \
+			my_symlink.cc my_symlink2.cc \
+			mf_pack.cc mf_unixpath.cc mf_arr_appstr.cc \
+			mf_wcomp.cc my_gethwaddr.cc \
+			mf_qsort.cc mf_qsort2.cc mf_sort.cc \
+			ptr_cmp.cc mf_radix.cc queues.cc \
+			tree.cc list.cc array.cc typelib.cc \
+			my_copy.cc my_lib.cc hash.cc \
+			my_delete.cc my_rename.cc my_redel.cc \
+			my_quick.cc my_static.cc \
+			my_time.cc \
+			my_sync.cc my_getopt.cc my_mkdir.cc \
+			default_modify.cc default.cc \
+                        checksum.cc \
+			my_sleep.cc \
+			charset.cc charset-def.cc my_bitmap.cc my_bit.cc \
+			sha1.cc \
+			my_access.cc base64.cc \
+			thr_alarm.cc thr_lock.cc my_thr_init.cc \
                         ${thr_mutex_source} ${thr_rwlock_source}
 
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \

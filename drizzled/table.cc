@@ -52,8 +52,7 @@ static uint32_t find_field(Field **fields, unsigned char *record, uint32_t start
 
 /* Get column name from column hash */
 
-static unsigned char *get_field_name(Field **buff, size_t *length,
-                             bool not_used __attribute__((unused)))
+static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 {
   *length= (uint) strlen((*buff)->field_name);
   return (unsigned char*) (*buff)->field_name;
@@ -304,7 +303,7 @@ void free_table_share(TABLE_SHARE *share)
    6    Unknown .frm version
 */
 
-int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags  __attribute__((unused)))
+int open_table_def(Session *session, TABLE_SHARE *share, uint32_t)
 {
   int error, table_type;
   bool error_given;
@@ -2519,7 +2518,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
     that are present in this value, returns the length of the value
 */
 uint32_t calculate_key_len(Table *table, uint32_t key,
-                       const unsigned char *buf __attribute__((unused)),
+                       const unsigned char *,
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
@@ -3565,8 +3564,7 @@ size_t Table::max_row_length(const unsigned char *data)
   true       table
 */
 
-bool mysql_frm_type(Session *session __attribute__((unused)),
-                    char *path, enum legacy_db_type *dbt)
+bool mysql_frm_type(Session *, char *path, enum legacy_db_type *dbt)
 {
   File file;
   unsigned char header[10];     /* This should be optimized */
@@ -3688,7 +3686,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     new_created field
 */
 
-static Field *create_tmp_field_from_item(Session *session __attribute__((unused)),
+static Field *create_tmp_field_from_item(Session *,
                                          Item *item, Table *table,
                                          Item ***copy_func, bool modify_item,
                                          uint32_t convert_blob_length)
@@ -3812,8 +3810,7 @@ static Field *create_tmp_field_from_item(Session *session __attribute__((unused)
     new_created field
 */
 
-Field *create_tmp_field_for_schema(Session *session __attribute__((unused)),
-                                   Item *item, Table *table)
+Field *create_tmp_field_for_schema(Session *, Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {
@@ -3862,12 +3859,10 @@ Field *create_tmp_field_for_schema(Session *session __attribute__((unused)),
     new_created field
 */
 
-Field *create_tmp_field(Session *session, Table *table,Item *item, Item::Type type,
-                        Item ***copy_func, Field **from_field,
-                        Field **default_field,
-                        bool group, bool modify_item,
-                        bool table_cant_handle_bit_fields __attribute__((unused)),
-                        bool make_copy_field,
+Field *create_tmp_field(Session *session, Table *table,Item *item,
+                        Item::Type type, Item ***copy_func, Field **from_field,
+                        Field **default_field, bool group, bool modify_item,
+                        bool, bool make_copy_field,
                         uint32_t convert_blob_length)
 {
   Field *result;
@@ -5021,17 +5016,8 @@ bool create_myisam_from_heap(Session *session, Table *table,
     new_table.no_rows=1;
   }
 
-#ifdef TO_BE_DONE_LATER_IN_4_1
-  /*
-    To use start_bulk_insert() (which is new in 4.1) we need to find
-    all places where a corresponding end_bulk_insert() should be put.
-  */
-  table->file->info(HA_STATUS_VARIABLE); /* update table->file->stats.records */
-  new_table.file->ha_start_bulk_insert(table->file->stats.records);
-#else
   /* HA_EXTRA_WRITE_CACHE can stay until close, no need to disable it */
   new_table.file->extra(HA_EXTRA_WRITE_CACHE);
-#endif
 
   /*
     copy all old rows from heap table to MyISAM table

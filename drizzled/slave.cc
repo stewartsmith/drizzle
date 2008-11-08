@@ -511,9 +511,7 @@ int32_t start_slave_thread(pthread_handler h_func, pthread_mutex_t *start_lock,
 */
 
 int32_t start_slave_threads(bool need_slave_mutex, bool wait_for_start,
-                        Master_info* mi,
-                        const char* master_info_fname __attribute__((unused)),
-                        const char* slave_info_fname __attribute__((unused)),
+                        Master_info* mi, const char*, const char*,
                         int32_t thread_mask)
 {
   pthread_mutex_t *lock_io=0,*lock_sql=0,*lock_cond_io=0,*lock_cond_sql=0;
@@ -1058,7 +1056,7 @@ static bool wait_for_relay_log_space(Relay_log_info* rli)
     ignored events' end position for the use of the slave SQL thread, by
     calling this function. Only that thread can call it (see assertion).
  */
-static void write_ignored_events_info_to_relay_log(Session *session __attribute__((unused)),
+static void write_ignored_events_info_to_relay_log(Session *session,
                                                    Master_info *mi)
 {
   Relay_log_info *rli= &mi->rli;
@@ -1463,8 +1461,8 @@ static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
 */
 
 static uint32_t read_event(DRIZZLE *drizzle,
-                        Master_info *mi __attribute__((unused)),
-                        bool* suppress_warnings)
+                           Master_info *mi,
+                           bool* suppress_warnings)
 {
   uint32_t len;
 
@@ -1507,9 +1505,8 @@ static uint32_t read_event(DRIZZLE *drizzle,
 }
 
 
-int32_t check_expected_error(Session* session __attribute__((unused)),
-                         Relay_log_info const *rli __attribute__((unused)),
-                         int32_t expected_error)
+int32_t check_expected_error(Session*, Relay_log_info const *,
+                             int32_t expected_error)
 {
   switch (expected_error) {
   case ER_NET_READ_ERROR:

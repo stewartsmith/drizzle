@@ -2396,7 +2396,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
 }
 
 Log_event::enum_skip_reason
-Format_description_log_event::do_shall_skip(Relay_log_info *rli __attribute__((unused)))
+Format_description_log_event::do_shall_skip(Relay_log_info *)
 {
   return Log_event::EVENT_SKIP_NOT;
 }
@@ -3450,7 +3450,7 @@ bool Xid_log_event::write(IO_CACHE* file)
 }
 
 
-int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
+int Xid_log_event::do_apply_event(const Relay_log_info *)
 {
   return end_trans(session, COMMIT);
 }
@@ -3823,7 +3823,7 @@ void Slave_log_event::init_from_mem_pool()
 }
 
 
-int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
+int Slave_log_event::do_apply_event(const Relay_log_info *)
 {
   if (mysql_bin_log.is_open())
     mysql_bin_log.write(this);
@@ -4265,7 +4265,7 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
   Delete_file_log_event::do_apply_event()
 */
 
-int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
+int Delete_file_log_event::do_apply_event(const Relay_log_info *)
 {
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
@@ -5537,9 +5537,8 @@ int Table_map_log_event::save_field_metadata()
   Mats says tbl->s lives longer than this event so it's ok to copy pointers
   (tbl->s->db etc) and not pointer content.
  */
-Table_map_log_event::Table_map_log_event(Session *session, Table *tbl, ulong tid,
-                                         bool is_transactional __attribute__((unused)),
-                                         uint16_t flags)
+Table_map_log_event::Table_map_log_event(Session *session, Table *tbl,
+                                         ulong tid, bool, uint16_t flags)
   : Log_event(session, 0, true),
     m_table(tbl),
     m_dbnam(tbl->s->db.str),
