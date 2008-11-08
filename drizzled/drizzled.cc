@@ -378,7 +378,7 @@ char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char log_error_file[FN_REFLEN], glob_hostname[FN_REFLEN];
 char drizzle_real_data_home[FN_REFLEN],
-     language[FN_REFLEN], reg_ext[FN_EXTLEN], mysql_charsets_dir[FN_REFLEN],
+     language[FN_REFLEN], reg_ext[FN_EXTLEN], drizzle_charsets_dir[FN_REFLEN],
      *opt_init_file, *opt_tc_log_file;
 char drizzle_unpacked_real_data_home[FN_REFLEN];
 uint32_t reg_ext_length;
@@ -388,9 +388,9 @@ key_map key_map_full(0);                        // Will be initialized later
 const char *opt_date_time_formats[3];
 
 uint32_t drizzle_data_home_len;
-char mysql_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
+char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
-char *opt_mysql_tmpdir;
+char *opt_drizzle_tmpdir;
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -420,7 +420,7 @@ struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
 
-MY_TMPDIR mysql_tmpdir_list;
+MY_TMPDIR drizzle_tmpdir_list;
 MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -846,7 +846,7 @@ void clean_up(bool print_message)
     free_defaults(defaults_argv);
   free(sys_init_connect.value);
   free(sys_init_slave.value);
-  free_tmpdir(&mysql_tmpdir_list);
+  free_tmpdir(&drizzle_tmpdir_list);
   free(slave_load_tmpdir);
   if (opt_bin_logname)
     free(opt_bin_logname);
@@ -2493,7 +2493,7 @@ int main(int argc, char **argv)
   check_data_home(drizzle_real_data_home);
   if (my_setwd(drizzle_real_data_home,MYF(MY_WME)) && !opt_help)
     unireg_abort(1);				/* purecov: inspected */
-  drizzle_data_home= mysql_data_home_buff;
+  drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
   drizzle_data_home_len= 2;
@@ -3342,8 +3342,8 @@ struct my_option my_long_options[] =
    N_("Path for temporary files. Several paths may be specified, separated "
       "by a colon (:)"
       ", in this case they are used in a round-robin fashion."),
-   (char**) &opt_mysql_tmpdir,
-   (char**) &opt_mysql_tmpdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_drizzle_tmpdir,
+   (char**) &opt_drizzle_tmpdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
    N_("Default transaction isolation level."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0,
@@ -4106,8 +4106,8 @@ static void drizzle_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   drizzled_user= drizzled_chroot= opt_init_file= opt_bin_logname = 0;
-  opt_mysql_tmpdir= my_bind_addr_str= NULL;
-  memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
+  opt_drizzle_tmpdir= my_bind_addr_str= NULL;
+  memset(&drizzle_tmpdir_list, 0, sizeof(drizzle_tmpdir_list));
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
@@ -4152,8 +4152,8 @@ static void drizzle_init_variables(void)
   strmake(language, LANGUAGE, sizeof(language)-1);
   strmake(drizzle_real_data_home, get_relative_path(DATADIR),
 	  sizeof(drizzle_real_data_home)-1);
-  mysql_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
-  mysql_data_home_buff[1]=0;
+  drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
+  drizzle_data_home_buff[1]=0;
   drizzle_data_home_len= 2;
 
   /* Replication parameters */
@@ -4428,8 +4428,8 @@ mysqld_get_one_option(int optid,
     }
     break;
   case OPT_CHARSETS_DIR:
-    strmake(mysql_charsets_dir, argument, sizeof(mysql_charsets_dir)-1);
-    charsets_dir = mysql_charsets_dir;
+    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir)-1);
+    charsets_dir = drizzle_charsets_dir;
     break;
   case OPT_TX_ISOLATION:
     {
@@ -4684,21 +4684,21 @@ static void fix_paths(void)
   (void) my_load_path(language,language,buff);
 
   /* If --character-sets-dir isn't given, use shared library dir */
-  if (charsets_dir != mysql_charsets_dir)
+  if (charsets_dir != drizzle_charsets_dir)
   {
-    strcpy(mysql_charsets_dir, buff);
-    strncat(mysql_charsets_dir, CHARSET_DIR,
-            sizeof(mysql_charsets_dir)-strlen(buff)-1);
+    strcpy(drizzle_charsets_dir, buff);
+    strncat(drizzle_charsets_dir, CHARSET_DIR,
+            sizeof(drizzle_charsets_dir)-strlen(buff)-1);
   }
-  (void) my_load_path(mysql_charsets_dir, mysql_charsets_dir, buff);
-  convert_dirname(mysql_charsets_dir, mysql_charsets_dir, NULL);
-  charsets_dir=mysql_charsets_dir;
+  (void) my_load_path(drizzle_charsets_dir, drizzle_charsets_dir, buff);
+  convert_dirname(drizzle_charsets_dir, drizzle_charsets_dir, NULL);
+  charsets_dir=drizzle_charsets_dir;
 
-  if (init_tmpdir(&mysql_tmpdir_list, opt_mysql_tmpdir))
+  if (init_tmpdir(&drizzle_tmpdir_list, opt_drizzle_tmpdir))
     exit(1);
   if (!slave_load_tmpdir)
   {
-    if (!(slave_load_tmpdir = (char*) my_strdup(mysql_tmpdir, MYF(MY_FAE))))
+    if (!(slave_load_tmpdir = (char*) my_strdup(drizzle_tmpdir, MYF(MY_FAE))))
       exit(1);
   }
   /*

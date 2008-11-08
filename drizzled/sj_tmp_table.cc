@@ -90,7 +90,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
             session->thread_id, session->tmp_table++);
   }
-  fn_format(path, path, mysql_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
   /* STEP 2: Figure if we'll be using a key or blob+constraint */
   if (uniq_tuple_length_arg >= CONVERT_IF_BIGGER_TO_BLOB)

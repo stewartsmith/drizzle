@@ -6314,9 +6314,9 @@ bool mysql_rm_tmp_tables(void)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  for (i=0; i<=mysql_tmpdir_list.max; i++)
+  for (i=0; i<=drizzle_tmpdir_list.max; i++)
   {
-    tmpdir=mysql_tmpdir_list.list[i];
+    tmpdir=drizzle_tmpdir_list.list[i];
     /* See if the directory exists */
     if (!(dirp = my_dir(tmpdir,MYF(MY_WME | MY_DONT_SORT))))
       continue;

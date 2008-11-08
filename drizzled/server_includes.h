@@ -599,10 +599,10 @@ extern int creating_table;    // How many mysql_create_table() are running
 */
 
 extern time_t server_start_time, flush_status_time;
-extern char *opt_mysql_tmpdir;
+extern char *opt_drizzle_tmpdir;
             
-#define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
-extern MY_TMPDIR mysql_tmpdir_list;
+#define drizzle_tmpdir (my_tmpdir(&drizzle_tmpdir_list))
+extern MY_TMPDIR drizzle_tmpdir_list;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
 extern const char *myisam_recover_options_str;

@@ -259,7 +259,7 @@ Open_tables_state::Open_tables_state(ulong version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  File fd = create_temp_file(filename, mysql_tmpdir, prefix,
+  File fd = create_temp_file(filename, drizzle_tmpdir, prefix,
                              O_CREAT | O_EXCL | O_RDWR,
                              MYF(MY_WME));
   if (fd >= 0) {

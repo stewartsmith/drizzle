@@ -2217,7 +2217,7 @@ int Session::binlog_setup_trx_data()
 
   trx_data= (binlog_trx_data*) my_malloc(sizeof(binlog_trx_data), MYF(MY_ZEROFILL));
   if (!trx_data ||
-      open_cached_file(&trx_data->trans_log, mysql_tmpdir,
+      open_cached_file(&trx_data->trans_log, drizzle_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
   {
     free((unsigned char*)trx_data);

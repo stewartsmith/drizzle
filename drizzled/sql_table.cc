@@ -189,7 +189,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 
 
 /*
-  Creates path to a file: mysql_tmpdir/#sql1234_12_1.ext
+  Creates path to a file: drizzle_tmpdir/#sql1234_12_1.ext
 
   SYNOPSIS
    build_tmptable_filename()
@@ -200,7 +200,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   NOTES
 
     Uses current_pid, thread_id, and tmp_table counter to create
-    a file name in mysql_tmpdir.
+    a file name in drizzle_tmpdir.
 
   RETURN
     path length
@@ -209,7 +209,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
 
-  char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
+  char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
 	      tmp_file_prefix, current_pid,
               session->thread_id, session->tmp_table++, reg_ext);

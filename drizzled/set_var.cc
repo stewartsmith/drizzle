@@ -2437,7 +2437,7 @@ static unsigned char *get_error_count(Session *session)
 
   This is necessary because if the user does not specify a temporary
   directory via the command line, one is chosen based on the environment
-  or system defaults.  But we can't just always use mysql_tmpdir, because
+  or system defaults.  But we can't just always use drizzle_tmpdir, because
   that is actually a call to my_tmpdir() which cycles among possible
   temporary directories.
 
@@ -2448,9 +2448,9 @@ static unsigned char *get_error_count(Session *session)
 */
 static unsigned char *get_tmpdir(Session *)
 {
-  if (opt_mysql_tmpdir)
-    return (unsigned char *)opt_mysql_tmpdir;
-  return (unsigned char*)mysql_tmpdir;
+  if (opt_drizzle_tmpdir)
+    return (unsigned char *)opt_drizzle_tmpdir;
+  return (unsigned char*)drizzle_tmpdir;
 }
 
 /****************************************************************************
