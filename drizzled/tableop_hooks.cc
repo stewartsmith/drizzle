@@ -17,27 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_UDF_H
-#define DRIZZLED_SQL_UDF_H
-
-/* This file defines structures needed by udf functions */
-
+#include <config.h>
+#include <drizzled/tableop_hooks.h>
 #include CSTDINT_H
-#include <drizzled/item_func.h>
 
-enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
+class Table;
 
-typedef Item_func* (*create_func_item)(MEM_ROOT*);
-
-struct udf_func
+void Tableop_hooks::do_prelock(Table **, uint32_t)
 {
-  LEX_STRING name;
-  create_func_item create_func;
-};
+  /* Default is to do nothing */
+}
 
-void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint32_t len=0);
-void free_udf(udf_func *udf);
-int mysql_create_function(Session *session,udf_func *udf);
 
-#endif /* DRIZZLED_SQL_UDF_H */
+int Tableop_hooks::do_postlock(Table **, uint32_t)
+{
+  /* Default is to do nothing */
+  return 0;
+}

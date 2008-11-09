@@ -1,17 +1,21 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /**
   @file handler.cc
@@ -26,20 +30,13 @@
 #include <drizzled/data_home.h>
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/cost_vect.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
 
-/*
-  While we have legacy_db_type, we have this array to
-  check for dups and to find handlerton from legacy_db_type.
-  Remove when legacy_db_type is finally gone
-*/
-st_plugin_int *hton2plugin[MAX_HA];
-
-static handlerton *installed_htons[128];
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -50,13 +47,6 @@ uint32_t total_ha_2pc= 0;
 /* size of savepoint storage area (see ha_init) */
 uint32_t savepoint_alloc_size= 0;
 
-static const LEX_STRING sys_table_aliases[]=
-{
-  { C_STRING_WITH_LEN("INNOBASE") },  { C_STRING_WITH_LEN("INNODB") },
-  { C_STRING_WITH_LEN("HEAP") },      { C_STRING_WITH_LEN("MEMORY") },
-  {NULL, 0}
-};
-
 const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
@@ -64,163 +54,12 @@ const char *ha_row_type[] = {
 const char *tx_isolation_names[] =
 { "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
   NULL};
+
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-			       tx_isolation_names, NULL};
+                               tx_isolation_names, NULL};
 
 static TYPELIB known_extensions= {0,"known_exts", NULL, NULL};
 uint32_t known_extensions_id= 0;
-
-
-
-static plugin_ref ha_default_plugin(Session *session)
-{
-  if (session->variables.table_plugin)
-    return session->variables.table_plugin;
-  return my_plugin_lock(session, &global_system_variables.table_plugin);
-}
-
-
-/**
-  Return the default storage engine handlerton for thread
-
-  @param ha_default_handlerton(session)
-  @param session         current thread
-
-  @return
-    pointer to handlerton
-*/
-handlerton *ha_default_handlerton(Session *session)
-{
-  plugin_ref plugin= ha_default_plugin(session);
-  assert(plugin);
-  handlerton *hton= plugin_data(plugin, handlerton*);
-  assert(hton);
-  return hton;
-}
-
-
-/**
-  Return the storage engine handlerton for the supplied name
-  
-  @param session         current thread
-  @param name        name of storage engine
-  
-  @return
-    pointer to storage engine plugin handle
-*/
-plugin_ref ha_resolve_by_name(Session *session, const LEX_STRING *name)
-{
-  const LEX_STRING *table_alias;
-  plugin_ref plugin;
-
-redo:
-  /* my_strnncoll is a macro and gcc doesn't do early expansion of macro */
-  if (session && !my_charset_utf8_general_ci.coll->strnncoll(&my_charset_utf8_general_ci,
-                           (const unsigned char *)name->str, name->length,
-                           (const unsigned char *)STRING_WITH_LEN("DEFAULT"), 0))
-    return ha_default_plugin(session);
-
-  if ((plugin= my_plugin_lock_by_name(session, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
-  {
-    handlerton *hton= plugin_data(plugin, handlerton *);
-    if (!(hton->flags & HTON_NOT_USER_SELECTABLE))
-      return plugin;
-      
-    /*
-      unlocking plugin immediately after locking is relatively low cost.
-    */
-    plugin_unlock(session, plugin);
-  }
-
-  /*
-    We check for the historical aliases.
-  */
-  for (table_alias= sys_table_aliases; table_alias->str; table_alias+= 2)
-  {
-    if (!my_strnncoll(&my_charset_utf8_general_ci,
-                      (const unsigned char *)name->str, name->length,
-                      (const unsigned char *)table_alias->str, table_alias->length))
-    {
-      name= table_alias + 1;
-      goto redo;
-    }
-  }
-
-  return NULL;
-}
-
-
-plugin_ref ha_lock_engine(Session *session, handlerton *hton)
-{
-  if (hton)
-  {
-    st_plugin_int **plugin= hton2plugin + hton->slot;
-    
-    return my_plugin_lock(session, &plugin);
-  }
-  return NULL;
-}
-
-
-handlerton *ha_resolve_by_legacy_type(Session *session, enum legacy_db_type db_type)
-{
-  plugin_ref plugin;
-  switch (db_type) {
-  case DB_TYPE_DEFAULT:
-    return ha_default_handlerton(session);
-  default:
-    if (db_type > DB_TYPE_UNKNOWN && db_type < DB_TYPE_DEFAULT &&
-        (plugin= ha_lock_engine(session, installed_htons[db_type])))
-      return plugin_data(plugin, handlerton*);
-    /* fall through */
-  case DB_TYPE_UNKNOWN:
-    return NULL;
-  }
-}
-
-
-/**
-  Use other database handler if databasehandler is not compiled in.
-*/
-handlerton *ha_checktype(Session *session, enum legacy_db_type database_type,
-                          bool no_substitute, bool report_error)
-{
-  handlerton *hton= ha_resolve_by_legacy_type(session, database_type);
-  if (ha_storage_engine_is_enabled(hton))
-    return hton;
-
-  if (no_substitute)
-  {
-    if (report_error)
-    {
-      const char *engine_name= ha_resolve_storage_engine_name(hton);
-      my_error(ER_FEATURE_DISABLED,MYF(0),engine_name,engine_name);
-    }
-    return NULL;
-  }
-
-  return ha_default_handlerton(session);
-} /* ha_checktype */
-
-
-handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
-                         handlerton *db_type)
-{
-  handler *file;
-
-  if (db_type && db_type->state == SHOW_OPTION_YES && db_type->create)
-  {
-    if ((file= db_type->create(db_type, share, alloc)))
-      file->init();
-    return(file);
-  }
-  /*
-    Try the default table type
-    Here the call to current_session() is ok as we call this function a lot of
-    times but we enter this branch very seldom.
-  */
-  return(get_new_handler(share, alloc, ha_default_handlerton(current_session)));
-}
 
 
 /**
@@ -311,118 +150,6 @@ static int ha_finish_errors(void)
 }
 
 
-int ha_finalize_handlerton(st_plugin_int *plugin)
-{
-  handlerton *hton= (handlerton *)plugin->data;
-
-  switch (hton->state)
-  {
-  case SHOW_OPTION_NO:
-  case SHOW_OPTION_DISABLED:
-    break;
-  case SHOW_OPTION_YES:
-    if (installed_htons[hton->db_type] == hton)
-      installed_htons[hton->db_type]= NULL;
-    break;
-  };
-
-  if (hton && plugin->plugin->deinit)
-    (void)plugin->plugin->deinit(hton);
-
-  free((unsigned char*)hton);
-
-  return(0);
-}
-
-
-int ha_initialize_handlerton(st_plugin_int *plugin)
-{
-  handlerton *hton;
-
-  hton= (handlerton *)my_malloc(sizeof(handlerton),
-                                MYF(MY_WME | MY_ZEROFILL));
-  /* 
-    FIXME: the MY_ZEROFILL flag above doesn't zero all the bytes.
-    
-    This was detected after adding get_backup_engine member to handlerton
-    structure. Apparently get_backup_engine was not NULL even though it was
-    not initialized.
-   */
-  memset(hton, 0, sizeof(hton));
-  /* Historical Requirement */
-  plugin->data= hton; // shortcut for the future
-  if (plugin->plugin->init)
-  {
-    if (plugin->plugin->init(hton))
-    {
-      sql_print_error(_("Plugin '%s' init function returned error."),
-                      plugin->name.str);
-      goto err;
-    }
-  }
-
-  /*
-    the switch below and hton->state should be removed when
-    command-line options for plugins will be implemented
-  */
-  switch (hton->state) {
-  case SHOW_OPTION_NO:
-    break;
-  case SHOW_OPTION_YES:
-    {
-      uint32_t tmp;
-      /* now check the db_type for conflict */
-      if (hton->db_type <= DB_TYPE_UNKNOWN ||
-          hton->db_type >= DB_TYPE_DEFAULT ||
-          installed_htons[hton->db_type])
-      {
-        int idx= (int) DB_TYPE_FIRST_DYNAMIC;
-
-        while (idx < (int) DB_TYPE_DEFAULT && installed_htons[idx])
-          idx++;
-
-        if (idx == (int) DB_TYPE_DEFAULT)
-        {
-          sql_print_warning(_("Too many storage engines!"));
-          return(1);
-        }
-        if (hton->db_type != DB_TYPE_UNKNOWN)
-          sql_print_warning(_("Storage engine '%s' has conflicting typecode. "
-                            "Assigning value %d."), plugin->plugin->name, idx);
-        hton->db_type= (enum legacy_db_type) idx;
-      }
-      installed_htons[hton->db_type]= hton;
-      tmp= hton->savepoint_offset;
-      hton->savepoint_offset= savepoint_alloc_size;
-      savepoint_alloc_size+= tmp;
-      hton->slot= total_ha++;
-      hton2plugin[hton->slot]=plugin;
-      if (hton->prepare)
-        total_ha_2pc++;
-      break;
-    }
-    /* fall through */
-  default:
-    hton->state= SHOW_OPTION_DISABLED;
-    break;
-  }
-  
-  /* 
-    This is entirely for legacy. We will create a new "disk based" hton and a 
-    "memory" hton which will be configurable longterm. We should be able to 
-    remove partition and myisammrg.
-  */
-  if (strcmp(plugin->plugin->name, "MEMORY") == 0)
-    heap_hton= hton;
-
-  if (strcmp(plugin->plugin->name, "MyISAM") == 0)
-    myisam_hton= hton;
-
-  return(0);
-err:
-  return(1);
-}
-
 int ha_init()
 {
   int error= 0;
@@ -442,7 +169,7 @@ int ha_end()
 {
   int error= 0;
 
-  /* 
+  /*
     This should be eventualy based  on the graceful shutdown flag.
     So if flag is equal to HA_PANIC_CLOSE, the deallocate
     the errors.
@@ -1138,9 +865,9 @@ int ha_autocommit_or_rollback(Session *session, int error)
     if (!error)
     {
       if (ha_commit_trans(session, 0))
-	error=1;
+        error=1;
     }
-    else 
+    else
     {
       (void) ha_rollback_trans(session, 0);
       if (session->transaction_rollback_request)
@@ -1301,7 +1028,7 @@ int ha_recover(HASH *commit_list)
 #endif
 
 
-  for (info.len= MAX_XID_LIST_SIZE ; 
+  for (info.len= MAX_XID_LIST_SIZE ;
        info.list==0 && info.len > MIN_XID_LIST_SIZE; info.len/=2)
   {
     info.list=(XID *)my_malloc(info.len*sizeof(XID), MYF(0));
@@ -1312,12 +1039,12 @@ int ha_recover(HASH *commit_list)
     return(1);
   }
 
-  plugin_foreach(NULL, xarecover_handlerton, 
+  plugin_foreach(NULL, xarecover_handlerton,
                  DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
   free((unsigned char*)info.list);
   if (info.found_foreign_xids)
-    sql_print_warning(_("Found %d prepared XA transactions"), 
+    sql_print_warning(_("Found %d prepared XA transactions"),
                       info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
@@ -1415,7 +1142,7 @@ static bool release_temporary_latches(Session *session, plugin_ref plugin,
 
 int ha_release_temporary_latches(Session *session)
 {
-  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
+  plugin_foreach(session, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN,
                  NULL);
 
   return 0;
@@ -1565,7 +1292,7 @@ static bool flush_handlerton(Session *session __attribute__((unused)),
                              void *arg __attribute__((unused)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
-  if (hton->state == SHOW_OPTION_YES && hton->flush_logs && 
+  if (hton->state == SHOW_OPTION_YES && hton->flush_logs &&
       hton->flush_logs(hton))
     return true;
   return false;
@@ -1603,7 +1330,7 @@ static const char *check_lowercase_names(handler *file, const char *path,
     we only should turn into lowercase database/table part
     so start the process after homedirectory
   */
-  my_casedn_str(files_charset_info, tmp_path + mysql_data_home_len);
+  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
   return tmp_path;
 }
 
@@ -1706,7 +1433,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
   /*
     Allocate handler->ref here because otherwise ha_open will allocate it
-    on this->table->mem_root and we will not be able to reclaim that memory 
+    on this->table->mem_root and we will not be able to reclaim that memory
     when the clone handler object is destroyed.
   */
   if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
@@ -1719,7 +1446,76 @@ handler *handler::clone(MEM_ROOT *mem_root)
   return NULL;
 }
 
+int handler::ha_index_init(uint32_t idx, bool sorted)
+{
+  int result;
+  assert(inited==NONE);
+  if (!(result= index_init(idx, sorted)))
+    inited=INDEX;
+  end_range= NULL;
+  return(result);
+}
 
+int handler::ha_index_end()
+{
+  assert(inited==INDEX);
+  inited=NONE;
+  end_range= NULL;
+  return(index_end());
+}
+
+int handler::ha_rnd_init(bool scan)
+{
+  int result;
+  assert(inited==NONE || (inited==RND && scan));
+  inited= (result= rnd_init(scan)) ? NONE: RND;
+  return(result);
+}
+
+int handler::ha_rnd_end()
+{
+  assert(inited==RND);
+  inited=NONE;
+  return(rnd_end());
+}
+
+int handler::ha_index_or_rnd_end()
+{
+  return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
+}
+
+handler::Table_flags handler::ha_table_flags() const
+{
+  return cached_table_flags;
+}
+
+void handler::ha_start_bulk_insert(ha_rows rows)
+{
+  estimation_rows_to_insert= rows;
+  start_bulk_insert(rows);
+}
+
+int handler::ha_end_bulk_insert()
+{
+  estimation_rows_to_insert= 0;
+  return end_bulk_insert();
+}
+
+void handler::change_table_ptr(Table *table_arg, TABLE_SHARE *share)
+{
+  table= table_arg;
+  table_share= share;
+}
+
+const key_map *handler::keys_to_use_for_scanning()
+{
+  return &key_map_empty;
+}
+
+bool handler::has_transactions()
+{
+  return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
+}
 
 void handler::ha_statistic_increment(ulong SSV::*offset) const
 {
@@ -1736,6 +1532,20 @@ Session *handler::ha_session(void) const
   assert(!table || !table->in_use || table->in_use == current_session);
   return (table && table->in_use) ? table->in_use : current_session;
 }
+
+
+bool handler::is_fatal_error(int error, uint32_t flags)
+{
+  if (!error ||
+      ((flags & HA_CHECK_DUP_KEY) &&
+       (error == HA_ERR_FOUND_DUPP_KEY ||
+        error == HA_ERR_FOUND_DUPP_UNIQUE)))
+    return false;
+  return true;
+}
+
+
+ha_rows handler::records() { return stats.records; }
 
 /**
   Open database-handler.
@@ -1772,7 +1582,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from handler::clone() */
-    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root, 
+    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root,
                                           ALIGN_SIZE(ref_length)*2)))
     {
       close();
@@ -2049,7 +1859,7 @@ int handler::update_auto_increment()
         /* avoid overflow in formula, with this if() */
         if (nb_already_reserved_intervals <= AUTO_INC_DEFAULT_NB_MAX_BITS)
         {
-          nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS * 
+          nb_desired_values= AUTO_INC_DEFAULT_NB_ROWS *
             (1 << nb_already_reserved_intervals);
           set_if_smaller(nb_desired_values, AUTO_INC_DEFAULT_NB_MAX);
         }
@@ -2063,7 +1873,7 @@ int handler::update_auto_increment()
                          &nb_reserved_values);
       if (nr == ~(uint64_t) 0)
         return(HA_ERR_AUTOINC_READ_FAILED);  // Mark failure
-      
+
       /*
         That rounding below should not be needed when all engines actually
         respect offset and increment in get_auto_increment(). But they don't
@@ -2074,7 +1884,7 @@ int handler::update_auto_increment()
       */
       nr= compute_next_insert_id(nr-1, variables);
     }
-    
+
     if (table->s->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
@@ -3046,7 +2856,7 @@ int ha_create_table(Session *session, const char *path,
   char name_buff[FN_REFLEN];
   const char *name;
   TABLE_SHARE share;
-  
+
   init_tmp_table_share(session, &share, db, 0, table_name, path);
   if (open_table_def(session, &share, 0) ||
       open_table_from_share(session, &share, "", 0, (uint) READ_ALL, 0, &table,
@@ -3244,7 +3054,7 @@ struct st_discover_args
 {
   const char *db;
   const char *name;
-  unsigned char **frmblob; 
+  unsigned char **frmblob;
   size_t *frmlen;
 };
 
@@ -3254,8 +3064,8 @@ static bool discover_handlerton(Session *session, plugin_ref plugin,
   st_discover_args *vargs= (st_discover_args *)arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->discover &&
-      (!(hton->discover(hton, session, vargs->db, vargs->name, 
-                        vargs->frmblob, 
+      (!(hton->discover(hton, session, vargs->db, vargs->name,
+                        vargs->frmblob,
                         vargs->frmlen))))
     return true;
 
@@ -3415,7 +3225,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
   Session *session= current_session;
-  
+
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
 
@@ -3424,7 +3234,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   {
     if (unlikely(session->killed != 0))
       return HA_POS_ERROR;
-    
+
     n_ranges++;
     key_range *min_endp, *max_endp;
     {
@@ -3435,7 +3245,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
       rows= 1; /* there can be at most one row */
     else
     {
-      if (HA_POS_ERROR == (rows= this->records_in_range(keyno, min_endp, 
+      if (HA_POS_ERROR == (rows= this->records_in_range(keyno, min_endp,
                                                         max_endp)))
       {
         /* Can't scan one range => can't do MRR scan at all */
@@ -3445,7 +3255,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
     }
     total_rows += rows;
   }
-  
+
   if (total_rows != HA_POS_ERROR)
   {
     /* The following calculation is the same as in multi_range_read_info(): */
@@ -3518,14 +3328,14 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
 /**
   Initialize the MRR scan
 
-  Initialize the MRR scan. This function may do heavyweight scan 
+  Initialize the MRR scan. This function may do heavyweight scan
   initialization like row prefetching/sorting/etc (NOTE: but better not do
   it here as we may not need it, e.g. if we never satisfy WHERE clause on
   previous tables. For many implementations it would be natural to do such
   initializations in the first multi_read_range_next() call)
 
   mode is a combination of the following flags: HA_MRR_SORTED,
-  HA_MRR_INDEX_ONLY, HA_MRR_NO_ASSOCIATION 
+  HA_MRR_INDEX_ONLY, HA_MRR_NO_ASSOCIATION
 
   @param seq             Range sequence to be traversed
   @param seq_init_param  First parameter for seq->init()
@@ -3537,12 +3347,12 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
     One must have called index_init() before calling this function. Several
     multi_range_read_init() calls may be made in course of one query.
 
-    Until WL#2623 is done (see its text, section 3.2), the following will 
+    Until WL#2623 is done (see its text, section 3.2), the following will
     also hold:
     The caller will guarantee that if "seq->init == mrr_ranges_array_init"
     then seq_init_param is an array of n_ranges KEY_MULTI_RANGE structures.
     This property will only be used by NDB handler until WL#2623 is done.
-     
+
     Buffer memory management is done according to the following scenario:
     The caller allocates the buffer and provides it to the callee by filling
     the members of HANDLER_BUFFER structure.
@@ -3637,7 +3447,7 @@ scan_it_again:
 
 
 /* **************************************************************************
- * DS-MRR implementation 
+ * DS-MRR implementation
  ***************************************************************************/
 
 /**
@@ -3680,16 +3490,16 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
 
   is_mrr_assoc= !test(mode & HA_MRR_NO_ASSOCIATION);
   rowids_buf_end= buf->buffer_end;
-  
+
   elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
-  rowids_buf_last= rowids_buf + 
+  rowids_buf_last= rowids_buf +
                       ((rowids_buf_end - rowids_buf)/ elem_size)*
                       elem_size;
   rowids_buf_end= rowids_buf_last;
 
   /* Create a separate handler object to do rndpos() calls. */
   Session *session= current_session;
-  if (!(new_h2= h->clone(session->mem_root)) || 
+  if (!(new_h2= h->clone(session->mem_root)) ||
       new_h2->ha_external_lock(session, F_RDLCK))
   {
     delete new_h2;
@@ -3708,12 +3518,12 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   table->prepare_for_position();
   new_h2->extra(HA_EXTRA_KEYREAD);
 
-  if (h2->ha_index_init(keyno, false) || 
+  if (h2->ha_index_init(keyno, false) ||
       h2->handler::multi_range_read_init(seq_funcs, seq_init_param, n_ranges,
                                          mode, buf))
     goto error;
   use_default_impl= false;
-  
+
   if (pushed_cond)
     h2->idx_cond_push(keyno, pushed_cond);
   if (dsmrr_fill_buffer(new_h2))
@@ -3723,12 +3533,12 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
     If the above call has scanned through all intervals in *seq, then
     adjust *buf to indicate that the remaining buffer space will not be used.
   */
-  if (dsmrr_eof) 
+  if (dsmrr_eof)
     buf->end_of_used_area= rowids_buf_last;
 
   if (h->ha_rnd_init(false))
     goto error;
-  
+
   return(0);
 error:
   h2->ha_index_or_rnd_end();
@@ -3763,12 +3573,12 @@ static int rowid_cmp(void *h, unsigned char *a, unsigned char *b)
   DS-MRR: Fill the buffer with rowids and sort it by rowid
 
   {This is an internal function of DiskSweep MRR implementation}
-  Scan the MRR ranges and collect ROWIDs (or {ROWID, range_id} pairs) into 
-  buffer. When the buffer is full or scan is completed, sort the buffer by 
+  Scan the MRR ranges and collect ROWIDs (or {ROWID, range_id} pairs) into
+  buffer. When the buffer is full or scan is completed, sort the buffer by
   rowid and return.
-  
-  The function assumes that rowids buffer is empty when it is invoked. 
-  
+
+  The function assumes that rowids buffer is empty when it is invoked.
+
   @param h  Table handler
 
   @retval 0      OK, the next portion of rowids is in the buffer,
@@ -3782,7 +3592,7 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   int res = 0;
 
   rowids_buf_cur= rowids_buf;
-  while ((rowids_buf_cur < rowids_buf_end) && 
+  while ((rowids_buf_cur < rowids_buf_end) &&
          !(res= h2->handler::multi_range_read_next(&range_info)))
   {
     /* Put rowid, or {rowid, range_id} pair into the buffer */
@@ -3798,13 +3608,13 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
   }
 
   if (res && res != HA_ERR_END_OF_FILE)
-    return(res); 
+    return(res);
   dsmrr_eof= test(res == HA_ERR_END_OF_FILE);
 
   /* Sort the buffer contents by rowid */
   uint32_t elem_size= h->ref_length + (int)is_mrr_assoc * sizeof(void*);
   uint32_t n_rowids= (rowids_buf_cur - rowids_buf) / elem_size;
-  
+
   my_qsort2(rowids_buf, n_rowids, elem_size, (qsort2_cmp)rowid_cmp,
             (void*)h);
   rowids_buf_last= rowids_buf_cur;
@@ -3820,10 +3630,10 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *unused __attribute__((unused)))
 int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
 {
   int res;
-  
+
   if (use_default_impl)
     return h->handler::multi_range_read_next(range_info);
-    
+
   if (rowids_buf_cur == rowids_buf_last)
   {
     if (dsmrr_eof)
@@ -3835,7 +3645,7 @@ int DsMrr_impl::dsmrr_next(handler *h, char **range_info)
     if (res)
       goto end;
   }
-  
+
   /* Return EOF if there are no rowids in the buffer after re-fill attempt */
   if (rowids_buf_cur == rowids_buf_last)
   {
@@ -3863,7 +3673,7 @@ end:
 */
 int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uint32_t *bufsz,
                            uint32_t *flags, COST_VECT *cost)
-{  
+{
   int res;
   uint32_t def_flags= *flags;
   uint32_t def_bufsz= *bufsz;
@@ -3873,7 +3683,7 @@ int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uin
                                          &def_flags, cost);
   assert(!res);
 
-  if ((*flags & HA_MRR_USE_DEFAULT_IMPL) || 
+  if ((*flags & HA_MRR_USE_DEFAULT_IMPL) ||
       choose_mrr_impl(keyno, rows, &def_flags, &def_bufsz, cost))
   {
     /* Default implementation is choosen */
@@ -3889,7 +3699,7 @@ int DsMrr_impl::dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t rows, uin
 */
 
 ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                 void *seq_init_param, uint32_t n_ranges, 
+                                 void *seq_init_param, uint32_t n_ranges,
                                  uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   ha_rows rows;
@@ -3897,7 +3707,7 @@ ha_rows DsMrr_impl::dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   uint32_t def_bufsz= *bufsz;
   /* Get cost/flags/mem_usage of default MRR implementation */
   rows= h->handler::multi_range_read_info_const(keyno, seq, seq_init_param,
-                                                n_ranges, &def_bufsz, 
+                                                n_ranges, &def_bufsz,
                                                 &def_flags, cost);
   if (rows == HA_POS_ERROR)
   {
@@ -3984,25 +3794,25 @@ bool DsMrr_impl::choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags,
   COST_VECT dsmrr_cost;
   bool res;
   Session *session= current_session;
-  if ((session->variables.optimizer_use_mrr == 2) || 
+  if ((session->variables.optimizer_use_mrr == 2) ||
       (*flags & HA_MRR_INDEX_ONLY) || (*flags & HA_MRR_SORTED) ||
-      (keyno == table->s->primary_key && 
-       h->primary_key_is_clustered()) || 
+      (keyno == table->s->primary_key &&
+       h->primary_key_is_clustered()) ||
        key_uses_partial_cols(keyno))
   {
     /* Use the default implementation */
     *flags |= HA_MRR_USE_DEFAULT_IMPL;
     return true;
   }
-  
-  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length; 
+
+  uint32_t add_len= table->key_info[keyno].key_length + h->ref_length;
   *bufsz -= add_len;
   if (get_disk_sweep_mrr_cost(keyno, rows, *flags, bufsz, &dsmrr_cost))
     return true;
   *bufsz += add_len;
-  
+
   bool force_dsmrr;
-  /* 
+  /*
     If @@optimizer_use_mrr==force, then set cost of DS-MRR to be minimum of
     DS-MRR and Default implementations cost. This allows one to force use of
     DS-MRR whenever it is applicable without affecting other cost-based
@@ -4061,15 +3871,15 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
 
   /* Number of iterations we'll make with full buffer */
   n_full_steps= (uint)floor(rows2double(rows) / max_buff_entries);
-  
-  /* 
-    Get numbers of rows we'll be processing in 
-     - non-last sweep, with full buffer 
+
+  /*
+    Get numbers of rows we'll be processing in
+     - non-last sweep, with full buffer
      - last iteration, with non-full buffer
   */
   rows_in_full_step= max_buff_entries;
   rows_in_last_step= rows % max_buff_entries;
-  
+
   /* Adjust buffer size if we expect to use only part of the buffer */
   if (n_full_steps)
   {
@@ -4079,20 +3889,20 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
   else
   {
     cost->zero();
-    *buffer_size= cmax((ulong)*buffer_size, 
-                      (size_t)(1.2*rows_in_last_step) * elem_size + 
+    *buffer_size= cmax((ulong)*buffer_size,
+                      (size_t)(1.2*rows_in_last_step) * elem_size +
                       h->ref_length + table->key_info[keynr].key_length);
   }
-  
+
   COST_VECT last_step_cost;
   get_sort_and_sweep_cost(table, rows_in_last_step, &last_step_cost);
   cost->add(&last_step_cost);
- 
+
   if (n_full_steps != 0)
     cost->mem_cost= *buffer_size;
   else
     cost->mem_cost= (double)rows_in_last_step * elem_size;
-  
+
   /* Total cost of all index accesses */
   index_read_cost= h->index_only_read_time(keynr, (double)rows);
   cost->add_io(index_read_cost, 1 /* Random seeks */);
@@ -4100,7 +3910,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
 }
 
 
-/* 
+/*
   Get cost of one sort-and-sweep step
 
   SYNOPSIS
@@ -4115,7 +3925,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
      - read #nrows records from table in a sweep.
 */
 
-static 
+static
 void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 {
   if (nrows)
@@ -4149,7 +3959,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
   Time to move the disk head is proportional to head travel distance.
 
   Time to wait for the plate to rotate depends on whether the disk head
-  was moved or not. 
+  was moved or not.
 
   If disk head wasn't moved, the wait time is proportional to distance
   between the previous block and the block we're reading.
@@ -4160,7 +3970,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 
   Our cost units are "random disk seeks". The cost of random disk seek is
   actually not a constant, it depends one range of cylinders we're going
-  to access. We make it constant by introducing a fuzzy concept of "typical 
+  to access. We make it constant by introducing a fuzzy concept of "typical
   datafile length" (it's fuzzy as it's hard to tell whether it should
   include index file, temp.tables etc). Then random seek cost is:
 
@@ -4175,7 +3985,7 @@ void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
   @param cost         OUT  The cost.
 */
 
-void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
+void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
                          COST_VECT *cost)
 {
   cost->zero();
@@ -4254,7 +4064,7 @@ int handler::read_range_first(const key_range *start_key,
                            start_key->keypart_map,
                            start_key->flag);
   if (result)
-    return((result == HA_ERR_KEY_NOT_FOUND) 
+    return((result == HA_ERR_KEY_NOT_FOUND)
 		? HA_ERR_END_OF_FILE
 		: result);
 
@@ -4522,7 +4332,7 @@ static int write_locked_table_maps(Session *session)
         continue;
 
       Table **const end_ptr= lock->table + lock->table_count;
-      for (Table **table_ptr= lock->table ; 
+      for (Table **table_ptr= lock->table ;
            table_ptr != end_ptr ;
            ++table_ptr)
       {

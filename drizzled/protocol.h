@@ -17,6 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_PROTOCOL_H
+#define DRIZZLED_PROTOCOL_H
 
 class i_string;
 class Session;
@@ -131,3 +133,4 @@ unsigned char *net_store_data(unsigned char *to,const unsigned char *from, size_
 unsigned char *net_store_data(unsigned char *to,int32_t from);
 unsigned char *net_store_data(unsigned char *to,int64_t from);
 
+#endif /* DRIZZLED_PROTOCOL_H */

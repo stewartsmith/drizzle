@@ -181,7 +181,7 @@ int Master_info::init_master_info(const char* master_info_fname,
   {
     char fname[FN_REFLEN+128];
 
-    fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
+    fn_format(fname, master_info_fname, drizzle_data_home, "", 4+32);
     info_filename.assign(fname);
   }
 

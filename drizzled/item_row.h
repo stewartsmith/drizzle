@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_ITEM_ROW_H
+#define DRIZZLED_ITEM_ROW_H
+
 class Item_row: public Item
 {
   Item **items;
@@ -84,3 +87,5 @@ public:
   bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return false; }
 };
+
+#endif /* DRIZZLED_ITEM_ROW_H */

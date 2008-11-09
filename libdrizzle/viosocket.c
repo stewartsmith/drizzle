@@ -20,9 +20,17 @@
   the file descriptior.
 */
 
-#include "vio_priv.h"
+#define DONT_MAP_VIO
+#include <drizzled/global.h>
+#include <libdrizzle/vio.h>
 #include <sys/socket.h>
 #include <drizzled/util/test.h>
+#include <string.h>
+
+#include <netinet/tcp.h>
+#include <sys/poll.h>
+
+#include <netdb.h>
 
 int vio_errno(Vio *vio __attribute__((unused)))
 {

@@ -703,7 +703,7 @@ static char *dtoa_alloc(int i, Stack_alloc *alloc)
     alloc->free+= aligned_size;
   }
   else
-    rv= malloc(i);
+    rv= (char *)malloc(i);
   return rv;
 }
 
@@ -2254,7 +2254,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
             goto bump_up;
           else if (dval(d) < 0.5 - dval(eps))
           {
-            while (*--s == '0');
+            while (*--s == '0') {}
             s++;
             goto ret1;
           }
@@ -2529,7 +2529,7 @@ roundoff:
   }
   else
   {
-    while (*--s == '0');
+    while (*--s == '0') {}
     s++;
   }
 ret:

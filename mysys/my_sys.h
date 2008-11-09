@@ -148,9 +148,6 @@ extern void *my_memdup(const void *from,size_t length,myf MyFlags);
 extern char *my_strdup(const char *from,myf MyFlags);
 extern char *my_strndup(const char *from, size_t length,
 				   myf MyFlags);
-#define CALLER_INFO_PROTO   /* nothing */
-#define CALLER_INFO         /* nothing */
-#define ORIG_CALLER_INFO    /* nothing */
 #define TRASH(A,B) /* nothing */
 
 #ifdef HAVE_ALLOCA
@@ -489,18 +486,16 @@ void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 File create_temp_file(char *to, const char *dir, const char *pfx,
 		      int mode, myf MyFlags);
-#define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D CALLER_INFO)
-#define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D ORIG_CALLER_INFO)
-#define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E CALLER_INFO)
-#define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E ORIG_CALLER_INFO)
+#define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
+#define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
+#define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
+#define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc, 
-                                   uint32_t alloc_increment
-                                   CALLER_INFO_PROTO);
+                                   uint32_t alloc_increment);
 /* init_dynamic_array() function is deprecated */
 extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                  uint32_t init_alloc,uint32_t alloc_increment
-                                  CALLER_INFO_PROTO);
+                                  uint32_t init_alloc,uint32_t alloc_increment);
 extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
 extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);

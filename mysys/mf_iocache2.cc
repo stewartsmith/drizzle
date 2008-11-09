@@ -276,8 +276,8 @@ size_t my_b_printf(IO_CACHE *info, const char* fmt, ...)
 size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 {
   size_t out_length= 0;
-  uint32_t minimum_width; /* as yet unimplemented */
-  uint32_t minimum_width_sign;
+  int32_t minimum_width; /* as yet unimplemented */
+  int32_t minimum_width_sign;
   uint32_t precision; /* as yet unimplemented for anything but %b */
   bool is_zero_padded;
 
@@ -383,7 +383,7 @@ process_flags:
     else if (*fmt == 'd' || *fmt == 'u')	/* Integer parameter */
     {
       register int iarg;
-      size_t length2;
+      ssize_t length2;
       char buff[17];
 
       iarg = va_arg(args, int);
@@ -396,7 +396,7 @@ process_flags:
       if (minimum_width > length2) 
       {
         const size_t buflen = minimum_width - length2;
-        unsigned char *buffz= my_alloca(buflen);
+        unsigned char *buffz= (unsigned char *)my_alloca(buflen);
         memset(buffz, is_zero_padded ? '0' : ' ', buflen);
         my_b_write(info, buffz, buflen);
         my_afree(buffz);

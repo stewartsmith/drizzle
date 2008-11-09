@@ -145,7 +145,7 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &SV::auto_increment_offset, NULL, NULL,
                           sys_var::SESSION_VARIABLE_IN_BINLOG);
 
-static sys_var_const_str       sys_basedir(&vars, "basedir", mysql_home);
+static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
 					      &binlog_cache_size);
 static sys_var_session_binlog_format sys_binlog_format(&vars, "binlog_format",
@@ -170,7 +170,7 @@ sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
 					    &connect_timeout);
-static sys_var_const_str       sys_datadir(&vars, "datadir", mysql_real_data_home);
+static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,
 					    &delay_key_write_typelib,
@@ -2927,7 +2927,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   if (type == OPT_GLOBAL)
     plugin= my_plugin_lock(session, &(global_system_variables.*offset));
   hton= plugin_data(plugin, handlerton*);
-  engine_name= &hton2plugin[hton->slot]->name;
+  engine_name= ha_storage_engine_name(hton);
   result= (unsigned char *) session->strmake(engine_name->str, engine_name->length);
   if (type == OPT_GLOBAL)
     plugin_unlock(session, plugin);

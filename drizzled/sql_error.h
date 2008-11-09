@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SQL_ERROR_H
+#define DRIZZLED_SQL_ERROR_H
+
 class DRIZZLE_ERROR: public Sql_alloc
 {
 public:
@@ -45,3 +48,5 @@ void drizzle_reset_errors(Session *session, bool force);
 bool mysqld_show_warnings(Session *session, uint32_t levels_to_show);
 
 extern const LEX_STRING warning_level_names[];
+
+#endif /* DRIZZLED_SQL_ERROR_H */

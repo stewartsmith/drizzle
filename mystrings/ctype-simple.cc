@@ -342,7 +342,7 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
   
-  for ( ; s<e && my_isspace(cs, *s) ; s++);
+  for ( ; s<e && my_isspace(cs, *s) ; s++) {}
   
   if (s == e)
   {
@@ -465,7 +465,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
   
-  for( ; s<e && my_isspace(cs, *s); s++);
+  for( ; s<e && my_isspace(cs, *s); s++) {}
   
   if (s==e)
   {
@@ -578,7 +578,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++);
+  for(; s<e && my_isspace(cs,*s); s++) {}
 
   if (s == e)
   {
@@ -701,7 +701,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++);
+  for(; s<e && my_isspace(cs,*s); s++) {}
 
   if (s == e)
   {
@@ -1103,7 +1103,7 @@ size_t my_scan_8bit(const CHARSET_INFO * const cs, const char *str, const char *
   case MY_SEQ_INTTAIL:
     if (*str == '.')
     {
-      for(str++ ; str != end && *str == '0' ; str++);
+      for(str++ ; str != end && *str == '0' ; str++) {}
       return (size_t) (str - str0);
     }
     return 0;
@@ -1485,7 +1485,7 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
   int shift= 0, digits= 0, negative, addon;
 
   /* Skip leading spaces and tabs */
-  for ( ; str < end && (*str == ' ' || *str == '\t') ; str++);
+  for ( ; str < end && (*str == ' ' || *str == '\t') ; str++) {}
 
   if (str >= end)
     goto ret_edom;
@@ -1555,17 +1555,17 @@ my_strntoull10rnd_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
         addon= (*str >= '5');
       if (!dot)
       {
-        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; shift++, str++);
+        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; shift++, str++) {}
         if (str < end && *str == '.')
         {
           str++;
-          for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++);
+          for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++) {}
         }
       }
       else
       {
         shift= dot - str;
-        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++);
+        for ( ; str < end && (ch= (unsigned char) (*str - '0')) < 10; str++) {}
       }
       goto exp;
     }

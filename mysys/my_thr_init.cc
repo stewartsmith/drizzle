@@ -18,7 +18,8 @@
   thread variables.
 */
 
-#include "mysys_priv.h"
+#include <mysys/mysys_priv.h>
+#include <mysys/my_pthread.h>
 #include <mystrings/m_string.h>
 #include <signal.h>
 
@@ -66,7 +67,8 @@ pthread_mutexattr_t my_errorcheck_mutexattr;
   race conditions in NPTL pthread_exit code.
 */
 
-static pthread_handler_t
+extern "C"
+void *
 nptl_pthread_exit_hack_handler(void *arg __attribute((unused)))
 {
   /* Do nothing! */

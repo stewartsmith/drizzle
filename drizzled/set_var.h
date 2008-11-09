@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_ITEM_SET_H
+#define DRIZZLED_ITEM_SET_H
+
 /* Classes to support the SET command */
 
 
@@ -1283,3 +1286,5 @@ void free_key_cache(const char *name, KEY_CACHE *key_cache);
 bool process_key_caches(process_key_cache_t func);
 void delete_elements(I_List<NAMED_LIST> *list,
 		     void (*free_element)(const char*, unsigned char*));
+
+#endif /* DRIZZLED_ITEM_SET_H */

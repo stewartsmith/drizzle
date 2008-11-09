@@ -30,6 +30,7 @@
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>
 #include <drizzled/scheduler.h>
+#include <drizzled/ha_trx_info.h>
 
 class Relay_log_info;
 
@@ -40,7 +41,6 @@ class Lex_input_stream;
 class Rows_log_event;
 
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
-enum enum_ha_read_modes { RFIRST, RNEXT, RPREV, RLAST, RKEY, RNEXT_SAME };
 enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
                             DELAY_KEY_WRITE_ALL };

@@ -68,7 +68,7 @@ sql_print_message_func sql_print_message_handlers[3] =
 char *make_default_log_name(char *buff,const char* log_ext)
 {
   strmake(buff, pidfile_name, FN_REFLEN-5);
-  return fn_format(buff, buff, mysql_data_home, log_ext,
+  return fn_format(buff, buff, drizzle_data_home, log_ext,
                    MYF(MY_UNPACK_FILENAME|MY_REPLACE_EXT));
 }
 
@@ -985,7 +985,7 @@ void DRIZZLE_LOG::cleanup()
 
 int DRIZZLE_LOG::generate_new_name(char *new_name, const char *log_name)
 {
-  fn_format(new_name, log_name, mysql_data_home, "", 4);
+  fn_format(new_name, log_name, drizzle_data_home, "", 4);
   if (log_type == LOG_BIN)
   {
     if (!fn_ext(log_name)[0])
@@ -1098,7 +1098,7 @@ bool DRIZZLE_BIN_LOG::open_index_file(const char *index_file_name_arg,
     index_file_name_arg= log_name;    // Use same basename for index file
     opt= MY_UNPACK_FILENAME | MY_REPLACE_EXT;
   }
-  fn_format(index_file_name, index_file_name_arg, mysql_data_home,
+  fn_format(index_file_name, index_file_name_arg, drizzle_data_home,
             ".index", opt);
   if ((index_file_nr= my_open(index_file_name,
                               O_RDWR | O_CREAT,
@@ -3320,7 +3320,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
   tc_log_page_size= getpagesize();
   assert(TC_LOG_PAGE_SIZE % tc_log_page_size == 0);
 
-  fn_format(logname,opt_name,mysql_data_home,"",MY_UNPACK_FILENAME);
+  fn_format(logname,opt_name,drizzle_data_home,"",MY_UNPACK_FILENAME);
   if ((fd= my_open(logname, O_RDWR, MYF(0))) < 0)
   {
     if (my_errno != ENOENT)

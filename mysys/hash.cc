@@ -22,6 +22,7 @@
 /* Key length of 0 isn't allowed */
 
 #include <config.h>
+#include CSTDINT_H
 #include <mysys/hash.h>
 
 const uint32_t NO_RECORD= UINT32_MAX;
@@ -57,7 +58,7 @@ bool
 _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
            uint32_t size, size_t key_offset, size_t key_length,
            hash_get_key get_key,
-           void (*free_element)(void*),uint32_t flags CALLER_INFO_PROTO)
+           void (*free_element)(void*),uint32_t flags)
 {
   hash->records=0;
   if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
