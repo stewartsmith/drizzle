@@ -149,7 +149,6 @@ static int ha_finish_errors(void)
   return 0;
 }
 
-
 int ha_init()
 {
   int error= 0;
