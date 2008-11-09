@@ -1529,7 +1529,7 @@ int64_t Item_in_optimizer::val_int()
     else
     {
       if (!((Item_in_subselect*)args[1])->is_correlated &&
-          result_for_null_param != UNKNOWN)
+          result_for_null_param != -1)
       {
         /* Use cached value from previous execution */
         null_value= result_for_null_param;
