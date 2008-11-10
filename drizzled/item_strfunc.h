@@ -20,87 +20,27 @@
 #ifndef DRIZZLED_ITEM_STRFUNC_H
 #define DRIZZLED_ITEM_STRFUNC_H
 
+#include <drizzled/functions/str/sysconst.h>
+#include <drizzled/functions/str/alloc_buffer.h>
+#include <drizzled/functions/str/char.h>
+#include <drizzled/functions/str/charset.h>
 #include <drizzled/functions/str/concat.h>
 #include <drizzled/functions/str/conv.h>
+#include <drizzled/functions/str/database.h>
 #include <drizzled/functions/str/elt.h>
 #include <drizzled/functions/str/format.h>
 #include <drizzled/functions/str/insert.h>
 #include <drizzled/functions/str/left.h>
 #include <drizzled/functions/str/make_set.h>
+#include <drizzled/functions/str/pad.h>
+#include <drizzled/functions/str/repeat.h>
 #include <drizzled/functions/str/replace.h>
 #include <drizzled/functions/str/reverse.h>
 #include <drizzled/functions/str/right.h>
+#include <drizzled/functions/str/str_conv.h>
 #include <drizzled/functions/str/substr.h>
-#include <drizzled/functions/str/sysconst.h>
-#include <drizzled/functions/str/database.h>
 #include <drizzled/functions/str/trim.h>
 #include <drizzled/functions/str/user.h>
-
-class Item_func_char :public Item_str_func
-{
-public:
-  Item_func_char(List<Item> &list) :Item_str_func(list)
-  { collation.set(&my_charset_bin); }
-  Item_func_char(List<Item> &list, const CHARSET_INFO * const cs) :Item_str_func(list)
-  { collation.set(cs); }  
-  String *val_str(String *);
-  void fix_length_and_dec() 
-  {
-    max_length= arg_count * 4;
-  }
-  const char *func_name() const { return "char"; }
-};
-
-
-class Item_func_repeat :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_repeat(Item *arg1,Item *arg2) :Item_str_func(arg1,arg2) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "repeat"; }
-};
-
-
-class Item_func_rpad :public Item_str_func
-{
-  String tmp_value, rpad_str;
-public:
-  Item_func_rpad(Item *arg1,Item *arg2,Item *arg3)
-    :Item_str_func(arg1,arg2,arg3) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "rpad"; }
-};
-
-
-class Item_func_lpad :public Item_str_func
-{
-  String tmp_value, lpad_str;
-public:
-  Item_func_lpad(Item *arg1,Item *arg2,Item *arg3)
-    :Item_str_func(arg1,arg2,arg3) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "lpad"; }
-};
-
-
-class Item_func_conv :public Item_str_func
-{
-public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
-  }
-};
-
 
 class Item_func_hex :public Item_str_func
 {
@@ -261,21 +201,6 @@ public:
     /* this function is transparent for view updating */
     return args[0]->filed_for_view_update();
   }
-};
-
-class Item_func_charset :public Item_str_func
-{
-public:
-  Item_func_charset(Item *a) :Item_str_func(a) {}
-  String *val_str(String *);
-  const char *func_name() const { return "charset"; }
-  void fix_length_and_dec()
-  {
-     collation.set(system_charset_info);
-     max_length= 64 * collation.collation->mbmaxlen; // should be enough
-     maybe_null= 0;
-  };
-  table_map not_null_tables() const { return 0; }
 };
 
 class Item_func_collation :public Item_str_func

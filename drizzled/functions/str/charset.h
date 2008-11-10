@@ -17,23 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONV_H
-#define DRIZZLED_STR_FUNCTIONS_CONV_H
+#ifndef DRIZZLED_STR_FUNCTIONS_CHARSET_H
+#define DRIZZLED_STR_FUNCTIONS_CHARSET_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
-class Item_func_conv :public Item_str_func
+class Item_func_charset :public Item_str_func
 {
 public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
+  Item_func_charset(Item *a) :Item_str_func(a) {}
   String *val_str(String *);
+  const char *func_name() const { return "charset"; }
   void fix_length_and_dec()
   {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
-  }
+     collation.set(system_charset_info);
+     max_length= 64 * collation.collation->mbmaxlen; // should be enough
+     maybe_null= 0;
+  };
+  table_map not_null_tables() const { return 0; }
 };
 
-#endif /* DRIZZLED_STR_FUNCTIONS_CONV_H */
+#endif /* DRIZZLED_STR_FUNCTIONS_CHARSET_H */

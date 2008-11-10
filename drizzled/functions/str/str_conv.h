@@ -17,23 +17,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONV_H
-#define DRIZZLED_STR_FUNCTIONS_CONV_H
+#ifndef DRIZZLED_STR_FUNCTIONS_STR_CONV_H
+#define DRIZZLED_STR_FUNCTIONS_STR_CONV_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
-class Item_func_conv :public Item_str_func
+class Item_str_conv :public Item_str_func
 {
+protected:
+  uint32_t multiply;
+  my_charset_conv_case converter;
+  String tmp_value;
 public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
+  Item_str_conv(Item *item) :Item_str_func(item) {}
   String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
-  }
 };
 
-#endif /* DRIZZLED_STR_FUNCTIONS_CONV_H */
+
+class Item_func_lcase :public Item_str_conv
+{
+public:
+  Item_func_lcase(Item *item) :Item_str_conv(item) {}
+  const char *func_name() const { return "lcase"; }
+  void fix_length_and_dec();
+};
+
+class Item_func_ucase :public Item_str_conv
+{
+public:
+  Item_func_ucase(Item *item) :Item_str_conv(item) {}
+  const char *func_name() const { return "ucase"; }
+  void fix_length_and_dec();
+};
+
+#endif /* DRIZZLED_STR_FUNCTIONS_STR_CONV_H */

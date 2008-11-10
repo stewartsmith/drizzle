@@ -17,23 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONV_H
-#define DRIZZLED_STR_FUNCTIONS_CONV_H
+#ifndef DRIZZLED_STR_FUNCTIONS_CHAR_H
+#define DRIZZLED_STR_FUNCTIONS_CHAR_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
-class Item_func_conv :public Item_str_func
+class Item_func_char :public Item_str_func
 {
 public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
+  Item_func_char(List<Item> &list) :Item_str_func(list)
+  { collation.set(&my_charset_bin); }
+  Item_func_char(List<Item> &list, const CHARSET_INFO * const cs) :Item_str_func(list)
+  { collation.set(cs); }
   String *val_str(String *);
   void fix_length_and_dec()
   {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
+    max_length= arg_count * 4;
   }
+  const char *func_name() const { return "char"; }
 };
 
-#endif /* DRIZZLED_STR_FUNCTIONS_CONV_H */
+#endif /* DRIZZLED_STR_FUNCTIONS_CHAR_H */

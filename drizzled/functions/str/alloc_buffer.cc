@@ -17,23 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONV_H
-#define DRIZZLED_STR_FUNCTIONS_CONV_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/str/alloc_buffer.h>
 
-#include <drizzled/functions/str/strfunc.h> 
-
-class Item_func_conv :public Item_str_func
+String* alloc_buffer(String *res,String *str,String *tmp_value,
+                            ulong length)
 {
-public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
+  if (res->alloced_length() < length)
   {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
+    if (str->alloced_length() >= length)
+    {
+      (void) str->copy(*res);
+      str->length(length);
+      return str;
+    }
+    if (tmp_value->alloc(length))
+      return 0;
+    (void) tmp_value->copy(*res);
+    tmp_value->length(length);
+    return tmp_value;
   }
-};
-
-#endif /* DRIZZLED_STR_FUNCTIONS_CONV_H */
+  res->length(length);
+  return res;
+}

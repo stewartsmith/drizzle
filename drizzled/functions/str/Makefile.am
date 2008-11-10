@@ -17,7 +17,10 @@ noinst_LTLIBRARIES = 	libstrfunc.la
 
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
-libstrfunc_la_SOURCES = concat.cc \
+libstrfunc_la_SOURCES = alloc_buffer.cc \
+		  char.cc \
+		  charset.cc \
+		  concat.cc \
 		  conv.cc \
 		  database.cc \
 		  elt.cc \
@@ -25,16 +28,22 @@ libstrfunc_la_SOURCES = concat.cc \
 		  insert.cc \
 		  left.cc \
 		  make_set.cc \
+		  pad.cc \
+		  repeat.cc \
 		  replace.cc \
 		  reverse.cc \
 		  right.cc \
+		  str_conv.cc \
 		  strfunc.cc \
 		  substr.cc \
 		  sysconst.cc \
 		  trim.cc \
 		  user.cc
 
-noinst_HEADERS = concat.h \
+noinst_HEADERS = alloc_buffer.h \
+		 char.h \
+		 charset.h \
+		 concat.h \
 		 conv.h \
 		 database.h \
 		 elt.h \
@@ -42,9 +51,12 @@ noinst_HEADERS = concat.h \
 		 insert.h \
 		 left.h \
 		 make_set.h \
+		 pad.h \
+		 repeat.h \
 		 replace.h \
 		 reverse.h \
 		 right.h \
+		 str_conv.h \
 		 strfunc.h \
 		 substr.h \
 		 sysconst.h \

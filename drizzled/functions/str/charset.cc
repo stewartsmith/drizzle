@@ -19,39 +19,17 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
-#include <drizzled/functions/str/conv.h>
+#include <drizzled/functions/str/charset.h>
 
-String *Item_func_conv::val_str(String *str)
+String *Item_func_charset::val_str(String *str)
 {
   assert(fixed == 1);
-  String *res= args[0]->val_str(str);
-  char *endptr,ans[65],*ptr;
-  int64_t dec;
-  int from_base= (int) args[1]->val_int();
-  int to_base= (int) args[2]->val_int();
-  int err;
+  uint32_t dummy_errors;
 
-  if (args[0]->null_value || args[1]->null_value || args[2]->null_value ||
-      abs(to_base) > 36 || abs(to_base) < 2 ||
-      abs(from_base) > 36 || abs(from_base) < 2 || !(res->length()))
-  {
-    null_value= 1;
-    return NULL;
-  }
+  const CHARSET_INFO * const cs= args[0]->collation.collation;
   null_value= 0;
-  unsigned_flag= !(from_base < 0);
-
-  if (from_base < 0)
-    dec= my_strntoll(res->charset(), res->ptr(), res->length(),
-                     -from_base, &endptr, &err);
-  else
-    dec= (int64_t) my_strntoull(res->charset(), res->ptr(), res->length(),
-                                 from_base, &endptr, &err);
-
-  ptr= int64_t2str(dec, ans, to_base);
-  if (str->copy(ans, (uint32_t) (ptr-ans), default_charset()))
-    return &my_empty_string;
+  str->copy(cs->csname, strlen(cs->csname),
+            &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
   return str;
 }
-
 

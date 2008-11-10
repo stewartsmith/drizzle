@@ -17,23 +17,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_CONV_H
-#define DRIZZLED_STR_FUNCTIONS_CONV_H
+#include <drizzled/server_includes.h>
+#include CSTDINT_H
+#include <drizzled/functions/str/char.h>
 
-#include <drizzled/functions/str/strfunc.h> 
-
-class Item_func_conv :public Item_str_func
+String *Item_func_char::val_str(String *str)
 {
-public:
-  Item_func_conv(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  const char *func_name() const { return "conv"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
+  assert(fixed == 1);
+  str->length(0);
+  str->set_charset(collation.collation);
+  for (uint32_t i=0 ; i < arg_count ; i++)
   {
-    collation.set(default_charset());
-    max_length=64;
-    maybe_null= 1;
+    int32_t num=(int32_t) args[i]->val_int();
+    if (!args[i]->null_value)
+    {
+      char char_num= (char) num;
+      if (num&0xFF000000L) {
+        str->append((char)(num>>24));
+        goto b2;
+      } else if (num&0xFF0000L) {
+    b2:        str->append((char)(num>>16));
+        goto b1;
+      } else if (num&0xFF00L) {
+    b1:        str->append((char)(num>>8));
+      }
+      str->append(&char_num, 1);
+    }
   }
-};
+  str->realloc(str->length());                  // Add end 0 (for Purify)
+  return check_well_formed_result(str);
+}
 
-#endif /* DRIZZLED_STR_FUNCTIONS_CONV_H */
+
