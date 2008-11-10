@@ -21,8 +21,10 @@ libstrfunc_la_SOURCES = alloc_buffer.cc \
 		  binary.cc \
 		  char.cc \
 		  charset.cc \
+		  collation.cc \
 		  concat.cc \
 		  conv.cc \
+		  conv_charset.cc \
 		  database.cc \
 		  elt.cc \
 		  export_set.cc \
@@ -37,20 +39,24 @@ libstrfunc_la_SOURCES = alloc_buffer.cc \
 		  replace.cc \
 		  reverse.cc \
 		  right.cc \
+		  set_collation.cc \
 		  str_conv.cc \
 		  strfunc.cc \
 		  substr.cc \
 		  sysconst.cc \
 		  trim.cc \
 		  user.cc \
-		  uuid.cc
+		  uuid.cc \
+		  weight_string.cc
 
 noinst_HEADERS = alloc_buffer.h \
 		 binary.h \
 		 char.h \
 		 charset.h \
+		 collation.h \
 		 concat.h \
 		 conv.h \
+		 conv_charset.h \
 		 database.h \
 		 elt.h \
 		 export_set.h \
@@ -65,12 +71,14 @@ noinst_HEADERS = alloc_buffer.h \
 		 replace.h \
 		 reverse.h \
 		 right.h \
+		 set_collation.h \
 		 str_conv.h \
 		 strfunc.h \
 		 substr.h \
 		 sysconst.h \
 		 trim.h \
 		 user.h \
-		 uuid.h
+		 uuid.h \
+		 weight_string.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@
