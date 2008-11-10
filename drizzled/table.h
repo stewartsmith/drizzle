@@ -30,6 +30,7 @@
 #include <drizzled/field_iterator.h>
 #include <mysys/hash.h>
 #include <drizzled/handler.h>
+#include <drizzled/lex_string.h>
 
 class Item;				/* Needed by order_st */
 class Item_subselect;
