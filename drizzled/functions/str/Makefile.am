@@ -18,17 +18,21 @@ noinst_LTLIBRARIES = 	libstrfunc.la
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 libstrfunc_la_SOURCES = alloc_buffer.cc \
+		  binary.cc \
 		  char.cc \
 		  charset.cc \
 		  concat.cc \
 		  conv.cc \
 		  database.cc \
 		  elt.cc \
+		  export_set.cc \
 		  format.cc \
+		  hex.cc \
 		  insert.cc \
 		  left.cc \
 		  make_set.cc \
 		  pad.cc \
+		  quote.cc \
 		  repeat.cc \
 		  replace.cc \
 		  reverse.cc \
@@ -38,20 +42,25 @@ libstrfunc_la_SOURCES = alloc_buffer.cc \
 		  substr.cc \
 		  sysconst.cc \
 		  trim.cc \
-		  user.cc
+		  user.cc \
+		  uuid.cc
 
 noinst_HEADERS = alloc_buffer.h \
+		 binary.h \
 		 char.h \
 		 charset.h \
 		 concat.h \
 		 conv.h \
 		 database.h \
 		 elt.h \
+		 export_set.h \
 		 format.h \
+		 hex.h \
 		 insert.h \
 		 left.h \
 		 make_set.h \
 		 pad.h \
+		 quote.h \
 		 repeat.h \
 		 replace.h \
 		 reverse.h \
@@ -61,6 +70,7 @@ noinst_HEADERS = alloc_buffer.h \
 		 substr.h \
 		 sysconst.h \
 		 trim.h \
-		 user.h
+		 user.h \
+		 uuid.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

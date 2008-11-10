@@ -22,13 +22,16 @@
 
 #include <drizzled/functions/str/sysconst.h>
 #include <drizzled/functions/str/alloc_buffer.h>
+#include <drizzled/functions/str/binary.h>
 #include <drizzled/functions/str/char.h>
 #include <drizzled/functions/str/charset.h>
 #include <drizzled/functions/str/concat.h>
 #include <drizzled/functions/str/conv.h>
 #include <drizzled/functions/str/database.h>
 #include <drizzled/functions/str/elt.h>
+#include <drizzled/functions/str/export_set.h>
 #include <drizzled/functions/str/format.h>
+#include <drizzled/functions/str/hex.h>
 #include <drizzled/functions/str/insert.h>
 #include <drizzled/functions/str/left.h>
 #include <drizzled/functions/str/make_set.h>
@@ -41,64 +44,7 @@
 #include <drizzled/functions/str/substr.h>
 #include <drizzled/functions/str/trim.h>
 #include <drizzled/functions/str/user.h>
-
-class Item_func_hex :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_hex(Item *a) :Item_str_func(a) {}
-  const char *func_name() const { return "hex"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(default_charset());
-    decimals=0;
-    max_length=args[0]->max_length*2*collation.collation->mbmaxlen;
-  }
-};
-
-class Item_func_unhex :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_unhex(Item *a) :Item_str_func(a) 
-  { 
-    /* there can be bad hex strings */
-    maybe_null= 1; 
-  }
-  const char *func_name() const { return "unhex"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=(1+args[0]->max_length)/2;
-  }
-};
-
-
-class Item_func_binary :public Item_str_func
-{
-public:
-  Item_func_binary(Item *a) :Item_str_func(a) {}
-  String *val_str(String *a)
-  {
-    assert(fixed == 1);
-    String *tmp=args[0]->val_str(a);
-    null_value=args[0]->null_value;
-    if (tmp)
-      tmp->set_charset(&my_charset_bin);
-    return tmp;
-  }
-  void fix_length_and_dec()
-  {
-    collation.set(&my_charset_bin);
-    max_length=args[0]->max_length;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-  const char *func_name() const { return "cast_as_binary"; }
-};
-
+#include <drizzled/functions/str/uuid.h>
 
 class Item_load_file :public Item_str_func
 {
@@ -117,31 +63,6 @@ public:
   { return true; }
 };
 
-
-class Item_func_export_set: public Item_str_func
-{
- public:
-  Item_func_export_set(Item *a,Item *b,Item* c) :Item_str_func(a,b,c) {}
-  Item_func_export_set(Item *a,Item *b,Item* c,Item* d) :Item_str_func(a,b,c,d) {}
-  Item_func_export_set(Item *a,Item *b,Item* c,Item* d,Item* e) :Item_str_func(a,b,c,d,e) {}
-  String  *val_str(String *str);
-  void fix_length_and_dec();
-  const char *func_name() const { return "export_set"; }
-};
-
-class Item_func_quote :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_quote(Item *a) :Item_str_func(a) {}
-  const char *func_name() const { return "quote"; }
-  String *val_str(String *);
-  void fix_length_and_dec()
-  {
-    collation.set(args[0]->collation);
-    max_length= args[0]->max_length * 2 + 2;
-  }
-};
 
 class Item_func_conv_charset :public Item_str_func
 {
@@ -234,26 +155,6 @@ public:
     TODO: Currently this Item is not allowed for virtual columns
     only due to a bug in generating virtual column value.
   */
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-#define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
-class Item_func_uuid: public Item_str_func
-{
-public:
-  Item_func_uuid(): Item_str_func() {}
-  void fix_length_and_dec() {
-    collation.set(system_charset_info);
-    /*
-       NOTE! uuid() should be changed to use 'ascii'
-       charset when hex(), format(), md5(), etc, and implicit
-       number-to-string conversion will use 'ascii'
-    */
-    max_length= UUID_LENGTH * system_charset_info->mbmaxlen;
-  }
-  const char *func_name() const{ return "uuid"; }
-  String *val_str(String *);
   bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
   { return true; }
 };
