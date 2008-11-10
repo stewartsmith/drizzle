@@ -26,24 +26,10 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <mysys/sha1.h>
-#include <zlib.h>
-#include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 
-#include <mysys/my_static.h>
-/*
-#include CMATH_H */
-
-#if defined(CMATH_NAMESPACE)
-using namespace CMATH_NAMESPACE;
-#endif
-
-using namespace std;
-
 String my_empty_string("",default_charset_info);
-
 
 String *Item_load_file::val_str(String *str)
 {
