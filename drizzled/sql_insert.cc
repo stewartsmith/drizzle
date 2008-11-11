@@ -1504,8 +1504,6 @@ void select_insert::abort() {
         if (mysql_bin_log.is_open())
           session->binlog_query(Session::ROW_QUERY_TYPE, session->query, session->query_length,
                             transactional_table, false);
-        if (!session->current_stmt_binlog_row_based && !can_rollback_data())
-          session->transaction.all.modified_non_trans_table= true;
     }
     assert(transactional_table || !changed ||
 		session->transaction.stmt.modified_non_trans_table);
@@ -1785,8 +1783,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 &&
-      session->current_stmt_binlog_row_based)
+  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 && session->current_stmt_binlog_row_based)
   {
     session->binlog_start_trans_and_stmt();
   }
@@ -1862,7 +1859,6 @@ select_create::binlog_show_create_table(Table **tables, uint32_t count)
     schema that will do a close_thread_tables(), destroying the
     statement transaction cache.
   */
-  assert(session->current_stmt_binlog_row_based);
   assert(tables && *tables && count > 0);
 
   char buf[2048];
