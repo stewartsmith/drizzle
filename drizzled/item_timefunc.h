@@ -20,6 +20,12 @@
 #ifndef DRIZZLED_ITEM_TIMEFUNC_H
 #define DRIZZLED_ITEM_TIMEFUNC_H
 
+#include <drizzled/functions/time/dayofmonth.h>
+#include <drizzled/functions/time/dayofyear.h>
+#include <drizzled/functions/time/period_add.h>
+#include <drizzled/functions/time/period_diff.h>
+#include <drizzled/functions/time/to_days.h>
+
 /* Function items used by mysql */
 
 enum date_time_format_types 
@@ -29,69 +35,6 @@ enum date_time_format_types
 
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval);
-
-class Item_func_period_add :public Item_int_func
-{
-public:
-  Item_func_period_add(Item *a,Item *b) :Item_int_func(a,b) {}
-  int64_t val_int();
-  const char *func_name() const { return "period_add"; }
-  void fix_length_and_dec() 
-  { 
-    max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-};
-
-
-class Item_func_period_diff :public Item_int_func
-{
-public:
-  Item_func_period_diff(Item *a,Item *b) :Item_int_func(a,b) {}
-  int64_t val_int();
-  const char *func_name() const { return "period_diff"; }
-  void fix_length_and_dec()
-  { 
-    decimals=0;
-    max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-};
-
-
-class Item_func_to_days :public Item_int_func
-{
-public:
-  Item_func_to_days(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "to_days"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0; 
-    max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1; 
-  }
-  enum_monotonicity_info get_monotonicity_info() const;
-  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
-};
-
-
-class Item_func_dayofmonth :public Item_int_func
-{
-public:
-  Item_func_dayofmonth(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "dayofmonth"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0; 
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1; 
-  }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
-};
-
 
 class Item_func_month :public Item_func
 {
@@ -134,22 +77,6 @@ public:
     maybe_null=1; 
   }
 };
-
-
-class Item_func_dayofyear :public Item_int_func
-{
-public:
-  Item_func_dayofyear(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "dayofyear"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0;
-    max_length=3*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1; 
-  }
-};
-
 
 class Item_func_hour :public Item_int_func
 {
