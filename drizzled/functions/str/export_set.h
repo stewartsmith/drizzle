@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_EXPORT_SET_H
-#define DRIZZLED_STR_FUNCTIONS_EXPORT_SET_H
+#ifndef DRIZZLED_FUNCTIONS_STR_EXPORT_SET_H
+#define DRIZZLED_FUNCTIONS_STR_EXPORT_SET_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
@@ -33,4 +33,4 @@ class Item_func_export_set: public Item_str_func
   const char *func_name() const { return "export_set"; }
 };
 
-#endif /* DRIZZLED_STR_FUNCTIONS_EXPORT_SET_H */
+#endif /* DRIZZLED_FUNCTIONS_STR_EXPORT_SET_H */

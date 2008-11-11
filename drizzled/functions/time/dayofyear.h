@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TIME_FUNCTIONS_DAYOFYEAR_H
-#define DRIZZLED_TIME_FUNCTIONS_DAYOFYEAR_H
+#ifndef DRIZZLED_FUNCTIONS_TIME_DAYOFYEAR_H
+#define DRIZZLED_FUNCTIONS_TIME_DAYOFYEAR_H
 
 class Item_func_dayofyear :public Item_int_func
 {
@@ -34,4 +34,4 @@ public:
   }
 };
 
-#endif /* DRIZZLED_TIME_FUNCTIONS_DAYOFYEAR_H */
+#endif /* DRIZZLED_FUNCTIONS_TIME_DAYOFYEAR_H */

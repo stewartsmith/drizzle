@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STR_FUNCTIONS_WEIGHT_STRING_H
-#define DRIZZLED_STR_FUNCTIONS_WEIGHT_STRING_H
+#ifndef DRIZZLED_FUNCTIONS_STR_WEIGHT_STRING_H
+#define DRIZZLED_FUNCTIONS_STR_WEIGHT_STRING_H
 
 #include <drizzled/functions/str/strfunc.h> 
 
@@ -41,4 +41,4 @@ public:
   { return true; }
 };
 
-#endif /* DRIZZLED_STR_FUNCTIONS_WEIGHT_STRING_H */
+#endif /* DRIZZLED_FUNCTIONS_STR_WEIGHT_STRING_H */
