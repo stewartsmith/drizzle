@@ -121,9 +121,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       - We should not be binlogging this statement row-based, and
       - there should be no delete triggers associated with the table.
   */
-  if (!using_limit && const_cond_result &&
-      (session->lex->sql_command == SQLCOM_TRUNCATE ||
-       (!session->current_stmt_binlog_row_based)))
+  if (!using_limit && const_cond_result)
   {
     /* Update the table->file->stats.records number */
     table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -927,8 +925,6 @@ trunc_by_del:
   session->options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
   ha_enable_transaction(session, false);
   mysql_init_select(session->lex);
-  bool save_binlog_row_based= session->current_stmt_binlog_row_based;
-  session->clear_current_stmt_binlog_row_based();
   error= mysql_delete(session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   ha_enable_transaction(session, true);
@@ -939,6 +935,5 @@ trunc_by_del:
   error= ha_autocommit_or_rollback(session, error);
   ha_commit(session);
   session->options= save_options;
-  session->current_stmt_binlog_row_based= save_binlog_row_based;
   return(error);
 }

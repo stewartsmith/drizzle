@@ -355,7 +355,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   bool some_tables_deleted=0, tmp_table_deleted=0, foreign_key_error=0;
   String built_query;
 
-  if (session->current_stmt_binlog_row_based && !dont_log_query)
+  if (!dont_log_query)
   {
     built_query.set_charset(system_charset_info);
     if (if_exists)
@@ -419,7 +419,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       being built.  The string always end in a comma and the comma
       will be chopped off before being written to the binary log.
       */
-    if (session->current_stmt_binlog_row_based && !dont_log_query)
+    if (!dont_log_query)
     {
       non_temp_tables_count++;
       /*
@@ -541,8 +541,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     if (!dont_log_query)
     {
-      if (!session->current_stmt_binlog_row_based ||
-          (non_temp_tables_count > 0 && !tmp_table_deleted))
+      if ((non_temp_tables_count > 0 && !tmp_table_deleted))
       {
         /*
           In this case, we are either using statement-based
@@ -553,8 +552,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
          */
         write_bin_log(session, !error, session->query, session->query_length);
       }
-      else if (session->current_stmt_binlog_row_based &&
-               non_temp_tables_count > 0 &&
+      else if (non_temp_tables_count > 0 &&
                tmp_table_deleted)
       {
         /*
@@ -1898,9 +1896,7 @@ bool mysql_create_table_no_lock(Session *session,
     Otherwise, the statement shall be binlogged.
    */
   if (!internal_tmp_table &&
-      (!session->current_stmt_binlog_row_based ||
-       (session->current_stmt_binlog_row_based &&
-        !(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
+      ((!(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
     write_bin_log(session, true, session->query, session->query_length);
   error= false;
 unlock_and_end:
@@ -3023,7 +3019,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   /*
     We have to write the query before we unlock the tables.
   */
-  if (session->current_stmt_binlog_row_based)
   {
     /*
        Since temporary tables are not replicated under row-based
@@ -3077,8 +3072,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       Case 3 and 4 does nothing under RBR
     */
   }
-  else
-    write_bin_log(session, true, session->query, session->query_length);
 
   res= false;
   goto err;
@@ -4885,9 +4878,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (rename_temporary_table(session, new_table, new_db, new_name))
       goto err1;
-    /* We don't replicate alter table statement on temporary tables */
-    if (!session->current_stmt_binlog_row_based)
-      write_bin_log(session, true, session->query, session->query_length);
     goto end_temporary;
   }
 
@@ -4988,7 +4978,6 @@ end_online:
   session->set_proc_info("end");
 
   assert(!(mysql_bin_log.is_open() &&
-                session->current_stmt_binlog_row_based &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 

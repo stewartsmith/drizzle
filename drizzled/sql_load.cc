@@ -438,32 +438,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
     session->transaction.all.modified_non_trans_table= true;
 
   if (mysql_bin_log.is_open())
-  {
-    /*
-      We need to do the job that is normally done inside
-      binlog_query() here, which is to ensure that the pending event
-      is written before tables are unlocked and before any other
-      events are written.  We also need to update the table map
-      version for the binary log to mark that table maps are invalid
-      after this point.
-     */
-    if (session->current_stmt_binlog_row_based)
-      session->binlog_flush_pending_rows_event(true);
-    else
-    {
-      /*
-        As already explained above, we need to call end_io_cache() or the last
-        block will be logged only after Execute_load_query_log_event (which is
-        wrong), when read_info is destroyed.
-      */
-      read_info.end_io_cache();
-      if (lf_info.wrote_create_file)
-      {
-        write_execute_load_query_log_event(session, handle_duplicates, ignore,
-                                           transactional_table,killed_status);
-      }
-    }
-  }
+    session->binlog_flush_pending_rows_event(true);
 
   /* ok to client sent only after binlog write and engine commit */
   my_ok(session, info.copied + info.deleted, 0L, name);

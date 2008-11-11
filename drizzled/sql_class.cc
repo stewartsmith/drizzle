@@ -2619,7 +2619,7 @@ namespace {
 int Session::binlog_write_row(Table* table, bool is_trans, 
                           unsigned char const *record) 
 { 
-  assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
+  assert(mysql_bin_log.is_open());
 
   /*
     Pack records into format for transfer. We are allocating more
@@ -2647,7 +2647,7 @@ int Session::binlog_update_row(Table* table, bool is_trans,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 { 
-  assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
+  assert(mysql_bin_log.is_open());
 
   size_t const before_maxlen = table->max_row_length(before_record);
   size_t const after_maxlen  = table->max_row_length(after_record);
@@ -2680,7 +2680,7 @@ int Session::binlog_update_row(Table* table, bool is_trans,
 int Session::binlog_delete_row(Table* table, bool is_trans, 
                            unsigned char const *record)
 { 
-  assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
+  assert(mysql_bin_log.is_open());
 
   /* 
      Pack records into format for transfer. We are allocating more
@@ -2791,9 +2791,7 @@ int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *que
 
   switch (qtype) {
   case Session::ROW_QUERY_TYPE:
-    if (current_stmt_binlog_row_based)
-      return(0);
-    /* Otherwise, we fall through */
+    return(0);
   case Session::DRIZZLE_QUERY_TYPE:
     /*
       Using this query type is a conveniece hack, since we have been
