@@ -25,9 +25,9 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_filter.h>
-#include <drizzled/rpl_rli.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/rli.h>
 
 #include <mysys/my_dir.h>
 #include <stdarg.h>

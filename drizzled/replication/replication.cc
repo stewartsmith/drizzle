@@ -15,10 +15,10 @@
 
 #include <drizzled/server_includes.h>
 
-#include <drizzled/rpl_mi.h>
-#include <drizzled/sql_repl.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/replication.h>
 #include <drizzled/log_event.h>
-#include <drizzled/rpl_filter.h>
+#include <drizzled/replication/filter.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>

@@ -1,5 +1,5 @@
 #include <drizzled/server_includes.h>
-#include "rpl_reporting.h"
+#include <drizzled/replication/reporting.h>
 #include <drizzled/gettext.h>
 
 void

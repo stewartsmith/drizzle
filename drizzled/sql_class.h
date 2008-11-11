@@ -25,7 +25,7 @@
 
 #include <drizzled/global.h>
 #include <drizzled/log.h>
-#include <drizzled/rpl_tblmap.h>
+#include <drizzled/replication/tblmap.h>
 #include <drizzled/protocol.h>
 #include <libdrizzle/password.h>     // rand_struct
 #include <drizzled/sql_locale.h>

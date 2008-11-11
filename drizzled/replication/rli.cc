@@ -14,11 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/rpl_mi.h>
-#include <drizzled/rpl_rli.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/rli.h>
 // For check_binlog_magic
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_utility.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/utility.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/gettext.h>

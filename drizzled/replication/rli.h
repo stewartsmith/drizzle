@@ -20,10 +20,10 @@
 #ifndef RPL_RLI_H
 #define RPL_RLI_H
 
+#include <drizzled/replication/tblmap.h>
+#include <drizzled/replication/reporting.h>
+#include <drizzled/replication/utility.h>
 #include <string>
-#include "rpl_tblmap.h"
-#include "rpl_reporting.h"
-#include "rpl_utility.h"
 
 struct RPL_TableList;
 class Master_info;

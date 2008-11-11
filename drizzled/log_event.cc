@@ -18,11 +18,11 @@
  */
 
 #include <drizzled/server_includes.h>
-#include "rpl_rli.h"
-#include "rpl_mi.h"
-#include "rpl_filter.h"
-#include "rpl_utility.h"
-#include "rpl_record.h"
+#include <drizzled/replication/rli.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/utility.h>
+#include <drizzled/replication/record.h>
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <libdrizzle/pack.h>

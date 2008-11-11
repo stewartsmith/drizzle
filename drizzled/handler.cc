@@ -24,7 +24,7 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/rpl_filter.h>
+#include <drizzled/replication/filter.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>

@@ -52,7 +52,7 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "rpl_mi.h"
+#include <drizzled/replication/mi.h>
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>

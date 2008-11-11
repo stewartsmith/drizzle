@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/rpl_mi.h>
+#include <drizzled/replication/mi.h>
 #include <drizzled/gettext.h>
 #include <drizzled/slave.h>
 #include <drizzled/data_home.h>

@@ -1162,8 +1162,8 @@ AC_CONFIG_LIBOBJ_DIR([mystrings])
 AC_CHECK_FUNCS( \
   cuserid fchmod \
   fdatasync fpresetsticky fpsetmask fsync \
-  getcwd getpassphrase getpwnam \
-  getpwuid getrlimit getrusage getwd index initgroups isnan \
+  getpassphrase getpwnam \
+  getpwuid getrlimit getrusage index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \

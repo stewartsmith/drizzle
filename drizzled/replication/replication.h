@@ -17,7 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "rpl_filter.h"
+#ifndef DRIZZLED_REPLICATION_REPLICATION_H
+#define DRIZZLED_REPLICATION_REPLICATION_H
+
+#include <drizzled/replication/filter.h>
 
 #include "slave.h"
 
@@ -63,3 +66,7 @@ typedef struct st_load_file_info
 
 int log_loaded_block(IO_CACHE* file);
 int init_replication_sys_vars();
+
+void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos, uint16_t flags);
+
+#endif /* DRIZZLED_REPLICATION_REPLICATION_H */

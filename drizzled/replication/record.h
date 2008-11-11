@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_RPL_RECORD_H
 #define DRIZZLED_RPL_RECORD_H
 
-#include <drizzled/rpl_reporting.h>
+#include <drizzled/replication/reporting.h>
 
 size_t pack_row(Table* table, MY_BITMAP const* cols,
                 unsigned char *row_data, const unsigned char *data);

@@ -14,8 +14,8 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
-#include "rpl_utility.h"
-#include "rpl_rli.h"
+#include <drizzled/replication/utility.h>
+#include <drizzled/replication/rli.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 

@@ -52,5 +52,7 @@ bool mysql_assign_to_keycache(Session* session, TableList* table_list,
 bool mysql_preload_keys(Session* session, TableList* table_list);
 int reassign_keycache_tables(Session* session, KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache);
+void write_bin_log(Session *session, bool clear_error,
+                   char const *query, ulong query_length);
 
 #endif /* DRIZZLE_SERVER_SQL_TABLE_H */

@@ -36,10 +36,10 @@ class Comp_creator;
 typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 
 /**
- * Contains all headers, definitions, and declarations common to 
- * the server and the plugin infrastructure, and not the client 
+ * Contains all headers, definitions, and declarations common to
+ * the server and the plugin infrastructure, and not the client
  */
-#include <drizzled/common_includes.h>       
+#include <drizzled/common_includes.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
 /* Simple error injection (crash) module */
@@ -49,23 +49,6 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
-/* sql_db.cc */
-int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create, bool silent);
-bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
-bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent);
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
-                     bool force_switch);
-bool mysql_opt_change_db(Session *session,
-                         const LEX_STRING *new_db_name,
-                         LEX_STRING *saved_db_name,
-                         bool force_switch,
-                         bool *cur_db_changed);
-
-/* sql_repl.cc */
-void write_bin_log(Session *session, bool clear_error,
-                   char const *query, ulong query_length);
-void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos, uint16_t flags);
-void mysql_client_binlog_statement(Session *session);
 
 /* sql_rename.cc */
 bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent);

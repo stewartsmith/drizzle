@@ -23,6 +23,7 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
+#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <netdb.h>
 

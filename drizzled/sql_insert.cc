@@ -25,7 +25,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/sql_show.h>
-#include <drizzled/rpl_mi.h>
+#include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
 #include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>

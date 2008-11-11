@@ -14,10 +14,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/rpl_rli.h>
-#include <drizzled/rpl_record.h>
-#include <drizzled/rpl_utility.h>
-#include <drizzled/rpl_rli.h>
+#include <drizzled/replication/rli.h>
+#include <drizzled/replication/record.h>
+#include <drizzled/replication/utility.h>
+#include <drizzled/replication/rli.h>
 #include <drizzled/error.h>
 
 /**

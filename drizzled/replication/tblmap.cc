@@ -15,7 +15,7 @@
 
 #include <drizzled/server_includes.h>
 
-#include "rpl_tblmap.h"
+#include <drizzled/replication/tblmap.h>
 
 #define TABLE_ID_HASH_SIZE 32
 #define TABLE_ID_CHUNK 256

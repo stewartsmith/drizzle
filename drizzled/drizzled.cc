@@ -27,9 +27,9 @@
 
 #include <mysys/my_bit.h>
 #include <drizzled/slave.h>
-#include <drizzled/rpl_mi.h>
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_filter.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/filter.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
@@ -125,6 +125,7 @@ typedef fp_except fp_except_t;
 #include <sys/fpu.h>
 #endif
 
+
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -167,6 +168,8 @@ extern "C" int gethostname(char *name, int namelen);
 #endif
 
 extern "C" RETSIGTYPE handle_segfault(int sig);
+
+using namespace std;
 
 /* Constants */
 
@@ -1069,12 +1072,11 @@ static void set_effective_user(struct passwd *user_info_arg)
 /** Change root user if started with @c --chroot . */
 static void set_root(const char *path)
 {
-  if (chroot(path) == -1)
+  if ((chroot(path) == -1) || !chdir("/"))
   {
     sql_perror("chroot");
     unireg_abort(1);
   }
-  my_setwd("/", MYF(0));
 }
 
 
@@ -2491,7 +2493,7 @@ int main(int argc, char **argv)
     We have enough space for fiddling with the argv, continue
   */
   check_data_home(drizzle_real_data_home);
-  if (my_setwd(drizzle_real_data_home,MYF(MY_WME)) && !opt_help)
+  if (chdir(drizzle_real_data_home) && !opt_help)
     unireg_abort(1);				/* purecov: inspected */
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here

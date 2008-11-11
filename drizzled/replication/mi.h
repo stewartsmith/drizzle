@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_RPL_MI_H
 #define DRIZZLED_RPL_MI_H
 
-#include "rpl_rli.h"
-#include "rpl_reporting.h"
+#include <drizzled/replication/rli.h>
+#include <drizzled/replication/reporting.h>
 #include <drizzled/serialize/serialize.h>
 #include <string>
 
