@@ -20,6 +20,10 @@
 #ifndef DRIZZLED_ITEM_TIMEFUNC_H
 #define DRIZZLED_ITEM_TIMEFUNC_H
 
+#include <drizzled/functions/time/weekday.h>
+#include <drizzled/functions/time/str_timefunc.h>
+#include <drizzled/functions/time/curtime.h>
+#include <drizzled/functions/time/dayname.h>
 #include <drizzled/functions/time/dayofmonth.h>
 #include <drizzled/functions/time/dayofyear.h>
 #include <drizzled/functions/time/hour.h>
@@ -29,10 +33,13 @@
 #include <drizzled/functions/time/period_add.h>
 #include <drizzled/functions/time/period_diff.h>
 #include <drizzled/functions/time/second.h>
+#include <drizzled/functions/time/time_to_sec.h>
 #include <drizzled/functions/time/to_days.h>
+#include <drizzled/functions/time/unix_timestamp.h>
 #include <drizzled/functions/time/week.h>
 #include <drizzled/functions/time/week_mode.h>
-#include <drizzled/functions/time/weekday.h>
+#include <drizzled/functions/time/year.h>
+#include <drizzled/functions/time/yearweek.h>
 
 /* Function items used by mysql */
 
@@ -43,87 +50,6 @@ enum date_time_format_types
 
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval);
-
-class Item_func_yearweek :public Item_int_func
-{
-public:
-  Item_func_yearweek(Item *a,Item *b) :Item_int_func(a,b) {}
-  int64_t val_int();
-  const char *func_name() const { return "yearweek"; }
-  void fix_length_and_dec()
-  { 
-    decimals=0;
-    max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_year :public Item_int_func
-{
-public:
-  Item_func_year(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "year"; }
-  enum_monotonicity_info get_monotonicity_info() const;
-  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  void fix_length_and_dec()
-  { 
-    decimals=0;
-    max_length=4*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_dayname :public Item_func_weekday
-{
- public:
-  Item_func_dayname(Item *a) :Item_func_weekday(a,0) {}
-  const char *func_name() const { return "dayname"; }
-  String *val_str(String *str);
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec() 
-  { 
-    collation.set(&my_charset_bin);
-    decimals=0; 
-    max_length=9*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1; 
-  }
-};
-
-
-class Item_func_unix_timestamp :public Item_int_func
-{
-  String value;
-public:
-  Item_func_unix_timestamp() :Item_int_func() {}
-  Item_func_unix_timestamp(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "unix_timestamp"; }
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_time_to_sec :public Item_int_func
-{
-public:
-  Item_func_time_to_sec(Item *item) :Item_int_func(item) {}
-  int64_t val_int();
-  const char *func_name() const { return "time_to_sec"; }
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-};
-
 
 /*
   This can't be a Item_str_func, because the val_real() functions are special
@@ -188,83 +114,6 @@ public:
   {
     return save_date_in_field(field);
   }
-};
-
-
-class Item_str_timefunc :public Item_str_func
-{
-public:
-  Item_str_timefunc() :Item_str_func() {}
-  Item_str_timefunc(Item *a) :Item_str_func(a) {}
-  Item_str_timefunc(Item *a,Item *b) :Item_str_func(a,b) {}
-  Item_str_timefunc(Item *a, Item *b, Item *c) :Item_str_func(a, b ,c) {}
-  enum_field_types field_type() const { return DRIZZLE_TYPE_TIME; }
-  void fix_length_and_dec()
-  {
-    decimals= DATETIME_DEC;
-    max_length=MAX_TIME_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  Field *tmp_table_field(Table *table)
-  {
-    return tmp_table_field_from_field_type(table, 0);
-  }
-  double val_real() { return val_real_from_decimal(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
-  {
-    assert(fixed == 1);
-    return  val_decimal_from_time(decimal_value);
-  }
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
-  {
-    return save_time_in_field(field);
-  }
-};
-
-
-/* Abstract CURTIME function. Children should define what time zone is used */
-
-class Item_func_curtime :public Item_str_timefunc
-{
-  int64_t value;
-  char buff[9*2+32];
-  uint32_t buff_length;
-public:
-  Item_func_curtime() :Item_str_timefunc() {}
-  Item_func_curtime(Item *a) :Item_str_timefunc(a) {}
-  double val_real() { assert(fixed == 1); return (double) value; }
-  int64_t val_int() { assert(fixed == 1); return value; }
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  /* 
-    Abstract method that defines which time zone is used for conversion.
-    Converts time current time in my_time_t representation to broken-down
-    DRIZZLE_TIME representation using UTC-SYSTEM or per-thread time zone.
-  */
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool result_as_int64_t() { return true; }
-  bool check_vcol_func_processor(unsigned char *int_arg  __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_curtime_local :public Item_func_curtime
-{
-public:
-  Item_func_curtime_local() :Item_func_curtime() {}
-  Item_func_curtime_local(Item *a) :Item_func_curtime(a) {}
-  const char *func_name() const { return "curtime"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
-};
-
-
-class Item_func_curtime_utc :public Item_func_curtime
-{
-public:
-  Item_func_curtime_utc() :Item_func_curtime() {}
-  Item_func_curtime_utc(Item *a) :Item_func_curtime(a) {}
-  const char *func_name() const { return "utc_time"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
 };
 
 

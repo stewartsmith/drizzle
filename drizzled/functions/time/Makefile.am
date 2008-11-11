@@ -18,6 +18,8 @@ noinst_LTLIBRARIES = 	libtimefunc.la
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 libtimefunc_la_SOURCES = \
+		  curtime.cc \
+		  dayname.cc \
 		  dayofmonth.cc \
 		  dayofyear.cc \
 		  hour.cc \
@@ -27,12 +29,18 @@ libtimefunc_la_SOURCES = \
 		  period_add.cc \
 		  period_diff.cc \
 		  second.cc \
+		  time_to_sec.cc \
 		  to_days.cc \
+		  unix_timestamp.cc \
 		  week.cc \
 		  week_mode.cc \
-		  weekday.cc
+		  weekday.cc \
+		  year.cc \
+		  yearweek.cc
 
 noinst_HEADERS = \
+		 curtime.h \
+		 dayname.h \
 		 dayofmonth.h \
 		 dayofyear.h \
 		 hour.h \
@@ -42,9 +50,14 @@ noinst_HEADERS = \
 		 period_add.h \
 		 period_diff.h \
 		 second.h \
+		 str_timefunc.h \
+		 time_to_sec.h \
 		 to_days.h \
+		 unix_timestamp.h \
 		 week.h \
 		 week_mode.h \
-		 weekday.h
+		 weekday.h \
+		 year.h  \
+		 yearweek.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@
