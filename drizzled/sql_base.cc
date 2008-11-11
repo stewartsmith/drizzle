@@ -3624,107 +3624,15 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
 
 
 /**
-   Decide on logging format to use for the statement.
 
-   Compute the capabilities vector for the involved storage engines
-   and mask out the flags for the binary log. Right now, the binlog
-   flags only include the capabilities of the storage engines, so this
-   is safe.
+  We just do row based binlogging.
 
-   We now have three alternatives that prevent the statement from
-   being loggable:
-
-   1. If there are no capabilities left (all flags are clear) it is
-      not possible to log the statement at all, so we roll back the
-      statement and report an error.
-
-   2. Statement mode is set, but the capabilities indicate that
-      statement format is not possible.
-
-   3. Row mode is set, but the capabilities indicate that row
-      format is not possible.
-
-   4. Statement is unsafe, but the capabilities indicate that row
-      format is not possible.
-
-   If we are in MIXED mode, we then decide what logging format to use:
-
-   1. If the statement is unsafe, row-based logging is used.
-
-   2. If statement-based logging is not possible, row-based logging is
-      used.
-
-   3. Otherwise, statement-based logging is used.
-
-   @param session    Client thread
-   @param tables Tables involved in the query
  */
 
-int decide_logging_format(Session *session, TableList *tables)
+int decide_logging_format(Session *session)
 {
   if (mysql_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
-  {
-    handler::Table_flags flags_some_set= handler::Table_flags();
-    handler::Table_flags flags_all_set= ~handler::Table_flags();
-    bool multi_engine= false;
-    void* prev_ht= NULL;
-    for (TableList *table= tables; table; table= table->next_global)
-    {
-      if (!table->placeholder() && table->lock_type >= TL_WRITE_ALLOW_WRITE)
-      {
-        uint64_t const flags= table->table->file->ha_table_flags();
-        if (prev_ht && prev_ht != table->table->file->ht)
-          multi_engine= true;
-        prev_ht= table->table->file->ht;
-        flags_all_set &= flags;
-        flags_some_set |= flags;
-      }
-    }
-
-    int error= 0;
-    if (flags_all_set == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-               "Statement cannot be logged to the binary log in"
-               " row-based nor statement-based format");
-    }
-    else if (session->variables.binlog_format == BINLOG_FORMAT_STMT &&
-             (flags_all_set & HA_BINLOG_STMT_CAPABLE) == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-                "Statement-based format required for this statement,"
-                " but not allowed by this combination of engines");
-    }
-    else if ((session->variables.binlog_format == BINLOG_FORMAT_ROW ||
-              session->lex->is_stmt_unsafe()) &&
-             (flags_all_set & HA_BINLOG_ROW_CAPABLE) == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-                "Row-based format required for this statement,"
-                " but not allowed by this combination of engines");
-    }
-
-    if (error)
-      return -1;
-
-    /*
-      We switch to row-based format if we are in mixed mode and one of
-      the following are true:
-
-      1. If the statement is unsafe
-      2. If statement format cannot be used
-
-      Observe that point to cannot be decided before the tables
-      involved in a statement has been checked, i.e., we cannot put
-      this code in reset_current_stmt_binlog_row_based(), it has to be
-      here.
-    */
-    if (session->lex->is_stmt_unsafe() ||
-        (flags_all_set & HA_BINLOG_STMT_CAPABLE) == 0)
-    {
-      session->set_current_stmt_binlog_row_based_if_mixed();
-    }
-  }
+    session->set_current_stmt_binlog_row_based();
 
   return 0;
 }
@@ -3768,7 +3676,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
   *need_reopen= false;
 
   if (!tables)
-    return(decide_logging_format(session, tables));
+    return(decide_logging_format(session));
 
   if (!session->locked_tables)
   {
@@ -3813,7 +3721,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
     }
   }
 
-  return(decide_logging_format(session, tables));
+  return(decide_logging_format(session));
 }
 
 

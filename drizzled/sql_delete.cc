@@ -385,7 +385,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   if (session->lex->current_select->select_limit)
   {
     session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
+    session->set_current_stmt_binlog_row_based();
   }
   session->lex->allow_sum_func= 0;
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,

@@ -1102,7 +1102,7 @@ bool mysql_insert_select_prepare(Session *session)
   if (lex->current_select->select_limit)
   {
     lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
+    session->set_current_stmt_binlog_row_based();
   }
   /*
     SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
@@ -1758,7 +1758,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     virtual int do_postlock(Table **tables, uint32_t count)
     {
       Session *session= const_cast<Session*>(ptr->get_session());
-      if (int error= decide_logging_format(session, &all_tables))
+      if (int error= decide_logging_format(session))
         return error;
 
       Table const *const table = *tables;

@@ -744,7 +744,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
   if (session->lex->current_select->select_limit)
   {
     session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
+    session->set_current_stmt_binlog_row_based();
   }
 
   session->lex->allow_sum_func= 0;

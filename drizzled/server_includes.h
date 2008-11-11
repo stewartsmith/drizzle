@@ -438,7 +438,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
                                 thr_lock_type lock_type);
 bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
 int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
-int decide_logging_format(Session *session, TableList *tables);
+int decide_logging_format(Session *session);
 Table *open_temporary_table(Session *session, const char *path, const char *db,
                             const char *table_name, bool link_in_list,
                             open_table_mode open_mode);

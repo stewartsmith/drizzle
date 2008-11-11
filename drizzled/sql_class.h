@@ -1667,11 +1667,6 @@ public:
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
 
-  inline void set_current_stmt_binlog_row_based_if_mixed()
-  {
-    if (variables.binlog_format == BINLOG_FORMAT_MIXED)
-      current_stmt_binlog_row_based= true;
-  }
   inline void set_current_stmt_binlog_row_based()
   {
     current_stmt_binlog_row_based= true;
