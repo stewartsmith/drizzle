@@ -20,14 +20,31 @@ AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 libtimefunc_la_SOURCES = \
 		  dayofmonth.cc \
 		  dayofyear.cc \
+		  hour.cc \
+		  minute.cc \
+		  month.cc \
+		  quarter.cc \
 		  period_add.cc \
 		  period_diff.cc \
-		  to_days.cc
+		  second.cc \
+		  to_days.cc \
+		  week.cc \
+		  week_mode.cc \
+		  weekday.cc
 
 noinst_HEADERS = \
+		 dayofmonth.h \
 		 dayofyear.h \
+		 hour.h \
+		 minute.h \
+		 month.h \
+		 quarter.h \
 		 period_add.h \
 		 period_diff.h \
-		 to_days.h
+		 second.h \
+		 to_days.h \
+		 week.h \
+		 week_mode.h \
+		 weekday.h
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

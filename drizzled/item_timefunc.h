@@ -22,9 +22,17 @@
 
 #include <drizzled/functions/time/dayofmonth.h>
 #include <drizzled/functions/time/dayofyear.h>
+#include <drizzled/functions/time/hour.h>
+#include <drizzled/functions/time/minute.h>
+#include <drizzled/functions/time/month.h>
+#include <drizzled/functions/time/quarter.h>
 #include <drizzled/functions/time/period_add.h>
 #include <drizzled/functions/time/period_diff.h>
+#include <drizzled/functions/time/second.h>
 #include <drizzled/functions/time/to_days.h>
+#include <drizzled/functions/time/week.h>
+#include <drizzled/functions/time/week_mode.h>
+#include <drizzled/functions/time/weekday.h>
 
 /* Function items used by mysql */
 
@@ -35,122 +43,6 @@ enum date_time_format_types
 
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval);
-
-class Item_func_month :public Item_func
-{
-public:
-  Item_func_month(Item *a) :Item_func(a) {}
-  int64_t val_int();
-  double val_real()
-  { assert(fixed == 1); return (double) Item_func_month::val_int(); }
-  String *val_str(String *str) 
-  {
-    str->set(val_int(), &my_charset_bin);
-    return null_value ? 0 : str;
-  }
-  const char *func_name() const { return "month"; }
-  enum Item_result result_type () const { return INT_RESULT; }
-  void fix_length_and_dec() 
-  { 
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1; 
-  }
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
-};
-
-
-class Item_func_monthname :public Item_func_month
-{
-public:
-  Item_func_monthname(Item *a) :Item_func_month(a) {}
-  const char *func_name() const { return "monthname"; }
-  String *val_str(String *str);
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec() 
-  {
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=10*my_charset_bin.mbmaxlen;
-    maybe_null=1; 
-  }
-};
-
-class Item_func_hour :public Item_int_func
-{
-public:
-  Item_func_hour(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "hour"; }
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_minute :public Item_int_func
-{
-public:
-  Item_func_minute(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "minute"; }
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_quarter :public Item_int_func
-{
-public:
-  Item_func_quarter(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "quarter"; }
-  void fix_length_and_dec()
-  { 
-     decimals=0;
-     max_length=1*MY_CHARSET_BIN_MB_MAXLEN;
-     maybe_null=1;
-  }
-};
-
-
-class Item_func_second :public Item_int_func
-{
-public:
-  Item_func_second(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "second"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0;
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_week :public Item_int_func
-{
-public:
-  Item_func_week(Item *a,Item *b) :Item_int_func(a,b) {}
-  int64_t val_int();
-  const char *func_name() const { return "week"; }
-  void fix_length_and_dec()
-  { 
-    decimals=0;
-    max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
 
 class Item_func_yearweek :public Item_int_func
 {
@@ -183,34 +75,6 @@ public:
   }
 };
 
-
-class Item_func_weekday :public Item_func
-{
-  bool odbc_type;
-public:
-  Item_func_weekday(Item *a,bool type_arg)
-    :Item_func(a), odbc_type(type_arg) {}
-  int64_t val_int();
-  double val_real() { assert(fixed == 1); return (double) val_int(); }
-  String *val_str(String *str)
-  {
-    assert(fixed == 1);
-    str->set(val_int(), &my_charset_bin);
-    return null_value ? 0 : str;
-  }
-  const char *func_name() const
-  {
-     return (odbc_type ? "dayofweek" : "weekday");
-  }
-  enum Item_result result_type () const { return INT_RESULT; }
-  void fix_length_and_dec()
-  {
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=1*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
-};
 
 class Item_func_dayname :public Item_func_weekday
 {
