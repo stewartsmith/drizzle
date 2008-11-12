@@ -37,10 +37,14 @@ enum date_time_format_types
 #include <drizzled/functions/time/dayofyear.h>
 #include <drizzled/functions/time/from_days.h>
 #include <drizzled/functions/time/from_unixtime.h>
+#include <drizzled/functions/time/get_format.h>
 #include <drizzled/functions/time/hour.h>
 #include <drizzled/functions/time/makedate.h>
 #include <drizzled/functions/time/make_datetime.h>
 #include <drizzled/functions/time/make_datetime_with_warn.h>
+#include <drizzled/functions/time/maketime.h>
+#include <drizzled/functions/time/make_time_with_warn.h>
+#include <drizzled/functions/time/microsecond.h>
 #include <drizzled/functions/time/minute.h>
 #include <drizzled/functions/time/month.h>
 #include <drizzled/functions/time/now.h>
@@ -50,7 +54,9 @@ enum date_time_format_types
 #include <drizzled/functions/time/sec_to_time.h>
 #include <drizzled/functions/time/second.h>
 #include <drizzled/functions/time/sysdate_local.h>
+#include <drizzled/functions/time/timestamp_diff.h>
 #include <drizzled/functions/time/time_to_sec.h>
+#include <drizzled/functions/time/timediff.h>
 #include <drizzled/functions/time/to_days.h>
 #include <drizzled/functions/time/unix_timestamp.h>
 #include <drizzled/functions/time/week.h>
@@ -252,87 +258,6 @@ public:
   {
     return save_date_in_field(field);
   }
-};
-
-
-class Item_func_timediff :public Item_str_timefunc
-{
-public:
-  Item_func_timediff(Item *a, Item *b)
-    :Item_str_timefunc(a, b) {}
-  String *val_str(String *str);
-  const char *func_name() const { return "timediff"; }
-  void fix_length_and_dec()
-  {
-    Item_str_timefunc::fix_length_and_dec();
-    maybe_null= 1;
-  }
-};
-
-class Item_func_maketime :public Item_str_timefunc
-{
-public:
-  Item_func_maketime(Item *a, Item *b, Item *c)
-    :Item_str_timefunc(a, b, c) 
-  {
-    maybe_null= true;
-  }
-  String *val_str(String *str);
-  const char *func_name() const { return "maketime"; }
-};
-
-class Item_func_microsecond :public Item_int_func
-{
-public:
-  Item_func_microsecond(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "microsecond"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_timestamp_diff :public Item_int_func
-{
-  const interval_type int_type;
-public:
-  Item_func_timestamp_diff(Item *a,Item *b,interval_type type_arg)
-    :Item_int_func(a,b), int_type(type_arg) {}
-  const char *func_name() const { return "timestampdiff"; }
-  int64_t val_int();
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    maybe_null=1;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-enum date_time_format
-{
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
-
-class Item_func_get_format :public Item_str_func
-{
-public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
 };
 
 

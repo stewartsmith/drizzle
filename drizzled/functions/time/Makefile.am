@@ -28,10 +28,14 @@ libtimefunc_la_SOURCES = \
 		  dayofyear.cc \
 		  from_days.cc \
 		  from_unixtime.cc \
+		  get_format.cc \
 		  hour.cc \
+		  makedate.cc \
 		  make_datetime_with_warn.cc \
 		  make_datetime.cc \
-		  makedate.cc \
+		  maketime.cc \
+		  make_time_with_warn.cc \
+		  microsecond.cc \
 		  minute.cc \
 		  month.cc \
 		  now.cc \
@@ -41,6 +45,8 @@ libtimefunc_la_SOURCES = \
 		  sec_to_time.cc \
 		  second.cc \
 		  sysdate_local.cc \
+		  timediff.cc \
+		  timestamp_diff.cc \
 		  time_to_sec.cc \
 		  to_days.cc \
 		  unix_timestamp.cc \
@@ -61,10 +67,14 @@ noinst_HEADERS = \
 		 dayofyear.h \
 		 from_days.h \
 		 from_unixtime.h \
+		 get_format.h \
 		 hour.h \
+		 makedate.h \
 		 make_datetime_with_warn.h \
 		 make_datetime.h \
-		 makedate.h \
+		 maketime.h \
+		 make_time_with_warn.h \
+		 microsecond.h \
 		 minute.h \
 		 month.h \
 		 now.h \
@@ -75,6 +85,8 @@ noinst_HEADERS = \
 		 second.h \
 		 sysdate_local.h \
 		 str_timefunc.h \
+		 timediff.h \
+		 timestamp_diff.h \
 		 time_to_sec.h \
 		 to_days.h \
 		 unix_timestamp.h \
