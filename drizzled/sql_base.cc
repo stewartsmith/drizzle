@@ -1162,7 +1162,7 @@ void close_temporary_tables(Session *session)
   if (!session->temporary_tables)
     return;
 
-  if (!mysql_bin_log.is_open() || session->current_stmt_binlog_row_based)
+  if (!mysql_bin_log.is_open() || true )
   {
     Table *tmp_next;
     for (table= session->temporary_tables; table; table= tmp_next)

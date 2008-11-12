@@ -1916,11 +1916,6 @@ int handler::update_auto_increment()
   {
     auto_inc_interval_for_cur_row.replace(nr, nb_reserved_values,
                                           variables->auto_increment_increment);
-    /* Row-based replication does not need to store intervals in binlog */
-    if (!session->current_stmt_binlog_row_based)
-        session->auto_inc_intervals_in_cur_stmt_for_binlog.append(auto_inc_interval_for_cur_row.minimum(),
-                                                              auto_inc_interval_for_cur_row.values(),
-                                                              variables->auto_increment_increment);
   }
 
   /*
@@ -4291,8 +4286,7 @@ static bool check_table_binlog_row_based(Session *session, Table *table)
   assert(table->s->cached_row_logging_check == 0 ||
               table->s->cached_row_logging_check == 1);
 
-  return (session->current_stmt_binlog_row_based &&
-          table->s->cached_row_logging_check &&
+  return (table->s->cached_row_logging_check &&
           (session->options & OPTION_BIN_LOG) &&
           mysql_bin_log.is_open());
 }

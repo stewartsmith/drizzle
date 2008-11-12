@@ -2310,7 +2310,6 @@ int Session::binlog_write_table_map(Table *table, bool is_trans)
   int error;
 
   /* Pre-conditions */
-  assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
   assert(table->s->table_map_id != UINT32_MAX);
 
   Table_map_log_event::flag_set const
@@ -2528,69 +2527,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
         test first if we want to write to trans_log, and if not, lock
         LOCK_log.
       */
-    }
-
-    /*
-      No check for auto events flag here - this write method should
-      never be called if auto-events are enabled
-    */
-
-    /*
-      1. Write first log events which describe the 'run environment'
-      of the SQL command
-    */
-
-    /*
-      If row-based binlogging, Insert_id, Rand and other kind of "setting
-      context" events are not needed.
-    */
-    if (session)
-    {
-      if (!session->current_stmt_binlog_row_based)
-      {
-        if (session->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
-        {
-          Intvar_log_event e(session,(unsigned char) LAST_INSERT_ID_EVENT,
-                             session->first_successful_insert_id_in_prev_stmt_for_binlog);
-          if (e.write(file))
-            goto err;
-        }
-        if (session->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
-        {
-          /*
-            If the auto_increment was second in a table's index (possible with
-            MyISAM or BDB) (table->next_number_keypart != 0), such event is
-            in fact not necessary. We could avoid logging it.
-          */
-          Intvar_log_event e(session, (unsigned char) INSERT_ID_EVENT,
-                             session->auto_inc_intervals_in_cur_stmt_for_binlog.
-                             minimum());
-          if (e.write(file))
-            goto err;
-        }
-        if (session->rand_used)
-        {
-          Rand_log_event e(session,session->rand_saved_seed1,session->rand_saved_seed2);
-          if (e.write(file))
-            goto err;
-        }
-        if (session->user_var_events.elements)
-        {
-          for (uint32_t i= 0; i < session->user_var_events.elements; i++)
-          {
-            BINLOG_USER_VAR_EVENT *user_var_event;
-            get_dynamic(&session->user_var_events,(unsigned char*) &user_var_event, i);
-            User_var_log_event e(session, user_var_event->user_var_event->name.str,
-                                 user_var_event->user_var_event->name.length,
-                                 user_var_event->value,
-                                 user_var_event->length,
-                                 user_var_event->type,
-                                 user_var_event->charset_number);
-            if (e.write(file))
-              goto err;
-          }
-        }
-      }
     }
 
     /*

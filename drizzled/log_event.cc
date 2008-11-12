@@ -5281,7 +5281,6 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       thread is certainly going to stop.
       rollback at the caller along with sbr.
     */
-    session->reset_current_stmt_binlog_row_based();
     const_cast<Relay_log_info*>(rli)->cleanup_context(session, error);
     session->is_slave_error= 1;
     return(error);
@@ -5375,8 +5374,6 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
       transactional engine), and a call to be sure to have the pending
       event flushed.
     */
-
-    session->reset_current_stmt_binlog_row_based();
 
     rli->cleanup_context(session, 0);
     if (error == 0)
@@ -5771,16 +5768,6 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
     */
     lex_start(session);
     mysql_reset_session_for_next_command(session);
-    /*
-      Check if the slave is set to use SBR.  If so, it should switch
-      to using RBR until the end of the "statement", i.e., next
-      STMT_END_F or next error.
-    */
-    if (!session->current_stmt_binlog_row_based &&
-        mysql_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
-    {
-      session->set_current_stmt_binlog_row_based();
-    }
 
     /*
       Open the table if it is not already open and add the table to

@@ -372,19 +372,6 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   
   List<Item> all_fields;
 
-  /*
-    Statement-based replication of DELETE ... LIMIT is not safe as order of
-    rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if ORDER BY primary_key
-    is present. However it may confuse users to see very similiar statements
-    replicated differently.
-  */
-  if (session->lex->current_select->select_limit)
-  {
-    session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based();
-  }
   session->lex->allow_sum_func= 0;
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,
