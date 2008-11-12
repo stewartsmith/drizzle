@@ -39,9 +39,11 @@ DISTCLEANFILES = ac_available_languages_fragment
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-		groupadd $(DRIZZLED_USER) ;\
-		useradd -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
-		chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
+		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
+			$(GROUPADD) $(DRIZZLED_USER) ;\
+			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
+			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
+		fi \
 	fi
 
 distclean-local:
