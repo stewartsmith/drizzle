@@ -360,6 +360,12 @@ AC_SUBST(NM)dnl
 AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
+# Look for "(group|user)add". 
+# TODO: If the programs do not exist, inform the DBA that the user
+#       was not created at the end of the install routine.
+AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
+AC_CHECK_PROGS(USERADD, useradd adduser)
+
 # Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
 if test -z "$YACC" && test -d ".bzr"
