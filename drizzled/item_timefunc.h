@@ -22,17 +22,22 @@
 
 #include <drizzled/functions/time/weekday.h>
 #include <drizzled/functions/time/str_timefunc.h>
+#include <drizzled/functions/time/date.h>
+#include <drizzled/functions/time/curdate.h>
 #include <drizzled/functions/time/curtime.h>
 #include <drizzled/functions/time/dayname.h>
 #include <drizzled/functions/time/dayofmonth.h>
 #include <drizzled/functions/time/dayofyear.h>
+#include <drizzled/functions/time/from_days.h>
 #include <drizzled/functions/time/hour.h>
 #include <drizzled/functions/time/minute.h>
 #include <drizzled/functions/time/month.h>
+#include <drizzled/functions/time/now.h>
 #include <drizzled/functions/time/quarter.h>
 #include <drizzled/functions/time/period_add.h>
 #include <drizzled/functions/time/period_diff.h>
 #include <drizzled/functions/time/second.h>
+#include <drizzled/functions/time/sysdate_local.h>
 #include <drizzled/functions/time/time_to_sec.h>
 #include <drizzled/functions/time/to_days.h>
 #include <drizzled/functions/time/unix_timestamp.h>
@@ -50,190 +55,6 @@ enum date_time_format_types
 
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval);
-
-/*
-  This can't be a Item_str_func, because the val_real() functions are special
-*/
-
-class Item_date :public Item_func
-{
-public:
-  Item_date() :Item_func() {}
-  Item_date(Item *a) :Item_func(a) {}
-  enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
-  String *val_str(String *str);
-  int64_t val_int();
-  double val_real() { return val_real_from_decimal(); }
-  const char *func_name() const { return "date"; }
-  void fix_length_and_dec()
-  { 
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  Field *tmp_table_field(Table *table)
-  {
-    return tmp_table_field_from_field_type(table, 0);
-  }
-  bool result_as_int64_t() { return true; }
-  my_decimal *val_decimal(my_decimal *decimal_value)
-  {
-    assert(fixed == 1);
-    return  val_decimal_from_date(decimal_value);
-  }
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
-  {
-    return save_date_in_field(field);
-  }
-};
-
-
-class Item_date_func :public Item_str_func
-{
-public:
-  Item_date_func() :Item_str_func() {}
-  Item_date_func(Item *a) :Item_str_func(a) {}
-  Item_date_func(Item *a,Item *b) :Item_str_func(a,b) {}
-  Item_date_func(Item *a,Item *b, Item *c) :Item_str_func(a,b,c) {}
-  enum_field_types field_type() const { return DRIZZLE_TYPE_DATETIME; }
-  Field *tmp_table_field(Table *table)
-  {
-    return tmp_table_field_from_field_type(table, 0);
-  }
-  bool result_as_int64_t() { return true; }
-  double val_real() { return (double) val_int(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
-  {
-    assert(fixed == 1);
-    return  val_decimal_from_date(decimal_value);
-  }
-  int save_in_field(Field *field,
-                    bool no_conversions __attribute__((unused)))
-  {
-    return save_date_in_field(field);
-  }
-};
-
-
-/* Abstract CURDATE function. See also Item_func_curtime. */
-
-class Item_func_curdate :public Item_date
-{
-  int64_t value;
-  DRIZZLE_TIME ltime;
-public:
-  Item_func_curdate() :Item_date() {}
-  int64_t val_int() { assert(fixed == 1); return (value) ; }
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_curdate_local :public Item_func_curdate
-{
-public:
-  Item_func_curdate_local() :Item_func_curdate() {}
-  const char *func_name() const { return "curdate"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
-};
-
-
-class Item_func_curdate_utc :public Item_func_curdate
-{
-public:
-  Item_func_curdate_utc() :Item_func_curdate() {}
-  const char *func_name() const { return "utc_date"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
-};
-
-
-/* Abstract CURRENT_TIMESTAMP function. See also Item_func_curtime */
-
-class Item_func_now :public Item_date_func
-{
-protected:
-  int64_t value;
-  char buff[20*2+32];	// +32 to make my_snprintf_{8bit|ucs2} happy
-  uint32_t buff_length;
-  DRIZZLE_TIME ltime;
-public:
-  Item_func_now() :Item_date_func() {}
-  Item_func_now(Item *a) :Item_date_func(a) {}
-  enum Item_result result_type () const { return STRING_RESULT; }
-  int64_t val_int() { assert(fixed == 1); return value; }
-  int save_in_field(Field *to, bool no_conversions);
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return true; }
-};
-
-
-class Item_func_now_local :public Item_func_now
-{
-public:
-  Item_func_now_local() :Item_func_now() {}
-  Item_func_now_local(Item *a) :Item_func_now(a) {}
-  const char *func_name() const { return "now"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
-  virtual enum Functype functype() const { return NOW_FUNC; }
-};
-
-
-class Item_func_now_utc :public Item_func_now
-{
-public:
-  Item_func_now_utc() :Item_func_now() {}
-  Item_func_now_utc(Item *a) :Item_func_now(a) {}
-  const char *func_name() const { return "utc_timestamp"; }
-  virtual void store_now_in_TIME(DRIZZLE_TIME *now_time);
-};
-
-
-/*
-  This is like NOW(), but always uses the real current time, not the
-  query_start(). This matches the Oracle behavior.
-*/
-class Item_func_sysdate_local :public Item_func_now
-{
-public:
-  Item_func_sysdate_local() :Item_func_now() {}
-  Item_func_sysdate_local(Item *a) :Item_func_now(a) {}
-  bool const_item() const { return 0; }
-  const char *func_name() const { return "sysdate"; }
-  void store_now_in_TIME(DRIZZLE_TIME *now_time);
-  double val_real();
-  int64_t val_int();
-  int save_in_field(Field *to, bool no_conversions);
-  String *val_str(String *str);
-  void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  void update_used_tables()
-  {
-    Item_func_now::update_used_tables();
-    used_tables_cache|= RAND_TABLE_BIT;
-  }
-};
-
-
-class Item_func_from_days :public Item_date
-{
-public:
-  Item_func_from_days(Item *a) :Item_date(a) {}
-  const char *func_name() const { return "from_days"; }
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  bool check_vcol_func_processor(unsigned char *int_arg __attribute__((unused)))
-  { return false; }
-};
-
 
 class Item_func_date_format :public Item_str_func
 {
