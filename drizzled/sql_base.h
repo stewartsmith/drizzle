@@ -17,27 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_UDF_H
-#define DRIZZLED_SQL_UDF_H
-
-/* This file defines structures needed by udf functions */
+#ifndef DRIZZLED_SQL_BASE_H
+#define DRIZZLED_SQL_BASE_H
 
 #include <stdint.h>
-#include <drizzled/item_func.h>
 
-enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
+typedef struct st_table_share TABLE_SHARE;
 
-typedef Item_func* (*create_func_item)(MEM_ROOT*);
+void table_cache_free(void);
+bool table_cache_init(void);
+bool table_def_init(void);
+void table_def_free(void);
+void assign_new_table_id(TABLE_SHARE *share);
+uint32_t cached_open_tables(void);
+uint32_t cached_table_definitions(void);
 
-struct udf_func
-{
-  LEX_STRING name;
-  create_func_item create_func;
-};
+void kill_drizzle(void);
 
-void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint32_t len=0);
-void free_udf(udf_func *udf);
-int mysql_create_function(Session *session,udf_func *udf);
 
-#endif /* DRIZZLED_SQL_UDF_H */
+#endif /* DRIZZLED_SQL_BASE_H */

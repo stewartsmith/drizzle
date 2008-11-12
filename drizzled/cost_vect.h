@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_COST_VECT_H
 #define DRIZZLED_COST_VECT_H
 
-#include CSTDINT_H
+#include <stdint.h>
 
 class COST_VECT
 {

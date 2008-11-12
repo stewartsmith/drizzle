@@ -17,7 +17,7 @@
 
 #include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
@@ -283,7 +283,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (tables && tables->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -4394,7 +4394,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
 
   if (table_list && table_list->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 

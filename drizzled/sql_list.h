@@ -459,7 +459,7 @@ struct ilink
   struct ilink **prev,*next;
   static void *operator new(size_t size)
   {
-    return (void*)my_malloc((uint)size, MYF(MY_WME | MY_FAE | ME_FATALERROR));
+    return (void*)malloc((uint)size);
   }
   static void operator delete(void* ptr_arg,
                               size_t size __attribute__((unused)))

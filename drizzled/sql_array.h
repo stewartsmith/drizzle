@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SQL_ARRAY_H
+#define DRIZZLED_SQL_ARRAY_H
+
 #include <mysys/my_sys.h>
 
 /* 
@@ -89,3 +92,4 @@ public:
   }
 };
 
+#endif /* DRIZZLED_SQL_ARRAY_H */

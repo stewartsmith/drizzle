@@ -535,7 +535,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   uint32_t path_len;
 
   /* do not create 'information_schema' db */
-  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.str))
+  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.c_str()))
   {
     my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
     return(-1);
@@ -771,7 +771,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -1107,14 +1107,16 @@ static void mysql_change_db_impl(Session *session,
 
     session->set_db(NULL, 0);
   }
-  else if (new_db_name == &INFORMATION_SCHEMA_NAME)
+  else if (my_strcasecmp(system_charset_info, new_db_name->str,
+                         INFORMATION_SCHEMA_NAME.c_str()) == 0)
   {
     /*
       Here we must use Session::set_db(), because we want to copy
       INFORMATION_SCHEMA_NAME constant.
     */
 
-    session->set_db(INFORMATION_SCHEMA_NAME.str, INFORMATION_SCHEMA_NAME.length);
+    session->set_db(INFORMATION_SCHEMA_NAME.c_str(),
+                    INFORMATION_SCHEMA_NAME.length());
   }
   else
   {
@@ -1290,11 +1292,13 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   }
 
   if (my_strcasecmp(system_charset_info, new_db_name->str,
-                    INFORMATION_SCHEMA_NAME.str) == 0)
+                    INFORMATION_SCHEMA_NAME.c_str()) == 0)
   {
     /* Switch the current database to INFORMATION_SCHEMA. */
-
-    mysql_change_db_impl(session, &INFORMATION_SCHEMA_NAME, system_charset_info);
+    /* const_cast<> is safe here: mysql_change_db_impl does a copy */
+    LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
+                          INFORMATION_SCHEMA_NAME.length() };
+    mysql_change_db_impl(session, &is_name, system_charset_info);
 
     return(false);
   }

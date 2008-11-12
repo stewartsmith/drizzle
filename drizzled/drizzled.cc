@@ -34,6 +34,9 @@
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
+#include <drizzled/sql_parse.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -674,32 +677,6 @@ static void close_server_sock()
 }
 
 
-void kill_drizzle(void)
-{
-
-#if defined(SIGNALS_DONT_BREAK_READ)
-  abort_loop=1;					// Break connection loops
-  close_server_sock();				// Force accept to wake up
-#endif
-
-#if defined(HAVE_PTHREAD_KILL)
-  pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
-#elif !defined(SIGNALS_DONT_BREAK_READ)
-  kill(current_pid, DRIZZLE_KILL_SIGNAL);
-#endif
-  shutdown_in_progress=1;			// Safety if kill didn't work
-#ifdef SIGNALS_DONT_BREAK_READ
-  if (!kill_in_progress)
-  {
-    pthread_t tmp;
-    abort_loop=1;
-    if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
-			   (void*) 0))
-      sql_print_error(_("Can't create thread to kill server"));
-  }
-#endif
-  return;;
-}
 
 /**
   Force server down. Kill all connections and threads and exit.
@@ -1207,32 +1184,6 @@ static void network_init(void)
   return;
 }
 
-/**
-  Close a connection.
-
-  @param session		Thread handle
-  @param errcode	Error code to print to console
-  @param lock	        1 if we have have to lock LOCK_thread_count
-
-  @note
-    For the connection that is doing shutdown, this is called twice
-*/
-void close_connection(Session *session, uint32_t errcode, bool lock)
-{
-  st_vio *vio;
-  if (lock)
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-  session->killed= Session::KILL_CONNECTION;
-  if ((vio= session->net.vio) != 0)
-  {
-    if (errcode)
-      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
-    net_close(&(session->net));		/* vio is freed in delete session */
-  }
-  if (lock)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  return;;
-}
 
 
 /** Called when a thread is aborted. */

@@ -1,4 +1,4 @@
-dnl -*- ksh -*-
+dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
@@ -555,7 +555,6 @@ AC_CHECK_LIB(uuid, uuid_generate)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
   [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
        [Use libevent in DIR])],
@@ -576,7 +575,7 @@ then
     LIBS="${my_save_LIBS}"
     LIBEVENT_CPPFLAGS=""
 else
-    AC_MSG_RESULT($withval)
+    AC_MSG_CHECKING(for libevent in $withval)
     if test -f $withval/event.h -a -f $withval/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi

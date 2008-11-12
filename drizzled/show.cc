@@ -21,7 +21,7 @@
 /* Function with list databases, tables or fields */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <mysys/my_dir.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/convert.h>
@@ -1015,9 +1015,9 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   uint32_t create_options = create_info ? create_info->options : 0;
 
   if (!my_strcasecmp(system_charset_info, dbname,
-                     INFORMATION_SCHEMA_NAME.str))
+                     INFORMATION_SCHEMA_NAME.c_str()))
   {
-    dbname= INFORMATION_SCHEMA_NAME.str;
+    dbname= INFORMATION_SCHEMA_NAME.c_str();
     create.default_table_charset= system_charset_info;
   }
   else
@@ -2028,8 +2028,8 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
 {
   LEX_STRING *i_s_name_copy= 0;
   i_s_name_copy= session->make_lex_string(i_s_name_copy,
-                                      INFORMATION_SCHEMA_NAME.str,
-                                      INFORMATION_SCHEMA_NAME.length, true);
+                                      INFORMATION_SCHEMA_NAME.c_str(),
+                                      INFORMATION_SCHEMA_NAME.length(), true);
   *with_i_schema= 0;
   if (lookup_field_vals->wild_db_value)
   {
@@ -2040,7 +2040,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
     */
     if (!lookup_field_vals->db_value.str ||
         !wild_case_compare(system_charset_info, 
-                           INFORMATION_SCHEMA_NAME.str,
+                           INFORMATION_SCHEMA_NAME.c_str(),
                            lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
@@ -2058,7 +2058,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
   */
   if (lookup_field_vals->db_value.str)
   {
-    if (!my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str,
+    if (!my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.c_str(),
                        lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
@@ -4208,8 +4208,8 @@ int make_schema_select(Session *session, SELECT_LEX *sel,
      We have to make non const db_name & table_name
      because of lower_case_table_names
   */
-  session->make_lex_string(&db, INFORMATION_SCHEMA_NAME.str,
-                       INFORMATION_SCHEMA_NAME.length, 0);
+  session->make_lex_string(&db, INFORMATION_SCHEMA_NAME.c_str(),
+                       INFORMATION_SCHEMA_NAME.length(), 0);
   session->make_lex_string(&table, schema_table->table_name,
                        strlen(schema_table->table_name), 0);
   if (schema_table->old_format(session, schema_table) ||   /* Handle old syntax */

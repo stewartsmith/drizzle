@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HANDLER_STRUCTS_H
 #define DRIZZLED_HANDLER_STRUCTS_H
 
-#include CSTDINT_H
+#include <stdint.h>
 #include <time.h>
 
 #include <drizzled/base.h>

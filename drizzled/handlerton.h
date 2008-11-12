@@ -20,8 +20,9 @@
 #ifndef DRIZZLED_HANDLERTON_H
 #define DRIZZLED_HANDLERTON_H
 
+#include <stdint.h>
+
 #include <drizzled/definitions.h>
-#include CSTDINT_H
 #include <drizzled/sql_plugin.h>
 
 class TableList;

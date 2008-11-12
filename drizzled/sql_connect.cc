@@ -22,10 +22,12 @@
   Functions to autenticate and handle reqests for a connection
 */
 #include <drizzled/server_includes.h>
+#include <netdb.h>
+
 #include <drizzled/authentication.h>
 #include <drizzled/db.h>
 #include <drizzled/error.h>
-#include <netdb.h>
+#include <drizzled/sql_parse.h>
 
 extern scheduler_functions thread_scheduler;
 

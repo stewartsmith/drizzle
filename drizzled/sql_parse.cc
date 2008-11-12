@@ -25,6 +25,9 @@
 #include <drizzled/query_id.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
+#include <drizzled/rename.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -716,7 +719,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     packet= arg_end + 1;
 
     if (!my_strcasecmp(system_charset_info, table_list.db,
-                       INFORMATION_SCHEMA_NAME.str))
+                       INFORMATION_SCHEMA_NAME.c_str()))
     {
       ST_SCHEMA_TABLE *schema_table= find_schema_table(session, table_list.alias);
       if (schema_table)
@@ -3069,7 +3072,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.str))
+                                      INFORMATION_SCHEMA_NAME.c_str()))
   {
     ST_SCHEMA_TABLE *schema_table= find_schema_table(session, ptr->table_name);
     if (!schema_table ||
@@ -3082,7 +3085,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
           lex->sql_command == SQLCOM_SHOW_KEYS)))
     {
       my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.str);
+               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
       return(0);
     }
     ptr->schema_table_name= ptr->table_name;
@@ -4087,7 +4090,7 @@ bool create_table_precheck(Session *, TableList *,
 
   if (create_table && (strcmp(create_table->db, "information_schema") == 0))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -4164,8 +4167,9 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint32_t max_char_length,
-                           uint32_t err_code, const char *param_for_err_msg)
+bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
+                           uint32_t max_char_length,
+                           const char *param_for_err_msg)
 {
 #ifdef HAVE_CHARSET_utf8mb3
   /*

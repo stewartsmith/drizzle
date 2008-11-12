@@ -51,8 +51,6 @@ enum tmp_table_type
 bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
 
 
-enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
-
 /*
   Values in this enum are used to indicate how a tables TIMESTAMP field
   should be treated. It can be set to the current timestamp on insert or
@@ -609,6 +607,9 @@ public:
 
   int report_error(int error);
 };
+
+Table *create_virtual_tmp_table(Session *session,
+                                List<Create_field> &field_list);
 
 typedef struct st_foreign_key_info
 {

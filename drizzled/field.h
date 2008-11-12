@@ -723,11 +723,12 @@ public:
 
 
 Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
-		  unsigned char *null_pos, unsigned char null_bit,
-		  uint32_t pack_flag, enum_field_types field_type,
-		  const CHARSET_INFO * cs,
-		  Field::utype unireg_check,
-		  TYPELIB *interval, const char *field_name);
+                  unsigned char *null_pos, unsigned char null_bit,
+                  uint32_t pack_flag, enum_field_types field_type,
+                  const CHARSET_INFO * cs,
+                  Field::utype unireg_check,
+                  TYPELIB *interval, const char *field_name);
+
 uint32_t pack_length_to_packflag(uint32_t type);
 enum_field_types get_blob_type_from_length(uint32_t length);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);

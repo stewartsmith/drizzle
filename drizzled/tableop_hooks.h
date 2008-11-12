@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_TABLEOP_HOOKS_H
 #define DRIZZLED_TABLEOP_HOOKS_H
 
-#include CSTDINT_H
+#include <stdint.h>
 
 class Table;
 

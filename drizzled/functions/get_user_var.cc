@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/get_user_var.h>
+#include <drizzled/sql_parse.h>
 
 String *
 Item_func_get_user_var::val_str(String *str)

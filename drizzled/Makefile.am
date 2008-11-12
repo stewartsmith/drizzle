@@ -131,11 +131,13 @@ noinst_HEADERS = \
 		protocol.h \
 		qcache.h \
 		query_id.h \
-		replication/replication.h \
+		rename.h \
+		replication/binlog.h \
 		replication/constants.h \
 		replication/filter.h \
 		replication/mi.h \
 		replication/record.h \
+		replication/replication.h \
 		replication/reporting.h \
 		replication/rli.h \
 		replication/tblmap.h \
@@ -149,6 +151,7 @@ noinst_HEADERS = \
 		slave.h \
 		sql_alloc.h \
 		sql_array.h \
+		sql_base.h \
 		sql_bitmap.h \
 		sql_class.h \
 		sql_error.h \
@@ -158,7 +161,6 @@ noinst_HEADERS = \
 		sql_parse.h \
 		sql_plugin.h \
 		sql_select.h \
-		sql_show.h \
 		sql_sort.h \
 		sql_state.h \
 		sql_string.h \
@@ -213,6 +215,7 @@ drizzled_SOURCES = \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
+		rename.cc \
 		replication/binlog.cc \
 		replication/filter.cc \
 		replication/mi.cc \
@@ -225,6 +228,7 @@ drizzled_SOURCES = \
 		scheduler.cc \
                 scheduling.cc \
 		set_var.cc \
+		show.cc \
 		sj_tmp_table.cc \
 		slave.cc \
 		sql_base.cc \
@@ -244,9 +248,7 @@ drizzled_SOURCES = \
 		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
-		sql_rename.cc \
 		sql_select.cc \
-		sql_show.cc \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
@@ -289,11 +291,13 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
-#		server_includes.h.gch
 if GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
 		handlerton.h.gch  \
+		show.h.gch \
+		sql_base.h.gch \
+		sql_parse.h.gch \
 		sql_plugin.h.gch
 else
 PCHHEADERS = 

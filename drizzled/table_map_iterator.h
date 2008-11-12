@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_TABLE_MAP_ITERATOR_H
 #define DRIZZLED_TABLE_MAP_ITERATOR_H
 
-#include CSTDINT_H
+#include <stdint.h>
 
 /* An iterator to quickly walk over bits in unint64_t bitmap. */
 class Table_map_iterator

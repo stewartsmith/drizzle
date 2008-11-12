@@ -2856,3 +2856,30 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   elements++;
   return(0);
 }
+
+/**
+  Close a connection.
+
+  @param session		Thread handle
+  @param errcode	Error code to print to console
+  @param lock	        1 if we have have to lock LOCK_thread_count
+
+  @note
+    For the connection that is doing shutdown, this is called twice
+*/
+void close_connection(Session *session, uint32_t errcode, bool lock)
+{
+  st_vio *vio;
+  if (lock)
+    (void) pthread_mutex_lock(&LOCK_thread_count);
+  session->killed= Session::KILL_CONNECTION;
+  if ((vio= session->net.vio) != 0)
+  {
+    if (errcode)
+      net_send_error(session, errcode, ER(errcode)); /* purecov: inspected */
+    net_close(&(session->net));		/* vio is freed in delete session */
+  }
+  if (lock)
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
+  return;;
+}
