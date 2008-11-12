@@ -764,9 +764,6 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
                ER_TRUNCATED_WRONG_VALUE, warn_buff);
 }
 
-/* Daynumber from year 0 to 9999-12-31 */
-#define MAX_DAY_NUMBER 3652424L
-
 bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL interval)
 {
   long period, sign;
