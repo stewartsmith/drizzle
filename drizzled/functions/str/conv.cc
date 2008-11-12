@@ -21,51 +21,37 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/conv.h>
 
-String *Item_str_conv::val_str(String *str)
+String *Item_func_conv::val_str(String *str)
 {
   assert(fixed == 1);
-  String *res;
-  if (!(res=args[0]->val_str(str)))
+  String *res= args[0]->val_str(str);
+  char *endptr,ans[65],*ptr;
+  int64_t dec;
+  int from_base= (int) args[1]->val_int();
+  int to_base= (int) args[2]->val_int();
+  int err;
+
+  if (args[0]->null_value || args[1]->null_value || args[2]->null_value ||
+      abs(to_base) > 36 || abs(to_base) < 2 ||
+      abs(from_base) > 36 || abs(from_base) < 2 || !(res->length()))
   {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
+    null_value= 1;
+    return NULL;
   }
-  null_value=0;
-  if (multiply == 1)
-  {
-    uint32_t len;
-    res= copy_if_not_alloced(str,res,res->length());
-    len= converter(collation.collation, (char*) res->ptr(), res->length(),
-                                        (char*) res->ptr(), res->length());
-    assert(len <= res->length());
-    res->length(len);
-  }
+  null_value= 0;
+  unsigned_flag= !(from_base < 0);
+
+  if (from_base < 0)
+    dec= my_strntoll(res->charset(), res->ptr(), res->length(),
+                     -from_base, &endptr, &err);
   else
-  {
-    uint32_t len= res->length() * multiply;
-    tmp_value.alloc(len);
-    tmp_value.set_charset(collation.collation);
-    len= converter(collation.collation, (char*) res->ptr(), res->length(),
-                                        (char*) tmp_value.ptr(), len);
-    tmp_value.length(len);
-    res= &tmp_value;
-  }
-  return res;
+    dec= (int64_t) my_strntoull(res->charset(), res->ptr(), res->length(),
+                                 from_base, &endptr, &err);
+
+  ptr= int64_t2str(dec, ans, to_base);
+  if (str->copy(ans, (uint32_t) (ptr-ans), default_charset()))
+    return &my_empty_string;
+  return str;
 }
 
-void Item_func_lcase::fix_length_and_dec()
-{
-  collation.set(args[0]->collation);
-  multiply= collation.collation->casedn_multiply;
-  converter= collation.collation->cset->casedn;
-  max_length= args[0]->max_length * multiply;
-}
-
-void Item_func_ucase::fix_length_and_dec()
-{
-  collation.set(args[0]->collation);
-  multiply= collation.collation->caseup_multiply;
-  converter= collation.collation->cset->caseup;
-  max_length= args[0]->max_length * multiply;
-}
 

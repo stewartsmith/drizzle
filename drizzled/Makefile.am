@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions functions/str .
+SUBDIRS = util field serialize functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -75,6 +75,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
 		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
+		 $(top_builddir)/drizzled/functions/time/libtimefunc.la \
 		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
