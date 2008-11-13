@@ -4385,6 +4385,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   handlerton *old_db_type, *new_db_type, *save_old_db_type;
   legacy_db_type table_type;
 
+  new_name_buff[0]= '\0';
+
   if (table_list && table_list->schema_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
