@@ -296,7 +296,6 @@ if GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
 		handlerton.h.gch  \
-		show.h.gch \
 		sql_base.h.gch \
 		sql_parse.h.gch \
 		sql_plugin.h.gch

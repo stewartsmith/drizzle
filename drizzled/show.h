@@ -31,6 +31,8 @@
 #include <stdint.h>
 
 #include <drizzled/sql_list.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_parse.h>
 
 /* Forward declarations */
 class String;
