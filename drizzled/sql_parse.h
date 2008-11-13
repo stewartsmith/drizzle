@@ -33,6 +33,7 @@ class TableList;
 class Lex_input_stream;
 class Item;
 class LEX;
+class Table_ident;
 
 
 bool begin_trans(Session *session);
