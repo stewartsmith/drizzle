@@ -201,6 +201,8 @@ public:
 
 
 class Item_cache;
+#define UNKNOWN ((bool)-1)
+
 
 /*
   Item_in_optimizer(left_expr, Item_in_subselect(...))
@@ -232,7 +234,7 @@ protected:
 public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
     Item_bool_func(a, reinterpret_cast<Item *>(b)), cache(0),
-    save_cache(0), result_for_null_param((bool)-1)
+    save_cache(0), result_for_null_param(UNKNOWN)
   { with_subselect= true; }
   bool fix_fields(Session *, Item **);
   bool fix_left(Session *session, Item **ref);

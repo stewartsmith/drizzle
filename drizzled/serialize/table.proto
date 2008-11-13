@@ -121,7 +121,7 @@ message Table {
   message Index {
 
     enum IndexType {
-      UNKNOWN = 0;
+      UNKNOWN_INDEX = 0;
       HASH = 1;
       BTREE = 2;
     }
@@ -135,7 +135,7 @@ message Table {
     required string name = 1;
     required bool is_primary = 2;
     required bool is_unique = 3;
-    required IndexType type = 4 [default = UNKNOWN];
+    required IndexType type = 4 [default = UNKNOWN_INDEX];
     repeated IndexPart index_part = 5;
   }
 
