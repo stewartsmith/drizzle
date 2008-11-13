@@ -500,6 +500,27 @@ static void fill_table_proto(drizzle::Table *table_proto,
     table_options->set_block_size(create_info->block_size);
 }
 
+int rename_table_proto_file(const char *from, const char* to)
+{
+  string from_path(from);
+  string to_path(to);
+  string file_ext = ".tabledefinition";
+
+  from_path.append(file_ext);
+  to_path.append(file_ext);
+
+  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+}
+
+int delete_table_proto_file(char *file_name)
+{
+  string new_path(file_name);
+  string file_ext = ".tabledefinition";
+
+  new_path.append(file_ext);
+  return my_delete(new_path.c_str(), MYF(0));
+}
+
 int create_table_proto_file(char *file_name,
                             const char *table_name,
                             HA_CREATE_INFO *create_info,

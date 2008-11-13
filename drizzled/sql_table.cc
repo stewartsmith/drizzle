@@ -501,6 +501,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
       {
         int new_error;
+
+        /* for some weird-ass reason, we ignore the return code here
+           and things work. */
+        delete_table_proto_file(path);
+
         /* Delete the table definition file */
         my_stpcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
@@ -615,7 +620,11 @@ bool quick_rm_table(handlerton *base,const char *db,
                                          db, table_name, reg_ext, flags);
   if (my_delete(path,MYF(0)))
     error= 1; /* purecov: inspected */
+
   path[path_length - reg_ext_length]= '\0'; // Remove reg_ext
+
+  error|= delete_table_proto_file(path);
+
   return(ha_delete_table(current_session, base, path, db, table_name, 0) ||
               error);
 }
@@ -2105,6 +2114,15 @@ mysql_rename_table(handlerton *base, const char *old_db,
     {
       error=my_errno;
       /* Restore old file name */
+      if (file)
+        file->ha_rename_table(to_base, from_base);
+    }
+
+    if(!(flags & NO_FRM_RENAME)
+       && rename_table_proto_file(from_base, to_base))
+    {
+      error= errno;
+      rename_file_ext(to, from, reg_ext);
       if (file)
         file->ha_rename_table(to_base, from_base);
     }

@@ -957,8 +957,19 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       extension= strchr(file->name, '\0');
     if (find_type(extension, &deletable_extentions,1+2) <= 0)
     {
-      if (find_type(extension, ha_known_exts(),1+2) <= 0)
-	found_other_files++;
+      /*
+        ass ass ass.
+
+        strange checking for magic extensions that are then deleted if
+        not reg_ext (i.e. .frm).
+
+        and (previously) we'd err out on drop database if files not matching
+        engine ha_known_exts() or deletable_extensions were present.
+
+        presumably this was to avoid deleting other user data... except if that
+        data happened to be in files ending in .BAK, .opt or .TMD. *fun*
+       */
+      find_type(extension, ha_known_exts(),1+2);
       continue;
     }
     /* just for safety we use files_charset_info */

@@ -3857,6 +3857,8 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   handler *file;
   char *ext;
 
+  delete_table_proto_file(path);
+
   my_stpcpy(ext= strchr(path, '\0'), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
