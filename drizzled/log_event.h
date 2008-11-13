@@ -33,11 +33,11 @@
 #define DRIZZLED_LOG_EVENT_H
 
 
-#include <string>
 #include <mysys/my_bitmap.h>
-#include "rpl_constants.h"
-#include "rpl_record.h"
-#include "rpl_reporting.h"
+#include <drizzled/replication/constants.h>
+#include <drizzled/replication/record.h>
+#include <drizzled/replication/reporting.h>
+#include <string>
 
 #include <drizzled/sql_string.h>       /* append_query_string() needs String declaration */
 

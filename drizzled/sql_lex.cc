@@ -2047,7 +2047,7 @@ void st_select_lex::print_limit(Session *session __attribute__((unused)),
   to implement the clean up.
 */
 
-void st_lex::cleanup_lex_after_parse_error(Session *session __attribute__((unused)))
+void LEX::cleanup_lex_after_parse_error(Session *session __attribute__((unused)))
 {
 }
 
@@ -2121,7 +2121,7 @@ void Query_tables_list::destroy_query_tables_list()
   Initialize LEX object.
 
   SYNOPSIS
-    st_lex::st_lex()
+    LEX::LEX()
 
   NOTE
     LEX object initialized with this constructor can be used as part of
@@ -2131,7 +2131,7 @@ void Query_tables_list::destroy_query_tables_list()
     for this.
 */
 
-st_lex::st_lex()
+LEX::LEX()
   :result(0), yacc_yyss(0), yacc_yyvs(0),
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
@@ -2148,7 +2148,7 @@ st_lex::st_lex()
   Check whether the merging algorithm can be used on this VIEW
 
   SYNOPSIS
-    st_lex::can_be_merged()
+    LEX::can_be_merged()
 
   DESCRIPTION
     We can apply merge algorithm if it is single SELECT view  with
@@ -2162,7 +2162,7 @@ st_lex::st_lex()
     true  - merge algorithm can be used
 */
 
-bool st_lex::can_be_merged()
+bool LEX::can_be_merged()
 {
   // TODO: do not forget implement case when select_lex.table_list.elements==0
 
@@ -2199,19 +2199,19 @@ bool st_lex::can_be_merged()
   check if command can use VIEW with MERGE algorithm (for top VIEWs)
 
   SYNOPSIS
-    st_lex::can_use_merged()
+    LEX::can_use_merged()
 
   DESCRIPTION
     Only listed here commands can use merge algorithm in top level
     SELECT_LEX (for subqueries will be used merge algorithm if
-    st_lex::can_not_use_merged() is not true).
+    LEX::can_not_use_merged() is not true).
 
   RETURN
     false - command can't use merged VIEWs
     true  - VIEWs with MERGE algorithms can be used
 */
 
-bool st_lex::can_use_merged()
+bool LEX::can_use_merged()
 {
   switch (sql_command)
   {
@@ -2236,18 +2236,18 @@ bool st_lex::can_use_merged()
   Check if command can't use merged views in any part of command
 
   SYNOPSIS
-    st_lex::can_not_use_merged()
+    LEX::can_not_use_merged()
 
   DESCRIPTION
     Temporary table algorithm will be used on all SELECT levels for queries
-    listed here (see also st_lex::can_use_merged()).
+    listed here (see also LEX::can_use_merged()).
 
   RETURN
     false - command can't use merged VIEWs
     true  - VIEWs with MERGE algorithms can be used
 */
 
-bool st_lex::can_not_use_merged()
+bool LEX::can_not_use_merged()
 {
   switch (sql_command)
   {
@@ -2274,7 +2274,7 @@ bool st_lex::can_not_use_merged()
     false no, we need data
 */
 
-bool st_lex::only_view_structure()
+bool LEX::only_view_structure()
 {
   switch (sql_command) {
   case SQLCOM_SHOW_CREATE:
@@ -2299,7 +2299,7 @@ bool st_lex::only_view_structure()
 */
 
 
-bool st_lex::need_correct_ident()
+bool LEX::need_correct_ident()
 {
   switch(sql_command)
   {
@@ -2332,7 +2332,7 @@ bool st_lex::need_correct_ident()
 */
 
 bool
-st_lex::copy_db_to(char **p_db, size_t *p_db_length) const
+LEX::copy_db_to(char **p_db, size_t *p_db_length) const
 {
   return session->copy_db_to(p_db, p_db_length);
 }
@@ -2384,7 +2384,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
       In this case link_to_local is set.
 
 */
-TableList *st_lex::unlink_first_table(bool *link_to_local)
+TableList *LEX::unlink_first_table(bool *link_to_local)
 {
   TableList *first;
   if ((first= query_tables))
@@ -2424,7 +2424,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
   table list
 
   SYNOPSYS
-     st_lex::first_lists_tables_same()
+     LEX::first_lists_tables_same()
 
   NOTES
     In many cases (for example, usual INSERT/DELETE/...) the first table of
@@ -2435,7 +2435,7 @@ TableList *st_lex::unlink_first_table(bool *link_to_local)
     the global list first.
 */
 
-void st_lex::first_lists_tables_same()
+void LEX::first_lists_tables_same()
 {
   TableList *first_table= (TableList*) select_lex.table_list.first;
   if (query_tables != first_table && first_table != 0)
@@ -2471,7 +2471,7 @@ void st_lex::first_lists_tables_same()
     global list
 */
 
-void st_lex::link_first_table_back(TableList *first,
+void LEX::link_first_table_back(TableList *first,
 				   bool link_to_local)
 {
   if (first)
@@ -2498,7 +2498,7 @@ void st_lex::link_first_table_back(TableList *first,
   cleanup lex for case when we open table by table for processing
 
   SYNOPSIS
-    st_lex::cleanup_after_one_table_open()
+    LEX::cleanup_after_one_table_open()
 
   NOTE
     This method is mostly responsible for cleaning up of selects lists and
@@ -2506,7 +2506,7 @@ void st_lex::link_first_table_back(TableList *first,
     to call Query_tables_list::reset_query_tables_list(false).
 */
 
-void st_lex::cleanup_after_one_table_open()
+void LEX::cleanup_after_one_table_open()
 {
   /*
     session->lex->derived_tables & additional units may be set if we open
@@ -2541,7 +2541,7 @@ void st_lex::cleanup_after_one_table_open()
       backup  Pointer to Query_tables_list instance to be used for backup
 */
 
-void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
+void LEX::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
 {
 }
 
@@ -2554,7 +2554,7 @@ void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attrib
       backup  Pointer to Query_tables_list instance used for backup
 */
 
-void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
+void LEX::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
 {
 }
 
@@ -2570,7 +2570,7 @@ void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attrib
     true   Either or both routines and tables are used.
 */
 
-bool st_lex::table_or_sp_used()
+bool LEX::table_or_sp_used()
 {
   if (sroutines.records || query_tables)
     return(true);

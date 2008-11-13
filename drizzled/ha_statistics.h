@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HA_STATISTICS_H
 #define DRIZZLED_HA_STATISTICS_H
 
-#include CSTDINT_H
+#include <stdint.h>
 #include <drizzled/definitions.h>
 #include <time.h>
 

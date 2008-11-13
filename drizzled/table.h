@@ -30,6 +30,7 @@
 #include <drizzled/field_iterator.h>
 #include <mysys/hash.h>
 #include <drizzled/handler.h>
+#include <drizzled/lex_string.h>
 
 class Item;				/* Needed by order_st */
 class Item_subselect;
@@ -49,8 +50,6 @@ enum tmp_table_type
 
 bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
 
-
-enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
 
 /*
   Values in this enum are used to indicate how a tables TIMESTAMP field
@@ -608,6 +607,9 @@ public:
 
   int report_error(int error);
 };
+
+Table *create_virtual_tmp_table(Session *session,
+                                List<Create_field> &field_list);
 
 typedef struct st_foreign_key_info
 {

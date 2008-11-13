@@ -33,10 +33,10 @@
 */
 
 
-#include "log.h"
+#include <drizzled/log.h>
 #include <mysys/my_list.h>
-#include "rpl_filter.h"
-#include "rpl_tblmap.h"
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/tblmap.h>
 
 
 // Forward declarations

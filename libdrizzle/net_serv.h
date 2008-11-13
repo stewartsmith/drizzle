@@ -22,12 +22,11 @@
 #define _libdrizzle_net_serv_h_
 
 #ifdef __cplusplus
-#include CSTDINT_H
 extern "C" {
-#else
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
-#endif
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
 

@@ -28,7 +28,7 @@
 #include <mysys/hash.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/plugin.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 

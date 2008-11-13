@@ -341,8 +341,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
-extern int my_getwd(char * buf,size_t size,myf MyFlags);
-extern int my_setwd(const char *dir,myf MyFlags);
 extern void *my_once_alloc(size_t Size,myf MyFlags);
 extern void my_once_free(void);
 extern char *my_once_strdup(const char *src,myf myflags);
@@ -431,8 +429,7 @@ extern void my_remember_signal(int signal_number,RETSIGTYPE (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
-extern int test_if_hard_path(const char *dir_name);
-extern bool has_path(const char *name);
+bool test_if_hard_path(const char *dir_name);
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern void to_unix_path(char * name);
 extern char * fn_ext(const char *name);

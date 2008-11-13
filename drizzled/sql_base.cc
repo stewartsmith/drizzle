@@ -16,11 +16,7 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <mysys/my_dir.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/nested_join.h>
+#include <signal.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -32,6 +28,16 @@
 #  include <time.h>
 # endif
 #endif
+#include <mysys/my_pthread.h>
+
+#include <drizzled/sql_select.h>
+#include <mysys/my_dir.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
+
 
 /**
   return true if the table was created explicitly.
@@ -6208,7 +6214,7 @@ err:
 }
 
 
-bool mysql_rm_tmp_tables(void)
+bool drizzle_rm_tmp_tables(void)
 {
   uint32_t i, idx;
   char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];
@@ -6222,9 +6228,9 @@ bool mysql_rm_tmp_tables(void)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  for (i=0; i<=mysql_tmpdir_list.max; i++)
+  for (i=0; i<=drizzle_tmpdir_list.max; i++)
   {
-    tmpdir=mysql_tmpdir_list.list[i];
+    tmpdir=drizzle_tmpdir_list.list[i];
     /* See if the directory exists */
     if (!(dirp = my_dir(tmpdir,MYF(MY_WME | MY_DONT_SORT))))
       continue;
@@ -6467,3 +6473,30 @@ bool is_equal(const LEX_STRING *a, const LEX_STRING *b)
 /**
   @} (end of group Data_Dictionary)
 */
+
+void kill_drizzle(void)
+{
+
+#if defined(SIGNALS_DONT_BREAK_READ)
+  abort_loop=1;					// Break connection loops
+  close_server_sock();				// Force accept to wake up
+#endif
+
+#if defined(HAVE_PTHREAD_KILL)
+  pthread_kill(signal_thread, SIGTERM);
+#elif !defined(SIGNALS_DONT_BREAK_READ)
+  kill(current_pid, SIGTERM);
+#endif
+  shutdown_in_progress=1;			// Safety if kill didn't work
+#ifdef SIGNALS_DONT_BREAK_READ
+  if (!kill_in_progress)
+  {
+    pthread_t tmp;
+    abort_loop=1;
+    if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
+			   (void*) 0))
+      sql_print_error(_("Can't create thread to kill server"));
+  }
+#endif
+  return;;
+}

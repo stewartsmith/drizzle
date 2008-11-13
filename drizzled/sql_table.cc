@@ -17,7 +17,7 @@
 
 #include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
@@ -189,7 +189,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 
 
 /*
-  Creates path to a file: mysql_tmpdir/#sql1234_12_1.ext
+  Creates path to a file: drizzle_tmpdir/#sql1234_12_1.ext
 
   SYNOPSIS
    build_tmptable_filename()
@@ -200,7 +200,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   NOTES
 
     Uses current_pid, thread_id, and tmp_table counter to create
-    a file name in mysql_tmpdir.
+    a file name in drizzle_tmpdir.
 
   RETURN
     path length
@@ -209,7 +209,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
 
-  char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
+  char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
 	      tmp_file_prefix, current_pid,
               session->thread_id, session->tmp_table++, reg_ext);
@@ -283,7 +283,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (tables && tables->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -4387,7 +4387,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
 
   if (table_list && table_list->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 

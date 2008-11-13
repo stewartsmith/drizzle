@@ -2556,4 +2556,44 @@ extern Cached_item *new_Cached_item(Session *session, Item *item,
 extern void resolve_const_item(Session *session, Item **ref, Item *cmp_item);
 extern bool field_is_equal_to_item(Field *field,Item *item);
 
+/**
+  Create field for temporary table.
+
+  @param session		Thread handler
+  @param table		Temporary table
+  @param item		Item to create a field for
+  @param type		Type of item (normally item->type)
+  @param copy_func	If set and item is a function, store copy of item
+                       in this array
+  @param from_field    if field will be created using other field as example,
+                       pointer example field will be written here
+  @param default_field	If field has a default value field, store it here
+  @param group		1 if we are going to do a relative group by on result
+  @param modify_item	1 if item->result_field should point to new item.
+                       This is relevent for how fill_record() is going to
+                       work:
+                       If modify_item is 1 then fill_record() will update
+                       the record in the original table.
+                       If modify_item is 0 then fill_record() will update
+                       the temporary table
+  @param convert_blob_length If >0 create a varstring(convert_blob_length)
+                             field instead of blob.
+
+  @retval
+    0			on error
+  @retval
+    new_created field
+*/
+
+/* TODO: This is here for now because it needs the Item::Type. It should live
+   in Field or Table once item.h is clean enough to actually include */
+Field *create_tmp_field(Session *session, Table *table, Item *item,
+                        Item::Type type,
+                        Item ***copy_func, Field **from_field,
+                        Field **def_field,
+                        bool group, bool modify_item,
+                        bool table_cant_handle_bit_fields,
+                        bool make_copy_field,
+                        uint32_t convert_blob_length);
+
 #endif

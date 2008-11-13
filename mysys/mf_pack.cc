@@ -19,11 +19,6 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
-#ifdef VMS
-#include <rms.h>
-#include <iodef.h>
-#include <descrip.h>
-#endif /* VMS */
 
 static char * expand_tilde(char * *path);
 
@@ -33,7 +28,7 @@ static char * expand_tilde(char * *path);
 
 void pack_dirname(char * to, const char *from)
 {
-  int cwd_err;
+  int getcwd_error= 0;
   size_t d_length,length,buff_length= 0;
   char * start;
   char buff[FN_REFLEN];
@@ -47,8 +42,9 @@ void pack_dirname(char * to, const char *from)
 #endif
     start=to;
 
-  if (!(cwd_err= my_getwd(buff,FN_REFLEN,MYF(0))))
+  if (!(getcwd(buff, FN_REFLEN)))
   {
+    getcwd_error= errno;
     buff_length= strlen(buff);
     d_length= (size_t) (start-to);
     if ((start == to ||
@@ -76,7 +72,7 @@ void pack_dirname(char * to, const char *from)
 	(void) strmov_overlapp(to+1,to+length);
       }
     }
-    if (! cwd_err)
+    if (! getcwd_error)
     {						/* Test if cwd is ~/... */
       if (length > 1 && length < buff_length)
       {
@@ -183,7 +179,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 	  }
 	  if (*pos == FN_CURLIB && (pos == start || pos[-1] == FN_LIBCHAR))
 	  {
-	    if (my_getwd(curr_dir,FN_REFLEN,MYF(0)))
+	    if (getcwd(curr_dir,FN_REFLEN))
 	    {
 	      pos+=length+1;			/* Don't unpack ./.. */
 	      continue;

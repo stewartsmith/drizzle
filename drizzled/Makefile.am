@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions functions/str .
+SUBDIRS = util field serialize functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -75,6 +75,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
 		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
+		 $(top_builddir)/drizzled/functions/time/libtimefunc.la \
 		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
@@ -95,6 +96,7 @@ noinst_HEADERS = \
 		connect.h \
 		cost_vect.h \
 		data_home.h \
+		db.h \
 		definitions.h \
 		errmsg.h \
 		error_injection.h \
@@ -130,14 +132,17 @@ noinst_HEADERS = \
 		protocol.h \
 		qcache.h \
 		query_id.h \
-		rpl_constants.h \
-		rpl_filter.h \
-		rpl_mi.h \
-		rpl_record.h \
-		rpl_reporting.h \
-		rpl_rli.h \
-		rpl_tblmap.h \
-		rpl_utility.h \
+		rename.h \
+		replication/binlog.h \
+		replication/constants.h \
+		replication/filter.h \
+		replication/mi.h \
+		replication/record.h \
+		replication/replication.h \
+		replication/reporting.h \
+		replication/rli.h \
+		replication/tblmap.h \
+		replication/utility.h \
 		scheduler.h \
 		scheduling.h \
 		server_includes.h \
@@ -147,6 +152,7 @@ noinst_HEADERS = \
 		slave.h \
 		sql_alloc.h \
 		sql_array.h \
+		sql_base.h \
 		sql_bitmap.h \
 		sql_class.h \
 		sql_error.h \
@@ -155,9 +161,7 @@ noinst_HEADERS = \
 		sql_locale.h \
 		sql_parse.h \
 		sql_plugin.h \
-		sql_repl.h \
 		sql_select.h \
-		sql_show.h \
 		sql_sort.h \
 		sql_state.h \
 		sql_string.h \
@@ -176,6 +180,7 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		configvar.cc \
+		db.cc \
 		discover.cc \
 		drizzled.cc \
 		errmsg.cc \
@@ -211,25 +216,27 @@ drizzled_SOURCES = \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
-		rpl_filter.cc \
-		rpl_mi.cc \
-		rpl_record.cc \
-		rpl_reporting.cc \
-		rpl_rli.cc \
-		rpl_tblmap.cc \
-		rpl_utility.cc \
+		rename.cc \
+		replication/binlog.cc \
+		replication/filter.cc \
+		replication/mi.cc \
+		replication/record.cc \
+		replication/replication.cc \
+		replication/reporting.cc \
+		replication/rli.cc \
+		replication/tblmap.cc \
+		replication/utility.cc \
 		scheduler.cc \
                 scheduling.cc \
 		set_var.cc \
+		show.cc \
 		sj_tmp_table.cc \
 		slave.cc \
 		sql_base.cc \
-		sql_binlog.cc \
 		sql_builtin.cc \
 		sql_class.cc \
 		sql_client.cc \
 		sql_connect.cc \
-		sql_db.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
@@ -242,10 +249,7 @@ drizzled_SOURCES = \
 		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
-		sql_rename.cc \
-		sql_repl.cc \
 		sql_select.cc \
-		sql_show.cc \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
@@ -288,11 +292,12 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
-#		server_includes.h.gch
 if GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
 		handlerton.h.gch  \
+		sql_base.h.gch \
+		sql_parse.h.gch \
 		sql_plugin.h.gch
 else
 PCHHEADERS = 

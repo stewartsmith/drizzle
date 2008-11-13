@@ -17,7 +17,7 @@
 /* Copy data from a textfile to table */
 
 #include <drizzled/server_includes.h>
-#include "sql_repl.h"
+#include <drizzled/replication/replication.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 

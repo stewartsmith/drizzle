@@ -34,6 +34,8 @@
 #include <drizzled/util/test.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
+#include <drizzled/show.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

@@ -53,7 +53,7 @@ if BUILD_THR_RWLOCK
 thr_rwlock_source=thr_rwlock.cc
 endif
 
-libmysys_la_SOURCES = my_init.cc my_getwd.cc mf_getdate.cc \
+libmysys_la_SOURCES = my_init.cc mf_getdate.cc \
 			mf_path.cc mf_loadpath.cc my_file.cc \
 			my_open.cc my_create.cc my_dup.cc my_seek.cc my_read.cc \
 			my_write.cc \

@@ -1,4 +1,4 @@
-dnl -*- ksh -*-
+dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
@@ -360,6 +360,12 @@ AC_SUBST(NM)dnl
 AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
+# Look for "(group|user)add". 
+# TODO: If the programs do not exist, inform the DBA that the user
+#       was not created at the end of the install routine.
+AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
+AC_CHECK_PROGS(USERADD, useradd adduser)
+
 # Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
 if test -z "$YACC" && test -d ".bzr"
@@ -555,7 +561,6 @@ AC_CHECK_LIB(uuid, uuid_generate)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
   [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
        [Use libevent in DIR])],
@@ -576,7 +581,7 @@ then
     LIBS="${my_save_LIBS}"
     LIBEVENT_CPPFLAGS=""
 else
-    AC_MSG_RESULT($withval)
+    AC_MSG_CHECKING(for libevent in $withval)
     if test -f $withval/event.h -a -f $withval/libevent.a; then
        owd=`pwd`
        if cd $withval; then withval=`pwd`; cd $owd; fi
@@ -1162,8 +1167,8 @@ AC_CONFIG_LIBOBJ_DIR([mystrings])
 AC_CHECK_FUNCS( \
   cuserid fchmod \
   fdatasync fpresetsticky fpsetmask fsync \
-  getcwd getpassphrase getpwnam \
-  getpwuid getrlimit getrusage getwd index initgroups isnan \
+  getpassphrase getpwnam \
+  getpwuid getrlimit getrusage index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
@@ -1572,6 +1577,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/functions/Makefile dnl
  drizzled/functions/str/Makefile dnl
+ drizzled/functions/time/Makefile dnl
  drizzled/util/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl

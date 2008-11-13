@@ -26,10 +26,10 @@
 #include <drizzled/server_includes.h>
 
 #include <storage/myisam/myisam.h>
-#include <drizzled/rpl_mi.h>
-#include <drizzled/rpl_rli.h>
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_filter.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/rli.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/filter.h>
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
@@ -51,7 +51,7 @@
 
 #include <drizzled/tztime.h>
 
-#include "rpl_tblmap.h"
+#include <drizzled/replication/tblmap.h>
 
 #define MAX_SLAVE_RETRY_PAUSE 5
 bool use_slave_mask = 0;
