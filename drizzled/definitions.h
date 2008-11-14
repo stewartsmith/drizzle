@@ -971,6 +971,28 @@ enum enum_schema_tables
 #define OPEN_FRM_ONLY   1                // open FRM file only
 #define OPEN_FULL_TABLE 2                // open FRM,MYD, MYI files
 
+/*
+   "Declared Type Collation"
+   A combination of collation and its derivation.
+
+  Flags for collation aggregation modes:
+  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
+  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
+                                 (i.e. constant).
+  MY_COLL_ALLOW_CONV           - allow any kind of conversion
+                                 (combination of the above two)
+  MY_COLL_DISALLOW_NONE        - don't allow return DERIVATION_NONE
+                                 (e.g. when aggregating for comparison)
+  MY_COLL_CMP_CONV             - combination of MY_COLL_ALLOW_CONV
+                                 and MY_COLL_DISALLOW_NONE
+*/
+
+#define MY_COLL_ALLOW_SUPERSET_CONV   1
+#define MY_COLL_ALLOW_COERCIBLE_CONV  2
+#define MY_COLL_ALLOW_CONV            3
+#define MY_COLL_DISALLOW_NONE         4
+#define MY_COLL_CMP_CONV              7
+
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 

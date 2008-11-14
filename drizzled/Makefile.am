@@ -98,6 +98,7 @@ noinst_HEADERS = \
 		data_home.h \
 		db.h \
 		definitions.h \
+		dtcollation.h \
 		errmsg.h \
 		error_injection.h \
 		field.h \
@@ -183,6 +184,7 @@ drizzled_SOURCES = \
 		db.cc \
 		discover.cc \
 		drizzled.cc \
+		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
 		field.cc \

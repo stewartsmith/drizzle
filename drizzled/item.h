@@ -20,100 +20,13 @@
 #ifndef drizzled_item_h
 #define drizzled_item_h
 
+#include <drizzled/dtcollation.h>
+
 class Protocol;
 struct TableList;
 void item_init(void);			/* Init item functions */
 class Item_field;
 
-/*
-   "Declared Type Collation"
-   A combination of collation and its derivation.
-
-  Flags for collation aggregation modes:
-  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
-  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
-                                 (i.e. constant).
-  MY_COLL_ALLOW_CONV           - allow any kind of conversion
-                                 (combination of the above two)
-  MY_COLL_DISALLOW_NONE        - don't allow return DERIVATION_NONE
-                                 (e.g. when aggregating for comparison)
-  MY_COLL_CMP_CONV             - combination of MY_COLL_ALLOW_CONV
-                                 and MY_COLL_DISALLOW_NONE
-*/
-
-#define MY_COLL_ALLOW_SUPERSET_CONV   1
-#define MY_COLL_ALLOW_COERCIBLE_CONV  2
-#define MY_COLL_ALLOW_CONV            3
-#define MY_COLL_DISALLOW_NONE         4
-#define MY_COLL_CMP_CONV              7
-
-class DTCollation {
-public:
-  const CHARSET_INFO *collation;
-  enum Derivation derivation;
-  uint32_t repertoire;
-  
-  void set_repertoire_from_charset(const CHARSET_INFO * const cs)
-  {
-    repertoire= cs->state & MY_CS_PUREASCII ?
-                MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-  }
-  DTCollation()
-  {
-    collation= &my_charset_bin;
-    derivation= DERIVATION_NONE;
-    repertoire= MY_REPERTOIRE_UNICODE30;
-  }
-  DTCollation(const CHARSET_INFO * const collation_arg, Derivation derivation_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(DTCollation &dt)
-  { 
-    collation= dt.collation;
-    derivation= dt.derivation;
-    repertoire= dt.repertoire;
-  }
-  void set(const CHARSET_INFO * const collation_arg, Derivation derivation_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(const CHARSET_INFO * const collation_arg,
-           Derivation derivation_arg,
-           uint32_t repertoire_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    repertoire= repertoire_arg;
-  }
-  void set(const CHARSET_INFO * const collation_arg)
-  {
-    collation= collation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(Derivation derivation_arg)
-  { derivation= derivation_arg; }
-  bool aggregate(DTCollation &dt, uint32_t flags= 0);
-  bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0)
-  { set(dt1); return aggregate(dt2, flags); }
-  const char *derivation_name() const
-  {
-    switch(derivation)
-    {
-      case DERIVATION_IGNORABLE: return "IGNORABLE";
-      case DERIVATION_COERCIBLE: return "COERCIBLE";
-      case DERIVATION_IMPLICIT:  return "IMPLICIT";
-      case DERIVATION_SYSCONST:  return "SYSCONST";
-      case DERIVATION_EXPLICIT:  return "EXPLICIT";
-      case DERIVATION_NONE:      return "NONE";
-      default: return "UNKNOWN";
-    }
-  }
-};
 
 /*************************************************************************/
 /*
@@ -1001,13 +914,6 @@ public:
       name= orig_name;
   }
 };
-
-bool agg_item_collations(DTCollation &c, const char *name,
-                         Item **items, uint32_t nitems, uint32_t flags, int item_sep);
-bool agg_item_collations_for_comparison(DTCollation &c, const char *name,
-                                        Item **items, uint32_t nitems, uint32_t flags);
-bool agg_item_charsets(DTCollation &c, const char *name,
-                       Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 
 
 class Item_num: public Item_basic_constant
