@@ -3659,7 +3659,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 }
 
 
-
 /**
   Create field for information schema table.
 

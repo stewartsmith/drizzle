@@ -45,7 +45,7 @@ int64_t Item_func_year::val_int()
 enum_monotonicity_info Item_func_year::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM &&
-      (args[0]->field_type() == DRIZZLE_TYPE_NEWDATE ||
+      (args[0]->field_type() == DRIZZLE_TYPE_DATE ||
        args[0]->field_type() == DRIZZLE_TYPE_DATETIME))
     return MONOTONIC_INCREASING;
   return NON_MONOTONIC;

@@ -58,7 +58,7 @@ uint32_t table_def::calc_field_size(uint32_t col, unsigned char *master_data) co
   case DRIZZLE_TYPE_NULL:
     length= 0;
     break;
-  case DRIZZLE_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_DATE:
     length= 3;
     break;
   case DRIZZLE_TYPE_TIME:

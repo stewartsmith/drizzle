@@ -100,7 +100,7 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
   if (value)
   {
     *value= min_max;
-    if (datetime_item->field_type() == DRIZZLE_TYPE_NEWDATE)
+    if (datetime_item->field_type() == DRIZZLE_TYPE_DATE)
       *value/= 1000000L;
   }
   return min_max_idx;
