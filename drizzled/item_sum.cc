@@ -23,6 +23,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/hybrid_type_traits.h>
+#include <drizzled/hybrid_type_traits_integer.h>
+#include <drizzled/hybrid_type_traits_decimal.h>
+
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -939,6 +944,7 @@ const Hybrid_type_traits_fast_decimal
   return &fast_decimal_traits_instance;
 }
 
+
 void Item_sum_distinct::fix_length_and_dec()
 {
   assert(args[0]->fixed);
@@ -977,6 +983,12 @@ void Item_sum_distinct::fix_length_and_dec()
     assert(0);
   }
   val.traits->fix_length_and_dec(this, args[0]);
+}
+
+
+enum Item_result Item_sum_distinct::result_type () const
+{
+  return val.traits->type();
 }
 
 

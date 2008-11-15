@@ -994,5 +994,34 @@ enum enum_schema_tables
 #define MY_COLL_CMP_CONV              7
 
 
+/*
+  This enum is used to report information about monotonicity of function
+  represented by Item* tree.
+  Monotonicity is defined only for Item* trees that represent table
+  partitioning expressions (i.e. have no subselects/user vars/PS parameters
+  etc etc). An Item* tree is assumed to have the same monotonicity properties
+  as its correspoinding function F:
+
+  [signed] int64_t F(field1, field2, ...) {
+    put values of field_i into table record buffer;
+    return item->val_int(); 
+  }
+
+  NOTE
+  At the moment function monotonicity is not well defined (and so may be
+  incorrect) for Item trees with parameters/return types that are different
+  from INT_RESULT, may be NULL, or are unsigned.
+  It will be possible to address this issue once the related partitioning bugs
+  (BUG#16002, BUG#15447, BUG#13436) are fixed.
+*/
+
+typedef enum monotonicity_info 
+{
+   NON_MONOTONIC,              /* none of the below holds */
+   MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */
+   MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
+} enum_monotonicity_info;
+
+
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 
