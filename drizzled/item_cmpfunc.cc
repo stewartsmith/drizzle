@@ -744,7 +744,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       uint64_t value;
       bool error;
       String tmp, *str_val= 0;
-      enum enum_drizzle_timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_NEWDATE ?
+      enum enum_drizzle_timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_DATE ?
                               DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
@@ -948,7 +948,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
       compare it with 100000000L - any DATE value should be less than it.
       Don't shift cached DATETIME values up for the second time.
     */
-    if (f_type == DRIZZLE_TYPE_NEWDATE ||
+    if (f_type == DRIZZLE_TYPE_DATE ||
         (f_type != DRIZZLE_TYPE_DATETIME && value < 100000000L))
       value*= 1000000L;
   }
@@ -970,7 +970,7 @@ get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
     bool error;
     enum_field_types f_type= warn_item->field_type();
     enum enum_drizzle_timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_NEWDATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
+      DRIZZLE_TYPE_DATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(session, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current

@@ -3970,7 +3970,7 @@ bool Item::is_datetime()
 {
   switch (field_type())
   {
-    case DRIZZLE_TYPE_NEWDATE:
+    case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
       return true;
@@ -4127,8 +4127,8 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
-  case DRIZZLE_TYPE_NEWDATE:
-    field= new Field_newdate(maybe_null, name, &my_charset_bin);
+  case DRIZZLE_TYPE_DATE:
+    field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_TIME:
     field= new Field_time(maybe_null, name, &my_charset_bin);
@@ -4697,7 +4697,7 @@ bool Item::send(Protocol *protocol, String *buffer)
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
     {
-      if (f_type == DRIZZLE_TYPE_NEWDATE)
+      if (f_type == DRIZZLE_TYPE_DATE)
 	return protocol->store_date(&tm);
       else
 	result= protocol->store(&tm);
@@ -6333,7 +6333,7 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   case DRIZZLE_TYPE_ENUM:
@@ -6525,7 +6525,7 @@ static Field *create_tmp_field_from_item(Session *,
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_NEWDATE ||
+        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_DATE ||
         type == DRIZZLE_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
     /* 

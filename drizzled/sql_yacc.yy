@@ -1831,7 +1831,7 @@ type:
             $$= DRIZZLE_TYPE_VARCHAR;
           }
         | DATE_SYM
-          { $$=DRIZZLE_TYPE_NEWDATE; }
+          { $$=DRIZZLE_TYPE_DATE; }
         | TIME_SYM
           { $$=DRIZZLE_TYPE_TIME; }
         | TIMESTAMP

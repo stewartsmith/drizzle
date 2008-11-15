@@ -706,8 +706,8 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
     fields creations separately.
   */
   switch (args[0]->field_type()) {
-  case DRIZZLE_TYPE_NEWDATE:
-    field= new Field_newdate(maybe_null, name, collation.collation);
+  case DRIZZLE_TYPE_DATE:
+    field= new Field_date(maybe_null, name, collation.collation);
     break;
   case DRIZZLE_TYPE_TIME:
     field= new Field_time(maybe_null, name, collation.collation);

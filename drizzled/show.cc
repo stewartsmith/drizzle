@@ -3874,7 +3874,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
       }
       item->unsigned_flag= (fields_info->field_flags & MY_I_S_UNSIGNED);
       break;
-    case DRIZZLE_TYPE_NEWDATE:
+    case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_TIME:
     case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:

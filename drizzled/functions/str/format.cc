@@ -22,6 +22,10 @@
 #include CMATH_H
 #include <drizzled/functions/str/format.h>
 
+#if defined(CMATH_NAMESPACE)
+using namespace CMATH_NAMESPACE;
+#endif
+
 /**
   Change a number to format '3,333,333,333.000'.
 

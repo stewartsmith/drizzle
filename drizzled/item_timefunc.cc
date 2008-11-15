@@ -1346,7 +1346,7 @@ void Item_date_add_interval::fix_length_and_dec()
     follows:
 
     - If first arg is a DRIZZLE_TYPE_DATETIME result is DRIZZLE_TYPE_DATETIME
-    - If first arg is a DRIZZLE_TYPE_NEWDATE and the interval type uses hours,
+    - If first arg is a DRIZZLE_TYPE_DATE and the interval type uses hours,
       minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
     - Otherwise the result is DRIZZLE_TYPE_VARCHAR
       (This is because you can't know if the string contains a DATE, DRIZZLE_TIME or
@@ -1357,7 +1357,7 @@ void Item_date_add_interval::fix_length_and_dec()
   if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
     cached_field_type= DRIZZLE_TYPE_DATETIME;
-  else if (arg0_field_type == DRIZZLE_TYPE_NEWDATE)
+  else if (arg0_field_type == DRIZZLE_TYPE_DATE)
   {
     if (int_type <= INTERVAL_DAY || int_type == INTERVAL_YEAR_MONTH)
       cached_field_type= arg0_field_type;
@@ -1963,7 +1963,7 @@ void Item_func_add_time::fix_length_and_dec()
 
   cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == DRIZZLE_TYPE_NEWDATE ||
+  if (arg0_field_type == DRIZZLE_TYPE_DATE ||
       arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
     cached_field_type= DRIZZLE_TYPE_DATETIME;
@@ -2500,7 +2500,7 @@ void Item_func_str_to_date::fix_length_and_dec()
       switch (cached_format_type) {
       case DATE_ONLY:
         cached_timestamp_type= DRIZZLE_TIMESTAMP_DATE;
-        cached_field_type= DRIZZLE_TYPE_NEWDATE; 
+        cached_field_type= DRIZZLE_TYPE_DATE; 
         max_length= MAX_DATE_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       case TIME_ONLY:

@@ -2769,7 +2769,7 @@ char *str_to_hex(char *to, const char *from, uint32_t len);
   </tr>
 
   <tr>
-    <td><i>DRIZZLE_TYPE_NEWDATE</i></td><td><i>14</i></td>
+    <td><i>DRIZZLE_TYPE_DATE</i></td><td><i>14</i></td>
     <td>&ndash;</td>
     <td><i>This enumeration value is only used internally and cannot
     exist in a binlog.</i></td>
