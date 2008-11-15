@@ -28,8 +28,13 @@
                              CLIENT_TRANSACTIONS |                      \
                              CLIENT_SECURE_CONNECTION)
 
+#if defined(__GNU__)
+#define __private_extern__ __attribute__((visibility("hidden))) extern
+#else
+#define __private_extern__ extern
+#endif
 
-extern unsigned int drizzle_port;
+__private_extern__ unsigned int drizzle_port;
 
 #if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
 #define __builtin_expect(x, expected_value) (x)
@@ -43,8 +48,8 @@ extern unsigned int drizzle_port;
 #define min(a, b)       ((a) < (b) ? (a) : (b))
 #endif
 
-extern const char _dig_vec_upper[];
-extern const char _dig_vec_lower[];
+__private_extern__ const char _dig_vec_upper[];
+__private_extern__ const char _dig_vec_lower[];
 
 const char * sqlstate_get_unknown(void);
 const char * sqlstate_get_not_error(void);
