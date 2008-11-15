@@ -2441,7 +2441,7 @@ alter_list_item:
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
-                                                               primary_key_name));
+                                                               "PRIMARY"));
             lex->alter_info.flags|= ALTER_DROP_INDEX;
           }
         | DROP key_or_index field_ident

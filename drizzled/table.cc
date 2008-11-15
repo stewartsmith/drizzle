@@ -1035,7 +1035,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    uint32_t primary_key=(uint) (find_type((char*) primary_key_name,
+    uint32_t primary_key=(uint) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
     int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;

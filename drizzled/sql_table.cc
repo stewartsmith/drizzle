@@ -32,7 +32,21 @@ extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
 
-const char * primary_key_name="PRIMARY";
+
+bool is_primary_key(KEY *key_info)
+{
+  static const char * primary_key_name="PRIMARY";
+  return (strcmp(key_info->name, primary_key_name)==0);
+}
+
+const char* is_primary_key_name(const char* key_name)
+{
+  static const char * primary_key_name="PRIMARY";
+  if (strcmp(key_name, primary_key_name)==0)
+    return key_name;
+  else
+    return NULL;
+}
 
 static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
@@ -662,9 +676,9 @@ static int sort_keys(KEY *a, KEY *b)
       /* Sort NOT NULL keys before other keys */
       return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
-    if (a->name == primary_key_name)
+    if (is_primary_key(a))
       return -1;
-    if (b->name == primary_key_name)
+    if (is_primary_key(b))
       return 1;
     /* Sort keys don't containing partial segments before others */
     if ((a_flags ^ b_flags) & HA_KEY_HAS_PART_KEY_SEG)
@@ -1266,7 +1280,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
     else
       (*key_count)--;
     if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
-	!my_strcasecmp(system_charset_info,key->name.str, primary_key_name))
+        is_primary_key_name(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
       return(true);
@@ -1536,7 +1550,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                        MYF(0));
 	    return(true);
 	  }
-	  key_name=primary_key_name;
+          static const char pkey_name[]= "PRIMARY";
+	  key_name=pkey_name;
 	  primary_key=1;
 	}
 	else if (!(key_name= key->name.str))
@@ -2030,7 +2045,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
   char buff[MAX_FIELD_NAME],*buff_end;
 
   if (!check_if_keyname_exists(field_name,start,end) &&
-      my_strcasecmp(system_charset_info,field_name,primary_key_name))
+      !is_primary_key_name(field_name))
     return (char*) field_name;			// Use fieldname
   buff_end=strmake(buff,field_name, sizeof(buff)-4);
 
@@ -3499,8 +3514,7 @@ compare_tables(Session *session,
       if (table_key->flags & HA_NOSAME)
       {
         /* Unique key. Check for "PRIMARY". */
-        if (! my_strcasecmp(system_charset_info,
-                            table_key->name, primary_key_name))
+        if (is_primary_key(table_key))
           *alter_flags|= HA_DROP_PK_INDEX;
         else
           *alter_flags|= HA_DROP_UNIQUE_INDEX;
@@ -3520,8 +3534,7 @@ compare_tables(Session *session,
       if (table_key->flags & HA_NOSAME)
       {
         // Unique key. Check for "PRIMARY".
-        if (! my_strcasecmp(system_charset_info,
-                            table_key->name, primary_key_name))
+        if (is_primary_key(table_key))
           *alter_flags|= HA_ALTER_PK_INDEX;
         else
           *alter_flags|= HA_ALTER_UNIQUE_INDEX;
@@ -3550,8 +3563,7 @@ compare_tables(Session *session,
         if (table_key->flags & HA_NOSAME)
         {
           /* Unique key. Check for "PRIMARY" */
-          if (! my_strcasecmp(system_charset_info,
-                              table_key->name, primary_key_name))
+          if (is_primary_key(table_key))
             *alter_flags|= HA_ALTER_PK_INDEX;
           else
             *alter_flags|= HA_ALTER_UNIQUE_INDEX;
@@ -3613,8 +3625,7 @@ compare_tables(Session *session,
       if (new_key->flags & HA_NOSAME)
       {
         /* Unique key. Check for "PRIMARY" */
-        if (! my_strcasecmp(system_charset_info,
-                            new_key->name, primary_key_name))
+        if (is_primary_key(new_key))
           *alter_flags|= HA_ADD_PK_INDEX;
         else
         *alter_flags|= HA_ADD_UNIQUE_INDEX;
@@ -4276,7 +4287,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
 
       if (key_info->flags & HA_NOSAME)
       {
-        if (! my_strcasecmp(system_charset_info, key_name, primary_key_name))
+        if (is_primary_key_name(key_name))
           key_type= Key::PRIMARY;
         else
           key_type= Key::UNIQUE;
@@ -4300,8 +4311,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
         goto err;
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
-      if (key->name.str &&
-	  !my_strcasecmp(system_charset_info, key->name.str, primary_key_name))
+      if (key->name.str && is_primary_key_name(key->name.str))
       {
 	my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
         goto err;

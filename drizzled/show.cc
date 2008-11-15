@@ -828,7 +828,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 
-    if (i == primary_key && !strcmp(key_info->name, primary_key_name))
+    if (i == primary_key && is_primary_key(key_info))
     {
       found_primary=1;
       /*
@@ -3462,7 +3462,7 @@ static int get_schema_constraints_record(Session *session, TableList *tables,
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
         continue;
 
-      if (i == primary_key && !strcmp(key_info->name, primary_key_name))
+      if (i == primary_key && is_primary_key(key_info))
       {
         if (store_constraints(session, table, db_name, table_name, key_info->name,
                               strlen(key_info->name),

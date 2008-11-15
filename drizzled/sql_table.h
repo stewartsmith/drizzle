@@ -61,4 +61,7 @@ int reassign_keycache_tables(Session* session, KEY_CACHE *src_cache,
 void write_bin_log(Session *session, bool clear_error,
                    char const *query, ulong query_length);
 
+bool is_primary_key(KEY *key_info);
+const char* is_primary_key_name(const char* key_name);
+
 #endif /* DRIZZLE_SERVER_SQL_TABLE_H */
