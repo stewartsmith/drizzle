@@ -623,43 +623,6 @@ typedef struct st_foreign_key_info
   List<LEX_STRING> referenced_fields;
 } FOREIGN_KEY_INFO;
 
-/*
-  Make sure that the order of schema_tables and enum_schema_tables are the same.
-*/
-
-enum enum_schema_tables
-{
-  SCH_CHARSETS= 0,
-  SCH_COLLATIONS,
-  SCH_COLLATION_CHARACTER_SET_APPLICABILITY,
-  SCH_COLUMNS,
-  SCH_GLOBAL_STATUS,
-  SCH_GLOBAL_VARIABLES,
-  SCH_KEY_COLUMN_USAGE,
-  SCH_OPEN_TABLES,
-  SCH_PLUGINS,
-  SCH_PROCESSLIST,
-  SCH_REFERENTIAL_CONSTRAINTS,
-  SCH_SCHEMATA,
-  SCH_SESSION_STATUS,
-  SCH_SESSION_VARIABLES,
-  SCH_STATISTICS,
-  SCH_STATUS,
-  SCH_TABLES,
-  SCH_TABLE_CONSTRAINTS,
-  SCH_TABLE_NAMES,
-  SCH_VARIABLES
-};
-
-
-#define MY_I_S_MAYBE_NULL 1
-#define MY_I_S_UNSIGNED   2
-
-
-#define SKIP_OPEN_TABLE 0                // do not open table
-#define OPEN_FRM_ONLY   1                // open FRM file only
-#define OPEN_FULL_TABLE 2                // open FRM,MYD, MYI files
-
 typedef struct st_field_info
 {
   /** 
