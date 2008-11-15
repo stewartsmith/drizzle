@@ -28,8 +28,8 @@
                              CLIENT_TRANSACTIONS |                      \
                              CLIENT_SECURE_CONNECTION)
 
-#if defined(__GNU__)
-#define __private_extern__ __attribute__((visibility("hidden))) extern
+#if defined(__GNUC__)
+#define __private_extern__ __attribute__((visibility("hidden"))) extern
 #else
 #define __private_extern__ extern
 #endif
