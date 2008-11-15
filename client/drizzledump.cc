@@ -2228,7 +2228,7 @@ static void dump_table(char *table, char *db)
                 if (opt_hex_blob && is_blob)
                 {
                   extended_row.append("0x");
-                  drizzle_hex_string(tmp_str, row[i], length);
+                  octet2hex(tmp_str, row[i], length);
                   extended_row.append(tmp_str);
                 }
                 else

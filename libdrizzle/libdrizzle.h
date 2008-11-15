@@ -53,8 +53,6 @@ extern "C" {
   unsigned int drizzle_get_default_port(void);
   uint32_t drizzle_escape_string(char *to,const char *from,
                                  uint32_t from_length);
-  uint32_t drizzle_hex_string(char *to,const char *from,
-                              uint32_t from_length);
 
 #ifdef  __cplusplus
 }
