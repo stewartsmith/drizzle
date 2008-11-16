@@ -28,6 +28,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
+#include <drizzled/item/strfunc.h>
 
 String my_empty_string("",default_charset_info);
 

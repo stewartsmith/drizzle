@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_CURTIME_H
 #define DRIZZLED_FUNCTIONS_TIME_CURTIME_H
 
+#include <drizzled/functions/time/str_timefunc.h>
+
 /* Abstract CURTIME function. Children should define what time zone is used */
 
 class Item_func_curtime :public Item_str_timefunc

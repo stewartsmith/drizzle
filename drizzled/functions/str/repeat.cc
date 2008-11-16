@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/repeat.h>
 #include <drizzled/error.h>
+#include <drizzled/functions/str/alloc_buffer.h>
 
 void Item_func_repeat::fix_length_and_dec()
 {

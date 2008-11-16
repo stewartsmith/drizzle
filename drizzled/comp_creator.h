@@ -17,25 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTIONS_TIME_DAYNAME_H
-#define DRIZZLED_FUNCTIONS_TIME_DAYNAME_H
+#ifndef DRIZZLED_COMP_CREATOR_H
+#define DRIZZLED_COMP_CREATOR_H
 
-#include <drizzled/functions/time/weekday.h>
+class Item_bool_func2;
 
-class Item_func_dayname :public Item_func_weekday
+
+class Comp_creator
 {
- public:
-  Item_func_dayname(Item *a) :Item_func_weekday(a,0) {}
-  const char *func_name() const { return "dayname"; }
-  String *val_str(String *str);
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec()
-  {
-    collation.set(&my_charset_bin);
-    decimals=0;
-    max_length=9*MY_CHARSET_BIN_MB_MAXLEN;
-    maybe_null=1;
-  }
+public:
+  Comp_creator() {}                           /* Remove gcc warning */
+  virtual ~Comp_creator() {}                  /* Remove gcc warning */
+  virtual Item_bool_func2* create(Item *a, Item *b) const = 0;
+  virtual const char* symbol(bool invert) const = 0;
+  virtual bool eqne_op() const = 0;
+  virtual bool l_op() const = 0;
 };
 
-#endif /* DRIZZLED_FUNCTIONS_TIME_DAYNAME_H */
+typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
+
+#endif /* DRIZZLED_COMP_CREATOR_H */

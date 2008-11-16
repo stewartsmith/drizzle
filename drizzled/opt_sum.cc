@@ -49,6 +49,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/item/cmpfunc.h>
 
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref, Field* field,
                                 COND *cond, uint32_t *range_fl,

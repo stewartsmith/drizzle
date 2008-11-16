@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
-#include <drizzled/item_func.h>
+#include <drizzled/item/func.h>
 #include <drizzled/functions/exp.h>
 #include CMATH_H
 

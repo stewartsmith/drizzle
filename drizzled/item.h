@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef drizzled_item_h
-#define drizzled_item_h
+#ifndef DRIZZLED_ITEM_H
+#define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
 
@@ -26,155 +26,12 @@ class Protocol;
 struct TableList;
 void item_init(void);			/* Init item functions */
 class Item_field;
-
+class Name_resolution_context;
 
 void dummy_error_processor(Session *session, void *data);
 
 void view_error_processor(Session *session, void *data);
 
-/*
-  Instances of Name_resolution_context store the information necesary for
-  name resolution of Items and other context analysis of a query made in
-  fix_fields().
-
-  This structure is a part of SELECT_LEX, a pointer to this structure is
-  assigned when an item is created (which happens mostly during  parsing
-  (sql_yacc.yy)), but the structure itself will be initialized after parsing
-  is complete
-
-  TODO: move subquery of INSERT ... SELECT and CREATE ... SELECT to
-  separate SELECT_LEX which allow to remove tricks of changing this
-  structure before and after INSERT/CREATE and its SELECT to make correct
-  field name resolution.
-*/
-struct Name_resolution_context: Sql_alloc
-{
-  /*
-    The name resolution context to search in when an Item cannot be
-    resolved in this context (the context of an outer select)
-  */
-  Name_resolution_context *outer_context;
-
-  /*
-    List of tables used to resolve the items of this context.  Usually these
-    are tables from the FROM clause of SELECT statement.  The exceptions are
-    INSERT ... SELECT and CREATE ... SELECT statements, where SELECT
-    subquery is not moved to a separate SELECT_LEX.  For these types of
-    statements we have to change this member dynamically to ensure correct
-    name resolution of different parts of the statement.
-  */
-  TableList *table_list;
-  /*
-    In most cases the two table references below replace 'table_list' above
-    for the purpose of name resolution. The first and last name resolution
-    table references allow us to search only in a sub-tree of the nested
-    join tree in a FROM clause. This is needed for NATURAL JOIN, JOIN ... USING
-    and JOIN ... ON. 
-  */
-  TableList *first_name_resolution_table;
-  /*
-    Last table to search in the list of leaf table references that begins
-    with first_name_resolution_table.
-  */
-  TableList *last_name_resolution_table;
-
-  /*
-    SELECT_LEX item belong to, in case of merged VIEW it can differ from
-    SELECT_LEX where item was created, so we can't use table_list/field_list
-    from there
-  */
-  st_select_lex *select_lex;
-
-  /*
-    Processor of errors caused during Item name resolving, now used only to
-    hide underlying tables in errors about views (i.e. it substitute some
-    errors for views)
-  */
-  void (*error_processor)(Session *, void *);
-  void *error_processor_data;
-
-  /*
-    When true items are resolved in this context both against the
-    SELECT list and this->table_list. If false, items are resolved
-    only against this->table_list.
-  */
-  bool resolve_in_select_list;
-
-  /*
-    Security context of this name resolution context. It's used for views
-    and is non-zero only if the view is defined with SQL SECURITY DEFINER.
-  */
-  Security_context *security_ctx;
-
-  Name_resolution_context()
-    :outer_context(0), table_list(0), select_lex(0),
-    error_processor_data(0),
-    security_ctx(0)
-    {}
-
-  void init()
-  {
-    resolve_in_select_list= false;
-    error_processor= &dummy_error_processor;
-    first_name_resolution_table= NULL;
-    last_name_resolution_table= NULL;
-  }
-
-  void resolve_in_table_list_only(TableList *tables)
-  {
-    table_list= first_name_resolution_table= tables;
-    resolve_in_select_list= false;
-  }
-
-  void process_error(Session *session)
-  {
-    (*error_processor)(session, error_processor_data);
-  }
-};
-
-
-/*
-  Store and restore the current state of a name resolution context.
-*/
-
-class Name_resolution_context_state
-{
-private:
-  TableList *save_table_list;
-  TableList *save_first_name_resolution_table;
-  TableList *save_next_name_resolution_table;
-  bool        save_resolve_in_select_list;
-  TableList *save_next_local;
-
-public:
-  Name_resolution_context_state() {}          /* Remove gcc warning */
-
-public:
-  /* Save the state of a name resolution context. */
-  void save_state(Name_resolution_context *context, TableList *table_list)
-  {
-    save_table_list=                  context->table_list;
-    save_first_name_resolution_table= context->first_name_resolution_table;
-    save_resolve_in_select_list=      context->resolve_in_select_list;
-    save_next_local=                  table_list->next_local;
-    save_next_name_resolution_table=  table_list->next_name_resolution_table;
-  }
-
-  /* Restore a name resolution context from saved state. */
-  void restore_state(Name_resolution_context *context, TableList *table_list)
-  {
-    table_list->next_local=                save_next_local;
-    table_list->next_name_resolution_table= save_next_name_resolution_table;
-    context->table_list=                   save_table_list;
-    context->first_name_resolution_table=  save_first_name_resolution_table;
-    context->resolve_in_select_list=       save_resolve_in_select_list;
-  }
-
-  TableList *get_first_name_resolution_table()
-  {
-    return save_first_name_resolution_table;
-  }
-};
 
 
 /*************************************************************************/
@@ -1876,15 +1733,6 @@ public:
   virtual Item *real_item() { return ref; }
 };
 
-#ifdef DRIZZLE_SERVER
-#include "item_sum.h"
-#include "item_func.h"
-#include "item_row.h"
-#include "item_cmpfunc.h"
-#include "item_strfunc.h"
-#include "item_timefunc.h"
-#include "item_subselect.h"
-#endif
 
 class Item_copy_string :public Item
 {
@@ -2201,106 +2049,6 @@ public:
   int save_in_field(Field *field, bool no_conversions);
 };
 
-class Item_cache_row: public Item_cache
-{
-  Item_cache  **values;
-  uint32_t item_count;
-  bool save_array;
-public:
-  Item_cache_row()
-    :Item_cache(), values(0), item_count(2), save_array(0) {}
-  
-  /*
-    'allocate' used only in row transformer, to preallocate space for row 
-    cache.
-  */
-  bool allocate(uint32_t num);
-  /*
-    'setup' is needed only by row => it not called by simple row subselect
-    (only by IN subselect (in subselect optimizer))
-  */
-  bool setup(Item *item);
-  void store(Item *item);
-  void illegal_method_call(const char *);
-  void make_field(Send_field *)
-  {
-    illegal_method_call((const char*)"make_field");
-  };
-  double val_real()
-  {
-    illegal_method_call((const char*)"val");
-    return 0;
-  };
-  int64_t val_int()
-  {
-    illegal_method_call((const char*)"val_int");
-    return 0;
-  };
-  String *val_str(String *)
-  {
-    illegal_method_call((const char*)"val_str");
-    return 0;
-  };
-  my_decimal *val_decimal(my_decimal *val __attribute__((unused)))
-  {
-    illegal_method_call((const char*)"val_decimal");
-    return 0;
-  };
-
-  enum Item_result result_type() const { return ROW_RESULT; }
-  
-  uint32_t cols() { return item_count; }
-  Item *element_index(uint32_t i) { return values[i]; }
-  Item **addr(uint32_t i) { return (Item **) (values + i); }
-  bool check_cols(uint32_t c);
-  bool null_inside();
-  void bring_value();
-  void keep_array() { save_array= 1; }
-  void cleanup()
-  {
-    Item_cache::cleanup();
-    if (save_array)
-      memset(values, 0, item_count*sizeof(Item**));
-    else
-      values= 0;
-    return;
-  }
-};
-
-
-/*
-  Item_type_holder used to store type. name, length of Item for UNIONS &
-  derived tables.
-
-  Item_type_holder do not need cleanup() because its time of live limited by
-  single SP/PS execution.
-*/
-class Item_type_holder: public Item
-{
-protected:
-  TYPELIB *enum_set_typelib;
-  enum_field_types fld_type;
-
-  void get_full_info(Item *item);
-
-  /* It is used to count decimal precision in join_types */
-  int prev_decimal_int_part;
-public:
-  Item_type_holder(Session*, Item*);
-
-  Item_result result_type() const;
-  enum_field_types field_type() const { return fld_type; };
-  enum Type type() const { return TYPE_HOLDER; }
-  double val_real();
-  int64_t val_int();
-  my_decimal *val_decimal(my_decimal *);
-  String *val_str(String*);
-  bool join_types(Session *session, Item *);
-  Field *make_field_by_type(Table *table);
-  static uint32_t display_length(Item *item);
-  static enum_field_types get_real_type(Item *);
-};
-
 
 class st_select_lex;
 void mark_select_range_as_dependent(Session *session,
@@ -2354,4 +2102,4 @@ Field *create_tmp_field(Session *session, Table *table, Item *item,
                         bool make_copy_field,
                         uint32_t convert_blob_length);
 
-#endif
+#endif /* DRIZZLED_ITEM_H */

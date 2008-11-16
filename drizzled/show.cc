@@ -29,6 +29,7 @@
 #include <string>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
+#include <drizzled/item/cmpfunc.h>
 
 inline const char *
 str_or_nil(const char *str)

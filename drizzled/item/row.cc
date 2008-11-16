@@ -16,6 +16,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 
+#include <drizzled/item/row.h>
+
 /**
   Row items used for comparing rows and IN operations on rows:
 

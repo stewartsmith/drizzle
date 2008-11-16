@@ -17,7 +17,7 @@
 
 #include CSTDINT_H
 #include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
+#include <drizzled/item/func.h>
 #include <zlib.h>
 
 class Item_func_crc32 :public Item_int_func

@@ -32,9 +32,11 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
 
 #include CMATH_H
 

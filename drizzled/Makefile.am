@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions functions/str functions/time .
+SUBDIRS = util field item serialize functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -71,6 +71,7 @@ LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
+		 $(top_builddir)/drizzled/item/libitem.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
@@ -92,6 +93,7 @@ noinst_HEADERS = \
 		base.h \
 		client_settings.h \
 		common_includes.h \
+		comp_creator.h \
 		configvar.h \
 		connect.h \
 		cost_vect.h \
@@ -114,15 +116,7 @@ noinst_HEADERS = \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
-		item_cmpfunc.h \
-		item_create.h \
-		item_func.h \
 	       	item.h \
-		item_row.h \
-		item_strfunc.h \
-		item_subselect.h \
-		item_sum.h \
-		item_timefunc.h \
                 key_map.h \
 		lex.h \
 		lex_symbol.h \
@@ -130,6 +124,8 @@ noinst_HEADERS = \
 		logging.h \
 		log.h \
 		my_decimal.h\
+		name_resolution_context.h \
+		name_resolution_context_state.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -199,16 +195,7 @@ drizzled_SOURCES = \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
 		init.cc \
-		item_buff.cc \
 		item.cc \
-		item_cmpfunc.cc \
-		item_create.cc \
-		item_func.cc \
-		item_row.cc \
-		item_strfunc.cc \
-		item_subselect.cc \
-		item_sum.cc \
-		item_timefunc.cc \
 		key.cc \
                 key_map.cc \
 		lock.cc \
@@ -217,6 +204,7 @@ drizzled_SOURCES = \
 		logging.cc \
 		mf_iocache.cc \
 		my_decimal.cc\
+		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_DATE_H
 #define DRIZZLED_FUNCTIONS_TIME_DATE_H
 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/str/strfunc.h>
 /*
   This can't be a Item_str_func, because the val_real() functions are special
 */

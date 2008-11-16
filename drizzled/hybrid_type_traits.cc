@@ -19,6 +19,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/hybrid_type_traits.h>
+#include <drizzled/hybrid_type.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

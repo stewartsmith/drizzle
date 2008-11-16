@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_STR_TIMEFUNC_H
 #define DRIZZLED_FUNCTIONS_TIME_STR_TIMEFUNC_H
 
+#include <drizzled/item/strfunc.h>
+
 class Item_str_timefunc :public Item_str_func
 {
 public:

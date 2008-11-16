@@ -18,9 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/hybrid_type_traits_decimal.h>
+#include <drizzled/hybrid_type.h>
 #include <drizzled/definitions.h>
 
-#include <drizzled/hybrid_type_traits_decimal.h>
 
 /* Hybrid_type_traits_decimal */
 static const Hybrid_type_traits_decimal decimal_traits_instance;

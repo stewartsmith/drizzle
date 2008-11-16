@@ -28,7 +28,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
-
+#include <drizzled/functions/time/unix_timestamp.h>
+#include <drizzled/item/cmpfunc.h>
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -3791,37 +3792,37 @@ bool check_simple_select()
 
 Comp_creator *comp_eq_creator(bool invert)
 {
-  return invert?(Comp_creator *)&ne_creator:(Comp_creator *)&eq_creator;
+  return invert?(Comp_creator *)Ne_creator::instance():(Comp_creator *)Eq_creator::instance();
 }
 
 
 Comp_creator *comp_ge_creator(bool invert)
 {
-  return invert?(Comp_creator *)&lt_creator:(Comp_creator *)&ge_creator;
+  return invert?(Comp_creator *)Lt_creator::instance():(Comp_creator *)Ge_creator::instance();
 }
 
 
 Comp_creator *comp_gt_creator(bool invert)
 {
-  return invert?(Comp_creator *)&le_creator:(Comp_creator *)&gt_creator;
+  return invert?(Comp_creator *)Le_creator::instance():(Comp_creator *)Gt_creator::instance();
 }
 
 
 Comp_creator *comp_le_creator(bool invert)
 {
-  return invert?(Comp_creator *)&gt_creator:(Comp_creator *)&le_creator;
+  return invert?(Comp_creator *)Gt_creator::instance():(Comp_creator *)Le_creator::instance();
 }
 
 
 Comp_creator *comp_lt_creator(bool invert)
 {
-  return invert?(Comp_creator *)&ge_creator:(Comp_creator *)&lt_creator;
+  return invert?(Comp_creator *)Ge_creator::instance():(Comp_creator *)Lt_creator::instance();
 }
 
 
 Comp_creator *comp_ne_creator(bool invert)
 {
-  return invert?(Comp_creator *)&eq_creator:(Comp_creator *)&ne_creator;
+  return invert?(Comp_creator *)Eq_creator::instance():(Comp_creator *)Ne_creator::instance();
 }
 
 
