@@ -22,16 +22,25 @@
 
 #include <drizzled/dtcollation.h>
 
+#define NO_CACHED_FIELD_INDEX ((uint)(-1))
+
 class Protocol;
-struct TableList;
-void item_init(void);			/* Init item functions */
+class TableList;
 class Item_field;
 class Name_resolution_context;
+class st_select_lex;
+class Item_equal;
+class COND_EQUAL;
+class user_var_entry;
+class Item_sum;
+class Item_in_subselect;
+
+
+void item_init(void);			/* Init item functions */
+
 
 void dummy_error_processor(Session *session, void *data);
-
 void view_error_processor(Session *session, void *data);
-
 
 
 /*************************************************************************/
@@ -54,12 +63,13 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
 
 class Item
 {
-  Item(const Item &);			/* Prevent use of these */
+  /* Prevent use of these */
+  Item(const Item &);
   void operator=(Item &);
+
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
-  virtual bool is_expensive_processor(unsigned char *arg __attribute__((unused)))
-  { return 0; }
+  virtual bool is_expensive_processor(unsigned char *arg);
 
 public:
   static void *operator new(size_t size)
@@ -74,10 +84,10 @@ public:
   {}
 
   enum Type {FIELD_ITEM= 0, FUNC_ITEM, SUM_FUNC_ITEM, STRING_ITEM,
-	     INT_ITEM, REAL_ITEM, NULL_ITEM, VARBIN_ITEM,
-	     COPY_STR_ITEM, FIELD_AVG_ITEM, DEFAULT_VALUE_ITEM,
-	     PROC_ITEM,COND_ITEM, REF_ITEM, FIELD_STD_ITEM,
-	     FIELD_VARIANCE_ITEM, INSERT_VALUE_ITEM,
+             INT_ITEM, REAL_ITEM, NULL_ITEM, VARBIN_ITEM,
+             COPY_STR_ITEM, FIELD_AVG_ITEM, DEFAULT_VALUE_ITEM,
+             PROC_ITEM,COND_ITEM, REF_ITEM, FIELD_STD_ITEM,
+             FIELD_VARIANCE_ITEM, INSERT_VALUE_ITEM,
              SUBSELECT_ITEM, ROW_ITEM, CACHE_ITEM, TYPE_HOLDER,
              PARAM_ITEM, DECIMAL_ITEM,
              VIEW_FIXER_ITEM};
@@ -85,7 +95,7 @@ public:
   enum cond_result { COND_UNDEF,COND_OK,COND_TRUE,COND_FALSE };
 
   enum traverse_order { POSTFIX, PREFIX };
-  
+
   /* Reuse size, only used by SP local variable assignment, otherwize 0 */
   uint32_t rsize;
 
@@ -94,12 +104,18 @@ public:
     save_in_field
   */
   String str_value;
-  char * name;			/* Name from select */
+
+  /* Name from select */
+  char * name;
+
   /* Original item name (if it was renamed)*/
   char * orig_name;
   Item *next;
   uint32_t max_length;
-  uint32_t name_length;                     /* Length of name */
+
+  /* Length of name */
+  uint32_t name_length;
+
   int8_t marker;
   uint8_t decimals;
   bool maybe_null;			/* If item may be null */
@@ -130,28 +146,37 @@ public:
 #ifdef EXTRA_DEBUG
     name=0;
 #endif
-  }		/*lint -e1509 */
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs);
+  }
+  void set_name(const char *str, uint32_t length,
+                const CHARSET_INFO * const cs);
   void rename(char *new_name);
   void init_make_field(Send_field *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(Send_field *field);
   Field *make_string_field(Table *table);
   virtual bool fix_fields(Session *, Item **);
+
   /*
     Fix after some tables has been pulled out. Basically re-calculate all
     attributes that are dependent on the tables.
   */
-  virtual void fix_after_pullout(st_select_lex *new_parent __attribute__((unused)),
-                                 Item **ref __attribute__((unused))) {};
+  virtual void fix_after_pullout(st_select_lex *new_parent, Item **ref);
 
   /*
     should be used in case where we are sure that we do not need
-    complete fix_fields() procedure.
-  */
+    complete fix_fields() procedure.  */
   inline void quick_fix_field() { fixed= 1; }
-  /* Function returns 1 on overflow and -1 on fatal errors */
+
+  /*
+  Save value in field, but don't give any warnings
+
+  NOTES
+   This is used to temporary store and retrieve a value in a column,
+   for example in opt_range to adjust the key value to fit the column.
+  Return: Function returns 1 on overflow and -1 on fatal errors
+  */
   int save_in_field_no_warnings(Field *field, bool no_conversions);
+
   virtual int save_in_field(Field *field, bool no_conversions);
   virtual void save_org_in_field(Field *field)
   { (void) save_in_field(field, 1); }
@@ -164,7 +189,7 @@ public:
   virtual enum_field_types string_field_type() const;
   virtual enum_field_types field_type() const;
   virtual enum Type type() const =0;
-  
+
   /*
     Return information about function monotonicity. See comment for
     enum_monotonicity_info for details. This function can only be called
@@ -174,7 +199,10 @@ public:
   { return NON_MONOTONIC; }
 
   /*
-    Convert "func_arg $CMP$ const" half-interval into "FUNC(func_arg) $CMP2$ const2"
+    Convert:
+      "func_arg $CMP$ const" half-interval
+    into:
+      "FUNC(func_arg) $CMP2$ const2"
 
     SYNOPSIS
       val_int_endpoint()
@@ -194,10 +222,10 @@ public:
       The value of const is supplied implicitly as the value this item's
       argument, the form of $CMP$ comparison is specified through the
       function's arguments. The calle returns the result interval
-         
+
          F(x) $CMP2$ F(const)
-      
-      passing back F(const) as the return value, and the form of $CMP2$ 
+
+      passing back F(const) as the return value, and the form of $CMP2$
       through the out parameter. NULL values are assumed to be comparable and
       be less than any non-NULL values.
 
@@ -206,9 +234,7 @@ public:
         - If the value of the function is NULL then the bound is the
           smallest possible value of INT64_MIN
   */
-  virtual int64_t val_int_endpoint(bool left_endp __attribute__((unused)),
-                                    bool *incl_endp __attribute__((unused)))
-  { assert(0); return 0; }
+  virtual int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
 
 
   /* valXXX methods must return NULL or 0 or 0.0 if null_value is set. */
@@ -320,9 +346,8 @@ public:
 
   virtual Field *get_tmp_table_field(void) { return 0; }
   /* This is also used to create fields in CREATE ... SELECT: */
-  virtual Field *tmp_table_field(Table *t_arg __attribute__((unused)))
-  { return 0; }
-  virtual const char *full_name(void) const { return name ? name : "???"; }
+  virtual Field *tmp_table_field(Table *t_arg);
+  virtual const char *full_name(void) const;
 
   /*
     *result* family of methods is analog of *val* family (see above) but
@@ -364,16 +389,16 @@ public:
   virtual uint32_t decimal_precision() const;
   inline int decimal_int_part() const
   { return my_decimal_int_part(decimal_precision(), decimals); }
-  /* 
+  /*
     Returns true if this is constant (during query execution, i.e. its value
     will not change until next fix_fields) and its value is known.
   */
   virtual bool const_item() const { return used_tables() == 0; }
-  /* 
+  /*
     Returns true if this is constant but its value may be not known yet.
     (Can be used for parameters of prep. stmts or of stored procedures.)
   */
-  virtual bool const_during_execution() const 
+  virtual bool const_during_execution() const
   { return (used_tables() & ~PARAM_TABLE_BIT) == 0; }
 
   /**
@@ -387,37 +412,34 @@ public:
     query and why they should be generated from the Item-tree, @see
     mysql_register_view().
   */
-  virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((unused)))
-  {
-    str->append(full_name());
-  }
+  virtual void print(String *str, enum_query_type query_type);
 
   void print_item_w_name(String *, enum_query_type query_type);
   virtual void update_used_tables() {}
-  virtual void split_sum_func(Session *session __attribute__((unused)),
-                              Item **ref_pointer_array __attribute__((unused)),
-                              List<Item> &fields __attribute__((unused))) {}
+  virtual void split_sum_func(Session *session, Item **ref_pointer_array,
+                              List<Item> &fields);
+
   /* Called for items that really have to be split */
-  void split_sum_func2(Session *session, Item **ref_pointer_array, List<Item> &fields,
+  void split_sum_func2(Session *session, Item **ref_pointer_array,
+                       List<Item> &fields,
                        Item **ref, bool skip_registered);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
-  { return get_date(ltime,fuzzydate); }
+  virtual bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
+
   /*
-    The method allows to determine nullness of a complex expression 
-    without fully evaluating it, instead of calling val/result*() then 
+    The method allows to determine nullness of a complex expression
+    without fully evaluating it, instead of calling val/result*() then
     checking null_value. Used in Item_func_isnull/Item_func_isnotnull
     and Item_sum_count/Item_sum_count_distinct.
     Any new item which can be NULL must implement this method.
   */
-  virtual bool is_null() { return 0; }
+  virtual bool is_null();
 
   /*
    Make sure the null_value member has a correct value.
   */
-  virtual void update_null_value () { (void) val_int(); }
+  virtual void update_null_value ();
 
   /*
     Inform the item that there will be no distinction between its result
@@ -429,45 +451,42 @@ public:
       Item_cond_and and subquery-related item) enable special optimizations
       when they are "top level".
   */
-  virtual void top_level_item(void) {}
+  virtual void top_level_item(void);
   /*
     set field of temporary table for Item which can be switched on temporary
     table during query processing (grouping and so on)
   */
-  virtual void set_result_field(Field *field __attribute__((unused))) {}
-  virtual bool is_result_field(void) { return 0; }
-  virtual bool is_bool_func(void) { return 0; }
-  virtual void save_in_result_field(bool no_conversions __attribute__((unused)))
-  {}
+  virtual void set_result_field(Field *field);
+  virtual bool is_result_field(void);
+  virtual bool is_bool_func(void);
+  virtual void save_in_result_field(bool no_conversions);
+
   /*
     set value of aggregate function in case of no rows for grouping were found
   */
-  virtual void no_rows_in_result(void) {}
-  virtual Item *copy_or_same(Session *session __attribute__((unused)))
-  { return this; }
-  virtual Item *copy_andor_structure(Session *session  __attribute__((unused)))
-  { return this; }
-  virtual Item *real_item(void) { return this; }
-  virtual Item *get_tmp_table_item(Session *session) { return copy_or_same(session); }
+  virtual void no_rows_in_result(void);
+  virtual Item *copy_or_same(Session *session);
+
+  virtual Item *copy_andor_structure(Session *session);
+
+  virtual Item *real_item(void);
+  virtual Item *get_tmp_table_item(Session *session);
 
   static const CHARSET_INFO *default_charset();
-  virtual const CHARSET_INFO *compare_collation() { return NULL; }
+  virtual const CHARSET_INFO *compare_collation();
 
-  virtual bool walk(Item_processor processor __attribute__((unused)),
-                    bool walk_subquery __attribute__((unused)),
-                    unsigned char *arg)
-  {
-    return (this->*processor)(arg);
-  }
+  virtual bool walk(Item_processor processor,
+                    bool walk_subquery,
+                    unsigned char *arg);
 
   virtual Item* transform(Item_transformer transformer, unsigned char *arg);
 
   /*
     This function performs a generic "compilation" of the Item tree.
-    The process of compilation is assumed to go as follows: 
-    
+    The process of compilation is assumed to go as follows:
+
     compile()
-    { 
+    {
       if (this->*some_analyzer(...))
       {
         compile children if any;
@@ -476,53 +495,30 @@ public:
     }
 
     i.e. analysis is performed top-down while transformation is done
-    bottom-up.      
+    bottom-up.
   */
   virtual Item* compile(Item_analyzer analyzer, unsigned char **arg_p,
-                        Item_transformer transformer, unsigned char *arg_t)
-  {
-    if ((this->*analyzer) (arg_p))
-      return ((this->*transformer) (arg_t));
-    return 0;
-  }
+                        Item_transformer transformer, unsigned char *arg_t);
 
-   virtual void traverse_cond(Cond_traverser traverser __attribute__((unused)),
-                              void *arg,
-                              traverse_order order __attribute__((unused)))
-   {
-     (*traverser)(this, arg);
-   }
+  virtual void traverse_cond(Cond_traverser traverser,
+                             void *arg,
+                             traverse_order order);
 
-  virtual bool remove_dependence_processor(unsigned char * arg __attribute__((unused)))
-  { return 0; }
-  virtual bool remove_fixed(unsigned char * arg __attribute__((unused)))
-  {
-    fixed= 0;
-    return 0;
-  }
-  virtual bool cleanup_processor(unsigned char *arg __attribute__((unused)));
-  virtual bool collect_item_field_processor(unsigned char * arg __attribute__((unused)))
-  { return 0; }
-  virtual bool find_item_in_field_list_processor(unsigned char *arg __attribute__((unused)))
- { return 0; }
-  virtual bool change_context_processor(unsigned char *context __attribute__((unused)))
-  { return 0; }
-  virtual bool reset_query_id_processor(unsigned char *query_id_arg __attribute__((unused)))
-  { return 0; }
-  virtual bool register_field_in_read_map(unsigned char *arg __attribute__((unused)))
-  { return 0; }
+  virtual bool remove_dependence_processor(unsigned char * arg);
+  virtual bool remove_fixed(unsigned char * arg);
+  virtual bool cleanup_processor(unsigned char *arg);
+  virtual bool collect_item_field_processor(unsigned char * arg);
+  virtual bool find_item_in_field_list_processor(unsigned char *arg);
+  virtual bool change_context_processor(unsigned char *context);
+  virtual bool reset_query_id_processor(unsigned char *query_id_arg);
+  virtual bool register_field_in_read_map(unsigned char *arg);
+
   /*
     The next function differs from the previous one that a bitmap to be updated
     is passed as unsigned char *arg.
   */
-  virtual bool register_field_in_bitmap(unsigned char *arg __attribute__((unused)))
-  { return 0; }
-  virtual bool subst_argument_checker(unsigned char **arg)
-  {
-    if (*arg)
-      *arg= NULL;
-    return true;
-  }
+  virtual bool register_field_in_bitmap(unsigned char *arg);
+  virtual bool subst_argument_checker(unsigned char **arg);
 
   /*
     Check if an expression/function is allowed for a virtual column
@@ -533,48 +529,42 @@ public:
       TRUE                           Function not accepted
       FALSE                          Function accepted
   */
-  virtual bool check_vcol_func_processor(unsigned char *arg __attribute__((unused))) 
-  { return true; }
-
-  virtual Item *equal_fields_propagator(unsigned char * arg __attribute__((unused))) { return this; }
-  virtual bool set_no_const_sub(unsigned char *arg __attribute__((unused))) { return false; }
-  virtual Item *replace_equal_field(unsigned char * arg __attribute__((unused))) { return this; }
+  virtual bool check_vcol_func_processor(unsigned char *arg);
+  virtual Item *equal_fields_propagator(unsigned char * arg);
+  virtual bool set_no_const_sub(unsigned char *arg);
+  virtual Item *replace_equal_field(unsigned char * arg);
 
 
   /*
     For SP local variable returns pointer to Item representing its
     current value and pointer to current Item otherwise.
   */
-  virtual Item *this_item(void) { return this; }
-  virtual const Item *this_item(void) const { return this; }
+  virtual Item *this_item(void);
+  virtual const Item *this_item(void) const;
 
   /*
     For SP local variable returns address of pointer to Item representing its
     current value and pointer passed via parameter otherwise.
   */
-  virtual Item **this_item_addr(Session *session __attribute__((unused)), Item **addr_arg) { return addr_arg; }
+  virtual Item **this_item_addr(Session *session, Item **addr_arg);
 
   // Row emulation
-  virtual uint32_t cols() { return 1; }
-  virtual Item* element_index(uint32_t i __attribute__((unused))) { return this; }
-  virtual Item** addr(uint32_t i __attribute__((unused))) { return 0; }
+  virtual uint32_t cols();
+  virtual Item* element_index(uint32_t i);
+  virtual Item** addr(uint32_t i);
   virtual bool check_cols(uint32_t c);
   // It is not row => null inside is impossible
-  virtual bool null_inside() { return 0; }
+  virtual bool null_inside();
   // used in row subselects to get value of elements
-  virtual void bring_value() {}
+  virtual void bring_value();
 
   Field *tmp_table_field_from_field_type(Table *table, bool fixed_length);
-  virtual Item_field *filed_for_view_update() { return 0; }
+  virtual Item_field *filed_for_view_update();
 
-  virtual Item *neg_transformer(Session *session __attribute__((unused))) { return NULL; }
-  virtual Item *update_value_transformer(unsigned char *select_arg __attribute__((unused))) { return this; }
+  virtual Item *neg_transformer(Session *session);
+  virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  void delete_self()
-  {
-    cleanup();
-    delete this;
-  }
+  void delete_self();
 
   /*
     result_as_int64_t() must return true for Items representing DATE/TIME
@@ -583,7 +573,7 @@ public:
     their values should be compared as integers (because the integer
     representation is more precise than the string one).
   */
-  virtual bool result_as_int64_t() { return false; }
+  virtual bool result_as_int64_t();
   bool is_datetime();
 
   /*
@@ -597,14 +587,12 @@ public:
     where 'cost' is either 'double' or some structure of various cost
     parameters.
   */
-  virtual bool is_expensive()
-  {
-    if (is_expensive_cache < 0)
-      is_expensive_cache= walk(&Item::is_expensive_processor, 0, (unsigned char*)0);
-    return test(is_expensive_cache);
-  }
+  virtual bool is_expensive();
+
   String *check_well_formed_result(String *str, bool send_error= 0);
-  bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs); 
+  bool eq_by_collation(Item *item, bool binary_cmp,
+                       const CHARSET_INFO * const cs);
+
 };
 
 
@@ -633,9 +621,6 @@ public:
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
 };
 
-#define NO_CACHED_FIELD_INDEX ((uint)(-1))
-
-class st_select_lex;
 class Item_ident :public Item
 {
 protected:
@@ -705,10 +690,6 @@ public:
   void make_field(Send_field *tmp_field);
 };
 
-
-class Item_equal;
-class COND_EQUAL;
-class user_var_entry;
 
 class Item_field :public Item_ident
 {
@@ -1623,7 +1604,6 @@ public:
   Item_field::fix_outer_field() functions.
 */
 
-class Item_sum;
 class Item_outer_ref :public Item_direct_ref
 {
 public:
@@ -1666,8 +1646,6 @@ public:
   virtual Ref_Type ref_type() { return OUTER_REF; }
 };
 
-
-class Item_in_subselect;
 
 
 /*
@@ -2050,7 +2028,7 @@ public:
 };
 
 
-class st_select_lex;
+
 void mark_select_range_as_dependent(Session *session,
                                     st_select_lex *last_select,
                                     st_select_lex *current_sel,

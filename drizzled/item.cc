@@ -50,6 +50,34 @@ void item_init(void)
 }
 
 
+bool Item::is_expensive_processor(unsigned char *)
+{
+  return 0;
+}
+
+void Item::fix_after_pullout(st_select_lex *, Item **)
+{}
+
+
+Field *Item::tmp_table_field(Table *)
+{
+  return 0;
+}
+
+
+const char *Item::full_name(void) const
+{
+  return name ? name : "???";
+}
+
+
+int64_t Item::val_int_endpoint(bool, bool *)
+{
+  assert(0);
+  return 0;
+}
+
+
 /**
   @todo
     Make this functions class dependent
@@ -326,6 +354,12 @@ uint32_t Item::decimal_precision() const
 }
 
 
+void Item::print(String *str, enum_query_type)
+{
+  str->append(full_name());
+}
+
+
 void Item::print_item_w_name(String *str, enum_query_type query_type)
 {
   print(str, query_type);
@@ -337,6 +371,10 @@ void Item::print_item_w_name(String *str, enum_query_type query_type)
     append_identifier(session, str, name, (uint) strlen(name));
   }
 }
+
+
+void Item::split_sum_func(Session *, Item **, List<Item> &)
+{}
 
 
 void Item::cleanup()
@@ -833,10 +871,81 @@ bool Item::get_time(DRIZZLE_TIME *ltime)
       str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
     memset(ltime, 0, sizeof(*ltime));
-    return 1;
+    return true;
   }
+  return false;
+}
+
+
+bool Item::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+{
+  return get_date(ltime,fuzzydate);
+}
+
+
+bool Item::is_null()
+{
+  return false;
+}
+
+
+void Item::update_null_value ()
+{
+  (void) val_int();
+}
+
+
+void Item::top_level_item(void)
+{}
+
+
+void Item::set_result_field(Field *)
+{}
+
+
+bool Item::is_result_field(void)
+{
   return 0;
 }
+
+
+bool Item::is_bool_func(void)
+{
+  return 0;
+}
+
+
+void Item::save_in_result_field(bool)
+{}
+
+
+void Item::no_rows_in_result(void)
+{}
+
+
+Item *Item::copy_or_same(Session *)
+{
+  return this;
+}
+
+
+Item *Item::copy_andor_structure(Session *)
+{
+  return this;
+}
+
+
+Item *Item::real_item(void)
+{
+  return this;
+}
+
+
+Item *Item::get_tmp_table_item(Session *session)
+{
+  return copy_or_same(session);
+}
+
 
 const CHARSET_INFO *Item::default_charset()
 {
@@ -844,13 +953,196 @@ const CHARSET_INFO *Item::default_charset()
 }
 
 
-/*
-  Save value in field, but don't give any warnings
+const CHARSET_INFO *Item::compare_collation()
+{
+  return NULL;
+}
 
-  NOTES
-   This is used to temporary store and retrieve a value in a column,
-   for example in opt_range to adjust the key value to fit the column.
-*/
+
+bool Item::walk(Item_processor processor, bool, unsigned char *arg)
+{
+  return (this->*processor)(arg);
+}
+
+
+Item* Item::compile(Item_analyzer analyzer, unsigned char **arg_p,
+                    Item_transformer transformer, unsigned char *arg_t)
+{
+  if ((this->*analyzer) (arg_p))
+    return ((this->*transformer) (arg_t));
+  return 0;
+}
+
+
+void Item::traverse_cond(Cond_traverser traverser, void *arg, traverse_order)
+{
+  (*traverser)(this, arg);
+}
+
+
+bool Item::remove_dependence_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::remove_fixed(unsigned char *)
+{
+  fixed= 0;
+  return 0;
+}
+
+
+bool Item::collect_item_field_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::find_item_in_field_list_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::change_context_processor(unsigned char *)
+{
+  return 0;
+}
+
+bool Item::reset_query_id_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::register_field_in_read_map(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::register_field_in_bitmap(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::subst_argument_checker(unsigned char **arg)
+{
+  if (*arg)
+    *arg= NULL;
+  return true;
+}
+
+
+bool Item::check_vcol_func_processor(unsigned char *)
+{
+  return true;
+}
+
+
+Item *Item::equal_fields_propagator(unsigned char *)
+{
+  return this;
+}
+
+
+bool Item::set_no_const_sub(unsigned char *)
+{
+  return false;
+}
+
+
+Item *Item::replace_equal_field(unsigned char *)
+{
+  return this;
+}
+
+
+Item *Item::this_item(void)
+{
+  return this;
+}
+
+
+const Item *Item::this_item(void) const
+{
+  return this;
+}
+
+
+Item **Item::this_item_addr(Session *, Item **addr_arg)
+{
+  return addr_arg;
+}
+
+
+uint32_t Item::cols()
+{
+  return 1;
+}
+
+
+Item* Item::element_index(uint32_t)
+{
+  return this;
+}
+
+
+Item** Item::addr(uint32_t)
+{
+  return 0;
+}
+
+
+bool Item::null_inside()
+{
+  return 0;
+}
+
+
+void Item::bring_value()
+{}
+
+
+Item_field *Item::filed_for_view_update()
+{
+  return 0;
+}
+
+Item *Item::neg_transformer(Session *)
+{
+  return NULL;
+}
+
+
+Item *Item::update_value_transformer(unsigned char *)
+{
+  return this;
+}
+
+
+void Item::delete_self()
+{
+  cleanup();
+  delete this;
+}
+
+bool Item::result_as_int64_t()
+{
+  return false;
+}
+
+
+bool Item::is_expensive()
+{
+  if (is_expensive_cache < 0)
+    is_expensive_cache= walk(&Item::is_expensive_processor, 0,
+                             (unsigned char*)0);
+  return test(is_expensive_cache);
+}
+
 
 int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 {
