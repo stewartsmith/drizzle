@@ -3589,9 +3589,9 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    if( mysql_bin_log.is_open() )
+    if (drizzle_bin_log.is_open())
     {
-      mysql_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
+      drizzle_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
     }
     pthread_mutex_lock(&LOCK_active_mi);
     rotate_relay_log(active_mi);

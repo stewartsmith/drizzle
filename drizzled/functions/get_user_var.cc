@@ -133,7 +133,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
       goto err;
   }
   else if (var_entry->used_query_id == session->query_id ||
-           mysql_bin_log.is_query_in_union(session, var_entry->used_query_id))
+           drizzle_bin_log.is_query_in_union(session, var_entry->used_query_id))
   {
     /* 
        If this variable was already stored in user_var_events by this query

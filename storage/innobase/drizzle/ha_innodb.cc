@@ -2159,8 +2159,8 @@ retry:
 			}
 		}
 
-		trx->mysql_log_file_name = mysql_bin_log_file_name();
-		trx->mysql_log_offset = (ib_int64_t) mysql_bin_log_file_pos();
+		trx->mysql_log_file_name = drizzle_bin_log_file_name();
+		trx->mysql_log_offset = (ib_int64_t) drizzle_bin_log_file_pos();
 
 		innobase_commit_low(trx);
 

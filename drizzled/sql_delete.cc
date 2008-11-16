@@ -315,7 +315,7 @@ cleanup:
   /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (error < 0)
         session->clear_error();
@@ -679,7 +679,7 @@ void multi_delete::abort()
     /* 
        there is only side effects; to binlog with the error
     */
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       session->binlog_query(Session::ROW_QUERY_TYPE,
                         session->query, session->query_length,
@@ -784,7 +784,7 @@ bool multi_delete::send_eof()
 
   if ((local_error == 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (local_error == 0)
         session->clear_error();

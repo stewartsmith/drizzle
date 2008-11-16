@@ -243,7 +243,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 void write_bin_log(Session *session, bool clear_error,
                    char const *query, ulong query_length)
 {
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     if (clear_error)
       session->clear_error();
@@ -4977,7 +4977,7 @@ end_online:
 
   session->set_proc_info("end");
 
-  assert(!(mysql_bin_log.is_open() &&
+  assert(!(drizzle_bin_log.is_open() &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 

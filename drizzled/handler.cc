@@ -4288,7 +4288,7 @@ static bool check_table_binlog_row_based(Session *session, Table *table)
 
   return (table->s->cached_row_logging_check &&
           (session->options & OPTION_BIN_LOG) &&
-          mysql_bin_log.is_open());
+          drizzle_bin_log.is_open());
 }
 
 
