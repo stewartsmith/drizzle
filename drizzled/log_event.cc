@@ -3825,8 +3825,8 @@ void Slave_log_event::init_from_mem_pool()
 
 int Slave_log_event::do_apply_event(const Relay_log_info *)
 {
-  if (mysql_bin_log.is_open())
-    mysql_bin_log.write(this);
+  if (drizzle_bin_log.is_open())
+    drizzle_bin_log.write(this);
   return 0;
 }
 
@@ -3883,7 +3883,7 @@ Create_file_log_event(Session* session_arg, sql_exchange* ex,
   :Load_log_event(session_arg,ex,db_arg,table_name_arg,fields_arg,handle_dup, ignore,
 		  using_trans),
    fake_base(0), block(block_arg), event_buf(0), block_len(block_len_arg),
-   file_id(session_arg->file_id = mysql_bin_log.next_file_id())
+   file_id(session_arg->file_id = drizzle_bin_log.next_file_id())
 {
   sql_ex.force_new_format();
   return;
@@ -4436,7 +4436,7 @@ Begin_load_query_log_event(Session* session_arg, const char* db_arg, unsigned ch
   :Append_block_log_event(session_arg, db_arg, block_arg, block_len_arg,
                           using_trans)
 {
-   file_id= session_arg->file_id= mysql_bin_log.next_file_id();
+   file_id= session_arg->file_id= drizzle_bin_log.next_file_id();
 }
 
 

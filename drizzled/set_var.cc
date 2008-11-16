@@ -834,7 +834,7 @@ void fix_binlog_format_after_update(Session *session, enum_var_type)
 
 static void fix_max_binlog_size(Session *, enum_var_type)
 {
-  mysql_bin_log.set_max_size(max_binlog_size);
+  drizzle_bin_log.set_max_size(max_binlog_size);
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
   return;

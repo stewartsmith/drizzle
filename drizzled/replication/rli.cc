@@ -126,7 +126,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
     fix_max_relay_log_size will reconsider the choice (for example
     if the user changes max_relay_log_size to zero, we have to
     switch to using max_binlog_size for the relay log) and update
-    rli->relay_log.max_size (and mysql_bin_log.max_size).
+    rli->relay_log.max_size (and drizzle_bin_log.max_size).
   */
   {
     char buf[FN_REFLEN];

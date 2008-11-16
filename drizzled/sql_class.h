@@ -1438,20 +1438,20 @@ public:
   
   struct {
     /* 
-      If true, mysql_bin_log::write(Log_event) call will not write events to 
+      If true, drizzle_bin_log::write(Log_event) call will not write events to 
       binlog, and maintain 2 below variables instead (use
-      mysql_bin_log.start_union_events to turn this on)
+      drizzle_bin_log.start_union_events to turn this on)
     */
     bool do_union;
     /*
-      If true, at least one mysql_bin_log::write(Log_event) call has been
-      made after last mysql_bin_log.start_union_events() call.
+      If true, at least one drizzle_bin_log::write(Log_event) call has been
+      made after last drizzle_bin_log.start_union_events() call.
     */
     bool unioned_events;
     /*
-      If true, at least one mysql_bin_log::write(Log_event e), where 
+      If true, at least one drizzle_bin_log::write(Log_event e), where 
       e.cache_stmt == true call has been made after last 
-      mysql_bin_log.start_union_events() call.
+      drizzle_bin_log.start_union_events() call.
     */
     bool unioned_events_trans;
     

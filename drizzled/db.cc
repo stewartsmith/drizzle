@@ -140,7 +140,7 @@ static inline void write_to_binlog(Session *session, char *query, uint32_t q_len
   qinfo.error_code= 0;
   qinfo.db= db;
   qinfo.db_len= db_len;
-  mysql_bin_log.write(&qinfo);
+  drizzle_bin_log.write(&qinfo);
 }  
 
 
@@ -633,7 +633,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       query_length= session->query_length;
     }
 
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       Query_log_event qinfo(session, query, query_length, 0, 
 			    /* suppress_use */ true);
@@ -659,7 +659,7 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       qinfo.db_len = strlen(db);
 
       /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-      mysql_bin_log.write(&qinfo);
+      drizzle_bin_log.write(&qinfo);
     }
     my_ok(session, result);
   }
@@ -716,7 +716,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     session->variables.collation_database= session->db_charset;
   }
 
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     Query_log_event qinfo(session, session->query, session->query_length, 0,
 			  /* suppress_use */ true);
@@ -731,7 +731,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
 
     session->clear_error();
     /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-    mysql_bin_log.write(&qinfo);
+    drizzle_bin_log.write(&qinfo);
   }
   my_ok(session, result);
 
@@ -851,7 +851,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
       query =session->query;
       query_length= session->query_length;
     }
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       Query_log_event qinfo(session, query, query_length, 0, 
 			    /* suppress_use */ true);
@@ -865,14 +865,14 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
       session->clear_error();
       /* These DDL methods and logging protected with LOCK_drizzle_create_db */
-      mysql_bin_log.write(&qinfo);
+      drizzle_bin_log.write(&qinfo);
     }
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     my_ok(session, (uint32_t) deleted);
     session->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
-  else if (mysql_bin_log.is_open())
+  else if (drizzle_bin_log.is_open())
   {
     char *query, *query_pos, *query_end, *query_data_start;
     TableList *tbl;

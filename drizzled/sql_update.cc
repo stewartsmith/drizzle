@@ -661,7 +661,7 @@ int mysql_update(Session *session, TableList *table_list,
   */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (error < 0)
         session->clear_error();
@@ -1490,7 +1490,7 @@ void multi_update::abort()
       The query has to binlog because there's a modified non-transactional table
       either from the query's list or via a stored routine: bug#13270,23333
     */
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       /*
         Session::killed status might not have been set ON at time of an error
@@ -1694,7 +1694,7 @@ bool multi_update::send_eof()
               session->transaction.stmt.modified_non_trans_table);
   if (local_error == 0 || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (local_error == 0)
         session->clear_error();

@@ -316,7 +316,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
     return(true);				// Can't allocate buffers
   }
 
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     lf_info.session = session;
     lf_info.wrote_create_file = 0;
@@ -386,7 +386,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
       while (!read_info.next_line())
 	;
 
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       {
 	/*
@@ -423,7 +423,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
 	  {
 	    Delete_file_log_event d(session, db, transactional_table);
             d.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
-	    mysql_bin_log.write(&d);
+	    drizzle_bin_log.write(&d);
 	  }
 	}
       }
@@ -437,7 +437,7 @@ int mysql_load(Session *session,sql_exchange *ex,TableList *table_list,
   if (session->transaction.stmt.modified_non_trans_table)
     session->transaction.all.modified_non_trans_table= true;
 
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
     session->binlog_flush_pending_rows_event(true);
 
   /* ok to client sent only after binlog write and engine commit */
@@ -466,7 +466,7 @@ static bool write_execute_load_query_log_event(Session *session,
       (ignore ? LOAD_DUP_IGNORE : LOAD_DUP_ERROR),
       transactional_table, false, killed_err_arg);
   e.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
-  return mysql_bin_log.write(&e);
+  return drizzle_bin_log.write(&e);
 }
 
 
@@ -866,7 +866,7 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
       if (get_it_from_net)
 	cache.read_function = _my_b_net_read;
 
-      if (mysql_bin_log.is_open())
+      if (drizzle_bin_log.is_open())
 	cache.pre_read = cache.pre_close =
 	  (IO_CACHE_CALLBACK) log_loaded_block;
     }

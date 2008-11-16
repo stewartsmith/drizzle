@@ -419,7 +419,7 @@ extern char *default_tz_name;
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
 
-extern DRIZZLE_BIN_LOG mysql_bin_log;
+extern DRIZZLE_BIN_LOG drizzle_bin_log;
 extern LOGGER logger;
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;

@@ -252,28 +252,28 @@ bool purge_error_message(Session* session, int res)
 bool purge_master_logs(Session* session, const char* to_log)
 {
   char search_file_name[FN_REFLEN];
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
   {
     my_ok(session);
     return false;
   }
 
-  mysql_bin_log.make_log_name(search_file_name, to_log);
+  drizzle_bin_log.make_log_name(search_file_name, to_log);
   return purge_error_message(session,
-			     mysql_bin_log.purge_logs(search_file_name, 0, 1,
+			     drizzle_bin_log.purge_logs(search_file_name, 0, 1,
 						      1, NULL));
 }
 
 
 bool purge_master_logs_before_date(Session* session, time_t purge_time)
 {
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
   {
     my_ok(session);
     return 0;
   }
   return purge_error_message(session,
-                             mysql_bin_log.purge_logs_before_date(purge_time));
+                             drizzle_bin_log.purge_logs_before_date(purge_time));
 }
 
 int test_for_non_eof_log_read_errors(int error, const char **errmsg)
@@ -410,7 +410,7 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos,
     coord->pos= pos;
   }
 
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
   {
     errmsg = "Binary log is not open";
     my_errno= ER_MASTER_FATAL_ERROR_READING_BINLOG;
@@ -425,13 +425,13 @@ void mysql_binlog_send(Session* session, char* log_ident, my_off_t pos,
 
   name=search_file_name;
   if (log_ident[0])
-    mysql_bin_log.make_log_name(search_file_name, log_ident);
+    drizzle_bin_log.make_log_name(search_file_name, log_ident);
   else
     name=0;					// Find first log
 
   linfo.index_file_offset = 0;
 
-  if (mysql_bin_log.find_log_pos(&linfo, name, 1))
+  if (drizzle_bin_log.find_log_pos(&linfo, name, 1))
   {
     errmsg = "Could not find first log file name in binary log index file";
     my_errno= ER_MASTER_FATAL_ERROR_READING_BINLOG;
@@ -509,10 +509,10 @@ impossible position";
 
   /*
     We can set log_lock now, it does not move (it's a member of
-    mysql_bin_log, and it's already inited, and it will be destroyed
+    drizzle_bin_log, and it's already inited, and it will be destroyed
     only at shutdown).
   */
-  log_lock = mysql_bin_log.get_log_lock();
+  log_lock = drizzle_bin_log.get_log_lock();
   if (pos > BIN_LOG_HEADER_SIZE)
   {
      /*
@@ -633,7 +633,7 @@ impossible position";
       goto err;
 
     if (!(flags & BINLOG_DUMP_NON_BLOCK) &&
-        mysql_bin_log.is_active(log_file_name))
+        drizzle_bin_log.is_active(log_file_name))
     {
       /*
 	Block until there is more data in the log
@@ -691,7 +691,7 @@ impossible position";
               assert(heartbeat_ts && heartbeat_period != 0L);
               set_timespec_nsec(*heartbeat_ts, heartbeat_period);
             }
-            ret= mysql_bin_log.wait_for_update_bin_log(session, heartbeat_ts);
+            ret= drizzle_bin_log.wait_for_update_bin_log(session, heartbeat_ts);
             assert(ret == 0 || (heartbeat_period != 0L && coord != NULL));
             if (ret == ETIMEDOUT || ret == ETIME)
             {
@@ -759,7 +759,7 @@ impossible position";
       /* need this to break out of the for loop from switch */
 
       session->set_proc_info("Finished reading one binlog; switching to next binlog");
-      switch (mysql_bin_log.find_next_log(&linfo, 1)) {
+      switch (drizzle_bin_log.find_next_log(&linfo, 1)) {
       case LOG_INFO_EOF:
 	loop_breaker = (flags & BINLOG_DUMP_NON_BLOCK);
 	break;
@@ -1302,13 +1302,13 @@ bool change_master(Session* session, Master_info* mi)
 
 int reset_master(Session* session)
 {
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
   {
     my_message(ER_FLUSH_MASTER_BINLOG_CLOSED,
                ER(ER_FLUSH_MASTER_BINLOG_CLOSED), MYF(ME_BELL+ME_WAITTANG));
     return 1;
   }
-  return mysql_bin_log.reset_logs(session);
+  return drizzle_bin_log.reset_logs(session);
 }
 
 int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
@@ -1344,10 +1344,10 @@ bool show_binlog_info(Session* session)
     return(true);
   protocol->prepare_for_resend();
 
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     LOG_INFO li;
-    mysql_bin_log.get_current_log(&li);
+    drizzle_bin_log.get_current_log(&li);
     int dir_len = dirname_length(li.log_file_name);
     protocol->store(li.log_file_name + dir_len, &my_charset_bin);
     protocol->store((uint64_t) li.pos);
@@ -1384,7 +1384,7 @@ bool show_binlogs(Session* session)
   int cur_dir_len;
   Protocol *protocol= session->protocol;
 
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
   {
     my_message(ER_NO_BINARY_LOGGING, ER(ER_NO_BINARY_LOGGING), MYF(0));
     return 1;
@@ -1397,12 +1397,12 @@ bool show_binlogs(Session* session)
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
   
-  pthread_mutex_lock(mysql_bin_log.get_log_lock());
-  mysql_bin_log.lock_index();
-  index_file=mysql_bin_log.get_index_file();
+  pthread_mutex_lock(drizzle_bin_log.get_log_lock());
+  drizzle_bin_log.lock_index();
+  index_file= drizzle_bin_log.get_index_file();
   
-  mysql_bin_log.raw_get_current_log(&cur); // dont take mutex
-  pthread_mutex_unlock(mysql_bin_log.get_log_lock()); // lockdep, OK
+  drizzle_bin_log.raw_get_current_log(&cur); // dont take mutex
+  pthread_mutex_unlock(drizzle_bin_log.get_log_lock()); // lockdep, OK
   
   cur_dir_len= dirname_length(cur.log_file_name);
 
@@ -1436,12 +1436,12 @@ bool show_binlogs(Session* session)
     if (protocol->write())
       goto err;
   }
-  mysql_bin_log.unlock_index();
+  drizzle_bin_log.unlock_index();
   my_eof(session);
   return(false);
 
 err:
-  mysql_bin_log.unlock_index();
+  drizzle_bin_log.unlock_index();
   return(true);
 }
 
@@ -1478,7 +1478,7 @@ int log_loaded_block(IO_CACHE* file)
       Append_block_log_event a(lf_info->session, lf_info->session->db, buffer,
                                cmin(block_len, max_event_size),
                                lf_info->log_delayed);
-      mysql_bin_log.write(&a);
+      drizzle_bin_log.write(&a);
     }
     else
     {
@@ -1486,7 +1486,7 @@ int log_loaded_block(IO_CACHE* file)
                                    buffer,
                                    cmin(block_len, max_event_size),
                                    lf_info->log_delayed);
-      mysql_bin_log.write(&b);
+      drizzle_bin_log.write(&b);
       lf_info->wrote_create_file= 1;
     }
   }

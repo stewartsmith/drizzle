@@ -214,12 +214,12 @@ char **thd_query(MYSQL_THD thd);
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
  */
-const char* mysql_bin_log_file_name(void);
+const char* drizzle_bin_log_file_name(void);
 
 /** Get the current position of the MySQL binlog.
  * @return byte offset from the beginning of the binlog
  */
-ulonglong mysql_bin_log_file_pos(void);
+ulonglong drizzle_bin_log_file_pos(void);
 
 /**
   Check if a user thread is a replication slave thread
