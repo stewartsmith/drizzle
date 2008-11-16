@@ -123,6 +123,8 @@ noinst_HEADERS = \
 		item_subselect.h \
 		item_sum.h \
 		item_timefunc.h \
+		item/cache_row.h \
+		item/type_holder.h \
                 key_map.h \
 		lex.h \
 		lex_symbol.h \
@@ -211,6 +213,8 @@ drizzled_SOURCES = \
 		item_subselect.cc \
 		item_sum.cc \
 		item_timefunc.cc \
+		item/cache_row.cc \
+		item/type_holder.cc \
 		key.cc \
                 key_map.cc \
 		lock.cc \
