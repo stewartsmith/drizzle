@@ -4165,7 +4165,7 @@ void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array,
   List_iterator<Item> li(list);
   Item *item;
   while ((item= li++))
-    item->split_sum_func2(session, ref_pointer_array, fields, li.ref(), true);
+    item->split_sum_func(session, ref_pointer_array, fields, li.ref(), true);
 }
 
 

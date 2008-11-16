@@ -1193,7 +1193,7 @@ public:
                                SUM items
 
   @note
-    This is from split_sum_func2() for items that should be split
+    This is from split_sum_func() for items that should be split
 
     All found SUM items are added FIRST in the fields list and
     we replace the item with a reference.
@@ -1201,14 +1201,14 @@ public:
     session->fatal_error() may be called if we are out of memory
 */
 
-void Item::split_sum_func2(Session *session, Item **ref_pointer_array,
-                           List<Item> &fields, Item **ref, 
-                           bool skip_registered)
+void Item::split_sum_func(Session *session, Item **ref_pointer_array,
+                          List<Item> &fields, Item **ref,
+                          bool skip_registered)
 {
-  /* An item of type Item_sum  is registered <=> ref_by != 0 */ 
-  if (type() == SUM_FUNC_ITEM && skip_registered && 
+  /* An item of type Item_sum  is registered <=> ref_by != 0 */
+  if (type() == SUM_FUNC_ITEM && skip_registered &&
       ((Item_sum *) this)->ref_by)
-    return;                                                 
+    return;
   if ((type() != SUM_FUNC_ITEM && with_sum_func) ||
       (type() == FUNC_ITEM &&
        (((Item_func *) this)->functype() == Item_func::ISNOTNULLTEST_FUNC ||

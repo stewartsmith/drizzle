@@ -107,7 +107,7 @@ void Item_row::split_sum_func(Session *session, Item **ref_pointer_array,
 {
   Item **arg, **arg_end;
   for (arg= items, arg_end= items+arg_count; arg != arg_end ; arg++)
-    (*arg)->split_sum_func2(session, ref_pointer_array, fields, arg, true);
+    (*arg)->split_sum_func(session, ref_pointer_array, fields, arg, true);
 }
 
 

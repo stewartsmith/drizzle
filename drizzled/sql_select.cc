@@ -651,8 +651,8 @@ JOIN::prepare(Item ***rref_pointer_array,
   }
 
   if (having && having->with_sum_func)
-    having->split_sum_func2(session, ref_pointer_array, all_fields,
-                            &having, true);
+    having->split_sum_func(session, ref_pointer_array, all_fields,
+                           &having, true);
   if (select_lex->inner_sum_func_list)
   {
     Item_sum *end=select_lex->inner_sum_func_list;
@@ -660,8 +660,8 @@ JOIN::prepare(Item ***rref_pointer_array,
     do
     { 
       item_sum= item_sum->next;
-      item_sum->split_sum_func2(session, ref_pointer_array,
-                                all_fields, item_sum->ref_by, false);
+      item_sum->split_sum_func(session, ref_pointer_array,
+                               all_fields, item_sum->ref_by, false);
     } while (item_sum != end);
   }
 
