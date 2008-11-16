@@ -347,7 +347,6 @@ then
 fi
 
 # We use libtool
-#AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
 # Ensure that we have --preserve-dup-deps defines, otherwise we get link
@@ -1566,7 +1565,9 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
-AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
+dnl re-enable later
+dnl AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
+AM_CONDITIONAL([GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl

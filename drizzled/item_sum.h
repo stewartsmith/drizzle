@@ -24,6 +24,7 @@
 
 
 #include <mysys/my_tree.h>
+#include <drizzled/hybrid_type.h>
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls
@@ -488,7 +489,7 @@ public:
   void update_field() {} // not used
   virtual void no_rows_in_result() {}
   void fix_length_and_dec();
-  enum Item_result result_type () const { return val.traits->type(); }
+  enum Item_result result_type () const;
   virtual void calculate_val_and_count();
   virtual bool unique_walk_function(void *elem);
 };

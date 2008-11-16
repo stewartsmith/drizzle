@@ -219,15 +219,6 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
   return found_types;
 }
 
-static void my_coll_agg_error(DTCollation &c1, DTCollation &c2,
-                              const char *fname)
-{
-  my_error(ER_CANT_AGGREGATE_2COLLATIONS, MYF(0),
-           c1.collation->name,c1.derivation_name(),
-           c2.collation->name,c2.derivation_name(),
-           fname);
-}
-
 
 Item_bool_func2* Eq_creator::create(Item *a, Item *b) const
 {

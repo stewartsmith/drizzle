@@ -20,219 +20,12 @@
 #ifndef drizzled_item_h
 #define drizzled_item_h
 
+#include <drizzled/dtcollation.h>
+
 class Protocol;
 struct TableList;
 void item_init(void);			/* Init item functions */
 class Item_field;
-
-/*
-   "Declared Type Collation"
-   A combination of collation and its derivation.
-
-  Flags for collation aggregation modes:
-  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
-  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
-                                 (i.e. constant).
-  MY_COLL_ALLOW_CONV           - allow any kind of conversion
-                                 (combination of the above two)
-  MY_COLL_DISALLOW_NONE        - don't allow return DERIVATION_NONE
-                                 (e.g. when aggregating for comparison)
-  MY_COLL_CMP_CONV             - combination of MY_COLL_ALLOW_CONV
-                                 and MY_COLL_DISALLOW_NONE
-*/
-
-#define MY_COLL_ALLOW_SUPERSET_CONV   1
-#define MY_COLL_ALLOW_COERCIBLE_CONV  2
-#define MY_COLL_ALLOW_CONV            3
-#define MY_COLL_DISALLOW_NONE         4
-#define MY_COLL_CMP_CONV              7
-
-class DTCollation {
-public:
-  const CHARSET_INFO *collation;
-  enum Derivation derivation;
-  uint32_t repertoire;
-  
-  void set_repertoire_from_charset(const CHARSET_INFO * const cs)
-  {
-    repertoire= cs->state & MY_CS_PUREASCII ?
-                MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-  }
-  DTCollation()
-  {
-    collation= &my_charset_bin;
-    derivation= DERIVATION_NONE;
-    repertoire= MY_REPERTOIRE_UNICODE30;
-  }
-  DTCollation(const CHARSET_INFO * const collation_arg, Derivation derivation_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(DTCollation &dt)
-  { 
-    collation= dt.collation;
-    derivation= dt.derivation;
-    repertoire= dt.repertoire;
-  }
-  void set(const CHARSET_INFO * const collation_arg, Derivation derivation_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(const CHARSET_INFO * const collation_arg,
-           Derivation derivation_arg,
-           uint32_t repertoire_arg)
-  {
-    collation= collation_arg;
-    derivation= derivation_arg;
-    repertoire= repertoire_arg;
-  }
-  void set(const CHARSET_INFO * const collation_arg)
-  {
-    collation= collation_arg;
-    set_repertoire_from_charset(collation_arg);
-  }
-  void set(Derivation derivation_arg)
-  { derivation= derivation_arg; }
-  bool aggregate(DTCollation &dt, uint32_t flags= 0);
-  bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0)
-  { set(dt1); return aggregate(dt2, flags); }
-  const char *derivation_name() const
-  {
-    switch(derivation)
-    {
-      case DERIVATION_IGNORABLE: return "IGNORABLE";
-      case DERIVATION_COERCIBLE: return "COERCIBLE";
-      case DERIVATION_IMPLICIT:  return "IMPLICIT";
-      case DERIVATION_SYSCONST:  return "SYSCONST";
-      case DERIVATION_EXPLICIT:  return "EXPLICIT";
-      case DERIVATION_NONE:      return "NONE";
-      default: return "UNKNOWN";
-    }
-  }
-};
-
-/*************************************************************************/
-/*
-  A framework to easily handle different return types for hybrid items
-  (hybrid item is an item whose operand can be of any type, e.g. integer,
-  real, decimal).
-*/
-
-struct Hybrid_type_traits;
-
-struct Hybrid_type
-{
-  int64_t integer;
-
-  double real;
-  /*
-    Use two decimal buffers interchangeably to speed up += operation
-    which has no native support in decimal library.
-    Hybrid_type+= arg is implemented as dec_buf[1]= dec_buf[0] + arg.
-    The third decimal is used as a handy temporary storage.
-  */
-  my_decimal dec_buf[3];
-  int used_dec_buf_no;
-
-  /*
-    Traits moved to a separate class to
-      a) be able to easily change object traits in runtime
-      b) they work as a differentiator for the union above
-  */
-  const Hybrid_type_traits *traits;
-
-  Hybrid_type() {}
-  /* XXX: add traits->copy() when needed */
-  Hybrid_type(const Hybrid_type &rhs) :traits(rhs.traits) {}
-};
-
-
-/* Hybryd_type_traits interface + default implementation for REAL_RESULT */
-
-struct Hybrid_type_traits
-{
-  virtual Item_result type() const { return REAL_RESULT; }
-
-  virtual void
-  fix_length_and_dec(Item *item, Item *arg) const;
-
-  /* Hybrid_type operations. */
-  virtual void set_zero(Hybrid_type *val) const { val->real= 0.0; }
-  virtual void add(Hybrid_type *val, Field *f) const
-  { val->real+= f->val_real(); }
-  virtual void div(Hybrid_type *val, uint64_t u) const
-  { val->real/= uint64_t2double(u); }
-
-  virtual int64_t val_int(Hybrid_type *val,
-                          bool unsigned_flag) const;
-  virtual double val_real(Hybrid_type *val) const { return val->real; }
-  virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
-  static const Hybrid_type_traits *instance();
-  Hybrid_type_traits() {}
-  virtual ~Hybrid_type_traits() {}
-};
-
-
-struct Hybrid_type_traits_decimal: public Hybrid_type_traits
-{
-  virtual Item_result type() const { return DECIMAL_RESULT; }
-
-  virtual void
-  fix_length_and_dec(Item *arg, Item *item) const;
-
-  /* Hybrid_type operations. */
-  virtual void set_zero(Hybrid_type *val) const;
-  virtual void add(Hybrid_type *val, Field *f) const;
-  virtual void div(Hybrid_type *val, uint64_t u) const;
-
-  virtual int64_t val_int(Hybrid_type *val, bool unsigned_flag) const;
-  virtual double val_real(Hybrid_type *val) const;
-  virtual my_decimal *val_decimal(Hybrid_type *val,
-                                  my_decimal *buf __attribute__((unused))) const
-  { return &val->dec_buf[val->used_dec_buf_no]; }
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
-  static const Hybrid_type_traits_decimal *instance();
-  Hybrid_type_traits_decimal() {};
-};
-
-
-struct Hybrid_type_traits_integer: public Hybrid_type_traits
-{
-  virtual Item_result type() const { return INT_RESULT; }
-
-  virtual void
-  fix_length_and_dec(Item *arg, Item *item) const;
-
-  /* Hybrid_type operations. */
-  virtual void set_zero(Hybrid_type *val) const
-  { val->integer= 0; }
-  virtual void add(Hybrid_type *val, Field *f) const
-  { val->integer+= f->val_int(); }
-  virtual void div(Hybrid_type *val, uint64_t u) const
-  { val->integer/= (int64_t) u; }
-
-  virtual int64_t val_int(Hybrid_type *val,
-                           bool unsigned_flag __attribute__((unused))) const
-  { return val->integer; }
-  virtual double val_real(Hybrid_type *val) const
-  { return (double) val->integer; }
-  virtual my_decimal *val_decimal(Hybrid_type *val,
-                                  my_decimal *buf __attribute__((unused))) const
-  {
-    int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
-    return &val->dec_buf[2];
-  }
-  virtual String *val_str(Hybrid_type *val, String *buf,
-                          uint8_t decimals __attribute__((unused))) const
-  { buf->set(val->integer, &my_charset_bin); return buf;}
-  static const Hybrid_type_traits_integer *instance();
-  Hybrid_type_traits_integer() {};
-};
 
 
 void dummy_error_processor(Session *session, void *data);
@@ -384,43 +177,14 @@ public:
 };
 
 
-/*
-  This enum is used to report information about monotonicity of function
-  represented by Item* tree.
-  Monotonicity is defined only for Item* trees that represent table
-  partitioning expressions (i.e. have no subselects/user vars/PS parameters
-  etc etc). An Item* tree is assumed to have the same monotonicity properties
-  as its correspoinding function F:
-
-  [signed] int64_t F(field1, field2, ...) {
-    put values of field_i into table record buffer;
-    return item->val_int(); 
-  }
-
-  NOTE
-  At the moment function monotonicity is not well defined (and so may be
-  incorrect) for Item trees with parameters/return types that are different
-  from INT_RESULT, may be NULL, or are unsigned.
-  It will be possible to address this issue once the related partitioning bugs
-  (BUG#16002, BUG#15447, BUG#13436) are fixed.
-*/
-
-typedef enum monotonicity_info 
-{
-   NON_MONOTONIC,              /* none of the below holds */
-   MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */
-   MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
-} enum_monotonicity_info;
-
 /*************************************************************************/
-typedef bool (Item::*Item_processor) (unsigned char *arg);
 /*
   Analyzer function
     SYNOPSIS
       argp   in/out IN:  Analysis parameter
                     OUT: Parameter to be passed to the transformer
 
-    RETURN 
+     RETURN
       true   Invoke the transformer
       false  Don't do it
 
@@ -428,6 +192,7 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
 typedef bool (Item::*Item_analyzer) (unsigned char **argp);
 typedef Item* (Item::*Item_transformer) (unsigned char *arg);
 typedef void (*Cond_traverser) (const Item *item, void *arg);
+typedef bool (Item::*Item_processor) (unsigned char *arg);
 
 
 class Item
@@ -1001,13 +766,6 @@ public:
       name= orig_name;
   }
 };
-
-bool agg_item_collations(DTCollation &c, const char *name,
-                         Item **items, uint32_t nitems, uint32_t flags, int item_sep);
-bool agg_item_collations_for_comparison(DTCollation &c, const char *name,
-                                        Item **items, uint32_t nitems, uint32_t flags);
-bool agg_item_charsets(DTCollation &c, const char *name,
-                       Item **items, uint32_t nitems, uint32_t flags, int item_sep);
 
 
 class Item_num: public Item_basic_constant

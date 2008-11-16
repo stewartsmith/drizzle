@@ -180,6 +180,8 @@ void create_random_string(char *to, uint32_t length, struct rand_struct *rand_st
 
 char *octet2hex(char *to, const char *str, uint32_t len)
 {
+  static const char _dig_vec_upper[]= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
   const char *str_end= str + len; 
   for (; str != str_end; ++str)
   {

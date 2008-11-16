@@ -28,9 +28,6 @@
                              CLIENT_TRANSACTIONS |                      \
                              CLIENT_SECURE_CONNECTION)
 
-
-extern unsigned int drizzle_port;
-
 #if !defined(__GNUC__) || (__GNUC__ == 2 && __GNUC_MINOR__ < 96)
 #define __builtin_expect(x, expected_value) (x)
 #endif
@@ -42,9 +39,6 @@ extern unsigned int drizzle_port;
 #define max(a, b)       ((a) > (b) ? (a) : (b))
 #define min(a, b)       ((a) < (b) ? (a) : (b))
 #endif
-
-extern const char _dig_vec_upper[];
-extern const char _dig_vec_lower[];
 
 const char * sqlstate_get_unknown(void);
 const char * sqlstate_get_not_error(void);
