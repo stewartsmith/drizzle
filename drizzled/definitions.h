@@ -361,8 +361,8 @@
 
 #define portable_sizeof_char_ptr 8
 
-#define tmp_file_prefix "#sql"			/**< Prefix for tmp tables */
-#define tmp_file_prefix_length 4
+#define TMP_FILE_PREFIX "#sql"			/**< Prefix for tmp tables */
+#define TMP_FILE_PREFIX_LENGTH 4
 
 /* Flags for calc_week() function.  */
 #define WEEK_MONDAY_FIRST    1

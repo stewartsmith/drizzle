@@ -26,6 +26,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 
+/* For proto */
+#include <string>
+#include <fstream>
+#include <drizzled/serialize/serialize.h>
+using namespace std;
+
 #define FCOMP			17		/* Bytes for a packed field */
 
 static unsigned char * pack_screens(List<Create_field> &create_fields,
@@ -350,6 +356,198 @@ err3:
   return(1);
 } /* mysql_create_frm */
 
+static void fill_table_proto(drizzle::Table *table_proto,
+                             const char *table_name,
+                             List<Create_field> &create_fields,
+                             HA_CREATE_INFO *create_info)
+{
+  Create_field *field_arg;
+  List_iterator<Create_field> it(create_fields);
+  drizzle::Table::StorageEngine *engine= table_proto->mutable_engine();
+  drizzle::Table::TableOptions *table_options= table_proto->mutable_options();
+
+  engine->set_name(create_info->db_type->name);
+
+  table_proto->set_name(table_name);
+  table_proto->set_type(drizzle::Table::STANDARD);
+
+  while ((field_arg= it++))
+  {
+    drizzle::Table::Field *attribute;
+    //drizzle::Table::Field::FieldConstraints *constraints;
+
+    attribute= table_proto->add_field();
+    attribute->set_name(field_arg->field_name);
+    switch (field_arg->sql_type) {
+    case DRIZZLE_TYPE_TINY:
+      attribute->set_type(drizzle::Table::Field::TINYINT);
+      break;
+    case DRIZZLE_TYPE_LONG:
+      attribute->set_type(drizzle::Table::Field::INTEGER);
+      break;
+    case DRIZZLE_TYPE_DOUBLE:
+      attribute->set_type(drizzle::Table::Field::DOUBLE);
+      break;
+    case DRIZZLE_TYPE_NULL  :
+      assert(1); /* Not a user definable type */
+    case DRIZZLE_TYPE_TIMESTAMP:
+      attribute->set_type(drizzle::Table::Field::TIMESTAMP);
+      break;
+    case DRIZZLE_TYPE_LONGLONG:
+      attribute->set_type(drizzle::Table::Field::BIGINT);
+      break;
+    case DRIZZLE_TYPE_TIME:
+      attribute->set_type(drizzle::Table::Field::TIME);
+      break;
+    case DRIZZLE_TYPE_DATETIME:
+      attribute->set_type(drizzle::Table::Field::DATETIME);
+      break;
+    case DRIZZLE_TYPE_DATE:
+      attribute->set_type(drizzle::Table::Field::DATE);
+      break;
+    case DRIZZLE_TYPE_VARCHAR:
+      {
+        drizzle::Table::Field::StringFieldOptions *string_field_options;
+
+        string_field_options= attribute->mutable_string_options();
+        attribute->set_type(drizzle::Table::Field::VARCHAR);
+        string_field_options->set_length(field_arg->char_length);
+        string_field_options->set_collation_id(field_arg->charset->number);
+        string_field_options->set_collation(field_arg->charset->name);
+
+        break;
+      }
+    case DRIZZLE_TYPE_NEWDECIMAL:
+      {
+        drizzle::Table::Field::NumericFieldOptions *numeric_field_options;
+
+        attribute->set_type(drizzle::Table::Field::DECIMAL);
+        numeric_field_options= attribute->mutable_numeric_options();
+        /* This is magic, I hate magic numbers -Brian */
+        numeric_field_options->set_precision(field_arg->length + ( field_arg->decimals ? -2 : -1));
+        numeric_field_options->set_scale(field_arg->decimals);
+        break;
+      }
+    case DRIZZLE_TYPE_ENUM:
+      {
+        drizzle::Table::Field::SetFieldOptions *set_field_options;
+
+        assert(field_arg->interval);
+
+        attribute->set_type(drizzle::Table::Field::ENUM);
+        set_field_options= attribute->mutable_set_options();
+
+        for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
+        {
+          const char *src= field_arg->interval->type_names[pos];
+
+          set_field_options->add_value(src);
+        }
+        set_field_options->set_count_elements(set_field_options->value_size());
+        break;
+      }
+    case DRIZZLE_TYPE_BLOB:
+      attribute->set_type(drizzle::Table::Field::BLOB);
+      break;
+    default:
+      assert(1);
+    }
+
+#ifdef NOTDONE
+    field_constraints= attribute->mutable_constraints();
+    constraints->set_is_nullable(field_arg->def->null_value);
+#endif
+
+    /* Set the comment */
+    if (field_arg->comment.length)
+      attribute->set_comment(field_arg->comment.str);
+  }
+
+  if (create_info->comment.length)
+    table_options->set_comment(create_info->comment.str);
+
+  if (create_info->table_charset)
+  {
+    table_options->set_collation_id(field_arg->charset->number);
+    table_options->set_collation(field_arg->charset->name);
+  }
+
+  if (create_info->connect_string.length)
+    table_options->set_connect_string(create_info->connect_string.str);
+
+  if (create_info->data_file_name)
+    table_options->set_data_file_name(create_info->data_file_name);
+
+  if (create_info->index_file_name)
+    table_options->set_index_file_name(create_info->index_file_name);
+
+  if (create_info->max_rows)
+    table_options->set_max_rows(create_info->max_rows);
+
+  if (create_info->min_rows)
+    table_options->set_min_rows(create_info->min_rows);
+
+  if (create_info->auto_increment_value)
+    table_options->set_auto_increment_value(create_info->auto_increment_value);
+
+  if (create_info->avg_row_length)
+    table_options->set_avg_row_length(create_info->avg_row_length);
+
+  if (create_info->key_block_size)
+    table_options->set_key_block_size(create_info->key_block_size);
+
+  if (create_info->block_size)
+    table_options->set_block_size(create_info->block_size);
+}
+
+int rename_table_proto_file(const char *from, const char* to)
+{
+  string from_path(from);
+  string to_path(to);
+  string file_ext = ".tabledefinition";
+
+  from_path.append(file_ext);
+  to_path.append(file_ext);
+
+  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+}
+
+int delete_table_proto_file(char *file_name)
+{
+  string new_path(file_name);
+  string file_ext = ".tabledefinition";
+
+  new_path.append(file_ext);
+  return my_delete(new_path.c_str(), MYF(0));
+}
+
+int create_table_proto_file(char *file_name,
+                            const char *table_name,
+                            HA_CREATE_INFO *create_info,
+                            List<Create_field> &create_fields,
+                            uint32_t keys __attribute__((unused)),
+                            KEY *key_info)
+{
+  (void)key_info;
+
+  drizzle::Table table_proto;
+  string new_path(file_name);
+  string file_ext = ".tabledefinition";
+
+  fill_table_proto(&table_proto, table_name, create_fields, create_info);
+
+  new_path.replace(new_path.find(".frm"), file_ext.length(), file_ext );
+
+  fstream output(new_path.c_str(), ios::out | ios::trunc | ios::binary);
+  if (!table_proto.SerializeToOstream(&output))
+  {
+    printf("Failed to write schema.\n");
+    fprintf(stderr, "Failed to write schema.\n");
+    return -1;
+  }
+
+  return 0;
+}
 
 /*
   Create a frm (table definition) file and the tables
@@ -377,14 +575,16 @@ int rea_create_table(Session *session, const char *path,
                      List<Create_field> &create_fields,
                      uint32_t keys, KEY *key_info, handler *file)
 {
-  
-
   char frm_name[FN_REFLEN];
   strxmov(frm_name, path, reg_ext, NULL);
   if (mysql_create_frm(session, frm_name, db, table_name, create_info,
                        create_fields, keys, key_info, file))
 
     return(1);
+
+  if (create_table_proto_file(frm_name, table_name, create_info,
+                              create_fields, keys, key_info) != 0)
+    return 1;
 
   // Make sure mysql_create_frm din't remove extension
   assert(*fn_rext(frm_name));

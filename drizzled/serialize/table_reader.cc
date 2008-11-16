@@ -4,11 +4,11 @@
 #include "table.pb.h"
 using namespace std;
 
-/* 
+/*
   Written from Google proto example
 */
 
-void print_field(const drizzle::Table::Field *field) 
+void print_field(const drizzle::Table::Field *field)
 {
   using namespace drizzle;
   cout << "\t`" << field->name() << "`";
@@ -42,26 +42,17 @@ void print_field(const drizzle::Table::Field *field)
       cout << ") ";
       break;
     }
-  case Table::Field::SET:
-    cout << " SET ";
-    break;
   case Table::Field::TINYINT:
     cout << " TINYINT ";
     break;
-  case Table::Field::SMALLINT:
-    cout << " SMALLINT ";
-    break;
   case Table::Field::INTEGER:
-    cout << " INTEGER ";
+    cout << " INT" ;
     break;
   case Table::Field::BIGINT:
     cout << " BIGINT ";
     break;
   case Table::Field::DECIMAL:
     cout << " DECIMAL(" << field->numeric_options().precision() << "," << field->numeric_options().scale() << ") ";
-    break;
-  case Table::Field::VARBINARY:
-    cout << " VARBINARY(" << field->string_options().length() << ") ";
     break;
   case Table::Field::DATE:
     cout << " DATE ";
@@ -79,8 +70,8 @@ void print_field(const drizzle::Table::Field *field)
 
   if (field->type() == Table::Field::INTEGER
       || field->type() == Table::Field::BIGINT
-      || field->type() == Table::Field::SMALLINT
-      || field->type() == Table::Field::TINYINT) {
+      || field->type() == Table::Field::TINYINT)
+  {
     if (field->has_constraints()
         && field->constraints().has_is_unsigned())
       if (field->constraints().is_unsigned())
@@ -96,10 +87,8 @@ void print_field(const drizzle::Table::Field *field)
     cout << " NOT NULL ";
 
   if (field->type() == Table::Field::TEXT
-      || field->type() == Table::Field::VARCHAR) {
-    if (field->string_options().has_charset())
-      cout << " CHARACTER SET " << field->string_options().charset();
-
+      || field->type() == Table::Field::VARCHAR)
+  {
     if (field->string_options().has_collation())
       cout << " COLLATE " << field->string_options().collation();
   }
@@ -116,7 +105,8 @@ void print_field(const drizzle::Table::Field *field)
     cout << " COMMENT `" << field->comment() << "` ";
 }
 
-void print_engine(const drizzle::Table::StorageEngine *engine) {
+void print_engine(const drizzle::Table::StorageEngine *engine)
+{
   using namespace drizzle;
   uint32_t x;
 
@@ -128,14 +118,15 @@ void print_engine(const drizzle::Table::StorageEngine *engine) {
   }
 }
 
-void print_index(const drizzle::Table::Index *index) {
+void print_index(const drizzle::Table::Index *index)
+{
   using namespace drizzle;
   uint32_t x;
 
   if (index->is_primary())
-    cout << " PRIMARY"; 
+    cout << " PRIMARY";
   else if (index->is_unique())
-    cout << " UNIQUE"; 
+    cout << " UNIQUE";
   cout << " KEY `" << index->name() << "` (";
   {
     int x;
@@ -155,7 +146,22 @@ void print_index(const drizzle::Table::Index *index) {
   cout << "\t";
 }
 
-void print_table(const drizzle::Table *table) 
+void print_table_stats(const drizzle::Table::TableStats *stats)
+{
+
+}
+
+void print_table_options(const drizzle::Table::TableOptions *options)
+{
+  if (options->has_comment())
+    cout << " COMMENT = '" << options->comment() << "' " << endl;
+
+  if (options->has_collation())
+    cout << " COLLATE = '" << options->collation() << "' " << endl;
+}
+
+
+void print_table(const drizzle::Table *table)
 {
   using namespace drizzle;
   uint32_t x;
@@ -166,7 +172,7 @@ void print_table(const drizzle::Table *table)
     cout << "TEMPORARY ";
 
   cout << "TABLE `" << table->name() << "` (" << endl;
-  
+
   for (x= 0; x < table->field_size() ; x++)
   {
     const Table::Field field = table->field(x);
@@ -190,31 +196,18 @@ void print_table(const drizzle::Table *table)
   cout << endl;
 
   cout << ") " << endl;
-  
+
   print_engine(&table->engine());
 
-  /*
   if (table->has_options())
     print_table_options(&table->options());
+  /*
   if (table->has_stats())
     print_table_stats(&table->stats());
   */
-  if (table->has_comment())
-    cout << " COMMENT = `" << table->comment() << "` " << endl;
 }
 
-void print_table_stats(const drizzle::Table::TableStats *stats) {
-  
-}
-
-void print_table_options(const drizzle::Table::TableOptions *options) {
-  if (options->has_collation())
-    cout << " COLLATE = `" << options->collation() << "` " << endl;
-  if (options->has_charset())
-    cout << " CHARACTER SET = `" << options->charset() << "` " << endl;
-}
-
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -228,7 +221,7 @@ int main(int argc, char* argv[])
   {
     // Read the existing address book.
     fstream input(argv[1], ios::in | ios::binary);
-    if (!table.ParseFromIstream(&input)) 
+    if (!table.ParseFromIstream(&input))
     {
       cerr << "Failed to parse table." << endl;
       return -1;

@@ -3760,12 +3760,12 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", tmp_file_prefix,
+    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
             current_pid, temp_pool_slot);
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, current_pid,
             session->thread_id, session->tmp_table++);
   }
 

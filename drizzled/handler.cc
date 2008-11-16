@@ -149,7 +149,6 @@ static int ha_finish_errors(void)
   return 0;
 }
 
-
 int ha_init()
 {
   int error= 0;
@@ -3073,7 +3072,7 @@ int ha_discover(Session *session, const char *db, const char *name,
   int error= -1; // Table does not exist in any handler
   st_discover_args args= {db, name, frmblob, frmlen};
 
-  if (is_prefix(name,tmp_file_prefix)) /* skip temporary tables */
+  if (is_prefix(name, TMP_FILE_PREFIX)) /* skip temporary tables */
     return(error);
 
   if (plugin_foreach(session, discover_handlerton,
