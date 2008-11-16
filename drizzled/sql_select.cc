@@ -36,6 +36,7 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
 
 #include CMATH_H
 

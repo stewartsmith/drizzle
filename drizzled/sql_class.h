@@ -31,6 +31,7 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/scheduler.h>
 #include <drizzled/ha_trx_info.h>
+#include <mysys/my_tree.h>
 
 class Relay_log_info;
 

@@ -24,8 +24,11 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/cache_row.h>
 #include <drizzled/item/type_holder.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/functions/str/conv_charset.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

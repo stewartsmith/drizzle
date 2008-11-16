@@ -18,12 +18,14 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/dtcollation.h>
+
 #include <drizzled/definitions.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
+#include <drizzled/functions/str/conv_charset.h>
 
-#include <drizzled/dtcollation.h>
 
 
 static bool

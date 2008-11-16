@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/field.h>
+#include <drizzled/item/cmpfunc.h>
 
 // Conversion functions
 

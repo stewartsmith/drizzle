@@ -93,6 +93,7 @@ noinst_HEADERS = \
 		base.h \
 		client_settings.h \
 		common_includes.h \
+		comp_creator.h \
 		configvar.h \
 		connect.h \
 		cost_vect.h \

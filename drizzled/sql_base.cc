@@ -37,6 +37,7 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
 
 
 /**

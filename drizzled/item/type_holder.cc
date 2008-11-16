@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/item/sum.h>
 #include <drizzled/item/type_holder.h>
 
 Item_type_holder::Item_type_holder(Session *session, Item *item)

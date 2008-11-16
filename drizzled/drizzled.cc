@@ -37,6 +37,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/timefunc.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -408,12 +410,6 @@ const char *in_having_cond= "<IN HAVING>";
 
 my_decimal decimal_zero;
 /* classes for comparation parsing/processing */
-Eq_creator eq_creator;
-Ne_creator ne_creator;
-Gt_creator gt_creator;
-Lt_creator lt_creator;
-Ge_creator ge_creator;
-Le_creator le_creator;
 
 FILE *stderror_file=0;
 

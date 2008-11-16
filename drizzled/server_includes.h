@@ -30,11 +30,6 @@
 #ifndef DRIZZLED_SERVER_INCLUDES_H
 #define DRIZZLED_SERVER_INCLUDES_H
 
-/* Some forward declarations just for the server */
-
-class Comp_creator;
-typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
-
 /**
  * Contains all headers, definitions, and declarations common to
  * the server and the plugin infrastructure, and not the client
@@ -350,12 +345,6 @@ extern const char *myisam_recover_options_str;
 extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
 extern const char * const TRG_EXT;
 extern const char * const TRN_EXT;
-extern Eq_creator eq_creator;
-extern Ne_creator ne_creator;
-extern Gt_creator gt_creator;
-extern Lt_creator lt_creator;
-extern Ge_creator ge_creator;
-extern Le_creator le_creator;
 extern char language[FN_REFLEN];
 extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;

@@ -22,10 +22,15 @@
 
 /* compare and test functions */
 
+#include <drizzled/comp_creator.h>
+#include <drizzled/item/row.h>
+#include <drizzled/item/sum.h>
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;
 class Arg_comparator;
+class Item_sum_hybrid;
+class Item_row;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 
@@ -247,17 +252,6 @@ public:
   Item *transform(Item_transformer transformer, unsigned char *arg);
 };
 
-class Comp_creator
-{
-public:
-  Comp_creator() {}                           /* Remove gcc warning */
-  virtual ~Comp_creator() {}                  /* Remove gcc warning */
-  virtual Item_bool_func2* create(Item *a, Item *b) const = 0;
-  virtual const char* symbol(bool invert) const = 0;
-  virtual bool eqne_op() const = 0;
-  virtual bool l_op() const = 0;
-};
-
 class Eq_creator :public Comp_creator
 {
 public:
@@ -267,6 +261,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? "<>" : "="; }
   virtual bool eqne_op() const { return 1; }
   virtual bool l_op() const { return 0; }
+  static const Eq_creator *instance();
 };
 
 class Ne_creator :public Comp_creator
@@ -278,6 +273,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? "=" : "<>"; }
   virtual bool eqne_op() const { return 1; }
   virtual bool l_op() const { return 0; }
+  static const Ne_creator *instance();
 };
 
 class Gt_creator :public Comp_creator
@@ -289,6 +285,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? "<=" : ">"; }
   virtual bool eqne_op() const { return 0; }
   virtual bool l_op() const { return 0; }
+  static const Gt_creator *instance();
 };
 
 class Lt_creator :public Comp_creator
@@ -300,6 +297,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? ">=" : "<"; }
   virtual bool eqne_op() const { return 0; }
   virtual bool l_op() const { return 1; }
+  static const Lt_creator *instance();
 };
 
 class Ge_creator :public Comp_creator
@@ -311,6 +309,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? "<" : ">="; }
   virtual bool eqne_op() const { return 0; }
   virtual bool l_op() const { return 0; }
+  static const Ge_creator *instance();
 };
 
 class Le_creator :public Comp_creator
@@ -322,6 +321,7 @@ public:
   virtual const char* symbol(bool invert) const { return invert? ">" : "<="; }
   virtual bool eqne_op() const { return 0; }
   virtual bool l_op() const { return 1; }
+  static const Le_creator *instance();
 };
 
 class Item_bool_func2 :public Item_int_func

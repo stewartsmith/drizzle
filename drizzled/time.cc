@@ -24,6 +24,7 @@
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
 #include <drizzled/tztime.h>
+#include <drizzled/item/timefunc.h>
 
 /* Some functions to calculate dates */
 
