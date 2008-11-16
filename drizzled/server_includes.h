@@ -739,7 +739,7 @@ inline void setup_table_map(Table *table, TableList *table_list, uint32_t tablen
   table->merge_keys.clear_all();
 }
 
-#include <drizzled/item_create.h>         /* Factory API for creating Item_* instances */
+#include <drizzled/item/create.h>         /* Factory API for creating Item_* instances */
 
 /**
   convert a hex digit into number.

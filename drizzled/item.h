@@ -1734,13 +1734,13 @@ public:
 };
 
 #ifdef DRIZZLE_SERVER
-#include "item_sum.h"
-#include "item_func.h"
-#include "item_row.h"
-#include "item_cmpfunc.h"
-#include "item_strfunc.h"
-#include "item_timefunc.h"
-#include "item_subselect.h"
+#include <drizzled/item/sum.h>
+#include <drizzled/item/func.h>
+#include <drizzled/item/row.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/strfunc.h>
+#include <drizzled/item/timefunc.h>
+#include <drizzled/item/subselect.h>
 #endif
 
 class Item_copy_string :public Item

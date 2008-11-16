@@ -14,8 +14,8 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
-#include <drizzled/item_strfunc.h>
+#include <drizzled/item/func.h>
+#include <drizzled/item/strfunc.h>
 #include <drizzled/error.h>
 #include <zlib.h>
 
