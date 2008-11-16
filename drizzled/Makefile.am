@@ -130,6 +130,8 @@ noinst_HEADERS = \
 		logging.h \
 		log.h \
 		my_decimal.h\
+		name_resolution_context.h \
+		name_resolution_context_state.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -217,6 +219,7 @@ drizzled_SOURCES = \
 		logging.cc \
 		mf_iocache.cc \
 		my_decimal.cc\
+		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \

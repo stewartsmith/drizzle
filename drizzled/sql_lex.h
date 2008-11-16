@@ -24,7 +24,8 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 
-#include "sql_udf.h"
+#include <drizzled/sql_udf.h>
+#include <drizzled/name_resolution_context.h>
 
 /* YACC and LEX Definitions */
 

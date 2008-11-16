@@ -27,6 +27,7 @@
 #include <drizzled/show.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
