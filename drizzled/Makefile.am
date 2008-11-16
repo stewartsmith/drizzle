@@ -98,6 +98,7 @@ noinst_HEADERS = \
 		data_home.h \
 		db.h \
 		definitions.h \
+		dtcollation.h \
 		errmsg.h \
 		error_injection.h \
 		field.h \
@@ -109,6 +110,10 @@ noinst_HEADERS = \
 		ha_statistics.h \
 		handler.h \
 		handler_structs.h \
+		hybrid_type.h \
+		hybrid_type_traits.h \
+		hybrid_type_traits_decimal.h \
+		hybrid_type_traits_integer.h \
 		item_cmpfunc.h \
 		item_create.h \
 		item_func.h \
@@ -183,12 +188,16 @@ drizzled_SOURCES = \
 		db.cc \
 		discover.cc \
 		drizzled.cc \
+		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		hybrid_type_traits.cc \
+		hybrid_type_traits_decimal.cc \
+		hybrid_type_traits_integer.cc \
 		init.cc \
 		item_buff.cc \
 		item.cc \

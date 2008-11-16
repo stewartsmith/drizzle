@@ -971,6 +971,57 @@ enum enum_schema_tables
 #define OPEN_FRM_ONLY   1                // open FRM file only
 #define OPEN_FULL_TABLE 2                // open FRM,MYD, MYI files
 
+/*
+   "Declared Type Collation"
+   A combination of collation and its derivation.
+
+  Flags for collation aggregation modes:
+  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
+  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
+                                 (i.e. constant).
+  MY_COLL_ALLOW_CONV           - allow any kind of conversion
+                                 (combination of the above two)
+  MY_COLL_DISALLOW_NONE        - don't allow return DERIVATION_NONE
+                                 (e.g. when aggregating for comparison)
+  MY_COLL_CMP_CONV             - combination of MY_COLL_ALLOW_CONV
+                                 and MY_COLL_DISALLOW_NONE
+*/
+
+#define MY_COLL_ALLOW_SUPERSET_CONV   1
+#define MY_COLL_ALLOW_COERCIBLE_CONV  2
+#define MY_COLL_ALLOW_CONV            3
+#define MY_COLL_DISALLOW_NONE         4
+#define MY_COLL_CMP_CONV              7
+
+
+/*
+  This enum is used to report information about monotonicity of function
+  represented by Item* tree.
+  Monotonicity is defined only for Item* trees that represent table
+  partitioning expressions (i.e. have no subselects/user vars/PS parameters
+  etc etc). An Item* tree is assumed to have the same monotonicity properties
+  as its correspoinding function F:
+
+  [signed] int64_t F(field1, field2, ...) {
+    put values of field_i into table record buffer;
+    return item->val_int(); 
+  }
+
+  NOTE
+  At the moment function monotonicity is not well defined (and so may be
+  incorrect) for Item trees with parameters/return types that are different
+  from INT_RESULT, may be NULL, or are unsigned.
+  It will be possible to address this issue once the related partitioning bugs
+  (BUG#16002, BUG#15447, BUG#13436) are fixed.
+*/
+
+typedef enum monotonicity_info 
+{
+   NON_MONOTONIC,              /* none of the below holds */
+   MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */
+   MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
+} enum_monotonicity_info;
+
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 
