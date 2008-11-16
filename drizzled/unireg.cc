@@ -365,7 +365,9 @@ err3:
 static void fill_table_proto(drizzle::Table *table_proto,
                              const char *table_name,
                              List<Create_field> &create_fields,
-                             HA_CREATE_INFO *create_info)
+                             HA_CREATE_INFO *create_info,
+                             uint32_t keys,
+                             KEY *key_info)
 {
   Create_field *field_arg;
   List_iterator<Create_field> it(create_fields);
@@ -504,6 +506,67 @@ static void fill_table_proto(drizzle::Table *table_proto,
 
   if (create_info->block_size)
     table_options->set_block_size(create_info->block_size);
+
+  for (unsigned int i= 0; i < keys; i++)
+  {
+    drizzle::Table::Index *idx;
+
+    idx= table_proto->add_index();
+
+    assert(test(key_info[i].flags & HA_USES_COMMENT) ==
+           (key_info[i].comment.length > 0));
+
+    idx->set_name(key_info[i].name);
+
+    if(is_primary_key_name(key_info[i].name))
+      idx->set_is_primary(true);
+    else
+      idx->set_is_primary(false);
+
+    switch(key_info[i].algorithm)
+    {
+    case HA_KEY_ALG_HASH:
+      idx->set_type(drizzle::Table::Index::HASH);
+      break;
+
+    case HA_KEY_ALG_BTREE:
+      idx->set_type(drizzle::Table::Index::BTREE);
+      break;
+
+    case HA_KEY_ALG_RTREE:
+    case HA_KEY_ALG_FULLTEXT:
+    case HA_KEY_ALG_UNDEF:
+      idx->set_type(drizzle::Table::Index::UNKNOWN_INDEX);
+      break;
+
+    default:
+      abort(); /* Somebody's brain broke. haven't added index type to proto */
+      break;
+    }
+
+    if (key_info[i].flags & HA_NOSAME)
+      idx->set_is_unique(true);
+    else
+      idx->set_is_unique(false);
+
+    /* FIXME: block_size ? */
+
+    for(unsigned int j=0; j< key_info[i].key_parts; j++)
+    {
+      drizzle::Table::Index::IndexPart *idxpart;
+      drizzle::Table::Field *field;
+
+      idxpart= idx->add_index_part();
+
+      field= idxpart->mutable_field();
+      *field= table_proto->field(key_info[i].key_part[j].fieldnr);
+
+      idxpart->set_compare_length(key_info[i].key_part[j].length);
+    }
+
+    if (key_info[i].flags & HA_USES_COMMENT)
+      idx->set_comment(key_info[i].comment.str);
+  }
 }
 
 int rename_table_proto_file(const char *from, const char* to)
@@ -531,7 +594,7 @@ int create_table_proto_file(char *file_name,
                             const char *table_name,
                             HA_CREATE_INFO *create_info,
                             List<Create_field> &create_fields,
-                            uint32_t keys __attribute__((unused)),
+                            uint32_t keys,
                             KEY *key_info)
 {
   (void)key_info;
@@ -540,7 +603,8 @@ int create_table_proto_file(char *file_name,
   string new_path(file_name);
   string file_ext = ".tabledefinition";
 
-  fill_table_proto(&table_proto, table_name, create_fields, create_info);
+  fill_table_proto(&table_proto, table_name, create_fields, create_info,
+                   keys, key_info);
 
   new_path.replace(new_path.find(".frm"), file_ext.length(), file_ext );
 
