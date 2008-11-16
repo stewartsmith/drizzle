@@ -37,6 +37,9 @@ using namespace CMATH_NAMESPACE;
 const String my_null_string("NULL", 4, default_charset_info);
 
 
+const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
+
+
 /*****************************************************************************
 ** Item functions
 *****************************************************************************/

@@ -22,8 +22,6 @@
 
 #include <drizzled/dtcollation.h>
 
-#define NO_CACHED_FIELD_INDEX ((uint)(-1))
-
 class Protocol;
 class TableList;
 class Item_field;
@@ -643,7 +641,7 @@ public:
   bool alias_name_used; /* true if item was resolved against alias */
   /* 
     Cached value of index for this field in table->field array, used by prep. 
-    stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX 
+    stmts for speeding up their re-execution. Holds NO_CACHED_FIELD_INDEX
     if index value is not known.
   */
   uint32_t cached_field_index;
@@ -1757,72 +1755,6 @@ public:
   bool const_item() const { return 0; }
   bool is_null() { return null_value; }
 };
-
-
-class Cached_item :public Sql_alloc
-{
-public:
-  bool null_value;
-  Cached_item() :null_value(0) {}
-  virtual bool cmp(void)=0;
-  virtual ~Cached_item(); /*line -e1509 */
-};
-
-class Cached_item_str :public Cached_item
-{
-  Item *item;
-  String value,tmp_value;
-public:
-  Cached_item_str(Session *session, Item *arg);
-  bool cmp(void);
-  ~Cached_item_str();                           // Deallocate String:s
-};
-
-
-class Cached_item_real :public Cached_item
-{
-  Item *item;
-  double value;
-public:
-  Cached_item_real(Item *item_par) :item(item_par),value(0.0) {}
-  bool cmp(void);
-};
-
-class Cached_item_int :public Cached_item
-{
-  Item *item;
-  int64_t value;
-public:
-  Cached_item_int(Item *item_par) :item(item_par),value(0) {}
-  bool cmp(void);
-};
-
-
-class Cached_item_decimal :public Cached_item
-{
-  Item *item;
-  my_decimal value;
-public:
-  Cached_item_decimal(Item *item_par);
-  bool cmp(void);
-};
-
-class Cached_item_field :public Cached_item
-{
-  unsigned char *buff;
-  Field *field;
-  uint32_t length;
-
-public:
-  Cached_item_field(Field *arg_field) : field(arg_field)
-  {
-    field= arg_field;
-    /* TODO: take the memory allocation below out of the constructor. */
-    buff= (unsigned char*) sql_calloc(length=field->pack_length());
-  }
-  bool cmp(void);
-};
-
 class Item_default_value : public Item_field
 {
 public:
@@ -2036,8 +1968,6 @@ void mark_select_range_as_dependent(Session *session,
                                     Field *found_field, Item *found_item,
                                     Item_ident *resolved_item);
 
-extern Cached_item *new_Cached_item(Session *session, Item *item,
-                                    bool use_result_field);
 extern void resolve_const_item(Session *session, Item **ref, Item *cmp_item);
 extern bool field_is_equal_to_item(Field *field,Item *item);
 

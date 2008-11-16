@@ -91,6 +91,7 @@ drizzled_LDFLAGS =
 noinst_HEADERS = \
 		authentication.h \
 		base.h \
+		cached_item.h \
 		client_settings.h \
 		common_includes.h \
 		comp_creator.h \
@@ -180,6 +181,7 @@ noinst_HEADERS = \
 
 drizzled_SOURCES = \
 		authentication.cc \
+		cached_item.cc \
 		configvar.cc \
 		db.cc \
 		discover.cc \

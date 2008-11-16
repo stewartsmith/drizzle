@@ -16,7 +16,6 @@
 noinst_LTLIBRARIES= 	libitem.la
 
 libitem_la_SOURCES= \
-		buff.cc \
 		cache_row.cc \
 		cmpfunc.cc \
 		create.cc \

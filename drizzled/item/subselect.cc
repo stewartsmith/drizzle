@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {

@@ -37,6 +37,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
 
 #include CMATH_H
 
