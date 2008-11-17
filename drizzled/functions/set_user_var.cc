@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/set_user_var.h>
+#include <drizzled/virtual_column_info.h>
 
 /*
   When a user variable is updated (in a SET command or a query like

@@ -73,7 +73,6 @@ inline Session *_current_session(void)
 #define current_session _current_session()
 
 
-#include <drizzled/table_list.h>
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
 

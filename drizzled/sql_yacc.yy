@@ -45,6 +45,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/timefunc.h>
+#include <drizzled/virtual_column_info.h>
 
 int yylex(void *yylval, void *yysession);
 

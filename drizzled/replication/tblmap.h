@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_RPL_TBLMAP_H
 #define DRIZZLED_RPL_TBLMAP_H
 
+#include <mysys/hash.h>
+
 /* Forward declarations */
 class Table;
 

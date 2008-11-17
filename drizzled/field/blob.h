@@ -74,8 +74,8 @@ public:
   int key_cmp(const unsigned char *str, uint32_t length);
   uint32_t key_length() const { return 0; }
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t pack_length() const
-  { return (uint32_t) (packlength+table->s->blob_ptr_size); }
+  uint32_t pack_length() const;
+
 
   /**
      Return the packed length without the pointer size added. 
@@ -98,11 +98,11 @@ public:
 #ifndef WORDS_BIGENDIAN
   static
 #endif
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number, bool low_byte_first);
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength, uint32_t i_number)
-  {
-    store_length(i_ptr, i_packlength, i_number, table->s->db_low_byte_first);
-  }
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
+                    uint32_t i_number, bool low_byte_first);
+  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
+                    uint32_t i_number);
+
   inline void store_length(uint32_t number)
   {
     store_length(ptr, packlength, number);
@@ -116,14 +116,12 @@ public:
 
      @returns The length in the row plus the size of the data.
   */
-  uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first)
-    {return packlength + get_length(ptr_arg, packlength, low_byte_first);}
+  uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first);
 
-  inline uint32_t get_length(uint32_t row_offset= 0)
-  { return get_length(ptr+row_offset, this->packlength, table->s->db_low_byte_first); }
-  uint32_t get_length(const unsigned char *ptr, uint32_t packlength, bool low_byte_first);
-  uint32_t get_length(const unsigned char *ptr_arg)
-  { return get_length(ptr_arg, this->packlength, table->s->db_low_byte_first); }
+  uint32_t get_length(uint32_t row_offset= 0);
+  uint32_t get_length(const unsigned char *ptr, uint32_t packlength,
+                      bool low_byte_first);
+  uint32_t get_length(const unsigned char *ptr_arg);
   void put_length(unsigned char *pos, uint32_t length);
   inline void get_ptr(unsigned char **str)
     {
@@ -187,8 +185,8 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
   uint32_t is_equal(Create_field *new_field);
-  inline bool in_read_set() { return bitmap_is_set(table->read_set, field_index); }
-  inline bool in_write_set() { return bitmap_is_set(table->write_set, field_index); }
+  bool in_read_set();
+  bool in_write_set();
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 };

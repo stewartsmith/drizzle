@@ -28,6 +28,7 @@
 #include "sql_select.h"
 #include <errno.h>
 #include <drizzled/error.h>
+#include <drizzled/virtual_column_info.h>
 
 
 /*****************************************************************************
@@ -555,39 +556,234 @@ test_if_important_data(const CHARSET_INFO * const cs, const char *str,
 }
 
 
-/**
-  Detect Item_result by given field type of UNION merge result.
-
-  @param field_type  given field type
-
-  @return
-    Item_result (type of internal MySQL expression result)
-*/
-
 Item_result Field::result_merge_type(enum_field_types field_type)
 {
   assert(field_type <= DRIZZLE_TYPE_MAX);
   return field_types_result_type[field_type];
 }
 
+
+bool Field::eq(Field *field)
+{
+  return (ptr == field->ptr && null_ptr == field->null_ptr &&
+          null_bit == field->null_bit);
+}
+
+
+uint32_t Field::pack_length() const
+{
+  return field_length;
+}
+
+
+uint32_t Field::pack_length_in_rec() const
+{
+  return pack_length();
+}
+
+
+uint32_t Field::pack_length_from_metadata(uint32_t field_metadata)
+{
+  return field_metadata;
+}
+
+
+uint32_t Field::row_pack_length()
+{
+  return 0;
+}
+
+
+int Field::save_field_metadata(unsigned char *first_byte)
+{
+  return do_save_field_metadata(first_byte);
+}
+
+
+uint32_t Field::data_length()
+{
+  return pack_length();
+}
+
+
+uint32_t Field::used_length()
+{
+  return pack_length();
+}
+
+
+uint32_t Field::sort_length() const
+{
+  return pack_length();
+}
+
+
+uint32_t Field::max_data_length() const
+{
+  return pack_length();
+}
+
+
+int Field::reset(void)
+{
+  memset(ptr, 0, pack_length());
+  return 0;
+}
+
+
+void Field::reset_fields()
+{}
+
+
+void Field::set_default()
+{
+  my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
+  memcpy(ptr, ptr + l_offset, pack_length());
+  if (null_ptr)
+    *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
+}
+
+
+bool Field::binary() const
+{
+  return 1;
+}
+
+
+bool Field::zero_pack() const
+{
+  return 1;
+}
+
+
+enum ha_base_keytype Field::key_type() const
+{
+  return HA_KEYTYPE_BINARY;
+}
+
+
+uint32_t Field::key_length() const
+{
+  return pack_length();
+}
+
+
+enum_field_types Field::real_type() const
+{
+  return type();
+}
+
+
+int Field::cmp_max(const unsigned char *a, const unsigned char *b, uint32_t)
+{
+  return cmp(a, b);
+}
+
+
+int Field::cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t)
+{
+  return memcmp(a,b,pack_length());
+}
+
+
+int Field::cmp_offset(uint32_t row_offset)
+{
+  return cmp(ptr,ptr+row_offset);
+}
+
+
+int Field::cmp_binary_offset(uint32_t row_offset)
+{
+  return cmp_binary(ptr, ptr+row_offset);
+}
+
+
+int Field::key_cmp(const unsigned char *a,const unsigned char *b)
+{
+  return cmp(a, b);
+}
+
+
+int Field::key_cmp(const unsigned char *str, uint32_t)
+{
+  return cmp(ptr,str);
+}
+
+
+uint32_t Field::decimals() const
+{
+  return 0;
+}
+
+
+bool Field::is_null(my_ptrdiff_t row_offset)
+{
+  return null_ptr ?
+    (null_ptr[row_offset] & null_bit ? true : false) :
+    table->null_row;
+}
+
+
+bool Field::is_real_null(my_ptrdiff_t row_offset)
+{
+  return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
+}
+
+
+bool Field::is_null_in_record(const unsigned char *record)
+{
+  if (!null_ptr)
+    return false;
+  return test(record[(uint32_t) (null_ptr -table->record[0])] &
+              null_bit);
+}
+
+
+bool Field::is_null_in_record_with_offset(my_ptrdiff_t offset)
+{
+  if (!null_ptr)
+    return false;
+  return test(null_ptr[offset] & null_bit);
+}
+
+
+void Field::set_null(my_ptrdiff_t row_offset)
+{
+  if (null_ptr)
+    null_ptr[row_offset]|= null_bit;
+}
+
+
+void Field::set_notnull(my_ptrdiff_t row_offset)
+{
+  if (null_ptr)
+    null_ptr[row_offset]&= (unsigned char) ~null_bit;
+}
+
+
+bool Field::maybe_null(void)
+{
+  return null_ptr != 0 || table->maybe_null;
+}
+
+
+bool Field::real_maybe_null(void)
+{
+  return null_ptr != 0;
+}
+
+
+size_t Field::last_null_byte() const
+{
+  size_t bytes= do_last_null_byte();
+  assert(bytes <= table->getNullBytes());
+  return bytes;
+}
+
+
 /*****************************************************************************
   Static help functions
 *****************************************************************************/
-
-
-/**
-  Check whether a field type can be partially indexed by a key.
-
-  This is a static method, rather than a virtual function, because we need
-  to check the type of a non-Field in mysql_alter_table().
-
-  @param type  field type
-
-  @retval
-    true  Type can have a prefixed key
-  @retval
-    false Type can not have a prefixed key
-*/
 
 bool Field::type_can_have_key_part(enum enum_field_types type)
 {
@@ -626,6 +822,13 @@ int Field::warn_if_overflow(int op_result)
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
+}
+
+
+void Field::init(Table *table_arg)
+{
+  orig_table= table= table_arg;
+  table_name= &table_arg->alias;
 }
 
 
@@ -709,14 +912,14 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 
 /// This is used as a table name when the table structure is not set up
 Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
-	     unsigned char null_bit_arg,
-	     utype unireg_check_arg, const char *field_name_arg)
+             unsigned char null_bit_arg,
+             utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
    table(0), orig_table(0), table_name(0),
    field_name(field_name_arg),
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
-   field_length(length_arg), null_bit(null_bit_arg), 
+   field_length(length_arg), null_bit(null_bit_arg),
    is_created_from_null_item(false),
    vcol_info(NULL), is_stored(true)
 {
@@ -756,7 +959,10 @@ void Field::copy_from_tmp(int row_offset)
   memcpy(ptr,ptr+row_offset,pack_length());
   if (null_ptr)
   {
-    *null_ptr= (unsigned char) ((null_ptr[0] & (unsigned char) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (unsigned char) null_bit));
+    *null_ptr= (unsigned char) ((null_ptr[0] &
+                                 (unsigned char) ~(uint32_t) null_bit) |
+                                (null_ptr[row_offset] &
+                                 (unsigned char) null_bit));
   }
 }
 
@@ -774,9 +980,9 @@ bool Field::send_binary(Protocol *protocol)
    Check to see if field size is compatible with destination.
 
    This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The 
+   field size is less than or equal to the master's field size. The
    encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination). 
+   to the size of this field (the slave or destination).
 
    @param   field_metadata   Encoded size in field metadata
 
@@ -791,7 +997,8 @@ int Field::compatible_field_size(uint32_t field_metadata)
 }
 
 
-int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
+int Field::store(const char *to, uint32_t length,
+                 const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -849,6 +1056,15 @@ Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
   memcpy(to, from, length);
   return to+length;
 }
+
+
+unsigned char *Field::pack(unsigned char *to, const unsigned char *from)
+{
+  unsigned char *result= this->pack(to, from, UINT32_MAX,
+                                    table->s->db_low_byte_first);
+  return(result);
+}
+
 
 /**
    Unpack a field from row data.
@@ -909,6 +1125,34 @@ Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
 
   memcpy(to, from, param_data > length ? length : len);
   return from+len;
+}
+
+
+const unsigned char *Field::unpack(unsigned char* to,
+                                   const unsigned char *from)
+{
+  const unsigned char *result= unpack(to, from, 0U,
+                                      table->s->db_low_byte_first);
+  return(result);
+}
+
+
+uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
+{
+  return length;
+}
+
+
+int Field::pack_cmp(const unsigned char *a, const unsigned char *b,
+                    uint32_t, bool)
+{
+  return cmp(a,b);
+}
+
+
+int Field::pack_cmp(const unsigned char *b, uint32_t, bool)
+{
+  return cmp(ptr,b);
 }
 
 

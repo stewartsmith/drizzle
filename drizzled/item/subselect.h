@@ -35,6 +35,7 @@ class Item_bool_func2;
 class Cached_item;
 class Item_in_optimizer;
 class Item_func_not_all;
+class TMP_TABLE_PARAM;
 
 
 /* base class for subselects */

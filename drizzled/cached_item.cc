@@ -26,6 +26,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/sql_string.h>
 
 /**
   Create right type of Cached_item for an item.

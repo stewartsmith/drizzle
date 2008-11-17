@@ -26,6 +26,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
+#include <drizzled/virtual_column_info.h>
 
 #include <string>
 

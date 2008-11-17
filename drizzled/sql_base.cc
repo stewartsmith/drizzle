@@ -16,6 +16,8 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
+#include <drizzled/virtual_column_info.h>
+
 #include <signal.h>
 
 #if TIME_WITH_SYS_TIME

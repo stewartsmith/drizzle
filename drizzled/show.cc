@@ -26,10 +26,12 @@
 #include <drizzled/gettext.h>
 #include <drizzled/util/convert.h>
 #include <drizzled/error.h>
-#include <string>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/virtual_column_info.h>
+
+#include <string>
 
 inline const char *
 str_or_nil(const char *str)

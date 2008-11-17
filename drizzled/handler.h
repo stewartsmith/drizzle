@@ -52,6 +52,7 @@ class TableList;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
+struct order_st;
 
 class Item;
 struct st_table_log_memory_entry;

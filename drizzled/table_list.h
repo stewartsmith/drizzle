@@ -57,7 +57,7 @@
 */
 
 
-#include "table.h"
+#include <drizzled/table.h>
 
 class Index_hint;
 class COND_EQUAL;

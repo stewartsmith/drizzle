@@ -177,7 +177,8 @@ noinst_HEADERS = \
 		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
-		tztime.h
+		tztime.h \
+		virtual_column_info.h
 
 drizzled_SOURCES = \
 		authentication.cc \
@@ -193,6 +194,7 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
@@ -266,6 +268,7 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		unireg.cc \
+		virtual_column_info.cc \
 		xid.cc
 
 libhandler_la_SOURCES = handler.cc handlerton.cc

@@ -25,6 +25,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/virtual_column_info.h>
 
 /* For proto */
 #include <string>

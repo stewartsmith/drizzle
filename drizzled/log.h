@@ -276,10 +276,7 @@ public:
   int log_xid(Session *session, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
-  bool is_table_mapped(Table *table) const
-  {
-    return table->s->table_map_version == table_map_version();
-  }
+  bool is_table_mapped(Table *table) const;
 
   uint64_t table_map_version() const { return m_table_map_version; }
   void update_table_map_version() { ++m_table_map_version; }

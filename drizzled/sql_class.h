@@ -32,6 +32,7 @@
 #include <drizzled/scheduler.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
+#include <drizzled/handler.h>
 
 class Relay_log_info;
 

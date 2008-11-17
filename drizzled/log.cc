@@ -3877,6 +3877,12 @@ err1:
 }
 
 
+bool DRIZZLE_BIN_LOG::is_table_mapped(Table *table) const
+{
+  return table->s->table_map_version == table_map_version();
+}
+
+
 #ifdef INNODB_COMPATIBILITY_HOOKS
 /**
   Get the file name of the MySQL binlog.

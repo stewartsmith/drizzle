@@ -21,7 +21,7 @@
 #define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 
 class TableList;
-class SecurityContext;
+class Security_context;
 class Session;
 class st_select_lex;
 

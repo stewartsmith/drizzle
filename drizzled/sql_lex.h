@@ -27,6 +27,7 @@
 #include <drizzled/sql_udf.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/table_list.h>
 
 class select_result_interceptor;
 /* YACC and LEX Definitions */
