@@ -620,6 +620,8 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 int create_frm(Session *session, const char *name, const char *db, const char *table,
                uint32_t reclength, unsigned char *fileinfo,
 	       HA_CREATE_INFO *create_info, uint32_t keys, KEY *key_info);
+int rename_table_proto_file(const char *from, const char* to);
+int delete_table_proto_file(char *file_name);
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);

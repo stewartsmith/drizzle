@@ -248,6 +248,8 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     }
   }
 
+  hton->name= plugin->name.str;
+
   /*
     the switch below and hton->state should be removed when
     command-line options for plugins will be implemented

@@ -67,7 +67,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   uint32_t errors;
   uint32_t res;
 
-  if (!memcmp(from, tmp_file_prefix, tmp_file_prefix_length))
+  if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
     res= (my_stpncpy(to, from, to_length) - to);
@@ -211,8 +211,8 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 
   char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
-	      tmp_file_prefix, current_pid,
-              session->thread_id, session->tmp_table++, reg_ext);
+           TMP_FILE_PREFIX, current_pid,
+           session->thread_id, session->tmp_table++, reg_ext);
 
   if (lower_case_table_names)
   {
@@ -501,6 +501,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
       {
         int new_error;
+
+        /* for some weird-ass reason, we ignore the return code here
+           and things work. */
+        delete_table_proto_file(path);
+
         /* Delete the table definition file */
         my_stpcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
@@ -615,7 +620,11 @@ bool quick_rm_table(handlerton *base,const char *db,
                                          db, table_name, reg_ext, flags);
   if (my_delete(path,MYF(0)))
     error= 1; /* purecov: inspected */
+
   path[path_length - reg_ext_length]= '\0'; // Remove reg_ext
+
+  error|= delete_table_proto_file(path);
+
   return(ha_delete_table(current_session, base, path, db, table_name, 0) ||
               error);
 }
@@ -2105,6 +2114,15 @@ mysql_rename_table(handlerton *base, const char *old_db,
     {
       error=my_errno;
       /* Restore old file name */
+      if (file)
+        file->ha_rename_table(to_base, from_base);
+    }
+
+    if(!(flags & NO_FRM_RENAME)
+       && rename_table_proto_file(from_base, to_base))
+    {
+      error= errno;
+      rename_file_ext(to, from, reg_ext);
       if (file)
         file->ha_rename_table(to_base, from_base);
     }
@@ -3754,7 +3772,7 @@ Table *create_altered_table(Session *session,
   char path[FN_REFLEN];
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64,
-           tmp_file_prefix, current_pid, session->thread_id);
+           TMP_FILE_PREFIX, current_pid, session->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -4385,6 +4403,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   handlerton *old_db_type, *new_db_type, *save_old_db_type;
   legacy_db_type table_type;
 
+  new_name_buff[0]= '\0';
+
   if (table_list && table_list->schema_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
@@ -4792,7 +4812,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       close_temporary_table(session, altered_table, 1, 1);
   }
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, tmp_file_prefix,
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
@@ -4915,7 +4935,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   */
 
   session->set_proc_info("rename result table");
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, tmp_file_prefix,
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);

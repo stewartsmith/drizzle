@@ -1421,7 +1421,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros ${W_FAIL}"
+  BASE_WARNINGS="-W -Wall -Wextra ${W_FAIL}"
 
   if test "$ac_warn_longlong" = "yes"
   then

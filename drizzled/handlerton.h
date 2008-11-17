@@ -51,6 +51,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 struct handlerton
 {
   /*
+    Name used for storage engine.
+  */
+  const char *name;
+
+  /*
     Historical marker for if the engine is available of not
   */
   SHOW_COMP_OPTION state;

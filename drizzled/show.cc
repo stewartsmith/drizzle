@@ -282,7 +282,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
     {
         // Return only .frm files which aren't temp files.
       if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),reg_ext) ||
-          is_prefix(file->name, tmp_file_prefix))
+          is_prefix(file->name, TMP_FILE_PREFIX))
         continue;
       *ext=0;
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
