@@ -21,6 +21,8 @@
 #define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
+#include <mysys/drizzle_time.h>
+#include <drizzled/my_decimal.h>
 
 class Protocol;
 class TableList;
@@ -32,7 +34,7 @@ class COND_EQUAL;
 class user_var_entry;
 class Item_sum;
 class Item_in_subselect;
-
+class Send_field;
 
 void item_init(void);			/* Init item functions */
 
@@ -385,8 +387,8 @@ public:
   inline uint32_t float_length(uint32_t decimals_par) const
   { return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;}
   virtual uint32_t decimal_precision() const;
-  inline int decimal_int_part() const
-  { return my_decimal_int_part(decimal_precision(), decimals); }
+  int decimal_int_part() const;
+
   /*
     Returns true if this is constant (during query execution, i.e. its value
     will not change until next fix_fields) and its value is known.
@@ -682,10 +684,10 @@ public:
   {}
 
   enum Type type() const { return FIELD_ITEM; }
-  double val_real() { return field->val_real(); }
-  int64_t val_int() { return field->val_int(); }
-  String *val_str(String *str) { return field->val_str(str); }
-  my_decimal *val_decimal(my_decimal *dec) { return field->val_decimal(dec); }
+  double val_real();
+  int64_t val_int();
+  String *val_str(String *str);
+  my_decimal *val_decimal(my_decimal *dec);
   void make_field(Send_field *tmp_field);
 };
 
@@ -743,18 +745,9 @@ public:
   int save_in_field(Field *field,bool no_conversions);
   void save_org_in_field(Field *field);
   table_map used_tables() const;
-  enum Item_result result_type () const
-  {
-    return field->result_type();
-  }
-  Item_result cast_to_int_type() const
-  {
-    return field->cast_to_int_type();
-  }
-  enum_field_types field_type() const
-  {
-    return field->type();
-  }
+  enum Item_result result_type () const;
+  Item_result cast_to_int_type() const;
+  enum_field_types field_type() const;
   enum_monotonicity_info get_monotonicity_info() const
   {
     return MONOTONIC_STRICT_INCREASING;
@@ -765,7 +758,7 @@ public:
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
-  bool is_null() { return field->is_null(); }
+  bool is_null();
   void update_null_value();
   Item *get_tmp_table_item(Session *session);
   bool collect_item_field_processor(unsigned char * arg);
@@ -775,16 +768,13 @@ public:
   bool check_vcol_func_processor(unsigned char *arg __attribute__((unused)))
   { return false; }
   void cleanup();
-  bool result_as_int64_t()
-  {
-    return field->can_be_compared_as_int64_t();
-  }
+  bool result_as_int64_t();
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
   bool subst_argument_checker(unsigned char **arg);
   Item *equal_fields_propagator(unsigned char *arg);
   bool set_no_const_sub(unsigned char *arg);
   Item *replace_equal_field(unsigned char *arg);
-  inline uint32_t max_disp_length() { return field->max_display_length(); }
+  uint32_t max_disp_length();
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
@@ -1873,10 +1863,7 @@ public:
   table_map used_tables() const { return used_table_map; }
   virtual void keep_array() {}
   virtual void print(String *str, enum_query_type query_type);
-  bool eq_def(Field *field) 
-  { 
-    return cached_field ? cached_field->eq_def (field) : false;
-  }
+  bool eq_def(Field *field);
   bool eq(const Item *item,
           bool binary_cmp __attribute__((unused))) const
   {
@@ -1943,13 +1930,7 @@ class Item_cache_str: public Item_cache
   bool is_varbinary;
 
 public:
-  Item_cache_str(const Item *item) :
-    Item_cache(), value(0),
-    is_varbinary(item->type() == FIELD_ITEM &&
-                 ((const Item_field *) item)->field->type() ==
-                   DRIZZLE_TYPE_VARCHAR &&
-                 !((const Item_field *) item)->field->has_charset())
-  {}
+  Item_cache_str(const Item *item);
   void store(Item *item);
   double val_real();
   int64_t val_int();

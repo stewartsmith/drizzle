@@ -2128,6 +2128,16 @@ void TMP_TABLE_PARAM::init()
   return;
 }
 
+void TMP_TABLE_PARAM::cleanup(void)
+{
+  /* Fix for Intel compiler */
+  if (copy_field)
+  {
+    delete [] copy_field;
+    save_copy_field= copy_field= 0;
+  }
+}
+
 
 void session_increment_bytes_sent(ulong length)
 {

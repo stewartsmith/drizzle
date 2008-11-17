@@ -33,6 +33,7 @@
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
+#include <drizzled/sql_error.h>
 
 class Relay_log_info;
 
@@ -42,6 +43,7 @@ class Slave_log_event;
 class Lex_input_stream;
 class Rows_log_event;
 class user_var_entry;
+class Copy_field;
 
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
@@ -2129,14 +2131,7 @@ public:
     cleanup();
   }
   void init(void);
-  inline void cleanup(void)
-  {
-    if (copy_field)				/* Fix for Intel compiler */
-    {
-      delete [] copy_field;
-      save_copy_field= copy_field= 0;
-    }
-  }
+  void cleanup(void);
 };
 
 class select_union :public select_result_interceptor

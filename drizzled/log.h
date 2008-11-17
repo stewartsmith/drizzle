@@ -20,6 +20,7 @@
 #ifndef DRIZZLE_SERVER_LOG_H
 #define DRIZZLE_SERVER_LOG_H
 
+#include <drizzled/common.h>
 #include <mysys/iocache.h>
 #include <drizzled/xid.h>
 

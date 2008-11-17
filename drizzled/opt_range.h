@@ -23,6 +23,7 @@
 #ifndef DRIZZLED_OPT_RANGE_H
 #define DRIZZLED_OPT_RANGE_H
 
+#include <drizzled/field.h>
 #include <mysys/queues.h>
 
 typedef struct st_key_part {

@@ -20,10 +20,15 @@
 #ifndef DRIZZLED_PROTOCOL_H
 #define DRIZZLED_PROTOCOL_H
 
+#include <drizzled/sql_list.h>
+
+class String;
 class i_string;
 class Session;
+class my_decimal;
 typedef struct st_drizzle_field DRIZZLE_FIELD;
 typedef struct st_drizzle_rows DRIZZLE_ROWS;
+typedef struct st_drizzle_time DRIZZLE_TIME;
 
 class Protocol
 {
@@ -50,7 +55,7 @@ public:
   bool store(I_List<i_string> *str_list);
   bool store(const char *from, const CHARSET_INFO * const cs);
   String *storage_packet() { return packet; }
-  inline void free() { packet->free(); }
+  void free();
   virtual bool write();
   inline  bool store(int from)
   { return store_long((int64_t) from); }
@@ -60,10 +65,9 @@ public:
   { return store_int64_t((int64_t) from, 0); }
   inline  bool store(uint64_t from)
   { return store_int64_t((int64_t) from, 1); }
-  inline bool store(String *str)
-  { return store((char*) str->ptr(), str->length(), str->charset()); }
+  bool store(String *str);
 
-  virtual bool prepare_for_send(List<Item> *item_list) 
+  virtual bool prepare_for_send(List<Item> *item_list)
   {
     field_count=item_list->elements;
     return 0;
@@ -77,7 +81,7 @@ public:
   virtual bool store_short(int64_t from)=0;
   virtual bool store_long(int64_t from)=0;
   virtual bool store_int64_t(int64_t from, bool unsigned_flag)=0;
-  virtual bool store_decimal(const my_decimal *)=0;
+  virtual bool store_decimal(const my_decimal * dec_value)=0;
   virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs)=0;
   virtual bool store(const char *from, size_t length, 
                      const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs)=0;

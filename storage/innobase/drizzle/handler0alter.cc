@@ -8,6 +8,7 @@ Smart ALTER TABLE
 # include <drizzled/common_includes.h>
 # include <drizzled/error.h>
 # include <mystrings/m_ctype.h>
+# include <drizzled/field.h>
 #else
 # include <mysql_priv.h>
 # include <mysqld_error.h>

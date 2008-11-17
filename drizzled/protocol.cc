@@ -630,6 +630,17 @@ bool Protocol::store(I_List<i_string>* str_list)
 }
 
 
+bool Protocol::store(String *str)
+{
+  return store((char*) str->ptr(), str->length(), str->charset());
+}
+
+void Protocol::free()
+{
+  packet->free();
+}
+
+
 /****************************************************************************
   Functions to handle the simple (default) protocol where everything is
   This protocol is the one that is used by default between the MySQL server

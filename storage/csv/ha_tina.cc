@@ -41,6 +41,7 @@ TODO:
  -Brian
 */
 #include <drizzled/common_includes.h>
+#include <drizzled/field.h>
 #include "ha_tina.h"
 #include <drizzled/error.h>
 

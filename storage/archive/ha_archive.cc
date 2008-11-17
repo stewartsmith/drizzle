@@ -15,6 +15,7 @@
 
 
 #include <drizzled/common_includes.h>
+#include <drizzled/field.h>
 #include <storage/myisam/myisam.h>
 
 #include "ha_archive.h"

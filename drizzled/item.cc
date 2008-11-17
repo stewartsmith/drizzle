@@ -358,6 +358,12 @@ uint32_t Item::decimal_precision() const
 }
 
 
+int Item::decimal_int_part() const
+{
+  return my_decimal_int_part(decimal_precision(), decimals);
+}
+
+
 void Item::print(String *str, enum_query_type)
 {
   str->append(full_name());
@@ -1265,6 +1271,31 @@ void Item_ident_for_show::make_field(Send_field *tmp_field)
   tmp_field->decimals= field->decimals();
 }
 
+
+double Item_ident_for_show::val_real()
+{
+  return field->val_real();
+}
+
+
+int64_t Item_ident_for_show::val_int()
+{
+  return field->val_int();
+}
+
+
+String *Item_ident_for_show::val_str(String *str)
+{
+  return field->val_str(str);
+}
+
+
+my_decimal *Item_ident_for_show::val_decimal(my_decimal *dec)
+{
+  return field->val_decimal(dec);
+}
+
+
 /**********************************************/
 
 Item_field::Item_field(Field *f)
@@ -1599,6 +1630,24 @@ table_map Item_field::used_tables() const
 }
 
 
+enum Item_result Item_field::result_type () const
+{
+  return field->result_type();
+}
+
+
+Item_result Item_field::cast_to_int_type() const
+{
+  return field->cast_to_int_type();
+}
+
+
+enum_field_types Item_field::field_type() const
+{
+  return field->type();
+}
+
+
 void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
 {
   if (new_parent == depended_from)
@@ -1609,6 +1658,12 @@ void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
   ctx->first_name_resolution_table= context->first_name_resolution_table;
   ctx->last_name_resolution_table=  context->last_name_resolution_table;
   this->context=ctx;
+}
+
+
+bool Item_field::is_null()
+{
+  return field->is_null();
 }
 
 
@@ -3572,6 +3627,13 @@ void Item_field::cleanup()
   return;
 }
 
+
+bool Item_field::result_as_int64_t()
+{
+  return field->can_be_compared_as_int64_t();
+}
+
+
 /**
   Find a field among specified multiple equalities.
 
@@ -3754,6 +3816,12 @@ Item *Item_field::replace_equal_field(unsigned char *)
       return subst;
   }
   return this;
+}
+
+
+uint32_t Item_field::max_disp_length()
+{
+  return field->max_display_length();
 }
 
 
@@ -5722,6 +5790,12 @@ void Item_cache::print(String *str, enum_query_type query_type)
 }
 
 
+bool Item_cache::eq_def(Field *field)
+{
+  return cached_field ? cached_field->eq_def (field) : false;
+}
+
+
 void Item_cache_int::store(Item *item)
 {
   value= item->val_int_result();
@@ -5822,6 +5896,14 @@ my_decimal *Item_cache_decimal::val_decimal(my_decimal *)
   return &decimal_value;
 }
 
+
+Item_cache_str::Item_cache_str(const Item *item) :
+  Item_cache(), value(0),
+  is_varbinary(item->type() == FIELD_ITEM &&
+               ((const Item_field *) item)->field->type() ==
+               DRIZZLE_TYPE_VARCHAR &&
+               !((const Item_field *) item)->field->has_charset())
+{}
 
 void Item_cache_str::store(Item *item)
 {

@@ -31,6 +31,7 @@
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
+#include <drizzled/field.h>
 
 /* Include necessary InnoDB headers */
 extern "C" {

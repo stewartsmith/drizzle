@@ -30,6 +30,8 @@
 #include <drizzled/table_list.h>
 
 class select_result_interceptor;
+class virtual_column_info;
+
 /* YACC and LEX Definitions */
 
 /* These may not be declared yet */
