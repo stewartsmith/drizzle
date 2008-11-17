@@ -33,7 +33,7 @@ void Item_func_make_set::update_used_tables()
 void Item_func_make_set::split_sum_func(Session *session, Item **ref_pointer_array,
 					List<Item> &fields)
 {
-  item->split_sum_func2(session, ref_pointer_array, fields, &item, true);
+  item->split_sum_func(session, ref_pointer_array, fields, &item, true);
   Item_str_func::split_sum_func(session, ref_pointer_array, fields);
 }
 
