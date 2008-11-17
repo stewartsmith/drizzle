@@ -40,6 +40,7 @@ class Load_log_event;
 class Slave_log_event;
 class Lex_input_stream;
 class Rows_log_event;
+class user_var_entry;
 
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,

@@ -76,7 +76,6 @@ inline Session *_current_session(void)
 #include <drizzled/table_list.h>
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
-#include <drizzled/item.h>
 
 
 #include <drizzled/sql_class.h>

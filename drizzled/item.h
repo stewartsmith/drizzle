@@ -1941,7 +1941,7 @@ class Item_cache_str: public Item_cache
   char buffer[STRING_BUFFER_USUAL_SIZE];
   String *value, value_buff;
   bool is_varbinary;
-  
+
 public:
   Item_cache_str(const Item *item) :
     Item_cache(), value(0),
