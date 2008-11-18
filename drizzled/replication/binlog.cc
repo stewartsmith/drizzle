@@ -19,6 +19,7 @@
 #include <mysys/base64.h>
 #include <drizzled/error.h>
 #include <drizzled/slave.h>
+#include <drizzled/session.h>
 
 /**
   Execute a BINLOG statement

@@ -23,6 +23,8 @@
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
 #include <libdrizzle/pack.h>
+#include <drizzled/protocol.h>
+#include <drizzled/session.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */

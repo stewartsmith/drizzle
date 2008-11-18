@@ -20,10 +20,11 @@
 #ifndef DRIZZLED_FUNCTIONS_LAST_INSERT_H
 #define DRIZZLED_FUNCTIONS_LAST_INSERT_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_last_insert_id :public Item_int_func
-{ 
+{
 public:
   Item_func_last_insert_id() :Item_int_func() {}
   Item_func_last_insert_id(Item *a) :Item_int_func(a) {}

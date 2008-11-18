@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_LOCK_H
 #define DRIZZLED_FUNCTIONS_LOCK_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_is_free_lock :public Item_int_func
 {

@@ -29,6 +29,7 @@ using namespace std;
 #include <drizzled/functions/int.h>
 #include CMATH_H
 #include <drizzled/util/math.h>
+#include <drizzled/session.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

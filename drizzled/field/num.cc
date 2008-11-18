@@ -22,6 +22,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/num.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 /**
   Numeric fields base class constructor.

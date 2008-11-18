@@ -30,6 +30,9 @@
 #include <drizzled/rename.h>
 #include <drizzled/functions/time/unix_timestamp.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_load.h>
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -3790,42 +3793,6 @@ bool check_simple_select()
 }
 
 
-Comp_creator *comp_eq_creator(bool invert)
-{
-  return invert?(Comp_creator *)Ne_creator::instance():(Comp_creator *)Eq_creator::instance();
-}
-
-
-Comp_creator *comp_ge_creator(bool invert)
-{
-  return invert?(Comp_creator *)Lt_creator::instance():(Comp_creator *)Ge_creator::instance();
-}
-
-
-Comp_creator *comp_gt_creator(bool invert)
-{
-  return invert?(Comp_creator *)Le_creator::instance():(Comp_creator *)Gt_creator::instance();
-}
-
-
-Comp_creator *comp_le_creator(bool invert)
-{
-  return invert?(Comp_creator *)Gt_creator::instance():(Comp_creator *)Le_creator::instance();
-}
-
-
-Comp_creator *comp_lt_creator(bool invert)
-{
-  return invert?(Comp_creator *)Ge_creator::instance():(Comp_creator *)Lt_creator::instance();
-}
-
-
-Comp_creator *comp_ne_creator(bool invert)
-{
-  return invert?(Comp_creator *)Eq_creator::instance():(Comp_creator *)Ne_creator::instance();
-}
-
-
 /**
   Construct ALL/ANY/SOME subquery Item.
 
@@ -3838,9 +3805,9 @@ Comp_creator *comp_ne_creator(bool invert)
     constructed Item (or 0 if out of memory)
 */
 Item * all_any_subquery_creator(Item *left_expr,
-				chooser_compare_func_creator cmp,
-				bool all,
-				SELECT_LEX *select_lex)
+                                chooser_compare_func_creator cmp,
+                                bool all,
+                                SELECT_LEX *select_lex)
 {
   if ((cmp == &comp_eq_creator) && !all)       //  = ANY <=> IN
     return new Item_in_subselect(left_expr, select_lex);

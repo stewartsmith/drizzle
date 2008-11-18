@@ -23,6 +23,7 @@
 
 #include <drizzled/sql_alloc.h>
 #include <drizzled/sql_list.h>
+#include <drizzled/natural_join_column.h>
 
 class Table;
 class TableList;

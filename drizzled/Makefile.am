@@ -89,6 +89,8 @@ drizzled_DEPENDENCIES = @mysql_plugin_libs@
 drizzled_LDFLAGS =
 
 noinst_HEADERS = \
+		alter_column.h \
+		alter_drop.h \
 		authentication.h \
 		base.h \
 		cached_item.h \
@@ -107,6 +109,7 @@ noinst_HEADERS = \
 		field.h \
 		field_iterator.h \
 		filesort_info.h \
+		foreign_key.h \
 		gettext.h \
 		global.h \
 		ha_trx_info.h \
@@ -118,7 +121,9 @@ noinst_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 	       	item.h \
+		key.h \
                 key_map.h \
+		key_part_spec.h \
 		lex.h \
 		lex_symbol.h \
 		log_event.h \
@@ -148,6 +153,7 @@ noinst_HEADERS = \
 		scheduler.h \
 		scheduling.h \
 		server_includes.h \
+		session.h \
 		set_var.h \
 		show.h \
 		sj_tmp_table.h \
@@ -156,10 +162,10 @@ noinst_HEADERS = \
 		sql_array.h \
 		sql_base.h \
 		sql_bitmap.h \
-		sql_class.h \
 		sql_error.h \
 		sql_lex.h \
 		sql_list.h \
+		sql_load.h \
 		sql_locale.h \
 		sql_parse.h \
 		sql_plugin.h \
@@ -183,6 +189,7 @@ noinst_HEADERS = \
 drizzled_SOURCES = \
 		authentication.cc \
 		cached_item.cc \
+		comp_creator.cc \
 		configvar.cc \
 		db.cc \
 		discover.cc \
@@ -229,13 +236,13 @@ drizzled_SOURCES = \
 		replication/utility.cc \
 		scheduler.cc \
                 scheduling.cc \
+		session.cc \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
 		slave.cc \
 		sql_base.cc \
 		sql_builtin.cc \
-		sql_class.cc \
 		sql_client.cc \
 		sql_connect.cc \
 		sql_delete.cc \

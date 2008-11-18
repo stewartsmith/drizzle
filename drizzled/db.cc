@@ -28,7 +28,10 @@ using namespace std;
 #include "log.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-
+#include <mysys/hash.h>
+#include <drizzled/session.h>
+#include <drizzled/db.h>
+#include <drizzled/sql_base.h>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -37,9 +40,10 @@ static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
 static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
-				 const char *db, const char *path, uint32_t level, 
+                                 const char *db, const char *path,
+                                 uint32_t level,
                                  TableList **dropped_tables);
-         
+
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(Session *session,
                                  LEX_STRING *new_db_name,

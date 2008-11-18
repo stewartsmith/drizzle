@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_FIND_IN_SET_H
 #define DRIZZLED_FUNCTIONS_FIND_IN_SET_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_find_in_set :public Item_int_func
 {

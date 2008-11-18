@@ -19,6 +19,8 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 static int lex_one_token(void *arg, void *yysession);
 
@@ -72,14 +74,15 @@ const char * index_hint_type_name[] =
   "FORCE INDEX"
 };
 
-inline int lex_casecmp(const char *s, const char *t, uint32_t len)
+int lex_casecmp(const char *s, const char *t, uint32_t len)
 {
   while (len-- != 0 &&
 	 to_upper_lex[(unsigned char) *s++] == to_upper_lex[(unsigned char) *t++]) ;
   return (int) len+1;
 }
 
-#include <lex_hash.h>
+/* EVIL EVIL - this is included here so that it will have to_upper_lex */
+#include <drizzled/lex_hash.h>
 
 
 void lex_init(void)

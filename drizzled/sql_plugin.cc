@@ -15,6 +15,7 @@
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_getopt.h>
+#include <mysys/hash.h>
 
 #include <drizzled/authentication.h>
 #include <drizzled/logging.h>
@@ -25,6 +26,9 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/show.h>
+#include <drizzled/handler.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
 
 #include <string>
 

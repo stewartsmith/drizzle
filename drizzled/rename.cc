@@ -18,9 +18,11 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
 
 static TableList *rename_tables(Session *session, TableList *table_list,
-				 bool skip_error);
+                                bool skip_error);
 
 static TableList *reverse_table_list(TableList *table_list);
 

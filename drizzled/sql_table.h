@@ -26,6 +26,12 @@
 #ifndef DRIZZLE_SERVER_SQL_TABLE_H
 #define DRIZZLE_SERVER_SQL_TABLE_H
 
+class Session;
+class TableList;
+typedef struct st_ha_check_opt HA_CHECK_OPT;
+class Table;
+typedef struct st_key_cache KEY_CACHE;
+
 bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
                     bool drop_temporary);
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,

@@ -22,6 +22,10 @@
 #ifndef DRIZZLE_SERVER_ITEM_CREATE_H
 #define DRIZZLE_SERVER_ITEM_CREATE_H
 
+#include <drizzled/item/func.h>
+
+struct udf_func;
+
 /**
   Public function builder interface.
   The parser (sql/sql_yacc.yy) uses a factory / builder pattern to

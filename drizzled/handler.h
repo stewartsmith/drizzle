@@ -1407,9 +1407,6 @@ void execute_init_command(Session *session, sys_var_str *init_command_var,
 extern Field *not_found_field;
 extern Field *view_ref_found;
 
-enum find_item_error_report_type {REPORT_ALL_ERRORS, REPORT_EXCEPT_NOT_FOUND,
-                                  IGNORE_ERRORS, REPORT_EXCEPT_NON_UNIQUE,
-                                  IGNORE_EXCEPT_NON_UNIQUE};
 Field *
 find_field_in_tables(Session *session, Item_ident *item,
                      TableList *first_table, TableList *last_table,

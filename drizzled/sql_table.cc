@@ -22,6 +22,13 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
+#include <mysys/hash.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/db.h>
+
+extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
 
@@ -1623,7 +1630,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 */
 
 static void set_table_default_charset(Session *session,
-				      HA_CREATE_INFO *create_info, char *db)
+                                      HA_CREATE_INFO *create_info, char *db)
 {
   /*
     If the table character set was not given explicitly,

@@ -20,11 +20,12 @@
 
 /*****************************************************************************
 **
-** This file implements classes defined in sql_class.h
+** This file implements classes defined in session.h
 ** Especially the classes to handle a result from a select
 **
 *****************************************************************************/
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/record.h>
 #include <drizzled/log_event.h>
@@ -34,6 +35,7 @@
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_base.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -688,7 +690,7 @@ void Session::init(void)
 /*
   Init Session for query processing.
   This has to be called once before we call mysql_parse.
-  See also comments in sql_class.h.
+  See also comments in session.h.
 */
 
 void Session::init_for_queries()

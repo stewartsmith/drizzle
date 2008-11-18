@@ -16,6 +16,8 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
+#include <mysys/hash.h>
+#include <drizzled/sql_udf.h>
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;

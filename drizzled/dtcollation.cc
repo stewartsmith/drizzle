@@ -25,7 +25,7 @@
 #include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
 #include <drizzled/functions/str/conv_charset.h>
-
+#include <drizzled/session.h>
 
 
 static bool

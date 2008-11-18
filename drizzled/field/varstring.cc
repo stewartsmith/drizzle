@@ -21,6 +21,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 /****************************************************************************
   VARCHAR type

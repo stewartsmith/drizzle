@@ -20,14 +20,15 @@
 #ifndef DRIZZLED_FUNCTIONS_POW_H
 #define DRIZZLED_FUNCTIONS_POW_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_pow :public Item_dec_func
-{ 
+{
 public:
   Item_func_pow(Item *a,Item *b) :Item_dec_func(a,b) {}
   double val_real();
   const char *func_name() const { return "pow"; }
-}; 
+};
 
 #endif /* DRIZZLED_FUNCTIONS_POW_H */

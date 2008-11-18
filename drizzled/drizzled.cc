@@ -39,6 +39,9 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/timefunc.h>
+#include <drizzled/session.h>
+#include <drizzled/db.h>
+#include <drizzled/item/create.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

@@ -26,6 +26,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 static void do_field_eq(Copy_field *copy)
 {

@@ -23,7 +23,6 @@
 /// TODO: Rename this file - func.h is stupid.
 
 #include <drizzled/item.h>
-#include <drizzled/item/func.h>
 #include <drizzled/sql_list.h>
 
 

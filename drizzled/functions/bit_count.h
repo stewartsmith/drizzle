@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_BIT_COUNT_H
 #define DRIZZLED_FUNCTIONS_BIT_COUNT_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_bit_count :public Item_int_func
 {

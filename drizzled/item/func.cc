@@ -22,6 +22,8 @@
 */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/functions/func.h>
+#include <drizzled/session.h>
 #include <mysys/my_bit.h>
 #include <drizzled/slave.h>
 #include <drizzled/error.h>

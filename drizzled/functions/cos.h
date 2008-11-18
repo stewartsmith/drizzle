@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_COS_H
 #define DRIZZLED_FUNCTIONS_COS_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_cos :public Item_dec_func
 {

@@ -21,7 +21,9 @@
 #define DRIZZLED_PROTOCOL_H
 
 #include <drizzled/sql_list.h>
+#include <drizzled/item.h>
 
+class Field;
 class String;
 class i_string;
 class Session;

@@ -44,7 +44,8 @@ TODO:
 #include <drizzled/field.h>
 #include "ha_tina.h"
 #include <drizzled/error.h>
-
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char

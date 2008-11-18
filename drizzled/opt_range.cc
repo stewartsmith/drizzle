@@ -1062,6 +1062,23 @@ SQL_SELECT::~SQL_SELECT()
   cleanup();
 }
 
+
+bool SQL_SELECT::check_quick(Session *session, bool force_quick_range,
+                             ha_rows limit)
+{
+  key_map tmp;
+  tmp.set_all();
+  return test_quick_select(session, tmp, 0, limit,
+                           force_quick_range, false) < 0;
+}
+
+
+bool SQL_SELECT::skip_record()
+{
+  return cond ? cond->val_int() == 0 : 0;
+}
+
+
 QUICK_SELECT_I::QUICK_SELECT_I()
   :max_used_key_length(0),
    used_key_parts(0)
@@ -1344,6 +1361,12 @@ failure:
   delete file;
   file= save_file;
   return(1);
+}
+
+
+void QUICK_RANGE_SELECT::save_last_pos()
+{
+  file->position(record);
 }
 
 

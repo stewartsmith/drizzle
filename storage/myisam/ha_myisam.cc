@@ -25,6 +25,9 @@
 #include <drizzled/util/test.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/protocol.h>
+#include <drizzled/table.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -55,7 +58,7 @@ static handler *myisam_create_handler(handlerton *hton,
 // collect errors printed by mi_check routines
 
 static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
-			       const char *fmt, va_list args)
+                               const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
   Protocol *protocol= session->protocol;
@@ -1335,6 +1338,15 @@ int ha_myisam::index_end()
   in_range_check_pushed_down= false;
   ds_mrr.dsmrr_close();
   return 0; 
+}
+
+
+uint32_t ha_myisam::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
+          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
+          HA_READ_ORDER | HA_KEYREAD_ONLY |
+          (keys_with_parts.is_set(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
 }
 
 

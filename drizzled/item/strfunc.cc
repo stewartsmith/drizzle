@@ -29,6 +29,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
 #include <drizzled/item/strfunc.h>
+#include <drizzled/session.h>
 
 String my_empty_string("",default_charset_info);
 
@@ -62,9 +63,9 @@ String *Item_load_file::val_str(String *str)
   if (stat_info.st_size > (long) current_session->variables.max_allowed_packet)
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
-			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_session->variables.max_allowed_packet);
+                        ER_WARN_ALLOWED_PACKET_OVERFLOWED,
+                        ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
+                        func_name(), current_session->variables.max_allowed_packet);
     goto err;
   }
   if (tmp_value.alloc(stat_info.st_size))

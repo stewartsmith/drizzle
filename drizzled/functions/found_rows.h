@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_FOUND_ROWS_H
 #define DRIZZLED_FUNCTIONS_FOUND_ROWS_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_found_rows :public Item_int_func
 {

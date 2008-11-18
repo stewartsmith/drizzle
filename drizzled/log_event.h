@@ -37,6 +37,7 @@
 #include <drizzled/replication/constants.h>
 #include <drizzled/replication/record.h>
 #include <drizzled/replication/reporting.h>
+#include <drizzled/session.h>
 #include <string>
 
 #include <drizzled/sql_string.h>       /* append_query_string() needs String declaration */
@@ -801,11 +802,11 @@ public:
     constructor and pass description_event as an argument.
   */
   static Log_event* read_log_event(IO_CACHE* file,
-				   pthread_mutex_t* log_lock,
+                                   pthread_mutex_t* log_lock,
                                    const Format_description_log_event
                                    *description_event);
   static int read_log_event(IO_CACHE* file, String* packet,
-			    pthread_mutex_t* log_lock);
+                            pthread_mutex_t* log_lock);
   /*
     init_show_field_list() prepares the column names and types for the
     output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
@@ -821,10 +822,7 @@ public:
 
   virtual void pack_info(Protocol *protocol);
 
-  virtual const char* get_db()
-  {
-    return session ? session->db : 0;
-  }
+  virtual const char* get_db();
 
   static void *operator new(size_t size)
   {
@@ -852,17 +850,7 @@ public:
   { return 0; }
   virtual bool write_data_body(IO_CACHE*)
   { return 0; }
-  inline time_t get_time()
-  {
-    Session *tmp_session;
-    if (when)
-      return when;
-    if (session)
-      return session->start_time;
-    if ((tmp_session= current_session))
-      return tmp_session->start_time;
-    return my_time(0);
-  }
+  time_t get_time();
   virtual Log_event_type get_type_code() = 0;
   virtual bool is_valid() const = 0;
   virtual bool is_artificial_event() { return 0; }

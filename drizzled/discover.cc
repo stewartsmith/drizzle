@@ -21,6 +21,8 @@
 */
 #include <drizzled/server_includes.h>
 
+extern char reg_ext[FN_EXTLEN];
+
 /**
   Read the contents of a .frm file.
 

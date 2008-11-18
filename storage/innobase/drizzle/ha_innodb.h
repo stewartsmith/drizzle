@@ -20,6 +20,12 @@
   Innodb
 */
 
+#ifndef INNODB_HANDLER_HA_INNODB_H
+#define INNODB_HANDLER_HA_INNODB_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
+
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -287,3 +293,5 @@ convert_error_code_to_mysql(
 	int		error,	/* in: InnoDB error code */
 	ulint		flags,	/* in: InnoDB table flags, or 0 */
 	Session	        *session);	/* in: user thread handle or NULL */
+
+#endif /* INNODB_HANDLER_HA_INNODB_H */

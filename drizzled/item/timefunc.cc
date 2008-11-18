@@ -32,6 +32,8 @@
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/item/timefunc.h>
+#include <drizzled/sql_locale.h>
+#include <drizzled/session.h>
 
 /** Day number for Dec 31st, 9999. */
 #define MAX_DAY_NUMBER 3652424L

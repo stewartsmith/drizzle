@@ -23,6 +23,9 @@
 #include <drizzled/dtcollation.h>
 #include <mysys/drizzle_time.h>
 #include <drizzled/my_decimal.h>
+#include <drizzled/sql_bitmap.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/sql_alloc.h>
 
 class Protocol;
 class TableList;
@@ -35,6 +38,7 @@ class user_var_entry;
 class Item_sum;
 class Item_in_subselect;
 class Send_field;
+class Field;
 
 void item_init(void);			/* Init item functions */
 
@@ -61,7 +65,7 @@ typedef void (*Cond_traverser) (const Item *item, void *arg);
 typedef bool (Item::*Item_processor) (unsigned char *arg);
 
 
-class Item
+class Item: public Sql_alloc
 {
   /* Prevent use of these */
   Item(const Item &);
@@ -72,16 +76,6 @@ class Item
   virtual bool is_expensive_processor(unsigned char *arg);
 
 public:
-  static void *operator new(size_t size)
-  { return sql_alloc(size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((unused)),
-                              MEM_ROOT *mem_root __attribute__((unused)))
-  {}
 
   enum Type {FIELD_ITEM= 0, FUNC_ITEM, SUM_FUNC_ITEM, STRING_ITEM,
              INT_ITEM, REAL_ITEM, NULL_ITEM, VARBIN_ITEM,

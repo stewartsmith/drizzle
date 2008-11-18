@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/str/user.h>
+#include <drizzled/session.h>
 
 /**
   @todo

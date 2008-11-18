@@ -32,6 +32,8 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
 #include <drizzled/tableop_hooks.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 

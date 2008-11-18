@@ -22,6 +22,7 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
+#include <drizzled/sql_base.h>
 
 /*
   check that all fields are real fields

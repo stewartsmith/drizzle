@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/connection_id.h>
+#include <drizzled/session.h>
 
 void Item_func_connection_id::fix_length_and_dec()
 {

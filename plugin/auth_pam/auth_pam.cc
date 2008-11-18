@@ -6,6 +6,7 @@
 
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
 #ifndef __sun

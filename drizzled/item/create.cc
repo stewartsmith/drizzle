@@ -21,29 +21,18 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/functions/coercibility.h>
-#include <drizzled/functions/locate.h>
-#include <drizzled/functions/str/binary.h>
-#include <drizzled/functions/str/conv.h>
-#include <drizzled/functions/str/concat.h>
-#include <drizzled/functions/str/export_set.h>
-#include <drizzled/functions/str/pad.h>
-#include <drizzled/functions/str/make_set.h>
-#include <drizzled/functions/str/quote.h>
-#include <drizzled/functions/str/repeat.h>
-#include <drizzled/functions/str/format.h>
-#include <drizzled/functions/str/hex.h>
-#include <drizzled/functions/str/uuid.h>
-#include <drizzled/functions/str/trim.h>
-#include <drizzled/functions/str/str_conv.h>
-#include <drizzled/functions/str/substr.h>
+#include <drizzled/item/create.h>
+#include <drizzled/item/func.h>
 #include <drizzled/error.h>
 
 #include <drizzled/item/strfunc.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/timefunc.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/session.h>
 
 class Item;
+
 
 /*
 =============================================================================

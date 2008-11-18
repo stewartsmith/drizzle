@@ -28,6 +28,8 @@
 #include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/scheduler.h>
+#include <drizzled/session.h>
 
 extern scheduler_functions thread_scheduler;
 

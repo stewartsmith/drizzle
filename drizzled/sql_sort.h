@@ -20,6 +20,7 @@
 #ifndef _DRIZZLED_SQL_SORT_H
 #define _DRIZZLED_SQL_SORT_H
 
+typedef struct st_sort_field SORT_FIELD;
 
 /* Defines used by filesort and uniques */
 

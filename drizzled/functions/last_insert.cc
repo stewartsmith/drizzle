@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/last_insert.h>
+#include <drizzled/session.h>
 
 int64_t Item_func_last_insert_id::val_int()
 {

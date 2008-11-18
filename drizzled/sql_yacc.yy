@@ -46,6 +46,15 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/timefunc.h>
 #include <drizzled/virtual_column_info.h>
+#include <drizzled/session.h>
+#include <drizzled/item/func.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/item/create.h>
+#include <drizzled/lex_string.h>
+
+class Table_ident;
+class Item;
+class Item_num;
 
 int yylex(void *yylval, void *yysession);
 

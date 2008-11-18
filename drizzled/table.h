@@ -31,6 +31,7 @@
 #include <mysys/hash.h>
 #include <drizzled/handler.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/table_list.h>
 
 class Item;
 class Item_subselect;
@@ -623,5 +624,21 @@ typedef struct st_open_table_list
   uint32_t in_use,locked;
 } OPEN_TableList;
 
+
+inline void mark_as_null_row(Table *table)
+{
+  table->null_row=1;
+  table->status|=STATUS_NULL_ROW;
+  memset(table->null_flags, 255, table->s->null_bytes);
+}
+
+/**
+  clean/setup table fields and map.
+
+  @param table        Table structure pointer (which should be setup)
+  @param table_list   TableList structure pointer (owner of Table)
+  @param tablenr     table number
+*/
+void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr);
 
 #endif /* DRIZZLED_TABLE_H */

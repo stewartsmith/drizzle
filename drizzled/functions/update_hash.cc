@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/update_hash.h>
+#include <drizzled/session.h>
 
 /**
   Set value to user variable.

@@ -15,6 +15,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 #include <drizzled/item/row.h>
 

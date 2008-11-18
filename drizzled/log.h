@@ -24,6 +24,7 @@
 #include <mysys/iocache.h>
 #include <drizzled/xid.h>
 
+class Table;
 class Relay_log_info;
 class Session;
 class Format_description_log_event;

@@ -61,8 +61,12 @@
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
 #include <drizzled/data_home.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
+extern I_List<NAMED_LIST> key_caches;
 
 
 static DYNAMIC_ARRAY fixed_show_vars;

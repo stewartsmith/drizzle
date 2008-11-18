@@ -22,6 +22,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

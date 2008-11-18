@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/time/now.h>
 #include <drizzled/tztime.h>
+#include <drizzled/session.h>
 
 String *Item_func_now::val_str(String *str __attribute__((unused)))
 {

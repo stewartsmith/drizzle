@@ -80,12 +80,26 @@ So, we can read full search-structure as 32-bit word
 
 */
 
-#define NO_YACC_SYMBOLS
-#include "global.h"
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
-#include "lex.h"
+
+/* We break our rule here because of Bison -
+   these includes are for sql_yacc.h */
+#include <drizzled/lex_string.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/sql_string.h>
+#include <drizzled/session.h>
+#include <drizzled/lex_symbol.h>
+#include <drizzled/item/func.h>
+
+class Item;
+class Item_num;
+class Table_ident;
+
+#include <drizzled/sql_yacc.h>
+#include <drizzled/lex.h>
 
 using namespace std;
 

@@ -24,6 +24,8 @@
   Classes for the thread scheduler
 */
 
+#include <mysys/my_list.h>
+
 /* Forward declarations */
 class Session;
 struct event;

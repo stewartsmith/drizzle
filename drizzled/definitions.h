@@ -390,7 +390,7 @@
 
   Move this out of here once Stew's done with UDF breakout.  The following headers need it:
 
-    sql_lex.h --> included by sql_class.h
+    sql_lex.h --> included by session.h
     item.h
     table.h
     item_func.h
@@ -1110,6 +1110,28 @@ enum index_hint_type
   INDEX_HINT_FORCE
 };
 
+
+enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
+enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
+                            DELAY_KEY_WRITE_ALL };
+enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
+                            SLAVE_EXEC_MODE_IDEMPOTENT,
+                            SLAVE_EXEC_MODE_LAST_BIT};
+enum enum_mark_columns
+{ MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
+
+enum enum_filetype { FILETYPE_CSV, FILETYPE_XML };
+
+enum find_item_error_report_type {REPORT_ALL_ERRORS, REPORT_EXCEPT_NOT_FOUND,
+                                  IGNORE_ERRORS, REPORT_EXCEPT_NON_UNIQUE,
+                                  IGNORE_EXCEPT_NON_UNIQUE};
+
+enum enum_schema_table_state
+{
+  NOT_PROCESSED= 0,
+  PROCESSED_BY_CREATE_SORT_INDEX,
+  PROCESSED_BY_JOIN_EXEC
+};
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 

@@ -25,6 +25,9 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/functions/bit.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

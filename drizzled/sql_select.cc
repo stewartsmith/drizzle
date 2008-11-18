@@ -38,6 +38,7 @@
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
 
 #include CMATH_H
 
@@ -406,13 +407,13 @@ fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
   Function to setup clauses without sum functions.
 */
 inline int setup_without_group(Session *session, Item **ref_pointer_array,
-			       TableList *tables,
-			       TableList *leaves,
-			       List<Item> &fields,
-			       List<Item> &all_fields,
-			       COND **conds,
-			       order_st *order,
-			       order_st *group, bool *hidden_group_fields)
+                               TableList *tables,
+                               TableList *leaves,
+                               List<Item> &fields,
+                               List<Item> &all_fields,
+                               COND **conds,
+                               order_st *order,
+                               order_st *group, bool *hidden_group_fields)
 {
   int res;
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;

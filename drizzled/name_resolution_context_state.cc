@@ -21,6 +21,7 @@
 #include <drizzled/name_resolution_context.h>
 
 #include <drizzled/name_resolution_context_state.h>
+#include <drizzled/table_list.h>
 
 void
 Name_resolution_context_state::save_state(Name_resolution_context *context,

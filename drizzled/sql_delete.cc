@@ -23,6 +23,7 @@
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
 
 /**
   Implement DELETE SQL word.

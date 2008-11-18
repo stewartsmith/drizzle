@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_YEARWEEK_H
 #define DRIZZLED_FUNCTIONS_TIME_YEARWEEK_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_yearweek :public Item_int_func
 {
 public:

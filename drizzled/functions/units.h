@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_UNITS_H
 #define DRIZZLED_FUNCTIONS_UNITS_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/real.h>
 
 class Item_func_units :public Item_real_func
 {

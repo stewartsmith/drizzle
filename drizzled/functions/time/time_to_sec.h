@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_TIME_TO_SEC_H
 #define DRIZZLED_FUNCTIONS_TIME_TIME_TO_SEC_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_time_to_sec :public Item_int_func
 {
 public:

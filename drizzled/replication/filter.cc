@@ -15,11 +15,12 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/filter.h>
+#include <drizzled/table_list.h>
 
 #define TABLE_RULE_HASH_SIZE   16
 #define TABLE_RULE_ARR_SIZE   16
 
-Rpl_filter::Rpl_filter() : 
+Rpl_filter::Rpl_filter() :
   table_rules_on(0), do_table_inited(0), ignore_table_inited(0),
   wild_do_table_inited(0), wild_ignore_table_inited(0)
 {
@@ -80,21 +81,21 @@ Rpl_filter::~Rpl_filter()
 
   RETURN VALUES
     0           should not be logged/replicated
-    1           should be logged/replicated                  
+    1           should be logged/replicated
 */
 
-bool 
+bool
 Rpl_filter::tables_ok(const char* db, TableList* tables)
 {
   bool some_tables_updating= 0;
-  
+
   for (; tables; tables= tables->next_global)
   {
     char hash_key[2*NAME_LEN+2];
     char *end;
     uint32_t len;
 
-    if (!tables->updating) 
+    if (!tables->updating)
       continue;
     some_tables_updating= 1;
     end= my_stpcpy(hash_key, tables->db ? tables->db : db);

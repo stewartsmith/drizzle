@@ -17,6 +17,11 @@
 
 /* class for the the heap handler */
 
+#ifndef STORAGE_HEAP_HA_HEAP_H
+#define STORAGE_HEAP_HA_HEAP_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
 #include <heap.h>
 
 class ha_heap: public handler
@@ -36,11 +41,7 @@ public:
   {
     return "MEMORY";
   }
-  const char *index_type(uint32_t inx)
-  {
-    return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
-            "BTREE" : "HASH");
-  }
+  const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -50,13 +51,7 @@ public:
             HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS |
             HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT);
   }
-  uint32_t index_flags(uint32_t inx, uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
-  {
-    return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
-            HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
-            HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
-  }
+  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
@@ -77,10 +72,13 @@ public:
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
+  int index_read_map(unsigned char * buf, const unsigned char * key,
+                     key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
-  int index_read_last_map(unsigned char *buf, const unsigned char *key, key_part_map keypart_map);
-  int index_read_idx_map(unsigned char * buf, uint32_t index, const unsigned char * key,
+  int index_read_last_map(unsigned char *buf, const unsigned char *key,
+                          key_part_map keypart_map);
+  int index_read_idx_map(unsigned char * buf, uint32_t index,
+                         const unsigned char * key,
                          key_part_map keypart_map,
                          enum ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
@@ -107,7 +105,7 @@ public:
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-			     enum thr_lock_type lock_type);
+                             enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
   {
     return memcmp(ref1, ref2, sizeof(HEAP_PTR));
@@ -116,3 +114,5 @@ public:
 private:
   void update_key_stats();
 };
+
+#endif /* STORAGE_HEAP_HA_HEAP_H */

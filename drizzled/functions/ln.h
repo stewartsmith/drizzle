@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_LN_H
 #define DRIZZLED_FUNCTIONS_LN_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_ln :public Item_dec_func
 {

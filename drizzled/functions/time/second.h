@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_SECOND_H
 #define DRIZZLED_FUNCTIONS_TIME_SECOND_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_second :public Item_int_func
 {
 public:

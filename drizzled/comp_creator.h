@@ -36,4 +36,13 @@ public:
 
 typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 
+Comp_creator *comp_eq_creator(bool invert);
+Comp_creator *comp_ge_creator(bool invert);
+Comp_creator *comp_gt_creator(bool invert);
+Comp_creator *comp_le_creator(bool invert);
+Comp_creator *comp_lt_creator(bool invert);
+Comp_creator *comp_ne_creator(bool invert);
+
+
+
 #endif /* DRIZZLED_COMP_CREATOR_H */

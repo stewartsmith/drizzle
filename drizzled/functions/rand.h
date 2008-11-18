@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_RAND_H
 #define DRIZZLED_FUNCTIONS_RAND_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/real.h>
 
 class Item_func_rand :public Item_real_func
 {

@@ -21,6 +21,9 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
 
 uint32_t
 blob_pack_length_to_max_length(uint32_t arg)
@@ -447,7 +450,7 @@ int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
 
 uint32_t Field_blob::sort_length() const
 {
-  return (uint32_t) (current_session->variables.max_sort_length + 
+  return (uint32_t) (current_session->variables.max_sort_length +
                    (field_charset == &my_charset_bin ? 0 : packlength));
 }
 

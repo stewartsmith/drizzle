@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_WEEKDAY_H
 #define DRIZZLED_FUNCTIONS_TIME_WEEKDAY_H
 
+#include <drizzled/functions/func.h>
+
 class Item_func_weekday :public Item_func
 {
   bool odbc_type;

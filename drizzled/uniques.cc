@@ -32,6 +32,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_sort.h>
+#include <drizzled/session.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)

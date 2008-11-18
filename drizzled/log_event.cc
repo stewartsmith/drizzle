@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/log_event.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/filter.h>
@@ -27,6 +28,8 @@
 #include <drizzled/error.h>
 #include <libdrizzle/pack.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
 
 #include <algorithm>
 
@@ -633,6 +636,12 @@ void Log_event::pack_info(Protocol *protocol)
 }
 
 
+const char* Log_event::get_db()
+{
+  return session ? session->db : 0;
+}
+
+
 /**
   init_show_field_list() prepares the column names and types for the
   output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
@@ -643,13 +652,13 @@ void Log_event::init_show_field_list(List<Item>* field_list)
 {
   field_list->push_back(new Item_empty_string("Log_name", 20));
   field_list->push_back(new Item_return_int("Pos", MY_INT32_NUM_DECIMAL_DIGITS,
-					    DRIZZLE_TYPE_LONGLONG));
+                                            DRIZZLE_TYPE_LONGLONG));
   field_list->push_back(new Item_empty_string("Event_type", 20));
   field_list->push_back(new Item_return_int("Server_id", 10,
-					    DRIZZLE_TYPE_LONG));
+                                            DRIZZLE_TYPE_LONG));
   field_list->push_back(new Item_return_int("End_log_pos",
                                             MY_INT32_NUM_DECIMAL_DIGITS,
-					    DRIZZLE_TYPE_LONGLONG));
+                                            DRIZZLE_TYPE_LONGLONG));
   field_list->push_back(new Item_empty_string("Info", 20));
 }
 
@@ -730,13 +739,26 @@ bool Log_event::write_header(IO_CACHE* file, ulong event_data_length)
 }
 
 
+time_t Log_event::get_time()
+{
+  Session *tmp_session;
+  if (when)
+    return when;
+  if (session)
+    return session->start_time;
+  if ((tmp_session= current_session))
+    return tmp_session->start_time;
+  return my_time(0);
+}
+
+
 /**
   This needn't be format-tolerant, because we only read
   LOG_EVENT_MINIMAL_HEADER_LEN (we just want to read the event's length).
 */
 
 int Log_event::read_log_event(IO_CACHE* file, String* packet,
-			      pthread_mutex_t* log_lock)
+                              pthread_mutex_t* log_lock)
 {
   ulong data_len;
   int result=0;

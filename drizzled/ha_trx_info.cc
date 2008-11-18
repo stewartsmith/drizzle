@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/ha_trx_info.h>
 #include <drizzled/handlerton.h>
-#include <drizzled/sql_class.h>
+#include <drizzled/session.h>
 
 
 void Ha_trx_info::register_ha(Session_TRANS *trans, handlerton *ht_arg)

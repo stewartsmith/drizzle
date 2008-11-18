@@ -1,5 +1,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/natural_join_column.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
 
 Natural_join_column::Natural_join_column(Field_translator *, TableList *tab)
 {

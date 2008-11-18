@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/insert.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 String *Item_func_insert::val_str(String *str)
 {

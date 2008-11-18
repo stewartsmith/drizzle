@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TAN_H
 #define DRIZZLED_FUNCTIONS_TAN_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_tan :public Item_dec_func
 {

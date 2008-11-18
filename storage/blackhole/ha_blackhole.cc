@@ -14,6 +14,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/common_includes.h>
+#include <drizzled/table.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */
@@ -51,6 +52,14 @@ static const char *ha_blackhole_exts[] = {
 const char **ha_blackhole::bas_ext() const
 {
   return ha_blackhole_exts;
+}
+
+
+uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
+          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
+          HA_READ_ORDER | HA_KEYREAD_ONLY);
 }
 
 int ha_blackhole::open(const char *name, int mode __attribute__((unused)),

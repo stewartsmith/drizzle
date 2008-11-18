@@ -76,7 +76,4 @@ inline Session *_current_session(void)
 #define current_session _current_session()
 
 
-#include <drizzled/sql_class.h>
-
-
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */
