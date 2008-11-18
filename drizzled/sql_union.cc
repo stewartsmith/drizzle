@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/item/type_holder.h>
+#include <drizzled/sql_base.h>
 
 bool mysql_union(Session *session, LEX *, select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)

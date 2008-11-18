@@ -21,6 +21,8 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/pad.h>
 #include <drizzled/error.h>
+#include <drizzled/functions/str/alloc_buffer.h>
+#include <drizzled/session.h>
 
 void Item_func_rpad::fix_length_and_dec()
 {

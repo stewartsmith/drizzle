@@ -43,6 +43,10 @@ struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
 class ST_SCHEMA_TABLE;
+class NAMED_LIST;
+
+typedef struct system_status_var STATUS_VAR;
+
 
 enum find_files_result {
   FIND_FILES_OK,

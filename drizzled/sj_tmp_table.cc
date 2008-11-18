@@ -17,7 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "sj_tmp_table.h"
+#include <config.h>
+#include <drizzled/sj_tmp_table.h>
+#include <drizzled/session.h>
 
 /*
   Create a temporary table to weed out duplicate rowid combinations

@@ -81,11 +81,12 @@ So, we can read full search-structure as 32-bit word
 */
 
 #define NO_YACC_SYMBOLS
-#include "global.h"
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
-#include "lex.h"
+
+#include <drizzled/lex.h>
 
 using namespace std;
 

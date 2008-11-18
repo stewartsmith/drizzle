@@ -22,9 +22,12 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "sql_sort.h"
+#include <drizzled/sql_sort.h>
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/table_list.h>
 
 /* functions defined in this file */
 

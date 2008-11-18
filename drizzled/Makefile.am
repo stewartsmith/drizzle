@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions functions/str functions/time .
+SUBDIRS = util field item serialize functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -71,6 +71,7 @@ LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
+		 $(top_builddir)/drizzled/item/libitem.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
@@ -88,10 +89,14 @@ drizzled_DEPENDENCIES = @mysql_plugin_libs@
 drizzled_LDFLAGS =
 
 noinst_HEADERS = \
+		alter_column.h \
+		alter_drop.h \
 		authentication.h \
 		base.h \
+		cached_item.h \
 		client_settings.h \
 		common_includes.h \
+		comp_creator.h \
 		configvar.h \
 		connect.h \
 		cost_vect.h \
@@ -104,6 +109,7 @@ noinst_HEADERS = \
 		field.h \
 		field_iterator.h \
 		filesort_info.h \
+		foreign_key.h \
 		gettext.h \
 		global.h \
 		ha_trx_info.h \
@@ -114,22 +120,18 @@ noinst_HEADERS = \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
-		item_cmpfunc.h \
-		item_create.h \
-		item_func.h \
 	       	item.h \
-		item_row.h \
-		item_strfunc.h \
-		item_subselect.h \
-		item_sum.h \
-		item_timefunc.h \
+		key.h \
                 key_map.h \
+		key_part_spec.h \
 		lex.h \
 		lex_symbol.h \
 		log_event.h \
 		logging.h \
 		log.h \
 		my_decimal.h\
+		name_resolution_context.h \
+		name_resolution_context_state.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -151,6 +153,7 @@ noinst_HEADERS = \
 		scheduler.h \
 		scheduling.h \
 		server_includes.h \
+		session.h \
 		set_var.h \
 		show.h \
 		sj_tmp_table.h \
@@ -159,10 +162,10 @@ noinst_HEADERS = \
 		sql_array.h \
 		sql_base.h \
 		sql_bitmap.h \
-		sql_class.h \
 		sql_error.h \
 		sql_lex.h \
 		sql_list.h \
+		sql_load.h \
 		sql_locale.h \
 		sql_parse.h \
 		sql_plugin.h \
@@ -180,10 +183,13 @@ noinst_HEADERS = \
 		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
-		tztime.h
+		tztime.h \
+		virtual_column_info.h
 
 drizzled_SOURCES = \
 		authentication.cc \
+		cached_item.cc \
+		comp_creator.cc \
 		configvar.cc \
 		db.cc \
 		discover.cc \
@@ -195,20 +201,12 @@ drizzled_SOURCES = \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
 		init.cc \
-		item_buff.cc \
 		item.cc \
-		item_cmpfunc.cc \
-		item_create.cc \
-		item_func.cc \
-		item_row.cc \
-		item_strfunc.cc \
-		item_subselect.cc \
-		item_sum.cc \
-		item_timefunc.cc \
 		key.cc \
                 key_map.cc \
 		lock.cc \
@@ -217,6 +215,7 @@ drizzled_SOURCES = \
 		logging.cc \
 		mf_iocache.cc \
 		my_decimal.cc\
+		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
@@ -237,13 +236,13 @@ drizzled_SOURCES = \
 		replication/utility.cc \
 		scheduler.cc \
                 scheduling.cc \
+		session.cc \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
 		slave.cc \
 		sql_base.cc \
 		sql_builtin.cc \
-		sql_class.cc \
 		sql_client.cc \
 		sql_connect.cc \
 		sql_delete.cc \
@@ -276,6 +275,7 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		unireg.cc \
+		virtual_column_info.cc \
 		xid.cc
 
 libhandler_la_SOURCES = handler.cc handlerton.cc

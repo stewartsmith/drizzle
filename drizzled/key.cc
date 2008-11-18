@@ -17,6 +17,7 @@
 /* Functions to handle keys and fields in forms */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/table.h>
 
 /*
   Search after a key that starts with 'field'

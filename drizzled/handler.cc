@@ -32,11 +32,15 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/cost_vect.h>
 #include CMATH_H
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
 
+
+extern HASH open_cache;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -4287,7 +4291,7 @@ static bool check_table_binlog_row_based(Session *session, Table *table)
 
   return (table->s->cached_row_logging_check &&
           (session->options & OPTION_BIN_LOG) &&
-          mysql_bin_log.is_open());
+          drizzle_bin_log.is_open());
 }
 
 

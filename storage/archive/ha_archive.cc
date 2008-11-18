@@ -15,9 +15,12 @@
 
 
 #include <drizzled/common_includes.h>
+#include <drizzled/field.h>
 #include <storage/myisam/myisam.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
-#include "ha_archive.h"
+#include <storage/archive/ha_archive.h>
 
 /*
   First, if you want to understand storage engines you should look at 

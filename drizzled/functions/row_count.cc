@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/row_count.h>
+#include <drizzled/session.h>
 
 int64_t Item_func_row_count::val_int()
 {

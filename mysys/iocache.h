@@ -21,6 +21,8 @@
 #ifndef mysys_iocache_h
 #define mysys_iocache_h
 
+#include <mysys/my_sys.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

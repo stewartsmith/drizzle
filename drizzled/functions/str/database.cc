@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/str/database.h>
+#include <drizzled/session.h>
 
 String *Item_func_database::val_str(String *str)
 {

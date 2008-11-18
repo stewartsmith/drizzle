@@ -24,11 +24,22 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/functions/bit.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif
+
+static Eq_creator eq_creator;
+static Ne_creator ne_creator;
+static Gt_creator gt_creator;
+static Lt_creator lt_creator;
+static Ge_creator ge_creator;
+static Le_creator le_creator;
 
 static bool convert_constant_item(Session *, Item_field *, Item **);
 
@@ -226,9 +237,21 @@ Item_bool_func2* Eq_creator::create(Item *a, Item *b) const
 }
 
 
+const Eq_creator* Eq_creator::instance()
+{
+  return &eq_creator;
+}
+
+
 Item_bool_func2* Ne_creator::create(Item *a, Item *b) const
 {
   return new Item_func_ne(a, b);
+}
+
+
+const Ne_creator* Ne_creator::instance()
+{
+  return &ne_creator;
 }
 
 
@@ -238,9 +261,21 @@ Item_bool_func2* Gt_creator::create(Item *a, Item *b) const
 }
 
 
+const Gt_creator* Gt_creator::instance()
+{
+  return &gt_creator;
+}
+
+
 Item_bool_func2* Lt_creator::create(Item *a, Item *b) const
 {
   return new Item_func_lt(a, b);
+}
+
+
+const Lt_creator* Lt_creator::instance()
+{
+  return &lt_creator;
 }
 
 
@@ -250,10 +285,22 @@ Item_bool_func2* Ge_creator::create(Item *a, Item *b) const
 }
 
 
+const Ge_creator* Ge_creator::instance()
+{
+  return &ge_creator;
+}
+
+
 Item_bool_func2* Le_creator::create(Item *a, Item *b) const
 {
   return new Item_func_le(a, b);
 }
+
+const Le_creator* Le_creator::instance()
+{
+  return &le_creator;
+}
+
 
 /*
   Test functions
@@ -4121,7 +4168,7 @@ void Item_cond::split_sum_func(Session *session, Item **ref_pointer_array,
   List_iterator<Item> li(list);
   Item *item;
   while ((item= li++))
-    item->split_sum_func2(session, ref_pointer_array, fields, li.ref(), true);
+    item->split_sum_func(session, ref_pointer_array, fields, li.ref(), true);
 }
 
 

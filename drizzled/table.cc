@@ -16,8 +16,6 @@
 
 /* Some general useful functions */
 
-#include <config.h>
-
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -27,6 +25,11 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 #include <string>
 
@@ -42,8 +45,9 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno,
 static int open_binary_frm(Session *session, TABLE_SHARE *share,
                            unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
-			      uint32_t types, char **names);
-static uint32_t find_field(Field **fields, unsigned char *record, uint32_t start, uint32_t length);
+                              uint32_t types, char **names);
+static uint32_t find_field(Field **fields, unsigned char *record,
+                           uint32_t start, uint32_t length);
 
 /*************************************************************************/
 
@@ -2870,6 +2874,12 @@ void TableList::cleanup_items()
 }
 
 
+bool TableList::placeholder()
+{
+  return derived || schema_table || (create && !table->getDBStat()) || !table;
+}
+
+
 /*
   Set insert_values buffer
 
@@ -3192,7 +3202,7 @@ void Table::mark_columns_needed_for_delete()
     }
     file->column_bitmaps_signal();
   }
-  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE || (mysql_bin_log.is_open() && in_use))
+  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE || (drizzle_bin_log.is_open() && in_use))
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3244,7 +3254,7 @@ void Table::mark_columns_needed_for_update()
     file->column_bitmaps_signal();
   }
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) ||
-      (mysql_bin_log.is_open() && in_use))
+      (drizzle_bin_log.is_open() && in_use))
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -4960,6 +4970,27 @@ int update_virtual_fields_marked_for_write(Table *table,
     }
   }
   return(0);
+}
+
+
+void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr)
+{
+  table->used_fields= 0;
+  table->const_table= 0;
+  table->null_row= 0;
+  table->status= STATUS_NO_RECORD;
+  table->maybe_null= table_list->outer_join;
+  TableList *embedding= table_list->embedding;
+  while (!table->maybe_null && embedding)
+  {
+    table->maybe_null= embedding->outer_join;
+    embedding= embedding->embedding;
+  }
+  table->tablenr= tablenr;
+  table->map= (table_map) 1 << tablenr;
+  table->force_index= table_list->force_index;
+  table->covering_keys= table->s->keys_for_keyread;
+  table->merge_keys.clear_all();
 }
 
 

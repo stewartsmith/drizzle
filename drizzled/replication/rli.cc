@@ -22,6 +22,8 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/gettext.h>
+#include <drizzled/log_event.h>
+#include <drizzled/sql_base.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -41,7 +43,7 @@ static int32_t count_relay_log_space(Relay_log_info* rli);
 // Defined in slave.cc
 int32_t init_intvar_from_file(int32_t* var, IO_CACHE* f, int32_t default_val);
 int32_t init_strvar_from_file(char *var, int32_t max_size, IO_CACHE *f,
-			  const char *default_val);
+                              const char *default_val);
 
 
 Relay_log_info::Relay_log_info()
@@ -126,7 +128,7 @@ int32_t init_relay_log_info(Relay_log_info* rli,
     fix_max_relay_log_size will reconsider the choice (for example
     if the user changes max_relay_log_size to zero, we have to
     switch to using max_binlog_size for the relay log) and update
-    rli->relay_log.max_size (and mysql_bin_log.max_size).
+    rli->relay_log.max_size (and drizzle_bin_log.max_size).
   */
   {
     char buf[FN_REFLEN];
@@ -974,6 +976,13 @@ void Relay_log_info::cleanup_context(Session *session, bool error)
   last_event_start_time= 0;
   return;
 }
+
+
+bool Relay_log_info::is_in_group() const {
+  return (sql_session->options & OPTION_BEGIN) ||
+      (m_flags & (1UL << IN_STMT));
+}
+
 
 void Relay_log_info::clear_tables_to_lock()
 {

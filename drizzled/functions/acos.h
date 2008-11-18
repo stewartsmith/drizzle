@@ -20,10 +20,11 @@
 #ifndef DRIZZLED_FUNCTIONS_ACOS_H
 #define DRIZZLED_FUNCTIONS_ACOS_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_acos :public Item_dec_func
-{ 
+{
 public:
   Item_func_acos(Item *a) :Item_dec_func(a) {}
   double val_real();

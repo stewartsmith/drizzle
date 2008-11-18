@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_ROUND_H
 #define DRIZZLED_FUNCTIONS_ROUND_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/num1.h>
 
 class Item_func_round :public Item_func_num1
 {

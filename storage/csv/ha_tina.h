@@ -13,6 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef STORAGE_CSV_HA_TINA_H
+#define STORAGE_CSV_HA_TINA_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "transparent_file.h"
@@ -167,3 +173,4 @@ public:
   int chain_append();
 };
 
+#endif /* STORAGE_CSV_HA_TINA_H */

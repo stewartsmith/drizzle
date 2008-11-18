@@ -6,25 +6,15 @@ InnoDB INFORMATION SCHEMA tables interface to MySQL.
 Created July 18, 2007 Vasil Dimov
 *******************************************************/
 
-#if defined(BUILD_DRIZZLE)
-# include <drizzled/common_includes.h>
-# include <drizzled/error.h>
-# include <mystrings/m_ctype.h>
-# include <mysys/my_sys.h>
-# include <mysys/hash.h>
-# include <mysys/mysys_err.h>
-# include <drizzled/plugin.h>
-#else
-# include <mysql_priv.h>
-# include <mysqld_error.h>
-
-# include <m_ctype.h>
-# include <hash.h>
-# include <myisampack.h>
-# include <mysys_err.h>
-# include <my_sys.h>
-# include <mysql/plugin.h>
-#endif
+#include <drizzled/common_includes.h>
+#include <drizzled/error.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/my_sys.h>
+#include <mysys/hash.h>
+#include <mysys/mysys_err.h>
+#include <drizzled/plugin.h>
+#include <drizzled/field.h>
+#include <drizzled/table.h>
 
 #include "i_s.h"
 

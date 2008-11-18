@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_ITEM_SET_H
 #define DRIZZLED_ITEM_SET_H
 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/set_user_var.h>
+
 /* Classes to support the SET command */
 
 
@@ -31,6 +34,7 @@
 class sys_var;
 class set_var;
 class sys_var_pluginvar; /* opaque */
+class Time_zone;
 typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 

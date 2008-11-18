@@ -20,11 +20,13 @@
 #ifndef DRIZZLED_FUNCTIONS_GET_VARIABLE_H
 #define DRIZZLED_FUNCTIONS_GET_VARIABLE_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+
+typedef struct st_hash HASH;
 
 class user_var_entry;
-user_var_entry *get_variable(HASH *hash, 
-			     LEX_STRING &name,
+user_var_entry *get_variable(HASH *hash,
+                             LEX_STRING &name,
                              bool create_if_not_exists);
 
 #endif /* DRIZZLED_FUNCTIONS_GET_VARIABLE_H */

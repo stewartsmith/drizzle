@@ -390,10 +390,7 @@ public:
      @retval true Replication thread is currently inside a group
      @retval false Replication thread is currently not inside a group
    */
-  bool is_in_group() const {
-    return (sql_session->options & OPTION_BEGIN) ||
-      (m_flags & (1UL << IN_STMT));
-  }
+  bool is_in_group() const;
 
 private:
   uint32_t m_flags;

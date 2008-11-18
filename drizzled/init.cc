@@ -22,6 +22,8 @@
 */
 
 #include <drizzled/server_includes.h>
+extern char reg_ext[FN_EXTLEN];
+extern uint32_t reg_ext_length;
 
 void unireg_init(ulong options __attribute__((unused)))
 {

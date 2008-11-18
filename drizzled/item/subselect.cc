@@ -26,6 +26,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {
@@ -943,7 +946,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
 
 Item_subselect::trans_res
 Item_in_subselect::single_value_transformer(JOIN *join,
-					    Comp_creator *func)
+					    const Comp_creator *func)
 {
   SELECT_LEX *select_lex= join->select_lex;
 
@@ -1124,7 +1127,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 */
 
 Item_subselect::trans_res
-Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creator *func)
+Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp_creator *func)
 {
   SELECT_LEX *select_lex= join->select_lex;
 
@@ -1577,7 +1580,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
 Item_subselect::trans_res
 Item_in_subselect::select_transformer(JOIN *join)
 {
-  return select_in_like_transformer(join, &eq_creator);
+  return select_in_like_transformer(join, Eq_creator::instance());
 }
 
 
@@ -1603,7 +1606,7 @@ Item_in_subselect::select_transformer(JOIN *join)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::select_in_like_transformer(JOIN *join, Comp_creator *func)
+Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *func)
 {
   SELECT_LEX *current= session->lex->current_select, *up;
   const char *save_where= session->where;
@@ -1669,7 +1672,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, Comp_creator *func)
   else
   {
     /* we do not support row operation for ALL/ANY/SOME */
-    if (func != &eq_creator)
+    if (func != Eq_creator::instance())
     {
       my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
       return(RES_ERROR);
@@ -1757,7 +1760,7 @@ bool Item_in_subselect::setup_engine()
       exec_method= NOT_TRANSFORMED;
       if (left_expr->cols() == 1)
         trans_res= single_value_in_to_exists_transformer(old_engine->join,
-                                                         &eq_creator);
+                                                         Eq_creator::instance());
       else
         trans_res= row_value_in_to_exists_transformer(old_engine->join);
       res= (trans_res != Item_subselect::RES_OK);

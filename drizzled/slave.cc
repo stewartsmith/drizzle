@@ -37,6 +37,8 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/gettext.h>
 #include <signal.h>
+#include <drizzled/session.h>
+#include <drizzled/log_event.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

@@ -20,6 +20,12 @@
 #ifndef DRIZZLED_SQL_SELECT_H
 #define DRIZZLED_SQL_SELECT_H
 
+#include <drizzled/item.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/session.h>
+
+class select_result;
+
 /**
   @file
 

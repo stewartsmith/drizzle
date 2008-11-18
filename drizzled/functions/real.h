@@ -21,6 +21,7 @@
 #define DRIZZLED_FUNCTIONS_REAL_H
 
 #include <drizzled/item.h>
+#include <drizzled/functions/func.h>
 
 class Item_real_func :public Item_func
 {

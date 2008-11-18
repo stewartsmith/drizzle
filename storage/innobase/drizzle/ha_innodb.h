@@ -20,6 +20,12 @@
   Innodb
 */
 
+#ifndef INNODB_HANDLER_HA_INNODB_H
+#define INNODB_HANDLER_HA_INNODB_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
+
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -236,12 +242,12 @@ char **session_query(Session *session);
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
  */
-const char* mysql_bin_log_file_name(void);
+const char* drizzle_bin_log_file_name(void);
 
 /** Get the current position of the MySQL binlog.
  * @return byte offset from the beginning of the binlog
  */
-uint64_t mysql_bin_log_file_pos(void);
+uint64_t drizzle_bin_log_file_pos(void);
 
 /**
   Check if a user thread is a replication slave thread
@@ -287,3 +293,5 @@ convert_error_code_to_mysql(
 	int		error,	/* in: InnoDB error code */
 	ulint		flags,	/* in: InnoDB table flags, or 0 */
 	Session	        *session);	/* in: user thread handle or NULL */
+
+#endif /* INNODB_HANDLER_HA_INNODB_H */

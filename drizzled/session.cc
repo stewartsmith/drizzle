@@ -20,11 +20,12 @@
 
 /*****************************************************************************
 **
-** This file implements classes defined in sql_class.h
+** This file implements classes defined in session.h
 ** Especially the classes to handle a result from a select
 **
 *****************************************************************************/
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/record.h>
 #include <drizzled/log_event.h>
@@ -34,6 +35,7 @@
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_base.h>
 
 extern scheduler_functions thread_scheduler;
 /*
@@ -688,7 +690,7 @@ void Session::init(void)
 /*
   Init Session for query processing.
   This has to be called once before we call mysql_parse.
-  See also comments in sql_class.h.
+  See also comments in session.h.
 */
 
 void Session::init_for_queries()
@@ -2128,6 +2130,16 @@ void TMP_TABLE_PARAM::init()
   return;
 }
 
+void TMP_TABLE_PARAM::cleanup(void)
+{
+  /* Fix for Intel compiler */
+  if (copy_field)
+  {
+    delete [] copy_field;
+    save_copy_field= copy_field= 0;
+  }
+}
+
 
 void session_increment_bytes_sent(ulong length)
 {
@@ -2473,7 +2485,7 @@ Session::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
       flush the pending event and replace it with the newly created
       event...
     */
-    if (unlikely(mysql_bin_log.flush_and_set_pending_rows_event(this, ev)))
+    if (unlikely(drizzle_bin_log.flush_and_set_pending_rows_event(this, ev)))
     {
       delete ev;
       return(NULL);
@@ -2619,7 +2631,7 @@ namespace {
 int Session::binlog_write_row(Table* table, bool is_trans, 
                           unsigned char const *record) 
 { 
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
 
   /*
     Pack records into format for transfer. We are allocating more
@@ -2647,7 +2659,7 @@ int Session::binlog_update_row(Table* table, bool is_trans,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 { 
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
 
   size_t const before_maxlen = table->max_row_length(before_record);
   size_t const after_maxlen  = table->max_row_length(after_record);
@@ -2680,7 +2692,7 @@ int Session::binlog_update_row(Table* table, bool is_trans,
 int Session::binlog_delete_row(Table* table, bool is_trans, 
                            unsigned char const *record)
 { 
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
 
   /* 
      Pack records into format for transfer. We are allocating more
@@ -2712,7 +2724,7 @@ int Session::binlog_flush_pending_rows_event(bool stmt_end)
     mode: it might be the case that we left row-based mode before
     flushing anything (e.g., if we have explicitly locked tables).
    */
-  if (!mysql_bin_log.is_open())
+  if (!drizzle_bin_log.is_open())
     return(0);
 
   /*
@@ -2729,7 +2741,7 @@ int Session::binlog_flush_pending_rows_event(bool stmt_end)
       binlog_table_maps= 0;
     }
 
-    error= mysql_bin_log.flush_and_set_pending_rows_event(this, 0);
+    error= drizzle_bin_log.flush_and_set_pending_rows_event(this, 0);
   }
 
   return(error);
@@ -2763,7 +2775,7 @@ int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *que
                       ulong query_len, bool is_trans, bool suppress_use,
                       Session::killed_state killed_status_arg)
 {
-  assert(query_arg && mysql_bin_log.is_open());
+  assert(query_arg && drizzle_bin_log.is_open());
 
   if (int error= binlog_flush_pending_rows_event(true))
     return(error);
@@ -2816,7 +2828,7 @@ int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *que
         log event is written to the binary log, we pretend that no
         table maps were written.
        */
-      int error= mysql_bin_log.write(&qinfo);
+      int error= drizzle_bin_log.write(&qinfo);
       binlog_table_maps= 0;
       return(error);
     }

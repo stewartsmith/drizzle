@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/concat.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 String *Item_func_concat::val_str(String *str)
 {

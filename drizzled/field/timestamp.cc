@@ -23,6 +23,8 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -441,5 +443,41 @@ void Field_timestamp::set_time()
   long tmp= (long) session->query_start();
   set_notnull();
   store_timestamp(tmp);
+}
+
+
+void Field_timestamp::set_default()
+{
+  if (table->timestamp_field == this &&
+      unireg_check != TIMESTAMP_UN_FIELD)
+    set_time();
+  else
+    Field::set_default();
+}
+
+long Field_timestamp::get_timestamp(bool *null_value)
+{
+  if ((*null_value= is_null()))
+    return 0;
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+    return sint4korr(ptr);
+#endif
+  long tmp;
+  longget(tmp,ptr);
+  return tmp;
+}
+
+
+void Field_timestamp::store_timestamp(my_time_t timestamp)
+{
+#ifdef WORDS_BIGENDIAN
+  if (table && table->s->db_low_byte_first)
+  {
+    int4store(ptr,timestamp);
+  }
+  else
+#endif
+    longstore(ptr,(uint32_t) timestamp);
 }
 

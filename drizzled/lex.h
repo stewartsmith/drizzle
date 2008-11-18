@@ -20,7 +20,7 @@
 
 /* This file includes all reserved words and functions */
 
-#include "lex_symbol.h"
+#include <drizzled/lex_symbol.h>
 
 SYM_GROUP sym_group_common= {"", ""};
 

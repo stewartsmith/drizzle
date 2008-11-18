@@ -1575,6 +1575,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
+ drizzled/item/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/functions/Makefile dnl
  drizzled/functions/str/Makefile dnl

@@ -21,6 +21,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 /****************************************************************************
   VARCHAR type
@@ -39,6 +41,34 @@
 ****************************************************************************/
 
 const uint32_t Field_varstring::MAX_SIZE= UINT16_MAX;
+
+Field_varstring::Field_varstring(unsigned char *ptr_arg,
+                                 uint32_t len_arg, uint32_t length_bytes_arg,
+                                 unsigned char *null_ptr_arg,
+                                 unsigned char null_bit_arg,
+                                 enum utype unireg_check_arg,
+                                 const char *field_name_arg,
+                                 TABLE_SHARE *share,
+                                 const CHARSET_INFO * const cs)
+  :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
+                 unireg_check_arg, field_name_arg, cs),
+   length_bytes(length_bytes_arg)
+{
+  share->varchar_fields++;
+}
+
+Field_varstring::Field_varstring(uint32_t len_arg,bool maybe_null_arg,
+                                 const char *field_name_arg,
+                                 TABLE_SHARE *share,
+                                 const CHARSET_INFO * const cs)
+  :Field_longstr((unsigned char*) 0,len_arg,
+                 maybe_null_arg ? (unsigned char*) "": 0, 0,
+                 NONE, field_name_arg, cs),
+   length_bytes(len_arg < 256 ? 1 :2)
+{
+  share->varchar_fields++;
+}
+
 
 /**
    Save the field metadata for varstring fields.

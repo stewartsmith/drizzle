@@ -17,6 +17,9 @@
   This files defines some MySQL C API functions that are server specific
 */
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
+
+extern struct system_variables global_system_variables;
 
 /*
   Function called by my_net_init() to set some check variables

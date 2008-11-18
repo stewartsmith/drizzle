@@ -23,12 +23,13 @@
 #ifndef DRIZZLED_STRUCTS_H
 #define DRIZZLED_STRUCTS_H
 
-#include <mysys/iocache.h>
+#include <drizzled/base.h>
 #include <mysys/definitions.h>
 #include <drizzled/lex_string.h>
 
 class Table;
 class Field;
+typedef struct st_io_cache IO_CACHE;
 
 typedef struct st_date_time_format {
   unsigned char positions[8];

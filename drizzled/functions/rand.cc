@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/rand.h>
+#include <libdrizzle/password.h>
+#include <drizzled/session.h>
 
 void Item_func_rand::seed_random(Item *arg)
 {

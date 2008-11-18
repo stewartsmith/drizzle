@@ -615,4 +615,9 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
     it.replace(el->clone(mem_root));
 }
 
+/* sql_list.cc */
+void free_list(I_List <i_string_pair> *list);
+void free_list(I_List <i_string> *list);
+
+
 #endif // DRIZZLED_SQL_LIST_H

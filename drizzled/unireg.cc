@@ -25,6 +25,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/session.h>
 
 /* For proto */
 #include <string>
@@ -35,21 +37,25 @@ using namespace std;
 #define FCOMP			17		/* Bytes for a packed field */
 
 static unsigned char * pack_screens(List<Create_field> &create_fields,
-			    uint32_t *info_length, uint32_t *screens, bool small_file);
-static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count, KEY *key_info,
-                      ulong data_offset);
+                                    uint32_t *info_length, uint32_t *screens,
+                                    bool small_file);
+static uint32_t pack_keys(unsigned char *keybuff,uint32_t key_count,
+                          KEY *key_info, ulong data_offset);
 static bool pack_header(unsigned char *forminfo,
-			List<Create_field> &create_fields,
-			uint32_t info_length, uint32_t screens, uint32_t table_options,
-			ulong data_offset, handler *file);
-static uint32_t get_interval_id(uint32_t *int_count,List<Create_field> &create_fields,
-			    Create_field *last_field);
+                        List<Create_field> &create_fields,
+                        uint32_t info_length, uint32_t screens,
+                        uint32_t table_options,
+                        ulong data_offset, handler *file);
+static uint32_t get_interval_id(uint32_t *int_count,
+                                List<Create_field> &create_fields,
+                                Create_field *last_field);
 static bool pack_fields(File file, List<Create_field> &create_fields,
                         ulong data_offset);
-static bool make_empty_rec(Session *session, int file, enum legacy_db_type table_type,
-			   uint32_t table_options,
-			   List<Create_field> &create_fields,
-			   uint32_t reclength, ulong data_offset,
+static bool make_empty_rec(Session *session, int file,
+                           enum legacy_db_type table_type,
+                           uint32_t table_options,
+                           List<Create_field> &create_fields,
+                           uint32_t reclength, ulong data_offset,
                            handler *handler);
 
 /**

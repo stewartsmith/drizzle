@@ -27,10 +27,13 @@
 #include <drizzled/show.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
 #include <drizzled/tableop_hooks.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
@@ -463,7 +466,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
     {
-      if (mysql_bin_log.is_open())
+      if (drizzle_bin_log.is_open())
       {
 	if (error <= 0)
         {
@@ -1433,7 +1436,7 @@ bool select_insert::send_eof()
     events are in the transaction cache and will be written when
     ha_autocommit_or_rollback() is issued below.
   */
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     if (!error)
       session->clear_error();
@@ -1501,7 +1504,7 @@ void select_insert::abort() {
     transactional_table= table->file->has_transactions();
     if (session->transaction.stmt.modified_non_trans_table)
     {
-        if (mysql_bin_log.is_open())
+        if (drizzle_bin_log.is_open())
           session->binlog_query(Session::ROW_QUERY_TYPE, session->query, session->query_length,
                             transactional_table, false);
     }

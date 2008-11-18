@@ -24,7 +24,18 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 
-#include "sql_udf.h"
+#include <drizzled/sql_udf.h>
+#include <drizzled/name_resolution_context.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/table_list.h>
+#include <drizzled/functions/real.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/key.h>
+#include <drizzled/foreign_key.h>
+
+class select_result_interceptor;
+class virtual_column_info;
 
 /* YACC and LEX Definitions */
 
@@ -40,13 +51,13 @@ class LEX_COLUMN;
 */
 
 #include <drizzled/set_var.h>
-
+#include <drizzled/item/func.h>
 #ifdef DRIZZLE_YACC
 #define LEX_YYSTYPE void *
 #else
 #if defined(DRIZZLE_LEX)
-#include "lex_symbol.h"
-#include "sql_yacc.h"
+#include <drizzled/lex_symbol.h>
+#include <drizzled/sql_yacc.h>
 #define LEX_YYSTYPE YYSTYPE *
 #else
 #define LEX_YYSTYPE void *
@@ -1569,6 +1580,8 @@ extern void lex_end(LEX *lex);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 
 extern bool is_lex_native_function(const LEX_STRING *name);
+
+int lex_casecmp(const char *s, const char *t, uint32_t len);
 
 /**
   @} (End of group Semantic_Analysis)

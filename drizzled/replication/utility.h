@@ -21,6 +21,7 @@
 #define RPL_UTILITY_H
 
 #include <drizzled/server_includes.h>
+#include <drizzled/table_list.h>
 
 class Relay_log_info;
 

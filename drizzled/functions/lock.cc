@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/lock.h>
+#include <mysys/hash.h>
+#include <drizzled/session.h>
 
 /*
 ** User level locks

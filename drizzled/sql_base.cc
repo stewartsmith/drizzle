@@ -16,6 +16,8 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
+#include <drizzled/virtual_column_info.h>
+
 #include <signal.h>
 
 #if TIME_WITH_SYS_TIME
@@ -37,6 +39,7 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
 
 
 /**
@@ -1168,7 +1171,7 @@ void close_temporary_tables(Session *session)
   if (!session->temporary_tables)
     return;
 
-  if (!mysql_bin_log.is_open() || true )
+  if (!drizzle_bin_log.is_open() || true )
   {
     Table *tmp_next;
     for (table= session->temporary_tables; table; table= tmp_next)
@@ -1281,7 +1284,7 @@ void close_temporary_tables(Session *session)
         causing the slave to stop.
       */
       qinfo.error_code= 0;
-      mysql_bin_log.write(&qinfo);
+      drizzle_bin_log.write(&qinfo);
       session->variables.pseudo_thread_id= save_pseudo_thread_id;
     }
     else
@@ -3224,7 +3227,7 @@ retry:
   if (unlikely(entry->file->implicit_emptied))
   {
     entry->file->implicit_emptied= 0;
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       char *query, *end;
       uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
@@ -3637,7 +3640,7 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
 
 int decide_logging_format(Session *session)
 {
-  if (mysql_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
+  if (drizzle_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
     session->set_current_stmt_binlog_row_based();
 
   return 0;

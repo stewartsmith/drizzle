@@ -32,9 +32,13 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
 #include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
 
 #include CMATH_H
 
@@ -403,13 +407,13 @@ fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
   Function to setup clauses without sum functions.
 */
 inline int setup_without_group(Session *session, Item **ref_pointer_array,
-			       TableList *tables,
-			       TableList *leaves,
-			       List<Item> &fields,
-			       List<Item> &all_fields,
-			       COND **conds,
-			       order_st *order,
-			       order_st *group, bool *hidden_group_fields)
+                               TableList *tables,
+                               TableList *leaves,
+                               List<Item> &fields,
+                               List<Item> &all_fields,
+                               COND **conds,
+                               order_st *order,
+                               order_st *group, bool *hidden_group_fields)
 {
   int res;
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
@@ -649,8 +653,8 @@ JOIN::prepare(Item ***rref_pointer_array,
   }
 
   if (having && having->with_sum_func)
-    having->split_sum_func2(session, ref_pointer_array, all_fields,
-                            &having, true);
+    having->split_sum_func(session, ref_pointer_array, all_fields,
+                           &having, true);
   if (select_lex->inner_sum_func_list)
   {
     Item_sum *end=select_lex->inner_sum_func_list;
@@ -658,8 +662,8 @@ JOIN::prepare(Item ***rref_pointer_array,
     do
     { 
       item_sum= item_sum->next;
-      item_sum->split_sum_func2(session, ref_pointer_array,
-                                all_fields, item_sum->ref_by, false);
+      item_sum->split_sum_func(session, ref_pointer_array,
+                               all_fields, item_sum->ref_by, false);
     } while (item_sum != end);
   }
 

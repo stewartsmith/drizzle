@@ -15,7 +15,9 @@
 
 #define DRIZZLE_SERVER 1 /* for session variable max_allowed_packet */
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
 #include <drizzled/error.h>
+#include <drizzled/item/strfunc.h>
 
 #include <zlib.h>
 
@@ -47,8 +49,8 @@ String *Item_func_uncompress::val_str(String *str)
   if (res->length() <= 4)
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-			ER_ZLIB_Z_DATA_ERROR,
-			ER(ER_ZLIB_Z_DATA_ERROR));
+                        ER_ZLIB_Z_DATA_ERROR,
+                        ER(ER_ZLIB_Z_DATA_ERROR));
     goto err;
   }
 
@@ -57,8 +59,8 @@ String *Item_func_uncompress::val_str(String *str)
   if (new_size > current_session->variables.max_allowed_packet)
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-			ER_TOO_BIG_FOR_UNCOMPRESS,
-			ER(ER_TOO_BIG_FOR_UNCOMPRESS),
+                        ER_TOO_BIG_FOR_UNCOMPRESS,
+                        ER(ER_TOO_BIG_FOR_UNCOMPRESS),
                         current_session->variables.max_allowed_packet);
     goto err;
   }
@@ -66,7 +68,7 @@ String *Item_func_uncompress::val_str(String *str)
     goto err;
 
   if ((err= uncompress((Byte*)buffer.ptr(), &new_size,
-		       ((const Bytef*)res->ptr())+4,res->length())) == Z_OK)
+                       ((const Bytef*)res->ptr())+4,res->length())) == Z_OK)
   {
     buffer.length((uint32_t) new_size);
     return &buffer;

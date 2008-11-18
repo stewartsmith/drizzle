@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/time/sysdate_local.h>
 #include <drizzled/tztime.h>
-
+#include <drizzled/session.h>
 
 /**
     Converts current time in my_time_t to DRIZZLE_TIME represenatation for local

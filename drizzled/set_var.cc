@@ -61,8 +61,12 @@
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
 #include <drizzled/data_home.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
+extern I_List<NAMED_LIST> key_caches;
 
 
 static DYNAMIC_ARRAY fixed_show_vars;
@@ -834,7 +838,7 @@ void fix_binlog_format_after_update(Session *session, enum_var_type)
 
 static void fix_max_binlog_size(Session *, enum_var_type)
 {
-  mysql_bin_log.set_max_size(max_binlog_size);
+  drizzle_bin_log.set_max_size(max_binlog_size);
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
   return;

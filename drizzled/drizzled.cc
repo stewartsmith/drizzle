@@ -37,6 +37,11 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/timefunc.h>
+#include <drizzled/session.h>
+#include <drizzled/db.h>
+#include <drizzled/item/create.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -408,12 +413,6 @@ const char *in_having_cond= "<IN HAVING>";
 
 my_decimal decimal_zero;
 /* classes for comparation parsing/processing */
-Eq_creator eq_creator;
-Ne_creator ne_creator;
-Gt_creator gt_creator;
-Lt_creator lt_creator;
-Ge_creator ge_creator;
-Le_creator le_creator;
 
 FILE *stderror_file=0;
 
@@ -797,7 +796,7 @@ void clean_up(bool print_message)
 
   logger.cleanup_base();
 
-  mysql_bin_log.cleanup();
+  drizzle_bin_log.cleanup();
 
   if (use_slave_mask)
     bitmap_free(&slave_error_mask);
@@ -1886,7 +1885,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     global DRIZZLE_BIN_LOGs in their constructors, because then they would be
     inited before MY_INIT(). So we do it here.
   */
-  mysql_bin_log.init_pthread_objects();
+  drizzle_bin_log.init_pthread_objects();
 
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
@@ -2195,7 +2194,7 @@ static int init_server_components()
   {
     char buf[FN_REFLEN];
     const char *ln;
-    ln= mysql_bin_log.generate_name(opt_bin_logname, "-bin", 1, buf);
+    ln= drizzle_bin_log.generate_name(opt_bin_logname, "-bin", 1, buf);
     if (!opt_bin_logname && !opt_binlog_index_name)
     {
       /*
@@ -2216,7 +2215,7 @@ static int init_server_components()
       free(opt_bin_logname);
       opt_bin_logname=my_strdup(buf, MYF(0));
     }
-    if (mysql_bin_log.open_index_file(opt_binlog_index_name, ln))
+    if (drizzle_bin_log.open_index_file(opt_binlog_index_name, ln))
     {
       unireg_abort(1);
     }
@@ -2323,7 +2322,7 @@ static int init_server_components()
   }
 
   tc_log= (total_ha_2pc > 1 ? (opt_bin_log  ?
-                               (TC_LOG *) &mysql_bin_log :
+                               (TC_LOG *) &drizzle_bin_log :
                                (TC_LOG *) &tc_log_mmap) :
            (TC_LOG *) &tc_log_dummy);
 
@@ -2338,7 +2337,7 @@ static int init_server_components()
     unireg_abort(1);
   }
 
-  if (opt_bin_log && mysql_bin_log.open(opt_bin_logname, LOG_BIN, 0,
+  if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
                                         WRITE_CACHE, 0, max_binlog_size, 0))
     unireg_abort(1);
 
@@ -2346,7 +2345,7 @@ static int init_server_components()
   {
     time_t purge_time= server_start_time - expire_logs_days*24*60*60;
     if (purge_time >= 0)
-      mysql_bin_log.purge_logs_before_date(purge_time);
+      drizzle_bin_log.purge_logs_before_date(purge_time);
   }
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)

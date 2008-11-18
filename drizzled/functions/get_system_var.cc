@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/functions/get_system_var.h>
+#include <drizzled/session.h>
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,

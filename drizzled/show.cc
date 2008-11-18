@@ -26,9 +26,14 @@
 #include <drizzled/gettext.h>
 #include <drizzled/util/convert.h>
 #include <drizzled/error.h>
-#include <string>
 #include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/db.h>
+
+#include <string>
 
 inline const char *
 str_or_nil(const char *str)
@@ -1176,7 +1181,7 @@ void mysqld_list_processes(Session *session,const char *user, bool verbose)
         {
 	  /* 
             query_length is always set to 0 when we set query = NULL; see
-	    the comment in sql_class.h why this prevents crashes in possible
+	          the comment in session.h why this prevents crashes in possible
             races with query_length
           */
           uint32_t length= cmin((uint32_t)max_query_length, tmp->query_length);

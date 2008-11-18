@@ -38,19 +38,22 @@
 
 /* Cross-platform portability code and standard includes */
 #include <drizzled/global.h>
+/* Contains system-wide constants and #defines */
+#include <drizzled/definitions.h>
+/* System-wide common data structures */
+#include <drizzled/structs.h>
+
 /* Lots of system-wide struct definitions like IO_CACHE,
    prototypes for all my_* functions */
 #include <mysys/my_sys.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 /* Defines for the storage engine handler -- i.e. HA_XXX defines */
-#include <drizzled/base.h>			                /* Needed by field.h */
+/* Needed by field.h */
+#include <drizzled/base.h>
+
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
-#include "sql_plugin.h"
-/* Contains system-wide constants and #defines */
-#include <drizzled/definitions.h>
-/* System-wide common data structures */
-#include <drizzled/structs.h>
+#include <drizzled/sql_plugin.h>
 
 
 /**
@@ -71,15 +74,6 @@ inline Session *_current_session(void)
   return (Session *)pthread_getspecific(THR_Session);
 }
 #define current_session _current_session()
-
-
-#include <drizzled/table_list.h>
-/* Drizzle server data type class definitions */
-#include <drizzled/field.h>
-#include <drizzled/item.h>
-
-
-#include <drizzled/sql_class.h>
 
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

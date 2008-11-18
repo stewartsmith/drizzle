@@ -22,6 +22,8 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
 static int rr_quick(READ_RECORD *info);
 int rr_sequential(READ_RECORD *info);

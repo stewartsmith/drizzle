@@ -25,6 +25,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/common.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/comp_creator.h>
 
 #include <mystrings/m_ctype.h>
 
@@ -35,6 +36,7 @@ class Item;
 class LEX;
 class Table_ident;
 
+typedef class st_select_lex SELECT_LEX;
 
 bool begin_trans(Session *session);
 bool end_active_trans(Session *session);
@@ -109,5 +111,9 @@ bool mysql_new_select(LEX *lex, bool move_down);
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          enum enum_schema_tables schema_table_idx);
 
+Item * all_any_subquery_creator(Item *left_expr,
+                                chooser_compare_func_creator cmp,
+                                bool all,
+                                SELECT_LEX *select_lex);
 
 #endif /* DRIZZLE_SERVER_SQL_PARSE_H */

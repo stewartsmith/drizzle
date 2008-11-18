@@ -22,6 +22,8 @@
 #include <drizzled/functions/time/curdate.h>
 #include <drizzled/tztime.h>
 
+#include <drizzled/session.h>
+
 void Item_func_curdate::fix_length_and_dec()
 {
   collation.set(&my_charset_bin);

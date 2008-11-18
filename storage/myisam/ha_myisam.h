@@ -14,6 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
+#ifndef STORAGE_MYISAM_HA_MYISAM_H
+#define STORAGE_MYISAM_HA_MYISAM_H
+
+#include <drizzled/handler.h>
+#include <mysys/thr_lock.h>
 
 /* class for the the myisam handler */
 
@@ -57,14 +62,7 @@ class ha_myisam: public handler
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);
   int index_end();
-  uint32_t index_flags(uint32_t inx, uint32_t part __attribute__((unused)),
-                       bool all_parts __attribute__((unused))) const
-  {
-    return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-            0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-            HA_READ_ORDER | HA_KEYREAD_ONLY | 
-            (keys_with_parts.is_set(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
-  }
+  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
@@ -159,3 +157,4 @@ private:
   friend bool index_cond_func_myisam(void *arg);
 };
 
+#endif /* STORAGE_MYISAM_HA_MYISAM_H */

@@ -20,10 +20,11 @@
 #ifndef DRIZZLED_FUNCTIONS_ASIN_H
 #define DRIZZLED_FUNCTIONS_ASIN_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_asin :public Item_dec_func
-{ 
+{
 public:
   Item_func_asin(Item *a) :Item_dec_func(a) {}
   double val_real();

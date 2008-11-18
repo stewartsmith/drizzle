@@ -31,8 +31,9 @@
 #include <mysys/hash.h>
 #include <drizzled/handler.h>
 #include <drizzled/lex_string.h>
+#include <drizzled/table_list.h>
 
-class Item;				/* Needed by order_st */
+class Item;
 class Item_subselect;
 class st_select_lex_unit;
 class st_select_lex;
@@ -42,91 +43,13 @@ class TableList;
 
 /*************************************************************************/
 
-enum tmp_table_type
-{
-  NO_TMP_TABLE, NON_TRANSACTIONAL_TMP_TABLE, TRANSACTIONAL_TMP_TABLE,
-  INTERNAL_TMP_TABLE, SYSTEM_TMP_TABLE, TMP_TABLE_FRM_FILE_ONLY
-};
 
 bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
 
 
-/*
-  Values in this enum are used to indicate how a tables TIMESTAMP field
-  should be treated. It can be set to the current timestamp on insert or
-  update or both.
-  WARNING: The values are used for bit operations. If you change the
-  enum, you must keep the bitwise relation of the values. For example:
-  (int) TIMESTAMP_AUTO_SET_ON_BOTH must be equal to
-  (int) TIMESTAMP_AUTO_SET_ON_INSERT | (int) TIMESTAMP_AUTO_SET_ON_UPDATE.
-  We use an enum here so that the debugger can display the value names.
-*/
-enum timestamp_auto_set_type
-{
-  TIMESTAMP_NO_AUTO_SET= 0, TIMESTAMP_AUTO_SET_ON_INSERT= 1,
-  TIMESTAMP_AUTO_SET_ON_UPDATE= 2, TIMESTAMP_AUTO_SET_ON_BOTH= 3
-};
-#define clear_timestamp_auto_bits(_target_, _bits_) \
-  (_target_)= (enum timestamp_auto_set_type)((int)(_target_) & ~(int)(_bits_))
-
 class Field_timestamp;
 class Field_blob;
 
-/**
-  Category of table found in the table share.
-*/
-enum enum_table_category
-{
-  /**
-    Unknown value.
-  */
-  TABLE_UNKNOWN_CATEGORY=0,
-
-  /**
-    Temporary table.
-    The table is visible only in the session.
-    Therefore,
-    - FLUSH TABLES WITH READ LOCK
-    - SET GLOBAL READ_ONLY = ON
-    do not apply to this table.
-    Note that LOCK Table t FOR READ/WRITE
-    can be used on temporary tables.
-    Temporary tables are not part of the table cache.
-  */
-  TABLE_CATEGORY_TEMPORARY=1,
-
-  /**
-    User table.
-    These tables do honor:
-    - LOCK Table t FOR READ/WRITE
-    - FLUSH TABLES WITH READ LOCK
-    - SET GLOBAL READ_ONLY = ON
-    User tables are cached in the table cache.
-  */
-  TABLE_CATEGORY_USER=2,
-
-  /**
-    Information schema tables.
-    These tables are an interface provided by the system
-    to inspect the system metadata.
-    These tables do *not* honor:
-    - LOCK Table t FOR READ/WRITE
-    - FLUSH TABLES WITH READ LOCK
-    - SET GLOBAL READ_ONLY = ON
-    as there is no point in locking explicitely
-    an INFORMATION_SCHEMA table.
-    Nothing is directly written to information schema tables.
-    Note that this value is not used currently,
-    since information schema tables are not shared,
-    but implemented as session specific temporary tables.
-  */
-  /*
-    TODO: Fixing the performance issues of I_S will lead
-    to I_S tables in the table cache, which should use
-    this table type.
-  */
-  TABLE_CATEGORY_INFORMATION
-};
 typedef enum enum_table_category TABLE_CATEGORY;
 
 TABLE_CATEGORY get_table_category(const LEX_STRING *db,
@@ -321,14 +244,6 @@ typedef struct st_table_share
 
 
 extern uint32_t refresh_version;
-
-/* Information for one open table */
-enum index_hint_type
-{
-  INDEX_HINT_IGNORE,
-  INDEX_HINT_USE,
-  INDEX_HINT_FORCE
-};
 
 typedef struct st_table_field_w_type
 {
@@ -709,5 +624,21 @@ typedef struct st_open_table_list
   uint32_t in_use,locked;
 } OPEN_TableList;
 
+
+inline void mark_as_null_row(Table *table)
+{
+  table->null_row=1;
+  table->status|=STATUS_NULL_ROW;
+  memset(table->null_flags, 255, table->s->null_bytes);
+}
+
+/**
+  clean/setup table fields and map.
+
+  @param table        Table structure pointer (which should be setup)
+  @param table_list   TableList structure pointer (owner of Table)
+  @param tablenr     table number
+*/
+void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr);
 
 #endif /* DRIZZLED_TABLE_H */

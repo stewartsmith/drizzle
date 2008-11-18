@@ -23,6 +23,8 @@
 /* subselect Item */
 
 
+#include <drizzled/comp_creator.h>
+
 class st_select_lex;
 class st_select_lex_unit;
 class JOIN;
@@ -31,6 +33,10 @@ class subselect_engine;
 class subselect_hash_sj_engine;
 class Item_bool_func2;
 class Cached_item;
+class Item_in_optimizer;
+class Item_func_not_all;
+class TMP_TABLE_PARAM;
+
 
 /* base class for subselects */
 
@@ -337,11 +343,11 @@ public:
     was_null= 0;
   }
   trans_res select_transformer(JOIN *join);
-  trans_res select_in_like_transformer(JOIN *join, Comp_creator *func);
-  trans_res single_value_transformer(JOIN *join, Comp_creator *func);
+  trans_res select_in_like_transformer(JOIN *join, const Comp_creator *func);
+  trans_res single_value_transformer(JOIN *join, const Comp_creator *func);
   trans_res row_value_transformer(JOIN * join);
   trans_res single_value_in_to_exists_transformer(JOIN * join,
-                                                  Comp_creator *func);
+                                                  const Comp_creator *func);
   trans_res row_value_in_to_exists_transformer(JOIN * join);
   virtual bool exec();
   int64_t val_int();

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_FROM_DAYS_H
 #define DRIZZLED_FUNCTIONS_TIME_FROM_DAYS_H
 
+#include <drizzled/functions/time/date.h>
+
 class Item_func_from_days :public Item_date
 {
 public:

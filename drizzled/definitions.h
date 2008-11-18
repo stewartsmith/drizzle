@@ -390,7 +390,7 @@
 
   Move this out of here once Stew's done with UDF breakout.  The following headers need it:
 
-    sql_lex.h --> included by sql_class.h
+    sql_lex.h --> included by session.h
     item.h
     table.h
     item_func.h
@@ -1022,6 +1022,116 @@ typedef enum monotonicity_info
    MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
 } enum_monotonicity_info;
 
+enum tmp_table_type
+{
+  NO_TMP_TABLE, NON_TRANSACTIONAL_TMP_TABLE, TRANSACTIONAL_TMP_TABLE,
+  INTERNAL_TMP_TABLE, SYSTEM_TMP_TABLE, TMP_TABLE_FRM_FILE_ONLY
+};
+
+/*
+  Values in this enum are used to indicate how a tables TIMESTAMP field
+  should be treated. It can be set to the current timestamp on insert or
+  update or both.
+  WARNING: The values are used for bit operations. If you change the
+  enum, you must keep the bitwise relation of the values. For example:
+  (int) TIMESTAMP_AUTO_SET_ON_BOTH must be equal to
+  (int) TIMESTAMP_AUTO_SET_ON_INSERT | (int) TIMESTAMP_AUTO_SET_ON_UPDATE.
+  We use an enum here so that the debugger can display the value names.
+*/
+enum timestamp_auto_set_type
+{
+  TIMESTAMP_NO_AUTO_SET= 0, TIMESTAMP_AUTO_SET_ON_INSERT= 1,
+  TIMESTAMP_AUTO_SET_ON_UPDATE= 2, TIMESTAMP_AUTO_SET_ON_BOTH= 3
+};
+#define clear_timestamp_auto_bits(_target_, _bits_) \
+  (_target_)= (enum timestamp_auto_set_type)((int)(_target_) & ~(int)(_bits_))
+
+/**
+  Category of table found in the table share.
+*/
+enum enum_table_category
+{
+  /**
+    Unknown value.
+  */
+  TABLE_UNKNOWN_CATEGORY=0,
+
+  /**
+    Temporary table.
+    The table is visible only in the session.
+    Therefore,
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    do not apply to this table.
+    Note that LOCK Table t FOR READ/WRITE
+    can be used on temporary tables.
+    Temporary tables are not part of the table cache.
+  */
+  TABLE_CATEGORY_TEMPORARY=1,
+
+  /**
+    User table.
+    These tables do honor:
+    - LOCK Table t FOR READ/WRITE
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    User tables are cached in the table cache.
+  */
+  TABLE_CATEGORY_USER=2,
+
+  /**
+    Information schema tables.
+    These tables are an interface provided by the system
+    to inspect the system metadata.
+    These tables do *not* honor:
+    - LOCK Table t FOR READ/WRITE
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    as there is no point in locking explicitely
+    an INFORMATION_SCHEMA table.
+    Nothing is directly written to information schema tables.
+    Note that this value is not used currently,
+    since information schema tables are not shared,
+    but implemented as session specific temporary tables.
+  */
+  /*
+    TODO: Fixing the performance issues of I_S will lead
+    to I_S tables in the table cache, which should use
+    this table type.
+  */
+  TABLE_CATEGORY_INFORMATION
+};
+
+/* Information for one open table */
+enum index_hint_type
+{
+  INDEX_HINT_IGNORE,
+  INDEX_HINT_USE,
+  INDEX_HINT_FORCE
+};
+
+
+enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
+enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
+                            DELAY_KEY_WRITE_ALL };
+enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
+                            SLAVE_EXEC_MODE_IDEMPOTENT,
+                            SLAVE_EXEC_MODE_LAST_BIT};
+enum enum_mark_columns
+{ MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
+
+enum enum_filetype { FILETYPE_CSV, FILETYPE_XML };
+
+enum find_item_error_report_type {REPORT_ALL_ERRORS, REPORT_EXCEPT_NOT_FOUND,
+                                  IGNORE_ERRORS, REPORT_EXCEPT_NON_UNIQUE,
+                                  IGNORE_EXCEPT_NON_UNIQUE};
+
+enum enum_schema_table_state
+{
+  NOT_PROCESSED= 0,
+  PROCESSED_BY_CREATE_SORT_INDEX,
+  PROCESSED_BY_JOIN_EXEC
+};
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 

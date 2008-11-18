@@ -21,10 +21,18 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/functions/coercibility.h>
-#include <drizzled/functions/locate.h>
-#include <drizzled/functions/str/quote.h>
+#include <drizzled/item/create.h>
+#include <drizzled/item/func.h>
 #include <drizzled/error.h>
+
+#include <drizzled/item/strfunc.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/timefunc.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/session.h>
+
+class Item;
+
 
 /*
 =============================================================================

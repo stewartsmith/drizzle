@@ -18,8 +18,8 @@
  */
 
 
-#ifndef DRIZZLED_SQL_CLASS_H
-#define DRIZZLED_SQL_CLASS_H
+#ifndef DRIZZLED_SESSION_H
+#define DRIZZLED_SESSION_H
 
 /* Classes in mysql */
 
@@ -31,6 +31,9 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/scheduler.h>
 #include <drizzled/ha_trx_info.h>
+#include <mysys/my_tree.h>
+#include <drizzled/handler.h>
+#include <drizzled/sql_error.h>
 
 class Relay_log_info;
 
@@ -39,16 +42,10 @@ class Load_log_event;
 class Slave_log_event;
 class Lex_input_stream;
 class Rows_log_event;
+class user_var_entry;
+class Copy_field;
+class Table_ident;
 
-enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
-enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
-                            DELAY_KEY_WRITE_ALL };
-enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
-                            SLAVE_EXEC_MODE_IDEMPOTENT,
-                            SLAVE_EXEC_MODE_LAST_BIT};
-enum enum_mark_columns
-{ MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
-enum enum_filetype { FILETYPE_CSV, FILETYPE_XML };
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -102,128 +99,8 @@ typedef struct st_copy_info {
 } COPY_INFO;
 
 
-class Key_part_spec :public Sql_alloc {
-public:
-  LEX_STRING field_name;
-  uint32_t length;
-  Key_part_spec(const LEX_STRING &name, uint32_t len)
-    : field_name(name), length(len)
-  {}
-  Key_part_spec(const char *name, const size_t name_len, uint32_t len)
-    : length(len)
-  { field_name.str= (char *)name; field_name.length= name_len; }
-  bool operator==(const Key_part_spec& other) const;
-  /**
-    Construct a copy of this Key_part_spec. field_name is copied
-    by-pointer as it is known to never change. At the same time
-    'length' may be reset in mysql_prepare_create_table, and this
-    is why we supply it with a copy.
-
-    @return If out of memory, 0 is returned and an error is set in
-    Session.
-  */
-  Key_part_spec *clone(MEM_ROOT *mem_root) const
-  { return new (mem_root) Key_part_spec(*this); }
-};
 
 
-class Alter_drop :public Sql_alloc {
-public:
-  enum drop_type {KEY, COLUMN };
-  const char *name;
-  enum drop_type type;
-  Alter_drop(enum drop_type par_type,const char *par_name)
-    :name(par_name), type(par_type) {}
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  Alter_drop *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Alter_drop(*this); }
-};
-
-
-class Alter_column :public Sql_alloc {
-public:
-  const char *name;
-  Item *def;
-  Alter_column(const char *par_name,Item *literal)
-    :name(par_name), def(literal) {}
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  Alter_column *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Alter_column(*this); }
-};
-
-
-class Key :public Sql_alloc {
-public:
-  enum Keytype { PRIMARY, UNIQUE, MULTIPLE, FOREIGN_KEY};
-  enum Keytype type;
-  KEY_CREATE_INFO key_create_info;
-  List<Key_part_spec> columns;
-  LEX_STRING name;
-  bool generated;
-
-  Key(enum Keytype type_par, const LEX_STRING &name_arg,
-      KEY_CREATE_INFO *key_info_arg,
-      bool generated_arg, List<Key_part_spec> &cols)
-    :type(type_par), key_create_info(*key_info_arg), columns(cols),
-    name(name_arg), generated(generated_arg)
-  {}
-  Key(enum Keytype type_par, const char *name_arg, size_t name_len_arg,
-      KEY_CREATE_INFO *key_info_arg, bool generated_arg,
-      List<Key_part_spec> &cols)
-    :type(type_par), key_create_info(*key_info_arg), columns(cols),
-    generated(generated_arg)
-  {
-    name.str= (char *)name_arg;
-    name.length= name_len_arg;
-  }
-  Key(const Key &rhs, MEM_ROOT *mem_root);
-  virtual ~Key() {}
-  /* Equality comparison of keys (ignoring name) */
-  friend bool foreign_key_prefix(Key *a, Key *b);
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  virtual Key *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Key(*this, mem_root); }
-};
-
-class Table_ident;
-
-class Foreign_key: public Key {
-public:
-  enum fk_match_opt { FK_MATCH_UNDEF, FK_MATCH_FULL,
-		      FK_MATCH_PARTIAL, FK_MATCH_SIMPLE};
-  enum fk_option { FK_OPTION_UNDEF, FK_OPTION_RESTRICT, FK_OPTION_CASCADE,
-		   FK_OPTION_SET_NULL, FK_OPTION_NO_ACTION, FK_OPTION_DEFAULT};
-
-  Table_ident *ref_table;
-  List<Key_part_spec> ref_columns;
-  uint32_t delete_opt, update_opt, match_opt;
-  Foreign_key(const LEX_STRING &name_arg, List<Key_part_spec> &cols,
-	      Table_ident *table,   List<Key_part_spec> &ref_cols,
-	      uint32_t delete_opt_arg, uint32_t update_opt_arg, uint32_t match_opt_arg)
-    :Key(FOREIGN_KEY, name_arg, &default_key_create_info, 0, cols),
-    ref_table(table), ref_columns(ref_cols),
-    delete_opt(delete_opt_arg), update_opt(update_opt_arg),
-    match_opt(match_opt_arg)
-  {}
-  Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root);
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  virtual Key *clone(MEM_ROOT *mem_root) const
-  { return new (mem_root) Foreign_key(*this, mem_root); }
-  /* Used to validate foreign key options */
-  bool validate(List<Create_field> &table_fields);
-};
 
 typedef struct st_mysql_lock
 {
@@ -1438,20 +1315,20 @@ public:
   
   struct {
     /* 
-      If true, mysql_bin_log::write(Log_event) call will not write events to 
+      If true, drizzle_bin_log::write(Log_event) call will not write events to 
       binlog, and maintain 2 below variables instead (use
-      mysql_bin_log.start_union_events to turn this on)
+      drizzle_bin_log.start_union_events to turn this on)
     */
     bool do_union;
     /*
-      If true, at least one mysql_bin_log::write(Log_event) call has been
-      made after last mysql_bin_log.start_union_events() call.
+      If true, at least one drizzle_bin_log::write(Log_event) call has been
+      made after last drizzle_bin_log.start_union_events() call.
     */
     bool unioned_events;
     /*
-      If true, at least one mysql_bin_log::write(Log_event e), where 
+      If true, at least one drizzle_bin_log::write(Log_event e), where 
       e.cache_stmt == true call has been made after last 
-      mysql_bin_log.start_union_events() call.
+      drizzle_bin_log.start_union_events() call.
     */
     bool unioned_events_trans;
     
@@ -2126,14 +2003,7 @@ public:
     cleanup();
   }
   void init(void);
-  inline void cleanup(void)
-  {
-    if (copy_field)				/* Fix for Intel compiler */
-    {
-      delete [] copy_field;
-      save_copy_field= copy_field= 0;
-    }
-  }
+  void cleanup(void);
 };
 
 class select_union :public select_result_interceptor
@@ -2450,6 +2320,28 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
 void close_connection(Session *session, uint32_t errcode, bool lock);
+
+/* Some inline functions for more speed */
+
+inline bool add_item_to_list(Session *session, Item *item)
+{
+  return session->lex->current_select->add_item_to_list(session, item);
+}
+
+inline bool add_value_to_list(Session *session, Item *value)
+{
+  return session->lex->value_list.push_back(value);
+}
+
+inline bool add_order_to_list(Session *session, Item *item, bool asc)
+{
+  return session->lex->current_select->add_order_to_list(session, item, asc);
+}
+
+inline bool add_group_to_list(Session *session, Item *item, bool asc)
+{
+  return session->lex->current_select->add_group_to_list(session, item, asc);
+}
 
 #endif /* DRIZZLE_SERVER */
 

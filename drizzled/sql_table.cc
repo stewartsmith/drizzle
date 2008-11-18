@@ -22,6 +22,13 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
+#include <mysys/hash.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/db.h>
+
+extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
 
@@ -243,7 +250,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 void write_bin_log(Session *session, bool clear_error,
                    char const *query, ulong query_length)
 {
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     if (clear_error)
       session->clear_error();
@@ -1623,7 +1630,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 */
 
 static void set_table_default_charset(Session *session,
-				      HA_CREATE_INFO *create_info, char *db)
+                                      HA_CREATE_INFO *create_info, char *db)
 {
   /*
     If the table character set was not given explicitly,
@@ -4997,7 +5004,7 @@ end_online:
 
   session->set_proc_info("end");
 
-  assert(!(mysql_bin_log.is_open() &&
+  assert(!(drizzle_bin_log.is_open() &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 

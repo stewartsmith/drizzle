@@ -21,6 +21,7 @@
 #include <drizzled/replication/mi.h>
 #include CSTDINT_H
 #include <drizzled/functions/master_pos_wait.h>
+#include <drizzled/session.h>
 
 /**
   Wait until we are at or past the given position in the master binlog

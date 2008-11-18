@@ -28,6 +28,10 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/rename.h>
+#include <drizzled/functions/time/unix_timestamp.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_load.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -3589,9 +3593,9 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    if( mysql_bin_log.is_open() )
+    if (drizzle_bin_log.is_open())
     {
-      mysql_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
+      drizzle_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
     }
     pthread_mutex_lock(&LOCK_active_mi);
     rotate_relay_log(active_mi);
@@ -3789,42 +3793,6 @@ bool check_simple_select()
 }
 
 
-Comp_creator *comp_eq_creator(bool invert)
-{
-  return invert?(Comp_creator *)&ne_creator:(Comp_creator *)&eq_creator;
-}
-
-
-Comp_creator *comp_ge_creator(bool invert)
-{
-  return invert?(Comp_creator *)&lt_creator:(Comp_creator *)&ge_creator;
-}
-
-
-Comp_creator *comp_gt_creator(bool invert)
-{
-  return invert?(Comp_creator *)&le_creator:(Comp_creator *)&gt_creator;
-}
-
-
-Comp_creator *comp_le_creator(bool invert)
-{
-  return invert?(Comp_creator *)&gt_creator:(Comp_creator *)&le_creator;
-}
-
-
-Comp_creator *comp_lt_creator(bool invert)
-{
-  return invert?(Comp_creator *)&ge_creator:(Comp_creator *)&lt_creator;
-}
-
-
-Comp_creator *comp_ne_creator(bool invert)
-{
-  return invert?(Comp_creator *)&eq_creator:(Comp_creator *)&ne_creator;
-}
-
-
 /**
   Construct ALL/ANY/SOME subquery Item.
 
@@ -3837,9 +3805,9 @@ Comp_creator *comp_ne_creator(bool invert)
     constructed Item (or 0 if out of memory)
 */
 Item * all_any_subquery_creator(Item *left_expr,
-				chooser_compare_func_creator cmp,
-				bool all,
-				SELECT_LEX *select_lex)
+                                chooser_compare_func_creator cmp,
+                                bool all,
+                                SELECT_LEX *select_lex)
 {
   if ((cmp == &comp_eq_creator) && !all)       //  = ANY <=> IN
     return new Item_in_subselect(left_expr, select_lex);

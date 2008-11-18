@@ -21,6 +21,9 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
 
 uint32_t
 blob_pack_length_to_max_length(uint32_t arg)
@@ -85,6 +88,13 @@ void Field_blob::store_length(unsigned char *i_ptr,
 }
 
 
+void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_packlength,
+                  uint32_t i_number)
+{
+  store_length(i_ptr, i_packlength, i_number, table->s->db_low_byte_first);
+}
+
+
 uint32_t Field_blob::get_length(const unsigned char *pos,
                               uint32_t packlength_arg,
                               bool low_byte_first __attribute__((unused)))
@@ -118,6 +128,26 @@ uint32_t Field_blob::get_length(const unsigned char *pos,
     }
   }
   return 0;					// Impossible
+}
+
+
+uint32_t Field_blob::get_packed_size(const unsigned char *ptr_arg,
+                                bool low_byte_first)
+{
+  return packlength + get_length(ptr_arg, packlength, low_byte_first);
+}
+
+
+uint32_t Field_blob::get_length(uint32_t row_offset)
+{
+  return get_length(ptr+row_offset, this->packlength,
+                    table->s->db_low_byte_first);
+}
+
+
+uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
+{
+  return get_length(ptr_arg, this->packlength, table->s->db_low_byte_first);
 }
 
 
@@ -420,7 +450,7 @@ int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
 
 uint32_t Field_blob::sort_length() const
 {
-  return (uint32_t) (current_session->variables.max_sort_length + 
+  return (uint32_t) (current_session->variables.max_sort_length +
                    (field_charset == &my_charset_bin ? 0 : packlength));
 }
 
@@ -460,11 +490,17 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
       }
     }
     memcpy(&blob,ptr+packlength,sizeof(char*));
-    
+
     blob_length=my_strnxfrm(field_charset,
                             to, length, blob, blob_length);
     assert(blob_length == length);
   }
+}
+
+
+uint32_t Field_blob::pack_length() const
+{
+  return (uint32_t) (packlength+table->s->blob_ptr_size);
 }
 
 
@@ -718,3 +754,13 @@ uint32_t Field_blob::max_display_length()
   }
 }
 
+bool Field_blob::in_read_set()
+{
+  return bitmap_is_set(table->read_set, field_index);
+}
+
+
+bool Field_blob::in_write_set()
+{
+  return bitmap_is_set(table->write_set, field_index);
+}

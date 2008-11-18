@@ -38,11 +38,23 @@
 #define Lex (YYSession->lex)
 #define Select Lex->current_select
 #include <drizzled/server_includes.h>
-#include "lex_symbol.h"
+#include <drizzled/lex_symbol.h>
 #include <drizzled/functions/locate.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/timefunc.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/session.h>
+#include <drizzled/item/func.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/item/create.h>
+#include <drizzled/lex_string.h>
+
+class Table_ident;
+class Item;
+class Item_num;
 
 int yylex(void *yylval, void *yysession);
 

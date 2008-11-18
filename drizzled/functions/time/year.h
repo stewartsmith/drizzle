@@ -20,7 +20,9 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_YEAR_H
 #define DRIZZLED_FUNCTIONS_TIME_YEAR_H
 
-class Item_func_year :public Item_int_func 
+#include <drizzled/functions/int.h>
+
+class Item_func_year :public Item_int_func
 {
 public:
   Item_func_year(Item *a) :Item_int_func(a) {}

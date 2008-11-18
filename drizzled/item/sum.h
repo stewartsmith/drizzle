@@ -25,6 +25,11 @@
 
 #include <mysys/my_tree.h>
 #include <drizzled/hybrid_type.h>
+#include <drizzled/item.h>
+
+
+class st_select_lex;
+struct order_st;
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls
@@ -220,8 +225,6 @@
   code clean here.  
     
 */ 
-
-class st_select_lex;
 
 class Item_sum :public Item_result_field
 {

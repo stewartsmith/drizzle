@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/divide.h>
+#include <drizzled/session.h>
 
 double Item_func_div::real_op()
 {

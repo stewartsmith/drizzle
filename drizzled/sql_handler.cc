@@ -59,6 +59,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
+#include <drizzled/sql_base.h>
 
 
 /**

@@ -4,14 +4,12 @@ Smart ALTER TABLE
 (c) 2005-2008 Innobase Oy
 *******************************************************/
 
-#if defined(BUILD_DRIZZLE)
-# include <drizzled/common_includes.h>
-# include <drizzled/error.h>
-# include <mystrings/m_ctype.h>
-#else
-# include <mysql_priv.h>
-# include <mysqld_error.h>
-#endif
+#include <drizzled/common_includes.h>
+#include <drizzled/error.h>
+#include <mystrings/m_ctype.h>
+#include <drizzled/field.h>
+#include <drizzled/table.h>
+#include <drizzled/log.h>
 
 extern "C" {
 #include "log0log.h"

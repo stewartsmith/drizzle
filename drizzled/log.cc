@@ -36,14 +36,14 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
-
+#include <drizzled/log_event.h>
 
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
 LOGGER logger;
 
-DRIZZLE_BIN_LOG mysql_bin_log;
+DRIZZLE_BIN_LOG drizzle_bin_log;
 ulong sync_binlog_counter= 0;
 
 static bool test_if_number(const char *str,
@@ -319,7 +319,7 @@ binlog_trans_log_savepos(Session *session, my_off_t *pos)
     session->binlog_setup_trx_data();
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
   *pos= trx_data->position();
   return;
 }
@@ -437,14 +437,14 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
      */
     session->binlog_flush_pending_rows_event(true);
 
-    error= mysql_bin_log.write(session, &trx_data->trans_log, end_ev);
+    error= drizzle_bin_log.write(session, &trx_data->trans_log, end_ev);
     trx_data->reset();
 
     /*
       We need to step the table map version after writing the
       transaction cache to disk.
     */
-    mysql_bin_log.update_table_map_version();
+    drizzle_bin_log.update_table_map_version();
     statistic_increment(binlog_cache_use, &LOCK_status);
     if (trans_log->disk_writes != 0)
     {
@@ -476,7 +476,7 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
       that a new table map event is generated instead of the one that
       was written to the thrown-away transaction cache.
     */
-    mysql_bin_log.update_table_map_version();
+    drizzle_bin_log.update_table_map_version();
   }
 
   return(error);
@@ -2321,11 +2321,11 @@ int Session::binlog_write_table_map(Table *table, bool is_trans)
   if (is_trans && binlog_table_maps == 0)
     binlog_start_trans_and_stmt();
 
-  if ((error= mysql_bin_log.write(&the_event)))
+  if ((error= drizzle_bin_log.write(&the_event)))
     return(error);
 
   binlog_table_maps++;
-  table->s->table_map_version= mysql_bin_log.table_map_version();
+  table->s->table_map_version= drizzle_bin_log.table_map_version();
   return(0);
 }
 
@@ -2366,7 +2366,7 @@ int
 DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *session,
                                                 Rows_log_event* event)
 {
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
 
   int error= 0;
 
@@ -3877,24 +3877,30 @@ err1:
 }
 
 
+bool DRIZZLE_BIN_LOG::is_table_mapped(Table *table) const
+{
+  return table->s->table_map_version == table_map_version();
+}
+
+
 #ifdef INNODB_COMPATIBILITY_HOOKS
 /**
   Get the file name of the MySQL binlog.
   @return the name of the binlog file
 */
 extern "C"
-const char* mysql_bin_log_file_name(void)
+const char* drizzle_bin_log_file_name(void)
 {
-  return mysql_bin_log.get_log_fname();
+  return drizzle_bin_log.get_log_fname();
 }
 /**
   Get the current position of the MySQL binlog.
   @return byte offset from the beginning of the binlog
 */
 extern "C"
-uint64_t mysql_bin_log_file_pos(void)
+uint64_t drizzle_bin_log_file_pos(void)
 {
-  return (uint64_t) mysql_bin_log.get_log_file()->pos_in_file;
+  return (uint64_t) drizzle_bin_log.get_log_file()->pos_in_file;
 }
 #endif /* INNODB_COMPATIBILITY_HOOKS */
 
