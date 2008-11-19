@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIME
 #define DRIZZLE_SERVER_FIELD_TIME
 
+#include <drizzled/field/str.h>
+
 class Field_time :public Field_str {
 public:
   Field_time(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,

@@ -32,6 +32,27 @@
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 
+
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
+
+
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
 #endif

@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_VARSTRING
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
+#include <drizzled/field/longstr.h>
+
 class Field_varstring :public Field_longstr {
 public:
   /*

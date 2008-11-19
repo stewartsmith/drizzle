@@ -20,6 +20,7 @@
 #include <config.h>
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/session.h>
+#include <drizzled/field/varstring.h>
 
 /*
   Create a temporary table to weed out duplicate rowid combinations

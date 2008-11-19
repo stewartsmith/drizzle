@@ -42,7 +42,9 @@ TODO:
 */
 #include <drizzled/common_includes.h>
 #include <drizzled/field.h>
-#include "ha_tina.h"
+#include <drizzled/field/blob.h>
+#include <drizzled/field/timestamp.h>
+#include <storage/csv/ha_tina.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -600,7 +602,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   for (Field **field=table->field ; *field ; field++)
   {
     char curr_char;
-    
+
     buffer.length(0);
     if (curr_offset >= end_offset)
       goto err;
@@ -648,7 +650,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         }
       }
     }
-    else 
+    else
     {
       for(; curr_offset < end_offset; curr_offset++)
       {
@@ -672,7 +674,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         Field_blob *blob= *(Field_blob**) field;
         unsigned char *src, *tgt;
         uint32_t length, packlength;
-        
+
         packlength= blob->pack_length_no_ptr();
         length= blob->get_length(blob->ptr);
         memcpy(&src, blob->ptr + packlength, sizeof(char*));

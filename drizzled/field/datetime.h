@@ -21,18 +21,21 @@
 #ifndef DRIZZLE_SERVER_FIELD_DATETIME
 #define DRIZZLE_SERVER_FIELD_DATETIME
 
+#include <drizzled/field/str.h>
+
 class Field_datetime :public Field_str {
 public:
-  Field_datetime(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-		 enum utype unireg_check_arg, const char *field_name_arg,
-		 const CHARSET_INFO * const cs)
+  Field_datetime(unsigned char *ptr_arg, unsigned char *null_ptr_arg,
+                 unsigned char null_bit_arg,
+                 enum utype unireg_check_arg, const char *field_name_arg,
+                 const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 19, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, cs)
+               unireg_check_arg, field_name_arg, cs)
     {}
   Field_datetime(bool maybe_null_arg, const char *field_name_arg,
-		 const CHARSET_INFO * const cs)
+                 const CHARSET_INFO * const cs)
     :Field_str((unsigned char*) 0,19, maybe_null_arg ? (unsigned char*) "": 0,0,
-	       NONE, field_name_arg, cs) {}
+               NONE, field_name_arg, cs) {}
   enum_field_types type() const { return DRIZZLE_TYPE_DATETIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }

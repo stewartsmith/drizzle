@@ -34,6 +34,7 @@
 #include <drizzled/tableop_hooks.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_load.h>
+#include <drizzled/field/timestamp.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
