@@ -39,6 +39,7 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
 
 #include CMATH_H
 

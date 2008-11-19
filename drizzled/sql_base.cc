@@ -17,6 +17,8 @@
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
 #include <drizzled/virtual_column_info.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/null.h>
 
 #include <signal.h>
 

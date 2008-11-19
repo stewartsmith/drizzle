@@ -21,8 +21,10 @@
 #ifndef DRIZZLE_SERVER_FIELD_NULL
 #define DRIZZLE_SERVER_FIELD_NULL
 
-/* 
-  Everything saved in this will disappear. It will always return NULL 
+#include <drizzled/field/str.h>
+
+/*
+ * Everything saved in this will disappear. It will always return NULL
  */
 
 class Field_null :public Field_str {

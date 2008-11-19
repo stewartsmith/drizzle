@@ -15,14 +15,16 @@
 
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
-#include "ha_heap.h"
-#include "heapdef.h"
+#include <storage/heap/ha_heap.h>
+#include <storage/heap/heapdef.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/varstring.h>
 
 static handler *heap_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
 int heap_deinit(void *)
@@ -231,7 +233,7 @@ int ha_heap::write_row(unsigned char * buf)
       return res;
   }
   res= heap_write(file,buf);
-  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD > 
+  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
                file->s->records))
   {
     /*

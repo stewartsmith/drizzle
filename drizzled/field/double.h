@@ -21,12 +21,15 @@
 #ifndef DRIZZLE_SERVER_FIELD_DOUBLE
 #define DRIZZLE_SERVER_FIELD_DOUBLE
 
+#include <drizzled/field/real.h>
+
 class Field_double :public Field_real {
 public:
-  Field_double(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
-	       unsigned char null_bit_arg,
-	       enum utype unireg_check_arg, const char *field_name_arg,
-	       uint8_t dec_arg,bool zero_arg,bool unsigned_arg)
+  Field_double(unsigned char *ptr_arg, uint32_t len_arg,
+               unsigned char *null_ptr_arg,
+               unsigned char null_bit_arg,
+               enum utype unireg_check_arg, const char *field_name_arg,
+               uint8_t dec_arg,bool zero_arg,bool unsigned_arg)
     :Field_real(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                 unireg_check_arg, field_name_arg,
                 dec_arg, zero_arg, unsigned_arg)

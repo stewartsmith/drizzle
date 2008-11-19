@@ -18,6 +18,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/table.h>
+#include <drizzled/field/blob.h>
 
 /*
   Search after a key that starts with 'field'

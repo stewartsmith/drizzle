@@ -23,6 +23,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/field/timestamp.h>
 
 class READ_INFO {
   File	file;

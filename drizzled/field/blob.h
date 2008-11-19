@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_BLOB
 #define DRIZZLE_SERVER_FIELD_BLOB
 
+#include <drizzled/field/longstr.h>
+
 class Field_blob :public Field_longstr {
 protected:
   uint32_t packlength;

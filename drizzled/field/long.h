@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_LONG
 #define DRIZZLE_SERVER_FIELD_LONG
 
+#include <drizzled/field/num.h>
+
 class Field_long :public Field_num {
 public:
   Field_long(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,

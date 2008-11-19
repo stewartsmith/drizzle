@@ -21,13 +21,16 @@
 #ifndef DRIZZLE_SERVER_FIELD_DATE
 #define DRIZZLE_SERVER_FIELD_DATE
 
+#include <drizzled/field/str.h>
+
 class Field_date :public Field_str {
 public:
-  Field_date(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-		enum utype unireg_check_arg, const char *field_name_arg,
-		const CHARSET_INFO * const cs)
+  Field_date(unsigned char *ptr_arg, unsigned char *null_ptr_arg,
+             unsigned char null_bit_arg,
+             enum utype unireg_check_arg, const char *field_name_arg,
+             const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, cs)
+               unireg_check_arg, field_name_arg, cs)
     {}
   Field_date(bool maybe_null_arg, const char *field_name_arg,
                 const CHARSET_INFO * const cs)
@@ -37,7 +40,8 @@ public:
   enum_field_types real_type() const { return DRIZZLE_TYPE_DATE; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_UINT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length,
+             const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type type);
