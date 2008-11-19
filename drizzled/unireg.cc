@@ -662,7 +662,7 @@ int rea_create_table(Session *session, const char *path,
     create_info->options|= HA_CREATE_KEEP_FILES;
   if (file->ha_create_handler_files(path, NULL, CHF_CREATE_FLAG, create_info))
     goto err_handler;
-  if (!create_info->frm_only && ha_create_table(session, path, db, table_name,
+  if ( ha_create_table(session, path, db, table_name,
                                                 create_info,0))
     goto err_handler;
   return(0);

@@ -1913,7 +1913,7 @@ bool mysql_create_table_no_lock(Session *session,
     /* Open table and put in temporary table list */
     if (!(open_temporary_table(session, path, db, table_name, 1, OTM_OPEN)))
     {
-      (void) rm_temporary_table(create_info->db_type, path, false);
+      (void) rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
     session->thread_specific_used= true;
@@ -3045,7 +3045,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
                                      OTM_OPEN))
     {
       (void) rm_temporary_table(create_info->db_type,
-				dst_path, false); /* purecov: inspected */
+				dst_path);
       goto err;     /* purecov: inspected */
     }
   }
@@ -3745,7 +3745,6 @@ int create_temporary_table(Session *session,
 
   /*
     Create a table with a temporary name.
-    With create_info->frm_only == 1 this creates a .frm file only.
     We don't log the statement, it will be logged later.
   */
   tmp_disable_binlog(session);
@@ -3795,7 +3794,7 @@ Table *create_altered_table(Session *session,
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
   altered_create_info.options&= ~HA_LEX_CREATE_TMP_TABLE;
-  altered_create_info.frm_only= 1;
+
   if ((error= create_temporary_table(session, table, new_db, tmp_name,
                                      &altered_create_info,
                                      alter_info, db_change)))
