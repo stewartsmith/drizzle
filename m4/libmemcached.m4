@@ -1,13 +1,13 @@
-# Check to find libmemcached.
+dnl Check to find libmemcached.
 
-AC_DEFUN([AC_WITH_LIBMEMCACHED],[
+AC_DEFUN([_SEARCH_FOR_LIBMEMCACHED],[
   AC_ARG_WITH(libmemcached,
-    [AS_HELP_STRING([--with-libmemcached<:@=DIR@:>@],
+    [AS_HELP_STRING([--with-libmemcached@<:@=DIR@:>@],
        [Use libmemcached in DIR])],
     [ with_libmemcached=$withval ],
     [ with_libmemcached=yes ])
 
-  if test "$with_libmemcached" = "yes"],
+  if test "$with_libmemcached" = "yes"
   then
     AC_CHECK_HEADERS(libmemcached/memcached.h)
     if test "$ac_cv_header_libmemcached_memcached_h" = "no"
@@ -16,11 +16,11 @@ AC_DEFUN([AC_WITH_LIBMEMCACHED],[
     fi
     my_save_LIBS="$LIBS"
     LIBS=""
-    AC_SEARCH_LIBS(libmemcached)
+    AC_CHECK_LIB(memcached, memcached_quit, [ac_cv_found_libmemcached=yes], [ac_cv_found_libmemcached=no])
     LIBMEMCACED_LIBS="${LIBS}"
     LIBS="${my_save_LIBS}"
     LIBEVENT_CPPFLAGS=""
-    if test "$ac_cv_header_libmemcached_memcached_h" = "yes" -a "$ac_cv_search_memcached" = "yes"
+    if test "$ac_cv_header_libmemcached_memcached_h" = "yes" -a "$ac_cv_found_libmemcached" = "yes"
     then
       ac_cv_have_memcached=yes
     else
@@ -42,8 +42,13 @@ AC_DEFUN([AC_WITH_LIBMEMCACHED],[
       LIBMEMCACHED_LIBS="-L$withval/lib -lmemcached"
       ac_cv_have_memcached=yes
     else
-      AC_MSG_ERROR([event.h or libevent.a not found in $withval])
+      AC_MSG_WARN([memcached.h or libmemcached.a not found in $withval])
+      ac_cv_have_memcached=no
     fi
   fi
   AM_CONDITIONAL(HAVE_MEMCACHED,[test "$ac_cv_have_memcached" = "yes"])
 ])    
+
+AC_DEFUN([AC_WITH_LIBMEMCACHED],[
+  AC_REQUIRE([_SEARCH_FOR_LIBMEMCACHED])
+])
