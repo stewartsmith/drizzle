@@ -3304,11 +3304,6 @@ compare_tables(Session *session,
   Create_field *new_field;
   KEY_PART_INFO *key_part;
   KEY_PART_INFO *end;
-  /*
-    Remember if the new definition has new VARCHAR column;
-    create_info->varchar will be reset in mysql_prepare_create_table.
-  */
-  bool varchar= create_info->varchar;
 
   {
     /*
@@ -3389,8 +3384,7 @@ compare_tables(Session *session,
       create_info->used_fields & HA_CREATE_USED_ROW_FORMAT ||
       (alter_info->flags & (ALTER_RECREATE | ALTER_FOREIGN_KEY)) ||
       order_num ||
-      !table->s->mysql_version ||
-      (table->s->frm_version < FRM_VER_TRUE_VARCHAR && varchar))
+      !table->s->mysql_version)
   {
     *table_changes= IS_EQUAL_NO;
     /*
@@ -3412,9 +3406,6 @@ compare_tables(Session *session,
     /* TODO check for ADD/DROP FOREIGN KEY */
     if (alter_info->flags & ALTER_FOREIGN_KEY)
       *alter_flags|=  HA_ALTER_FOREIGN_KEY;
-    if (!table->s->mysql_version ||
-        (table->s->frm_version < FRM_VER_TRUE_VARCHAR && varchar))
-      *alter_flags|=  HA_ALTER_COLUMN_TYPE;
   }
   /*
     Go through fields and check if the original ones are compatible

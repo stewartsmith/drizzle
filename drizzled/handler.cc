@@ -2317,53 +2317,6 @@ int handler::check_old_types()
   return 0;
 }
 
-
-static bool update_frm_version(Table *table)
-{
-  char path[FN_REFLEN];
-  File file;
-  bool result= true;
-
-  /*
-    No need to update frm version in case table was created or checked
-    by server with the same version. This also ensures that we do not
-    update frm version for temporary tables as this code doesn't support
-    temporary tables.
-  */
-  if (table->s->mysql_version == DRIZZLE_VERSION_ID)
-    return(0);
-
-  strxmov(path, table->s->normalized_path.str, reg_ext, NULL);
-
-  if ((file= my_open(path, O_RDWR, MYF(MY_WME))) >= 0)
-  {
-    unsigned char version[4];
-    char *key= table->s->table_cache_key.str;
-    uint32_t key_length= table->s->table_cache_key.length;
-    Table *entry;
-    HASH_SEARCH_STATE state;
-
-    int4store(version, DRIZZLE_VERSION_ID);
-
-    if (pwrite(file, (unsigned char*)version, 4, 51L) == 0)
-    {
-      result= false;
-      goto err;
-    }
-
-    for (entry=(Table*) hash_first(&open_cache,(unsigned char*) key,key_length, &state);
-         entry;
-         entry= (Table*) hash_next(&open_cache,(unsigned char*) key,key_length, &state))
-      entry->s->mysql_version= DRIZZLE_VERSION_ID;
-  }
-err:
-  if (file >= 0)
-    my_close(file,MYF(MY_WME));
-  return(result);
-}
-
-
-
 /**
   @return
     key if error because of duplicated keys
@@ -2474,7 +2427,7 @@ int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
   }
   if ((error= check(session, check_opt)))
     return error;
-  return update_frm_version(table);
+  return HA_ADMIN_OK;
 }
 
 /**
@@ -2522,7 +2475,7 @@ int handler::ha_repair(Session* session, HA_CHECK_OPT* check_opt)
 
   if ((result= repair(session, check_opt)))
     return result;
-  return update_frm_version(table);
+  return HA_ADMIN_OK;
 }
 
 

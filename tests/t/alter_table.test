@@ -251,15 +251,15 @@ drop table if exists t1;
 
 create table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a) values(1);
---replace_column 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
+--replace_column 3 X 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
 show table status like 't1';
 alter table t1 modify a int;
---replace_column 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
+--replace_column 3 X 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
 show table status like 't1';
 drop table t1;
 create table t1 (a int not null default 0, b int not null default 0, c int not null default 0, d int not null default 0, e int not null default 0, f int not null default 0, g int not null default 0, h int not null default 0,i int not null default 0, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a) values(1);
---replace_column 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
+--replace_column 3 X 7 X 8 X 9 X 10 X 11 X 12 X 13 X 14 X
 show table status like 't1';
 drop table t1;
 

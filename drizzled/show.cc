@@ -2844,7 +2844,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     }
     tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
     table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
-    table->field[5]->store((int64_t) share->frm_version, true);
+    table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;
     if (share->min_rows)

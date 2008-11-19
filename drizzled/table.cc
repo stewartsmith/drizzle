@@ -219,7 +219,7 @@ void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
   share->path.str=               (char*) path;
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
-  share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
+
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -468,16 +468,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   my_seek(file,pos,MY_SEEK_SET,MYF(0));
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
-
-  share->frm_version= head[2];
-  /*
-    Check if .frm file created by MySQL 5.0. In this case we want to
-    display CHAR fields as CHAR and not as VARCHAR.
-    We do it this way as we want to keep the old frm version to enable
-    MySQL 4.1 to read these files.
-  */
-  if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
-    share->frm_version= FRM_VER_TRUE_VARCHAR;
 
   legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
   assert(share->db_plugin == NULL);
