@@ -16,11 +16,11 @@ AC_DEFUN([_SEARCH_FOR_LIBMEMCACHED],[
     fi
     my_save_LIBS="$LIBS"
     LIBS=""
-    AC_CHECK_LIB(memcached, memcached_quit, [ac_cv_found_libmemcached=yes], [ac_cv_found_libmemcached=no])
-    LIBMEMCACED_LIBS="${LIBS}"
+    AC_CHECK_LIB(memcached, memcached_create)
+    LIBMEMCACHED_LIBS="${LIBS}"
     LIBS="${my_save_LIBS}"
-    LIBEVENT_CPPFLAGS=""
-    if test "$ac_cv_header_libmemcached_memcached_h" = "yes" -a "$ac_cv_found_libmemcached" = "yes"
+    LIBMEMCACHED_CPPFLAGS=""
+    if test "$ac_cv_header_libmemcached_memcached_h" = "yes" -a "$ac_cv_lib_memcached_memcached_create" = "yes"
     then
       ac_cv_have_memcached=yes
     else
@@ -46,9 +46,11 @@ AC_DEFUN([_SEARCH_FOR_LIBMEMCACHED],[
       ac_cv_have_memcached=no
     fi
   fi
+  AC_SUBST(LIBMEMCACHED_LIBS)
+  AC_SUBST(LIBMEMCACHED_CPPFLAGS)
   AM_CONDITIONAL(HAVE_MEMCACHED,[test "$ac_cv_have_memcached" = "yes"])
 ])    
 
-AC_DEFUN([AC_WITH_LIBMEMCACHED],[
+AC_DEFUN([WITH_LIBMEMCACHED],[
   AC_REQUIRE([_SEARCH_FOR_LIBMEMCACHED])
 ])
