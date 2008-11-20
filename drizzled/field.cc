@@ -29,6 +29,24 @@
 #include <errno.h>
 #include <drizzled/error.h>
 #include <drizzled/virtual_column_info.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
 
 
 /*****************************************************************************
@@ -1328,92 +1346,6 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
   return tmp;
 }
 
-
-/*
-  Report "not well formed" or "cannot convert" error
-  after storing a character string info a field.
-
-  SYNOPSIS
-    check_string_copy_error()
-    field                    - Field
-    well_formed_error_pos    - where not well formed data was first met
-    cannot_convert_error_pos - where a not-convertable character was first met
-    end                      - end of the string
-    cs                       - character set of the string
-
-  NOTES
-    As of version 5.0 both cases return the same error:
-
-      "Invalid string value: 'xxx' for column 't' at row 1"
-
-  Future versions will possibly introduce a new error message:
-
-      "Cannot convert character string: 'xxx' for column 't' at row 1"
-
-  RETURN
-    false - If errors didn't happen
-    true  - If an error happened
-*/
-
-bool
-check_string_copy_error(Field_str *field,
-                        const char *well_formed_error_pos,
-                        const char *cannot_convert_error_pos,
-                        const char *end,
-                        const CHARSET_INFO * const cs)
-{
-  const char *pos, *end_orig;
-  char tmp[64], *t;
-  
-  if (!(pos= well_formed_error_pos) &&
-      !(pos= cannot_convert_error_pos))
-    return false;
-
-  end_orig= end;
-  set_if_smaller(end, pos + 6);
-
-  for (t= tmp; pos < end; pos++)
-  {
-    /*
-      If the source string is ASCII compatible (mbminlen==1)
-      and the source character is in ASCII printable range (0x20..0x7F),
-      then display the character as is.
-      
-      Otherwise, if the source string is not ASCII compatible (e.g. UCS2),
-      or the source character is not in the printable range,
-      then print the character using HEX notation.
-    */
-    if (((unsigned char) *pos) >= 0x20 &&
-        ((unsigned char) *pos) <= 0x7F &&
-        cs->mbminlen == 1)
-    {
-      *t++= *pos;
-    }
-    else
-    {
-      *t++= '\\';
-      *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *pos) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *pos) & 15];
-    }
-  }
-  if (end_orig > end)
-  {
-    *t++= '.';
-    *t++= '.';
-    *t++= '.';
-  }
-  *t= '\0';
-  push_warning_printf(field->table->in_use, 
-                      field->table->in_use->abort_on_warning ?
-                      DRIZZLE_ERROR::WARN_LEVEL_ERROR :
-                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                      ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
-                      ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
-                      "string", tmp, field->field_name,
-                      (uint32_t) field->table->in_use->row_count);
-  return true;
-}
 
 uint32_t Field::is_equal(Create_field *new_field)
 {

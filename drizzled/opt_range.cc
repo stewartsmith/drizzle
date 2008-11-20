@@ -108,6 +108,7 @@
 #include <drizzled/error.h>
 #include <drizzled/cost_vect.h>
 #include <drizzled/item/cmpfunc.h>
+#include <drizzled/field/num.h>
 
 #include CMATH_H
 

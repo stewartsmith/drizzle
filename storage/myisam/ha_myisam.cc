@@ -28,6 +28,7 @@
 #include <drizzled/session.h>
 #include <drizzled/protocol.h>
 #include <drizzled/table.h>
+#include <drizzled/field/timestamp.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -35,7 +36,7 @@ ulong myisam_recover_options= HA_RECOVER_NONE;
 const char *myisam_recover_names[] =
 { "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
 TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
-				 myisam_recover_names, NULL};
+                                 myisam_recover_names, NULL};
 
 const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
                                            "nulls_ignored", NULL};

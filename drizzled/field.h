@@ -677,75 +677,9 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 
 
 bool
-test_if_important_data(const CHARSET_INFO * const cs, 
-		       const char *str,
+test_if_important_data(const CHARSET_INFO * const cs,
+                       const char *str,
                        const char *strend);
 
-/*
-  Field subclasses
- */
-#include <drizzled/field/str.h>
-#include <drizzled/field/longstr.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/field/null.h>
-#include <drizzled/field/date.h>
-#include <drizzled/field/fdecimal.h>
-#include <drizzled/field/real.h>
-#include <drizzled/field/double.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/timetype.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/field/datetime.h>
-#include <drizzled/field/fstring.h>
-#include <drizzled/field/varstring.h>
-
-/*
-  The following are for the interface with the .frm file
-*/
-
-#define FIELDFLAG_DECIMAL		1
-#define FIELDFLAG_BINARY		1	// Shares same flag
-#define FIELDFLAG_NUMBER		2
-#define FIELDFLAG_DECIMAL_POSITION      4
-#define FIELDFLAG_PACK			120	// Bits used for packing
-#define FIELDFLAG_INTERVAL		256     // mangled with decimals!
-#define FIELDFLAG_BLOB			1024	// mangled with decimals!
-
-#define FIELDFLAG_NO_DEFAULT		16384   /* sql */
-#define FIELDFLAG_SUM			((uint32_t) 32768)// predit: +#fieldflag
-#define FIELDFLAG_MAYBE_NULL		((uint32_t) 32768)// sql
-#define FIELDFLAG_HEX_ESCAPE		((uint32_t) 0x10000)
-#define FIELDFLAG_PACK_SHIFT		3
-#define FIELDFLAG_DEC_SHIFT		8
-#define FIELDFLAG_MAX_DEC		31
-
-#define MTYP_TYPENR(type) (type & 127)	/* Remove bits from type */
-
-#define f_is_dec(x)		((x) & FIELDFLAG_DECIMAL)
-#define f_is_num(x)		((x) & FIELDFLAG_NUMBER)
-#define f_is_decimal_precision(x)	((x) & FIELDFLAG_DECIMAL_POSITION)
-#define f_is_packed(x)		((x) & FIELDFLAG_PACK)
-#define f_packtype(x)		(((x) >> FIELDFLAG_PACK_SHIFT) & 15)
-#define f_decimals(x)		((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & FIELDFLAG_MAX_DEC))
-#define f_is_alpha(x)		(!f_is_num(x))
-#define f_is_binary(x)          ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
-#define f_is_enum(x)            (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == FIELDFLAG_INTERVAL)
-#define f_is_blob(x)		(((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == FIELDFLAG_BLOB)
-#define f_is_equ(x)		((x) & (1+2+FIELDFLAG_PACK+31*256))
-#define f_settype(x)   (((int) x) << FIELDFLAG_PACK_SHIFT)
-#define f_maybe_null(x)		(x & FIELDFLAG_MAYBE_NULL)
-#define f_no_default(x)		(x & FIELDFLAG_NO_DEFAULT)
-#define f_is_hex_escape(x)      ((x) & FIELDFLAG_HEX_ESCAPE)
-
-bool
-check_string_copy_error(Field_str *field,
-                        const char *well_formed_error_pos,
-                        const char *cannot_convert_error_pos,
-                        const char *end,
-                        const CHARSET_INFO * const cs);
 
 #endif /* DRIZZLED_FIELD_H */

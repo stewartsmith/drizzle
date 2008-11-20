@@ -21,6 +21,11 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIMESTAMP
 #define DRIZZLE_SERVER_FIELD_TIMESTAMP
 
+#include <drizzled/field/str.h>
+
+typedef struct st_table_share TABLE_SHARE;
+typedef struct charset_info_st CHARSET_INFO;
+
 class Field_timestamp :public Field_str {
 public:
   Field_timestamp(unsigned char *ptr_arg, uint32_t len_arg,

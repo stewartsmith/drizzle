@@ -32,6 +32,8 @@
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/fdecimal.h>
 
 #include <string>
 

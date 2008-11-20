@@ -23,6 +23,7 @@
 #include <drizzled/item.h>
 #include <drizzled/cached_item.h>
 #include <drizzled/session.h>
+#include <drizzled/field/varstring.h>
 
 class select_result;
 

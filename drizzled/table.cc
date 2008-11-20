@@ -30,7 +30,9 @@
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-
+#include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/double.h>
 #include <string>
 
 using namespace std;

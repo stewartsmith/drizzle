@@ -23,6 +23,8 @@
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/fstring.h>
 
 /*
   check that all fields are real fields

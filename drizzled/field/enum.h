@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_ENUM
 #define DRIZZLE_SERVER_FIELD_ENUM
 
+#include <drizzled/field/str.h>
+
 class Field_enum :public Field_str {
 protected:
   uint32_t packlength;

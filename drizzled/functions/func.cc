@@ -27,6 +27,10 @@ using namespace std;
 #include <drizzled/sql_list.h>
 
 #include <drizzled/functions/int.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/fdecimal.h>
 #include CMATH_H
 #include <drizzled/util/math.h>
 #include <drizzled/session.h>

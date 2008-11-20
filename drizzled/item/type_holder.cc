@@ -22,6 +22,7 @@
 #include <drizzled/functions/func.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/type_holder.h>
+#include <drizzled/field/enum.h>
 
 Item_type_holder::Item_type_holder(Session *session, Item *item)
   :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))

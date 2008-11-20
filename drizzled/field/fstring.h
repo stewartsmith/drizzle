@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_FIELD_STRING
 #define DRIZZLE_SERVER_FIELD_STRING
 
+#include <drizzled/field/longstr.h>
+
 class Field_string :public Field_longstr {
 public:
   bool can_alter_field_type;

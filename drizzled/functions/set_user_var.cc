@@ -22,6 +22,7 @@
 #include <drizzled/functions/set_user_var.h>
 #include <drizzled/functions/get_variable.h>
 #include <drizzled/functions/update_hash.h>
+#include <drizzled/field/num.h>
 #include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 
