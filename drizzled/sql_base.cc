@@ -1573,13 +1573,10 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
 
   free_io_cache(table);
   closefrm(table, 0);
-  /*
-     Check that temporary table has not been created with
-     frm_only because it has then not been created in any storage engine
-   */
+
   if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str, 
-                       table->s->tmp_table == TMP_TABLE_FRM_FILE_ONLY);
+    rm_temporary_table(table_type, table->s->path.str);
+
   if (free_share)
   {
     free_table_share(table->s);
@@ -3856,7 +3853,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 }
 
 
-bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
+bool rm_temporary_table(handlerton *base, char *path)
 {
   bool error=0;
   handler *file;
@@ -3869,7 +3866,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension
   file= get_new_handler((TABLE_SHARE*) 0, current_session->mem_root, base);
-  if (!frm_only && file && file->ha_delete_table(path))
+  if (file && file->ha_delete_table(path))
   {
     error=1;
     sql_print_warning(_("Could not remove temporary table: '%s', error: %d"),

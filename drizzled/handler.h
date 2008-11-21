@@ -1208,7 +1208,7 @@ int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
                     bool update_create_info);
-int ha_delete_table(Session *session, handlerton *db_type, const char *path,
+int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
 /* statistics and info */

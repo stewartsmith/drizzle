@@ -828,7 +828,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 
-    if (i == primary_key && !strcmp(key_info->name, primary_key_name))
+    if (i == primary_key && is_primary_key(key_info))
     {
       found_primary=1;
       /*
@@ -2345,20 +2345,12 @@ static int fill_schema_table_names(Session *session, Table *table,
   }
   else
   {
-    enum legacy_db_type not_used;
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str, 
                                 table_name->str, reg_ext, 0);
-    if (mysql_frm_type(session, path, &not_used)) 
-    {
+
       table->field[3]->store(STRING_WITH_LEN("BASE Table"),
                              system_charset_info);
-    }
-    else
-    {
-      table->field[3]->store(STRING_WITH_LEN("ERROR"),
-                             system_charset_info);
-    }
 
     if (session->is_error() && session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
     {
@@ -2844,7 +2836,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
     }
     tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
     table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
-    table->field[5]->store((int64_t) share->frm_version, true);
+    table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;
     if (share->min_rows)
@@ -3462,7 +3454,7 @@ static int get_schema_constraints_record(Session *session, TableList *tables,
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
         continue;
 
-      if (i == primary_key && !strcmp(key_info->name, primary_key_name))
+      if (i == primary_key && is_primary_key(key_info))
       {
         if (store_constraints(session, table, db_name, table_name, key_info->name,
                               strlen(key_info->name),

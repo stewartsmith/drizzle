@@ -44,9 +44,6 @@ class TableList;
 /*************************************************************************/
 
 
-bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
-
-
 class Field_timestamp;
 class Field_blob;
 
@@ -160,7 +157,7 @@ typedef struct st_table_share
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
   uint32_t column_bitmap_size;
-  unsigned char frm_version;
+
   uint32_t vfields;                         /* Number of virtual fields */
   bool null_field_first;
   bool db_low_byte_first;		/* Portable row format */

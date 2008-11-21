@@ -161,6 +161,9 @@ test-drizzle:
         delete \
         distinct \
 	drizzleslap \
+	drop_table \
+	drop_table_if_exists \
+	drop_table_temp \
 	empty_table \
         endspace \
         flush2 \
@@ -218,7 +221,6 @@ test-drizzle:
         limit \
         lock_tables_lost_commit \
 	main.myisam-blob \
-	main.myisam-system \
 	mysqldump-compat \
 	mysqldump-max \
 	order_by \
