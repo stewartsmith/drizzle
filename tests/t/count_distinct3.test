@@ -12,6 +12,7 @@ CREATE TABLE t1 (id INTEGER, grp int, id_rev INTEGER);
 --disable_query_log
 SET @rnd_max= 2147483647;
 let $1 = 1000;
+begin;
 while ($1)
 {
   SET @rnd= RAND();
@@ -21,20 +22,9 @@ while ($1)
   INSERT INTO t1 (id, grp, id_rev) VALUES (@id, @grp, @id_rev); 
   dec $1;
 }
+commit;
 set @@read_buffer_size=2*1024*1024;
 CREATE TABLE t2 SELECT * FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
-INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
-INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
 INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
 INSERT INTO t2 (id, grp, id_rev) SELECT id, grp, id_rev FROM t1;
 INSERT INTO t1 (id, grp, id_rev) SELECT id, grp, id_rev FROM t2;
