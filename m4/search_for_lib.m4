@@ -5,9 +5,9 @@ AC_DEFUN([SEARCH_FOR_LIB],
 [
   AS_VAR_PUSHDEF([with_lib], [with_lib$1])
   AS_VAR_PUSHDEF([ac_header], [ac_cv_header_$3])
+  AS_VAR_PUSHDEF([have_lib], [ac_cv_have_$1])
   AS_VAR_PUSHDEF([libs_var], AS_TR_CPP([$1_LIBS]))
   AS_VAR_PUSHDEF([cppflags_var], AS_TR_CPP([$1_CPPFLAGS]))
-  AS_VAR_PUSHDEF([have_lib], [ac_cv_have_$1])
   AS_LITERAL_IF([$1],
                 [AS_VAR_PUSHDEF([ac_lib], [ac_cv_lib_$1_$2])],
                 [AS_VAR_PUSHDEF([ac_lib], [ac_cv_lib_$1''_$2])])
@@ -55,9 +55,9 @@ AC_DEFUN([SEARCH_FOR_LIB],
       [$4]
     fi
   ])
-  AC_SUBST(LIBMEMCACHED_LIBS)
-  AC_SUBST(LIBMEMCACHED_CPPFLAGS)
-  AM_CONDITIONAL(HAVE_MEMCACHED,[test "$ac_cv_have_memcached" = "yes"])
+  AC_SUBST(libs_var)
+  AC_SUBST(cppflags_var)
+  AM_CONDITIONAL(AS_TR_CPP(HAVE_$1),[test AS_VAR_GET([have_lib]) = yes])
   AS_VAR_POPDEF([with_lib])
   AS_VAR_POPDEF([ac_header])
   AS_VAR_POPDEF([libs_var])

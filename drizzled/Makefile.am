@@ -67,7 +67,7 @@ noinst_LTLIBRARIES = libhandler.la libyacc.la
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(ZLIB_LIBS) $(LIBINTL)
+	$(Z_LIBS) $(LIBINTL) ${UUID_LIBS}
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -290,9 +290,9 @@ if HAVE_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
-gen_lex_hash_SOURCES =gen_lex_hash.cc
+gen_lex_hash_SOURCES= gen_lex_hash.cc
 
-gen_lex_hash_LDFLAGS =  
+gen_lex_hash_LDFLAGS= 
 
 DEFS =-DDRIZZLE_SERVER \
       -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
