@@ -38,6 +38,8 @@
 #include <drizzled/data_home.h>
 #include <drizzled/log_event.h>
 
+#include <drizzled/errmsg.h>
+
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
@@ -3164,7 +3166,7 @@ void sql_print_error(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(ERROR_LEVEL, format, args);
+  errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
   va_end(args);
 
   return;
@@ -3176,7 +3178,7 @@ void sql_print_warning(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(WARNING_LEVEL, format, args);
+  errmsg_vprintf (current_session, WARNING_LEVEL, format, args);
   va_end(args);
 
   return;
@@ -3188,7 +3190,7 @@ void sql_print_information(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(INFORMATION_LEVEL, format, args);
+  errmsg_vprintf (current_session, INFORMATION_LEVEL, format, args);
   va_end(args);
 
   return;
