@@ -34,7 +34,7 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 DTRACE = @DTRACE@
 
@@ -83,7 +83,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(LIBEVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@
 
 drizzled_LDFLAGS =
@@ -280,6 +280,7 @@ drizzled_SOURCES = \
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 libyacc_la_SOURCES = sql_yacc.yy
+AM_YFLAGS = -p DRIZZLE -d --verbose
 # Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.
 libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
@@ -333,9 +334,6 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
-
-AM_YFLAGS = -d --verbose
-
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool

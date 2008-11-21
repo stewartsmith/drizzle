@@ -5,6 +5,8 @@ DRIZZLE_PLUGIN_STATIC(innobase,   [libinnobase.la])
 DRIZZLE_PLUGIN_DYNAMIC(innobase,   [libinnobase.la])
 DRIZZLE_PLUGIN_MANDATORY(innobase)  dnl Default
 DRIZZLE_PLUGIN_ACTIONS(innobase,  [
+  AC_PROG_LEX
+  AC_FUNC_MMAP
   AC_CHECK_LIB(rt, aio_read, [innodb_system_libs="-lrt"])
   AC_SUBST(innodb_system_libs)
   AC_CHECK_HEADERS(aio.h sched.h)
@@ -14,6 +16,7 @@ DRIZZLE_PLUGIN_ACTIONS(innobase,  [
   AC_CHECK_FUNCS(sched_yield)
   AC_CHECK_FUNCS(fdatasync)
   AC_CHECK_FUNCS(localtime_r)
+  AC_CHECK_FUNCS([uname munmap memchr getpagesize bzero])
   AC_C_BIGENDIAN
   case "$target_os" in
          lin*)
