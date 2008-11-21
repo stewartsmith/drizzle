@@ -21,6 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
 #include CMATH_H
 #include <drizzled/util/math.h>
 
