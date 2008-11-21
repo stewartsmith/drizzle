@@ -569,8 +569,7 @@ THR_LOCK_DATA **ha_heap::store_lock(Session *session __attribute__((unused)),
 
 int ha_heap::delete_table(const char *name)
 {
-  int error= heap_delete_table(name);
-  return error == ENOENT ? 0 : error;
+  return heap_delete_table(name);
 }
 
 

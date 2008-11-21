@@ -44,9 +44,6 @@ class TableList;
 /*************************************************************************/
 
 
-bool mysql_frm_type(Session *session, char *path, enum legacy_db_type *dbt);
-
-
 class Field_timestamp;
 class Field_blob;
 

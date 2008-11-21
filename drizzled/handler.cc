@@ -1368,30 +1368,80 @@ handle_error(uint32_t sql_errno  __attribute__((unused)),
 }
 
 
+struct handlerton_delete_table_args {
+  Session *session;
+  const char *path;
+  handler *file;
+  int error;
+};
+
+static bool deletetable_handlerton(Session *unused1 __attribute__((unused)),
+                                   plugin_ref plugin,
+                                   void *args)
+{
+  struct handlerton_delete_table_args *dtargs= (struct handlerton_delete_table_args *) args;
+
+  Session *session= dtargs->session;
+  const char *path= dtargs->path;
+
+  handler *file;
+  char tmp_path[FN_REFLEN];
+
+  if(dtargs->error!=ENOENT) /* already deleted table */
+    return false;
+
+  handlerton *table_type= plugin_data(plugin, handlerton *);
+
+  if(!table_type)
+    return false;
+
+  if(!(table_type->state == SHOW_OPTION_YES && table_type->create))
+    return false;
+
+  if ((file= table_type->create(table_type, NULL, session->mem_root)))
+    file->init();
+  else
+    return false;
+
+  path= check_lowercase_names(file, path, tmp_path);
+  int error= file->ha_delete_table(path);
+
+  if(error!=ENOENT)
+  {
+    dtargs->error= error;
+    if(dtargs->file)
+      delete dtargs->file;
+    dtargs->file= file;
+    return true;
+  }
+
+  return false;
+}
+
 /**
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int ha_delete_table(Session *session, handlerton *table_type, const char *path,
+int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning)
 {
-  handler *file;
-  char tmp_path[FN_REFLEN];
-  int error;
-  Table dummy_table;
   TABLE_SHARE dummy_share;
+  Table dummy_table;
+
+  struct handlerton_delete_table_args dtargs;
+  dtargs.error= ENOENT;
+  dtargs.session= session;
+  dtargs.path= path;
+  dtargs.file= NULL;
+
+  plugin_foreach(NULL, deletetable_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN,
+                 &dtargs);
 
   memset(&dummy_table, 0, sizeof(dummy_table));
   memset(&dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
-  /* DB_TYPE_UNKNOWN is used in ALTER Table when renaming only .frm files */
-  if (table_type == NULL ||
-      ! (file=get_new_handler((TABLE_SHARE*)0, session->mem_root, table_type)))
-    return(ENOENT);
-
-  path= check_lowercase_names(file, path, tmp_path);
-  if ((error= file->ha_delete_table(path)) && generate_warning)
+  if (dtargs.error && generate_warning)
   {
     /*
       Because file->print_error() use my_error() to generate the error message
@@ -1410,10 +1460,11 @@ int ha_delete_table(Session *session, handlerton *table_type, const char *path,
     dummy_share.table_name.length= strlen(alias);
     dummy_table.alias= alias;
 
+    handler *file= dtargs.file;
     file->change_table_ptr(&dummy_table, &dummy_share);
 
     session->push_internal_handler(&ha_delete_table_error_handler);
-    file->print_error(error, 0);
+    file->print_error(dtargs.error, 0);
 
     session->pop_internal_handler();
 
@@ -1421,11 +1472,14 @@ int ha_delete_table(Session *session, handlerton *table_type, const char *path,
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, dtargs.error,
                 ha_delete_table_error_handler.buff);
   }
-  delete file;
-  return(error);
+
+  if(dtargs.file)
+    delete dtargs.file;
+
+  return dtargs.error;
 }
 
 /****************************************************************************

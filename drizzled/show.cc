@@ -2345,20 +2345,12 @@ static int fill_schema_table_names(Session *session, Table *table,
   }
   else
   {
-    enum legacy_db_type not_used;
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str, 
                                 table_name->str, reg_ext, 0);
-    if (mysql_frm_type(session, path, &not_used)) 
-    {
+
       table->field[3]->store(STRING_WITH_LEN("BASE Table"),
                              system_charset_info);
-    }
-    else
-    {
-      table->field[3]->store(STRING_WITH_LEN("ERROR"),
-                             system_charset_info);
-    }
 
     if (session->is_error() && session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
     {

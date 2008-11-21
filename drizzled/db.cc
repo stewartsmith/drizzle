@@ -1012,7 +1012,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
     }
   }
   if (session->killed ||
-      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1, 1)))
+      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1)))
     goto err;
 
   my_dirend(dirp);  

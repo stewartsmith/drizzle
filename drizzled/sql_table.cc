@@ -322,7 +322,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
     LOCK_open during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
-  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, 0, 0);
+  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, 0);
 
   if (need_start_waiting)
     start_waiting_global_read_lock(session);
@@ -364,8 +364,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 */
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view,
-                         bool dont_log_query)
+                         bool drop_temporary, bool dont_log_query)
 {
   TableList *table;
   char path[FN_REFLEN], *alias;
@@ -416,8 +415,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     char *db=table->db;
     handlerton *table_type;
-    enum legacy_db_type frm_db_type;
-
 
     error= drop_temporary_table(session, table);
 
@@ -485,8 +482,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                                         FN_IS_TMP : 0);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))) ||
-         (!drop_view && mysql_frm_type(session, path, &frm_db_type) != true)))
+        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))))
+        )
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -499,17 +496,12 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     else
     {
       char *end;
-      if (table_type == NULL)
-      {
-        mysql_frm_type(session, path, &frm_db_type);
-        table_type= ha_resolve_by_legacy_type(session, frm_db_type);
-      }
       // Remove extension for delete
       *(end= path + path_length - reg_ext_length)= '\0';
-      error= ha_delete_table(session, table_type, path, db, table->table_name,
+      error= ha_delete_table(session, path, db, table->table_name,
                              !dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && 
-	  (if_exists || table_type == NULL))
+	  if_exists)
       {
 	error= 0;
         session->clear_error();
@@ -631,7 +623,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(handlerton *base,const char *db,
+bool quick_rm_table(handlerton *base __attribute__((unused)),const char *db,
                     const char *table_name, uint32_t flags)
 {
   char path[FN_REFLEN];
@@ -646,7 +638,7 @@ bool quick_rm_table(handlerton *base,const char *db,
 
   error|= delete_table_proto_file(path);
 
-  return(ha_delete_table(current_session, base, path, db, table_name, 0) ||
+  return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
 }
 
@@ -4408,7 +4400,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   handlerton *old_db_type, *new_db_type, *save_old_db_type;
-  legacy_db_type table_type;
 
   new_name_buff[0]= '\0';
 
@@ -4461,7 +4452,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     into the main table list, like open_tables does).
     This code is wrong and will be removed, please do not copy.
   */
-  (void)mysql_frm_type(session, new_name_buff, &table_type);
 
   if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
     return(true);

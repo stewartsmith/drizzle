@@ -3550,48 +3550,6 @@ size_t Table::max_row_length(const unsigned char *data)
   return length;
 }
 
-/*
-  Check type of .frm if we are not going to parse it
-
-  SYNOPSIS
-  mysql_frm_type()
-  path        path to file
-
-  RETURN
-  false       error
-  true       table
-*/
-
-bool mysql_frm_type(Session *, char *path, enum legacy_db_type *dbt)
-{
-  File file;
-  unsigned char header[10];     /* This should be optimized */
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  if ((file= open(path, O_RDONLY)) < 0)
-    return false;
-  error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
-  my_close(file, MYF(MY_WME));
-
-  if (error)
-    return false;
-
-  /*  
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-   */  
-  if (header[0] != (unsigned char) 254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return true;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  return true;                   // Is probably a .frm table
-}
-
 /****************************************************************************
  Functions for creating temporary tables.
 ****************************************************************************/
