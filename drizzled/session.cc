@@ -472,7 +472,6 @@ Session::Session()
    binlog_table_maps(0), binlog_flags(0UL),
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
-   first_successful_insert_id_in_prev_stmt_for_binlog(0),
    first_successful_insert_id_in_cur_stmt(0),
    stmt_depends_on_first_successful_insert_id_in_prev_stmt(false),
    global_read_lock(0),

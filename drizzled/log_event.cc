@@ -1890,14 +1890,6 @@ end:
   session->query_length= 0;
   pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(session);      
-  /*
-    As a disk space optimization, future masters will not log an event for
-    LAST_INSERT_ID() if that function returned 0 (and thus they will be able
-    to replace the Session::stmt_depends_on_first_successful_insert_id_in_prev_stmt
-    variable by (Session->first_successful_insert_id_in_prev_stmt > 0) ; with the
-    resetting below we are ready to support that.
-  */
-  session->first_successful_insert_id_in_prev_stmt_for_binlog= 0;
   session->first_successful_insert_id_in_prev_stmt= 0;
   session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
