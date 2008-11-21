@@ -152,8 +152,6 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
 					      &binlog_cache_size);
-static sys_var_session_binlog_format sys_binlog_format(&vars, "binlog_format",
-                                            &SV::binlog_format);
 static sys_var_session_ulong	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
 						  &SV::bulk_insert_buff_size);
 static sys_var_session_ulong	sys_completion_type(&vars, "completion_type",
@@ -800,39 +798,6 @@ void fix_slave_exec_mode(enum_var_type)
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)
     bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
-}
-
-bool sys_var_session_binlog_format::is_readonly() const
-{
-  /*
-    Under certain circumstances, the variable is read-only (unchangeable):
-  */
-  Session *session= current_session;
-  /*
-    If RBR and open temporary tables, their CREATE TABLE may not be in the
-    binlog, so we can't toggle to SBR in this connection.
-    The test below will also prevent SET GLOBAL, well it was not easy to test
-    if global or not here.
-    And this test will also prevent switching from RBR to RBR (a no-op which
-    should not happen too often).
-
-    If we don't have row-based replication compiled in, the variable
-    is always read-only.
-  */
-  if ((session->variables.binlog_format == BINLOG_FORMAT_ROW) &&
-      session->temporary_tables)
-  {
-    my_error(ER_TEMP_TABLE_PREVENTS_SWITCH_OUT_OF_RBR, MYF(0));
-    return 1;
-  }
-  
-  return sys_var_session_enum::is_readonly();
-}
-
-
-void fix_binlog_format_after_update(Session *session, enum_var_type)
-{
-  session->reset_current_stmt_binlog_row_based();
 }
 
 

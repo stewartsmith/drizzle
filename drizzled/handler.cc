@@ -4362,6 +4362,7 @@ static int binlog_log_row(Table* table,
 {
   if (table->no_replicate)
     return 0;
+
   bool error= 0;
   Session *const session= table->in_use;
 
@@ -4378,6 +4379,7 @@ static int binlog_log_row(Table* table,
       error= (*log_func)(session, table, has_trans, before_record, after_record);
     }
   }
+
   return error ? HA_ERR_RBR_LOGGING_FAILED : 0;
 }
 

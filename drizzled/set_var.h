@@ -1104,20 +1104,6 @@ public:
 };
 
 
-extern void fix_binlog_format_after_update(Session *session, enum_var_type type);
-
-class sys_var_session_binlog_format :public sys_var_session_enum
-{
-public:
-  sys_var_session_binlog_format(sys_var_chain *chain, const char *name_arg, 
-                            ulong SV::*offset_arg)
-    :sys_var_session_enum(chain, name_arg, offset_arg,
-                      &binlog_format_typelib,
-                      fix_binlog_format_after_update)
-  {};
-  bool is_readonly() const;
-};
-
 /****************************************************************************
   Classes for parsing of the SET command
 ****************************************************************************/

@@ -299,12 +299,7 @@ char* opt_secure_file_priv= 0;
 bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
-const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NULL};
-TYPELIB binlog_format_typelib=
-  { array_elements(binlog_format_names) - 1, "",
-    binlog_format_names, NULL };
 uint32_t opt_binlog_format_id= (uint32_t) BINLOG_FORMAT_UNSPEC;
-const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
@@ -2178,10 +2173,6 @@ static int init_server_components()
       assert(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
     }
 
-  /* Check that we have not let the format to unspecified at this point */
-  assert((uint)global_system_variables.binlog_format <=
-              array_elements(binlog_format_names)-1);
-
   if (opt_log_slave_updates && replicate_same_server_id)
   {
     sql_print_error(_("using --replicate-same-server-id in conjunction with "
@@ -2756,7 +2747,6 @@ enum options_drizzled
   OPT_SQL_BIN_UPDATE_SAME,     OPT_REPLICATE_DO_DB,
   OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
-  OPT_BINLOG_FORMAT,
   OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
@@ -2895,16 +2885,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog_format", OPT_BINLOG_FORMAT,
-   N_("Does not have any effect without '--log-bin'. "
-      "Tell the master the form of binary logging to use: either 'row' for "
-      "row-based binary logging, or 'statement' for statement-based binary "
-      "logging, or 'mixed'. 'mixed' is statement-based binary logging except "
-      "for those statements where only row-based is correct: those which "
-      "involve user-defined functions (i.e. UDFs) or the UUID() function; for "
-      "those, row-based binary logging is automatically used. ")
-   ,(char**) &opt_binlog_format, (char**) &opt_binlog_format,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-do-db", OPT_BINLOG_DO_DB,
    N_("Tells the master it should log updates for the specified database, and "
       "exclude all others not explicitly mentioned."),
@@ -4267,13 +4247,6 @@ drizzled_get_one_option(int optid,
   case (int)OPT_BINLOG_IGNORE_DB:
     {
       binlog_filter->add_ignore_db(argument);
-      break;
-    }
-  case OPT_BINLOG_FORMAT:
-    {
-      int id;
-      id= find_type_or_exit(argument, &binlog_format_typelib, opt->name);
-      global_system_variables.binlog_format= opt_binlog_format_id= id - 1;
       break;
     }
   case (int)OPT_BINLOG_DO_DB:

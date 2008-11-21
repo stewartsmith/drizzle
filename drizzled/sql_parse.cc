@@ -1024,24 +1024,6 @@ bool alloc_query(Session *session, const char *packet, uint32_t packet_length)
   return false;
 }
 
-static void reset_one_shot_variables(Session *session) 
-{
-  session->variables.character_set_client=
-    global_system_variables.character_set_client;
-  session->variables.collation_connection=
-    global_system_variables.collation_connection;
-  session->variables.collation_database=
-    global_system_variables.collation_database;
-  session->variables.collation_server=
-    global_system_variables.collation_server;
-  session->update_charset();
-  session->variables.time_zone=
-    global_system_variables.time_zone;
-  session->variables.lc_time_names= &my_locale_en_US;
-  session->one_shot_set= 0;
-}
-
-
 /**
   Execute command saved in session and lex->sql_command.
 
@@ -1145,23 +1127,6 @@ mysql_execute_command(Session *session)
     {
       /* we warn the slave SQL thread */
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      if (session->one_shot_set)
-      {
-        /*
-          It's ok to check session->one_shot_set here:
-
-          The charsets in a MySQL 5.0 slave can change by both a binlogged
-          SET ONE_SHOT statement and the event-internal charset setting, 
-          and these two ways to change charsets do not seems to work
-          together.
-
-          At least there seems to be problems in the rli cache for
-          charsets if we are using ONE_SHOT.  Note that this is normally no
-          problem because either the >= 5.0 slave reads a 4.1 binlog (with
-          ONE_SHOT) *or* or 5.0 binlog (without ONE_SHOT) but never both."
-        */
-        reset_one_shot_variables(session);
-      }
       return(0);
     }
   }
@@ -1983,18 +1948,8 @@ end_with_restore_list:
 
     if (open_and_lock_tables(session, all_tables))
       goto error;
-    if (lex->one_shot_set && not_all_support_one_shot(lex_var_list))
-    {
-      my_error(ER_RESERVED_SYNTAX, MYF(0), "SET ONE_SHOT");
-      goto error;
-    }
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
-      /*
-        If the previous command was a SET ONE_SHOT, we don't want to forget
-        about the ONE_SHOT property of that SET. So we use a |= instead of = .
-      */
-      session->one_shot_set|= lex->one_shot_set;
       my_ok(session);
     }
     else
@@ -2383,19 +2338,6 @@ end_with_restore_list:
     break;
   }
   session->set_proc_info("query end");
-
-  /*
-    Binlog-related cleanup:
-    Reset system variables temporarily modified by SET ONE SHOT.
-
-    Exception: If this is a SET, do nothing. This is to allow
-    mysqlbinlog to print many SET commands (in this case we want the
-    charset temp setting to live until the real query). This is also
-    needed so that SET CHARACTER_SET_CLIENT... does not cancel itself
-    immediately.
-  */
-  if (session->one_shot_set && lex->sql_command != SQLCOM_SET_OPTION)
-    reset_one_shot_variables(session);
 
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the

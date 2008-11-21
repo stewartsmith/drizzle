@@ -7231,29 +7231,6 @@ ha_innobase::external_lock(
 
 	update_session(session);
 
-	/* Statement based binlogging does not work in isolation level
-	READ UNCOMMITTED and READ COMMITTED since the necessary
-	locks cannot be taken. In this case, we print an
-	informative error message and return with an error. */
-	if (lock_type == F_WRLCK)
-	{
-		ulong const binlog_format= session_binlog_format(session);
-		ulong const tx_isolation = session_tx_isolation(current_session);
-		if (tx_isolation <= ISO_READ_COMMITTED &&
-		    binlog_format == BINLOG_FORMAT_STMT)
-		{
-			char buf[256];
-			snprintf(buf, sizeof(buf),
-				    "Transaction level '%s' in"
-				    " InnoDB is not safe for binlog mode '%s'",
-				    tx_isolation_names[tx_isolation],
-				    binlog_format_names[binlog_format]);
-			my_error(ER_BINLOG_LOGGING_IMPOSSIBLE, MYF(0), buf);
-			return(HA_ERR_LOGGING_IMPOSSIBLE);
-		}
-	}
-
-
 	trx = prebuilt->trx;
 
 	prebuilt->sql_stat_start = TRUE;

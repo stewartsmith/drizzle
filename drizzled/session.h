@@ -1231,7 +1231,7 @@ public:
   /* scramble - random string sent to client on handshake */
   char	     scramble[SCRAMBLE_LENGTH+1];
 
-  bool       slave_thread, one_shot_set;
+  bool       slave_thread;
   /* tells if current statement should binlog row-based(1) or stmt-based(0) */
   bool       current_stmt_binlog_row_based;
   bool	     some_tables_deleted;

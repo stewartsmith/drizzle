@@ -518,7 +518,6 @@ Session::Session()
   slave_thread = 0;
   memset(&variables, 0, sizeof(variables));
   thread_id= 0;
-  one_shot_set= 0;
   file_id = 0;
   query_id= 0;
   warn_id= 0;
