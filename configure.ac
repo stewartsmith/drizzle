@@ -577,7 +577,7 @@ SEARCH_FOR_LIB(event, event_loop, event.h,
                AC_MSG_ERROR([libevent is required for Drizzle]))
 
 
-AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
   save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
   CPPFLAGS="$EVENT_CPPFLAGS"
@@ -589,7 +589,7 @@ AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
 #include <event.h>],[
 	struct bufferevent bev;
 	bufferevent_settimeout(&bev, 1, 1);
-  ], ac_libevent_works=yes, [
+  ], ac_cv_libevent_works=yes, [
         AC_MSG_ERROR([you need to install a more recent version of libevent,
 	check http://www.monkey.org/~provos/libevent/])
   ])
