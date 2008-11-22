@@ -97,11 +97,6 @@ public:
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
-  bool is_written_to_binlog(enum_var_type type)
-  {
-    return (type == OPT_SESSION || type == OPT_DEFAULT) &&
-      (binlog_status == SESSION_VARIABLE_IN_BINLOG);
-  }
   virtual bool update(Session *session, set_var *var)=0;
   virtual void set_default(Session *session_arg __attribute__((unused)),
                            enum_var_type type __attribute__((unused)))

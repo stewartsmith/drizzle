@@ -299,7 +299,6 @@ char* opt_secure_file_priv= 0;
 bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
-uint32_t opt_binlog_format_id= (uint32_t) BINLOG_FORMAT_ROW;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
@@ -2153,8 +2152,6 @@ static int init_server_components()
     sql_print_error(_("Out of memory"));
     unireg_abort(1);
   }
-
-  global_system_variables.binlog_format= BINLOG_FORMAT_ROW;
 
   if (opt_log_slave_updates && replicate_same_server_id)
   {
@@ -4092,7 +4089,6 @@ static void drizzle_init_variables(void)
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
   global_system_variables.old_alter_table= 0;
-  global_system_variables.binlog_format= BINLOG_FORMAT_ROW;
   /*
     Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
     when collecting index statistics for MyISAM tables.

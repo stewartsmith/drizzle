@@ -861,34 +861,6 @@ public:
     }
   }
 
-  /**
-     Has the parser/scanner detected that this statement is unsafe?
-   */
-  inline bool is_stmt_unsafe() const {
-    return binlog_stmt_flags & (1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  /**
-     Flag the current (top-level) statement as unsafe.
-
-     The flag will be reset after the statement has finished.
-
-   */
-  inline void set_stmt_unsafe() {
-    binlog_stmt_flags|= (1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  inline void clear_stmt_unsafe() {
-    binlog_stmt_flags&= ~(1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  /**
-    true if the parsed tree contains references to stored procedures
-    or functions, false otherwise
-  */
-  bool uses_stored_routines() const
-  { return sroutines_list.elements != 0; }
-
 private:
   enum enum_binlog_stmt_flag {
     BINLOG_STMT_FLAG_UNSAFE,

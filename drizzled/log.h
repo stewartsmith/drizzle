@@ -413,21 +413,6 @@ public:
   void init_error_log(uint32_t error_log_printer);
 };
 
-enum enum_binlog_format {
-  /*
-    statement-based except for cases where only row-based can work (UUID()
-    etc):
-  */
-  BINLOG_FORMAT_MIXED= 0,
-  BINLOG_FORMAT_STMT= 1, // statement-based
-  BINLOG_FORMAT_ROW= 2, // row_based
-/*
-  This value is last, after the end of binlog_format_typelib: it has no
-  corresponding cell in this typelib. We use this value to be able to know if
-  the user has explicitely specified a binlog format at startup or not.
-*/
-  BINLOG_FORMAT_UNSPEC= 3
-};
 extern TYPELIB binlog_format_typelib;
 
 int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);

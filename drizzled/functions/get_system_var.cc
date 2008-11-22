@@ -52,11 +52,6 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   return(0);
 }
 
-bool Item_func_get_system_var::is_written_to_binlog()
-{
-  return var->is_written_to_binlog(var_type);
-}
-
 Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
                      LEX_STRING component)
 {

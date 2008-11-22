@@ -2536,12 +2536,6 @@ void mysql_reset_session_for_next_command(Session *session)
   session->rand_used= 0;
   session->sent_row_count= session->examined_row_count= 0;
 
-  /*
-    Because we come here only for start of top-statements, binlog format is
-    constant inside a complex statement (using stored functions) etc.
-  */
-  session->reset_current_stmt_binlog_row_based();
-
   return;
 }
 

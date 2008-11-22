@@ -196,7 +196,6 @@ struct system_variables
   ulong trans_prealloc_size;
   ulong log_warnings;
   ulong group_concat_max_len;
-  ulong binlog_format; // binlog format for this session (see enum_binlog_format)
   /*
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly
@@ -1232,8 +1231,6 @@ public:
   char	     scramble[SCRAMBLE_LENGTH+1];
 
   bool       slave_thread;
-  /* tells if current statement should binlog row-based(1) or stmt-based(0) */
-  bool       current_stmt_binlog_row_based;
   bool	     some_tables_deleted;
   bool       last_cuted_field;
   bool	     no_errors, password;
@@ -1532,32 +1529,6 @@ public:
   void set_status_var_init();
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
-
-  inline void set_current_stmt_binlog_row_based()
-  {
-    current_stmt_binlog_row_based= true;
-  }
-  inline void clear_current_stmt_binlog_row_based()
-  {
-    current_stmt_binlog_row_based= false;
-  }
-  inline void reset_current_stmt_binlog_row_based()
-  {
-    /*
-      If there are temporary tables, don't reset back to
-      statement-based. Indeed it could be that:
-      CREATE TEMPORARY TABLE t SELECT UUID(); # row-based
-      # and row-based does not store updates to temp tables
-      # in the binlog.
-
-      Don't reset binlog format for NDB binlog injector thread.
-    */
-    if (temporary_tables == NULL)
-    {
-      current_stmt_binlog_row_based= 
-        test(variables.binlog_format == BINLOG_FORMAT_ROW);
-    }
-  }
 
   /**
     Set the current database; use deep copy of C-string.

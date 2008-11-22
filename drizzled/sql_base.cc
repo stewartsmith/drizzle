@@ -3630,21 +3630,6 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
   return(0);
 }
 
-
-/**
-
-  We just do row based binlogging.
-
- */
-
-int decide_logging_format(Session *session)
-{
-  if (drizzle_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
-    session->set_current_stmt_binlog_row_based();
-
-  return 0;
-}
-
 /*
   Lock all tables in list
 
@@ -3684,7 +3669,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
   *need_reopen= false;
 
   if (!tables)
-    return(decide_logging_format(session));
+    return 0;
 
   if (!session->locked_tables)
   {
@@ -3729,7 +3714,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
     }
   }
 
-  return(decide_logging_format(session));
+  return 0;
 }
 
 

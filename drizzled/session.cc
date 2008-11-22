@@ -680,7 +680,6 @@ void Session::init(void)
   memset(warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
   update_charset();
-  reset_current_stmt_binlog_row_based();
   memset(&status_var, 0, sizeof(status_var));
 }
 
@@ -2282,11 +2281,6 @@ extern "C" int session_non_transactional_update(const Session *session)
   return(session->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int session_binlog_format(const Session *session)
-{
-  return (int) session->variables.binlog_format;
-}
-
 extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
@@ -2777,27 +2771,6 @@ int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *que
 
   if (int error= binlog_flush_pending_rows_event(true))
     return(error);
-
-  /*
-    If we are in statement mode and trying to log an unsafe statement,
-    we should print a warning.
-  */
-  if (lex->is_stmt_unsafe() &&
-      variables.binlog_format == BINLOG_FORMAT_STMT)
-  {
-    assert(this->query != NULL);
-    push_warning(this, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_BINLOG_UNSAFE_STATEMENT,
-                 ER(ER_BINLOG_UNSAFE_STATEMENT));
-    if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
-    {
-      char warn_buf[DRIZZLE_ERRMSG_SIZE];
-      snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
-               ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
-      sql_print_warning("%s",warn_buf);
-      binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
-    }
-  }
 
   switch (qtype) {
   case Session::ROW_QUERY_TYPE:
