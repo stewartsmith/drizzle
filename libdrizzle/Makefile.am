@@ -56,7 +56,8 @@ libdrizzle_la_SOURCES = client.c \
 			vio.c \
 			viosocket.c
 
-libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
+libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@
+libdrizzle_la_LIBS = ${Z_LIBS}
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \

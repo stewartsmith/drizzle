@@ -365,8 +365,11 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
 AC_CHECK_PROGS(USERADD, useradd adduser)
 
-# Not critical since the generated file is distributed
-AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
+dnl Needed for ltmain
+AC_PROG_RANLIB
+
+dnl Not critical since the generated file is distributed
+AC_PROG_YACC
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -479,6 +482,19 @@ AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 AC_CXX_CMATH
 
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_PID_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UID_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+
+
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
@@ -532,7 +548,7 @@ AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
   ],[
     google::protobuf::FileDescriptorProto testFdp;
   ], ac_libprotobuf_works=yes, [
-        AC_ERROR([could not find Google's libprotobuf])
+        AC_MSG_ERROR([could not find Google's libprotobuf])
   ])
 
 ])
@@ -549,61 +565,23 @@ AC_LANG_POP()
 # Check for libuuid
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(uuid/uuid.h)
-if test "x$ac_cv_header_uuid_uuid_h" = "xno"
-then
-  AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
-fi
-AC_CHECK_LIB(uuid, uuid_generate)
+SEARCH_FOR_LIB(uuid, uuid_generate, uuid/uuid.h, 
+               AC_MSG_ERROR([libuuid is required for Drizzle]))
+
 
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_ARG_WITH(libevent,
-  [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
-       [Use libevent in DIR])],
-  [ with_libevent=$withval ],
-  [ with_libevent=yes ])
+SEARCH_FOR_LIB(event, event_loop, event.h, 
+               AC_MSG_ERROR([libevent is required for Drizzle]))
 
-if test "$with_libevent" = "yes"
-then
-    AC_CHECK_HEADERS(event.h)
-    if test "x$ac_cv_header_event_h" != "xyes"
-    then
-      AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
-    fi
-    my_save_LIBS="$LIBS"
-    LIBS=""
-    AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-    LIBEVENT_LIBS="${LIBS}"
-    LIBS="${my_save_LIBS}"
-    LIBEVENT_CPPFLAGS=""
-else
-    AC_MSG_CHECKING(for libevent in $withval)
-    if test -f $withval/event.h -a -f $withval/libevent.a; then
-       owd=`pwd`
-       if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CPPFLAGS="-I$withval"
-       LIBEVENT_LIBS="-L$withval -levent"
-    elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
-       owd=`pwd`
-       if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CPPFLAGS="-I$withval/include"
-       LIBEVENT_LIBS="-L$withval/lib -levent"
-    else
-       AC_MSG_ERROR([event.h or libevent.a not found in $withval])
-    fi
-fi
 
-AC_SUBST(LIBEVENT_CPPFLAGS)
-AC_SUBST(LIBEVENT_LIBS)
-
-AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
   save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
-  CPPFLAGS="$LIBEVENT_CPPFLAGS"
-  LIBS="$LIBEVENT_LIBS"
+  CPPFLAGS="$EVENT_CPPFLAGS"
+  LIBS="$EVENT_LIBS"
   AC_TRY_LINK([
 #include <sys/types.h>
 #include <sys/time.h>
@@ -611,8 +589,8 @@ AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
 #include <event.h>],[
 	struct bufferevent bev;
 	bufferevent_settimeout(&bev, 1, 1);
-  ], ac_libevent_works=yes, [
-        AC_ERROR([you need to install a more recent version of libevent,
+  ], ac_cv_libevent_works=yes, [
+        AC_MSG_ERROR([you need to install a more recent version of libevent,
 	check http://www.monkey.org/~provos/libevent/])
   ])
 
@@ -651,17 +629,8 @@ fi
 # Check for libz
 #--------------------------------------------------------------------
 
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_HEADERS(zlib.h)
-if test "x$ac_cv_header_zlib_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
-fi
-AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
-ZLIB_LIBS="$LIBS"
-LIBS="$my_save_LIBS"
-AC_SUBST(ZLIB_LIBS)
+SEARCH_FOR_LIB(z, crc32, zlib.h, 
+               AC_MSG_ERROR([libz is required for Drizzle]))
 
 
 #--------------------------------------------------------------------
@@ -1057,6 +1026,7 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
+AC_C_VOLATILE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM

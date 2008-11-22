@@ -34,7 +34,7 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 DTRACE = @DTRACE@
 
@@ -67,7 +67,7 @@ noinst_LTLIBRARIES = libhandler.la libyacc.la
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(ZLIB_LIBS) $(LIBINTL)
+	$(Z_LIBS) $(LIBINTL) ${UUID_LIBS}
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -83,7 +83,7 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(LIBEVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@
 
 drizzled_LDFLAGS =
@@ -280,6 +280,7 @@ drizzled_SOURCES = \
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 libyacc_la_SOURCES = sql_yacc.yy
+AM_YFLAGS = -p DRIZZLE -d --verbose
 # Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.
 libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
@@ -289,9 +290,9 @@ if HAVE_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
-gen_lex_hash_SOURCES =gen_lex_hash.cc
+gen_lex_hash_SOURCES= gen_lex_hash.cc
 
-gen_lex_hash_LDFLAGS =  
+gen_lex_hash_LDFLAGS= 
 
 DEFS =-DDRIZZLE_SERVER \
       -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
@@ -333,9 +334,6 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
-
-AM_YFLAGS = -d --verbose
-
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool
