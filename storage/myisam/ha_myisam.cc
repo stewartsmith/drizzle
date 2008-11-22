@@ -31,6 +31,7 @@
 #include <drizzled/field/timestamp.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
+pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
@@ -1789,6 +1790,8 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
 
 int myisam_deinit(void *hton __attribute__((unused)))
 {
+  pthread_mutex_destroy(&THR_LOCK_myisam);
+
   return mi_panic(HA_PANIC_CLOSE);
 }
 

@@ -44,7 +44,6 @@ pthread_key_t THR_KEY_mysys;
 #endif /* USE_TLS */
 pthread_mutex_t THR_LOCK_open;
 pthread_mutex_t THR_LOCK_lock;
-pthread_mutex_t THR_LOCK_myisam;
 pthread_mutex_t THR_LOCK_charset; 
 pthread_mutex_t THR_LOCK_threads; 
 pthread_mutex_t THR_LOCK_time;
@@ -126,7 +125,6 @@ bool my_thread_global_init(void)
 
   pthread_mutex_init(&THR_LOCK_open,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_lock,MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_SLOW);
   pthread_mutex_init(&THR_LOCK_charset,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_threads,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_time,MY_MUTEX_INIT_FAST);
@@ -179,7 +177,6 @@ void my_thread_global_end(void)
 #endif
   pthread_mutex_destroy(&THR_LOCK_open);
   pthread_mutex_destroy(&THR_LOCK_lock);
-  pthread_mutex_destroy(&THR_LOCK_myisam);
   pthread_mutex_destroy(&THR_LOCK_time);
   pthread_mutex_destroy(&THR_LOCK_charset);
   if (all_threads_killed)

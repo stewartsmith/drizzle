@@ -33,6 +33,8 @@
 
 #include "myisamdef.h"
 
+pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
+
 static uint32_t decode_bits;
 static char **default_argv;
 static const char *load_default_groups[]= { "myisamchk", 0 };
@@ -129,6 +131,9 @@ int main(int argc, char **argv)
     printf("\nTotal of all %d MyISAM-files:\nData records: %9s   Deleted blocks: %9s\n",check_param.total_files,llstr(check_param.total_records,buff),
 	   llstr(check_param.total_deleted,buff2));
   }
+
+  pthread_mutex_destroy(&THR_LOCK_myisam);
+
   free_defaults(default_argv);
   free_tmpdir(&myisamchk_tmpdir);
   my_end(check_param.testflag & T_INFO ? MY_CHECK_ERROR | MY_GIVE_INFO : MY_CHECK_ERROR);
