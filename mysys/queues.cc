@@ -22,6 +22,7 @@
   of queue_fix was implemented.
 */
 
+#include <stdlib.h>
 #include "mysys_priv.h"
 #include "mysys_err.h"
 #include <queues.h>
