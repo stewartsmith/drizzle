@@ -42,9 +42,12 @@ pthread_key_t THR_KEY_mysys;
 #else
 pthread_key_t THR_KEY_mysys;
 #endif /* USE_TLS */
-pthread_mutex_t THR_LOCK_malloc,THR_LOCK_open,
-	        THR_LOCK_lock,THR_LOCK_isam,THR_LOCK_myisam,THR_LOCK_heap,
-                THR_LOCK_net, THR_LOCK_charset, THR_LOCK_threads, THR_LOCK_time;
+pthread_mutex_t THR_LOCK_open;
+pthread_mutex_t THR_LOCK_lock;
+pthread_mutex_t THR_LOCK_myisam;
+pthread_mutex_t THR_LOCK_charset; 
+pthread_mutex_t THR_LOCK_threads; 
+pthread_mutex_t THR_LOCK_time;
 pthread_cond_t  THR_COND_threads;
 uint32_t            THR_thread_count= 0;
 uint32_t 		my_thread_end_wait_time= 5;
@@ -104,32 +107,6 @@ bool my_thread_global_init(void)
     return 1;
   }
 
-#ifdef TARGET_OS_LINUX
-  /*
-    BUG#24507: Race conditions inside current NPTL pthread_exit()
-    implementation.
-
-    To avoid a possible segmentation fault during concurrent
-    executions of pthread_exit(), a dummy thread is spawned which
-    initializes internal variables of pthread lib. See bug description
-    for a full explanation.
-
-    TODO: Remove this code when fixed versions of glibc6 are in common
-    use.
-  */
-  if (thd_lib_detected == THD_LIB_NPTL)
-  {
-    pthread_t       dummy_thread;
-    pthread_attr_t  dummy_thread_attr;
-
-    pthread_attr_init(&dummy_thread_attr);
-    pthread_attr_setdetachstate(&dummy_thread_attr, PTHREAD_CREATE_DETACHED);
-
-    pthread_create(&dummy_thread,&dummy_thread_attr,
-                   nptl_pthread_exit_hack_handler, NULL);
-  }
-#endif /* TARGET_OS_LINUX */
-
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
   /*
     Set mutex type to "fast" a.k.a "adaptive"
@@ -153,13 +130,9 @@ bool my_thread_global_init(void)
                             PTHREAD_MUTEX_ERRORCHECK);
 #endif
 
-  pthread_mutex_init(&THR_LOCK_malloc,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_open,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_lock,MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&THR_LOCK_isam,MY_MUTEX_INIT_SLOW);
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_SLOW);
-  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&THR_LOCK_net,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_charset,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_threads,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_time,MY_MUTEX_INIT_FAST);
@@ -216,13 +189,9 @@ void my_thread_global_end(void)
 #ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
   pthread_mutexattr_destroy(&my_errorcheck_mutexattr);
 #endif
-  pthread_mutex_destroy(&THR_LOCK_malloc);
   pthread_mutex_destroy(&THR_LOCK_open);
   pthread_mutex_destroy(&THR_LOCK_lock);
-  pthread_mutex_destroy(&THR_LOCK_isam);
   pthread_mutex_destroy(&THR_LOCK_myisam);
-  pthread_mutex_destroy(&THR_LOCK_heap);
-  pthread_mutex_destroy(&THR_LOCK_net);
   pthread_mutex_destroy(&THR_LOCK_time);
   pthread_mutex_destroy(&THR_LOCK_charset);
   if (all_threads_killed)
