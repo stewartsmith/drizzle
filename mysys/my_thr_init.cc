@@ -51,12 +51,6 @@ pthread_mutex_t THR_LOCK_time;
 pthread_cond_t  THR_COND_threads;
 uint32_t            THR_thread_count= 0;
 uint32_t 		my_thread_end_wait_time= 5;
-#if !defined(HAVE_LOCALTIME_R) || !defined(HAVE_GMTIME_R)
-pthread_mutex_t LOCK_localtime_r;
-#endif
-#ifndef HAVE_GETHOSTBYNAME_R
-pthread_mutex_t LOCK_gethostbyname_r;
-#endif
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 pthread_mutexattr_t my_fast_mutexattr;
 #endif
@@ -137,12 +131,6 @@ bool my_thread_global_init(void)
   pthread_mutex_init(&THR_LOCK_threads,MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&THR_LOCK_time,MY_MUTEX_INIT_FAST);
   pthread_cond_init(&THR_COND_threads, NULL);
-#if !defined(HAVE_LOCALTIME_R) || !defined(HAVE_GMTIME_R)
-  pthread_mutex_init(&LOCK_localtime_r,MY_MUTEX_INIT_SLOW);
-#endif
-#ifndef HAVE_GETHOSTBYNAME_R
-  pthread_mutex_init(&LOCK_gethostbyname_r,MY_MUTEX_INIT_SLOW);
-#endif
   if (my_thread_init())
   {
     my_thread_global_end();			/* Clean up */
@@ -199,12 +187,6 @@ void my_thread_global_end(void)
     pthread_mutex_destroy(&THR_LOCK_threads);
     pthread_cond_destroy(&THR_COND_threads);
   }
-#if !defined(HAVE_LOCALTIME_R) || !defined(HAVE_GMTIME_R)
-  pthread_mutex_destroy(&LOCK_localtime_r);
-#endif
-#ifndef HAVE_GETHOSTBYNAME_R
-  pthread_mutex_destroy(&LOCK_gethostbyname_r);
-#endif
 }
 
 static my_thread_id thread_id= 0;
