@@ -369,6 +369,10 @@
 #define WEEK_YEAR            2
 #define WEEK_FIRST_WEEKDAY   4
 
+/* used in date and time conversions */
+/* Daynumber from year 0 to 9999-12-31 */
+#define MAX_DAY_NUMBER 3652424L
+
 #define STRING_BUFFER_USUAL_SIZE 80
 
 /*

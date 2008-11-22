@@ -20,25 +20,43 @@
 #ifndef DRIZZLED_ITEM_TIMEFUNC_H
 #define DRIZZLED_ITEM_TIMEFUNC_H
 
+enum date_time_format_types 
+{ 
+  TIME_ONLY= 0, TIME_MICROSECOND, DATE_ONLY, DATE_TIME, DATE_TIME_MICROSECOND
+};
+
 #include <drizzled/functions/time/weekday.h>
 #include <drizzled/functions/time/str_timefunc.h>
+#include <drizzled/functions/time/add_time.h>
 #include <drizzled/functions/time/date.h>
 #include <drizzled/functions/time/curdate.h>
 #include <drizzled/functions/time/curtime.h>
+#include <drizzled/functions/time/date_format.h>
 #include <drizzled/functions/time/dayname.h>
 #include <drizzled/functions/time/dayofmonth.h>
 #include <drizzled/functions/time/dayofyear.h>
 #include <drizzled/functions/time/from_days.h>
+#include <drizzled/functions/time/from_unixtime.h>
+#include <drizzled/functions/time/get_format.h>
 #include <drizzled/functions/time/hour.h>
+#include <drizzled/functions/time/makedate.h>
+#include <drizzled/functions/time/make_datetime.h>
+#include <drizzled/functions/time/make_datetime_with_warn.h>
+#include <drizzled/functions/time/maketime.h>
+#include <drizzled/functions/time/make_time_with_warn.h>
+#include <drizzled/functions/time/microsecond.h>
 #include <drizzled/functions/time/minute.h>
 #include <drizzled/functions/time/month.h>
 #include <drizzled/functions/time/now.h>
 #include <drizzled/functions/time/quarter.h>
 #include <drizzled/functions/time/period_add.h>
 #include <drizzled/functions/time/period_diff.h>
+#include <drizzled/functions/time/sec_to_time.h>
 #include <drizzled/functions/time/second.h>
 #include <drizzled/functions/time/sysdate_local.h>
+#include <drizzled/functions/time/timestamp_diff.h>
 #include <drizzled/functions/time/time_to_sec.h>
+#include <drizzled/functions/time/timediff.h>
 #include <drizzled/functions/time/to_days.h>
 #include <drizzled/functions/time/unix_timestamp.h>
 #include <drizzled/functions/time/week.h>
@@ -46,103 +64,8 @@
 #include <drizzled/functions/time/year.h>
 #include <drizzled/functions/time/yearweek.h>
 
-/* Function items used by mysql */
-
-enum date_time_format_types 
-{ 
-  TIME_ONLY= 0, TIME_MICROSECOND, DATE_ONLY, DATE_TIME, DATE_TIME_MICROSECOND
-};
-
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval);
-
-class Item_func_date_format :public Item_str_func
-{
-  int fixed_length;
-  const bool is_time_format;
-  String value;
-public:
-  Item_func_date_format(Item *a,Item *b,bool is_time_format_arg)
-    :Item_str_func(a,b),is_time_format(is_time_format_arg) {}
-  String *val_str(String *str);
-  const char *func_name() const
-    { return is_time_format ? "time_format" : "date_format"; }
-  void fix_length_and_dec();
-  uint32_t format_length(const String *format);
-  bool eq(const Item *item, bool binary_cmp) const;
-};
-
-
-class Item_func_from_unixtime :public Item_date_func
-{
-  Session *session;
- public:
-  Item_func_from_unixtime(Item *a) :Item_date_func(a) {}
-  int64_t val_int();
-  String *val_str(String *str);
-  const char *func_name() const { return "from_unixtime"; }
-  void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-};
-
-
-/* 
-  We need Time_zone class declaration for storing pointers in
-  Item_func_convert_tz.
-*/
-class Time_zone;
-
-/*
-  This class represents CONVERT_TZ() function.
-  The important fact about this function that it is handled in special way.
-  When such function is met in expression time_zone system tables are added
-  to global list of tables to open, so later those already opened and locked
-  tables can be used during this function calculation for loading time zone
-  descriptions.
-*/
-class Item_func_convert_tz :public Item_date_func
-{
-  /*
-    If time zone parameters are constants we are caching objects that
-    represent them (we use separate from_tz_cached/to_tz_cached members
-    to indicate this fact, since NULL is legal value for from_tz/to_tz
-    members.
-  */
-  bool from_tz_cached, to_tz_cached;
-  Time_zone *from_tz, *to_tz;
- public:
-  Item_func_convert_tz(Item *a, Item *b, Item *c):
-    Item_date_func(a, b, c), from_tz_cached(0), to_tz_cached(0) {}
-  int64_t val_int();
-  String *val_str(String *str);
-  const char *func_name() const { return "convert_tz"; }
-  void fix_length_and_dec();
-  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
-  void cleanup();
-};
-
-
-class Item_func_sec_to_time :public Item_str_timefunc
-{
-public:
-  Item_func_sec_to_time(Item *item) :Item_str_timefunc(item) {}
-  double val_real()
-  {
-    assert(fixed == 1);
-    return (double) Item_func_sec_to_time::val_int();
-  }
-  int64_t val_int();
-  String *val_str(String *);
-  void fix_length_and_dec()
-  { 
-    Item_str_timefunc::fix_length_and_dec();
-    collation.set(&my_charset_bin);
-    maybe_null=1;
-  }
-  const char *func_name() const { return "sec_to_time"; }
-  bool result_as_int64_t() { return true; }
-};
-
 
 class Item_date_add_interval :public Item_date_func
 {
@@ -335,141 +258,6 @@ public:
   {
     return save_date_in_field(field);
   }
-};
-
-class Item_func_makedate :public Item_date_func
-{
-public:
-  Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
-  String *val_str(String *str);
-  const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
-  void fix_length_and_dec()
-  { 
-    decimals=0;
-    max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  int64_t val_int();
-};
-
-
-class Item_func_add_time :public Item_str_func
-{
-  const bool is_date;
-  int sign;
-  enum_field_types cached_field_type;
-
-public:
-  Item_func_add_time(Item *a, Item *b, bool type_arg, bool neg_arg)
-    :Item_str_func(a, b), is_date(type_arg) { sign= neg_arg ? -1 : 1; }
-  String *val_str(String *str);
-  enum_field_types field_type() const { return cached_field_type; }
-  void fix_length_and_dec();
-
-  Field *tmp_table_field(Table *table)
-  {
-    return tmp_table_field_from_field_type(table, 0);
-  }
-  virtual void print(String *str, enum_query_type query_type);
-  const char *func_name() const { return "add_time"; }
-  double val_real() { return val_real_from_decimal(); }
-  my_decimal *val_decimal(my_decimal *decimal_value)
-  {
-    assert(fixed == 1);
-    if (cached_field_type == DRIZZLE_TYPE_TIME)
-      return  val_decimal_from_time(decimal_value);
-    if (cached_field_type == DRIZZLE_TYPE_DATETIME)
-      return  val_decimal_from_date(decimal_value);
-    return Item_str_func::val_decimal(decimal_value);
-  }
-  int save_in_field(Field *field, bool no_conversions)
-  {
-    if (cached_field_type == DRIZZLE_TYPE_TIME)
-      return save_time_in_field(field);
-    if (cached_field_type == DRIZZLE_TYPE_DATETIME)
-      return save_date_in_field(field);
-    return Item_str_func::save_in_field(field, no_conversions);
-  }
-};
-
-class Item_func_timediff :public Item_str_timefunc
-{
-public:
-  Item_func_timediff(Item *a, Item *b)
-    :Item_str_timefunc(a, b) {}
-  String *val_str(String *str);
-  const char *func_name() const { return "timediff"; }
-  void fix_length_and_dec()
-  {
-    Item_str_timefunc::fix_length_and_dec();
-    maybe_null= 1;
-  }
-};
-
-class Item_func_maketime :public Item_str_timefunc
-{
-public:
-  Item_func_maketime(Item *a, Item *b, Item *c)
-    :Item_str_timefunc(a, b, c) 
-  {
-    maybe_null= true;
-  }
-  String *val_str(String *str);
-  const char *func_name() const { return "maketime"; }
-};
-
-class Item_func_microsecond :public Item_int_func
-{
-public:
-  Item_func_microsecond(Item *a) :Item_int_func(a) {}
-  int64_t val_int();
-  const char *func_name() const { return "microsecond"; }
-  void fix_length_and_dec() 
-  { 
-    decimals=0;
-    maybe_null=1;
-  }
-};
-
-
-class Item_func_timestamp_diff :public Item_int_func
-{
-  const interval_type int_type;
-public:
-  Item_func_timestamp_diff(Item *a,Item *b,interval_type type_arg)
-    :Item_int_func(a,b), int_type(type_arg) {}
-  const char *func_name() const { return "timestampdiff"; }
-  int64_t val_int();
-  void fix_length_and_dec()
-  {
-    decimals=0;
-    maybe_null=1;
-  }
-  virtual void print(String *str, enum_query_type query_type);
-};
-
-
-enum date_time_format
-{
-  USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT
-};
-
-class Item_func_get_format :public Item_str_func
-{
-public:
-  const enum enum_drizzle_timestamp_type type; // keep it public
-  Item_func_get_format(enum enum_drizzle_timestamp_type type_arg, Item *a)
-    :Item_str_func(a), type(type_arg)
-  {}
-  String *val_str(String *str);
-  const char *func_name() const { return "get_format"; }
-  void fix_length_and_dec()
-  {
-    maybe_null= 1;
-    decimals=0;
-    max_length=17*MY_CHARSET_BIN_MB_MAXLEN;
-  }
-  virtual void print(String *str, enum_query_type query_type);
 };
 
 
