@@ -32,7 +32,6 @@ void Item_func_from_unixtime::fix_length_and_dec()
   decimals= DATETIME_DEC;
   max_length=MAX_DATETIME_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
-  session->time_zone_used= 1;
 }
 
 String *Item_func_from_unixtime::val_str(String *str)
