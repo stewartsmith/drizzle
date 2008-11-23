@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 
@@ -36,7 +37,8 @@ static void get_block(azio_stream *s);
 static void do_aio_cleanup(azio_stream *s);
 #endif
 
-static pthread_handler_t run_task(void *p)
+extern "C"
+pthread_handler_t run_task(void *p)
 {
   int fd;
   char *buffer;
@@ -54,7 +56,7 @@ static pthread_handler_t run_task(void *p)
     }
     offset= s->container.offset;
     fd= s->container.fd;
-    buffer= s->container.buffer;
+    buffer= (char *)s->container.buffer;
     pthread_mutex_unlock(&s->container.thresh_mutex);
 
     if (s->container.ready == AZ_THREAD_DEAD)
@@ -80,7 +82,7 @@ static void azio_kill(azio_stream *s)
   pthread_mutex_unlock(&s->container.thresh_mutex);
 
   pthread_cond_signal(&s->container.threshhold);
-  pthread_join(s->container.mainthread, (void *)NULL);
+  pthread_join(s->container.mainthread, NULL);
 }
 
 static size_t azio_return(azio_stream *s)
@@ -325,8 +327,7 @@ int write_header(azio_stream *s)
   for end of file.
   IN assertion: the stream s has been sucessfully opened for reading.
 */
-int get_byte(s)
-  azio_stream *s;
+int get_byte(azio_stream *s)
 {
   if (s->z_eof) return EOF;
   if (s->stream.avail_in == 0) 
@@ -424,8 +425,7 @@ void read_header(azio_stream *s, unsigned char *buffer)
  * Cleanup then free the given azio_stream. Return a zlib error code.
  Try freeing in the reverse order of allocations.
  */
-int destroy (s)
-  azio_stream *s;
+int destroy (azio_stream *s)
 {
   int err = Z_OK;
 
@@ -721,9 +721,7 @@ static void azio_disable_aio(azio_stream *s)
   s->method= AZ_METHOD_BLOCK;
 }
 
-int ZEXPORT azflush (s, flush)
-  azio_stream *s;
-  int flush;
+int ZEXPORT azflush (azio_stream *s,int flush)
 {
   int err;
 
@@ -779,8 +777,7 @@ int azread_init(azio_stream *s)
 /* ===========================================================================
   Rewinds input file.
 */
-int azrewind (s)
-  azio_stream *s;
+int azrewind (azio_stream *s)
 {
   if (s == NULL || s->mode != 'r') return -1;
 
@@ -809,10 +806,7 @@ int azrewind (s)
   SEEK_END is not implemented, returns error.
   In this version of the library, azseek can be extremely slow.
 */
-size_t azseek (s, offset, whence)
-  azio_stream *s;
-  size_t offset;
-  int whence;
+size_t azseek (azio_stream *s, size_t offset, int whence)
 {
 
   if (s == NULL || whence == SEEK_END ||
@@ -877,8 +871,7 @@ size_t azseek (s, offset, whence)
   given compressed file. This position represents a number of bytes in the
   uncompressed data stream.
 */
-size_t ZEXPORT aztell (file)
-  azio_stream *file;
+size_t ZEXPORT aztell (azio_stream *file)
 {
   return azseek(file, 0L, SEEK_CUR);
 }

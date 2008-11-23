@@ -49,18 +49,18 @@ typedef struct st_hash {
   /* Place for hash_keys */
   DYNAMIC_ARRAY array;
   hash_get_key get_key;
-  void (*free)(void *);
+  hash_free_key free;
   const CHARSET_INFO *charset;
 } HASH;
 
 /* A search iterator state */
 typedef uint32_t HASH_SEARCH_STATE;
 
-bool _hash_init(HASH *hash, uint32_t growth_size,
-                const CHARSET_INFO * const charset,
-                uint32_t default_array_elements, size_t key_offset,
-                size_t key_length, hash_get_key get_key,
-                void (*free_element)(void*), uint32_t flags);
+bool
+_hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
+           uint32_t size, size_t key_offset, size_t key_length,
+           hash_get_key get_key,
+           hash_free_key free_element, uint32_t flags);
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H)
 #define hash_init2(A,B,C,D,E,F,G,H,I) _hash_init(A,B,C,D,E,F,G,H,I)
 void hash_free(HASH *tree);

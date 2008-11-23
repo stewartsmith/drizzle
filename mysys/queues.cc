@@ -50,7 +50,7 @@
 */
 
 int init_queue(QUEUE *queue, uint32_t max_elements, uint32_t offset_to_key,
-	       bool max_at_top, int (*compare) (void *, unsigned char *, unsigned char *),
+	       bool max_at_top, queue_compare compare,
 	       void *first_cmp_arg)
 {
   if ((queue->root= (unsigned char **) my_malloc((max_elements+1)*sizeof(void*),

@@ -18,6 +18,7 @@
 #include <drizzled/global.h>
 
 #include <mystrings/m_ctype.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
 #include <mysys/my_bit.h>
@@ -1456,7 +1457,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   }
 
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record))
+  if (!mi_alloc_rec_buff(info, (ulong)-1, &sort_param.record))
   {
     mi_check_print_error(param,"Not enough memory for record");
     goto err;

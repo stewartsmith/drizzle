@@ -881,8 +881,10 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   strpos=(unsigned char*) sort_keys;
   sort_length=info->key_length;
 
-  if (init_queue(&queue,(uint) (Tb-Fb)+1,offsetof(BUFFPEK,key),0,
-                 (int (*)(void*, unsigned char *,unsigned char*)) info->key_cmp,
+
+  if (init_queue(&queue,(uint32_t) (Tb-Fb)+1,(uint32_t) offsetof(BUFFPEK,key),
+                 false,
+                 (queue_compare) info->key_cmp,
                  (void*) info))
     return(1); /* purecov: inspected */
 

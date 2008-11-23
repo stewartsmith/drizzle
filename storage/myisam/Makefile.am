@@ -31,6 +31,7 @@ EXTRA_DIST =		plug.in
 noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk
+
 noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h \
 			keycache.h \
@@ -60,3 +61,4 @@ libmyisamha_la_SOURCES = ha_myisam.cc
 libmyisamnone_la_SOURCES = mi_reportnone.c
 libmyisam_la_SOURCES = 
 libmyisam_la_LIBADD = libmyisamha.la libmyisamutil.la
+myisamchk_SOURCES = myisamchk.cc 
