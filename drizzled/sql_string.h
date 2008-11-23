@@ -395,16 +395,9 @@ static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
 
-inline
-bool operator==(const String &s1, const String &s2)
-{
-  return stringcmp(&s1,&s2) == 0;
-}
-
-inline
-bool operator!=(const String &s1, const String &s2)
-{
-  return !(s1 == s2);
-}
+extern "C++" {
+bool operator==(const String &s1, const String &s2);
+bool operator!=(const String &s1, const String &s2);
+};
 
 #endif /* DRIZZLE_SERVER_SQL_STRING_H */

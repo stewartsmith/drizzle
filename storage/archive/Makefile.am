@@ -34,16 +34,16 @@ pkglib_LTLIBRARIES =	@plugin_archive_shared_target@
 ha_archive_la_LDFLAGS =	-module -rpath $(pkgplugindir) $(LDADD)
 ha_archive_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 ha_archive_la_CFLAGS =	$(AM_CFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN 
-ha_archive_la_SOURCES =	ha_archive.cc azio.c
+ha_archive_la_SOURCES =	ha_archive.cc azio.cc
 
 
 EXTRA_LIBRARIES =	libarchive.a
 noinst_LIBRARIES =	@plugin_archive_static_target@
 libarchive_a_CXXFLAGS =	$(AM_CXXFLAGS) 
 libarchive_a_CFLAGS =	$(AM_CFLAGS) 
-libarchive_a_SOURCES =	ha_archive.cc azio.c
+libarchive_a_SOURCES =	ha_archive.cc azio.cc
 
-archive_performance_SOURCES =	archive_performance.c azio.c
+archive_performance_SOURCES =	archive_performance.c azio.cc
 archive_performance_CFLAGS =	$(AM_CFLAGS) 
 archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
@@ -51,7 +51,7 @@ archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			-lz
 archive_performance_LDFLAGS =
 
-archive_test_SOURCES =	archive_test.c azio.c
+archive_test_SOURCES =	archive_test.c azio.cc dummy.cc
 archive_test_CFLAGS =	$(AM_CFLAGS) 
 archive_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
@@ -59,7 +59,7 @@ archive_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			-lz
 archive_test_LDFLAGS =
 
-archive_reader_SOURCES = archive_reader.c azio.c
+archive_reader_SOURCES = archive_reader.c azio.cc
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
 archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
@@ -67,7 +67,7 @@ archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			-lz
 archive_reader_LDFLAGS =
 
-concurrency_test_SOURCES = concurrency_test.c azio.c
+concurrency_test_SOURCES = concurrency_test.c azio.cc
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
