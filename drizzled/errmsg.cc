@@ -21,6 +21,8 @@
 #include <drizzled/errmsg.h>
 #include <drizzled/gettext.h>
 
+static bool errmsg_has= false;
+
 int errmsg_initializer(st_plugin_int *plugin)
 {
   errmsg_t *p;
@@ -46,6 +48,9 @@ int errmsg_initializer(st_plugin_int *plugin)
       goto err;
     }
   }
+
+  errmsg_has= true;
+
   return 0;
 
 err:
@@ -120,6 +125,18 @@ bool errmsg_vprintf (Session *session, int priority, const char *format, va_list
 {
   bool foreach_rv;
   errmsg_parms_t parms;
+
+  /* check to see if any errmsg plugin has been loaded
+     if not, just fall back to emitting the message to stderr */
+  if (!errmsg_has)
+  {
+    /* if it turns out that the vfprintf doesnt do one single write
+       (single writes are atomic), then this needs to be rewritten to
+       vsprintf into a char buffer, and then write() that char buffer
+       to stderr */
+    vfprintf(stderr, format, ap);
+    return false;
+  }
 
   /* marshall the parameters so they will fit into the foreach */
   parms.priority= priority;
