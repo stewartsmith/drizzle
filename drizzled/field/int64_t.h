@@ -63,46 +63,13 @@ public:
   bool can_be_compared_as_int64_t() const { return true; }
   uint32_t max_display_length() { return 20; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
-                      uint32_t max_length __attribute__((unused)),
-                      bool low_byte_first __attribute__((unused)))
-  {
-    int64_t val;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      val = sint8korr(from);
-    else
-#endif
-      int64_tget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      int8store(to, val);
-    else
-#endif
-      int64_tstore(to, val);
-    return to + sizeof(val);
-  }
+                              uint32_t max_length,
+                              bool low_byte_first);
 
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data __attribute__((unused)),
-                              bool low_byte_first __attribute__((unused)))
-  {
-    int64_t val;
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      val = sint8korr(from);
-    else
-#endif
-      int64_tget(val, from);
+                              uint32_t param_data,
+                              bool low_byte_first);
 
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      int8store(to, val);
-    else
-#endif
-      int64_tstore(to, val);
-    return from + sizeof(val);
-  }
 };
 
-#endif
+#endif 

@@ -596,7 +596,7 @@ size_t azread_row(azio_stream *s, int *error)
   new_ptr= (char *)realloc(s->row_ptr, (sizeof(char) * row_length));
 
   if (!new_ptr)
-    return -1;
+    return SIZE_MAX;
 
   s->row_ptr= new_ptr;
 
@@ -811,7 +811,7 @@ size_t azseek (azio_stream *s, size_t offset, int whence)
 
   if (s == NULL || whence == SEEK_END ||
       s->z_err == Z_ERRNO || s->z_err == Z_DATA_ERROR) {
-    return -1L;
+    return SIZE_MAX;
   }
 
   if (s->mode == 'w') 
@@ -827,7 +827,8 @@ size_t azseek (azio_stream *s, size_t offset, int whence)
       if (offset < AZ_BUFSIZE_READ) size = (uInt)offset;
 
       size = azwrite(s, s->inbuf, size);
-      if (size == 0) return -1L;
+      if (size == 0)
+        return SIZE_MAX;
 
       offset -= size;
     }
@@ -844,7 +845,7 @@ size_t azseek (azio_stream *s, size_t offset, int whence)
   if (offset >= s->out) {
     offset -= s->out;
   } else if (azrewind(s)) {
-    return -1L;
+    return SIZE_MAX;
   }
   /* offset is now the number of bytes to skip. */
 
@@ -860,7 +861,7 @@ size_t azseek (azio_stream *s, size_t offset, int whence)
     if (offset < AZ_BUFSIZE_WRITE) size = (int)offset;
 
     size = azread_internal(s, s->outbuf, size, &error);
-    if (error < 0) return -1L;
+    if (error < 0) return SIZE_MAX;
     offset -= size;
   }
   return s->out;

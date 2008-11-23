@@ -18,22 +18,35 @@ noinst_LTLIBRARIES = 	libtimefunc.la
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 libtimefunc_la_SOURCES = \
+		  add_time.cc \
 		  curdate.cc \
 		  curtime.cc \
 		  date.cc \
+		  date_format.cc \
 		  dayname.cc \
 		  dayofmonth.cc \
 		  dayofyear.cc \
 		  from_days.cc \
+		  from_unixtime.cc \
+		  get_format.cc \
 		  hour.cc \
+		  makedate.cc \
+		  make_datetime_with_warn.cc \
+		  make_datetime.cc \
+		  maketime.cc \
+		  make_time_with_warn.cc \
+		  microsecond.cc \
 		  minute.cc \
 		  month.cc \
 		  now.cc \
 		  quarter.cc \
 		  period_add.cc \
 		  period_diff.cc \
+		  sec_to_time.cc \
 		  second.cc \
 		  sysdate_local.cc \
+		  timediff.cc \
+		  timestamp_diff.cc \
 		  time_to_sec.cc \
 		  to_days.cc \
 		  unix_timestamp.cc \
@@ -44,23 +57,36 @@ libtimefunc_la_SOURCES = \
 		  yearweek.cc
 
 noinst_HEADERS = \
+		 add_time.h \
 		 curdate.h \
 		 curtime.h \
 		 date.h \
+		 date_format.h \
 		 dayname.h \
 		 dayofmonth.h \
 		 dayofyear.h \
 		 from_days.h \
+		 from_unixtime.h \
+		 get_format.h \
 		 hour.h \
+		 makedate.h \
+		 make_datetime_with_warn.h \
+		 make_datetime.h \
+		 maketime.h \
+		 make_time_with_warn.h \
+		 microsecond.h \
 		 minute.h \
 		 month.h \
 		 now.h \
 		 quarter.h \
 		 period_add.h \
 		 period_diff.h \
+		 sec_to_time.h \
 		 second.h \
 		 sysdate_local.h \
 		 str_timefunc.h \
+		 timediff.h \
+		 timestamp_diff.h \
 		 time_to_sec.h \
 		 to_days.h \
 		 unix_timestamp.h \
