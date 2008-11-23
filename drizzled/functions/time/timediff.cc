@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/timediff.h>
+#include <drizzled/item/timefunc.h>
 
 /**
   TIMEDIFF(t,s) is a time function that calculates the

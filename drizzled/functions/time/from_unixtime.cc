@@ -20,7 +20,10 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/from_unixtime.h>
+#include <drizzled/functions/time/make_datetime.h>
+#include <drizzled/item/timefunc.h>
 #include <drizzled/tztime.h>
+#include <drizzled/session.h>
 
 void Item_func_from_unixtime::fix_length_and_dec()
 {

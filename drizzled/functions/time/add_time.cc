@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/add_time.h>
+#include <drizzled/item/timefunc.h>
 
 void Item_func_add_time::fix_length_and_dec()
 {
@@ -40,7 +41,7 @@ void Item_func_add_time::fix_length_and_dec()
 
   cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == DRIZZLE_TYPE_NEWDATE ||
+  if (arg0_field_type == DRIZZLE_TYPE_DATE ||
       arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
     cached_field_type= DRIZZLE_TYPE_DATETIME;

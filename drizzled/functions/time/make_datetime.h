@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_MAKE_DATETIME_H
 #define DRIZZLED_FUNCTIONS_TIME_MAKE_DATETIME_H
 
+#include <drizzled/item/timefunc.h>
+
 bool make_datetime(date_time_format_types format, 
                    DRIZZLE_TIME *ltime,
                    String *str);

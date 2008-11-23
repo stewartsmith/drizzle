@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_ADD_TIME_H
 #define DRIZZLED_FUNCTIONS_TIME_ADD_TIME_H
 
+#include <drizzled/item/strfunc.h>
+
 class Item_func_add_time :public Item_str_func
 {
   const bool is_date;
