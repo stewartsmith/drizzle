@@ -283,24 +283,6 @@ struct sql_ex_info
 #define Q_DATA_OFFSET		QUERY_HEADER_LEN
 /* these are codes, not offsets; not more than 256 values (1 byte). */
 #define Q_FLAGS2_CODE           0
-#define Q_SQL_MODE_CODE         1
-/*
-  Q_CATALOG_CODE is catalog with end zero stored; it is used only by MySQL
-  5.0.x where 0<=x<=3. We have to keep it to be able to replicate these
-  old masters.
-*/
-#define Q_CATALOG_CODE          2
-#define Q_AUTO_INCREMENT	3
-#define Q_CHARSET_CODE          4
-#define Q_TIME_ZONE_CODE        5
-/*
-  Q_CATALOG_NZ_CODE is catalog withOUT end zero stored; it is used by MySQL
-  5.0.x where x>=4. Saves one byte in every Query_log_event in binlog,
-  compared to Q_CATALOG_CODE. The reason we didn't simply re-use
-  Q_CATALOG_CODE is that then a 5.0.3 slave of this 5.0.x (x>=4) master would
-  crash (segfault etc) because it would expect a 0 when there is none.
-*/
-#define Q_CATALOG_NZ_CODE       6
 
 #define Q_LC_TIME_NAMES_CODE    7
 

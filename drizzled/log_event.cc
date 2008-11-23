@@ -1103,20 +1103,6 @@ void Query_log_event::pack_info(Protocol *protocol)
 
 
 /**
-  Utility function for the next method (Query_log_event::write()) .
-*/
-static void write_str_with_code_and_len(char **dst, const char *src,
-                                        int len, uint32_t code)
-{
-  assert(src);
-  *((*dst)++)= code;
-  *((*dst)++)= (unsigned char) len;
-  memcpy(*dst, src, len);
-  (*dst)+= len;
-}
-
-
-/**
   Query_log_event::write().
 
   @note
@@ -1201,57 +1187,6 @@ bool Query_log_event::write(IO_CACHE* file)
     int4store(start, flags2);
     start+= 4;
   }
-  if (sql_mode_inited)
-  {
-    *start++= Q_SQL_MODE_CODE;
-    int8store(start, (uint64_t)sql_mode);
-    start+= 8;
-  }
-  if (catalog_len) // i.e. this var is inited (false for 4.0 events)
-  {
-    write_str_with_code_and_len((char **)(&start),
-                                catalog, catalog_len, Q_CATALOG_NZ_CODE);
-    /*
-      In 5.0.x where x<4 masters we used to store the end zero here. This was
-      a waste of one byte so we don't do it in x>=4 masters. We change code to
-      Q_CATALOG_NZ_CODE, because re-using the old code would make x<4 slaves
-      of this x>=4 master segfault (expecting a zero when there is
-      none). Remaining compatibility problems are: the older slave will not
-      find the catalog; but it is will not crash, and it's not an issue
-      that it does not find the catalog as catalogs were not used in these
-      older MySQL versions (we store it in binlog and read it from relay log
-      but do nothing useful with it). What is an issue is that the older slave
-      will stop processing the Q_* blocks (and jumps to the db/query) as soon
-      as it sees unknown Q_CATALOG_NZ_CODE; so it will not be able to read
-      Q_AUTO_INCREMENT*, Q_CHARSET and so replication will fail silently in
-      various ways. Documented that you should not mix alpha/beta versions if
-      they are not exactly the same version, with example of 5.0.3->5.0.2 and
-      5.0.4->5.0.3. If replication is from older to new, the new will
-      recognize Q_CATALOG_CODE and have no problem.
-    */
-  }
-  if (auto_increment_increment != 1 || auto_increment_offset != 1)
-  {
-    *start++= Q_AUTO_INCREMENT;
-    int2store(start, auto_increment_increment);
-    int2store(start+2, auto_increment_offset);
-    start+= 4;
-  }
-  if (charset_inited)
-  {
-    *start++= Q_CHARSET_CODE;
-    memcpy(start, charset, 6);
-    start+= 6;
-  }
-  if (time_zone_len)
-  {
-    /* In the TZ sys table, column Name is of length 64 so this should be ok */
-    assert(time_zone_len <= MAX_TIME_ZONE_NAME_LENGTH);
-    *start++= Q_TIME_ZONE_CODE;
-    *start++= time_zone_len;
-    memcpy(start, time_zone_str, time_zone_len);
-    start+= time_zone_len;
-  }
   if (lc_time_names_number)
   {
     assert(lc_time_names_number <= 0xFFFF);
@@ -1325,24 +1260,23 @@ Query_log_event::Query_log_event()
   The value for local `killed_status' can be supplied by caller.
 */
 Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
-				 ulong query_length, bool using_trans,
-				 bool suppress_use,
+                                 ulong query_length, bool using_trans,
+                                 bool suppress_use,
                                  Session::killed_state killed_status_arg)
-  :Log_event(session_arg,
-             (session_arg->thread_specific_used ? LOG_EVENT_THREAD_SPECIFIC_F :
-              0) |
-             (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
-	     using_trans),
-   data_buf(0), query(query_arg), catalog(session_arg->catalog),
-   db(session_arg->db), q_len((uint32_t) query_length),
-   thread_id(session_arg->thread_id),
-   /* save the original thread id; we already know the server id */
-   slave_proxy_id(session_arg->variables.pseudo_thread_id),
-   flags2_inited(1), sql_mode_inited(1), charset_inited(1),
-   sql_mode(0),
-   auto_increment_increment(session_arg->variables.auto_increment_increment),
-   auto_increment_offset(session_arg->variables.auto_increment_offset),
-   lc_time_names_number(session_arg->variables.lc_time_names->number),
+:Log_event(session_arg,
+           (session_arg->thread_specific_used ? LOG_EVENT_THREAD_SPECIFIC_F : 0) |
+           (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
+           using_trans),
+  data_buf(0), query(query_arg), catalog(session_arg->catalog),
+  db(session_arg->db), q_len((uint32_t) query_length),
+  thread_id(session_arg->thread_id),
+  /* save the original thread id; we already know the server id */
+  slave_proxy_id(session_arg->variables.pseudo_thread_id),
+  flags2_inited(1), sql_mode_inited(1), charset_inited(1),
+  sql_mode(0),
+  auto_increment_increment(session_arg->variables.auto_increment_increment),
+  auto_increment_offset(session_arg->variables.auto_increment_offset),
+  lc_time_names_number(session_arg->variables.lc_time_names->number),
    charset_database_number(0)
 {
   time_t end_time;
@@ -1382,65 +1316,7 @@ Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
   int2store(charset, session_arg->variables.character_set_client->number);
   int2store(charset+2, session_arg->variables.collation_connection->number);
   int2store(charset+4, session_arg->variables.collation_server->number);
-  if (session_arg->time_zone_used)
-  {
-    /*
-      Note that our event becomes dependent on the Time_zone object
-      representing the time zone. Fortunately such objects are never deleted
-      or changed during mysqld's lifetime.
-    */
-    time_zone_len= session_arg->variables.time_zone->get_name()->length();
-    time_zone_str= session_arg->variables.time_zone->get_name()->ptr();
-  }
-  else
-    time_zone_len= 0;
-}
-
-
-/* 2 utility functions for the next method */
-
-/**
-   Read a string with length from memory.
-
-   This function reads the string-with-length stored at
-   <code>src</code> and extract the length into <code>*len</code> and
-   a pointer to the start of the string into <code>*dst</code>. The
-   string can then be copied using <code>memcpy()</code> with the
-   number of bytes given in <code>*len</code>.
-
-   @param src Pointer to variable holding a pointer to the memory to
-              read the string from.
-   @param dst Pointer to variable holding a pointer where the actual
-              string starts. Starting from this position, the string
-              can be copied using @c memcpy().
-   @param len Pointer to variable where the length will be stored.
-   @param end One-past-the-end of the memory where the string is
-              stored.
-
-   @return    Zero if the entire string can be copied successfully,
-              @c UINT_MAX if the length could not be read from memory
-              (that is, if <code>*src >= end</code>), otherwise the
-              number of bytes that are missing to read the full
-              string, which happends <code>*dst + *len >= end</code>.
-*/
-static int
-get_str_len_and_pointer(const Log_event::Byte **src,
-                        const char **dst,
-                        uint32_t *len,
-                        const Log_event::Byte *end)
-{
-  if (*src >= end)
-    return -1;       // Will be UINT_MAX in two-complement arithmetics
-  uint32_t length= **src;
-  if (length > 0)
-  {
-    if (*src + length >= end)
-      return *src + length - end + 1;       // Number of bytes missing
-    *dst= (char *)*src + 1;                    // Will be copied later
-  }
-  *len= length;
-  *src+= length + 1;
-  return 0;
+  time_zone_len= 0;
 }
 
 static void copy_str_and_move(const char **src, 
@@ -1550,44 +1426,6 @@ Query_log_event::Query_log_event(const char* buf, uint32_t event_len,
       flags2_inited= 1;
       flags2= uint4korr(pos);
       pos+= 4;
-      break;
-    case Q_SQL_MODE_CODE:
-    {
-      CHECK_SPACE(pos, end, 8);
-      sql_mode_inited= 1;
-      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is uint64_t
-      pos+= 8;
-      break;
-    }
-    case Q_CATALOG_NZ_CODE:
-      if (get_str_len_and_pointer(&pos, &catalog, &catalog_len, end))
-      {
-        query= 0;
-        return;
-      }
-      break;
-    case Q_AUTO_INCREMENT:
-      CHECK_SPACE(pos, end, 4);
-      auto_increment_increment= uint2korr(pos);
-      auto_increment_offset=    uint2korr(pos+2);
-      pos+= 4;
-      break;
-    case Q_TIME_ZONE_CODE:
-    {
-      if (get_str_len_and_pointer(&pos, &time_zone_str, &time_zone_len, end))
-      {
-        query= 0;
-        return;
-      }
-      break;
-    }
-    case Q_CATALOG_CODE: /* for 5.0.x where 0<=x<=3 masters */
-      CHECK_SPACE(pos, end, 1);
-      if ((catalog_len= *pos))
-        catalog= (char*) pos+1;                           // Will be copied later
-      CHECK_SPACE(pos, end, catalog_len + 2);
-      pos+= catalog_len+2; // leap over end 0
-      catalog_nz= 0; // catalog has end 0 in event
       break;
     case Q_LC_TIME_NAMES_CODE:
       CHECK_SPACE(pos, end, 2);

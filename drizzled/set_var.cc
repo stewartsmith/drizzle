@@ -2132,7 +2132,6 @@ unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
       timezone). If it's the global value which was used we can't replicate
       (binlog code stores session value only).
     */
-    session->time_zone_used= 1;
     return (unsigned char *)(session->variables.time_zone->get_name()->ptr());
   }
 }

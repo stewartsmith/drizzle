@@ -963,11 +963,6 @@ public:
 private:
   uint32_t binlog_table_maps; // Number of table maps currently in the binlog
 
-  enum enum_binlog_flag {
-    BINLOG_FLAG_UNSAFE_STMT_PRINTED,
-    BINLOG_FLAG_COUNT
-  };
-
   /**
      Flags with per-thread information regarding the status of the
      binary log.
@@ -1260,7 +1255,7 @@ public:
     Reset to false when we leave the sub-statement mode.
   */
   bool       is_fatal_sub_stmt_error;
-  bool	     query_start_used, rand_used, time_zone_used;
+  bool	     query_start_used; 
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
   bool	     in_lock_tables;

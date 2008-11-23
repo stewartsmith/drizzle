@@ -2508,7 +2508,7 @@ void mysql_reset_session_for_next_command(Session *session)
   session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
 
   session->query_start_used= 0;
-  session->is_fatal_error= session->time_zone_used= 0;
+  session->is_fatal_error= 0;
   session->server_status&= ~ (SERVER_MORE_RESULTS_EXISTS | 
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -2533,7 +2533,6 @@ void mysql_reset_session_for_next_command(Session *session)
   session->clear_error();
   session->main_da.reset_diagnostics_area();
   session->total_warn_count=0;			// Warnings for this query
-  session->rand_used= 0;
   session->sent_row_count= session->examined_row_count= 0;
 
   return;

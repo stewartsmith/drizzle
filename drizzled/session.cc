@@ -478,8 +478,6 @@ Session::Session()
    is_fatal_error(0),
    transaction_rollback_request(0),
    is_fatal_sub_stmt_error(0),
-   rand_used(0),
-   time_zone_used(0),
    in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL)
@@ -941,7 +939,6 @@ void Session::cleanup_after_query()
     /* Forget those values, for next binlogger: */
     stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
     auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-    rand_used= 0;
   }
   if (first_successful_insert_id_in_cur_stmt > 0)
   {

@@ -54,17 +54,6 @@ bool Item_func_rand::fix_fields(Session *session,Item **ref)
   }
   else
   {
-    /*
-      Save the seed only the first time RAND() is used in the query
-      Once events are forwarded rather than recreated,
-      the following can be skipped if inside the slave thread
-    */
-    if (!session->rand_used)
-    {
-      session->rand_used= 1;
-      session->rand_saved_seed1= session->rand.seed1;
-      session->rand_saved_seed2= session->rand.seed2;
-    }
     rand= &session->rand;
   }
   return false;
