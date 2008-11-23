@@ -13,6 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#include <stdio.h>
 #include <drizzled/global.h>
 #include CMATH_H
 #include <mystrings/m_string.h>  /* strchr() */
@@ -46,7 +47,7 @@ base64_needed_encoded_length(int length_of_data)
 int
 base64_needed_decoded_length(int length_of_encoded_data)
 {
-  return (int) ceil(length_of_encoded_data * 3 / 4);
+  return (int) ceil((double)(length_of_encoded_data * 3 / 4));
 }
 
 

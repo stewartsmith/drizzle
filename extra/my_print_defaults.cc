@@ -20,6 +20,7 @@
 **  Written by Monty
 */
 
+#include <stdio.h>
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>

@@ -261,7 +261,6 @@ int64_t Field_timestamp::val_int(void)
   DRIZZLE_TIME time_tmp;
   Session  *session= table ? table->in_use : current_session;
 
-  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -292,7 +291,6 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
   to= (char*) val_buffer->ptr();
   val_buffer->length(field_length);
 
-  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);
@@ -357,7 +355,6 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t fuzzydate)
 {
   long temp;
   Session *session= table ? table->in_use : current_session;
-  session->time_zone_used= 1;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp=uint4korr(ptr);

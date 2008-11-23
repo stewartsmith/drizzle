@@ -1368,30 +1368,80 @@ handle_error(uint32_t sql_errno  __attribute__((unused)),
 }
 
 
+struct handlerton_delete_table_args {
+  Session *session;
+  const char *path;
+  handler *file;
+  int error;
+};
+
+static bool deletetable_handlerton(Session *unused1 __attribute__((unused)),
+                                   plugin_ref plugin,
+                                   void *args)
+{
+  struct handlerton_delete_table_args *dtargs= (struct handlerton_delete_table_args *) args;
+
+  Session *session= dtargs->session;
+  const char *path= dtargs->path;
+
+  handler *file;
+  char tmp_path[FN_REFLEN];
+
+  if(dtargs->error!=ENOENT) /* already deleted table */
+    return false;
+
+  handlerton *table_type= plugin_data(plugin, handlerton *);
+
+  if(!table_type)
+    return false;
+
+  if(!(table_type->state == SHOW_OPTION_YES && table_type->create))
+    return false;
+
+  if ((file= table_type->create(table_type, NULL, session->mem_root)))
+    file->init();
+  else
+    return false;
+
+  path= check_lowercase_names(file, path, tmp_path);
+  int error= file->ha_delete_table(path);
+
+  if(error!=ENOENT)
+  {
+    dtargs->error= error;
+    if(dtargs->file)
+      delete dtargs->file;
+    dtargs->file= file;
+    return true;
+  }
+
+  return false;
+}
+
 /**
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int ha_delete_table(Session *session, handlerton *table_type, const char *path,
+int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning)
 {
-  handler *file;
-  char tmp_path[FN_REFLEN];
-  int error;
-  Table dummy_table;
   TABLE_SHARE dummy_share;
+  Table dummy_table;
+
+  struct handlerton_delete_table_args dtargs;
+  dtargs.error= ENOENT;
+  dtargs.session= session;
+  dtargs.path= path;
+  dtargs.file= NULL;
+
+  plugin_foreach(NULL, deletetable_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN,
+                 &dtargs);
 
   memset(&dummy_table, 0, sizeof(dummy_table));
   memset(&dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
-  /* DB_TYPE_UNKNOWN is used in ALTER Table when renaming only .frm files */
-  if (table_type == NULL ||
-      ! (file=get_new_handler((TABLE_SHARE*)0, session->mem_root, table_type)))
-    return(ENOENT);
-
-  path= check_lowercase_names(file, path, tmp_path);
-  if ((error= file->ha_delete_table(path)) && generate_warning)
+  if (dtargs.error && generate_warning)
   {
     /*
       Because file->print_error() use my_error() to generate the error message
@@ -1410,10 +1460,11 @@ int ha_delete_table(Session *session, handlerton *table_type, const char *path,
     dummy_share.table_name.length= strlen(alias);
     dummy_table.alias= alias;
 
+    handler *file= dtargs.file;
     file->change_table_ptr(&dummy_table, &dummy_share);
 
     session->push_internal_handler(&ha_delete_table_error_handler);
-    file->print_error(error, 0);
+    file->print_error(dtargs.error, 0);
 
     session->pop_internal_handler();
 
@@ -1421,11 +1472,14 @@ int ha_delete_table(Session *session, handlerton *table_type, const char *path,
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, dtargs.error,
                 ha_delete_table_error_handler.buff);
   }
-  delete file;
-  return(error);
+
+  if(dtargs.file)
+    delete dtargs.file;
+
+  return dtargs.error;
 }
 
 /****************************************************************************
@@ -2317,53 +2371,6 @@ int handler::check_old_types()
   return 0;
 }
 
-
-static bool update_frm_version(Table *table)
-{
-  char path[FN_REFLEN];
-  File file;
-  bool result= true;
-
-  /*
-    No need to update frm version in case table was created or checked
-    by server with the same version. This also ensures that we do not
-    update frm version for temporary tables as this code doesn't support
-    temporary tables.
-  */
-  if (table->s->mysql_version == DRIZZLE_VERSION_ID)
-    return(0);
-
-  strxmov(path, table->s->normalized_path.str, reg_ext, NULL);
-
-  if ((file= my_open(path, O_RDWR, MYF(MY_WME))) >= 0)
-  {
-    unsigned char version[4];
-    char *key= table->s->table_cache_key.str;
-    uint32_t key_length= table->s->table_cache_key.length;
-    Table *entry;
-    HASH_SEARCH_STATE state;
-
-    int4store(version, DRIZZLE_VERSION_ID);
-
-    if (pwrite(file, (unsigned char*)version, 4, 51L) == 0)
-    {
-      result= false;
-      goto err;
-    }
-
-    for (entry=(Table*) hash_first(&open_cache,(unsigned char*) key,key_length, &state);
-         entry;
-         entry= (Table*) hash_next(&open_cache,(unsigned char*) key,key_length, &state))
-      entry->s->mysql_version= DRIZZLE_VERSION_ID;
-  }
-err:
-  if (file >= 0)
-    my_close(file,MYF(MY_WME));
-  return(result);
-}
-
-
-
 /**
   @return
     key if error because of duplicated keys
@@ -2474,7 +2481,7 @@ int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
   }
   if ((error= check(session, check_opt)))
     return error;
-  return update_frm_version(table);
+  return HA_ADMIN_OK;
 }
 
 /**
@@ -2522,7 +2529,7 @@ int handler::ha_repair(Session* session, HA_CHECK_OPT* check_opt)
 
   if ((result= repair(session, check_opt)))
     return result;
-  return update_frm_version(table);
+  return HA_ADMIN_OK;
 }
 
 
@@ -4362,6 +4369,7 @@ static int binlog_log_row(Table* table,
 {
   if (table->no_replicate)
     return 0;
+
   bool error= 0;
   Session *const session= table->in_use;
 
@@ -4378,6 +4386,7 @@ static int binlog_log_row(Table* table,
       error= (*log_func)(session, table, has_trans, before_record, after_record);
     }
   }
+
   return error ? HA_ERR_RBR_LOGGING_FAILED : 0;
 }
 

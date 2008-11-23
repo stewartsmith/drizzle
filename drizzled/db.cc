@@ -799,13 +799,6 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
   pthread_mutex_lock(&LOCK_drizzle_create_db);
 
-  /*
-    This statement will be replicated as a statement, even when using
-    row-based replication. The flag will be reset at the end of the
-    statement.
-  */
-  session->clear_current_stmt_binlog_row_based();
-
   length= build_table_filename(path, sizeof(path), db, "", "", 0);
   my_stpcpy(path+length, MY_DB_OPT_FILE);		// Append db option file name
   del_dbopt(path);				// Remove dboption hash entry
@@ -1012,7 +1005,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
     }
   }
   if (session->killed ||
-      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1, 1)))
+      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1)))
     goto err;
 
   my_dirend(dirp);  

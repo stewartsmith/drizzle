@@ -59,7 +59,6 @@ void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
   Session *session= current_session;
   session->variables.time_zone->gmt_sec_to_TIME(now_time,
                                              (my_time_t)session->query_start());
-  session->time_zone_used= 1;
 }
 
 /**

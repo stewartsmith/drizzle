@@ -1479,8 +1479,6 @@ Create_udf_func::create(Session *session, udf_func *udf, List<Item> *item_list)
   if (item_list != NULL)
     arg_count= item_list->elements;
 
-  session->lex->set_stmt_unsafe();
-
   func= udf->create_func(session->mem_root);
 
   func->set_arguments(*item_list);
@@ -2025,7 +2023,6 @@ Create_func_found_rows Create_func_found_rows::s_singleton;
 Item*
 Create_func_found_rows::create(Session *session)
 {
-  session->lex->set_stmt_unsafe();
   return new (session->mem_root) Item_func_found_rows();
 }
 
@@ -2600,7 +2597,6 @@ Create_func_row_count Create_func_row_count::s_singleton;
 Item*
 Create_func_row_count::create(Session *session)
 {
-  session->lex->set_stmt_unsafe();
   return new (session->mem_root) Item_func_row_count();
 }
 
@@ -2826,7 +2822,6 @@ Create_func_uuid Create_func_uuid::s_singleton;
 Item*
 Create_func_uuid::create(Session *session)
 {
-  session->lex->set_stmt_unsafe();
   return new (session->mem_root) Item_func_uuid();
 }
 

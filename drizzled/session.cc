@@ -472,15 +472,12 @@ Session::Session()
    binlog_table_maps(0), binlog_flags(0UL),
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
-   first_successful_insert_id_in_prev_stmt_for_binlog(0),
    first_successful_insert_id_in_cur_stmt(0),
    stmt_depends_on_first_successful_insert_id_in_prev_stmt(false),
    global_read_lock(0),
    is_fatal_error(0),
    transaction_rollback_request(0),
    is_fatal_sub_stmt_error(0),
-   rand_used(0),
-   time_zone_used(0),
    in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL)
@@ -519,7 +516,6 @@ Session::Session()
   slave_thread = 0;
   memset(&variables, 0, sizeof(variables));
   thread_id= 0;
-  one_shot_set= 0;
   file_id = 0;
   query_id= 0;
   warn_id= 0;
@@ -682,7 +678,6 @@ void Session::init(void)
   memset(warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
   update_charset();
-  reset_current_stmt_binlog_row_based();
   memset(&status_var, 0, sizeof(status_var));
 }
 
@@ -944,7 +939,6 @@ void Session::cleanup_after_query()
     /* Forget those values, for next binlogger: */
     stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
     auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-    rand_used= 0;
   }
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
@@ -2284,11 +2278,6 @@ extern "C" int session_non_transactional_update(const Session *session)
   return(session->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int session_binlog_format(const Session *session)
-{
-  return (int) session->variables.binlog_format;
-}
-
 extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
@@ -2779,27 +2768,6 @@ int Session::binlog_query(Session::enum_binlog_query_type qtype, char const *que
 
   if (int error= binlog_flush_pending_rows_event(true))
     return(error);
-
-  /*
-    If we are in statement mode and trying to log an unsafe statement,
-    we should print a warning.
-  */
-  if (lex->is_stmt_unsafe() &&
-      variables.binlog_format == BINLOG_FORMAT_STMT)
-  {
-    assert(this->query != NULL);
-    push_warning(this, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                 ER_BINLOG_UNSAFE_STATEMENT,
-                 ER(ER_BINLOG_UNSAFE_STATEMENT));
-    if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
-    {
-      char warn_buf[DRIZZLE_ERRMSG_SIZE];
-      snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
-               ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
-      sql_print_warning("%s",warn_buf);
-      binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
-    }
-  }
 
   switch (qtype) {
   case Session::ROW_QUERY_TYPE:

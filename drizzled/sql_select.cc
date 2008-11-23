@@ -16338,11 +16338,8 @@ Index_hint::print(Session *session, String *str)
   str->append (STRING_WITH_LEN(" ("));
   if (key_name.length)
   {
-    if (session && !my_strnncoll(system_charset_info,
-                             (const unsigned char *)key_name.str, key_name.length, 
-                             (const unsigned char *)primary_key_name, 
-                             strlen(primary_key_name)))
-      str->append(primary_key_name);
+    if (session && is_primary_key_name(key_name.str))
+      str->append(is_primary_key_name(key_name.str));
     else
       append_identifier(session, str, key_name.str, key_name.length);
   }

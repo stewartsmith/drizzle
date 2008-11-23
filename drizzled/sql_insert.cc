@@ -1094,20 +1094,6 @@ bool mysql_insert_select_prepare(Session *session)
   LEX *lex= session->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
   
-
-  /*
-    Statement-based replication of INSERT ... SELECT ... LIMIT is not safe
-    as order of rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if ORDER BY primary_key
-    is present or we SELECT a constant. However it may confuse users to
-    see very similiar statements replicated differently.
-  */
-  if (lex->current_select->select_limit)
-  {
-    lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based();
-  }
   /*
     SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
     clause if table is VIEW
@@ -1759,14 +1745,10 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   private:
     virtual int do_postlock(Table **tables, uint32_t count)
     {
-      Session *session= const_cast<Session*>(ptr->get_session());
-      if (int error= decide_logging_format(session))
-        return error;
-
       Table const *const table = *tables;
-      if (session->current_stmt_binlog_row_based  &&
-          !table->s->tmp_table &&
-          !ptr->get_create_info()->table_existed)
+      if (drizzle_bin_log.is_open()
+          && !table->s->tmp_table 
+          && !ptr->get_create_info()->table_existed)
       {
         ptr->binlog_show_create_table(tables, count);
       }
@@ -1787,7 +1769,8 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 && session->current_stmt_binlog_row_based)
+  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 
+      && drizzle_bin_log.is_open())
   {
     session->binlog_start_trans_and_stmt();
   }

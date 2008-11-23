@@ -46,7 +46,7 @@ pthread_cond_t timer_alarm_threshold;
 pthread_mutex_t row_lock;
 
 /* Prototypes */
-void *run_task(void *p);
+void *run_concurrent_task(void *p);
 void *timer_thread(void *p);
 void scheduler(az_method use_aio);
 void create_data_file(azio_stream *write_handler, uint64_t rows);
@@ -150,7 +150,7 @@ void scheduler(az_method use_aio)
     context[x].use_aio= use_aio;
 
     /* now you create the thread */
-    if (pthread_create(&mainthread, &attr, run_task,
+    if (pthread_create(&mainthread, &attr, run_concurrent_task,
                        (void *)context) != 0)
     {
       fprintf(stderr,"Could not create thread\n");
@@ -235,7 +235,7 @@ void *timer_thread(void *p)
   return 0;
 }
 
-void *run_task(void *p)
+void *run_concurrent_task(void *p)
 {
   thread_context_st *context= (thread_context_st *)p;
   uint64_t count;

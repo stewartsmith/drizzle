@@ -219,7 +219,7 @@ void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
   share->path.str=               (char*) path;
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
-  share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
+
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -468,16 +468,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   my_seek(file,pos,MY_SEEK_SET,MYF(0));
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
-
-  share->frm_version= head[2];
-  /*
-    Check if .frm file created by MySQL 5.0. In this case we want to
-    display CHAR fields as CHAR and not as VARCHAR.
-    We do it this way as we want to keep the old frm version to enable
-    MySQL 4.1 to read these files.
-  */
-  if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
-    share->frm_version= FRM_VER_TRUE_VARCHAR;
 
   legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
   assert(share->db_plugin == NULL);
@@ -1035,7 +1025,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    uint32_t primary_key=(uint) (find_type((char*) primary_key_name,
+    uint32_t primary_key=(uint) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
     int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
@@ -3558,48 +3548,6 @@ size_t Table::max_row_length(const unsigned char *data)
       HA_KEY_BLOB_LENGTH;
   }
   return length;
-}
-
-/*
-  Check type of .frm if we are not going to parse it
-
-  SYNOPSIS
-  mysql_frm_type()
-  path        path to file
-
-  RETURN
-  false       error
-  true       table
-*/
-
-bool mysql_frm_type(Session *, char *path, enum legacy_db_type *dbt)
-{
-  File file;
-  unsigned char header[10];     /* This should be optimized */
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  if ((file= open(path, O_RDONLY)) < 0)
-    return false;
-  error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
-  my_close(file, MYF(MY_WME));
-
-  if (error)
-    return false;
-
-  /*  
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-   */  
-  if (header[0] != (unsigned char) 254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return true;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  return true;                   // Is probably a .frm table
 }
 
 /****************************************************************************

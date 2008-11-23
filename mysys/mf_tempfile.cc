@@ -13,6 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#include <stdio.h>
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 #include "my_static.h"
@@ -77,7 +78,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 				    sizeof(prefix_buff)-7),"XXXXXX") -
 		     prefix_buff);
     if (!dir && ! (dir =getenv("TMPDIR")))
-      dir=P_tmpdir;
+      dir= P_tmpdir;
     if (strlen(dir)+ pfx_len > FN_REFLEN-2)
     {
       errno=my_errno= ENAMETOOLONG;

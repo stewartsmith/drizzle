@@ -18,6 +18,7 @@
 #include <drizzled/global.h>
 
 #include <mystrings/m_ctype.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
 #include <mysys/my_bit.h>
@@ -32,6 +33,8 @@
 #include <drizzled/util/test.h>
 
 #include "myisamdef.h"
+
+pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t decode_bits;
 static char **default_argv;
@@ -129,6 +132,9 @@ int main(int argc, char **argv)
     printf("\nTotal of all %d MyISAM-files:\nData records: %9s   Deleted blocks: %9s\n",check_param.total_files,llstr(check_param.total_records,buff),
 	   llstr(check_param.total_deleted,buff2));
   }
+
+  pthread_mutex_destroy(&THR_LOCK_myisam);
+
   free_defaults(default_argv);
   free_tmpdir(&myisamchk_tmpdir);
   my_end(check_param.testflag & T_INFO ? MY_CHECK_ERROR | MY_GIVE_INFO : MY_CHECK_ERROR);
@@ -1451,7 +1457,7 @@ static int mi_sort_records(MI_CHECK *param,
     goto err;
   }
 
-  if (!mi_alloc_rec_buff(info, -1, &sort_param.record))
+  if (!mi_alloc_rec_buff(info, (ulong)-1, &sort_param.record))
   {
     mi_check_print_error(param,"Not enough memory for record");
     goto err;

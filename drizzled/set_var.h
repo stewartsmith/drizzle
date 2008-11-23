@@ -97,11 +97,6 @@ public:
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
-  bool is_written_to_binlog(enum_var_type type)
-  {
-    return (type == OPT_SESSION || type == OPT_DEFAULT) &&
-      (binlog_status == SESSION_VARIABLE_IN_BINLOG);
-  }
   virtual bool update(Session *session, set_var *var)=0;
   virtual void set_default(Session *session_arg __attribute__((unused)),
                            enum_var_type type __attribute__((unused)))
@@ -1103,20 +1098,6 @@ public:
   virtual void set_default(Session *session, enum_var_type type);
 };
 
-
-extern void fix_binlog_format_after_update(Session *session, enum_var_type type);
-
-class sys_var_session_binlog_format :public sys_var_session_enum
-{
-public:
-  sys_var_session_binlog_format(sys_var_chain *chain, const char *name_arg, 
-                            ulong SV::*offset_arg)
-    :sys_var_session_enum(chain, name_arg, offset_arg,
-                      &binlog_format_typelib,
-                      fix_binlog_format_after_update)
-  {};
-  bool is_readonly() const;
-};
 
 /****************************************************************************
   Classes for parsing of the SET command

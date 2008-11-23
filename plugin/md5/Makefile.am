@@ -24,7 +24,7 @@ AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes)
 if BUILD_MD5_UDF
 EXTRA_LTLIBRARIES =	libmd5udf.la
 pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
-libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lssl
+libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -L/opt/csw/lib -lssl
 libmd5udf_la_CXXFLAGS=	-DDRIZZLE_DYNAMIC_PLUGIN
 libmd5udf_la_SOURCES =	md5udf.cc
 

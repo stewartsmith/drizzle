@@ -2441,7 +2441,7 @@ alter_list_item:
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
-                                                               primary_key_name));
+                                                               "PRIMARY"));
             lex->alter_info.flags|= ALTER_DROP_INDEX;
           }
         | DROP key_or_index field_ident
@@ -3359,7 +3359,6 @@ function_call_keyword:
         | CURRENT_USER optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_current_user(Lex->current_context());
-            Lex->set_stmt_unsafe();
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3421,7 +3420,6 @@ function_call_keyword:
         | USER '(' ')'
           {
             $$= new (YYSession->mem_root) Item_func_user();
-            Lex->set_stmt_unsafe();
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
@@ -3766,8 +3764,6 @@ variable_aux:
             }
             if (!($$= get_system_var(YYSession, $2, $3, $4)))
               DRIZZLE_YYABORT;
-            if (!((Item_func_get_system_var*) $$)->is_written_to_binlog())
-              Lex->set_stmt_unsafe();
           }
         ;
 

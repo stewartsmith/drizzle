@@ -16,6 +16,7 @@
 #include "m_string.h"
 #include "m_ctype.h"
 #include <errno.h>
+#include <stdio.h>
 
 #include "stdarg.h"
 
@@ -1330,7 +1331,8 @@ static bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
   return false;
 }
 
-static bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
+extern "C"
+bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   cs->caseup_multiply= 1;
   cs->casedn_multiply= 1;
@@ -1357,8 +1359,9 @@ static void set_max_sort_char(CHARSET_INFO *cs)
   }
 }
 
-static bool my_coll_init_simple(CHARSET_INFO *cs,
-                                   void *(*alloc)(size_t) __attribute__((unused)))
+extern "C"
+bool my_coll_init_simple(CHARSET_INFO *cs,
+                         void *(*alloc)(size_t) __attribute__((unused)))
 {
   set_max_sort_char(cs);
   return false;

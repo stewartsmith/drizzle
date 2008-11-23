@@ -23,12 +23,16 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 
+pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
+
 static handler *heap_create_handler(handlerton *hton,
                                     TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
 int heap_deinit(void *)
 {
+  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
+
   return hp_panic(HA_PANIC_CLOSE);
 }
 
@@ -569,8 +573,7 @@ THR_LOCK_DATA **ha_heap::store_lock(Session *session __attribute__((unused)),
 
 int ha_heap::delete_table(const char *name)
 {
-  int error= heap_delete_table(name);
-  return error == ENOENT ? 0 : error;
+  return heap_delete_table(name);
 }
 
 

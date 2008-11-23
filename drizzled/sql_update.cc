@@ -735,20 +735,6 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 {
   List<Item> all_fields;
   SELECT_LEX *select_lex= &session->lex->select_lex;
-  
-  /*
-    Statement-based replication of UPDATE ... LIMIT is not safe as order of
-    rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if order_st BY primary_key
-    is present. However it may confuse users to see very similiar statements
-    replicated differently.
-  */
-  if (session->lex->current_select->select_limit)
-  {
-    session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based();
-  }
 
   session->lex->allow_sum_func= 0;
 
