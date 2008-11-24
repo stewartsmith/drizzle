@@ -1362,7 +1362,6 @@ public:
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
-  LEX_SERVER_OPTIONS server_options;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -1469,9 +1468,6 @@ public:
   void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
 
-  bool can_be_merged();
-  bool can_use_merged();
-  bool can_not_use_merged();
   bool only_view_structure();
   bool need_correct_ident();
 

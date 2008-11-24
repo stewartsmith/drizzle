@@ -67,7 +67,7 @@ noinst_LTLIBRARIES = libhandler.la libyacc.la
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL) ${UUID_LIBS}
+	$(Z_LIBS) $(LIBINTL) 
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \

@@ -1251,8 +1251,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
   }
   else if ((type() == SUM_FUNC_ITEM || (used_tables() & ~PARAM_TABLE_BIT)) &&
            type() != SUBSELECT_ITEM &&
-           (type() != REF_ITEM ||
-           ((Item_ref*)this)->ref_type() == Item_ref::VIEW_REF))
+           type() != REF_ITEM)
   {
     /*
       Replace item with a reference so that we can easily calculate
@@ -5340,30 +5339,6 @@ bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   return (null_value=(*ref)->get_date(ltime,fuzzydate));
 }
 
-
-/**
-  Prepare referenced field then call usual Item_direct_ref::fix_fields .
-
-  @param session         thread handler
-  @param reference   reference on reference where this item stored
-
-  @retval
-    false   OK
-  @retval
-    true    Error
-*/
-
-bool Item_direct_view_ref::fix_fields(Session *session, Item **reference)
-{
-  /* view fild reference must be defined */
-  assert(*ref);
-  /* (*ref)->check_cols() will be made in Item_direct_ref::fix_fields */
-  if (!(*ref)->fixed &&
-      ((*ref)->fix_fields(session, ref)))
-    return true;
-  return Item_direct_ref::fix_fields(session, reference);
-}
-
 /*
   Prepare referenced outer field then call usual Item_direct_ref::fix_fields
 
@@ -5407,37 +5382,6 @@ void Item_ref::fix_after_pullout(st_select_lex *new_parent, Item **)
     (*ref)->fix_after_pullout(new_parent, ref);
     depended_from= NULL;
   }
-}
-
-/**
-  Compare two view column references for equality.
-
-  A view column reference is considered equal to another column
-  reference if the second one is a view column and if both column
-  references resolve to the same item. It is assumed that both
-  items are of the same type.
-
-  @param item        item to compare with
-  @param binary_cmp  make binary comparison
-
-  @retval
-    true    Referenced item is equal to given item
-  @retval
-    false   otherwise
-*/
-
-bool Item_direct_view_ref::eq(const Item *item, bool) const
-{
-  if (item->type() == REF_ITEM)
-  {
-    Item_ref *item_ref= (Item_ref*) item;
-    if (item_ref->ref_type() == VIEW_REF)
-    {
-      Item *item_ref_ref= *(item_ref->ref);
-      return ((*ref)->real_item() == item_ref_ref->real_item());
-    }
-  }
-  return false;
 }
 
 bool Item_default_value::eq(const Item *item, bool binary_cmp) const

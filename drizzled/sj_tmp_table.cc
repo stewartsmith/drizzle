@@ -86,11 +86,11 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
-	    current_pid, temp_pool_slot);
+	    (unsigned long)current_pid, temp_pool_slot);
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
             session->thread_id, session->tmp_table++);
   }
   fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);

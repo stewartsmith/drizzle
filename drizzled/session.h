@@ -34,6 +34,7 @@
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
 #include <drizzled/sql_error.h>
+#include <bitset>
 
 class Relay_log_info;
 
@@ -2262,11 +2263,20 @@ public:
 
 /* Bits in sql_command_flags */
 
-#define CF_CHANGES_DATA		1
-#define CF_HAS_ROW_COUNT	2
-#define CF_STATUS_COMMAND	4
-#define CF_SHOW_TABLE_COMMAND	8
-#define CF_WRITE_LOGS_COMMAND  16
+enum sql_command_flag_bits {
+  CF_BIT_CHANGES_DATA,
+  CF_BIT_HAS_ROW_COUNT,
+  CF_BIT_STATUS_COMMAND,
+  CF_BIT_SHOW_TABLE_COMMAND,
+  CF_BIT_WRITE_LOGS_COMMAND,
+  CF_BIT_SIZE
+};
+
+static const std::bitset<CF_BIT_SIZE> CF_CHANGES_DATA(1 << CF_BIT_CHANGES_DATA);
+static const std::bitset<CF_BIT_SIZE> CF_HAS_ROW_COUNT(1 << CF_BIT_HAS_ROW_COUNT);
+static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMAND);
+static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
+static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
 

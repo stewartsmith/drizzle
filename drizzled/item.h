@@ -77,14 +77,29 @@ class Item: public Sql_alloc
 
 public:
 
-  enum Type {FIELD_ITEM= 0, FUNC_ITEM, SUM_FUNC_ITEM, STRING_ITEM,
-             INT_ITEM, REAL_ITEM, NULL_ITEM, VARBIN_ITEM,
-             COPY_STR_ITEM, FIELD_AVG_ITEM, DEFAULT_VALUE_ITEM,
-             PROC_ITEM,COND_ITEM, REF_ITEM, FIELD_STD_ITEM,
-             FIELD_VARIANCE_ITEM, INSERT_VALUE_ITEM,
-             SUBSELECT_ITEM, ROW_ITEM, CACHE_ITEM, TYPE_HOLDER,
-             PARAM_ITEM, DECIMAL_ITEM,
-             VIEW_FIXER_ITEM};
+  enum Type {FIELD_ITEM= 0, 
+    FUNC_ITEM,
+    SUM_FUNC_ITEM,
+    STRING_ITEM,
+    INT_ITEM,
+    REAL_ITEM,
+    NULL_ITEM,
+    VARBIN_ITEM,
+    COPY_STR_ITEM,
+    FIELD_AVG_ITEM,
+    DEFAULT_VALUE_ITEM,
+    PROC_ITEM,
+    COND_ITEM,
+    REF_ITEM,
+    FIELD_STD_ITEM,
+    FIELD_VARIANCE_ITEM,
+    INSERT_VALUE_ITEM,
+    SUBSELECT_ITEM,
+    ROW_ITEM, CACHE_ITEM,
+    TYPE_HOLDER,
+    PARAM_ITEM,
+    DECIMAL_ITEM
+  };
 
   enum cond_result { COND_UNDEF,COND_OK,COND_TRUE,COND_FALSE };
 
@@ -1549,33 +1564,6 @@ public:
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual Ref_Type ref_type() { return DIRECT_REF; }
 };
-
-/*
-  Class for view fields, the same as Item_direct_ref, but call fix_fields
-  of reference if it is not called yet
-*/
-class Item_direct_view_ref :public Item_direct_ref
-{
-public:
-  Item_direct_view_ref(Name_resolution_context *context_arg, Item **item,
-                  const char *table_name_arg,
-                  const char *field_name_arg)
-    :Item_direct_ref(context_arg, item, table_name_arg, field_name_arg) {}
-  /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_direct_view_ref(Session *session, Item_direct_ref *item)
-    :Item_direct_ref(session, item) {}
-
-  bool fix_fields(Session *, Item **);
-  bool eq(const Item *item, bool binary_cmp) const;
-  Item *get_tmp_table_item(Session *session)
-  {
-    Item *item= Item_ref::get_tmp_table_item(session);
-    item->name= name;
-    return item;
-  }
-  virtual Ref_Type ref_type() { return VIEW_REF; }
-};
-
 
 /*
   Class for outer fields.

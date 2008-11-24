@@ -1540,7 +1540,6 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
     case Item::CACHE_ITEM:
     case Item::TYPE_HOLDER:
     case Item::PARAM_ITEM:
-    case Item::VIEW_FIXER_ITEM: 
          my_error(ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED, MYF(0), field_name);
          return true;
          break;

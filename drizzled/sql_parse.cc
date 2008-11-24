@@ -32,6 +32,9 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
+#include <bitset>
+
+using namespace std;
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -164,11 +167,14 @@ static bool some_non_temp_table_to_be_updated(Session *session, TableList *table
           a number of modified rows
 */
 
-uint32_t sql_command_flags[SQLCOM_END+1];
+bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
-  memset(&sql_command_flags, 0, sizeof(sql_command_flags));
+  uint32_t x;
+
+  for (x= 0; x <= SQLCOM_END; x++)
+    sql_command_flags[x].reset();
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -223,7 +229,7 @@ void init_update_queries(void)
 bool is_update_query(enum enum_sql_command command)
 {
   assert(command >= 0 && command <= SQLCOM_END);
-  return (sql_command_flags[command] & CF_CHANGES_DATA) != 0;
+  return (sql_command_flags[command].test(CF_BIT_CHANGES_DATA));
 }
 
 void execute_init_command(Session *session, sys_var_str *init_command_var,
@@ -443,7 +449,7 @@ static bool deny_updates_if_read_only_option(Session *session,
 
   LEX *lex= session->lex;
 
-  if (!(sql_command_flags[lex->sql_command] & CF_CHANGES_DATA))
+  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_CHANGES_DATA)))
     return(false);
 
   /* Multi update is an exception and is dealt with later. */
@@ -2345,7 +2351,7 @@ end_with_restore_list:
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (!(sql_command_flags[lex->sql_command] & CF_HAS_ROW_COUNT))
+  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
     session->row_count_func= -1;
 
   goto finish;
@@ -2666,7 +2672,7 @@ void mysql_init_multi_delete(LEX *lex)
   lex->select_lex.select_limit= 0;
   lex->unit.select_limit_cnt= HA_POS_ERROR;
   lex->select_lex.table_list.save_and_clear(&lex->auxiliary_table_list);
-  lex->lock_option= using_update_log ? TL_READ_NO_INSERT : TL_READ;
+  lex->lock_option= TL_READ;
   lex->query_tables= 0;
   lex->query_tables_last= &lex->query_tables;
 }
@@ -3016,7 +3022,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
     ST_SCHEMA_TABLE *schema_table= find_schema_table(session, ptr->table_name);
     if (!schema_table ||
         (schema_table->hidden && 
-         ((sql_command_flags[lex->sql_command] & CF_STATUS_COMMAND) == 0 || 
+         ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
           /*
             this check is used for show columns|keys from I_S hidden table
           */

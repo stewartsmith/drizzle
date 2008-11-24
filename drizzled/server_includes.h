@@ -46,6 +46,7 @@
 #include <drizzled/log.h>
 
 #include <string>
+#include <bitset>
 
 typedef class st_select_lex SELECT_LEX;
 typedef struct st_mysql_lock DRIZZLE_LOCK;
@@ -156,7 +157,7 @@ extern ulong max_binlog_size, max_relay_log_size;
 extern ulong opt_binlog_rows_event_max_size;
 extern ulong rpl_recovery_rank, thread_cache_size, thread_pool_size;
 extern ulong back_log;
-extern ulong current_pid;
+extern pid_t current_pid;
 extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
 extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
 extern ulong tc_log_page_waits;
@@ -231,7 +232,7 @@ extern struct my_option my_long_options[];
 extern const LEX_STRING view_type;
 extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
-extern uint32_t sql_command_flags[];
+extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
 
 /* optional things, have_* variables */
