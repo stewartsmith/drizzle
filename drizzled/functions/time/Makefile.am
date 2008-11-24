@@ -22,13 +22,16 @@ libtimefunc_la_SOURCES = \
 		  curdate.cc \
 		  curtime.cc \
 		  date.cc \
+		  date_add_interval.cc \
 		  date_format.cc \
 		  dayname.cc \
 		  dayofmonth.cc \
+		  extract.cc \
 		  dayofyear.cc \
 		  from_days.cc \
 		  from_unixtime.cc \
 		  get_format.cc \
+		  get_interval_value.cc \
 		  hour.cc \
 		  last_day.cc \
 		  makedate.cc \
@@ -51,6 +54,7 @@ libtimefunc_la_SOURCES = \
 		  timestamp_diff.cc \
 		  time_to_sec.cc \
 		  to_days.cc \
+		  typecast.cc \
 		  unix_timestamp.cc \
 		  week.cc \
 		  week_mode.cc \
@@ -63,13 +67,16 @@ noinst_HEADERS = \
 		 curdate.h \
 		 curtime.h \
 		 date.h \
+		 date_add_interval.h \
 		 date_format.h \
 		 dayname.h \
 		 dayofmonth.h \
 		 dayofyear.h \
+		 extract.h \
 		 from_days.h \
 		 from_unixtime.h \
 		 get_format.h \
+		 get_interval_value.h \
 		 hour.h \
 		 last_day.h \
 		 makedate.h \
@@ -93,6 +100,7 @@ noinst_HEADERS = \
 		 timestamp_diff.h \
 		 time_to_sec.h \
 		 to_days.h \
+		 typecast.h \
 		 unix_timestamp.h \
 		 week.h \
 		 week_mode.h \

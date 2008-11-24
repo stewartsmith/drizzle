@@ -362,8 +362,6 @@ extern DATE_TIME_FORMAT *date_time_format_copy(Session *session,
 					       DATE_TIME_FORMAT *format);
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 				                             enum enum_drizzle_timestamp_type type);
-extern bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-			                     enum enum_drizzle_timestamp_type type, String *str);
 void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
                    String *str);
 void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
