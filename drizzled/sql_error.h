@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SQL_ERROR_H
 #define DRIZZLED_SQL_ERROR_H
 
+#include <drizzled/sql_alloc.h>
+
 class DRIZZLE_ERROR: public Sql_alloc
 {
 public:

@@ -22,6 +22,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -222,3 +225,57 @@ void Field_int64_t::sql_type(String &res) const
   const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
 }
+
+
+unsigned char *Field_int64_t::pack(unsigned char* to, const unsigned char *from,
+                                         uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                         bool low_byte_first
+#else
+                                         bool
+#endif
+)
+{
+  int64_t val;
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+     val = sint8korr(from);
+  else
+#endif
+    int64_tget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    int8store(to, val);
+  else
+#endif
+    int64_tstore(to, val);
+  return to + sizeof(val);
+}
+
+
+const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned char *from, uint32_t,
+#ifdef WORDS_BIGENDIAN
+                                           bool low_byte_first
+#else
+                                           bool
+#endif
+)
+{
+  int64_t val;
+#ifdef WORDS_BIGENDIAN
+  if (low_byte_first)
+    val = sint8korr(from);
+  else
+#endif
+    int64_tget(val, from);
+
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+    int8store(to, val);
+  else
+#endif
+    int64_tstore(to, val);
+  return from + sizeof(val);
+}
+

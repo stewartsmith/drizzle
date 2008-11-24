@@ -22,6 +22,7 @@
 
 #include <libdrizzle/net_serv.h>
 #include <mysys/my_alloc.h>
+#include <mystrings/m_ctype.h>
 
 class Session;
 
@@ -59,7 +60,7 @@ public:
   { return alloc_root(mem_root, size); }
   static void operator delete(void *ptr __attribute__((unused)),
                               size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
+  {  }
   static void operator delete(void *ptr __attribute__((unused)),
                               MEM_ROOT *mem_root __attribute__((unused)))
   { /* never called */ }
@@ -68,7 +69,7 @@ public:
   { /* never called */ }
   static void operator delete[](void *ptr __attribute__((unused)),
                                 size_t size __attribute__((unused)))
-  { TRASH(ptr, size); }
+  {  }
 #ifdef HAVE_purify
   bool dummy;
   inline Sql_alloc() :dummy(0) {}

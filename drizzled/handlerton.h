@@ -20,8 +20,9 @@
 #ifndef DRIZZLED_HANDLERTON_H
 #define DRIZZLED_HANDLERTON_H
 
+#include <stdint.h>
+
 #include <drizzled/definitions.h>
-#include CSTDINT_H
 #include <drizzled/sql_plugin.h>
 
 class TableList;
@@ -49,6 +50,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 */
 struct handlerton
 {
+  /*
+    Name used for storage engine.
+  */
+  const char *name;
+
   /*
     Historical marker for if the engine is available of not
   */

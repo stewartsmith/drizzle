@@ -22,6 +22,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_logging.h>
 #include <drizzled/gettext.h>
+#include <drizzled/session.h>
 
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN (32*1024)
@@ -117,22 +118,22 @@ bool logging_query_func_post (Session *session)
 
   msgbuf_len=
     snprintf(msgbuf, MAX_MSG_LEN,
-	     _("thread_id=%ld query_id=%ld"
-	       " t_connect=%lld t_start=%lld t_lock=%lld"
-	       " command=%.*s"
-	       " rows_sent=%ld rows_examined=%u\n"
-	       " db=\"%.*s\" query=\"%.*s\"\n"),
-	     (unsigned long) session->thread_id, 
-	     (unsigned long) session->query_id,
-	     (unsigned long long)(t_mark - session->connect_utime),
-	     (unsigned long long)(t_mark - session->start_utime),
-	     (unsigned long long)(t_mark - session->utime_after_lock),
-	     (uint32_t)command_name[session->command].length,
-	     command_name[session->command].str,
-	     (unsigned long) session->sent_row_count,
-	     (uint32_t) session->examined_row_count,
-	     session->db_length, session->db,
-	     session->query_length, session->query);
+             "thread_id=%ld query_id=%ld"
+             " t_connect=%lld t_start=%lld t_lock=%lld"
+             " command=%.*s"
+             " rows_sent=%ld rows_examined=%u\n"
+             " db=\"%.*s\" query=\"%.*s\"\n",
+             (unsigned long) session->thread_id,
+             (unsigned long) session->query_id,
+             (unsigned long long)(t_mark - session->connect_utime),
+             (unsigned long long)(t_mark - session->start_utime),
+             (unsigned long long)(t_mark - session->utime_after_lock),
+             (uint32_t)command_name[session->command].length,
+             command_name[session->command].str,
+             (unsigned long) session->sent_row_count,
+             (uint32_t) session->examined_row_count,
+             session->db_length, session->db,
+             session->query_length, session->query);
   /* a single write has a OS level thread lock
      so there is no need to have mutexes guarding this write,
   */

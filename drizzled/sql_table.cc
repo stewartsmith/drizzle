@@ -17,15 +17,36 @@
 
 #include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
+#include <mysys/hash.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/db.h>
+
+extern HASH lock_db_cache;
 
 int creating_table= 0;        // How many mysql_create_table are running
 
-const char * primary_key_name="PRIMARY";
+
+bool is_primary_key(KEY *key_info)
+{
+  static const char * primary_key_name="PRIMARY";
+  return (strcmp(key_info->name, primary_key_name)==0);
+}
+
+const char* is_primary_key_name(const char* key_name)
+{
+  static const char * primary_key_name="PRIMARY";
+  if (strcmp(key_name, primary_key_name)==0)
+    return key_name;
+  else
+    return NULL;
+}
 
 static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
@@ -67,7 +88,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   uint32_t errors;
   uint32_t res;
 
-  if (!memcmp(from, tmp_file_prefix, tmp_file_prefix_length))
+  if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
     res= (my_stpncpy(to, from, to_length) - to);
@@ -189,7 +210,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 
 
 /*
-  Creates path to a file: mysql_tmpdir/#sql1234_12_1.ext
+  Creates path to a file: drizzle_tmpdir/#sql1234_12_1.ext
 
   SYNOPSIS
    build_tmptable_filename()
@@ -200,7 +221,7 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   NOTES
 
     Uses current_pid, thread_id, and tmp_table counter to create
-    a file name in mysql_tmpdir.
+    a file name in drizzle_tmpdir.
 
   RETURN
     path length
@@ -209,10 +230,10 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
 uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 {
 
-  char *p= my_stpncpy(buff, mysql_tmpdir, bufflen);
+  char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
-	      tmp_file_prefix, current_pid,
-              session->thread_id, session->tmp_table++, reg_ext);
+           TMP_FILE_PREFIX, current_pid,
+           session->thread_id, session->tmp_table++, reg_ext);
 
   if (lower_case_table_names)
   {
@@ -243,7 +264,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 void write_bin_log(Session *session, bool clear_error,
                    char const *query, ulong query_length)
 {
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     if (clear_error)
       session->clear_error();
@@ -283,7 +304,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (tables && tables->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -301,7 +322,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
     LOCK_open during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
-  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, 0, 0);
+  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, 0);
 
   if (need_start_waiting)
     start_waiting_global_read_lock(session);
@@ -343,8 +364,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 */
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view,
-                         bool dont_log_query)
+                         bool drop_temporary, bool dont_log_query)
 {
   TableList *table;
   char path[FN_REFLEN], *alias;
@@ -355,7 +375,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   bool some_tables_deleted=0, tmp_table_deleted=0, foreign_key_error=0;
   String built_query;
 
-  if (session->current_stmt_binlog_row_based && !dont_log_query)
+  if (!dont_log_query)
   {
     built_query.set_charset(system_charset_info);
     if (if_exists)
@@ -395,8 +415,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     char *db=table->db;
     handlerton *table_type;
-    enum legacy_db_type frm_db_type;
-
 
     error= drop_temporary_table(session, table);
 
@@ -419,7 +437,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       being built.  The string always end in a comma and the comma
       will be chopped off before being written to the binary log.
       */
-    if (session->current_stmt_binlog_row_based && !dont_log_query)
+    if (!dont_log_query)
     {
       non_temp_tables_count++;
       /*
@@ -464,8 +482,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                                         FN_IS_TMP : 0);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))) ||
-         (!drop_view && mysql_frm_type(session, path, &frm_db_type) != true)))
+        ((table_type == NULL && (access(path, F_OK) && ha_create_table_from_engine(session, db, alias))))
+        )
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -478,17 +496,12 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     else
     {
       char *end;
-      if (table_type == NULL)
-      {
-        mysql_frm_type(session, path, &frm_db_type);
-        table_type= ha_resolve_by_legacy_type(session, frm_db_type);
-      }
       // Remove extension for delete
       *(end= path + path_length - reg_ext_length)= '\0';
-      error= ha_delete_table(session, table_type, path, db, table->table_name,
+      error= ha_delete_table(session, path, db, table->table_name,
                              !dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && 
-	  (if_exists || table_type == NULL))
+	  if_exists)
       {
 	error= 0;
         session->clear_error();
@@ -501,6 +514,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
       {
         int new_error;
+
+        /* for some weird-ass reason, we ignore the return code here
+           and things work. */
+        delete_table_proto_file(path);
+
         /* Delete the table definition file */
         my_stpcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
@@ -541,8 +559,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     if (!dont_log_query)
     {
-      if (!session->current_stmt_binlog_row_based ||
-          (non_temp_tables_count > 0 && !tmp_table_deleted))
+      if ((non_temp_tables_count > 0 && !tmp_table_deleted))
       {
         /*
           In this case, we are either using statement-based
@@ -553,8 +570,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
          */
         write_bin_log(session, !error, session->query, session->query_length);
       }
-      else if (session->current_stmt_binlog_row_based &&
-               non_temp_tables_count > 0 &&
+      else if (non_temp_tables_count > 0 &&
                tmp_table_deleted)
       {
         /*
@@ -607,7 +623,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(handlerton *base,const char *db,
+bool quick_rm_table(handlerton *base __attribute__((unused)),const char *db,
                     const char *table_name, uint32_t flags)
 {
   char path[FN_REFLEN];
@@ -617,8 +633,12 @@ bool quick_rm_table(handlerton *base,const char *db,
                                          db, table_name, reg_ext, flags);
   if (my_delete(path,MYF(0)))
     error= 1; /* purecov: inspected */
+
   path[path_length - reg_ext_length]= '\0'; // Remove reg_ext
-  return(ha_delete_table(current_session, base, path, db, table_name, 0) ||
+
+  error|= delete_table_proto_file(path);
+
+  return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
 }
 
@@ -648,9 +668,9 @@ static int sort_keys(KEY *a, KEY *b)
       /* Sort NOT NULL keys before other keys */
       return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
-    if (a->name == primary_key_name)
+    if (is_primary_key(a))
       return -1;
-    if (b->name == primary_key_name)
+    if (is_primary_key(b))
       return 1;
     /* Sort keys don't containing partial segments before others */
     if ((a_flags ^ b_flags) & HA_KEY_HAS_PART_KEY_SEG)
@@ -805,7 +825,7 @@ int prepare_create_field(Create_field *sql_field,
                                      sql_field->charset, &dup_val_count))
       return(1);
     break;
-  case DRIZZLE_TYPE_NEWDATE:  // Rest of string types
+  case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
@@ -1252,7 +1272,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
     else
       (*key_count)--;
     if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
-	!my_strcasecmp(system_charset_info,key->name.str, primary_key_name))
+        is_primary_key_name(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
       return(true);
@@ -1522,7 +1542,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                        MYF(0));
 	    return(true);
 	  }
-	  key_name=primary_key_name;
+          static const char pkey_name[]= "PRIMARY";
+	  key_name=pkey_name;
 	  primary_key=1;
 	}
 	else if (!(key_name= key->name.str))
@@ -1616,7 +1637,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 */
 
 static void set_table_default_charset(Session *session,
-				      HA_CREATE_INFO *create_info, char *db)
+                                      HA_CREATE_INFO *create_info, char *db)
 {
   /*
     If the table character set was not given explicitly,
@@ -1884,7 +1905,7 @@ bool mysql_create_table_no_lock(Session *session,
     /* Open table and put in temporary table list */
     if (!(open_temporary_table(session, path, db, table_name, 1, OTM_OPEN)))
     {
-      (void) rm_temporary_table(create_info->db_type, path, false);
+      (void) rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
     session->thread_specific_used= true;
@@ -1898,9 +1919,7 @@ bool mysql_create_table_no_lock(Session *session,
     Otherwise, the statement shall be binlogged.
    */
   if (!internal_tmp_table &&
-      (!session->current_stmt_binlog_row_based ||
-       (session->current_stmt_binlog_row_based &&
-        !(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
+      ((!(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
     write_bin_log(session, true, session->query, session->query_length);
   error= false;
 unlock_and_end:
@@ -2018,7 +2037,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
   char buff[MAX_FIELD_NAME],*buff_end;
 
   if (!check_if_keyname_exists(field_name,start,end) &&
-      my_strcasecmp(system_charset_info,field_name,primary_key_name))
+      !is_primary_key_name(field_name))
     return (char*) field_name;			// Use fieldname
   buff_end=strmake(buff,field_name, sizeof(buff)-4);
 
@@ -2109,6 +2128,15 @@ mysql_rename_table(handlerton *base, const char *old_db,
     {
       error=my_errno;
       /* Restore old file name */
+      if (file)
+        file->ha_rename_table(to_base, from_base);
+    }
+
+    if(!(flags & NO_FRM_RENAME)
+       && rename_table_proto_file(from_base, to_base))
+    {
+      error= errno;
+      rename_file_ext(to, from, reg_ext);
       if (file)
         file->ha_rename_table(to_base, from_base);
     }
@@ -3009,7 +3037,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
                                      OTM_OPEN))
     {
       (void) rm_temporary_table(create_info->db_type,
-				dst_path, false); /* purecov: inspected */
+				dst_path);
       goto err;     /* purecov: inspected */
     }
   }
@@ -3023,7 +3051,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   /*
     We have to write the query before we unlock the tables.
   */
-  if (session->current_stmt_binlog_row_based)
   {
     /*
        Since temporary tables are not replicated under row-based
@@ -3077,8 +3104,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       Case 3 and 4 does nothing under RBR
     */
   }
-  else
-    write_bin_log(session, true, session->query, session->query_length);
 
   res= false;
   goto err;
@@ -3271,11 +3296,6 @@ compare_tables(Session *session,
   Create_field *new_field;
   KEY_PART_INFO *key_part;
   KEY_PART_INFO *end;
-  /*
-    Remember if the new definition has new VARCHAR column;
-    create_info->varchar will be reset in mysql_prepare_create_table.
-  */
-  bool varchar= create_info->varchar;
 
   {
     /*
@@ -3356,8 +3376,7 @@ compare_tables(Session *session,
       create_info->used_fields & HA_CREATE_USED_ROW_FORMAT ||
       (alter_info->flags & (ALTER_RECREATE | ALTER_FOREIGN_KEY)) ||
       order_num ||
-      !table->s->mysql_version ||
-      (table->s->frm_version < FRM_VER_TRUE_VARCHAR && varchar))
+      !table->s->mysql_version)
   {
     *table_changes= IS_EQUAL_NO;
     /*
@@ -3379,9 +3398,6 @@ compare_tables(Session *session,
     /* TODO check for ADD/DROP FOREIGN KEY */
     if (alter_info->flags & ALTER_FOREIGN_KEY)
       *alter_flags|=  HA_ALTER_FOREIGN_KEY;
-    if (!table->s->mysql_version ||
-        (table->s->frm_version < FRM_VER_TRUE_VARCHAR && varchar))
-      *alter_flags|=  HA_ALTER_COLUMN_TYPE;
   }
   /*
     Go through fields and check if the original ones are compatible
@@ -3481,8 +3497,7 @@ compare_tables(Session *session,
       if (table_key->flags & HA_NOSAME)
       {
         /* Unique key. Check for "PRIMARY". */
-        if (! my_strcasecmp(system_charset_info,
-                            table_key->name, primary_key_name))
+        if (is_primary_key(table_key))
           *alter_flags|= HA_DROP_PK_INDEX;
         else
           *alter_flags|= HA_DROP_UNIQUE_INDEX;
@@ -3502,8 +3517,7 @@ compare_tables(Session *session,
       if (table_key->flags & HA_NOSAME)
       {
         // Unique key. Check for "PRIMARY".
-        if (! my_strcasecmp(system_charset_info,
-                            table_key->name, primary_key_name))
+        if (is_primary_key(table_key))
           *alter_flags|= HA_ALTER_PK_INDEX;
         else
           *alter_flags|= HA_ALTER_UNIQUE_INDEX;
@@ -3532,8 +3546,7 @@ compare_tables(Session *session,
         if (table_key->flags & HA_NOSAME)
         {
           /* Unique key. Check for "PRIMARY" */
-          if (! my_strcasecmp(system_charset_info,
-                              table_key->name, primary_key_name))
+          if (is_primary_key(table_key))
             *alter_flags|= HA_ALTER_PK_INDEX;
           else
             *alter_flags|= HA_ALTER_UNIQUE_INDEX;
@@ -3595,8 +3608,7 @@ compare_tables(Session *session,
       if (new_key->flags & HA_NOSAME)
       {
         /* Unique key. Check for "PRIMARY" */
-        if (! my_strcasecmp(system_charset_info,
-                            new_key->name, primary_key_name))
+        if (is_primary_key(new_key))
           *alter_flags|= HA_ADD_PK_INDEX;
         else
         *alter_flags|= HA_ADD_UNIQUE_INDEX;
@@ -3716,7 +3728,6 @@ int create_temporary_table(Session *session,
 
   /*
     Create a table with a temporary name.
-    With create_info->frm_only == 1 this creates a .frm file only.
     We don't log the statement, it will be logged later.
   */
   tmp_disable_binlog(session);
@@ -3761,12 +3772,12 @@ Table *create_altered_table(Session *session,
   char path[FN_REFLEN];
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64,
-           tmp_file_prefix, current_pid, session->thread_id);
+           TMP_FILE_PREFIX, current_pid, session->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
   altered_create_info.options&= ~HA_LEX_CREATE_TMP_TABLE;
-  altered_create_info.frm_only= 1;
+
   if ((error= create_temporary_table(session, table, new_db, tmp_name,
                                      &altered_create_info,
                                      alter_info, db_change)))
@@ -4111,7 +4122,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
       If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
       flag to allow ALTER Table only if the table to be altered is empty.
       */
-    if ((def->sql_type == DRIZZLE_TYPE_NEWDATE ||
+    if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
          !alter_info->datetime_field &&
          !(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
@@ -4258,7 +4269,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
 
       if (key_info->flags & HA_NOSAME)
       {
-        if (! my_strcasecmp(system_charset_info, key_name, primary_key_name))
+        if (is_primary_key_name(key_name))
           key_type= Key::PRIMARY;
         else
           key_type= Key::UNIQUE;
@@ -4282,8 +4293,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
         goto err;
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
-      if (key->name.str &&
-	  !my_strcasecmp(system_charset_info, key->name.str, primary_key_name))
+      if (key->name.str && is_primary_key_name(key->name.str))
       {
 	my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
         goto err;
@@ -4390,11 +4400,12 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   handlerton *old_db_type, *new_db_type, *save_old_db_type;
-  legacy_db_type table_type;
+
+  new_name_buff[0]= '\0';
 
   if (table_list && table_list->schema_table)
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -4441,7 +4452,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     into the main table list, like open_tables does).
     This code is wrong and will be removed, please do not copy.
   */
-  (void)mysql_frm_type(session, new_name_buff, &table_type);
 
   if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
     return(true);
@@ -4799,7 +4809,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       close_temporary_table(session, altered_table, 1, 1);
   }
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, tmp_file_prefix,
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
@@ -4885,9 +4895,6 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (rename_temporary_table(session, new_table, new_db, new_name))
       goto err1;
-    /* We don't replicate alter table statement on temporary tables */
-    if (!session->current_stmt_binlog_row_based)
-      write_bin_log(session, true, session->query, session->query_length);
     goto end_temporary;
   }
 
@@ -4925,7 +4932,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   */
 
   session->set_proc_info("rename result table");
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, tmp_file_prefix,
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX,
            current_pid, session->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);
@@ -4987,8 +4994,7 @@ end_online:
 
   session->set_proc_info("end");
 
-  assert(!(mysql_bin_log.is_open() &&
-                session->current_stmt_binlog_row_based &&
+  assert(!(drizzle_bin_log.is_open() &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(session, true, session->query, session->query_length);
 
@@ -5059,7 +5065,7 @@ err:
     enum enum_drizzle_timestamp_type t_type= DRIZZLE_TIMESTAMP_DATE;
     switch (alter_info->datetime_field->sql_type)
     {
-      case DRIZZLE_TYPE_NEWDATE:
+      case DRIZZLE_TYPE_DATE:
         f_val= "0000-00-00";
         t_type= DRIZZLE_TIMESTAMP_DATE;
         break;

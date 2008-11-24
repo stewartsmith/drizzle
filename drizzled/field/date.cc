@@ -22,6 +22,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/date.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -29,8 +32,7 @@ using namespace CMATH_NAMESPACE;
 #endif
 
 /****************************************************************************
-** The new date type
-** This is identical to the old date type, but stored on 3 bytes instead of 4
+** Drizzle date type stored in 3 bytes
 ** In number context: YYYYMMDD
 ****************************************************************************/
 
@@ -38,7 +40,7 @@ using namespace CMATH_NAMESPACE;
   Store string into a date field
 
   SYNOPSIS
-    Field_newdate::store()
+    Field_date::store()
     from                Date string
     len                 Length of date field
     cs                  Character set (not used)
@@ -53,7 +55,7 @@ using namespace CMATH_NAMESPACE;
        store function.
 */
 
-int Field_newdate::store(const char *from,
+int Field_date::store(const char *from,
                          uint32_t len,
                          const CHARSET_INFO * const cs __attribute__((unused)))
 {
@@ -90,7 +92,7 @@ int Field_newdate::store(const char *from,
 }
 
 
-int Field_newdate::store(double nr)
+int Field_date::store(double nr)
 {
   if (nr < 0.0 || nr > 99991231235959.0)
   {
@@ -99,11 +101,11 @@ int Field_newdate::store(double nr)
                          ER_WARN_DATA_TRUNCATED, nr, DRIZZLE_TIMESTAMP_DATE);
     return 1;
   }
-  return Field_newdate::store((int64_t) rint(nr), false);
+  return Field_date::store((int64_t) rint(nr), false);
 }
 
 
-int Field_newdate::store(int64_t nr,
+int Field_date::store(int64_t nr,
                          bool unsigned_val __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
@@ -138,7 +140,7 @@ int Field_newdate::store(int64_t nr,
 }
 
 
-int Field_newdate::store_time(DRIZZLE_TIME *ltime,
+int Field_date::store_time(DRIZZLE_TIME *ltime,
                               enum enum_drizzle_timestamp_type time_type)
 {
   long tmp;
@@ -181,21 +183,21 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,
 }
 
 
-bool Field_newdate::send_binary(Protocol *protocol)
+bool Field_date::send_binary(Protocol *protocol)
 {
   DRIZZLE_TIME tm;
-  Field_newdate::get_date(&tm,0);
+  Field_date::get_date(&tm,0);
   return protocol->store_date(&tm);
 }
 
 
-double Field_newdate::val_real(void)
+double Field_date::val_real(void)
 {
-  return (double) Field_newdate::val_int();
+  return (double) Field_date::val_int();
 }
 
 
-int64_t Field_newdate::val_int(void)
+int64_t Field_date::val_int(void)
 {
   uint32_t j= uint3korr(ptr);
   j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
@@ -203,7 +205,7 @@ int64_t Field_newdate::val_int(void)
 }
 
 
-String *Field_newdate::val_str(String *val_buffer,
+String *Field_date::val_str(String *val_buffer,
 			       String *val_ptr __attribute__((unused)))
 {
   val_buffer->alloc(field_length);
@@ -231,7 +233,7 @@ String *Field_newdate::val_str(String *val_buffer,
 }
 
 
-bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+bool Field_date::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint3korr(ptr);
   ltime->day=   tmp & 31;
@@ -244,13 +246,13 @@ bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
 }
 
 
-bool Field_newdate::get_time(DRIZZLE_TIME *ltime)
+bool Field_date::get_time(DRIZZLE_TIME *ltime)
 {
-  return Field_newdate::get_date(ltime,0);
+  return Field_date::get_date(ltime,0);
 }
 
 
-int Field_newdate::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
+int Field_date::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   uint32_t a,b;
   a=(uint32_t) uint3korr(a_ptr);
@@ -259,7 +261,7 @@ int Field_newdate::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 }
 
 
-void Field_newdate::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
+void Field_date::sort_string(unsigned char *to,uint32_t length __attribute__((unused)))
 {
   to[0] = ptr[2];
   to[1] = ptr[1];
@@ -267,7 +269,7 @@ void Field_newdate::sort_string(unsigned char *to,uint32_t length __attribute__(
 }
 
 
-void Field_newdate::sql_type(String &res) const
+void Field_date::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("date"));
 }

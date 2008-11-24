@@ -22,6 +22,8 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
 
 /**
   Implement DELETE SQL word.
@@ -121,9 +123,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       - We should not be binlogging this statement row-based, and
       - there should be no delete triggers associated with the table.
   */
-  if (!using_limit && const_cond_result &&
-      (session->lex->sql_command == SQLCOM_TRUNCATE ||
-       (!session->current_stmt_binlog_row_based)))
+  if (!using_limit && const_cond_result)
   {
     /* Update the table->file->stats.records number */
     table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -316,7 +316,7 @@ cleanup:
   /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (error < 0)
         session->clear_error();
@@ -374,19 +374,6 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   
   List<Item> all_fields;
 
-  /*
-    Statement-based replication of DELETE ... LIMIT is not safe as order of
-    rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if ORDER BY primary_key
-    is present. However it may confuse users to see very similiar statements
-    replicated differently.
-  */
-  if (session->lex->current_select->select_limit)
-  {
-    session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
-  }
   session->lex->allow_sum_func= 0;
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,
@@ -693,7 +680,7 @@ void multi_delete::abort()
     /* 
        there is only side effects; to binlog with the error
     */
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       session->binlog_query(Session::ROW_QUERY_TYPE,
                         session->query, session->query_length,
@@ -798,7 +785,7 @@ bool multi_delete::send_eof()
 
   if ((local_error == 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (local_error == 0)
         session->clear_error();
@@ -856,7 +843,6 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   {
     handlerton *table_type= table->s->db_type();
     TABLE_SHARE *share= table->s;
-    bool frm_only= (share->tmp_table == TMP_TABLE_FRM_FILE_ONLY);
 
     if (!ha_check_storage_engine_flag(table_type, HTON_CAN_RECREATE))
       goto trunc_by_del;
@@ -871,7 +857,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
                                              share->db.str,
 					     share->table_name.str, 1,
                                              OTM_OPEN))))
-      (void) rm_temporary_table(table_type, path, frm_only);
+      (void) rm_temporary_table(table_type, path);
     free_table_share(share);
     free((char*) table);
     /*
@@ -927,8 +913,6 @@ trunc_by_del:
   session->options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
   ha_enable_transaction(session, false);
   mysql_init_select(session->lex);
-  bool save_binlog_row_based= session->current_stmt_binlog_row_based;
-  session->clear_current_stmt_binlog_row_based();
   error= mysql_delete(session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
   ha_enable_transaction(session, true);
@@ -939,6 +923,5 @@ trunc_by_del:
   error= ha_autocommit_or_rollback(session, error);
   ha_commit(session);
   session->options= save_options;
-  session->current_stmt_binlog_row_based= save_binlog_row_based;
   return(error);
 }

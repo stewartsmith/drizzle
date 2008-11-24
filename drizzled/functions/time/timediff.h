@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_TIMEDIFF_H
 #define DRIZZLED_FUNCTIONS_TIME_TIMEDIFF_H
 
+#include <drizzled/functions/time/str_timefunc.h>
+
 class Item_func_timediff :public Item_str_timefunc
 {
 public:

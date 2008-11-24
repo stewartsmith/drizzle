@@ -22,9 +22,12 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "sql_sort.h"
+#include <drizzled/sql_sort.h>
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/table_list.h>
 
 /* functions defined in this file */
 
@@ -219,7 +222,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     my_error(ER_OUT_OF_SORTMEMORY,MYF(ME_ERROR+ME_WAITTANG));
     goto err;
   }
-  if (open_cached_file(&buffpek_pointers,mysql_tmpdir,TEMP_PREFIX,
+  if (open_cached_file(&buffpek_pointers,drizzle_tmpdir,TEMP_PREFIX,
 		       DISK_BUFFER_SIZE, MYF(MY_WME)))
     goto err;
 
@@ -254,7 +257,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     close_cached_file(&buffpek_pointers);
 	/* Open cached file if it isn't open */
     if (! my_b_inited(outfile) &&
-	open_cached_file(outfile,mysql_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER,
+	open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER,
 			  MYF(MY_WME)))
       goto err;
     if (reinit_io_cache(outfile,WRITE_CACHE,0L,0,0))
@@ -630,7 +633,7 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
   rec_length= param->rec_length;
   my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, mysql_tmpdir, TEMP_PREFIX, DISK_BUFFER_SIZE,
+      open_cached_file(tempfile, drizzle_tmpdir, TEMP_PREFIX, DISK_BUFFER_SIZE,
                        MYF(MY_WME)))
     goto err;                                   /* purecov: inspected */
   /* check we won't have more buffpeks than we can possibly keep in memory */
@@ -986,7 +989,7 @@ int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
   if (*maxbuffer < MERGEBUFF2)
     return(0);				/* purecov: inspected */
   if (flush_io_cache(t_file) ||
-      open_cached_file(&t_file2,mysql_tmpdir,TEMP_PREFIX,DISK_BUFFER_SIZE,
+      open_cached_file(&t_file2,drizzle_tmpdir,TEMP_PREFIX,DISK_BUFFER_SIZE,
 			MYF(MY_WME)))
     return(1);				/* purecov: inspected */
 

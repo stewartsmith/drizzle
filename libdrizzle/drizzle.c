@@ -245,7 +245,7 @@ drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
     char port_buf[NI_MAXSERV];
 
     if (!port)
-      port= drizzle_port;
+      port= drizzle_get_default_port();
 
     if (!host)
       host= LOCAL_HOST;

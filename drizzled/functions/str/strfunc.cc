@@ -32,6 +32,7 @@
 #include <uuid/uuid.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
+#include <drizzled/functions/str/strfunc.h>
 
 // For soundex_map
 #include <mysys/my_static.h>

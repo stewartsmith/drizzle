@@ -42,6 +42,8 @@ This file contains the implementation of error and warnings related
 ***********************************************************************/
 
 #include <drizzled/server_includes.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 /*
   Store a new message in an error object

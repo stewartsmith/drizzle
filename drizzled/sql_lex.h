@@ -24,7 +24,18 @@
   @defgroup Semantic_Analysis Semantic Analysis
 */
 
-#include "sql_udf.h"
+#include <drizzled/sql_udf.h>
+#include <drizzled/name_resolution_context.h>
+#include <drizzled/item/subselect.h>
+#include <drizzled/table_list.h>
+#include <drizzled/functions/real.h>
+#include <drizzled/alter_drop.h>
+#include <drizzled/alter_column.h>
+#include <drizzled/key.h>
+#include <drizzled/foreign_key.h>
+
+class select_result_interceptor;
+class virtual_column_info;
 
 /* YACC and LEX Definitions */
 
@@ -40,68 +51,19 @@ class LEX_COLUMN;
 */
 
 #include <drizzled/set_var.h>
-
+#include <drizzled/item/func.h>
 #ifdef DRIZZLE_YACC
 #define LEX_YYSTYPE void *
 #else
 #if defined(DRIZZLE_LEX)
-#include "lex_symbol.h"
-#include "sql_yacc.h"
+#include <drizzled/lex_symbol.h>
+#include <drizzled/sql_yacc.h>
 #define LEX_YYSTYPE YYSTYPE *
 #else
 #define LEX_YYSTYPE void *
 #endif
 #endif
 #endif
-
-/*
-  When a command is added here, be sure it's also added in mysqld.cc
-  in "struct show_var_st status_vars[]= {" ...
-
-  If the command returns a result set or is not allowed in stored
-  functions or triggers, please also make sure that
-  sp_get_flags_for_command (sp_head.cc) returns proper flags for the
-  added SQLCOM_.
-*/
-
-enum enum_sql_command {
-  SQLCOM_SELECT, SQLCOM_CREATE_TABLE, SQLCOM_CREATE_INDEX, SQLCOM_ALTER_TABLE,
-  SQLCOM_UPDATE, SQLCOM_INSERT, SQLCOM_INSERT_SELECT,
-  SQLCOM_DELETE, SQLCOM_TRUNCATE, SQLCOM_DROP_TABLE, SQLCOM_DROP_INDEX,
-  SQLCOM_SHOW_DATABASES, SQLCOM_SHOW_TABLES, SQLCOM_SHOW_FIELDS,
-  SQLCOM_SHOW_KEYS, SQLCOM_SHOW_VARIABLES, SQLCOM_SHOW_STATUS,
-  SQLCOM_SHOW_ENGINE_LOGS, SQLCOM_SHOW_ENGINE_STATUS, SQLCOM_SHOW_ENGINE_MUTEX,
-  SQLCOM_SHOW_PROCESSLIST, SQLCOM_SHOW_MASTER_STAT, SQLCOM_SHOW_SLAVE_STAT,
-  SQLCOM_SHOW_CREATE,
-  SQLCOM_SHOW_CREATE_DB,
-  SQLCOM_SHOW_TABLE_STATUS,
-  SQLCOM_LOAD,SQLCOM_SET_OPTION,SQLCOM_LOCK_TABLES,SQLCOM_UNLOCK_TABLES,
-  SQLCOM_CHANGE_DB, SQLCOM_CREATE_DB, SQLCOM_DROP_DB, SQLCOM_ALTER_DB,
-  SQLCOM_REPAIR, SQLCOM_REPLACE, SQLCOM_REPLACE_SELECT,
-  SQLCOM_OPTIMIZE, SQLCOM_CHECK,
-  SQLCOM_ASSIGN_TO_KEYCACHE,
-  SQLCOM_FLUSH, SQLCOM_KILL, SQLCOM_ANALYZE,
-  SQLCOM_ROLLBACK, SQLCOM_ROLLBACK_TO_SAVEPOINT,
-  SQLCOM_COMMIT, SQLCOM_SAVEPOINT, SQLCOM_RELEASE_SAVEPOINT,
-  SQLCOM_SLAVE_START, SQLCOM_SLAVE_STOP,
-  SQLCOM_BEGIN, SQLCOM_CHANGE_MASTER,
-  SQLCOM_RENAME_TABLE,  
-  SQLCOM_RESET, SQLCOM_PURGE, SQLCOM_PURGE_BEFORE, SQLCOM_SHOW_BINLOGS,
-  SQLCOM_SHOW_OPEN_TABLES,
-  SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
-  SQLCOM_SHOW_WARNS,
-  SQLCOM_EMPTY_QUERY,
-  SQLCOM_SHOW_ERRORS,
-  SQLCOM_CHECKSUM,
-  SQLCOM_BINLOG_BASE64_EVENT,
-  SQLCOM_SHOW_PLUGINS,
-  /*
-    When a command is added here, be sure it's also added in mysqld.cc
-    in "struct show_var_st status_vars[]= {" ...
-  */
-  /* This should be the last !!! */
-  SQLCOM_END
-};
 
 // describe/explain types
 #define DESCRIBE_NORMAL		1
@@ -316,7 +278,7 @@ public:
     Base class for st_select_lex (SELECT_LEX) & 
     st_select_lex_unit (SELECT_LEX_UNIT)
 */
-struct st_lex;
+class LEX;
 class st_select_lex;
 class st_select_lex_unit;
 class st_select_lex_node {
@@ -384,7 +346,7 @@ public:
   {}
 
   friend class st_select_lex_unit;
-  friend bool mysql_new_select(struct st_lex *lex, bool move_down);
+  friend bool mysql_new_select(LEX *lex, bool move_down);
 private:
   void fast_exclude();
 };
@@ -502,7 +464,7 @@ public:
   /* Saved values of the WHERE and HAVING clauses*/
   Item::cond_result cond_value, having_value;
   /* point on lex in which it was created, used in view subquery detection */
-  st_lex *parent_lex;
+  LEX *parent_lex;
   enum olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
   SQL_LIST	      table_list;
@@ -898,34 +860,6 @@ public:
       query_tables_own_last= 0;
     }
   }
-
-  /**
-     Has the parser/scanner detected that this statement is unsafe?
-   */
-  inline bool is_stmt_unsafe() const {
-    return binlog_stmt_flags & (1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  /**
-     Flag the current (top-level) statement as unsafe.
-
-     The flag will be reset after the statement has finished.
-
-   */
-  inline void set_stmt_unsafe() {
-    binlog_stmt_flags|= (1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  inline void clear_stmt_unsafe() {
-    binlog_stmt_flags&= ~(1U << BINLOG_STMT_FLAG_UNSAFE);
-  }
-
-  /**
-    true if the parsed tree contains references to stored procedures
-    or functions, false otherwise
-  */
-  bool uses_stored_routines() const
-  { return sroutines_list.elements != 0; }
 
 private:
   enum enum_binlog_stmt_flag {
@@ -1363,8 +1297,9 @@ public:
 
 /* The state of the lex parsing. This is saved in the Session struct */
 
-typedef struct st_lex : public Query_tables_list
+class LEX : public Query_tables_list
 {
+public: 
   SELECT_LEX_UNIT unit;                         /* most upper unit */
   SELECT_LEX select_lex;                        /* first SELECT_LEX */
   /* current SELECT_LEX in parsing */
@@ -1521,9 +1456,9 @@ typedef struct st_lex : public Query_tables_list
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */
 
-  st_lex();
+  LEX();
 
-  virtual ~st_lex()
+  virtual ~LEX()
   {
     destroy_query_tables_list();
     plugin_unlock_list(NULL, (plugin_ref *)plugins.buffer, plugins.elements);
@@ -1589,9 +1524,9 @@ typedef struct st_lex : public Query_tables_list
     }
     return false;
   }
-} LEX;
+};
 
-struct st_lex_local: public st_lex
+struct st_lex_local: public LEX
 {
   static void *operator new(size_t size) throw()
   {
@@ -1617,6 +1552,8 @@ extern void lex_end(LEX *lex);
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 
 extern bool is_lex_native_function(const LEX_STRING *name);
+
+int lex_casecmp(const char *s, const char *t, uint32_t len);
 
 /**
   @} (End of group Semantic_Analysis)

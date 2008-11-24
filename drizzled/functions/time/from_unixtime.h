@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_FROM_UNIXTIME_H
 #define DRIZZLED_FUNCTIONS_TIME_FROM_UNIXTIME_H
 
+#include <drizzled/functions/time/date.h>
+
 class Item_func_from_unixtime :public Item_date_func
 {
   Session *session;

@@ -21,6 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_REAL
 #define DRIZZLE_SERVER_FIELD_REAL
 
+#include <drizzled/field/num.h>
 
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {

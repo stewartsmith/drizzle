@@ -18,15 +18,18 @@
  */
 
 #include <drizzled/server_includes.h>
-#include "rpl_rli.h"
-#include "rpl_mi.h"
-#include "rpl_filter.h"
-#include "rpl_utility.h"
-#include "rpl_record.h"
+#include <drizzled/log_event.h>
+#include <drizzled/replication/rli.h>
+#include <drizzled/replication/mi.h>
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/utility.h>
+#include <drizzled/replication/record.h>
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <libdrizzle/pack.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
 
 #include <algorithm>
 
@@ -633,6 +636,12 @@ void Log_event::pack_info(Protocol *protocol)
 }
 
 
+const char* Log_event::get_db()
+{
+  return session ? session->db : 0;
+}
+
+
 /**
   init_show_field_list() prepares the column names and types for the
   output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
@@ -643,13 +652,13 @@ void Log_event::init_show_field_list(List<Item>* field_list)
 {
   field_list->push_back(new Item_empty_string("Log_name", 20));
   field_list->push_back(new Item_return_int("Pos", MY_INT32_NUM_DECIMAL_DIGITS,
-					    DRIZZLE_TYPE_LONGLONG));
+                                            DRIZZLE_TYPE_LONGLONG));
   field_list->push_back(new Item_empty_string("Event_type", 20));
   field_list->push_back(new Item_return_int("Server_id", 10,
-					    DRIZZLE_TYPE_LONG));
+                                            DRIZZLE_TYPE_LONG));
   field_list->push_back(new Item_return_int("End_log_pos",
                                             MY_INT32_NUM_DECIMAL_DIGITS,
-					    DRIZZLE_TYPE_LONGLONG));
+                                            DRIZZLE_TYPE_LONGLONG));
   field_list->push_back(new Item_empty_string("Info", 20));
 }
 
@@ -730,13 +739,26 @@ bool Log_event::write_header(IO_CACHE* file, ulong event_data_length)
 }
 
 
+time_t Log_event::get_time()
+{
+  Session *tmp_session;
+  if (when)
+    return when;
+  if (session)
+    return session->start_time;
+  if ((tmp_session= current_session))
+    return tmp_session->start_time;
+  return my_time(0);
+}
+
+
 /**
   This needn't be format-tolerant, because we only read
   LOG_EVENT_MINIMAL_HEADER_LEN (we just want to read the event's length).
 */
 
 int Log_event::read_log_event(IO_CACHE* file, String* packet,
-			      pthread_mutex_t* log_lock)
+                              pthread_mutex_t* log_lock)
 {
   ulong data_len;
   int result=0;
@@ -1081,20 +1103,6 @@ void Query_log_event::pack_info(Protocol *protocol)
 
 
 /**
-  Utility function for the next method (Query_log_event::write()) .
-*/
-static void write_str_with_code_and_len(char **dst, const char *src,
-                                        int len, uint32_t code)
-{
-  assert(src);
-  *((*dst)++)= code;
-  *((*dst)++)= (unsigned char) len;
-  memcpy(*dst, src, len);
-  (*dst)+= len;
-}
-
-
-/**
   Query_log_event::write().
 
   @note
@@ -1179,57 +1187,6 @@ bool Query_log_event::write(IO_CACHE* file)
     int4store(start, flags2);
     start+= 4;
   }
-  if (sql_mode_inited)
-  {
-    *start++= Q_SQL_MODE_CODE;
-    int8store(start, (uint64_t)sql_mode);
-    start+= 8;
-  }
-  if (catalog_len) // i.e. this var is inited (false for 4.0 events)
-  {
-    write_str_with_code_and_len((char **)(&start),
-                                catalog, catalog_len, Q_CATALOG_NZ_CODE);
-    /*
-      In 5.0.x where x<4 masters we used to store the end zero here. This was
-      a waste of one byte so we don't do it in x>=4 masters. We change code to
-      Q_CATALOG_NZ_CODE, because re-using the old code would make x<4 slaves
-      of this x>=4 master segfault (expecting a zero when there is
-      none). Remaining compatibility problems are: the older slave will not
-      find the catalog; but it is will not crash, and it's not an issue
-      that it does not find the catalog as catalogs were not used in these
-      older MySQL versions (we store it in binlog and read it from relay log
-      but do nothing useful with it). What is an issue is that the older slave
-      will stop processing the Q_* blocks (and jumps to the db/query) as soon
-      as it sees unknown Q_CATALOG_NZ_CODE; so it will not be able to read
-      Q_AUTO_INCREMENT*, Q_CHARSET and so replication will fail silently in
-      various ways. Documented that you should not mix alpha/beta versions if
-      they are not exactly the same version, with example of 5.0.3->5.0.2 and
-      5.0.4->5.0.3. If replication is from older to new, the new will
-      recognize Q_CATALOG_CODE and have no problem.
-    */
-  }
-  if (auto_increment_increment != 1 || auto_increment_offset != 1)
-  {
-    *start++= Q_AUTO_INCREMENT;
-    int2store(start, auto_increment_increment);
-    int2store(start+2, auto_increment_offset);
-    start+= 4;
-  }
-  if (charset_inited)
-  {
-    *start++= Q_CHARSET_CODE;
-    memcpy(start, charset, 6);
-    start+= 6;
-  }
-  if (time_zone_len)
-  {
-    /* In the TZ sys table, column Name is of length 64 so this should be ok */
-    assert(time_zone_len <= MAX_TIME_ZONE_NAME_LENGTH);
-    *start++= Q_TIME_ZONE_CODE;
-    *start++= time_zone_len;
-    memcpy(start, time_zone_str, time_zone_len);
-    start+= time_zone_len;
-  }
   if (lc_time_names_number)
   {
     assert(lc_time_names_number <= 0xFFFF);
@@ -1303,24 +1260,23 @@ Query_log_event::Query_log_event()
   The value for local `killed_status' can be supplied by caller.
 */
 Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
-				 ulong query_length, bool using_trans,
-				 bool suppress_use,
+                                 ulong query_length, bool using_trans,
+                                 bool suppress_use,
                                  Session::killed_state killed_status_arg)
-  :Log_event(session_arg,
-             (session_arg->thread_specific_used ? LOG_EVENT_THREAD_SPECIFIC_F :
-              0) |
-             (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
-	     using_trans),
-   data_buf(0), query(query_arg), catalog(session_arg->catalog),
-   db(session_arg->db), q_len((uint32_t) query_length),
-   thread_id(session_arg->thread_id),
-   /* save the original thread id; we already know the server id */
-   slave_proxy_id(session_arg->variables.pseudo_thread_id),
-   flags2_inited(1), sql_mode_inited(1), charset_inited(1),
-   sql_mode(0),
-   auto_increment_increment(session_arg->variables.auto_increment_increment),
-   auto_increment_offset(session_arg->variables.auto_increment_offset),
-   lc_time_names_number(session_arg->variables.lc_time_names->number),
+:Log_event(session_arg,
+           (session_arg->thread_specific_used ? LOG_EVENT_THREAD_SPECIFIC_F : 0) |
+           (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
+           using_trans),
+  data_buf(0), query(query_arg), catalog(session_arg->catalog),
+  db(session_arg->db), q_len((uint32_t) query_length),
+  thread_id(session_arg->thread_id),
+  /* save the original thread id; we already know the server id */
+  slave_proxy_id(session_arg->variables.pseudo_thread_id),
+  flags2_inited(1), sql_mode_inited(1), charset_inited(1),
+  sql_mode(0),
+  auto_increment_increment(session_arg->variables.auto_increment_increment),
+  auto_increment_offset(session_arg->variables.auto_increment_offset),
+  lc_time_names_number(session_arg->variables.lc_time_names->number),
    charset_database_number(0)
 {
   time_t end_time;
@@ -1360,65 +1316,7 @@ Query_log_event::Query_log_event(Session* session_arg, const char* query_arg,
   int2store(charset, session_arg->variables.character_set_client->number);
   int2store(charset+2, session_arg->variables.collation_connection->number);
   int2store(charset+4, session_arg->variables.collation_server->number);
-  if (session_arg->time_zone_used)
-  {
-    /*
-      Note that our event becomes dependent on the Time_zone object
-      representing the time zone. Fortunately such objects are never deleted
-      or changed during mysqld's lifetime.
-    */
-    time_zone_len= session_arg->variables.time_zone->get_name()->length();
-    time_zone_str= session_arg->variables.time_zone->get_name()->ptr();
-  }
-  else
-    time_zone_len= 0;
-}
-
-
-/* 2 utility functions for the next method */
-
-/**
-   Read a string with length from memory.
-
-   This function reads the string-with-length stored at
-   <code>src</code> and extract the length into <code>*len</code> and
-   a pointer to the start of the string into <code>*dst</code>. The
-   string can then be copied using <code>memcpy()</code> with the
-   number of bytes given in <code>*len</code>.
-
-   @param src Pointer to variable holding a pointer to the memory to
-              read the string from.
-   @param dst Pointer to variable holding a pointer where the actual
-              string starts. Starting from this position, the string
-              can be copied using @c memcpy().
-   @param len Pointer to variable where the length will be stored.
-   @param end One-past-the-end of the memory where the string is
-              stored.
-
-   @return    Zero if the entire string can be copied successfully,
-              @c UINT_MAX if the length could not be read from memory
-              (that is, if <code>*src >= end</code>), otherwise the
-              number of bytes that are missing to read the full
-              string, which happends <code>*dst + *len >= end</code>.
-*/
-static int
-get_str_len_and_pointer(const Log_event::Byte **src,
-                        const char **dst,
-                        uint32_t *len,
-                        const Log_event::Byte *end)
-{
-  if (*src >= end)
-    return -1;       // Will be UINT_MAX in two-complement arithmetics
-  uint32_t length= **src;
-  if (length > 0)
-  {
-    if (*src + length >= end)
-      return *src + length - end + 1;       // Number of bytes missing
-    *dst= (char *)*src + 1;                    // Will be copied later
-  }
-  *len= length;
-  *src+= length + 1;
-  return 0;
+  time_zone_len= 0;
 }
 
 static void copy_str_and_move(const char **src, 
@@ -1528,44 +1426,6 @@ Query_log_event::Query_log_event(const char* buf, uint32_t event_len,
       flags2_inited= 1;
       flags2= uint4korr(pos);
       pos+= 4;
-      break;
-    case Q_SQL_MODE_CODE:
-    {
-      CHECK_SPACE(pos, end, 8);
-      sql_mode_inited= 1;
-      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is uint64_t
-      pos+= 8;
-      break;
-    }
-    case Q_CATALOG_NZ_CODE:
-      if (get_str_len_and_pointer(&pos, &catalog, &catalog_len, end))
-      {
-        query= 0;
-        return;
-      }
-      break;
-    case Q_AUTO_INCREMENT:
-      CHECK_SPACE(pos, end, 4);
-      auto_increment_increment= uint2korr(pos);
-      auto_increment_offset=    uint2korr(pos+2);
-      pos+= 4;
-      break;
-    case Q_TIME_ZONE_CODE:
-    {
-      if (get_str_len_and_pointer(&pos, &time_zone_str, &time_zone_len, end))
-      {
-        query= 0;
-        return;
-      }
-      break;
-    }
-    case Q_CATALOG_CODE: /* for 5.0.x where 0<=x<=3 masters */
-      CHECK_SPACE(pos, end, 1);
-      if ((catalog_len= *pos))
-        catalog= (char*) pos+1;                           // Will be copied later
-      CHECK_SPACE(pos, end, catalog_len + 2);
-      pos+= catalog_len+2; // leap over end 0
-      catalog_nz= 0; // catalog has end 0 in event
       break;
     case Q_LC_TIME_NAMES_CODE:
       CHECK_SPACE(pos, end, 2);
@@ -1868,14 +1728,6 @@ end:
   session->query_length= 0;
   pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(session);      
-  /*
-    As a disk space optimization, future masters will not log an event for
-    LAST_INSERT_ID() if that function returned 0 (and thus they will be able
-    to replace the Session::stmt_depends_on_first_successful_insert_id_in_prev_stmt
-    variable by (Session->first_successful_insert_id_in_prev_stmt > 0) ; with the
-    resetting below we are ready to support that.
-  */
-  session->first_successful_insert_id_in_prev_stmt_for_binlog= 0;
   session->first_successful_insert_id_in_prev_stmt= 0;
   session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
@@ -1884,18 +1736,7 @@ end:
 
 int Query_log_event::do_update_pos(Relay_log_info *rli)
 {
-  /*
-    Note that we will not increment group* positions if we are just
-    after a SET ONE_SHOT, because SET ONE_SHOT should not be separated
-    from its following updating query.
-  */
-  if (session->one_shot_set)
-  {
-    rli->inc_event_relay_log_pos();
-    return 0;
-  }
-  else
-    return Log_event::do_update_pos(rli);
+  return Log_event::do_update_pos(rli);
 }
 
 
@@ -3825,8 +3666,8 @@ void Slave_log_event::init_from_mem_pool()
 
 int Slave_log_event::do_apply_event(const Relay_log_info *)
 {
-  if (mysql_bin_log.is_open())
-    mysql_bin_log.write(this);
+  if (drizzle_bin_log.is_open())
+    drizzle_bin_log.write(this);
   return 0;
 }
 
@@ -3883,7 +3724,7 @@ Create_file_log_event(Session* session_arg, sql_exchange* ex,
   :Load_log_event(session_arg,ex,db_arg,table_name_arg,fields_arg,handle_dup, ignore,
 		  using_trans),
    fake_base(0), block(block_arg), event_buf(0), block_len(block_len_arg),
-   file_id(session_arg->file_id = mysql_bin_log.next_file_id())
+   file_id(session_arg->file_id = drizzle_bin_log.next_file_id())
 {
   sql_ex.force_new_format();
   return;
@@ -4436,7 +4277,7 @@ Begin_load_query_log_event(Session* session_arg, const char* db_arg, unsigned ch
   :Append_block_log_event(session_arg, db_arg, block_arg, block_len_arg,
                           using_trans)
 {
-   file_id= session_arg->file_id= mysql_bin_log.next_file_id();
+   file_id= session_arg->file_id= drizzle_bin_log.next_file_id();
 }
 
 
@@ -5281,7 +5122,6 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       thread is certainly going to stop.
       rollback at the caller along with sbr.
     */
-    session->reset_current_stmt_binlog_row_based();
     const_cast<Relay_log_info*>(rli)->cleanup_context(session, error);
     session->is_slave_error= 1;
     return(error);
@@ -5375,8 +5215,6 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
       transactional engine), and a call to be sure to have the pending
       event flushed.
     */
-
-    session->reset_current_stmt_binlog_row_based();
 
     rli->cleanup_context(session, 0);
     if (error == 0)
@@ -5771,16 +5609,6 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
     */
     lex_start(session);
     mysql_reset_session_for_next_command(session);
-    /*
-      Check if the slave is set to use SBR.  If so, it should switch
-      to using RBR until the end of the "statement", i.e., next
-      STMT_END_F or next error.
-    */
-    if (!session->current_stmt_binlog_row_based &&
-        mysql_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
-    {
-      session->set_current_stmt_binlog_row_based();
-    }
 
     /*
       Open the table if it is not already open and add the table to

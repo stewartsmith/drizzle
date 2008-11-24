@@ -26,11 +26,7 @@
 #ifndef DRIZZLE_SERVER_DEFINITIONS_H
 #define DRIZZLE_SERVER_DEFINITIONS_H
 
-#if defined(__cplusplus)
-#include CSTDINT_H
-#else
 #include <stdint.h>
-#endif
 
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
@@ -365,8 +361,8 @@
 
 #define portable_sizeof_char_ptr 8
 
-#define tmp_file_prefix "#sql"			/**< Prefix for tmp tables */
-#define tmp_file_prefix_length 4
+#define TMP_FILE_PREFIX "#sql"			/**< Prefix for tmp tables */
+#define TMP_FILE_PREFIX_LENGTH 4
 
 /* Flags for calc_week() function.  */
 #define WEEK_MONDAY_FIRST    1
@@ -398,7 +394,7 @@
 
   Move this out of here once Stew's done with UDF breakout.  The following headers need it:
 
-    sql_lex.h --> included by sql_class.h
+    sql_lex.h --> included by session.h
     item.h
     table.h
     item_func.h
@@ -889,4 +885,298 @@ enum SHOW_COMP_OPTION { SHOW_OPTION_YES, SHOW_OPTION_NO, SHOW_OPTION_DISABLED};
 typedef int myf;
 #define MYF(v)		(myf) (v)
 
+/*
+  When a command is added here, be sure it's also added in mysqld.cc
+  in "struct show_var_st status_vars[]= {" ...
+
+  If the command returns a result set or is not allowed in stored
+  functions or triggers, please also make sure that
+  sp_get_flags_for_command (sp_head.cc) returns proper flags for the
+  added SQLCOM_.
+*/
+
+enum enum_sql_command {
+  SQLCOM_SELECT, SQLCOM_CREATE_TABLE, SQLCOM_CREATE_INDEX, SQLCOM_ALTER_TABLE,
+  SQLCOM_UPDATE, SQLCOM_INSERT, SQLCOM_INSERT_SELECT,
+  SQLCOM_DELETE, SQLCOM_TRUNCATE, SQLCOM_DROP_TABLE, SQLCOM_DROP_INDEX,
+  SQLCOM_SHOW_DATABASES, SQLCOM_SHOW_TABLES, SQLCOM_SHOW_FIELDS,
+  SQLCOM_SHOW_KEYS, SQLCOM_SHOW_VARIABLES, SQLCOM_SHOW_STATUS,
+  SQLCOM_SHOW_ENGINE_LOGS, SQLCOM_SHOW_ENGINE_STATUS, SQLCOM_SHOW_ENGINE_MUTEX,
+  SQLCOM_SHOW_PROCESSLIST, SQLCOM_SHOW_MASTER_STAT, SQLCOM_SHOW_SLAVE_STAT,
+  SQLCOM_SHOW_CREATE,
+  SQLCOM_SHOW_CREATE_DB,
+  SQLCOM_SHOW_TABLE_STATUS,
+  SQLCOM_LOAD,SQLCOM_SET_OPTION,SQLCOM_LOCK_TABLES,SQLCOM_UNLOCK_TABLES,
+  SQLCOM_CHANGE_DB, SQLCOM_CREATE_DB, SQLCOM_DROP_DB, SQLCOM_ALTER_DB,
+  SQLCOM_REPAIR, SQLCOM_REPLACE, SQLCOM_REPLACE_SELECT,
+  SQLCOM_OPTIMIZE, SQLCOM_CHECK,
+  SQLCOM_ASSIGN_TO_KEYCACHE,
+  SQLCOM_FLUSH, SQLCOM_KILL, SQLCOM_ANALYZE,
+  SQLCOM_ROLLBACK, SQLCOM_ROLLBACK_TO_SAVEPOINT,
+  SQLCOM_COMMIT, SQLCOM_SAVEPOINT, SQLCOM_RELEASE_SAVEPOINT,
+  SQLCOM_SLAVE_START, SQLCOM_SLAVE_STOP,
+  SQLCOM_BEGIN, SQLCOM_CHANGE_MASTER,
+  SQLCOM_RENAME_TABLE,  
+  SQLCOM_RESET, SQLCOM_PURGE, SQLCOM_PURGE_BEFORE, SQLCOM_SHOW_BINLOGS,
+  SQLCOM_SHOW_OPEN_TABLES,
+  SQLCOM_DELETE_MULTI, SQLCOM_UPDATE_MULTI,
+  SQLCOM_SHOW_WARNS,
+  SQLCOM_EMPTY_QUERY,
+  SQLCOM_SHOW_ERRORS,
+  SQLCOM_CHECKSUM,
+  SQLCOM_BINLOG_BASE64_EVENT,
+  SQLCOM_SHOW_PLUGINS,
+  /*
+    When a command is added here, be sure it's also added in mysqld.cc
+    in "struct show_var_st status_vars[]= {" ...
+  */
+  /* This should be the last !!! */
+  SQLCOM_END
+};
+
+enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
+
+enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
+
+/*
+  Make sure that the order of schema_tables and enum_schema_tables are the same.
+*/
+
+enum enum_schema_tables
+{
+  SCH_CHARSETS= 0,
+  SCH_COLLATIONS,
+  SCH_COLLATION_CHARACTER_SET_APPLICABILITY,
+  SCH_COLUMNS,
+  SCH_GLOBAL_STATUS,
+  SCH_GLOBAL_VARIABLES,
+  SCH_KEY_COLUMN_USAGE,
+  SCH_OPEN_TABLES,
+  SCH_PLUGINS,
+  SCH_PROCESSLIST,
+  SCH_REFERENTIAL_CONSTRAINTS,
+  SCH_SCHEMATA,
+  SCH_SESSION_STATUS,
+  SCH_SESSION_VARIABLES,
+  SCH_STATISTICS,
+  SCH_STATUS,
+  SCH_TABLES,
+  SCH_TABLE_CONSTRAINTS,
+  SCH_TABLE_NAMES,
+  SCH_VARIABLES
+};
+
+
+#define MY_I_S_MAYBE_NULL 1
+#define MY_I_S_UNSIGNED   2
+
+
+#define SKIP_OPEN_TABLE 0                // do not open table
+#define OPEN_FRM_ONLY   1                // open FRM file only
+#define OPEN_FULL_TABLE 2                // open FRM,MYD, MYI files
+
+/*
+   "Declared Type Collation"
+   A combination of collation and its derivation.
+
+  Flags for collation aggregation modes:
+  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
+  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
+                                 (i.e. constant).
+  MY_COLL_ALLOW_CONV           - allow any kind of conversion
+                                 (combination of the above two)
+  MY_COLL_DISALLOW_NONE        - don't allow return DERIVATION_NONE
+                                 (e.g. when aggregating for comparison)
+  MY_COLL_CMP_CONV             - combination of MY_COLL_ALLOW_CONV
+                                 and MY_COLL_DISALLOW_NONE
+*/
+
+#define MY_COLL_ALLOW_SUPERSET_CONV   1
+#define MY_COLL_ALLOW_COERCIBLE_CONV  2
+#define MY_COLL_ALLOW_CONV            3
+#define MY_COLL_DISALLOW_NONE         4
+#define MY_COLL_CMP_CONV              7
+
+
+/*
+  This enum is used to report information about monotonicity of function
+  represented by Item* tree.
+  Monotonicity is defined only for Item* trees that represent table
+  partitioning expressions (i.e. have no subselects/user vars/PS parameters
+  etc etc). An Item* tree is assumed to have the same monotonicity properties
+  as its correspoinding function F:
+
+  [signed] int64_t F(field1, field2, ...) {
+    put values of field_i into table record buffer;
+    return item->val_int(); 
+  }
+
+  NOTE
+  At the moment function monotonicity is not well defined (and so may be
+  incorrect) for Item trees with parameters/return types that are different
+  from INT_RESULT, may be NULL, or are unsigned.
+  It will be possible to address this issue once the related partitioning bugs
+  (BUG#16002, BUG#15447, BUG#13436) are fixed.
+*/
+
+typedef enum monotonicity_info 
+{
+   NON_MONOTONIC,              /* none of the below holds */
+   MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */
+   MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
+} enum_monotonicity_info;
+
+enum tmp_table_type
+{
+  NO_TMP_TABLE, NON_TRANSACTIONAL_TMP_TABLE, TRANSACTIONAL_TMP_TABLE,
+  INTERNAL_TMP_TABLE, SYSTEM_TMP_TABLE, TMP_TABLE_FRM_FILE_ONLY
+};
+
+/*
+  Values in this enum are used to indicate how a tables TIMESTAMP field
+  should be treated. It can be set to the current timestamp on insert or
+  update or both.
+  WARNING: The values are used for bit operations. If you change the
+  enum, you must keep the bitwise relation of the values. For example:
+  (int) TIMESTAMP_AUTO_SET_ON_BOTH must be equal to
+  (int) TIMESTAMP_AUTO_SET_ON_INSERT | (int) TIMESTAMP_AUTO_SET_ON_UPDATE.
+  We use an enum here so that the debugger can display the value names.
+*/
+enum timestamp_auto_set_type
+{
+  TIMESTAMP_NO_AUTO_SET= 0, TIMESTAMP_AUTO_SET_ON_INSERT= 1,
+  TIMESTAMP_AUTO_SET_ON_UPDATE= 2, TIMESTAMP_AUTO_SET_ON_BOTH= 3
+};
+#define clear_timestamp_auto_bits(_target_, _bits_) \
+  (_target_)= (enum timestamp_auto_set_type)((int)(_target_) & ~(int)(_bits_))
+
+/**
+  Category of table found in the table share.
+*/
+enum enum_table_category
+{
+  /**
+    Unknown value.
+  */
+  TABLE_UNKNOWN_CATEGORY=0,
+
+  /**
+    Temporary table.
+    The table is visible only in the session.
+    Therefore,
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    do not apply to this table.
+    Note that LOCK Table t FOR READ/WRITE
+    can be used on temporary tables.
+    Temporary tables are not part of the table cache.
+  */
+  TABLE_CATEGORY_TEMPORARY=1,
+
+  /**
+    User table.
+    These tables do honor:
+    - LOCK Table t FOR READ/WRITE
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    User tables are cached in the table cache.
+  */
+  TABLE_CATEGORY_USER=2,
+
+  /**
+    Information schema tables.
+    These tables are an interface provided by the system
+    to inspect the system metadata.
+    These tables do *not* honor:
+    - LOCK Table t FOR READ/WRITE
+    - FLUSH TABLES WITH READ LOCK
+    - SET GLOBAL READ_ONLY = ON
+    as there is no point in locking explicitely
+    an INFORMATION_SCHEMA table.
+    Nothing is directly written to information schema tables.
+    Note that this value is not used currently,
+    since information schema tables are not shared,
+    but implemented as session specific temporary tables.
+  */
+  /*
+    TODO: Fixing the performance issues of I_S will lead
+    to I_S tables in the table cache, which should use
+    this table type.
+  */
+  TABLE_CATEGORY_INFORMATION
+};
+
+/* Information for one open table */
+enum index_hint_type
+{
+  INDEX_HINT_IGNORE,
+  INDEX_HINT_USE,
+  INDEX_HINT_FORCE
+};
+
+
+enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
+enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
+                            DELAY_KEY_WRITE_ALL };
+enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
+                            SLAVE_EXEC_MODE_IDEMPOTENT,
+                            SLAVE_EXEC_MODE_LAST_BIT};
+enum enum_mark_columns
+{ MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
+
+enum enum_filetype { FILETYPE_CSV, FILETYPE_XML };
+
+enum find_item_error_report_type {REPORT_ALL_ERRORS, REPORT_EXCEPT_NOT_FOUND,
+                                  IGNORE_ERRORS, REPORT_EXCEPT_NON_UNIQUE,
+                                  IGNORE_EXCEPT_NON_UNIQUE};
+
+enum enum_schema_table_state
+{
+  NOT_PROCESSED= 0,
+  PROCESSED_BY_CREATE_SORT_INDEX,
+  PROCESSED_BY_JOIN_EXEC
+};
+
+/*
+ * The following are for the interface with the .frm file
+ */
+
+#define FIELDFLAG_DECIMAL    1
+#define FIELDFLAG_BINARY    1  // Shares same flag
+#define FIELDFLAG_NUMBER    2
+#define FIELDFLAG_DECIMAL_POSITION      4
+#define FIELDFLAG_PACK      120  // Bits used for packing
+#define FIELDFLAG_INTERVAL    256     // mangled with decimals!
+#define FIELDFLAG_BLOB      1024  // mangled with decimals!
+
+#define FIELDFLAG_NO_DEFAULT    16384   /* sql */
+#define FIELDFLAG_SUM      ((uint32_t) 32768)// predit: +#fieldflag
+#define FIELDFLAG_MAYBE_NULL    ((uint32_t) 32768)// sql
+#define FIELDFLAG_HEX_ESCAPE    ((uint32_t) 0x10000)
+#define FIELDFLAG_PACK_SHIFT    3
+#define FIELDFLAG_DEC_SHIFT    8
+#define FIELDFLAG_MAX_DEC    31
+
+#define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
+
+#define f_is_dec(x)     ((x) & FIELDFLAG_DECIMAL)
+#define f_is_num(x)     ((x) & FIELDFLAG_NUMBER)
+#define f_is_decimal_precision(x)  ((x) & FIELDFLAG_DECIMAL_POSITION)
+#define f_is_packed(x)  ((x) & FIELDFLAG_PACK)
+#define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
+#define f_decimals(x)   ((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & \
+                                     FIELDFLAG_MAX_DEC))
+#define f_is_alpha(x)   (!f_is_num(x))
+#define f_is_binary(x)  ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
+#define f_is_enum(x)    (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == \
+                         FIELDFLAG_INTERVAL)
+#define f_is_blob(x)    (((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == \
+                         FIELDFLAG_BLOB)
+#define f_is_equ(x)     ((x) & (1+2+FIELDFLAG_PACK+31*256))
+#define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
+#define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
+#define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)
+#define f_is_hex_escape(x) ((x) & FIELDFLAG_HEX_ESCAPE)
+
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
+

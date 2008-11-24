@@ -24,11 +24,6 @@
 #include <poll.h>
 #include <fcntl.h>
 
-const char _dig_vec_upper[] =
-  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char _dig_vec_lower[] =
-  "0123456789abcdefghijklmnopqrstuvwxyz";
-
 const char  *unknown_sqlstate= "HY000";
 const char  *not_error_sqlstate= "00000";
 const char  *cant_connect_sqlstate= "08001";

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_HOUR_H
 #define DRIZZLED_FUNCTIONS_TIME_HOUR_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_hour :public Item_int_func
 {
 public:

@@ -459,7 +459,7 @@ struct ilink
   struct ilink **prev,*next;
   static void *operator new(size_t size)
   {
-    return (void*)my_malloc((uint)size, MYF(MY_WME | MY_FAE | ME_FATALERROR));
+    return (void*)malloc((uint)size);
   }
   static void operator delete(void* ptr_arg,
                               size_t size __attribute__((unused)))
@@ -614,5 +614,10 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
   while ((el= it++))
     it.replace(el->clone(mem_root));
 }
+
+/* sql_list.cc */
+void free_list(I_List <i_string_pair> *list);
+void free_list(I_List <i_string> *list);
+
 
 #endif // DRIZZLED_SQL_LIST_H

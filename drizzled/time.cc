@@ -24,6 +24,8 @@
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
 #include <drizzled/tztime.h>
+#include <drizzled/item/timefunc.h>
+#include <drizzled/session.h>
 
 /* Some functions to calculate dates */
 
@@ -264,7 +266,6 @@ my_time_t TIME_to_timestamp(Session *session, const DRIZZLE_TIME *t,
   my_time_t timestamp;
 
   *in_dst_time_gap= 0;
-  session->time_zone_used= 1;
 
   timestamp= session->variables.time_zone->TIME_to_gmt_sec(t, in_dst_time_gap);
   if (timestamp)

@@ -22,7 +22,7 @@
 #include <drizzled/base.h>
 #include <drizzled/handler.h>
 #include <drizzled/handlerton.h>
-#include <drizzled/sql_class.h>
+#include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
@@ -247,6 +247,8 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
       goto err;
     }
   }
+
+  hton->name= plugin->name.str;
 
   /*
     the switch below and hton->state should be removed when

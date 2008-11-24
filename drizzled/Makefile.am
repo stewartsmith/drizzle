@@ -23,7 +23,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = util field serialize functions functions/str functions/time .
+SUBDIRS = util field item serialize functions functions/str functions/time .
 
 sbin_PROGRAMS =drizzled
 
@@ -34,7 +34,7 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${EVENT_CPPFLAGS} ${PROTOBUF_CPPFLAGS}
 
 DTRACE = @DTRACE@
 
@@ -67,10 +67,11 @@ noinst_LTLIBRARIES = libhandler.la libyacc.la
 LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
 	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystrings.la \
-	$(ZLIB_LIBS) $(LIBINTL)
+	$(Z_LIBS) $(LIBINTL) ${UUID_LIBS}
 
 drizzled_LDADD = libhandler.la libyacc.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
+		 $(top_builddir)/drizzled/item/libitem.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(top_builddir)/drizzled/functions/libfunctions.la \
@@ -82,48 +83,55 @@ drizzled_LDADD = libhandler.la libyacc.la \
 		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(LIBEVENT_LIBS) $(PROTOBUF_LIBS)
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
 drizzled_DEPENDENCIES = @mysql_plugin_libs@
 
 drizzled_LDFLAGS =
 
 noinst_HEADERS = \
+		alter_column.h \
+		alter_drop.h \
 		authentication.h \
 		base.h \
+		cached_item.h \
 		client_settings.h \
 		common_includes.h \
+		comp_creator.h \
 		configvar.h \
 		connect.h \
 		cost_vect.h \
 		data_home.h \
+		db.h \
 		definitions.h \
+		dtcollation.h \
 		errmsg.h \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
 		filesort_info.h \
+		foreign_key.h \
 		gettext.h \
 		global.h \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
 		handler_structs.h \
-		item_cmpfunc.h \
-		item_create.h \
-		item_func.h \
+		hybrid_type.h \
+		hybrid_type_traits.h \
+		hybrid_type_traits_decimal.h \
+		hybrid_type_traits_integer.h \
 	       	item.h \
-		item_row.h \
-		item_strfunc.h \
-		item_subselect.h \
-		item_sum.h \
-		item_timefunc.h \
+		key.h \
                 key_map.h \
+		key_part_spec.h \
 		lex.h \
 		lex_symbol.h \
 		log_event.h \
 		logging.h \
 		log.h \
 		my_decimal.h\
+		name_resolution_context.h \
+		name_resolution_context_state.h \
 		opt_range.h \
 		order.h \
 		parser.h \
@@ -131,34 +139,37 @@ noinst_HEADERS = \
 		protocol.h \
 		qcache.h \
 		query_id.h \
-		rpl_constants.h \
-		rpl_filter.h \
-		rpl_mi.h \
-		rpl_record.h \
-		rpl_reporting.h \
-		rpl_rli.h \
-		rpl_tblmap.h \
-		rpl_utility.h \
+		rename.h \
+		replication/binlog.h \
+		replication/constants.h \
+		replication/filter.h \
+		replication/mi.h \
+		replication/record.h \
+		replication/replication.h \
+		replication/reporting.h \
+		replication/rli.h \
+		replication/tblmap.h \
+		replication/utility.h \
 		scheduler.h \
 		scheduling.h \
 		server_includes.h \
+		session.h \
 		set_var.h \
 		show.h \
 		sj_tmp_table.h \
 		slave.h \
 		sql_alloc.h \
 		sql_array.h \
+		sql_base.h \
 		sql_bitmap.h \
-		sql_class.h \
 		sql_error.h \
 		sql_lex.h \
 		sql_list.h \
+		sql_load.h \
 		sql_locale.h \
 		sql_parse.h \
 		sql_plugin.h \
-		sql_repl.h \
 		sql_select.h \
-		sql_show.h \
 		sql_sort.h \
 		sql_state.h \
 		sql_string.h \
@@ -172,30 +183,30 @@ noinst_HEADERS = \
 		tableop_hooks.h \
 		tmp_table.h \
 		tzfile.h \
-		tztime.h
+		tztime.h \
+		virtual_column_info.h
 
 drizzled_SOURCES = \
 		authentication.cc \
+		cached_item.cc \
+		comp_creator.cc \
 		configvar.cc \
+		db.cc \
 		discover.cc \
 		drizzled.cc \
+		dtcollation.cc \
 		errmsg.cc \
 		error.cc \
 		field.cc \
 		field_conv.cc \
 		field_iterator.cc \
 		filesort.cc \
+		ha_trx_info.cc \
+		hybrid_type_traits.cc \
+		hybrid_type_traits_decimal.cc \
+		hybrid_type_traits_integer.cc \
 		init.cc \
-		item_buff.cc \
 		item.cc \
-		item_cmpfunc.cc \
-		item_create.cc \
-		item_func.cc \
-		item_row.cc \
-		item_strfunc.cc \
-		item_subselect.cc \
-		item_sum.cc \
-		item_timefunc.cc \
 		key.cc \
                 key_map.cc \
 		lock.cc \
@@ -204,6 +215,7 @@ drizzled_SOURCES = \
 		logging.cc \
 		mf_iocache.cc \
 		my_decimal.cc\
+		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
@@ -212,25 +224,27 @@ drizzled_SOURCES = \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
-		rpl_filter.cc \
-		rpl_mi.cc \
-		rpl_record.cc \
-		rpl_reporting.cc \
-		rpl_rli.cc \
-		rpl_tblmap.cc \
-		rpl_utility.cc \
+		rename.cc \
+		replication/binlog.cc \
+		replication/filter.cc \
+		replication/mi.cc \
+		replication/record.cc \
+		replication/replication.cc \
+		replication/reporting.cc \
+		replication/rli.cc \
+		replication/tblmap.cc \
+		replication/utility.cc \
 		scheduler.cc \
                 scheduling.cc \
+		session.cc \
 		set_var.cc \
+		show.cc \
 		sj_tmp_table.cc \
 		slave.cc \
 		sql_base.cc \
-		sql_binlog.cc \
 		sql_builtin.cc \
-		sql_class.cc \
 		sql_client.cc \
 		sql_connect.cc \
-		sql_db.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
@@ -243,10 +257,7 @@ drizzled_SOURCES = \
 		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
-		sql_rename.cc \
-		sql_repl.cc \
 		sql_select.cc \
-		sql_show.cc \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
@@ -264,10 +275,12 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		unireg.cc \
+		virtual_column_info.cc \
 		xid.cc
 
 libhandler_la_SOURCES = handler.cc handlerton.cc
 libyacc_la_SOURCES = sql_yacc.yy
+AM_YFLAGS = -p DRIZZLE -d --verbose
 # Code output from YACC contains GOBS of unused macros, and I can't
 # figure out how to turn it off.
 libyacc_la_CXXFLAGS = ${AM_CXXFLAGS} -Wno-unused-macros
@@ -277,9 +290,9 @@ if HAVE_DTRACE
 drizzled_SOURCES += probes.d
 endif
 
-gen_lex_hash_SOURCES =gen_lex_hash.cc
+gen_lex_hash_SOURCES= gen_lex_hash.cc
 
-gen_lex_hash_LDFLAGS =  
+gen_lex_hash_LDFLAGS= 
 
 DEFS =-DDRIZZLE_SERVER \
       -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
@@ -289,11 +302,12 @@ DEFS =-DDRIZZLE_SERVER \
       -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
-#		server_includes.h.gch
 if GCC_PCH
 PCHHEADERS = \
 		definitions.h.gch \
 		handlerton.h.gch  \
+		sql_base.h.gch \
+		sql_parse.h.gch \
 		sql_plugin.h.gch
 else
 PCHHEADERS = 
@@ -320,9 +334,6 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
-
-AM_YFLAGS = -d --verbose
-
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool

@@ -24,13 +24,17 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
-#include <drizzled/sql_show.h>
-#include <drizzled/rpl_mi.h>
+#include <drizzled/show.h>
+#include <drizzled/replication/mi.h>
 #include <drizzled/error.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/slave.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/probes.h>
 #include <drizzled/tableop_hooks.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_load.h>
+#include <drizzled/field/timestamp.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
@@ -463,7 +467,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table || was_insert_delayed)
     {
-      if (mysql_bin_log.is_open())
+      if (drizzle_bin_log.is_open())
       {
 	if (error <= 0)
         {
@@ -1090,20 +1094,6 @@ bool mysql_insert_select_prepare(Session *session)
   LEX *lex= session->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
   
-
-  /*
-    Statement-based replication of INSERT ... SELECT ... LIMIT is not safe
-    as order of rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if ORDER BY primary_key
-    is present or we SELECT a constant. However it may confuse users to
-    see very similiar statements replicated differently.
-  */
-  if (lex->current_select->select_limit)
-  {
-    lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
-  }
   /*
     SELECT_LEX do not belong to INSERT statement, so we can't add WHERE
     clause if table is VIEW
@@ -1433,7 +1423,7 @@ bool select_insert::send_eof()
     events are in the transaction cache and will be written when
     ha_autocommit_or_rollback() is issued below.
   */
-  if (mysql_bin_log.is_open())
+  if (drizzle_bin_log.is_open())
   {
     if (!error)
       session->clear_error();
@@ -1501,11 +1491,9 @@ void select_insert::abort() {
     transactional_table= table->file->has_transactions();
     if (session->transaction.stmt.modified_non_trans_table)
     {
-        if (mysql_bin_log.is_open())
+        if (drizzle_bin_log.is_open())
           session->binlog_query(Session::ROW_QUERY_TYPE, session->query, session->query_length,
                             transactional_table, false);
-        if (!session->current_stmt_binlog_row_based && !can_rollback_data())
-          session->transaction.all.modified_non_trans_table= true;
     }
     assert(transactional_table || !changed ||
 		session->transaction.stmt.modified_non_trans_table);
@@ -1757,14 +1745,10 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   private:
     virtual int do_postlock(Table **tables, uint32_t count)
     {
-      Session *session= const_cast<Session*>(ptr->get_session());
-      if (int error= decide_logging_format(session, &all_tables))
-        return error;
-
       Table const *const table = *tables;
-      if (session->current_stmt_binlog_row_based  &&
-          !table->s->tmp_table &&
-          !ptr->get_create_info()->table_existed)
+      if (drizzle_bin_log.is_open()
+          && !table->s->tmp_table 
+          && !ptr->get_create_info()->table_existed)
       {
         ptr->binlog_show_create_table(tables, count);
       }
@@ -1785,8 +1769,8 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     row-based replication for the statement.  If we are creating a
     temporary table, we need to start a statement transaction.
   */
-  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 &&
-      session->current_stmt_binlog_row_based)
+  if ((session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE) == 0 
+      && drizzle_bin_log.is_open())
   {
     session->binlog_start_trans_and_stmt();
   }
@@ -1862,7 +1846,6 @@ select_create::binlog_show_create_table(Table **tables, uint32_t count)
     schema that will do a close_thread_tables(), destroying the
     statement transaction cache.
   */
-  assert(session->current_stmt_binlog_row_based);
   assert(tables && *tables && count > 0);
 
   char buf[2048];

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_TIMESTAMP_DIFF_H
 #define DRIZZLED_FUNCTIONS_TIME_TIMESTAMP_DIFF_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_timestamp_diff :public Item_int_func
 {
   const interval_type int_type;

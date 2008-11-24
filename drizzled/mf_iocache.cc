@@ -29,11 +29,10 @@
   also info->rc_pos is set to info->rc_end.
   If called through open_cached_file(), then the temporary file will
   only be created if a write exeeds the file buffer or if one calls
-  flush_io_cache().  
+  flush_io_cache().
 */
 #include <drizzled/server_includes.h>
-
-extern "C" {
+#include <drizzled/session.h>
 
 /**
   Read buffered from the net.
@@ -43,8 +42,7 @@ extern "C" {
   @retval
     0   if record read
 */
-int _my_b_net_read(register IO_CACHE *info, unsigned char *Buffer,
-		   size_t Count __attribute__((unused)))
+int _my_b_net_read(register IO_CACHE *info, unsigned char *Buffer, size_t)
 {
   ulong read_length;
   NET *net= &(current_session)->net;
@@ -78,5 +76,3 @@ int _my_b_net_read(register IO_CACHE *info, unsigned char *Buffer,
 
   return(0);
 }
-
-} /* extern "C" */

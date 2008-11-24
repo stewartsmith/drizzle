@@ -30,6 +30,7 @@ libtimefunc_la_SOURCES = \
 		  from_unixtime.cc \
 		  get_format.cc \
 		  hour.cc \
+		  last_day.cc \
 		  makedate.cc \
 		  make_datetime_with_warn.cc \
 		  make_datetime.cc \
@@ -44,6 +45,7 @@ libtimefunc_la_SOURCES = \
 		  period_diff.cc \
 		  sec_to_time.cc \
 		  second.cc \
+		  str_to_date.cc \
 		  sysdate_local.cc \
 		  timediff.cc \
 		  timestamp_diff.cc \
@@ -69,6 +71,7 @@ noinst_HEADERS = \
 		 from_unixtime.h \
 		 get_format.h \
 		 hour.h \
+		 last_day.h \
 		 makedate.h \
 		 make_datetime_with_warn.h \
 		 make_datetime.h \
@@ -83,6 +86,7 @@ noinst_HEADERS = \
 		 period_diff.h \
 		 sec_to_time.h \
 		 second.h \
+		 str_to_date.h \
 		 sysdate_local.h \
 		 str_timefunc.h \
 		 timediff.h \

@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/benchmark.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 
 /* This function is just used to test speed of different functions */

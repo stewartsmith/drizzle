@@ -15,17 +15,24 @@
 
 #define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
-#include "ha_heap.h"
-#include "heapdef.h"
+#include <storage/heap/ha_heap.h>
+#include <storage/heap/heapdef.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/varstring.h>
+
+pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
 static handler *heap_create_handler(handlerton *hton,
-                                    TABLE_SHARE *table, 
+                                    TABLE_SHARE *table,
                                     MEM_ROOT *mem_root);
 
-int heap_deinit(void *p __attribute__((unused)))
-            
+int heap_deinit(void *)
 {
+  pthread_mutex_init(&THR_LOCK_heap,MY_MUTEX_INIT_FAST);
+
   return hp_panic(HA_PANIC_CLOSE);
 }
 
@@ -149,6 +156,21 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
 }
 
 
+const char *ha_heap::index_type(uint32_t inx)
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+          "BTREE" : "HASH");
+}
+
+
+uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+          HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
+          HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
+}
+
+
 /*
   Compute which keys to use for scanning
 
@@ -215,7 +237,7 @@ int ha_heap::write_row(unsigned char * buf)
       return res;
   }
   res= heap_write(file,buf);
-  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD > 
+  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
                file->s->records))
   {
     /*
@@ -551,8 +573,7 @@ THR_LOCK_DATA **ha_heap::store_lock(Session *session __attribute__((unused)),
 
 int ha_heap::delete_table(const char *name)
 {
-  int error= heap_delete_table(name);
-  return error == ENOENT ? 0 : error;
+  return heap_delete_table(name);
 }
 
 

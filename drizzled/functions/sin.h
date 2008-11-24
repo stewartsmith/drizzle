@@ -20,10 +20,11 @@
 #ifndef DRIZZLED_FUNCTIONS_SIN_H
 #define DRIZZLED_FUNCTIONS_SIN_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_sin :public Item_dec_func
-{ 
+{
 public:
   Item_func_sin(Item *a) :Item_dec_func(a) {}
   double val_real();

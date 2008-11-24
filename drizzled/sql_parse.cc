@@ -15,14 +15,23 @@
 
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_filter.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/binlog.h>
 #include <drizzled/logging.h>
+#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
+#include <drizzled/rename.h>
+#include <drizzled/functions/time/unix_timestamp.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_load.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -714,7 +723,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     packet= arg_end + 1;
 
     if (!my_strcasecmp(system_charset_info, table_list.db,
-                       INFORMATION_SCHEMA_NAME.str))
+                       INFORMATION_SCHEMA_NAME.c_str()))
     {
       ST_SCHEMA_TABLE *schema_table= find_schema_table(session, table_list.alias);
       if (schema_table)
@@ -776,7 +785,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_other);
     my_eof(session);
     close_thread_tables(session);			// Free before kill
-    kill_mysql();
+    kill_drizzle();
     error=true;
     break;
   }
@@ -1015,24 +1024,6 @@ bool alloc_query(Session *session, const char *packet, uint32_t packet_length)
   return false;
 }
 
-static void reset_one_shot_variables(Session *session) 
-{
-  session->variables.character_set_client=
-    global_system_variables.character_set_client;
-  session->variables.collation_connection=
-    global_system_variables.collation_connection;
-  session->variables.collation_database=
-    global_system_variables.collation_database;
-  session->variables.collation_server=
-    global_system_variables.collation_server;
-  session->update_charset();
-  session->variables.time_zone=
-    global_system_variables.time_zone;
-  session->variables.lc_time_names= &my_locale_en_US;
-  session->one_shot_set= 0;
-}
-
-
 /**
   Execute command saved in session and lex->sql_command.
 
@@ -1136,23 +1127,6 @@ mysql_execute_command(Session *session)
     {
       /* we warn the slave SQL thread */
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      if (session->one_shot_set)
-      {
-        /*
-          It's ok to check session->one_shot_set here:
-
-          The charsets in a MySQL 5.0 slave can change by both a binlogged
-          SET ONE_SHOT statement and the event-internal charset setting, 
-          and these two ways to change charsets do not seems to work
-          together.
-
-          At least there seems to be problems in the rli cache for
-          charsets if we are using ONE_SHOT.  Note that this is normally no
-          problem because either the >= 5.0 slave reads a 4.1 binlog (with
-          ONE_SHOT) *or* or 5.0 binlog (without ONE_SHOT) but never both."
-        */
-        reset_one_shot_variables(session);
-      }
       return(0);
     }
   }
@@ -1974,18 +1948,8 @@ end_with_restore_list:
 
     if (open_and_lock_tables(session, all_tables))
       goto error;
-    if (lex->one_shot_set && not_all_support_one_shot(lex_var_list))
-    {
-      my_error(ER_RESERVED_SYNTAX, MYF(0), "SET ONE_SHOT");
-      goto error;
-    }
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
-      /*
-        If the previous command was a SET ONE_SHOT, we don't want to forget
-        about the ONE_SHOT property of that SET. So we use a |= instead of = .
-      */
-      session->one_shot_set|= lex->one_shot_set;
       my_ok(session);
     }
     else
@@ -2376,19 +2340,6 @@ end_with_restore_list:
   session->set_proc_info("query end");
 
   /*
-    Binlog-related cleanup:
-    Reset system variables temporarily modified by SET ONE SHOT.
-
-    Exception: If this is a SET, do nothing. This is to allow
-    mysqlbinlog to print many SET commands (in this case we want the
-    charset temp setting to live until the real query). This is also
-    needed so that SET CHARACTER_SET_CLIENT... does not cancel itself
-    immediately.
-  */
-  if (session->one_shot_set && lex->sql_command != SQLCOM_SET_OPTION)
-    reset_one_shot_variables(session);
-
-  /*
     The return value for ROW_COUNT() is "implementation dependent" if the
     statement is not DELETE, INSERT or UPDATE, but -1 is what JDBC and ODBC
     wants. We also keep the last value in case of SQLCOM_CALL or
@@ -2557,7 +2508,7 @@ void mysql_reset_session_for_next_command(Session *session)
   session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
 
   session->query_start_used= 0;
-  session->is_fatal_error= session->time_zone_used= 0;
+  session->is_fatal_error= 0;
   session->server_status&= ~ (SERVER_MORE_RESULTS_EXISTS | 
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -2582,14 +2533,7 @@ void mysql_reset_session_for_next_command(Session *session)
   session->clear_error();
   session->main_da.reset_diagnostics_area();
   session->total_warn_count=0;			// Warnings for this query
-  session->rand_used= 0;
   session->sent_row_count= session->examined_row_count= 0;
-
-  /*
-    Because we come here only for start of top-statements, binlog format is
-    constant inside a complex statement (using stored functions) etc.
-  */
-  session->reset_current_stmt_binlog_row_based();
 
   return;
 }
@@ -3067,7 +3011,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.str))
+                                      INFORMATION_SCHEMA_NAME.c_str()))
   {
     ST_SCHEMA_TABLE *schema_table= find_schema_table(session, ptr->table_name);
     if (!schema_table ||
@@ -3080,7 +3024,7 @@ TableList *st_select_lex::add_table_to_list(Session *session,
           lex->sql_command == SQLCOM_SHOW_KEYS)))
     {
       my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.str);
+               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
       return(0);
     }
     ptr->schema_table_name= ptr->table_name;
@@ -3584,9 +3528,9 @@ bool reload_cache(Session *session, ulong options, TableList *tables,
       than it would help them)
     */
     tmp_write_to_binlog= 0;
-    if( mysql_bin_log.is_open() )
+    if (drizzle_bin_log.is_open())
     {
-      mysql_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
+      drizzle_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
     }
     pthread_mutex_lock(&LOCK_active_mi);
     rotate_relay_log(active_mi);
@@ -3784,42 +3728,6 @@ bool check_simple_select()
 }
 
 
-Comp_creator *comp_eq_creator(bool invert)
-{
-  return invert?(Comp_creator *)&ne_creator:(Comp_creator *)&eq_creator;
-}
-
-
-Comp_creator *comp_ge_creator(bool invert)
-{
-  return invert?(Comp_creator *)&lt_creator:(Comp_creator *)&ge_creator;
-}
-
-
-Comp_creator *comp_gt_creator(bool invert)
-{
-  return invert?(Comp_creator *)&le_creator:(Comp_creator *)&gt_creator;
-}
-
-
-Comp_creator *comp_le_creator(bool invert)
-{
-  return invert?(Comp_creator *)&gt_creator:(Comp_creator *)&le_creator;
-}
-
-
-Comp_creator *comp_lt_creator(bool invert)
-{
-  return invert?(Comp_creator *)&ge_creator:(Comp_creator *)&lt_creator;
-}
-
-
-Comp_creator *comp_ne_creator(bool invert)
-{
-  return invert?(Comp_creator *)&eq_creator:(Comp_creator *)&ne_creator;
-}
-
-
 /**
   Construct ALL/ANY/SOME subquery Item.
 
@@ -3832,9 +3740,9 @@ Comp_creator *comp_ne_creator(bool invert)
     constructed Item (or 0 if out of memory)
 */
 Item * all_any_subquery_creator(Item *left_expr,
-				chooser_compare_func_creator cmp,
-				bool all,
-				SELECT_LEX *select_lex)
+                                chooser_compare_func_creator cmp,
+                                bool all,
+                                SELECT_LEX *select_lex)
 {
   if ((cmp == &comp_eq_creator) && !all)       //  = ANY <=> IN
     return new Item_in_subselect(left_expr, select_lex);
@@ -4085,7 +3993,7 @@ bool create_table_precheck(Session *, TableList *,
 
   if (create_table && (strcmp(create_table->db, "information_schema") == 0))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return(true);
   }
 
@@ -4162,8 +4070,9 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, uint32_t max_char_length,
-                           uint32_t err_code, const char *param_for_err_msg)
+bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
+                           uint32_t max_char_length,
+                           const char *param_for_err_msg)
 {
 #ifdef HAVE_CHARSET_utf8mb3
   /*

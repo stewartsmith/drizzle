@@ -215,6 +215,5 @@ typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 /* useful constants */#
 extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
-extern const char *primary_key_name;
 
 #endif /* _SQL_BITMAP_H_ */

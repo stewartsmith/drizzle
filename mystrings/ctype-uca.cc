@@ -32,6 +32,7 @@
 */
 
 
+#include <stdio.h>
 #include "m_string.h"
 #include "m_ctype.h"
 
@@ -8021,7 +8022,8 @@ static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   Should work for any character set.
 */
 
-static bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
+extern "C"
+bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   cs->pad_char= ' ';
   return create_tailoring(cs, alloc);

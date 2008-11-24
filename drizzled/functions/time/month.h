@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_MONTH_H
 #define DRIZZLED_FUNCTIONS_TIME_MONTH_H
 
+#include <drizzled/functions/func.h>
+
 class Item_func_month :public Item_func
 {
 public:

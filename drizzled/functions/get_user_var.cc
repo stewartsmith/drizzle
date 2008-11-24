@@ -20,6 +20,9 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/get_user_var.h>
+#include <drizzled/functions/get_variable.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/session.h>
 
 String *
 Item_func_get_user_var::val_str(String *str)
@@ -132,7 +135,7 @@ int get_var_with_binlog(Session *session, enum_sql_command sql_command,
       goto err;
   }
   else if (var_entry->used_query_id == session->query_id ||
-           mysql_bin_log.is_query_in_union(session, var_entry->used_query_id))
+           drizzle_bin_log.is_query_in_union(session, var_entry->used_query_id))
   {
     /* 
        If this variable was already stored in user_var_events by this query

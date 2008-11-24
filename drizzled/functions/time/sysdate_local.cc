@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/time/sysdate_local.h>
 #include <drizzled/tztime.h>
-
+#include <drizzled/session.h>
 
 /**
     Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
@@ -31,7 +31,6 @@ void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   Session *session= current_session;
   session->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
-  session->time_zone_used= 1;
 }
 
 

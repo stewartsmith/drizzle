@@ -28,9 +28,16 @@
 #include <mysys/hash.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/plugin.h>
-#include <drizzled/sql_show.h>
+#include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
+#include <drizzled/field.h>
+#include <drizzled/log.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/timestamp.h>
 
 /* Include necessary InnoDB headers */
 extern "C" {
@@ -2159,8 +2166,8 @@ retry:
 			}
 		}
 
-		trx->mysql_log_file_name = mysql_bin_log_file_name();
-		trx->mysql_log_offset = (ib_int64_t) mysql_bin_log_file_pos();
+		trx->mysql_log_file_name = drizzle_bin_log_file_name();
+		trx->mysql_log_offset = (ib_int64_t) drizzle_bin_log_file_pos();
 
 		innobase_commit_low(trx);
 
@@ -3060,7 +3067,7 @@ get_innobase_type_from_mysql_type(
 	case DRIZZLE_TYPE_LONGLONG:
 	case DRIZZLE_TYPE_TINY:
 	case DRIZZLE_TYPE_DATETIME:
-	case DRIZZLE_TYPE_NEWDATE:
+	case DRIZZLE_TYPE_DATE:
 	case DRIZZLE_TYPE_TIME:
 	case DRIZZLE_TYPE_TIMESTAMP:
 		return(DATA_INT);
@@ -7223,29 +7230,6 @@ ha_innobase::external_lock(
 	trx_t*		trx;
 
 	update_session(session);
-
-	/* Statement based binlogging does not work in isolation level
-	READ UNCOMMITTED and READ COMMITTED since the necessary
-	locks cannot be taken. In this case, we print an
-	informative error message and return with an error. */
-	if (lock_type == F_WRLCK)
-	{
-		ulong const binlog_format= session_binlog_format(session);
-		ulong const tx_isolation = session_tx_isolation(current_session);
-		if (tx_isolation <= ISO_READ_COMMITTED &&
-		    binlog_format == BINLOG_FORMAT_STMT)
-		{
-			char buf[256];
-			snprintf(buf, sizeof(buf),
-				    "Transaction level '%s' in"
-				    " InnoDB is not safe for binlog mode '%s'",
-				    tx_isolation_names[tx_isolation],
-				    binlog_format_names[binlog_format]);
-			my_error(ER_BINLOG_LOGGING_IMPOSSIBLE, MYF(0), buf);
-			return(HA_ERR_LOGGING_IMPOSSIBLE);
-		}
-	}
-
 
 	trx = prebuilt->trx;
 

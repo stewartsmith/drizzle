@@ -20,9 +20,11 @@
 #ifndef DRIZZLE_SERVER_LOG_H
 #define DRIZZLE_SERVER_LOG_H
 
+#include <drizzled/common.h>
 #include <mysys/iocache.h>
 #include <drizzled/xid.h>
 
+class Table;
 class Relay_log_info;
 class Session;
 class Format_description_log_event;
@@ -276,10 +278,7 @@ public:
   int log_xid(Session *session, my_xid xid);
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
-  bool is_table_mapped(Table *table) const
-  {
-    return table->s->table_map_version == table_map_version();
-  }
+  bool is_table_mapped(Table *table) const;
 
   uint64_t table_map_version() const { return m_table_map_version; }
   void update_table_map_version() { ++m_table_map_version; }
@@ -414,21 +413,6 @@ public:
   void init_error_log(uint32_t error_log_printer);
 };
 
-enum enum_binlog_format {
-  /*
-    statement-based except for cases where only row-based can work (UUID()
-    etc):
-  */
-  BINLOG_FORMAT_MIXED= 0,
-  BINLOG_FORMAT_STMT= 1, // statement-based
-  BINLOG_FORMAT_ROW= 2, // row_based
-/*
-  This value is last, after the end of binlog_format_typelib: it has no
-  corresponding cell in this typelib. We use this value to be able to know if
-  the user has explicitely specified a binlog format at startup or not.
-*/
-  BINLOG_FORMAT_UNSPEC= 3
-};
 extern TYPELIB binlog_format_typelib;
 
 int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);

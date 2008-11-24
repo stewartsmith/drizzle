@@ -26,10 +26,16 @@
 #ifndef DRIZZLE_SERVER_SQL_TABLE_H
 #define DRIZZLE_SERVER_SQL_TABLE_H
 
+class Session;
+class TableList;
+typedef struct st_ha_check_opt HA_CHECK_OPT;
+class Table;
+typedef struct st_key_cache KEY_CACHE;
+
 bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
                     bool drop_temporary);
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view, bool log_query);
+                         bool drop_temporary, bool log_query);
 bool quick_rm_table(handlerton *base,const char *db,
                     const char *table_name, uint32_t flags);
 void close_cached_table(Session *session, Table *table);
@@ -52,5 +58,10 @@ bool mysql_assign_to_keycache(Session* session, TableList* table_list,
 bool mysql_preload_keys(Session* session, TableList* table_list);
 int reassign_keycache_tables(Session* session, KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache);
+void write_bin_log(Session *session, bool clear_error,
+                   char const *query, ulong query_length);
+
+bool is_primary_key(KEY *key_info);
+const char* is_primary_key_name(const char* key_name);
 
 #endif /* DRIZZLE_SERVER_SQL_TABLE_H */

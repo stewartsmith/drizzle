@@ -19,9 +19,11 @@
 
 #include <drizzled/server_includes.h>
 #include <libdrizzle/libdrizzle.h>
-#include "event.h"
+#include <event.h>
 #include <drizzled/gettext.h>
-
+#include <drizzled/sql_parse.h>
+#include <drizzled/scheduler.h>
+#include <drizzled/session.h>
 
 /*
   'Dummy' functions to be used when we don't need any handling for a scheduler

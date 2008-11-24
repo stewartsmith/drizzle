@@ -32,8 +32,15 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/test.h>
+#include <drizzled/name_resolution_context_state.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/probes.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/cached_item.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -401,13 +408,13 @@ fix_inner_refs(Session *session, List<Item> &all_fields, SELECT_LEX *select,
   Function to setup clauses without sum functions.
 */
 inline int setup_without_group(Session *session, Item **ref_pointer_array,
-			       TableList *tables,
-			       TableList *leaves,
-			       List<Item> &fields,
-			       List<Item> &all_fields,
-			       COND **conds,
-			       order_st *order,
-			       order_st *group, bool *hidden_group_fields)
+                               TableList *tables,
+                               TableList *leaves,
+                               List<Item> &fields,
+                               List<Item> &all_fields,
+                               COND **conds,
+                               order_st *order,
+                               order_st *group, bool *hidden_group_fields)
 {
   int res;
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
@@ -647,8 +654,8 @@ JOIN::prepare(Item ***rref_pointer_array,
   }
 
   if (having && having->with_sum_func)
-    having->split_sum_func2(session, ref_pointer_array, all_fields,
-                            &having, true);
+    having->split_sum_func(session, ref_pointer_array, all_fields,
+                           &having, true);
   if (select_lex->inner_sum_func_list)
   {
     Item_sum *end=select_lex->inner_sum_func_list;
@@ -656,8 +663,8 @@ JOIN::prepare(Item ***rref_pointer_array,
     do
     { 
       item_sum= item_sum->next;
-      item_sum->split_sum_func2(session, ref_pointer_array,
-                                all_fields, item_sum->ref_by, false);
+      item_sum->split_sum_func(session, ref_pointer_array,
+                               all_fields, item_sum->ref_by, false);
     } while (item_sum != end);
   }
 
@@ -10358,7 +10365,7 @@ remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value)
         session->substitute_null_with_insert_id= false;
       }
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
-      else if (((field->type() == DRIZZLE_TYPE_NEWDATE) ||
+      else if (((field->type() == DRIZZLE_TYPE_DATE) ||
 		(field->type() == DRIZZLE_TYPE_DATETIME)) &&
 		(field->flags & NOT_NULL_FLAG) &&
 	       !field->table->maybe_null)
@@ -14578,7 +14585,7 @@ calc_group_buffer(JOIN *join,order_st *group)
           by 8 as maximum pack length of such fields.
         */
         if (type == DRIZZLE_TYPE_TIME ||
-            type == DRIZZLE_TYPE_NEWDATE ||
+            type == DRIZZLE_TYPE_DATE ||
             type == DRIZZLE_TYPE_DATETIME ||
             type == DRIZZLE_TYPE_TIMESTAMP)
         {
@@ -16331,11 +16338,8 @@ Index_hint::print(Session *session, String *str)
   str->append (STRING_WITH_LEN(" ("));
   if (key_name.length)
   {
-    if (session && !my_strnncoll(system_charset_info,
-                             (const unsigned char *)key_name.str, key_name.length, 
-                             (const unsigned char *)primary_key_name, 
-                             strlen(primary_key_name)))
-      str->append(primary_key_name);
+    if (session && is_primary_key_name(key_name.str))
+      str->append(is_primary_key_name(key_name.str));
     else
       append_identifier(session, str, key_name.str, key_name.length);
   }

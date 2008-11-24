@@ -16,8 +16,6 @@
 
 /* Some general useful functions */
 
-#include <config.h>
-
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -27,13 +25,17 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
-
+#include <drizzled/item/sum.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/table_list.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/double.h>
 #include <string>
 
 using namespace std;
-
-/* INFORMATION_SCHEMA name */
-LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
 
 /* Keyword for parsing virtual column functions */
 LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
@@ -45,8 +47,9 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno,
 static int open_binary_frm(Session *session, TABLE_SHARE *share,
                            unsigned char *head, File file);
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
-			      uint32_t types, char **names);
-static uint32_t find_field(Field **fields, unsigned char *record, uint32_t start, uint32_t length);
+                              uint32_t types, char **names);
+static uint32_t find_field(Field **fields, unsigned char *record,
+                           uint32_t start, uint32_t length);
 
 /*************************************************************************/
 
@@ -93,9 +96,9 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
   assert(db != NULL);
   assert(name != NULL);
 
-  if ((db->length == INFORMATION_SCHEMA_NAME.length) &&
+  if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
       (my_strcasecmp(system_charset_info,
-                    INFORMATION_SCHEMA_NAME.str,
+                    INFORMATION_SCHEMA_NAME.c_str(),
                     db->str) == 0))
   {
     return TABLE_CATEGORY_INFORMATION;
@@ -216,7 +219,7 @@ void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
   share->path.str=               (char*) path;
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
-  share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
+
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -465,16 +468,6 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   my_seek(file,pos,MY_SEEK_SET,MYF(0));
   if (my_read(file,forminfo,288,MYF(MY_NABP)))
     goto err;
-
-  share->frm_version= head[2];
-  /*
-    Check if .frm file created by MySQL 5.0. In this case we want to
-    display CHAR fields as CHAR and not as VARCHAR.
-    We do it this way as we want to keep the old frm version to enable
-    MySQL 4.1 to read these files.
-  */
-  if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
-    share->frm_version= FRM_VER_TRUE_VARCHAR;
 
   legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
   assert(share->db_plugin == NULL);
@@ -1032,7 +1025,7 @@ static int open_binary_frm(Session *session, TABLE_SHARE *share, unsigned char *
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    uint32_t primary_key=(uint) (find_type((char*) primary_key_name,
+    uint32_t primary_key=(uint) (find_type((char*) "PRIMARY",
 				       &share->keynames, 3) - 1);
     int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
@@ -2873,6 +2866,12 @@ void TableList::cleanup_items()
 }
 
 
+bool TableList::placeholder()
+{
+  return derived || schema_table || (create && !table->getDBStat()) || !table;
+}
+
+
 /*
   Set insert_values buffer
 
@@ -3195,8 +3194,7 @@ void Table::mark_columns_needed_for_delete()
     }
     file->column_bitmaps_signal();
   }
-  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE ||
-      (mysql_bin_log.is_open() && in_use && in_use->current_stmt_binlog_row_based))
+  if (file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE || (drizzle_bin_log.is_open() && in_use))
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3248,7 +3246,7 @@ void Table::mark_columns_needed_for_update()
     file->column_bitmaps_signal();
   }
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) ||
-      (mysql_bin_log.is_open() && in_use && in_use->current_stmt_binlog_row_based))
+      (drizzle_bin_log.is_open() && in_use))
   {
     /*
       If the handler has no cursor capabilites, or we have row-based
@@ -3552,48 +3550,6 @@ size_t Table::max_row_length(const unsigned char *data)
   return length;
 }
 
-/*
-  Check type of .frm if we are not going to parse it
-
-  SYNOPSIS
-  mysql_frm_type()
-  path        path to file
-
-  RETURN
-  false       error
-  true       table
-*/
-
-bool mysql_frm_type(Session *, char *path, enum legacy_db_type *dbt)
-{
-  File file;
-  unsigned char header[10];     /* This should be optimized */
-  int error;
-
-  *dbt= DB_TYPE_UNKNOWN;
-
-  if ((file= open(path, O_RDONLY)) < 0)
-    return false;
-  error= my_read(file, (unsigned char*) header, sizeof(header), MYF(MY_NABP));
-  my_close(file, MYF(MY_WME));
-
-  if (error)
-    return false;
-
-  /*  
-    This is just a check for DB_TYPE. We'll return default unknown type
-    if the following test is true (arg #3). This should not have effect
-    on return value from this function (default FRMTYPE_TABLE)
-   */  
-  if (header[0] != (unsigned char) 254 || header[1] != 1 ||
-      (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
-       (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return true;
-
-  *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  return true;                   // Is probably a .frm table
-}
-
 /****************************************************************************
  Functions for creating temporary tables.
 ****************************************************************************/
@@ -3662,140 +3618,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
   return new_field;
 }
 
-/**
-  Create field for temporary table using type of given item.
-
-  @param session                   Thread handler
-  @param item                  Item to create a field for
-  @param table                 Temporary table
-  @param copy_func             If set and item is a function, store copy of
-                               item in this array
-  @param modify_item           1 if item->result_field should point to new
-                               item. This is relevent for how fill_record()
-                               is going to work:
-                               If modify_item is 1 then fill_record() will
-                               update the record in the original table.
-                               If modify_item is 0 then fill_record() will
-                               update the temporary table
-  @param convert_blob_length   If >0 create a varstring(convert_blob_length)
-                               field instead of blob.
-
-  @retval
-    0  on error
-  @retval
-    new_created field
-*/
-
-static Field *create_tmp_field_from_item(Session *,
-                                         Item *item, Table *table,
-                                         Item ***copy_func, bool modify_item,
-                                         uint32_t convert_blob_length)
-{
-  bool maybe_null= item->maybe_null;
-  Field *new_field;
-
-  switch (item->result_type()) {
-  case REAL_RESULT:
-    new_field= new Field_double(item->max_length, maybe_null,
-                                item->name, item->decimals, true);
-    break;
-  case INT_RESULT:
-    /* 
-      Select an integer type with the minimal fit precision.
-      MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
-      Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
-      Field_long : make them Field_int64_t.  
-    */
-    if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_int64_t(item->max_length, maybe_null,
-                                   item->name, item->unsigned_flag);
-    else
-      new_field=new Field_long(item->max_length, maybe_null,
-                               item->name, item->unsigned_flag);
-    break;
-  case STRING_RESULT:
-    assert(item->collation.collation);
-  
-    enum enum_field_types type;
-    /*
-      DATE/TIME fields have STRING_RESULT result type. 
-      To preserve type they needed to be handled separately.
-    */
-    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
-        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_NEWDATE ||
-        type == DRIZZLE_TYPE_TIMESTAMP)
-      new_field= item->tmp_table_field_from_field_type(table, 1);
-    /* 
-      Make sure that the blob fits into a Field_varstring which has 
-      2-byte lenght. 
-    */
-    else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
-             convert_blob_length <= Field_varstring::MAX_SIZE && 
-             convert_blob_length)
-      new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
-                                     item->collation.collation);
-    else
-      new_field= item->make_string_field(table);
-    new_field->set_derivation(item->collation.derivation);
-    break;
-  case DECIMAL_RESULT:
-  {
-    uint8_t dec= item->decimals;
-    uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
-    uint32_t len= item->max_length;
-
-    /*
-      Trying to put too many digits overall in a DECIMAL(prec,dec)
-      will always throw a warning. We must limit dec to
-      DECIMAL_MAX_SCALE however to prevent an assert() later.
-    */
-
-    if (dec > 0)
-    {
-      signed int overflow;
-
-      dec= cmin(dec, (uint8_t)DECIMAL_MAX_SCALE);
-
-      /*
-        If the value still overflows the field with the corrected dec,
-        we'll throw out decimals rather than integers. This is still
-        bad and of course throws a truncation warning.
-        +1: for decimal point
-      */
-
-      overflow= my_decimal_precision_to_length(intg + dec, dec,
-                                               item->unsigned_flag) - len;
-
-      if (overflow > 0)
-        dec= cmax(0, dec - overflow);            // too long, discard fract
-      else
-        len -= item->decimals - dec;            // corrected value fits
-    }
-
-    new_field= new Field_new_decimal(len, maybe_null, item->name,
-                                     dec, item->unsigned_flag);
-    break;
-  }
-  case ROW_RESULT:
-  default:
-    // This case should never be choosen
-    assert(0);
-    new_field= 0;
-    break;
-  }
-  if (new_field)
-    new_field->init(table);
-    
-  if (copy_func && item->is_result_field())
-    *((*copy_func)++) = item;			// Save for copy_funcs
-  if (modify_item)
-    item->set_result_field(new_field);
-  if (item->type() == Item::NULL_ITEM)
-    new_field->is_created_from_null_item= true;
-  return new_field;
-}
-
 
 /**
   Create field for information schema table.
@@ -3829,128 +3651,6 @@ Field *create_tmp_field_for_schema(Session *, Item *item, Table *table)
   return item->tmp_table_field_from_field_type(table, 0);
 }
 
-
-/**
-  Create field for temporary table.
-
-  @param session		Thread handler
-  @param table		Temporary table
-  @param item		Item to create a field for
-  @param type		Type of item (normally item->type)
-  @param copy_func	If set and item is a function, store copy of item
-                       in this array
-  @param from_field    if field will be created using other field as example,
-                       pointer example field will be written here
-  @param default_field	If field has a default value field, store it here
-  @param group		1 if we are going to do a relative group by on result
-  @param modify_item	1 if item->result_field should point to new item.
-                       This is relevent for how fill_record() is going to
-                       work:
-                       If modify_item is 1 then fill_record() will update
-                       the record in the original table.
-                       If modify_item is 0 then fill_record() will update
-                       the temporary table
-  @param convert_blob_length If >0 create a varstring(convert_blob_length)
-                             field instead of blob.
-
-  @retval
-    0			on error
-  @retval
-    new_created field
-*/
-
-Field *create_tmp_field(Session *session, Table *table,Item *item,
-                        Item::Type type, Item ***copy_func, Field **from_field,
-                        Field **default_field, bool group, bool modify_item,
-                        bool, bool make_copy_field,
-                        uint32_t convert_blob_length)
-{
-  Field *result;
-  Item::Type orig_type= type;
-  Item *orig_item= 0;
-
-  if (type != Item::FIELD_ITEM &&
-      item->real_item()->type() == Item::FIELD_ITEM)
-  {
-    orig_item= item;
-    item= item->real_item();
-    type= Item::FIELD_ITEM;
-  }
-
-  switch (type) {
-  case Item::SUM_FUNC_ITEM:
-  {
-    Item_sum *item_sum=(Item_sum*) item;
-    result= item_sum->create_tmp_field(group, table, convert_blob_length);
-    if (!result)
-      my_error(ER_OUT_OF_RESOURCES, MYF(ME_FATALERROR));
-    return result;
-  }
-  case Item::FIELD_ITEM:
-  case Item::DEFAULT_VALUE_ITEM:
-  {
-    Item_field *field= (Item_field*) item;
-    bool orig_modify= modify_item;
-    if (orig_type == Item::REF_ITEM)
-      modify_item= 0;
-    /*
-      If item have to be able to store NULLs but underlaid field can't do it,
-      create_tmp_field_from_field() can't be used for tmp field creation.
-    */
-    if (field->maybe_null && !field->field->maybe_null())
-    {
-      result= create_tmp_field_from_item(session, item, table, NULL,
-                                         modify_item, convert_blob_length);
-      *from_field= field->field;
-      if (result && modify_item)
-        field->result_field= result;
-    } 
-    else
-      result= create_tmp_field_from_field(session, (*from_field= field->field),
-                                          orig_item ? orig_item->name :
-                                          item->name,
-                                          table,
-                                          modify_item ? field :
-                                          NULL,
-                                          convert_blob_length);
-    if (orig_type == Item::REF_ITEM && orig_modify)
-      ((Item_ref*)orig_item)->set_result_field(result);
-    if (field->field->eq_def(result))
-      *default_field= field->field;
-    return result;
-  }
-  /* Fall through */
-  case Item::FUNC_ITEM:
-    /* Fall through */
-  case Item::COND_ITEM:
-  case Item::FIELD_AVG_ITEM:
-  case Item::FIELD_STD_ITEM:
-  case Item::SUBSELECT_ITEM:
-    /* The following can only happen with 'CREATE TABLE ... SELECT' */
-  case Item::PROC_ITEM:
-  case Item::INT_ITEM:
-  case Item::REAL_ITEM:
-  case Item::DECIMAL_ITEM:
-  case Item::STRING_ITEM:
-  case Item::REF_ITEM:
-  case Item::NULL_ITEM:
-  case Item::VARBIN_ITEM:
-    if (make_copy_field)
-    {
-      assert(((Item_result_field*)item)->result_field);
-      *from_field= ((Item_result_field*)item)->result_field;
-    }
-    return create_tmp_field_from_item(session, item, table,
-                                      (make_copy_field ? 0 : copy_func),
-                                       modify_item, convert_blob_length);
-  case Item::TYPE_HOLDER:  
-    result= ((Item_type_holder *)item)->make_field_by_type(table);
-    result->set_derivation(item->collation.derivation);
-    return result;
-  default:					// Dosen't have to be stored
-    return 0;
-  }
-}
 
 /**
   Create a temp table according to a field list.
@@ -4020,12 +3720,12 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", tmp_file_prefix,
+    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
             current_pid, temp_pool_slot);
   else
   {
     /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", tmp_file_prefix,current_pid,
+    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, current_pid,
             session->thread_id, session->tmp_table++);
   }
 
@@ -4033,7 +3733,7 @@ create_tmp_table(Session *session,TMP_TABLE_PARAM *param,List<Item> &fields,
     No need to change table name to lower case as we are only creating
     MyISAM or HEAP tables here
   */
-  fn_format(path, path, mysql_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
 
   if (group)
@@ -5220,6 +4920,27 @@ int update_virtual_fields_marked_for_write(Table *table,
     }
   }
   return(0);
+}
+
+
+void setup_table_map(Table *table, TableList *table_list, uint32_t tablenr)
+{
+  table->used_fields= 0;
+  table->const_table= 0;
+  table->null_row= 0;
+  table->status= STATUS_NO_RECORD;
+  table->maybe_null= table_list->outer_join;
+  TableList *embedding= table_list->embedding;
+  while (!table->maybe_null && embedding)
+  {
+    table->maybe_null= embedding->outer_join;
+    embedding= embedding->embedding;
+  }
+  table->tablenr= tablenr;
+  table->map= (table_map) 1 << tablenr;
+  table->force_index= table_list->force_index;
+  table->covering_keys= table->s->keys_for_keyread;
+  table->merge_keys.clear_all();
 }
 
 

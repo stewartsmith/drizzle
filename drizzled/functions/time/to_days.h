@@ -20,13 +20,15 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_TO_DAYS_H
 #define DRIZZLED_FUNCTIONS_TIME_TO_DAYS_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_to_days :public Item_int_func
 {
 public:
   Item_func_to_days(Item *a) :Item_int_func(a) {}
   int64_t val_int();
   const char *func_name() const { return "to_days"; }
-  void fix_length_and_dec() 
+  void fix_length_and_dec()
   {
     decimals=0;
     max_length=6*MY_CHARSET_BIN_MB_MAXLEN;

@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/functions/str/replace.h>
 #include <drizzled/error.h>
+#include <drizzled/session.h>
 
 /**
   Replace all occurences of string2 in string1 with string3.

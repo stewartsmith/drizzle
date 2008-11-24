@@ -20,11 +20,12 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/get_variable.h>
+#include <drizzled/session.h>
 
 #define extra_size sizeof(double)
 
 user_var_entry *get_variable(HASH *hash, LEX_STRING &name,
-				    bool create_if_not_exists)
+                             bool create_if_not_exists)
 {
   user_var_entry *entry;
 

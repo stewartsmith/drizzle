@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_PERIOD_DIFF_H
 #define DRIZZLED_FUNCTIONS_TIME_PERIOD_DIFF_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_period_diff :public Item_int_func
 {
 public:

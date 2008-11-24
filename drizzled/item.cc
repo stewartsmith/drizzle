@@ -1,23 +1,57 @@
-/* Copyright (C) 2000-2006 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 
 #include <drizzled/server_includes.h>
+#include CMATH_H
+
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
-#include CMATH_H
+#include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/item/cache_row.h>
+#include <drizzled/item/type_holder.h>
+#include <drizzled/item/sum.h>
+#include <drizzled/functions/str/conv_charset.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/sql_base.h>
+
+
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
+
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -25,139 +59,9 @@ using namespace CMATH_NAMESPACE;
 
 const String my_null_string("NULL", 4, default_charset_info);
 
-/****************************************************************************/
 
-/* Hybrid_type_traits {_real} */
+const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
-void Hybrid_type_traits::fix_length_and_dec(Item *item, Item *arg) const
-{
-  item->decimals= NOT_FIXED_DEC;
-  item->max_length= item->float_length(arg->decimals);
-}
-
-static const Hybrid_type_traits real_traits_instance;
-
-const Hybrid_type_traits *Hybrid_type_traits::instance()
-{
-  return &real_traits_instance;
-}
-
-int64_t Hybrid_type_traits::val_int(Hybrid_type *val,
-                                    bool) const
-{
-  return (int64_t) rint(val->real);
-}
-
-my_decimal *
-Hybrid_type_traits::val_decimal(Hybrid_type *val, my_decimal *) const
-{
-  double2my_decimal(E_DEC_FATAL_ERROR, val->real, val->dec_buf);
-  return val->dec_buf;
-}
-
-
-String *
-Hybrid_type_traits::val_str(Hybrid_type *val, String *to, uint8_t decimals) const
-{
-  to->set_real(val->real, decimals, &my_charset_bin);
-  return to;
-}
-
-/* Hybrid_type_traits_decimal */
-static const Hybrid_type_traits_decimal decimal_traits_instance;
-
-const Hybrid_type_traits_decimal *Hybrid_type_traits_decimal::instance()
-{
-  return &decimal_traits_instance;
-}
-
-
-void
-Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
-{
-  item->decimals= arg->decimals;
-  item->max_length= cmin(arg->max_length + DECIMAL_LONGLONG_DIGITS,
-                        (unsigned int)DECIMAL_MAX_STR_LENGTH);
-}
-
-
-void Hybrid_type_traits_decimal::set_zero(Hybrid_type *val) const
-{
-  my_decimal_set_zero(&val->dec_buf[0]);
-  val->used_dec_buf_no= 0;
-}
-
-
-void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
-{
-  my_decimal_add(E_DEC_FATAL_ERROR,
-                 &val->dec_buf[val->used_dec_buf_no ^ 1],
-                 &val->dec_buf[val->used_dec_buf_no],
-                 f->val_decimal(&val->dec_buf[2]));
-  val->used_dec_buf_no^= 1;
-}
-
-
-/**
-  @todo
-  what is '4' for scale?
-*/
-void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
-{
-  int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
-  /* XXX: what is '4' for scale? */
-  my_decimal_div(E_DEC_FATAL_ERROR,
-                 &val->dec_buf[val->used_dec_buf_no ^ 1],
-                 &val->dec_buf[val->used_dec_buf_no],
-                 &val->dec_buf[2], 4);
-  val->used_dec_buf_no^= 1;
-}
-
-
-int64_t
-Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
-{
-  int64_t result;
-  my_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
-                 unsigned_flag, &result);
-  return result;
-}
-
-
-double
-Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
-{
-  my_decimal2double(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
-                    &val->real);
-  return val->real;
-}
-
-
-String *
-Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
-                                    uint8_t decimals) const
-{
-  my_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
-                   decimals, false, &val->dec_buf[2]);
-  my_decimal2string(E_DEC_FATAL_ERROR, &val->dec_buf[2], 0, 0, 0, to);
-  return to;
-}
-
-/* Hybrid_type_traits_integer */
-static const Hybrid_type_traits_integer integer_traits_instance;
-
-const Hybrid_type_traits_integer *Hybrid_type_traits_integer::instance()
-{
-  return &integer_traits_instance;
-}
-
-void
-Hybrid_type_traits_integer::fix_length_and_dec(Item *item, Item *) const
-{
-  item->decimals= 0;
-  item->max_length= MY_INT64_NUM_DECIMAL_DIGITS;
-  item->unsigned_flag= 0;
-}
 
 /*****************************************************************************
 ** Item functions
@@ -169,6 +73,34 @@ Hybrid_type_traits_integer::fix_length_and_dec(Item *item, Item *) const
 
 void item_init(void)
 {
+}
+
+
+bool Item::is_expensive_processor(unsigned char *)
+{
+  return 0;
+}
+
+void Item::fix_after_pullout(st_select_lex *, Item **)
+{}
+
+
+Field *Item::tmp_table_field(Table *)
+{
+  return 0;
+}
+
+
+const char *Item::full_name(void) const
+{
+  return name ? name : "???";
+}
+
+
+int64_t Item::val_int_endpoint(bool, bool *)
+{
+  assert(0);
+  return 0;
 }
 
 
@@ -448,6 +380,18 @@ uint32_t Item::decimal_precision() const
 }
 
 
+int Item::decimal_int_part() const
+{
+  return my_decimal_int_part(decimal_precision(), decimals);
+}
+
+
+void Item::print(String *str, enum_query_type)
+{
+  str->append(full_name());
+}
+
+
 void Item::print_item_w_name(String *str, enum_query_type query_type)
 {
   print(str, query_type);
@@ -459,6 +403,10 @@ void Item::print_item_w_name(String *str, enum_query_type query_type)
     append_identifier(session, str, name, (uint) strlen(name));
   }
 }
+
+
+void Item::split_sum_func(Session *, Item **, List<Item> &)
+{}
 
 
 void Item::cleanup()
@@ -955,10 +903,81 @@ bool Item::get_time(DRIZZLE_TIME *ltime)
       str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
     memset(ltime, 0, sizeof(*ltime));
-    return 1;
+    return true;
   }
+  return false;
+}
+
+
+bool Item::get_date_result(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
+{
+  return get_date(ltime,fuzzydate);
+}
+
+
+bool Item::is_null()
+{
+  return false;
+}
+
+
+void Item::update_null_value ()
+{
+  (void) val_int();
+}
+
+
+void Item::top_level_item(void)
+{}
+
+
+void Item::set_result_field(Field *)
+{}
+
+
+bool Item::is_result_field(void)
+{
   return 0;
 }
+
+
+bool Item::is_bool_func(void)
+{
+  return 0;
+}
+
+
+void Item::save_in_result_field(bool)
+{}
+
+
+void Item::no_rows_in_result(void)
+{}
+
+
+Item *Item::copy_or_same(Session *)
+{
+  return this;
+}
+
+
+Item *Item::copy_andor_structure(Session *)
+{
+  return this;
+}
+
+
+Item *Item::real_item(void)
+{
+  return this;
+}
+
+
+Item *Item::get_tmp_table_item(Session *session)
+{
+  return copy_or_same(session);
+}
+
 
 const CHARSET_INFO *Item::default_charset()
 {
@@ -966,13 +985,196 @@ const CHARSET_INFO *Item::default_charset()
 }
 
 
-/*
-  Save value in field, but don't give any warnings
+const CHARSET_INFO *Item::compare_collation()
+{
+  return NULL;
+}
 
-  NOTES
-   This is used to temporary store and retrieve a value in a column,
-   for example in opt_range to adjust the key value to fit the column.
-*/
+
+bool Item::walk(Item_processor processor, bool, unsigned char *arg)
+{
+  return (this->*processor)(arg);
+}
+
+
+Item* Item::compile(Item_analyzer analyzer, unsigned char **arg_p,
+                    Item_transformer transformer, unsigned char *arg_t)
+{
+  if ((this->*analyzer) (arg_p))
+    return ((this->*transformer) (arg_t));
+  return 0;
+}
+
+
+void Item::traverse_cond(Cond_traverser traverser, void *arg, traverse_order)
+{
+  (*traverser)(this, arg);
+}
+
+
+bool Item::remove_dependence_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::remove_fixed(unsigned char *)
+{
+  fixed= 0;
+  return 0;
+}
+
+
+bool Item::collect_item_field_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::find_item_in_field_list_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::change_context_processor(unsigned char *)
+{
+  return 0;
+}
+
+bool Item::reset_query_id_processor(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::register_field_in_read_map(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::register_field_in_bitmap(unsigned char *)
+{
+  return 0;
+}
+
+
+bool Item::subst_argument_checker(unsigned char **arg)
+{
+  if (*arg)
+    *arg= NULL;
+  return true;
+}
+
+
+bool Item::check_vcol_func_processor(unsigned char *)
+{
+  return true;
+}
+
+
+Item *Item::equal_fields_propagator(unsigned char *)
+{
+  return this;
+}
+
+
+bool Item::set_no_const_sub(unsigned char *)
+{
+  return false;
+}
+
+
+Item *Item::replace_equal_field(unsigned char *)
+{
+  return this;
+}
+
+
+Item *Item::this_item(void)
+{
+  return this;
+}
+
+
+const Item *Item::this_item(void) const
+{
+  return this;
+}
+
+
+Item **Item::this_item_addr(Session *, Item **addr_arg)
+{
+  return addr_arg;
+}
+
+
+uint32_t Item::cols()
+{
+  return 1;
+}
+
+
+Item* Item::element_index(uint32_t)
+{
+  return this;
+}
+
+
+Item** Item::addr(uint32_t)
+{
+  return 0;
+}
+
+
+bool Item::null_inside()
+{
+  return 0;
+}
+
+
+void Item::bring_value()
+{}
+
+
+Item_field *Item::filed_for_view_update()
+{
+  return 0;
+}
+
+Item *Item::neg_transformer(Session *)
+{
+  return NULL;
+}
+
+
+Item *Item::update_value_transformer(unsigned char *)
+{
+  return this;
+}
+
+
+void Item::delete_self()
+{
+  cleanup();
+  delete this;
+}
+
+bool Item::result_as_int64_t()
+{
+  return false;
+}
+
+
+bool Item::is_expensive()
+{
+  if (is_expensive_cache < 0)
+    is_expensive_cache= walk(&Item::is_expensive_processor, 0,
+                             (unsigned char*)0);
+  return test(is_expensive_cache);
+}
+
 
 int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 {
@@ -1023,7 +1225,7 @@ public:
                                SUM items
 
   @note
-    This is from split_sum_func2() for items that should be split
+    This is from split_sum_func() for items that should be split
 
     All found SUM items are added FIRST in the fields list and
     we replace the item with a reference.
@@ -1031,14 +1233,14 @@ public:
     session->fatal_error() may be called if we are out of memory
 */
 
-void Item::split_sum_func2(Session *session, Item **ref_pointer_array,
-                           List<Item> &fields, Item **ref, 
-                           bool skip_registered)
+void Item::split_sum_func(Session *session, Item **ref_pointer_array,
+                          List<Item> &fields, Item **ref,
+                          bool skip_registered)
 {
-  /* An item of type Item_sum  is registered <=> ref_by != 0 */ 
-  if (type() == SUM_FUNC_ITEM && skip_registered && 
+  /* An item of type Item_sum  is registered <=> ref_by != 0 */
+  if (type() == SUM_FUNC_ITEM && skip_registered &&
       ((Item_sum *) this)->ref_by)
-    return;                                                 
+    return;
   if ((type() != SUM_FUNC_ITEM && with_sum_func) ||
       (type() == FUNC_ITEM &&
        (((Item_func *) this)->functype() == Item_func::ISNOTNULLTEST_FUNC ||
@@ -1078,333 +1280,6 @@ void Item::split_sum_func2(Session *session, Item **ref_pointer_array,
 }
 
 
-static bool
-left_is_superset(DTCollation *left, DTCollation *right)
-{
-  /* Allow convert to Unicode */
-  if (left->collation->state & MY_CS_UNICODE &&
-      (left->derivation < right->derivation ||
-       (left->derivation == right->derivation &&
-        !(right->collation->state & MY_CS_UNICODE))))
-    return true;
-  /* Allow convert from ASCII */
-  if (right->repertoire == MY_REPERTOIRE_ASCII &&
-      (left->derivation < right->derivation ||
-       (left->derivation == right->derivation &&
-        !(left->repertoire == MY_REPERTOIRE_ASCII))))
-    return true;
-  /* Disallow conversion otherwise */
-  return false;
-}
-
-/**
-  Aggregate two collations together taking
-  into account their coercibility (aka derivation):.
-
-  0 == DERIVATION_EXPLICIT  - an explicitly written COLLATE clause @n
-  1 == DERIVATION_NONE      - a mix of two different collations @n
-  2 == DERIVATION_IMPLICIT  - a column @n
-  3 == DERIVATION_COERCIBLE - a string constant.
-
-  The most important rules are:
-  -# If collations are the same:
-  chose this collation, and the strongest derivation.
-  -# If collations are different:
-  - Character sets may differ, but only if conversion without
-  data loss is possible. The caller provides flags whether
-  character set conversion attempts should be done. If no
-  flags are substituted, then the character sets must be the same.
-  Currently processed flags are:
-  MY_COLL_ALLOW_SUPERSET_CONV  - allow conversion to a superset
-  MY_COLL_ALLOW_COERCIBLE_CONV - allow conversion of a coercible value
-  - two EXPLICIT collations produce an error, e.g. this is wrong:
-  CONCAT(expr1 collate latin1_swedish_ci, expr2 collate latin1_german_ci)
-  - the side with smaller derivation value wins,
-  i.e. a column is stronger than a string constant,
-  an explicit COLLATE clause is stronger than a column.
-  - if derivations are the same, we have DERIVATION_NONE,
-  we'll wait for an explicit COLLATE clause which possibly can
-  come from another argument later: for example, this is valid,
-  but we don't know yet when collecting the first two arguments:
-     @code
-       CONCAT(latin1_swedish_ci_column,
-              latin1_german1_ci_column,
-              expr COLLATE latin1_german2_ci)
-  @endcode
-*/
-
-bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
-{
-  if (!my_charset_same(collation, dt.collation))
-  {
-    /* 
-       We do allow to use binary strings (like BLOBS)
-       together with character strings.
-       Binaries have more precedence than a character
-       string of the same derivation.
-    */
-    if (collation == &my_charset_bin)
-    {
-      if (derivation <= dt.derivation)
-	; // Do nothing
-      else
-      {
-	set(dt); 
-      }
-    }
-    else if (dt.collation == &my_charset_bin)
-    {
-      if (dt.derivation <= derivation)
-      {
-        set(dt);
-      }
-      else
-      {
-        // Do nothing
-      }
-    }
-    else if ((flags & MY_COLL_ALLOW_SUPERSET_CONV) &&
-             left_is_superset(this, &dt))
-    {
-      // Do nothing
-    }
-    else if ((flags & MY_COLL_ALLOW_SUPERSET_CONV) &&
-             left_is_superset(&dt, this))
-    {
-      set(dt);
-    }
-    else if ((flags & MY_COLL_ALLOW_COERCIBLE_CONV) &&
-             derivation < dt.derivation &&
-             dt.derivation >= DERIVATION_SYSCONST)
-    {
-      // Do nothing;
-    }
-    else if ((flags & MY_COLL_ALLOW_COERCIBLE_CONV) &&
-             dt.derivation < derivation &&
-             derivation >= DERIVATION_SYSCONST)
-    {
-      set(dt);
-    }
-    else
-    {
-      // Cannot apply conversion
-      set(0, DERIVATION_NONE, 0);
-      return 1;
-    }
-  }
-  else if (derivation < dt.derivation)
-  {
-    // Do nothing
-  }
-  else if (dt.derivation < derivation)
-  {
-    set(dt);
-  }
-  else
-  { 
-    if (collation == dt.collation)
-    {
-      // Do nothing
-    }
-    else 
-    {
-      if (derivation == DERIVATION_EXPLICIT)
-      {
-        set(0, DERIVATION_NONE, 0);
-        return 1;
-      }
-      if (collation->state & MY_CS_BINSORT)
-        return 0;
-      if (dt.collation->state & MY_CS_BINSORT)
-      {
-        set(dt);
-        return 0;
-      }
-      const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname, 
-                                                            MY_CS_BINSORT,MYF(0));
-      set(bin, DERIVATION_NONE);
-    }
-  }
-  repertoire|= dt.repertoire;
-  return 0;
-}
-
-/******************************/
-static
-void my_coll_agg_error(DTCollation &c1, DTCollation &c2, const char *fname)
-{
-  my_error(ER_CANT_AGGREGATE_2COLLATIONS,MYF(0),
-           c1.collation->name,c1.derivation_name(),
-           c2.collation->name,c2.derivation_name(),
-           fname);
-}
-
-
-static
-void my_coll_agg_error(DTCollation &c1, DTCollation &c2, DTCollation &c3,
-                       const char *fname)
-{
-  my_error(ER_CANT_AGGREGATE_3COLLATIONS,MYF(0),
-  	   c1.collation->name,c1.derivation_name(),
-	   c2.collation->name,c2.derivation_name(),
-	   c3.collation->name,c3.derivation_name(),
-	   fname);
-}
-
-
-static
-void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
-                       int item_sep)
-{
-  if (count == 2)
-    my_coll_agg_error(args[0]->collation, args[item_sep]->collation, fname);
-  else if (count == 3)
-    my_coll_agg_error(args[0]->collation, args[item_sep]->collation,
-                      args[2*item_sep]->collation, fname);
-  else
-    my_error(ER_CANT_AGGREGATE_NCOLLATIONS,MYF(0),fname);
-}
-
-
-bool agg_item_collations(DTCollation &c, const char *fname,
-                         Item **av, uint32_t count, uint32_t flags, int item_sep)
-{
-  uint32_t i;
-  Item **arg;
-  c.set(av[0]->collation);
-  for (i= 1, arg= &av[item_sep]; i < count; i++, arg++)
-  {
-    if (c.aggregate((*arg)->collation, flags))
-    {
-      my_coll_agg_error(av, count, fname, item_sep);
-      return true;
-    }
-  }
-  if ((flags & MY_COLL_DISALLOW_NONE) &&
-      c.derivation == DERIVATION_NONE)
-  {
-    my_coll_agg_error(av, count, fname, item_sep);
-    return true;
-  }
-  return false;
-}
-
-
-bool agg_item_collations_for_comparison(DTCollation &c, const char *fname,
-                                        Item **av, uint32_t count, uint32_t flags)
-{
-  return (agg_item_collations(c, fname, av, count,
-                              flags | MY_COLL_DISALLOW_NONE, 1));
-}
-
-
-/**
-  Collect arguments' character sets together.
-
-  We allow to apply automatic character set conversion in some cases.
-  The conditions when conversion is possible are:
-  - arguments A and B have different charsets
-  - A wins according to coercibility rules
-    (i.e. a column is stronger than a string constant,
-     an explicit COLLATE clause is stronger than a column)
-  - character set of A is either superset for character set of B,
-    or B is a string constant which can be converted into the
-    character set of A without data loss.
-    
-  If all of the above is true, then it's possible to convert
-  B into the character set of A, and then compare according
-  to the collation of A.
-  
-  For functions with more than two arguments:
-  @code
-    collect(A,B,C) ::= collect(collect(A,B),C)
-  @endcode
-  Since this function calls Session::change_item_tree() on the passed Item **
-  pointers, it is necessary to pass the original Item **'s, not copies.
-  Otherwise their values will not be properly restored (see BUG#20769).
-  If the items are not consecutive (eg. args[2] and args[5]), use the
-  item_sep argument, ie.
-  @code
-    agg_item_charsets(coll, fname, &args[2], 2, flags, 3)
-  @endcode
-*/
-
-bool agg_item_charsets(DTCollation &coll, const char *fname,
-                       Item **args, uint32_t nargs, uint32_t flags, int item_sep)
-{
-  Item **arg, *safe_args[2];
-
-  memset(safe_args, 0, sizeof(safe_args));
-
-  if (agg_item_collations(coll, fname, args, nargs, flags, item_sep))
-    return true;
-
-  /*
-    For better error reporting: save the first and the second argument.
-    We need this only if the the number of args is 3 or 2:
-    - for a longer argument list, "Illegal mix of collations"
-      doesn't display each argument's characteristics.
-    - if nargs is 1, then this error cannot happen.
-  */
-  if (nargs >=2 && nargs <= 3)
-  {
-    safe_args[0]= args[0];
-    safe_args[1]= args[item_sep];
-  }
-
-  Session *session= current_session;
-  bool res= false;
-  uint32_t i;
-
-  for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
-  {
-    Item* conv;
-    uint32_t dummy_offset;
-    if (!String::needs_conversion(0, (*arg)->collation.collation,
-                                  coll.collation,
-                                  &dummy_offset))
-      continue;
-
-    if (!(conv= (*arg)->safe_charset_converter(coll.collation)) &&
-        ((*arg)->collation.repertoire == MY_REPERTOIRE_ASCII))
-      conv= new Item_func_conv_charset(*arg, coll.collation, 1);
-
-    if (!conv)
-    {
-      if (nargs >=2 && nargs <= 3)
-      {
-        /* restore the original arguments for better error message */
-        args[0]= safe_args[0];
-        args[item_sep]= safe_args[1];
-      }
-      my_coll_agg_error(args, nargs, fname, item_sep);
-      res= true;
-      break; // we cannot return here, we need to restore "arena".
-    }
-    if ((*arg)->type() == Item::FIELD_ITEM)
-      ((Item_field *)(*arg))->no_const_subst= 1;
-    /*
-      If in statement prepare, then we create a converter for two
-      constant items, do it once and then reuse it.
-      If we're in execution of a prepared statement, arena is NULL,
-      and the conv was created in runtime memory. This can be
-      the case only if the argument is a parameter marker ('?'),
-      because for all true constants the charset converter has already
-      been created in prepare. In this case register the change for
-      rollback.
-    */
-    session->change_item_tree(arg, conv);
-    /*
-      We do not check conv->fixed, because Item_func_conv_charset which can
-      be return by safe_charset_converter can't be fixed at creation
-    */
-    conv->fix_fields(session, arg);
-  }
-
-  return res;
-}
-
-
 void Item_ident_for_show::make_field(Send_field *tmp_field)
 {
   tmp_field->table_name= tmp_field->org_table_name= table_name;
@@ -1417,6 +1292,31 @@ void Item_ident_for_show::make_field(Send_field *tmp_field)
     (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }
+
+
+double Item_ident_for_show::val_real()
+{
+  return field->val_real();
+}
+
+
+int64_t Item_ident_for_show::val_int()
+{
+  return field->val_int();
+}
+
+
+String *Item_ident_for_show::val_str(String *str)
+{
+  return field->val_str(str);
+}
+
+
+my_decimal *Item_ident_for_show::val_decimal(my_decimal *dec)
+{
+  return field->val_decimal(dec);
+}
+
 
 /**********************************************/
 
@@ -1752,6 +1652,24 @@ table_map Item_field::used_tables() const
 }
 
 
+enum Item_result Item_field::result_type () const
+{
+  return field->result_type();
+}
+
+
+Item_result Item_field::cast_to_int_type() const
+{
+  return field->cast_to_int_type();
+}
+
+
+enum_field_types Item_field::field_type() const
+{
+  return field->type();
+}
+
+
 void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
 {
   if (new_parent == depended_from)
@@ -1762,6 +1680,12 @@ void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **)
   ctx->first_name_resolution_table= context->first_name_resolution_table;
   ctx->last_name_resolution_table=  context->last_name_resolution_table;
   this->context=ctx;
+}
+
+
+bool Item_field::is_null()
+{
+  return field->is_null();
 }
 
 
@@ -3725,6 +3649,13 @@ void Item_field::cleanup()
   return;
 }
 
+
+bool Item_field::result_as_int64_t()
+{
+  return field->can_be_compared_as_int64_t();
+}
+
+
 /**
   Find a field among specified multiple equalities.
 
@@ -3910,6 +3841,12 @@ Item *Item_field::replace_equal_field(unsigned char *)
 }
 
 
+uint32_t Item_field::max_disp_length()
+{
+  return field->max_display_length();
+}
+
+
 void Item::init_make_field(Send_field *tmp_field,
 			   enum enum_field_types field_type_arg)
 {
@@ -3968,7 +3905,7 @@ bool Item::is_datetime()
 {
   switch (field_type())
   {
-    case DRIZZLE_TYPE_NEWDATE:
+    case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_DATETIME:
     case DRIZZLE_TYPE_TIMESTAMP:
       return true;
@@ -4125,8 +4062,8 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
-  case DRIZZLE_TYPE_NEWDATE:
-    field= new Field_newdate(maybe_null, name, &my_charset_bin);
+  case DRIZZLE_TYPE_DATE:
+    field= new Field_date(maybe_null, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_TIME:
     field= new Field_time(maybe_null, name, &my_charset_bin);
@@ -4695,7 +4632,7 @@ bool Item::send(Protocol *protocol, String *buffer)
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
     {
-      if (f_type == DRIZZLE_TYPE_NEWDATE)
+      if (f_type == DRIZZLE_TYPE_DATE)
 	return protocol->store_date(&tm);
       else
 	result= protocol->store(&tm);
@@ -5875,6 +5812,12 @@ void Item_cache::print(String *str, enum_query_type query_type)
 }
 
 
+bool Item_cache::eq_def(Field *field)
+{
+  return cached_field ? cached_field->eq_def (field) : false;
+}
+
+
 void Item_cache_int::store(Item *item)
 {
   value= item->val_int_result();
@@ -5976,6 +5919,14 @@ my_decimal *Item_cache_decimal::val_decimal(my_decimal *)
 }
 
 
+Item_cache_str::Item_cache_str(const Item *item) :
+  Item_cache(), value(0),
+  is_varbinary(item->type() == FIELD_ITEM &&
+               ((const Item_field *) item)->field->type() ==
+               DRIZZLE_TYPE_VARCHAR &&
+               !((const Item_field *) item)->field->has_charset())
+{}
+
 void Item_cache_str::store(Item *item)
 {
   value_buff.set(buffer, sizeof(buffer), item->collation.collation);
@@ -6039,420 +5990,6 @@ int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 }
 
 
-bool Item_cache_row::allocate(uint32_t num)
-{
-  item_count= num;
-  Session *session= current_session;
-  return (!(values= 
-	    (Item_cache **) session->calloc(sizeof(Item_cache *)*item_count)));
-}
-
-
-bool Item_cache_row::setup(Item * item)
-{
-  example= item;
-  if (!values && allocate(item->cols()))
-    return 1;
-  for (uint32_t i= 0; i < item_count; i++)
-  {
-    Item *el= item->element_index(i);
-    Item_cache *tmp;
-    if (!(tmp= values[i]= Item_cache::get_cache(el)))
-      return 1;
-    tmp->setup(el);
-  }
-  return 0;
-}
-
-
-void Item_cache_row::store(Item * item)
-{
-  null_value= 0;
-  item->bring_value();
-  for (uint32_t i= 0; i < item_count; i++)
-  {
-    values[i]->store(item->element_index(i));
-    null_value|= values[i]->null_value;
-  }
-}
-
-
-void Item_cache_row::illegal_method_call(const char *)
-{
-  assert(0);
-  my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
-  return;
-}
-
-
-bool Item_cache_row::check_cols(uint32_t c)
-{
-  if (c != item_count)
-  {
-    my_error(ER_OPERAND_COLUMNS, MYF(0), c);
-    return 1;
-  }
-  return 0;
-}
-
-
-bool Item_cache_row::null_inside()
-{
-  for (uint32_t i= 0; i < item_count; i++)
-  {
-    if (values[i]->cols() > 1)
-    {
-      if (values[i]->null_inside())
-	return 1;
-    }
-    else
-    {
-      values[i]->update_null_value();
-      if (values[i]->null_value)
-	return 1;
-    }
-  }
-  return 0;
-}
-
-
-void Item_cache_row::bring_value()
-{
-  for (uint32_t i= 0; i < item_count; i++)
-    values[i]->bring_value();
-  return;
-}
-
-
-Item_type_holder::Item_type_holder(Session *session, Item *item)
-  :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))
-{
-  assert(item->fixed);
-  maybe_null= item->maybe_null;
-  collation.set(item->collation);
-  get_full_info(item);
-  /* fix variable decimals which always is NOT_FIXED_DEC */
-  if (Field::result_merge_type(fld_type) == INT_RESULT)
-    decimals= 0;
-  prev_decimal_int_part= item->decimal_int_part();
-}
-
-
-/**
-  Return expression type of Item_type_holder.
-
-  @return
-    Item_result (type of internal MySQL expression result)
-*/
-
-Item_result Item_type_holder::result_type() const
-{
-  return Field::result_merge_type(fld_type);
-}
-
-
-/**
-  Find real field type of item.
-
-  @return
-    type of field which should be created to store item value
-*/
-
-enum_field_types Item_type_holder::get_real_type(Item *item)
-{
-  switch(item->type())
-  {
-  case FIELD_ITEM:
-  {
-    /*
-      Item_fields::field_type ask Field_type() but sometimes field return
-      a different type, like for enum/set, so we need to ask real type.
-    */
-    Field *field= ((Item_field *) item)->field;
-    enum_field_types type= field->real_type();
-    if (field->is_created_from_null_item)
-      return DRIZZLE_TYPE_NULL;
-    return type;
-  }
-  case SUM_FUNC_ITEM:
-  {
-    /*
-      Argument of aggregate function sometimes should be asked about field
-      type
-    */
-    Item_sum *item_sum= (Item_sum *) item;
-    if (item_sum->keep_field_type())
-      return get_real_type(item_sum->args[0]);
-    break;
-  }
-  case FUNC_ITEM:
-    if (((Item_func *) item)->functype() == Item_func::GUSERVAR_FUNC)
-    {
-      /*
-        There are work around of problem with changing variable type on the
-        fly and variable always report "string" as field type to get
-        acceptable information for client in send_field, so we make field
-        type from expression type.
-      */
-      switch (item->result_type()) {
-      case STRING_RESULT:
-        return DRIZZLE_TYPE_VARCHAR;
-      case INT_RESULT:
-        return DRIZZLE_TYPE_LONGLONG;
-      case REAL_RESULT:
-        return DRIZZLE_TYPE_DOUBLE;
-      case DECIMAL_RESULT:
-        return DRIZZLE_TYPE_NEWDECIMAL;
-      case ROW_RESULT:
-      default:
-        assert(0);
-        return DRIZZLE_TYPE_VARCHAR;
-      }
-    }
-    break;
-  default:
-    break;
-  }
-  return item->field_type();
-}
-
-/**
-  Find field type which can carry current Item_type_holder type and
-  type of given Item.
-
-  @param session     thread handler
-  @param item    given item to join its parameters with this item ones
-
-  @retval
-    true   error - types are incompatible
-  @retval
-    false  OK
-*/
-
-bool Item_type_holder::join_types(Session *, Item *item)
-{
-  uint32_t max_length_orig= max_length;
-  uint32_t decimals_orig= decimals;
-  fld_type= Field::field_type_merge(fld_type, get_real_type(item));
-  {
-    int item_decimals= item->decimals;
-    /* fix variable decimals which always is NOT_FIXED_DEC */
-    if (Field::result_merge_type(fld_type) == INT_RESULT)
-      item_decimals= 0;
-    decimals= cmax((int)decimals, item_decimals);
-  }
-  if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
-  {
-    decimals= cmin((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
-    int precision= cmin(cmax(prev_decimal_int_part, item->decimal_int_part())
-                       + decimals, DECIMAL_MAX_PRECISION);
-    unsigned_flag&= item->unsigned_flag;
-    max_length= my_decimal_precision_to_length(precision, decimals,
-                                               unsigned_flag);
-  }
-
-  switch (Field::result_merge_type(fld_type))
-  {
-  case STRING_RESULT:
-  {
-    const char *old_cs, *old_derivation;
-    uint32_t old_max_chars= max_length / collation.collation->mbmaxlen;
-    old_cs= collation.collation->name;
-    old_derivation= collation.derivation_name();
-    if (collation.aggregate(item->collation, MY_COLL_ALLOW_CONV))
-    {
-      my_error(ER_CANT_AGGREGATE_2COLLATIONS, MYF(0),
-	       old_cs, old_derivation,
-	       item->collation.collation->name,
-	       item->collation.derivation_name(),
-	       "UNION");
-      return(true);
-    }
-    /*
-      To figure out max_length, we have to take into account possible
-      expansion of the size of the values because of character set
-      conversions.
-     */
-    if (collation.collation != &my_charset_bin)
-    {
-      max_length= cmax(old_max_chars * collation.collation->mbmaxlen,
-                      display_length(item) /
-                      item->collation.collation->mbmaxlen *
-                      collation.collation->mbmaxlen);
-    }
-    else
-      set_if_bigger(max_length, display_length(item));
-    break;
-  }
-  case REAL_RESULT:
-  {
-    if (decimals != NOT_FIXED_DEC)
-    {
-      int delta1= max_length_orig - decimals_orig;
-      int delta2= item->max_length - item->decimals;
-      max_length= cmax(delta1, delta2) + decimals;
-      if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
-      {
-        max_length= DBL_DIG + 7;
-        decimals= NOT_FIXED_DEC;
-      }
-    }
-    else
-      max_length= DBL_DIG+7;
-    break;
-  }
-  default:
-    max_length= cmax(max_length, display_length(item));
-  };
-  maybe_null|= item->maybe_null;
-  get_full_info(item);
-
-  /* Remember decimal integer part to be used in DECIMAL_RESULT handleng */
-  prev_decimal_int_part= decimal_int_part();
-  return(false);
-}
-
-/**
-  Calculate lenth for merging result for given Item type.
-
-  @param item  Item for length detection
-
-  @return
-    length
-*/
-
-uint32_t Item_type_holder::display_length(Item *item)
-{
-  if (item->type() == Item::FIELD_ITEM)
-    return ((Item_field *)item)->max_disp_length();
-
-  switch (item->field_type())
-  {
-  case DRIZZLE_TYPE_TIMESTAMP:
-  case DRIZZLE_TYPE_TIME:
-  case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_NEWDATE:
-  case DRIZZLE_TYPE_VARCHAR:
-  case DRIZZLE_TYPE_NEWDECIMAL:
-  case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_BLOB:
-    return 4;
-  case DRIZZLE_TYPE_LONG:
-    return MY_INT32_NUM_DECIMAL_DIGITS;
-  case DRIZZLE_TYPE_DOUBLE:
-    return 53;
-  case DRIZZLE_TYPE_NULL:
-    return 0;
-  case DRIZZLE_TYPE_LONGLONG:
-    return 20;
-  default:
-    assert(0); // we should never go there
-    return 0;
-  }
-}
-
-
-/**
-  Make temporary table field according collected information about type
-  of UNION result.
-
-  @param table  temporary table for which we create fields
-
-  @return
-    created field
-*/
-
-Field *Item_type_holder::make_field_by_type(Table *table)
-{
-  /*
-    The field functions defines a field to be not null if null_ptr is not 0
-  */
-  unsigned char *null_ptr= maybe_null ? (unsigned char*) "" : 0;
-  Field *field;
-
-  switch (fld_type) {
-  case DRIZZLE_TYPE_ENUM:
-    assert(enum_set_typelib);
-    field= new Field_enum((unsigned char *) 0, max_length, null_ptr, 0,
-                          Field::NONE, name,
-                          get_enum_pack_length(enum_set_typelib->count),
-                          enum_set_typelib, collation.collation);
-    if (field)
-      field->init(table);
-    return field;
-  case DRIZZLE_TYPE_NULL:
-    return make_string_field(table);
-  default:
-    break;
-  }
-  return tmp_table_field_from_field_type(table, 0);
-}
-
-
-/**
-  Get full information from Item about enum/set fields to be able to create
-  them later.
-
-  @param item    Item for information collection
-*/
-void Item_type_holder::get_full_info(Item *item)
-{
-  if (fld_type == DRIZZLE_TYPE_ENUM)
-  {
-    if (item->type() == Item::SUM_FUNC_ITEM &&
-        (((Item_sum*)item)->sum_func() == Item_sum::MAX_FUNC ||
-         ((Item_sum*)item)->sum_func() == Item_sum::MIN_FUNC))
-      item = ((Item_sum*)item)->args[0];
-    /*
-      We can have enum/set type after merging only if we have one enum|set
-      field (or MIN|MAX(enum|set field)) and number of NULL fields
-    */
-    assert((enum_set_typelib &&
-                 get_real_type(item) == DRIZZLE_TYPE_NULL) ||
-                (!enum_set_typelib &&
-                 item->type() == Item::FIELD_ITEM &&
-                 (get_real_type(item) == DRIZZLE_TYPE_ENUM) &&
-                 ((Field_enum*)((Item_field *) item)->field)->typelib));
-    if (!enum_set_typelib)
-    {
-      enum_set_typelib= ((Field_enum*)((Item_field *) item)->field)->typelib;
-    }
-  }
-}
-
-
-double Item_type_holder::val_real()
-{
-  assert(0); // should never be called
-  return 0.0;
-}
-
-
-int64_t Item_type_holder::val_int()
-{
-  assert(0); // should never be called
-  return 0;
-}
-
-my_decimal *Item_type_holder::val_decimal(my_decimal *)
-{
-  assert(0); // should never be called
-  return 0;
-}
-
-String *Item_type_holder::val_str(String*)
-{
-  assert(0); // should never be called
-  return 0;
-}
-
-void Item_result_field::cleanup()
-{
-  Item::cleanup();
-  result_field= 0;
-  return;
-}
-
 /**
   Dummy error processor used by default by Name_resolution_context.
 
@@ -6462,6 +5999,234 @@ void Item_result_field::cleanup()
 
 void dummy_error_processor(Session *, void *)
 {}
+
+/**
+  Create field for temporary table using type of given item.
+
+  @param session                   Thread handler
+  @param item                  Item to create a field for
+  @param table                 Temporary table
+  @param copy_func             If set and item is a function, store copy of
+                               item in this array
+  @param modify_item           1 if item->result_field should point to new
+                               item. This is relevent for how fill_record()
+                               is going to work:
+                               If modify_item is 1 then fill_record() will
+                               update the record in the original table.
+                               If modify_item is 0 then fill_record() will
+                               update the temporary table
+  @param convert_blob_length   If >0 create a varstring(convert_blob_length)
+                               field instead of blob.
+
+  @retval
+    0  on error
+  @retval
+    new_created field
+*/
+
+static Field *create_tmp_field_from_item(Session *,
+                                         Item *item, Table *table,
+                                         Item ***copy_func, bool modify_item,
+                                         uint32_t convert_blob_length)
+{
+  bool maybe_null= item->maybe_null;
+  Field *new_field;
+
+  switch (item->result_type()) {
+  case REAL_RESULT:
+    new_field= new Field_double(item->max_length, maybe_null,
+                                item->name, item->decimals, true);
+    break;
+  case INT_RESULT:
+    /* 
+      Select an integer type with the minimal fit precision.
+      MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
+      Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
+      Field_long : make them Field_int64_t.  
+    */
+    if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
+      new_field=new Field_int64_t(item->max_length, maybe_null,
+                                   item->name, item->unsigned_flag);
+    else
+      new_field=new Field_long(item->max_length, maybe_null,
+                               item->name, item->unsigned_flag);
+    break;
+  case STRING_RESULT:
+    assert(item->collation.collation);
+  
+    enum enum_field_types type;
+    /*
+      DATE/TIME fields have STRING_RESULT result type. 
+      To preserve type they needed to be handled separately.
+    */
+    if ((type= item->field_type()) == DRIZZLE_TYPE_DATETIME ||
+        type == DRIZZLE_TYPE_TIME || type == DRIZZLE_TYPE_DATE ||
+        type == DRIZZLE_TYPE_TIMESTAMP)
+      new_field= item->tmp_table_field_from_field_type(table, 1);
+    /* 
+      Make sure that the blob fits into a Field_varstring which has 
+      2-byte lenght. 
+    */
+    else if (item->max_length/item->collation.collation->mbmaxlen > 255 &&
+             convert_blob_length <= Field_varstring::MAX_SIZE && 
+             convert_blob_length)
+      new_field= new Field_varstring(convert_blob_length, maybe_null,
+                                     item->name, table->s,
+                                     item->collation.collation);
+    else
+      new_field= item->make_string_field(table);
+    new_field->set_derivation(item->collation.derivation);
+    break;
+  case DECIMAL_RESULT:
+  {
+    uint8_t dec= item->decimals;
+    uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
+    uint32_t len= item->max_length;
+
+    /*
+      Trying to put too many digits overall in a DECIMAL(prec,dec)
+      will always throw a warning. We must limit dec to
+      DECIMAL_MAX_SCALE however to prevent an assert() later.
+    */
+
+    if (dec > 0)
+    {
+      signed int overflow;
+
+      dec= cmin(dec, (uint8_t)DECIMAL_MAX_SCALE);
+
+      /*
+        If the value still overflows the field with the corrected dec,
+        we'll throw out decimals rather than integers. This is still
+        bad and of course throws a truncation warning.
+        +1: for decimal point
+      */
+
+      overflow= my_decimal_precision_to_length(intg + dec, dec,
+                                               item->unsigned_flag) - len;
+
+      if (overflow > 0)
+        dec= cmax(0, dec - overflow);            // too long, discard fract
+      else
+        len -= item->decimals - dec;            // corrected value fits
+    }
+
+    new_field= new Field_new_decimal(len, maybe_null, item->name,
+                                     dec, item->unsigned_flag);
+    break;
+  }
+  case ROW_RESULT:
+  default:
+    // This case should never be choosen
+    assert(0);
+    new_field= 0;
+    break;
+  }
+  if (new_field)
+    new_field->init(table);
+    
+  if (copy_func && item->is_result_field())
+    *((*copy_func)++) = item;			// Save for copy_funcs
+  if (modify_item)
+    item->set_result_field(new_field);
+  if (item->type() == Item::NULL_ITEM)
+    new_field->is_created_from_null_item= true;
+  return new_field;
+}
+
+Field *create_tmp_field(Session *session, Table *table,Item *item,
+                        Item::Type type, Item ***copy_func, Field **from_field,
+                        Field **default_field, bool group, bool modify_item,
+                        bool, bool make_copy_field,
+                        uint32_t convert_blob_length)
+{
+  Field *result;
+  Item::Type orig_type= type;
+  Item *orig_item= 0;
+
+  if (type != Item::FIELD_ITEM &&
+      item->real_item()->type() == Item::FIELD_ITEM)
+  {
+    orig_item= item;
+    item= item->real_item();
+    type= Item::FIELD_ITEM;
+  }
+
+  switch (type) {
+  case Item::SUM_FUNC_ITEM:
+  {
+    Item_sum *item_sum=(Item_sum*) item;
+    result= item_sum->create_tmp_field(group, table, convert_blob_length);
+    if (!result)
+      my_error(ER_OUT_OF_RESOURCES, MYF(ME_FATALERROR));
+    return result;
+  }
+  case Item::FIELD_ITEM:
+  case Item::DEFAULT_VALUE_ITEM:
+  {
+    Item_field *field= (Item_field*) item;
+    bool orig_modify= modify_item;
+    if (orig_type == Item::REF_ITEM)
+      modify_item= 0;
+    /*
+      If item have to be able to store NULLs but underlaid field can't do it,
+      create_tmp_field_from_field() can't be used for tmp field creation.
+    */
+    if (field->maybe_null && !field->field->maybe_null())
+    {
+      result= create_tmp_field_from_item(session, item, table, NULL,
+                                         modify_item, convert_blob_length);
+      *from_field= field->field;
+      if (result && modify_item)
+        field->result_field= result;
+    } 
+    else
+      result= create_tmp_field_from_field(session, (*from_field= field->field),
+                                          orig_item ? orig_item->name :
+                                          item->name,
+                                          table,
+                                          modify_item ? field :
+                                          NULL,
+                                          convert_blob_length);
+    if (orig_type == Item::REF_ITEM && orig_modify)
+      ((Item_ref*)orig_item)->set_result_field(result);
+    if (field->field->eq_def(result))
+      *default_field= field->field;
+    return result;
+  }
+  /* Fall through */
+  case Item::FUNC_ITEM:
+    /* Fall through */
+  case Item::COND_ITEM:
+  case Item::FIELD_AVG_ITEM:
+  case Item::FIELD_STD_ITEM:
+  case Item::SUBSELECT_ITEM:
+    /* The following can only happen with 'CREATE TABLE ... SELECT' */
+  case Item::PROC_ITEM:
+  case Item::INT_ITEM:
+  case Item::REAL_ITEM:
+  case Item::DECIMAL_ITEM:
+  case Item::STRING_ITEM:
+  case Item::REF_ITEM:
+  case Item::NULL_ITEM:
+  case Item::VARBIN_ITEM:
+    if (make_copy_field)
+    {
+      assert(((Item_result_field*)item)->result_field);
+      *from_field= ((Item_result_field*)item)->result_field;
+    }
+    return create_tmp_field_from_item(session, item, table,
+                                      (make_copy_field ? 0 : copy_func),
+                                       modify_item, convert_blob_length);
+  case Item::TYPE_HOLDER:  
+    result= ((Item_type_holder *)item)->make_field_by_type(table);
+    result->set_derivation(item->collation.derivation);
+    return result;
+  default:					// Dosen't have to be stored
+    return 0;
+  }
+}
+
 
 /**
   Wrapper of hide_view_error call for Name_resolution_context error

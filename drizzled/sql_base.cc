@@ -16,11 +16,11 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <mysys/my_dir.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/nested_join.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/null.h>
+
+#include <signal.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -32,6 +32,17 @@
 #  include <time.h>
 # endif
 #endif
+#include <mysys/my_pthread.h>
+
+#include <drizzled/sql_select.h>
+#include <mysys/my_dir.h>
+#include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/nested_join.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
+#include <drizzled/item/cmpfunc.h>
+
 
 /**
   return true if the table was created explicitly.
@@ -39,7 +50,7 @@
 inline bool is_user_table(Table * table)
 {
   const char *name= table->s->table_name.str;
-  return strncmp(name, tmp_file_prefix, tmp_file_prefix_length);
+  return strncmp(name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH);
 }
 
 
@@ -1162,7 +1173,7 @@ void close_temporary_tables(Session *session)
   if (!session->temporary_tables)
     return;
 
-  if (!mysql_bin_log.is_open() || session->current_stmt_binlog_row_based)
+  if (!drizzle_bin_log.is_open() || true )
   {
     Table *tmp_next;
     for (table= session->temporary_tables; table; table= tmp_next)
@@ -1275,7 +1286,7 @@ void close_temporary_tables(Session *session)
         causing the slave to stop.
       */
       qinfo.error_code= 0;
-      mysql_bin_log.write(&qinfo);
+      drizzle_bin_log.write(&qinfo);
       session->variables.pseudo_thread_id= save_pseudo_thread_id;
     }
     else
@@ -1562,13 +1573,10 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
 
   free_io_cache(table);
   closefrm(table, 0);
-  /*
-     Check that temporary table has not been created with
-     frm_only because it has then not been created in any storage engine
-   */
+
   if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str, 
-                       table->s->tmp_table == TMP_TABLE_FRM_FILE_ONLY);
+    rm_temporary_table(table_type, table->s->path.str);
+
   if (free_share)
   {
     free_table_share(table->s);
@@ -3218,7 +3226,7 @@ retry:
   if (unlikely(entry->file->implicit_emptied))
   {
     entry->file->implicit_emptied= 0;
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       char *query, *end;
       uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
@@ -3622,113 +3630,6 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
   return(0);
 }
 
-
-/**
-   Decide on logging format to use for the statement.
-
-   Compute the capabilities vector for the involved storage engines
-   and mask out the flags for the binary log. Right now, the binlog
-   flags only include the capabilities of the storage engines, so this
-   is safe.
-
-   We now have three alternatives that prevent the statement from
-   being loggable:
-
-   1. If there are no capabilities left (all flags are clear) it is
-      not possible to log the statement at all, so we roll back the
-      statement and report an error.
-
-   2. Statement mode is set, but the capabilities indicate that
-      statement format is not possible.
-
-   3. Row mode is set, but the capabilities indicate that row
-      format is not possible.
-
-   4. Statement is unsafe, but the capabilities indicate that row
-      format is not possible.
-
-   If we are in MIXED mode, we then decide what logging format to use:
-
-   1. If the statement is unsafe, row-based logging is used.
-
-   2. If statement-based logging is not possible, row-based logging is
-      used.
-
-   3. Otherwise, statement-based logging is used.
-
-   @param session    Client thread
-   @param tables Tables involved in the query
- */
-
-int decide_logging_format(Session *session, TableList *tables)
-{
-  if (mysql_bin_log.is_open() && (session->options & OPTION_BIN_LOG))
-  {
-    handler::Table_flags flags_some_set= handler::Table_flags();
-    handler::Table_flags flags_all_set= ~handler::Table_flags();
-    bool multi_engine= false;
-    void* prev_ht= NULL;
-    for (TableList *table= tables; table; table= table->next_global)
-    {
-      if (!table->placeholder() && table->lock_type >= TL_WRITE_ALLOW_WRITE)
-      {
-        uint64_t const flags= table->table->file->ha_table_flags();
-        if (prev_ht && prev_ht != table->table->file->ht)
-          multi_engine= true;
-        prev_ht= table->table->file->ht;
-        flags_all_set &= flags;
-        flags_some_set |= flags;
-      }
-    }
-
-    int error= 0;
-    if (flags_all_set == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-               "Statement cannot be logged to the binary log in"
-               " row-based nor statement-based format");
-    }
-    else if (session->variables.binlog_format == BINLOG_FORMAT_STMT &&
-             (flags_all_set & HA_BINLOG_STMT_CAPABLE) == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-                "Statement-based format required for this statement,"
-                " but not allowed by this combination of engines");
-    }
-    else if ((session->variables.binlog_format == BINLOG_FORMAT_ROW ||
-              session->lex->is_stmt_unsafe()) &&
-             (flags_all_set & HA_BINLOG_ROW_CAPABLE) == 0)
-    {
-      my_error((error= ER_BINLOG_LOGGING_IMPOSSIBLE), MYF(0),
-                "Row-based format required for this statement,"
-                " but not allowed by this combination of engines");
-    }
-
-    if (error)
-      return -1;
-
-    /*
-      We switch to row-based format if we are in mixed mode and one of
-      the following are true:
-
-      1. If the statement is unsafe
-      2. If statement format cannot be used
-
-      Observe that point to cannot be decided before the tables
-      involved in a statement has been checked, i.e., we cannot put
-      this code in reset_current_stmt_binlog_row_based(), it has to be
-      here.
-    */
-    if (session->lex->is_stmt_unsafe() ||
-        (flags_all_set & HA_BINLOG_STMT_CAPABLE) == 0)
-    {
-      session->set_current_stmt_binlog_row_based_if_mixed();
-    }
-  }
-
-  return 0;
-}
-
 /*
   Lock all tables in list
 
@@ -3768,7 +3669,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
   *need_reopen= false;
 
   if (!tables)
-    return(decide_logging_format(session, tables));
+    return 0;
 
   if (!session->locked_tables)
   {
@@ -3813,7 +3714,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
     }
   }
 
-  return(decide_logging_format(session, tables));
+  return 0;
 }
 
 
@@ -3937,18 +3838,20 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 }
 
 
-bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
+bool rm_temporary_table(handlerton *base, char *path)
 {
   bool error=0;
   handler *file;
   char *ext;
+
+  delete_table_proto_file(path);
 
   my_stpcpy(ext= strchr(path, '\0'), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension
   file= get_new_handler((TABLE_SHARE*) 0, current_session->mem_root, base);
-  if (!frm_only && file && file->ha_delete_table(path))
+  if (file && file->ha_delete_table(path))
   {
     error=1;
     sql_print_warning(_("Could not remove temporary table: '%s', error: %d"),
@@ -6300,7 +6203,7 @@ err:
 }
 
 
-bool mysql_rm_tmp_tables(void)
+bool drizzle_rm_tmp_tables(void)
 {
   uint32_t i, idx;
   char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];
@@ -6314,9 +6217,9 @@ bool mysql_rm_tmp_tables(void)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  for (i=0; i<=mysql_tmpdir_list.max; i++)
+  for (i=0; i<=drizzle_tmpdir_list.max; i++)
   {
-    tmpdir=mysql_tmpdir_list.list[i];
+    tmpdir=drizzle_tmpdir_list.list[i];
     /* See if the directory exists */
     if (!(dirp = my_dir(tmpdir,MYF(MY_WME | MY_DONT_SORT))))
       continue;
@@ -6332,7 +6235,7 @@ bool mysql_rm_tmp_tables(void)
                                    (file->name[1] == '.' &&  !file->name[2])))
         continue;
 
-      if (!memcmp(file->name, tmp_file_prefix, tmp_file_prefix_length))
+      if (!memcmp(file->name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
       {
         char *ext= fn_ext(file->name);
         uint32_t ext_len= strlen(ext);
@@ -6559,3 +6462,30 @@ bool is_equal(const LEX_STRING *a, const LEX_STRING *b)
 /**
   @} (end of group Data_Dictionary)
 */
+
+void kill_drizzle(void)
+{
+
+#if defined(SIGNALS_DONT_BREAK_READ)
+  abort_loop=1;					// Break connection loops
+  close_server_sock();				// Force accept to wake up
+#endif
+
+#if defined(HAVE_PTHREAD_KILL)
+  pthread_kill(signal_thread, SIGTERM);
+#elif !defined(SIGNALS_DONT_BREAK_READ)
+  kill(current_pid, SIGTERM);
+#endif
+  shutdown_in_progress=1;			// Safety if kill didn't work
+#ifdef SIGNALS_DONT_BREAK_READ
+  if (!kill_in_progress)
+  {
+    pthread_t tmp;
+    abort_loop=1;
+    if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
+			   (void*) 0))
+      sql_print_error(_("Can't create thread to kill server"));
+  }
+#endif
+  return;;
+}

@@ -45,7 +45,7 @@ char * my_path(char * to, const char *progname,
     intern_filename(to,to);
     if (!test_if_hard_path(to))
     {
-      if (!my_getwd(curr_dir,FN_REFLEN,MYF(0)))
+      if (!getcwd(curr_dir,FN_REFLEN))
 	bchange((unsigned char*) to, 0, (unsigned char*) curr_dir, strlen(curr_dir), strlen(to)+1);
     }
   }
@@ -102,3 +102,16 @@ static char *find_file_in_path(char *to, const char *name)
   }
   return NULL;				/* File not found */
 }
+
+	/* Test if hard pathname */
+	/* Returns true if dirname is a hard path */
+
+bool test_if_hard_path(register const char *dir_name)
+{
+  if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
+    return (home_dir != NULL && test_if_hard_path(home_dir));
+  if (dir_name[0] == FN_LIBCHAR)
+    return (true);
+  return false;
+} /* test_if_hard_path */
+

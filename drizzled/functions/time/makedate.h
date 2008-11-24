@@ -20,13 +20,15 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_MAKEDATE_H
 #define DRIZZLED_FUNCTIONS_TIME_MAKEDATE_H
 
+#include <drizzled/functions/time/date.h>
+
 class Item_func_makedate :public Item_date_func
 {
 public:
   Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
   String *val_str(String *str);
   const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DATE; }
   void fix_length_and_dec()
   {
     decimals=0;

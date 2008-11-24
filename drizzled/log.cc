@@ -25,9 +25,9 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_repl.h>
-#include <drizzled/rpl_filter.h>
-#include <drizzled/rpl_rli.h>
+#include <drizzled/replication/replication.h>
+#include <drizzled/replication/filter.h>
+#include <drizzled/replication/rli.h>
 
 #include <mysys/my_dir.h>
 #include <stdarg.h>
@@ -36,14 +36,16 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
+#include <drizzled/log_event.h>
 
+#include <drizzled/errmsg.h>
 
 /* max size of the log message */
 #define MY_OFF_T_UNDEF (~(my_off_t)0UL)
 
 LOGGER logger;
 
-DRIZZLE_BIN_LOG mysql_bin_log;
+DRIZZLE_BIN_LOG drizzle_bin_log;
 ulong sync_binlog_counter= 0;
 
 static bool test_if_number(const char *str,
@@ -319,7 +321,7 @@ binlog_trans_log_savepos(Session *session, my_off_t *pos)
     session->binlog_setup_trx_data();
   binlog_trx_data *const trx_data=
     (binlog_trx_data*) session_get_ha_data(session, binlog_hton);
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
   *pos= trx_data->position();
   return;
 }
@@ -437,14 +439,14 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
      */
     session->binlog_flush_pending_rows_event(true);
 
-    error= mysql_bin_log.write(session, &trx_data->trans_log, end_ev);
+    error= drizzle_bin_log.write(session, &trx_data->trans_log, end_ev);
     trx_data->reset();
 
     /*
       We need to step the table map version after writing the
       transaction cache to disk.
     */
-    mysql_bin_log.update_table_map_version();
+    drizzle_bin_log.update_table_map_version();
     statistic_increment(binlog_cache_use, &LOCK_status);
     if (trans_log->disk_writes != 0)
     {
@@ -476,7 +478,7 @@ binlog_end_trans(Session *session, binlog_trx_data *trx_data,
       that a new table map event is generated instead of the one that
       was written to the thrown-away transaction cache.
     */
-    mysql_bin_log.update_table_map_version();
+    drizzle_bin_log.update_table_map_version();
   }
 
   return(error);
@@ -2217,7 +2219,7 @@ int Session::binlog_setup_trx_data()
 
   trx_data= (binlog_trx_data*) my_malloc(sizeof(binlog_trx_data), MYF(MY_ZEROFILL));
   if (!trx_data ||
-      open_cached_file(&trx_data->trans_log, mysql_tmpdir,
+      open_cached_file(&trx_data->trans_log, drizzle_tmpdir,
                        LOG_PREFIX, binlog_cache_size, MYF(MY_WME)))
   {
     free((unsigned char*)trx_data);
@@ -2310,7 +2312,6 @@ int Session::binlog_write_table_map(Table *table, bool is_trans)
   int error;
 
   /* Pre-conditions */
-  assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
   assert(table->s->table_map_id != UINT32_MAX);
 
   Table_map_log_event::flag_set const
@@ -2322,11 +2323,11 @@ int Session::binlog_write_table_map(Table *table, bool is_trans)
   if (is_trans && binlog_table_maps == 0)
     binlog_start_trans_and_stmt();
 
-  if ((error= mysql_bin_log.write(&the_event)))
+  if ((error= drizzle_bin_log.write(&the_event)))
     return(error);
 
   binlog_table_maps++;
-  table->s->table_map_version= mysql_bin_log.table_map_version();
+  table->s->table_map_version= drizzle_bin_log.table_map_version();
   return(0);
 }
 
@@ -2367,7 +2368,7 @@ int
 DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(Session *session,
                                                 Rows_log_event* event)
 {
-  assert(mysql_bin_log.is_open());
+  assert(drizzle_bin_log.is_open());
 
   int error= 0;
 
@@ -2528,69 +2529,6 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
         test first if we want to write to trans_log, and if not, lock
         LOCK_log.
       */
-    }
-
-    /*
-      No check for auto events flag here - this write method should
-      never be called if auto-events are enabled
-    */
-
-    /*
-      1. Write first log events which describe the 'run environment'
-      of the SQL command
-    */
-
-    /*
-      If row-based binlogging, Insert_id, Rand and other kind of "setting
-      context" events are not needed.
-    */
-    if (session)
-    {
-      if (!session->current_stmt_binlog_row_based)
-      {
-        if (session->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
-        {
-          Intvar_log_event e(session,(unsigned char) LAST_INSERT_ID_EVENT,
-                             session->first_successful_insert_id_in_prev_stmt_for_binlog);
-          if (e.write(file))
-            goto err;
-        }
-        if (session->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
-        {
-          /*
-            If the auto_increment was second in a table's index (possible with
-            MyISAM or BDB) (table->next_number_keypart != 0), such event is
-            in fact not necessary. We could avoid logging it.
-          */
-          Intvar_log_event e(session, (unsigned char) INSERT_ID_EVENT,
-                             session->auto_inc_intervals_in_cur_stmt_for_binlog.
-                             minimum());
-          if (e.write(file))
-            goto err;
-        }
-        if (session->rand_used)
-        {
-          Rand_log_event e(session,session->rand_saved_seed1,session->rand_saved_seed2);
-          if (e.write(file))
-            goto err;
-        }
-        if (session->user_var_events.elements)
-        {
-          for (uint32_t i= 0; i < session->user_var_events.elements; i++)
-          {
-            BINLOG_USER_VAR_EVENT *user_var_event;
-            get_dynamic(&session->user_var_events,(unsigned char*) &user_var_event, i);
-            User_var_log_event e(session, user_var_event->user_var_event->name.str,
-                                 user_var_event->user_var_event->name.length,
-                                 user_var_event->value,
-                                 user_var_event->length,
-                                 user_var_event->type,
-                                 user_var_event->charset_number);
-            if (e.write(file))
-              goto err;
-          }
-        }
-      }
     }
 
     /*
@@ -3228,7 +3166,7 @@ void sql_print_error(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(ERROR_LEVEL, format, args);
+  errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
   va_end(args);
 
   return;
@@ -3240,7 +3178,7 @@ void sql_print_warning(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(WARNING_LEVEL, format, args);
+  errmsg_vprintf (current_session, WARNING_LEVEL, format, args);
   va_end(args);
 
   return;
@@ -3252,7 +3190,7 @@ void sql_print_information(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  error_log_print(INFORMATION_LEVEL, format, args);
+  errmsg_vprintf (current_session, INFORMATION_LEVEL, format, args);
   va_end(args);
 
   return;
@@ -3941,24 +3879,30 @@ err1:
 }
 
 
+bool DRIZZLE_BIN_LOG::is_table_mapped(Table *table) const
+{
+  return table->s->table_map_version == table_map_version();
+}
+
+
 #ifdef INNODB_COMPATIBILITY_HOOKS
 /**
   Get the file name of the MySQL binlog.
   @return the name of the binlog file
 */
 extern "C"
-const char* mysql_bin_log_file_name(void)
+const char* drizzle_bin_log_file_name(void)
 {
-  return mysql_bin_log.get_log_fname();
+  return drizzle_bin_log.get_log_fname();
 }
 /**
   Get the current position of the MySQL binlog.
   @return byte offset from the beginning of the binlog
 */
 extern "C"
-uint64_t mysql_bin_log_file_pos(void)
+uint64_t drizzle_bin_log_file_pos(void)
 {
-  return (uint64_t) mysql_bin_log.get_log_file()->pos_in_file;
+  return (uint64_t) drizzle_bin_log.get_log_file()->pos_in_file;
 }
 #endif /* INNODB_COMPATIBILITY_HOOKS */
 

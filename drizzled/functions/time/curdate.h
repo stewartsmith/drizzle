@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_CURDATE_H
 #define DRIZZLED_FUNCTIONS_TIME_CURDATE_H
 
+#include <drizzled/functions/time/date.h>
+
 /* Abstract CURDATE function. See also Item_func_curtime. */
 
 class Item_func_curdate :public Item_date

@@ -27,15 +27,23 @@
 
 #include <drizzled/sql_error.h>
 #include <drizzled/my_decimal.h>
+#include <drizzled/sql_bitmap.h>
+#include <drizzled/sql_list.h>
+#include <drizzled/lex_string.h>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
+class Table;
 class Send_field;
 class Protocol;
 class Create_field;
+class virtual_column_info;
+
+typedef struct st_table_share TABLE_SHARE;
+
 struct st_cache_field;
 int field_conv(Field *to,Field *from);
 
@@ -49,57 +57,6 @@ inline uint32_t get_set_pack_length(int elements)
   uint32_t len= (elements + 7) / 8;
   return len > 4 ? 8 : len;
 }
-
-class virtual_column_info: public Sql_alloc
-{
-public:
-  Item *expr_item;
-  LEX_STRING expr_str;
-  Item *item_free_list;
-  virtual_column_info() 
-  : expr_item(0), item_free_list(0),
-    field_type(DRIZZLE_TYPE_VIRTUAL),
-    is_stored(false), data_inited(false)
-  {
-    expr_str.str= NULL;
-    expr_str.length= 0;
-  };
-  ~virtual_column_info() {}
-  enum_field_types get_real_type()
-  {
-    assert(data_inited);
-    return data_inited ? field_type : DRIZZLE_TYPE_VIRTUAL;
-  }
-  void set_field_type(enum_field_types fld_type)
-  {
-    /* Calling this function can only be done once. */
-    assert(not data_inited);
-    data_inited= true;
-    field_type= fld_type;
-  }
-  bool get_field_stored()
-  {
-    assert(data_inited);
-    return data_inited ? is_stored : true;
-  }
-  void set_field_stored(bool stored)
-  {
-    is_stored= stored;
-  }
-private:
-  /*
-    The following data is only updated by the parser and read
-    when a Create_field object is created/initialized.
-  */
-  enum_field_types field_type;   /* Real field type*/
-  bool is_stored;             /* Indication that the field is 
-                                    phisically stored in the database*/
-  /*
-    This flag is used to prevent other applications from
-    reading and using incorrect data.
-  */
-  bool data_inited; 
-};
 
 class Field
 {
@@ -124,16 +81,16 @@ public:
   /* Field is part of the following keys */
   key_map	key_start, part_of_key, part_of_key_not_clustered;
   key_map       part_of_sortkey;
-  /* 
-    We use three additional unireg types for TIMESTAMP to overcome limitation 
-    of current binary format of .frm file. We'd like to be able to support 
-    NOW() as default and on update value for such fields but unable to hold 
+  /*
+    We use three additional unireg types for TIMESTAMP to overcome limitation
+    of current binary format of .frm file. We'd like to be able to support
+    NOW() as default and on update value for such fields but unable to hold
     this info anywhere except unireg_check field. This issue will be resolved
     in more clean way with transition to new text based .frm format.
     See also comment for Field_timestamp::Field_timestamp().
   */
   enum utype  { NONE,DATE,SHIELD,NOEMPTY,CASEUP,PNR,BGNR,PGNR,YES,NO,REL,
-		CHECK,EMPTY,UNKNOWN_FIELD,CASEDN,NEXT_NUMBER,INTERVAL_FIELD,
+                CHECK,EMPTY,UNKNOWN_FIELD,CASEDN,NEXT_NUMBER,INTERVAL_FIELD,
                 BIT_FIELD, TIMESTAMP_OLD_FIELD, CAPITALIZE, BLOB_FIELD,
                 TIMESTAMP_DN_FIELD, TIMESTAMP_UN_FIELD, TIMESTAMP_DNUN_FIELD};
   enum imagetype { itRAW, itMBR};
@@ -157,7 +114,7 @@ public:
   /* Virtual column data */
   virtual_column_info *vcol_info;
   /*
-    Indication that the field is phycically stored in tables 
+    Indication that the field is physically stored in tables
     rather than just generated on SQL queries.
     As of now, false can only be set for generated-only virtual columns.
   */
@@ -168,11 +125,13 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int  store(const char *to, uint32_t length, const CHARSET_INFO * const cs)=0;
+  virtual int  store(const char *to, uint32_t length,
+                     const CHARSET_INFO * const cs)=0;
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
-  virtual int store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type t_type);
+  virtual int store_time(DRIZZLE_TIME *ltime,
+                         enum enum_drizzle_timestamp_type t_type);
   int store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
@@ -201,60 +160,78 @@ public:
   virtual Item_result result_type () const=0;
   virtual Item_result cmp_type () const { return result_type(); }
   virtual Item_result cast_to_int_type () const { return result_type(); }
+  /**
+     Check whether a field type can be partially indexed by a key.
+
+     This is a static method, rather than a virtual function, because we need
+     to check the type of a non-Field in mysql_alter_table().
+
+     @param type  field type
+
+     @retval
+       true  Type can have a prefixed key
+     @retval
+       false Type can not have a prefixed key
+  */
   static bool type_can_have_key_part(enum_field_types);
   static enum_field_types field_type_merge(enum_field_types, enum_field_types);
+
+  /**
+     Detect Item_result by given field type of UNION merge result.
+
+     @param field_type  given field type
+
+     @return
+       Item_result (type of internal MySQL expression result)
+  */
   static Item_result result_merge_type(enum_field_types);
-  virtual bool eq(Field *field)
-  {
-    return (ptr == field->ptr && null_ptr == field->null_ptr &&
-            null_bit == field->null_bit);
-  }
+
+  virtual bool eq(Field *field);
   virtual bool eq_def(Field *field);
-  
+
   /*
     pack_length() returns size (in bytes) used to store field data in memory
     (i.e. it returns the maximum size of the field in a row of the table,
     which is located in RAM).
   */
-  virtual uint32_t pack_length() const { return (uint32_t) field_length; }
+  virtual uint32_t pack_length() const;
 
   /*
     pack_length_in_rec() returns size (in bytes) used to store field data on
     storage (i.e. it returns the maximal size of the field in a row of the
     table, which is located on disk).
   */
-  virtual uint32_t pack_length_in_rec() const { return pack_length(); }
+  virtual uint32_t pack_length_in_rec() const;
   virtual int compatible_field_size(uint32_t field_metadata);
-  virtual uint32_t pack_length_from_metadata(uint32_t field_metadata)
-  { return field_metadata; }
+  virtual uint32_t pack_length_from_metadata(uint32_t field_metadata);
+
   /*
     This method is used to return the size of the data in a row-based
     replication row record. The default implementation of returning 0 is
     designed to allow fields that do not use metadata to return true (1)
     from compatible_field_size() which uses this function in the comparison.
-    The default value for field metadata for fields that do not have 
+    The default value for field metadata for fields that do not have
     metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
 
     Note: While most classes that override this method return pack_length(),
-    the classes Field_varstring, and Field_blob return 
+    the classes Field_varstring, and Field_blob return
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
-  virtual uint32_t row_pack_length() { return 0; }
-  virtual int save_field_metadata(unsigned char *first_byte)
-  { return do_save_field_metadata(first_byte); }
+  virtual uint32_t row_pack_length();
+  virtual int save_field_metadata(unsigned char *first_byte);
 
   /*
     data_length() return the "real size" of the data in memory.
     For varstrings, this does _not_ include the length bytes.
   */
-  virtual uint32_t data_length() { return pack_length(); }
+  virtual uint32_t data_length();
   /*
     used_length() returns the number of bytes actually used to store the data
     of the field. So for a varstring it includes both lenght byte(s) and
     string data, and anything after data_length() bytes are unused.
   */
-  virtual uint32_t used_length() { return pack_length(); }
-  virtual uint32_t sort_length() const { return pack_length(); }
+  virtual uint32_t used_length();
+  virtual uint32_t sort_length() const;
 
   /**
      Get the maximum size of the data in packed format.
@@ -262,72 +239,46 @@ public:
      @return Maximum data length of the field when packed using the
      Field::pack() function.
    */
-  virtual uint32_t max_data_length() const {
-    return pack_length();
-  };
-
-  virtual int reset(void) { memset(ptr, 0, pack_length()); return 0; }
-  virtual void reset_fields() {}
-  virtual void set_default()
-  {
-    my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
-    memcpy(ptr, ptr + l_offset, pack_length());
-    if (null_ptr)
-      *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
-  }
-  virtual bool binary() const { return 1; }
-  virtual bool zero_pack() const { return 1; }
-  virtual enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
-  virtual uint32_t key_length() const { return pack_length(); }
+  virtual uint32_t max_data_length() const;
+  virtual int reset(void);
+  virtual void reset_fields();
+  virtual void set_default();
+  virtual bool binary() const;
+  virtual bool zero_pack() const;
+  virtual enum ha_base_keytype key_type() const;
+  virtual uint32_t key_length() const;
   virtual enum_field_types type() const =0;
-  virtual enum_field_types real_type() const { return type(); }
+  virtual enum_field_types real_type() const;
   inline  int cmp(const unsigned char *str) { return cmp(ptr,str); }
   virtual int cmp_max(const unsigned char *a, const unsigned char *b,
-                      uint32_t max_len __attribute__((unused)))
-    { return cmp(a, b); }
+                      uint32_t max_len);
   virtual int cmp(const unsigned char *,const unsigned char *)=0;
   virtual int cmp_binary(const unsigned char *a,const unsigned char *b,
-                         uint32_t  __attribute__((unused)) max_length=UINT32_MAX)
-  { return memcmp(a,b,pack_length()); }
-  virtual int cmp_offset(uint32_t row_offset)
-  { return cmp(ptr,ptr+row_offset); }
-  virtual int cmp_binary_offset(uint32_t row_offset)
-  { return cmp_binary(ptr, ptr+row_offset); };
-  virtual int key_cmp(const unsigned char *a,const unsigned char *b)
-  { return cmp(a, b); }
-  virtual int key_cmp(const unsigned char *str, uint32_t length __attribute__((unused)))
-  { return cmp(ptr,str); }
-  virtual uint32_t decimals() const { return 0; }
+                         uint32_t max_length=UINT32_MAX);
+  virtual int cmp_offset(uint32_t row_offset);
+  virtual int cmp_binary_offset(uint32_t row_offset);
+  virtual int key_cmp(const unsigned char *a,const unsigned char *b);
+  virtual int key_cmp(const unsigned char *str, uint32_t length);
+  virtual uint32_t decimals() const;
+
   /*
     Caller beware: sql_type can change str.Ptr, so check
     ptr() to see if it changed if you are using your own buffer
     in str and restore it with set() if needed
   */
   virtual void sql_type(String &str) const =0;
-  virtual uint32_t size_of() const =0;		// For new field
-  inline bool is_null(my_ptrdiff_t row_offset= 0)
-  { return null_ptr ? (null_ptr[row_offset] & null_bit ? 1 : 0) : table->null_row; }
-  inline bool is_real_null(my_ptrdiff_t row_offset= 0)
-    { return null_ptr ? (null_ptr[row_offset] & null_bit ? 1 : 0) : 0; }
-  inline bool is_null_in_record(const unsigned char *record)
-  {
-    if (!null_ptr)
-      return 0;
-    return test(record[(uint32_t) (null_ptr -table->record[0])] &
-		null_bit);
-  }
-  inline bool is_null_in_record_with_offset(my_ptrdiff_t offset)
-  {
-    if (!null_ptr)
-      return 0;
-    return test(null_ptr[offset] & null_bit);
-  }
-  inline void set_null(my_ptrdiff_t row_offset= 0)
-    { if (null_ptr) null_ptr[row_offset]|= null_bit; }
-  inline void set_notnull(my_ptrdiff_t row_offset= 0)
-    { if (null_ptr) null_ptr[row_offset]&= (unsigned char) ~null_bit; }
-  inline bool maybe_null(void) { return null_ptr != 0 || table->maybe_null; }
-  inline bool real_maybe_null(void) { return null_ptr != 0; }
+
+  // For new field
+  virtual uint32_t size_of() const =0;
+
+  bool is_null(my_ptrdiff_t row_offset= 0);
+  bool is_real_null(my_ptrdiff_t row_offset= 0);
+  bool is_null_in_record(const unsigned char *record);
+  bool is_null_in_record_with_offset(my_ptrdiff_t offset);
+  void set_null(my_ptrdiff_t row_offset= 0);
+  void set_notnull(my_ptrdiff_t row_offset= 0);
+  bool maybe_null(void);
+  bool real_maybe_null(void);
 
   enum {
     LAST_NULL_BYTE_UNDEF= 0
@@ -348,11 +299,7 @@ public:
       the record. If the field does not use any bits of the null
       bytes, the value 0 (LAST_NULL_BYTE_UNDEF) is returned.
    */
-  size_t last_null_byte() const {
-    size_t bytes= do_last_null_byte();
-    assert(bytes <= table->getNullBytes());
-    return bytes;
-  }
+  size_t last_null_byte() const;
 
   virtual void make_field(Send_field *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
@@ -452,56 +399,53 @@ public:
   virtual bool send_binary(Protocol *protocol);
 
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
-                      uint32_t max_length, bool low_byte_first);
+                              uint32_t max_length, bool low_byte_first);
   /**
-     @overload Field::pack(unsigned char*, const unsigned char*, uint32_t, bool)
+     @overload Field::pack(unsigned char*, const unsigned char*,
+                           uint32_t, bool)
   */
-  unsigned char *pack(unsigned char *to, const unsigned char *from)
-  {
-    unsigned char *result= this->pack(to, from, UINT_MAX, table->s->db_low_byte_first);
-    return(result);
-  }
+  unsigned char *pack(unsigned char *to, const unsigned char *from);
 
-  virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data, bool low_byte_first);
+  virtual const unsigned char *unpack(unsigned char* to,
+                                      const unsigned char *from,
+                                      uint32_t param_data,
+                                      bool low_byte_first);
   /**
-     @overload Field::unpack(unsigned char*, const unsigned char*, uint32_t, bool)
+     @overload Field::unpack(unsigned char*, const unsigned char*,
+                             uint32_t, bool)
   */
-  const unsigned char *unpack(unsigned char* to, const unsigned char *from)
-  {
-    const unsigned char *result= unpack(to, from, 0U, table->s->db_low_byte_first);
-    return(result);
-  }
+  const unsigned char *unpack(unsigned char* to, const unsigned char *from);
 
   virtual unsigned char *pack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
-					uint32_t max_length, bool low_byte_first)
+  virtual unsigned char *pack_key_from_key_image(unsigned char* to,
+                                                 const unsigned char *from,
+                                                 uint32_t max_length,
+                                                 bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
-                                  uint32_t max_length, bool low_byte_first)
+  virtual const unsigned char *unpack_key(unsigned char* to,
+                                          const unsigned char *from,
+                                          uint32_t max_length,
+                                          bool low_byte_first)
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint32_t packed_col_length(const unsigned char *to __attribute__((unused)),
-                                 uint32_t length)
-  { return length;}
+  virtual uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   virtual uint32_t max_packed_col_length(uint32_t max_length)
   { return max_length;}
 
   virtual int pack_cmp(const unsigned char *a,const unsigned char *b,
-                       uint32_t key_length_arg __attribute__((unused)),
-                       bool insert_or_update __attribute__((unused)))
-  { return cmp(a,b); }
+                       uint32_t key_length_arg,
+                       bool insert_or_update);
   virtual int pack_cmp(const unsigned char *b,
-                       uint32_t key_length_arg __attribute__((unused)),
-                       bool insert_or_update __attribute__((unused)))
-  { return cmp(ptr,b); }
+                       uint32_t key_length_arg,
+                       bool insert_or_update);
+
   uint32_t offset(unsigned char *record)
   {
     return (uint32_t) (ptr - record);
@@ -534,11 +478,7 @@ public:
     return (op_result == E_DEC_OVERFLOW);
   }
   int warn_if_overflow(int op_result);
-  void init(Table *table_arg)
-  {
-    orig_table= table= table_arg;
-    table_name= &table_arg->alias;
-  }
+  void init(Table *table_arg);
 
   /* maximum possible display length */
   virtual uint32_t max_display_length()= 0;
@@ -723,11 +663,12 @@ public:
 
 
 Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
-		  unsigned char *null_pos, unsigned char null_bit,
-		  uint32_t pack_flag, enum_field_types field_type,
-		  const CHARSET_INFO * cs,
-		  Field::utype unireg_check,
-		  TYPELIB *interval, const char *field_name);
+                  unsigned char *null_pos, unsigned char null_bit,
+                  uint32_t pack_flag, enum_field_types field_type,
+                  const CHARSET_INFO * cs,
+                  Field::utype unireg_check,
+                  TYPELIB *interval, const char *field_name);
+
 uint32_t pack_length_to_packflag(uint32_t type);
 enum_field_types get_blob_type_from_length(uint32_t length);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
@@ -736,75 +677,9 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 
 
 bool
-test_if_important_data(const CHARSET_INFO * const cs, 
-		       const char *str,
+test_if_important_data(const CHARSET_INFO * const cs,
+                       const char *str,
                        const char *strend);
 
-/*
-  Field subclasses
- */
-#include <drizzled/field/str.h>
-#include <drizzled/field/longstr.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/field/null.h>
-#include <drizzled/field/date.h>
-#include <drizzled/field/fdecimal.h>
-#include <drizzled/field/real.h>
-#include <drizzled/field/double.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/timetype.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/field/datetime.h>
-#include <drizzled/field/fstring.h>
-#include <drizzled/field/varstring.h>
-
-/*
-  The following are for the interface with the .frm file
-*/
-
-#define FIELDFLAG_DECIMAL		1
-#define FIELDFLAG_BINARY		1	// Shares same flag
-#define FIELDFLAG_NUMBER		2
-#define FIELDFLAG_DECIMAL_POSITION      4
-#define FIELDFLAG_PACK			120	// Bits used for packing
-#define FIELDFLAG_INTERVAL		256     // mangled with decimals!
-#define FIELDFLAG_BLOB			1024	// mangled with decimals!
-
-#define FIELDFLAG_NO_DEFAULT		16384   /* sql */
-#define FIELDFLAG_SUM			((uint32_t) 32768)// predit: +#fieldflag
-#define FIELDFLAG_MAYBE_NULL		((uint32_t) 32768)// sql
-#define FIELDFLAG_HEX_ESCAPE		((uint32_t) 0x10000)
-#define FIELDFLAG_PACK_SHIFT		3
-#define FIELDFLAG_DEC_SHIFT		8
-#define FIELDFLAG_MAX_DEC		31
-
-#define MTYP_TYPENR(type) (type & 127)	/* Remove bits from type */
-
-#define f_is_dec(x)		((x) & FIELDFLAG_DECIMAL)
-#define f_is_num(x)		((x) & FIELDFLAG_NUMBER)
-#define f_is_decimal_precision(x)	((x) & FIELDFLAG_DECIMAL_POSITION)
-#define f_is_packed(x)		((x) & FIELDFLAG_PACK)
-#define f_packtype(x)		(((x) >> FIELDFLAG_PACK_SHIFT) & 15)
-#define f_decimals(x)		((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & FIELDFLAG_MAX_DEC))
-#define f_is_alpha(x)		(!f_is_num(x))
-#define f_is_binary(x)          ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
-#define f_is_enum(x)            (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == FIELDFLAG_INTERVAL)
-#define f_is_blob(x)		(((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == FIELDFLAG_BLOB)
-#define f_is_equ(x)		((x) & (1+2+FIELDFLAG_PACK+31*256))
-#define f_settype(x)   (((int) x) << FIELDFLAG_PACK_SHIFT)
-#define f_maybe_null(x)		(x & FIELDFLAG_MAYBE_NULL)
-#define f_no_default(x)		(x & FIELDFLAG_NO_DEFAULT)
-#define f_is_hex_escape(x)      ((x) & FIELDFLAG_HEX_ESCAPE)
-
-bool
-check_string_copy_error(Field_str *field,
-                        const char *well_formed_error_pos,
-                        const char *cannot_convert_error_pos,
-                        const char *end,
-                        const CHARSET_INFO * const cs);
 
 #endif /* DRIZZLED_FIELD_H */

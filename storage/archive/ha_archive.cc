@@ -15,13 +15,18 @@
 
 
 #include <drizzled/common_includes.h>
+#include <drizzled/field.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/timestamp.h>
 #include <storage/myisam/myisam.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
 
-#include "ha_archive.h"
+#include <storage/archive/ha_archive.h>
 
 /*
-  First, if you want to understand storage engines you should look at 
-  ha_example.cc and ha_example.h. 
+  First, if you want to understand storage engines you should look at
+  ha_example.cc and ha_example.h.
 
   This example was written as a test case for a customer who needed
   a storage engine without indexes that could compress data very well.

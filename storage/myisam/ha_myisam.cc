@@ -25,14 +25,19 @@
 #include <drizzled/util/test.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/session.h>
+#include <drizzled/protocol.h>
+#include <drizzled/table.h>
+#include <drizzled/field/timestamp.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
+pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 /* bits in myisam_recover_options */
 const char *myisam_recover_names[] =
 { "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
 TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
-				 myisam_recover_names, NULL};
+                                 myisam_recover_names, NULL};
 
 const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
                                            "nulls_ignored", NULL};
@@ -55,7 +60,7 @@ static handler *myisam_create_handler(handlerton *hton,
 // collect errors printed by mi_check routines
 
 static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
-			       const char *fmt, va_list args)
+                               const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
   Protocol *protocol= session->protocol;
@@ -846,7 +851,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   param.tmpfile_createflag = O_RDWR | O_TRUNC;
   param.using_global_keycache = 1;
   param.session= session;
-  param.tmpdir= &mysql_tmpdir_list;
+  param.tmpdir= &drizzle_tmpdir_list;
   param.out_flag= 0;
   my_stpcpy(fixed_name,file->filename);
 
@@ -1118,7 +1123,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     param.myf_rw&= ~MY_WAIT_IF_FULL;
     param.sort_buffer_length=  session->variables.myisam_sort_buff_size;
     param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
-    param.tmpdir=&mysql_tmpdir_list;
+    param.tmpdir=&drizzle_tmpdir_list;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       sql_print_warning("Warning: Enabling keys got errno %d on %s.%s, retrying",
@@ -1335,6 +1340,15 @@ int ha_myisam::index_end()
   in_range_check_pushed_down= false;
   ds_mrr.dsmrr_close();
   return 0; 
+}
+
+
+uint32_t ha_myisam::index_flags(uint32_t inx, uint32_t, bool) const
+{
+  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
+          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
+          HA_READ_ORDER | HA_KEYREAD_ONLY |
+          (keys_with_parts.is_set(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
 }
 
 
@@ -1776,6 +1790,8 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
 
 int myisam_deinit(void *hton __attribute__((unused)))
 {
+  pthread_mutex_destroy(&THR_LOCK_myisam);
+
   return mi_panic(HA_PANIC_CLOSE);
 }
 

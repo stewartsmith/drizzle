@@ -21,6 +21,7 @@
 #include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/functions/get_system_var.h>
+#include <drizzled/session.h>
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
@@ -49,11 +50,6 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   session->change_item_tree(ref, item);
 
   return(0);
-}
-
-bool Item_func_get_system_var::is_written_to_binlog()
-{
-  return var->is_written_to_binlog(var_type);
 }
 
 Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,

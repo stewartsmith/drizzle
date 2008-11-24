@@ -107,6 +107,8 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/cost_vect.h>
+#include <drizzled/item/cmpfunc.h>
+#include <drizzled/field/num.h>
 
 #include CMATH_H
 
@@ -1061,6 +1063,23 @@ SQL_SELECT::~SQL_SELECT()
   cleanup();
 }
 
+
+bool SQL_SELECT::check_quick(Session *session, bool force_quick_range,
+                             ha_rows limit)
+{
+  key_map tmp;
+  tmp.set_all();
+  return test_quick_select(session, tmp, 0, limit,
+                           force_quick_range, false) < 0;
+}
+
+
+bool SQL_SELECT::skip_record()
+{
+  return cond ? cond->val_int() == 0 : 0;
+}
+
+
 QUICK_SELECT_I::QUICK_SELECT_I()
   :max_used_key_length(0),
    used_key_parts(0)
@@ -1343,6 +1362,12 @@ failure:
   delete file;
   file= save_file;
   return(1);
+}
+
+
+void QUICK_RANGE_SELECT::save_last_pos()
+{
+  file->position(record);
 }
 
 
@@ -4471,7 +4496,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   /* For comparison purposes allow invalid dates like 2000-01-32 */
   orig_sql_mode= field->table->in_use->variables.sql_mode;
   if (value->real_item()->type() == Item::STRING_ITEM &&
-      (field->type() == DRIZZLE_TYPE_NEWDATE ||
+      (field->type() == DRIZZLE_TYPE_DATE ||
        field->type() == DRIZZLE_TYPE_DATETIME))
     field->table->in_use->variables.sql_mode|= MODE_INVALID_DATES;
   err= value->save_in_field_no_warnings(field, 1);
@@ -4494,7 +4519,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
           for the cases like int_field > 999999999999999999999999 as well.
         */
         tree= 0;
-        if (err == 3 && field->type() == DRIZZLE_TYPE_NEWDATE &&
+        if (err == 3 && field->type() == DRIZZLE_TYPE_DATE &&
             (type == Item_func::GT_FUNC || type == Item_func::GE_FUNC ||
              type == Item_func::LT_FUNC || type == Item_func::LE_FUNC) )
         {

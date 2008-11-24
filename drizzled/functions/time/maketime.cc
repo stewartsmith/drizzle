@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/maketime.h>
+#include <drizzled/functions/time/make_time_with_warn.h>
 
 /**
   MAKETIME(h,m,s) is a time function that calculates a time value

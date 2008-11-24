@@ -20,14 +20,18 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_DAYOFMONTH_H
 #define DRIZZLED_FUNCTIONS_TIME_DAYOFMONTH_H
 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
+
+
 class Item_func_dayofmonth :public Item_int_func
 {
-public: 
+public:
   Item_func_dayofmonth(Item *a) :Item_int_func(a) {}
   int64_t val_int();
   const char *func_name() const { return "dayofmonth"; }
-  void fix_length_and_dec() 
-  { 
+  void fix_length_and_dec()
+  {
     decimals=0;
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1;

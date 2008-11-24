@@ -23,6 +23,8 @@
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
 #include <libdrizzle/pack.h>
+#include <drizzled/protocol.h>
+#include <drizzled/session.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
@@ -627,6 +629,17 @@ bool Protocol::store(I_List<i_string>* str_list)
   if ((len= tmp.length()))
     len--;					// Remove last ','
   return store((char*) tmp.ptr(), len,  tmp.charset());
+}
+
+
+bool Protocol::store(String *str)
+{
+  return store((char*) str->ptr(), str->length(), str->charset());
+}
+
+void Protocol::free()
+{
+  packet->free();
 }
 
 

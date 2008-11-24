@@ -38,6 +38,7 @@ extern "C" {
 
 #include <mystrings/decimal.h>
 #include <mysys/my_time.h>
+#include <drizzled/sql_string.h>
 
 #ifdef __cplusplus
 }
@@ -237,7 +238,7 @@ int my_decimal_round(uint32_t mask, const my_decimal *from, int scale,
                      bool truncate, my_decimal *to)
 {
   return check_result(mask, decimal_round((decimal_t*) from, to, scale,
-					  (truncate ? TRUNCATE : HALF_UP)));
+                                          (truncate ? TRUNCATE : HALF_UP)));
 }
 
 
@@ -256,11 +257,11 @@ int my_decimal_ceiling(uint32_t mask, const my_decimal *from, my_decimal *to)
 
 
 int my_decimal2string(uint32_t mask, const my_decimal *d, uint32_t fixed_prec,
-		      uint32_t fixed_dec, char filler, String *str);
+                      uint32_t fixed_dec, char filler, String *str);
 
 inline
 int my_decimal2int(uint32_t mask, const my_decimal *d, bool unsigned_flag,
-		   int64_t *l)
+                   int64_t *l)
 {
   my_decimal rounded;
   /* decimal_round can return only E_DEC_TRUNCATED */

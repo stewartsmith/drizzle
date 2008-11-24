@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_LOCATE_H
 #define DRIZZLED_FUNCTIONS_LOCATE_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_locate :public Item_int_func
 {

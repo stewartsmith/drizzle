@@ -22,8 +22,8 @@
 
 /* This file defines structures needed by udf functions */
 
-#include CSTDINT_H
-#include <drizzled/item_func.h>
+#include <stdint.h>
+#include <drizzled/functions/func.h>
 
 enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 

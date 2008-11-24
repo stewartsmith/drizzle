@@ -107,8 +107,8 @@
 
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
-#define NAME_CHAR_LEN	64              /* Field/table name length */
 #define USERNAME_CHAR_LENGTH 16
+#define NAME_CHAR_LEN	64              /* Field/table name length */
 #define NAME_LEN                (NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN)
 #define USERNAME_LENGTH         (USERNAME_CHAR_LENGTH*SYSTEM_CHARSET_MBMAXLEN)
 
@@ -332,12 +332,14 @@ enum enum_server_command
 enum enum_field_types { DRIZZLE_TYPE_TINY,
                         DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
-                        DRIZZLE_TYPE_NULL,   DRIZZLE_TYPE_TIMESTAMP,
+                        DRIZZLE_TYPE_NULL,
+                        DRIZZLE_TYPE_TIMESTAMP,
                         DRIZZLE_TYPE_LONGLONG,
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_DATETIME,
-                        DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-			                  DRIZZLE_TYPE_VIRTUAL,
+                        DRIZZLE_TYPE_DATE,
+                        DRIZZLE_TYPE_VARCHAR,
+                        DRIZZLE_TYPE_VIRTUAL,
                         DRIZZLE_TYPE_NEWDECIMAL,
                         DRIZZLE_TYPE_ENUM,
                         DRIZZLE_TYPE_BLOB,

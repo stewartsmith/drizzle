@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_NOW_H
 #define DRIZZLED_FUNCTIONS_TIME_NOW_H
 
+#include <drizzled/functions/time/date.h>
+
 /* Abstract CURRENT_TIMESTAMP function. See also Item_func_curtime */
 
 class Item_func_now :public Item_date_func

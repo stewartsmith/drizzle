@@ -66,9 +66,9 @@ static unsigned char bin_char_array[] =
 };
 
 
-static bool 
-my_coll_init_8bit_bin(CHARSET_INFO *cs,
-                      void *(*alloc)(size_t) __attribute__((unused)))
+extern "C"
+bool my_coll_init_8bit_bin(CHARSET_INFO *cs,
+                           void *(*alloc)(size_t) __attribute__((unused)))
 {
   cs->max_sort_char=255; 
   return false;

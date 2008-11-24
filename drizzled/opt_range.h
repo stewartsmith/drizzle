@@ -23,7 +23,14 @@
 #ifndef DRIZZLED_OPT_RANGE_H
 #define DRIZZLED_OPT_RANGE_H
 
+#include <drizzled/field.h>
 #include <mysys/queues.h>
+#include <drizzled/item/sum.h>
+
+class JOIN;
+typedef class Item COND;
+
+typedef struct st_handler_buffer HANDLER_BUFFER;
 
 typedef struct st_key_part {
   uint16_t           key,part;
@@ -328,8 +335,7 @@ public:
   bool reverse_sorted() { return 0; }
   bool unique_key_range();
   int init_ror_merged_scan(bool reuse_handler);
-  void save_last_pos()
-  { file->position(record); }
+  void save_last_pos();
   int get_type() { return QS_TYPE_RANGE; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
@@ -705,15 +711,10 @@ class SQL_SELECT :public Sql_alloc {
   SQL_SELECT();
   ~SQL_SELECT();
   void cleanup();
-  bool check_quick(Session *session, bool force_quick_range, ha_rows limit)
-  {
-    key_map tmp;
-    tmp.set_all();
-    return test_quick_select(session, tmp, 0, limit, force_quick_range, false) < 0;
-  }
-  inline bool skip_record() { return cond ? cond->val_int() == 0 : 0; }
+  bool check_quick(Session *session, bool force_quick_range, ha_rows limit);
+  bool skip_record();
   int test_quick_select(Session *session, key_map keys, table_map prev_tables,
-			ha_rows limit, bool force_quick_range, 
+                        ha_rows limit, bool force_quick_range,
                         bool ordered_output);
 };
 

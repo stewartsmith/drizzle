@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
 #define DRIZZLED_FUNCTIONS_TIME_GET_FORMAT_H
 
+#include <drizzled/item/strfunc.h>
+
 enum date_time_format
 {
   USA_FORMAT, JIS_FORMAT, ISO_FORMAT, EUR_FORMAT, INTERNAL_FORMAT

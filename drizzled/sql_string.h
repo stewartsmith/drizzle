@@ -31,22 +31,34 @@
 #include <mysys/iocache.h>
 
 class String;
-int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
-String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-uint32_t copy_and_convert(char *to, uint32_t to_length, const CHARSET_INFO * const to_cs,
-			const char *from, uint32_t from_length,
-			const CHARSET_INFO * const from_cs, uint32_t *errors);
-uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                               char *to, uint32_t to_length,
-                               const CHARSET_INFO * const from_cs,
-                               const char *from, uint32_t from_length,
-                               uint32_t nchars,
-                               const char **well_formed_error_pos,
-                               const char **cannot_convert_error_pos,
-                               const char **from_end_pos);
-size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                                 char *dst, size_t dstlen,
-                                 const char *src, size_t srclen);
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+  int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+  int stringcmp(const String *a,const String *b);
+  String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
+  uint32_t copy_and_convert(char *to, uint32_t to_length,
+                            const CHARSET_INFO * const to_cs,
+                            const char *from, uint32_t from_length,
+                            const CHARSET_INFO * const from_cs,
+                            uint32_t *errors);
+  uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+                                   char *to, uint32_t to_length,
+                                   const CHARSET_INFO * const from_cs,
+                                   const char *from, uint32_t from_length,
+                                   uint32_t nchars,
+                                   const char **well_formed_error_pos,
+                                   const char **cannot_convert_error_pos,
+                                   const char **from_end_pos);
+  size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
+                                   char *dst, size_t dstlen,
+                                   const char *src, size_t srclen);
+
+#if defined(__cplusplus)
+}
+#endif
 
 class String
 {
@@ -383,16 +395,9 @@ static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
 
-inline
-bool operator==(const String &s1, const String &s2)
-{
-  return stringcmp(&s1,&s2) == 0;
-}
-
-inline
-bool operator!=(const String &s1, const String &s2)
-{
-  return !(s1 == s2);
+extern "C++" {
+bool operator==(const String &s1, const String &s2);
+bool operator!=(const String &s1, const String &s2);
 }
 
 #endif /* DRIZZLE_SERVER_SQL_STRING_H */

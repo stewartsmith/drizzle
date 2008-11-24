@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_FUNCTIONS_STR_H
 #define DRIZZLED_FUNCTIONS_STR_H
 
-/* This file defines all string functions */
 
+#include <drizzled/functions/func.h>
+
+/* This file defines all string functions */
 
 class Item_str_func :public Item_func
 {

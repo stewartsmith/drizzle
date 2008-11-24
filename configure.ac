@@ -1,4 +1,4 @@
-dnl -*- ksh -*-
+dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
@@ -347,7 +347,6 @@ then
 fi
 
 # We use libtool
-#AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
 # Ensure that we have --preserve-dup-deps defines, otherwise we get link
@@ -360,8 +359,17 @@ AC_SUBST(NM)dnl
 AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
-# Not critical since the generated file is distributed
-AC_CHECK_PROGS(YACC, ['bison -y -p DRIZZLE'])
+# Look for "(group|user)add". 
+# TODO: If the programs do not exist, inform the DBA that the user
+#       was not created at the end of the install routine.
+AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
+AC_CHECK_PROGS(USERADD, useradd adduser)
+
+dnl Needed for ltmain
+AC_PROG_RANLIB
+
+dnl Not critical since the generated file is distributed
+AC_PROG_YACC
 if test -z "$YACC" && test -d ".bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -477,7 +485,7 @@ AC_CXX_CMATH
 DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
-if test "$GCC" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
+if test "$lt_cv_prog_gnu_ld" = "yes" -a $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
@@ -527,7 +535,7 @@ AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
   ],[
     google::protobuf::FileDescriptorProto testFdp;
   ], ac_libprotobuf_works=yes, [
-        AC_ERROR([could not find Google's libprotobuf])
+        AC_MSG_ERROR([could not find Google's libprotobuf])
   ])
 
 ])
@@ -544,62 +552,23 @@ AC_LANG_POP()
 # Check for libuuid
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(uuid/uuid.h)
-if test "x$ac_cv_header_uuid_uuid_h" = "xno"
-then
-  AC_MSG_ERROR([Couldn't find uuid/uuid.h. Try installing libuuid development packages])
-fi
-AC_CHECK_LIB(uuid, uuid_generate)
+SEARCH_FOR_LIB(uuid, uuid_generate, uuid/uuid.h, 
+               AC_MSG_ERROR([libuuid is required for Drizzle]))
+
 
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_MSG_CHECKING(for libevent)
-AC_ARG_WITH(libevent,
-  [AS_HELP_STRING([--with-libevent@<:@=DIR@:>@],
-       [Use libevent in DIR])],
-  [ with_libevent=$withval ],
-  [ with_libevent=yes ])
+SEARCH_FOR_LIB(event, event_loop, event.h, 
+               AC_MSG_ERROR([libevent is required for Drizzle]))
 
-if test "$with_libevent" = "yes"
-then
-    AC_CHECK_HEADERS(event.h)
-    if test "x$ac_cv_header_event_h" != "xyes"
-    then
-      AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
-    fi
-    my_save_LIBS="$LIBS"
-    LIBS=""
-    AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-    LIBEVENT_LIBS="${LIBS}"
-    LIBS="${my_save_LIBS}"
-    LIBEVENT_CPPFLAGS=""
-else
-    AC_MSG_RESULT($withval)
-    if test -f $withval/event.h -a -f $withval/libevent.a; then
-       owd=`pwd`
-       if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CPPFLAGS="-I$withval"
-       LIBEVENT_LIBS="-L$withval -levent"
-    elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
-       owd=`pwd`
-       if cd $withval; then withval=`pwd`; cd $owd; fi
-       LIBEVENT_CPPFLAGS="-I$withval/include"
-       LIBEVENT_LIBS="-L$withval/lib -levent"
-    else
-       AC_MSG_ERROR([event.h or libevent.a not found in $withval])
-    fi
-fi
 
-AC_SUBST(LIBEVENT_CPPFLAGS)
-AC_SUBST(LIBEVENT_LIBS)
-
-AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+AC_CACHE_CHECK([for bufferevent in libevent], ac_cv_libevent_works, [
   save_CPPFLAGS="$CPPFLAGS"
   save_LIBS="$LIBS"
-  CPPFLAGS="$LIBEVENT_CPPFLAGS"
-  LIBS="$LIBEVENT_LIBS"
+  CPPFLAGS="$EVENT_CPPFLAGS"
+  LIBS="$EVENT_LIBS"
   AC_TRY_LINK([
 #include <sys/types.h>
 #include <sys/time.h>
@@ -607,8 +576,8 @@ AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
 #include <event.h>],[
 	struct bufferevent bev;
 	bufferevent_settimeout(&bev, 1, 1);
-  ], ac_libevent_works=yes, [
-        AC_ERROR([you need to install a more recent version of libevent,
+  ], ac_cv_libevent_works=yes, [
+        AC_MSG_ERROR([you need to install a more recent version of libevent,
 	check http://www.monkey.org/~provos/libevent/])
   ])
 
@@ -647,17 +616,8 @@ fi
 # Check for libz
 #--------------------------------------------------------------------
 
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_HEADERS(zlib.h)
-if test "x$ac_cv_header_zlib_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
-fi
-AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
-ZLIB_LIBS="$LIBS"
-LIBS="$my_save_LIBS"
-AC_SUBST(ZLIB_LIBS)
+SEARCH_FOR_LIB(z, crc32, zlib.h, 
+               AC_MSG_ERROR([libz is required for Drizzle]))
 
 
 #--------------------------------------------------------------------
@@ -1053,6 +1013,7 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
+AC_C_VOLATILE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
@@ -1162,8 +1123,8 @@ AC_CONFIG_LIBOBJ_DIR([mystrings])
 AC_CHECK_FUNCS( \
   cuserid fchmod \
   fdatasync fpresetsticky fpsetmask fsync \
-  getcwd getpassphrase getpwnam \
-  getpwuid getrlimit getrusage getwd index initgroups isnan \
+  getpassphrase getpwnam \
+  getpwuid getrlimit getrusage index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
@@ -1417,7 +1378,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-W -Wall -Wextra -Wunused-macros ${W_FAIL}"
+  BASE_WARNINGS="-W -Wall -Wextra ${W_FAIL}"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1561,7 +1522,9 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 dnl GCC Precompiled Header Support
-AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
+dnl re-enable later
+dnl AM_CONDITIONAL([GCC_PCH],[test "$GCC" = "yes"])
+AM_CONDITIONAL([GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  mystrings/Makefile storage/Makefile dnl
@@ -1569,6 +1532,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
+ drizzled/item/Makefile dnl
  drizzled/serialize/Makefile dnl
  drizzled/functions/Makefile dnl
  drizzled/functions/str/Makefile dnl

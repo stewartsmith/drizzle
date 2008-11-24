@@ -20,6 +20,10 @@
 #ifndef DRIZZLED_HA_TRX_INFO_H
 #define DRIZZLED_HA_TRX_INFO_H
 
+
+class Session_TRANS;
+class handlerton;
+
 /**
   Either statement transaction or normal transaction - related
   thread-specific storage engine data.
@@ -41,62 +45,21 @@ class Ha_trx_info
 {
 public:
   /** Register this storage engine in the given transaction context. */
-  void register_ha(Session_TRANS *trans, handlerton *ht_arg)
-  {
-    assert(m_flags == 0);
-    assert(m_ht == NULL);
-    assert(m_next == NULL);
-
-    m_ht= ht_arg;
-    m_flags= (int) TRX_READ_ONLY; /* Assume read-only at start. */
-
-    m_next= trans->ha_list;
-    trans->ha_list= this;
-  }
+  void register_ha(Session_TRANS *trans, handlerton *ht_arg);
 
   /** Clear, prepare for reuse. */
-  void reset()
-  {
-    m_next= NULL;
-    m_ht= NULL;
-    m_flags= 0;
-  }
-
+  void reset();
   Ha_trx_info() { reset(); }
 
-  void set_trx_read_write()
-  {
-    assert(is_started());
-    m_flags|= (int) TRX_READ_WRITE;
-  }
-  bool is_trx_read_write() const
-  {
-    assert(is_started());
-    return m_flags & (int) TRX_READ_WRITE;
-  }
-  bool is_started() const { return m_ht != NULL; }
+  void set_trx_read_write();
+  bool is_trx_read_write() const;
+  bool is_started() const;
+
   /** Mark this transaction read-write if the argument is read-write. */
-  void coalesce_trx_with(const Ha_trx_info *stmt_trx)
-  {
-    /*
-      Must be called only after the transaction has been started.
-      Can be called many times, e.g. when we have many
-      read-write statements in a transaction.
-    */
-    assert(is_started());
-    if (stmt_trx->is_trx_read_write())
-      set_trx_read_write();
-  }
-  Ha_trx_info *next() const
-  {
-    assert(is_started());
-    return m_next;
-  }
-  handlerton *ht() const
-  {
-    assert(is_started());
-    return m_ht;
-  }
+  void coalesce_trx_with(const Ha_trx_info *stmt_trx);
+  Ha_trx_info *next() const;
+  handlerton *ht() const;
+
 private:
   enum { TRX_READ_ONLY= 0, TRX_READ_WRITE= 1 };
   /** Auxiliary, used for ha_list management */

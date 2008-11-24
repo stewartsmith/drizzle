@@ -52,7 +52,7 @@
 */
 
 #include <drizzled/server_includes.h>
-#include "rpl_mi.h"
+#include <drizzled/replication/mi.h>
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
@@ -61,8 +61,12 @@
 #include <drizzled/tztime.h>
 #include <drizzled/slave.h>
 #include <drizzled/data_home.h>
+#include <drizzled/set_var.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
+extern I_List<NAMED_LIST> key_caches;
 
 
 static DYNAMIC_ARRAY fixed_show_vars;
@@ -148,8 +152,6 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
 					      &binlog_cache_size);
-static sys_var_session_binlog_format sys_binlog_format(&vars, "binlog_format",
-                                            &SV::binlog_format);
 static sys_var_session_ulong	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
 						  &SV::bulk_insert_buff_size);
 static sys_var_session_ulong	sys_completion_type(&vars, "completion_type",
@@ -798,43 +800,10 @@ void fix_slave_exec_mode(enum_var_type)
     bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
 }
 
-bool sys_var_session_binlog_format::is_readonly() const
-{
-  /*
-    Under certain circumstances, the variable is read-only (unchangeable):
-  */
-  Session *session= current_session;
-  /*
-    If RBR and open temporary tables, their CREATE TABLE may not be in the
-    binlog, so we can't toggle to SBR in this connection.
-    The test below will also prevent SET GLOBAL, well it was not easy to test
-    if global or not here.
-    And this test will also prevent switching from RBR to RBR (a no-op which
-    should not happen too often).
-
-    If we don't have row-based replication compiled in, the variable
-    is always read-only.
-  */
-  if ((session->variables.binlog_format == BINLOG_FORMAT_ROW) &&
-      session->temporary_tables)
-  {
-    my_error(ER_TEMP_TABLE_PREVENTS_SWITCH_OUT_OF_RBR, MYF(0));
-    return 1;
-  }
-  
-  return sys_var_session_enum::is_readonly();
-}
-
-
-void fix_binlog_format_after_update(Session *session, enum_var_type)
-{
-  session->reset_current_stmt_binlog_row_based();
-}
-
 
 static void fix_max_binlog_size(Session *, enum_var_type)
 {
-  mysql_bin_log.set_max_size(max_binlog_size);
+  drizzle_bin_log.set_max_size(max_binlog_size);
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
   return;
@@ -2163,7 +2132,6 @@ unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
       timezone). If it's the global value which was used we can't replicate
       (binlog code stores session value only).
     */
-    session->time_zone_used= 1;
     return (unsigned char *)(session->variables.time_zone->get_name()->ptr());
   }
 }
@@ -2437,7 +2405,7 @@ static unsigned char *get_error_count(Session *session)
 
   This is necessary because if the user does not specify a temporary
   directory via the command line, one is chosen based on the environment
-  or system defaults.  But we can't just always use mysql_tmpdir, because
+  or system defaults.  But we can't just always use drizzle_tmpdir, because
   that is actually a call to my_tmpdir() which cycles among possible
   temporary directories.
 
@@ -2448,9 +2416,9 @@ static unsigned char *get_error_count(Session *session)
 */
 static unsigned char *get_tmpdir(Session *)
 {
-  if (opt_mysql_tmpdir)
-    return (unsigned char *)opt_mysql_tmpdir;
-  return (unsigned char*)mysql_tmpdir;
+  if (opt_drizzle_tmpdir)
+    return (unsigned char *)opt_drizzle_tmpdir;
+  return (unsigned char*)drizzle_tmpdir;
 }
 
 /****************************************************************************

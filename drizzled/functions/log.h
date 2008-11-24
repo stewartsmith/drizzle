@@ -20,12 +20,13 @@
 #ifndef DRIZZLED_FUNCTIONS_LOG_H
 #define DRIZZLED_FUNCTIONS_LOG_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/dec.h>
 
 class Item_func_log :public Item_dec_func
 {
 public:
-  Item_func_log(Item *a) :Item_dec_func(a) {} 
+  Item_func_log(Item *a) :Item_dec_func(a) {}
   Item_func_log(Item *a,Item *b) :Item_dec_func(a,b) {}
   double val_real();
   const char *func_name() const { return "log"; }

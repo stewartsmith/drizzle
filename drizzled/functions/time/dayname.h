@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_DAYNAME_H
 #define DRIZZLED_FUNCTIONS_TIME_DAYNAME_H
 
+#include <drizzled/functions/time/weekday.h>
+
 class Item_func_dayname :public Item_func_weekday
 {
  public:

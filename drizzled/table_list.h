@@ -19,8 +19,8 @@
  */
 
 
-#ifndef DRIZZLED_TMP_TABLE_H
-#define DRIZZLED_TMP_TABLE_H
+#ifndef DRIZZLED_TABLE_LIST_H
+#define DRIZZLED_TABLE_LIST_H
 
 /*
   Table reference in the FROM clause.
@@ -57,7 +57,7 @@
 */
 
 
-#include "table.h"
+#include <drizzled/table.h>
 
 class Index_hint;
 class COND_EQUAL;
@@ -72,14 +72,6 @@ class Item_subselect;
 class Table;
 
 struct nested_join_st;
-
-enum enum_schema_table_state
-{
-  NOT_PROCESSED= 0,
-  PROCESSED_BY_CREATE_SORT_INDEX,
-  PROCESSED_BY_JOIN_EXEC
-};
-
 
 class TableList
 {
@@ -251,10 +243,7 @@ public:
     If you change placeholder(), please check the condition in
     check_transactional_lock() too.
   */
-  bool placeholder()
-  {
-    return derived || schema_table || (create && !table->getDBStat()) || !table;
-  }
+  bool placeholder();
   void print(Session *session, String *str, enum_query_type query_type);
   bool set_insert_values(MEM_ROOT *mem_root);
   TableList *find_underlying_table(Table *table);
@@ -281,4 +270,4 @@ public:
 
 void close_thread_tables(Session *session);
 
-#endif /* DRIZZLED_TMP_TABLE_H */
+#endif /* DRIZZLED_TABLE_LIST_H */

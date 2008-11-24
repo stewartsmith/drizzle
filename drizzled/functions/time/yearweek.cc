@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/yearweek.h>
+#include <drizzled/functions/time/week_mode.h>
 
 int64_t Item_func_yearweek::val_int()
 {

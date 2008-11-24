@@ -19,6 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
+#include <drizzled/functions/bit.h>
 
 // Shift-functions, same as << and >> in C/C++
 

@@ -314,7 +314,7 @@ static void my_aiowait(my_aio_result *result)
 
 bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
-			bool use_async_io __attribute__((unused)),
+			bool use_async_io,
 			bool clear_cache)
 {
   /* One can't do reinit with the following types */
@@ -396,6 +396,8 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
     info->read_function=_my_b_async_read;
   }
   info->inited=0;
+#else
+  (void)use_async_io;
 #endif
   return(0);
 } /* reinit_io_cache */
@@ -1026,7 +1028,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
   while (write_length)
   {
     size_t copy_length= cmin(write_length, write_cache->buffer_length);
-    int  __attribute__((unused)) rc;
+    int  rc;
 
     rc= lock_io_cache(write_cache, write_cache->pos_in_file);
     /* The writing thread does always have the lock when it awakes. */

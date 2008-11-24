@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_COERCIBILITY_H
 #define DRIZZLED_FUNCTIONS_COERCIBILITY_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int.h>
 
 class Item_func_coercibility :public Item_int_func
 {

@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_CEILING_H
 #define DRIZZLED_FUNCTIONS_CEILING_H
 
-#include <drizzled/functions/func.h> 
+#include <drizzled/functions/func.h>
+#include <drizzled/functions/int_val.h>
 
 class Item_func_ceiling :public Item_func_int_val
 {

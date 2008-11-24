@@ -22,6 +22,9 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/probes.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/fstring.h>
 
 /*
   check that all fields are real fields
@@ -361,7 +364,7 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, mysql_tmpdir,TEMP_PREFIX,
+      if (open_cached_file(&tempfile, drizzle_tmpdir,TEMP_PREFIX,
 			   DISK_BUFFER_SIZE, MYF(MY_WME)))
 	goto err;
 
@@ -661,7 +664,7 @@ int mysql_update(Session *session, TableList *table_list,
   */
   if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (error < 0)
         session->clear_error();
@@ -732,20 +735,6 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 {
   List<Item> all_fields;
   SELECT_LEX *select_lex= &session->lex->select_lex;
-  
-  /*
-    Statement-based replication of UPDATE ... LIMIT is not safe as order of
-    rows is not defined, so in mixed mode we go to row-based.
-
-    Note that we may consider a statement as safe if order_st BY primary_key
-    is present. However it may confuse users to see very similiar statements
-    replicated differently.
-  */
-  if (session->lex->current_select->select_limit)
-  {
-    session->lex->set_stmt_unsafe();
-    session->set_current_stmt_binlog_row_based_if_mixed();
-  }
 
   session->lex->allow_sum_func= 0;
 
@@ -1490,7 +1479,7 @@ void multi_update::abort()
       The query has to binlog because there's a modified non-transactional table
       either from the query's list or via a stored routine: bug#13270,23333
     */
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       /*
         Session::killed status might not have been set ON at time of an error
@@ -1694,7 +1683,7 @@ bool multi_update::send_eof()
               session->transaction.stmt.modified_non_trans_table);
   if (local_error == 0 || session->transaction.stmt.modified_non_trans_table)
   {
-    if (mysql_bin_log.is_open())
+    if (drizzle_bin_log.is_open())
     {
       if (local_error == 0)
         session->clear_error();

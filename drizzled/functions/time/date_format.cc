@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/time/date_format.h>
+#include <drizzled/session.h>
 
 void Item_func_date_format::fix_length_and_dec()
 {

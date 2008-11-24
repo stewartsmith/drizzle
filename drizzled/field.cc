@@ -28,6 +28,25 @@
 #include "sql_select.h"
 #include <errno.h>
 #include <drizzled/error.h>
+#include <drizzled/virtual_column_info.h>
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
 
 
 /*****************************************************************************
@@ -61,7 +80,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -92,7 +111,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -123,7 +142,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -154,8 +173,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_TIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -185,8 +204,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -216,8 +235,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -247,8 +266,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_TIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -278,8 +297,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -291,7 +310,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
-  /* DRIZZLE_TYPE_NEWDATE -> */
+  /* DRIZZLE_TYPE_DATE -> */
   {
     //DRIZZLE_TYPE_TINY
     DRIZZLE_TYPE_VARCHAR,
@@ -300,7 +319,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_NULL
-    DRIZZLE_TYPE_NEWDATE,
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_LONGLONG
@@ -309,8 +328,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATETIME,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_DATETIME,
-    //DRIZZLE_TYPE_NEWDATE
-    DRIZZLE_TYPE_NEWDATE,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VIRTUAL
@@ -340,7 +359,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -371,7 +390,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VIRTUAL,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VIRTUAL,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VIRTUAL,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VIRTUAL,
@@ -402,7 +421,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -433,7 +452,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
@@ -464,7 +483,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_BLOB,
-    //DRIZZLE_TYPE_NEWDATE
+    //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_BLOB,
@@ -516,7 +535,7 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
   //DRIZZLE_TYPE_DATETIME
   STRING_RESULT,
-  //DRIZZLE_TYPE_NEWDATE
+  //DRIZZLE_TYPE_DATE
   STRING_RESULT,
   //DRIZZLE_TYPE_VARCHAR
   STRING_RESULT,
@@ -555,39 +574,234 @@ test_if_important_data(const CHARSET_INFO * const cs, const char *str,
 }
 
 
-/**
-  Detect Item_result by given field type of UNION merge result.
-
-  @param field_type  given field type
-
-  @return
-    Item_result (type of internal MySQL expression result)
-*/
-
 Item_result Field::result_merge_type(enum_field_types field_type)
 {
   assert(field_type <= DRIZZLE_TYPE_MAX);
   return field_types_result_type[field_type];
 }
 
+
+bool Field::eq(Field *field)
+{
+  return (ptr == field->ptr && null_ptr == field->null_ptr &&
+          null_bit == field->null_bit);
+}
+
+
+uint32_t Field::pack_length() const
+{
+  return field_length;
+}
+
+
+uint32_t Field::pack_length_in_rec() const
+{
+  return pack_length();
+}
+
+
+uint32_t Field::pack_length_from_metadata(uint32_t field_metadata)
+{
+  return field_metadata;
+}
+
+
+uint32_t Field::row_pack_length()
+{
+  return 0;
+}
+
+
+int Field::save_field_metadata(unsigned char *first_byte)
+{
+  return do_save_field_metadata(first_byte);
+}
+
+
+uint32_t Field::data_length()
+{
+  return pack_length();
+}
+
+
+uint32_t Field::used_length()
+{
+  return pack_length();
+}
+
+
+uint32_t Field::sort_length() const
+{
+  return pack_length();
+}
+
+
+uint32_t Field::max_data_length() const
+{
+  return pack_length();
+}
+
+
+int Field::reset(void)
+{
+  memset(ptr, 0, pack_length());
+  return 0;
+}
+
+
+void Field::reset_fields()
+{}
+
+
+void Field::set_default()
+{
+  my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
+  memcpy(ptr, ptr + l_offset, pack_length());
+  if (null_ptr)
+    *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
+}
+
+
+bool Field::binary() const
+{
+  return 1;
+}
+
+
+bool Field::zero_pack() const
+{
+  return 1;
+}
+
+
+enum ha_base_keytype Field::key_type() const
+{
+  return HA_KEYTYPE_BINARY;
+}
+
+
+uint32_t Field::key_length() const
+{
+  return pack_length();
+}
+
+
+enum_field_types Field::real_type() const
+{
+  return type();
+}
+
+
+int Field::cmp_max(const unsigned char *a, const unsigned char *b, uint32_t)
+{
+  return cmp(a, b);
+}
+
+
+int Field::cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t)
+{
+  return memcmp(a,b,pack_length());
+}
+
+
+int Field::cmp_offset(uint32_t row_offset)
+{
+  return cmp(ptr,ptr+row_offset);
+}
+
+
+int Field::cmp_binary_offset(uint32_t row_offset)
+{
+  return cmp_binary(ptr, ptr+row_offset);
+}
+
+
+int Field::key_cmp(const unsigned char *a,const unsigned char *b)
+{
+  return cmp(a, b);
+}
+
+
+int Field::key_cmp(const unsigned char *str, uint32_t)
+{
+  return cmp(ptr,str);
+}
+
+
+uint32_t Field::decimals() const
+{
+  return 0;
+}
+
+
+bool Field::is_null(my_ptrdiff_t row_offset)
+{
+  return null_ptr ?
+    (null_ptr[row_offset] & null_bit ? true : false) :
+    table->null_row;
+}
+
+
+bool Field::is_real_null(my_ptrdiff_t row_offset)
+{
+  return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
+}
+
+
+bool Field::is_null_in_record(const unsigned char *record)
+{
+  if (!null_ptr)
+    return false;
+  return test(record[(uint32_t) (null_ptr -table->record[0])] &
+              null_bit);
+}
+
+
+bool Field::is_null_in_record_with_offset(my_ptrdiff_t offset)
+{
+  if (!null_ptr)
+    return false;
+  return test(null_ptr[offset] & null_bit);
+}
+
+
+void Field::set_null(my_ptrdiff_t row_offset)
+{
+  if (null_ptr)
+    null_ptr[row_offset]|= null_bit;
+}
+
+
+void Field::set_notnull(my_ptrdiff_t row_offset)
+{
+  if (null_ptr)
+    null_ptr[row_offset]&= (unsigned char) ~null_bit;
+}
+
+
+bool Field::maybe_null(void)
+{
+  return null_ptr != 0 || table->maybe_null;
+}
+
+
+bool Field::real_maybe_null(void)
+{
+  return null_ptr != 0;
+}
+
+
+size_t Field::last_null_byte() const
+{
+  size_t bytes= do_last_null_byte();
+  assert(bytes <= table->getNullBytes());
+  return bytes;
+}
+
+
 /*****************************************************************************
   Static help functions
 *****************************************************************************/
-
-
-/**
-  Check whether a field type can be partially indexed by a key.
-
-  This is a static method, rather than a virtual function, because we need
-  to check the type of a non-Field in mysql_alter_table().
-
-  @param type  field type
-
-  @retval
-    true  Type can have a prefixed key
-  @retval
-    false Type can not have a prefixed key
-*/
 
 bool Field::type_can_have_key_part(enum enum_field_types type)
 {
@@ -626,6 +840,13 @@ int Field::warn_if_overflow(int op_result)
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
+}
+
+
+void Field::init(Table *table_arg)
+{
+  orig_table= table= table_arg;
+  table_name= &table_arg->alias;
 }
 
 
@@ -709,14 +930,14 @@ String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 
 /// This is used as a table name when the table structure is not set up
 Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
-	     unsigned char null_bit_arg,
-	     utype unireg_check_arg, const char *field_name_arg)
+             unsigned char null_bit_arg,
+             utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
    table(0), orig_table(0), table_name(0),
    field_name(field_name_arg),
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
-   field_length(length_arg), null_bit(null_bit_arg), 
+   field_length(length_arg), null_bit(null_bit_arg),
    is_created_from_null_item(false),
    vcol_info(NULL), is_stored(true)
 {
@@ -756,7 +977,10 @@ void Field::copy_from_tmp(int row_offset)
   memcpy(ptr,ptr+row_offset,pack_length());
   if (null_ptr)
   {
-    *null_ptr= (unsigned char) ((null_ptr[0] & (unsigned char) ~(uint32_t) null_bit) | (null_ptr[row_offset] & (unsigned char) null_bit));
+    *null_ptr= (unsigned char) ((null_ptr[0] &
+                                 (unsigned char) ~(uint32_t) null_bit) |
+                                (null_ptr[row_offset] &
+                                 (unsigned char) null_bit));
   }
 }
 
@@ -774,9 +998,9 @@ bool Field::send_binary(Protocol *protocol)
    Check to see if field size is compatible with destination.
 
    This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The 
+   field size is less than or equal to the master's field size. The
    encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination). 
+   to the size of this field (the slave or destination).
 
    @param   field_metadata   Encoded size in field metadata
 
@@ -791,7 +1015,8 @@ int Field::compatible_field_size(uint32_t field_metadata)
 }
 
 
-int Field::store(const char *to, uint32_t length, const CHARSET_INFO * const cs,
+int Field::store(const char *to, uint32_t length,
+                 const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -849,6 +1074,15 @@ Field::pack(unsigned char *to, const unsigned char *from, uint32_t max_length,
   memcpy(to, from, length);
   return to+length;
 }
+
+
+unsigned char *Field::pack(unsigned char *to, const unsigned char *from)
+{
+  unsigned char *result= this->pack(to, from, UINT32_MAX,
+                                    table->s->db_low_byte_first);
+  return(result);
+}
+
 
 /**
    Unpack a field from row data.
@@ -909,6 +1143,34 @@ Field::unpack(unsigned char* to, const unsigned char *from, uint32_t param_data,
 
   memcpy(to, from, param_data > length ? length : len);
   return from+len;
+}
+
+
+const unsigned char *Field::unpack(unsigned char* to,
+                                   const unsigned char *from)
+{
+  const unsigned char *result= unpack(to, from, 0U,
+                                      table->s->db_low_byte_first);
+  return(result);
+}
+
+
+uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
+{
+  return length;
+}
+
+
+int Field::pack_cmp(const unsigned char *a, const unsigned char *b,
+                    uint32_t, bool)
+{
+  return cmp(a,b);
+}
+
+
+int Field::pack_cmp(const unsigned char *b, uint32_t, bool)
+{
+  return cmp(ptr,b);
 }
 
 
@@ -1084,92 +1346,6 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
   return tmp;
 }
 
-
-/*
-  Report "not well formed" or "cannot convert" error
-  after storing a character string info a field.
-
-  SYNOPSIS
-    check_string_copy_error()
-    field                    - Field
-    well_formed_error_pos    - where not well formed data was first met
-    cannot_convert_error_pos - where a not-convertable character was first met
-    end                      - end of the string
-    cs                       - character set of the string
-
-  NOTES
-    As of version 5.0 both cases return the same error:
-
-      "Invalid string value: 'xxx' for column 't' at row 1"
-
-  Future versions will possibly introduce a new error message:
-
-      "Cannot convert character string: 'xxx' for column 't' at row 1"
-
-  RETURN
-    false - If errors didn't happen
-    true  - If an error happened
-*/
-
-bool
-check_string_copy_error(Field_str *field,
-                        const char *well_formed_error_pos,
-                        const char *cannot_convert_error_pos,
-                        const char *end,
-                        const CHARSET_INFO * const cs)
-{
-  const char *pos, *end_orig;
-  char tmp[64], *t;
-  
-  if (!(pos= well_formed_error_pos) &&
-      !(pos= cannot_convert_error_pos))
-    return false;
-
-  end_orig= end;
-  set_if_smaller(end, pos + 6);
-
-  for (t= tmp; pos < end; pos++)
-  {
-    /*
-      If the source string is ASCII compatible (mbminlen==1)
-      and the source character is in ASCII printable range (0x20..0x7F),
-      then display the character as is.
-      
-      Otherwise, if the source string is not ASCII compatible (e.g. UCS2),
-      or the source character is not in the printable range,
-      then print the character using HEX notation.
-    */
-    if (((unsigned char) *pos) >= 0x20 &&
-        ((unsigned char) *pos) <= 0x7F &&
-        cs->mbminlen == 1)
-    {
-      *t++= *pos;
-    }
-    else
-    {
-      *t++= '\\';
-      *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *pos) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *pos) & 15];
-    }
-  }
-  if (end_orig > end)
-  {
-    *t++= '.';
-    *t++= '.';
-    *t++= '.';
-  }
-  *t= '\0';
-  push_warning_printf(field->table->in_use, 
-                      field->table->in_use->abort_on_warning ?
-                      DRIZZLE_ERROR::WARN_LEVEL_ERROR :
-                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                      ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
-                      ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
-                      "string", tmp, field->field_name,
-                      (uint32_t) field->table->in_use->row_count);
-  return true;
-}
 
 uint32_t Field::is_equal(Create_field *new_field)
 {
@@ -1514,7 +1690,7 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
                                               Field::NONE));
     }
     break;
-  case DRIZZLE_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_DATE:
     length= 10;
     break;
   case DRIZZLE_TYPE_TIME:
@@ -1582,7 +1758,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_TINY	: return 1;
-  case DRIZZLE_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIME:   return 3;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_LONG	: return 4;
@@ -1633,7 +1809,7 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
   }
 
   switch (field_type) {
-  case DRIZZLE_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
@@ -1704,8 +1880,8 @@ Field *make_field(TABLE_SHARE *share, unsigned char *ptr, uint32_t field_length,
     return new Field_timestamp(ptr,field_length, null_pos, null_bit,
                                unireg_check, field_name, share,
                                field_charset);
-  case DRIZZLE_TYPE_NEWDATE:
-    return new Field_newdate(ptr,null_pos,null_bit,
+  case DRIZZLE_TYPE_DATE:
+    return new Field_date(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);
   case DRIZZLE_TYPE_TIME:
     return new Field_time(ptr,null_pos,null_bit,
@@ -1934,3 +2110,4 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
                                  field_name);
   }
 }
+

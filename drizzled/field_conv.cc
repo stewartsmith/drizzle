@@ -26,6 +26,28 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <drizzled/table.h>
+#include <drizzled/session.h>
+
+#include <drizzled/field/str.h>
+#include <drizzled/field/longstr.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/blob.h>
+#include <drizzled/field/enum.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/real.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/num.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
+
 
 static void do_field_eq(Copy_field *copy)
 {
@@ -638,7 +660,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_NEWDATE) || to->type() == DRIZZLE_TYPE_DATETIME))
+          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_DATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
 	if (from->real_type() == DRIZZLE_TYPE_ENUM)
 	  if (to->result_type() != STRING_RESULT)
@@ -730,7 +752,7 @@ int field_conv(Field *to,Field *from)
         (to->real_type() != DRIZZLE_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_NEWDATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
+        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) && 
         (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
 #ifdef HAVE_purify

@@ -32,6 +32,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_sort.h>
+#include <drizzled/session.h>
 #include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
@@ -75,7 +76,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   */
   max_elements= (ulong) (max_in_memory_size /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+size));
-  open_cached_file(&file, mysql_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
+  open_cached_file(&file, drizzle_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
                    MYF(MY_WME));
 }
 
@@ -615,7 +616,7 @@ bool Unique::get(Table *table)
   outfile=table->sort.io_cache=(IO_CACHE*) my_malloc(sizeof(IO_CACHE),
                                 MYF(MY_ZEROFILL));
 
-  if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,mysql_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
+  if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
     return 1;
   reinit_io_cache(outfile,WRITE_CACHE,0L,0,0);
 

@@ -33,11 +33,12 @@
 #define DRIZZLED_LOG_EVENT_H
 
 
-#include <string>
 #include <mysys/my_bitmap.h>
-#include "rpl_constants.h"
-#include "rpl_record.h"
-#include "rpl_reporting.h"
+#include <drizzled/replication/constants.h>
+#include <drizzled/replication/record.h>
+#include <drizzled/replication/reporting.h>
+#include <drizzled/session.h>
+#include <string>
 
 #include <drizzled/sql_string.h>       /* append_query_string() needs String declaration */
 
@@ -282,24 +283,6 @@ struct sql_ex_info
 #define Q_DATA_OFFSET		QUERY_HEADER_LEN
 /* these are codes, not offsets; not more than 256 values (1 byte). */
 #define Q_FLAGS2_CODE           0
-#define Q_SQL_MODE_CODE         1
-/*
-  Q_CATALOG_CODE is catalog with end zero stored; it is used only by MySQL
-  5.0.x where 0<=x<=3. We have to keep it to be able to replicate these
-  old masters.
-*/
-#define Q_CATALOG_CODE          2
-#define Q_AUTO_INCREMENT	3
-#define Q_CHARSET_CODE          4
-#define Q_TIME_ZONE_CODE        5
-/*
-  Q_CATALOG_NZ_CODE is catalog withOUT end zero stored; it is used by MySQL
-  5.0.x where x>=4. Saves one byte in every Query_log_event in binlog,
-  compared to Q_CATALOG_CODE. The reason we didn't simply re-use
-  Q_CATALOG_CODE is that then a 5.0.3 slave of this 5.0.x (x>=4) master would
-  crash (segfault etc) because it would expect a 0 when there is none.
-*/
-#define Q_CATALOG_NZ_CODE       6
 
 #define Q_LC_TIME_NAMES_CODE    7
 
@@ -801,11 +784,11 @@ public:
     constructor and pass description_event as an argument.
   */
   static Log_event* read_log_event(IO_CACHE* file,
-				   pthread_mutex_t* log_lock,
+                                   pthread_mutex_t* log_lock,
                                    const Format_description_log_event
                                    *description_event);
   static int read_log_event(IO_CACHE* file, String* packet,
-			    pthread_mutex_t* log_lock);
+                            pthread_mutex_t* log_lock);
   /*
     init_show_field_list() prepares the column names and types for the
     output of SHOW BINLOG EVENTS; it is used only by SHOW BINLOG
@@ -821,10 +804,7 @@ public:
 
   virtual void pack_info(Protocol *protocol);
 
-  virtual const char* get_db()
-  {
-    return session ? session->db : 0;
-  }
+  virtual const char* get_db();
 
   static void *operator new(size_t size)
   {
@@ -852,17 +832,7 @@ public:
   { return 0; }
   virtual bool write_data_body(IO_CACHE*)
   { return 0; }
-  inline time_t get_time()
-  {
-    Session *tmp_session;
-    if (when)
-      return when;
-    if (session)
-      return session->start_time;
-    if ((tmp_session= current_session))
-      return tmp_session->start_time;
-    return my_time(0);
-  }
+  time_t get_time();
   virtual Log_event_type get_type_code() = 0;
   virtual bool is_valid() const = 0;
   virtual bool is_artificial_event() { return 0; }
@@ -2769,7 +2739,7 @@ char *str_to_hex(char *to, const char *from, uint32_t len);
   </tr>
 
   <tr>
-    <td><i>DRIZZLE_TYPE_NEWDATE</i></td><td><i>14</i></td>
+    <td><i>DRIZZLE_TYPE_DATE</i></td><td><i>14</i></td>
     <td>&ndash;</td>
     <td><i>This enumeration value is only used internally and cannot
     exist in a binlog.</i></td>

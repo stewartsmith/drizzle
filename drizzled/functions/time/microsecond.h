@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_MICROSECOND_H
 #define DRIZZLED_FUNCTIONS_TIME_MICROSECOND_H
 
+#include <drizzled/functions/int.h>
+
 class Item_func_microsecond :public Item_int_func
 {
 public:

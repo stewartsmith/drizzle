@@ -21,3 +21,7 @@ LDADD =		$(top_builddir)/mysys/libmysys.la \
 bin_PROGRAMS =	my_print_defaults \
 		mysql_waitpid \
 		innochecksum
+
+my_print_defaults_SOURCES= my_print_defaults.cc
+mysql_waitpid_SOURCES= mysql_waitpid.cc
+innochecksum_LDADD= 

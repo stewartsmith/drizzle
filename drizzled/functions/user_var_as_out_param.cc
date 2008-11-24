@@ -20,6 +20,9 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/functions/user_var_as_out_param.h>
+#include <drizzled/session.h>
+#include <drizzled/functions/get_variable.h>
+#include <drizzled/functions/update_hash.h>
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {

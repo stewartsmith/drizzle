@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_FUNCTIONS_TIME_SYSDATE_LOCAL_H
 #define DRIZZLED_FUNCTIONS_TIME_SYSDATE_LOCAL_H
 
+#include <drizzled/functions/time/now.h>
+
 /*
   This is like NOW(), but always uses the real current time, not the
   query_start(). This matches the Oracle behavior.

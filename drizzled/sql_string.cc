@@ -1082,3 +1082,15 @@ void String::swap(String &s)
   std::swap(alloced, s.alloced);
   std::swap(str_charset, s.str_charset);
 }
+
+
+bool operator==(const String &s1, const String &s2)
+{
+  return stringcmp(&s1,&s2) == 0;
+}
+
+bool operator!=(const String &s1, const String &s2)
+{
+  return !(s1 == s2);
+}
+

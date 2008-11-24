@@ -14,9 +14,11 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/common_includes.h>
-#include <drizzled/item_func.h>
-#include <drizzled/item_strfunc.h>
+#include <drizzled/sql_udf.h>
+#include <drizzled/item/func.h>
+#include <drizzled/item/strfunc.h>
 #include <drizzled/error.h>
+#include <drizzled/sql_error.h>
 #include <zlib.h>
 
 class Item_func_compress: public Item_str_func
@@ -58,7 +60,7 @@ String *Item_func_compress::val_str(String *str)
   new_size= res->length() + res->length() / 5 + 12;
 
   // Check new_size overflow: new_size <= res->length()
-  if (((uint32_t) (new_size+5) <= res->length()) || 
+  if (((uint32_t) (new_size+5) <= res->length()) ||
       buffer.realloc((uint32_t) new_size + 4 + 1))
   {
     null_value= 1;
@@ -69,10 +71,11 @@ String *Item_func_compress::val_str(String *str)
 
   // As far as we have checked res->is_empty() we can use ptr()
   if ((err= compress(body, &new_size,
-		     (const Bytef*)res->ptr(), res->length())) != Z_OK)
+                     (const Bytef*)res->ptr(), res->length())) != Z_OK)
   {
     code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
-    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
+    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                 code, ER(code));
     null_value= 1;
     return 0;
   }

@@ -74,6 +74,10 @@
 */
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
+#include <mysys/hash.h>
+#include <mysys/thr_lock.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_base.h>
 
 /**
   @defgroup Locking Locking
@@ -86,8 +90,9 @@ extern HASH open_cache;
 #define GET_LOCK_UNLOCK         1
 #define GET_LOCK_STORE_LOCKS    2
 
-static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,uint32_t count,
-				 uint32_t flags, Table **write_locked);
+static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,
+                                   uint32_t count,
+                                   uint32_t flags, Table **write_locked);
 static int lock_external(Session *session, Table **table,uint32_t count);
 static int unlock_external(Session *session, Table **table,uint32_t count);
 static void print_lock_error(int error, const char *);
