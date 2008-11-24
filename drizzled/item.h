@@ -1566,33 +1566,6 @@ public:
 };
 
 /*
-  Class for view fields, the same as Item_direct_ref, but call fix_fields
-  of reference if it is not called yet
-*/
-class Item_direct_view_ref :public Item_direct_ref
-{
-public:
-  Item_direct_view_ref(Name_resolution_context *context_arg, Item **item,
-                  const char *table_name_arg,
-                  const char *field_name_arg)
-    :Item_direct_ref(context_arg, item, table_name_arg, field_name_arg) {}
-  /* Constructor need to process subselect with temporary tables (see Item) */
-  Item_direct_view_ref(Session *session, Item_direct_ref *item)
-    :Item_direct_ref(session, item) {}
-
-  bool fix_fields(Session *, Item **);
-  bool eq(const Item *item, bool binary_cmp) const;
-  Item *get_tmp_table_item(Session *session)
-  {
-    Item *item= Item_ref::get_tmp_table_item(session);
-    item->name= name;
-    return item;
-  }
-  virtual Ref_Type ref_type() { return VIEW_REF; }
-};
-
-
-/*
   Class for outer fields.
   An object of this class is created when the select where the outer field was
   resolved is a grouping one. After it has been fixed the ref field will point
