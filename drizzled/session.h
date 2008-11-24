@@ -2262,11 +2262,13 @@ public:
 
 /* Bits in sql_command_flags */
 
-#define CF_BIT_CHANGES_DATA       0
-#define CF_BIT_HAS_ROW_COUNT      1
-#define CF_BIT_STATUS_COMMAND     2
-#define CF_BIT_SHOW_TABLE_COMMAND 3
-#define CF_BIT_WRITE_LOGS_COMMAND 4
+enum sql_command_flag_bits {
+  CF_BIT_CHANGES_DATA,
+  CF_BIT_HAS_ROW_COUNT,
+  CF_BIT_STATUS_COMMAND,
+  CF_BIT_SHOW_TABLE_COMMAND,
+  CF_BIT_WRITE_LOGS_COMMAND
+};
 
 #define CF_CHANGES_DATA           (1 << CF_BIT_CHANGES_DATA)
 #define CF_HAS_ROW_COUNT          (1 << CF_BIT_HAS_ROW_COUNT)
