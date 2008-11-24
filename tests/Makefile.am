@@ -28,6 +28,7 @@ PRESCRIPTS =		test-run.pl stress-test.pl
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
+resolve_stack_dump_SOURCES = resolve_stack_dump.cc
 
 LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \

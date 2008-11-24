@@ -16,6 +16,8 @@
 #ifndef _my_getopt_h
 #define _my_getopt_h
 
+#include <mysys/my_sys.h>
+
 #define GET_NO_ARG     1
 #define GET_BOOL       2
 #define GET_INT        3
@@ -34,11 +36,10 @@
 #define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <mysys/my_sys.h>
 
 enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 
@@ -64,6 +65,7 @@ struct my_option
 
 typedef bool (* my_get_one_option) (int, const struct my_option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
+typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct my_option *);
 
 extern char *disabled_my_option;
 extern bool my_getopt_print_errors;
@@ -75,8 +77,7 @@ extern int handle_options (int *argc, char ***argv,
 extern void my_cleanup_options(const struct my_option *options);
 extern void my_print_help(const struct my_option *options);
 extern void my_print_variables(const struct my_option *options);
-extern void my_getopt_register_get_addr(char ** (*func_addr)(const char *, uint,
-                                                             const struct my_option *));
+extern void my_getopt_register_get_addr(getopt_get_addr_func func_addr);
 
 uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix);
