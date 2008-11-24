@@ -232,7 +232,7 @@ uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
 
   char *p= my_stpncpy(buff, drizzle_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%"PRIx64"_%x%s",
-           TMP_FILE_PREFIX, current_pid,
+           TMP_FILE_PREFIX, (unsigned long)current_pid,
            session->thread_id, session->tmp_table++, reg_ext);
 
   if (lower_case_table_names)
@@ -2311,7 +2311,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     goto end;				// Can't use USE_FRM flag
 
   snprintf(tmp, sizeof(tmp), "%s-%lx_%"PRIx64,
-           from, current_pid, session->thread_id);
+           from, (unsigned long)current_pid, session->thread_id);
 
   /* If we could open the table, close it */
   if (table_list->table)
@@ -3772,7 +3772,7 @@ Table *create_altered_table(Session *session,
   char path[FN_REFLEN];
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64,
-           TMP_FILE_PREFIX, current_pid, session->thread_id);
+           TMP_FILE_PREFIX, (unsigned long)current_pid, session->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -4810,7 +4810,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   }
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX,
-           current_pid, session->thread_id);
+           (unsigned long)current_pid, session->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -4933,7 +4933,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
 
   session->set_proc_info("rename result table");
   snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX,
-           current_pid, session->thread_id);
+           (unsigned long)current_pid, session->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);
 

@@ -1362,7 +1362,6 @@ public:
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
-  LEX_SERVER_OPTIONS server_options;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,

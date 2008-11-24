@@ -335,7 +335,7 @@ ulong binlog_cache_disk_use= 0;
 ulong max_connections;
 ulong max_connect_errors;
 ulong thread_id=1L;
-ulong current_pid;
+pid_t current_pid;
 ulong slow_launch_threads = 0;
 ulong sync_binlog_period;
 ulong expire_logs_days = 0;
