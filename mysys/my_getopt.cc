@@ -100,10 +100,9 @@ static void default_reporter(enum loglevel level,
   one. Call function 'get_one_option()' once for each option.
 */
 
-static char** (*getopt_get_addr)(const char *, uint, const struct my_option *);
+static getopt_get_addr_func getopt_get_addr;
 
-void my_getopt_register_get_addr(char** (*func_addr)(const char *, uint,
-						    const struct my_option *))
+void my_getopt_register_get_addr(getopt_get_addr_func func_addr)
 {
   getopt_get_addr= func_addr;
 }

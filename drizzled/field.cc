@@ -2096,7 +2096,7 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t co
 */
 
 void 
-Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint32_t code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, const uint32_t code, 
                             double nr, enum enum_drizzle_timestamp_type ts_type)
 {
   Session *session= table ? table->in_use : current_session;

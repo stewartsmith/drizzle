@@ -4399,11 +4399,11 @@ drizzled_get_one_option(int optid,
 /** Handle arguments for multiple key caches. */
 
 extern "C" char **drizzle_getopt_value(const char *keyname, uint32_t key_length,
-                                      const struct my_option *option);
+                                       const struct my_option *option);
 
 char**
 drizzle_getopt_value(const char *keyname, uint32_t key_length,
-		   const struct my_option *option)
+		    const struct my_option *option)
 {
   switch (option->id) {
   case OPT_KEY_BUFFER_SIZE:
