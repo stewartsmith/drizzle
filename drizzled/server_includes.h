@@ -232,7 +232,7 @@ extern struct my_option my_long_options[];
 extern const LEX_STRING view_type;
 extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
-extern std::bitset<32> sql_command_flags[];
+extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
 
 /* optional things, have_* variables */

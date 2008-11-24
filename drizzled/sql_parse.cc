@@ -32,6 +32,9 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
+#include <bitset>
+
+using namespace std;
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -164,7 +167,7 @@ static bool some_non_temp_table_to_be_updated(Session *session, TableList *table
           a number of modified rows
 */
 
-std::bitset<32> sql_command_flags[SQLCOM_END+1];
+bitset<CF_BIT_SIZE> sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
