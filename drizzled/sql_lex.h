@@ -1468,9 +1468,6 @@ public:
   void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
 
-  bool can_be_merged();
-  bool can_use_merged();
-  bool can_not_use_merged();
   bool only_view_structure();
   bool need_correct_ident();
 
