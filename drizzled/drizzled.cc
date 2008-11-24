@@ -267,7 +267,7 @@ bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
-bool opt_using_transactions, using_update_log;
+bool opt_using_transactions;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
@@ -2190,12 +2190,6 @@ static int init_server_components()
     {
       unireg_abort(1);
     }
-
-    /*
-      Used to specify which type of lock we need to use for queries of type
-      INSERT ... SELECT. This will change when we have row level logging.
-    */
-    using_update_log=1;
   }
 
   /* call ha_init_key_cache() on all key caches to init them */
@@ -4010,7 +4004,7 @@ static void drizzle_init_variables(void)
   thread_count= thread_running= wake_thread=0;
   slave_open_temp_tables= 0;
   opt_endinfo= using_udf_functions= 0;
-  opt_using_transactions= using_update_log= 0;
+  opt_using_transactions= false;
   abort_loop= select_thread_in_use= signal_thread_in_use= 0;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
