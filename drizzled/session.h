@@ -2262,11 +2262,17 @@ public:
 
 /* Bits in sql_command_flags */
 
-#define CF_CHANGES_DATA		1
-#define CF_HAS_ROW_COUNT	2
-#define CF_STATUS_COMMAND	4
-#define CF_SHOW_TABLE_COMMAND	8
-#define CF_WRITE_LOGS_COMMAND  16
+#define CF_BIT_CHANGES_DATA       0
+#define CF_BIT_HAS_ROW_COUNT      1
+#define CF_BIT_STATUS_COMMAND     2
+#define CF_BIT_SHOW_TABLE_COMMAND 3
+#define CF_BIT_WRITE_LOGS_COMMAND 4
+
+#define CF_CHANGES_DATA           (1 << CF_BIT_CHANGES_DATA)
+#define CF_HAS_ROW_COUNT          (1 << CF_BIT_HAS_ROW_COUNT)
+#define CF_STATUS_COMMAND         (1 << CF_BIT_STATUS_COMMAND)
+#define CF_SHOW_TABLE_COMMAND     (1 << CF_BIT_SHOW_TABLE_COMMAND)
+#define CF_WRITE_LOGS_COMMAND     (1 << CF_BIT_WRITE_LOGS_COMMAND)
 
 /* Functions in sql_class.cc */
 
