@@ -243,7 +243,6 @@ static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                fix_max_relay_log_size);
 static sys_var_session_ulong	sys_max_sort_length(&vars, "max_sort_length",
 					    &SV::max_sort_length);
-static sys_var_max_user_conn   sys_max_user_connections(&vars, "max_user_connections");
 static sys_var_session_ulong	sys_max_tmp_tables(&vars, "max_tmp_tables",
 					   &SV::max_tmp_tables);
 static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
@@ -2157,51 +2156,6 @@ void sys_var_session_time_zone::set_default(Session *session, enum_var_type type
  else
    session->variables.time_zone= global_system_variables.time_zone;
  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-bool sys_var_max_user_conn::check(Session *session, set_var *var)
-{
-  if (var->type == OPT_GLOBAL)
-    return sys_var_session::check(session, var);
-  else
-  {
-    /*
-      Per-session values of max_user_connections can't be set directly.
-      May be we should have a separate error message for this?
-    */
-    my_error(ER_GLOBAL_VARIABLE, MYF(0), name);
-    return true;
-  }
-}
-
-bool sys_var_max_user_conn::update(Session *, set_var *var)
-{
-  assert(var->type == OPT_GLOBAL);
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  max_user_connections= (uint)var->save_result.uint64_t_value;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return 0;
-}
-
-
-void sys_var_max_user_conn::set_default(Session *, enum_var_type type)
-{
-  assert(type == OPT_GLOBAL);
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  max_user_connections= (ulong) option_limits->def_value;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-unsigned char *sys_var_max_user_conn::value_ptr(Session *session,
-                                                enum_var_type type,
-                                                LEX_STRING *)
-{
-  if (type != OPT_GLOBAL &&
-      session->user_connect && session->user_connect->user_resources.user_conn)
-    return (unsigned char*) &(session->user_connect->user_resources.user_conn);
-  return (unsigned char*) &(max_user_connections);
 }
 
 

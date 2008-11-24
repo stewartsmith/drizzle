@@ -1023,24 +1023,6 @@ public:
 };
 
 
-class sys_var_max_user_conn : public sys_var_session
-{
-public:
-  sys_var_max_user_conn(sys_var_chain *chain, const char *name_arg):
-    sys_var_session(name_arg)
-  { chain_sys_var(chain); }
-  bool check(Session *session, set_var *var);
-  bool update(Session *session, set_var *var);
-  bool check_default(enum_var_type type)
-  {
-    return type != OPT_GLOBAL || !option_limits;
-  }
-  void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_INT; }
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-};
-
-
 class sys_var_microseconds :public sys_var_session
 {
   uint64_t SV::*offset;
