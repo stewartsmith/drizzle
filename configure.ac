@@ -529,12 +529,12 @@ then
 fi
 AC_MSG_RESULT("$wthval")
 
-AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+AC_CACHE_CHECK([for Message in libprotobuf], ac_cv_libprotobuf_works, [
   AC_TRY_LINK([
 #include <google/protobuf/descriptor.pb.h>
   ],[
     google::protobuf::FileDescriptorProto testFdp;
-  ], ac_libprotobuf_works=yes, [
+  ], ac_cv_libprotobuf_works=yes, [
         AC_MSG_ERROR([could not find Google's libprotobuf])
   ])
 
