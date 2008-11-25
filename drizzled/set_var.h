@@ -397,10 +397,10 @@ public:
 
 class sys_var_enum_const :public sys_var
 {
-  ulong SV::*offset;
+  uint32_t SV::*offset;
   TYPELIB *enum_names;
 public:
-  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, ulong SV::*offset_arg,
+  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, uint32_t SV::*offset_arg,
       TYPELIB *typelib, sys_after_update_func func)
     :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
   { chain_sys_var(chain); }
@@ -821,70 +821,6 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
 };
-
-
-class sys_var_set :public sys_var
-{
-protected:
-  ulong *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_set(sys_var_chain *chain, const char *name_arg, ulong *value_arg,
-              TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg, func), value(value_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  virtual bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  virtual void set_default(Session *session __attribute__((unused)),
-                           enum_var_type type __attribute__((unused)))
-  {
-    *value= 0;
-  }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
-  { return 0; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-};
-
-class sys_var_set_slave_mode :public sys_var_set
-{
-public:
-  sys_var_set_slave_mode(sys_var_chain *chain, const char *name_arg,
-                         ulong *value_arg,
-                         TYPELIB *typelib, sys_after_update_func func) :
-    sys_var_set(chain, name_arg, value_arg, typelib, func) {}
-  void set_default(Session *session, enum_var_type type);
-  bool check(Session *session, set_var *var);
-  bool update(Session *session, set_var *var);
-};
-
-class sys_var_log_output :public sys_var
-{
-  ulong *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_log_output(sys_var_chain *chain, const char *name_arg, ulong *value_arg,
-                     TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
-  {
-    chain_sys_var(chain);
-    set_allow_empty_value(false);
-  }
-  virtual bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
-  { return 0; }
-  void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-};
-
 
 /* Variable that you can only read from */
 

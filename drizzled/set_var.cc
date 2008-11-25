@@ -325,11 +325,6 @@ static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_p
 						      &opt_slave_compressed_protocol);
 static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
                                                          &slave_allow_batching);
-static sys_var_set_slave_mode slave_exec_mode(&vars,
-                                              "slave_exec_mode",
-                                              &slave_exec_mode_options,
-                                              &slave_exec_mode_typelib,
-                                              0);
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
                                              &slow_launch_time);
 static sys_var_session_uint64_t	sys_sort_buffer(&vars, "sort_buffer_size",
@@ -720,65 +715,6 @@ extern void fix_delay_key_write(Session *, enum_var_type)
     ha_open_options|= HA_OPEN_DELAY_KEY_WRITE;
     break;
   }
-}
-
-bool sys_var_set::update(Session *, set_var *var)
-{
-  *value= var->save_result.uint32_t_value;
-  return 0;
-}
-
-unsigned char *sys_var_set::value_ptr(Session *session,
-                              enum_var_type,
-                              LEX_STRING *)
-{
-  char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  ulong length;
-  ulong val= *value;
-
-  tmp.length(0);
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(enum_names->type_names[i],
-                 enum_names->type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if ((length= tmp.length()))
-    length--;
-  return (unsigned char*) session->strmake(tmp.ptr(), length);
-}
-
-void sys_var_set_slave_mode::set_default(Session *, enum_var_type)
-{
-  slave_exec_mode_options= 0;
-  bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
-}
-
-bool sys_var_set_slave_mode::check(Session *session, set_var *var)
-{
-  bool rc=  sys_var_set::check(session, var);
-  if (!rc &&
-      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_STRICT) == 1 &&
-      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
-  {
-    rc= true;
-    my_error(ER_SLAVE_AMBIGOUS_EXEC_MODE, MYF(0), "");
-  }
-  return rc;
-}
-
-bool sys_var_set_slave_mode::update(Session *session, set_var *var)
-{
-  bool rc;
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  rc= sys_var_set::update(session, var);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return rc;
 }
 
 void fix_slave_exec_mode(enum_var_type)
@@ -1425,7 +1361,7 @@ bool sys_var_session_enum::update(Session *session, set_var *var)
 void sys_var_session_enum::set_default(Session *session, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
-    global_system_variables.*offset= (ulong) option_limits->def_value;
+    global_system_variables.*offset= (uint32_t) option_limits->def_value;
   else
     session->variables.*offset= global_system_variables.*offset;
 }
@@ -1435,7 +1371,7 @@ unsigned char *sys_var_session_enum::value_ptr(Session *session,
                                                enum_var_type type,
                                                LEX_STRING *)
 {
-  ulong tmp= ((type == OPT_GLOBAL) ?
+  uint32_t tmp= ((type == OPT_GLOBAL) ?
 	      global_system_variables.*offset :
 	      session->variables.*offset);
   return (unsigned char*) enum_names->type_names[tmp];
@@ -1930,52 +1866,6 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
 
 err:
   return result;
-}
-
-
-bool sys_var_log_output::update(Session *, set_var *var)
-{
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.lock_exclusive();
-  *value= var->save_result.uint32_t_value;
-  logger.unlock();
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return 0;
-}
-
-
-void sys_var_log_output::set_default(Session *, enum_var_type)
-{
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.lock_exclusive();
-  *value= LOG_FILE;
-  logger.unlock();
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-unsigned char *sys_var_log_output::value_ptr(Session *session,
-                                             enum_var_type, LEX_STRING *)
-{
-  char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  ulong length;
-  ulong val= *value;
-
-  tmp.length(0);
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(log_output_typelib.type_names[i],
-                 log_output_typelib.type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if ((length= tmp.length()))
-    length--;
-  return (unsigned char*) session->strmake(tmp.ptr(), length);
 }
 
 
