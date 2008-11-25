@@ -1189,15 +1189,6 @@ public:
     // it is constant => can be used without fix_fields (and frequently used)
     fixed= 1;
   }
-  /*
-    This is used in stored procedures to avoid memory leaks and
-    does a deep copy of its argument.
-  */
-  void set_str_with_copy(const char *str_arg, uint32_t length_arg)
-  {
-    str_value.copy(str_arg, length_arg, collation.collation);
-    max_length= str_value.numchars() * collation.collation->mbmaxlen;
-  }
   void set_repertoire_from_value()
   {
     collation.repertoire= my_string_repertoire(str_value.charset(),

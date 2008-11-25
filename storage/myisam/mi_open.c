@@ -200,8 +200,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       mi_safe_mul(MI_MIN_KEY_BLOCK_LENGTH,
 		  ((uint64_t) 1 << (share->base.key_reflength*8))-1);
 #if SIZEOF_OFF_T == 4
-    set_if_smaller(max_data_file_length, INT_MAX32);
-    set_if_smaller(max_key_file_length, INT_MAX32);
+    set_if_smaller(max_data_file_length, INT32_MAX);
+    set_if_smaller(max_key_file_length, INT32_MAX);
 #endif
     if (share->base.raid_type)
     {

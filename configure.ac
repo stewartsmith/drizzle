@@ -301,6 +301,13 @@ fi
 DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
+AH_TOP([
+#ifdef _FILE_OFFSET_BITS
+# undef _FILE_OFFSET_BITS
+#endif
+])
+AC_SYS_LARGEFILE
+
 AC_PROG_AWK
 
 if test "$ac_cv_c_compiler_gnu" = "yes"
@@ -529,12 +536,12 @@ then
 fi
 AC_MSG_RESULT("$wthval")
 
-AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+AC_CACHE_CHECK([for Message in libprotobuf], ac_cv_libprotobuf_works, [
   AC_TRY_LINK([
 #include <google/protobuf/descriptor.pb.h>
   ],[
     google::protobuf::FileDescriptorProto testFdp;
-  ], ac_libprotobuf_works=yes, [
+  ], ac_cv_libprotobuf_works=yes, [
         AC_MSG_ERROR([could not find Google's libprotobuf])
   ])
 
@@ -908,9 +915,6 @@ then
 else
   AC_MSG_RESULT([no])
 fi
-
-AC_SYS_LARGEFILE
-AC_FUNC_FSEEKO
 
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T

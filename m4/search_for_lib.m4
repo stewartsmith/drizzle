@@ -30,10 +30,10 @@ AC_DEFUN([SEARCH_FOR_LIB],
     AS_IF([test AS_VAR_GET([ac_header]) = "$3" -a AS_VAR_GET([ac_lib]) = yes],
       [AS_VAR_SET([have_lib],[yes])],
       [AS_VAR_SET([have_lib],[no])
-       AS_VAR_SET([with_lib],[AS_VAR_GET([with_lib]) /usr/local /opt/csw])
+       AS_VAR_SET([with_lib],["AS_VAR_GET([with_lib]) /usr/local /opt/csw"])
       ])
   ])
-  AS_IF([test AS_VAR_GET([with_lib]) != yes],[
+  AS_IF([test "AS_VAR_GET([with_lib])" != yes],[
    AC_MSG_CHECKING(for $1 in $withval)
    for libloc in AS_VAR_GET([with_lib])
    do
@@ -42,14 +42,14 @@ AC_DEFUN([SEARCH_FOR_LIB],
       owd=`pwd`
       if cd $libloc; then libloc=`pwd`; cd $owd; fi
       AS_VAR_SET([cppflags_var],[-I$libloc])
-      AS_VAR_SET([libs_var],[-L$libloc -l$1])
+      AS_VAR_SET([libs_var],["-L$libloc -l$1"])
       AS_VAR_SET([have_lib],[yes])
       break
     elif test -f $libloc/include/$3 -a -f $libloc/lib/lib$1.a; then
       owd=`pwd`
       if cd $libloc; then libloc=`pwd`; cd $owd; fi
       AS_VAR_SET([cppflags_var],[-I$libloc/include])
-      AS_VAR_SET([libs_var],[-L$libloc/lib -l$1])
+      AS_VAR_SET([libs_var],["-L$libloc/lib -l$1"])
       AS_VAR_SET([have_lib],[yes])
       break
     else
