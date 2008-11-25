@@ -140,11 +140,11 @@ static unsigned char *get_tmpdir(Session *session);
 
 static sys_var_chain vars = { NULL, NULL };
 
-static sys_var_session_ulong
+static sys_var_session_uint32_t
 sys_auto_increment_increment(&vars, "auto_increment_increment",
                              &SV::auto_increment_increment, NULL, NULL,
                              sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_session_ulong
+static sys_var_session_uint32_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &SV::auto_increment_offset, NULL, NULL,
                           sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -187,46 +187,46 @@ sys_var_str             sys_init_connect(&vars, "init_connect", 0,
 sys_var_str             sys_init_slave(&vars, "init_slave", 0,
                                        sys_update_init_slave,
                                        sys_default_init_slave,0);
-static sys_var_session_ulong	sys_interactive_timeout(&vars, "interactive_timeout",
-						&SV::net_interactive_timeout);
-static sys_var_session_ulong	sys_join_buffer_size(&vars, "join_buffer_size",
-					     &SV::join_buff_size);
+static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_timeout",
+                                                        &SV::net_interactive_timeout);
+static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
+                                                     &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
 static sys_var_key_cache_long  sys_key_cache_block_size(&vars, "key_cache_block_size",
-						 offsetof(KEY_CACHE,
-							  param_block_size));
+                                                        offsetof(KEY_CACHE,
+                                                                 param_block_size));
 static sys_var_key_cache_long	sys_key_cache_division_limit(&vars, "key_cache_division_limit",
-						     offsetof(KEY_CACHE,
-							      param_division_limit));
+                                                           offsetof(KEY_CACHE,
+                                                                    param_division_limit));
 static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
-						     offsetof(KEY_CACHE,
-							      param_age_threshold));
+                                                           offsetof(KEY_CACHE,
+                                                                    param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
-					 &opt_local_infile);
+                                         &opt_local_infile);
 static sys_var_session_bool	sys_low_priority_updates(&vars, "low_priority_updates",
-						 &SV::low_priority_updates,
-						 fix_low_priority_updates);
+                                                     &SV::low_priority_updates,
+                                                     fix_low_priority_updates);
 #ifndef TO_BE_DELETED	/* Alias for the low_priority_updates */
 static sys_var_session_bool	sys_sql_low_priority_updates(&vars, "sql_low_priority_updates",
-						     &SV::low_priority_updates,
-						     fix_low_priority_updates);
+                                                         &SV::low_priority_updates,
+                                                         fix_low_priority_updates);
 #endif
-static sys_var_session_ulong	sys_max_allowed_packet(&vars, "max_allowed_packet",
-					       &SV::max_allowed_packet);
+static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
+                                                       &SV::max_allowed_packet);
 static sys_var_long_ptr	sys_max_binlog_cache_size(&vars, "max_binlog_cache_size",
-						  &max_binlog_cache_size);
+                                                  &max_binlog_cache_size);
 static sys_var_long_ptr	sys_max_binlog_size(&vars, "max_binlog_size",
-					    &max_binlog_size,
+                                            &max_binlog_size,
                                             fix_max_binlog_size);
 static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
-					    &max_connections,
+                                            &max_connections,
                                             fix_max_connections);
 static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
-					       &max_connect_errors);
-static sys_var_session_ulong	sys_max_error_count(&vars, "max_error_count",
-					    &SV::max_error_count);
+                                               &max_connect_errors);
+static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
+                                                  &SV::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
-						&SV::max_heap_table_size);
+                                                        &SV::max_heap_table_size);
 static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               &SV::pseudo_thread_id,
                                               0, check_pseudo_thread_id,
@@ -257,27 +257,27 @@ static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats
                                                 &SV::myisam_stats_method,
                                                 &myisam_stats_method_typelib,
                                                 NULL);
-static sys_var_session_ulong	sys_net_buffer_length(&vars, "net_buffer_length",
-					      &SV::net_buffer_length);
-static sys_var_session_ulong	sys_net_read_timeout(&vars, "net_read_timeout",
-					     &SV::net_read_timeout,
-					     0, fix_net_read_timeout);
-static sys_var_session_ulong	sys_net_write_timeout(&vars, "net_write_timeout",
-					      &SV::net_write_timeout,
-					      0, fix_net_write_timeout);
-static sys_var_session_ulong	sys_net_retry_count(&vars, "net_retry_count",
-					    &SV::net_retry_count,
-					    0, fix_net_retry_count);
+static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
+                                                      &SV::net_buffer_length);
+static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
+                                                     &SV::net_read_timeout,
+                                                     0, fix_net_read_timeout);
+static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout",
+                                                      &SV::net_write_timeout,
+                                                      0, fix_net_write_timeout);
+static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
+                                                    &SV::net_retry_count,
+                                                    0, fix_net_retry_count);
 static sys_var_session_bool	sys_new_mode(&vars, "new", &SV::new_mode);
 static sys_var_bool_ptr_readonly sys_old_mode(&vars, "old",
-                                       &global_system_variables.old_mode);
+                                              &global_system_variables.old_mode);
 /* these two cannot be static */
 sys_var_session_bool                sys_old_alter_table(&vars, "old_alter_table",
-                                            &SV::old_alter_table);
+                                                        &SV::old_alter_table);
 static sys_var_session_ulong        sys_optimizer_prune_level(&vars, "optimizer_prune_level",
-                                                  &SV::optimizer_prune_level);
+                                                              &SV::optimizer_prune_level);
 static sys_var_session_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",
-                                                   &SV::optimizer_search_depth);
+                                                               &SV::optimizer_search_depth);
 
 const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
 TYPELIB optimizer_use_mrr_typelib= {
@@ -372,8 +372,8 @@ static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_mac
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
                                                SYSTEM_TYPE);
-static sys_var_session_ulong	sys_net_wait_timeout(&vars, "wait_timeout",
-					     &SV::net_wait_timeout);
+static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
+                                                     &SV::net_wait_timeout);
 
 /* Condition pushdown to storage engine */
 static sys_var_session_bool

@@ -2058,7 +2058,7 @@ requesting master dump")) ||
         switch (drizzle_error_number) {
         case CR_NET_PACKET_TOO_LARGE:
           sql_print_error(_("Log entry on master is longer than "
-                            "max_allowed_packet (%ld) on "
+                            "max_allowed_packet (%u) on "
                             "slave. If the entry is correct, restart the "
                             "server with a higher value of "
                             "max_allowed_packet"),
