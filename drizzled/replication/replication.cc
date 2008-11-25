@@ -18,7 +18,8 @@
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/replication.h>
 #include <drizzled/log_event.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
@@ -1336,8 +1337,6 @@ bool show_binlog_info(Session* session)
   field_list.push_back(new Item_empty_string("File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Position",20,
 					   DRIZZLE_TYPE_LONGLONG));
-  field_list.push_back(new Item_empty_string("Binlog_Do_DB",255));
-  field_list.push_back(new Item_empty_string("Binlog_Ignore_DB",255));
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
@@ -1351,8 +1350,6 @@ bool show_binlog_info(Session* session)
     int dir_len = dirname_length(li.log_file_name);
     protocol->store(li.log_file_name + dir_len, &my_charset_bin);
     protocol->store((uint64_t) li.pos);
-    protocol->store(binlog_filter->get_do_db());
-    protocol->store(binlog_filter->get_ignore_db());
     if (protocol->write())
       return(true);
   }

@@ -24,7 +24,8 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
@@ -4288,8 +4289,7 @@ static bool check_table_binlog_row_based(Session *session, Table *table)
 {
   if (table->s->cached_row_logging_check == -1)
   {
-    int const check(table->s->tmp_table == NO_TMP_TABLE &&
-                    binlog_filter->db_ok(table->s->db.str));
+    int const check(table->s->tmp_table == NO_TMP_TABLE);
     table->s->cached_row_logging_check= check;
   }
 

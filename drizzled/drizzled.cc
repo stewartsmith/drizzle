@@ -29,7 +29,8 @@
 #include <drizzled/slave.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
@@ -411,8 +412,6 @@ FILE *stderror_file=0;
 
 I_List<Session> threads;
 I_List<NAMED_LIST> key_caches;
-Rpl_filter* rpl_filter;
-Rpl_filter* binlog_filter;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
@@ -827,8 +826,6 @@ void clean_up(bool print_message)
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
-  delete binlog_filter;
-  delete rpl_filter;
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
@@ -1843,13 +1840,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= my_time(0);
-  rpl_filter= new Rpl_filter;
-  binlog_filter= new Rpl_filter;
-  if (!rpl_filter || !binlog_filter)
-  {
-    sql_perror("Could not allocate replication and binlog filters");
-    exit(1);
-  }
 
   if (init_thread_environment())
     return 1;
@@ -2717,17 +2707,14 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
   OPT_MASTER_INFO_FILE,
   OPT_MASTER_RETRY_COUNT,      OPT_LOG_TC, OPT_LOG_TC_SIZE,
-  OPT_SQL_BIN_UPDATE_SAME,     OPT_REPLICATE_DO_DB,
-  OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
-  OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
+  OPT_SQL_BIN_UPDATE_SAME,
+  OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
-  OPT_REPLICATE_REWRITE_DB,    OPT_SERVER_ID,
+  OPT_SERVER_ID,
   OPT_SKIP_SLAVE_START,
-  OPT_REPLICATE_DO_TABLE,
-  OPT_REPLICATE_IGNORE_TABLE,  OPT_REPLICATE_WILD_DO_TABLE,
-  OPT_REPLICATE_WILD_IGNORE_TABLE, OPT_REPLICATE_SAME_SERVER_ID,
+  OPT_REPLICATE_SAME_SERVER_ID,
   OPT_DISCONNECT_SLAVE_EVENT_COUNT, OPT_TC_HEURISTIC_RECOVER,
   OPT_ABORT_SLAVE_EVENT_COUNT,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -2858,14 +2845,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-do-db", OPT_BINLOG_DO_DB,
-   N_("Tells the master it should log updates for the specified database, and "
-      "exclude all others not explicitly mentioned."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-ignore-db", OPT_BINLOG_IGNORE_DB,
-   N_("Tells the master that updates to the given database should not "
-      "be logged tothe binary log."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
    N_("The maximum size of a row-based binary log event in bytes. Rows will "
       "be grouped into events smaller than this size if possible. "
@@ -3100,38 +3079,6 @@ struct my_option my_long_options[] =
       "replication thread is in the relay logs."),
    (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-do-db", OPT_REPLICATE_DO_DB,
-   N_("Tells the slave thread to restrict replication to the specified "
-      "database. To specify more than one database, use the directive "
-      "multiple times, once for each database. Note that this will only work "
-      "if you do not use cross-database queries such as UPDATE "
-      "some_db.some_table SET foo='bar' while having selected a different or "
-      "no database. If you need cross database updates to work, use "
-      "replicate-wild-do-table=db_name.%."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-do-table", OPT_REPLICATE_DO_TABLE,
-   N_("Tells the slave thread to restrict replication to the specified table. "
-      "To specify more than one table, use the directive multiple times, once "
-      "for each table. This will work for cross-database updates, in contrast "
-      "to replicate-do-db."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-ignore-db", OPT_REPLICATE_IGNORE_DB,
-   N_("Tells the slave thread to not replicate to the specified database. To "
-      "specify more than one database to ignore, use the directive multiple "
-      "times, once for each database. This option will not work if you use "
-      "cross database updates. If you need cross database updates to work, "
-      "use replicate-wild-ignore-table=db_name.%. "),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-ignore-table", OPT_REPLICATE_IGNORE_TABLE,
-   N_("Tells the slave thread to not replicate to the specified table. To "
-      "specify more than one table to ignore, use the directive multiple "
-      "times, once for each table. This will work for cross-datbase updates, "
-      "in contrast to replicate-ignore-db."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-rewrite-db", OPT_REPLICATE_REWRITE_DB,
-   N_("Updates to a database with a different name than the original. "
-      "Example: replicate-rewrite-db=master_db_name->slave_db_name."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
    N_("In replication, if set to 1, do not skip events having our server id. "
       "Default value is 0 (to break infinite loops in circular replication). "
@@ -3139,22 +3086,6 @@ struct my_option my_long_options[] =
    (char**) &replicate_same_server_id,
    (char**) &replicate_same_server_id,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-wild-do-table", OPT_REPLICATE_WILD_DO_TABLE,
-   N_("Tells the slave thread to restrict replication to the tables that "
-      "match the specified wildcard pattern. To specify more than one table, "
-      "use the directive multiple times, once for each table. This will work "
-      "for cross-database updates. Example: replicate-wild-do-table=foo%.bar% "
-      "will replicate only updates to tables in all databases that start with "
-      "foo and whose table names start with bar."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-wild-ignore-table", OPT_REPLICATE_WILD_IGNORE_TABLE,
-   N_("Tells the slave thread to not replicate to the tables that match the "
-      "given wildcard pattern. To specify more than one table to ignore, use "
-      "the directive multiple times, once for each table. This will work for "
-      "cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% "
-      "will not do updates to tables in databases that start with foo and "
-      "whose table names start with bar."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   // In replication, we may need to tell the other servers how to connect
   {"report-host", OPT_REPORT_HOST,
    N_("Hostname or IP of the slave to be reported to to the master during "
@@ -4172,96 +4103,6 @@ drizzled_get_one_option(int optid,
   case (int) OPT_ERROR_LOG_FILE:
     opt_error_log= 1;
     break;
-  case (int)OPT_REPLICATE_IGNORE_DB:
-    {
-      rpl_filter->add_ignore_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_DO_DB:
-    {
-      rpl_filter->add_do_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_REWRITE_DB:
-    {
-      char* key = argument,*p, *val;
-
-      if (!(p= strstr(argument, "->")))
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - missing '->'!\n"));
-        exit(1);
-      }
-      val= p--;
-      while (my_isspace(mysqld_charset, *p) && p > argument)
-        *p-- = 0;
-      if (p == argument)
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - empty FROM db!\n"));
-        exit(1);
-      }
-      *val= 0;
-      val+= 2;
-      while (*val && my_isspace(mysqld_charset, *val))
-        *val++;
-      if (!*val)
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - empty TO db!\n"));
-        exit(1);
-      }
-
-      rpl_filter->add_db_rewrite(key, val);
-      break;
-    }
-
-  case (int)OPT_BINLOG_IGNORE_DB:
-    {
-      binlog_filter->add_ignore_db(argument);
-      break;
-    }
-  case (int)OPT_BINLOG_DO_DB:
-    {
-      binlog_filter->add_do_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_DO_TABLE:
-    {
-      if (rpl_filter->add_do_table(argument))
-      {
-        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_WILD_DO_TABLE:
-    {
-      if (rpl_filter->add_wild_do_table(argument))
-      {
-        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_WILD_IGNORE_TABLE:
-    {
-      if (rpl_filter->add_wild_ignore_table(argument))
-      {
-        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_IGNORE_TABLE:
-    {
-      if (rpl_filter->add_ignore_table(argument))
-      {
-        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;

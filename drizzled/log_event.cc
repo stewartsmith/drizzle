@@ -21,7 +21,8 @@
 #include <drizzled/log_event.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/mi.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/utility.h>
 #include <drizzled/replication/record.h>
 #include <mysys/my_dir.h>
@@ -1498,7 +1499,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
 int Query_log_event::do_apply_event(Relay_log_info const *rli,
                                       const char *query_arg, uint32_t q_len_arg)
 {
-  LEX_STRING new_db;
   int expected_error,actual_error= 0;
   Query_id &query_id= Query_id::get_query_id();
   /*
@@ -1509,9 +1509,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
     you.
   */
   session->catalog= catalog_len ? (char *) catalog : (char *)"";
-  new_db.length= db_len;
-  new_db.str= (char *) rpl_filter->get_rewrite_db(db, &new_db.length);
-  session->set_db(new_db.str, new_db.length);       /* allocates a copy of 'db' */
+  session->set_db(db, strlen(db));       /* allocates a copy of 'db' */
   session->variables.auto_increment_increment= auto_increment_increment;
   session->variables.auto_increment_offset=    auto_increment_offset;
 
@@ -1540,7 +1538,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
             ::do_apply_event(), then the companion SET also have so
             we don't need to reset_one_shot_variables().
   */
-  if (rpl_filter->db_ok(session->db))
+  if (1)
   {
     session->set_time((time_t)when);
     session->query_length= q_len_arg;
@@ -2640,11 +2638,8 @@ void Load_log_event::set_fields(const char* affected_db,
 int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
                                    bool use_rli_only_for_errors)
 {
-  LEX_STRING new_db;
   Query_id &query_id= Query_id::get_query_id();
-  new_db.length= db_len;
-  new_db.str= (char *) rpl_filter->get_rewrite_db(db, &new_db.length);
-  session->set_db(new_db.str, new_db.length);
+  session->set_db(db, strlen(db));
   assert(session->query == 0);
   session->query_length= 0;                         // Should not be needed
   session->is_slave_error= 0;
@@ -2691,7 +2686,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
             ::do_apply_event(), then the companion SET also have so
             we don't need to reset_one_shot_variables().
   */
-  if (rpl_filter->db_ok(session->db))
+  if (1)
   {
     session->set_time((time_t)when);
     session->query_id = query_id.next();
@@ -2711,13 +2706,6 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     tables.updating= 1;
 
     // the table will be opened in mysql_load    
-    if (rpl_filter->is_on() && !rpl_filter->tables_ok(session->db, &tables))
-    {
-      // TODO: this is a bug - this needs to be moved to the I/O thread
-      if (net)
-        skip_load_data_infile(net);
-    }
-    else
     {
       char llbuff[22];
       char *end;
@@ -2746,7 +2734,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 
       if (sql_ex.opt_flags & REPLACE_FLAG)
       {
-	handle_dup= DUP_REPLACE;
+        handle_dup= DUP_REPLACE;
       }
       else if (sql_ex.opt_flags & IGNORE_FLAG)
       {
@@ -2756,14 +2744,14 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       else
       {
         /*
-	  When replication is running fine, if it was DUP_ERROR on the
+          When replication is running fine, if it was DUP_ERROR on the
           master then we could choose IGNORE here, because if DUP_ERROR
           suceeded on master, and data is identical on the master and slave,
           then there should be no uniqueness errors on slave, so IGNORE is
           the same as DUP_ERROR. But in the unlikely case of uniqueness errors
           (because the data on the master and slave happen to be different
-	  (user error or bug), we want LOAD DATA to print an error message on
-	  the slave to discover the problem.
+          (user error or bug), we want LOAD DATA to print an error message on
+          the slave to discover the problem.
 
           If reading from net (a 3.23 master), mysql_load() will change this
           to IGNORE.
@@ -2795,7 +2783,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 
       ex.opt_enclosed = (sql_ex.opt_flags & OPT_ENCLOSED_FLAG);
       if (sql_ex.empty_flags & FIELD_TERM_EMPTY)
-	ex.field_term->length(0);
+        ex.field_term->length(0);
 
       ex.skip_lines = skip_lines;
       List<Item> field_list;
@@ -2804,12 +2792,12 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       session->variables.pseudo_thread_id= thread_id;
       if (net)
       {
-	// mysql_load will use session->net to read the file
-	session->net.vio = net->vio;
-	/*
-	  Make sure the client does not get confused about the packet sequence
-	*/
-	session->net.pkt_nr = net->pkt_nr;
+        // mysql_load will use session->net to read the file
+        session->net.vio = net->vio;
+        /*
+          Make sure the client does not get confused about the packet sequence
+        */
+        session->net.pkt_nr = net->pkt_nr;
       }
       /*
         It is safe to use tmp_list twice because we are not going to
@@ -2821,10 +2809,10 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
         session->is_slave_error= 1;
       if (session->cuted_fields)
       {
-	/* log_pos is the position of the LOAD event in the master log */
+        /* log_pos is the position of the LOAD event in the master log */
         sql_print_warning(_("Slave: load data infile on table '%s' at "
-                          "log position %s in log '%s' produced %ld "
-                          "warning(s). Default database: '%s'"),
+                            "log position %s in log '%s' produced %ld "
+                            "warning(s). Default database: '%s'"),
                           (char*) table_name,
                           llstr(log_pos,llbuff), RPL_LOG_NAME, 
                           (ulong) session->cuted_fields,
@@ -5083,7 +5071,6 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   RPL_TableList *table_list;
   char *db_mem, *tname_mem;
   Query_id &query_id= Query_id::get_query_id();
-  size_t dummy_len;
   void *memory;
   assert(rli->sql_session == session);
 
@@ -5104,17 +5091,11 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  my_stpcpy(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
+  my_stpcpy(table_list->db, m_dbnam);
   my_stpcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 
-  if (!rpl_filter->db_ok(table_list->db) ||
-      (rpl_filter->is_on() && !rpl_filter->tables_ok("", table_list)))
-  {
-    free(memory);
-  }
-  else
   {
     /*
       open_tables() reads the contents of session->lex, so they must be

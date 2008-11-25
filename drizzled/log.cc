@@ -26,7 +26,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/rli.h>
 
 #include <mysys/my_dir.h>
@@ -2491,9 +2492,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       "do the involved tables match (to be implemented)
       binlog_[wild_]{do|ignore}_table?" (WL#1049)"
     */
-    const char *local_db= event_info->get_db();
-    if ((session && !(session->options & OPTION_BIN_LOG)) ||
-	(!binlog_filter->db_ok(local_db)))
+    if (session && !(session->options & OPTION_BIN_LOG))
     {
       pthread_mutex_unlock(&LOCK_log);
       return(0);

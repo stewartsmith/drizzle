@@ -20,7 +20,9 @@
 #ifndef DRIZZLED_REPLICATION_REPLICATION_H
 #define DRIZZLED_REPLICATION_REPLICATION_H
 
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
+
 
 #include "slave.h"
 
