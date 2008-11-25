@@ -477,11 +477,6 @@ static sys_var_readonly		sys_warning_count(&vars, "warning_count",
 						  SHOW_LONG,
 						  get_warning_count);
 
-static sys_var_rand_seed1 sys_rand_seed1(&vars, "rand_seed1",
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_rand_seed2 sys_rand_seed2(&vars, "rand_seed2",
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-
 static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
                                                         &SV::default_week_format);
 
@@ -2068,19 +2063,6 @@ unsigned char *sys_var_insert_id::value_ptr(Session *session, enum_var_type,
   session->sys_var_tmp.uint64_t_value=
     session->auto_inc_intervals_forced.minimum();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
-}
-
-
-bool sys_var_rand_seed1::update(Session *session, set_var *var)
-{
-  session->rand.seed1= (ulong) var->save_result.uint64_t_value;
-  return 0;
-}
-
-bool sys_var_rand_seed2::update(Session *session, set_var *var)
-{
-  session->rand.seed2= (ulong) var->save_result.uint64_t_value;
-  return 0;
 }
 
 
