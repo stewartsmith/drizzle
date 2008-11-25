@@ -909,9 +909,6 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_SYS_LARGEFILE
-AC_FUNC_FSEEKO
-
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T
 
