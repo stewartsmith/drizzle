@@ -3342,7 +3342,7 @@ struct my_option my_long_options[] =
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,
-   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
+   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULL,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
    N_("If non-zero: relay log will be rotated automatically when the size "
@@ -3361,7 +3361,7 @@ struct my_option my_long_options[] =
       "(only the first max_sort_length bytes of each value are used; the "
       "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
-   (char**) &max_system_variables.max_sort_length, 0, GET_ULONG,
+   (char**) &max_system_variables.max_sort_length, 0, GET_UINT,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
    N_("Maximum number of temporary tables a client can keep open at a time."),

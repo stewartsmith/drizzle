@@ -155,7 +155,7 @@ struct system_variables
   ulong max_allowed_packet;
   ulong max_error_count;
   ulong max_length_for_sort_data;
-  ulong max_sort_length;
+  uint32_t max_sort_length;
   ulong max_tmp_tables;
   ulong min_examined_row_limit;
   ulong myisam_repair_threads;
@@ -188,15 +188,15 @@ struct system_variables
   ulong completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   ulong sql_mode;
-  ulong default_week_format;
-  ulong max_seeks_for_key;
-  ulong range_alloc_block_size;
-  ulong query_alloc_block_size;
-  ulong query_prealloc_size;
-  ulong trans_alloc_block_size;
-  ulong trans_prealloc_size;
-  ulong log_warnings;
-  ulong group_concat_max_len;
+  uint32_t default_week_format;
+  uint32_t max_seeks_for_key;
+  uint32_t range_alloc_block_size;
+  uint32_t query_alloc_block_size;
+  uint32_t query_prealloc_size;
+  uint32_t trans_alloc_block_size;
+  uint32_t trans_prealloc_size;
+  bool log_warnings;
+  uint32_t group_concat_max_len;
   /*
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly

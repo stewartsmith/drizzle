@@ -434,6 +434,26 @@ public:
   }
 };
 
+class sys_var_session_uint32_t :public sys_var_session
+{
+  sys_check_func check_func;
+public:
+  uint32_t SV::*offset;
+  sys_var_session_uint32_t(sys_var_chain *chain, const char *name_arg,
+                           uint32_t SV::*offset_arg,
+                           sys_check_func c_func= NULL,
+                           sys_after_update_func au_func= NULL,
+                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
+    :sys_var_session(name_arg, au_func, binlog_status_arg), check_func(c_func),
+    offset(offset_arg)
+  { chain_sys_var(chain); }
+  bool check(Session *session, set_var *var);
+  bool update(Session *session, set_var *var);
+  void set_default(Session *session, enum_var_type type);
+  SHOW_TYPE show_type() { return SHOW_LONG; }
+  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
+};
+
 
 class sys_var_session_ulong :public sys_var_session
 {

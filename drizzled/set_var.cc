@@ -234,17 +234,17 @@ static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
 					  &SV::max_join_size,
 					  fix_max_join_size);
-static sys_var_session_ulong	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
-					      &SV::max_seeks_for_key);
-static sys_var_session_ulong   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
-                                                 &SV::max_length_for_sort_data);
+static sys_var_session_uint32_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
+                                                      &SV::max_seeks_for_key);
+static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
+                                                               &SV::max_length_for_sort_data);
 static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                &max_relay_log_size,
                                                fix_max_relay_log_size);
-static sys_var_session_ulong	sys_max_sort_length(&vars, "max_sort_length",
-					    &SV::max_sort_length);
-static sys_var_session_ulong	sys_max_tmp_tables(&vars, "max_tmp_tables",
-					   &SV::max_tmp_tables);
+static sys_var_session_uint32_t	sys_max_sort_length(&vars, "max_sort_length",
+                                                    &SV::max_sort_length);
+static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
+                                                   &SV::max_tmp_tables);
 static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 						 &max_write_lock_count);
 static sys_var_session_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
@@ -300,21 +300,21 @@ static sys_var_session_ulong	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size
 static sys_var_session_ulong	sys_div_precincrement(&vars, "div_precision_increment",
                                               &SV::div_precincrement);
 
-static sys_var_session_ulong	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
-						   &SV::range_alloc_block_size);
-static sys_var_session_ulong	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
-						   &SV::query_alloc_block_size,
-						   0, fix_session_mem_root);
-static sys_var_session_ulong	sys_query_prealloc_size(&vars, "query_prealloc_size",
-						&SV::query_prealloc_size,
-						0, fix_session_mem_root);
+static sys_var_session_uint32_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+                                                           &SV::range_alloc_block_size);
+static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
+                                                           &SV::query_alloc_block_size,
+                                                           0, fix_session_mem_root);
+static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
+                                                        &SV::query_prealloc_size,
+                                                        0, fix_session_mem_root);
 static sys_var_readonly        sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
-static sys_var_session_ulong	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
-						   &SV::trans_alloc_block_size,
-						   0, fix_trans_mem_root);
-static sys_var_session_ulong	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-						&SV::trans_prealloc_size,
-						0, fix_trans_mem_root);
+static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
+                                                           &SV::trans_alloc_block_size,
+                                                           0, fix_trans_mem_root);
+static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
+                                                        &SV::trans_prealloc_size,
+                                                        0, fix_trans_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -482,11 +482,11 @@ static sys_var_rand_seed1 sys_rand_seed1(&vars, "rand_seed1",
 static sys_var_rand_seed2 sys_rand_seed2(&vars, "rand_seed2",
                                          sys_var::SESSION_VARIABLE_IN_BINLOG);
 
-static sys_var_session_ulong        sys_default_week_format(&vars, "default_week_format",
-					                &SV::default_week_format);
+static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
+                                                        &SV::default_week_format);
 
-sys_var_session_ulong               sys_group_concat_max_len(&vars, "group_concat_max_len",
-                                                         &SV::group_concat_max_len);
+sys_var_session_uint32_t sys_group_concat_max_len(&vars, "group_concat_max_len",
+                                               &SV::group_concat_max_len);
 
 sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
                                     sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -1060,6 +1060,67 @@ bool sys_var_session_ulong::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_ulong::value_ptr(Session *session,
+                                                enum_var_type type,
+                                                LEX_STRING *)
+{
+  if (type == OPT_GLOBAL)
+    return (unsigned char*) &(global_system_variables.*offset);
+  return (unsigned char*) &(session->variables.*offset);
+}
+
+/*
+  32 bit types for session variables 
+*/
+bool sys_var_session_uint32_t::check(Session *session, set_var *var)
+{
+  return (get_unsigned(session, var) ||
+          (check_func && (*check_func)(session, var)));
+}
+
+bool sys_var_session_uint32_t::update(Session *session, set_var *var)
+{
+  uint64_t tmp= var->save_result.uint64_t_value;
+  
+  /* Don't use bigger value than given with --maximum-variable-name=.. */
+  if ((uint32_t) tmp > max_system_variables.*offset)
+  {
+    throw_bounds_warning(session, true, true, name, (int64_t) tmp);
+    tmp= max_system_variables.*offset;
+  }
+  
+  if (option_limits)
+    tmp= (uint32_t) fix_unsigned(session, tmp, option_limits);
+  else if (tmp > UINT32_MAX)
+  {
+    tmp= UINT32_MAX;
+    throw_bounds_warning(session, true, true, name, (int64_t) var->save_result.uint64_t_value);
+  }
+  
+  if (var->type == OPT_GLOBAL)
+     global_system_variables.*offset= (uint32_t) tmp;
+   else
+     session->variables.*offset= (uint32_t) tmp;
+
+   return 0;
+ }
+
+
+ void sys_var_session_uint32_t::set_default(Session *session, enum_var_type type)
+ {
+   if (type == OPT_GLOBAL)
+   {
+     bool not_used;
+     /* We will not come here if option_limits is not set */
+     global_system_variables.*offset=
+       (uint32_t) getopt_ull_limit_value((uint32_t) option_limits->def_value,
+                                      option_limits, &not_used);
+   }
+   else
+     session->variables.*offset= global_system_variables.*offset;
+ }
+
+
+unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
                                                 enum_var_type type,
                                                 LEX_STRING *)
 {

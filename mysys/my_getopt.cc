@@ -608,10 +608,10 @@ static int setval(const struct my_option *opts, char **value, char *argument,
       *((bool*) result_pos)= (bool) atoi(argument) != 0;
       break;
     case GET_INT:
-      *((int*) result_pos)= (int) getopt_ll(argument, opts, &err);
+      *((int32_t*) result_pos)= (int) getopt_ll(argument, opts, &err);
       break;
     case GET_UINT:
-      *((uint*) result_pos)= (uint) getopt_ull(argument, opts, &err);
+      *((uint32_t*) result_pos)= (uint) getopt_ull(argument, opts, &err);
       break;
     case GET_LONG:
       *((long*) result_pos)= (long) getopt_ll(argument, opts, &err);
