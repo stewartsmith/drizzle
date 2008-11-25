@@ -1496,7 +1496,7 @@ then
   NO_EXCEPTIONS="-features=no%except"
   W_EXCEPTIONS="-features=except"
 dnl Need to do this to work around AC_SYS_LARGEFILE
-  AH_TOP([
+  AH_BOTTOM([
 #ifdef _FILE_OFFSET_BITS
 # undef _FILE_OFFSET_BITS
 #endif
