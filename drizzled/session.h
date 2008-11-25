@@ -156,12 +156,12 @@ struct system_variables
   uint32_t max_allowed_packet;
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
-  uint32_t max_sort_length;
+  uint64_t max_sort_length;
   uint64_t max_tmp_tables;
-  ulong min_examined_row_limit;
-  ulong myisam_repair_threads;
-  ulong myisam_sort_buff_size;
-  ulong myisam_stats_method;
+  uint64_t min_examined_row_limit;
+  uint32_t myisam_repair_threads;
+  uint64_t myisam_sort_buff_size;
+  uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
   uint32_t net_interactive_timeout;
   uint32_t net_read_timeout;
@@ -176,28 +176,28 @@ struct system_variables
       1 - force MRR when the storage engine is capable of doing it
       2 - disable MRR.
   */
-  ulong optimizer_use_mrr; 
+  uint32_t optimizer_use_mrr; 
   /* A bitmap for switching optimizations on/off */
-  ulong optimizer_switch;
+  uint32_t optimizer_switch;
   ulong preload_buff_size;
   ulong read_buff_size;
   ulong read_rnd_buff_size;
   ulong div_precincrement;
   ulong sortbuff_size;
   ulong thread_handling;
-  ulong tx_isolation;
+  uint32_t tx_isolation;
   ulong completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
   ulong sql_mode;
   uint32_t default_week_format;
-  uint32_t max_seeks_for_key;
-  uint32_t range_alloc_block_size;
+  uint64_t max_seeks_for_key;
+  uint64_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
   bool log_warnings;
-  uint32_t group_concat_max_len;
+  uint64_t group_concat_max_len;
   /*
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly

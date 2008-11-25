@@ -39,7 +39,7 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib, delay_key_write_typelib, sql_mode_typelib,
-  optimizer_switch_typelib, slave_exec_mode_typelib;
+       optimizer_switch_typelib, slave_exec_mode_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -507,14 +507,16 @@ public:
                            sys_after_update_func au_func= NULL,
                            sys_check_func c_func= NULL,
                            Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-        :sys_var_session(name_arg, au_func, binlog_status_arg),
-         check_func(c_func),
-         offset(offset_arg)
-            { chain_sys_var(chain); }
-  sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg, 
-                        uint64_t SV::*offset_arg, 
-			sys_after_update_func func, bool only_global_arg,
-      sys_check_func cfunc= NULL)
+    :sys_var_session(name_arg, au_func, binlog_status_arg),
+    check_func(c_func),
+    offset(offset_arg)
+  { chain_sys_var(chain); }
+  sys_var_session_uint64_t(sys_var_chain *chain, 
+                           const char *name_arg, 
+                           uint64_t SV::*offset_arg, 
+                           sys_after_update_func func, 
+                           bool only_global_arg,
+                           sys_check_func cfunc= NULL)
     :sys_var_session(name_arg, func),
     check_func(cfunc),
     offset(offset_arg),
@@ -563,12 +565,12 @@ public:
 class sys_var_session_enum :public sys_var_session
 {
 protected:
-  ulong SV::*offset;
+  uint32_t SV::*offset;
   TYPELIB *enum_names;
   sys_check_func check_func;
 public:
   sys_var_session_enum(sys_var_chain *chain, const char *name_arg,
-                   ulong SV::*offset_arg, TYPELIB *typelib,
+                   uint32_t SV::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
                    sys_check_func check= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
@@ -595,7 +597,7 @@ class sys_var_session_optimizer_switch :public sys_var_session_enum
 {
 public:
   sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg, 
-                               ulong SV::*offset_arg)
+                                   uint32_t SV::*offset_arg)
     :sys_var_session_enum(chain, name_arg, offset_arg, &optimizer_switch_typelib)
   {}
   bool check(Session *session, set_var *var)
@@ -604,7 +606,7 @@ public:
   }
   void set_default(Session *session, enum_var_type type);
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  static bool symbolic_mode_representation(Session *session, uint64_t sql_mode,
+  static bool symbolic_mode_representation(Session *session, uint32_t sql_mode,
                                            LEX_STRING *rep);
 };
 

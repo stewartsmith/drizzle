@@ -31,7 +31,7 @@ public:
   Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     TABLE_SHARE *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
-  Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
              const CHARSET_INFO * const cs)
     :Field_longstr((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs),
@@ -39,7 +39,7 @@ public:
   {
     flags|= BLOB_FLAG;
   }
-  Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs, bool set_packlength)
     :Field_longstr((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs)

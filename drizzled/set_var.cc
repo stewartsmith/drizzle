@@ -232,16 +232,16 @@ static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               0, check_pseudo_thread_id,
                                               sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
-					  &SV::max_join_size,
-					  fix_max_join_size);
-static sys_var_session_uint32_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
+                                                  &SV::max_join_size,
+                                                  fix_max_join_size);
+static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
                                                       &SV::max_seeks_for_key);
 static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
                                                                &SV::max_length_for_sort_data);
 static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                &max_relay_log_size,
                                                fix_max_relay_log_size);
-static sys_var_session_uint32_t	sys_max_sort_length(&vars, "max_sort_length",
+static sys_var_session_uint64_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
 static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
                                                    &SV::max_tmp_tables);
@@ -250,13 +250,13 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 static sys_var_session_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                           &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
-static sys_var_session_ulong       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
-static sys_var_session_ulong	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
+static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
+static sys_var_session_uint64_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
-                                                &SV::myisam_stats_method,
-                                                &myisam_stats_method_typelib,
-                                                NULL);
+                                                            &SV::myisam_stats_method,
+                                                            &myisam_stats_method_typelib,
+                                                            NULL);
 static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
                                                       &SV::net_buffer_length);
 static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
@@ -285,10 +285,10 @@ TYPELIB optimizer_use_mrr_typelib= {
   optimizer_use_mrr_names, NULL
 };
 
-static sys_var_session_enum        sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
-                                              &SV::optimizer_use_mrr,
-                                              &optimizer_use_mrr_typelib,
-                                              NULL);
+static sys_var_session_enum sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
+                                                  &SV::optimizer_use_mrr,
+                                                  &optimizer_use_mrr_typelib,
+                                                  NULL);
 
 static sys_var_session_ulong        sys_preload_buff_size(&vars, "preload_buffer_size",
                                               &SV::preload_buff_size);
@@ -300,21 +300,21 @@ static sys_var_session_ulong	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size
 static sys_var_session_ulong	sys_div_precincrement(&vars, "div_precision_increment",
                                               &SV::div_precincrement);
 
-static sys_var_session_uint32_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+static sys_var_session_uint64_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
                                                            &SV::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
                                                            &SV::query_alloc_block_size,
-                                                           0, fix_session_mem_root);
+                                                           false, fix_session_mem_root);
 static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
                                                         &SV::query_prealloc_size,
-                                                        0, fix_session_mem_root);
-static sys_var_readonly        sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
+                                                        false, fix_session_mem_root);
+static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
                                                            &SV::trans_alloc_block_size,
-                                                           0, fix_trans_mem_root);
+                                                           false, fix_trans_mem_root);
 static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
                                                         &SV::trans_prealloc_size,
-                                                        0, fix_trans_mem_root);
+                                                        false, fix_trans_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -341,7 +341,7 @@ static sys_var_session_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
   master's (see log_event.cc: Query_log_event::do_apply_event()).
 */
 static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
-                                     &SV::optimizer_switch);
+                                                               &SV::optimizer_switch);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::table_plugin);
@@ -358,10 +358,10 @@ static sys_var_long_ptr	sys_thread_cache_size(&vars, "thread_cache_size",
 sys_var_long_ptr	sys_thread_pool_size(&vars, "thread_pool_size",
 					      &thread_pool_size);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
-					 &SV::tx_isolation,
-					 &tx_isolation_typelib,
-					 fix_tx_isolation,
-					 check_tx_isolation);
+                                             &SV::tx_isolation,
+                                             &tx_isolation_typelib,
+                                             fix_tx_isolation,
+                                             check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
@@ -485,8 +485,8 @@ static sys_var_rand_seed2 sys_rand_seed2(&vars, "rand_seed2",
 static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
                                                         &SV::default_week_format);
 
-sys_var_session_uint32_t sys_group_concat_max_len(&vars, "group_concat_max_len",
-                                               &SV::group_concat_max_len);
+sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
+                                                  &SV::group_concat_max_len);
 
 sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
                                     sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -2954,7 +2954,7 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 
 bool
 sys_var_session_optimizer_switch::
-symbolic_mode_representation(Session *session, uint64_t val, LEX_STRING *rep)
+symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
   String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
