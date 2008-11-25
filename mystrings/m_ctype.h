@@ -21,9 +21,9 @@
 #ifndef _m_ctype_h
 #define _m_ctype_h
 
-#include <drizzled/global.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -38,7 +38,7 @@ extern "C" {
 
 #define CHARSET_DIR	"charsets/"
 
-#define my_wc_t ulong
+#define my_wc_t unsigned long
 
 typedef struct unicase_info_st
 {
@@ -260,7 +260,7 @@ typedef struct my_charset_handler_st
   /* String-to-number conversion routines */
   long        (*strntol)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
-  ulong      (*strntoul)(const struct charset_info_st * const, const char *s, size_t l,
+  unsigned long      (*strntoul)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
   int64_t   (*strntoll)(const struct charset_info_st * const, const char *s, size_t l,
 			 int base, char **e, int *err);
@@ -395,7 +395,7 @@ size_t my_snprintf_8bit(const CHARSET_INFO * const, char *to, size_t n,
 
 long       my_strntol_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
                            char **e, int *err);
-ulong      my_strntoul_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
+unsigned long      my_strntoul_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
 			    char **e, int *err);
 int64_t   my_strntoll_8bit(const CHARSET_INFO * const, const char *s, size_t l, int base,
 			    char **e, int *err);
@@ -537,7 +537,7 @@ bool my_propagate_simple(const CHARSET_INFO * const cs, const unsigned char *str
 bool my_propagate_complex(const CHARSET_INFO * const cs, const unsigned char *str, size_t len);
 
 
-uint32_t my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong len);
+uint32_t my_string_repertoire(const CHARSET_INFO * const cs, const char *str, unsigned long len);
 bool my_charset_is_ascii_based(const CHARSET_INFO * const cs);
 bool my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs);
 

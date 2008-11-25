@@ -22,7 +22,7 @@
  * Work around Sun Studio not supporting all of C99 math in C++
  */
 
-#include <config.h>
+#include <drizzled/global.h>
 #if defined(NEED_ISNAN) || defined(NEED_ISINF) || defined(NEED_ISFINITE)
 # if defined(HAVE_IEEEFP_H)
 #  include <ieeefp.h>

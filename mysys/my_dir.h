@@ -22,7 +22,6 @@ extern "C" {
 #ifndef MY_DIR_H
 #define MY_DIR_H
 
-#include <config.h>
 #include <drizzled/definitions.h>
 #include <sys/stat.h>
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
+#include <drizzled/global.h>
 #include <definitions.h>
 #include <drizzled/query_id.h>
 #include <mysys/my_pthread.h>
