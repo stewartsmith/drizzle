@@ -168,8 +168,8 @@ struct system_variables
   uint32_t net_retry_count;
   uint32_t net_wait_timeout;
   uint32_t net_write_timeout;
-  ulong optimizer_prune_level;
-  ulong optimizer_search_depth;
+  bool optimizer_prune_level;
+  uint32_t optimizer_search_depth;
   /*
     Controls use of Engine-MRR:
       0 - auto, based on cost
@@ -179,16 +179,16 @@ struct system_variables
   uint32_t optimizer_use_mrr; 
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
-  ulong preload_buff_size;
-  ulong read_buff_size;
-  ulong read_rnd_buff_size;
-  ulong div_precincrement;
-  ulong sortbuff_size;
-  ulong thread_handling;
+  uint64_t preload_buff_size;
+  uint32_t read_buff_size;
+  uint32_t read_rnd_buff_size;
+  uint32_t div_precincrement;
+  uint64_t sortbuff_size;
+  uint32_t thread_handling;
   uint32_t tx_isolation;
-  ulong completion_type;
+  uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
-  ulong sql_mode;
+  uint32_t sql_mode;
   uint32_t default_week_format;
   uint64_t max_seeks_for_key;
   uint64_t range_alloc_block_size;

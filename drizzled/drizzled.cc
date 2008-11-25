@@ -2884,7 +2884,7 @@ struct my_option my_long_options[] =
   {"completion-type", OPT_COMPLETION_TYPE,
    N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
-   (char**) &max_system_variables.completion_type, 0, GET_ULONG,
+   (char**) &max_system_variables.completion_type, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
   {"console", OPT_CONSOLE,
    N_("Write error output on screen."),
@@ -3209,7 +3209,7 @@ struct my_option my_long_options[] =
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
-    0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
   { "connect_timeout", OPT_CONNECT_TIMEOUT,
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
@@ -3234,7 +3234,7 @@ struct my_option my_long_options[] =
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
    (char**) &global_system_variables.div_precincrement,
-   (char**) &max_system_variables.div_precincrement, 0, GET_ULONG,
+   (char**) &max_system_variables.div_precincrement, 0, GET_UINT,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
   { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
     N_("If non-zero, binary logs will be purged after expire_logs_days "
@@ -3376,7 +3376,7 @@ struct my_option my_long_options[] =
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
-   (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULONG,
+   (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
    N_("Block size to be used for MyISAM index pages."),
@@ -3451,13 +3451,13 @@ struct my_option my_long_options[] =
    (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
-   N_("Controls the heuristic(s) applied during query optimization to prune "
-      "less-promising partial plans from the optimizer search space. Meaning: "
-      "0 - do not apply any heuristic, thus perform exhaustive search; "
-      "1 - prune plans based on number of retrieved rows."),
-   (char**) &global_system_variables.optimizer_prune_level,
-   (char**) &max_system_variables.optimizer_prune_level,
-   0, GET_ULONG, OPT_ARG, 1, 0, 1, 0, 1, 0},
+    N_("Controls the heuristic(s) applied during query optimization to prune "
+       "less-promising partial plans from the optimizer search space. Meaning: "
+       "false - do not apply any heuristic, thus perform exhaustive search; "
+       "true - prune plans based on number of retrieved rows."),
+    (char**) &global_system_variables.optimizer_prune_level,
+    (char**) &max_system_variables.optimizer_prune_level,
+    0, GET_BOOL, OPT_ARG, 1, 0, 1, 0, 1, 0},
   {"optimizer_search_depth", OPT_OPTIMIZER_SEARCH_DEPTH,
    N_("Maximum depth of search performed by the query optimizer. Values "
       "larger than the number of relations in a query result in better query "
@@ -3469,7 +3469,7 @@ struct my_option my_long_options[] =
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
-   0, GET_ULONG, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+   0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -3483,7 +3483,7 @@ struct my_option my_long_options[] =
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
    (char**) &global_system_variables.preload_buff_size,
-   (char**) &max_system_variables.preload_buff_size, 0, GET_ULONG,
+   (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for query parsing and execution"),
@@ -3503,13 +3503,13 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
-   N_("Each thread that does a sequential scan allocates a buffer of this "
-      "size for each table it scans. If you do many sequential scans, you may "
-      "want to increase this value."),
-   (char**) &global_system_variables.read_buff_size,
-   (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
-   0},
+    N_("Each thread that does a sequential scan allocates a buffer of this "
+       "size for each table it scans. If you do many sequential scans, you may "
+       "want to increase this value."),
+    (char**) &global_system_variables.read_buff_size,
+    (char**) &max_system_variables.read_buff_size,0, GET_UINT, REQUIRED_ARG,
+    128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
+    0},
   {"read_only", OPT_READONLY,
    N_("Make all non-temporary tables read-only, with the exception for "
       "replication (slave) threads and users with the SUPER privilege"),
@@ -3522,14 +3522,8 @@ struct my_option my_long_options[] =
       "to the value of record_buffer."),
    (char**) &global_system_variables.read_rnd_buff_size,
    (char**) &max_system_variables.read_rnd_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
-   INT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
-  {"record_buffer", OPT_RECORD_BUFFER,
-   "Alias for read_buffer_size",
-   (char**) &global_system_variables.read_buff_size,
-   (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD,
-   INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
+   GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
+   UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
    N_("0 = do not purge relay logs. "
       "1 = purge them as soon as they are no more needed."),
@@ -3569,8 +3563,8 @@ struct my_option my_long_options[] =
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, ULONG_MAX,
+   (char**) &max_system_variables.sortbuff_size, 0, GET_ULL, REQUIRED_ARG,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, UINT64_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
    N_("Synchronously flush binary log to disk after every #th event. "
@@ -3595,10 +3589,10 @@ struct my_option my_long_options[] =
    (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-   N_("How many threads we should create to handle query requests in case of "
-      "'thread_handling=pool-of-threads'"),
-   (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
-   REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
+    N_("How many threads we should create to handle query requests in case of "
+       "'thread_handling=pool-of-threads'"),
+    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_UINT,
+    REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,

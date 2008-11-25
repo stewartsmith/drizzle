@@ -152,12 +152,12 @@ sys_auto_increment_offset(&vars, "auto_increment_offset",
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
 					      &binlog_cache_size);
-static sys_var_session_ulong	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
-						  &SV::bulk_insert_buff_size);
-static sys_var_session_ulong	sys_completion_type(&vars, "completion_type",
-					 &SV::completion_type,
-					 check_completion_type,
-					 fix_completion_type);
+static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
+                                                          &SV::bulk_insert_buff_size);
+static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
+                                                    &SV::completion_type,
+                                                    check_completion_type,
+                                                    fix_completion_type);
 static sys_var_collation_sv
 sys_collation_connection(&vars, "collation_connection",
                          &SV::collation_connection, &default_charset_info,
@@ -247,8 +247,8 @@ static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
                                                    &SV::max_tmp_tables);
 static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 						 &max_write_lock_count);
-static sys_var_session_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
-                                                          &SV::min_examined_row_limit);
+static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
+                                                           &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_session_uint64_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
@@ -272,12 +272,12 @@ static sys_var_session_bool	sys_new_mode(&vars, "new", &SV::new_mode);
 static sys_var_bool_ptr_readonly sys_old_mode(&vars, "old",
                                               &global_system_variables.old_mode);
 /* these two cannot be static */
-sys_var_session_bool                sys_old_alter_table(&vars, "old_alter_table",
-                                                        &SV::old_alter_table);
-static sys_var_session_ulong        sys_optimizer_prune_level(&vars, "optimizer_prune_level",
-                                                              &SV::optimizer_prune_level);
-static sys_var_session_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",
-                                                               &SV::optimizer_search_depth);
+sys_var_session_bool sys_old_alter_table(&vars, "old_alter_table",
+                                         &SV::old_alter_table);
+static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
+                                                      &SV::optimizer_prune_level);
+static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
+                                                           &SV::optimizer_search_depth);
 
 const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
 TYPELIB optimizer_use_mrr_typelib= {
@@ -290,15 +290,15 @@ static sys_var_session_enum sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
                                                   &optimizer_use_mrr_typelib,
                                                   NULL);
 
-static sys_var_session_ulong        sys_preload_buff_size(&vars, "preload_buffer_size",
-                                              &SV::preload_buff_size);
-static sys_var_session_ulong	sys_read_buff_size(&vars, "read_buffer_size",
-					   &SV::read_buff_size);
+static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
+                                                      &SV::preload_buff_size);
+static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
+                                                   &SV::read_buff_size);
 static sys_var_opt_readonly	sys_readonly(&vars, "read_only", &opt_readonly);
-static sys_var_session_ulong	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
-					       &SV::read_rnd_buff_size);
-static sys_var_session_ulong	sys_div_precincrement(&vars, "div_precision_increment",
-                                              &SV::div_precincrement);
+static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
+                                                       &SV::read_rnd_buff_size);
+static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
+                                                      &SV::div_precincrement);
 
 static sys_var_session_uint64_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
                                                            &SV::range_alloc_block_size);
@@ -331,9 +331,9 @@ static sys_var_set_slave_mode slave_exec_mode(&vars,
                                               &slave_exec_mode_typelib,
                                               0);
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
-					     &slow_launch_time);
-static sys_var_session_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
-					&SV::sortbuff_size);
+                                             &slow_launch_time);
+static sys_var_session_uint64_t	sys_sort_buffer(&vars, "sort_buffer_size",
+                                                &SV::sortbuff_size);
 /*
   sql_mode should *not* have binlog_mode=SESSION_VARIABLE_IN_BINLOG:
   even though it is written to the binlog, the slave ignores the
@@ -1008,64 +1008,6 @@ unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
                                              LEX_STRING *)
 {
   return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
-}
-
-bool sys_var_session_ulong::check(Session *session, set_var *var)
-{
-  return (get_unsigned(session, var) ||
-          (check_func && (*check_func)(session, var)));
-}
-
-bool sys_var_session_ulong::update(Session *session, set_var *var)
-{
-  uint64_t tmp= var->save_result.uint64_t_value;
-  
-  /* Don't use bigger value than given with --maximum-variable-name=.. */
-  if ((ulong) tmp > max_system_variables.*offset)
-  {
-    throw_bounds_warning(session, true, true, name, (int64_t) tmp);
-    tmp= max_system_variables.*offset;
-  }
-  
-  if (option_limits)
-    tmp= (ulong) fix_unsigned(session, tmp, option_limits);
-  else if (tmp > UINT32_MAX)
-  {
-    tmp= UINT32_MAX;
-    throw_bounds_warning(session, true, true, name, (int64_t) var->save_result.uint64_t_value);
-  }
-  
-  if (var->type == OPT_GLOBAL)
-     global_system_variables.*offset= (ulong) tmp;
-   else
-     session->variables.*offset= (ulong) tmp;
-
-   return 0;
- }
-
-
- void sys_var_session_ulong::set_default(Session *session, enum_var_type type)
- {
-   if (type == OPT_GLOBAL)
-   {
-     bool not_used;
-     /* We will not come here if option_limits is not set */
-     global_system_variables.*offset=
-       (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
-                                      option_limits, &not_used);
-   }
-   else
-     session->variables.*offset= global_system_variables.*offset;
- }
-
-
-unsigned char *sys_var_session_ulong::value_ptr(Session *session,
-                                                enum_var_type type,
-                                                LEX_STRING *)
-{
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
 }
 
 /*
