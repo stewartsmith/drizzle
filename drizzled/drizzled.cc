@@ -42,6 +42,8 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
+#include <drizzled/errmsg.h>
+
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -4433,7 +4435,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    vprint_msg_to_log(level, format, args);
+    errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }
