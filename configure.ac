@@ -301,6 +301,13 @@ fi
 DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
+AH_TOP([
+#ifdef _FILE_OFFSET_BITS
+# undef _FILE_OFFSET_BITS
+#endif
+])
+AC_SYS_LARGEFILE
+
 AC_PROG_AWK
 
 if test "$ac_cv_c_compiler_gnu" = "yes"
