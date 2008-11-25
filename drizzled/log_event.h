@@ -124,22 +124,6 @@
 #define LINE_START_EMPTY	0x8
 #define ESCAPED_EMPTY		0x10
 
-/*****************************************************************************
-
-  old_sql_ex struct
-
- ****************************************************************************/
-struct old_sql_ex
-{
-  char field_term;
-  char enclosed;
-  char line_term;
-  char line_start;
-  char escaped;
-  char opt_flags;
-  char empty_flags;
-};
-
 #define NUM_LOAD_DELIM_STRS 5
 
 /*****************************************************************************
@@ -480,14 +464,6 @@ enum Log_event_type
   EXECUTE_LOAD_QUERY_EVENT= 18,
 
   TABLE_MAP_EVENT = 19,
-
-  /*
-    These event numbers were used for 5.1.0 to 5.1.15 and are
-    therefore obsolete.
-   */
-  PRE_GA_WRITE_ROWS_EVENT = 20,
-  PRE_GA_UPDATE_ROWS_EVENT = 21,
-  PRE_GA_DELETE_ROWS_EVENT = 22,
 
   /*
     These event numbers are used from 5.1.16 and forward
@@ -1976,134 +1952,6 @@ protected:
   virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
 };
 
-
-/**
-  @class Intvar_log_event
-
-  An Intvar_log_event will be created just before a Query_log_event,
-  if the query uses one of the variables LAST_INSERT_ID or INSERT_ID.
-  Each Intvar_log_event holds the value of one of these variables.
-
-  @section Intvar_log_event_binary_format Binary Format
-
-  The Post-Header has two components:
-
-  <table>
-  <caption>Post-Header for Intvar_log_event</caption>
-
-  <tr>
-    <th>Name</th>
-    <th>Format</th>
-    <th>Description</th>
-  </tr>
-
-  <tr>
-    <td>type</td>
-    <td>1 byte enumeration</td>
-    <td>One byte identifying the type of variable stored.  Currently,
-    two identifiers are supported:  LAST_INSERT_ID_EVENT==1 and
-    INSERT_ID_EVENT==2.
-    </td>
-  </tr>
-
-  <tr>
-    <td>value</td>
-    <td>8 byte unsigned integer</td>
-    <td>The value of the variable.</td>
-  </tr>
-
-  </table>
-*/
-class Intvar_log_event: public Log_event
-{
-public:
-  uint64_t val;
-  unsigned char type;
-
-  Intvar_log_event(Session* session_arg,unsigned char type_arg, uint64_t val_arg)
-    :Log_event(session_arg,0,0),val(val_arg),type(type_arg)
-  {}
-  void pack_info(Protocol* protocol);
-
-  Intvar_log_event(const char* buf,
-                   const Format_description_log_event *description_event);
-  ~Intvar_log_event() {}
-  Log_event_type get_type_code() { return INTVAR_EVENT;}
-  const char* get_var_type_name();
-  int get_data_size() { return  9; /* sizeof(type) + sizeof(val) */;}
-  bool write(IO_CACHE* file);
-  bool is_valid() const { return 1; }
-
-private:
-  virtual int do_apply_event(Relay_log_info const *rli);
-  virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-};
-
-
-/**
-  @class Rand_log_event
-
-  Logs random seed used by the next RAND(), and by PASSWORD() in 4.1.0.
-  4.1.1 does not need it (it's repeatable again) so this event needn't be
-  written in 4.1.1 for PASSWORD() (but the fact that it is written is just a
-  waste, it does not cause bugs).
-
-  The state of the random number generation consists of 128 bits,
-  which are stored internally as two 64-bit numbers.
-
-  @section Rand_log_event_binary_format Binary Format  
-  This event type has no Post-Header. The Body of this event type has
-  two components:
-
-  <table>
-  <caption>Post-Header for Intvar_log_event</caption>
-
-  <tr>
-    <th>Name</th>
-    <th>Format</th>
-    <th>Description</th>
-  </tr>
-
-  <tr>
-    <td>seed1</td>
-    <td>8 byte unsigned integer</td>
-    <td>64 bit random seed1.</td>
-  </tr>
-
-  <tr>
-    <td>seed2</td>
-    <td>8 byte unsigned integer</td>
-    <td>64 bit random seed2.</td>
-  </tr>
-  </table>
-*/
-
-class Rand_log_event: public Log_event
-{
- public:
-  uint64_t seed1;
-  uint64_t seed2;
-
-  Rand_log_event(Session* session_arg, uint64_t seed1_arg, uint64_t seed2_arg)
-    :Log_event(session_arg,0,0),seed1(seed1_arg),seed2(seed2_arg)
-  {}
-  void pack_info(Protocol* protocol);
-
-  Rand_log_event(const char* buf,
-                 const Format_description_log_event *description_event);
-  ~Rand_log_event() {}
-  Log_event_type get_type_code() { return RAND_EVENT;}
-  int get_data_size() { return 16; /* sizeof(uint64_t) * 2*/ }
-  bool write(IO_CACHE* file);
-  bool is_valid() const { return 1; }
-
-private:
-  virtual int do_apply_event(Relay_log_info const *rli);
-  virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
-};
-
 /**
   @class Xid_log_event
 
@@ -2131,47 +1979,6 @@ class Xid_log_event: public Log_event
 private:
   virtual int do_apply_event(Relay_log_info const *rli);
   enum_skip_reason do_shall_skip(Relay_log_info *rli);
-};
-
-/**
-  @class User_var_log_event
-
-  Every time a query uses the value of a user variable, a User_var_log_event is
-  written before the Query_log_event, to set the user variable.
-
-  @section User_var_log_event_binary_format Binary Format  
-*/
-
-class User_var_log_event: public Log_event
-{
-public:
-  char *name;
-  uint32_t name_len;
-  char *val;
-  ulong val_len;
-  Item_result type;
-  uint32_t charset_number;
-  bool is_null;
-  User_var_log_event(Session*,
-                     char *name_arg, uint32_t name_len_arg,
-                     char *val_arg, ulong val_len_arg, Item_result type_arg,
-		     uint32_t charset_number_arg)
-    :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
-    val_len(val_len_arg), type(type_arg), charset_number(charset_number_arg)
-    { is_null= !val; }
-  void pack_info(Protocol* protocol);
-
-  User_var_log_event(const char* buf,
-                     const Format_description_log_event *description_event);
-  ~User_var_log_event() {}
-  Log_event_type get_type_code() { return USER_VAR_EVENT;}
-  bool write(IO_CACHE* file);
-  bool is_valid() const { return 1; }
-
-private:
-  virtual int do_apply_event(Relay_log_info const *rli);
-  virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli);
 };
 
 
