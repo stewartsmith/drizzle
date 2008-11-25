@@ -604,7 +604,7 @@ fi
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
-# Check for tcmalloc
+# Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
 AC_ARG_ENABLE([tcmalloc],
@@ -613,9 +613,14 @@ AC_ARG_ENABLE([tcmalloc],
     [ac_enable_tcmalloc="$enableval"],
     [ac_enable_tcmalloc="no"])
 
-if test "x$ac_enable_tcmalloc" = "xyes"
+if test "x$ac_enable_tcmalloc" != "xno"
 then
   AC_CHECK_LIB(tcmalloc,malloc,[],[])
+fi
+
+if test "x$ac_cv_lib_tcmalloc_malloc" != "xyes"
+then
+  AC_CHECK_LIB(mtmalloc,malloc,[],[])
 fi
 
 #--------------------------------------------------------------------
