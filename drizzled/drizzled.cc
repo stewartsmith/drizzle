@@ -294,7 +294,7 @@ char* opt_secure_file_priv= 0;
 */
 bool opt_noacl;
 
-ulong opt_binlog_rows_event_max_size;
+uint64_t opt_binlog_rows_event_max_size;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
