@@ -26,7 +26,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/rli.h>
 
 #include <mysys/my_dir.h>
@@ -2491,9 +2492,7 @@ bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
       "do the involved tables match (to be implemented)
       binlog_[wild_]{do|ignore}_table?" (WL#1049)"
     */
-    const char *local_db= event_info->get_db();
-    if ((session && !(session->options & OPTION_BIN_LOG)) ||
-	(!binlog_filter->db_ok(local_db)))
+    if (session && !(session->options & OPTION_BIN_LOG))
     {
       pthread_mutex_unlock(&LOCK_log);
       return(0);
@@ -3099,67 +3098,6 @@ void DRIZZLE_BIN_LOG::signal_update()
   pthread_cond_broadcast(&update_cond);
   return;
 }
-
-/**
-  Prints a printf style message to the error log and, under NT, to the
-  Windows event log.
-
-  This function prints the message into a buffer and then sends that buffer
-  to other functions to write that message to other logging sources.
-
-  @param event_type          Type of event to write (Error, Warning, or Info)
-  @param format              Printf style format of message
-  @param args                va_list list of arguments for the message
-
-  @returns
-    The function always returns 0. The return value is present in the
-    signature to be compatible with other logging routines, which could
-    return an error (e.g. logging to the log tables)
-*/
-static void print_buffer_to_file(enum loglevel level, int,
-                                 const char *buffer, size_t)
-{
-  time_t skr;
-  struct tm tm_tmp;
-  struct tm *start;
-
-  pthread_mutex_lock(&LOCK_error_log);
-
-  skr= my_time(0);
-  localtime_r(&skr, &tm_tmp);
-  start=&tm_tmp;
-
-  fprintf(stderr, "%02d%02d%02d %2d:%02d:%02d [%s] %s\n",
-          start->tm_year % 100,
-          start->tm_mon+1,
-          start->tm_mday,
-          start->tm_hour,
-          start->tm_min,
-          start->tm_sec,
-          (level == ERROR_LEVEL ? "ERROR" : level == WARNING_LEVEL ?
-           "Warning" : "Note"),
-          buffer);
-
-  fflush(stderr);
-
-  pthread_mutex_unlock(&LOCK_error_log);
-  return;
-}
-
-
-int vprint_msg_to_log(enum loglevel level, const char *format, va_list args)
-{
-  char   buff[1024];
-  size_t length;
-  int error_code= errno;
-
-  length= vsnprintf(buff, sizeof(buff), format, args);
-
-  print_buffer_to_file(level, error_code, buff, length);
-
-  return(0);
-}
-
 
 void sql_print_error(const char *format, ...) 
 {

@@ -29,7 +29,8 @@
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
@@ -1172,13 +1173,6 @@ bool show_master_info(Session* session, Master_info* mi)
                                              FN_REFLEN));
   field_list.push_back(new Item_empty_string("Slave_IO_Running", 3));
   field_list.push_back(new Item_empty_string("Slave_SQL_Running", 3));
-  field_list.push_back(new Item_empty_string("Replicate_Do_DB", 20));
-  field_list.push_back(new Item_empty_string("Replicate_Ignore_DB", 20));
-  field_list.push_back(new Item_empty_string("Replicate_Do_Table", 20));
-  field_list.push_back(new Item_empty_string("Replicate_Ignore_Table", 23));
-  field_list.push_back(new Item_empty_string("Replicate_Wild_Do_Table", 24));
-  field_list.push_back(new Item_empty_string("Replicate_Wild_Ignore_Table",
-                                             28));
   field_list.push_back(new Item_return_int("Last_Errno", 4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_Error", 20));
   field_list.push_back(new Item_return_int("Skip_Counter", 10,
@@ -1231,19 +1225,6 @@ bool show_master_info(Session* session, Master_info* mi)
     protocol->store(mi->slave_running == DRIZZLE_SLAVE_RUN_CONNECT ?
                     "Yes" : "No", &my_charset_bin);
     protocol->store(mi->rli.slave_running ? "Yes":"No", &my_charset_bin);
-    protocol->store(rpl_filter->get_do_db());
-    protocol->store(rpl_filter->get_ignore_db());
-
-    char buf[256];
-    String tmp(buf, sizeof(buf), &my_charset_bin);
-    rpl_filter->get_do_table(&tmp);
-    protocol->store(&tmp);
-    rpl_filter->get_ignore_table(&tmp);
-    protocol->store(&tmp);
-    rpl_filter->get_wild_do_table(&tmp);
-    protocol->store(&tmp);
-    rpl_filter->get_wild_ignore_table(&tmp);
-    protocol->store(&tmp);
 
     protocol->store(mi->rli.last_error().number);
     protocol->store(mi->rli.last_error().message, &my_charset_bin);
@@ -1800,7 +1781,7 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
           }
         }
         else
-          sql_print_error(_("Slave SQL thread retried transaction %lu time(s) "
+          sql_print_error(_("Slave SQL thread retried transaction %"PRIu64" time(s) "
                             "in vain, giving up. Consider raising the value of "
                             "the slave_transaction_retries variable."),
                           slave_trans_retries);
@@ -2077,7 +2058,7 @@ requesting master dump")) ||
         switch (drizzle_error_number) {
         case CR_NET_PACKET_TOO_LARGE:
           sql_print_error(_("Log entry on master is longer than "
-                            "max_allowed_packet (%ld) on "
+                            "max_allowed_packet (%u) on "
                             "slave. If the entry is correct, restart the "
                             "server with a higher value of "
                             "max_allowed_packet"),
@@ -2475,11 +2456,6 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
   if (unlikely(!cev->is_valid()))
     return(1);
 
-  if (!rpl_filter->db_ok(cev->db))
-  {
-    skip_load_data_infile(net);
-    return(0);
-  }
   assert(cev->inited_from_old);
   session->file_id = cev->file_id = mi->file_id++;
   session->server_id = cev->server_id;

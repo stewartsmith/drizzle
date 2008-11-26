@@ -39,7 +39,7 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib, delay_key_write_typelib, sql_mode_typelib,
-  optimizer_switch_typelib, slave_exec_mode_typelib;
+       optimizer_switch_typelib, slave_exec_mode_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -147,16 +147,16 @@ public:
 
 
 /*
-  A global-only ulong variable that requires its access to be
+  A global-only uint64_t variable that requires its access to be
   protected with a mutex.
 */
 
 class sys_var_long_ptr_global: public sys_var_global
 {
-  ulong *value;
+  uint64_t *value;
 public:
   sys_var_long_ptr_global(sys_var_chain *chain, const char *name_arg,
-                          ulong *value_ptr_arg,
+                          uint64_t *value_ptr_arg,
                           pthread_mutex_t *guard_arg,
                           sys_after_update_func after_update_arg= NULL)
     :sys_var_global(name_arg, after_update_arg, guard_arg),
@@ -174,13 +174,13 @@ public:
 
 
 /*
-  A global ulong variable that is protected by LOCK_global_system_variables
+  A global uint64_t variable that is protected by LOCK_global_system_variables
 */
 
 class sys_var_long_ptr :public sys_var_long_ptr_global
 {
 public:
-  sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, ulong *value_ptr,
+  sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr,
                    sys_after_update_func after_update_arg= NULL);
 };
 
@@ -397,10 +397,10 @@ public:
 
 class sys_var_enum_const :public sys_var
 {
-  ulong SV::*offset;
+  uint32_t SV::*offset;
   TYPELIB *enum_names;
 public:
-  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, ulong SV::*offset_arg,
+  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, uint32_t SV::*offset_arg,
       TYPELIB *typelib, sys_after_update_func func)
     :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
   { chain_sys_var(chain); }
@@ -434,17 +434,16 @@ public:
   }
 };
 
-
-class sys_var_session_ulong :public sys_var_session
+class sys_var_session_uint32_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  ulong SV::*offset;
-  sys_var_session_ulong(sys_var_chain *chain, const char *name_arg,
-                    ulong SV::*offset_arg,
-                    sys_check_func c_func= NULL,
-                    sys_after_update_func au_func= NULL,
-                    Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
+  uint32_t SV::*offset;
+  sys_var_session_uint32_t(sys_var_chain *chain, const char *name_arg,
+                           uint32_t SV::*offset_arg,
+                           sys_check_func c_func= NULL,
+                           sys_after_update_func au_func= NULL,
+                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_session(name_arg, au_func, binlog_status_arg), check_func(c_func),
     offset(offset_arg)
   { chain_sys_var(chain); }
@@ -487,14 +486,16 @@ public:
                            sys_after_update_func au_func= NULL,
                            sys_check_func c_func= NULL,
                            Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-        :sys_var_session(name_arg, au_func, binlog_status_arg),
-         check_func(c_func),
-         offset(offset_arg)
-            { chain_sys_var(chain); }
-  sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg, 
-                        uint64_t SV::*offset_arg, 
-			sys_after_update_func func, bool only_global_arg,
-      sys_check_func cfunc= NULL)
+    :sys_var_session(name_arg, au_func, binlog_status_arg),
+    check_func(c_func),
+    offset(offset_arg)
+  { chain_sys_var(chain); }
+  sys_var_session_uint64_t(sys_var_chain *chain, 
+                           const char *name_arg, 
+                           uint64_t SV::*offset_arg, 
+                           sys_after_update_func func, 
+                           bool only_global_arg,
+                           sys_check_func cfunc= NULL)
     :sys_var_session(name_arg, func),
     check_func(cfunc),
     offset(offset_arg),
@@ -543,12 +544,12 @@ public:
 class sys_var_session_enum :public sys_var_session
 {
 protected:
-  ulong SV::*offset;
+  uint32_t SV::*offset;
   TYPELIB *enum_names;
   sys_check_func check_func;
 public:
   sys_var_session_enum(sys_var_chain *chain, const char *name_arg,
-                   ulong SV::*offset_arg, TYPELIB *typelib,
+                   uint32_t SV::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
                    sys_check_func check= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
@@ -575,7 +576,7 @@ class sys_var_session_optimizer_switch :public sys_var_session_enum
 {
 public:
   sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg, 
-                               ulong SV::*offset_arg)
+                                   uint32_t SV::*offset_arg)
     :sys_var_session_enum(chain, name_arg, offset_arg, &optimizer_switch_typelib)
   {}
   bool check(Session *session, set_var *var)
@@ -584,7 +585,7 @@ public:
   }
   void set_default(Session *session, enum_var_type type);
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  static bool symbolic_mode_representation(Session *session, uint64_t sql_mode,
+  static bool symbolic_mode_representation(Session *session, uint32_t sql_mode,
                                            LEX_STRING *rep);
 };
 
@@ -675,29 +676,6 @@ public:
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-};
-
-
-class sys_var_rand_seed1 :public sys_var
-{
-public:
-  sys_var_rand_seed1(sys_var_chain *chain, const char *name_arg,
-                     Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var(name_arg, NULL, binlog_status_arg)
-  { chain_sys_var(chain); }
-  bool update(Session *session, set_var *var);
-  bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
-};
-
-class sys_var_rand_seed2 :public sys_var
-{
-public:
-  sys_var_rand_seed2(sys_var_chain *chain, const char *name_arg,
-                     Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var(name_arg, NULL, binlog_status_arg)
-  { chain_sys_var(chain); }
-  bool update(Session *session, set_var *var);
-  bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
 };
 
 
@@ -843,70 +821,6 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
 };
-
-
-class sys_var_set :public sys_var
-{
-protected:
-  ulong *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_set(sys_var_chain *chain, const char *name_arg, ulong *value_arg,
-              TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg, func), value(value_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  virtual bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  virtual void set_default(Session *session __attribute__((unused)),
-                           enum_var_type type __attribute__((unused)))
-  {
-    *value= 0;
-  }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
-  { return 0; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-};
-
-class sys_var_set_slave_mode :public sys_var_set
-{
-public:
-  sys_var_set_slave_mode(sys_var_chain *chain, const char *name_arg,
-                         ulong *value_arg,
-                         TYPELIB *typelib, sys_after_update_func func) :
-    sys_var_set(chain, name_arg, value_arg, typelib, func) {}
-  void set_default(Session *session, enum_var_type type);
-  bool check(Session *session, set_var *var);
-  bool update(Session *session, set_var *var);
-};
-
-class sys_var_log_output :public sys_var
-{
-  ulong *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_log_output(sys_var_chain *chain, const char *name_arg, ulong *value_arg,
-                     TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
-  {
-    chain_sys_var(chain);
-    set_allow_empty_value(false);
-  }
-  virtual bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type __attribute__((unused)))
-  { return 0; }
-  void set_default(Session *session, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-};
-
 
 /* Variable that you can only read from */
 

@@ -149,54 +149,55 @@ struct system_variables
   uint64_t tmp_table_size;
   ha_rows select_limit;
   ha_rows max_join_size;
-  ulong auto_increment_increment, auto_increment_offset;
-  ulong bulk_insert_buff_size;
-  ulong join_buff_size;
-  ulong max_allowed_packet;
-  ulong max_error_count;
-  ulong max_length_for_sort_data;
-  ulong max_sort_length;
-  ulong max_tmp_tables;
-  ulong min_examined_row_limit;
-  ulong myisam_repair_threads;
-  ulong myisam_sort_buff_size;
-  ulong myisam_stats_method;
-  ulong net_buffer_length;
-  ulong net_interactive_timeout;
-  ulong net_read_timeout;
-  ulong net_retry_count;
-  ulong net_wait_timeout;
-  ulong net_write_timeout;
-  ulong optimizer_prune_level;
-  ulong optimizer_search_depth;
+  uint32_t auto_increment_increment;
+  uint32_t auto_increment_offset;
+  uint64_t bulk_insert_buff_size;
+  uint64_t join_buff_size;
+  uint32_t max_allowed_packet;
+  uint64_t max_error_count;
+  uint64_t max_length_for_sort_data;
+  uint64_t max_sort_length;
+  uint64_t max_tmp_tables;
+  uint64_t min_examined_row_limit;
+  uint32_t myisam_repair_threads;
+  uint64_t myisam_sort_buff_size;
+  uint32_t myisam_stats_method;
+  uint32_t net_buffer_length;
+  uint32_t net_interactive_timeout;
+  uint32_t net_read_timeout;
+  uint32_t net_retry_count;
+  uint32_t net_wait_timeout;
+  uint32_t net_write_timeout;
+  bool optimizer_prune_level;
+  uint32_t optimizer_search_depth;
   /*
     Controls use of Engine-MRR:
       0 - auto, based on cost
       1 - force MRR when the storage engine is capable of doing it
       2 - disable MRR.
   */
-  ulong optimizer_use_mrr; 
+  uint32_t optimizer_use_mrr; 
   /* A bitmap for switching optimizations on/off */
-  ulong optimizer_switch;
-  ulong preload_buff_size;
-  ulong read_buff_size;
-  ulong read_rnd_buff_size;
-  ulong div_precincrement;
-  ulong sortbuff_size;
-  ulong thread_handling;
-  ulong tx_isolation;
-  ulong completion_type;
+  uint32_t optimizer_switch;
+  uint64_t preload_buff_size;
+  uint32_t read_buff_size;
+  uint32_t read_rnd_buff_size;
+  uint32_t div_precincrement;
+  uint64_t sortbuff_size;
+  uint32_t thread_handling;
+  uint32_t tx_isolation;
+  uint32_t completion_type;
   /* Determines which non-standard SQL behaviour should be enabled */
-  ulong sql_mode;
-  ulong default_week_format;
-  ulong max_seeks_for_key;
-  ulong range_alloc_block_size;
-  ulong query_alloc_block_size;
-  ulong query_prealloc_size;
-  ulong trans_alloc_block_size;
-  ulong trans_prealloc_size;
-  ulong log_warnings;
-  ulong group_concat_max_len;
+  uint32_t sql_mode;
+  uint32_t default_week_format;
+  uint64_t max_seeks_for_key;
+  uint64_t range_alloc_block_size;
+  uint32_t query_alloc_block_size;
+  uint32_t query_prealloc_size;
+  uint32_t trans_alloc_block_size;
+  uint32_t trans_prealloc_size;
+  bool log_warnings;
+  uint64_t group_concat_max_len;
   /*
     In slave thread we need to know in behalf of which
     thread the query is being run to replicate temp tables properly

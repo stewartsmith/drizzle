@@ -140,24 +140,24 @@ static unsigned char *get_tmpdir(Session *session);
 
 static sys_var_chain vars = { NULL, NULL };
 
-static sys_var_session_ulong
+static sys_var_session_uint32_t
 sys_auto_increment_increment(&vars, "auto_increment_increment",
                              &SV::auto_increment_increment, NULL, NULL,
                              sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_session_ulong
+static sys_var_session_uint32_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
                           &SV::auto_increment_offset, NULL, NULL,
                           sys_var::SESSION_VARIABLE_IN_BINLOG);
 
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_long_ptr	sys_binlog_cache_size(&vars, "binlog_cache_size",
-					      &binlog_cache_size);
-static sys_var_session_ulong	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
-						  &SV::bulk_insert_buff_size);
-static sys_var_session_ulong	sys_completion_type(&vars, "completion_type",
-					 &SV::completion_type,
-					 check_completion_type,
-					 fix_completion_type);
+                                              &binlog_cache_size);
+static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
+                                                          &SV::bulk_insert_buff_size);
+static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
+                                                    &SV::completion_type,
+                                                    check_completion_type,
+                                                    fix_completion_type);
 static sys_var_collation_sv
 sys_collation_connection(&vars, "collation_connection",
                          &SV::collation_connection, &default_charset_info,
@@ -171,7 +171,7 @@ sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      &default_charset_info,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
-					    &connect_timeout);
+                                            &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,
@@ -179,7 +179,7 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    fix_delay_key_write);
 
 static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
-					     &expire_logs_days);
+                                             &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
@@ -187,97 +187,97 @@ sys_var_str             sys_init_connect(&vars, "init_connect", 0,
 sys_var_str             sys_init_slave(&vars, "init_slave", 0,
                                        sys_update_init_slave,
                                        sys_default_init_slave,0);
-static sys_var_session_ulong	sys_interactive_timeout(&vars, "interactive_timeout",
-						&SV::net_interactive_timeout);
-static sys_var_session_ulong	sys_join_buffer_size(&vars, "join_buffer_size",
-					     &SV::join_buff_size);
+static sys_var_session_uint32_t	sys_interactive_timeout(&vars, "interactive_timeout",
+                                                        &SV::net_interactive_timeout);
+static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
+                                                     &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
 static sys_var_key_cache_long  sys_key_cache_block_size(&vars, "key_cache_block_size",
-						 offsetof(KEY_CACHE,
-							  param_block_size));
+                                                        offsetof(KEY_CACHE,
+                                                                 param_block_size));
 static sys_var_key_cache_long	sys_key_cache_division_limit(&vars, "key_cache_division_limit",
-						     offsetof(KEY_CACHE,
-							      param_division_limit));
+                                                           offsetof(KEY_CACHE,
+                                                                    param_division_limit));
 static sys_var_key_cache_long  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
-						     offsetof(KEY_CACHE,
-							      param_age_threshold));
+                                                           offsetof(KEY_CACHE,
+                                                                    param_age_threshold));
 static sys_var_bool_ptr	sys_local_infile(&vars, "local_infile",
-					 &opt_local_infile);
+                                         &opt_local_infile);
 static sys_var_session_bool	sys_low_priority_updates(&vars, "low_priority_updates",
-						 &SV::low_priority_updates,
-						 fix_low_priority_updates);
+                                                     &SV::low_priority_updates,
+                                                     fix_low_priority_updates);
 #ifndef TO_BE_DELETED	/* Alias for the low_priority_updates */
 static sys_var_session_bool	sys_sql_low_priority_updates(&vars, "sql_low_priority_updates",
-						     &SV::low_priority_updates,
-						     fix_low_priority_updates);
+                                                         &SV::low_priority_updates,
+                                                         fix_low_priority_updates);
 #endif
-static sys_var_session_ulong	sys_max_allowed_packet(&vars, "max_allowed_packet",
-					       &SV::max_allowed_packet);
+static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
+                                                       &SV::max_allowed_packet);
 static sys_var_long_ptr	sys_max_binlog_cache_size(&vars, "max_binlog_cache_size",
-						  &max_binlog_cache_size);
+                                                  &max_binlog_cache_size);
 static sys_var_long_ptr	sys_max_binlog_size(&vars, "max_binlog_size",
-					    &max_binlog_size,
+                                            &max_binlog_size,
                                             fix_max_binlog_size);
 static sys_var_long_ptr	sys_max_connections(&vars, "max_connections",
-					    &max_connections,
+                                            &max_connections,
                                             fix_max_connections);
 static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
-					       &max_connect_errors);
-static sys_var_session_ulong	sys_max_error_count(&vars, "max_error_count",
-					    &SV::max_error_count);
+                                               &max_connect_errors);
+static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
+                                                  &SV::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
-						&SV::max_heap_table_size);
+                                                        &SV::max_heap_table_size);
 static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               &SV::pseudo_thread_id,
                                               0, check_pseudo_thread_id,
                                               sys_var::SESSION_VARIABLE_IN_BINLOG);
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
-					  &SV::max_join_size,
-					  fix_max_join_size);
-static sys_var_session_ulong	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
-					      &SV::max_seeks_for_key);
-static sys_var_session_ulong   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
-                                                 &SV::max_length_for_sort_data);
+                                                  &SV::max_join_size,
+                                                  fix_max_join_size);
+static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
+                                                      &SV::max_seeks_for_key);
+static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
+                                                               &SV::max_length_for_sort_data);
 static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                &max_relay_log_size,
                                                fix_max_relay_log_size);
-static sys_var_session_ulong	sys_max_sort_length(&vars, "max_sort_length",
-					    &SV::max_sort_length);
-static sys_var_session_ulong	sys_max_tmp_tables(&vars, "max_tmp_tables",
-					   &SV::max_tmp_tables);
+static sys_var_session_uint64_t	sys_max_sort_length(&vars, "max_sort_length",
+                                                    &SV::max_sort_length);
+static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
+                                                   &SV::max_tmp_tables);
 static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
-						 &max_write_lock_count);
-static sys_var_session_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
-                                                          &SV::min_examined_row_limit);
+                                                 &max_write_lock_count);
+static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
+                                                           &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
-static sys_var_session_ulong       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
-static sys_var_session_ulong	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
+static sys_var_session_uint32_t       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
+static sys_var_session_uint64_t	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
 static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
-                                                &SV::myisam_stats_method,
-                                                &myisam_stats_method_typelib,
-                                                NULL);
-static sys_var_session_ulong	sys_net_buffer_length(&vars, "net_buffer_length",
-					      &SV::net_buffer_length);
-static sys_var_session_ulong	sys_net_read_timeout(&vars, "net_read_timeout",
-					     &SV::net_read_timeout,
-					     0, fix_net_read_timeout);
-static sys_var_session_ulong	sys_net_write_timeout(&vars, "net_write_timeout",
-					      &SV::net_write_timeout,
-					      0, fix_net_write_timeout);
-static sys_var_session_ulong	sys_net_retry_count(&vars, "net_retry_count",
-					    &SV::net_retry_count,
-					    0, fix_net_retry_count);
+                                                            &SV::myisam_stats_method,
+                                                            &myisam_stats_method_typelib,
+                                                            NULL);
+static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
+                                                      &SV::net_buffer_length);
+static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
+                                                     &SV::net_read_timeout,
+                                                     0, fix_net_read_timeout);
+static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout",
+                                                      &SV::net_write_timeout,
+                                                      0, fix_net_write_timeout);
+static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
+                                                    &SV::net_retry_count,
+                                                    0, fix_net_retry_count);
 static sys_var_session_bool	sys_new_mode(&vars, "new", &SV::new_mode);
 static sys_var_bool_ptr_readonly sys_old_mode(&vars, "old",
-                                       &global_system_variables.old_mode);
+                                              &global_system_variables.old_mode);
 /* these two cannot be static */
-sys_var_session_bool                sys_old_alter_table(&vars, "old_alter_table",
-                                            &SV::old_alter_table);
-static sys_var_session_ulong        sys_optimizer_prune_level(&vars, "optimizer_prune_level",
-                                                  &SV::optimizer_prune_level);
-static sys_var_session_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",
-                                                   &SV::optimizer_search_depth);
+sys_var_session_bool sys_old_alter_table(&vars, "old_alter_table",
+                                         &SV::old_alter_table);
+static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
+                                                      &SV::optimizer_prune_level);
+static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
+                                                           &SV::optimizer_search_depth);
 
 const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
 TYPELIB optimizer_use_mrr_typelib= {
@@ -285,36 +285,36 @@ TYPELIB optimizer_use_mrr_typelib= {
   optimizer_use_mrr_names, NULL
 };
 
-static sys_var_session_enum        sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
-                                              &SV::optimizer_use_mrr,
-                                              &optimizer_use_mrr_typelib,
-                                              NULL);
+static sys_var_session_enum sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
+                                                  &SV::optimizer_use_mrr,
+                                                  &optimizer_use_mrr_typelib,
+                                                  NULL);
 
-static sys_var_session_ulong        sys_preload_buff_size(&vars, "preload_buffer_size",
-                                              &SV::preload_buff_size);
-static sys_var_session_ulong	sys_read_buff_size(&vars, "read_buffer_size",
-					   &SV::read_buff_size);
+static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
+                                                      &SV::preload_buff_size);
+static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
+                                                   &SV::read_buff_size);
 static sys_var_opt_readonly	sys_readonly(&vars, "read_only", &opt_readonly);
-static sys_var_session_ulong	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
-					       &SV::read_rnd_buff_size);
-static sys_var_session_ulong	sys_div_precincrement(&vars, "div_precision_increment",
-                                              &SV::div_precincrement);
+static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
+                                                       &SV::read_rnd_buff_size);
+static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
+                                                      &SV::div_precincrement);
 
-static sys_var_session_ulong	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
-						   &SV::range_alloc_block_size);
-static sys_var_session_ulong	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
-						   &SV::query_alloc_block_size,
-						   0, fix_session_mem_root);
-static sys_var_session_ulong	sys_query_prealloc_size(&vars, "query_prealloc_size",
-						&SV::query_prealloc_size,
-						0, fix_session_mem_root);
-static sys_var_readonly        sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
-static sys_var_session_ulong	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
-						   &SV::trans_alloc_block_size,
-						   0, fix_trans_mem_root);
-static sys_var_session_ulong	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-						&SV::trans_prealloc_size,
-						0, fix_trans_mem_root);
+static sys_var_session_uint64_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
+                                                           &SV::range_alloc_block_size);
+static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
+                                                           &SV::query_alloc_block_size,
+                                                           false, fix_session_mem_root);
+static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
+                                                        &SV::query_prealloc_size,
+                                                        false, fix_session_mem_root);
+static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
+static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
+                                                           &SV::trans_alloc_block_size,
+                                                           false, fix_trans_mem_root);
+static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
+                                                        &SV::trans_prealloc_size,
+                                                        false, fix_trans_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -325,15 +325,10 @@ static sys_var_bool_ptr	sys_slave_compressed_protocol(&vars, "slave_compressed_p
 						      &opt_slave_compressed_protocol);
 static sys_var_bool_ptr         sys_slave_allow_batching(&vars, "slave_allow_batching",
                                                          &slave_allow_batching);
-static sys_var_set_slave_mode slave_exec_mode(&vars,
-                                              "slave_exec_mode",
-                                              &slave_exec_mode_options,
-                                              &slave_exec_mode_typelib,
-                                              0);
 static sys_var_long_ptr	sys_slow_launch_time(&vars, "slow_launch_time",
-					     &slow_launch_time);
-static sys_var_session_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
-					&SV::sortbuff_size);
+                                             &slow_launch_time);
+static sys_var_session_uint64_t	sys_sort_buffer(&vars, "sort_buffer_size",
+                                                &SV::sortbuff_size);
 /*
   sql_mode should *not* have binlog_mode=SESSION_VARIABLE_IN_BINLOG:
   even though it is written to the binlog, the slave ignores the
@@ -341,7 +336,7 @@ static sys_var_session_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
   master's (see log_event.cc: Query_log_event::do_apply_event()).
 */
 static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
-                                     &SV::optimizer_switch);
+                                                               &SV::optimizer_switch);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::table_plugin);
@@ -356,12 +351,12 @@ static sys_var_long_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_time
 static sys_var_long_ptr	sys_thread_cache_size(&vars, "thread_cache_size",
 					      &thread_cache_size);
 sys_var_long_ptr	sys_thread_pool_size(&vars, "thread_pool_size",
-					      &thread_pool_size);
+                                       &thread_pool_size);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
-					 &SV::tx_isolation,
-					 &tx_isolation_typelib,
-					 fix_tx_isolation,
-					 check_tx_isolation);
+                                             &SV::tx_isolation,
+                                             &tx_isolation_typelib,
+                                             fix_tx_isolation,
+                                             check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
@@ -372,8 +367,8 @@ static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_mac
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
                                                SYSTEM_TYPE);
-static sys_var_session_ulong	sys_net_wait_timeout(&vars, "wait_timeout",
-					     &SV::net_wait_timeout);
+static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
+                                                     &SV::net_wait_timeout);
 
 /* Condition pushdown to storage engine */
 static sys_var_session_bool
@@ -477,16 +472,11 @@ static sys_var_readonly		sys_warning_count(&vars, "warning_count",
 						  SHOW_LONG,
 						  get_warning_count);
 
-static sys_var_rand_seed1 sys_rand_seed1(&vars, "rand_seed1",
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_rand_seed2 sys_rand_seed2(&vars, "rand_seed2",
-                                         sys_var::SESSION_VARIABLE_IN_BINLOG);
+static sys_var_session_uint32_t sys_default_week_format(&vars, "default_week_format",
+                                                        &SV::default_week_format);
 
-static sys_var_session_ulong        sys_default_week_format(&vars, "default_week_format",
-					                &SV::default_week_format);
-
-sys_var_session_ulong               sys_group_concat_max_len(&vars, "group_concat_max_len",
-                                                         &SV::group_concat_max_len);
+sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
+                                                  &SV::group_concat_max_len);
 
 sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
                                     sys_var::SESSION_VARIABLE_IN_BINLOG);
@@ -727,65 +717,6 @@ extern void fix_delay_key_write(Session *, enum_var_type)
   }
 }
 
-bool sys_var_set::update(Session *, set_var *var)
-{
-  *value= var->save_result.uint32_t_value;
-  return 0;
-}
-
-unsigned char *sys_var_set::value_ptr(Session *session,
-                              enum_var_type,
-                              LEX_STRING *)
-{
-  char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  ulong length;
-  ulong val= *value;
-
-  tmp.length(0);
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(enum_names->type_names[i],
-                 enum_names->type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if ((length= tmp.length()))
-    length--;
-  return (unsigned char*) session->strmake(tmp.ptr(), length);
-}
-
-void sys_var_set_slave_mode::set_default(Session *, enum_var_type)
-{
-  slave_exec_mode_options= 0;
-  bit_do_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT);
-}
-
-bool sys_var_set_slave_mode::check(Session *session, set_var *var)
-{
-  bool rc=  sys_var_set::check(session, var);
-  if (!rc &&
-      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_STRICT) == 1 &&
-      bit_is_set(var->save_result.uint32_t_value, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
-  {
-    rc= true;
-    my_error(ER_SLAVE_AMBIGOUS_EXEC_MODE, MYF(0), "");
-  }
-  return rc;
-}
-
-bool sys_var_set_slave_mode::update(Session *session, set_var *var)
-{
-  bool rc;
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  rc= sys_var_set::update(session, var);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return rc;
-}
-
 void fix_slave_exec_mode(enum_var_type)
 {
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
@@ -889,7 +820,7 @@ static bool get_unsigned(Session *, set_var *var)
 
 
 sys_var_long_ptr::
-sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, ulong *value_ptr_arg,
+sys_var_long_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg,
                  sys_after_update_func after_update_arg)
   :sys_var_long_ptr_global(chain, name_arg, value_ptr_arg,
                            &LOCK_global_system_variables, after_update_arg)
@@ -906,7 +837,7 @@ bool sys_var_long_ptr_global::update(Session *session, set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(guard);
   if (option_limits)
-    *value= (ulong) fix_unsigned(session, tmp, option_limits);
+    *value= (uint64_t) fix_unsigned(session, tmp, option_limits);
   else
   {
     if (tmp > UINT32_MAX)
@@ -915,7 +846,7 @@ bool sys_var_long_ptr_global::update(Session *session, set_var *var)
       throw_bounds_warning(session, true, true, name,
                            (int64_t) var->save_result.uint64_t_value);
     }
-    *value= (ulong) tmp;
+    *value= (uint64_t) tmp;
   }
 
   pthread_mutex_unlock(guard);
@@ -927,7 +858,7 @@ void sys_var_long_ptr_global::set_default(Session *, enum_var_type)
 {
   bool not_used;
   pthread_mutex_lock(guard);
-  *value= (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
+  *value= (uint64_t) getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                          option_limits, &not_used);
   pthread_mutex_unlock(guard);
 }
@@ -1010,25 +941,28 @@ unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
   return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
 }
 
-bool sys_var_session_ulong::check(Session *session, set_var *var)
+/*
+  32 bit types for session variables 
+*/
+bool sys_var_session_uint32_t::check(Session *session, set_var *var)
 {
   return (get_unsigned(session, var) ||
           (check_func && (*check_func)(session, var)));
 }
 
-bool sys_var_session_ulong::update(Session *session, set_var *var)
+bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
   
   /* Don't use bigger value than given with --maximum-variable-name=.. */
-  if ((ulong) tmp > max_system_variables.*offset)
+  if ((uint32_t) tmp > max_system_variables.*offset)
   {
     throw_bounds_warning(session, true, true, name, (int64_t) tmp);
     tmp= max_system_variables.*offset;
   }
   
   if (option_limits)
-    tmp= (ulong) fix_unsigned(session, tmp, option_limits);
+    tmp= (uint32_t) fix_unsigned(session, tmp, option_limits);
   else if (tmp > UINT32_MAX)
   {
     tmp= UINT32_MAX;
@@ -1036,22 +970,22 @@ bool sys_var_session_ulong::update(Session *session, set_var *var)
   }
   
   if (var->type == OPT_GLOBAL)
-     global_system_variables.*offset= (ulong) tmp;
+     global_system_variables.*offset= (uint32_t) tmp;
    else
-     session->variables.*offset= (ulong) tmp;
+     session->variables.*offset= (uint32_t) tmp;
 
    return 0;
  }
 
 
- void sys_var_session_ulong::set_default(Session *session, enum_var_type type)
+ void sys_var_session_uint32_t::set_default(Session *session, enum_var_type type)
  {
    if (type == OPT_GLOBAL)
    {
      bool not_used;
      /* We will not come here if option_limits is not set */
      global_system_variables.*offset=
-       (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
+       (uint32_t) getopt_ull_limit_value((uint32_t) option_limits->def_value,
                                       option_limits, &not_used);
    }
    else
@@ -1059,7 +993,7 @@ bool sys_var_session_ulong::update(Session *session, set_var *var)
  }
 
 
-unsigned char *sys_var_session_ulong::value_ptr(Session *session,
+unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
                                                 enum_var_type type,
                                                 LEX_STRING *)
 {
@@ -1265,7 +1199,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, cmin(sizeof(buff) - 1, (ulong)error_len));
+      strmake(buff, error, cmin(sizeof(buff) - 1, (uint64_t)error_len));
       goto err;
     }
   }
@@ -1427,7 +1361,7 @@ bool sys_var_session_enum::update(Session *session, set_var *var)
 void sys_var_session_enum::set_default(Session *session, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
-    global_system_variables.*offset= (ulong) option_limits->def_value;
+    global_system_variables.*offset= (uint32_t) option_limits->def_value;
   else
     session->variables.*offset= global_system_variables.*offset;
 }
@@ -1437,7 +1371,7 @@ unsigned char *sys_var_session_enum::value_ptr(Session *session,
                                                enum_var_type type,
                                                LEX_STRING *)
 {
-  ulong tmp= ((type == OPT_GLOBAL) ?
+  uint32_t tmp= ((type == OPT_GLOBAL) ?
 	      global_system_variables.*offset :
 	      session->variables.*offset);
   return (unsigned char*) enum_names->type_names[tmp];
@@ -1823,7 +1757,7 @@ end:
 */
 bool sys_var_key_cache_long::update(Session *session, set_var *var)
 {
-  ulong tmp= (ulong) var->value->val_int();
+  uint64_t tmp= (uint64_t) var->value->val_int();
   LEX_STRING *base_name= &var->base;
   bool error= 0;
 
@@ -1848,8 +1782,8 @@ bool sys_var_key_cache_long::update(Session *session, set_var *var)
   if (key_cache->in_init)
     goto end;
 
-  *((ulong*) (((char*) key_cache) + offset))=
-    (ulong) fix_unsigned(session, tmp, option_limits);
+  *((uint64_t*) (((char*) key_cache) + offset))=
+    (uint64_t) fix_unsigned(session, tmp, option_limits);
 
   /*
     Don't create a new key cache if it didn't exist
@@ -1932,52 +1866,6 @@ bool update_sys_var_str_path(Session *, sys_var_str *var_str,
 
 err:
   return result;
-}
-
-
-bool sys_var_log_output::update(Session *, set_var *var)
-{
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.lock_exclusive();
-  *value= var->save_result.uint32_t_value;
-  logger.unlock();
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return 0;
-}
-
-
-void sys_var_log_output::set_default(Session *, enum_var_type)
-{
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  logger.lock_exclusive();
-  *value= LOG_FILE;
-  logger.unlock();
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-}
-
-
-unsigned char *sys_var_log_output::value_ptr(Session *session,
-                                             enum_var_type, LEX_STRING *)
-{
-  char buff[256];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-  ulong length;
-  ulong val= *value;
-
-  tmp.length(0);
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(log_output_typelib.type_names[i],
-                 log_output_typelib.type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if ((length= tmp.length()))
-    length--;
-  return (unsigned char*) session->strmake(tmp.ptr(), length);
 }
 
 
@@ -2065,19 +1953,6 @@ unsigned char *sys_var_insert_id::value_ptr(Session *session, enum_var_type,
   session->sys_var_tmp.uint64_t_value=
     session->auto_inc_intervals_forced.minimum();
   return (unsigned char*) &session->sys_var_tmp.uint64_t_value;
-}
-
-
-bool sys_var_rand_seed1::update(Session *session, set_var *var)
-{
-  session->rand.seed1= (ulong) var->save_result.uint64_t_value;
-  return 0;
-}
-
-bool sys_var_rand_seed2::update(Session *session, set_var *var)
-{
-  session->rand.seed2= (ulong) var->save_result.uint64_t_value;
-  return 0;
 }
 
 
@@ -2893,7 +2768,7 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 
 bool
 sys_var_session_optimizer_switch::
-symbolic_mode_representation(Session *session, uint64_t val, LEX_STRING *rep)
+symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
   String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);

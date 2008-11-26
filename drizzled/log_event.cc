@@ -21,7 +21,8 @@
 #include <drizzled/log_event.h>
 #include <drizzled/replication/rli.h>
 #include <drizzled/replication/mi.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/utility.h>
 #include <drizzled/replication/record.h>
 #include <mysys/my_dir.h>
@@ -443,7 +444,6 @@ const char* Log_event::get_type_str(Log_event_type type)
   case STOP_EVENT:   return "Stop";
   case QUERY_EVENT:  return "Query";
   case ROTATE_EVENT: return "Rotate";
-  case INTVAR_EVENT: return "Intvar";
   case LOAD_EVENT:   return "Load";
   case NEW_LOAD_EVENT:   return "New_load";
   case SLAVE_EVENT:  return "Slave";
@@ -451,14 +451,9 @@ const char* Log_event::get_type_str(Log_event_type type)
   case APPEND_BLOCK_EVENT: return "Append_block";
   case DELETE_FILE_EVENT: return "Delete_file";
   case EXEC_LOAD_EVENT: return "Exec_load";
-  case RAND_EVENT: return "RAND";
   case XID_EVENT: return "Xid";
-  case USER_VAR_EVENT: return "User var";
   case FORMAT_DESCRIPTION_EVENT: return "Format_desc";
   case TABLE_MAP_EVENT: return "Table_map";
-  case PRE_GA_WRITE_ROWS_EVENT: return "Write_rows_event_old";
-  case PRE_GA_UPDATE_ROWS_EVENT: return "Update_rows_event_old";
-  case PRE_GA_DELETE_ROWS_EVENT: return "Delete_rows_event_old";
   case WRITE_ROWS_EVENT: return "Write_rows";
   case UPDATE_ROWS_EVENT: return "Update_rows";
   case DELETE_ROWS_EVENT: return "Delete_rows";
@@ -997,17 +992,8 @@ Log_event* Log_event::read_log_event(const char* buf, uint32_t event_len,
     case STOP_EVENT:
       ev = new Stop_log_event(buf, description_event);
       break;
-    case INTVAR_EVENT:
-      ev = new Intvar_log_event(buf, description_event);
-      break;
     case XID_EVENT:
       ev = new Xid_log_event(buf, description_event);
-      break;
-    case RAND_EVENT:
-      ev = new Rand_log_event(buf, description_event);
-      break;
-    case USER_VAR_EVENT:
-      ev = new User_var_log_event(buf, description_event);
       break;
     case FORMAT_DESCRIPTION_EVENT:
       ev = new Format_description_log_event(buf, event_len, description_event);
@@ -1513,7 +1499,6 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
 int Query_log_event::do_apply_event(Relay_log_info const *rli,
                                       const char *query_arg, uint32_t q_len_arg)
 {
-  LEX_STRING new_db;
   int expected_error,actual_error= 0;
   Query_id &query_id= Query_id::get_query_id();
   /*
@@ -1524,9 +1509,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
     you.
   */
   session->catalog= catalog_len ? (char *) catalog : (char *)"";
-  new_db.length= db_len;
-  new_db.str= (char *) rpl_filter->get_rewrite_db(db, &new_db.length);
-  session->set_db(new_db.str, new_db.length);       /* allocates a copy of 'db' */
+  session->set_db(db, strlen(db));       /* allocates a copy of 'db' */
   session->variables.auto_increment_increment= auto_increment_increment;
   session->variables.auto_increment_offset=    auto_increment_offset;
 
@@ -1555,7 +1538,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
             ::do_apply_event(), then the companion SET also have so
             we don't need to reset_one_shot_variables().
   */
-  if (rpl_filter->db_ok(session->db))
+  if (1)
   {
     session->set_time((time_t)when);
     session->query_length= q_len_arg;
@@ -1981,7 +1964,6 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
       post_header_len[QUERY_EVENT-1]= QUERY_HEADER_MINIMAL_LEN;
       post_header_len[STOP_EVENT-1]= 0;
       post_header_len[ROTATE_EVENT-1]= (binlog_ver==1) ? 0 : ROTATE_HEADER_LEN;
-      post_header_len[INTVAR_EVENT-1]= 0;
       post_header_len[LOAD_EVENT-1]= LOAD_HEADER_LEN;
       post_header_len[SLAVE_EVENT-1]= 0;
       post_header_len[CREATE_FILE_EVENT-1]= CREATE_FILE_HEADER_LEN;
@@ -1989,8 +1971,6 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
       post_header_len[EXEC_LOAD_EVENT-1]= EXEC_LOAD_HEADER_LEN;
       post_header_len[DELETE_FILE_EVENT-1]= DELETE_FILE_HEADER_LEN;
       post_header_len[NEW_LOAD_EVENT-1]= post_header_len[LOAD_EVENT-1];
-      post_header_len[RAND_EVENT-1]= 0;
-      post_header_len[USER_VAR_EVENT-1]= 0;
     }
     break;
   default: /* Includes binlog version 2 i.e. 4.0.x x<=1 */
@@ -2115,15 +2095,11 @@ Format_description_log_event(const char* buf,
     static const uint8_t perm[23]=
       {
         UNKNOWN_EVENT, START_EVENT_V3, QUERY_EVENT, STOP_EVENT, ROTATE_EVENT,
-        INTVAR_EVENT, LOAD_EVENT, SLAVE_EVENT, CREATE_FILE_EVENT,
+        LOAD_EVENT, SLAVE_EVENT, CREATE_FILE_EVENT,
         APPEND_BLOCK_EVENT, EXEC_LOAD_EVENT, DELETE_FILE_EVENT,
         NEW_LOAD_EVENT,
-        RAND_EVENT, USER_VAR_EVENT,
         FORMAT_DESCRIPTION_EVENT,
         TABLE_MAP_EVENT,
-        PRE_GA_WRITE_ROWS_EVENT,
-        PRE_GA_UPDATE_ROWS_EVENT,
-        PRE_GA_DELETE_ROWS_EVENT,
         XID_EVENT,
         BEGIN_LOAD_QUERY_EVENT,
         EXECUTE_LOAD_QUERY_EVENT,
@@ -2662,11 +2638,8 @@ void Load_log_event::set_fields(const char* affected_db,
 int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
                                    bool use_rli_only_for_errors)
 {
-  LEX_STRING new_db;
   Query_id &query_id= Query_id::get_query_id();
-  new_db.length= db_len;
-  new_db.str= (char *) rpl_filter->get_rewrite_db(db, &new_db.length);
-  session->set_db(new_db.str, new_db.length);
+  session->set_db(db, strlen(db));
   assert(session->query == 0);
   session->query_length= 0;                         // Should not be needed
   session->is_slave_error= 0;
@@ -2713,7 +2686,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
             ::do_apply_event(), then the companion SET also have so
             we don't need to reset_one_shot_variables().
   */
-  if (rpl_filter->db_ok(session->db))
+  if (1)
   {
     session->set_time((time_t)when);
     session->query_id = query_id.next();
@@ -2733,13 +2706,6 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     tables.updating= 1;
 
     // the table will be opened in mysql_load    
-    if (rpl_filter->is_on() && !rpl_filter->tables_ok(session->db, &tables))
-    {
-      // TODO: this is a bug - this needs to be moved to the I/O thread
-      if (net)
-        skip_load_data_infile(net);
-    }
-    else
     {
       char llbuff[22];
       char *end;
@@ -2768,7 +2734,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 
       if (sql_ex.opt_flags & REPLACE_FLAG)
       {
-	handle_dup= DUP_REPLACE;
+        handle_dup= DUP_REPLACE;
       }
       else if (sql_ex.opt_flags & IGNORE_FLAG)
       {
@@ -2778,14 +2744,14 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       else
       {
         /*
-	  When replication is running fine, if it was DUP_ERROR on the
+          When replication is running fine, if it was DUP_ERROR on the
           master then we could choose IGNORE here, because if DUP_ERROR
           suceeded on master, and data is identical on the master and slave,
           then there should be no uniqueness errors on slave, so IGNORE is
           the same as DUP_ERROR. But in the unlikely case of uniqueness errors
           (because the data on the master and slave happen to be different
-	  (user error or bug), we want LOAD DATA to print an error message on
-	  the slave to discover the problem.
+          (user error or bug), we want LOAD DATA to print an error message on
+          the slave to discover the problem.
 
           If reading from net (a 3.23 master), mysql_load() will change this
           to IGNORE.
@@ -2817,7 +2783,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
 
       ex.opt_enclosed = (sql_ex.opt_flags & OPT_ENCLOSED_FLAG);
       if (sql_ex.empty_flags & FIELD_TERM_EMPTY)
-	ex.field_term->length(0);
+        ex.field_term->length(0);
 
       ex.skip_lines = skip_lines;
       List<Item> field_list;
@@ -2826,12 +2792,12 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       session->variables.pseudo_thread_id= thread_id;
       if (net)
       {
-	// mysql_load will use session->net to read the file
-	session->net.vio = net->vio;
-	/*
-	  Make sure the client does not get confused about the packet sequence
-	*/
-	session->net.pkt_nr = net->pkt_nr;
+        // mysql_load will use session->net to read the file
+        session->net.vio = net->vio;
+        /*
+          Make sure the client does not get confused about the packet sequence
+        */
+        session->net.pkt_nr = net->pkt_nr;
       }
       /*
         It is safe to use tmp_list twice because we are not going to
@@ -2843,10 +2809,10 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
         session->is_slave_error= 1;
       if (session->cuted_fields)
       {
-	/* log_pos is the position of the LOAD event in the master log */
+        /* log_pos is the position of the LOAD event in the master log */
         sql_print_warning(_("Slave: load data infile on table '%s' at "
-                          "log position %s in log '%s' produced %ld "
-                          "warning(s). Default database: '%s'"),
+                            "log position %s in log '%s' produced %ld "
+                            "warning(s). Default database: '%s'"),
                           (char*) table_name,
                           llstr(log_pos,llbuff), RPL_LOG_NAME, 
                           (ulong) session->cuted_fields,
@@ -3073,186 +3039,6 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
 
 
 /**************************************************************************
-	Intvar_log_event methods
-**************************************************************************/
-
-/*
-  Intvar_log_event::pack_info()
-*/
-
-void Intvar_log_event::pack_info(Protocol *protocol)
-{
-  char buf[256], *pos;
-  pos= strmake(buf, get_var_type_name(), sizeof(buf)-23);
-  *pos++= '=';
-  pos= int64_t10_to_str(val, pos, -10);
-  protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
-}
-
-
-/*
-  Intvar_log_event::Intvar_log_event()
-*/
-
-Intvar_log_event::Intvar_log_event(const char* buf,
-                                   const Format_description_log_event* description_event)
-  :Log_event(buf, description_event)
-{
-  buf+= description_event->common_header_len;
-  type= buf[I_TYPE_OFFSET];
-  val= uint8korr(buf+I_VAL_OFFSET);
-}
-
-
-/*
-  Intvar_log_event::get_var_type_name()
-*/
-
-const char* Intvar_log_event::get_var_type_name()
-{
-  switch(type) {
-  case LAST_INSERT_ID_EVENT: return "LAST_INSERT_ID";
-  case INSERT_ID_EVENT: return "INSERT_ID";
-  default: /* impossible */ return "UNKNOWN";
-  }
-}
-
-
-/*
-  Intvar_log_event::write()
-*/
-
-bool Intvar_log_event::write(IO_CACHE* file)
-{
-  unsigned char buf[9];
-  buf[I_TYPE_OFFSET]= (unsigned char) type;
-  int8store(buf + I_VAL_OFFSET, val);
-  return (write_header(file, sizeof(buf)) ||
-          my_b_safe_write(file, buf, sizeof(buf)));
-}
-
-
-/*
-  Intvar_log_event::print()
-*/
-
-/*
-  Intvar_log_event::do_apply_event()
-*/
-
-int Intvar_log_event::do_apply_event(Relay_log_info const *rli)
-{
-  /*
-    We are now in a statement until the associated query log event has
-    been processed.
-   */
-  const_cast<Relay_log_info*>(rli)->set_flag(Relay_log_info::IN_STMT);
-
-  switch (type) {
-  case LAST_INSERT_ID_EVENT:
-    session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 1;
-    session->first_successful_insert_id_in_prev_stmt= val;
-    break;
-  case INSERT_ID_EVENT:
-    session->force_one_auto_inc_interval(val);
-    break;
-  }
-  return 0;
-}
-
-int Intvar_log_event::do_update_pos(Relay_log_info *rli)
-{
-  rli->inc_event_relay_log_pos();
-  return 0;
-}
-
-
-Log_event::enum_skip_reason
-Intvar_log_event::do_shall_skip(Relay_log_info *rli)
-{
-  /*
-    It is a common error to set the slave skip counter to 1 instead of
-    2 when recovering from an insert which used a auto increment,
-    rand, or user var.  Therefore, if the slave skip counter is 1, we
-    just say that this event should be skipped by ignoring it, meaning
-    that we do not change the value of the slave skip counter since it
-    will be decreased by the following insert event.
-  */
-  return continue_group(rli);
-}
-
-
-/**************************************************************************
-  Rand_log_event methods
-**************************************************************************/
-
-void Rand_log_event::pack_info(Protocol *protocol)
-{
-  char buf1[256], *pos;
-  pos= my_stpcpy(buf1,"rand_seed1=");
-  pos= int10_to_str((long) seed1, pos, 10);
-  pos= my_stpcpy(pos, ",rand_seed2=");
-  pos= int10_to_str((long) seed2, pos, 10);
-  protocol->store(buf1, (uint) (pos-buf1), &my_charset_bin);
-}
-
-
-Rand_log_event::Rand_log_event(const char* buf,
-                               const Format_description_log_event* description_event)
-  :Log_event(buf, description_event)
-{
-  buf+= description_event->common_header_len;
-  seed1= uint8korr(buf+RAND_SEED1_OFFSET);
-  seed2= uint8korr(buf+RAND_SEED2_OFFSET);
-}
-
-
-bool Rand_log_event::write(IO_CACHE* file)
-{
-  unsigned char buf[16];
-  int8store(buf + RAND_SEED1_OFFSET, seed1);
-  int8store(buf + RAND_SEED2_OFFSET, seed2);
-  return (write_header(file, sizeof(buf)) ||
-          my_b_safe_write(file, buf, sizeof(buf)));
-}
-
-
-int Rand_log_event::do_apply_event(Relay_log_info const *rli)
-{
-  /*
-    We are now in a statement until the associated query log event has
-    been processed.
-   */
-  const_cast<Relay_log_info*>(rli)->set_flag(Relay_log_info::IN_STMT);
-
-  session->rand.seed1= (ulong) seed1;
-  session->rand.seed2= (ulong) seed2;
-  return 0;
-}
-
-int Rand_log_event::do_update_pos(Relay_log_info *rli)
-{
-  rli->inc_event_relay_log_pos();
-  return 0;
-}
-
-
-Log_event::enum_skip_reason
-Rand_log_event::do_shall_skip(Relay_log_info *rli)
-{
-  /*
-    It is a common error to set the slave skip counter to 1 instead of
-    2 when recovering from an insert which used a auto increment,
-    rand, or user var.  Therefore, if the slave skip counter is 1, we
-    just say that this event should be skipped by ignoring it, meaning
-    that we do not change the value of the slave skip counter since it
-    will be decreased by the following insert event.
-  */
-  return continue_group(rli);
-}
-
-
-/**************************************************************************
   Xid_log_event methods
 **************************************************************************/
 
@@ -3304,276 +3090,6 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
     return(Log_event::EVENT_SKIP_COUNT);
   }
   return(Log_event::do_shall_skip(rli));
-}
-
-
-/**************************************************************************
-  User_var_log_event methods
-**************************************************************************/
-
-void User_var_log_event::pack_info(Protocol* protocol)
-{
-  char *buf= 0;
-  uint32_t val_offset= 4 + name_len;
-  uint32_t event_len= val_offset;
-
-  if (is_null)
-  {
-    if (!(buf= (char*) my_malloc(val_offset + 5, MYF(MY_WME))))
-      return;
-    my_stpcpy(buf + val_offset, "NULL");
-    event_len= val_offset + 4;
-  }
-  else
-  {
-    switch (type) {
-    case REAL_RESULT:
-      double real_val;
-      float8get(real_val, val);
-      if (!(buf= (char*) my_malloc(val_offset + MY_GCVT_MAX_FIELD_WIDTH + 1,
-                                   MYF(MY_WME))))
-        return;
-      event_len+= my_gcvt(real_val, MY_GCVT_ARG_DOUBLE, MY_GCVT_MAX_FIELD_WIDTH,
-                          buf + val_offset, NULL);
-      break;
-    case INT_RESULT:
-      if (!(buf= (char*) my_malloc(val_offset + 22, MYF(MY_WME))))
-        return;
-      event_len= int64_t10_to_str(uint8korr(val), buf + val_offset,-10)-buf;
-      break;
-    case DECIMAL_RESULT:
-    {
-      if (!(buf= (char*) my_malloc(val_offset + DECIMAL_MAX_STR_LENGTH,
-                                   MYF(MY_WME))))
-        return;
-      String str(buf+val_offset, DECIMAL_MAX_STR_LENGTH, &my_charset_bin);
-      my_decimal dec;
-      binary2my_decimal(E_DEC_FATAL_ERROR, (unsigned char*) (val+2), &dec, val[0],
-                        val[1]);
-      my_decimal2string(E_DEC_FATAL_ERROR, &dec, 0, 0, 0, &str);
-      event_len= str.length() + val_offset;
-      break;
-    } 
-    case STRING_RESULT:
-      /* 15 is for 'COLLATE' and other chars */
-      buf= (char*) my_malloc(event_len+val_len*2+1+2*MY_CS_NAME_SIZE+15,
-                             MYF(MY_WME));
-      const CHARSET_INFO *cs;
-      if (!buf)
-        return;
-      if (!(cs= get_charset(charset_number, MYF(0))))
-      {
-        my_stpcpy(buf+val_offset, "???");
-        event_len+= 3;
-      }
-      else
-      {
-        char *p= strxmov(buf + val_offset, "_", cs->csname, " ", NULL);
-        p= str_to_hex(p, val, val_len);
-        p= strxmov(p, " COLLATE ", cs->name, NULL);
-        event_len= p-buf;
-      }
-      break;
-    case ROW_RESULT:
-    default:
-      assert(1);
-      return;
-    }
-  }
-  buf[0]= '@';
-  buf[1]= '`';
-  memcpy(buf+2, name, name_len);
-  buf[2+name_len]= '`';
-  buf[3+name_len]= '=';
-  protocol->store(buf, event_len, &my_charset_bin);
-  free(buf);
-}
-
-
-User_var_log_event::
-User_var_log_event(const char* buf,
-                   const Format_description_log_event* description_event)
-  :Log_event(buf, description_event)
-{
-  buf+= description_event->common_header_len;
-  name_len= uint4korr(buf);
-  name= (char *) buf + UV_NAME_LEN_SIZE;
-  buf+= UV_NAME_LEN_SIZE + name_len;
-  is_null= (bool) *buf;
-  if (is_null)
-  {
-    type= STRING_RESULT;
-    charset_number= my_charset_bin.number;
-    val_len= 0;
-    val= 0;  
-  }
-  else
-  {
-    type= (Item_result) buf[UV_VAL_IS_NULL];
-    charset_number= uint4korr(buf + UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE);
-    val_len= uint4korr(buf + UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE + 
-		       UV_CHARSET_NUMBER_SIZE);
-    val= (char *) (buf + UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE +
-		   UV_CHARSET_NUMBER_SIZE + UV_VAL_LEN_SIZE);
-  }
-}
-
-
-bool User_var_log_event::write(IO_CACHE* file)
-{
-  char buf[UV_NAME_LEN_SIZE];
-  char buf1[UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE + 
-	    UV_CHARSET_NUMBER_SIZE + UV_VAL_LEN_SIZE];
-  unsigned char buf2[(8 > DECIMAL_MAX_FIELD_SIZE + 2) ? 8 : DECIMAL_MAX_FIELD_SIZE +2], *pos= buf2;
-  uint32_t buf1_length;
-  ulong event_length;
-
-  int4store(buf, name_len);
-  
-  if ((buf1[0]= is_null))
-  {
-    buf1_length= 1;
-    val_len= 0;                                 // Length of 'pos'
-  }    
-  else
-  {
-    buf1[1]= type;
-    int4store(buf1 + 2, charset_number);
-
-    switch (type) {
-    case REAL_RESULT:
-      float8store(buf2, *(double*) val);
-      break;
-    case INT_RESULT:
-      int8store(buf2, *(int64_t*) val);
-      break;
-    case DECIMAL_RESULT:
-    {
-      my_decimal *dec= (my_decimal *)val;
-      dec->fix_buffer_pointer();
-      buf2[0]= (char)(dec->intg + dec->frac);
-      buf2[1]= (char)dec->frac;
-      decimal2bin((decimal_t*)val, buf2+2, buf2[0], buf2[1]);
-      val_len= decimal_bin_size(buf2[0], buf2[1]) + 2;
-      break;
-    }
-    case STRING_RESULT:
-      pos= (unsigned char*) val;
-      break;
-    case ROW_RESULT:
-    default:
-      assert(1);
-      return 0;
-    }
-    int4store(buf1 + 2 + UV_CHARSET_NUMBER_SIZE, val_len);
-    buf1_length= 10;
-  }
-
-  /* Length of the whole event */
-  event_length= sizeof(buf)+ name_len + buf1_length + val_len;
-
-  return (write_header(file, event_length) ||
-          my_b_safe_write(file, (unsigned char*) buf, sizeof(buf))   ||
-	  my_b_safe_write(file, (unsigned char*) name, name_len)     ||
-	  my_b_safe_write(file, (unsigned char*) buf1, buf1_length) ||
-	  my_b_safe_write(file, pos, val_len));
-}
-
-
-
-/*
-  User_var_log_event::do_apply_event()
-*/
-
-int User_var_log_event::do_apply_event(Relay_log_info const *rli)
-{
-  Item *it= 0;
-  const CHARSET_INFO *charset;
-  if (!(charset= get_charset(charset_number, MYF(MY_WME))))
-    return 1;
-  LEX_STRING user_var_name;
-  user_var_name.str= name;
-  user_var_name.length= name_len;
-  double real_val;
-  int64_t int_val;
-
-  /*
-    We are now in a statement until the associated query log event has
-    been processed.
-   */
-  const_cast<Relay_log_info*>(rli)->set_flag(Relay_log_info::IN_STMT);
-
-  if (is_null)
-  {
-    it= new Item_null();
-  }
-  else
-  {
-    switch (type) {
-    case REAL_RESULT:
-      float8get(real_val, val);
-      it= new Item_float(real_val, 0);
-      val= (char*) &real_val;		// Pointer to value in native format
-      val_len= 8;
-      break;
-    case INT_RESULT:
-      int_val= (int64_t) uint8korr(val);
-      it= new Item_int(int_val);
-      val= (char*) &int_val;		// Pointer to value in native format
-      val_len= 8;
-      break;
-    case DECIMAL_RESULT:
-    {
-      Item_decimal *dec= new Item_decimal((unsigned char*) val+2, val[0], val[1]);
-      it= dec;
-      val= (char *)dec->val_decimal(NULL);
-      val_len= sizeof(my_decimal);
-      break;
-    }
-    case STRING_RESULT:
-      it= new Item_string(val, val_len, charset);
-      break;
-    case ROW_RESULT:
-    default:
-      assert(1);
-      return 0;
-    }
-  }
-  Item_func_set_user_var e(user_var_name, it);
-  /*
-    Item_func_set_user_var can't substitute something else on its place =>
-    0 can be passed as last argument (reference on item)
-  */
-  e.fix_fields(session, 0);
-  /*
-    A variable can just be considered as a table with
-    a single record and with a single column. Thus, like
-    a column value, it could always have IMPLICIT derivation.
-   */
-  e.update_hash(val, val_len, type, charset, DERIVATION_IMPLICIT, 0);
-  free_root(session->mem_root,0);
-
-  return 0;
-}
-
-int User_var_log_event::do_update_pos(Relay_log_info *rli)
-{
-  rli->inc_event_relay_log_pos();
-  return 0;
-}
-
-Log_event::enum_skip_reason
-User_var_log_event::do_shall_skip(Relay_log_info *rli)
-{
-  /*
-    It is a common error to set the slave skip counter to 1 instead
-    of 2 when recovering from an insert which used a auto increment,
-    rand, or user var.  Therefore, if the slave skip counter is 1, we
-    just say that this event should be skipped by ignoring it, meaning
-    that we do not change the value of the slave skip counter since it
-    will be decreased by the following insert event.
-  */
-  return continue_group(rli);
 }
 
 
@@ -4470,21 +3986,7 @@ bool sql_ex_info::write_data(IO_CACHE* file)
 	    my_b_safe_write(file,(unsigned char*) &opt_flags,1));
   }
   else
-  {
-    /**
-      @todo This is sensitive to field padding. We should write a
-      char[7], not an old_sql_ex. /sven
-    */
-    old_sql_ex old_ex;
-    old_ex.field_term= *field_term;
-    old_ex.enclosed=   *enclosed;
-    old_ex.line_term=  *line_term;
-    old_ex.line_start= *line_start;
-    old_ex.escaped=    *escaped;
-    old_ex.opt_flags=  opt_flags;
-    old_ex.empty_flags=empty_flags;
-    return my_b_safe_write(file, (unsigned char*) &old_ex, sizeof(old_ex)) != 0;
-  }
+    assert(0);
 }
 
 
@@ -5569,7 +5071,6 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   RPL_TableList *table_list;
   char *db_mem, *tname_mem;
   Query_id &query_id= Query_id::get_query_id();
-  size_t dummy_len;
   void *memory;
   assert(rli->sql_session == session);
 
@@ -5590,17 +5091,11 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  my_stpcpy(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
+  my_stpcpy(table_list->db, m_dbnam);
   my_stpcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 
-  if (!rpl_filter->db_ok(table_list->db) ||
-      (rpl_filter->is_on() && !rpl_filter->tables_ok("", table_list)))
-  {
-    free(memory);
-  }
-  else
   {
     /*
       open_tables() reads the contents of session->lex, so they must be

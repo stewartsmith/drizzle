@@ -29,7 +29,8 @@
 #include <drizzled/slave.h>
 #include <drizzled/replication/mi.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/stacktrace.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
@@ -42,6 +43,8 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
+#include <drizzled/errmsg.h>
+
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -309,37 +312,39 @@ uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
-ulong back_log, connect_timeout;
+ulong back_log;
+uint64_t connect_timeout;
 uint32_t server_id;
-ulong table_cache_size, table_def_size;
+uint64_t table_cache_size;
+uint64_t table_def_size;
 ulong what_to_log;
-ulong slow_launch_time, slave_open_temp_tables;
+uint64_t slow_launch_time;
+ulong slave_open_temp_tables;
 ulong open_files_limit;
-ulong max_binlog_size;
-ulong max_relay_log_size;
-ulong slave_net_timeout;
-ulong slave_trans_retries;
+uint64_t max_binlog_size;
+uint64_t max_relay_log_size;
+uint64_t slave_net_timeout;
+uint64_t slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-ulong thread_cache_size= 0;
-ulong thread_pool_size= 0;
-ulong binlog_cache_size= 0;
-ulong max_binlog_cache_size= 0;
+uint64_t thread_cache_size= 0;
+uint64_t thread_pool_size= 0;
+uint64_t binlog_cache_size= 0;
+uint64_t max_binlog_cache_size= 0;
 uint32_t refresh_version;  /* Increments on each reload */
 ulong aborted_threads;
 ulong aborted_connects;
 ulong specialflag= 0;
 ulong binlog_cache_use= 0;
 ulong binlog_cache_disk_use= 0;
-ulong max_connections;
-ulong max_connect_errors;
+uint64_t max_connections;
+uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
 ulong slow_launch_threads = 0;
-ulong sync_binlog_period;
-ulong expire_logs_days = 0;
-ulong rpl_recovery_rank=0;
+uint64_t sync_binlog_period;
+uint64_t expire_logs_days= 0;
 const char *log_output_str= "FILE";
 
 const double log_10[] = {
@@ -411,8 +416,6 @@ FILE *stderror_file=0;
 
 I_List<Session> threads;
 I_List<NAMED_LIST> key_caches;
-Rpl_filter* rpl_filter;
-Rpl_filter* binlog_filter;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
@@ -827,8 +830,6 @@ void clean_up(bool print_message)
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
   bitmap_free(&temp_pool);
-  delete binlog_filter;
-  delete rpl_filter;
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
@@ -1287,15 +1288,15 @@ extern "C" RETSIGTYPE handle_segfault(int sig)
   fprintf(stderr, "connection_count=%u\n", connection_count);
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*max_threads = %lu K\n"
+                    "sort_buffer_size)*max_threads = %"PRIu64" K\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"),
-                    ((uint32_t) dflt_key_cache->key_cache_mem_size +
+          (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
                      thread_scheduler.max_threads +
-                     max_connections * sizeof(Session)) / 1024);
+                     max_connections * sizeof(Session)) / 1024));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1843,13 +1844,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= my_time(0);
-  rpl_filter= new Rpl_filter;
-  binlog_filter= new Rpl_filter;
-  if (!rpl_filter || !binlog_filter)
-  {
-    sql_perror("Could not allocate replication and binlog filters");
-    exit(1);
-  }
 
   if (init_thread_environment())
     return 1;
@@ -1948,7 +1942,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
                                       table_cache_size);
         if (global_system_variables.log_warnings)
           sql_print_warning(_("Changed limits: max_open_files: %u  "
-                              "max_connections: %ld  table_cache: %ld"),
+                              "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
                             files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
@@ -2302,7 +2296,7 @@ static int init_server_components()
   }
 
   if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
-                                        WRITE_CACHE, 0, max_binlog_size, 0))
+                                          WRITE_CACHE, 0, max_binlog_size, 0))
     unireg_abort(1);
 
   if (opt_bin_log && expire_logs_days)
@@ -2717,17 +2711,14 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
   OPT_MASTER_INFO_FILE,
   OPT_MASTER_RETRY_COUNT,      OPT_LOG_TC, OPT_LOG_TC_SIZE,
-  OPT_SQL_BIN_UPDATE_SAME,     OPT_REPLICATE_DO_DB,
-  OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
-  OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
+  OPT_SQL_BIN_UPDATE_SAME,
+  OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
-  OPT_REPLICATE_REWRITE_DB,    OPT_SERVER_ID,
+  OPT_SERVER_ID,
   OPT_SKIP_SLAVE_START,
-  OPT_REPLICATE_DO_TABLE,
-  OPT_REPLICATE_IGNORE_TABLE,  OPT_REPLICATE_WILD_DO_TABLE,
-  OPT_REPLICATE_WILD_IGNORE_TABLE, OPT_REPLICATE_SAME_SERVER_ID,
+  OPT_REPLICATE_SAME_SERVER_ID,
   OPT_DISCONNECT_SLAVE_EVENT_COUNT, OPT_TC_HEURISTIC_RECOVER,
   OPT_ABORT_SLAVE_EVENT_COUNT,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -2842,13 +2833,13 @@ struct my_option my_long_options[] =
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
-   (char**) &max_system_variables.auto_increment_increment, 0, GET_ULONG,
+   (char**) &max_system_variables.auto_increment_increment, 0, GET_UINT,
    OPT_ARG, 1, 1, 65535, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
-   (char**) &max_system_variables.auto_increment_offset, 0, GET_ULONG, OPT_ARG,
+   (char**) &max_system_variables.auto_increment_offset, 0, GET_UINT, OPT_ARG,
    1, 1, 65535, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
@@ -2858,14 +2849,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-do-db", OPT_BINLOG_DO_DB,
-   N_("Tells the master it should log updates for the specified database, and "
-      "exclude all others not explicitly mentioned."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"binlog-ignore-db", OPT_BINLOG_IGNORE_DB,
-   N_("Tells the master that updates to the given database should not "
-      "be logged tothe binary log."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
    N_("The maximum size of a row-based binary log event in bytes. Rows will "
       "be grouped into events smaller than this size if possible. "
@@ -2905,7 +2888,7 @@ struct my_option my_long_options[] =
   {"completion-type", OPT_COMPLETION_TYPE,
    N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
-   (char**) &max_system_variables.completion_type, 0, GET_ULONG,
+   (char**) &max_system_variables.completion_type, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
   {"console", OPT_CONSOLE,
    N_("Write error output on screen."),
@@ -3100,38 +3083,6 @@ struct my_option my_long_options[] =
       "replication thread is in the relay logs."),
    (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-do-db", OPT_REPLICATE_DO_DB,
-   N_("Tells the slave thread to restrict replication to the specified "
-      "database. To specify more than one database, use the directive "
-      "multiple times, once for each database. Note that this will only work "
-      "if you do not use cross-database queries such as UPDATE "
-      "some_db.some_table SET foo='bar' while having selected a different or "
-      "no database. If you need cross database updates to work, use "
-      "replicate-wild-do-table=db_name.%."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-do-table", OPT_REPLICATE_DO_TABLE,
-   N_("Tells the slave thread to restrict replication to the specified table. "
-      "To specify more than one table, use the directive multiple times, once "
-      "for each table. This will work for cross-database updates, in contrast "
-      "to replicate-do-db."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-ignore-db", OPT_REPLICATE_IGNORE_DB,
-   N_("Tells the slave thread to not replicate to the specified database. To "
-      "specify more than one database to ignore, use the directive multiple "
-      "times, once for each database. This option will not work if you use "
-      "cross database updates. If you need cross database updates to work, "
-      "use replicate-wild-ignore-table=db_name.%. "),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-ignore-table", OPT_REPLICATE_IGNORE_TABLE,
-   N_("Tells the slave thread to not replicate to the specified table. To "
-      "specify more than one table to ignore, use the directive multiple "
-      "times, once for each table. This will work for cross-datbase updates, "
-      "in contrast to replicate-ignore-db."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-rewrite-db", OPT_REPLICATE_REWRITE_DB,
-   N_("Updates to a database with a different name than the original. "
-      "Example: replicate-rewrite-db=master_db_name->slave_db_name."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
    N_("In replication, if set to 1, do not skip events having our server id. "
       "Default value is 0 (to break infinite loops in circular replication). "
@@ -3139,22 +3090,6 @@ struct my_option my_long_options[] =
    (char**) &replicate_same_server_id,
    (char**) &replicate_same_server_id,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-wild-do-table", OPT_REPLICATE_WILD_DO_TABLE,
-   N_("Tells the slave thread to restrict replication to the tables that "
-      "match the specified wildcard pattern. To specify more than one table, "
-      "use the directive multiple times, once for each table. This will work "
-      "for cross-database updates. Example: replicate-wild-do-table=foo%.bar% "
-      "will replicate only updates to tables in all databases that start with "
-      "foo and whose table names start with bar."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"replicate-wild-ignore-table", OPT_REPLICATE_WILD_IGNORE_TABLE,
-   N_("Tells the slave thread to not replicate to the tables that match the "
-      "given wildcard pattern. To specify more than one table to ignore, use "
-      "the directive multiple times, once for each table. This will work for "
-      "cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% "
-      "will not do updates to tables in databases that start with foo and "
-      "whose table names start with bar."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   // In replication, we may need to tell the other servers how to connect
   {"report-host", OPT_REPORT_HOST,
    N_("Hostname or IP of the slave to be reported to to the master during "
@@ -3271,19 +3206,19 @@ struct my_option my_long_options[] =
     N_("The size of the cache to hold the SQL statements for the binary log "
        "during a transaction. If you often use big, multi-statement "
        "transactions you can increase this to get more performance."),
-    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
+    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULL,
     REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
     N_("Size of tree cache used in bulk insert optimisation. Note that this is "
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
-    0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
   { "connect_timeout", OPT_CONNECT_TIMEOUT,
     N_("The number of seconds the drizzled server is waiting for a connect "
        "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULL, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
@@ -3303,13 +3238,13 @@ struct my_option my_long_options[] =
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
    (char**) &global_system_variables.div_precincrement,
-   (char**) &max_system_variables.div_precincrement, 0, GET_ULONG,
+   (char**) &max_system_variables.div_precincrement, 0, GET_UINT,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
   { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
     N_("If non-zero, binary logs will be purged after expire_logs_days "
        "days; possible purges happen at startup and at binary log rotation."),
     (char**) &expire_logs_days,
-    (char**) &expire_logs_days, 0, GET_ULONG,
+    (char**) &expire_logs_days, 0, GET_ULL,
     REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     N_("The maximum length of the result of function  group_concat."),
@@ -3372,7 +3307,7 @@ struct my_option my_long_options[] =
    N_("Can be used to restrict the total size used to cache a "
       "multi-transaction query."),
    (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
-   GET_ULONG, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
+   GET_ULL, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
    N_("Binary log will be rotated automatically when the size exceeds this "
       "value. Will also apply to relay logs if max_relay_log_size is 0. "
@@ -3411,7 +3346,7 @@ struct my_option my_long_options[] =
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,
-   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
+   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULL,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
    N_("If non-zero: relay log will be rotated automatically when the size "
@@ -3430,7 +3365,7 @@ struct my_option my_long_options[] =
       "(only the first max_sort_length bytes of each value are used; the "
       "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
-   (char**) &max_system_variables.max_sort_length, 0, GET_ULONG,
+   (char**) &max_system_variables.max_sort_length, 0, GET_UINT,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
    N_("Maximum number of temporary tables a client can keep open at a time."),
@@ -3439,13 +3374,13 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
-   (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULONG,
+   (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
-   (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULONG,
+   (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
    N_("Block size to be used for MyISAM index pages."),
@@ -3517,16 +3452,16 @@ struct my_option my_long_options[] =
       "descriptors to use with setrlimit(). If this value is 0 then drizzled "
       "will reserve max_connections*5 or max_connections + table_cache*2 "
       "(whichever is larger) number of files."),
-   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
+   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
-   N_("Controls the heuristic(s) applied during query optimization to prune "
-      "less-promising partial plans from the optimizer search space. Meaning: "
-      "0 - do not apply any heuristic, thus perform exhaustive search; "
-      "1 - prune plans based on number of retrieved rows."),
-   (char**) &global_system_variables.optimizer_prune_level,
-   (char**) &max_system_variables.optimizer_prune_level,
-   0, GET_ULONG, OPT_ARG, 1, 0, 1, 0, 1, 0},
+    N_("Controls the heuristic(s) applied during query optimization to prune "
+       "less-promising partial plans from the optimizer search space. Meaning: "
+       "false - do not apply any heuristic, thus perform exhaustive search; "
+       "true - prune plans based on number of retrieved rows."),
+    (char**) &global_system_variables.optimizer_prune_level,
+    (char**) &max_system_variables.optimizer_prune_level,
+    0, GET_BOOL, OPT_ARG, 1, 0, 1, 0, 1, 0},
   {"optimizer_search_depth", OPT_OPTIMIZER_SEARCH_DEPTH,
    N_("Maximum depth of search performed by the query optimizer. Values "
       "larger than the number of relations in a query result in better query "
@@ -3538,7 +3473,7 @@ struct my_option my_long_options[] =
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
-   0, GET_ULONG, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+   0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -3552,17 +3487,17 @@ struct my_option my_long_options[] =
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
    (char**) &global_system_variables.preload_buff_size,
-   (char**) &max_system_variables.preload_buff_size, 0, GET_ULONG,
+   (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
-   (char**) &max_system_variables.query_alloc_block_size, 0, GET_ULONG,
+   (char**) &max_system_variables.query_alloc_block_size, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
    N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
-   (char**) &max_system_variables.query_prealloc_size, 0, GET_ULONG,
+   (char**) &max_system_variables.query_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
    ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
@@ -3572,13 +3507,13 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
-   N_("Each thread that does a sequential scan allocates a buffer of this "
-      "size for each table it scans. If you do many sequential scans, you may "
-      "want to increase this value."),
-   (char**) &global_system_variables.read_buff_size,
-   (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
-   0},
+    N_("Each thread that does a sequential scan allocates a buffer of this "
+       "size for each table it scans. If you do many sequential scans, you may "
+       "want to increase this value."),
+    (char**) &global_system_variables.read_buff_size,
+    (char**) &max_system_variables.read_buff_size,0, GET_UINT, REQUIRED_ARG,
+    128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
+    0},
   {"read_only", OPT_READONLY,
    N_("Make all non-temporary tables read-only, with the exception for "
       "replication (slave) threads and users with the SUPER privilege"),
@@ -3591,14 +3526,8 @@ struct my_option my_long_options[] =
       "to the value of record_buffer."),
    (char**) &global_system_variables.read_rnd_buff_size,
    (char**) &max_system_variables.read_rnd_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
-   INT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
-  {"record_buffer", OPT_RECORD_BUFFER,
-   "Alias for read_buffer_size",
-   (char**) &global_system_variables.read_buff_size,
-   (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD,
-   INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
+   GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
+   UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
    N_("0 = do not purge relay logs. "
       "1 = purge them as soon as they are no more needed."),
@@ -3619,13 +3548,13 @@ struct my_option my_long_options[] =
    N_("Number of seconds to wait for more data from a master/slave connection "
       "before aborting the read."),
    (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
-   GET_ULONG, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
+   GET_UINT, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
    N_("Number of times the slave SQL thread will retry a transaction in case "
       "it failed with a deadlock or elapsed lock wait timeout, "
       "before giving up and stopping."),
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
+   GET_ULL, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
    N_("Allow slave to batch requests."),
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
@@ -3633,23 +3562,23 @@ struct my_option my_long_options[] =
   {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
    N_("If creating the thread takes longer than this value (in seconds), the "
       "Slow_launch_threads counter will be incremented."),
-   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULONG,
+   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULL,
    REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, ULONG_MAX,
+   (char**) &max_system_variables.sortbuff_size, 0, GET_ULL, REQUIRED_ARG,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, UINT64_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
    N_("Synchronously flush binary log to disk after every #th event. "
       "Use 0 (default) to disable synchronous flushing."),
-   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
+   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
-   0, GET_ULONG, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
@@ -3658,16 +3587,16 @@ struct my_option my_long_options[] =
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
-   0, GET_ULONG, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
   {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
    N_("How many threads we should keep in a cache for reuse."),
    (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-   N_("How many threads we should create to handle query requests in case of "
-      "'thread_handling=pool-of-threads'"),
-   (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
-   REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
+    N_("How many threads we should create to handle query requests in case of "
+       "'thread_handling=pool-of-threads'"),
+    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULL,
+    REQUIRED_ARG, 8, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
@@ -3688,18 +3617,18 @@ struct my_option my_long_options[] =
   {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_alloc_block_size,
-   (char**) &max_system_variables.trans_alloc_block_size, 0, GET_ULONG,
+   (char**) &max_system_variables.trans_alloc_block_size, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
    N_("Persistent buffer for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_prealloc_size,
-   (char**) &max_system_variables.trans_prealloc_size, 0, GET_ULONG,
+   (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"wait_timeout", OPT_WAIT_TIMEOUT,
    N_("The number of seconds the server waits for activity on a connection "
       "before closing it."),
    (char**) &global_system_variables.net_wait_timeout,
-   (char**) &max_system_variables.net_wait_timeout, 0, GET_ULONG,
+   (char**) &max_system_variables.net_wait_timeout, 0, GET_UINT,
    REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
    0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
@@ -4172,96 +4101,6 @@ drizzled_get_one_option(int optid,
   case (int) OPT_ERROR_LOG_FILE:
     opt_error_log= 1;
     break;
-  case (int)OPT_REPLICATE_IGNORE_DB:
-    {
-      rpl_filter->add_ignore_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_DO_DB:
-    {
-      rpl_filter->add_do_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_REWRITE_DB:
-    {
-      char* key = argument,*p, *val;
-
-      if (!(p= strstr(argument, "->")))
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - missing '->'!\n"));
-        exit(1);
-      }
-      val= p--;
-      while (my_isspace(mysqld_charset, *p) && p > argument)
-        *p-- = 0;
-      if (p == argument)
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - empty FROM db!\n"));
-        exit(1);
-      }
-      *val= 0;
-      val+= 2;
-      while (*val && my_isspace(mysqld_charset, *val))
-        *val++;
-      if (!*val)
-      {
-        fprintf(stderr,
-                _("Bad syntax in replicate-rewrite-db - empty TO db!\n"));
-        exit(1);
-      }
-
-      rpl_filter->add_db_rewrite(key, val);
-      break;
-    }
-
-  case (int)OPT_BINLOG_IGNORE_DB:
-    {
-      binlog_filter->add_ignore_db(argument);
-      break;
-    }
-  case (int)OPT_BINLOG_DO_DB:
-    {
-      binlog_filter->add_do_db(argument);
-      break;
-    }
-  case (int)OPT_REPLICATE_DO_TABLE:
-    {
-      if (rpl_filter->add_do_table(argument))
-      {
-        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_WILD_DO_TABLE:
-    {
-      if (rpl_filter->add_wild_do_table(argument))
-      {
-        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_WILD_IGNORE_TABLE:
-    {
-      if (rpl_filter->add_wild_ignore_table(argument))
-      {
-        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
-  case (int)OPT_REPLICATE_IGNORE_TABLE:
-    {
-      if (rpl_filter->add_ignore_table(argument))
-      {
-        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
-        exit(1);
-      }
-      break;
-    }
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;
@@ -4433,7 +4272,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    vprint_msg_to_log(level, format, args);
+    errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }

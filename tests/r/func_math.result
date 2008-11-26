@@ -95,10 +95,6 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
 Note	1003	select pow(10,log10(10)) AS `pow(10,log10(10))`,pow(2,4) AS `power(2,4)`
-set @@rand_seed1=10000000,@@rand_seed2=1000000;
-select rand(999999),rand();
-rand(999999)	rand()
-0.014231365187309091	0.028870999839968048
 explain extended select rand(999999),rand();
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used

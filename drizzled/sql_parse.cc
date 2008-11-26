@@ -16,7 +16,8 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <drizzled/replication/replication.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/binlog.h>
 #include <drizzled/logging.h>
 #include <drizzled/db.h>
@@ -134,10 +135,9 @@ bool begin_trans(Session *session)
 /**
   Returns true if all tables should be ignored.
 */
-inline bool all_tables_not_ok(Session *session, TableList *tables)
+inline bool all_tables_not_ok(Session *, TableList *)
 {
-  return rpl_filter->is_on() && tables &&
-         !rpl_filter->tables_ok(session->db, tables);
+  return false;
 }
 
 
@@ -2073,20 +2073,6 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    /*
-      If in a slave thread :
-      CREATE DATABASE DB was certainly not preceded by USE DB.
-      For that reason, db_ok() in sql/slave.cc did not check the
-      do_db/ignore_db. And as this query involves no tables, tables_ok()
-      above was not called. So we have to check rules again here.
-    */
-    if (session->slave_thread && 
-	(!rpl_filter->db_ok(lex->name.str) ||
-	 !rpl_filter->db_ok_with_wild_table(lex->name.str)))
-    {
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      break;
-    }
     res= mysql_create_db(session,(lower_case_table_names == 2 ? alias :
                               lex->name.str), &create_info, 0);
     break;
@@ -2101,20 +2087,6 @@ end_with_restore_list:
     if (check_db_name(&lex->name))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    /*
-      If in a slave thread :
-      DROP DATABASE DB may not be preceded by USE DB.
-      For that reason, maybe db_ok() in sql/slave.cc did not check the 
-      do_db/ignore_db. And as this query involves no tables, tables_ok()
-      above was not called. So we have to check rules again here.
-    */
-    if (session->slave_thread && 
-	(!rpl_filter->db_ok(lex->name.str) ||
-	 !rpl_filter->db_ok_with_wild_table(lex->name.str)))
-    {
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
     if (session->locked_tables || session->active_transaction())
@@ -2133,20 +2105,6 @@ end_with_restore_list:
     if (check_db_name(db))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    /*
-      If in a slave thread :
-      ALTER DATABASE DB may not be preceded by USE DB.
-      For that reason, maybe db_ok() in sql/slave.cc did not check the
-      do_db/ignore_db. And as this query involves no tables, tables_ok()
-      above was not called. So we have to check rules again here.
-    */
-    if (session->slave_thread &&
-	(!rpl_filter->db_ok(db->str) ||
-	 !rpl_filter->db_ok_with_wild_table(db->str)))
-    {
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
     if (session->locked_tables || session->active_transaction())

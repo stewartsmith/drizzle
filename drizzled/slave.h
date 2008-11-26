@@ -35,7 +35,8 @@
 
 #include <drizzled/log.h>
 #include <mysys/my_list.h>
-#include <drizzled/replication/filter.h>
+#include <libdrizzle/libdrizzle.h>
+#include <mysys/hash.h>
 #include <drizzled/replication/tblmap.h>
 
 

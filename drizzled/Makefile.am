@@ -142,7 +142,6 @@ noinst_HEADERS = \
 		rename.h \
 		replication/binlog.h \
 		replication/constants.h \
-		replication/filter.h \
 		replication/mi.h \
 		replication/record.h \
 		replication/replication.h \
@@ -226,7 +225,6 @@ drizzled_SOURCES = \
 		records.cc \
 		rename.cc \
 		replication/binlog.cc \
-		replication/filter.cc \
 		replication/mi.cc \
 		replication/record.cc \
 		replication/replication.cc \
