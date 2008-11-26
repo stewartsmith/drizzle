@@ -246,7 +246,7 @@ static sys_var_session_uint64_t	sys_max_sort_length(&vars, "max_sort_length",
 static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
                                                    &SV::max_tmp_tables);
 static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
-						 &max_write_lock_count);
+                                                 &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 static sys_var_session_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);

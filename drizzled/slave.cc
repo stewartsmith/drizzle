@@ -1781,7 +1781,7 @@ static int32_t exec_relay_log_event(Session* session, Relay_log_info* rli)
           }
         }
         else
-          sql_print_error(_("Slave SQL thread retried transaction %lu time(s) "
+          sql_print_error(_("Slave SQL thread retried transaction %"PRIu64" time(s) "
                             "in vain, giving up. Consider raising the value of "
                             "the slave_transaction_retries variable."),
                           slave_trans_retries);
