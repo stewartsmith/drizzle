@@ -670,36 +670,15 @@ AC_SUBST(READLINE_LIBS)
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[found_pcre="no"])
+PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
 
 if test "$found_pcre" = "no"
 then
-  dnl Only check the header here, because autoconf can't handle
-  dnl checking for C++ methods without C linkages
-  AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
-  then
-    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
-  else
-    # Found headers, now see if we can link
-    AC_MSG_CHECKING(for libpcrecpp)
-    save_LDFLAGS="$LDFLAGS"
-    LDFLAGS="-lpcrecpp -lpcre"
-    AC_TRY_LINK([
-#include <pcrecpp.h>
-    ],
-    [pcrecpp::RE_Options opt;],
-    [found_pcre="yes"],
-    [AC_MSG_ERROR([Couldn't link libpcrecpp])])
-
-    PCRE_LIBS="$LDFLAGS"
-    LDFLAGS="$save_LDFLAGS"
-    AC_MSG_RESULT([yes])
-  fi
+  SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
+                 AC_MSG_ERROR([libpcre is required for Drizzle]))
 fi
-AC_LANG_POP([])
+AM_CONDITIONAL([HAVE_PCRE],[test "$ac_cv_have_pcre" = "yes"])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
