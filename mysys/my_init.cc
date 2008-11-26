@@ -13,13 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
 #include "mysys_priv.h"
 #include "my_static.h"
 #include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <signal.h>
+#include <stdio.h>
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */

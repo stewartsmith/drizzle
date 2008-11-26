@@ -517,7 +517,7 @@ else
   PROTO_PATH="${withval}/bin:$PATH"
 fi 
 
-AC_CHECK_TOOL([PROTOC],[protoc],[no],[$PROTO_PATH])
+AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTO_PATH])
 if test "x$PROTOC" = "xno"
 then
   AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
@@ -1500,12 +1500,6 @@ then
   CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup -compat=5"
   NO_EXCEPTIONS="-features=no%except"
   W_EXCEPTIONS="-features=except"
-dnl Need to do this to work around AC_SYS_LARGEFILE
-  AH_BOTTOM([
-#ifdef _FILE_OFFSET_BITS
-# undef _FILE_OFFSET_BITS
-#endif
-  ])
 fi
 AM_CXXFLAGS="${CXX_WARNINGS} ${NO_EXCEPTIONS}  ${AM_CXXFLAGS}"
 AM_CFLAGS="${CC_WARNINGS} ${AM_CFLAGS}"

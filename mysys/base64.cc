@@ -13,12 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
 #include <drizzled/global.h>
-#include CMATH_H
 #include <mystrings/m_string.h>  /* strchr() */
 #include <mystrings/m_ctype.h>  /* my_isspace() */
 #include <mysys/base64.h>
+#include <stdio.h>
+#include CMATH_H
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

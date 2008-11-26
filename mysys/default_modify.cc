@@ -13,10 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
-#include <my_dir.h>
+#include <mysys/my_dir.h>
+
+#include <stdio.h>
 
 #define BUFF_SIZE 1024
 #define RESERVE 1024                   /* Extend buffer with this extent */

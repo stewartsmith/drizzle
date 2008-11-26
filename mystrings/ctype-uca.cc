@@ -32,9 +32,10 @@
 */
 
 
-#include <stdio.h>
-#include "m_string.h"
+#include <drizzled/global.h>
 #include "m_ctype.h"
+#include "m_string.h"
+#include <stdio.h>
 
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
@@ -8048,6 +8049,7 @@ static int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
                             diff_if_only_endspace_difference);
 }   
 
+extern "C"
 static void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
                                  const unsigned char *s, size_t slen,
                                  uint32_t *n1, uint32_t *n2)

@@ -13,12 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "mysys_priv.h"
 #include "my_static.h"
-#include <errno.h>
 #include "mysys_err.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 static void make_ftype(char * to,int flag);
 

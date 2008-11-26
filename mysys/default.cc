@@ -33,11 +33,12 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include <stdio.h>
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <my_dir.h>
+#include <mysys/my_dir.h>
+
+#include <stdio.h>
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
