@@ -48,54 +48,14 @@ DTRACEFILES = handler.o \
 	      sql_update.o
 
 drizzledincludedir = ${includedir}/drizzled
-dist_drizzledinclude_HEADERS =	common.h \
-				error.h \
-				korr.h \
-				lex_string.h \
-				plugin.h \
-				plugin_authentication.h \
-				plugin_configvar.h \
-				plugin_errmsg.h \
-				plugin_logging.h \
-				plugin_qcache.h \
-				plugin_parser.h \
-			 	plugin_scheduling.h \
-				xid.h
-
-noinst_LTLIBRARIES = libhandler.la libyacc.la
-
-LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
-	$(top_builddir)/mysys/libmysys.la \
-	$(top_builddir)/mystrings/libmystrings.la \
-	$(Z_LIBS) $(LIBINTL) 
-
-drizzled_LDADD = libhandler.la libyacc.la \
-		 $(top_builddir)/libdrizzle/libdrizzle.la \
-		 $(top_builddir)/drizzled/item/libitem.la \
-		 $(top_builddir)/drizzled/field/libfield.la \
-		 $(top_builddir)/drizzled/serialize/libserialize.la \
-		 $(top_builddir)/drizzled/functions/libfunctions.la \
-		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
-		 $(top_builddir)/drizzled/functions/time/libtimefunc.la \
-		 $(top_builddir)/drizzled/util/libutil.la \
-		 $(libevent_libs) \
-		 @mysql_plugin_libs@ \
-		 -lprotobuf \
-		 $(LDADD) \
-		 $(CXXLDFLAGS) \
-		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
-drizzled_DEPENDENCIES = @mysql_plugin_libs@ libyacc.la libhandler.la
-
-drizzled_LDFLAGS =
-
-noinst_HEADERS = \
+nobase_dist_drizzledinclude_HEADERS = \
 		alter_column.h \
 		alter_drop.h \
 		authentication.h \
 		base.h \
 		cached_item.h \
 		client_settings.h \
-		common_includes.h \
+		common.h \
 		comp_creator.h \
 		configvar.h \
 		connect.h \
@@ -105,13 +65,12 @@ noinst_HEADERS = \
 		definitions.h \
 		dtcollation.h \
 		errmsg.h \
+		error.h \
 		error_injection.h \
 		field.h \
 		field_iterator.h \
 		filesort_info.h \
 		foreign_key.h \
-		gettext.h \
-		global.h \
 		ha_trx_info.h \
 		ha_statistics.h \
 		handler.h \
@@ -124,7 +83,9 @@ noinst_HEADERS = \
 		key.h \
                 key_map.h \
 		key_part_spec.h \
+		korr.h \
 		lex.h \
+		lex_string.h \
 		lex_symbol.h \
 		log_event.h \
 		logging.h \
@@ -135,6 +96,14 @@ noinst_HEADERS = \
 		opt_range.h \
 		order.h \
 		parser.h \
+		plugin.h \
+		plugin_authentication.h \
+		plugin_configvar.h \
+		plugin_errmsg.h \
+		plugin_logging.h \
+		plugin_qcache.h \
+		plugin_parser.h \
+	 	plugin_scheduling.h \
 		probes.h \
 		protocol.h \
 		qcache.h \
@@ -151,7 +120,6 @@ noinst_HEADERS = \
 		replication/utility.h \
 		scheduler.h \
 		scheduling.h \
-		server_includes.h \
 		session.h \
 		set_var.h \
 		show.h \
@@ -183,7 +151,40 @@ noinst_HEADERS = \
 		tmp_table.h \
 		tzfile.h \
 		tztime.h \
-		virtual_column_info.h
+		virtual_column_info.h \
+		xid.h
+
+noinst_LTLIBRARIES = libhandler.la libyacc.la
+
+LDADD = $(top_builddir)/libdrizzle/libdrizzle.la \
+	$(top_builddir)/mysys/libmysys.la \
+	$(top_builddir)/mystrings/libmystrings.la \
+	$(Z_LIBS) $(LIBINTL) 
+
+drizzled_LDADD = libhandler.la libyacc.la \
+		 $(top_builddir)/libdrizzle/libdrizzle.la \
+		 $(top_builddir)/drizzled/item/libitem.la \
+		 $(top_builddir)/drizzled/field/libfield.la \
+		 $(top_builddir)/drizzled/serialize/libserialize.la \
+		 $(top_builddir)/drizzled/functions/libfunctions.la \
+		 $(top_builddir)/drizzled/functions/str/libstrfunc.la \
+		 $(top_builddir)/drizzled/functions/time/libtimefunc.la \
+		 $(top_builddir)/drizzled/util/libutil.la \
+		 $(libevent_libs) \
+		 @mysql_plugin_libs@ \
+		 -lprotobuf \
+		 $(LDADD) \
+		 $(CXXLDFLAGS) \
+		 $(LIBDL_LIBS) $(EVENT_LIBS) $(PROTOBUF_LIBS)
+drizzled_DEPENDENCIES = @mysql_plugin_libs@ libyacc.la libhandler.la
+
+drizzled_LDFLAGS =
+
+noinst_HEADERS = \
+		common_includes.h \
+		gettext.h \
+		global.h \
+		server_includes.h
 
 drizzled_SOURCES = \
 		authentication.cc \

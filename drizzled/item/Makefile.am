@@ -26,7 +26,8 @@ libitem_la_SOURCES= \
 		sum.cc \
 		type_holder.cc
 
-noinst_HEADERS= \
+itemincludedir = ${includedir}/drizzled/item
+nobase_dist_iteminclude_HEADERS = \
 		cache_row.h \
 		cmpfunc.h \
 		create.h \

@@ -57,6 +57,10 @@
 
 #endif // __cplusplus
 
+#ifndef EOVERFLOW
+#define EOVERFLOW 84
+#endif
+
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined

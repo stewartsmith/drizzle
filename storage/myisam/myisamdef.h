@@ -18,12 +18,15 @@
 #ifndef MYISAMDEF_H
 #define MYISAMDEF_H
 
+#include <drizzled/global.h>
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <mysys/my_tree.h>
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/common.h>
+
+#include <string.h>
 
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */

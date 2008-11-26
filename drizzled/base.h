@@ -29,20 +29,7 @@
 #ifndef DRIZZLE_SERVER_BASE_H
 #define DRIZZLE_SERVER_BASE_H
 
-#ifndef stdin				/* Included first in handler */
 #define CHSIZE_USED
-#include <drizzled/global.h>
-#include <mysys/my_dir.h>		/* This includes types */
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
-#include <errno.h>
-
-#ifndef EOVERFLOW
-#define EOVERFLOW 84
-#endif
-
-#endif	/* stdin */
-#include <mysys/my_list.h>
 
 /* The following is bits in the flag parameter to ha_open() */
 

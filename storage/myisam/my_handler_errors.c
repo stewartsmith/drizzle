@@ -17,7 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <drizzled/global.h>
 #include <drizzled/base.h>
+#include <mysys/my_sys.h>
 #include <storage/myisam/my_handler.h>
 
 #include <drizzled/gettext.h>

@@ -33,23 +33,26 @@ libfield_la_SOURCES = 	blob.cc \
 			timetype.cc \
 			varstring.cc
 
-noinst_HEADERS = blob.h \
-		 date.h \
-		 datetime.h \
-		 enum.h \
-		 fdecimal.h \
-		 double.h \
-		 int64_t.h \
-		 long.h \
-		 longstr.h \
-		 null.h \
-		 num.h \
-		 fstring.h \
-		 real.h \
-		 str.h \
-		 timestamp.h \
-		 timetype.h \
-		 varstring.h
-	
+
+fieldincludedir = ${includedir}/drizzled/field
+nobase_dist_fieldinclude_HEADERS = \
+		blob.h \
+		date.h \
+		datetime.h \
+		enum.h \
+		fdecimal.h \
+		double.h \
+		int64_t.h \
+		long.h \
+		longstr.h \
+		null.h \
+		num.h \
+		fstring.h \
+		real.h \
+		str.h \
+		timestamp.h \
+		timetype.h \
+		varstring.h
+
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

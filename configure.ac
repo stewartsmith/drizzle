@@ -58,6 +58,11 @@ else
   ldflags_is_set=yes
 fi
 
+if test "x${enable_dependency_tracking}" = "x"
+then
+  enable_dependency_tracking=yes
+fi
+
 ################ End of section to be done before AC_PROG_CC #################
 
 dnl Checks for programs.

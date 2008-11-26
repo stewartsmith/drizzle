@@ -41,6 +41,7 @@
 */
 
 #include "myisamdef.h"
+#include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
 #ifdef HAVE_SYS_VADVISE_H

@@ -17,12 +17,11 @@
 #ifndef HEAPDEF_H
 #define HEAPDEF_H
 
-#include <drizzled/base.h>		/* This includes global */
+#include <drizzled/global.h>
+#include <drizzled/base.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#include <mysys/my_sys.h>
+#include <mystrings/m_ctype.h>
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
 #include <mysys/my_tree.h>
@@ -34,6 +33,10 @@ extern "C" {
   The challenge is to find the balance between allocate as few blocks
   as possible and keep memory consumption down.
 */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define HP_MIN_RECORDS_IN_BLOCK 16
 #define HP_MAX_RECORDS_IN_BLOCK 8192

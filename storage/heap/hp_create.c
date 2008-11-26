@@ -14,8 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "heapdef.h"
-#include "drizzled/common.h"
-#include "drizzled/error.h"
+
+#include <drizzled/common.h>
+#include <drizzled/error.h>
+
+#include <string.h>
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,

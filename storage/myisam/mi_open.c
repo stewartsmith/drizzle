@@ -17,7 +17,10 @@
 
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
+#include <mystrings/m_string.h>
 #include <drizzled/util/test.h>
+
+#include <string.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 

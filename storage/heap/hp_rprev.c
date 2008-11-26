@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 	/* Read prev record for key */
 
 

@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include <string.h>
+
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
 
 

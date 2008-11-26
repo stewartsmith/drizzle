@@ -15,6 +15,8 @@
 
 #include "heapdef.h"
 
+#include <string.h>
+
 /* Read next record with the same key */
 
 int heap_rnext(HP_INFO *info, unsigned char *record)
