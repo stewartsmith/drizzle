@@ -1257,19 +1257,12 @@ Item *sys_var::item(Session *session, enum_var_type var_type, LEX_STRING *base)
     var_type= OPT_GLOBAL;
   }
   switch (show_type()) {
+  case SHOW_LONG:
   case SHOW_INT:
   {
     uint32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(uint*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    return new Item_uint((uint64_t) value);
-  }
-  case SHOW_LONG:
-  {
-    uint32_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(uint32_t*) value_ptr(session, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_uint((uint64_t) value);
   }
