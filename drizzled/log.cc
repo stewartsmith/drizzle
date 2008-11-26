@@ -47,7 +47,7 @@
 LOGGER logger;
 
 DRIZZLE_BIN_LOG drizzle_bin_log;
-ulong sync_binlog_counter= 0;
+uint64_t sync_binlog_counter= 0; /* We should rationalize the largest possible counters for binlog sync */
 
 static bool test_if_number(const char *str,
                            long *res, bool allow_wildcards);

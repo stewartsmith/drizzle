@@ -305,7 +305,7 @@ uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint32_t volatile thread_count, thread_running;
 uint64_t session_startup_options;
-ulong back_log;
+uint32_t back_log;
 uint64_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
@@ -2846,7 +2846,7 @@ struct my_option my_long_options[] =
       "The value has to be a multiple of 256."),
    (char**) &opt_binlog_rows_event_max_size,
    (char**) &opt_binlog_rows_event_max_size, 0,
-   GET_ULONG, REQUIRED_ARG,
+   GET_ULL, REQUIRED_ARG,
    /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
@@ -3191,7 +3191,7 @@ struct my_option my_long_options[] =
    N_("The number of outstanding connection requests Drizzle can have. This "
       "comes into play when the main Drizzle thread gets very many connection "
       "requests in a very short time."),
-    (char**) &back_log, (char**) &back_log, 0, GET_ULONG,
+    (char**) &back_log, (char**) &back_log, 0, GET_UINT,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
   { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
     N_("The size of the cache to hold the SQL statements for the binary log "
@@ -3591,7 +3591,7 @@ struct my_option my_long_options[] =
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULONG,
+   (char**) &my_thread_stack_size, 0, GET_ULL,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
