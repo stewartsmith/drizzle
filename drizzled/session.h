@@ -1058,18 +1058,6 @@ public:
     first_successful_insert_id_in_cur_stmt.
   */
   /*
-    stmt_depends_on_first_successful_insert_id_in_prev_stmt is set when
-    LAST_INSERT_ID() is used by a statement.
-    If it is set, first_successful_insert_id_in_prev_stmt_for_binlog will be
-    stored in the statement-based binlog.
-    This variable is CUMULATIVE along the execution of a stored function or
-    trigger: if one substatement sets it to 1 it will stay 1 until the
-    function/trigger ends, thus making sure that
-    first_successful_insert_id_in_prev_stmt_for_binlog does not change anymore
-    and is propagated to the caller for binlogging.
-  */
-  bool       stmt_depends_on_first_successful_insert_id_in_prev_stmt;
-  /*
     List of auto_increment intervals reserved by the thread so far, for
     storage in the statement-based binlog.
     Note that its minimum is not first_successful_insert_id_in_cur_stmt:
@@ -1126,10 +1114,6 @@ public:
   }
   inline uint64_t read_first_successful_insert_id_in_prev_stmt(void)
   {
-    if (!stmt_depends_on_first_successful_insert_id_in_prev_stmt)
-    {
-      stmt_depends_on_first_successful_insert_id_in_prev_stmt= 1;
-    }
     return first_successful_insert_id_in_prev_stmt;
   }
   /*

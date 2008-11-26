@@ -473,7 +473,6 @@ Session::Session()
    arg_of_last_insert_id_function(false),
    first_successful_insert_id_in_prev_stmt(0),
    first_successful_insert_id_in_cur_stmt(0),
-   stmt_depends_on_first_successful_insert_id_in_prev_stmt(false),
    global_read_lock(0),
    is_fatal_error(0),
    transaction_rollback_request(0),
@@ -937,7 +936,6 @@ void Session::cleanup_after_query()
   */
   {
     /* Forget those values, for next binlogger: */
-    stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
     auto_inc_intervals_in_cur_stmt_for_binlog.empty();
   }
   if (first_successful_insert_id_in_cur_stmt > 0)

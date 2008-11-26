@@ -802,24 +802,6 @@ public:
     0 - indicates that this query does not need prelocking.
   */
   TableList **query_tables_own_last;
-  /*
-    Set of stored routines called by statement.
-    (Note that we use lazy-initialization for this hash).
-  */
-  enum { START_SROUTINES_HASH_SIZE= 16 };
-  HASH sroutines;
-  /*
-    List linking elements of 'sroutines' set. Allows you to add new elements
-    to this set as you iterate through the list of existing elements.
-    'sroutines_list_own_last' is pointer to ::next member of last element of
-    this list which represents routine which is explicitly used by query.
-    'sroutines_list_own_elements' number of explicitly used routines.
-    We use these two members for restoring of 'sroutines_list' to the state
-    in which it was right after query parsing.
-  */
-  SQL_LIST sroutines_list;
-  unsigned char    **sroutines_list_own_last;
-  uint32_t     sroutines_list_own_elements;
 
   /*
     These constructor and destructor serve for creation/destruction
@@ -860,20 +842,6 @@ public:
       query_tables_own_last= 0;
     }
   }
-
-private:
-  enum enum_binlog_stmt_flag {
-    BINLOG_STMT_FLAG_UNSAFE,
-    BINLOG_STMT_FLAG_COUNT
-  };
-
-  /*
-    Tells if the parsing stage detected properties of the statement,
-    for example: that some items require row-based binlogging to give
-    a reliable binlog/replication, or if we will use stored functions
-    or triggers which themselves need require row-based binlogging.
-  */
-  uint32_t binlog_stmt_flags;
 };
 
 
@@ -1513,7 +1481,7 @@ public:
       on its top. So select_lex (as the first added) will be at the tail 
       of the list.
     */ 
-    if (&select_lex == all_selects_list && !sroutines.records)
+    if (&select_lex == all_selects_list)
     {
       assert(!all_selects_list->next_select_in_list());
       return true;

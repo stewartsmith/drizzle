@@ -2073,23 +2073,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
   query_tables= 0;
   query_tables_last= &query_tables;
   query_tables_own_last= 0;
-  if (init)
-  {
-    /*
-      We delay real initialization of hash (and therefore related
-      memory allocation) until first insertion into this hash.
-    */
-    hash_clear(&sroutines);
-  }
-  else if (sroutines.records)
-  {
-    /* Non-zero sroutines.records means that hash was initialized. */
-    my_hash_reset(&sroutines);
-  }
-  sroutines_list.empty();
-  sroutines_list_own_last= sroutines_list.next;
-  sroutines_list_own_elements= 0;
-  binlog_stmt_flags= 0;
 }
 
 
@@ -2102,7 +2085,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
 
 void Query_tables_list::destroy_query_tables_list()
 {
-  hash_free(&sroutines);
 }
 
 
@@ -2441,7 +2423,7 @@ void LEX::restore_backup_query_tables_list(Query_tables_list *backup __attribute
 
 bool LEX::table_or_sp_used()
 {
-  if (sroutines.records || query_tables)
+  if (query_tables)
     return(true);
 
   return(false);

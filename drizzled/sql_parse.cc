@@ -2469,7 +2469,6 @@ void mysql_reset_session_for_next_command(Session *session)
     Session::cleanup_after_query() should take care of this already.
   */
   session->auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-  session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
 
   session->query_start_used= 0;
   session->is_fatal_error= 0;

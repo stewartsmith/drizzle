@@ -1712,7 +1712,6 @@ end:
   pthread_mutex_unlock(&LOCK_thread_count);
   close_thread_tables(session);      
   session->first_successful_insert_id_in_prev_stmt= 0;
-  session->stmt_depends_on_first_successful_insert_id_in_prev_stmt= 0;
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return session->is_slave_error;
 }

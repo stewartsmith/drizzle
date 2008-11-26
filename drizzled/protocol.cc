@@ -34,7 +34,7 @@ static void write_eof_packet(Session *session, NET *net,
 
 bool Protocol::net_store_data(const unsigned char *from, size_t length)
 {
-  ulong packet_length=packet->length();
+  size_t packet_length= packet->length();
   /* 
      The +9 comes from that strings of length longer than 16M require
      9 bytes to be stored (see net_store_length).
@@ -44,7 +44,7 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length)
     return 1;
   unsigned char *to= net_store_length((unsigned char*) packet->ptr()+packet_length, length);
   memcpy(to,from,length);
-  packet->length((uint) (to+length-(unsigned char*) packet->ptr()));
+  packet->length((size_t) (to+length-(unsigned char*) packet->ptr()));
   return 0;
 }
 
@@ -88,8 +88,8 @@ bool Protocol::net_store_data(const unsigned char *from, size_t length,
             net_store_data((const unsigned char*) convert->ptr(), convert->length()));
   }
 
-  ulong packet_length= packet->length();
-  ulong new_length= packet_length + conv_length + 1;
+  size_t packet_length= packet->length();
+  size_t new_length= packet_length + conv_length + 1;
 
   if (new_length > packet->alloced_length() && packet->realloc(new_length))
     return 1;
@@ -304,7 +304,8 @@ static unsigned char *net_store_length_fast(unsigned char *packet, uint32_t leng
     return packet+1;
   }
   *packet++=252;
-  int2store(packet,(uint) length);
+  int2store(packet,(uint32_t) length);
+
   return packet+2;
 }
 
