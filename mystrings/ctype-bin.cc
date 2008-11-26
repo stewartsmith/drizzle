@@ -115,7 +115,7 @@ static size_t my_lengthsp_binary(const CHARSET_INFO * const,
   > 0	s > t
 */
 
-static int my_strnncollsp_binary(const CHARSET_INFO * const,
+static int my_strnncollsp_binary(const CHARSET_INFO * const cs,
                                  const unsigned char *s, size_t slen,
                                  const unsigned char *t, size_t tlen,
                                  bool)
@@ -237,7 +237,7 @@ uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const, uint32_t)
 
 static int my_mb_wc_bin(const CHARSET_INFO * const,
 			my_wc_t *wc, const unsigned char *str,
-			const unsigned char *)
+			const unsigned char *end)
 {
   if (str >= end)
     return MY_CS_TOOSMALL;
@@ -249,15 +249,15 @@ static int my_mb_wc_bin(const CHARSET_INFO * const,
 
 static int my_wc_mb_bin(const CHARSET_INFO * const,
 			my_wc_t wc,
-			unsigned char *s,
-			unsigned char *)
+			unsigned char *str,
+			unsigned char *end)
 {
-  if (s >= e)
+  if (str >= end)
     return MY_CS_TOOSMALL;
 
   if (wc < 256)
   {
-    s[0]= (char) wc;
+    str[0]= (char) wc;
     return 1;
   }
   return MY_CS_ILUNI;
