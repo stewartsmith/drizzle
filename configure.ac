@@ -630,16 +630,25 @@ fi
 SEARCH_FOR_LIB(z, crc32, zlib.h, 
                AC_MSG_ERROR([libz is required for Drizzle]))
 
+#--------------------------------------------------------------------
+# Check for libncurses
+#--------------------------------------------------------------------
+
+
+SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, AC_MSG_ERROR(Couldn't find ncurses)) 
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(readline/history.h readline/readline.h)
-if test "x$ac_cv_header_readline_readline_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
-fi
+
+SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
+               AC_MSG_ERROR([libreadline is required for Drizzle]),
+               [$NCURSES_LIBS]) 
+
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $READLINE_CPPFLAGS"
+AC_CHECK_HEADERS(readline/history.h)
 AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
 #ifdef HAVE_READLINE_HISTORY_H
 #include <readline/history.h>
@@ -654,16 +663,7 @@ AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
 ]])
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
-
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_LIB(readline, rl_initialize, [],
-  [AC_CHECK_LIB(ncurses, tgetent, [], [AC_MSG_ERROR(Couldn't find ncurses)]) 
-   AC_SEARCH_LIBS(rl_initialize, readline, [],
-    [AC_MSG_ERROR(Couldn't find libreadline.)])])
-READLINE_LIBS="$LIBS"
-LIBS="$my_save_LIBS"
-AC_SUBST(READLINE_LIBS)
+CPPFLAGS="$save_CPPFLAGS"
 
 
 #--------------------------------------------------------------------

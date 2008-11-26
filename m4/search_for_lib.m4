@@ -1,5 +1,6 @@
 dnl SEARCH_FOR_LIB(LIB, FUNCTIONS, FUNCTION,
-dnl                [ACTION-IF-NOT-FOUND])
+dnl                [ACTION-IF-NOT-FOUND],
+dnl                [LIBS_TO_ADD])
 
 AC_DEFUN([SEARCH_FOR_LIB],
 [
@@ -22,7 +23,7 @@ AC_DEFUN([SEARCH_FOR_LIB],
     AC_CHECK_HEADERS([$3])
 
     my_save_LIBS="$LIBS"
-    LIBS=""
+    LIBS="$5"
     AC_CHECK_LIB($1, $2)
     AS_VAR_SET([libs_var],[${LIBS}])
     LIBS="${my_save_LIBS}"
@@ -34,9 +35,9 @@ AC_DEFUN([SEARCH_FOR_LIB],
       ])
   ])
   AS_IF([test "AS_VAR_GET([with_lib])" != yes],[
-   AC_MSG_CHECKING(for $1 in $withval)
    for libloc in AS_VAR_GET([with_lib])
    do
+    AC_MSG_CHECKING(for $1 in $libloc)
     if test -f $libloc/$3 -a -f $libloc/lib$1.a
     then
       owd=`pwd`
