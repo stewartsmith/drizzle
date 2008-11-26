@@ -22,14 +22,18 @@ libtimefunc_la_SOURCES = \
 		  curdate.cc \
 		  curtime.cc \
 		  date.cc \
+		  date_add_interval.cc \
 		  date_format.cc \
 		  dayname.cc \
 		  dayofmonth.cc \
+		  extract.cc \
 		  dayofyear.cc \
 		  from_days.cc \
 		  from_unixtime.cc \
 		  get_format.cc \
+		  get_interval_value.cc \
 		  hour.cc \
+		  last_day.cc \
 		  makedate.cc \
 		  make_datetime_with_warn.cc \
 		  make_datetime.cc \
@@ -44,11 +48,13 @@ libtimefunc_la_SOURCES = \
 		  period_diff.cc \
 		  sec_to_time.cc \
 		  second.cc \
+		  str_to_date.cc \
 		  sysdate_local.cc \
 		  timediff.cc \
 		  timestamp_diff.cc \
 		  time_to_sec.cc \
 		  to_days.cc \
+		  typecast.cc \
 		  unix_timestamp.cc \
 		  week.cc \
 		  week_mode.cc \
@@ -61,14 +67,18 @@ noinst_HEADERS = \
 		 curdate.h \
 		 curtime.h \
 		 date.h \
+		 date_add_interval.h \
 		 date_format.h \
 		 dayname.h \
 		 dayofmonth.h \
 		 dayofyear.h \
+		 extract.h \
 		 from_days.h \
 		 from_unixtime.h \
 		 get_format.h \
+		 get_interval_value.h \
 		 hour.h \
+		 last_day.h \
 		 makedate.h \
 		 make_datetime_with_warn.h \
 		 make_datetime.h \
@@ -83,12 +93,14 @@ noinst_HEADERS = \
 		 period_diff.h \
 		 sec_to_time.h \
 		 second.h \
+		 str_to_date.h \
 		 sysdate_local.h \
 		 str_timefunc.h \
 		 timediff.h \
 		 timestamp_diff.h \
 		 time_to_sec.h \
 		 to_days.h \
+		 typecast.h \
 		 unix_timestamp.h \
 		 week.h \
 		 week_mode.h \

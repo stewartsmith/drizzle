@@ -21,7 +21,7 @@ AC_DEFUN([AC_CXX_CINTTYPES],
    if test -n "$ac_cv_cxx_cinttypes"; then
       AC_MSG_RESULT([$ac_cv_cxx_cinttypes])
    else
-      CXXFLAGS="${CXXFLAGS} -D__STDC_LIMIT_MACROS"
+      AC_DEFINE([__STDC_LIMIT_MACROS],[1],[Use STDC Limit Macros in C++])
       ac_cv_cxx_cinttypes="<inttypes.h>"
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cinttypes header.])

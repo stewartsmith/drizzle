@@ -37,9 +37,11 @@ bin_PROGRAMS =	drizzle \
 				drizzleslap
 
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
-drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
+drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS)  \
+				$(NCURSES_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzle_CXXFLAGS =		${AM_CXXFLAGS} ${W_EXCEPTIONS}
+drizzle_CPPFLAGS = 		${AM_CPPFLAGS} ${READLINE_CPPFLAGS}
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlecheck_SOURCES =		drizzlecheck.cc

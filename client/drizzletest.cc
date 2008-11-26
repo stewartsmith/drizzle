@@ -38,7 +38,6 @@
 
 #define MTEST_VERSION "3.3"
 
-#include <config.h>
 #include "client_priv.h"
 
 #include <queue>
@@ -46,7 +45,7 @@
 #include <string>
 #include <vector>
 
-#include <pcrecpp.h>
+#include <pcre.h>
 
 #include <mysys/hash.h>
 #include <stdarg.h>
@@ -6372,25 +6371,44 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
                 char *replace, char *in_string, int icase)
 {
   string string_to_match(in_string);
-  pcrecpp::RE_Options opt;
+  const char *error= NULL;
+  int erroffset;
+  int ovector[3];
+  pcre *re= pcre_compile(pattern,
+                         icase ? PCRE_CASELESS : 0,
+                         &error, &erroffset, NULL);
+  if (re == NULL)
+    return 1;
 
-  if (icase)
-    opt.set_caseless(true);
-
-  if (!pcrecpp::RE(pattern, opt).Replace(replace,&string_to_match)){
+  int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
+                    0, 0, ovector, 3);
+  if (rc < 0)
+  {
+    pcre_free(re);
     return 1;
   }
 
-  const char * new_str= string_to_match.c_str();
-  *buf_len_p= strlen(new_str);
+  char *substring_to_replace= in_string + ovector[0]; 
+  int substring_length= ovector[1] - ovector[0];
+  *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
   char * new_buf = (char *)malloc(*buf_len_p+1);
   if (new_buf == NULL)
   {
+    pcre_free(re);
     return 1;
   }
-  strcpy(new_buf, new_str);
+
+  memset(new_buf, 0, *buf_len_p+1);
+  strncpy(new_buf, in_string, substring_to_replace-in_string);
+  strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
+  strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
+          substring_to_replace + substring_length,
+          strlen(in_string)
+            - substring_length
+            - (substring_to_replace-in_string));
   *buf_p= new_buf;
 
+  pcre_free(re);
   return 0;
 }
 

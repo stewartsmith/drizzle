@@ -17,20 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/tableop_hooks.h>
-#include CSTDINT_H
+#ifndef DRIZZLED_FUNCTIONS_TIME_GET_INTERVAL_VALUE_H
+#define DRIZZLED_FUNCTIONS_TIME_GET_INTERVAL_VALUE_H
 
-class Table;
+bool get_interval_value(Item *args,
+                        interval_type int_type,
+                        String *str_value, 
+                        INTERVAL *interval);
 
-void Tableop_hooks::do_prelock(Table **, uint32_t)
-{
-  /* Default is to do nothing */
-}
-
-
-int Tableop_hooks::do_postlock(Table **, uint32_t)
-{
-  /* Default is to do nothing */
-  return 0;
-}
+#endif /* DRIZZLED_FUNCTIONS_TIME_GET_INTERVAL_VALUE_H */

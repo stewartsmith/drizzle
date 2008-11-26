@@ -17,20 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/tableop_hooks.h>
-#include CSTDINT_H
+#ifndef DRIZZLED_FUNCTIONS_TIME_EXTRACT_H
+#define DRIZZLED_FUNCTIONS_TIME_EXTRACT_H
 
-class Table;
+#include <drizzled/functions/int.h>
 
-void Tableop_hooks::do_prelock(Table **, uint32_t)
+class Item_extract :public Item_int_func
 {
-  /* Default is to do nothing */
-}
+  String value;
+  bool date_value;
+ public:
+  const interval_type int_type; // keep it public
+  Item_extract(interval_type type_arg, Item *a)
+    :Item_int_func(a), int_type(type_arg) {}
+  int64_t val_int();
+  enum Functype functype() const { return EXTRACT_FUNC; }
+  const char *func_name() const { return "extract"; }
+  void fix_length_and_dec();
+  bool eq(const Item *item, bool binary_cmp) const;
+  virtual void print(String *str, enum_query_type query_type);
+};
 
-
-int Tableop_hooks::do_postlock(Table **, uint32_t)
-{
-  /* Default is to do nothing */
-  return 0;
-}
+#endif /* DRIZZLED_FUNCTIONS_TIME_EXTRACT_H */

@@ -22,6 +22,238 @@
 #include <drizzled/functions/time/date_format.h>
 #include <drizzled/session.h>
 
+/**
+  Create a formated date/time value in a string.
+*/
+
+static bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
+		    enum enum_drizzle_timestamp_type type, String *str)
+{
+  char intbuff[15];
+  uint32_t hours_i;
+  uint32_t weekday;
+  ulong length;
+  const char *ptr, *end;
+  Session *session= current_session;
+  MY_LOCALE *locale= session->variables.lc_time_names;
+
+  str->length(0);
+
+  if (l_time->neg)
+    str->append('-');
+  
+  end= (ptr= format->format.str) + format->format.length;
+  for (; ptr != end ; ptr++)
+  {
+    if (*ptr != '%' || ptr+1 == end)
+      str->append(*ptr);
+    else
+    {
+      switch (*++ptr) {
+      case 'M':
+        if (!l_time->month)
+          return 1;
+        str->append(locale->month_names->type_names[l_time->month-1],
+                    strlen(locale->month_names->type_names[l_time->month-1]),
+                    system_charset_info);
+        break;
+      case 'b':
+        if (!l_time->month)
+          return 1;
+        str->append(locale->ab_month_names->type_names[l_time->month-1],
+                    strlen(locale->ab_month_names->type_names[l_time->month-1]),
+                    system_charset_info);
+        break;
+      case 'W':
+        if (type == DRIZZLE_TIMESTAMP_TIME)
+          return 1;
+        weekday= calc_weekday(calc_daynr(l_time->year,l_time->month,
+                              l_time->day),0);
+        str->append(locale->day_names->type_names[weekday],
+                    strlen(locale->day_names->type_names[weekday]),
+                    system_charset_info);
+        break;
+      case 'a':
+        if (type == DRIZZLE_TIMESTAMP_TIME)
+          return 1;
+        weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
+                             l_time->day),0);
+        str->append(locale->ab_day_names->type_names[weekday],
+                    strlen(locale->ab_day_names->type_names[weekday]),
+                    system_charset_info);
+        break;
+      case 'D':
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	if (l_time->day >= 10 &&  l_time->day <= 19)
+	  str->append(STRING_WITH_LEN("th"));
+	else
+	{
+	  switch (l_time->day %10) {
+	  case 1:
+	    str->append(STRING_WITH_LEN("st"));
+	    break;
+	  case 2:
+	    str->append(STRING_WITH_LEN("nd"));
+	    break;
+	  case 3:
+	    str->append(STRING_WITH_LEN("rd"));
+	    break;
+	  default:
+	    str->append(STRING_WITH_LEN("th"));
+	    break;
+	  }
+	}
+	break;
+      case 'Y':
+	length= int10_to_str(l_time->year, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 4, '0');
+	break;
+      case 'y':
+	length= int10_to_str(l_time->year%100, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'm':
+	length= int10_to_str(l_time->month, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'c':
+	length= int10_to_str(l_time->month, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	break;
+      case 'd':
+	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'e':
+	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	break;
+      case 'f':
+	length= int10_to_str(l_time->second_part, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 6, '0');
+	break;
+      case 'H':
+	length= int10_to_str(l_time->hour, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'h':
+      case 'I':
+	hours_i= (l_time->hour%24 + 11)%12+1;
+	length= int10_to_str(hours_i, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'i':					/* minutes */
+	length= int10_to_str(l_time->minute, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'j':
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	length= int10_to_str(calc_daynr(l_time->year,l_time->month,
+					l_time->day) - 
+		     calc_daynr(l_time->year,1,1) + 1, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 3, '0');
+	break;
+      case 'k':
+	length= int10_to_str(l_time->hour, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	break;
+      case 'l':
+	hours_i= (l_time->hour%24 + 11)%12+1;
+	length= int10_to_str(hours_i, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	break;
+      case 'p':
+	hours_i= l_time->hour%24;
+	str->append(hours_i < 12 ? "AM" : "PM",2);
+	break;
+      case 'r':
+	length= sprintf(intbuff, 
+		    ((l_time->hour % 24) < 12) ?
+                    "%02d:%02d:%02d AM" : "%02d:%02d:%02d PM",
+		    (l_time->hour+11)%12+1,
+		    l_time->minute,
+		    l_time->second);
+	str->append(intbuff, length);
+	break;
+      case 'S':
+      case 's':
+	length= int10_to_str(l_time->second, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+	break;
+      case 'T':
+	length= sprintf(intbuff, 
+		    "%02d:%02d:%02d", 
+		    l_time->hour, 
+		    l_time->minute,
+		    l_time->second);
+	str->append(intbuff, length);
+	break;
+      case 'U':
+      case 'u':
+      {
+	uint32_t year;
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	length= int10_to_str(calc_week(l_time,
+				       (*ptr) == 'U' ?
+				       WEEK_FIRST_WEEKDAY : WEEK_MONDAY_FIRST,
+				       &year),
+			     intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+      }
+      break;
+      case 'v':
+      case 'V':
+      {
+	uint32_t year;
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	length= int10_to_str(calc_week(l_time,
+				       ((*ptr) == 'V' ?
+					(WEEK_YEAR | WEEK_FIRST_WEEKDAY) :
+					(WEEK_YEAR | WEEK_MONDAY_FIRST)),
+				       &year),
+			     intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 2, '0');
+      }
+      break;
+      case 'x':
+      case 'X':
+      {
+	uint32_t year;
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	(void) calc_week(l_time,
+			 ((*ptr) == 'X' ?
+			  WEEK_YEAR | WEEK_FIRST_WEEKDAY :
+			  WEEK_YEAR | WEEK_MONDAY_FIRST),
+			 &year);
+	length= int10_to_str(year, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 4, '0');
+      }
+      break;
+      case 'w':
+	if (type == DRIZZLE_TIMESTAMP_TIME)
+	  return 1;
+	weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
+					l_time->day),1);
+	length= int10_to_str(weekday, intbuff, 10) - intbuff;
+	str->append_with_prefill(intbuff, length, 1, '0');
+	break;
+
+      default:
+	str->append(*ptr);
+	break;
+      }
+    }
+  }
+  return 0;
+}
+
 void Item_func_date_format::fix_length_and_dec()
 {
   Session* session= current_session;

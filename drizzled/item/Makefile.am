@@ -24,7 +24,6 @@ libitem_la_SOURCES= \
 		strfunc.cc \
 		subselect.cc \
 		sum.cc \
-		timefunc.cc \
 		type_holder.cc
 
 noinst_HEADERS= \

@@ -315,18 +315,20 @@ uint64_t session_startup_options;
 ulong back_log;
 uint64_t connect_timeout;
 uint32_t server_id;
-ulong table_cache_size, table_def_size;
+uint64_t table_cache_size;
+uint64_t table_def_size;
 ulong what_to_log;
-ulong slow_launch_time, slave_open_temp_tables;
+uint64_t slow_launch_time;
+ulong slave_open_temp_tables;
 ulong open_files_limit;
-ulong max_binlog_size;
-ulong max_relay_log_size;
-ulong slave_net_timeout;
-ulong slave_trans_retries;
+uint64_t max_binlog_size;
+uint64_t max_relay_log_size;
+uint64_t slave_net_timeout;
+uint64_t slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-ulong thread_cache_size= 0;
+uint64_t thread_cache_size= 0;
 uint64_t thread_pool_size= 0;
 uint64_t binlog_cache_size= 0;
 uint64_t max_binlog_cache_size= 0;
@@ -336,14 +338,13 @@ ulong aborted_connects;
 ulong specialflag= 0;
 ulong binlog_cache_use= 0;
 ulong binlog_cache_disk_use= 0;
-ulong max_connections;
-ulong max_connect_errors;
+uint64_t max_connections;
+uint64_t max_connect_errors;
 ulong thread_id=1L;
 pid_t current_pid;
 ulong slow_launch_threads = 0;
-ulong sync_binlog_period;
+uint64_t sync_binlog_period;
 uint64_t expire_logs_days= 0;
-ulong rpl_recovery_rank=0;
 const char *log_output_str= "FILE";
 
 const double log_10[] = {
@@ -1941,7 +1942,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
                                       table_cache_size);
         if (global_system_variables.log_warnings)
           sql_print_warning(_("Changed limits: max_open_files: %u  "
-                              "max_connections: %ld  table_cache: %ld"),
+                              "max_connections: %"PRIu64"  table_cache: %"PRIu64""),
                             files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
@@ -2295,7 +2296,7 @@ static int init_server_components()
   }
 
   if (opt_bin_log && drizzle_bin_log.open(opt_bin_logname, LOG_BIN, 0,
-                                        WRITE_CACHE, 0, max_binlog_size, 0))
+                                          WRITE_CACHE, 0, max_binlog_size, 0))
     unireg_abort(1);
 
   if (opt_bin_log && expire_logs_days)
@@ -3373,7 +3374,7 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
-   (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULONG,
+   (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
@@ -3451,7 +3452,7 @@ struct my_option my_long_options[] =
       "descriptors to use with setrlimit(). If this value is 0 then drizzled "
       "will reserve max_connections*5 or max_connections + table_cache*2 "
       "(whichever is larger) number of files."),
-   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
+   (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
@@ -3547,13 +3548,13 @@ struct my_option my_long_options[] =
    N_("Number of seconds to wait for more data from a master/slave connection "
       "before aborting the read."),
    (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
-   GET_ULONG, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
+   GET_UINT, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
    N_("Number of times the slave SQL thread will retry a transaction in case "
       "it failed with a deadlock or elapsed lock wait timeout, "
       "before giving up and stopping."),
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
+   GET_ULL, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
    N_("Allow slave to batch requests."),
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
@@ -3561,7 +3562,7 @@ struct my_option my_long_options[] =
   {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
    N_("If creating the thread takes longer than this value (in seconds), the "
       "Slow_launch_threads counter will be incremented."),
-   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULONG,
+   (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULL,
    REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
@@ -3572,12 +3573,12 @@ struct my_option my_long_options[] =
   {"sync-binlog", OPT_SYNC_BINLOG,
    N_("Synchronously flush binary log to disk after every #th event. "
       "Use 0 (default) to disable synchronous flushing."),
-   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
+   (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
-   0, GET_ULONG, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
@@ -3586,7 +3587,7 @@ struct my_option my_long_options[] =
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
-   0, GET_ULONG, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
   {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
    N_("How many threads we should keep in a cache for reuse."),
    (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,

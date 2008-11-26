@@ -19,7 +19,8 @@ AC_DEFUN([AC_CXX_CSTDINT],
    if test -n "$ac_cv_cxx_cstdint"; then
       AC_MSG_RESULT([$ac_cv_cxx_cstdint])
    else
-      CXXFLAGS="${CXXFLAGS}  -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+      AC_DEFINE([__STDC_CONSTANT_MACROS],[1],[Use STDC Constant Macros in C++])
+      AC_DEFINE([__STDC_FORMAT_MACROS],[1],[Use STDC Format Macros in C++])
       ac_cv_cxx_cstdint="<stdint.h>"
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cstdint header.])

@@ -33,12 +33,9 @@
  *
  **/
 
-#include <config.h>
-
+#include "client_priv.h"
 #include <string>
 #include CMATH_H
-
-#include "client_priv.h"
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
 #include <readline/history.h>

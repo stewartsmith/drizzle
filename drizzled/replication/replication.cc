@@ -1513,8 +1513,8 @@ class sys_var_sync_binlog_period :public sys_var_long_ptr
 {
 public:
   sys_var_sync_binlog_period(sys_var_chain *chain, const char *name_arg,
-                             ulong *value_ptr)
-    :sys_var_long_ptr(chain, name_arg,value_ptr) {}
+                             uint64_t *value_ptr)
+    :sys_var_long_ptr(chain, name_arg, value_ptr) {}
   bool update(Session *session, set_var *var);
 };
 
@@ -1540,8 +1540,7 @@ static sys_var_bool_ptr	sys_relay_log_purge(&vars, "relay_log_purge",
 static sys_var_long_ptr	sys_slave_net_timeout(&vars, "slave_net_timeout",
 					      &slave_net_timeout,
                                               fix_slave_net_timeout);
-static sys_var_long_ptr	sys_slave_trans_retries(&vars, "slave_transaction_retries",
-						&slave_trans_retries);
+static sys_var_long_ptr	sys_slave_trans_retries(&vars, "slave_transaction_retries", &slave_trans_retries);
 static sys_var_sync_binlog_period sys_sync_binlog_period(&vars, "sync_binlog", &sync_binlog_period);
 static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_counter");
 
@@ -1613,7 +1612,7 @@ bool sys_var_slave_skip_counter::check(Session *session __attribute__((unused)),
   }
   pthread_mutex_unlock(&active_mi->rli.run_lock);
   pthread_mutex_unlock(&LOCK_active_mi);
-  var->save_result.uint32_t_value= (ulong) var->value->val_int();
+  var->save_result.uint32_t_value= (uint32_t) var->value->val_int();
   return result;
 }
 

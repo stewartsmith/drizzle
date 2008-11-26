@@ -26,9 +26,8 @@
 
 #define DUMP_VERSION "10.13"
 
-#include <config.h>
-#include <string>
 #include "client_priv.h"
+#include <string>
 
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>

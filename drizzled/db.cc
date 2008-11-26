@@ -15,7 +15,7 @@
 
 
 /* create and drop of databases */
-#include <config.h>
+#include <drizzled/global.h>
 #include CSTDINT_H
 #include CINTTYPES_H
 #include <string>

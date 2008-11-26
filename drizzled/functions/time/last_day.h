@@ -17,20 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/tableop_hooks.h>
-#include CSTDINT_H
+#ifndef DRIZZLED_FUNCTIONS_TIME_LAST_DAY_H
+#define DRIZZLED_FUNCTIONS_TIME_LAST_DAY_H
 
-class Table;
+#include <drizzled/functions/time/date.h>
 
-void Tableop_hooks::do_prelock(Table **, uint32_t)
+class Item_func_last_day :public Item_date
 {
-  /* Default is to do nothing */
-}
+public:
+  Item_func_last_day(Item *a) :Item_date(a) {}
+  const char *func_name() const { return "last_day"; }
+  bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
+};
 
-
-int Tableop_hooks::do_postlock(Table **, uint32_t)
-{
-  /* Default is to do nothing */
-  return 0;
-}
+#endif /* DRIZZLED_FUNCTIONS_TIME_LAST_DAY_H */

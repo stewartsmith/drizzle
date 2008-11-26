@@ -271,7 +271,8 @@ static int my_wc_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 }
 
 
-static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+extern "C"
+void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                                   const unsigned char *key, size_t len,
                                   uint32_t *nr1, uint32_t *nr2)
 {
@@ -292,7 +293,8 @@ static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((u
 }
 
 
-static void my_hash_sort_bin(const CHARSET_INFO * const cs __attribute__((unused)),
+extern "C"
+void my_hash_sort_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                              const unsigned char *key, size_t len,
                              uint32_t *nr1, uint32_t *nr2)
 {

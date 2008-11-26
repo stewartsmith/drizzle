@@ -21,7 +21,7 @@
 /* One of key_length or key_length_offset must be given */
 /* Key length of 0 isn't allowed */
 
-#include <config.h>
+#include <drizzled/global.h>
 #include CSTDINT_H
 #include <mysys/hash.h>
 

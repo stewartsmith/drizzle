@@ -13,15 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
 #include "mysys_priv.h"
 #include <drizzled/gettext.h>
 
 #include <mystrings/m_string.h>
+#include <mysys/my_sys.h>
+#include <mysys/mysys_err.h>
+#include <mysys/my_getopt.h>
+
+#include <stdio.h>
 #include <stdlib.h>
-#include <my_sys.h>
-#include <mysys_err.h>
-#include <my_getopt.h>
 #include <errno.h>
 
 typedef void (*init_func_p)(const struct my_option *option, char **variable,

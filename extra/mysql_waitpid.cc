@@ -15,10 +15,12 @@
 
 /* Wait until a program dies */
 
-#include <stdio.h>
+#include <drizzled/global.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_sys.h>
 #include <mysys/my_getopt.h>
+
+#include <stdio.h>
 #include <signal.h>
 #include <errno.h>
 

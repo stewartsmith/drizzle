@@ -26,10 +26,9 @@
 */
 #define IMPORT_VERSION "3.7"
 
-#include <config.h>
+#include "client_priv.h"
 #include <string>
 
-#include "client_priv.h"
 #include <pthread.h>
 
 using namespace std;

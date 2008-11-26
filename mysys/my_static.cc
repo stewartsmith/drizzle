@@ -18,10 +18,10 @@
   a shared library
 */
 
-#include <stdlib.h>
 #include "mysys_priv.h"
 #include <mysys/mysys_err.h>
 #include "my_static.h"
+#include <stdlib.h>
 
 bool timed_mutexes= 0;
 

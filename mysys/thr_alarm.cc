@@ -13,17 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
 #include "mysys_priv.h"
 
 #if !defined(DONT_USE_THR_ALARM)
-#include <errno.h>
-#include <my_pthread.h>
-#include <signal.h>
-#include <my_sys.h>
+#include <mysys/my_pthread.h>
+#include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <queues.h>
-#include "thr_alarm.h"
+#include <mysys/queues.h>
+#include <mysys/thr_alarm.h>
+
+#include <stdio.h>
+#include <signal.h>
+#include <errno.h>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>				/* AIX needs this for fd_set */

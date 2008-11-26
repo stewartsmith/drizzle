@@ -91,12 +91,12 @@ multiple read locks.
 
 bool thr_lock_inited=0;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
-ulong table_lock_wait_timeout;
+uint64_t table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
 LIST *thr_lock_thread_list;			/* List of threads in use */
-ulong max_write_lock_count= ~(ulong) 0L;
+uint64_t max_write_lock_count= ~(uint64_t) 0L;
 
 static inline pthread_cond_t *get_cond(void)
 {

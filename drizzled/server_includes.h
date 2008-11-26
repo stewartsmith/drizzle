@@ -145,20 +145,32 @@ extern ulong thread_id;
 extern ulong binlog_cache_use, binlog_cache_disk_use;
 extern ulong aborted_threads,aborted_connects;
 extern ulong slave_open_temp_tables;
-extern ulong slow_launch_threads, slow_launch_time;
-extern ulong table_cache_size, table_def_size;
-extern ulong max_connections,max_connect_errors, connect_timeout;
+extern ulong slow_launch_threads;
+extern uint64_t slow_launch_time;
+extern uint64_t table_cache_size;
+extern uint64_t table_def_size;
+extern uint64_t max_connections;
+extern uint64_t max_connect_errors;
+extern uint64_t connect_timeout;
 extern bool slave_allow_batching;
-extern ulong slave_net_timeout, slave_trans_retries;
+extern uint64_t slave_net_timeout;
+extern uint64_t slave_trans_retries;
 extern uint32_t max_user_connections;
-extern ulong what_to_log,flush_time;
-extern ulong binlog_cache_size, max_binlog_cache_size, open_files_limit;
-extern ulong max_binlog_size, max_relay_log_size;
+extern ulong what_to_log;
+extern ulong flush_time;
+extern uint64_t binlog_cache_size;
+extern uint64_t max_binlog_cache_size;
+extern ulong open_files_limit;
+extern uint64_t max_binlog_size;
+extern uint64_t max_relay_log_size;
 extern ulong opt_binlog_rows_event_max_size;
-extern ulong rpl_recovery_rank, thread_cache_size, thread_pool_size;
+extern uint64_t thread_cache_size;
+extern uint64_t thread_pool_size;
 extern ulong back_log;
 extern pid_t current_pid;
-extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
+extern uint64_t expire_logs_days;
+extern uint64_t sync_binlog_period;
+extern ulong sync_binlog_counter;
 extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
 extern ulong tc_log_page_waits;
 extern bool relay_log_purge;
@@ -363,8 +375,6 @@ extern DATE_TIME_FORMAT *date_time_format_copy(Session *session,
 					       DATE_TIME_FORMAT *format);
 const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
 				                             enum enum_drizzle_timestamp_type type);
-extern bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
-			                     enum enum_drizzle_timestamp_type type, String *str);
 void make_datetime(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,
                    String *str);
 void make_date(const DATE_TIME_FORMAT *format, const DRIZZLE_TIME *l_time,

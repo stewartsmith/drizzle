@@ -20,12 +20,12 @@
 **  Written by Monty
 */
 
-#include <stdio.h>
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 
+#include <stdio.h>
 
 const char *config_file="drizzle";		/* Default config file */
 uint verbose= 0, opt_defaults_file_used= 0;

@@ -17,10 +17,9 @@
 
 #define CHECK_VERSION "2.5.0"
 
-#include <config.h>
+#include "client_priv.h"
 #include <vector>
 #include <string>
-#include "client_priv.h"
 #include <mystrings/m_ctype.h>
 
 template class std::vector<std::string>;

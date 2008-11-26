@@ -301,11 +301,6 @@ fi
 DRIZZLE_CHECK_C_VERSION
 DRIZZLE_CHECK_CXX_VERSION
 
-AH_TOP([
-#ifdef _FILE_OFFSET_BITS
-# undef _FILE_OFFSET_BITS
-#endif
-])
 AC_SYS_LARGEFILE
 
 AC_PROG_AWK
@@ -522,7 +517,7 @@ else
   PROTO_PATH="${withval}/bin:$PATH"
 fi 
 
-AC_CHECK_TOOL([PROTOC],[protoc],[no],[$PROTO_PATH])
+AC_PATH_PROG([PROTOC],[protoc],[no],[$PROTO_PATH])
 if test "x$PROTOC" = "xno"
 then
   AC_MSG_ERROR([Couldn't find protoc. Try installing Google Protocol Buffer.])
@@ -609,7 +604,7 @@ fi
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
-# Check for tcmalloc
+# Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
 AC_ARG_ENABLE([tcmalloc],
@@ -618,9 +613,14 @@ AC_ARG_ENABLE([tcmalloc],
     [ac_enable_tcmalloc="$enableval"],
     [ac_enable_tcmalloc="no"])
 
-if test "x$ac_enable_tcmalloc" = "xyes"
+if test "x$ac_enable_tcmalloc" != "xno"
 then
   AC_CHECK_LIB(tcmalloc,malloc,[],[])
+fi
+
+if test "x$ac_cv_lib_tcmalloc_malloc" != "xyes"
+then
+  AC_CHECK_LIB(mtmalloc,malloc,[],[])
 fi
 
 #--------------------------------------------------------------------
@@ -630,16 +630,25 @@ fi
 SEARCH_FOR_LIB(z, crc32, zlib.h, 
                AC_MSG_ERROR([libz is required for Drizzle]))
 
+#--------------------------------------------------------------------
+# Check for libncurses
+#--------------------------------------------------------------------
+
+
+SEARCH_FOR_LIB(ncurses, tgetent, ncurses/ncurses.h, AC_MSG_ERROR(Couldn't find ncurses)) 
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(readline/history.h readline/readline.h)
-if test "x$ac_cv_header_readline_readline_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
-fi
+
+SEARCH_FOR_LIB(readline, rl_initialize, readline/readline.h,
+               AC_MSG_ERROR([libreadline is required for Drizzle]),
+               [$NCURSES_LIBS]) 
+
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $READLINE_CPPFLAGS"
+AC_CHECK_HEADERS(readline/history.h)
 AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
 #ifdef HAVE_READLINE_HISTORY_H
 #include <readline/history.h>
@@ -654,52 +663,22 @@ AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
 ]])
 
 DRIZZLE_CHECK_NEW_RL_INTERFACE
-
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_LIB(readline, rl_initialize, [],
-  [AC_CHECK_LIB(ncurses, tgetent, [], [AC_MSG_ERROR(Couldn't find ncurses)]) 
-   AC_SEARCH_LIBS(rl_initialize, readline, [],
-    [AC_MSG_ERROR(Couldn't find libreadline.)])])
-READLINE_LIBS="$LIBS"
-LIBS="$my_save_LIBS"
-AC_SUBST(READLINE_LIBS)
+CPPFLAGS="$save_CPPFLAGS"
 
 
 #--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[found_pcre="no"])
+PKG_CHECK_MODULES(PCRE, [libpcre >= 3], [found_pcre="yes"],[found_pcre="no"])
 
 if test "$found_pcre" = "no"
 then
-  dnl Only check the header here, because autoconf can't handle
-  dnl checking for C++ methods without C linkages
-  AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
-  then
-    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
-  else
-    # Found headers, now see if we can link
-    AC_MSG_CHECKING(for libpcrecpp)
-    save_LDFLAGS="$LDFLAGS"
-    LDFLAGS="-lpcrecpp -lpcre"
-    AC_TRY_LINK([
-#include <pcrecpp.h>
-    ],
-    [pcrecpp::RE_Options opt;],
-    [found_pcre="yes"],
-    [AC_MSG_ERROR([Couldn't link libpcrecpp])])
-
-    PCRE_LIBS="$LDFLAGS"
-    LDFLAGS="$save_LDFLAGS"
-    AC_MSG_RESULT([yes])
-  fi
+  SEARCH_FOR_LIB(pcre, pcre_compile, pcre.h, 
+                 AC_MSG_ERROR([libpcre is required for Drizzle]))
 fi
-AC_LANG_POP([])
+AM_CONDITIONAL([HAVE_PCRE],[test "$ac_cv_have_pcre" = "yes"])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 

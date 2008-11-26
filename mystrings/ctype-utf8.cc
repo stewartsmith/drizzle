@@ -2212,7 +2212,7 @@ my_hash_add(uint32_t *n1, uint32_t *n2, uint32_t ch)
 }
 
 
-static void
+extern "C" void
 my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const unsigned char *s, size_t slen,
                      uint32_t *n1, uint32_t *n2)
 {
@@ -3109,7 +3109,7 @@ my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
 }
 
 
-static void
+extern "C" void
 my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const unsigned char *s, size_t slen,
                      uint32_t *n1, uint32_t *n2)
 {
